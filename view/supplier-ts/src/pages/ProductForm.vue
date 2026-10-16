@@ -16,6 +16,8 @@ import {
 import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku } from "@/types";
 import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
 import ProductImagePicker from '@/components/ProductImagePicker.vue';
+import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
+import { videoPreviewSource } from '@/api/productVideoUpload';
 import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.vue';
 import type { SupplierAttachment } from '@/api/attachments';
 import { escapeProductText, formatProductDescription, productDescriptionPreview, productImagePreview, type ProductMediaPreview } from '@/utils/productMedia';
@@ -28,6 +30,9 @@ const auth = useAuthStore();
 const productId = computed(() => Number(route.params.id ?? 0));
 const editing = computed(() => Number.isInteger(productId.value) && productId.value > 0);
 const canManageProducts = computed(() => auth.can("supplier.product.manage"));
+const videoUploaderOpen = ref(false), videoPreviewUrl = ref(''), videoGeneration = ref(0);
+const videoContext = computed(() => `${auth.user?.supplier_id ?? 0}:${productId.value}:${videoGeneration.value}`);
+const videoDisabled = computed(() => loading.value || saving.value || mediaInvalidated.value || !canManageProducts.value);
 const loading = ref(false);
 const saving = ref(false);
 const skuActionLoading = ref(false);
@@ -51,7 +56,7 @@ const descriptionInput = ref<{ textarea?: HTMLTextAreaElement }>();
 const descriptionCursor = ref({ start: 0, end: 0 });
 let mediaReadGeneration = 0, formReadGeneration = 0, formSaveGeneration = 0, skuActionGeneration = 0;
 const mediaSession = createSupplierSessionScope(() => {
-  mediaInvalidated.value = true; mediaPickerOpen.value = false; mediaTarget.value = null;
+  mediaInvalidated.value = true; videoUploaderOpen.value = false; videoPreviewUrl.value = ''; mediaPickerOpen.value = false; mediaTarget.value = null;
   mediaPreviews.value = {}; showDescriptionPreview.value = false; mediaReadGeneration += 1;
   failedPreviewSources.value = new Set(); skuActionGeneration += 1; skuActionLoading.value = false; mediaReading.value = false;
   formReadGeneration += 1; formSaveGeneration += 1; resetProductForm(); saving.value = false;
@@ -172,6 +177,7 @@ function initialForm(): ProductDetail {
 
 const form = reactive<ProductDetail>(initialForm());
 function resetProductForm() {
+  videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
   labelAvailability.value = { ids: [], ready: false };
   for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
@@ -192,8 +198,11 @@ function editableSku(sku: ProductSku): ProductSku {
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
-  Object.assign(form, { ...detail, attrs: detail.attrs.map(editableSku) });
+  const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
+  Object.assign(form, { ...editable, attrs: detail.attrs.map(editableSku) });
+  videoPreviewUrl.value = videoPreviewSource(form.video_link, preview);
   const labels = Array.isArray(detail.store_label_id) ? detail.store_label_id : String(detail.store_label_id ?? '').split(',').filter(Boolean).map(Number);
   selectedLabelIds.value = [...new Set(labels.filter(id => Number.isSafeInteger(id) && id > 0))]; labelsChanged.value = false;
   retiredAttrs.value = (detail.retired_attrs ?? []).map(editableSku);
@@ -201,6 +210,19 @@ function applyProductDetail(detail: ProductDetail) {
   failedPreviewSources.value = new Set();
 }
 
+function openVideoUpload() {
+  if (videoDisabled.value || !mediaSession.isCurrent() || !auth.can('supplier.attachment.manage')) return;
+  videoUploaderOpen.value = true;
+}
+function useUploadedVideo(value: { url: string; src: string }) {
+  if (videoDisabled.value || !videoUploaderOpen.value || !mediaSession.isCurrent() || !/^\/api\/assets\/[1-9]\d{0,9}$/.test(value.url)) return;
+  form.video_link = value.url; videoPreviewUrl.value = videoPreviewSource(value.url, value.src); videoUploaderOpen.value = false;
+}
+function removeVideo() {
+  if (videoDisabled.value || !mediaSession.isCurrent()) return;
+  form.video_link = ''; videoPreviewUrl.value = '';
+}
+watch(() => form.video_link, (value, previous) => { if (value !== previous && !videoPreviewSource(value, videoPreviewUrl.value)) videoPreviewUrl.value = ''; });
 function invalidateMediaTarget() {
   mediaPickerOpen.value = false; mediaTarget.value = null; mediaGeneration.value += 1; mediaReadGeneration += 1; mediaReading.value = false;
 }
@@ -263,8 +285,9 @@ async function refreshMediaPreview() {
   mediaReading.value = true;
   try {
     const detail = await getProductDetail(id);
-    if (generation === mediaReadGeneration && context === mediaContext.value && mediaSession.isCurrent() && detail.media?.version === 1) {
-      mediaPreviews.value = { ...mediaPreviews.value, ...detail.media.previews }; failedPreviewSources.value = new Set();
+    if (generation === mediaReadGeneration && context === mediaContext.value && mediaSession.isCurrent()) {
+      if (detail.video_link === form.video_link) videoPreviewUrl.value = videoPreviewSource(form.video_link, (detail as ProductDetail & { video_preview_url?: unknown }).video_preview_url);
+      if (detail.media?.version === 1) { mediaPreviews.value = { ...mediaPreviews.value, ...detail.media.previews }; failedPreviewSources.value = new Set(); }
     }
   } catch { if (generation === mediaReadGeneration && mediaSession.isCurrent()) ElMessage.error('未能重读图片预览，当前商品编辑保持不变'); }
   finally { if (generation === mediaReadGeneration) mediaReading.value = false; }
@@ -457,7 +480,7 @@ async function submit() {
       ...sku,
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
-    const { media: _preview, store_label_id: _originalLabels, ...editableForm } = form;
+    const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
     const result = await saveProduct(id, { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}) });
     if (generation !== formSaveGeneration || !mediaSession.isCurrent() || productId.value !== id && id !== 0) return;
     ElMessage.success(`商品 #${result.id} 已保存并进入待审核状态`);
@@ -553,6 +576,14 @@ onMounted(load);
               <el-button text type="danger" :icon="Delete" aria-label="删除图片" @click="removeSlider(index)" />
             </div>
           </div>
+        </article>
+
+        <article class="surface product-form-card">
+          <header class="card-heading-row"><div><h2>商品视频</h2><p>支持100 MiB以内的MP4；上传完成后明确选择使用，再保存商品。</p></div><el-button v-if="auth.can('supplier.attachment.manage')" :disabled="videoDisabled" @click="openVideoUpload">上传商品视频</el-button></header>
+          <p v-if="form.video_link" class="video-reference">{{ form.video_link }}</p><p v-else>尚未设置商品视频</p>
+          <video v-if="videoPreviewUrl && !mediaInvalidated" :src="videoPreviewUrl" controls preload="metadata" aria-label="商品视频预览" />
+          <p v-else-if="form.video_link">视频引用已保留；可重读已保存预览。</p>
+          <div class="media-actions"><el-button v-if="editing && form.video_link" :disabled="videoDisabled" :loading="mediaReading" @click="refreshMediaPreview">重读已保存视频预览</el-button><el-button v-if="form.video_link" :disabled="videoDisabled" @click="removeVideo">移除商品视频</el-button></div>
         </article>
 
         <article class="surface product-form-card">
@@ -707,12 +738,15 @@ onMounted(load);
     </div>
 
     <footer class="product-form-footer"><span>{{ isCardProduct ? "保存后将进入卡密库存页；一次性卡密不会通过此表单传输。" : "保存会重置为待审核并下架，避免未审核改动直接对外销售。" }}</span><div><el-button @click="router.push('/products')">取消</el-button><el-button type="primary" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
+    <ProductVideoUploader v-if="auth.user?.supplier_id" v-model:open="videoUploaderOpen" :supplier-id="auth.user.supplier_id" :context-key="videoContext" :disabled="videoDisabled" @use="useUploadedVideo" />
     <ProductImagePicker v-if="mediaPickerOpen && canChooseMedia" :key="mediaContext" v-model="mediaPickerOpen" :supplier-id="auth.user!.supplier_id" :context-key="mediaContext" :limit="mediaLimit" @selected="receiveMedia" />
   </section>
 </template>
 
 <style scoped>
 .card-heading-row { flex-wrap: wrap; }
+.video-reference { overflow-wrap: anywhere; }
+.product-form-card video { display: block; width: 100%; max-height: 360px; background: #111; }
 .card-heading-row > .el-button, .media-actions > .el-button { margin-left: 0; }
 .media-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .slider-row { flex-wrap: wrap; }

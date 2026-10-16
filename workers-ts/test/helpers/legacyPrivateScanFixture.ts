@@ -21,6 +21,7 @@ export const PRIVATE_SCAN_READ_ENV: SystemConfigEnv = { CONFIG_KV: {
 } };
 
 export async function seedPrivateScan(f: PrivateScanFixture) {
+  await isolatePrivateScanMaintenanceScheduling(f);
   await f.reset();
   await f.db.insert(user).values([
     { uid: 11, barCode: MEMBER_CODE, status: 1 }, { uid: 12, barCode: '987654321', status: 1 },
@@ -63,6 +64,36 @@ export async function seedPrivateScan(f: PrivateScanFixture) {
   if (f.db.$client instanceof PGlite) {
     await f.exec('CREATE UNIQUE INDEX IF NOT EXISTS user_bar_code_uq ON public."user" USING btree (bar_code) WHERE bar_code <> \'\'');
   } else await runMemberBarcodeIndex(f.db);
+}
+
+/** Repeated fixture reset/seed can invite background maintenance. Keep that
+ * scheduling out of positive request cases without changing production NOWAIT.
+ * The historical CI error did not record the blocker identity. */
+async function isolatePrivateScanMaintenanceScheduling(f: PrivateScanFixture) {
+  if (f.db.$client instanceof PGlite) return;
+  const base = validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL ?? '');
+  type Scheduling = { database: string; schema: string; host: string; port: number; version: number; role: string;
+    table_oid: string; owner: string; kind: string; options: string[] | null };
+  const capture = () => f.db.execute<Scheduling>(sql`SELECT current_database() AS database,current_schema() AS schema,
+    host(inet_server_addr()) AS host,inet_server_port() AS port,current_setting('server_version_num')::integer AS version,
+    current_user AS role,c.oid::text AS table_oid,pg_get_userbyid(c.relowner) AS owner,c.relkind::text AS kind,c.reloptions AS options
+    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='user'`);
+  const before = await capture(), row = before[0];
+  if (before.length !== 1 || !row || row.schema !== 'public' || row.role !== 'finance_test' || row.owner !== row.role
+    || row.kind !== 'r' || !/^[1-9]\d*$/.test(row.table_oid) || Math.floor(row.version / 10000) !== 16
+    || !ownsFinanceFixtureEndpoint(row.database, row.schema, base.href, row.host, row.port)
+    || row.options !== null && JSON.stringify(row.options) !== '["autovacuum_enabled=false"]')
+    throw Error('Private scan seed requires its exact owned native user table');
+  if (row.options !== null) return;
+  await f.db.$client.begin('isolation level read committed', async tx => {
+    await tx.unsafe("SET LOCAL statement_timeout='5s'; SET LOCAL lock_timeout='2s'");
+    await tx.unsafe('ALTER TABLE public."user" SET (autovacuum_enabled=false)');
+  });
+  const after = await capture();
+  if (after.length !== 1 || JSON.stringify({ ...after[0], options: row.options }) !== JSON.stringify(row)
+    || JSON.stringify(after[0].options) !== '["autovacuum_enabled=false"]')
+    throw Error('Private scan fixture user identity or scheduling changed unexpectedly');
+  console.log('PRIVATE_SCAN_FIXTURE_MAINTENANCE_SCHEDULING ' + JSON.stringify({ before, after, historical_blocker_identified: false }));
 }
 
 /** Uses only this process's owned disposable native fixture. No DSN/password

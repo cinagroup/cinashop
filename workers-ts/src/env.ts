@@ -345,6 +345,12 @@ export interface ProductVideoCleanupMessage {
   uploadId: string;
 }
 
+/** Supplier cleanup resolves its immutable tenant/actor tuple from SQL. */
+export interface SupplierVideoCleanupMessage {
+  action: 'cleanupSupplierVideoUpload';
+  uploadId: string;
+}
+
 /** Permanent official-account QR codes are provisioned outside HTTP requests. */
 export interface OfficialAccountQrcodeMessage {
   action: "provisionOfficialAccountQrcode";
@@ -465,6 +471,7 @@ export type OrderMessage =
   | SmsVerificationMessage
   | AttachmentObjectCleanupMessage
   | ProductVideoCleanupMessage
+  | SupplierVideoCleanupMessage
   | OfficialAccountQrcodeMessage
   | WorkCallbackOutboxMessage
   | WorkCallbackDispatchMessage

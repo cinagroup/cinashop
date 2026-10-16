@@ -318,6 +318,15 @@
       "next": "Review the complete saved failure evidence and preserve strict runtime guards while fixing the input, assertion or implementation; run the relevant complete regression files.",
       "resolution_evidence": "php-ts-ci-remaining-contracts-20261015.json",
       "validation_file_passed_cases": 111
+    },
+    {
+      "id": "private-scan-fixture-background-scheduling",
+      "status": "fixed_and_locally_validated_full_cloud_ci_pending",
+      "evidence": "Only base226 failed case: fixture index NOWAIT55P03; historical blocker was not identified.",
+      "change": "Only exact owned disposable PG16 public.user scheduling isolated; original production NOWAIT and genuine second-read denial retained.",
+      "validation_evidence": "php-ts-supplier-product-video-upload-20261016.json",
+      "native_files": 6,
+      "passed": 61
     }
   ],
   "resolution_base_commit": "721654e0645a636c882d4de81d38ed6511236a1f",
@@ -351,5 +360,16 @@
     "comparison_to_previous605": "The previous --log-failed aggregate had full shard2 but only partial shard1 output, so these newly visible families are not asserted to be regressions introduced at721. The13 Admin video detail design coverage failures fixed at721 are absent from the new failure files."
   },
   "remaining_contract_base": "ef794cf26661855e1f471c76c18095e8d8d54346",
-  "remaining_contract_evidence": "workers-ts/audit/php-ts-ci-remaining-contracts-20261015.json"
+  "remaining_contract_evidence": "workers-ts/audit/php-ts-ci-remaining-contracts-20261015.json",
+  "latest_completed_base_ci": {
+    "commit": "226bdd8d6278667bda4321800cbc255104c76c74",
+    "run_url": "https://github.com/cinagroup/cinashop/actions/runs/38739390569",
+    "conclusion": "failure",
+    "only_failure": "legacy-share-private-scan.test.ts fixture barcode index NOWAIT55P03 before business case",
+    "shard1_passed_files": 559,
+    "shard1_passed_cases": 9737,
+    "shard2_and_other_jobs": "success",
+    "latest_local_fix_evidence": "php-ts-supplier-product-video-upload-20261016.json",
+    "new_commit_cloud_ci": "pending"
+  }
 }

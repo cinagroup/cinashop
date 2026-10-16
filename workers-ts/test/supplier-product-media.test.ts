@@ -134,6 +134,58 @@ describe('Supplier product media save/read through JWT, RBAC and registered HTTP
     }, env);
     return { response, body: await response.json() as { status: number; data: any; msg: string } };
   }
+  it('keeps an invalid historical video editable without rendering or signing it, while refusing a new invalid reference', async () => {
+    const created = await request(0, product()); expect(created.body.status).toBe(200); const id = created.body.data.id;
+    await f.db.update(storeProduct).set({ videoLink: 'http://legacy.invalid/old.mp4', videoOpen: 1 }).where(eq(storeProduct.id, id));
+    const detail = await request(id); expect(detail.body.status, detail.body.msg).toBe(200);
+    expect(detail.body.data).toMatchObject({ video_link: 'http://legacy.invalid/old.mp4', video_preview_url: '' });
+    const unchanged = await request(id, product({ video_link: 'http://legacy.invalid/old.mp4', store_name: 'edited legacy product' }));
+    expect(unchanged.body.status, unchanged.body.msg).toBe(200);
+    expect((await request(id, product({ video_link: 'http://legacy.invalid/new.mp4' }))).body.status).not.toBe(200);
+    expect(objectGet).not.toHaveBeenCalled();
+  });
+
+  it('saves the owned video canonical reference, signs only the independent read projection and refuses foreign or malformed metadata', async () => {
+    await f.exec(`INSERT INTO system_attachment(att_id,type,module_type,relation_id,file_type,image_type,name,att_dir,att_type) VALUES
+      (31,4,1,7,2,8,'attachments/supplier/7/2026/10/owned.mp4','/api/assets/31','video/mp4'),
+      (32,4,1,8,2,8,'attachments/supplier/8/2026/10/foreign.mp4','/api/assets/32','video/mp4'),
+      (33,4,1,7,1,8,'attachments/supplier/7/image.png','/api/assets/33','image/png'),
+      (34,4,1,7,2,8,'attachments/supplier/7/wrong.mp4','/api/assets/34','image/png')`);
+    const saved = await request(0, product({ video_link: '/api/assets/31?expires=1&signature=old' }));
+    expect(saved.body.status, saved.body.msg).toBe(200); const id = saved.body.data.id;
+    const detail = await request(id); expect(detail.body.status, detail.body.msg).toBe(200);
+    expect(detail.body.data.video_link).toBe('/api/assets/31');
+    expect(detail.body.data.video_preview_url).toContain('/api/assets/31?expires=');
+    const snapshot = () => f.db.select().from(storeProduct).where(eq(storeProduct.id, id));
+    const before = await snapshot(); expect(before[0]).toMatchObject({ videoOpen: 1, videoLink: '/api/assets/31' });
+    for (const value of ['/api/assets/32', '/api/assets/33', '/api/assets/34', '/api/assets/999', 'javascript:alert(1)']) {
+      const rejected = await request(id, product({ video_link: value })); expect(rejected.body.status, value).not.toBe(200);
+      expect(await snapshot()).toEqual(before);
+    }
+    expect((await request(id, product({ video_link: '' }))).body.status).toBe(200);
+    expect((await snapshot())[0]).toMatchObject({ videoOpen: 0, videoLink: '' });
+    expect(objectGet).not.toHaveBeenCalled();
+  });
+
+  it.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('pins the owned video metadata against independent mutation until the product save commits', async () => {
+    await f.exec(`INSERT INTO system_attachment(att_id,type,module_type,relation_id,file_type,image_type,name,att_dir,att_type) VALUES
+      (31,4,1,7,2,8,'attachments/supplier/7/owned.mp4','/api/assets/31','video/mp4')`);
+    await f.exec(`CREATE FUNCTION owned_supplier_video_save_barrier() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN PERFORM pg_advisory_xact_lock(505701,0); RETURN NEW; END $$;
+      CREATE TRIGGER owned_supplier_video_save_barrier BEFORE INSERT ON store_product FOR EACH ROW EXECUTE FUNCTION owned_supplier_video_save_barrier()`);
+    try {
+      await withFinancePeers(f.db, async ([blocker, saving, mutating]) => {
+        await blocker.exec('BEGIN; SELECT pg_advisory_xact_lock(505701,0)');
+        const pending = outcome(new SupplierProductManagementService(createContainerFromDb(saving.db)).saveProduct(7, 0, product({ video_link: '/api/assets/31' })));
+        try {
+          await waitForFinanceBlock(f.db, saving.pid, blocker.pid); await mutating.exec("SET lock_timeout='100ms'");
+          await expect(mutating.exec('UPDATE system_attachment SET relation_id=8 WHERE att_id=31')).rejects.toMatchObject({ code: '55P03' });
+          await blocker.exec('COMMIT'); expect((await pending).ok).toBe(true);
+        } finally { await blocker.exec('ROLLBACK'); await pending; }
+      });
+    } finally { await f.exec('DROP TRIGGER owned_supplier_video_save_barrier ON store_product; DROP FUNCTION owned_supplier_video_save_barrier()'); }
+  });
+
   it('persists stable gallery/main/SKU/HTML, returns fresh signed previews, and serves a verified private object', async () => {
     const now = Date.now();
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now);

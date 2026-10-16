@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
-import { build } from 'esbuild';
+import { build, transformSync } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '../../view/supplier-ts');
 const require = createRequire(resolve(root, 'package.json'));
 const { parse, compileScript } = require('@vue/compiler-sfc');
+const { compile } = createRequire(require.resolve('@vue/compiler-sfc'))('@vue/compiler-dom');
 let runtime: any, pinia: any, windowSurface: EventTarget;
 beforeAll(async () => {
   const result = await build({ absWorkingDir: root, stdin: { resolveDir: root, contents: `
@@ -14,7 +15,7 @@ beforeAll(async () => {
     export { default as Picker } from './src/components/ProductImagePicker.vue';
     export { http } from './src/api/http'; export * as media from './src/utils/productMedia';
     export * as dialog from 'element-plus'; export { createPinia, disposePinia } from 'pinia';
-    export { createRenderer, h, nextTick, reactive } from 'vue';
+    export { createRenderer, h, nextTick, reactive } from 'vue'; export * as vue from 'vue';
     export { createRouter, createMemoryHistory, RouterView } from 'vue-router';
   ` }, alias: { '@': resolve(root, 'src') }, define: { 'import.meta.env.DEV': 'false', 'import.meta.env.VITE_API_BASE_URL': '"/supplierapi"', '__VUE_OPTIONS_API__': 'true', '__VUE_PROD_DEVTOOLS__': 'false', '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': 'false' },
     bundle: true, write: false, platform: 'browser', format: 'esm', plugins: [{ name: 'actual-media-sfc', setup(builder) {
@@ -382,4 +383,60 @@ it('the actual form never renders copied Kefu IMG, SKU or href tickets despite a
     expect(f.view.descriptionPreview.value).not.toMatch(/<img|href=|kefuapi|ticket=old|signature=old/);
     expect(f.calls.filter(c => c.method === 'post')).toEqual([]);
   } finally { f.close(); }
+});
+
+function formTemplateNodes(h: Awaited<ReturnType<typeof mount>>) {
+  const descriptor=parse(readFileSync(resolve(root,'src/pages/ProductForm.vue'),'utf8')).descriptor,components=new Map<string,unknown>();
+  const facade=new Proxy(runtime.vue,{get:(target,key)=>key==='resolveComponent'?(name:string)=>{if(!components.has(name))components.set(name,{name});return components.get(name);}:key==='resolveDirective'?()=>({}):target[key]});
+  const code=compile(descriptor.template.content,{mode:'function',prefixIdentifiers:true,expressionPlugins:['typescript']}).code;
+  const factory=transformSync(`function createTemplate(Vue){${code}}`,{loader:'ts',target:'es2022'}).code;
+  const render=new Function('Vue',factory+';return createTemplate(Vue);')(facade);
+  const context=new Proxy(h.view,{get:(target,name)=>runtime.vue.unref(target[name])});
+  const rows:any[]=[];
+  const collect=(node:any,tableRows?:any[]):void=>{
+    if(!node||typeof node!=='object')return;
+    if(Array.isArray(node)){for(const child of node)collect(child,tableRows);return;}
+    rows.push(node);
+    const data=node.type?.name==='el-table'?node.props.data:tableRows;
+    if(node.type?.name==='el-table')expect(Array.isArray(data)).toBe(true);
+    if(node.children&&typeof node.children==='object'&&!Array.isArray(node.children)){
+      for(const [name,slot] of Object.entries(node.children))if(typeof slot==='function'){
+        if(node.type?.name==='el-table-column'&&name==='default'){
+          if(!tableRows)throw Error('Table column requires its actual parent table data');
+          tableRows.forEach((row,$index)=>collect(slot({row,$index,column:node.props}),tableRows));
+        }else collect(slot(),data);
+      }
+    }else collect(node.children,data);
+  };
+  collect(render(context,[]));return rows;
+}
+it('keeps saved canonical video and signed preview separate and wires explicit uploader use into the actual form template',async()=>{
+  const detail={...product(),video_link:'/api/assets/301',video_preview_url:ticket(301)};
+  const f=await mount('Form',config=>config.url==='/product/product/5'?detail:undefined);
+  try{
+    expect(f.view.form.video_link).toBe('/api/assets/301');expect(f.view.form.video_preview_url).toBeUndefined();expect(f.view.videoPreviewUrl.value).toBe(ticket(301));
+    expect(formTemplateNodes(f).find(node=>node.type==='video').props.src).toBe(ticket(301));
+    f.view.openVideoUpload();const uploader=formTemplateNodes(f).find(node=>node.type?.name==='ProductVideoUploader');expect(uploader).toBeTruthy();expect(uploader.props.open).toBe(true);
+    expect(f.view.form.video_link).toBe('/api/assets/301');uploader.props.onUse({url:'/api/assets/302',src:ticket(302)});
+    expect(f.view.form.video_link).toBe('/api/assets/302');expect(f.view.videoPreviewUrl.value).toBe(ticket(302));expect(f.view.videoUploaderOpen.value).toBe(false);
+    await f.view.submit();const writes=f.calls.filter(call=>call.method==='post');expect(writes).toHaveLength(1);const payload=JSON.parse(writes[0].data);
+    expect(payload.video_link).toBe('/api/assets/302');expect(payload.video_preview_url).toBeUndefined();expect(JSON.stringify(payload)).not.toContain('signature=');
+  }finally{f.close();}
+});
+it('does not replace the draft video during preview refresh and rejects signed or late use events',async()=>{
+  let detail={...product(),video_link:'/api/assets/301',video_preview_url:ticket(301)};
+  const f=await mount('Form',config=>config.url==='/product/product/5'?detail:undefined);
+  try{
+    f.view.openVideoUpload();f.view.useUploadedVideo({url:ticket(302),src:ticket(302)});expect(f.view.form.video_link).toBe('/api/assets/301');
+    f.view.useUploadedVideo({url:'/api/assets/302',src:ticket(302)});detail={...detail,video_link:'/api/assets/303',video_preview_url:ticket(303)};
+    await f.view.refreshMediaPreview();expect(f.view.form.video_link).toBe('/api/assets/302');expect(f.view.videoPreviewUrl.value).toBe(ticket(302));
+    await f.router.push('/products/6/edit');await flush();const before=f.view.form.video_link;
+    f.view.useUploadedVideo({url:'/api/assets/304',src:ticket(304)});expect(f.view.form.video_link).toBe(before);
+  }finally{f.close();}
+});
+it('preserves historical video while editing and explicitly removes its preview and reference together',async()=>{
+  const detail={...product(),video_link:'https://videos.example.test/history.mp4',video_preview_url:ticket(999)};
+  const f=await mount('Form',config=>config.url==='/product/product/5'?detail:undefined);
+  try{expect(f.view.form.video_link).toBe(detail.video_link);expect(f.view.videoPreviewUrl.value).toBe('');f.view.removeVideo();expect(f.view.form.video_link).toBe('');expect(f.view.videoPreviewUrl.value).toBe('');}
+  finally{f.close();}
 });

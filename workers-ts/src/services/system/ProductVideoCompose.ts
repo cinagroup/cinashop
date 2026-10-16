@@ -10,12 +10,18 @@ const conflict = (message: string) => new HttpApiException(message, 409, 409);
 /** Storage-only stage of the durable upload. The caller owns SQL admission;
  * each bounded source is verified again before entering the native fixed stream. */
 export async function composeProductVideo(bucket: R2Bucket, plan: ProductVideoComposition): Promise<R2Object> {
-  const match = /^attachments\/admin\/1\/\d{4}\/\d{2}\/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})\.mp4$/.exec(plan.destination);
-  if (!match || !Array.isArray(plan.parts) || plan.parts.length < 1 || plan.parts.length > 100) throw new ValidateException('视频合并上下文无效');
+  const uuid = '([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})';
+  const admin = new RegExp(`^attachments/admin/1/\\d{4}/\\d{2}/${uuid}\\.mp4$`).exec(plan.destination);
+  const supplier = new RegExp(`^attachments/supplier/([1-9]\\d*)/\\d{4}/\\d{2}/${uuid}\\.mp4$`).exec(plan.destination);
+  const uploadId = admin?.[1] ?? supplier?.[2], supplierId = supplier?.[1];
+  if (!uploadId || supplierId && Number(supplierId) > 2147483647 || !Array.isArray(plan.parts) || plan.parts.length < 1 || plan.parts.length > 100)
+    throw new ValidateException('视频合并上下文无效');
   let owner = '', total = 0;
   for (const [index, part] of plan.parts.entries()) {
-    const source = /^attachments\/tmp\/admin\/([1-9]\d*)\/([a-f0-9-]{36})\/([1-9]\d*)\.part$/.exec(part.key);
-    if (!source || Number(source[1]) > 2147483647 || source[2] !== match[1] || Number(source[3]) !== index + 1
+    const source = admin
+      ? /^attachments\/tmp\/admin\/([1-9]\d*)\/([a-f0-9-]{36})\/([1-9]\d*)\.part$/.exec(part.key)
+      : new RegExp(`^attachments/tmp/supplier/${supplierId}/([1-9]\\d*)/([a-f0-9-]{36})/([1-9]\\d*)\\.part$`).exec(part.key);
+    if (!source || Number(source[1]) > 2147483647 || source[2] !== uploadId || Number(source[3]) !== index + 1
       || owner && source[1] !== owner || !Number.isSafeInteger(part.size) || part.size < (index === 0 ? 12 : 1)
       || part.size > 5 * 1024 * 1024 || !/^[a-f0-9]{64}$/.test(part.sha256)) throw new ValidateException('视频分片合并上下文无效');
     owner = source[1]; total += part.size;
@@ -23,7 +29,7 @@ export async function composeProductVideo(bucket: R2Bucket, plan: ProductVideoCo
   if (total > 100 * 1024 * 1024) throw new ValidateException('视频不能超过100 MiB');
   const fixed = new FixedLengthStream(total), writer = fixed.writable.getWriter();
   const putting = bucket.put(plan.destination, fixed.readable, { httpMetadata: {
-    contentType: 'video/mp4', contentDisposition: 'inline', cacheControl: 'private, no-store' }, customMetadata: { uploadId: match[1] } });
+    contentType: 'video/mp4', contentDisposition: 'inline', cacheControl: 'private, no-store' }, customMetadata: { uploadId } });
   void putting.catch(() => undefined);
   try {
     for (const [index, part] of plan.parts.entries()) {

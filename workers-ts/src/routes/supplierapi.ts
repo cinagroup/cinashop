@@ -16,6 +16,7 @@ import * as SupplierProductRules from '@/controllers/supplier/SupplierProductRul
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
+import * as SupplierVideo from '@/controllers/supplier/SupplierProductVideoController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -88,8 +89,14 @@ supplierapiRoutes.put("/file/file/update/:id", AttachmentController.supplierRena
 supplierapiRoutes.post("/file/upload", AttachmentController.supplierUploadImage);
 supplierapiRoutes.post("/file/upload/:upload_type", AttachmentController.supplierUploadImage);
 supplierapiRoutes.get("/file/upload_type", AttachmentController.supplierUploadType);
-supplierapiRoutes.post("/file/video_upload", AttachmentController.supplierUploadVideo);
-supplierapiRoutes.post("/file/video_attachment", AttachmentController.supplierSaveVideoAttachment);
+supplierapiRoutes.post("/file/video_upload", SupplierVideo.legacyUpload);
+supplierapiRoutes.post("/file/video_attachment", SupplierVideo.registerExternal);
+supplierapiRoutes.put('/file/video_uploads/:uploadId', SupplierVideo.initialize);
+supplierapiRoutes.get('/file/video_uploads/:uploadId', SupplierVideo.query);
+supplierapiRoutes.put('/file/video_uploads/:uploadId/parts/:part', SupplierVideo.part);
+supplierapiRoutes.post('/file/video_uploads/:uploadId/complete', SupplierVideo.complete);
+supplierapiRoutes.post('/file/video_uploads/:uploadId/cancel', SupplierVideo.cancel);
+supplierapiRoutes.get('/file/video_uploads/:uploadId/preview', SupplierVideo.preview);
 supplierapiRoutes.get("/file/get/way_data", AttachmentController.supplierUploadWayData);
 supplierapiRoutes.get("/file/category", AttachmentController.supplierCategories);
 supplierapiRoutes.get("/file/category/create", AttachmentController.supplierCategoryCreateForm);

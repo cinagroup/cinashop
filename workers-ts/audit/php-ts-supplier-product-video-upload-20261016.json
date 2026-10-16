@@ -1,0 +1,1223 @@
+{
+  "schema_version": 1,
+  "title": "Supplier 商品视频持久上传迁移与实际验收",
+  "base_commit": "226bdd8d6278667bda4321800cbc255104c76c74",
+  "status": "locally_validated_cloud_ci_pending",
+  "draft_only": false,
+  "recorded_at": "2026-10-16T00:28:39.782182+00:00",
+  "prepared_at_utc_date": "2026-10-16",
+  "goal_status": "active",
+  "scope": {
+    "implemented": [
+      "Supplier 商品编辑器本地 MP4 分片上传、sessionStorage 原 UUID 查询恢复、取消墓碑、显式使用后保存稳定引用",
+      "旧 Supplier 八字段 multipart 入口复用同一持久会话服务，保留顺序 code1/code2 重试行为及 pid=undefined 兼容",
+      "受控 HTTPS 外链素材登记、稳定去重与不执行远端下载",
+      "Supplier 独立 PG16 0186 addon、完整 catalog 声明门禁及原生/HTTP/前端/Worker runtime 验证源码",
+      "共享 Admin/Supplier 流式合并、未知 COMMIT 安全、发布与素材删除后晚到对象的 guarded 清理",
+      "Supplier cleanup 的普通 Queue consumer 与严格 DLQ replay 接线",
+      "上批仅剩 private scan fixture 55P03 的 owned 调度隔离修复，生产 NOWAIT 与真实二次角色拒绝测试保持"
+    ],
+    "not_a_claim": [
+      "不代表全部 PHP 到 TS 迁移完成或全局 CI 本批已通过",
+      "不代表已部署生产、安装生产 0186、执行生产迁移或调用生产 provider",
+      "不代表真实云端 R2/Queue 的故障、延迟或生产运行已验证",
+      "不代表 Node memory R2/Queue/FixedLengthStream stand-in 证明真实 provider 或视频解码",
+      "不代表已清洗全部历史外链、补发历史上传会话或清除旧无归属分片"
+    ]
+  },
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "bytes": 31144,
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+      "line_ranges": [
+        "270-284"
+      ],
+      "role": "Supplier file/video_upload and video_attachment route authority"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/file/SystemAttachment.php",
+      "bytes": 7289,
+      "sha256": "0533e1b496070a5073a69f3d4eb84bb910aa724646df21b7ebc00e94e19e8dd5",
+      "line_ranges": [
+        "118-155"
+      ],
+      "role": "Exactly eight old multipart inputs; type4 and server-derived supplierId; external registration contract"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/attachment/SystemAttachmentServices.php",
+      "bytes": 17033,
+      "sha256": "710faee5e1597801f59855efa7da77f4c2b2bf822c55a6bff80e28076b2f81fc",
+      "line_ranges": [
+        "268-378"
+      ],
+      "role": "Shared PHP sequential chunk completion, code1/code2, pid int cast and attachment metadata"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/upload.js",
+      "bytes": 3664,
+      "sha256": "e0fd2d4ad5358623c75cf12471f7aacffdab9de95b36cd9c84f8616cfe2ea896",
+      "line_ranges": [
+        "1-78"
+      ],
+      "role": "readAsBinaryString MD5 client identity; eight FormData fields; sequential code1/code2 consumer"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/upload.js",
+      "bytes": 2343,
+      "sha256": "944a64a1107b8beb8121e956caef45563ba3e29239c57b33f6127120fc9294ed",
+      "line_ranges": [
+        "17-24"
+      ],
+      "role": "Legacy POST file/video_upload actual request"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/product.js",
+      "bytes": 8324,
+      "sha256": "7dfb7eff6339d71ec504a8461f33414a2fa3329ae83e219aacf3e003958e94ce",
+      "line_ranges": [
+        "192-199"
+      ],
+      "role": "Legacy POST file/video_attachment actual request"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/components/uploadVideos/index.vue",
+      "bytes": 8433,
+      "sha256": "606bcbe2ac73d7af8f0b42ce6fe0c63f3eea05e11e38d346f0fe13dd75e1964c",
+      "line_ranges": [
+        "66-89",
+        "132-162",
+        "216-237"
+      ],
+      "role": "Reusable local MP4 video uploader, 3MiB chunks and explicit pid"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+      "bytes": 118117,
+      "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+      "line_ranges": [
+        "164-253",
+        "2539-2568"
+      ],
+      "role": "Real product authoring video control; uploadByPieces omits pid"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/productEdit/index.vue",
+      "bytes": 116613,
+      "sha256": "cad1d45b2e6067d499d857cf51a94071a57f2819fbfbb8d081ef28a381b02001",
+      "line_ranges": [
+        "154-242",
+        "2269-2300"
+      ],
+      "role": "Real product edit uploadByPieces omits pid"
+    }
+  ],
+  "legacy_contract": {
+    "upload_route": "POST /supplierapi/file/video_upload",
+    "multipart_fields_exactly": [
+      "chunkNumber",
+      "currentChunkSize",
+      "chunkSize",
+      "totalChunks",
+      "file",
+      "md5",
+      "filename",
+      "pid"
+    ],
+    "field_count": 8,
+    "indices": "1-based decimal string fields; actual File/Blob chunk can have empty, application/octet-stream or video/mp4 MIME",
+    "actual_client_chunk_bytes": 3145728,
+    "no_full_file_attestation": "Old protocol supplies neither total_size nor a complete SHA256 manifest. MD5 is an opaque client identity, not a claimed original-byte digest. Server calculates and fixes the SHA256/size of each first accepted part.",
+    "md5_provenance": "Actual old client uses FileReader.readAsBinaryString(file), then js-md5(binaryString).",
+    "identity": "APP_KEY HMAC(domain, supplier_id, actor_id, filename, normalized client_md5) yields the same UUIDv4-shaped legacy session on retries. Session initialization additionally fixes all manifest fields; changed category/count/chunk size is rejected.",
+    "pid_undefined": {
+      "actual_trigger": "productDetails.videoSaveToUrl and productEdit.videoSaveToUrl omit pid; FormData.append sends literal undefined.",
+      "php": "(int) pid resolves this to root category0.",
+      "ts": "Only legacy adapter accepts exact null or string undefined as0; modern pid remains bounded integer."
+    },
+    "responses": {
+      "nonfinal": {
+        "code": 1,
+        "msg": "waiting",
+        "file_path": ""
+      },
+      "final": {
+        "code": 2,
+        "msg": "success",
+        "att_id": "same actual attachment ID across final replays",
+        "name": "canonical /api/assets/<id>",
+        "dir": "canonical /api/assets/<id>",
+        "canonical_url": "canonical /api/assets/<id>",
+        "file_path": "separate temporary signed playback URL",
+        "src": "separate temporary signed playback URL"
+      },
+      "replay": "Committed nonfinal-part replay still returns code1; final-part replay returns code2 and the same attachment identity. This preserves the actual old sequential Promise consumer."
+    },
+    "external_registration": {
+      "route": "POST /supplierapi/file/video_attachment",
+      "input_keys": [
+        "path",
+        "cover_image",
+        "pid",
+        "upload_type"
+      ],
+      "response": "Supplier metadata DTO {att_id,name,url,src,cover_image,type}; existing TS Supplier shape retained. PHP true is provenance, not claimed byte-identical response.",
+      "limits": "Normalized HTTPS MP4 URL/controlled optional image cover each <=200 characters; deterministic name <100; real_name <=255; no remote HEAD/download/cover generation; upload_type cannot select a cloud driver."
+    }
+  },
+  "modern_contract": {
+    "prefix": "/supplierapi/file/video_uploads/:uploadId",
+    "upload_id": "Client lowercase UUIDv4 is persisted before any mutation; recovery queries the original UUID.",
+    "routes": [
+      {
+        "method": "PUT",
+        "path": "/:uploadId",
+        "body_keys_exactly": [
+          "filename",
+          "total_size",
+          "chunk_size",
+          "sha256",
+          "pid"
+        ],
+        "meaning": "initialize"
+      },
+      {
+        "method": "GET",
+        "path": "/:uploadId",
+        "meaning": "query original receipt"
+      },
+      {
+        "method": "PUT",
+        "path": "/:uploadId/parts/:part",
+        "meaning": "raw bounded binary part; 1-based index"
+      },
+      {
+        "method": "POST",
+        "path": "/:uploadId/complete",
+        "body": "empty"
+      },
+      {
+        "method": "POST",
+        "path": "/:uploadId/cancel",
+        "body": "empty"
+      },
+      {
+        "method": "GET",
+        "path": "/:uploadId/preview",
+        "response_keys": [
+          "id",
+          "url",
+          "preview_url"
+        ]
+      }
+    ],
+    "receipt_keys": [
+      "upload_id",
+      "actor_id",
+      "supplier_id",
+      "state",
+      "manifest",
+      "confirmed",
+      "result"
+    ],
+    "stored_manifest_keys_exactly": [
+      "version",
+      "mode",
+      "filename",
+      "total_size",
+      "chunk_size",
+      "total_chunks",
+      "sha256",
+      "pid",
+      "client_md5"
+    ],
+    "limits": {
+      "max_bytes": 104857600,
+      "max_part_bytes": 5242880,
+      "frontend_part_bytes": 3145728,
+      "max_parts": 100,
+      "minimum_first_part_bytes": 12,
+      "ttl_seconds": 43200,
+      "initialize_json_bytes": 16384,
+      "external_registration_json_bytes": 4096
+    },
+    "content_checks": "Server validates MP4 ftyp content, exact declared part size/SHA, immutable first part bytes and ordered re-read digests before composing; client hashing reads one bounded slice at a time.",
+    "progress": "Only durable server-confirmed part numbers contribute upload progress.",
+    "r2_paths": {
+      "part": "attachments/tmp/supplier/<supplier_id>/<actor_id>/<uuid>/<1-based-part>.part",
+      "final": "attachments/supplier/<supplier_id>/<UTC-year>/<UTC-month>/<uuid>.mp4"
+    },
+    "unknown_result": "No timeout/failure is a successful save. Query the original UUID; a committed receipt returns the original attachment and never allocates another upload. Immutable active parts can be resent to repair missing/corrupt R2 bytes; explicit force repair retransmits all originals.",
+    "cancellation": "Abort current request first, write the same UUID immutable tombstone, query if its result is unknown; terminal rows cannot reopen or be deleted/truncated."
+  },
+  "authority": {
+    "tenant": "Supplier ID comes from signed Supplier JWT actor -> current active system_admin.relation_id -> active system_supplier, never body/query/header tenant fields.",
+    "actor": "Every existing upload row binds both actor_id and supplier_id; HMAC domain, immutable root identity and storage paths bind the same tuple.",
+    "live_checks": "Every reservation/publication transaction holds actual authority table barriers and checks password auth-version, DB wall-clock JWT expiry, active account/tenant and current role/menu permission before and after work. Repeated after provider I/O and before attachment publication.",
+    "permissions": {
+      "initialize_parts_complete_legacy_register": "supplier.attachment.manage",
+      "preview": "supplier.attachment.view",
+      "query_cancel": "authenticated active original actor+supplier; manage withdrawal alone does not block recovery/cancellation"
+    },
+    "category": "Video category must be exact type4/relation=current supplier/file_type2 under actual category+attachment fence; root0 allowed.",
+    "frontend_identity": "supplier-token, supplier-user(id,supplier_id), supplier-permissions and actual supplier-session-changed/storage events; token/permission/tenant/actor/context epochs abort old requests and reject late replies including A->B->A.",
+    "session_storage": {
+      "key": "cinashop.supplier-product-video.pending.v1.<supplier>.<actor>",
+      "fields_exactly": [
+        "upload_id",
+        "actor_id",
+        "supplier_id"
+      ],
+      "does_not_store": [
+        "token",
+        "signed ticket",
+        "file bytes",
+        "product body",
+        "manifest",
+        "card or fixed-delivery secrets"
+      ],
+      "failure": "Read/parse/write failure gates all mutations until explicit successful recovery read."
+    }
+  },
+  "product_reference_contract": {
+    "stable": "Uploaded private video is saved only as canonical /api/assets/<id> in video_link; video_open derives from nonempty saved reference.",
+    "display": "video_preview_url is a separate read projection. Temporary preview tickets are rendered only, stripped from editable form/save bodies, and never replace stable references.",
+    "explicit_use": "Upload completion creates a library asset only. The user must click 使用此视频 to update the current product draft, then separately save the product.",
+    "private_policy": "Canonical refs always verify actual product-video module1/file2/image8/MP4 MIME/key and ownership within the save transaction under the real attachment fence, even when unchanged. Platform video may be shared; Supplier private video is same active supplier only.",
+    "legacy_compatibility_exception": {
+      "condition": "Existing product belongs to the current Supplier; input normalized value exactly equals its current stored legacy videoLink; value is noncanonical.",
+      "behavior": "Unchanged legacy public value may be retained while editing other fields. New or changed refs and every canonical private ref still assert policy. Read retains the editable value, but invalid old values receive empty preview and no private signature.",
+      "risk": "Intentional low-risk compatibility exception retains historical external-value risk; this is not data cleansing or a grant of private asset authority. Public consumers retain existing historical rendering semantics.",
+      "http_regression": "supplier-product-media.test.ts keeps HTTP legacy read and unchanged save, rejects changed HTTP and foreign/malformed private refs, and asserts no provider access."
+    }
+  },
+  "standalone_addon": {
+    "id": "0186_supplier_product_video_upload",
+    "table": "public.supplier_product_video_upload_v1",
+    "columns_exactly": [
+      "upload_id",
+      "actor_id",
+      "supplier_id",
+      "request_hash",
+      "intent",
+      "object_key",
+      "state",
+      "parts",
+      "confirmed",
+      "attachment_id",
+      "created_at",
+      "updated_at",
+      "expires_at"
+    ],
+    "source": {
+      "path": "workers-ts/src/migrations/supplierProductVideoUpload.ts",
+      "bytes": 13012,
+      "sha256": "fccded58af2a05339109bdf06ef87bb40732e6793f0f8b742378a18697a4ae26"
+    },
+    "sql_mirror": {
+      "path": "workers-ts/src/migrations/maintenance/0186_supplier_product_video_upload.sql",
+      "bytes": 3259,
+      "sha256": "b123fc3884e27219a779b5d36c9f840035ed1a072ddeabd54475bb62e23d1182"
+    },
+    "pg16_constraint_sha256": "f14be23dc22cbfcc4d38f1a494218b8f6199815c3df15cfd9f6645a539698fd4",
+    "install": "Explicit PG16 owner-maintenance transaction only; never HTTP, historical bootstrap, runAll, root SQL or ORM. Install/grant SELECT INSERT UPDATE to a separate restricted runtime identity before enabling the routes.",
+    "catalog_guard": "Exact13 columns/5CHECKs/7constraints/2indexes/2triggers/function body+owner+ACL+runtime privilege proof; partial/drifted addons fail closed without repair.",
+    "facts_guard": "Header tuple immutable; only OLD active -> active/cancelled/committed; updated_at monotone; parts/confirmed monotone; terminal rows reject update/delete/truncate. Parts object <=100 and <=16KiB; confirmed array <=100; detailed structure and HMAC rechecked in service.",
+    "declaration_audit": "Only independent current-product declaration scope adds source full SHA +13columns. Fixed current worker declarations306->307, product addons2->3; historical/current-ordinary cohorts and hashes, runAll/rootSQL/ORM unchanged."
+  },
+  "queue_and_unknown_commit": {
+    "messages_exactly": {
+      "action": "cleanupSupplierVideoUpload",
+      "uploadId": "lowercase UUIDv4"
+    },
+    "normal_consumer": "Actual Worker queue dispatch uses the strict message guard, acknowledges only successful guarded cleanup, retries failures with bounded backoff.",
+    "dlq_fix": "OrderQueueDeadLetterService now admits the same exact Supplier two-field UUID guard beside Admin. Existing test covers both and rejects objectKey, keys, supplierId, invalid/cased/non-v4/missing UUID. No caller-selected object path is replayable.",
+    "pre_post_enqueue": "Durable cleanup enqueue precedes every provider put/compose; failure prevents provider write. Successful provider write is followed by fresh cleanup enqueue to collect objects arriving after cancellation/expiry/deletion cleanup.",
+    "commit_uncertainty": "No failure/unknown COMMIT authorizes deletion of final object. Recovery reads terminal SQL receipt and preserves the same attachment/final key.",
+    "guarded_cleanup": "Consumer accepts only uploadId, re-reads strict SQL root under its guard, derives tenant+actor paths, defers active roots, and never trusts caller keys. Committed final key is eligible only after an all-owner actual attachment lookup under the real library fence finds no remaining reference.",
+    "known_extreme_residual": "If post-write enqueue fails after an old pre-write message has already been consumed, an in-flight provider write can leave a residual object until an explicit later guarded cleanup/retry. The request reports unknown and does not delete the final object; this extreme boundary is not claimed solved by pre/post enqueue.",
+    "other_boundaries": [
+      "Legacy MD5 cannot attest whole original bytes or authorize changed content.",
+      "No automatic cleanup of unregistered old Supplier protocol objects or historic public upload files.",
+      "Deletion/Queue/runtime/provider production behavior and operational rollout remain explicitly unexecuted."
+    ]
+  },
+  "previous_cloud_ci": {
+    "run_id": 38739390569,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38739390569",
+    "commit": "226bdd8d6278667bda4321800cbc255104c76c74",
+    "conclusion": "failure",
+    "shard1": {
+      "test_files": {
+        "passed": 559,
+        "failed": 1,
+        "total": 560
+      },
+      "cases": {
+        "passed": 9737,
+        "failed": 1,
+        "total": 9738
+      },
+      "log": {
+        "path": "/tmp/cinashop-ci-226-shard1-clean.log",
+        "bytes": 32317005,
+        "sha256": "38c142baaff41e5ecacb21bf68ae5e84521e5689e3818d72fc4f3348aa9a474c"
+      },
+      "sole_failure": "test/legacy-share-private-scan.test.ts > legacy share private scan SQL authority > rechecks genuine current viewer role after first read snapshot",
+      "sqlstate": "55P03",
+      "actual_stage": "Fixture seed invokes member barcode migration; LOCK TABLE ONLY public.user IN SHARE MODE NOWAIT refuses before the request test.",
+      "historical_blocker_identified": false
+    },
+    "shard2": "success; coordinator verified complete run summary",
+    "other_jobs": "success; coordinator verified complete run summary",
+    "scope": "Previous base CI is historical evidence, not final validation of this uncommitted patch.",
+    "fixture_change": {
+      "file": "workers-ts/test/helpers/legacyPrivateScanFixture.ts",
+      "behavior": "Only owned disposable native PG16 public.user table disables background autovacuum scheduling before repeated seed/reset. Exact endpoint/database/schema/currentrole/owner/OID/options are captured and rechecked with bounded real transaction.",
+      "historical_blocker": "unknown; no claim that autovacuum was identified as the blocker",
+      "preserved": [
+        "Production member barcode NOWAIT unchanged",
+        "Genuine runtime role second-read refusal and all original request cases unchanged",
+        "No retries/swallowing55P03, no synthetic transaction passthrough, no skipped cases",
+        "PGlite fixture branch unchanged"
+      ]
+    }
+  },
+  "historical_attempts": {
+    "browser_buffered_interrupted": {
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-browser-buffered-interrupted.log",
+        "bytes": 773,
+        "sha256": "5e3ca0a4c8f4a39f27e8843154d9f75b34ab9f81b96d1c8ad84c0b6097dd6fd5"
+      },
+      "exit_code": 130,
+      "counted_as_validation_pass": false,
+      "cluster_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LkmcuR",
+      "cluster_state": "stopped, as recorded by FINANCE_LOCAL_STOPPED",
+      "cleanup_remaining": 1,
+      "remaining_fixture_databases": [
+        "finance_fixture_9bcb9bf158d94a56b94acd6352a5dc03"
+      ],
+      "cleanup_complete": false,
+      "independent_pg_ctl_check": {
+        "log": "/tmp/cinashop-supplier-video-browser-buffered-interrupted.log",
+        "log_sha256": "5e3ca0a4c8f4a39f27e8843154d9f75b34ab9f81b96d1c8ad84c0b6097dd6fd5",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LkmcuR",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": false
+      },
+      "note": "Startup log was buffered; interrupted before usable READY/finish. Stopped cluster retains exact1 database residue. Final Browser is separate cleanly closed owned cluster."
+    },
+    "frontend_initial_module_resolution": {
+      "log_path": "/tmp/cinashop-supplier-video-frontend.log",
+      "status": "historical failure before test execution",
+      "correction": "Resolve compiler-dom through installed Supplier compiler-sfc node_modules; no dependency added."
+    },
+    "frontend_template_retry": {
+      "log_path": "/tmp/cinashop-supplier-video-frontend-retry.log",
+      "status": "historical59passed/1failed of60; not final credit",
+      "correction": "Actual TS template compiler output is transpiled using existing esbuild before new Function; preserves full actual template event wiring."
+    },
+    "browser_missing_rule": {
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-browser-missing-rule.log",
+        "bytes": 2843,
+        "sha256": "a00fd659e8624c8a90155765165ca344a5cbc586ef768a299c19eb2fd443ed70"
+      },
+      "status": "Owned fixture lacked store_product_rule, causing metadata load failure; explicitly closed through its control. Corrected fixture includes the genuine ORM table and final full Browser passes.",
+      "cleanup_complete": true,
+      "counted_as_validation_pass": false
+    },
+    "product_native_namespace": {
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-product-native.log",
+        "bytes": 13626,
+        "sha256": "49fe4c539e7bb4ca9dcddec2f6d47e2d9e8a07b45372c4eb911c4b1a8a6d6c70"
+      },
+      "status": "45pass/2fail. New table fence was hardcodedpublic against an owned schema fixture; switched to the actual ORM table identity. Final47 cases pass without weakened lock or owner policy.",
+      "counted_as_validation_pass": false
+    },
+    "unused_browser_type_import": {
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-first-worker-type.log",
+        "bytes": 117,
+        "sha256": "e0769ff7d5ab545b3738e09c62ddbf1f3d984436419990ae6d6d16287c6e0f1b"
+      },
+      "first_receipts": {
+        "path": "/tmp/cinashop-supplier-video-first-receipts.json",
+        "bytes": 1991,
+        "sha256": "e15bb0af2de31abed95f911df0f9b15c622793eab64dc733501f74c045c3a5ec"
+      },
+      "delta": {
+        "path": "/tmp/cinashop-supplier-video-freeze-type-only-delta.json",
+        "bytes": 369,
+        "sha256": "82560ad0e5fcf4fe272a7de34b68c159992aa4387dc0316182ebad7745ceb455"
+      },
+      "status": "Full standard tsc found only unused eq import in Browser fixture; removed import, repeated full checks. No executable behavior changed; all other4147 frozen inputs retained."
+    },
+    "template_scoped_slot": {
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-unit-final.log",
+        "bytes": 37284,
+        "sha256": "f54dbc309db5139e9a054f68472b86409e2a4798b7299d4ef1d8f18e85968f84"
+      },
+      "status": "183pass/1fail. Test renderer did not supply actual table row to scoped slot; corrected real parent data scope, final184 cases pass.",
+      "counted_as_validation_pass": false
+    }
+  },
+  "validation": {
+    "status": "local_complete_cloud_ci_pending",
+    "distinct_test_definitions": 380,
+    "test_files": 20,
+    "interactive_browser_workflows": 1,
+    "deduplication": "Exact (file, expanded test name) tuples parsed from final verbose logs; no overlap across the6 accepted runs. Exploratory/failed/duplicate attempts excluded. Browser counted separately.",
+    "runs": [
+      {
+        "name": "ordinary",
+        "files": 8,
+        "passed": 184,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-final-unit.log",
+          "bytes": 35979,
+          "sha256": "3d598250862ed0761f01f449b3f32f2d9e56233ee4fc9f30064631ff4d100e8b"
+        }
+      },
+      {
+        "name": "upload_native",
+        "files": 3,
+        "passed": 76,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-native-final.log",
+          "bytes": 24167,
+          "sha256": "3a0a1493417da80a05fbd4fb0b07e25df28b4de8f535e35964a7f11548242c7b"
+        }
+      },
+      {
+        "name": "product_native",
+        "files": 1,
+        "passed": 47,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-product-native-final.log",
+          "bytes": 11625,
+          "sha256": "1a36785b2250e2fc11b20bfa42cd836a4611cc64790c9347492e56e8a175a757"
+        }
+      },
+      {
+        "name": "private_scan_native",
+        "files": 3,
+        "passed": 47,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-ci-fixture-native.log",
+          "bytes": 12463,
+          "sha256": "8b52066a7639762f4180a33636d1eb7c42c1265942f398428eabb809141bea5d"
+        }
+      },
+      {
+        "name": "private_consumer_native",
+        "files": 3,
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-final-private-consumers.log",
+          "bytes": 6686,
+          "sha256": "baa529ba02a557c4cc2dc5faba7c60bd636463a88aafdfb465fd7969e4ec9bfa"
+        }
+      },
+      {
+        "name": "workerd",
+        "files": 2,
+        "passed": 12,
+        "failed": 0,
+        "skipped": 0,
+        "exit": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-video-final-runtime.log",
+          "bytes": 6333,
+          "sha256": "6b985a1a3cd66abb0977d6dab5af568ee5382308cabbba0f28e3c9e597c4bb44"
+        }
+      }
+    ],
+    "final_serial_receipts": [
+      {
+        "name": "unit",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "test/supplier-product-video-upload-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/supplier-rbac-migration.test.ts",
+          "test/supplier-product-management.test.ts",
+          "test/attachment-storage-migration.test.ts",
+          "test/supplier-attachment-picker-contract.test.ts",
+          "test/order-queue-dead-letter.test.ts",
+          "test/data-migration.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 15792,
+        "log": "/tmp/cinashop-supplier-video-final-unit.log"
+      },
+      {
+        "name": "private-consumers",
+        "args": [
+          "scripts/run-local-finance-postgres.mjs",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/legacy-share-http.test.ts",
+          "test/legacy-share-private-mini.test.ts",
+          "test/legacy-share-private-scan-flow.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 16949,
+        "log": "/tmp/cinashop-supplier-video-final-private-consumers.log"
+      },
+      {
+        "name": "runtime",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.worker.config.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "test/runtime/product-video-compose.test.ts",
+          "test/runtime/supplier-product-video-compose.test.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 32161,
+        "log": "/tmp/cinashop-supplier-video-final-runtime.log"
+      },
+      {
+        "name": "worker-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 122841,
+        "log": "/tmp/cinashop-supplier-video-final-worker-type.log"
+      },
+      {
+        "name": "runtime-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 75243,
+        "log": "/tmp/cinashop-supplier-video-final-runtime-type.log"
+      },
+      {
+        "name": "routes",
+        "args": [
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/route-parity-audit.ts"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 1069,
+        "log": "/tmp/cinashop-supplier-video-final-routes.log"
+      }
+    ],
+    "receipt_file": {
+      "path": "/tmp/cinashop-supplier-video-final-receipts.json",
+      "bytes": 2602,
+      "sha256": "d3eaf6db08d3197c8afd79c0a209a73f95f3aed9505a60bd5cec6be0201356c5"
+    },
+    "worker_types": {
+      "standard_8192_mib": {
+        "name": "worker-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 122841,
+        "log": "/tmp/cinashop-supplier-video-final-worker-type.log"
+      },
+      "runtime_8192_mib": {
+        "name": "runtime-type",
+        "args": [
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "signal": null,
+        "error": null,
+        "duration_ms": 75243,
+        "log": "/tmp/cinashop-supplier-video-final-runtime-type.log"
+      }
+    },
+    "supplier_vue_types": {
+      "exit": 0,
+      "command": "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-vue-type.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "supplier_build": {
+      "exit": 0,
+      "command": "node node_modules/vite/bin/vite.js build",
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-build.log",
+        "bytes": 4237,
+        "sha256": "2106445202f98d33261002257f7f460f9aafc4a17570e3430c75f39eef31087f"
+      },
+      "warnings": "Existing VueUse PURE annotations removed by Rollup; main bundle remains larger than500kB. Build successful."
+    },
+    "workerd_boundary": "Genuine local R2 and native FixedLengthStream; both Admin and Supplier exact owner/session prefixes, ordered digest/R2 corruption, early reject and actual consumer ack/retry. Deliberate stream abort produces workerd pipe-disconnect diagnostics; all12 assertions pass and terminal exit0.",
+    "route_audit": {
+      "totals": {
+        "php": 1904,
+        "ts": 2571,
+        "matched": 1028,
+        "executableMatched": 1007,
+        "unavailable": 21,
+        "missing": 876,
+        "retired": 16,
+        "actionableMissing": 860,
+        "coveragePercent": 54,
+        "executableCoveragePercent": 52.9,
+        "effectiveExecutableCoveragePercent": 53.3
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-final-routes.log",
+        "bytes": 1276070,
+        "sha256": "be1f460b99b1758d0e7ffd78e5bfcebad298589ddfc1ac85bdb262776573ace2"
+      },
+      "scope": "Full genuine PHP source evidence; static registration only, no response/provider parity claim."
+    },
+    "cluster_verification": [
+      {
+        "log": "/tmp/cinashop-supplier-video-native-final.log",
+        "log_sha256": "3a0a1493417da80a05fbd4fb0b07e25df28b4de8f535e35964a7f11548242c7b",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ejt7Ob",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": true
+      },
+      {
+        "log": "/tmp/cinashop-supplier-video-product-native-final.log",
+        "log_sha256": "1a36785b2250e2fc11b20bfa42cd836a4611cc64790c9347492e56e8a175a757",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-wMXGa7",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": true
+      },
+      {
+        "log": "/tmp/cinashop-supplier-video-ci-fixture-native.log",
+        "log_sha256": "8b52066a7639762f4180a33636d1eb7c42c1265942f398428eabb809141bea5d",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-oUJ2jx",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": true
+      },
+      {
+        "log": "/tmp/cinashop-supplier-video-final-private-consumers.log",
+        "log_sha256": "baa529ba02a557c4cc2dc5faba7c60bd636463a88aafdfb465fd7969e4ec9bfa",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-XEEA6a",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": true
+      },
+      {
+        "log": "/tmp/cinashop-supplier-video-browser.log",
+        "log_sha256": "906154e7d22c4c9edc3d23972a431435faa82174aa99371a9519d8786d31f57e",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-4yklUF",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": true
+      },
+      {
+        "log": "/tmp/cinashop-supplier-video-browser-buffered-interrupted.log",
+        "log_sha256": "5e3ca0a4c8f4a39f27e8843154d9f75b34ab9f81b96d1c8ad84c0b6097dd6fd5",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LkmcuR",
+        "pg_ctl_exit": 3,
+        "postmaster_pid_present": false,
+        "fixture_cleanup_complete": false
+      }
+    ],
+    "source_freeze": {
+      "scope": "4148 tracked/untracked source/config/fixture inputs selected by the recorded freeze script; audit and progress docs excluded. Final comparison required before publication.",
+      "manifest": {
+        "path": "/tmp/cinashop-supplier-video-final-frozen.json",
+        "bytes": 522760,
+        "sha256": "5572f2bd5572f9d2107ef3fb5676e4aa0cfcefa11dd03c551a608869c5d1dece"
+      },
+      "script": {
+        "path": "/tmp/cinashop-supplier-video-freeze.py",
+        "bytes": 1168,
+        "sha256": "429bd89c0dc1910bcd410a5f77963754b9d8b92c60e73fd7145f118b3e032926"
+      },
+      "drift": []
+    },
+    "browser": {
+      "exit": 0,
+      "log": {
+        "path": "/tmp/cinashop-supplier-video-browser.log",
+        "bytes": 3757,
+        "sha256": "906154e7d22c4c9edc3d23972a431435faa82174aa99371a9519d8786d31f57e"
+      },
+      "ui_observation": {
+        "browser": "Codex In-app Browser via installed CUA tools; no independent Chrome extension session observed",
+        "url": "http://127.0.0.1:33455/products/1/edit",
+        "title": "CinaShop 供应商中心",
+        "observed_viewport": {
+          "width": 647,
+          "height": 669
+        },
+        "meaningful_content": true,
+        "framework_overlay": false,
+        "relevant_console_errors_or_warnings": [],
+        "interaction": "Real file chooser -> start upload -> committed response502 -> same UUID query -> use video -> product save -> revisit actual detail -> signed preview decodes and native playback advances.",
+        "decoded_video": {
+          "width": 640,
+          "height": 480,
+          "duration_seconds": 5.802667,
+          "ready_state": 4,
+          "error": null,
+          "observed_playback_time_seconds": 4.055078,
+          "paused_during_playback_observation": false
+        },
+        "screenshot": {
+          "path": "/tmp/cinashop-supplier-video-saved.jpg",
+          "bytes": 52674,
+          "sha256": "d14ca6e436139ae96321de05d4e97b02e580ec84e1f48ed14000d74558031b75"
+        }
+      },
+      "fixture_file": {
+        "path": "/tmp/cinashop-supplier-video-fixture.mp4",
+        "bytes": 3145828,
+        "sha256": "6f1ca740aaf3c9c7187f8cc81b4ad6cf0da9ca6456c6d2d603f08a02b8f0201d"
+      },
+      "fixture_file_origin": "Owned local PHP vendor SDK MP4 test fixture, appended ISO-BMFF free box to cross3MiB; file not committed.",
+      "provider_boundary": "Actual App/JWT/PG16/metadata/signatures/Range; memory R2, recording Queue and Node fixed stream are stand-ins. Separate workerd suite validates genuine local R2/native stream.",
+      "sql_http_facts": {
+        "uploads": [
+          {
+            "upload_id": "652ea17b-cbb3-45fa-9aa7-d2dd86617c20",
+            "actor_id": 1,
+            "supplier_id": 7,
+            "state": "committed",
+            "confirmed": [
+              1,
+              2
+            ],
+            "attachment_id": 1
+          }
+        ],
+        "attachments": [
+          {
+            "id": 1,
+            "type": 4,
+            "supplier": 7,
+            "url": "/api/assets/1",
+            "key": "attachments/supplier/7/2026/10/652ea17b-cbb3-45fa-9aa7-d2dd86617c20.mp4"
+          }
+        ],
+        "products": [
+          {
+            "id": 1,
+            "video": "/api/assets/1"
+          }
+        ],
+        "paths": [
+          {
+            "path": "/api/get_script",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product_label",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/category/tree",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product/get_rule",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product/1",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20",
+            "method": "PUT",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20/parts/1",
+            "method": "PUT",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20/parts/2",
+            "method": "PUT",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20/complete",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/file/video_uploads/652ea17b-cbb3-45fa-9aa7-d2dd86617c20/preview",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          },
+          {
+            "path": "/supplierapi/product/product/1",
+            "method": "POST",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/api/get_script",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/category/tree",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product_label",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product/get_rule",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/supplierapi/product/product/1",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          },
+          {
+            "path": "/api/assets/1",
+            "method": "GET",
+            "status": 206
+          }
+        ],
+        "ranges": [
+          {
+            "range": "bytes=0-",
+            "status": 206
+          },
+          {
+            "range": "bytes=1048576-",
+            "status": 206
+          },
+          {
+            "range": "bytes=524288-",
+            "status": 206
+          },
+          {
+            "range": "bytes=1474560-",
+            "status": 206
+          },
+          {
+            "range": "bytes=0-",
+            "status": 206
+          },
+          {
+            "range": "bytes=2097152-",
+            "status": 206
+          }
+        ],
+        "queue_count": 6,
+        "dropped": "652ea17b-cbb3-45fa-9aa7-d2dd86617c20",
+        "recovered": true,
+        "saves": 1,
+        "outbound": 0,
+        "finished": true
+      },
+      "viewports_not_checked": "No independent full desktop or additional mobile viewport; observed default647x669 only."
+    },
+    "source_scan": {
+      "tool": "Gitleaks8.29.0",
+      "official_archive_sha256": "39e07ad810336fd0ae80d0bd61c60d0521f628173e7583583b5df4a38738522c",
+      "config_sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "code_source_exit": 0,
+      "code_source_report": {
+        "path": "/tmp/cinashop-supplier-video-gitleaks-source.json",
+        "findings": 0
+      },
+      "final_patch_metadata_scan": {
+        "exit": 0,
+        "findings": 0,
+        "report": "/tmp/cinashop-supplier-video-gitleaks-patch.json",
+        "scope": "Exact33 current changed files; source+tests+config+audit+docs, rescanned after final metadata update."
+      },
+      "commit_range_scan": "required before push; coordinator receipt kept outside self-referential artifact"
+    },
+    "cloud_ci_for_final_patch": "pending push/new run; previous226 full run has one fixture failure and is retained separately",
+    "production_executed": false
+  },
+  "source_snapshot": {
+    "algorithm": "SHA256 of exact current raw file bytes",
+    "captured_at": "2026-10-16T00:28:39.788751+00:00",
+    "policy": "Exact changed production/test/config source files; all audit JSON and progress documentation excluded.29 files pinned by raw bytes, independently compared to the final code patch. Additional input freeze records4148 code/config/fixture files.",
+    "source_file_count": 29
+  },
+  "source_files": [
+    {
+      "path": "view/supplier-ts/src/api/productVideoUpload.ts",
+      "bytes": 9365,
+      "sha256": "1f2ca04059536c07abaa4501367eff7d05f6e6cbc2b5b8abb4b1839a1aeef1c9"
+    },
+    {
+      "path": "view/supplier-ts/src/components/ProductVideoUploader.vue",
+      "bytes": 14941,
+      "sha256": "b2e819f2e6764feb5b126f236619ea0944c0aff8e0027bc1c006cc4b66ce3b31"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "bytes": 47274,
+      "sha256": "243d8aa3c0bc8735ecb3a7c65132b92938c4c82652ad9a8332cd6348065c125c"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 56521,
+      "sha256": "6af80a4d6dc5167cf48823bfe6d4436e859bbb88c512720032f3374b2e7c4ad3"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductVideoController.ts",
+      "bytes": 4934,
+      "sha256": "d297fb906ff5f11c5ac3a3376ef62472669977777e5874e133dbad460982f774"
+    },
+    {
+      "path": "workers-ts/src/env.ts",
+      "bytes": 22684,
+      "sha256": "8b3e1c6db5354a226fafa6ad686b3e0ac0617331c7fa4021bacd26124c009398"
+    },
+    {
+      "path": "workers-ts/src/index.ts",
+      "bytes": 33392,
+      "sha256": "6435ebd7ae5e69780f4c2cc3ff11e999147c4cba9d8d3c0e79bc09823d2959d3"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0186_supplier_product_video_upload.sql",
+      "bytes": 3259,
+      "sha256": "b123fc3884e27219a779b5d36c9f840035ed1a072ddeabd54475bb62e23d1182"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProductVideoUpload.ts",
+      "bytes": 13012,
+      "sha256": "fccded58af2a05339109bdf06ef87bb40732e6793f0f8b742378a18697a4ae26"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "bytes": 20322,
+      "sha256": "f5ad97adfdadea95e9f5a0ae48049490ed87399463f7ca48385eaa7a5917d061"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderQueueDeadLetterService.ts",
+      "bytes": 24107,
+      "sha256": "835fa8dc1e98923e3cf5e42198c88fb635e62a184779a155718ecf219740a74f"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "bytes": 15205,
+      "sha256": "4866a3f8ffb62fff21d48bde1676327acfc5db318d189e20f0c3bc9ec43e6d16"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "bytes": 34497,
+      "sha256": "d6850a9d88227c77e12471530c0db0b90d0c4db70546c1582e9527d7c7bcbfb7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductVideoUploadService.ts",
+      "bytes": 36441,
+      "sha256": "2765edc12147ed25c4a17040719a43f7c1a1a0276771a1dbae52ab3e6e0fdcde"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierVideoAuthority.ts",
+      "bytes": 3014,
+      "sha256": "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189"
+    },
+    {
+      "path": "workers-ts/src/services/system/ProductVideoCompose.ts",
+      "bytes": 3931,
+      "sha256": "4b96686708b28681846011ac5d98e3fa6b3d58a142706aea5de008fb3160d891"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-video.acceptance.ts",
+      "bytes": 12917,
+      "sha256": "aef8b25362d97a46567e5b93aac10ecd4c480dab35703e84813410463f5b91a4"
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "bytes": 74724,
+      "sha256": "29f9b84e5d91e1d515f94d6f201db55e9d00c671d8836e11e518f7b4fd2f715a"
+    },
+    {
+      "path": "workers-ts/test/helpers/legacyPrivateScanFixture.ts",
+      "bytes": 10401,
+      "sha256": "e22d0269dd412ba4cb518032384a544984c9d6696c7e7ec9941fb0458ea8f042"
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "bytes": 30794,
+      "sha256": "dfd5ce7572a70fa48c126e9204ceb1fbe97810689be929eeba80c16340e62782"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductVideoUpload.ts",
+      "bytes": 7282,
+      "sha256": "f24d66b3754d3aef26cbc4d3b88bf1ab3ac5eb642b5ce620518c6863328c1c46"
+    },
+    {
+      "path": "workers-ts/test/order-queue-dead-letter.test.ts",
+      "bytes": 10513,
+      "sha256": "d69b24a773591c476e698bb9f6703ef8df72f0008473216767f3025bc775d811"
+    },
+    {
+      "path": "workers-ts/test/runtime/supplier-product-video-compose.test.ts",
+      "bytes": 4893,
+      "sha256": "6bd671b0b0520c5582a99a82576554333c283dabbbfda634a020cb6d82212131"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-media-frontend.test.ts",
+      "bytes": 36664,
+      "sha256": "a5a220eb3ceb258fe5f114908b881435873f5fbeec61f1841bee705e63fc170c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-media.test.ts",
+      "bytes": 32436,
+      "sha256": "223bd7abdc9f21b968ce10b08d7559bf3aa7a321ab90c2533fe9ff7c29c5c90e"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-video-upload-catalog-native.test.ts",
+      "bytes": 16478,
+      "sha256": "49c78b1e2e71d9ef74a600d71b6553fddf8d9c10078c2ce52cb4a25c9c5cc8bc"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-video-upload-frontend.test.ts",
+      "bytes": 26442,
+      "sha256": "60f64fc52f9918ad59d92b30783c5c399e3b849ad95782352ce3761911bae9ba"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-video-upload-native.test.ts",
+      "bytes": 41038,
+      "sha256": "d00d671c89cd389f3f1977b2491b48e38521c0e927b1b60746e5255d4986495e"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-video-browser.config.ts",
+      "bytes": 733,
+      "sha256": "fd1da99d92a58b82df01e3a77da368f051f9cc8bdd7dc1722dc545437eb85d84"
+    }
+  ],
+  "parent_checkbox_verification": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "counts": [
+        404,
+        249,
+        155
+      ],
+      "exact_parent_checkbox_lines_equal": true,
+      "checkbox_sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2"
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "counts": [
+        88,
+        50,
+        38
+      ],
+      "exact_parent_checkbox_lines_equal": true,
+      "checkbox_sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4"
+    }
+  ],
+  "parent_checkbox_verification_algorithm": "Exact complete HEAD-vs-current checkbox line equality; canonical digest joins complete matched lines with LF and no trailing LF."
+}

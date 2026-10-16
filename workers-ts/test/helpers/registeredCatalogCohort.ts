@@ -161,10 +161,12 @@ const ordinaryExplicitColumns = {
 const productExplicitDeclarations = [
   ['adminProductEditorOperation.ts','8c41bd13efce59c6a604d92bb4824374df72e656d3a24d9fdbd38b57175e0fc1',['admin_product_editor_operation_v1']],
   ['adminProductVideoUpload.ts','08e82e9bbd7ca61d9ef210b08eb9a585f7e3f9f294824f7bde6751204cf75fa2',['admin_product_video_upload_v1']],
+  ['supplierProductVideoUpload.ts','fccded58af2a05339109bdf06ef87bb40732e6793f0f8b742378a18697a4ae26',['supplier_product_video_upload_v1']],
 ] as const;
 const productExplicitColumns = {
   admin_product_editor_operation_v1: ['operation_id','actor_id','requested_id','request_hash','state','result','created_at'],
   admin_product_video_upload_v1: ['upload_id','actor_id','request_hash','intent','object_key','state','parts','confirmed','attachment_id','created_at','updated_at','expires_at'],
+  supplier_product_video_upload_v1: ['upload_id','actor_id','supplier_id','request_hash','intent','object_key','state','parts','confirmed','attachment_id','created_at','updated_at','expires_at'],
 } as const;
 export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'='historical') {
   assert.ok(scope==='historical'||scope==='current-ordinary'||scope==='current-product','Unknown independently commissioned declaration scope');
@@ -205,13 +207,13 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
     for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...productExplicitColumns[name]]);
   }
   const productTables=productExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
-  assert.equal(productTables.length,2);assert.equal(new Set(productTables).size,2);
+  assert.equal(productTables.length,3);assert.equal(new Set(productTables).size,3);
   assert.deepEqual(Object.keys(productExplicitColumns).sort(),productTables);
   for(const name of productTables)assert.ok(!currentTables.includes(name),'Product declaration must not replace a historical or ordinary declaration');
   const productCurrentTables=[...currentTables,...productTables].sort();
-  assert.equal(productCurrentTables.length,24);assert.equal(new Set(productCurrentTables).size,24);
+  assert.equal(productCurrentTables.length,25);assert.equal(new Set(productCurrentTables).size,25);
   const productCurrentOnly=productCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
-  assert.equal(productCurrentOnly.length,23);assert.equal(new Set(productCurrentOnly).size,23);
+  assert.equal(productCurrentOnly.length,24);assert.equal(new Set(productCurrentOnly).size,24);
   return productCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();

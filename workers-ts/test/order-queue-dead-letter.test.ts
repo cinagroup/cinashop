@@ -11,11 +11,13 @@ import {
 import { sameDeadLetterAuditPublicSnapshot } from "./integration/OrderQueueDeadLetterPostgresScenario";
 
 describe("order Queue dead-letter operations", () => {
-  it('replays guarded video cleanup identity while refusing caller-selected object keys', () => {
-    const message = { action: 'cleanupProductVideoUpload', uploadId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' };
+  it.each(['cleanupProductVideoUpload', 'cleanupSupplierVideoUpload'])('replays guarded %s identity while refusing caller-selected object keys', action => {
+    const message = { action, uploadId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' };
     expect(prepareOrderQueueDeadLetter(message)).toMatchObject({ replayPolicy: 'ALLOW', replayMessage: message });
     for (const invalid of [{ ...message, objectKey: 'attachments/admin/1/owned.mp4' },
-      { ...message, uploadId: '../another-session' }, { action: message.action }]) {
+      { ...message, keys: ['attachments/supplier/7/owned.mp4'] }, { ...message, supplierId: 7 },
+      { ...message, uploadId: '../another-session' }, { ...message, uploadId: message.uploadId.toUpperCase() },
+      { ...message, uploadId: 'aaaaaaaa-aaaa-1aaa-aaaa-aaaaaaaaaaaa' }, { action: message.action }]) {
       const prepared = prepareOrderQueueDeadLetter(invalid);
       expect(prepared.replayPolicy).not.toBe('ALLOW'); expect(prepared.replayMessage).toBeUndefined();
     }

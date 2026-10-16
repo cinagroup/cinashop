@@ -1,3 +1,5 @@
+import { normalizeProductVideoReference, assertProductVideoReference, resolveProductVideoReference } from '@/services/product/ProductVideoPolicy';
+import { parseCanonicalAttachmentId, signAttachmentReferences } from '@/services/system/AttachmentService';
 import {
   and,
   eq,
@@ -10,6 +12,7 @@ import { lockShippingTemplateBindings } from '../product/ShippingTemplateLifecyc
 import { boundBargainSourceProductChange, lockBargainSourceProductChange } from '@/services/activity/BargainSourceProductLifecycle';
 import {
   storeCart,
+  systemAttachment,
   storeProduct,
   storeProductAttrValue,
   storeProductDescription,
@@ -125,6 +128,13 @@ function optionalString(value: unknown, field: string, maxLength: number): strin
   const normalized = value.trim();
   if (normalized.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
   return normalized;
+}
+
+/** Invalid historical public values may be retained unchanged while an editor
+ * repairs other fields. Admission below still rejects every new invalid value. */
+function editingVideoInput(value: unknown): string {
+  try { return normalizeProductVideoReference(value, { allowLegacyRelative: true }); }
+  catch { return optionalString(value, '视频地址', 500); }
 }
 
 function editingDescription(value: unknown): string {
@@ -296,7 +306,7 @@ export function normalizeSupplierProductInput(
     limitNum,
     sort: integerValue(input.sort, "排序", 0, 1_000_000),
     ficti: integerValue(input.ficti, "虚拟销量", 0),
-    videoLink: optionalString(firstValue(input, "video_link", "videoLink"), "视频地址", 500),
+    videoLink: editingVideoInput(firstValue(input, "video_link", "videoLink")),
   };
 }
 
@@ -442,6 +452,13 @@ export class SupplierProductManagementService {
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
       await lockSupplierProductMedia(tx, supplierId, input);
+      if (parseCanonicalAttachmentId(input.videoLink) !== null) {
+        await tx.execute(sql`LOCK TABLE ONLY ${systemAttachment} IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
+      }
+      // Existing legacy bytes do not grant asset authority. Canonical private
+      // references are always revalidated, even when unchanged.
+      if (!existing || existing.videoLink !== input.videoLink || parseCanonicalAttachmentId(input.videoLink) !== null)
+        await assertProductVideoReference(tx, input.videoLink, { type: 2, relationId: supplierId }, { allowLegacyRelative: true });
       const stock = input.skus.reduce((sum, sku) => sum + sku.stock, 0);
       if (!Number.isSafeInteger(stock)) throw new ValidateException("商品总库存超出安全范围");
       const price = minMoney(input.skus.map((sku) => sku.price));
@@ -606,7 +623,7 @@ export class SupplierProductManagementService {
       limit_num: product.limitNum,
       sort: product.sort,
       ficti: product.ficti,
-      video_link: product.videoLink,
+      video_link: supplierProductEditingMediaReference(product.videoLink),
       is_show: product.isShow,
       is_verify: product.isVerify,
       refusal: product.refusal,
@@ -614,7 +631,10 @@ export class SupplierProductManagementService {
     const media = await projectSupplierProductMedia(this.container.db, supplierId, {
       sliderImages: detail.slider_image, skus: [...detail.attrs, ...detail.retired_attrs], description: detail.description,
     }, this.env?.APP_KEY);
-    return { ...detail, media };
+    const video = await resolveProductVideoReference(this.container.db, detail.video_link, { type: 2, relationId: supplierId }, { allowLegacyRelative: true });
+    const videoPreview = video && parseCanonicalAttachmentId(video) !== null
+      ? this.env?.APP_KEY ? (await signAttachmentReferences(this.env.APP_KEY, [video]))[0] : '' : video;
+    return { ...detail, media, video_preview_url: videoPreview };
   }
 
   async recycleProduct(supplierId: number, productId: number) {
