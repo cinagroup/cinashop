@@ -1,5 +1,17 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-16 Supplier 整单后本地资金余款补退（异步渠道与界面待接入）
+
+接通已完成整单退款的本地资金余款补退：cash／offline／yue沿用真实原付款和Supplier经营权限，商品、库存、抵扣积分、优惠及原整票仍由第一次商品退款的成熟凭据核对。本批实际App／JWT正向验收offline与yue：原付款18.75元、整单首退7.00元，再补5.00元及6.75元，订单实际refundPrice连续为7.00→12.00→18.75；首笔退款实体、全部商品数量、积分和供应商商品结算不重复执行。每次补退另存实际supplier_transaction；yue真实账户入账及唯一余额账单、offline独立负额capital_flow、cash无额外平台资金流水，分别绑定完整原UUID和原付款身份。真实负余额账户也只按本次5.00元精确增加，不假定余额非负。
+
+新增底层历史叶子验证受保护的首笔goods operation／decision、真实整单实体／split／原票来源、原付款root、每次money operation／decision／completion及真实账单／流水／交易。每条compact source与completion proof有闭合结构和64KiB上限，最多200步，不递归复制历史完整来源；不可变链从首退金额连续走到今天实际累计金额，少决议、少completion、分叉或实际账单失配不能发布成功。历史归档／取消的首笔不会使可退预算归零重来。仅在同一原PG事务／backend及完整当前selected行hash匹配时，opaque baseline允许成熟deep读者在首笔refundPrice比较处看到首退金额；默认合同及其余实际字段、商品／积分／整票断言保持。本批baseline仅由Supplier协调器／执行器显式传入；其他有权Customer／Admin财务读取入口对累计补退证明的组合接入仍待完成，成熟默认reader在实际累计12.00与首笔7.00不一致时继续拒绝，未默默投影或扩跨域权限。原UUID在余额后续变化或管理权限撤回后仍可只读核对，不能据此授权新资金写入。
+
+资金补退与累计金额CAS、真实账单／流水／交易、原操作、决议和completion同事务完成；SET CONSTRAINTS之后重读完整来源、实际账户与所有原效果。active供应商商品流水ID集合必须仍恰为冻结的两行，补退自己的SR只允许预期账单，已补真实延迟新增商品结算流水、历史同SR额外账单和孤立operation＋decision无completion负例；另以实际单表账单／平台流水／supplier_transaction残留分别证明，没有operation／completion时原owner21或另actor22均不能把完整原UUID封存为not_applied。恢复查询按无损SR的完整UUID后缀全局核对金融证据，不凭请求管理员前缀漏看旧效果；资金资格也必须排除未注册实际效果：本orderNo的SR交易与专用平台流水按已验证ID反集核对，buyer专用money账单用protected operation／decision／completion及真实同SR交易分类外单归属，既不扫描其他整单，也不对buyer总账单设200笔上限。三类orphan均使seed和原quote下新UUID执行409且全snapshot不变；真实同buyer的另一订单先goods7.00再money1.00后，本单仍可正确quote6.75，不把合法外单当作缺失证据。未扩大ACL。金额被晚改会整体回滚；completion写权限缺失则在业务写入前拒绝。当前未扩大运行ACL，0194／0195／0196维护合同、旧声明／角色运行方案、旧内核和PHP购买来源保持。
+
+本批13文件192个不同检查以最终完整结果去重：Service原生37项包含旧20项及新增money17项；成熟manual11＋finalizer4＋invoice7共22项；8文件规则／迁移130项及workerd3项。两套Worker完整类型检查使用共享串行锁和8192MiB通过。历史calibration真实1失败／29未选、首轮money真实4失败／6通过／20未选、第二轮完整Service真实2失败／32通过／34项均保留exit1、不再计数；calibration为只追加凭据表上的冗余表锁实际42501，移除该锁而未放宽权限；首轮money包含两项实际text排序红测和两项夹具误认既有异常合同，分别以numeric列排序与既有code断言修正。第二轮实际两次补退已经成功，失败来自新增测试自己的SELECT文本alias排序；修正测试numeric排序后，先有完整37项通过；随后补上orphan资金资格guard及对应断言，保留其中19项未受影响的旧验收，首轮target实际17通过／1失败／19未选：新增同buyer第二单复用了已付款购物车，真实创建器在退款guard之前拒绝；仅以独立新cart输入修正夹具，生产源码不变。随后以冻结的最终源码重验17项money＋1项旧并发共18项通过、19项未选，组合为同一文件37个不同验收（旧20＋新17）；失败target的17通过不再计数。未把父批次的整37项冒充最终源码，也未把target18重复相加。最终两套完整类型检查在guard修改后重新通过；失败批次通过子集与先前阶段不再加数。本批7个独立自建PG16集群夹具清零、pg_ctl独立返回3且pid文件不存在，不删除或重新操作旧集群，详见[本批验证账本](workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json)。
+
+整单后type2拒绝、微信／支付宝余款退款的持久provider admission／原操作恢复／回调／对账、实际已开票人工红冲公开链路、Supplier前端桌面／移动端仍待完成；相关资金通道继续在业务写入前503。未新增Browser验收，未执行生产DDL／GRANT／部署或真实支付／税务调用；原复选行和用户选定的统计脚本PHP兼容行为保留，整体迁移继续active，未声明完成。
+
 ## 2026-10-16 Supplier 主动退款公开事务与原UUID恢复（余款和渠道待接入）
 
 接通按订单ID的GET／PUT `/order/refund/:id` 及独立原UUID查询／封存接口。实际JWT、当前经营权限、完整来源签名和受限PG16 LOGIN共同授权；全部商品首退、不可变原操作、实际资金／库存／积分／整票处理及最终决议同事务保存。原UUID精确重放不再创建退款或流水，未知GET不写入，撤销管理权后仍可核对本人原结果；缺决议或残留实体／资金凭据不能冒充未执行。type2拒绝只改订单退款状态，不产生退款实体或资金效果，offline／yue／weixin／alipay四渠道均由真实付款来源核实。四渠道红测发现在线根订单同时出现在source.order和payment.root：修复先证明两份完整原行一致，再仅投影两处合法退款状态字段；不同付款根保持原样，其余完整来源继续逐字段核对。

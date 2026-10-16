@@ -5,9 +5,10 @@ import {randomUUID} from 'node:crypto';
 import {eq,sql} from 'drizzle-orm';
 import {createApp} from '@/app';
 import {withTx,createDbFromConnectionString,createContainerFromDb} from '@/lib/di';
-import {storeOrder,storeOrderInvoice,storeOrderRefund,systemRole,user,userBill,capitalFlow} from '@/models/schema';
+import {storeCart,storeOrder,storeOrderInvoice,storeOrderRefund,systemRole,user,userBill,capitalFlow,supplierTransactions} from '@/models/schema';
 import {createToken} from '@/utils/jwt';
 import {StoreOrderPayService} from '@/services/order/StoreOrderPayService';
+import {StoreOrderCreateService} from '@/services/order/StoreOrderCreateService';
 import {SupplierProactiveRefundService} from '@/services/supplier/SupplierProactiveRefundService';
 import {readSupplierProactiveRefundSource} from '@/services/supplier/SupplierProactiveRefundSource';
 import {parseSupplierProactiveRefundIntent} from '@/services/supplier/SupplierProactiveRefundInput';
@@ -15,6 +16,13 @@ import {appendSupplierProactiveRefundOperation} from '@/services/supplier/Suppli
 import {requiredSupplierPermissions} from '@/services/supplier/SupplierPermissionService';
 import {installSupplierProactiveRefund} from '@/migrations/supplierProactiveRefund';
 import {runtimeBusinessPrivilegePlan} from '@/migrations/runtimeBusinessPrivilegePlan';
+import {readSupplierProactiveMoneyEvidence,projectSupplierProactiveMoneyBaseline} from '@/services/supplier/SupplierProactiveMoneyEvidence';
+import {verifyFinancialCompletedRefund} from '@/services/customer-work/CustomerWorkFinancialVerification';
+import {readBoundManualRefundProof} from '@/services/supplier/SupplierManualRefundProof';
+import {supplierProactiveRefundApplicationNumber} from '@/services/supplier/SupplierProactiveRefundIdentity';
+import {makeSupplierProactiveMoneySource} from '@/services/supplier/SupplierProactiveMoneyEvidence';
+import {outRequestHash} from '@/services/out/OutIdempotency';
+import {appendSupplierProactiveRefundDecision} from '@/services/supplier/SupplierProactiveRefundOperation';
 import {supplierManualRefundFixture} from './helpers/supplierManualRefund';
 import {supplierOrderEditActor,supplierOrderEditAppKey} from './helpers/supplierUnpaidOrderEdit';
 
@@ -29,8 +37,21 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Supplier 
   f=await supplierManualRefundFixture();wiring.open.mockImplementation(()=>f.container);
  },120000);
  afterEach(async()=>{try{expect(fetch).not.toHaveBeenCalled();await f?.close();}finally{vi.restoreAllMocks();}},30000);
- async function paid(channel:'offline'|'yue'|'weixin'|'alipay'='offline',amount='18.75') {
-  const order=await f.createOffline();
+ async function paid(channel:'offline'|'yue'|'weixin'|'alipay'='offline',amount='18.75',freshCart=false) {
+  const order=await (freshCart?f.withPaymentRuntime(async runtime=>{
+   // Independent synthetic cart input; both orders still use real checkout,
+   // offline selection, balance payment and paid-event consumption.
+   const original=await f.db.select().from(storeCart).where(sql`${storeCart.id} IN (1,2)`).orderBy(storeCart.id);
+   expect(original).toHaveLength(2);
+   const carts=await f.db.insert(storeCart).values(original.map(row=>({...row,id:row.id+1000,isPay:0,status:1}))).returning({id:storeCart.id});
+   const created=await StoreOrderCreateService.createWithRuntime(runtime.container,
+    {CONFIG_KV:f.env.CONFIG_KV,nextOrderId:async()=>'wx'+randomUUID().replaceAll('-','').slice(0,28)},
+    {uid:11,key:randomUUID(),cartIds:carts.map(row=>row.id),addressId:11,userIp:'127.0.0.1',useIntegral:true,payType:'offline',from:'pc'});
+   expect(await new StoreOrderPayService(runtime.container,f.paymentEnvironment).offlinePay(11,created.orderId,'pc')).toMatchObject({paid:false,pay_type:'offline'});
+   const [actual]=await f.db.select().from(storeOrder).where(eq(storeOrder.orderId,created.orderId));
+   if(!actual||actual.paid!==0||actual.supplierId!==7||actual.payType!=='offline')throw Error('Independent actual Supplier checkout absent');
+   return actual;
+  }):f.createOffline());
   await f.service.save(order.id,{...await f.body(order.id),pay_price:amount,gain_integral:'17'},actor());
   if(channel==='offline')await f.withPaymentRuntime(async(_runtime,payment)=>payment.pay(order.id,await f.paymentBody(order.id,payment),actor()));
   else await f.withPaidConsumer(async runtime=>{
@@ -60,7 +81,19 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Supplier 
  const snapshot=async()=>({...await f.manualSnapshot(),flows:await f.db.select().from(capitalFlow).orderBy(capitalFlow.id),
   invoices:await f.db.select().from(storeOrderInvoice).orderBy(storeOrderInvoice.id),
   proactive:await f.exec('SELECT * FROM public.supplier_proactive_refund_operation_v1 ORDER BY operation_id'),
-  decisions:await f.exec('SELECT * FROM public.supplier_proactive_refund_decision_v1 ORDER BY operation_id')});
+  decisions:await f.exec('SELECT * FROM public.supplier_proactive_refund_decision_v1 ORDER BY operation_id'),
+  money_completions:await f.exec('SELECT * FROM public.supplier_refund_money_completion_v1 ORDER BY operation_id'),
+  money_payments:await f.exec('SELECT * FROM public.supplier_refund_money_payment_v1 ORDER BY operation_id')});
+ function onlyMoneyChanged(before:Awaited<ReturnType<typeof snapshot>>,after:Awaited<ReturnType<typeof snapshot>>) {
+  const allowed=new Set(['store_order','store_order_status','user','user_bill','supplier_transactions','proactive','decisions','flows','money_completions']);
+  for(const [table,rows] of Object.entries(before)) {
+   if(allowed.has(table))continue;
+   if(table==='consumer_tables') {
+    const actual=after.consumer_tables;
+    for(const [name,values]of Object.entries(rows as Record<string,unknown>))if(!allowed.has(name))expect(actual[name]).toEqual(values);
+   } else expect((after as Record<string,unknown>)[table]).toEqual(rows);
+  }
+ }
  async function http(method:string,path:string,body?:unknown,actorId=21,raw?:string) {
   const a=supplierOrderEditActor(actorId),token=(await createToken(actorId,'supplier',a.authVersion,supplierOrderEditAppKey)).token;
   const response=await app.request('/supplierapi'+path,{method,headers:{Authorization:'Bearer '+token,'X-Supplier-Id':'8','Content-Type':'application/json'},
@@ -242,6 +275,182 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Supplier 
    const before=await snapshot();await expect(service.receipt(body.operation_id,actor())).rejects.toMatchObject({httpStatus:409});
    await expect(service.execute(id,{...body,type:2},actor())).rejects.toMatchObject({httpStatus:409});
    await expect(service.resolve(body.operation_id,id,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it.each(['offline','yue'] as const)('executes real %s money-only remainder through JWT in two exact payouts without repeating goods effects',async channel=>{
+  const id=await paid(channel);await f.db.insert(storeOrderInvoice).values({orderId:id,uid:11,category:'order',isPay:1,isRefund:0,isInvoice:0,
+   invoiceAmount:'18.75',name:'补退原整票',addTime:Math.floor(Date.now()/1000)});
+  await commissioned(async(runtime,service)=>{
+   const first=await service.execute(id,await request(service,id),actor()),before=await snapshot(),account=(await f.db.select().from(user).where(eq(user.uid,11)))[0];
+   expect(await service.seed(id,actor())).toMatchObject({kind:'money',quantity:0,refund_price:'11.75',paid:'18.75',refunded:'7.00'});
+   const body=await request(service,id,'5.00'),response=await http('PUT',`/order/refund/${id}`,body);
+   expect(response.body).toMatchObject({status:200,data:{state:'committed',result:{kind:'money',refund_id:first.result!.refund_id,amount:'5.00',status:channel==='offline'?'CASH_SUCCESS':'BALANCE_SUCCESS'}}});
+   expect(response.response.headers.get('cache-control')).toContain('private, no-store');
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'12.00',refundStatus:2,refundType:6,payPrice:'18.75'});
+   const stable=await snapshot();onlyMoneyChanged(before,stable);
+   expect((await http('PUT',`/order/refund/${id}`,body)).body).toEqual(response.body);
+   expect(await service.receipt(body.operation_id,actor())).toEqual(response.body.data);
+   expect(await service.resolve(body.operation_id,id,actor())).toEqual(response.body.data);expect(await snapshot()).toEqual(stable);
+   const tail=await request(service,id,'6.75'),done=await service.execute(id,tail,actor());expect(done.result).toMatchObject({kind:'money',amount:'6.75'});
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'18.75',refundStatus:2,refundType:6});
+   const final=await snapshot();onlyMoneyChanged(before,final);
+   expect(await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,id))).toHaveLength(1);
+   const completions=await f.exec('SELECT amount::text,before_refunded::text,after_refunded::text FROM public.supplier_refund_money_completion_v1 AS completion ORDER BY completion.before_refunded');
+   expect(completions).toMatchObject([{amount:'5.00',before_refunded:'7.00',after_refunded:'12.00'},{amount:'6.75',before_refunded:'12.00',after_refunded:'18.75'}]);
+   const current=(await f.db.select().from(user).where(eq(user.uid,11)))[0];
+   expect(BigInt(current.nowMoney.replace('.',''))-BigInt(account.nowMoney.replace('.',''))).toBe(channel==='yue'?1175n:0n);expect(current.integral).toBe(account.integral);
+   const flows=await f.db.select().from(capitalFlow).orderBy(capitalFlow.id);
+   expect(flows.map(row=>row.price)).toEqual(channel==='offline'?['-7.00','-5.00','-6.75']:[]);
+   expect((await f.db.select().from(supplierTransactions)).filter(row=>row.type===2).map(row=>row.payPrice).sort()).toEqual(['5.00','6.75','7.00']);
+   await expect(service.seed(id,actor())).rejects.toMatchObject({code:400});
+   expect(await service.execute(id,body,actor())).toEqual(response.body.data);expect(await snapshot()).toEqual(final);
+  });
+ },120000);
+ it('rejects money-only excess and stale history before payout and preserves a new actual UUID for the retry',async()=>{
+  const id=await paid();await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());
+   const stale=await request(service,id,'4.00'),before=await snapshot();
+   await expect(service.execute(id,{...stale,refund_price:'11.76'},actor())).rejects.toMatchObject({code:400});expect(await snapshot()).toEqual(before);
+   await service.execute(id,await request(service,id,'5.00'),actor());const stable=await snapshot();
+   await expect(service.execute(id,stale,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(stable);
+   expect(await service.receipt(stale.operation_id,actor())).toMatchObject({state:'unknown'});
+   expect(await service.execute(id,{...await request(service,id,'4.00'),operation_id:stale.operation_id},actor())).toMatchObject({state:'committed',result:{kind:'money'}});
+  });
+ },120000);
+ it('recovers a money-only original UUID after manage withdrawal without authorizing a new payout',async()=>{
+  const id=await paid('yue');await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00'),done=await service.execute(id,body,actor());
+   await f.db.update(systemRole).set({rules:'supplier.order.view'}).where(eq(systemRole.id,21));const before=await snapshot();
+   expect(await service.execute(id,body,actor())).toEqual(done);expect(await service.receipt(body.operation_id,actor())).toEqual(done);
+   expect(await service.resolve(body.operation_id,id,actor())).toEqual(done);
+   await expect(service.execute(id,{...body,operation_id:randomUUID()},actor())).rejects.toMatchObject({code:400011});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it.each(['is_del','is_cancel'] as const)('never resets money-only budget when the original whole-goods refund becomes %s',async column=>{
+  const id=await paid();await commissioned(async(_runtime,service)=>{
+   const done=await service.execute(id,await request(service,id),actor());await f.exec(`UPDATE public.store_order_refund SET ${column}=1 WHERE id=${done.result!.refund_id}`);
+   const before=await snapshot();await expect(service.seed(id,actor())).rejects.toBeDefined();expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it('rolls back a money-only payout when a real deferred writer changes its platform amount',async()=>{
+  const id=await paid();await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00');
+   await f.exec(`CREATE FUNCTION public.owned_money_flow_deferred() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+    BEGIN UPDATE public.capital_flow SET price=-4.99 WHERE id=NEW.id; RETURN NEW; END $$;
+    REVOKE ALL ON FUNCTION public.owned_money_flow_deferred() FROM PUBLIC;
+    CREATE CONSTRAINT TRIGGER owned_money_flow_deferred AFTER INSERT ON public.capital_flow DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION public.owned_money_flow_deferred()`);
+   try{const before=await snapshot();await expect(service.execute(id,body,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);}
+   finally{await f.exec('DROP TRIGGER owned_money_flow_deferred ON public.capital_flow;DROP FUNCTION public.owned_money_flow_deferred()');}
+  });
+ },120000);
+ it('rejects money-only writes before payout when completion append loses its explicit privilege',async()=>{
+  const id=await paid('yue');await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00');
+   await f.exec(`REVOKE INSERT ON public.supplier_refund_money_completion_v1 FROM "${runtime.role}"`);
+   const before=await snapshot();await expect(service.execute(id,body,actor())).rejects.toMatchObject({httpStatus:503});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it('binds money-only first-goods comparison to the real transaction and retains the mature default amount assertion',async()=>{
+  const id=await paid();await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());await service.execute(id,await request(service,id,'5.00'),actor());
+   const evidence=await withTx(runtime.container,async tx=>{
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id)),actual=await readSupplierProactiveMoneyEvidence(tx,order);
+    await expect(verifyFinancialCompletedRefund(tx,actual.firstRefund,readBoundManualRefundProof)).rejects.toBeDefined();
+    await verifyFinancialCompletedRefund(tx,actual.firstRefund,readBoundManualRefundProof,actual.baseline);
+    return actual;
+   });
+   await withTx(runtime.container,async tx=>{
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id));
+    await expect(projectSupplierProactiveMoneyBaseline(tx,evidence.baseline,order,evidence.firstRefund,evidence.firstSplit)).rejects.toMatchObject({httpStatus:409});
+    await expect(projectSupplierProactiveMoneyBaseline(tx,{} as typeof evidence.baseline,order,evidence.firstRefund,evidence.firstSplit)).rejects.toMatchObject({httpStatus:409});
+   });
+  });
+ },120000);
+ it('serializes independent money-only requests so two current quotes cannot both consume the same remainder',async()=>{
+  const id=await paid();await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const first=await request(service,id,'6.00'),secondBody=await request(service,id,'6.00');
+   const peer=createDbFromConnectionString(runtime.connectionString,1,{searchPath:'public,pg_temp',applicationName:'supplier-proactive-money-peer'});
+   try{
+    const [a]=await runtime.container.db.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`),[b]=await peer.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`);expect(a.pid).not.toBe(b.pid);
+    const other=new SupplierProactiveRefundService(createContainerFromDb(peer),supplierOrderEditAppKey,f.paymentEnvironment);
+    const results=await Promise.allSettled([service.execute(id,first,actor()),other.execute(id,secondBody,actor())]);
+    expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);
+    const failed=results.find(result=>result.status==='rejected');expect(failed&&failed.status==='rejected'&&failed.reason).toMatchObject({httpStatus:409});
+    expect(await runtime.order(id)).toMatchObject({refundPrice:'13.00'});
+    expect(await f.exec('SELECT operation_id FROM public.supplier_refund_money_completion_v1')).toHaveLength(1);
+    expect(await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,id))).toHaveLength(1);
+   }finally{await peer.$client.end();}
+  });
+ },120000);
+ it('rejects money-only history when an extra bill reuses its full original business identity',async()=>{
+  const id=await paid('yue');await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00');await service.execute(id,body,actor());
+   await f.db.insert(userBill).values({uid:11,linkId:supplierProactiveRefundApplicationNumber(actor().id,body.operation_id),pm:1,
+    category:'integral',type:'unexpected_extra_effect',number:'1.00',balance:'1.00',addTime:Math.floor(Date.now()/1000)});
+   const before=await snapshot();await expect(service.receipt(body.operation_id,actor())).rejects.toMatchObject({httpStatus:409});
+   await expect(service.seed(id,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it('rolls back money-only writes when a deferred writer creates another supplier entitlement',async()=>{
+  const id=await paid();await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00');
+   await f.exec(`CREATE FUNCTION public.owned_money_entitlement_deferred() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+    BEGIN INSERT INTO public.supplier_flowing_water(supplier_id,uid,order_id,link_id,pm,number,type,pay_type,pay_price,total_price,pay_postage,status)
+    VALUES(NEW.supplier_id,NEW.uid,'extra-money-'||NEW.id::text,NEW.link_id,0,1.00,2,NEW.pay_type,1.00,NEW.total_price,0.00,1);RETURN NEW;END $$;
+    REVOKE ALL ON FUNCTION public.owned_money_entitlement_deferred() FROM PUBLIC;
+    CREATE CONSTRAINT TRIGGER owned_money_entitlement_deferred AFTER INSERT ON public.supplier_transactions DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION public.owned_money_entitlement_deferred()`);
+   try{const before=await snapshot();await expect(service.execute(id,body,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);}
+   finally{await f.exec('DROP TRIGGER owned_money_entitlement_deferred ON public.supplier_transactions;DROP FUNCTION public.owned_money_entitlement_deferred()');}
+  });
+ },120000);
+ it('never publishes a money-only operation and decision without its atomic completion',async()=>{
+  const id=await paid();await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00'),parsed=await parseSupplierProactiveRefundIntent(id,body,actor());
+   await withTx(runtime.container,async tx=>{
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id)),source=await readSupplierProactiveRefundSource(tx,order),evidence=await readSupplierProactiveMoneyEvidence(tx,order),
+     money=makeSupplierProactiveMoneySource(order,evidence,await outRequestHash(source)),now=Math.floor(Date.now()/1000);
+    const operation=await appendSupplierProactiveRefundOperation(tx,{operationId:body.operation_id,orderId:id,actor:actor(),now,intent:parsed.intent,
+     requestHash:parsed.hash,source:money,result:{order_id:id,refund_id:evidence.first.refund_id,amount:'5.00',kind:'money',status:'CASH_SUCCESS'}});
+    await appendSupplierProactiveRefundDecision(tx,operation,{outcome:'local-settled',evidence:{refund_id:evidence.first.refund_id},now});
+   });
+   const before=await snapshot();await expect(service.receipt(body.operation_id,actor())).rejects.toMatchObject({httpStatus:409});
+   await expect(service.resolve(body.operation_id,id,actor())).rejects.toMatchObject({httpStatus:409});
+   await expect(service.execute(id,body,actor())).rejects.toMatchObject({httpStatus:409});
+   await expect(service.seed(id,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it('credits a real money-only refund into an existing negative balance without changing other account fields',async()=>{
+  const id=await paid('yue'),other=await paid('yue','18.75',true);await commissioned(async(_runtime,service)=>{
+   // A genuine payout for another order belongs to the same buyer, without
+   // contributing to this order's independently protected remaining budget.
+   await service.execute(other,await request(service,other),actor());
+   await service.execute(other,await request(service,other,'1.00'),actor());
+   await service.execute(id,await request(service,id),actor());await f.db.update(user).set({nowMoney:'-10.00'}).where(eq(user.uid,11));
+   const before=(await f.db.select().from(user).where(eq(user.uid,11)))[0],body=await request(service,id,'5.00');
+   await service.execute(id,body,actor());expect((await f.db.select().from(user).where(eq(user.uid,11)))[0]).toEqual({...before,nowMoney:'-5.00'});
+   const bills=(await f.db.select().from(userBill)).filter(row=>row.linkId===supplierProactiveRefundApplicationNumber(actor().id,body.operation_id));
+   expect(bills).toMatchObject([{number:'5.00',balance:'-5.00',pm:1,status:1}]);
+   expect(await service.seed(id,actor())).toMatchObject({kind:'money',refunded:'12.00',refund_price:'6.75'});
+  });
+ },120000);
+ it.each(['bill','flow','supplier_transaction'] as const)('never seals a money-only original UUID as absent when an orphan %s exists for another actor',async kind=>{
+  const id=await paid(kind==='bill'?'yue':'offline');await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const quote=await request(service,id,'5.00'),uuid=randomUUID(),order=await runtime.order(id),
+    number=supplierProactiveRefundApplicationNumber(actor().id,uuid),now=Math.floor(Date.now()/1000);
+   if(kind==='bill')await f.db.insert(userBill).values({uid:order.uid,linkId:number,pm:1,category:'now_money',type:'pay_product_refund',
+    eventKey:'supplier_proactive_money_refund',number:'5.00',balance:'5.00',addTime:now,status:1});
+   else if(kind==='flow')await f.db.insert(capitalFlow).values({eventKey:'supplier.proactive-refund:'+uuid,flowId:number,orderId:order.orderId,
+    storeId:order.storeId,uid:order.uid,price:'-5.00',tradingType:2,payType:'offline',addTime:now});
+   else await f.db.insert(supplierTransactions).values({supplierId:order.supplierId,uid:order.uid,orderId:number,linkId:order.orderId,
+    pm:0,type:2,payType:order.payType,payPrice:'5.00',totalPrice:order.totalPrice,payPostage:'0.00',tradeTime:now,addTime:now});
+   const before=await snapshot();expect(await service.receipt(uuid,actor())).toMatchObject({state:'unknown'});
+   await expect(service.resolve(uuid,id,actor())).rejects.toMatchObject({httpStatus:503});
+   await expect(service.resolve(uuid,id,supplierOrderEditActor(22))).rejects.toMatchObject({httpStatus:503});
+   await expect(service.seed(id,actor())).rejects.toMatchObject({httpStatus:409});
+   await expect(service.execute(id,quote,actor())).rejects.toMatchObject({httpStatus:409});
+   expect(await snapshot()).toEqual(before);
   });
  },120000);
  it('checks the real flow again after deferred SQL writers and rolls the complete payout back on a changed amount',async()=>{

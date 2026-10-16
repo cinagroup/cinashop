@@ -1,0 +1,2130 @@
+{
+  "schema": "php-ts-supplier-proactive-money-local-v1",
+  "date": "2026-10-16",
+  "base_commit": "c206dd4b4eb7553c14125144fb863745d47b833e",
+  "validated_at_utc": "2026-10-16T09:31:51.072257+00:00",
+  "status": "local_money_remainder_validated_provider_and_frontend_incomplete",
+  "goal_status": "active",
+  "completion_claim": false,
+  "previous_phase_audit": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/order/Refund.php",
+      "sha256": "e6efab85cd4fdbdcfc8f5901fad403b471e66f393788fc93e99e401778f827cc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/LoginServices.php",
+      "sha256": "95d65bf54d3bf3a8dd35784c8d7f7e3b71ef1fee0893ef87ff4ee8c674a9a08e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/AuthTokenMiddleware.php",
+      "sha256": "3eb8736ca6fe37a30b66142bb4b638a61fb623f540141be9569c769188f2895c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/SupplierCheckRoleMiddleware.php",
+      "sha256": "51d000fe779095dc33bf820dc654b0a559232d4f7e7db619d0491ca86dcf2002"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/modalForm.js",
+      "sha256": "c13984c66e5074b7687bf86488698e546e37aab9d2ad8e1ba98e3bd173f24689"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/system/CapitalFlowJob.php",
+      "sha256": "191e8b2b62f0ed0d2a0dd3541bbfdc196685a3e05191e06b76a845c5a4d2a3cd"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/CapitalFlowServices.php",
+      "sha256": "102dc781bd25f15d113670b429e3e118f91ee83ade577a1373b808642c14d2e7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/supplier/SupplierFinanceJob.php",
+      "sha256": "092f47ace4e1b7abdb4d1b28b3360851e2f53590650c26e3340417f43f7eec5b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/finance/SupplierFlowingWaterServices.php",
+      "sha256": "254a1529edb53611b287ae1d2c7c940dc213f959d0002e170de6de0618a2e527"
+    }
+  ],
+  "legacy_http": {
+    "seed": "GET /supplierapi/order/refund/:id",
+    "write": "PUT /supplierapi/order/refund/:id",
+    "id": "store_order integer primary key",
+    "fields": [
+      "refund_price",
+      "type(default1)"
+    ],
+    "selection": "Whole order total_num and all purchase carts; no item selection input."
+  },
+  "scope": {
+    "changed_files": 9,
+    "source_and_test_files": 6,
+    "root_documents": 2,
+    "new_audit_files": 1,
+    "source_fingerprint_count_excluding_audit": 8,
+    "expected_files": [
+      "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "MIGRATION_CHECKLIST.md",
+      "MIGRATION_AUDIT.md",
+      "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json"
+    ]
+  },
+  "implemented": {
+    "http": [
+      "GET /supplierapi/order/refund/:id",
+      "PUT /supplierapi/order/refund/:id",
+      "GET /supplierapi/order/refund_operations/:operationId",
+      "POST /supplierapi/order/refund_operations/:operationId/resolve"
+    ],
+    "local_channels": [
+      "cash",
+      "offline",
+      "yue"
+    ],
+    "actual_new_positive_channel_cases": [
+      "offline",
+      "yue"
+    ],
+    "amounts": {
+      "paid": "18.75",
+      "first_goods_refund": "7.00",
+      "money_payouts": [
+        "5.00",
+        "6.75"
+      ],
+      "actual_order_refund_price_chain": [
+        "7.00",
+        "12.00",
+        "18.75"
+      ],
+      "first_refund_amount_unchanged": true
+    },
+    "principal": "Genuine live Supplier manage admission and exact current source MAC; no Customer/Admin principal or serialized execution capability. Existing owner-only recovery survives manage withdrawal.",
+    "first_goods": "Protected global goods operations are inspected without active-refund filters. Require one actual complete whole receipt, original payment/supplier identity and full mature deep verification. Archived/cancelled/missing first business evidence fails closed and never resets money budget.",
+    "compact_protocol": {
+      "source_version": "supplier-proactive-money-source-v1",
+      "completion_version": "supplier-proactive-money-completion-v1",
+      "source_closed_keys": [
+        "version",
+        "order",
+        "payment",
+        "goods",
+        "history",
+        "current_source_hash"
+      ],
+      "per_source_and_completion_max_bytes": 65536,
+      "maximum_money_completions": 200,
+      "payment_identity_fields": 12,
+      "completion_proof_fields": 17,
+      "historical_source_rule": "Validate compact canonical bytes and their protected hashes. current_source_hash is produced from the real current full Source under live admission, then fixed in the immutable operation. Historical recovery does not invent or replay a changed source/MAC."
+    },
+    "exact_chain": "Actual immutable operation+decision+completion sets are equal; closed proof, canonical JSON/hashes, identities, first receipt references, complete historical prefixes and numeric before->after continuity match. The chain starts at the original goods amount and ends at actual order.refundPrice, within actual paid money; local payment-channel rows are forbidden.",
+    "baseline": "Opaque WeakMap capability bound to original txid/backend, exact complete current selected-row hash, specified first refund/order and materialization fingerprint. Only selected.refundPrice comparison gets a first-amount view; every other current field and default deep assertion remains actual. Only Supplier coordinator/executor explicitly compose it in this phase; default readers still reject actual cumulative12.00 versus first7.00, as the native test proves. Other authorized Customer/Admin read surfaces require their own explicit future composition, with no cross-realm grant expansion or automatic projection.",
+    "atomicity": "Actual cumulative-order CAS, yue account delta and bill/offline negative platform flow, supplier_transaction, immutable operation+decision+completion share one SQL transaction. Deferred SQL writers run before final complete source/account/effects/chain/deep readback.",
+    "new_money_effects": {
+      "yue": "One real pay_product_refund/now_money/pm1/status1 bill with full SR link and supplier_proactive_money_refund event, and exact actual account delta including a negative starting balance.",
+      "offline": "One actual negative capital_flow row keyed by full original UUID, exact payment/tenant/order identity and frozen full-row proof hash.",
+      "cash": "Cash confirmation required, no new user balance bill or platform capital flow.",
+      "supplier_transaction": "One independent actual type2/pm0 per-payout audit row; original orderNo link, current amount, original totalPrice, zero postage, short lossless SR business identity."
+    },
+    "unchanged_goods_effects": "No repeated goods finalizer/materializer, stock, points, coupon, commission or supplier goods settlement. Original active SFW ID set remains exactly its frozen income/expense pair, with complete row hashes unchanged.",
+    "unregistered_effects_budget_guard": "Before minting the baseline or publishing any available amount, compare all actual same-orderNo SR supplier_transactions and dedicated proactive capital_flow rows against the already validated row-ID sets, including archived rows. A buyer dedicated money-bill SQL anti-join requires protected operation/decision/completion raw identities, full UUID SR suffix, CP proof.bill.id and actual same-SR supplier transaction/order attribution. Registered other-order bills are classified without reading their goods/deep chain, while any unknown marker refuses the budget; no buyer-wide200 cap is introduced. Actual orphan bill/flow/transaction each rejects seed and a new UUID execute from the earlier quote with no writes. A genuine same-buyer other-order goods7.00+money1.00 leaves this order quote6.75 available.",
+    "recovery": "Every money receipt proves the complete protected chain and actual current bill/flow/transaction rows; absent decision/completion or any same-SR extra bill is not committed success. Explicit absent fences additionally query actual user_bill/capital_flow/supplier_transactions by the lossless SR full-UUID suffix globally, so isolated historical financial rows cannot be sealed not_applied by either original owner21 or another authorized actor22. The three actual single-table orphan cases create no operation/completion and require both actors to fail closed without ACL expansion. Today account balance may legitimately change after the original payout.",
+    "invoice": "First18.75 original whole invoice remains frozen/reconciled through the existing v3 reader; first cash7.00 and all later money operations preserve its original identity/amount."
+  },
+  "validation": {
+    "status": "accepted_distinct_checks_passed_with_documented_historical_failures",
+    "native_assertions_complete": true,
+    "frozen_final_sources_artifact": {
+      "path": "/tmp/cinashop-supplier-proactive-money-frozen-sources.json",
+      "sha256": "05abcd15ce770d6e8f6454d8a612f6095a2284f77ebbe913ab64a23d71ff504a",
+      "bytes": 1043
+    },
+    "frozen_final_sources": [
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+        "sha256": "46c8602a86731fbcd7a51b0ec27657269f4cf35627c54af2acf5be9c697b694b"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+        "sha256": "102ade1649f2655d685754f93f197868b229046fb44eb244c3ba134f30760ea7"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+        "sha256": "9b140005a04ecf404f17fa9c791466c01263bb26a5041d15770315ce24d96fa5"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+        "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+        "sha256": "5d5d2776ed094e6b50df89108c1920320fe166c553faede3f5b5e073eb39972b"
+      },
+      {
+        "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+        "sha256": "00dc1a807768b3cff0e45b5c90f1c914ace73ab9e1a26dd036c4f9e0b96f9afc"
+      }
+    ],
+    "distinct_files": 13,
+    "distinct_tests": 192,
+    "summaries": [
+      {
+        "phase": "native-accepted-final",
+        "files": 1,
+        "passed": 37,
+        "new_money_cases": 17,
+        "previous_public_coordinator_cases": 20,
+        "accepted_case_names": [
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real offline whole-goods7.00 through JWT and recovers one result without duplicate effects"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real yue whole-goods7.00 through JWT and recovers one result without duplicate effects"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > settles the actual zero-priced checkout with cash confirmation omitted and no balance or platform cash movement"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine offline type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine yue type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine weixin type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine alipay type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > preserves the complete original18.75 unissued invoice while executing the public7.00 goods concession"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects missing cash confirmation, bad money, unknown fields and decoded duplicate JSON with no SQL effects"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > binds the signed revision to the full actual order and rejects changed source before creating a goods claim"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > enforces tenant, view and manage JWT boundaries and keeps denied responses private"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > recovers a committed UUID after manage withdrawal and seals an absent UUID without replaying or granting authority"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects new weixin payout admission before business DML while its durable callback path is unavailable"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects new alipay payout admission before business DML while its durable callback path is unavailable"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back real stock, points, refund and immutable operation when platform flow insertion loses its reviewed privilege"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects an actual late cash-flow amount rewrite and rolls every goods, financial and immutable write back"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > keeps raw complete PHP purchase facts unchanged while the real coordinator settles the full goods and only the requested cash"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > refuses to publish a committed result when only the original operation exists and its durable decision is absent"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > checks the real flow again after deferred SQL writers and rolls the complete payout back on a changed amount"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > serializes independent original requests and never creates two whole-goods claims or cash flows"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real offline money-only remainder through JWT in two exact payouts without repeating goods effects"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real yue money-only remainder through JWT in two exact payouts without repeating goods effects"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only excess and stale history before payout and preserves a new actual UUID for the retry"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > recovers a money-only original UUID after manage withdrawal without authorizing a new payout"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_del"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_cancel"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back a money-only payout when a real deferred writer changes its platform amount"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only writes before payout when completion append loses its explicit privilege"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > binds money-only first-goods comparison to the real transaction and retains the mature default amount assertion"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > serializes independent money-only requests so two current quotes cannot both consume the same remainder"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only history when an extra bill reuses its full original business identity"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back money-only writes when a deferred writer creates another supplier entitlement"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never publishes a money-only operation and decision without its atomic completion"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > credits a real money-only refund into an existing negative balance without changing other account fields"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan bill exists for another actor"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan flow exists for another actor"
+          ],
+          [
+            "test/supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan supplier_transaction exists for another actor"
+          ]
+        ],
+        "count_equation": "19 unaffected cases from the pre-orphan-budget full37 pass +18 final-source targeted passes (17 money-only+1 original concurrency) =37 distinct cases in one file.",
+        "pre_orphan_budget_full_batch": {
+          "log": {
+            "path": "/tmp/cinashop-supplier-proactive-money-native-current.log",
+            "sha256": "a50babc676eb1f47015449139cfe2a93c0b5e33b6df3e228d0f6636f53430c77",
+            "bytes": 21662
+          },
+          "passed": 37,
+          "failed": 0,
+          "unselected": 0,
+          "final_source_check": false,
+          "accepted_count": 19,
+          "accepted_case_names": [
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > executes real offline whole-goods7.00 through JWT and recovers one result without duplicate effects"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > executes real yue whole-goods7.00 through JWT and recovers one result without duplicate effects"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > settles the actual zero-priced checkout with cash confirmation omitted and no balance or platform cash movement"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > persists a genuine offline type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > persists a genuine yue type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > persists a genuine weixin type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > persists a genuine alipay type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > preserves the complete original18.75 unissued invoice while executing the public7.00 goods concession"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects missing cash confirmation, bad money, unknown fields and decoded duplicate JSON with no SQL effects"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > binds the signed revision to the full actual order and rejects changed source before creating a goods claim"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > enforces tenant, view and manage JWT boundaries and keeps denied responses private"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > recovers a committed UUID after manage withdrawal and seals an absent UUID without replaying or granting authority"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects new weixin payout admission before business DML while its durable callback path is unavailable"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects new alipay payout admission before business DML while its durable callback path is unavailable"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rolls back real stock, points, refund and immutable operation when platform flow insertion loses its reviewed privilege"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects an actual late cash-flow amount rewrite and rolls every goods, financial and immutable write back"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > keeps raw complete PHP purchase facts unchanged while the real coordinator settles the full goods and only the requested cash"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > refuses to publish a committed result when only the original operation exists and its durable decision is absent"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > checks the real flow again after deferred SQL writers and rolls the complete payout back on a changed amount"
+            ]
+          ]
+        },
+        "final_source_targeted_batch": {
+          "log": {
+            "path": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget.log",
+            "sha256": "246ed140884d0e67b478597611252f193b1de4e230aa09f7ef2082c59996e5c9",
+            "bytes": 11298
+          },
+          "passed": 18,
+          "failed": 0,
+          "unselected": 19,
+          "total_declared": 37,
+          "accepted_count": 18,
+          "accepted_case_names": [
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > serializes independent original requests and never creates two whole-goods claims or cash flows"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > executes real offline money-only remainder through JWT in two exact payouts without repeating goods effects"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > executes real yue money-only remainder through JWT in two exact payouts without repeating goods effects"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects money-only excess and stale history before payout and preserves a new actual UUID for the retry"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > recovers a money-only original UUID after manage withdrawal without authorizing a new payout"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_del"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_cancel"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rolls back a money-only payout when a real deferred writer changes its platform amount"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects money-only writes before payout when completion append loses its explicit privilege"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > binds money-only first-goods comparison to the real transaction and retains the mature default amount assertion"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > serializes independent money-only requests so two current quotes cannot both consume the same remainder"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rejects money-only history when an extra bill reuses its full original business identity"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > rolls back money-only writes when a deferred writer creates another supplier entitlement"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never publishes a money-only operation and decision without its atomic completion"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > credits a real money-only refund into an existing negative balance without changing other account fields"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan bill exists for another actor"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan flow exists for another actor"
+            ],
+            [
+              "test/supplier-proactive-refund-service-native.test.ts",
+              "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan supplier_transaction exists for another actor"
+            ]
+          ],
+          "final_source_check": true
+        }
+      },
+      {
+        "phase": "native-regression",
+        "files": 3,
+        "passed": 22,
+        "per_file": {
+          "test/supplier-manual-refund-native.test.ts": 11,
+          "test/supplier-proactive-refund-finalizer-native.test.ts": 4,
+          "test/supplier-proactive-refund-invoice-native.test.ts": 7
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-native-regression.log",
+          "sha256": "aa5a13a16803207f560f6be63b61c64ff799ee2977eea73fbaf0e7c3fe459db9",
+          "bytes": 8979
+        },
+        "accepted_case_names": [
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > settles actual partial then remaining cash refunds, preserves buyer cash and replays one immutable original operation"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > rejects zeroed modern owners and a forged PHP tag on a protected modern refund generation without business DML"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > settles complete raw PHP zero-owner purchases through partial and protected remaining cash refunds without relabelling the source"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > rejects missing actual cash confirmation, wrong tenant and serialized manual capability with zero business effects"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > recovers a committed UUID and seals only an absent UUID after actual manage withdrawal"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > recovers actual COMMIT-return loss using the same UUID without another refund or promotion deletion"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > fails closed on missing proof SELECT and rolls back deferred account corruption with no operation or refund effects"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > keeps genuine independent authority and order writers as NOWAIT rejection instead of a successful cash refund"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > uses fixed source-lock capabilities to fence actual independent provider and promotion INSERT phantoms without runtime source DML"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "real Supplier offline cash refunds on independent LOGIN > binds opaque application and execution capabilities to the actual PG transaction and backend while allowing nested SAVEPOINTs"
+          ],
+          [
+            "test/supplier-manual-refund-native.test.ts",
+            "explicit Customer and Supplier manual-refund feature composition > preserves ungranted old checkout and actual Customer cash refunds while strictly admitting only the commissioned combined LOGIN"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > cancels the complete actual18.75 unissued original once for a7.00 first refund and retains11.75 as money only"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > keeps mature no-cap invoice concessions rejected and rejects serialized or cross-transaction prepared authority"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > rejects an actual provider decision on a local cash refund and rolls back the complete transaction"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > rolls the actual refund, point, stock and invoice writes back when immutable original operation evidence is absent"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > rejects a late actual invoice row change and rolls back all real financial and physical effects"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > rejects a canonical immutable operation with a wrong original payTime and rolls every real write back"
+          ],
+          [
+            "test/supplier-proactive-refund-invoice-native.test.ts",
+            "actual Supplier whole-invoice first-goods concessions > rejects a canonical immutable operation with a wrong original payType and rolls every real write back"
+          ],
+          [
+            "test/supplier-proactive-refund-finalizer-native.test.ts",
+            "actual Supplier proactive direct-finalizer admission > rejects a genuine quote capability at the direct finalizer and rolls the entire transaction back"
+          ],
+          [
+            "test/supplier-proactive-refund-finalizer-native.test.ts",
+            "actual Supplier proactive direct-finalizer admission > rejects a genuine application capability at the direct finalizer and rolls the entire transaction back"
+          ],
+          [
+            "test/supplier-proactive-refund-finalizer-native.test.ts",
+            "actual Supplier proactive direct-finalizer admission > rejects a genuine wrong-operation capability at the direct finalizer and rolls the entire transaction back"
+          ],
+          [
+            "test/supplier-proactive-refund-finalizer-native.test.ts",
+            "actual Supplier proactive direct-finalizer admission > settles a genuine original-operation execution capability directly and verifies actual balance, stock, points and materialization effects"
+          ]
+        ]
+      },
+      {
+        "phase": "domain",
+        "files": 8,
+        "passed": 130,
+        "report": {
+          "path": "/tmp/cinashop-supplier-proactive-money-domain.json",
+          "sha256": "36b637c727b75c9fb0f1f0b9ad4be00dc4971fe02e36175bb4de986a2a238ea6",
+          "bytes": 56434
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-domain.log",
+          "sha256": "b00f56f788b79cb8086424cda6ef9d54529a481807ba7d69e04aeddb9701dec2",
+          "bytes": 74
+        },
+        "accepted_case_names": [
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit binds the exact 181-file root migration cohort and refuses renamed, reordered, omitted or addon files"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit rejects unknown, omitted or aliased registered tables and changed reviewed additions"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit parses inline and table-level primary keys without splitting numeric type commas"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit merges multi-column PostgreSQL ALTER TABLE additions"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit parses current-schema format DDL with static PostgreSQL table and column identifiers"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit keeps the first duplicate CREATE definition because IF NOT EXISTS does not add columns"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit recognizes fixed public-qualified PostgreSQL tables without collapsing other schemas"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit audits an explicitly renamed source table as one logical shared table"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "MySQL to PostgreSQL schema audit keeps the explicit manifest aligned with all currently shared repository tables"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan uses an explicit source table name while retaining the target checkpoint name"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan accepts a scalar text primary key and records binary keyset semantics"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan plans sequence synchronization for copied identity columns outside a scalar key"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan rejects duplicate logical source or target table assignments"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan allows a primary-key table and plans epoch-to-timestamp conversion"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan maps explicit source columns into target names for planning and keyset reads"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan blocks source data loss, missing target defaults, unsafe keys and incompatible types"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan requires live unsigned range checks and blocks lossy decimal, time and text casts"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan validates text-to-JSON conversions before target insertion"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan treats MySQL enum and set values as bounded text for lossless PostgreSQL copies"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan only converts legacy numeric timestamp strings when the manifest opts in"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan blocks source NULLs that cannot populate a required target column"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan enables proven target keys but requires a live duplicate check when MySQL is weaker"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan reports missing and mismatched target rows after canonical conversion"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan requires explicit target confirmation and an extra remote-write gate"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan rejects identifier injection and unbounded batches"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan refuses write mode and command-line secrets before opening a database"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan validates the copy target confirmation before opening database connections"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan requires an explicit verification table list and run id before connecting"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan resumes from the last committed key after a batch failure without replaying earlier rows"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan does not skip negative integer keys on the first keyset page"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan resumes composite integer keysets lexicographically without dropping equal prefixes"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan resumes scalar text keysets in binary UTF-8 order and stores JSON cursors"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan paginates mixed integer/text composite keys in numeric and binary UTF-8 order"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan pages keyless tables as duplicate-preserving full-row multisets"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan compares composite-key verification batches without exposing row values"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/data-migration.test.ts",
+            "live migration safety plan keeps the physical and embedded control/parity migrations identical"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract binds full and goodwill amounts to the actual actor, tenant, order and immutable operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract normalizes only the existing exact nonnegative decimal contract, without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract normalizes PHP processing types and defaults only an absent type to approval"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract rejects actor, tenant, path-order, capability and all unknown body fields"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract rejects missing fields, non-JSON records and executable accessor properties"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract requires a canonical UUIDv4, lowercase revision and positive bounded path ID"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract requires explicit true for positive cash after the service determines the real channel"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract never carries a cash declaration into balance, provider or zero settlement"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract keeps zero and refusal operations free of cash confirmations for every settlement"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract detaches and freezes actor and body fields before awaiting the actual request hash"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract binds the revision to the complete source, real identity, tenant and login version"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract uses a dedicated revision domain and fails closed when signing is unavailable"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-input.test.ts",
+            "Supplier order-ID proactive refund input contract rejects malformed received or stored revisions as conflicts without timing-safe length errors"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money keeps the original18.75 invoice disposition whole when the first actual refund is only7.00"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money retains full original manual coverage and does not imply a new7.00 tax-provider red note"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money covers the exact full-money and genuine zero-price boundaries"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money retains a genuine older manual-review UUID instead of imposing the new operation UUIDv4 rule on historical evidence"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money preserves the actual payment root of an allocated child without moving a root invoice onto the child"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money requires whole-ticket coverage for actual issued facts {\"isInvoice\":1}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money requires whole-ticket coverage for actual issued facts {\"invoiceNumber\":\"原PHP已开票编号\"}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"orderId\":99}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"uid\":12}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"category\":\"other\"}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"invoiceAmount\":\"7.00\"}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"invoiceAmount\":\"18.74\"}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"isPay\":0}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"isRefund\":1}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"isDel\":1}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects another invoice identity, amount or lifecycle {\"isInvoice\":2}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money does not let a partial or manufactured quantity selection cancel a full original invoice"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects malformed manual coverage instead of turning a flag into verification authority"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash 18.76"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash -0.01"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash 7.001"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash 7.0"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash 07.00"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects inconsistent or rounded cash 7e0"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+            "whole-goods invoice amount and the independent remaining money rejects unpaid/audit-root identities and unbounded histories"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund preserves the original18.75 = first7.00 + remainder11.75 for cash"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund preserves the original18.75 = first7.00 + remainder11.75 for offline"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund preserves the original18.75 = first7.00 + remainder11.75 for yue"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund preserves the original18.75 = first7.00 + remainder11.75 for weixin"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund preserves the original18.75 = first7.00 + remainder11.75 for alipay"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund chains multiple genuine money deltas by exact amounts, independently of SQL/time order"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund reserves the full amount of an uncertain INIT provider operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund reserves the full amount of an uncertain REQUESTING provider operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund reserves the full amount of an uncertain PROCESSING provider operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund reserves the full amount of an uncertain UNKNOWN provider operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund reserves the full amount of an uncertain ABNORMAL provider operation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund counts a successful provider payout once and keeps another request reserved"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund releases only a conclusively closed operation without treating it as a completed payout"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.00\"},{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"1.25\",\"beforeRefunded\":\"11.00\",\"afterRefunded\":\"12.25\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.00\"},{\"operationId\":\"ffe89662-aa82-4c80-b52f-0ec5cf296d66\",\"amount\":\"1.25\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"8.25\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"ffe89662-aa82-4c80-b52f-0ec5cf296d66\",\"amount\":\"1.25\",\"beforeRefunded\":\"11.00\",\"afterRefunded\":\"12.25\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.01\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"11.76\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"18.76\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects a duplicate, forked, missing or inconsistent completion chain {\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"0.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"7.00\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"weixin\",\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"SUCCESS\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"weixin\",\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.00\"}],\"payments\":[]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"alipay\",\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.00\"}],\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"PROCESSING\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"weixin\",\"completions\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"beforeRefunded\":\"7.00\",\"afterRefunded\":\"11.00\"}],\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.01\",\"status\":\"SUCCESS\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"offline\",\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"UNKNOWN\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"yue\",\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"CLOSED\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund requires actual matching channel completion and disjoint pending reservations {\"payType\":\"weixin\",\"payments\":[{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"UNKNOWN\"},{\"operationId\":\"13b48210-1570-4da2-85ee-10ea27b9dc22\",\"amount\":\"4.00\",\"status\":\"UNKNOWN\"}]}"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta 0.00 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta -0.01 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta 11.751 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta 1e2 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta 011.75 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta 11.7 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund rejects an invalid new delta  11.75 without rounding"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund keeps integer cents exact at the SQL numeric12,2 boundary"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund refuses invalid first completion, exhausted balances and over-reservations"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+            "Supplier monetary continuation after a real whole-goods refund does not accept arbitrary channel/status strings or unbounded SQL histories"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-batch-permission.test.ts",
+            "Supplier batch catalog route admission keeps selection facts view-only and real application manage-only"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-batch-permission.test.ts",
+            "Supplier batch catalog route admission rejects alternate verbs and unknown batch children"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-category-permission.test.ts",
+            "supplier category exact permission contracts keeps every list, selector, detail and dynamic form a read grant"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-category-permission.test.ts",
+            "supplier category exact permission contracts requires product management for each actual mutation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-category-permission.test.ts",
+            "supplier category exact permission contracts denies unproved quick-edit, extra children and wrong mutation verbs"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier permission catalog covers every authenticated Supplier route and fails closed for unknown routes"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier permission catalog requires combined capabilities for manual print and waybill actions"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier permission catalog normalizes stable and legacy rules without permitting delegated escalation"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier permission catalog publishes unique view/manage keys for every Supplier domain"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts normalizes bounded administrator input and rejects weak or ambiguous credentials"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts normalizes scoped roles and requires at least one stable Supplier capability"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts mounts all eight exact legacy contracts after auth and permission middleware"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts mounts scoped role extensions before dynamic administrator routes"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts keeps every child mutation scoped, locked and unable to target the primary account"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-rbac-migration.test.ts",
+            "supplier child-administrator contracts filters the new Supplier navigation and exposes a guarded administrator page"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-refund-migration.test.ts",
+            "supplier refund compatibility migration normalizes the legacy reason configuration into a bounded exact-filter catalog"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-refund-migration.test.ts",
+            "supplier refund compatibility migration requires an exact, bounded amount and rejects the legacy mixed approve/refuse contract"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-refund-migration.test.ts",
+            "supplier refund compatibility migration mounts both active legacy GET contracts behind refund-view permission"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-refund-migration.test.ts",
+            "supplier refund compatibility migration rebinds the submitted amount and tenant identity inside the locked refund state machine"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-refund-migration.test.ts",
+            "supplier refund compatibility migration records the unsafe legacy GET mutation as an evidence-backed retirement"
+          ]
+        ]
+      },
+      {
+        "phase": "workerd",
+        "files": 1,
+        "passed": 3,
+        "report": {
+          "path": "/tmp/cinashop-supplier-proactive-money-workerd.json",
+          "sha256": "9075fa273b83b74722bce68d7f9d6f6442addb7ca807d5dc46e121bfaabe44b9",
+          "bytes": 1654
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-workerd.log",
+          "sha256": "477d70763a5d8da6d0bd5bea8cacbd7c264c7fd0b5613fbbc3767cf96d027cab",
+          "bytes": 75
+        },
+        "accepted_case_names": [
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/runtime/supplier-proactive-refund-planning.test.ts",
+            "workerd independently verifies the proactive HMAC domain and freezes intent before asynchronous WebCrypto hashing"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/runtime/supplier-proactive-refund-planning.test.ts",
+            "workerd keeps BigInt minor units and original whole-ticket value independent from pending provider money"
+          ],
+          [
+            "/home/cina/cinagroup/cinashop/workers-ts/test/runtime/supplier-proactive-refund-planning.test.ts",
+            "workerd preserves every original UUID bit inside the mature32-character financial link"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "name": "native-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-proactive-refund-service-native.test.ts"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-native-current.log",
+        "exit_code": 0,
+        "wall_seconds": 455.42
+      },
+      {
+        "name": "native-regression",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-manual-refund-native.test.ts",
+          "test/supplier-proactive-refund-finalizer-native.test.ts",
+          "test/supplier-proactive-refund-invoice-native.test.ts"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-native-regression.log",
+        "exit_code": 0,
+        "wall_seconds": 474.24
+      },
+      {
+        "name": "domain",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/supplier-rbac-migration.test.ts",
+          "test/supplier-refund-migration.test.ts",
+          "test/supplier-product-category-permission.test.ts",
+          "test/supplier-product-batch-permission.test.ts",
+          "test/supplier-proactive-refund-input.test.ts",
+          "test/supplier-proactive-refund-money-plan.test.ts",
+          "test/supplier-proactive-refund-invoice-plan.test.ts",
+          "test/data-migration.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-money-domain.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-domain.log",
+        "exit_code": 0,
+        "wall_seconds": 151.91
+      },
+      {
+        "name": "workerd",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "--config",
+          "vitest.worker.config.ts",
+          "test/runtime/supplier-proactive-refund-planning.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-money-workerd.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-workerd.log",
+        "exit_code": 0,
+        "wall_seconds": 10.43
+      },
+      {
+        "name": "native-orphan-budget",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--case",
+          "money-only",
+          "--case",
+          "serializes independent original requests",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-proactive-refund-service-native.test.ts"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget.log",
+        "exit_code": 0,
+        "wall_seconds": 259.29
+      },
+      {
+        "name": "type-runtime",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-runtime.log",
+        "exit_code": 0,
+        "wall_seconds": 72.72
+      },
+      {
+        "name": "type-unit-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-unit-current.log",
+        "exit_code": 0,
+        "wall_seconds": 128.96
+      }
+    ],
+    "commands_artifact": {
+      "path": "/tmp/cinashop-supplier-proactive-money-validation-before-orphan-budget.json",
+      "sha256": "2b9f4dca69a608f331e543855597e23f5b28dd3eede67a7176a9199a113c481c",
+      "bytes": 3840
+    },
+    "targeted_commands_artifact": {
+      "path": "/tmp/cinashop-supplier-proactive-money-orphan-budget-validation.json",
+      "sha256": "9651ec9d5859e4a6fd5bfe6da652b5d177de9844417caa879af758c30412c51c",
+      "bytes": 1611
+    },
+    "historical_pre_orphan_budget_commands": [
+      {
+        "name": "native-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-proactive-refund-service-native.test.ts"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-native-current.log",
+        "exit_code": 0,
+        "wall_seconds": 455.42
+      },
+      {
+        "name": "native-regression",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-manual-refund-native.test.ts",
+          "test/supplier-proactive-refund-finalizer-native.test.ts",
+          "test/supplier-proactive-refund-invoice-native.test.ts"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-native-regression.log",
+        "exit_code": 0,
+        "wall_seconds": 474.24
+      },
+      {
+        "name": "domain",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/supplier-rbac-migration.test.ts",
+          "test/supplier-refund-migration.test.ts",
+          "test/supplier-product-category-permission.test.ts",
+          "test/supplier-product-batch-permission.test.ts",
+          "test/supplier-proactive-refund-input.test.ts",
+          "test/supplier-proactive-refund-money-plan.test.ts",
+          "test/supplier-proactive-refund-invoice-plan.test.ts",
+          "test/data-migration.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-money-domain.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-domain.log",
+        "exit_code": 0,
+        "wall_seconds": 151.91
+      },
+      {
+        "name": "workerd",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "--config",
+          "vitest.worker.config.ts",
+          "test/runtime/supplier-proactive-refund-planning.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-money-workerd.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-workerd.log",
+        "exit_code": 0,
+        "wall_seconds": 10.43
+      },
+      {
+        "name": "type-runtime",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-runtime-before-orphan-budget.log",
+        "exit_code": 0,
+        "wall_seconds": 75.06,
+        "final_source_check": false
+      },
+      {
+        "name": "type-unit-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-unit-current-before-orphan-budget.log",
+        "exit_code": 0,
+        "wall_seconds": 276.5,
+        "final_source_check": false
+      }
+    ],
+    "historical_pre_orphan_budget_types": [
+      {
+        "name": "type-runtime",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-type-runtime-before-orphan-budget.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "final_source_check": false
+      },
+      {
+        "name": "type-unit-current",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-type-unit-current-before-orphan-budget.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "final_source_check": false
+      }
+    ],
+    "accepted_final_type_commands": [
+      {
+        "name": "type-runtime",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-runtime.log",
+        "exit_code": 0,
+        "wall_seconds": 72.72
+      },
+      {
+        "name": "type-unit-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-money-type-unit-current.log",
+        "exit_code": 0,
+        "wall_seconds": 128.96
+      }
+    ],
+    "type_unit_current_log": {
+      "path": "/tmp/cinashop-supplier-proactive-money-type-unit-current.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "type_runtime_log": {
+      "path": "/tmp/cinashop-supplier-proactive-money-type-runtime.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "historical_early_typecheck": {
+      "terminal": {
+        "name": "type-unit-first",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "log": "/tmp/cinashop-supplier-proactive-money-type-unit-first.log",
+        "final_source_check": false,
+        "note": "Final executor source/MAC binding guard was added after this check started. Both complete final configurations are checked again in validation.json."
+      },
+      "terminal_artifact": {
+        "path": "/tmp/cinashop-supplier-proactive-money-unit-terminal.json",
+        "sha256": "8f0bfd826e815b0511c71cdc3a33b35d9adb60abf4a4411bc256a655b7bbced0",
+        "bytes": 547
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-type-unit-first.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "final_source_check": false,
+      "note": "Exit0 predates the final executor actor/request/source/MAC/root-copy guards; accepted final configurations are the last two records in orphan-budget-validation.json."
+    },
+    "historical_attempts": [
+      {
+        "phase": "calibration",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-calibration.log",
+          "sha256": "9e5e705670c5f46819611d6ed7fbae8d8db22d84fe89eacdd46a1cd59509c1ba",
+          "bytes": 9514
+        },
+        "exit_code": 1,
+        "passed": 0,
+        "failed": 1,
+        "unselected": 29,
+        "total_declared": 30,
+        "accepted_count": 0,
+        "finding": "The first real money PUT returned503. Isolated PG16 server log identified42501 on SHARE ROW EXCLUSIVE LOCK of immutable operation_v1.",
+        "resolution": "Remove only the redundant four-evidence-table lock; preserve existing live authority/order/root/cart locks and original UUID advisory lock. No ACL expansion."
+      },
+      {
+        "phase": "native-first",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-native-first.log",
+          "sha256": "00a9037f7caa17b54d6f87894279dfbaa2685f1a217e923491601a08d77cf1e6",
+          "bytes": 15053
+        },
+        "exit_code": 1,
+        "passed": 6,
+        "failed": 4,
+        "unselected": 20,
+        "total_declared": 30,
+        "accepted_count": 0,
+        "findings": [
+          "Actual offline and yue second payouts failed: SELECT before_refunded::text gave ORDER BY the text output alias, placing12.00 before7.00.",
+          "Two new fixtures incorrectly required httpStatus400/403 on existing ValidateException/AuthException; their established codes are400 and400011."
+        ],
+        "resolutions": [
+          "Qualify ORDER BY completion.before_refunded to use the real numeric column; preserve exact contiguous history and actual cumulative amount checks.",
+          "Assert established exception codes in fixtures; leave the production error contract unchanged."
+        ]
+      },
+      {
+        "phase": "native-second",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-native-second.log",
+          "sha256": "3762f78637c40c73bf357830d8a8b37073b61be02f9e5401f238aff203413de7",
+          "bytes": 22948
+        },
+        "exit_code": 1,
+        "passed": 32,
+        "failed": 2,
+        "unselected": 0,
+        "total_declared": 34,
+        "accepted_count": 0,
+        "pipeline_terminal": [
+          {
+            "name": "native-current",
+            "command": [
+              "bash",
+              "/home/cina/cinagroup/tools/validate-serial.sh",
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--verbose-tests",
+              "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+              "test/supplier-proactive-refund-service-native.test.ts"
+            ],
+            "log": "/tmp/cinashop-supplier-proactive-money-native-second.log",
+            "exit_code": 1,
+            "wall_seconds": 423.02,
+            "original_log": "/tmp/cinashop-supplier-proactive-money-native-current.log",
+            "archive_note": "The failed complete34 batch was preserved before the final37 run; both failures were its test SQL text-alias ordering."
+          }
+        ],
+        "pipeline_terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-proactive-money-validation-first.json",
+          "sha256": "0e32e203ceb84b7a3955f995604be198fa783589a592a63585ca8680fcf071be",
+          "bytes": 800
+        },
+        "original_phase_name": "native-current",
+        "log_renamed_after_terminal": true,
+        "finding": "Production second payouts completed, but both positive fixtures queried before_refunded::text and ORDER BY its same-named text alias, reproducing12.00 before7.00 only in their final assertion.",
+        "resolution": "Qualify the test SQL numeric table column; preserve the actual complete payout chain. Retain the failed full34 log and first pipeline terminal, then rerun all six phases with the final37-case source. No historical passing subset is counted again."
+      },
+      {
+        "phase": "native-orphan-budget-first",
+        "log": {
+          "path": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget-first.log",
+          "sha256": "20926da6f73ce5b05d842c0f133ef9f9f07fa0b06d164ef68e1456b36848b2d5",
+          "bytes": 12557
+        },
+        "exit_code": 1,
+        "passed": 17,
+        "failed": 1,
+        "unselected": 19,
+        "total_declared": 37,
+        "accepted_count": 0,
+        "pipeline_terminal": [
+          {
+            "name": "native-orphan-budget",
+            "command": [
+              "bash",
+              "/home/cina/cinagroup/tools/validate-serial.sh",
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "scripts/run-local-finance-postgres.mjs",
+              "--schema-maintenance",
+              "--case",
+              "money-only",
+              "--case",
+              "serializes independent original requests",
+              "--verbose-tests",
+              "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+              "test/supplier-proactive-refund-service-native.test.ts"
+            ],
+            "log": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget-first.log",
+            "exit_code": 1,
+            "wall_seconds": 381.34,
+            "original_log": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget.log"
+          }
+        ],
+        "pipeline_terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-proactive-money-orphan-budget-validation-first.json",
+          "sha256": "e76c332cc976538e350232d5a9d22a2fcb24690dd84a97af7b1046c28e2343ed",
+          "bytes": 785
+        },
+        "original_phase_name": "native-orphan-budget",
+        "log_renamed_after_terminal": true,
+        "finding": "The new same-buyer second-order fixture reused hard-coded carts1/2 already marked isPay1 by the first actual checkout. CreateWithRuntime rejected the consumed carts before reaching refund or the new budget guard.",
+        "resolution": "Add an explicit fixture-only freshCart branch cloning the actual owned cart inputs to independent1001/1002 IDs with isPay0/status1. Preserve all original inputs and use real create/offline selection/payment/paid-consumer services. The old default branch and all production files remain unchanged. Rerun all18 affected cases and both final complete type configurations; do not add the failed run17 passes."
+      }
+    ],
+    "deduplication": "Only the union of19 unaffected pre-orphan-budget native cases and18 final-source target cases counts as37, plus distinct native regression22 plus domain130 and workerd3. Historical calibration/first-native/second-native/failed-target passes, skips and the earlier plan calibration do not add accepted cases. Previous batches are separate historical records."
+  },
+  "observed_fixes": [
+    {
+      "finding": "Actual redundant immutable-table LOCK failed42501 under the reviewed restricted LOGIN.",
+      "resolution": "Remove the redundant lock without changing grants or existing authority/order/UUID exclusion.",
+      "red_log": "/tmp/cinashop-supplier-proactive-money-calibration.log"
+    },
+    {
+      "finding": "Actual offline/yue second payouts encountered text12.00 before7.00 ordering.",
+      "resolution": "Use table-qualified numeric ORDER BY and keep exact prefix/amount proofs.",
+      "red_log": "/tmp/cinashop-supplier-proactive-money-native-first.log"
+    },
+    {
+      "finding": "New fixtures incorrectly assumed HTTP fields on established service error objects.",
+      "resolution": "Use existing400 and400011 codes in tests; production error contract unchanged.",
+      "red_log": "/tmp/cinashop-supplier-proactive-money-native-first.log"
+    },
+    {
+      "finding": "Frozen SFW row-by-ID checks alone did not rule out an additional active row for the original order.",
+      "resolution": "Require exact frozen two-ID active set and full old-row hashes; actual deferred extra-SFW test proves payout rollback."
+    },
+    {
+      "finding": "Historical money bill type/uid filtering could hide another bill bearing the same SR.",
+      "resolution": "Read all same-SR rows; yue has exactly the one proof-hashed uid/type bill and other local channels none; actual historical-extra-bill test refuses recovery."
+    },
+    {
+      "finding": "An operation and decision alone cannot prove an actual money completion.",
+      "resolution": "Equal actual operation/completion sets and full chain validation; explicit orphan admission test rejects receipt and new payout."
+    },
+    {
+      "finding": "A surviving user_bill, capital_flow or supplier_transaction alone still means the original UUID may have financial effects, including when another actor prefix is supplied.",
+      "resolution": "Global lossless SR full-UUID-suffix lookup before not_applied fencing; three real single-table orphan fixtures require both owner21 and alternate actor22 to be refused without writes or expanded privileges."
+    },
+    {
+      "finding": "Resolving an orphan original UUID failed closed, but a new UUID could still quote and consume money when unregistered actual financial rows were absent from the registered completion loop.",
+      "resolution": "Add per-order transaction/flow actual-ID anti-sets and a dedicated buyer bill foreign-registration classifier before publishing any money evidence. Revalidate the affected17 money cases and1 original concurrency case on final code, preserve only19 unaffected cases from the earlier full37 run, then rerun both complete type configurations.",
+      "final_log": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget.log"
+    },
+    {
+      "finding": "First orphan-budget target had17 passes and1 fixture-only consumed-cart failure before reaching refund guards.",
+      "resolution": "Create the extra genuine same-buyer order from independent owned cart IDs through the actual checkout/payment/consumer chain, preserve the existing default helper path, and rerun all18 targets plus both final types without production changes.",
+      "red_log": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget-first.log"
+    },
+    {
+      "finding": "Second full native run had32 passes and2 fixture-only ordering failures after actual positive payouts completed.",
+      "resolution": "Use qualified numeric ordering in the tests too, retain native-second.log and validation-first.json as failed historical evidence, then rerun the complete37-case file and all remaining phases.",
+      "red_log": "/tmp/cinashop-supplier-proactive-money-native-second.log"
+    }
+  ],
+  "cleanup": [
+    {
+      "phase": "calibration",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-0MCQHx",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-calibration.log",
+        "sha256": "9e5e705670c5f46819611d6ed7fbae8d8db22d84fe89eacdd46a1cd59509c1ba",
+        "bytes": 9514
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-first",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-DCUp47",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-first.log",
+        "sha256": "00a9037f7caa17b54d6f87894279dfbaa2685f1a217e923491601a08d77cf1e6",
+        "bytes": 15053
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-second",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-U3zikf",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-second.log",
+        "sha256": "3762f78637c40c73bf357830d8a8b37073b61be02f9e5401f238aff203413de7",
+        "bytes": 22948
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-current",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vMe4E8",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-current.log",
+        "sha256": "a50babc676eb1f47015449139cfe2a93c0b5e33b6df3e228d0f6636f53430c77",
+        "bytes": 21662
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-regression",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7VjAfM",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-regression.log",
+        "sha256": "aa5a13a16803207f560f6be63b61c64ff799ee2977eea73fbaf0e7c3fe459db9",
+        "bytes": 8979
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-orphan-budget-first",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-O2SxFq",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget-first.log",
+        "sha256": "20926da6f73ce5b05d842c0f133ef9f9f07fa0b06d164ef68e1456b36848b2d5",
+        "bytes": 12557
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "phase": "native-orphan-budget",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-e7HoNa",
+      "log": {
+        "path": "/tmp/cinashop-supplier-proactive-money-native-orphan-budget.log",
+        "sha256": "246ed140884d0e67b478597611252f193b1de4e230aa09f7ef2082c59996e5c9",
+        "bytes": 11298
+      },
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b44d36c7a49e100694785c625ed7591bd4b4b1ede6480698dbf72dcdf05f2a11",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "f1557c223e76e289988f7fdfd1fc833baaa6063fc9bbf488983d0aa9b438017b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "cec70d36c4cab1e122c0fa6156232c96ab058d904cd534987c4e07adf34caac1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "aee5546b574619a83287c35718408b22449470494eeb4acb65c3cfac94446dfa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "29b55528bd6a41ba521f59a6e0e33424a6fc2f348f84f38e7842efc12fa3745d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407",
+      "byte_equal_to_base": true
+    }
+  ],
+  "checkboxes": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "count": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "count": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562",
+      "byte_equal_to_base": true
+    }
+  ],
+  "base_ci": {
+    "sha": "c206dd4b4eb7553c14125144fb863745d47b833e",
+    "status": "in_progress",
+    "conclusion": null,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38873508476",
+    "checked_at": "2026-10-16T09:23:51.750Z",
+    "jobs": [
+      {
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Run Worker unit tests",
+            "status": "in_progress",
+            "started_at": "2026-10-16T08:30:28Z"
+          }
+        ]
+      },
+      {
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "in_progress",
+        "conclusion": null,
+        "steps": [
+          {
+            "name": "Run Worker unit tests",
+            "status": "in_progress",
+            "started_at": "2026-10-16T08:28:12Z"
+          }
+        ]
+      },
+      {
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "remaining": [
+    "Explicit cumulative Supplier money-proof composition for other authorized Customer/Admin financial read entry points. This phase passes the baseline only from Supplier coordinator/executor; mature default readers retain the first-refund amount assertion and cross-realm privileges stay unchanged.",
+    "Weixin/Alipay durable money/provider admission, original-operation resume, bound callback loader and reconciliation; new attempts503 before business DML.",
+    "Refusal after completed whole goods requires a separate protected metadata baseline; current path fails closed.",
+    "Issued-invoice manual red-note public-path end-to-end and Supplier frontend desktop/mobile browser acceptance."
+  ],
+  "statistics_script_contract": "Preserve the user-selected restored PHP get_script behavior and the updated retirement audit.",
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "secret_scan": {
+    "status": "selected_sources_and_staged_passed_exact_commit_range_gate_required",
+    "exact_range_base": "c206dd4b4eb7553c14125144fb863745d47b833e",
+    "source_log": "/tmp/cinashop-supplier-proactive-money-source-final-secrets.log",
+    "staged_log": "/tmp/cinashop-supplier-proactive-money-staged-secrets.log",
+    "exact_commit_range_log": "/tmp/cinashop-supplier-proactive-money-commit-range-secrets.log",
+    "source_findings": 0,
+    "staged_findings": 0,
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "commit_range_terminal_evidence": "Recorded outside this immutable commit after its SHA exists."
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "cae11c8e542e16219328b93080b4deebf0d83ed7fa6079316655359b027c5b80"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "db3cbae5a83161d29b34c678b359264317c7ada37b8e966ec4243b622a701707"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "46c8602a86731fbcd7a51b0ec27657269f4cf35627c54af2acf5be9c697b694b"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "102ade1649f2655d685754f93f197868b229046fb44eb244c3ba134f30760ea7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "9b140005a04ecf404f17fa9c791466c01263bb26a5041d15770315ce24d96fa5"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "5d5d2776ed094e6b50df89108c1920320fe166c553faede3f5b5e073eb39972b"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "00dc1a807768b3cff0e45b5c90f1c914ace73ab9e1a26dd036c4f9e0b96f9afc"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { assertSupplierProactiveRefundReady } from '@/migrations/supplierProactiveRefund';
 import { outRequestHash } from '@/services/out/OutIdempotency';
 import type { SupplierVideoActor } from './SupplierVideoAuthority';
+import {verifySupplierProactiveMoneySource} from './SupplierProactiveMoneyEvidence';
 import {
   SUPPLIER_PROACTIVE_REFUND_VERSION, assertSupplierProactiveRefundCash,
   supplierProactiveRefundConflict, supplierProactiveRefundId, supplierProactiveRefundJson,
@@ -140,6 +141,14 @@ function sourceAndResult(sourceValue: unknown, resultValue: unknown, intent: Sup
   source: Readonly<Record<string, unknown>>; result: SupplierProactiveRefundResult;
 } {
   const source = record(sourceValue), result = record(resultValue);
+  if(result.kind==='money') {
+    exact(result,['order_id','refund_id','amount','kind','status']);
+    verifySupplierProactiveMoneySource(source,intent);
+    const order=record(source.order),goods=record(source.goods);
+    fact(intent.type===1&&result.order_id===intent.order_id&&result.refund_id===goods.refund_id
+      &&amount(result.amount)===intent.refund_price&&result.status===(order.payType==='yue'?'BALANCE_SUCCESS':'CASH_SUCCESS'));
+    return {source,result:result as unknown as SupplierProactiveRefundResult};
+  }
   exact(source, ['version', 'order', 'carts', 'payment', 'refunds', 'refund_payments', 'invoices', 'promotion_rows']);
   exact(result, ['order_id', 'refund_id', 'amount', 'kind', 'status']);
   const order = record(source.order), payment = record(source.payment);
@@ -256,9 +265,9 @@ export async function appendSupplierProactiveRefundOperation(tx: DbClient, input
     result = input.result === null ? null : detached(input.result, 65_536);
   fact((intent === null && source === null && result === null && requestHash === '') || (intent && source && result && hash(requestHash)));
   const resultValue = result ? record(result.value) : null;
-  // The money-only executor requires a separately verified completion chain;
-  // this first-generation writer cannot admit it through a goods source.
-  fact(resultValue?.kind !== 'money');
+  // A monetary admission has a closed, bounded source of exact first-goods
+  // and chain references. The executor separately proves the live complete
+  // goods receipt and commits its actual payout and completion atomically.
   const expected = await validateOperation({ operation_id: operationId, actor_id: actorId, supplier_id: supplierId,
     order_id: orderId, state: result ? 'committed' : 'not_applied', kind: resultValue?.kind ?? null, request_hash: requestHash,
     intent: intent?.value ?? null, intent_json: intent?.json ?? null, source: source?.value ?? null,

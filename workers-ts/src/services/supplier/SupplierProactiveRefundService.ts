@@ -23,6 +23,9 @@ import {lockSupplierProactiveRefundOperation,readSupplierProactiveRefundOperatio
  appendSupplierProactiveRefundDecision,type SupplierProactiveRefundOperation,type SupplierProactiveRefundReceipt,
  type SupplierProactiveRefundResult} from './SupplierProactiveRefundOperation';
 import {recordSupplierProactiveRefundFlow,verifySupplierProactiveRefundFlow} from './SupplierProactiveRefundFlow';
+import {executeSupplierProactiveMoneyRefund,verifiedSupplierProactiveMoneyEvidence} from './SupplierProactiveMoneyExecutor';
+import {makeSupplierProactiveMoneySource,readSupplierProactiveMoneyEvidence} from './SupplierProactiveMoneyEvidence';
+import {verifyFinancialCompletedRefund} from '@/services/customer-work/CustomerWorkFinancialVerification';
 
 type Order=typeof storeOrder.$inferSelect;
 type Source=Awaited<ReturnType<typeof readSupplierProactiveRefundSource>>;
@@ -77,7 +80,23 @@ function settlement(order:Order,amount:string) {
 }
 async function completeReceipt(tx:DbClient,operation:SupplierProactiveRefundOperation,actor:SupplierVideoActor) {
  if(operation.state==='committed')fact(await readSupplierProactiveRefundDecision(tx,operation));
+ if(operation.kind==='money') {
+  const [order]=await tx.select().from(storeOrder).where(and(eq(storeOrder.id,operation.order_id),eq(storeOrder.supplierId,operation.supplier_id))).limit(1);
+  fact(order);const evidence=await readSupplierProactiveMoneyEvidence(tx,order);
+  fact(evidence.completions.some(row=>row.operation_id===operation.operation_id));
+  await verifyFinancialCompletedRefund(tx,evidence.firstRefund,readBoundManualRefundProof,evidence.baseline);
+ }
  return supplierProactiveRefundReceipt(operation,actor);
+}
+async function moneySource(tx:DbClient,source:Source) {
+ // Search immutable admissions even if their business refund was archived.
+ // Deleting/hiding a goods row can never reset a partially refunded budget.
+ const existing=await tx.execute(sql`SELECT operation_id FROM public.supplier_proactive_refund_operation_v1
+  WHERE order_id=${source.order.id} AND state='committed' AND kind='goods' LIMIT 2`);
+ if(!existing.length){wholeGoods(source);return null;}
+ fact(existing.length===1);
+ const evidence=await verifiedSupplierProactiveMoneyEvidence(tx,source);
+ return makeSupplierProactiveMoneySource(source.order,evidence,await outRequestHash(source));
 }
 
 /** Order-ID proactive coordination. Every local effect, immutable operation and
@@ -99,12 +118,12 @@ export class SupplierProactiveRefundService {
  async seed(orderId:number,actor:SupplierVideoActor) {
   supplierProactiveRefundId(orderId);
   return this.transaction(actor,false,'supplier.order.view',async(tx,owner)=>{
-   const source=await current(tx,orderId,owner),budget=common(source);wholeGoods(source);
+   const source=await current(tx,orderId,owner),budget=common(source),money=await moneySource(tx,source);
    const amount=`${budget.remaining/100n}.${String(budget.remaining%100n).padStart(2,'0')}`;
-   return{title:'主动退款',action:`/order/refund/${orderId}`,method:'PUT' as const,order_id:orderId,order_no:source.order.orderId,
+   return{title:money?'补退货款':'主动退款',action:`/order/refund/${orderId}`,method:'PUT' as const,order_id:orderId,order_no:source.order.orderId,
     refund_price:amount,paid:source.order.payPrice,refunded:source.order.refundPrice,pay_type:source.order.payType,
-    settlement:settlement(source.order,amount),quantity:source.order.totalNum,kind:'goods' as const,
-    revision:supplierProactiveRefundMac(this.appKey,source,owner),
+    settlement:settlement(source.order,amount),quantity:money?0:source.order.totalNum,kind:money?'money' as const:'goods' as const,
+    revision:supplierProactiveRefundMac(this.appKey,money??source,owner),
     fields:[{field:'refund_price',label:'实际退款金额',type:'number',value:amount,precision:2,min:0,max:amount,required:true},
      {field:'type',label:'处理方式',type:'radio',value:1,options:[{value:1,label:'退款'},{value:2,label:'拒绝退款'}]}]};
   });
@@ -123,8 +142,14 @@ export class SupplierProactiveRefundService {
     ONLY public.store_order_invoice IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
    await lockSupplierManualRefundSources(tx);
    const source=await current(tx,orderId,owner,true);common(source,intent.refund_price);
-   assertSupplierProactiveRefundRevision(intent.revision,supplierProactiveRefundMac(this.appKey,source,owner));
+   const money=await moneySource(tx,source);
+   assertSupplierProactiveRefundRevision(intent.revision,supplierProactiveRefundMac(this.appKey,money??source,owner));
    assertSupplierProactiveRefundCash(intent,settlement(source.order,intent.refund_price));
+   if(money) {
+    if(intent.type===2)throw new ServiceUnavailableException('整单完成后的拒绝须保留原商品完成状态与凭据');
+    const operation=await executeSupplierProactiveMoneyRefund(tx,owner,intent,hash,source,await clock(tx),this.appKey);
+    return completeReceipt(tx,operation,owner);
+   }
    wholeGoods(source);
    if(intent.type===2)return this.refuse(tx,source,intent,hash,owner);
    if(settlement(source.order,intent.refund_price)==='provider')throw new ServiceUnavailableException('原渠道主动退款的持久回调与对账尚未就绪');
@@ -217,6 +242,14 @@ export class SupplierProactiveRefundService {
    const money=await tx.execute(sql`SELECT operation_id FROM public.supplier_refund_money_payment_v1 WHERE operation_id=${uuid}::uuid
     UNION ALL SELECT operation_id FROM public.supplier_refund_money_completion_v1 WHERE operation_id=${uuid}::uuid LIMIT 1`);
    if(proofs.length||money.length)throw new ServiceUnavailableException('原主动退款资金凭据存在但回执缺失，请核对原请求');
+   // A partial historical writer may have left a real monetary row without
+   // an admission/completion. Match the complete UUID suffix across actors:
+   // another administrator must not seal that globally original UUID either.
+   const number=supplierProactiveRefundApplicationNumber(owner.id,uuid),suffix=number.slice(number.indexOf('_')+1),pattern=`^SR[0-9a-z]{1,6}_${suffix}$`;
+   const financial=await tx.execute(sql`SELECT id FROM public.user_bill WHERE link_id ~ ${pattern}
+    UNION ALL SELECT id FROM public.supplier_transactions WHERE order_id ~ ${pattern}
+    UNION ALL SELECT id FROM public.capital_flow WHERE event_key=${'supplier.proactive-refund:'+uuid} LIMIT 1`);
+   if(financial.length)throw new ServiceUnavailableException('原主动退款实际资金记录存在但回执缺失，请核对原请求');
    const saved=await appendSupplierProactiveRefundOperation(tx,{operationId:uuid,orderId,actor:owner,now:await clock(tx),intent:null,requestHash:'',source:null,result:null});
    return completeReceipt(tx,saved,owner);
   });
