@@ -341,13 +341,20 @@ describe("MySQL to PostgreSQL schema audit", () => {
     );
     const productAddonSources = ['adminProductEditorOperation.ts','adminProductVideoUpload.ts','productVideoGc.ts','supplierProductCopyOperation.ts','supplierProductVideoUpload.ts'];
     expect(embeddedMigrationSources.filter(({name})=>productAddonSources.includes(name)).map(({name})=>name)).toEqual(productAddonSources);
+    const orderAddonSources = ['legacyOrderGainPartition.ts','supplierOrderEditOperation.ts','supplierOrderPriceRevision.ts'];
+    expect(embeddedMigrationSources.filter(({name})=>orderAddonSources.includes(name)).map(({name})=>name)).toEqual(orderAddonSources);
+    const productDeclarations = [
+      readFileSync('src/services/MigrationService.ts','utf8'),
+      ...embeddedMigrationSources.filter(({name})=>!orderAddonSources.includes(name)).map(({sql})=>sql),
+    ].join('\n');
+    const productDefinitionDrift = comparePostgresDefinitions(externalTargetSql, productDeclarations);
     const ordinaryDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name)).map(({ sql }) => sql),
+      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name) && !orderAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name)).map(({ sql }) => sql),
+      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name) && !orderAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
     expect(historicalDefinitionDrift).toEqual({
@@ -377,7 +384,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(ordinaryDefinitionDrift.workerOnlyTables.filter(table => !historicalDefinitionDrift.workerOnlyTables.includes(table))).toEqual([
       'cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1',
     ]);
-    expect(definitionDrift).toEqual({
+    expect(productDefinitionDrift).toEqual({
       externalTableCount: 286,
       // Exactly five independently installed product addons follow the frozen
       // ordinary declaration scope. They do not join any construction cohort.
@@ -386,10 +393,17 @@ describe("MySQL to PostgreSQL schema audit", () => {
       workerOnlyTables: reviewedExplicitDeclarationTables('current-product'),
       columnDrift: [],
     });
-    const productOnly=definitionDrift.workerOnlyTables.filter(table=>!ordinaryDefinitionDrift.workerOnlyTables.includes(table));
+    const productOnly=productDefinitionDrift.workerOnlyTables.filter(table=>!ordinaryDefinitionDrift.workerOnlyTables.includes(table));
     expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_copy_operation_v1','supplier_product_video_upload_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
+    expect(definitionDrift).toEqual({ externalTableCount:286, workerTableCount:311,
+      externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
+      workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-order'), columnDrift:[] });
+    const orderOnly=definitionDrift.workerOnlyTables.filter(table=>!productDefinitionDrift.workerOnlyTables.includes(table));
+    expect(orderOnly).toEqual(['legacy_order_gain_partition_v1','supplier_order_edit_operation_v1']);
+    for(const path of ['embedded','external','orm'] as const)
+      expect(registeredTableNames(path).filter(table=>orderOnly.includes(table))).toEqual([]);
     for (const tableName of [
       "store_order",
       "store_order_economize",

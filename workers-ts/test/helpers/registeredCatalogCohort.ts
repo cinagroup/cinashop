@@ -172,8 +172,16 @@ const productExplicitColumns = {
   product_video_gc_state_v1: ['scope','cursor','maximum','cycle','lease_token','lease_until','last_completed_at','updated_at'],
   supplier_product_video_upload_v1: ['upload_id','actor_id','supplier_id','request_hash','intent','object_key','state','parts','confirmed','attachment_id','created_at','updated_at','expires_at'],
 } as const;
-export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'='historical') {
-  assert.ok(scope==='historical'||scope==='current-ordinary'||scope==='current-product','Unknown independently commissioned declaration scope');
+const supplierOrderExplicitDeclarations = [
+  ['supplierOrderEditOperation.ts','a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00',['supplier_order_edit_operation_v1']],
+  ['legacyOrderGainPartition.ts','04713d214c6a2b281a3f4b4545f8da0e23da5448c1a6698e5d3387d02affe79b',['legacy_order_gain_partition_v1']],
+] as const;
+const supplierOrderExplicitColumns = {
+  supplier_order_edit_operation_v1: ['operation_id','actor_id','supplier_id','order_id','request_hash','state','before_hash','after_hash','evidence','result','created_at'],
+  legacy_order_gain_partition_v1: ['partition_id','operation_id','source_order_id','child_order_id','buyer_id','supplier_id','kind','source_hash','child_hash','evidence','created_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'='historical') {
+  assert.ok(['historical','current-ordinary','current-product','current-supplier-order'].includes(scope),'Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -218,7 +226,22 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
   assert.equal(productCurrentTables.length,27);assert.equal(new Set(productCurrentTables).size,27);
   const productCurrentOnly=productCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
   assert.equal(productCurrentOnly.length,26);assert.equal(new Set(productCurrentOnly).size,26);
-  return productCurrentOnly;
+  if(scope==='current-product')return productCurrentOnly;
+  for(const [file,sha256,names] of supplierOrderExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned Supplier order DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...supplierOrderExplicitColumns[name]]);
+  }
+  const orderTables=supplierOrderExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(orderTables.length,2);assert.equal(new Set(orderTables).size,2);
+  assert.deepEqual(Object.keys(supplierOrderExplicitColumns).sort(),orderTables);
+  for(const name of orderTables)assert.ok(!productCurrentTables.includes(name),'Order declaration must not replace an existing declaration');
+  const orderCurrentTables=[...productCurrentTables,...orderTables].sort();
+  assert.equal(orderCurrentTables.length,29);assert.equal(new Set(orderCurrentTables).size,29);
+  const orderCurrentOnly=orderCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(orderCurrentOnly.length,28);assert.equal(new Set(orderCurrentOnly).size,28);
+  return orderCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();

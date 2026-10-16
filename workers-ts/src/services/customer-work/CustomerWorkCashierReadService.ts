@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderOutbox, storeOrderStatus } from '@/models/schema';
@@ -9,6 +9,7 @@ import { AuthException, NotFoundException, ValidateException } from '@/utils/err
 import { authorizeCustomerWorkActor, customerWorkId, type CustomerWorkActor, type CustomerWorkScope } from './CustomerWorkScope';
 import { freezeCustomerActor } from './CustomerWorkOperationRequest';
 import { readCashierConsumedForm } from './CustomerCashierFormImages';
+import { loadUnpaidOrderCashierEditProof, cashierEditedSnapshotMatches } from '@/services/order/UnpaidOrderCashierEditProof';
 
 export const CUSTOMER_CASHIER_READ_VERSION = 'customer-work-cashier-read-v1' as const;
 const scopeName = 'own-second-card-creations' as const;
@@ -113,6 +114,7 @@ export class CustomerWorkCashierReadService {
     const [order] = await db.select({ id:storeOrder.id, isSystemDel:storeOrder.isSystemDel, orderId:storeOrder.orderId,
       uid:storeOrder.uid, staffId:storeOrder.staffId, pid:storeOrder.pid, type:storeOrder.type, isChannel:storeOrder.isChannel,
       productType:storeOrder.productType, storeId:storeOrder.storeId, shippingType:storeOrder.shippingType, payPrice:storeOrder.payPrice,
+      supplierId:storeOrder.supplierId, changePrice:storeOrder.changePrice, gainIntegral:storeOrder.gainIntegral,
       paid:storeOrder.paid, payType:storeOrder.payType, payTime:storeOrder.payTime, realName:storeOrder.realName, userPhone:storeOrder.userPhone,
       addTime:storeOrder.addTime, status:storeOrder.status, refundStatus:storeOrder.refundStatus }).from(storeOrder).where(eq(storeOrder.id, saved.order_id)).limit(1);
     if (!order || order.isSystemDel) throw new NotFoundException('收银记录不存在');
@@ -127,18 +129,17 @@ export class CustomerWorkCashierReadService {
     if (audits.length !== 1) throw new ValidateException('原收银创建记录缺失');
     const [cartCount] = await db.select({count:sql<number>`count(*)::int`}).from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id));
     if (cartCount.count !== origin.cart_facts.length) throw new ValidateException('原收银商品行数量不一致');
+    const carts=await db.select({...getTableColumns(storeOrderCartInfo),
+      cartInfo:sql<string|null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo})<=262144 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`})
+      .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201);
+    const editProof=await loadUnpaidOrderCashierEditProof(db,order,carts,origin.cart_facts);
     const items = [];
     for (const fact of origin.cart_facts) {
-      const [cart] = await db.select({oid:storeOrderCartInfo.oid,uid:storeOrderCartInfo.uid,cartId:storeOrderCartInfo.cartId,
-        productId:storeOrderCartInfo.productId,productType:storeOrderCartInfo.productType,type:storeOrderCartInfo.type,
-        relationId:storeOrderCartInfo.relationId,skuUnique:storeOrderCartInfo.skuUnique,cartNum:storeOrderCartInfo.cartNum,
-        writeTimes:storeOrderCartInfo.writeTimes,
-        cartInfo:sql<string|null>`CASE WHEN octet_length(${storeOrderCartInfo.cartInfo})<=262144 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`
-      }).from(storeOrderCartInfo).where(eq(storeOrderCartInfo.id, fact.cart_row_id)).limit(1);
+      const cart = carts.find(value=>value.id===fact.cart_row_id);
       if (!cart || cart.oid !== order.id || cart.uid !== order.uid || cart.cartId !== fact.opaque_cart_id
         || cart.productId !== fact.product_id || cart.productType !== 4 || cart.type !== fact.owner_type || cart.relationId !== fact.owner_id
         || cart.skuUnique !== fact.sku_unique || cart.cartNum !== fact.purchase_quantity || cart.writeTimes !== fact.write_times
-        || cart.cartInfo === null || await outRequestHash(cart.cartInfo) !== fact.snapshot_hash)
+        || cart.cartInfo === null || await outRequestHash(cart.cartInfo) !== fact.snapshot_hash&&!cashierEditedSnapshotMatches(editProof,cart,fact.snapshot_hash))
         throw new ValidateException('原收银商品快照不一致');
       const snapshot = recordObject(typeof cart.cartInfo === 'string' ? JSON.parse(cart.cartInfo) : cart.cartInfo);
       const product = recordObject(snapshot.product), attr = recordObject(snapshot.sku);

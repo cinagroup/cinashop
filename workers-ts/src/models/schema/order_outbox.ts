@@ -9,6 +9,7 @@ import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryI
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductSaveEffectsPayload } from '@/services/product/ProductSaveEffects';
 import type { ProductStockEffectsPayload } from '@/services/product/ProductStockEffects';
+import type { SupplierOrderPriceRevisionPayload } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
 import {
   check,
   index,
@@ -82,6 +83,7 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | SupplierOrderPriceRevisionPayload
   | ProductSaveEffectsPayload
   | ProductRecycleEffectsPayload
   | ProductStockEffectsPayload

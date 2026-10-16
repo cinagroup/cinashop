@@ -105,6 +105,15 @@ export function normalizeSupplierRoute(routePath: string): string {
 /** Empty means authenticated self-service; null means an unknown route. */
 export function requiredSupplierPermissions(method: string, routePath: string): string[] | null {
   const route = normalizeSupplierRoute(routePath);
+  if (route === 'order/edit' || route.startsWith('order/edit/') || route === 'order/update' || route.startsWith('order/update/')
+    || route === 'order/edit_operations' || route.startsWith('order/edit_operations/')) {
+    const id = '(?:[1-9][0-9]{0,9}|:id|<id>)', uuid = '(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:operationid|<operationid>)';
+    if (readMethod(method) && new RegExp(`^order/edit/${id}$`).test(route)) return ['supplier.order.view'];
+    if (method.toUpperCase() === 'PUT' && new RegExp(`^order/update/${id}$`).test(route)) return ['supplier.order.manage'];
+    if (readMethod(method) && new RegExp(`^order/edit_operations/${uuid}$`).test(route)
+      || method.toUpperCase() === 'POST' && new RegExp(`^order/edit_operations/${uuid}/resolve$`).test(route)) return [];
+    return null;
+  }
   if (route === 'product/product/copy' || route.startsWith('product/product/copy/')
     || route === 'product/product/copy_operations' || route.startsWith('product/product/copy_operations/')) {
     const id='(?:[1-9][0-9]{0,9}|:id|<id>)', uuid='(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:operationid|<operationid>)';

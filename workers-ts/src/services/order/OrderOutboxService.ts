@@ -60,6 +60,7 @@ import { deliverDuePresale } from '@/services/activity/PresaleDeliveryResolver';
 import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecovery';
 import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
 import { upgradeAgentLevelsForUser } from '@/services/agent/AgentLevelTaskService';
+import { processSupplierOrderPriceRevision, SUPPLIER_ORDER_PRICE_REVISION_EVENT } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
 
 type OutboxMessage = OrderPaidOutboxMessage | OrderNotificationOutboxMessage | PresaleDeliveryOutboxMessage;
 
@@ -148,7 +149,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
   );
 }
 
@@ -168,6 +169,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === PRODUCT_STOCK_EFFECTS_EVENT
     || eventType === PRODUCT_RECYCLE_EFFECTS_EVENT
     || eventType === PRODUCT_SAVE_EFFECTS_EVENT
+    || eventType === SUPPLIER_ORDER_PRICE_REVISION_EVENT
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
     || eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
@@ -711,6 +713,8 @@ export class OrderOutboxService {
           this.env.WITHDRAWAL_WECOM_ROBOT_ENABLED === "enabled");
       } else if (isWithdrawalNoticeEvent(event.eventType)) {
         await processWithdrawalNoticeEvent(tx, event, now);
+      } else if (event.eventType === SUPPLIER_ORDER_PRICE_REVISION_EVENT) {
+        await processSupplierOrderPriceRevision(tx, event, now);
       } else if (isNotificationEventType(event.eventType)) {
         await processOrderNotificationOutboxEvent(tx, event, now);
       } else {

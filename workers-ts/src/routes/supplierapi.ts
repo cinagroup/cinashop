@@ -19,6 +19,7 @@ import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
 import * as SupplierVideo from '@/controllers/supplier/SupplierProductVideoController';
 import * as SupplierProductCopy from '@/controllers/supplier/SupplierProductCopyController';
+import * as SupplierUnpaidOrderEdit from '@/controllers/supplier/SupplierUnpaidOrderEditController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -263,6 +264,10 @@ supplierapiRoutes.put("/product/product/set_show/:id/:is_show", SupplierControll
 supplierapiRoutes.get("/product/product/:id", SupplierController.productDetail);
 
 supplierapiRoutes.get("/order/list", SupplierController.orderList);
+supplierapiRoutes.get('/order/edit/:id', SupplierUnpaidOrderEdit.seed);
+supplierapiRoutes.put('/order/update/:id', SupplierUnpaidOrderEdit.save);
+supplierapiRoutes.get('/order/edit_operations/:operationId', SupplierUnpaidOrderEdit.receipt);
+supplierapiRoutes.post('/order/edit_operations/:operationId/resolve', SupplierUnpaidOrderEdit.resolve);
 supplierapiRoutes.get("/order/distribution_info", SupplierController.pickingSheets);
 supplierapiRoutes.get("/order/split_cart_info/:id", SupplierController.splitCartInfo);
 supplierapiRoutes.put("/order/split_delivery/:id", SupplierController.splitDelivery);

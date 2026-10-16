@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 /**
  * 售后退款 Service (M4)
  *
@@ -1180,7 +1181,7 @@ async function createOrderRefundApplication(
     const lineQuote = quoteOrderRefundLineFinance(order, cartInfos, completedRefunds,
       new Map(refundCartSnapshot.map(item => typeof item === 'number'
         ? [financialCartKey(item), cartByIdentifier.get(item)!.cartNum - (completedQuantities.get(item) ?? 0)]
-        : [financialCartKey(item.cartId), item.cartNum])));
+        : [financialCartKey(item.cartId), item.cartNum])), await loadUnpaidOrderGainIntegralProof(tx,order,cartInfos));
     if (lineQuote !== null && !(options.reuseExisting && refundNum === remainingQuantity)) {
       // New evidence must reconcile even for whole/zero-cash quotes. Preserve
       // mandatory automatic full-refund recovery as an explicit exception;

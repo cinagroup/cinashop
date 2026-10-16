@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof, recordLegacyGainIntegralPartitions } from '@/services/order/UnpaidOrderGainIntegralProof';
 import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
@@ -380,6 +381,7 @@ function cloneCart(
   cartInfo: string | null,
   delivered: boolean,
   writeoff?: RefundWriteoffState,
+  expectedUnique = randomKey(),
 ): CartInsert {
   const { id: _id, ...base } = row;
   const snapshot = parseSnapshot(cartInfo);
@@ -397,7 +399,7 @@ function cloneCart(
     splitSurplusNum: delivered ? 0 : cartNum,
     splitStatus: delivered ? 2 : 0,
     cartInfo: snapshot ? JSON.stringify(snapshot) : cartInfo,
-    unique: randomKey(),
+    unique: expectedUnique,
   };
 }
 
@@ -925,7 +927,8 @@ export class SupplierFulfillmentService {
       // All original rows are locked. Versioned evidence must reconcile before
       // any child/notice write; it cannot fall back to merchandise weighting.
       const generation = await loadRefundOrderGeneration(tx, active, cartRows);
-      const financialPlan = planOrderFinancialSplit(active, cartRows, selectedByCartId);
+      const gainProof = await loadUnpaidOrderGainIntegralProof(tx,active,cartRows);
+      const financialPlan = planOrderFinancialSplit(active, cartRows, selectedByCartId,gainProof);
       const hasPromotionLedger = await assertOrderPromotionLedger(tx, active, cartRows);
       if (selectedQuantity >= totalQuantity) {
         await applyDelivery(
@@ -987,6 +990,7 @@ export class SupplierFulfillmentService {
         rowId: number;
         cartId: string;
         quantity: number;
+        expectedUnique: string;
         cartInfo: string | null;
         writeoff?: RefundWriteoffState;
       }> = [];
@@ -995,6 +999,7 @@ export class SupplierFulfillmentService {
         rowId: number;
         cartId: string;
         quantity: number;
+        expectedUnique: string;
         cartInfo: string | null;
         writeoff?: RefundWriteoffState;
       }> = [];
@@ -1023,6 +1028,7 @@ export class SupplierFulfillmentService {
             rowId,
             cartId,
             quantity: selected,
+            expectedUnique: randomKey(),
             cartInfo: selectedSnapshot,
             writeoff: financialParts?.selectedWriteoff ?? undefined,
           });
@@ -1034,6 +1040,7 @@ export class SupplierFulfillmentService {
             rowId,
             cartId: firstSplit ? String(rowId) : cart.cartId,
             quantity: remaining,
+            expectedUnique: randomKey(),
             cartInfo: remainingSnapshot,
             writeoff: financialParts?.remainingWriteoff ?? undefined,
           });
@@ -1078,6 +1085,7 @@ export class SupplierFulfillmentService {
             cart.cartInfo,
             true,
             cart.writeoff,
+            cart.expectedUnique,
           ),
         ),
       );
@@ -1124,6 +1132,7 @@ export class SupplierFulfillmentService {
               cart.cartInfo,
               false,
               cart.writeoff,
+              cart.expectedUnique,
             ),
           ),
         );
@@ -1165,6 +1174,7 @@ export class SupplierFulfillmentService {
               cart.cartInfo,
               false,
               cart.writeoff,
+              cart.expectedUnique,
             ),
           ),
         );
@@ -1182,6 +1192,12 @@ export class SupplierFulfillmentService {
           { orderId: remainingOrderPk, partitions: remainingCartRows.map(row => ({ sourceRowId: row.source.id,
             rowId: row.rowId, cartId: row.cartId, quantity: row.quantity })) },
         ], now);
+      await recordLegacyGainIntegralPartitions(tx,active,cartRows,gainProof,selectedByCartId,[
+        {orderId:selectedOrderPk,role:'selected',rows:selectedCartRows.map(row=>({sourceRowId:row.source.id,
+          rowId:row.rowId,cartId:row.cartId,quantity:row.quantity,expectedUnique:row.expectedUnique}))},
+        {orderId:remainingOrderPk,role:'remaining',rows:remainingCartRows.map(row=>({sourceRowId:row.source.id,
+          rowId:row.rowId,cartId:row.cartId,quantity:row.quantity,expectedUnique:row.expectedUnique}))},
+      ],'fulfillment',now);
       const description =
         input.deliveryType === "fictitious"
           ? `虚拟发货：${input.fictitiousContent}`

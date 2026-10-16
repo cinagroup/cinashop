@@ -14,6 +14,7 @@ import { ordinaryCashierHash, ordinaryCashierInteger, ordinaryCashierObject, ord
 import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
 import type { CheckoutConfirmation } from './CheckoutConfirmation';
 import type { CreateOrderParams } from './StoreOrderCreateService';
+import { loadUnpaidOrderCashierEditProof, cashierEditedSnapshotMatches } from './UnpaidOrderCashierEditProof';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -111,8 +112,12 @@ export async function readCashierOrdinaryOrigin(db: DB, order: Order): Promise<{
     || origin.creation_key!==row.request_key || origin.creation_hash!==row.request_hash || origin.scope_key!==row.scope_key
     || order.uid!==origin.buyer_uid || order.staffId!==origin.creator_uid || order.isChannel!==2 || order.productType!==0 || order.type!==0
     || order.shippingType!==origin.shipping_type || order.storeId!==origin.store_id || ![0,-1].includes(order.pid)
-    ||order.payPrice!==origin.creation_pay_price||order.totalNum!==origin.creation_total_num
+    ||order.totalNum!==origin.creation_total_num
     || await outRequestHash(order.customForm)!==origin.form_snapshot_hash) throw invalid();
+  if(order.payPrice!==origin.creation_pay_price||order.changePrice!=='0.00'){
+    const carts=await db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201);
+    if(!await loadUnpaidOrderCashierEditProof(db,order,carts,origin.cart_facts,origin.creation_pay_price))throw invalid();
+  }
   return { origin,origin_hash:row.origin_hash };
 }
 export async function assertCashierOrdinaryCreationReplay(db:DbClient,value:CashierOrdinaryCreationCapability,order:Order) {
@@ -172,10 +177,11 @@ export async function readCashierOrdinaryPaidOrigin(db:DbClient,root:Order,carts
 }
 async function assertOrdinaryCreationSource(db:DB,root:Order,saved:{origin:CashierOrdinaryOrigin;origin_hash:string},carts:readonly Cart[]){
   if(carts.length!==saved.origin.cart_facts.length||carts.length>200||carts.reduce((n,c)=>n+c.cartNum,0)!==saved.origin.creation_total_num)throw invalid();
+  const editProof=await loadUnpaidOrderCashierEditProof(db,root,carts,saved.origin.cart_facts,saved.origin.creation_pay_price);
   for(const c of carts){const f=saved.origin.cart_facts.find(f=>f.cart_row_id===c.id);
     if(!f||c.oid!==root.id||c.uid!==root.uid||c.cartId!==f.opaque_cart_id||c.productId!==f.product_id||c.productType!==0
       ||c.type!==f.owner_type||c.relationId!==f.owner_id||c.skuUnique!==f.sku_unique||c.cartNum!==f.purchase_quantity||c.isGift!==f.is_gift
-      ||await outRequestHash(c.cartInfo)!==f.snapshot_hash)throw invalid();}
+      ||await outRequestHash(c.cartInfo)!==f.snapshot_hash&&!cashierEditedSnapshotMatches(editProof,c,f.snapshot_hash))throw invalid();}
   const audits=await db.select().from(storeOrderStatus).where(and(eq(storeOrderStatus.id,saved.origin.creation_status_id),eq(storeOrderStatus.oid,root.id),eq(storeOrderStatus.changeType,'customer_ordinary_cashier_create'))).limit(2);
   const creation=await readOrdinaryCashierOperation(db,saved.origin.creator_uid,saved.origin.creation_key),order=creation?.evidence.order as Record<string,unknown>|undefined;
   if(audits.length!==1||audits[0].changeMessage!=='客户管理创建普通商品收银订单'||creation?.kind!=='creation'||creation.request_hash!==saved.origin.creation_hash

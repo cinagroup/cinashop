@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from '@/services/order/UnpaidOrderGainIntegralProof';
 import { and,desc,eq,inArray,sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { withTx, createContainerFromDb, type Container, type DbClient } from '@/lib/di';
@@ -88,7 +89,7 @@ export async function managerFinancialActionAvailability(db:DbClient,scope:Store
  const materialization=await managerRefundMaterializationReadiness(db);if(state.refund_create.available&&!materialization.ready)state.refund_create={available:false,reason:materialization.reason};
  const gift=await managerGiftRefundReadiness(db,order);if(!gift.ready){state.refund_create={available:false,reason:gift.reason};state.refund_decide={available:false,reason:gift.reason};}
  const payments=await managerPaymentMethods(db,env);
- if(state.refund_create.available){const carts=await db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).limit(201);try{if(!planOrderFinancialSplit(order,carts,new Map(carts.map(row=>[row.cartId,row.cartNum]))))state.refund_create={available:false,reason:'manager_refund_unversioned_financial_lines'};}catch(error){if(!(error instanceof ValidateException))throw error;state.refund_create={available:false,reason:'manager_refund_financial_lines_inconsistent'};}}
+ if(state.refund_create.available){const carts=await db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).limit(201);try{if(!planOrderFinancialSplit(order,carts,new Map(carts.map(row=>[row.cartId,row.cartNum])),await loadUnpaidOrderGainIntegralProof(db,order,carts)))state.refund_create={available:false,reason:'manager_refund_unversioned_financial_lines'};}catch(error){if(!(error instanceof ValidateException))throw error;state.refund_create={available:false,reason:'manager_refund_financial_lines_inconsistent'};}}
  if(state.confirm_offline.available&&!payments.offline.enabled)state.confirm_offline={available:false,reason:payments.offline.reason};
  if(state.confirm_offline.available&&order.type!==0)state.confirm_offline={available:false,reason:'营销订单缺少已审核门店线下收款来源协议'};
  const channel=order.payType==='weixin'?'weixin':order.payType==='alipay'?'alipay':null;

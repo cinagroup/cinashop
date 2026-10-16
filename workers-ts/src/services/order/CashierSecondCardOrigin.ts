@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeCart, storeOrder, storeOrderCartInfo, storeOrderOutbox, storeOrderStatus, user } from '@/models/schema';
@@ -15,6 +16,7 @@ import { planOrderFinancialSplit } from './OrderSplitFinance';
 import { storeOrderRefundSplit } from '@/models/schema/order_refund_split';
 import { storeOrderRefund } from '@/models/schema';
 import { refundOrderSplitFingerprint } from './RefundOrderSplitIdentity';
+import { loadUnpaidOrderCashierEditProof, cashierEditedSnapshotMatches } from './UnpaidOrderCashierEditProof';
 
 export const CASHIER_SECOND_CARD_ORIGIN_VERSION = 'cashier-second-card-origin-v1' as const;
 type Order = typeof storeOrder.$inferSelect;
@@ -257,6 +259,27 @@ export async function captureCashierSecondCardCreation(tx:DbClient, capability:C
 
 /** The origin is permanent evidence; a current paid bit or a product_type flag
  * alone cannot turn an ordinary store-zero order into a cashier entitlement. */
+export async function assertCashierSecondCardUnpaidSource(db:DbClient,order:Order,carts:readonly Cart[]):Promise<void>{
+  await assertCashierSecondCardOriginCatalog(db);
+  const rows=await db.execute<{origin:unknown;origin_hash:string;actor_uid:number;service_id:number;buyer_uid:number;request_key:string;request_hash:string;scope_key:string}>(sql`
+    SELECT origin,origin_hash,actor_uid,service_id,buyer_uid,request_key::text,request_hash,scope_key
+    FROM public.cashier_second_card_origin_v1 WHERE order_id=${order.id} LIMIT 2`);
+  if(rows.length!==1)throw new ValidateException('次卡收银原始创建来源不唯一');
+  const saved=rows[0],origin=parseFact(saved.origin);
+  if(order.paid!==0||order.pid!==0||order.status!==0||order.staffId!==origin.creator_uid||order.isChannel!==2
+    ||order.shippingType!==2||order.storeId!==0||order.productType!==4||order.uid!==origin.buyer_uid
+    ||origin.root_order_id!==order.id||origin.root_order_no!==order.orderId||origin.creator_uid!==saved.actor_uid
+    ||origin.service_id!==saved.service_id||origin.buyer_uid!==saved.buyer_uid||origin.creation_key!==saved.request_key
+    ||origin.creation_hash!==saved.request_hash||origin.scope_key!==saved.scope_key||await outRequestHash(origin)!==saved.origin_hash)
+    throw new ValidateException('次卡收银原始创建身份不一致');
+  const audits=await db.select({id:storeOrderStatus.id}).from(storeOrderStatus).where(and(eq(storeOrderStatus.id,origin.creation_status_id),
+    eq(storeOrderStatus.oid,order.id),eq(storeOrderStatus.changeType,'customer_cashier_create'))).limit(2);
+  if(audits.length!==1)throw new ValidateException('次卡收银原始创建记录缺失');
+  const proof=await loadUnpaidOrderCashierEditProof(db,order,carts,origin.cart_facts);
+  for(const cart of carts){const fact=origin.cart_facts.find(item=>item.cart_row_id===cart.id);
+    if(!fact||await outRequestHash(cart.cartInfo)!==fact.snapshot_hash&&!cashierEditedSnapshotMatches(proof,cart,fact.snapshot_hash))
+      throw new ValidateException('次卡收银原始购物快照不一致');}
+}
 export async function readCashierSecondCardOrigin(db:DbClient,order:Order,carts:readonly Cart[],lock=false):Promise<CashierSecondCardOriginProof|null> {
   if(order.shippingType!==2||order.storeId!==0||order.productType!==4)return null;
   if(!(await inspectCashierSecondCardOrigin(db)).complete)return null;
@@ -285,9 +308,11 @@ export async function readCashierSecondCardOrigin(db:DbClient,order:Order,carts:
   for(const original of carts){let cart=original,oid=order.id,visited=new Set<number>();
     for(let depth=0;;depth++){
       const fact=origin.cart_facts.find(f=>f.cart_row_id===cart.id&&oid===root.id);
-      if(fact){if(cart.oid!==root.id||cart.uid!==root.uid||cart.cartId!==fact.opaque_cart_id||cart.productId!==fact.product_id
+      if(fact){const editProof=await loadUnpaidOrderCashierEditProof(db,root,[cart],origin.cart_facts);
+        if(cart.oid!==root.id||cart.uid!==root.uid||cart.cartId!==fact.opaque_cart_id||cart.productId!==fact.product_id
         ||cart.productType!==4||cart.type!==fact.owner_type||cart.relationId!==fact.owner_id||cart.skuUnique!==fact.sku_unique
-        ||cart.cartNum!==fact.purchase_quantity||cart.writeTimes!==fact.write_times||await outRequestHash(cart.cartInfo)!==fact.snapshot_hash)
+        ||cart.cartNum!==fact.purchase_quantity||cart.writeTimes!==fact.write_times
+        ||await outRequestHash(cart.cartInfo)!==fact.snapshot_hash&&!cashierEditedSnapshotMatches(editProof,cart,fact.snapshot_hash))
           throw new ValidateException('收银次卡原始购物快照不一致');break;}
       if(!generation||depth>=200)throw new ValidateException('收银次卡购物行代际缺少完整原来源链');
       const splits=await db.select({refundId:storeOrderRefundSplit.refundId,sourceOrderId:storeOrderRefundSplit.sourceOrderId,
@@ -323,7 +348,7 @@ export async function readCashierSecondCardOrigin(db:DbClient,order:Order,carts:
       // Reuse the mature planner, including its gain_integral normalization and
       // monetary conservation. A hand-written partition differs from creation.
       const financialPlan=planOrderFinancialSplit({...frozenOrder,refundPrice:'0.00',backIntegral:'0.00'},
-        frozenCarts.map(c=>({...c,refundNum:0,splitStatus:0,splitSurplusNum:c.cartNum})),selections);
+        frozenCarts.map(c=>({...c,refundNum:0,splitStatus:0,splitSurplusNum:c.cartNum})),selections,await loadUnpaidOrderGainIntegralProof(db,frozenOrder,frozenCarts));
       if(!financialPlan)throw new ValidateException('收银次卡退款完整金额分割来源缺失');
       const part=parts.find(p=>p&&typeof p==='object'&&(p as Record<string,unknown>).remainingRowId===cart.id) as Record<string,unknown>|undefined;
       const source=part?savedSource.carts.find(c=>c&&typeof c==='object'&&(c as Cart).id===part.sourceRowId) as Cart|undefined:undefined;

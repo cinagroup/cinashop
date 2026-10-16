@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 import { asc, eq } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderPromotions } from '@/models/schema';
@@ -53,7 +54,7 @@ export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, se
       || ![0, 1, 2].includes(row.splitStatus) || (order.status === 0
         ? row.splitStatus === 2 || row.splitSurplusNum !== row.cartNum
         : !((row.splitStatus < 2 && row.splitSurplusNum === row.cartNum) || (row.splitStatus === 2 && row.splitSurplusNum === 0))))) throw invalid();
-  const plan = planOrderFinancialSplit(order, rows.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selections);
+  const plan = planOrderFinancialSplit(order, rows.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selections, await loadUnpaidOrderGainIntegralProof(tx,order,rows));
   if (!plan || typeof plan.selected.payPrice !== 'string') throw invalid();
   const promotionVersioned=await assertOrderPromotionLedger(tx, order, rows);
   // Only the fully reconciled original-PHP projection needs this additional

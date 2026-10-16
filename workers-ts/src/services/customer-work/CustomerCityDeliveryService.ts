@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from '@/services/order/UnpaidOrderGainIntegralProof';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
@@ -59,7 +60,7 @@ async function assertSelectedCarts(tx:DbClient,current:Awaited<ReturnType<typeof
   const quantities=new Map(selected.map(c=>[c.cart_id,c.cart_num]));
   if(selected.length>200||source.size!==available.length||quantities.size!==selected.length||selected.some(c=>!c.cart_id||!Number.isSafeInteger(c.cart_num)||c.cart_num<1||!source.has(c.cart_id)||c.cart_num>source.get(c.cart_id)!.splitSurplusNum))throw new ValidateException('拆单配送商品或数量已变化');
   await loadRefundOrderGeneration(tx,current.order,current.carts);
-  planOrderFinancialSplit(current.order,current.carts,quantities);
+  planOrderFinancialSplit(current.order,current.carts,quantities,await loadUnpaidOrderGainIntegralProof(tx,current.order,current.carts));
   await assertOrderPromotionLedger(tx,current.order,current.carts);
 }
 async function station(tx:DbClient,id:CustomerCityIdentity):Promise<CustomerCityStation|null>{

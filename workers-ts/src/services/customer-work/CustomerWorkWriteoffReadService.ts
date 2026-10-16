@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from '@/services/order/UnpaidOrderGainIntegralProof';
 import { and,asc,desc,eq,getTableColumns,inArray,isNull,sql,type SQL } from 'drizzle-orm';
 import {withTx,type Container,type DbClient} from '@/lib/di';
 import type { Env } from '@/env';
@@ -47,7 +48,7 @@ export async function customerWriteoffFacts(db:DbClient,order:CustomerWriteoffOr
  const refundColumns=getTableColumns(storeOrderRefund),refundRows=await db.select({...refundColumns,refundImg:sql<string|null>`NULL`,refundGoodsImg:sql<string|null>`NULL`}).from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,order.id)).orderBy(asc(storeOrderRefund.id)).limit(201);
  fact(refundRows.length<=200&&refundRows.every(row=>row.uid===order.uid&&row.storeId===order.storeId&&row.supplierId===order.supplierId),'售后关联超过完整容量或真实归属不一致');
  const refunds=refundRows.map(({refundPhone:_phone,refundImg:_images,refundGoodsImg:_goodsImages,...row})=>row);
- let generationReason='';try{const generation=await loadRefundOrderGeneration(db,order,carts),completed=await currentGenerationRefunds(refundRows.filter(r=>r.refundType===6&&!r.isDel&&!r.isCancel),generation);planCompletedRefundLineCompensation(order,carts,completed);}catch(error){if(!(error instanceof ValidateException))throw error;generationReason=error.message;}
+ let generationReason='';try{const generation=await loadRefundOrderGeneration(db,order,carts),completed=await currentGenerationRefunds(refundRows.filter(r=>r.refundType===6&&!r.isDel&&!r.isCancel),generation);planCompletedRefundLineCompensation(order,carts,completed,await loadUnpaidOrderGainIntegralProof(db,order,carts));}catch(error){if(!(error instanceof ValidateException))throw error;generationReason=error.message;}
  const pink=order.type===3?await db.select().from(storePink).where(eq(storePink.id,order.pinkId)).limit(2):[];fact(pink.length<=1,'拼团身份不唯一');
  const[records]=await db.execute<{count:string;digest:string}>(sql`SELECT count(*)::text AS count,md5(COALESCE(string_agg(md5(to_jsonb(r)::text),'' ORDER BY r.id),'')) AS digest FROM ${storeOrderWriteoff} r WHERE r.oid=${order.id}`);
  let origin:Awaited<ReturnType<typeof readCashierSecondCardOrigin>>=null,originReason='';

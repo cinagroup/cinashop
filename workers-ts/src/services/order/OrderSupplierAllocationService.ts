@@ -14,6 +14,7 @@ import {
 import { planOrderFinancialSplit } from './OrderSplitFinance';
 import { assertOrderPromotionLedger, writeOrderPromotionLedger } from './OrderPromotionLedgerSplit';
 import { lockSplitInvoices, prepareSplitInvoice, materializeSplitInvoice } from './SplitInvoiceAllocation';
+import { loadUnpaidOrderGainIntegralProof, recordLegacyGainIntegralPartitions, type LegacyGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 
 type OrderRow = typeof storeOrder.$inferSelect;
 type OrderInsert = typeof storeOrder.$inferInsert;
@@ -97,7 +98,7 @@ function randomKey(): string {
   return crypto.randomUUID().replaceAll("-", "");
 }
 
-function cloneAllocatedCart(row: CartRow, oid: number, cartInfo = row.cartInfo): CartInsert {
+function cloneAllocatedCart(row: CartRow, oid: number, cartInfo = row.cartInfo): CartInsert & {unique:string} {
   const { id: _id, ...base } = row;
   const available = Math.max(row.cartNum - row.refundNum, 0);
   return {
@@ -116,22 +117,25 @@ function allocateGroupAmounts(
   order: OrderRow,
   groups: readonly SupplierAllocationGroup[],
   rows: CartRow[],
+  proof?: LegacyGainIntegralProof | null,
 ): { amounts: Partial<OrderInsert>[]; snapshots: Map<number, string> } {
   let remainingOrder = order;
   let remainingRows = rows;
+  let remainingProof = proof;
   const snapshots = new Map<number, string>();
   let remainingWeight = groups.reduce((sum, group) => sum + group.weight, 0n);
   if (remainingWeight <= 0n) throw new Error("订单分配权重无效");
   const amounts = groups.map((group) => {
     const ids = new Set(group.cartIds);
     const financial = planOrderFinancialSplit(remainingOrder, remainingRows,
-      new Map(remainingRows.filter(row => ids.has(row.id)).map(row => [row.cartId, row.cartNum])));
+      new Map(remainingRows.filter(row => ids.has(row.id)).map(row => [row.cartId, row.cartNum])),remainingProof);
     const allocation = allocateSplitOrderAmounts(
       remainingOrder,
       group.weight,
       remainingWeight,
     );
     remainingOrder = { ...remainingOrder, ...allocation.remaining, ...financial?.remaining };
+    remainingProof = financial?.legacyGainProofs?.remaining;
     if (financial) for (const row of remainingRows) {
       const part = financial.carts.get(row.cartId);
       if (ids.has(row.id)) {
@@ -209,6 +213,7 @@ export async function allocatePaidOrderBySupplier(
     throw new Error("支付订单商品数量与主单不一致，不能安全拆分");
   }
   await assertOrderPromotionLedger(tx, root, cartRows);
+  const gainProof = await loadUnpaidOrderGainIntegralProof(tx,root,cartRows);
 
   const candidateSupplierIds = [
     ...new Set(
@@ -264,6 +269,9 @@ export async function allocatePaidOrderBySupplier(
       .where(eq(storeOrder.id, root.id))
       .returning();
     if (!updated[0]) throw new Error("订单 Supplier 归属更新失败");
+    await recordLegacyGainIntegralPartitions(tx,root,cartRows,gainProof,new Map(cartRows.map(row=>[row.cartId,row.cartNum])),[
+      {orderId:root.id,role:'selected',rows:cartRows.map(row=>({sourceRowId:row.id,rowId:row.id,cartId:row.cartId,quantity:row.cartNum,expectedUnique:row.unique}))},
+    ],'allocation',now);
     await tx.insert(storeOrderStatus).values({
       oid: root.id,
       changeType: "supplier_order_allocated",
@@ -281,7 +289,7 @@ export async function allocatePaidOrderBySupplier(
     throw new Error("混合订单商品已进入其他拆分流程");
   }
 
-  const { amounts, snapshots } = allocateGroupAmounts(root, plan, cartRows);
+  const { amounts, snapshots } = allocateGroupAmounts(root, plan, cartRows,gainProof);
   const invoice = await prepareSplitInvoice(tx, root, lockedInvoices);
   const childOrderIds = reserveChildOrderIds(root.orderId, [], plan.length);
   const cartsById = new Map(cartRows.map((cart) => [cart.id, cart]));
@@ -311,9 +319,19 @@ export async function allocatePaidOrderBySupplier(
       .returning();
     const child = childRows[0];
     if (!child) throw new Error("Supplier 履约子单创建失败");
+    const clonedCarts=groupCarts.map((cart)=>cloneAllocatedCart(cart,child.id,snapshots.get(cart.id)??cart.cartInfo));
     await tx
       .insert(storeOrderCartInfo)
-      .values(groupCarts.map((cart) => cloneAllocatedCart(cart, child.id, snapshots.get(cart.id) ?? cart.cartInfo)));
+      .values(clonedCarts);
+    if(gainProof){
+    const allocatedRows = await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,child.id)).orderBy(asc(storeOrderCartInfo.id));
+    await recordLegacyGainIntegralPartitions(tx,root,cartRows,gainProof,new Map(groupCarts.map(row=>[row.cartId,row.cartNum])),[
+      {orderId:child.id,role:'selected',rows:allocatedRows.map(row=>{
+        const source=groupCarts.find(cart=>cart.cartId===row.cartId),planned=clonedCarts.find(cart=>cart.cartId===row.cartId);
+        if(!source||!planned)throw new Error('Supplier 履约子单购物行与完整原写入计划不一致');
+        return{sourceRowId:source.id,rowId:row.id,cartId:row.cartId,quantity:row.cartNum,expectedUnique:planned.unique};})},
+    ],'allocation',now);
+    }
     await writeOrderPromotionLedger(tx, child, groupCarts.map((cart) => ({
       ...cart, cartInfo: snapshots.get(cart.id) ?? cart.cartInfo,
     })), now);

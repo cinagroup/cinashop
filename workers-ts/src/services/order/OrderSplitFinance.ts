@@ -7,6 +7,8 @@ import type { RefundEarnedIncomeCompensation } from './RefundEarnedIncome';
 import { readRefundGenerationMarker } from './RefundGenerationMarker';
 import { orderMembershipSavings } from './OrderMembershipSavings';
 import {LEGACY_PHP_REFUND_LINE_VERSION,projectLegacyPhpRefundLine} from './LegacyPhpRefundLineFinance';
+import { LEGACY_GAIN_EDIT_MARKER, LEGACY_EDITED_GAIN_FINANCIAL_VERSION, LEGACY_EDITED_GAIN_SOURCE,
+  legacyGainIntegralForLine, partitionLegacyGainIntegralProof, type LegacyGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 
 type Order = typeof storeOrder.$inferSelect;
 type Cart = typeof storeOrderCartInfo.$inferSelect;
@@ -56,13 +58,19 @@ function decimal(value: bigint): string {
   const sign = value < 0n ? '-' : '', absolute = value < 0n ? -value : value;
   return `${sign}${absolute / 100n}.${String(absolute % 100n).padStart(2, '0')}`;
 }
-function readLine(source: Cart, info: Record<string, unknown>): Line {
-  if (!['checkout-line-finance-v1', 'refund-order-line-finance-v1',LEGACY_PHP_REFUND_LINE_VERSION].includes(String(info.financial_version)) || info.id !== source.cartId
+function readLine(source: Cart, info: Record<string, unknown>, proof?: LegacyGainIntegralProof | null): Line {
+  if (!['checkout-line-finance-v1', 'refund-order-line-finance-v1',LEGACY_PHP_REFUND_LINE_VERSION,LEGACY_EDITED_GAIN_FINANCIAL_VERSION].includes(String(info.financial_version)) || info.id !== source.cartId
     || (info.cart_num !== source.cartNum && info.cart_num !== String(source.cartNum))
     || ![0, 1].includes(source.isGift)) throw invalid();
   if (Object.hasOwn(info, 'legacy_php_financial_source')
-    && (info.legacy_php_financial_source !== 'original-php-purchase-facts-v1'
-      || ![LEGACY_PHP_REFUND_LINE_VERSION, 'refund-order-line-finance-v1'].includes(String(info.financial_version)))) throw invalid();
+    && (![ 'original-php-purchase-facts-v1', LEGACY_EDITED_GAIN_SOURCE ].includes(String(info.legacy_php_financial_source))
+      || ![LEGACY_PHP_REFUND_LINE_VERSION, LEGACY_EDITED_GAIN_FINANCIAL_VERSION, 'refund-order-line-finance-v1'].includes(String(info.financial_version)))) throw invalid();
+  if (Object.hasOwn(info, LEGACY_GAIN_EDIT_MARKER) || info.legacy_php_financial_source === LEGACY_EDITED_GAIN_SOURCE
+    || info.financial_version === LEGACY_EDITED_GAIN_FINANCIAL_VERSION) {
+    const effective = legacyGainIntegralForLine(proof, source);
+    if (effective === undefined || points(info.gain_integral) !== BigInt(effective)
+      || info.financial_version === 'checkout-line-finance-v1' || info.legacy_php_financial_source !== LEGACY_EDITED_GAIN_SOURCE) throw invalid();
+  }
   if (info.financial_version === 'refund-order-line-finance-v1') {
     readRefundGenerationMarker(info.refund_order_generation);
   }
@@ -117,14 +125,14 @@ function persisted(amounts: Amounts): Partial<typeof storeOrder.$inferInsert> {
 
 /** Financial evidence only. Fulfillment and refund quotation separately check
  * their lifecycle/claims: a valid financial snapshot is never authorization. */
-function checkedOrderLines(order: Order, rows: Cart[]): Line[] | null {
+function checkedOrderLines(order: Order, rows: Cart[], proof?: LegacyGainIntegralProof | null): Line[] | null {
   if (!rows.length || rows.length > 200) throw invalid();
   let parsed = rows.map(row => parse(row.cartInfo));
   // This version is a server-created read projection, never stored purchase
   // evidence. A pre-labelled input cannot impersonate original PHP checkout.
   if(parsed.some(info=>info?.financial_version===LEGACY_PHP_REFUND_LINE_VERSION))throw invalid();
   if(parsed.every(info=>!info||!Object.hasOwn(info,'financial_version'))){
-    const original=parsed,paying=rows.filter(row=>row.isGift!==1);parsed=original.map((info,index)=>info?projectLegacyPhpRefundLine(order,rows[index],info,paying.length===1&&rows[index].isGift!==1):null);
+    const original=parsed,paying=rows.filter(row=>row.isGift!==1);parsed=original.map((info,index)=>info?projectLegacyPhpRefundLine(order,rows[index],info,paying.length===1&&rows[index].isGift!==1,proof):null);
     if(parsed.some(info=>!info)){
       // Preserve mature versionless/nonmaterialized refund behavior when this
       // is not complete PHP financial evidence. Torn modern financial rows
@@ -136,8 +144,8 @@ function checkedOrderLines(order: Order, rows: Cart[]): Line[] | null {
   if (rows.some(row => row.oid !== order.id || row.uid !== order.uid)) throw invalid();
   const ids = new Set(rows.map(row => row.cartId));
   if (ids.size !== rows.length) throw invalid();
-  const originals = rows.map((row, index) => readLine(row, object(parsed[index])));
-  const legacy = originals.map(({ info }) => info.legacy_php_financial_source === 'original-php-purchase-facts-v1');
+  const originals = rows.map((row, index) => readLine(row, object(parsed[index]),proof));
+  const legacy = originals.map(({ info }) => ['original-php-purchase-facts-v1', LEGACY_EDITED_GAIN_SOURCE].includes(String(info.legacy_php_financial_source)));
   if (legacy.some(Boolean) && !legacy.every(Boolean)) throw invalid();
   orderMembershipSavings(order, rows);
   const original = aggregate(originals);
@@ -155,15 +163,16 @@ function checkedOrderLines(order: Order, rows: Cart[]): Line[] | null {
  * never silently downgrade mixed/invalid v1 rows or overwrite source carts.
  * Caller holds the order and all cart locks, supplies every active cart, and
  * assigns each new row identity after planning. No database or provider I/O. */
-export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: ReadonlyMap<string, number>): {
+export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: ReadonlyMap<string, number>, proof?: LegacyGainIntegralProof | null): {
   selected: Partial<typeof storeOrder.$inferInsert>;
   remaining: Partial<typeof storeOrder.$inferInsert>;
   carts: Map<string, FinancialCartPartition>;
   /** Derived only after complete financial reconciliation. A marked successor
    * still needs its actual protected refund generation proved by the caller. */
   legacyPhpProjection: 'original-purchase' | 'refund-generation' | null;
+  legacyGainProofs?: { selected: LegacyGainIntegralProof | null; remaining: LegacyGainIntegralProof | null };
 } | null {
-  const originals = checkedOrderLines(order, rows);
+  const originals = checkedOrderLines(order, rows,proof);
   if (!originals) return null;
   if (selections.size === 0 || selections.size > 200
     || rows.some(row => row.splitSurplusNum !== row.cartNum || row.splitStatus >= 2 || row.refundNum !== 0)
@@ -189,8 +198,12 @@ export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: 
     : allocateRefundSplitPayment(order.payPrice, decimal(original.payPrice), decimal(selected.payPrice));
   const whole = remaining.totalNum === 0n;
   return {
-    legacyPhpProjection: originals.every(({ info }) => info.legacy_php_financial_source === 'original-php-purchase-facts-v1')
-      ? originals.every(({ info }) => info.financial_version === LEGACY_PHP_REFUND_LINE_VERSION)
+    ...(proof ? { legacyGainProofs: {
+      selected: partitionLegacyGainIntegralProof(proof, selectedLines.map(line=>({...line.source,cartInfo:JSON.stringify(line.info)}))),
+      remaining: partitionLegacyGainIntegralProof(proof, remainingLines.map(line=>({...line.source,cartInfo:JSON.stringify(line.info)}))),
+    } } : {}),
+    legacyPhpProjection: originals.every(({ info }) => ['original-php-purchase-facts-v1', LEGACY_EDITED_GAIN_SOURCE].includes(String(info.legacy_php_financial_source)))
+      ? originals.every(({ info }) => [LEGACY_PHP_REFUND_LINE_VERSION,LEGACY_EDITED_GAIN_FINANCIAL_VERSION].includes(String(info.financial_version)))
         ? 'original-purchase' : 'refund-generation' : null,
     selected: { ...persisted(selected), payPrice: payment.selected, changePrice: decimal(selected.payPrice - money(payment.selected)),
       giveIntegral: whole ? order.giveIntegral : 0, giveCoupon: whole ? order.giveCoupon : null, promotionsGive: whole ? order.promotionsGive : null },
@@ -208,9 +221,9 @@ export function planOrderFinancialSplit(order: Order, rows: Cart[], selections: 
  * Caller supplies locked order/cart evidence and no open refund. No SQL/I/O. */
 export function quoteOrderRefundLineFinance(
   order: Order, rows: Cart[], completed: Array<typeof storeOrderRefund.$inferSelect>,
-  selections: ReadonlyMap<string, number>,
+  selections: ReadonlyMap<string, number>, proof?: LegacyGainIntegralProof | null,
 ): string | null {
-  const originals = checkedOrderLines(order, rows);
+  const originals = checkedOrderLines(order, rows,proof);
   if (!originals) return null;
   if (completed.length > 200 || order.pid === -1) throw invalid();
   const byId = new Map(rows.map(row => [row.cartId, row]));
@@ -315,8 +328,9 @@ export function targetLineCompensation(income: number, basis: RefundCompensation
  * application at receipt; they must never increase completed compensation. */
 export function planCompletedRefundLineCompensation(
   order: Order, rows: Cart[], completed: Array<typeof storeOrderRefund.$inferSelect>,
+  proof?: LegacyGainIntegralProof | null,
 ): RefundLineCompensation | null {
-  const originals = checkedOrderLines(order, rows);
+  const originals = checkedOrderLines(order, rows,proof);
   if (!originals) return null;
   if (completed.length > 201 || order.pid === -1) throw invalid();
   const byId = new Map(rows.map(row => [row.cartId, row]));

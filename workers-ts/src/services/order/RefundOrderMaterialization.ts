@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof, recordLegacyGainIntegralPartitions } from './UnpaidOrderGainIntegralProof';
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderRefundPayment, storeOrderStatus } from '@/models/schema';
@@ -47,7 +48,7 @@ function cartSnapshot(value: string, id: string, refundId: number, selected: boo
     refund_order_generation: { refundId, role: selected ? 'selected' : 'remaining' } }, 65536);
 }
 function cloneCart(source: Cart, id: number, oid: number, quantity: number, snapshot: string,
-  writeoff: RefundWriteoffState, selected: boolean, firstSplit: boolean, delivered: boolean, refundId: number): typeof storeOrderCartInfo.$inferInsert {
+  writeoff: RefundWriteoffState, selected: boolean, firstSplit: boolean, delivered: boolean, refundId: number): typeof storeOrderCartInfo.$inferInsert & {unique:string} {
   return { ...source, ...writeoff, id, oid, cartId: firstSplit || selected ? String(id) : source.cartId,
     oldCartId: firstSplit || selected ? source.oldCartId || source.cartId : source.oldCartId,
     cartNum: quantity, refundNum: selected ? quantity : 0, surplusNum: quantity,
@@ -98,13 +99,14 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
     .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
   const hasPromotionLedger = await assertOrderPromotionLedger(tx, source, carts);
   const priorGeneration = await loadRefundOrderGeneration(tx, source, carts);
+  const gainProof = await loadUnpaidOrderGainIntegralProof(tx,source,carts);
   const other = await tx.select({ id: storeOrderRefund.id }).from(storeOrderRefund)
     .leftJoin(storeOrderRefundSplit, eq(storeOrderRefundSplit.refundId, storeOrderRefund.id)).where(and(
       eq(storeOrderRefund.storeOrderId, source.id), ne(storeOrderRefund.id, refund.id), eq(storeOrderRefund.isCancel, 0), eq(storeOrderRefund.isDel, 0),
       inArray(storeOrderRefund.refundType, [0, 1, 2, 4, 5, 6]), sql`${storeOrderRefundSplit.refundId} IS NULL`,
     )).limit(1);
   if (other.length) throw new ValidateException('其他售后尚未完成实体归属核对');
-  const compensation = planCompletedRefundLineCompensation(source, carts, [refund]);
+  const compensation = planCompletedRefundLineCompensation(source, carts, [refund],gainProof);
   if (!compensation || cents(source.backIntegral) !== compensation.usedIntegral * 100) throw invalid();
   const claim = readRefundQuantityReservation(refund)!;
   const selected = new Map(claim.items.map(item => [refundClaimCartKey(item), item.cartNum]));
@@ -115,7 +117,7 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       ? row.splitStatus === 2 || row.splitSurplusNum !== row.cartNum
       : !((row.splitStatus < 2 && row.splitSurplusNum === row.cartNum) || (row.splitStatus === 2 && row.splitSurplusNum === 0))))) throw invalid();
   const plan = planOrderFinancialSplit({ ...source, refundPrice: '0.00', backIntegral: '0.00' },
-    carts.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selected);
+    carts.map(row => ({ ...row, refundNum: 0, splitStatus: 0, splitSurplusNum: row.cartNum })), selected,gainProof);
   if (!plan) throw invalid();
   const disposition = refundSplitDisposition(source.status, carts, [...selected].map(([cartId, cartNum]) => ({ cartId, cartNum })));
   if (disposition === 'whole-order-gift-remainder') throw new ValidateException('未发货仅剩赠品，需要连同赠品库存与权益完成整单结算');
@@ -137,12 +139,15 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
   const firstSplit = source.pid === 0;
   const mappings: Array<{ sourceRowId: number; sourceCartId: string; selectedRowId: number | null; remainingRowId: number | null;
     selectedNum: number; remainingNum: number }> = [];
+  const expectedCartUniques=new Map<number,string>();
+  const plannedUnique=(rowId:number)=>{const value=expectedCartUniques.get(rowId);if(value===undefined)throw invalid();return value;};
   let selectedOrderId = source.id, remainingOrderId: number | null = null;
   if (disposition === 'whole-order') {
     await tx.update(storeOrder).set({ refundStatus: 2 }).where(eq(storeOrder.id, source.id));
     await tx.update(storeOrderCartInfo).set({ refundNum: 0, splitStatus: 2, splitSurplusNum: 0 }).where(eq(storeOrderCartInfo.oid, source.id));
     mappings.push(...carts.map(row => ({ sourceRowId: row.id, sourceCartId: row.cartId, selectedRowId: row.id,
       remainingRowId: null, selectedNum: row.cartNum, remainingNum: 0 })));
+    for(const row of carts)expectedCartUniques.set(row.id,row.unique);
   } else {
     const children = await tx.select({ orderId: storeOrder.orderId }).from(storeOrder).where(eq(storeOrder.pid, root.id))
       .orderBy(asc(storeOrder.id)).limit(1001);
@@ -173,10 +178,14 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
       const quantity = selected.get(row.cartId) ?? 0, parts = plan.carts.get(row.cartId)!;
       const selectedRowId = quantity ? ids[next++] : null;
       const remainingRowId = quantity < row.cartNum ? firstSplit ? ids[next++] : row.id : null;
-      if (selectedRowId !== null) selectedRows.push(cloneCart(row, selectedRowId, selectedOrderId, quantity,
-        parts.selected!, parts.selectedWriteoff!, true, firstSplit, source.status !== 0, refund.id));
-      if (remainingRowId !== null) remainingRows.push(cloneCart(row, remainingRowId, remainingOrderId, row.cartNum - quantity,
-        parts.remaining!, parts.remainingWriteoff!, false, firstSplit, source.status !== 0, refund.id));
+      if (selectedRowId !== null) {
+        const cloned=cloneCart(row, selectedRowId, selectedOrderId, quantity,parts.selected!, parts.selectedWriteoff!, true, firstSplit, source.status !== 0, refund.id);
+        selectedRows.push(cloned);expectedCartUniques.set(selectedRowId,cloned.unique);
+      }
+      if (remainingRowId !== null) {
+        const cloned=cloneCart(row, remainingRowId, remainingOrderId, row.cartNum - quantity,parts.remaining!, parts.remainingWriteoff!, false, firstSplit, source.status !== 0, refund.id);
+        remainingRows.push(cloned);expectedCartUniques.set(remainingRowId,cloned.unique);
+      }
       mappings.push({ sourceRowId: row.id, sourceCartId: row.cartId, selectedRowId, remainingRowId,
         selectedNum: quantity, remainingNum: row.cartNum - quantity });
     }
@@ -221,6 +230,15 @@ export async function materializeCompletedRefundOrder(tx: DbClient, expected: Re
     previousRefundId, baseBranchId: priorGeneration?.baseBranchId ?? null, returnedPointBillIds, earnedIncomeScope, invoiceAllocation,
     sourceSnapshot, partitions: boundedJson(mappings, 131072), addTime: now }).returning();
   if (!record) throw invalid();
+  await recordLegacyGainIntegralPartitions(tx,source,carts,gainProof,selected,[
+    { orderId:selectedOrderId,role:'selected',refundId:refund.id,rows:mappings.filter(row=>row.selectedRowId!==null).map(row=>({
+      sourceRowId:row.sourceRowId,rowId:row.selectedRowId!,cartId:disposition==='whole-order'?row.sourceCartId:String(row.selectedRowId),quantity:row.selectedNum,
+      expectedUnique:plannedUnique(row.selectedRowId!) })) },
+    ...(remainingOrderId===null?[]:[{ orderId:remainingOrderId,role:'remaining' as const,refundId:refund.id,
+      rows:mappings.filter(row=>row.remainingRowId!==null).map(row=>({sourceRowId:row.sourceRowId,rowId:row.remainingRowId!,
+        cartId:firstSplit?String(row.remainingRowId):row.sourceCartId,quantity:row.remainingNum,
+        expectedUnique:plannedUnique(row.remainingRowId!)})) }]),
+  ],'refund',now);
   await tx.insert(storeOrderStatus).values({ oid: source.id, changeType: 'refund_order_split',
     changeMessage: `退款 ${refund.id} 实体归属 ${selectedOrderId}，剩余订单 ${remainingOrderId ?? 0}`, changeTime: now });
   return result(record, false);

@@ -44,15 +44,16 @@ function amounts(rows: readonly Cart[]): { versioned: boolean; list: LedgerAmoun
 
 /** Caller already holds the source order and carts. Locks its ledger before
  * splitting so no child can acquire a different promotion amount. */
-export async function assertOrderPromotionLedger(tx: DbClient, order: Order, carts: readonly Cart[]): Promise<boolean> {
+export async function assertOrderPromotionLedger(tx: DbClient, order: Order, carts: readonly Cart[], readOnlySnapshot = false): Promise<boolean> {
   const expected = amounts(carts);
   if (!expected.versioned) {
     if (cents(order.promotionsPrice) !== 0) throw invalid();
     return false;
   }
   if (expected.list.reduce((sum, row) => sum + row.cents, 0) !== cents(order.promotionsPrice)) throw invalid();
-  const booked = await tx.select().from(storeOrderPromotions).where(eq(storeOrderPromotions.oid, order.id))
-    .orderBy(asc(storeOrderPromotions.id)).for('update');
+  const query = tx.select().from(storeOrderPromotions).where(eq(storeOrderPromotions.oid, order.id))
+    .orderBy(asc(storeOrderPromotions.id));
+  const booked = await (readOnlySnapshot ? query : query.for('update'));
   const actual = new Map<string, number>();
   for (const row of booked) {
     if (row.uid !== order.uid) throw invalid();

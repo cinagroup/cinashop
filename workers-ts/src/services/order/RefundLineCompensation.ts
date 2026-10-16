@@ -1,3 +1,4 @@
+import { loadUnpaidOrderGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 import { and, asc, eq } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund } from '@/models/schema';
@@ -31,7 +32,7 @@ export async function loadRefundLineCompensation(tx: DbClient, orderId: number, 
   if (history.length > 402) throw new ValidateException('退款补偿历史过长，请先核对订单');
   const completed = await currentGenerationRefunds(history, generation);
   if (projected) completed.push({ ...projected.refund, refundType: 6, refundedPrice: projected.refund.refundPrice });
-  const plan = planCompletedRefundLineCompensation(order, rows, completed);
+  const plan = planCompletedRefundLineCompensation(order, rows, completed, await loadUnpaidOrderGainIntegralProof(tx,order,rows));
   return plan && generation ? { ...plan, returnedPointBillIds: generation.returnedPointBillIds,
     ...(generation.earnedIncomeScope ? { earnedIncome: refundEarnedIncomeCompensation(plan, generation.earnedIncomeScope) } : {}),
     materializedRefundIds: [...generation.materialized.keys()] } : plan;

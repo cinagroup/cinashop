@@ -23,6 +23,7 @@ import {
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { customerCityQueuedNoticeIsActive } from './OrderNotificationOutboxService';
+import { supplierOrderPriceRevisionIsActive } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
 import { sendWithdrawalWecomRobot, WECOM_WITHDRAWAL_TARGET } from "@/services/wechat/WithdrawalWecomRobotProvider";
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
@@ -63,7 +64,7 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel);
 }
 
@@ -368,6 +369,11 @@ export class OrderNotificationDeliveryService {
       if (row.status !== "ENQUEUED") return "busy";
       if(!await customerCityQueuedNoticeIsActive(tx,row.eventKey)){
         await tx.update(orderNotificationDelivery).set({status:'SKIPPED',leaseToken:'',leaseUntil:0,lastError:'city_attempt_no_longer_active',updateTime:now}).where(eq(orderNotificationDelivery.id,row.id));
+        return 'skipped';
+      }
+      if (!await supplierOrderPriceRevisionIsActive(tx, row.eventKey)) {
+        await tx.update(orderNotificationDelivery).set({ status: 'SKIPPED', leaseToken: '', leaseUntil: 0,
+          lastError: 'order_price_revision_no_longer_active', updateTime: now }).where(eq(orderNotificationDelivery.id, row.id));
         return 'skipped';
       }
       const attemptCount = row.attemptCount + 1;
