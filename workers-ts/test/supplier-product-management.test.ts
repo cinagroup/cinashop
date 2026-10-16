@@ -242,7 +242,7 @@ describe("supplier product migration contracts", () => {
     const form = readFileSync("../view/supplier-ts/src/pages/ProductForm.vue", "utf8");
     const products = readFileSync("../view/supplier-ts/src/pages/Products.vue", "utf8");
     expect(form).toContain("卡密 / 固定内容");
-    expect(form).toContain(':disabled="editing"');
+    expect(form).toContain('<el-radio-group v-model="form.product_type" :disabled="editing || copying">');
     expect(form).toContain("保存后前往卡密库存安全导入");
     expect(form).toContain("delivery_mode === \"fixed\"");
     expect(form).toContain("scope.row.suk}-${scope.row.delivery_mode");

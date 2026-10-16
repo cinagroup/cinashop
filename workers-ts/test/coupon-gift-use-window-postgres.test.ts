@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
 import type { Env, OrderPaidOutboxMessage } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { storeCart, storeCouponIssue, storeCouponIssueUser, storeCouponUser, storeOrder, storeOrderStatus,
   storeOrderOutbox, storeOrderProductCouponReward, storeProduct, storeProductCoupon,
   systemConfig, user, userBill, userMoney } from '../src/models/schema';
-import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBusinessCommissioning';
+import { runRuntimeBusinessCommissioning, type RuntimeCommissionTarget } from '../src/migrations/runRuntimeBusinessCommissioning';
+import { inspectReviewedOfflineGiftCatalog } from '../src/migrations/reviewedOfflineGiftCatalog';
 import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
 import { LoginService } from '../src/services/user/LoginService';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
@@ -15,6 +17,7 @@ import { setTokenBucket } from '../src/utils/cache';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
 import { withCouponTemplatePeer, type CouponTemplateRuntimePeer } from './helpers/couponTemplateFixture';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
+import { ownsSequenceRunnerEndpoint, validateSequenceRunnerTestUrl } from './helpers/kefuSequenceRunnerDatabase';
 
 // Only the external token store is replaced. Real independently authenticated
 // App/Admin LOGINs execute production registration, checkout, wallet payment and
@@ -33,6 +36,59 @@ const firstIssue = 51001;
 const phone = (n: number) => `1391001${String(n).padStart(4, '0')}`;
 const issueLock = (command: string) => command.includes('from "store_coupon_issue"') && command.endsWith('for update');
 const accountLock = (command: string) => command.includes('from "user"') && command.endsWith('for update');
+
+/** This suite tests coupon-row contention, not background maintenance timing.
+ * Keep the exact two pricing sources out of autovacuum scheduling in this
+ * process-owned database. Actual independent writer/NOWAIT witnesses remain
+ * in the pricing capability suites; the historical blocker was not observed. */
+async function isolateGiftPricingMaintenance(f: Fixture, runtime: RuntimeCommissionTarget) {
+  const base = validateSequenceRunnerTestUrl(process.env.TEST_FINANCE_POSTGRES_URL ?? '');
+  const [identity] = await f.db.execute(sql`SELECT current_database() AS database,current_schema() AS schema,
+    current_user AS role,session_user AS session,host(inet_server_addr()) AS host,inet_server_port() AS port,
+    current_setting('server_version_num')::integer AS version`);
+  if (!identity || identity.role !== base.username || identity.session !== identity.role || Math.floor(Number(identity.version) / 10000) !== 16
+    || !ownsSequenceRunnerEndpoint(String(identity.database), String(identity.schema), base.href, identity.host, identity.port))
+    throw Error('Gift pricing scheduling requires the exact process-owned PG16 maintenance endpoint');
+  type Row = { name: string; oid: string; owner: string; kind: string; options: string[] | null };
+  const catalog = () => f.db.execute<Row>(sql`SELECT c.relname AS name,c.oid::text AS oid,
+    pg_get_userbyid(c.relowner) AS owner,c.relkind::text AS kind,c.reloptions AS options
+    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND c.relname IN('member_right','system_config') ORDER BY c.relname`);
+  const pricing = async () => {
+    const rows = await f.db.execute<{ oid: string; definition: string }>(sql`SELECT p.oid::text AS oid,pg_get_functiondef(p.oid) AS definition
+      FROM pg_catalog.pg_proc p WHERE p.oid='public.checkout_lock_pricing_v1()'::regprocedure`);
+    if (rows.length !== 1 || !/^[1-9]\d*$/.test(rows[0].oid) || !rows[0].definition) throw Error('Actual pricing capability absent');
+    return { oid: rows[0].oid, definition_sha256: createHash('sha256').update(rows[0].definition).digest('hex') };
+  };
+  const before = await catalog(), pricingBefore = await pricing();
+  if (before.length !== 2 || before.some((row, index) => row.name !== ['member_right','system_config'][index]
+    || row.owner !== identity.role || row.kind !== 'r' || !/^[1-9]\d*$/.test(row.oid)
+    || row.options !== null))
+    throw Error('Gift pricing source identity or options drift');
+  await f.db.transaction(async tx => {
+    await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+    await tx.execute(sql`ALTER TABLE public.member_right SET (autovacuum_enabled=false)`);
+    await tx.execute(sql`ALTER TABLE public.system_config SET (autovacuum_enabled=false)`);
+  });
+  const after = await catalog(), pricingAfter = await pricing();
+  if (after.length !== 2 || after.some((row,index) => JSON.stringify({ ...row, options: before[index].options }) !== JSON.stringify(before[index])
+    || JSON.stringify(row.options) !== '["autovacuum_enabled=false"]') || JSON.stringify(pricingAfter) !== JSON.stringify(pricingBefore))
+    throw Error('Gift pricing scheduling changed a source identity or pricing function');
+  console.log('GIFT_PRICING_FIXTURE_MAINTENANCE_SCHEDULING ' + JSON.stringify({ identity,before,after,
+    pricing_before: pricingBefore,pricing_after: pricingAfter,historical_blocker_identified: false }));
+  return async () => {
+    await f.db.transaction(async tx => {
+      await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+      await tx.execute(sql`ALTER TABLE public.member_right RESET (autovacuum_enabled)`);
+      await tx.execute(sql`ALTER TABLE public.system_config RESET (autovacuum_enabled)`);
+    });
+    const restored = await catalog(), pricingRestored = await pricing();
+    const offline = await inspectReviewedOfflineGiftCatalog(f.db, { requireOwner: true, maintenance: String(identity.role), runtime });
+    if (JSON.stringify(restored) !== JSON.stringify(before) || JSON.stringify(pricingRestored) !== JSON.stringify(pricingBefore)
+      || offline.state !== 'v1-gift-index') throw Error('Gift checkout preparation did not restore the exact commissioned catalog');
+    console.log('GIFT_PRICING_FIXTURE_MAINTENANCE_RESTORED ' + JSON.stringify({ restored, pricing: pricingRestored, offline: offline.state }));
+  };
+}
 
 function errorCode(error: unknown): string | undefined {
   if (!error || typeof error !== 'object') return undefined;
@@ -97,6 +153,7 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
   let f: Fixture | undefined;
   let env: Env;
   let cartNumber: number;
+  let runtimeNames: RuntimeCommissionTarget | undefined;
   const config = new Map<string, string>();
   const queue = { send: vi.fn(async () => { throw Error('No external queue delivery'); }),
     sendBatch: vi.fn(async () => { throw Error('No external queue delivery'); }) } as unknown as Queue<OrderPaidOutboxMessage>;
@@ -104,7 +161,7 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
 
   beforeEach(async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('No external I/O'));
-    vi.clearAllMocks(); config.clear(); cartNumber = 100;
+    vi.clearAllMocks(); config.clear(); cartNumber = 100; runtimeNames = undefined;
     f = await refundRuntimeFixture();
     try {
       // Separate platform orders allow two outbox workers to reach the SAME
@@ -135,6 +192,7 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
       const [identity] = await f.db.execute(sql`SELECT current_database() AS database`);
       const names = { app: app.role, admin: admin.role, maintenance: 'finance_test',
         database: String(identity.database), pricingOwner: f.pricingOwner };
+      runtimeNames = names;
       await runRuntimeBusinessCommissioning(f.db, names);
       for (const [peer, profile] of [[app, 'app'], [admin, 'admin']] as const) {
         expect(await auditRuntimeBusinessPrivileges(peer.db, profile, names)).toMatchObject({ ready: true, failures: [] });
@@ -183,9 +241,21 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('gift use windows throug
     await f.db.insert(storeCart).values([{ id: cartIds[0], uid: 11, productId: 70, productAttrUnique: 'qared001', cartNum: 1, isNew: 1, status: 1 },
       { id: cartIds[1], uid: 11, productId: 71, productAttrUnique: 'runtim71', cartNum: 1, isNew: 1, status: 1 }]);
     const container = createContainerFromDb(peer.db), identity = `gift_window_${n}`;
-    return StoreOrderCreateService.createWithRuntime(container,
-      { CONFIG_KV: env.CONFIG_KV, nextOrderId: async () => identity },
-      { uid: 11, key: identity, cartIds, addressId: 11, userIp: '127.0.0.1', useIntegral: false });
+    if (!runtimeNames) throw Error('Gift checkout requires actual commissioned runtime identities');
+    // This is order preparation, before the paid-gift operation under test.
+    // Commit owner DDL before the independent LOGIN runs; restore and prove
+    // the complete frozen catalog before any balance payment or gift consumer.
+    const restore = await isolateGiftPricingMaintenance(f, runtimeNames);
+    let created: { orderId: string; key: string };
+    try {
+      created = await StoreOrderCreateService.createWithRuntime(container,
+        { CONFIG_KV: env.CONFIG_KV, nextOrderId: async () => identity },
+        { uid: 11, key: identity, cartIds, addressId: 11, userIp: '127.0.0.1', useIntegral: false });
+    } finally { await restore(); }
+    const profile = peer.role === runtimeNames.app ? 'app' : peer.role === runtimeNames.admin ? 'admin' : null;
+    if (!profile) throw Error('Gift checkout peer is not a commissioned runtime');
+    expect(await auditRuntimeBusinessPrivileges(peer.db, profile, runtimeNames)).toMatchObject({ ready: true, failures: [] });
+    return created;
   }
   async function payment(peer: Peer, n: number) {
     const f = fixture(), container = createContainerFromDb(peer.db), created = await checkout(peer, n);

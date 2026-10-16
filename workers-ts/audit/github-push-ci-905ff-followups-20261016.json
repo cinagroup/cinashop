@@ -1,0 +1,281 @@
+{
+  "schema": "cinashop_ci_contract_followups_20261016_v1",
+  "reviewed_at_utc": "2026-10-16T04:17:26.406485+00:00",
+  "base_commit": "eb99c91eb3e7e73357ea7dc94552a3dbf17affb5",
+  "status": "local_validation_passed",
+  "scope": "Three test/fixture files only. No production source, DDL contract, frozen runtime privilege profile, frontend behavior or test case rejection guard changed.",
+  "cloud_original": {
+    "run_id": 38839784226,
+    "unit_job_id": 116777370735,
+    "base_commit": "905ff26533e5821d74d78785a9f5d18aaf657814",
+    "status": "failure",
+    "test_files": {
+      "failed": 3,
+      "passed": 564,
+      "total": 567
+    },
+    "tests": {
+      "failed": 3,
+      "passed": 8362,
+      "total": 8365
+    },
+    "logs": [
+      {
+        "path": "/tmp/cinashop-905ff-ci-shard2-failed.log",
+        "sha256": "2a6f84a0ad86619949a430a08b8dca2a2883ae43a4e0caac4c04c874661ad10c",
+        "bytes": 10937557
+      },
+      {
+        "path": "/tmp/cinashop-905ff-ci-shard2-clean.log",
+        "sha256": "868d9b29845ff48302e81aa58e5edaceec5e638b8316558d01e10ea22efcf4ca",
+        "bytes": 5527257
+      }
+    ],
+    "failures": [
+      {
+        "file": "test/coupon-gift-use-window-postgres.test.ts",
+        "case": "paid-outbox concurrent independent operations consume the last finite coupon only once",
+        "observed": "Actual checkout protectCheckoutPricingSources classified55P03 as configuration updating. Failure occurs during order preparation, before coupon consumer under test.",
+        "historical_blocker_identified": false
+      },
+      {
+        "file": "test/supplier-product-copy-native.test.ts",
+        "case": "validates inherited enabled configuration and ERP admission instead of silently dropping stale brands, labels, templates or form bindings",
+        "observed": "Final expected-valid manual source copy failed real LOCK TABLE ONLY store_product,... IN SHARE ROW EXCLUSIVE MODE NOWAIT; PostgreSQL55P03 could not obtain relation store_product. Invalid-config rejection assertions unchanged.",
+        "historical_blocker_identified": false
+      },
+      {
+        "file": "test/supplier-product-management.test.ts",
+        "case": "exposes Supplier type-one and type-three authoring without sending card secrets through the product form",
+        "observed": "Stale source literal expected disabled editing; actual now correctly locks editing||copying. Replaced with exact real radio-group source gate, preserving edit lock and adding copy lock."
+      }
+    ]
+  },
+  "phases": [
+    {
+      "id": "first-native-calibration",
+      "session_id": 35098,
+      "status": "failed",
+      "exit_code": 1,
+      "log": {
+        "path": "/tmp/cinashop-ci-905ff-contracts-native.log",
+        "sha256": "47362e3cf14bdcdaa7ffb8d153c86ccc5887a7598bcbe40fa7d3a818446d51ae",
+        "bytes": 44751
+      },
+      "requested_files": [
+        "test/coupon-gift-use-window-postgres.test.ts",
+        "test/checkout-pricing-service-runtime.test.ts",
+        "test/supplier-product-management.test.ts"
+      ],
+      "test_files": {
+        "failed": 1,
+        "passed": 2,
+        "total": 3
+      },
+      "tests": {
+        "failed": 19,
+        "passed": 27,
+        "total": 46
+      },
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-UioKQH",
+      "cleanup": {
+        "remaining": 0,
+        "stopped": true,
+        "authority": "terminal runner log; independent pg_ctl confirmation belongs to parent final evidence"
+      },
+      "cause": "Initial beforeEach autovacuum=false changed member_right/system_config reloptions before exact0159 commissioning. All19 coupon cases rejected genuine Runtime commissioning preflight. Strict reloptions IS NULL gate retained; temporary checkout-only prepare window replaces this wrong scheduling stage.",
+      "counting": "Retain failure history. No additive final positive credit from these reruns."
+    },
+    {
+      "id": "second-native-verified",
+      "session_id": 73131,
+      "status": "passed",
+      "log_path": "/tmp/cinashop-ci-905ff-contracts-verified.log",
+      "requested_files": [
+        "test/coupon-gift-use-window-postgres.test.ts",
+        "test/checkout-pricing-service-runtime.test.ts",
+        "test/supplier-product-management.test.ts",
+        "test/supplier-product-copy-native.test.ts"
+      ],
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-KydijD",
+      "cleanup": {
+        "remaining": 0,
+        "stopped": true,
+        "authority": "terminal runner log; independent pg_ctl confirmation belongs to parent final evidence"
+      },
+      "note": "Complete final four-file native run passed. This replaces repeated first-phase definitions; 70 is not additive to first-phase27 or old cloud8362.",
+      "exit_code": 0,
+      "log": {
+        "path": "/tmp/cinashop-ci-905ff-contracts-verified.log",
+        "sha256": "b8a23fffd5c895a494822adbcec042e4fb8eecf2be85b8e5984cec901248cc5b",
+        "bytes": 39989
+      },
+      "test_files": {
+        "failed": 0,
+        "passed": 4,
+        "total": 4
+      },
+      "tests": {
+        "failed": 0,
+        "passed": 70,
+        "skipped": 0,
+        "total": 70
+      }
+    }
+  ],
+  "review": {
+    "coupon_window": "Actual endpoint/schema/owner/OIDs/pricing definition hash checked. Two SETfalse operations are in one short owner transaction committed before independent runtime checkout. Normal checkout call finally restores exact original null options in another transaction. Full27-object inspected offline v1-gift-index plus actual peer complete runtime audit succeeds before helper returns to balance payment/paid consumer. Registration has no temporary options changes. No owner table lock held across peer checkout.",
+    "copy_scheduling": "Exact process-registered owned finance_fixture DB/endpoint, public search/table schema, PG16 finance_test owner, store_product OID/kind/options verified before/after one bounded transaction. Only fixture table autovacuum schedule changes. Existing independently authenticated store_product and six other authority/collection DML/NOWAIT zero-partial-copy negatives in native338ff remain unchanged.",
+    "guards": "No change to0159 Offline catalog reloptions null, pricing function definition, existing copy ERP/config rejection, role/actor or runtime profiles.",
+    "found_test_type_issue": {
+      "status": "fixed_by_parent_after_native_terminal_type_annotation_only",
+      "file": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+      "line": 249,
+      "issue": "Awaited<ReturnType<typeof StoreOrderCreateService.createWithRuntime>> selects last visible preview:true overload OrderPricingQuote, while this helper calls ordinary creation yielding {orderId,key}.",
+      "fix": "Exact normal create result type {orderId:string;key:string}; no runtime behavior change, any or ts-ignore. Full standard Worker types passed in session42999 after the annotation correction."
+    },
+    "fixture_failure_boundary": "If the post-SET evidence read itself fails before a restore closure is returned, current test fails closed and owned fixture is discarded by afterEach rather than proving restored options. Likewise restore failure rejects case; payment/consumer does not proceed. Do not claim all thrown setup paths have a successful restore; successful preparation has an explicit exact restored proof.",
+    "runtime_source_findings": "No production P1/P2 correctness regression identified in these test-only differences. Both final native validation and complete unit types passed; see final_validation."
+  },
+  "source_files": [
+    {
+      "path": "workers-ts/test/coupon-gift-use-window-postgres.test.ts",
+      "sha256": "4b388a35ebbb0bbdce5ba5e9c8045f9db7f428cab457ee3f596dff3b76a674a8"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+      "sha256": "01cf992d5e2ff2879b97e1db347b90f5c9b5bed2643575b7f767f6e7ac2bdc9e"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-management.test.ts",
+      "sha256": "fe31670622d5ccd0be4dabb44813c6a13967f43c450be2ee57eade7b4ef3aae0"
+    }
+  ],
+  "final_validation": {
+    "native": {
+      "status": "passed",
+      "test_files": 4,
+      "tests": 70,
+      "failed": 0,
+      "skipped": 0,
+      "phase_id": "second-native-verified",
+      "files": [
+        {
+          "path": "test/checkout-pricing-service-runtime.test.ts",
+          "passed": 15
+        },
+        {
+          "path": "test/coupon-gift-use-window-postgres.test.ts",
+          "passed": 19
+        },
+        {
+          "path": "test/supplier-product-copy-native.test.ts",
+          "passed": 24
+        },
+        {
+          "path": "test/supplier-product-management.test.ts",
+          "passed": 12
+        }
+      ]
+    },
+    "unit_types": {
+      "status": "passed",
+      "exit_code": 0,
+      "session_id": 42999,
+      "memory_mib": 8192,
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "log": {
+        "path": "/tmp/cinashop-ci-905ff-unit-types.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    "runtime_types": "Not rerun: all production Worker/runtime-test sources and config unchanged from eb99c91, whose complete runtime types passed.",
+    "frontend_build": "Not rerun: no rendered frontend source changed. Existing successful eb99c91 builds remain the source-stage evidence; no new Browser acceptance claimed.",
+    "cloud_new_commit": "Pending after this batch is pushed; no full cloud-CI success claim.",
+    "distinct_tests": 70,
+    "counting": "Latest complete four-file run only. Earlier27 passed definitions overlap and are not added."
+  },
+  "constraints": {
+    "heavy_commands_run_by_reviewer": false,
+    "repo_edits_this_review": false,
+    "production_actions": false
+  },
+  "goal": "active",
+  "unchanged_runtime_and_frontend_paths": [
+    "workers-ts/src",
+    "workers-ts/test/runtime",
+    "workers-ts/worker-configuration.d.ts",
+    "workers-ts/vitest.worker.config.ts",
+    "view"
+  ],
+  "worker_source_tree": "43f8693b676d055f19f7834f8b85fb668930bf9d",
+  "independent_cleanup": [
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-UioKQH",
+      "status_exit": 3,
+      "stdout": "pg_ctl: no server running",
+      "stderr": ""
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-KydijD",
+      "status_exit": 3,
+      "stdout": "pg_ctl: no server running",
+      "stderr": ""
+    }
+  ],
+  "secret_scan": {
+    "changed_source_files": 3,
+    "findings": 0,
+    "exit_code": 0,
+    "scanner": "gitleaks8.29.0",
+    "config": ".gitleaks.toml",
+    "allowlist_changed": false,
+    "report": {
+      "path": "/tmp/cinashop-ci-905ff-source-secrets.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    "remaining_publish_checks": "Final staged diff and exact commit range scanned separately before push."
+  },
+  "current_eb99c91_ci_snapshot": {
+    "run_id": 38848388189,
+    "success_jobs": 8,
+    "running_unit_shards": 2,
+    "source": "Actual GitHub job list observed2026-10-16 around04:13UTC; does not assert future results."
+  },
+  "next_migration_chain": {
+    "scope": "Supplier confirmation of offline cash payment→paid outbox→fulfillment and genuine Supplier cash refund",
+    "status": "source_contract_verified_implementation_not_started",
+    "source_notes": {
+      "path": "/tmp/cinashop-supplier-offline-payment-source-contract-notes.json",
+      "sha256": "747cf0876e801a30770d0377143a13fbca15cf47631251bf920d585efb9530f6",
+      "bytes": 12834
+    }
+  },
+  "parent_checkboxes": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "checked": 249,
+      "open": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007"
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "checked": 50,
+      "open": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562"
+    }
+  ],
+  "finalized_at_utc": "2026-10-16T04:20:21.069162+00:00"
+}

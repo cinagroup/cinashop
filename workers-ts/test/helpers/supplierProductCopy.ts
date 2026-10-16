@@ -2,7 +2,7 @@ import { eq, getTableName, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '@/lib/di';
 import { legacySaveSchema, legacySaveActor, legacySaveSku } from './adminLegacyProductSave';
 import { editorProduct } from './adminProductEditor';
-import { financePostgres } from './financePostgres';
+import { financePostgres, ownsFinanceFixtureEndpoint, validateFinanceFixtureUrl } from './financePostgres';
 import { AdminLegacyProductSaveService } from '@/services/admin/AdminLegacyProductSaveService';
 import { SupplierProductCopyService } from '@/services/supplier/SupplierProductCopyService';
 import { SUPPLIER_COPY_FIELDS } from '@/services/supplier/SupplierProductCopySource';
@@ -16,9 +16,49 @@ export const supplierProductCopyAppKey='owned-native-supplier-product-copy-key';
 export const supplierProductCopyPassword='owned-supplier-product-copy-password';
 const schema={...legacySaveSchema,storeProductSkuRetirementLog,storeOrder,storeOrderCartInfo,userBill,storeProductRule};
 export const supplierCopyActor=(id=21)=>({id,supplierId:id>=30?30:20,authVersion:md5(supplierProductCopyPassword),expiresAt:Math.floor(Date.now()/1000)+3600});
+
+/** Repeated reset/seed writes can invite background maintenance. Isolate only
+ * this newly owned fixture table's scheduling; production NOWAIT and the real
+ * independent-session DML contention cases remain unchanged. The historical
+ * CI 55P03 did not identify its blocker, so this does not attribute its cause. */
+async function isolateSupplierCopyMaintenanceScheduling(f: Awaited<ReturnType<typeof financePostgres>>) {
+  const base = validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL ?? '');
+  type Scheduling = { database: string; search_schema: string; schema: string; table_name: string;
+    host: string; port: number; version: number; role: string; table_oid: string; owner: string;
+    kind: string; options: string[] | null };
+  const evidence = await f.db.transaction(async tx => {
+    await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+    await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+    const capture = () => tx.execute<Scheduling>(sql`SELECT current_database() AS database,
+      current_schema() AS search_schema,n.nspname AS schema,c.relname AS table_name,
+      host(inet_server_addr()) AS host,inet_server_port() AS port,
+      current_setting('server_version_num')::integer AS version,current_user AS role,
+      c.oid::text AS table_oid,pg_get_userbyid(c.relowner) AS owner,c.relkind::text AS kind,c.reloptions AS options
+      FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='public' AND c.relname='store_product'`);
+    const before = await capture(), row = before[0];
+    if (before.length !== 1 || !row || row.search_schema !== 'public' || row.schema !== 'public'
+      || row.table_name !== 'store_product' || row.role !== 'finance_test' || row.owner !== row.role
+      || row.kind !== 'r' || !/^[1-9]\d*$/.test(row.table_oid) || Math.floor(row.version / 10000) !== 16
+      || !ownsFinanceFixtureEndpoint(row.database, row.schema, base.href, row.host, row.port)
+      || row.options !== null && JSON.stringify(row.options) !== '["autovacuum_enabled=false"]') {
+      throw Error('Supplier copy scheduling requires its exact owned native product table');
+    }
+    await tx.execute(sql`ALTER TABLE public.store_product SET (autovacuum_enabled=false)`);
+    const after = await capture();
+    if (after.length !== 1 || JSON.stringify({ ...after[0], options: row.options }) !== JSON.stringify(row)
+      || JSON.stringify(after[0].options) !== '["autovacuum_enabled=false"]') {
+      throw Error('Supplier copy fixture product identity or scheduling changed unexpectedly');
+    }
+    return { before, after, historical_blocker_identified: false };
+  });
+  console.log('SUPPLIER_COPY_FIXTURE_MAINTENANCE_SCHEDULING ' + JSON.stringify(evidence));
+}
+
 export async function supplierProductCopyFixture(){
   const f=await financePostgres(Object.values(schema),{namespace:'public'}),container=createContainerFromDb(f.db);
   try{
+    await isolateSupplierCopyMaintenanceScheduling(f);
     await f.db.transaction(tx=>installSupplierProductCopyOperation(tx));
     const service=new SupplierProductCopyService(container,supplierProductCopyAppKey);
     const seed=async()=>{
