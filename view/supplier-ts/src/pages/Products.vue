@@ -30,6 +30,8 @@ const auth = useAuthStore();
 const loading = ref(false);
 const rows = ref<ProductRow[]>([]);
 const total = ref(0);
+const productWriting = ref(false), productFresh = ref(false);
+let productReadGeneration = 0;
 const selected = ref<ProductRow[]>([]);
 const batchVisible = ref(false);
 const filters = reactive({ page: 1, limit: 20, store_name: "", is_show: "", is_verify: "" });
@@ -47,13 +49,14 @@ let categoryReadGeneration = 0, categoryFormGeneration = 0, categoryWriteGenerat
 const categorySession = createSupplierSessionScope(() => {
   categoryInvalidated.value = true;
   clearCategoryContext();
-  rows.value = []; selected.value = []; total.value = 0;
+  rows.value = []; selected.value = []; total.value = 0; productFresh.value = false; productWriting.value = false; productReadGeneration++;
 }, previewMode);
 const canViewCategories = computed(() => !categoryInvalidated.value && auth.can('supplier.product.view'));
 const canManageCategories = computed(() => !categoryInvalidated.value && auth.can('supplier.product.manage'));
 const categoryControlsDisabled = computed(() => categoryLoading.value || categoryFormLoading.value || categoryWriting.value || !categoryFresh.value);
 
 function clearCategoryContext() {
+  productReadGeneration++; productFresh.value = false; productWriting.value = false; rows.value = []; selected.value = []; total.value = 0;
   categoryContextGeneration += 1; categoryReadGeneration += 1; categoryFormGeneration += 1; categoryWriteGeneration += 1;
   categoryVisible.value = false; categoryFormVisible.value = false;
   categoryLoading.value = false; categoryFormLoading.value = false; categoryWriting.value = false;
@@ -119,18 +122,19 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 async function load() {
-  const context = categoryContext();
-  loading.value = true;
+  const context = categoryContext(), generation = ++productReadGeneration;
+  loading.value = true; productFresh.value = false;
   try {
-    const result = await getProducts(filters);
-    if (!categoryCurrent(context)) return;
+    const result = await getProducts({ ...filters });
+    if (!categoryCurrent(context) || generation !== productReadGeneration) return;
+    productFresh.value = true;
     rows.value = result.list;
     total.value = result.count;
     selected.value = [];
   } catch (error) {
-    if (categoryCurrent(context)) errorMessage(error, "商品加载失败");
+    if (categoryCurrent(context) && generation === productReadGeneration) errorMessage(error, "商品加载失败");
   } finally {
-    if (categoryCurrent(context)) loading.value = false;
+    if (categoryCurrent(context) && generation === productReadGeneration) loading.value = false;
   }
 }
 
@@ -146,18 +150,28 @@ async function toggleShow(row: ProductRow) {
 }
 
 async function removeProduct(row: ProductRow) {
+  const context = categoryContext(), generation = productReadGeneration, query = JSON.stringify(filters);
+  if (!categoryCurrent(context, true) || productWriting.value || !productFresh.value || !rows.value.some(item => item.id === row.id)) return;
+  productWriting.value = true;
+  let sent = false;
   try {
     await ElMessageBox.confirm(
       `“${row.store_name}”将下架并移入回收站，购物车中的该商品也会失效。`,
       "确认回收商品",
       { type: "warning", confirmButtonText: "移入回收站" },
     );
-    await recycleProduct(row.id);
+    if (!categoryCurrent(context, true) || generation !== productReadGeneration || query !== JSON.stringify(filters)) return;
+    sent = true; productFresh.value = false;
+    const result = await recycleProduct(row.id) as { id?: number; operation?: string; is_del?: number } | null;
+    if (!categoryCurrent(context, true)) return;
+    if (result?.id !== row.id || result.operation !== 'recycle' || result.is_del !== 1) throw new Error('回收回执不完整，请刷新列表或回收站核对');
     ElMessage.success("商品已移入回收站");
     await load();
   } catch (error) {
-    if (error !== "cancel" && error !== "close") errorMessage(error, "商品回收失败");
-  }
+    if (categoryCurrent(context, true) && error !== "cancel" && error !== "close") {
+      errorMessage(error, sent ? "回收结果未确认，请查询商品列表或回收站核对后再操作" : "商品回收失败");
+    }
+  } finally { if (categoryCurrent(context)) productWriting.value = false; }
 }
 
 async function applyBatch(isShow: number) {
@@ -359,6 +373,7 @@ onMounted(load);
       <div><h1>商品管理</h1><p>维护当前供应商的实物与卡密商品、SKU 和库存</p></div>
       <div class="heading-actions">
         <el-button type="warning" plain :icon="WarningFilled" @click="router.push('/products/virtual-alerts')">卡密预警</el-button>
+        <el-button v-if="canViewCategories" :icon="Delete" @click="router.push('/products/recycle')">回收站</el-button>
         <el-button v-if="canViewCategories" :icon="Setting" @click="openCategories">分类管理</el-button>
         <el-button type="primary" :icon="Plus" @click="router.push('/products/new')">新增商品</el-button>
       </div>
@@ -408,7 +423,7 @@ onMounted(load);
               @click="router.push(`/products/${scope.row.id}/virtual-inventory`)"
             >卡密库存</el-button>
             <el-button v-if="scope.row.product_type === 0 || scope.row.product_type === 3" link type="primary" :icon="Box" @click="openStock(scope.row)">库存</el-button>
-            <el-button link type="danger" :icon="Delete" @click="removeProduct(scope.row)">回收</el-button>
+            <el-button v-if="canManageCategories" link type="danger" :icon="Delete" :disabled="productWriting || !productFresh" @click="removeProduct(scope.row)">回收</el-button>
           </template>
         </el-table-column>
       </el-table>

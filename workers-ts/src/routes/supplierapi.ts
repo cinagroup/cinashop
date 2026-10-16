@@ -13,6 +13,7 @@ import * as SupplierCategory from "@/controllers/supplier/SupplierProductCategor
 import * as SupplierBatch from "@/controllers/supplier/SupplierProductBatchController";
 import * as SupplierLabels from '@/controllers/supplier/SupplierProductLabelController';
 import * as SupplierProductRules from '@/controllers/supplier/SupplierProductRuleController';
+import * as SupplierProductRecycle from '@/controllers/supplier/SupplierProductRecycleController';
 import * as PrintDocumentController from "@/controllers/system/PrintDocumentController";
 import * as PrintJobController from "@/controllers/system/PrintJobController";
 import * as WaybillJobController from "@/controllers/system/WaybillJobController";
@@ -51,6 +52,9 @@ supplierapiRoutes.use('/product/product/rule', SupplierProductRules.privateRespo
 supplierapiRoutes.use('/product/product/rule/*', SupplierProductRules.privateResponse);
 supplierapiRoutes.use('/product/product/get_rule', SupplierProductRules.privateResponse);
 supplierapiRoutes.use('/product/product/get_rule/*', SupplierProductRules.privateResponse);
+supplierapiRoutes.use('/product/product', SupplierProductRecycle.privateResponse);
+supplierapiRoutes.use('/product/product/*', SupplierProductRecycle.privateResponse);
+supplierapiRoutes.use('/product/type_header', SupplierProductRecycle.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -248,6 +252,8 @@ supplierapiRoutes.post("/product/generate_attr/:id/:type", SupplierController.ge
 supplierapiRoutes.post("/product/product", SupplierController.createProduct);
 supplierapiRoutes.post("/product/product/:id", SupplierController.saveProduct);
 supplierapiRoutes.delete("/product/product/:id", SupplierController.recycleProduct);
+supplierapiRoutes.delete('/product/product/thorough/:id', SupplierProductRecycle.thorough);
+supplierapiRoutes.get('/product/type_header', SupplierProductRecycle.header);
 supplierapiRoutes.put("/product/product/set_show/:id/:is_show", SupplierController.setProductShow);
 supplierapiRoutes.get("/product/product/:id", SupplierController.productDetail);
 

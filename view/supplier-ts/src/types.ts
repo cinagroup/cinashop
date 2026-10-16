@@ -105,6 +105,7 @@ export interface DashboardStats {
 
 export interface ProductRow {
   id: number;
+  is_del?: 0 | 1;
   product_type: number;
   image: string;
   store_name: string;

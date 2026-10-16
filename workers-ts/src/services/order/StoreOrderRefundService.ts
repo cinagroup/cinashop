@@ -34,6 +34,7 @@ import {
   userBill as userBillTable,
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
+import { readPermanentlyDeletedBaseInventory } from './PermanentlyDeletedBaseInventory';
 import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException } from "@/utils/errors";
@@ -2350,7 +2351,7 @@ async function lockBargainRefundInventory(
 
 async function restoreRefundStock(
   tx: DbClient,
-  order: Pick<typeof storeOrder.$inferSelect, "id" | "uid" | "type" | "activityId">,
+  order: Pick<typeof storeOrder.$inferSelect, "id" | "uid" | "type" | "activityId" | "supplierId">,
   refundNum: number,
   cartInfoSnapshot: string | null,
   bargainInventory: BargainRefundInventory | null,
@@ -2389,7 +2390,7 @@ async function restoreRefundStock(
   }
   const restorationLines: Array<{
     ci: typeof cartInfos[number]; num: number; baseSkuId: number;
-    activitySkuId: number; legacyActivitySnapshot: boolean;
+    activitySkuId: number; legacyActivitySnapshot: boolean; skipBase: boolean;
   }> = [];
   let remaining = refundNum;
   for (const { row: ci, requestedNum } of selected) {
@@ -2417,6 +2418,14 @@ async function restoreRefundStock(
       activitySkuId = 0;
       legacyActivitySnapshot = false;
     }
+    const deleted = ci.type === 2 && Number.isSafeInteger(ci.relationId) && ci.relationId > 0
+      && (order.supplierId === 0 || order.supplierId === ci.relationId)
+      ? await readPermanentlyDeletedBaseInventory(tx, {
+        productId: ci.productId, skuUnique: ci.skuUnique, productType: ci.productType,
+        supplierId: ci.relationId,
+        skuId: Number.isSafeInteger(baseSkuId) && baseSkuId > 0 ? baseSkuId : undefined,
+      }) : null;
+    if (deleted) baseSkuId = deleted.skuId;
     if (!Number.isSafeInteger(baseSkuId) || baseSkuId <= 0) {
       const baseRows = await tx
         .select({ id: storeProductAttrValue.id })
@@ -2432,44 +2441,46 @@ async function restoreRefundStock(
       if (baseRows.length !== 1) throw new ValidateException("退款商品规格无法唯一定位");
       baseSkuId = baseRows[0].id;
     }
-    restorationLines.push({ ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot });
+    restorationLines.push({ ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot, skipBase: Boolean(deleted) });
   }
   if (remaining > 0) throw new ValidateException("退款商品快照与退款数量不一致");
-  if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.map(({ ci, baseSkuId }) => ({
+  if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.filter(line => !line.skipBase).map(({ ci, baseSkuId }) => ({
     baseSkuId, productId: ci.productId,
   })), () => new ValidateException("退款商品库存无法回退"));
-  for (const { ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot } of restorationLines) {
-    let baseSkuRetired = false;
-    if (baseSkuId > 0) {
-      const baseSkuRows = await tx
-        .update(storeProductAttrValue)
-        .set({
+  for (const { ci, num, baseSkuId, activitySkuId, legacyActivitySnapshot, skipBase } of restorationLines) {
+    if (!skipBase) {
+      let baseSkuRetired = false;
+      if (baseSkuId > 0) {
+        const baseSkuRows = await tx
+          .update(storeProductAttrValue)
+          .set({
+            stock: sql`stock + ${num}`,
+            sales: sql`GREATEST(sales - ${num}, 0)`,
+          })
+          .where(and(
+            eq(storeProductAttrValue.id, baseSkuId),
+            eq(storeProductAttrValue.productId, ci.productId),
+            eq(storeProductAttrValue.type, 0),
+          ))
+          .returning({
+            id: storeProductAttrValue.id,
+            isRetired: storeProductAttrValue.isRetired,
+          });
+        if (!baseSkuRows[0]) throw new ValidateException("退款商品规格库存无法回退");
+        baseSkuRetired = baseSkuRows[0].isRetired === 1;
+      }
+      const productRows = await tx
+        .update(storeProduct)
+        .set(baseSkuRetired ? {
+          sales: sql`GREATEST(sales - ${num}, 0)`,
+        } : {
           stock: sql`stock + ${num}`,
           sales: sql`GREATEST(sales - ${num}, 0)`,
         })
-        .where(and(
-          eq(storeProductAttrValue.id, baseSkuId),
-          eq(storeProductAttrValue.productId, ci.productId),
-          eq(storeProductAttrValue.type, 0),
-        ))
-        .returning({
-          id: storeProductAttrValue.id,
-          isRetired: storeProductAttrValue.isRetired,
-        });
-      if (!baseSkuRows[0]) throw new ValidateException("退款商品规格库存无法回退");
-      baseSkuRetired = baseSkuRows[0].isRetired === 1;
+        .where(eq(storeProduct.id, ci.productId))
+        .returning({ id: storeProduct.id });
+      if (!productRows[0]) throw new ValidateException("退款商品库存无法回退");
     }
-    const productRows = await tx
-      .update(storeProduct)
-      .set(baseSkuRetired ? {
-        sales: sql`GREATEST(sales - ${num}, 0)`,
-      } : {
-        stock: sql`stock + ${num}`,
-        sales: sql`GREATEST(sales - ${num}, 0)`,
-      })
-      .where(eq(storeProduct.id, ci.productId))
-      .returning({ id: storeProduct.id });
-    if (!productRows[0]) throw new ValidateException("退款商品库存无法回退");
     if ([1, 2, 3, 4].includes(order.type)) {
       const activityId = effectiveActivityId;
       if (!Number.isSafeInteger(activityId) || activityId <= 0) {

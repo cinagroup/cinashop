@@ -45,6 +45,7 @@ import {
   systemStore,
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
+import { readPermanentlyDeletedBaseInventory } from './PermanentlyDeletedBaseInventory';
 import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException, HttpApiException } from "@/utils/errors";
@@ -527,7 +528,8 @@ export async function cancelStoreOrder(
 
     const cartInfos = await tx
       .select({ id: storeOrderCartInfo.id, oid: storeOrderCartInfo.oid, uid: storeOrderCartInfo.uid,
-        cartId: storeOrderCartInfo.cartId, oldCartId: storeOrderCartInfo.oldCartId, productId: storeOrderCartInfo.productId,
+        cartId: storeOrderCartInfo.cartId, oldCartId: storeOrderCartInfo.oldCartId, productId: storeOrderCartInfo.productId, productType: storeOrderCartInfo.productType,
+        type: storeOrderCartInfo.type, relationId: storeOrderCartInfo.relationId,
         skuUnique: storeOrderCartInfo.skuUnique, cartNum: storeOrderCartInfo.cartNum, refundNum: storeOrderCartInfo.refundNum,
         splitStatus: storeOrderCartInfo.splitStatus, splitSurplusNum: storeOrderCartInfo.splitSurplusNum,
         surplusNum: storeOrderCartInfo.surplusNum, isWriteoff: storeOrderCartInfo.isWriteoff,
@@ -603,7 +605,7 @@ export async function cancelStoreOrder(
 
     const restorationLines: Array<{
       item: typeof cartInfos[number]; snapshotSkuId: number;
-      snapshotActivitySkuId: number; legacyActivitySnapshot: boolean;
+      snapshotActivitySkuId: number; legacyActivitySnapshot: boolean; skipBase: boolean;
     }> = [];
     for (const item of cartInfos) {
       let snapshotSkuId = 0;
@@ -627,6 +629,13 @@ export async function cancelStoreOrder(
         snapshotActivitySkuId = 0;
         legacyActivitySnapshot = false;
       }
+      const deleted = item.type === 2 && Number.isSafeInteger(item.relationId) && item.relationId > 0
+        && (order.supplierId === 0 || order.supplierId === item.relationId)
+        ? await readPermanentlyDeletedBaseInventory(tx, {
+          productId: item.productId, skuUnique: item.skuUnique, productType: item.productType,
+          supplierId: item.relationId, skuId: snapshotSkuId || undefined,
+        }) : null;
+      if (deleted) snapshotSkuId = deleted.skuId;
       if (!snapshotSkuId) {
         const legacySkus = await tx
           .select({ id: storeProductAttrValue.id })
@@ -644,43 +653,45 @@ export async function cancelStoreOrder(
         }
         snapshotSkuId = legacySkus[0].id;
       }
-      restorationLines.push({ item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot });
+      restorationLines.push({ item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot, skipBase: Boolean(deleted) });
     }
     // Inventory writes below follow the frozen line order. A competing checkout
     // may hold these rows in the opposite order, so every required SKU and
     // product must be acquired without waiting before the first stock update.
-    if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.map(({ item, snapshotSkuId }) => ({
+    if (order.type === 1) await lockOrderCompensationInventory(tx, restorationLines.filter(line => !line.skipBase).map(({ item, snapshotSkuId }) => ({
       baseSkuId: snapshotSkuId, productId: item.productId,
     })), () => new Error(`订单 ${orderId} 的商品库存无法完整恢复`));
-    for (const { item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot } of restorationLines) {
-      const skuRestored = await tx
-        .update(storeProductAttrValue)
-        .set({
-          stock: sql`stock + ${item.cartNum}`,
-          sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
-        })
-        .where(and(
-          eq(storeProductAttrValue.id, snapshotSkuId),
-          eq(storeProductAttrValue.productId, item.productId),
-          eq(storeProductAttrValue.type, 0),
-        ))
-        .returning({
-          id: storeProductAttrValue.id,
-          isRetired: storeProductAttrValue.isRetired,
-        });
-      const baseSkuRetired = skuRestored[0]?.isRetired === 1;
-      const productRestored = await tx
-        .update(storeProduct)
-        .set(baseSkuRetired ? {
-          sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
-        } : {
-          stock: sql`stock + ${item.cartNum}`,
-          sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
-        })
-        .where(eq(storeProduct.id, item.productId))
-        .returning({ id: storeProduct.id });
-      if (!skuRestored.length || !productRestored.length) {
-        throw new Error(`订单 ${orderId} 的商品库存无法完整恢复`);
+    for (const { item, snapshotSkuId, snapshotActivitySkuId, legacyActivitySnapshot, skipBase } of restorationLines) {
+      if (!skipBase) {
+        const skuRestored = await tx
+          .update(storeProductAttrValue)
+          .set({
+            stock: sql`stock + ${item.cartNum}`,
+            sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
+          })
+          .where(and(
+            eq(storeProductAttrValue.id, snapshotSkuId),
+            eq(storeProductAttrValue.productId, item.productId),
+            eq(storeProductAttrValue.type, 0),
+          ))
+          .returning({
+            id: storeProductAttrValue.id,
+            isRetired: storeProductAttrValue.isRetired,
+          });
+        const baseSkuRetired = skuRestored[0]?.isRetired === 1;
+        const productRestored = await tx
+          .update(storeProduct)
+          .set(baseSkuRetired ? {
+            sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
+          } : {
+            stock: sql`stock + ${item.cartNum}`,
+            sales: sql`GREATEST(sales - ${item.cartNum}, 0)`,
+          })
+          .where(eq(storeProduct.id, item.productId))
+          .returning({ id: storeProduct.id });
+        if (!skuRestored.length || !productRestored.length) {
+          throw new Error(`订单 ${orderId} 的商品库存无法完整恢复`);
+        }
       }
       if ([1, 2, 3, 4].includes(order.type)) {
         if (!snapshotActivitySkuId && !(missingLegacyActivityMain && legacyActivitySnapshot)) {

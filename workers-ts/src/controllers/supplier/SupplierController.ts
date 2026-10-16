@@ -54,6 +54,7 @@ import {
 } from "@/services/store/StoreScopedConfigService";
 import { readBoundedJsonObject as readRequestJsonObject } from "@/utils/request-body";
 import { categoryActor } from './SupplierProductCategoryController';
+import * as ProductRecycle from './SupplierProductRecycleController';
 
 type SupplierContext = Context<{
   Bindings: Env;
@@ -480,8 +481,7 @@ export async function homeOrderType(c: SupplierContext) {
 }
 
 export async function productList(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await service(c).productList(supplierId, c.req.query()));
+  return ProductRecycle.list(c);
 }
 
 export async function productUnits(c: SupplierContext) {
@@ -652,12 +652,7 @@ export async function restoreProductSkus(c: SupplierContext) {
 }
 
 export async function recycleProduct(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  await productManagementService(c).recycleProduct(
-    supplierId,
-    positiveId(c.req.param("id"), "商品ID"),
-  );
-  return jsonOk(c, null, "商品已移入回收站");
+  return ProductRecycle.change(c);
 }
 
 export async function adjustProductStock(c: SupplierContext) {

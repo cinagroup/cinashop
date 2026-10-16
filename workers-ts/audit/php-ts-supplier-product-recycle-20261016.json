@@ -1,0 +1,1672 @@
+{
+  "schema_version": 1,
+  "title": "Supplier 商品回收、恢复与彻删：完整 PHP 生命周期和现有订单补偿",
+  "base_commit": "6a7058b75a14c6a1e70f1f78c046b7d96345bd0a",
+  "status": "locally_validated_cloud_ci_pending",
+  "goal_status": "active",
+  "recorded_at": "2026-10-16T01:33:38.949669+00:00",
+  "php_source": [
+    {
+      "path": "route/supplier.php",
+      "lines": [
+        199,
+        214
+      ],
+      "contract": "商品列表、DELETE toggle及DELETE thorough"
+    },
+    {
+      "path": "app/controller/supplier/product/StoreProduct.php",
+      "lines": [
+        395,
+        555
+      ],
+      "contract": "供应商隔离、恢复和仅回收商品彻删"
+    },
+    {
+      "path": "app/services/product/product/StoreProductServices.php",
+      "lines": [
+        1009,
+        1050
+      ],
+      "contract": "type2回收置is_show0；恢复仅is_del0，不额外改审核或旧show"
+    },
+    {
+      "path": "app/listener/product/DeleteSuccess.php",
+      "contract": "每个关联购物车status0，保留product relations原status"
+    },
+    {
+      "path": "app/controller/admin/v1/system/SystemClearData.php",
+      "lines": [
+        122,
+        177
+      ],
+      "contract": "永久删除十集合，不删除现有订单、活动、卡密和附件事实"
+    }
+  ],
+  "implemented": [
+    "两个商品列表别名支持is_del与PHP旧type过滤；八类type_header计数；列表与count使用真实只读REPEATABLE READ单快照",
+    "exact id + is_del=all + page1/limit1只读恢复原结果，不接受caller tenant；旧DELETE保持toggle，现代expected_is_del阻止重放翻转",
+    "真实Supplier App/JWT/SQL authority两次检查及DB时钟；回收/恢复使全部父商品cart.status0；类型固定2且supplier owner严格隔离",
+    "永久删除十个原PHP集合，正常和retired type0 SKU均适用；保留非零type/其他category数据以及已付、未付、发货、卡密、库存、支付和活动事实",
+    "每type0 SKU在根仍存在/已回收时追加受保护permanent_delete事实，五字段source receipt不含卡密或HTML；完整RETURNING与有界全量回读，任一缺行/变更全部回滚",
+    "按bargain source→Supplier每商品保存锁→全局SKU unique allocator→product try-lock→实际物理表NOWAIT锁的既有顺序执行",
+    "退款和未付取消仅在根与所有基础SKU确已缺失、原SKU身份未复用、严格持久删除事实匹配后免于补回已删基础库存；保留活动库存和真实资金/供应商账本补偿，任何错误原子回滚",
+    "Supplier回收站路由与真实Vue页面支持查询/分页/恢复/彻删；会话、权限、路由、查询代次隔离晚响应；未知回执只读原ID核对，禁止自动重发",
+    "彻删库存豁免同时要求已锁订单明细type2及正relationId，并与非零父单supplierId一致；混合父单0也按明细精确owner绑定，拒绝跨明细归属"
+  ],
+  "permanent_sets": {
+    "store_product": "id",
+    "store_product_attr": "product_id + type0",
+    "store_product_attr_result": "product_id + type0",
+    "store_product_attr_value": "product_id + type0",
+    "store_product_description": "product_id + type0",
+    "store_product_relation": "product_id, all",
+    "store_product_coupon": "product_id, all",
+    "user_relation": "relation_id + category='product'",
+    "store_product_reply": "product_id, all",
+    "community_relevance": "right_id + type='community_product'"
+  },
+  "maintenance": {
+    "0189": {
+      "automatic_runtime_install": false,
+      "production_executed": false,
+      "new_tables": 0,
+      "new_columns": 0,
+      "functions": 2,
+      "triggers": 3,
+      "dependency_snapshot_fields": [
+        "version",
+        "kind",
+        "owner_type",
+        "supplier_id",
+        "product_type"
+      ],
+      "legacy_guard_fingerprint": "a7fd5e4f568c081df96f905880e5396adfdfd49566ab9a2f3b335a3e3c703c09",
+      "explicit_PG16_owner_transaction": true,
+      "drift_repairs": false
+    },
+    "unchanged": [
+      "历史0126和旧guard基线源",
+      "历史bootstrap/runAll/ORM cohort",
+      "冻结manager runtime权限方案",
+      "current-product四个table addons与308表声明"
+    ],
+    "permissions": "真实PG16独立LOGIN确认：旧列级UPDATE(id,stock,sales)不能取得两库存表SRE，probe42501，调用503零副作用；显式新feature角色表级UPDATE后成功，事实日志仅SELECT，无日志DML/序列/guard EXECUTE；缺logSELECT继续503。Supplier写入另需十集合DELETE、事实与审计INSERT/序列、真实业务/权限表锁权限。所有为独立维护/profile发布依赖，不自动扩冻结manager方案。"
+  },
+  "preserved_user_decision": "保留已恢复的/api/get_script与Admin/Supplier/UniApp自动加载PHP兼容合同；退役审计已在先前提交更新。",
+  "initial_failures_preserved": [
+    {
+      "logs": [
+        "/tmp/cinashop-supplier-recycle-compensation-red.log",
+        "/tmp/cinashop-supplier-recycle-compensation-red2.log"
+      ],
+      "kind": "fixture_calibration",
+      "reason": "合成订单号超过varchar32；修正后重新执行，未作为生产回归结论"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-red3.log",
+      "kind": "genuine_business_red",
+      "failed": 4,
+      "passed": 2,
+      "reason": "普通/砍价真实订单在彻删后退款/取消库存回退失败；无删除事实的损坏按原合同拒绝"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-first.log",
+      "kind": "implementation_failure",
+      "reason": "source receipt五字段误计为六导致拒绝；已修正并增加正向事实合同验证"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-native-first.log",
+      "kind": "intermediate_joint",
+      "passed": 39,
+      "failed": 7,
+      "reason": "取消显式SELECT漏productType已修；其他失败为测试paid状态未建Supplier账本或撕裂modern版本测试输入，均修正为真账本/合法versionless形状"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-second.log",
+      "passed": 16,
+      "failed": 1,
+      "reason": "仍保留modern字段的伪legacy快照按防降级守卫拒绝；替换为真实无版本形状，守卫未弱化"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-line-owner-red.log",
+      "failed": 1,
+      "filtered_out": 18,
+      "reason": "mixed父单0时原实现忽略已持久化的明细owner，实际取消错误成功；已修正取消与退款两调用及取消SELECT；最终原生19项core包含正负回归"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-ordinary-final.log",
+      "failed": 13,
+      "passed": 86,
+      "reason": "砍价创建要求已维护的真实PG16定价能力，在内存环境拒绝；测试转至隔离PG16，最终联合68项中原13项全部通过，未弱化生产门禁"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-browser-final.log",
+      "reason": "首轮本地代理把/api/get_script误转静态HTML，Browser报告SyntaxError；在写入前通过显式finish关闭夹具，验证按不完整流程拒绝。修正代理转发真实App raw JS+隔离KV空配置后重新验收通过"
+    },
+    {
+      "kind": "browser_observation_retry",
+      "reason": "实际finish已通过全部SQL断言并完成，工具regexp可见性等待未匹配；改读已渲染pre内容确认finished=true，没有重复finish或删除"
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-worker-types.log",
+      "reason": "完整检查发现过期异常误用不含401的HttpApiException、两处fixture字段title应为storeName及未用imports；改用既有AuthException和正确字段，未放宽共享HTTP状态类型或生产合同。"
+    }
+  ],
+  "source_freeze": {
+    "file_count": 3204,
+    "sha256": "5df2bcf18fb9a7eab7b6c25996243c534b3f1185af27750cadf640bb55775254",
+    "manifest": "/tmp/cinashop-supplier-recycle-frozen-final.json",
+    "scope": "workers-ts及view/supplier-ts的Git已登记与本轮未跟踪源/配置/SQL/测试，排除audit/docs和非代码扩展",
+    "post_initial_changes": [
+      "runner追加原生砍价测试白名单",
+      "真实红测后两处补偿增加持久订单明细type/relationId校验",
+      "Browser代理真实转发统计脚本接口，测试KV提供显式空脚本",
+      "完整tsc修正：使用既有AuthException、测试fixture正确storeName与去未用imports；真实native18复验"
+    ],
+    "unchanged_after_validation": true
+  },
+  "changed_code_hashes": [
+    {
+      "path": "view/supplier-ts/src/api/productRecycle.ts",
+      "sha256": "ced72bf9de1d42227642796f253fdce4172e83c9b18792c921f61c193a70debf"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "sha256": "a9fdbfc3daf3dd30a1eda089ef9e8401d46c5481a22193edb20547066bd2dfe0"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductRecycle.vue",
+      "sha256": "7260779e64d453a9f2de184bc0e4a838aa712076295cb73f1bfb7716acfcd114"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "sha256": "4980b7a8ee84d3ce3ef2de1045dae8ea5df2dc28c55da4abc14446ff59fa1a1b"
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "b3a47237075c12f7a2e3d20540b2d4ce553b38af2dbc5f5429025f61ad6a2772"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "098b41ac09858392021c8951d6aa154cc45dcf2606021ab9b49522ac8c931a27"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "69c9052fda689dbf4a5c7fd122a2901a68b618e9b858030c5e8ff913aa3c7a23"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "8e22ce90de204076e69d031cfb3c3f46ba8e68bcf092c9331cedd597740c29a7"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductRecycleController.ts",
+      "sha256": "55fc801ef36248440ab278fa3d35bd5cdc430411b184d577124461718acfa43d"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0189_product_recycle_sku_guard.sql",
+      "sha256": "be8db8993c5d4ce3c0de0efa0b78cf6e909de12fb55cd7f6a388e28e42d4d520"
+    },
+    {
+      "path": "workers-ts/src/migrations/productRecycleSkuGuard.ts",
+      "sha256": "e6662ce1906c9f7b646d785c9509bd48f26ab88929dc27035828112ebb37d870"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "0d7e706957a1b8cf4b826da8210bbc5b61dfb6f787a6c1237fbeca5db1f667a3"
+    },
+    {
+      "path": "workers-ts/src/services/order/PermanentlyDeletedBaseInventory.ts",
+      "sha256": "98ce30fb3e6b40249adfb9df65d1a43dab0db84a7436555ab514f9ba33e8aec2"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "a86f25290d4cfd1738519a34e39772eea02faaf30470f7bba8a09c6a19d421ce"
+    },
+    {
+      "path": "workers-ts/src/services/product/PermanentProductDeletionEvidence.ts",
+      "sha256": "dff6198e7660c63f6c35fd2e2fb0273ced271f04ab6ba14fbcf8a50f6de431e1"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "bc5141f12d3d42a998dc492533a98ce58d5f5693ddd5db753e1398bc8bdfbb50"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductRecycleService.ts",
+      "sha256": "b7e1989e1573e9c81cd3713e5c912b78931a04e44f15a1532a396e6dd0375bcd"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-recycle.acceptance.ts",
+      "sha256": "7b5f6972757f9202c566892d7c6a4a1355f8862d9a6daa5763ab9843b1927faa"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductRecycle.ts",
+      "sha256": "88f54663c37482d6ee8b9ef2029e25d066029545e9ad45d84be330b17fc3b6de"
+    },
+    {
+      "path": "workers-ts/test/permanent-product-deletion-evidence.test.ts",
+      "sha256": "ad3dba333877b5c8f830accdc48e5c75c42135cb8334a57af5ddfe5ef3177701"
+    },
+    {
+      "path": "workers-ts/test/permanently-deleted-base-inventory-native.test.ts",
+      "sha256": "9f161d4d4e75b270e6e0bd74171af9486bccf9fc968ae3145ab515c494dd70ed"
+    },
+    {
+      "path": "workers-ts/test/product-recycle-sku-guard-catalog-native.test.ts",
+      "sha256": "5fde86a7c4d982dddd87388a3ea61243262fad0b0499c8ec7fca676c3e5d9431"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recycle-compensation-native.test.ts",
+      "sha256": "7b624edab6ee503876cdf97455b5933a17d2209337adfb29f9d8ab5ff499146d"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recycle-frontend.test.ts",
+      "sha256": "68ed6af3953c807f877cefbed9c2b999f87015999721028c2d11a69892dc137f"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-recycle-native.test.ts",
+      "sha256": "61a778cf3e3818b995d20b53c75f753c8efa575936704f91cd0ec45db6ce2f74"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-recycle-browser.config.ts",
+      "sha256": "afb493f4f3affd746bc8a5b086491b1fbd2cb24d659cf1a0d7955f8f48c81d2e"
+    }
+  ],
+  "parent_checkboxes": {
+    "MIGRATION_CHECKLIST.md": {
+      "total": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+      "unchanged_from_head": true
+    },
+    "MIGRATION_AUDIT.md": {
+      "total": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+      "unchanged_from_head": true
+    }
+  },
+  "limitations": [
+    "尚未执行生产DDL、GRANT或部署",
+    "任何新提交的完整云端CI须独立查看，不将旧提交的部分成功当作本次CI全绿",
+    "浏览器验收使用本机合成账号与owned PG16；没有调用真实支付、外部存储或队列provider",
+    "整个PHP→TS迁移目标仍active，父项不据此批次擅自勾选完成"
+  ],
+  "verification": {
+    "gates": [
+      {
+        "log": "/tmp/cinashop-supplier-recycle-native-verified.log",
+        "sha256": "adec98dd3715a1e8f4fe5f1cd20b5ee024c2a4e56602abab7660deba2e93674b",
+        "passed": 68,
+        "failed": 0,
+        "files": {
+          "test/supplier-product-recycle-compensation-native.test.ts": 19,
+          "test/bargain-inventory-compensation.test.ts": 13,
+          "test/supplier-product-recycle-native.test.ts": 18,
+          "test/product-recycle-sku-guard-catalog-native.test.ts": 11,
+          "test/seckill-cross-activity-compensation-postgres.test.ts": 2,
+          "test/seckill-compensation-refund-postgres.test.ts": 2,
+          "test/seckill-compensation-ordinary-order-postgres.test.ts": 1,
+          "test/permanently-deleted-base-inventory-native.test.ts": 2
+        }
+      },
+      {
+        "log": "/tmp/cinashop-supplier-recycle-compensation-regression.log",
+        "sha256": "b76e3adf16610b0a7048424f79e4c25ce8b91bbf2a5932382a6a97ea609218e9",
+        "passed": 45,
+        "failed": 0,
+        "files": {
+          "test/supplier-product-recycle-compensation-native.test.ts": 18,
+          "test/unpaid-mixed-order-cancellation-postgres.test.ts": 22,
+          "test/seckill-cross-activity-compensation-postgres.test.ts": 2,
+          "test/seckill-compensation-ordinary-order-postgres.test.ts": 1,
+          "test/seckill-compensation-refund-postgres.test.ts": 2
+        }
+      },
+      {
+        "log": "/tmp/cinashop-supplier-recycle-ordinary-verified.log",
+        "sha256": "f5f37c4e923d58401628a2de10bea0861699c37b312f0538ea3804d4f72aa101",
+        "passed": 86,
+        "failed": 0,
+        "files": {
+          "test/supplier-product-category-frontend.test.ts": 18,
+          "test/supplier-product-batch-frontend.test.ts": 21,
+          "test/supplier-product-recycle-frontend.test.ts": 17,
+          "test/product-sku-retirement.test.ts": 11,
+          "test/supplier-product-management.test.ts": 12,
+          "test/supplier-product-category-permission.test.ts": 3,
+          "test/permanent-product-deletion-evidence.test.ts": 2,
+          "test/supplier-product-batch-permission.test.ts": 2
+        }
+      },
+      {
+        "log": "/tmp/cinashop-supplier-recycle-statistics-verified.log",
+        "sha256": "f4ecff83cd8835c4c67646f031229c2afa4e91c24996e5af3c17c190c8f8c1a1",
+        "passed": 4,
+        "failed": 0,
+        "files": {
+          "test/public-statistics-script-http.test.ts": 4
+        }
+      }
+    ],
+    "distinct_related_tests_across_documented_phases": 181,
+    "latest_critical_native": 68,
+    "ordinary_frontend_and_statistics": 90,
+    "browser": 1,
+    "prior_adjacent_unpaid_cancellation_tests": 22,
+    "phase_boundary": "旧45项包含新core18和秒杀5，后续68项已在逐行owner修正后重新验证core19及全部秒杀5，去重；旧正常未付混合订单22项保留为收紧前的相邻回归，不冒充新缺失库存分支证明。普通8文件86项及原统计4项未受后续owner分支修改影响。",
+    "full_worker_types": {
+      "status": "passed",
+      "exit_code": 0,
+      "heap_MiB": 8192,
+      "logs": [
+        {
+          "path": "/tmp/cinashop-supplier-recycle-worker-types-verified.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "exit_code": 0
+        },
+        {
+          "path": "/tmp/cinashop-supplier-recycle-runtime-types-verified.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "exit_code": 0
+        }
+      ]
+    },
+    "supplier_vue_types_and_production_build": {
+      "exit_code": 0,
+      "log": "/tmp/cinashop-supplier-recycle-supplier-build.log",
+      "warnings": "既有依赖PURE注解位置与大chunk提示；构建成功，本轮未改依赖或全站打包策略"
+    },
+    "browser_evidence": {
+      "browser": "Codex In-app Browser",
+      "desktop": {
+        "width": 1280,
+        "height": 720
+      },
+      "mobile": {
+        "width": 390,
+        "height": 844,
+        "horizontalTable": true,
+        "restoreConfirmationOpenedAndCancelled": true
+      },
+      "readonlyWriteButtons": 0,
+      "consoleWarningsAndErrors": [],
+      "screenshots": [
+        "/tmp/cinashop-supplier-recycle-desktop.png",
+        "/tmp/cinashop-supplier-recycle-mobile.png",
+        "/tmp/cinashop-supplier-recycle-mobile-actions.png",
+        "/tmp/cinashop-supplier-recycle-readonly.png"
+      ],
+      "sql": {
+        "products": [
+          {
+            "id": 80,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 1,
+            "is_show": 0,
+            "is_verify": 1
+          },
+          {
+            "id": 82,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 1,
+            "is_show": 0,
+            "is_verify": -2
+          },
+          {
+            "id": 83,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 0,
+            "is_show": 0,
+            "is_verify": 1
+          },
+          {
+            "id": 84,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 0,
+            "is_show": 1,
+            "is_verify": 1
+          },
+          {
+            "id": 85,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 0,
+            "is_show": 1,
+            "is_verify": 0
+          },
+          {
+            "id": 86,
+            "type": 2,
+            "relation_id": 20,
+            "is_del": 0,
+            "is_show": 1,
+            "is_verify": -1
+          },
+          {
+            "id": 90,
+            "type": 2,
+            "relation_id": 30,
+            "is_del": 1,
+            "is_show": 1,
+            "is_verify": 0
+          },
+          {
+            "id": 100,
+            "type": 0,
+            "relation_id": 20,
+            "is_del": 1,
+            "is_show": 1,
+            "is_verify": 0
+          },
+          {
+            "id": 101,
+            "type": 1,
+            "relation_id": 20,
+            "is_del": 1,
+            "is_show": 1,
+            "is_verify": 0
+          }
+        ],
+        "sku_rows_81": [
+          {
+            "id": 303,
+            "type": 3,
+            "is_retired": 1
+          }
+        ],
+        "paths": [
+          {
+            "path": "/api/get_script",
+            "method": "GET",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_show=&is_verify="
+          },
+          {
+            "path": "/supplierapi/product/product/80",
+            "method": "DELETE",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_show=&is_verify="
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_del=1"
+          },
+          {
+            "path": "/supplierapi/product/type_header",
+            "method": "GET",
+            "status": 200,
+            "query": "?store_name="
+          },
+          {
+            "path": "/supplierapi/product/product/80",
+            "method": "DELETE",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_del=1"
+          },
+          {
+            "path": "/supplierapi/product/type_header",
+            "method": "GET",
+            "status": 200,
+            "query": "?store_name="
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_show=&is_verify="
+          },
+          {
+            "path": "/supplierapi/product/product/80",
+            "method": "DELETE",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_show=&is_verify="
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_del=1"
+          },
+          {
+            "path": "/supplierapi/product/type_header",
+            "method": "GET",
+            "status": 200,
+            "query": "?store_name="
+          },
+          {
+            "path": "/supplierapi/product/product/thorough/81",
+            "method": "DELETE",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?id=81&is_del=all&page=1&limit=1"
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_del=1"
+          },
+          {
+            "path": "/supplierapi/product/type_header",
+            "method": "GET",
+            "status": 200,
+            "query": "?store_name="
+          },
+          {
+            "path": "/api/get_script",
+            "method": "GET",
+            "status": 200,
+            "query": ""
+          },
+          {
+            "path": "/supplierapi/product/product/list",
+            "method": "GET",
+            "status": 200,
+            "query": "?page=1&limit=20&store_name=&is_del=1"
+          },
+          {
+            "path": "/supplierapi/product/type_header",
+            "method": "GET",
+            "status": 200,
+            "query": "?store_name="
+          }
+        ],
+        "dropped": true,
+        "recovered": true,
+        "outbound": 0,
+        "finished": true
+      }
+    },
+    "browser_log": "/tmp/cinashop-supplier-recycle-browser-verified.log",
+    "auth_and_fixture_type_repair_regression": {
+      "passed": 18,
+      "failed": 0,
+      "log": "/tmp/cinashop-supplier-recycle-auth-types-regression.log",
+      "sha256": "f521b4beed08296938a9562adc353162688a55f1f1296c455927a35025dc5b5e"
+    }
+  },
+  "owned_cluster_cleanup": [
+    {
+      "log": "/tmp/cinashop-supplier-recycle-bargain-native-final.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-RHwlNA",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-browser-final.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-h2Hgjm",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-browser-verified.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-OOotfm",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-first.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-oMX4g3",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-red.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-YLZXKZ",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-red2.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-cKbrum",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-red3.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VNRJ2m",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-regression.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Efl3Ob",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-compensation-second.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-wsKoPw",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-line-owner-red.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Q25Zun",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-native-final.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-l7bRxe",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-native-first.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZDbb2k",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-native-verified.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-5B4Azw",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "log": "/tmp/cinashop-supplier-recycle-auth-types-regression.log",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-IFZMMP",
+      "remaining_zero": true,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    }
+  ],
+  "independent_review": {
+    "artifact_version": 1,
+    "created_at": "2026-10-16T01:16:25.267073+00:00",
+    "status": "awaiting_final_validation",
+    "base_commit": "6a7058b75a14c6a1e70f1f78c046b7d96345bd0a",
+    "purpose": "独立只读复审交接：保留历史失败与中间通过，记录新持久行owner修正后的实际8文件68项原生、最后认证/类型修正后的18项原生重跑、普通86+统计HTTP4以及真实Browser1；双完整类型检查仍pending。主audit负责最终distinct总数与发布声明。",
+    "reviewer_scope": {
+      "agent": "/root/trusted_copy_contract",
+      "source_changes_during_this_review": false,
+      "heavy_commands_during_this_review": false,
+      "production_calls_or_ddl_or_grants": false
+    },
+    "review_outcome": {
+      "qualification": "root发现的持久ci owner缺口已真实红测并修正，两调用只读检查一致，后续68项联合原生实际通过。最后clock使用AuthException及fixture字段/未用imports类型修正也已只读确认，相关18项原生重跑通过。此记录不宣称生产发布完整或全部全局迁移完成；0189维护和独立feature权限profile仍为发布依赖，双完整类型终态由root补。",
+      "frontend": "独立回收站及原 Products 入口使用 expected_is_del 和当前会话/代次/确认检查；未知结果只以原 id 的单次全状态 RR 读取核对，不自动重发写入。未发现新增可行动前端问题。",
+      "financial_compatibility": "仅 ci.type=2、持久 relationId 为正整数、父订单 supplierId=0 或精确等于 relationId 时才读删除事实，并把 ci.relationId 显式传为 expected.supplierId。随后仍要求受保护五字段事实及 actual root/全部type0 SKU/快照SKU id缺失。合法混合父单0和仅旧JSON无sku.id保留兼容；错明细owner/type不获得skipBase，继续原库存路径。保留活动库存与财务状态仍必须恢复。"
+    },
+    "php_authority": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+        "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+        "lines": "198-210,233",
+        "contract": "Supplier list/delete/thorough/type_header routes within product group"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/product/StoreProduct.php",
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1",
+        "lines": "49-111,395-403,555-565",
+        "contract": "Authenticated owner filter; old DELETE toggle event; recycled-own-root permanent delete"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "lines": "79-119,1011-1053",
+        "contract": "Eight status counters; restore only is_del=0; recycle is_del=1,is_show=0; Supplier does not reset verification"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/product/product/StoreProduct.php",
+        "sha256": "696b6b6601e9ba8ba9fcde26a4ed12bda7f98edaaa81fc72ced3cae5321dc1a9",
+        "lines": "659-706",
+        "contract": "Exact status predicates, including recycled -1/-2 and active positive-stock police flag"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/listener/product/DeleteSuccess.php",
+        "sha256": "b2ceacea7e240ce093d4c49040e5d8b72ca0b3eb55def37a90e75171eaab5f4d",
+        "lines": "23-36",
+        "contract": "Product delete event invalidates all parent carts; no relation status change"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/admin/v1/system/SystemClearData.php",
+        "sha256": "b31798e0e5ddf000a168fa06b025ca564897c7af32318ea17ecc80c171fa75b9",
+        "lines": "122-179",
+        "contract": "Exact ten permanent-deletion collections"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/community/CommunityRelevanceServices.php",
+        "sha256": "3e55d96579f2b66447759dab1161388c7acf57928d841c9d58d5665d1d0bd484",
+        "lines": "30",
+        "contract": "TYPE_COMMUNITY_PRODUCT=community_product"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/user/UserRelationServices.php",
+        "sha256": "940538a8f7d8b86b33995f8aeb787a93ef39f0611469ca6b9be33f7849664baa",
+        "contract": "CATEGORY_PRODUCT literal used by permanent deletion"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/productList/index.vue",
+        "sha256": "19d0366b02244f4b6cb1e01ebc760c9e85bc25aaa9bb358619a124a3a98ba313",
+        "lines": "271,484",
+        "contract": "Legacy recycle/restore and permanent-delete consumer"
+      }
+    ],
+    "backend_contract": {
+      "owner": "真实 JWT actor 与认证 supplierId，root 必须 type=2 且 relation_id 精确相等；不信任 query/body/header owner flags。",
+      "list_aliases": [
+        "GET /supplierapi/product/product",
+        "GET /supplierapi/product/product/list"
+      ],
+      "list_result": "{list,count,page,limit}; rows include is_del; list/count use one real REPEATABLE READ READ ONLY transaction",
+      "unknown_result_lookup": "GET list?is_del=all&id=<positive>&page=1&limit=1; all only allowed with exact id, no other filters, max one row in one snapshot",
+      "header": "GET /supplierapi/product/type_header returns {list} with eight PHP counters [1,2,4,5,6,0,-1,-2]; -1/-2 may include recycled rows; warning status uses is_police=1,positive stock rather than a new threshold",
+      "change": "DELETE /product/product/:id; empty body retains PHP toggle; optional strict expected_is_del 0|1 returns409 on mismatch; recycle sets is_del1,is_show0; restore only sets is_del0; both invalidate every parent cart status0; no relation-status change",
+      "permanent": "DELETE /product/product/thorough/:id; empty body or expected_is_del1; only current own recycled type2 root; missing root404 rather than fabricated successful replay",
+      "write_envelope": "No query, max1KiB UTF8, only one optional exact expected_is_del scalar; duplicate and unknown keys rejected",
+      "responses": "private,no-store on success and denial; read requires supplier.product.view; mutation requires supplier.product.manage",
+      "php_ten_deleted_collections": [
+        {
+          "table": "store_product_attr",
+          "predicate": "product_id=id AND type=0"
+        },
+        {
+          "table": "store_product_attr_result",
+          "predicate": "product_id=id AND type=0"
+        },
+        {
+          "table": "store_product_attr_value",
+          "predicate": "product_id=id AND type=0",
+          "includes": "active and retired base SKUs"
+        },
+        {
+          "table": "store_product_description",
+          "predicate": "product_id=id AND type=0"
+        },
+        {
+          "table": "store_product_relation",
+          "predicate": "product_id=id"
+        },
+        {
+          "table": "store_product_coupon",
+          "predicate": "product_id=id"
+        },
+        {
+          "table": "user_relation",
+          "predicate": "relation_id=id AND category='product'"
+        },
+        {
+          "table": "store_product_reply",
+          "predicate": "product_id=id"
+        },
+        {
+          "table": "community_relevance",
+          "predicate": "right_id=id AND type='community_product'"
+        },
+        {
+          "table": "store_product",
+          "predicate": "id=id AND type=2 AND relation_id=authenticated supplierId AND is_del=1"
+        }
+      ],
+      "permanent_delete_order": "Inside one transaction: prove exact tenant source and all sets; append/read back protected type0 SKU facts while source root exists; delete exact root first; then nine child sets; full RETURNING/set readback before and after audit; any mismatch rolls back all.",
+      "preserved_facts": [
+        "store_cart on permanent path",
+        "store_order and store_order_cart_info",
+        "payment/refund/accounting facts",
+        "issued and unissued store_product_virtual card/delivery facts",
+        "activity roots and activity SKUs",
+        "system_attachment and object assets",
+        "existing retirement history plus newly appended permanent-deletion facts",
+        "all out-of-scope nonzero type/category/community rows"
+      ],
+      "capacity": "At most10000 rows per associated collection and4MiB aggregate serialized snapshot; over-capacity fails instead of truncating; no external I/O within transaction."
+    },
+    "locking_and_authority": {
+      "source": "workers-ts/src/services/supplier/SupplierProductRecycleService.ts:127,180-198",
+      "authority_table_barrier": {
+        "mode": "SHARE ROW EXCLUSIVE NOWAIT",
+        "tables": [
+          "system_admin",
+          "system_supplier",
+          "system_role",
+          "system_menus"
+        ],
+        "phase": "before first live actor/tenant/role/capability/database-clock check; repeat authority and DB clock before returning"
+      },
+      "bargain_predecessor_lock": {
+        "namespace": 731634,
+        "key": "product id",
+        "mode": "exclusive transaction advisory lock",
+        "phase": "before the three existing Supplier/SKU/product locks and business table barriers"
+      },
+      "exact_three_lock_order": [
+        {
+          "order": 1,
+          "namespace": 731602,
+          "key": "product id",
+          "meaning": "Existing Supplier per-product reservation; this alone is not the global allocator"
+        },
+        {
+          "order": 2,
+          "namespace": 731602,
+          "key": 0,
+          "symbol": "PRODUCT_SKU_IDENTITY_LOCK_KEY",
+          "meaning": "Actual shared global SKU unique allocator lock"
+        },
+        {
+          "order": 3,
+          "namespace": 731617,
+          "key": "product id",
+          "mode": "pg_try_advisory_xact_lock",
+          "meaning": "Existing product association write fence; refusal becomes409"
+        }
+      ],
+      "business_barrier": {
+        "mode": "SHARE ROW EXCLUSIVE NOWAIT",
+        "tables": [
+          "store_product_attr",
+          "store_product_attr_result",
+          "store_product_attr_value",
+          "store_product_description",
+          "store_product_relation",
+          "store_product_coupon",
+          "user_relation",
+          "store_product_reply",
+          "community_relevance",
+          "store_product",
+          "store_cart",
+          "store_product_sku_retirement_log"
+        ]
+      },
+      "pre_lock_read": "Whole root captured before lifecycle/identity locks and compared after all barriers; any change refuses rather than operating on a new state silently.",
+      "time_bounds": "Preserve any stricter existing setting; lock_timeout<=2000ms, statement_timeout<=5000ms,idle_in_transaction_session_timeout<=5000ms",
+      "financial_absence_barrier": "Physical SHARE ROW EXCLUSIVE NOWAIT on actual public.store_product and public.store_product_attr_value, then absence recheck; immutable log only SELECT. ActualPG16 restricted LOGIN proved old stock-column UPDATE cannot acquire this physical lock (42501); explicit table-level UPDATE positive control passed."
+    },
+    "addon_0189": {
+      "path": "workers-ts/src/migrations/productRecycleSkuGuard.ts",
+      "mirror": "workers-ts/src/migrations/maintenance/0189_product_recycle_sku_guard.sql",
+      "bootstrap": "Independent explicit maintenance only; no historical/bootstrap/ORM/runAll rewrite and no runtime auto-install/repair.",
+      "legacy_pg_get_functiondef_sha256": "a7fd5e4f568c081df96f905880e5396adfdfd49566ab9a2f3b335a3e3c703c09",
+      "observed_successor_pg_get_functiondef_sha256": "826a9e7c28929bfc74b1cf3ad8a5b321ce1440edac476bff89ac946aefa5a828",
+      "observed_successor_hash_source": "/tmp/cinashop-supplier-recycle-native-first.log:256; module also checks exact source body and catalog metadata",
+      "exact_function_count": 2,
+      "functions": [
+        "public.guard_retired_product_sku()",
+        "public.guard_product_permanent_delete_log()"
+      ],
+      "exact_trigger_count": 3,
+      "triggers": [
+        {
+          "name": "store_product_attr_value_retired_guard",
+          "target": "store_product_attr_value",
+          "events": "BEFORE UPDATE OR DELETE, ROW",
+          "identity": "existing function/trigger OIDs retained"
+        },
+        {
+          "name": "spsrl_permanent_rows",
+          "target": "store_product_sku_retirement_log",
+          "events": "BEFORE INSERT OR UPDATE OR DELETE, ROW"
+        },
+        {
+          "name": "spsrl_permanent_truncate",
+          "target": "store_product_sku_retirement_log",
+          "events": "BEFORE TRUNCATE, STATEMENT"
+        }
+      ],
+      "function_security": "Both SECURITY INVOKER with search_path=pg_catalog and no non-owner EXECUTE ACL; actual public relations/TG_RELID checked; invocation by triggers does not require granting direct EXECUTE to application role.",
+      "five_field_dependency_snapshot": {
+        "version": 1,
+        "kind": "supplier_product_permanent_delete",
+        "owner_type": 2,
+        "supplier_id": "positive actual source Supplier",
+        "product_type": "actual source product_type"
+      },
+      "fact_identity": "action=permanent_delete(16chars),product_id,sku_id,unique_snapshot,suk_snapshot,actor_id,add_time; no card secrets",
+      "fact_guard": "INSERT only matches still-existing recycled type2 owner root and actual type0 SKU identity; per-SKU try-lock731742 prevents racing second fact; duplicates23505. Existing permanent facts cannot UPDATE/DELETE, other action cannot UPDATE into permanent, and TRUNCATE is rejected when protected facts exist. Ordinary retire/restore history remains supported.",
+      "retired_sku_successor": "Retains old identity,stock,retirement rules; retired DELETE adds only exact public type0 SKU whose root is absent and matching protected permanent fact exists. Other retired deletes remain refused.",
+      "installer": "Genuine PG16 explicit READ COMMITTED writable origin owner/superuser transaction with maintenance reservation731627,13 and actual table NOWAIT locks. Accept only exact legacy body+measured fingerprint+metadata/ACL or exact complete successor; unknown,partial,preexisting unprotected facts,event/RLS/shape/ACL drift refused with no repair; no row-data rewriting.",
+      "manager_old_hash": "Historical manager public-invoker baseline remains unchanged. Presence is optional; successor functions revoke PUBLIC and runtime direct EXECUTE, so no broad second hash acceptance is added. New role/profile rights require a separately reviewed explicit feature plan."
+    },
+    "runtime_permissions_and_release_dependencies": {
+      "current_profiles_automatically_expanded": false,
+      "production_grants_executed": false,
+      "profile_status": "Existing app/manager fixed plans are unchanged and are not claimed to support the entire new feature. Manager current lacks retirement-log SELECT and has only id/stock/sales column UPDATE on root/SKU. Existing strict audits deliberately reject unreviewed additional rights.",
+      "supplier_declared_native_role": {
+        "status": "An independent ephemeral non-superuser LOGIN passed the existing18-case baseline with explicitly supplied fixture rights; not proof of frozen production profile readiness.",
+        "select": "Needed authentication/authority rows, all business snapshot collections, system_log and protected facts. Baseline test initially uses SELECT ON ALL TABLES of its isolated owned fixture, not a claimed minimal production SELECT profile.",
+        "lock_capability": "Must be able to acquire exact SRE locks on four authority and twelve business tables. Baseline positive fixture supplies table UPDATE on those tables; that is an explicit test-role grant and not automatic production broadening.",
+        "delete": "Exactly the ten deletion collections; guard narrows row effects. No order/payment/card/activity/attachment DELETE rights needed.",
+        "insert": [
+          "system_log",
+          "store_product_sku_retirement_log"
+        ],
+        "sequence_usage": [
+          "system_log_id_seq",
+          "store_product_sku_retirement_log_id_seq"
+        ],
+        "never_needed": [
+          "direct EXECUTE on either trigger function",
+          "retirement-log DELETE/TRUNCATE",
+          "order/payment/card/activity/attachment DML"
+        ]
+      },
+      "finance_absence_reader": {
+        "log": "SELECT only; no log INSERT/UPDATE/DELETE/TRUNCATE,sequence privilege or trigger EXECUTE",
+        "inventory": "Root/SKU SELECT plus actual permission to acquire SHARE ROW EXCLUSIVE. RealPG16 restricted LOGIN with only UPDATE(id,stock,sales) on both tables received42501; explicit table UPDATE positive control passed.",
+        "new_two_case_test_status": "passed_2_of_2_in_final_native_log",
+        "qualification": "RealPG16 now confirms these rights are required for this exact absence fence. They remain explicit independent feature release inputs: no production grant executed and no frozen manager/global profile automatically broadened. The new feature profile/maintenance must itself be reviewed and satisfy strict ACL audits.",
+        "failure_behavior": "Insufficient actual runtime permission maps503 with transaction rollback, rather than pretending compensation or deletion succeeded.",
+        "actual_pg16_acl_observation": {
+          "log": "/tmp/cinashop-supplier-recycle-native-final.log:2366",
+          "server_version_num": 160014,
+          "root_table_update": false,
+          "sku_table_update": false,
+          "root_stock_update": true,
+          "sku_stock_update": true,
+          "fact_select": true,
+          "fact_write": false,
+          "fact_guard_execute": false,
+          "sku_guard_execute": false,
+          "probe": {
+            "permitted": false,
+            "code": "42501"
+          },
+          "explicit_two_table_UPDATE_positive": "passed",
+          "missing_log_SELECT_negative_503_and_zero_side_effects": "passed"
+        },
+        "explicit_feature_maintenance_grant_inputs": [
+          "GRANT SELECT ON public.store_product_sku_retirement_log TO <independently commissioned runtime role>;",
+          "GRANT UPDATE ON public.store_product, public.store_product_attr_value TO <independently commissioned runtime role>;"
+        ]
+      },
+      "release_order": [
+        "Explicit owner 0189 installation and exact successor catalog proof",
+        "Separately commissioned restricted feature profile/maintenance grant plan and audit",
+        "Final native permissions/global-allocator-lock/financial/frontend/browser/type verification by root",
+        "Only a separately authorized production deployment may execute DDL/GRANT; none executed in this batch"
+      ]
+    },
+    "validation": {
+      "no_final_batch_total_filled": true,
+      "first_joint_native": {
+        "log": "/tmp/cinashop-supplier-recycle-native-first.log",
+        "terminal": "exit1",
+        "supplier_native": {
+          "passed": 18,
+          "status": "baseline_before_global_KEY0_added",
+          "superseded_by": "pre_line_owner_native49_history_then_pending_final_joint_run"
+        },
+        "catalog_native": {
+          "passed": 11,
+          "status": "baseline_passed",
+          "superseded_by": "pre_line_owner_native49_history_then_pending_final_joint_run"
+        },
+        "whole_run": {
+          "passed": 39,
+          "failed": 7,
+          "definitions": 46,
+          "files_passed": 2,
+          "files_failed": 1
+        },
+        "historical_failures": "Seven financial core tests failed; parent repaired actual productType selection and fixture payment/legacy source issues. This review does not substitute their later final result.",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZDbb2k"
+        }
+      },
+      "financial_initial_red": {
+        "log": "/tmp/cinashop-supplier-recycle-compensation-red3.log",
+        "passed": 2,
+        "failed": 4,
+        "purpose": "Real cancel/refund missing-base-inventory regression observed before implementation",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VNRJ2m"
+        }
+      },
+      "pending": [
+        {
+          "scope": "two complete Worker TypeScript checks on final frozen source",
+          "status": "pending_parent_terminal",
+          "qualification": "Do not infer full typecheck success from native/Browser/unit passes."
+        },
+        {
+          "scope": "parent final build/source scan/distinct audit",
+          "status": "root_owned_not_filled_here"
+        }
+      ],
+      "logs": [
+        {
+          "path": "/tmp/cinashop-supplier-recycle-native-first.log",
+          "sha256": "82a6510807cfd1d3d5c28296d002d4ce979dc5d9f0d312db7e6ef3a3a5ff55a9",
+          "terminal": true
+        },
+        {
+          "path": "/tmp/cinashop-supplier-recycle-compensation-red3.log",
+          "sha256": "501ae0fe84da0600ec3c9e63aae80251cbc9355c62c26e7d8179e3d6bd66544e",
+          "terminal": true
+        }
+      ],
+      "adjacent_financial_regression": {
+        "log": "/tmp/cinashop-supplier-recycle-compensation-regression.log",
+        "sha256": "b76e3adf16610b0a7048424f79e4c25ce8b91bbf2a5932382a6a97ea609218e9",
+        "terminal": "exit0_reported_by_root_and_log_has_complete_pass_summary_cleanup",
+        "files_passed": 5,
+        "definitions_passed": 45,
+        "definitions_failed": 0,
+        "new_core_definitions_repeated_from_final_native": 18,
+        "existing_adjacent_definitions": 27,
+        "files": [
+          "test/supplier-product-recycle-compensation-native.test.ts",
+          "test/unpaid-mixed-order-cancellation-postgres.test.ts",
+          "test/seckill-cross-activity-compensation-postgres.test.ts",
+          "test/seckill-compensation-ordinary-order-postgres.test.ts",
+          "test/seckill-compensation-refund-postgres.test.ts"
+        ],
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Efl3Ob"
+        },
+        "qualification": "Do not add45 to49 as disjoint definitions; core18 repeat. No final global batch total calculated here.",
+        "status": "historical_complete_before_line_owner_correction"
+      },
+      "pre_line_owner_native": {
+        "log": "/tmp/cinashop-supplier-recycle-native-final.log",
+        "sha256": "d1d06ff496e4b7854ce1175485db8dcfb41a8ef0e9dbae214938ca8259618e9c",
+        "terminal": "exit0_reported_by_root_and_log_has_complete_pass_summary_cleanup",
+        "files_passed": 4,
+        "definitions_passed": 49,
+        "definitions_failed": 0,
+        "by_file": [
+          {
+            "file": "test/supplier-product-recycle-native.test.ts",
+            "passed": 18
+          },
+          {
+            "file": "test/product-recycle-sku-guard-catalog-native.test.ts",
+            "passed": 11
+          },
+          {
+            "file": "test/supplier-product-recycle-compensation-native.test.ts",
+            "passed": 18
+          },
+          {
+            "file": "test/permanently-deleted-base-inventory-native.test.ts",
+            "passed": 2
+          }
+        ],
+        "actual_global_allocator_KEY0_blocker": "passed_after_source_change",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-l7bRxe"
+        },
+        "status": "historical_complete_before_line_owner_correction",
+        "retest_required_for_changed_financial_sources": true
+      },
+      "verified_joint_native": {
+        "path": "/tmp/cinashop-supplier-recycle-native-verified.log",
+        "sha256": "adec98dd3715a1e8f4fe5f1cd20b5ee024c2a4e56602abab7660deba2e93674b",
+        "terminal": true,
+        "files_passed": 8,
+        "definitions_passed": 68,
+        "definitions_failed": 0,
+        "actual_by_file": [
+          {
+            "file": "test/supplier-product-recycle-compensation-native.test.ts",
+            "passed": 19
+          },
+          {
+            "file": "test/bargain-inventory-compensation.test.ts",
+            "passed": 13
+          },
+          {
+            "file": "test/supplier-product-recycle-native.test.ts",
+            "passed": 18
+          },
+          {
+            "file": "test/product-recycle-sku-guard-catalog-native.test.ts",
+            "passed": 11
+          },
+          {
+            "file": "test/seckill-cross-activity-compensation-postgres.test.ts",
+            "passed": 2
+          },
+          {
+            "file": "test/seckill-compensation-refund-postgres.test.ts",
+            "passed": 2
+          },
+          {
+            "file": "test/seckill-compensation-ordinary-order-postgres.test.ts",
+            "passed": 1
+          },
+          {
+            "file": "test/permanently-deleted-base-inventory-native.test.ts",
+            "passed": 2
+          }
+        ],
+        "correction": "Expected69 was a scheduling estimate; actual68 is canonical log total.",
+        "phase": "After exact persisted line-owner gate fix; before last AuthException/type-only cleanup. The changed recycle service was subsequently rerun18/18.",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-5B4Azw"
+        }
+      },
+      "ordinary": {
+        "status": "passed",
+        "components": [
+          {
+            "path": "/tmp/cinashop-supplier-recycle-ordinary-verified.log",
+            "sha256": "f5f37c4e923d58401628a2de10bea0861699c37b312f0538ea3804d4f72aa101",
+            "terminal": true,
+            "files_passed": 8,
+            "definitions_passed": 86
+          },
+          {
+            "path": "/tmp/cinashop-supplier-recycle-statistics-verified.log",
+            "sha256": "f4ecff83cd8835c4c67646f031229c2afa4e91c24996e5af3c17c190c8f8c1a1",
+            "terminal": true,
+            "files_passed": 1,
+            "definitions_passed": 4,
+            "file": "test/public-statistics-script-http.test.ts",
+            "contract": [
+              "real registered raw JavaScript and JSON-encoded scalar config",
+              "missing/empty config returns empty successful JS",
+              "platform setting and cache invalidation",
+              "real database failure not disguised as successful empty script"
+            ]
+          }
+        ],
+        "component_sum": 90,
+        "qualification": "86+4 in distinct files, not90 in the ordinary-verified log alone. Parent owns final whole-batch distinct accounting."
+      },
+      "browser": {
+        "status": "passed",
+        "path": "/tmp/cinashop-supplier-recycle-browser-verified.log",
+        "sha256": "0d4b1ba02d5d981b86aaa364adae547dbe2a50da6ec3328a48eacec7899c82c4",
+        "terminal": true,
+        "files_passed": 1,
+        "definitions_passed": 1,
+        "qa": {
+          "path": "/tmp/cinashop-supplier-recycle-browser-qa.json",
+          "sha256": "471b59449d0f874c50eeada8563e4b3390bde89319c7df31fb496f2ce605352c",
+          "browser": "Codex In-app Browser",
+          "desktop": {
+            "width": 1280,
+            "height": 720
+          },
+          "mobile": {
+            "width": 390,
+            "height": 844,
+            "horizontalTable": true,
+            "restoreConfirmationOpenedAndCancelled": true
+          },
+          "consoleWarningsAndErrors": [],
+          "readonlyWriteButtons": 0,
+          "screenshots": [
+            "/tmp/cinashop-supplier-recycle-desktop.png",
+            "/tmp/cinashop-supplier-recycle-mobile.png",
+            "/tmp/cinashop-supplier-recycle-mobile-actions.png",
+            "/tmp/cinashop-supplier-recycle-readonly.png"
+          ],
+          "finished": true,
+          "committed_acknowledgement_dropped": true,
+          "single_all_state_query_recovered": true,
+          "outbound": 0
+        },
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-OOotfm"
+        },
+        "actual_chain": "Installed Codex In-app Browser→real builtSupplier UI→actual App/JWT/ownedPG16/controller/service; recycle80/restore80/recycle80/thorough81 plus committed502 recovery by original single all-state lookup; no production or provider calls.",
+        "statistics": "Browser fixture uses actual /api/get_script raw application/javascript App route, with test-only CONFIG_KV cfg_system_statistics empty-string configuration; never JSON-wraps the raw response. Separate4caseHTTP suite exercises actual configuration DAO/scalar/cache/error semantics.",
+        "phase": "Browser evidence belongs to completed verified host run. Later clock/fixture/import type cleanup is covered separately by recycle-native18; this does not claim Browser was rerun after that final type cleanup."
+      },
+      "historical_ordinary_failure": {
+        "path": "/tmp/cinashop-supplier-recycle-ordinary-final.log",
+        "sha256": "73c947e96015b0350c46972dbd9dff5d923763fe7ea422e205b9a6bc9910939e",
+        "terminal": true,
+        "files_failed": 1,
+        "files_passed": 8,
+        "definitions_failed": 13,
+        "definitions_passed": 86,
+        "qualification": "Historical mixed ordinary99 execution, not current90 successful total. Main root audit owns failure explanation and excluded-native scheduling."
+      },
+      "historical_browser_failure": {
+        "path": "/tmp/cinashop-supplier-recycle-browser-final.log",
+        "sha256": "bd580f8937b9a995304ca47f1b35a3a57e928231dff177f3521e60447b308189",
+        "terminal": true,
+        "files_failed": 1,
+        "definitions_failed": 1,
+        "failure": "finish asserted product80 recycled/isShow0 but actual product80 still active/isShow1; final verified run retains these finish assertions and completes actual flow.",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-h2Hgjm"
+        }
+      }
+    },
+    "current_source_snapshot": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/api/productRecycle.ts",
+        "sha256": "ced72bf9de1d42227642796f253fdce4172e83c9b18792c921f61c193a70debf"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/api/supplier.ts",
+        "sha256": "a9fdbfc3daf3dd30a1eda089ef9e8401d46c5481a22193edb20547066bd2dfe0"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/ProductRecycle.vue",
+        "sha256": "7260779e64d453a9f2de184bc0e4a838aa712076295cb73f1bfb7716acfcd114"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Products.vue",
+        "sha256": "4980b7a8ee84d3ce3ef2de1045dae8ea5df2dc28c55da4abc14446ff59fa1a1b"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/router.ts",
+        "sha256": "b3a47237075c12f7a2e3d20540b2d4ce553b38af2dbc5f5429025f61ad6a2772"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/types.ts",
+        "sha256": "098b41ac09858392021c8951d6aa154cc45dcf2606021ab9b49522ac8c931a27"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "69c9052fda689dbf4a5c7fd122a2901a68b618e9b858030c5e8ff913aa3c7a23"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/supplier/SupplierController.ts",
+        "sha256": "8e22ce90de204076e69d031cfb3c3f46ba8e68bcf092c9331cedd597740c29a7"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/supplier/SupplierProductRecycleController.ts",
+        "sha256": "55fc801ef36248440ab278fa3d35bd5cdc430411b184d577124461718acfa43d"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/maintenance/0189_product_recycle_sku_guard.sql",
+        "sha256": "be8db8993c5d4ce3c0de0efa0b78cf6e909de12fb55cd7f6a388e28e42d4d520"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/productRecycleSkuGuard.ts",
+        "sha256": "e6662ce1906c9f7b646d785c9509bd48f26ab88929dc27035828112ebb37d870"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/supplierapi.ts",
+        "sha256": "0d7e706957a1b8cf4b826da8210bbc5b61dfb6f787a6c1237fbeca5db1f667a3"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/PermanentlyDeletedBaseInventory.ts",
+        "sha256": "98ce30fb3e6b40249adfb9df65d1a43dab0db84a7436555ab514f9ba33e8aec2"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderRefundService.ts",
+        "sha256": "a86f25290d4cfd1738519a34e39772eea02faaf30470f7bba8a09c6a19d421ce"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/product/PermanentProductDeletionEvidence.ts",
+        "sha256": "dff6198e7660c63f6c35fd2e2fb0273ced271f04ab6ba14fbcf8a50f6de431e1"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierPermissionService.ts",
+        "sha256": "bc5141f12d3d42a998dc492533a98ce58d5f5693ddd5db753e1398bc8bdfbb50"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierProductRecycleService.ts",
+        "sha256": "b7e1989e1573e9c81cd3713e5c912b78931a04e44f15a1532a396e6dd0375bcd"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/browser/supplier-product-recycle.acceptance.ts",
+        "sha256": "7b5f6972757f9202c566892d7c6a4a1355f8862d9a6daa5763ab9843b1927faa"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/supplierProductRecycle.ts",
+        "sha256": "88f54663c37482d6ee8b9ef2029e25d066029545e9ad45d84be330b17fc3b6de"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/permanent-product-deletion-evidence.test.ts",
+        "sha256": "ad3dba333877b5c8f830accdc48e5c75c42135cb8334a57af5ddfe5ef3177701"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/permanently-deleted-base-inventory-native.test.ts",
+        "sha256": "9f161d4d4e75b270e6e0bd74171af9486bccf9fc968ae3145ab515c494dd70ed"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/product-recycle-sku-guard-catalog-native.test.ts",
+        "sha256": "5fde86a7c4d982dddd87388a3ea61243262fad0b0499c8ec7fca676c3e5d9431"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-recycle-compensation-native.test.ts",
+        "sha256": "7b624edab6ee503876cdf97455b5933a17d2209337adfb29f9d8ab5ff499146d"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-recycle-frontend.test.ts",
+        "sha256": "68ed6af3953c807f877cefbed9c2b999f87015999721028c2d11a69892dc137f"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-product-recycle-native.test.ts",
+        "sha256": "61a778cf3e3818b995d20b53c75f753c8efa575936704f91cd0ec45db6ce2f74"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/vitest.supplier-recycle-browser.config.ts",
+        "sha256": "afb493f4f3affd746bc8a5b086491b1fbd2cb24d659cf1a0d7955f8f48c81d2e"
+      }
+    ],
+    "historical_source_snapshot": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/productSkuRetirement.ts",
+        "sha256": "1143894caaca6beacda22817a7a67ed97f60731f365a3ff17964b485fd485951",
+        "head_sha256": "1143894caaca6beacda22817a7a67ed97f60731f365a3ff17964b485fd485951",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/migrations/0126_product_sku_retirement.sql",
+        "sha256": "05733c0c820c1114c50e290a4e765370c35e3dcdf3fc41e9f5dd8a640d133edb",
+        "head_sha256": "05733c0c820c1114c50e290a4e765370c35e3dcdf3fc41e9f5dd8a640d133edb",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/managerRuntimePrivilegePlan.ts",
+        "sha256": "d465e3a0a03b0fa8ea901411b2f366c9b47fe278d99dbcf4a006746534ef28d5",
+        "head_sha256": "d465e3a0a03b0fa8ea901411b2f366c9b47fe278d99dbcf4a006746534ef28d5",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/auditManagerRuntimePrivileges.ts",
+        "sha256": "db38d3eed623c9442580bf349a9f245812d3c2405724cd073ef100620622a611",
+        "head_sha256": "db38d3eed623c9442580bf349a9f245812d3c2405724cd073ef100620622a611",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+        "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+        "head_sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/index.ts",
+        "sha256": "78e20f02a91da2c56d8fc5fcacee767d6c4b89c7fcb018674e99bda96d1e1f4a",
+        "head_sha256": "78e20f02a91da2c56d8fc5fcacee767d6c4b89c7fcb018674e99bda96d1e1f4a",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/MigrationService.ts",
+        "sha256": "d2f9591be1e2f5fad9206b6e67f81e7d66d36597abc4ce6e009218c05de8263c",
+        "head_sha256": "d2f9591be1e2f5fad9206b6e67f81e7d66d36597abc4ce6e009218c05de8263c",
+        "unchanged_from_HEAD": true
+      }
+    ],
+    "explicit_boundaries": [
+      "No production credentials,database calls,DDL,GRANT,object deletion or deployment performed.",
+      "No current production data inheritance,provider or deployed Supplier account acceptance asserted.",
+      "No automatic repeated mutation after unknown commit; query reports current exact owner state, not an immutable operation receipt.",
+      "Concurrent later writes can change current lifecycle after success; expected_is_del and fresh explicit confirmation remain authoritative.",
+      "This temporary review is not the final validation ledger and does not mark parent checklist boxes."
+    ],
+    "updated_at": "2026-10-16T01:32:13.105594+00:00",
+    "historical_directory_diff_checks": [
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/migrations",
+        "unchanged_from_HEAD": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/MigrationService.ts",
+        "unchanged_from_HEAD": true
+      }
+    ],
+    "line_owner_finding_and_correction": {
+      "discovered_by": "root after prior readonly review",
+      "status": "fixed_in_source_readonly_checked_joint_native68_passed",
+      "original_defect": "新 cancel/refund 的 skipBase 调用只用 order.supplierId；当父单为0时传undefined，虽然 ci.type/relationId 早已持久化，错误明细owner仍能匹配其他Supplier的真实永久删除事实。JSON snapshot.product 无 owner 并不代表无可用持久owner。",
+      "authority": [
+        {
+          "source": "workers-ts/src/services/order/StoreOrderCreateService.ts:2995-2997",
+          "contract": "创建真实 checkout line 持久保存 product.type/relationId；HEAD 亦已有这两列赋值"
+        },
+        {
+          "source": "workers-ts/src/models/schema/order.ts:222-223",
+          "contract": "ci.type NOT NULL smallint，relationId NOT NULL int4"
+        },
+        {
+          "source": "workers-ts/src/services/activity/ActivityService.ts:890-891",
+          "contract": "积分直接兑换同样保存归属，现代事务还核对活动/base owner"
+        },
+        {
+          "source": "workers-ts/src/services/activity/OrderPromotionGiftService.ts:369-370",
+          "contract": "赠品明细保存实际商品owner"
+        },
+        {
+          "source": "workers-ts/src/services/order/OrderSupplierAllocationService.ts:100",
+          "contract": "支付拆单从源明细spread保留owner"
+        },
+        {
+          "source": "workers-ts/src/services/order/RefundOrderMaterialization.ts:49",
+          "contract": "退款实体拆单从源明细spread保留owner"
+        },
+        {
+          "source": "workers-ts/src/services/supplier/SupplierFulfillmentService.ts:374",
+          "contract": "Supplier履约拆单从源明细spread保留owner"
+        }
+      ],
+      "red": {
+        "log": "/tmp/cinashop-supplier-recycle-line-owner-red.log",
+        "sha256": "aebffc2cef5f2f1cefb3a662819f69f1faf9bbaf76e29bb09277e84eb4a1d7e1",
+        "terminal": "exit1",
+        "failed": 1,
+        "filtered_skipped": 18,
+        "available_definitions": 19,
+        "assertion": "promise resolved undefined instead of rejecting",
+        "case": "requires the immutable line Supplier identity when the unpaid parent has supplierId zero",
+        "source": "test/supplier-product-recycle-compensation-native.test.ts:164-170",
+        "setup": "真实create→实际Supplier彻删→父单supplierId0，ci.relationId改30而受保护fact实际20；错误取消曾成功",
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Q25Zun"
+        }
+      },
+      "fix": {
+        "cancel_select": "StoreOrderCreateService:532 新增 type/relationId 两列，原productType仍保留",
+        "cancel_call": "StoreOrderCreateService:632-637",
+        "refund_call": "StoreOrderRefundService:2423-2430；原select()已含归属列",
+        "predicate": "ci.type===2 && Number.isSafeInteger(ci.relationId) && ci.relationId>0 && (order.supplierId===0 || order.supplierId===ci.relationId)",
+        "expected_fact_supplier": "ci.relationId, always explicit at these production callers",
+        "failed_predicate": "deleted=null, no skipBase; existing normal inventory restoration/missing-inventory failure remains",
+        "readonly_check": "Both actual latest call sites match this exact predicate; database int4 bounds relationId, and fact parser separately enforces positive int32."
+      },
+      "compatibility": "Current TS creators persist line owner; clone paths preserve it. Existing genuine unversioned pre-ID core case changes only cartInfo and keeps type2/relationId, so no loose historical owner fallback is needed. orderSupplier0 still permits valid mixed or platform-fallback fulfillment with exact type2 line owner. No inherited PHP production data contract claimed.",
+      "final_validation": {
+        "log": "/tmp/cinashop-supplier-recycle-native-verified.log",
+        "status": "passed",
+        "requested_files": 8,
+        "passed_count": 68,
+        "failed_count": 0,
+        "log_sha256": "adec98dd3715a1e8f4fe5f1cd20b5ee024c2a4e56602abab7660deba2e93674b",
+        "qualification": "Earlier parent estimate69 was wrong; actual complete8file terminal is68. The specific immutable-line-Supplier negative case passed; historical49 predates this source correction.",
+        "actual_definitions": 68,
+        "previous_estimate_corrected": 69
+      }
+    },
+    "current_source_snapshot_refreshed_at": "2026-10-16T01:32:13.105594+00:00",
+    "current_source_snapshot_qualification": "Final currently frozen source snapshot after AuthException/storeName/import cleanup; only root may attach final full-types/build and whole-batch statement.",
+    "final_auth_and_type_fix_review": {
+      "status": "source_checked_related_native18_passed_full_types_pending",
+      "files": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierProductRecycleService.ts",
+          "change": "clock now throws AuthException(message,410001) instead of invalid HttpApiException(message,410001,401)",
+          "contract": "Matches existing SupplierVideoAuthority ERR_EXPIRED business authentication envelope, preserves DB-clock rejection and rollback; does not expand shared httpStatus union."
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierProductRecycle.ts",
+          "change": "seckill/combination preserved-activity fixture uses real storeName model fields instead of nonexistent title",
+          "contract": "Correct typed synthetic rows; same retained activity IDs/product association and preservation assertions."
+        },
+        {
+          "path": "workers-ts/test/supplier-product-recycle-native.test.ts",
+          "change": "Unused imports removed",
+          "contract": "No deleted/skip cases or weaker assertions; current complete18case native passed after these corrections."
+        }
+      ],
+      "shared_error_union_unchanged_from_HEAD": true,
+      "regression": {
+        "path": "/tmp/cinashop-supplier-recycle-auth-types-regression.log",
+        "sha256": "f521b4beed08296938a9562adc353162688a55f1f1296c455927a35025dc5b5e",
+        "terminal": true,
+        "files_passed": 1,
+        "definitions_passed": 18,
+        "definitions_failed": 0,
+        "fixture_cleanup": {
+          "remaining_fixture_databases": 0,
+          "cluster_stopped": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-IFZMMP"
+        }
+      },
+      "phase": "This18case rerun follows the final AuthException/fixture/import changes; complete Worker types are separately rerunning, not inferred from native pass."
+    },
+    "final_root_observation": {
+      "latest_native_tests": 68,
+      "post_type_fix_auth_native": 18,
+      "ordinary_tests": 90,
+      "browser": 1,
+      "full_worker_types": "both_passed"
+    }
+  },
+  "cloud_ci_before_push": {
+    "run": 38831544543,
+    "sha": "6a7058b75a14c6a1e70f1f78c046b7d96345bd0a",
+    "jobs": [
+      {
+        "id": 116751694233,
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694415,
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694487,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "id": 116751694505,
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694599,
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694603,
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694627,
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694648,
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694669,
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 116751694700,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "in_progress",
+        "conclusion": null
+      }
+    ]
+  },
+  "secret_scan_calibration": {
+    "initial_findings": 1,
+    "kind": "content_hash_false_positive",
+    "reason": "generic-api-key把路径名supplierapi.ts后的SHA256当凭据；将字典改成path/sha256结构，无扫描规则或豁免变更。"
+  },
+  "secret_scan": {
+    "source_exit_code": 0,
+    "source_findings": 0,
+    "report": "/tmp/cinashop-supplier-recycle-source-verified-secrets.json",
+    "staged_patch": {
+      "exit_code": 0,
+      "findings": 0,
+      "report": "/tmp/cinashop-supplier-recycle-final-patch-secrets.json"
+    },
+    "exact_commit_range": {
+      "stage": "after_commit",
+      "delivery_receipt": "/tmp/cinashop-supplier-recycle-final-receipt.json"
+    },
+    "rule_changes": false
+  }
+}

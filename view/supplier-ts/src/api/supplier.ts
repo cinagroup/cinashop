@@ -439,7 +439,7 @@ export async function getDashboard(): Promise<DashboardStats> {
 }
 
 export async function getProducts(params: Record<string, string | number>): Promise<PageResult<ProductRow>> {
-  if (previewMode) return { list: previewProducts, count: previewProducts.length, page: 1, limit: 20 };
+  if (previewMode) { const list = previewProducts.filter(row => row.is_del !== 1); return { list, count: list.length, page: 1, limit: 20 }; }
   return apiRequest<PageResult<ProductRow>>({ method: "GET", url: "/product/product/list", params });
 }
 
@@ -877,12 +877,12 @@ export function restoreProductSkus(
 
 export async function recycleProduct(id: number) {
   if (previewMode) {
-    const index = previewProducts.findIndex((item) => item.id === id);
-    if (index >= 0) previewProducts.splice(index, 1);
-    previewProductDetails.delete(id);
-    return null;
+    const row = previewProducts.find((item) => item.id === id && item.is_del !== 1);
+    if (!row) throw new Error('示例商品已变化，请刷新');
+    row.is_del = 1; row.is_show = 0;
+    return { id, is_del: 1, operation: 'recycle' };
   }
-  return apiRequest<null>({ method: "DELETE", url: `/product/product/${id}` });
+  return apiRequest({ method: "DELETE", url: `/product/product/${id}`, data: { expected_is_del: 0 } });
 }
 
 export async function batchSetProductShow(ids: number[], isShow: number): Promise<ProductBatchResult> {

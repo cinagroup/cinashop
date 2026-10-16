@@ -105,6 +105,12 @@ export function normalizeSupplierRoute(routePath: string): string {
 /** Empty means authenticated self-service; null means an unknown route. */
 export function requiredSupplierPermissions(method: string, routePath: string): string[] | null {
   const route = normalizeSupplierRoute(routePath);
+  if (route === 'product/type_header' || route.startsWith('product/type_header/')
+    || route === 'product/product/thorough' || route.startsWith('product/product/thorough/')) {
+    if (readMethod(method) && route === 'product/type_header') return ['supplier.product.view'];
+    if (method.toUpperCase() === 'DELETE' && /^product\/product\/thorough\/(?:[1-9][0-9]{0,9}|:id|<id>)$/.test(route)) return ['supplier.product.manage'];
+    return null;
+  }
   if (route === 'file/video_uploads' || route.startsWith('file/video_uploads/')) {
     const uuid = '(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:uploadid|<uploadid>)';
     const base = `file/video_uploads/${uuid}`, verb = method.toUpperCase();
