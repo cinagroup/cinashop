@@ -1,0 +1,844 @@
+{
+  "schema": "php-ts-supplier-proactive-refund-contract-v1",
+  "date": "2026-10-16",
+  "base_commit": "46db84bee0587b3d8bff8dabb969a7d3e06b27f2",
+  "status": "foundation_locally_validated_public_flow_incomplete",
+  "goal_status": "active",
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/order/Refund.php",
+      "sha256": "e6efab85cd4fdbdcfc8f5901fad403b471e66f393788fc93e99e401778f827cc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/LoginServices.php",
+      "sha256": "95d65bf54d3bf3a8dd35784c8d7f7e3b71ef1fee0893ef87ff4ee8c674a9a08e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/AuthTokenMiddleware.php",
+      "sha256": "3eb8736ca6fe37a30b66142bb4b638a61fb623f540141be9569c769188f2895c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/SupplierCheckRoleMiddleware.php",
+      "sha256": "51d000fe779095dc33bf820dc654b0a559232d4f7e7db619d0491ca86dcf2002"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/modalForm.js",
+      "sha256": "c13984c66e5074b7687bf86488698e546e37aab9d2ad8e1ba98e3bd173f24689"
+    }
+  ],
+  "ts_preimplementation_sources": [
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "eca08ec2c881184e0f34e50dfe499961bf7444f59628619eeab93dbfc00dee4f"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundService.ts",
+      "sha256": "a3f5304d3fa540d4de3e4fd1546bb8a80331c2a04167fcccc67deb6586dffe8a"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "0ba05045eefa8d7b9f391b3e34d4f3dd1cc24d1b57b4fcc98b4ecf3b49394974"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundLineOwnership.ts",
+      "sha256": "307da8c20f7c59f395cdc22f1e7a14c1f66a1c01674a3013cd9220094f029ac0"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "sha256": "9a0f84175c3b4b6fe6c366ccc295965f4cc7f0e04854cffbcce6fb6d69b4d8a8"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderSplitFinance.ts",
+      "sha256": "b6422fe5af793b50a6277cfb08d630087900e990f5937bbb7756e5dff2966652"
+    },
+    {
+      "path": "workers-ts/src/services/order/RefundQuantityReservation.ts",
+      "sha256": "c1acd0f686d0c193bad4d7acd30237894967e31a7c76b1af0f010f4cb07d9fb7"
+    },
+    {
+      "path": "workers-ts/src/services/order/RefundOrderMaterialization.ts",
+      "sha256": "add357dfed742b71eeae1c3186b5662cb2145d2a469273976a786d689c09a5bb"
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "f70737b81cb8aef1365c9ba9a81edf72e91092f52d5ebdca531d1c7c01561399"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundCreationService.ts",
+      "sha256": "c355073c4374a5590831ec8c4188d2952c0d77d1aca8cfb91b42d5b079a684d4"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundOperationService.ts",
+      "sha256": "b6ebea7b372682335ecb5506c1cffe73dec67b7f826391035769315ebfcd402c"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "7e9e2b4a6478dcaa76096bf4a558f68f27504728e1e525b4430c1c5cd1e886c0"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b44d36c7a49e100694785c625ed7591bd4b4b1ede6480698dbf72dcdf05f2a11"
+    }
+  ],
+  "legacy_http": {
+    "seed": "GET /supplierapi/order/refund/:id",
+    "write": "PUT /supplierapi/order/refund/:id",
+    "id": "store_order integer primary key",
+    "fields": [
+      "refund_price",
+      "type(default1)"
+    ],
+    "selection": "Whole order total_num and all purchase carts; no item selection input."
+  },
+  "behavior": {
+    "type1": "Create and execute whole-goods refund; requested cash may be below the whole payment remaining. Legacy success deletes refund rows and updates cumulative order.refund_price, allowing later payment remainder topups.",
+    "type2": "After common amount/open-refund checks only set order refund_status0/refund_type3; no refund entity or financial effects.",
+    "channels": [
+      "offline/cash manual return",
+      "yue balance credit",
+      "weixin original provider",
+      "alipay original provider"
+    ],
+    "source_mismatches": "Legacy GET and PUT have different active-refund sets and PUT omits several live checks. TS must preserve real actor/tenant/paid/root invariants, not port these authorization omissions.",
+    "history": "Do not delete protected refund/payment/materialization/invoice history to imitate old temporary-row deletion.",
+    "nonmonetary": "Legacy inventory has a refund_price-audit guard; other old side effects do not uniformly have once-only proof. New monetary continuation must not repeat inventory/points/coupons/commission/Supplier goods settlement."
+  },
+  "current_gap": {
+    "public_order_id_route": false,
+    "existing_refund_id_manual_review_is_not_substitute": true,
+    "general_application_authority": "Current Supplier application capability intentionally onlycash/offline; full migration also needs real Supplier authority for yue/weixin/alipay.",
+    "cash_remainder": "Existing materialized quantity protocol consumes all selected goods on the first discounted whole-goods refund; leftover paid money cannot be represented as another goods quote. A protected money-only continuation is required.",
+    "invoice_execution": "Existing invoice preparation rejects goods/payment concessions; the pure full-ticket plan has no SQL cancellation/red-note integration yet.",
+    "capital_flow": "The existing generic refund core has no capital_flow writer. A once-only actual monetary event writer remains required; Supplier settlement is not its substitute.",
+    "quantity_baseline_projection": "Existing deep quantity proofs require the first goods refund amount. A separately verified monetary baseline view must preserve those proofs while the real order reflects cumulative money.",
+    "authority": "The legacy order-ID action needs genuine supplier.order.manage authority across all channels. The existing cash-only refund.manage capability is not a substitute."
+  },
+  "required_proofs": [
+    "Actual JWT, live tenant/role/menu/DBclock and independent restricted LOGIN.",
+    "Whole quantity first refund, explicit actual positive cash confirmation, zero cash omission, exact minor-unit sums.",
+    "Cash-only continuation binds its first genuine all-goods completion, immutable purchase/payment root and original effect receipts; no repeated nonmonetary effects.",
+    "Preserve Supplier goods settlement reversal; continuation proves zero further settlement deduction and records only actual money delta.",
+    "Persist provider admission before I/O; callback/reconciliation dispatch by protected durable continuation identity, never an in-memory JSON bypass.",
+    "Original UUID ownership receipts, read-only unknown GET and explicit not_applied fence; lost creation/local COMMIT/provider responses never auto-replay a different operation.",
+    "Balance and both providers, cancellation/deletion/foreign tenant/source mutations/concurrent writers, retained evidence, points/coupon/commission/invoice and virtual-secret invariants.",
+    "Real Supplier frontend entry and desktop/mobile Browser validation."
+  ],
+  "baseline": {
+    "status": "passed_diagnostic_not_public_route_acceptance",
+    "log": "/tmp/cinashop-supplier-proactive-contract-baseline-final.log",
+    "feature_acceptance": false,
+    "actual_payment": "18.75",
+    "actual_first_cash_refund": "7.00",
+    "whole_goods_quantity": 3,
+    "remaining_money": "11.75",
+    "buyer_balance_unchanged": true,
+    "replay_unchanged": true,
+    "quote_sql_state": "42501",
+    "existing_quote_requires_reviewed_lock_adapter": true,
+    "existing_goods_creator_rejection": "订单商品已全部退款",
+    "no_external_provider_traffic": true
+  },
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false
+  },
+  "completion_claim": false,
+  "validated_at_utc": "2026-10-16T06:33:04.644651+00:00",
+  "checkboxes": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "count": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "count": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562",
+      "byte_equal_to_base": true
+    }
+  ],
+  "base_commit_ci": {
+    "run_id": 38858479131,
+    "head_sha": "46db84bee0587b3d8bff8dabb969a7d3e06b27f2",
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38858479131",
+    "observed_at_utc": "2026-10-16 06:26:51 UTC",
+    "jobs": [
+      {
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "foundation": {
+    "installed_automatically": false,
+    "maintenance": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+    "tables": [
+      {
+        "name": "supplier_proactive_refund_operation_v1",
+        "columns": 14
+      },
+      {
+        "name": "supplier_proactive_refund_decision_v1",
+        "columns": 11
+      },
+      {
+        "name": "supplier_refund_money_payment_v1",
+        "columns": 22
+      },
+      {
+        "name": "supplier_refund_money_completion_v1",
+        "columns": 16
+      }
+    ],
+    "constraints_sha256": "dc8c72d19fa9e639cb946906045d090aa9fd2b0537937053b9c07c396d2a8d34",
+    "catalog_module_sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+    "new_security_definer_functions": 0,
+    "provider_progress_columns": [
+      "provider_status",
+      "provider_refund_id",
+      "last_error",
+      "attempts",
+      "request_lease_until",
+      "next_retry_at",
+      "last_queried_at",
+      "query_count",
+      "updated_at"
+    ],
+    "provider_transaction_identity": "A genuine outTradeNo request may have an absent transactionId; no fabricated provider transaction is required.",
+    "declaration_scopes": {
+      "historical": 300,
+      "ordinary": 304,
+      "product": 309,
+      "supplier_order": 311,
+      "supplier_cash": 314,
+      "supplier_proactive": 318
+    },
+    "old_orm_and_bootstrap_unchanged": true,
+    "money_plan": "Pure exact integer-cent chain and disjoint pending provider reservations; no quantity claim, SQL evidence verification or execution authority.",
+    "invoice_plan": "Pure full-goods/full-original-ticket planning with distinct first payment/remainder and frozen manual disposition; no invoice SQL mutation, tax request or invented tax success.",
+    "existing_success_recovery": "A provider SUCCESS without completion first resumes the same original operation; it cannot authorize another new payout. A dedicated completing branch remains required."
+  },
+  "validation": {
+    "status": "all_planned_foundation_checks_passed",
+    "distinct_files": 7,
+    "distinct_tests": 124,
+    "ordinary": {
+      "files": 4,
+      "passed": 110
+    },
+    "native": {
+      "files": 2,
+      "passed": 12,
+      "diagnostic_baseline_cases": 1,
+      "catalog_cases": 11
+    },
+    "workerd": {
+      "files": 1,
+      "passed": 2
+    },
+    "types": [
+      {
+        "check": "unit",
+        "exit": 0
+      },
+      {
+        "check": "runtime",
+        "exit": 0
+      }
+    ],
+    "type_heap_mib": 8192,
+    "terminal_summaries": [
+      {
+        "phase": "domain-final",
+        "files": 3,
+        "passed": 74,
+        "log": "/tmp/cinashop-supplier-proactive-domain-final.log",
+        "sha256": "19320d6c7ea52e7fe4141b04e6ec9a3fa7ccd3f7fce501b5460d80468f92163b"
+      },
+      {
+        "phase": "data-migration-test",
+        "files": 1,
+        "passed": 36,
+        "log": "/tmp/cinashop-supplier-proactive-data-migration-test.log",
+        "sha256": "3a5fb624a1e665eaaa052439fe829cc3345f2f1673effba392ae2632e3a25e25"
+      },
+      {
+        "phase": "contract-baseline-final",
+        "files": 1,
+        "passed": 1,
+        "log": "/tmp/cinashop-supplier-proactive-contract-baseline-final.log",
+        "sha256": "ae051a3cb7c47784243e987b26008c1eb9d9f5d9b37b69dcced84ee83670fab4"
+      },
+      {
+        "phase": "catalog-final",
+        "files": 1,
+        "passed": 11,
+        "log": "/tmp/cinashop-supplier-proactive-catalog-final.log",
+        "sha256": "4aabfcc39b9df194f7a33eef3413d358d8f7a984974f7c9a39863084fb7b1d99"
+      },
+      {
+        "phase": "workerd-final",
+        "files": 1,
+        "passed": 2,
+        "log": "/tmp/cinashop-supplier-proactive-workerd-final.log",
+        "sha256": "c233387ce4dcbf2ecef8c7bdf46d0fe79e02ec6200887fef808e79ba67bbac27"
+      }
+    ],
+    "phase_history": [
+      {
+        "phase": "catalog-calibration-sql-fixed",
+        "log": "/tmp/cinashop-supplier-proactive-catalog-calibration-sql-fixed.log",
+        "sha256": "d79a84be22ff48433f2d441a29b8b48aecbb3a6ac6d72465742cc8e1b1bbb697",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  9 failed | 2 passed (11)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-O5cmNY"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "catalog-calibration",
+        "log": "/tmp/cinashop-supplier-proactive-catalog-calibration.log",
+        "sha256": "960276358f76c34f6bf3ab4541f671304e409f23ab2f7f94a947647407a14009",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  10 failed | 1 passed (11)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mrXB4y"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "catalog-final",
+        "log": "/tmp/cinashop-supplier-proactive-catalog-final.log",
+        "sha256": "4aabfcc39b9df194f7a33eef3413d358d8f7a984974f7c9a39863084fb7b1d99",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  11 passed (11)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-jky1LI"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "catalog-pinned",
+        "log": "/tmp/cinashop-supplier-proactive-catalog-pinned.log",
+        "sha256": "a2037abb79d01c3cb064d0591ee117f8d8fe1fa16708ca40b6826b14af1c1396",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  1 failed | 10 passed (11)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-r1RK5u"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "contract-baseline-corrected",
+        "log": "/tmp/cinashop-supplier-proactive-contract-baseline-corrected.log",
+        "sha256": "f7cd5a88c6b2c6196de0271bc12f62bcb05f8158d6d97e4a0a6f805f8c91c554",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  1 failed (1)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-l6duki"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "contract-baseline-final",
+        "log": "/tmp/cinashop-supplier-proactive-contract-baseline-final.log",
+        "sha256": "ae051a3cb7c47784243e987b26008c1eb9d9f5d9b37b69dcced84ee83670fab4",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  1 passed (1)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-9S92F6"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "contract-baseline-verified",
+        "log": "/tmp/cinashop-supplier-proactive-contract-baseline-verified.log",
+        "sha256": "7f226b6ff0c9122b2e4cd067c6406ce10fc76b224326705620e379c041dd84ce",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  1 failed (1)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-4vX2cX"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "contract-baseline",
+        "log": "/tmp/cinashop-supplier-proactive-contract-baseline.log",
+        "sha256": "c9cf4ef54a88e6b0dc0a675cebe55ce96fedaf383e6c848b369601a866fedeb7",
+        "test_summary": [
+          " Test Files  1 failed (1)",
+          "      Tests  1 failed (1)"
+        ],
+        "clusters": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-AzsX79"
+        ],
+        "fixture_zero": true
+      },
+      {
+        "phase": "data-migration-test",
+        "log": "/tmp/cinashop-supplier-proactive-data-migration-test.log",
+        "sha256": "3a5fb624a1e665eaaa052439fe829cc3345f2f1673effba392ae2632e3a25e25",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  36 passed (36)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "domain-before-types",
+        "log": "/tmp/cinashop-supplier-proactive-domain-before-types.log",
+        "sha256": "e11445188442762772fa361c9d75abf51576bf7e2f8aada63a5d2bc4130af2b4",
+        "test_summary": [
+          " Test Files  3 passed (3)",
+          "      Tests  74 passed (74)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "domain-final",
+        "log": "/tmp/cinashop-supplier-proactive-domain-final.log",
+        "sha256": "19320d6c7ea52e7fe4141b04e6ec9a3fa7ccd3f7fce501b5460d80468f92163b",
+        "test_summary": [
+          " Test Files  3 passed (3)",
+          "      Tests  74 passed (74)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "input-test",
+        "log": "/tmp/cinashop-supplier-proactive-input-test.log",
+        "sha256": "bf83bdf6ffe433b3edf26608daa12b972bc8547beaee2b50a0d06c0969ed5fa4",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  13 passed (13)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "invoice-plan-test",
+        "log": "/tmp/cinashop-supplier-proactive-invoice-plan-test.log",
+        "sha256": "5f69fb1fe7790d4bcc92b3501b6353abe5039ebf05529fcfee85c3f2d5f2717a",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  24 passed (24)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "money-plan-test",
+        "log": "/tmp/cinashop-supplier-proactive-money-plan-test.log",
+        "sha256": "31aa7afe2eefb6a168f16015c6c99d189f4993089d4108120481d7c63fa2a92a",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  36 passed (36)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "runtime-validation",
+        "log": "/tmp/cinashop-supplier-proactive-runtime-validation.log",
+        "sha256": "a277de733f7b74a639423b3f7a4178b659d77575f440086d1fe7829043570b1a",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "types-first",
+        "log": "/tmp/cinashop-supplier-proactive-types-first.log",
+        "sha256": "54f8d4e1bbd1cb673c4565e71afa674db8db001b7211965220d8c450bdfedb8c",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "types-runtime",
+        "log": "/tmp/cinashop-supplier-proactive-types-runtime.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "types-unit-first",
+        "log": "/tmp/cinashop-supplier-proactive-types-unit-first.log",
+        "sha256": "211a58b6def1d9dd701e4b0e40b490afad6f81a8e5f3e0f1dab5539d84134f71",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "types-unit",
+        "log": "/tmp/cinashop-supplier-proactive-types-unit.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "types",
+        "log": "/tmp/cinashop-supplier-proactive-types.log",
+        "sha256": "01d613a8c90ea98b6586efeeea0673186836e69f1d9b1b55a29202f92ff19d0b",
+        "test_summary": [],
+        "clusters": [],
+        "fixture_zero": false
+      },
+      {
+        "phase": "workerd-final",
+        "log": "/tmp/cinashop-supplier-proactive-workerd-final.log",
+        "sha256": "c233387ce4dcbf2ecef8c7bdf46d0fe79e02ec6200887fef808e79ba67bbac27",
+        "test_summary": [
+          " Test Files  1 passed (1)",
+          "      Tests  2 passed (2)"
+        ],
+        "clusters": [],
+        "fixture_zero": false
+      }
+    ],
+    "cleanup": [
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-4vX2cX",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-contract-baseline-verified.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-9S92F6",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-contract-baseline-final.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-AzsX79",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-contract-baseline.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-O5cmNY",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-catalog-calibration-sql-fixed.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-jky1LI",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-catalog-final.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-l6duki",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-contract-baseline-corrected.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mrXB4y",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-catalog-calibration.log"
+        ]
+      },
+      {
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-r1RK5u",
+        "owned_by_current_uid": true,
+        "postgres_major": 16,
+        "fixture_databases_remaining": 0,
+        "pg_ctl_status": 3,
+        "logs": [
+          "/tmp/cinashop-supplier-proactive-catalog-pinned.log"
+        ]
+      }
+    ],
+    "deduplication": "Only the final complete definition of each of these seven files counts. Earlier failed calibration and repeated domain runs do not add acceptance.",
+    "repairs": [
+      {
+        "phase": "contract-baseline",
+        "finding": "Whole-order materialization represents closed goods with refundNum0 and splitStatus2, not refundNum==cartNum.",
+        "resolution": "Corrected the diagnostic assertion; no business source change."
+      },
+      {
+        "phase": "contract-baseline",
+        "finding": "The existing restricted quote uses a status FOR SHARE read that requires absent UPDATE permission.",
+        "resolution": "Recorded actual42501 and preserved the old restricted role; future GET requires its own reviewed locking adapter."
+      },
+      {
+        "phase": "contract-baseline",
+        "finding": "The atomic wrapper first required explicit physical cartSelections before reaching the no-goods remainder guard.",
+        "resolution": "Supplied actual original physical selections, then proved semantic rejection and unchanged effects."
+      },
+      {
+        "phase": "catalog-calibration",
+        "finding": "An unnest output alias used SQL reserved word collation.",
+        "resolution": "Renamed the alias to index_collation; all actual catalog predicates remain enforced."
+      },
+      {
+        "phase": "catalog-calibration",
+        "finding": "The intentionally uncalibrated constraint placeholder rejected the actual PG16 schema.",
+        "resolution": "Pinned the independently observed constraint hash; all drift cases remain negative."
+      },
+      {
+        "phase": "catalog-native",
+        "finding": "The real FK23503 was inside the ORM cause rather than the outer error.",
+        "resolution": "Corrected the assertion to inspect actual cause; FK definition was unchanged."
+      },
+      {
+        "phase": "invoice-planning",
+        "finding": "Historical manual red-note review IDs use the older UUID1–5 contract.",
+        "resolution": "Use the original manualRedUuid parser; do not impose the new operation UUIDv4 rule on older evidence."
+      },
+      {
+        "phase": "types-first",
+        "finding": "A test incorrectly asserted partial history patches as complete SupplierMoneyHistory objects.",
+        "resolution": "Use satisfies Array<Partial<SupplierMoneyHistory>>; no runtime case or production implementation changed."
+      }
+    ]
+  },
+  "integration_remaining": [
+    "Live supplier.order.manage application/execution authority across cash/balance/weixin/alipay.",
+    "Original operation creation, monetary-only execution, receipt/resolve and explicit resume, durable callback/reconcile dispatch.",
+    "Protected baseline projection for existing quantity proofs while actual cumulative order.refundPrice includes money-only deltas.",
+    "Invoice SQL original cancellation/full manual disposition and all existing proof-reader integration.",
+    "Actual once-only Supplier money delta and platform capital_flow; preserve already completed inventory/points/coupons/commission/goods settlement.",
+    "Exact GET/PUT legacy order-ID public route, type2 refusal, permissions, frontend and real desktop/mobile Browser flow."
+  ],
+  "browser_connection": {
+    "inventory": [
+      {
+        "id": "2",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex In-app Browser",
+        "type": "iab"
+      },
+      {
+        "id": "1",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex MCP Apps",
+        "type": "mcpapps"
+      }
+    ],
+    "observation_log": "/tmp/cinashop-supplier-proactive-browser-inventory.json",
+    "independent_extension_connection_observed": false,
+    "does_not_assert_extension_uninstalled": true
+  },
+  "secret_scan": {
+    "status": "selected_sources_and_staged_passed_exact_commit_range_gate_required",
+    "config_unchanged": true,
+    "exact_range_base": "46db84bee0587b3d8bff8dabb969a7d3e06b27f2",
+    "source_log": "/tmp/cinashop-supplier-proactive-source-final-secrets.log",
+    "staged_log": "/tmp/cinashop-supplier-proactive-staged-secrets.log",
+    "exact_commit_range_log": "/tmp/cinashop-supplier-proactive-commit-range-secrets.log",
+    "commit_range_terminal_evidence": "Recorded outside this commit after its immutable SHA exists.",
+    "source_findings": 0,
+    "staged_findings": 0,
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "final_status_note": "The final audit bytes are re-scanned before commit. Exact immutable base..HEAD scan is required after commit creation; terminal evidence is outside this commit."
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "268c1f4a70b86ce1ef405d9d599964d2c6735463adc6994ed230dfcb5ce36476"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "3b7d94ab81657e6e0bdfc64e2a062308e7af320e4988753b914cb7808a6fd451"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "ad23496e36659c8ef832fb34033431be21a8a3bca8217341c87e829819b797cc"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInvoicePlan.ts",
+      "sha256": "cc04e120a199a8ffc4d8880474eeea6cbf99f38971626cd43d6aa0b6b73bd173"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b"
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea"
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407"
+    },
+    {
+      "path": "workers-ts/test/runtime/supplier-proactive-refund-planning.test.ts",
+      "sha256": "a24603820fb6b6b4e7a3d6a121d2eaaf0410fefa6a403cfd0acedb5cea3ebf91"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-catalog-native.test.ts",
+      "sha256": "0a031276380582f2d8976216536ded63d0a150081a6308cc57d8c9c757a8d53a"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-contract-native.test.ts",
+      "sha256": "d82e883dcd3369dff97a1b2af4cb4dd2a12aafe206f84ad0d2bd6704c70f49bf"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-input.test.ts",
+      "sha256": "d0bb0df93216c8a97d49d58d16474dc51bbfa11d6940922168cacc2453709d44"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-invoice-plan.test.ts",
+      "sha256": "ac8b1fac45333367d92f2edf034147cd259690f2bcfdec3e2278dddbeeccd82b"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-money-plan.test.ts",
+      "sha256": "6e45a04d9bd9b1f03dcb8558956fe396b9574d02a109c182e639ae3f403ed6b4"
+    }
+  ]
+}

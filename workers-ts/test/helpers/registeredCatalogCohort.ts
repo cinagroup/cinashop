@@ -191,8 +191,19 @@ const supplierCashExplicitColumns = {
   supplier_manual_refund_operation_v1: ['operation_id','actor_id','supplier_id','refund_id','request_hash','state','intent','source_hash','proof_hash','result','created_at'],
   supplier_manual_refund_proof_v1: ['refund_id','operation_id','actor_id','supplier_id','order_id','payment_order_id','buyer_id','pay_type','amount','intent','intent_json','request_hash','source','source_json','source_hash','proof','proof_json','proof_hash','transaction_id','created_at'],
 } as const;
-export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'='historical') {
-  assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash'].includes(scope),'Unknown independently commissioned declaration scope');
+// Four independent proactive-refund tables are declarations only. They are
+// never installed by the historical ORM/bootstrap/external migration cohort.
+const supplierProactiveExplicitDeclarations = [
+  ['supplierProactiveRefund.ts','575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f',['supplier_proactive_refund_operation_v1','supplier_proactive_refund_decision_v1','supplier_refund_money_payment_v1','supplier_refund_money_completion_v1']],
+] as const;
+const supplierProactiveExplicitColumns = {
+  supplier_proactive_refund_operation_v1: ['operation_id','actor_id','supplier_id','order_id','state','kind','request_hash','intent','intent_json','source','source_json','source_hash','result','created_at'],
+  supplier_proactive_refund_decision_v1: ['operation_id','actor_id','supplier_id','order_id','kind','outcome','request_hash','evidence','evidence_json','evidence_hash','created_at'],
+  supplier_refund_money_payment_v1: ['id','operation_id','order_id','payment_order_id','provider','out_refund_no','transaction_id','request_amount','total_amount','provider_status','provider_refund_id','last_error','attempts','request_lease_until','next_retry_at','last_queried_at','query_count','request','request_json','request_hash','created_at','updated_at'],
+  supplier_refund_money_completion_v1: ['operation_id','actor_id','supplier_id','order_id','first_refund_id','payment_order_id','amount','pay_type','source_hash','request_hash','before_refunded','after_refunded','proof','proof_json','proof_hash','created_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'|'current-supplier-proactive'='historical') {
+  assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash','current-supplier-proactive'].includes(scope),'Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -267,7 +278,22 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
   assert.equal(cashCurrentTables.length,32);assert.equal(new Set(cashCurrentTables).size,32);
   const cashCurrentOnly=cashCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
   assert.equal(cashCurrentOnly.length,31);assert.equal(new Set(cashCurrentOnly).size,31);
-  return cashCurrentOnly;
+  if(scope==='current-supplier-cash')return cashCurrentOnly;
+  for(const [file,sha256,names] of supplierProactiveExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned Supplier proactive DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...supplierProactiveExplicitColumns[name]]);
+  }
+  const proactiveTables=supplierProactiveExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(proactiveTables.length,4);assert.equal(new Set(proactiveTables).size,4);
+  assert.deepEqual(Object.keys(supplierProactiveExplicitColumns).sort(),proactiveTables);
+  for(const name of proactiveTables)assert.ok(!cashCurrentTables.includes(name),'Proactive declaration must not replace an existing declaration');
+  const proactiveCurrentTables=[...cashCurrentTables,...proactiveTables].sort();
+  assert.equal(proactiveCurrentTables.length,36);assert.equal(new Set(proactiveCurrentTables).size,36);
+  const proactiveCurrentOnly=proactiveCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(proactiveCurrentOnly.length,35);assert.equal(new Set(proactiveCurrentOnly).size,35);
+  return proactiveCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();
