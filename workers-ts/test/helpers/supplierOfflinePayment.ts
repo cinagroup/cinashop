@@ -19,7 +19,7 @@ export const supplierPaidConsumerExtraTables = ['store_order_outbox', 'store_ord
   'store_order_promotion_gift_coupon_reward', 'store_promotions', 'store_promotions_auxiliary',
   'user_label', 'user_label_relation', 'order_print_job', 'order_print_job_action', 'store_product_virtual',
   'system_user_level', 'user_level', 'store_service_record', 'store_order_promotions', 'system_notification', 'system_message',
-  'order_notification_delivery', 'store_product_log', 'store_order_writeoff'] as const;
+  'order_notification_delivery', 'store_product_log', 'store_order_writeoff', 'luck_lottery', 'luck_lottery_entitlement'] as const;
 export async function supplierOfflinePaymentFixture() {
   const f = await supplierUnpaidOrderEditFixture();
   try {

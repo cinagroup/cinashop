@@ -4,6 +4,7 @@ import { supplierManualRefundMac } from '../../src/services/supplier/SupplierMan
 import { outRequestHash } from '../../src/services/out/OutIdempotency';
 import { planSupplierProactiveMoneyRefund } from '../../src/services/supplier/SupplierProactiveRefundMoneyPlan';
 import { planSupplierProactiveWholeInvoice } from '../../src/services/supplier/SupplierProactiveRefundInvoicePlan';
+import { supplierProactiveRefundApplicationNumber } from '../../src/services/supplier/SupplierProactiveRefundIdentity';
 
 it('workerd independently verifies the proactive HMAC domain and freezes intent before asynchronous WebCrypto hashing', async () => {
   const actor = { id: 21, supplierId: 7, authVersion: '1'.repeat(32), expiresAt: 2_000_000_000 };
@@ -36,4 +37,17 @@ it('workerd keeps BigInt minor units and original whole-ticket value independent
   expect(invoice).toMatchObject({ goods_quantity: 3, invoice_amount: '18.75', first_refunded: '7.00', unreturned_payment: '11.75' });
   expect(planSupplierProactiveMoneyRefund({ paid: '9999999999.99', firstGoodsRefund: '0.01', payType: 'yue', completions: [], payments: [] },
     '9999999999.98').after_refunded).toBe('9999999999.99');
+});
+
+it('workerd preserves every original UUID bit inside the mature32-character financial link', () => {
+  const uuid='ffffffff-ffff-4fff-bfff-ffffffffffff';
+  const number=supplierProactiveRefundApplicationNumber(2147483647,uuid);
+  expect(number.length).toBeLessThanOrEqual(32);
+  expect(number).toMatch(/^SR[0-9a-z]+_[A-Za-z0-9_-]{22}$/);
+  const separator=number.indexOf('_'),actor=number.slice(2,separator);
+  expect(Number.parseInt(actor,36)).toBe(2147483647);
+  const raw=atob(number.slice(separator+1).replaceAll('-','+').replaceAll('_','/')+'==');
+  expect([...raw].map(byte=>byte.charCodeAt(0).toString(16).padStart(2,'0')).join('')).toBe(uuid.replaceAll('-',''));
+  expect(supplierProactiveRefundApplicationNumber(21,uuid)).not.toBe(number);
+  expect(supplierProactiveRefundApplicationNumber(2147483647,'ffffffff-ffff-4fff-bfff-fffffffffffe')).not.toBe(number);
 });

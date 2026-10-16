@@ -10,6 +10,8 @@ import { assertSupplierVideoAuthority,type SupplierVideoActor } from './Supplier
 import { supplierManualRefundJson,supplierManualRefundRecord,supplierManualRefundConflict,type SupplierManualRefundIntent } from './SupplierManualRefundInput';
 import { ServiceUnavailableException,ValidateException } from '@/utils/errors';
 import {assertSupplierManualRefundLineOwnership} from './SupplierManualRefundLineOwnership';
+import {authorizeSupplierProactiveRefundApplication,type SupplierProactiveRefundApplicationCapability} from './SupplierProactiveRefundCapability';
+import {assertSupplierProactiveRefundCash} from './SupplierProactiveRefundInput';
 type Order=typeof storeOrder.$inferSelect;type Cart=typeof storeOrderCartInfo.$inferSelect;type Refund=typeof storeOrderRefund.$inferSelect;
 const fact=(ok:unknown):void=>{if(!ok)throw supplierManualRefundConflict('供应商现金退款原付款、租户或完整凭据无法核对');};
 const bytes=(value:unknown,max:number)=>{const text=supplierManualRefundJson(value);fact(new TextEncoder().encode(text).length<=max);return text;};
@@ -39,16 +41,16 @@ async function refundTransaction(tx:DbClient):Promise<SupplierRefundTransaction>
   fact(identity&&/^[1-9][0-9]*$/.test(identity.transaction_id)&&Number.isSafeInteger(identity.backend_id)&&identity.backend_id>0);
   return identity;
 }
-async function lockAuthority(tx:DbClient,actor:SupplierVideoActor) {
+async function lockAuthority(tx:DbClient,actor:SupplierVideoActor,permission:'supplier.refund.manage'|'supplier.order.manage'='supplier.refund.manage') {
   await tx.execute(sql`LOCK TABLE ONLY public.system_admin,ONLY public.system_supplier,ONLY public.system_role,ONLY public.system_menus IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
-  await assertSupplierVideoAuthority(tx,actor,'supplier.refund.manage');
+  await assertSupplierVideoAuthority(tx,actor,permission);
 }
-async function sameTransaction(tx:DbClient,expected:SupplierRefundTransaction,actor:SupplierVideoActor) {
+async function sameTransaction(tx:DbClient,expected:SupplierRefundTransaction,actor:SupplierVideoActor,permission:'supplier.refund.manage'|'supplier.order.manage'='supplier.refund.manage') {
   const current=await refundTransaction(tx);
   fact(current.transaction_id===expected.transaction_id&&current.backend_id===expected.backend_id);
   // Mint acquired this before the core's order/cart locks. A legitimate nested
   // SAVEPOINT reacquires its own lock; another TX is refused before this step.
-  await lockAuthority(tx,actor);
+  await lockAuthority(tx,actor,permission);
 }
 declare const appBrand:unique symbol;
 export type SupplierManualRefundApplicationCapability={readonly[appBrand]:true};
@@ -69,17 +71,35 @@ export async function authorizeSupplierManualRefundApplication(tx:DbClient,cap:S
 }
 declare const executionBrand:unique symbol;
 export type SupplierManualRefundExecutionCapability={readonly[executionBrand]:true};
-const executions=new WeakMap<object,{actor:SupplierVideoActor;intent:SupplierManualRefundIntent;hash:string;sourceHash:string;transaction:SupplierRefundTransaction}>();
+const executions=new WeakMap<object,{actor:SupplierVideoActor;intent:SupplierManualRefundIntent;hash:string;sourceHash:string;transaction:SupplierRefundTransaction;
+  permission:'supplier.refund.manage'|'supplier.order.manage'}>();
 export async function prepareSupplierManualRefundExecution(tx:DbClient,actor:SupplierVideoActor,intent:SupplierManualRefundIntent,
   hash:string,order:Order,refund:Refund):Promise<SupplierManualRefundExecutionCapability> {
+  return prepareExecution(tx,actor,intent,hash,order,refund,'supplier.refund.manage');
+}
+/** Preserve the existing cash proof format, but require a genuine independent
+ * order-management admission. An HTTP flag/string cannot select this policy. */
+export async function prepareSupplierProactiveManualRefundExecution(tx:DbClient,capability:SupplierProactiveRefundApplicationCapability,
+  actor:SupplierVideoActor,intent:SupplierManualRefundIntent,hash:string,order:Order,refund:Refund):Promise<SupplierManualRefundExecutionCapability> {
+  const admission=await authorizeSupplierProactiveRefundApplication(tx,capability,order,
+    await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid,order.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201));
+  fact(admission.phase==='execution'&&admission.intent&&admission.operationId===intent.operation_id
+    &&admission.intent.actor_id===actor.id&&admission.intent.supplier_id===actor.supplierId
+    &&admission.intent.refund_price===intent.refund_price&&admission.intent.cash_returned===intent.cash_returned);
+  if(!admission.intent)throw supplierManualRefundConflict();
+  assertSupplierProactiveRefundCash(admission.intent,intent.refund_price==='0.00'?'zero':'cash');
+  return prepareExecution(tx,actor,intent,hash,order,refund,'supplier.order.manage');
+}
+async function prepareExecution(tx:DbClient,actor:SupplierVideoActor,intent:SupplierManualRefundIntent,hash:string,order:Order,refund:Refund,
+  permission:'supplier.refund.manage'|'supplier.order.manage'):Promise<SupplierManualRefundExecutionCapability> {
   const owner=Object.freeze({...actor}),request=Object.freeze({...intent}),transaction=await refundTransaction(tx);
-  await lockAuthority(tx,owner);await assertSupplierManualRefundReady(tx);
+  await lockAuthority(tx,owner,permission);await assertSupplierManualRefundReady(tx);
   fact(request.actor_id===owner.id&&request.supplier_id===owner.supplierId&&request.refund_id===refund.id&&order.supplierId===owner.supplierId);
   fact(hash===await outRequestHash(request));
   const cap=Object.freeze({}) as SupplierManualRefundExecutionCapability;
   const sourceHash=await outRequestHash(await readSupplierManualRefundSource(tx,order,refund));
-  await assertSupplierVideoAuthority(tx,owner,'supplier.refund.manage');
-  executions.set(cap,{actor:owner,intent:request,hash,sourceHash,transaction});return cap;
+  await assertSupplierVideoAuthority(tx,owner,permission);
+  executions.set(cap,{actor:owner,intent:request,hash,sourceHash,transaction,permission});return cap;
 }
 async function oldProofPresent(tx:DbClient,refundId:number) {
   const [present]=await tx.execute(sql`SELECT to_regclass('public.customer_financial_manual_refund_v1') IS NOT NULL AS present`);
@@ -91,7 +111,7 @@ async function oldProofPresent(tx:DbClient,refundId:number) {
 }
 export async function persistSupplierManualRefundProof(tx:DbClient,cap:SupplierManualRefundExecutionCapability,refund:Refund,order:Order) {
   const p=executions.get(cap);fact(p&&p.intent.refund_id===refund.id);if(!p)throw supplierManualRefundConflict();
-  await sameTransaction(tx,p.transaction,p.actor);await assertSupplierManualRefundReady(tx);
+  await sameTransaction(tx,p.transaction,p.actor,p.permission);await assertSupplierManualRefundReady(tx);
   fact(order.supplierId===p.actor.supplierId&&refund.supplierId===order.supplierId&&refund.storeOrderId===order.id&&refund.uid===order.uid
     &&refund.storeId===order.storeId&&!refund.isDel&&!refund.isCancel&&refund.refundPrice===p.intent.refund_price);
   fact(!await oldProofPresent(tx,refund.id));

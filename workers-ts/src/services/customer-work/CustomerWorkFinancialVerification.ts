@@ -14,7 +14,7 @@ import {readRefundEarnedIncomeScope,captureRefundEarnedIncomeScope} from '@/serv
 import {readBargainOrderParticipation} from '@/services/activity/BargainOrderSnapshot';
 import {outRequestHash} from '@/services/out/OutIdempotency';
 import {assertGuestRefundAccountless,isManualRefundOrder,readCustomerManualRefundProof} from '@/services/order/CustomerManualRefund';
-import {assertStoredManualInvoiceAllocation} from '@/services/order/InvoiceManualRedNoteEvidence';
+import {assertStoredManualInvoiceAllocation,assertStoredSupplierProactiveInvoiceAllocation,SUPPLIER_WHOLE_INVOICE_VERSION} from '@/services/order/InvoiceManualRedNoteEvidence';
 import type {FinancialOrder,FinancialRefund} from './CustomerWorkFinancialReadService';
 /** Trusted server composition only; materialization independently enforces its own proof. */
 export type FinancialManualProofReader=(tx:DbClient,refund:FinancialRefund,order:FinancialOrder)=>Promise<{source:{carts:unknown}}>;
@@ -117,7 +117,14 @@ export async function verifyFinancialMaterializedRefund(tx:DbClient,refund:Finan
  }
  const allocationRaw=json(record.invoiceAllocation,16384);
  if(allocationRaw!==null){
-  const allocation=object(allocationRaw),manual=allocation.version==='refund-invoice-allocation-manual-red-v2';
+  const allocation=object(allocationRaw);
+  if(allocation.version===SUPPLIER_WHOLE_INVOICE_VERSION){
+   requireFact(record.disposition==='whole'&&record.sourceOrderId===record.selectedOrderId&&record.remainingOrderId===null
+    &&allocation.sourceOrderId===record.sourceOrderId&&allocation.paymentOrderId===record.paymentOrderId&&allocation.refundId===refund.id
+    &&allocation.first_refunded===refund.refundPrice&&object(allocation.selected).amount===plan!.selected.payPrice);
+   await assertStoredSupplierProactiveInvoiceAllocation(tx,record.invoiceAllocation,refund.uid,record.paymentOrderId);
+  }else{
+  const manual=allocation.version==='refund-invoice-allocation-manual-red-v2';
   requireFact(manual||allocation.version==='refund-invoice-allocation-v1');
   // The new version is admitted only through the immutable original issued
   // snapshots, exact manual record/review hashes and frozen created targets.
@@ -148,6 +155,8 @@ export async function verifyFinancialMaterializedRefund(tx:DbClient,refund:Finan
    }
   }
  }
+ }
+
  if(isManualRefundOrder(source.source)&&amountToCents(refund.refundPrice)!>0){const manual=await manualProofReader(tx,refund,source.source);requireFact(await outRequestHash(manual.source.carts)===await outRequestHash(source.carts));}
  const frozenPayment=object(source.payment);requireFact(Object.keys(frozenPayment).sort().join(',')==='id,orderId,payPrice,payType,tradeNo'&&payment!.id===frozenPayment.id&&payment!.uid===refund.uid&&payment!.paid===1&&payment!.payType===source.source.payType&&selected!.payType===payment!.payType&&['orderId','tradeNo','payPrice','payType'].every(key=>(payment! as unknown as Record<string,unknown>)[key]===frozenPayment[key]));
  const points=planCompletedRefundLineCompensation(source.source,source.carts,[refund],await loadUnpaidOrderGainIntegralProof(tx,source.source,source.carts));requireFact(!!points&&amountToCents(source.source.backIntegral)===points!.usedIntegral*100);

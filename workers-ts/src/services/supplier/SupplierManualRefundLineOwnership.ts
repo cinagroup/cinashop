@@ -11,11 +11,12 @@ import {readRefundGenerationMarker,type RefundGenerationMarker} from '@/services
 import {readRefundQuantityReservation,refundClaimCartKey} from '@/services/order/RefundQuantityReservation';
 import {refundOrderSplitFingerprint} from '@/services/order/RefundOrderSplitIdentity';
 import {outRequestHash} from '@/services/out/OutIdempotency';
-import type {manualRefundWriteFacts} from '@/services/order/CustomerManualRefund';
+import type {CustomerManualOfflineOrigin} from '@/services/order/CustomerManualOfflineOrigin';
 import {loadSupplierOfflinePaymentOperation} from './SupplierOfflinePaymentOperation';
 import {supplierManualRefundConflict} from './SupplierManualRefundInput';
 
 type Order=typeof storeOrder.$inferSelect;type Cart=typeof storeOrderCartInfo.$inferSelect;type Refund=typeof storeOrderRefund.$inferSelect;
+export interface SupplierRefundPurchasePayment {root_id:number;payment_origin?:CustomerManualOfflineOrigin}
 type ProofReader=(tx:DbClient,refund:Refund,order:Order)=>Promise<{source:{carts:unknown}}>;
 const fact=(ok:unknown):void=>{if(!ok)throw supplierManualRefundConflict('供应商退款商品归属及原PHP购买来源无法核对');};
 const object=(value:unknown):Record<string,unknown>=>{fact(value&&typeof value==='object'&&!Array.isArray(value));return value as Record<string,unknown>;};
@@ -59,8 +60,8 @@ interface RequiredLine {id:number;cartId:string;quantity:number;facts:Cart}
 function samePurchase(required:RequiredLine,source:Cart,quantity:number) {
   fact(Number.isSafeInteger(quantity)&&quantity>0&&required.quantity<=quantity&&stable.every(key=>required.facts[key]===source[key]));
 }
-async function originalSupplierPhpPurchase(tx:DbClient,payment:Awaited<ReturnType<typeof manualRefundWriteFacts>>,order:Order) {
-  if(!('payment_origin'in payment)||payment.payment_origin.kind!=='supplier_order_offline')return null;
+async function originalSupplierPhpPurchase(tx:DbClient,payment:SupplierRefundPurchasePayment,order:Order) {
+  if(payment.payment_origin?.kind!=='supplier_order_offline')return null;
   const origin=payment.payment_origin,receipt=await loadSupplierOfflinePaymentOperation(tx,origin.receipt.operation_id);
   fact(receipt?.state==='committed'&&receipt.source&&receipt.order_id===payment.root_id
     &&receipt.supplier_id===order.supplierId&&receipt.source.order.uid===order.uid);
@@ -90,7 +91,7 @@ function bindOriginalRawPurchase(original:Awaited<ReturnType<typeof originalSupp
  * remain readable; derived PHP lines must additionally trace every current
  * row through immutable refund/fulfillment mappings back to that raw purchase.
  * This does not relabel a checkout snapshot or rewrite any original evidence. */
-export async function assertSupplierManualRefundLineOwnership(tx:DbClient,order:Order,carts:Cart[],payment:Awaited<ReturnType<typeof manualRefundWriteFacts>>,readProof:ProofReader) {
+export async function assertSupplierManualRefundLineOwnership(tx:DbClient,order:Order,carts:Cart[],payment:SupplierRefundPurchasePayment,readProof:ProofReader) {
   if(carts.every(row=>row.type===2&&row.relationId===order.supplierId))return;
   fact(carts.every(row=>row.type===0&&row.relationId===0));
   const originalPurchase=await originalSupplierPhpPurchase(tx,payment,order),paymentRootId=payment.root_id;

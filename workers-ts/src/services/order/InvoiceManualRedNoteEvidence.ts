@@ -1,6 +1,11 @@
 import {asc,eq,inArray,sql,getTableColumns} from 'drizzle-orm';
 import type {DbClient} from '@/lib/di';
-import {storeOrder} from '@/models/schema';
+import {storeOrder,storeOrderInvoice,storeOrderRefund} from '@/models/schema';
+import {storeOrderRefundSplit} from '@/models/schema/order_refund_split';
+import {assertSupplierProactiveRefundReady} from '@/migrations/supplierProactiveRefund';
+import {outRequestHash} from '@/services/out/OutIdempotency';
+import {refundOrderSplitFingerprint} from './RefundOrderSplitIdentity';
+import {readRefundQuantityReservation,refundClaimCartKey} from './RefundQuantityReservation';
 import {storeOrderInvoiceEvidence} from '@/models/schema/invoice_evidence';
 import {storeOrderInvoiceManualRedNote as notes,storeOrderInvoiceManualRedReview as reviews} from '@/models/schema/invoice_manual_red_note';
 import {invoiceManualRedNoteReadiness} from '@/migrations/invoiceManualRedNoteCatalog';
@@ -83,6 +88,9 @@ export async function readInvoiceManualDisposition(tx:DbClient,source:typeof sto
  * can never turn into another payment. */
 export async function assertStoredManualInvoiceAllocation(tx:DbClient,text:string,uid:number,paymentOrderId:number,mode:'reader'|'admin-read'='reader'):Promise<void>{
  let value:unknown;try{value=JSON.parse(text);}catch{throw manualRedInvalid();}
+ if(value&&typeof value==='object'&&'version' in value&&value.version===SUPPLIER_WHOLE_INVOICE_VERSION){
+  await assertStoredSupplierProactiveInvoiceAllocation(tx,text,uid,paymentOrderId,mode);return;
+ }
  if(!value||typeof value!=='object'||!('version' in value)||value.version!=='refund-invoice-allocation-manual-red-v2')return;
  const allocation=manualRedObject(manualRedJson(value));exactKeys(allocation,['version','sourceOrderId','paymentOrderId','original','manual_disposition','selected','remaining']);
  const original=manualRedObject(manualRedJson(allocation.original));
@@ -93,8 +101,13 @@ export async function assertStoredManualInvoiceAllocation(tx:DbClient,text:strin
  const [created]=await tx.select({uid:storeOrderInvoiceEvidence.uid,orderId:storeOrderInvoiceEvidence.orderId,amount:sql<string>`${storeOrderInvoiceEvidence.snapshot}::jsonb->'invoice'->>'invoice_amount'`}).from(storeOrderInvoiceEvidence).where(sql`${storeOrderInvoiceEvidence.invoiceId}=${invoiceId} AND ${storeOrderInvoiceEvidence.kind}='created' AND ${storeOrderInvoiceEvidence.documentNumber}=''`).limit(1);
  if(!created||created.uid!==uid||created.orderId!==orderId||created.amount!==amount)throw manualRedInvalid();sum+=amountToCents(amount)!;}
  if(sum!==amountToCents(manualRedMoney(original.invoiceAmount)))throw manualRedInvalid();
- if(!('manual_disposition' in value)||!value.manual_disposition||typeof value.manual_disposition!=='object')throw manualRedInvalid();
- const d=value.manual_disposition;
+ await assertStoredManualInvoiceDisposition(tx,allocation.manual_disposition,uid,paymentOrderId,mode);
+}
+/** Verify a frozen full original-document disposition without manufacturing a
+ * v2 allocation or another red-note success. Historical v2 uses the same checks. */
+export async function assertStoredManualInvoiceDisposition(tx:DbClient,value:unknown,uid:number,paymentOrderId:number,mode:'reader'|'admin-read'='reader'):Promise<void>{
+ if(!value||typeof value!=='object'||Array.isArray(value))throw manualRedInvalid();
+ const d=value;
  exactKeys(manualRedObject(manualRedJson(d)),['version','coverage_hash','coverage_count','invoice_ids','review_ids']);
  if(!('version' in d)||d.version!=='invoice-manual-disposition-v1'||!('coverage_hash' in d)||typeof d.coverage_hash!=='string'||!/^[a-f0-9]{64}$/.test(d.coverage_hash)
  ||!('coverage_count' in d)||typeof d.coverage_count!=='number'||!Number.isSafeInteger(d.coverage_count)||d.coverage_count<1||d.coverage_count>200
@@ -125,3 +138,141 @@ export async function invoiceHasReportedHistory(tx:DbClient,source:typeof storeO
  return row?.reported===true;
 }
 
+
+/** Whole-goods concessions retain the complete original tax document. This
+ * version never means that a provider issued or red-noted a document. */
+export const SUPPLIER_WHOLE_INVOICE_VERSION='refund-invoice-allocation-supplier-whole-v3' as const;
+const proactiveHash=(value:unknown):value is string=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+// Purchase/payment identity survives this whole-goods materialization. Refund
+// totals/status and later delivery/remark fields deliberately are not identity.
+const proactiveOrderIdentityFields=[
+ 'id','pid','orderId','uid','supplierId','storeId','type','productType','activityId','pinkId',
+ 'paid','payType','payTime','tradeNo','totalNum','payPrice','totalPrice','totalPostage','payPostage','freightPrice',
+ 'payIntegral','deductionPrice','couponId','couponPrice','promotionsPrice','firstOrderPrice','changePrice',
+ 'gainIntegral','useIntegral','cost','spreadUid','spreadTwoUid','oneBrokerage','twoBrokerage',
+ 'divisionId','divisionBrokerage','divisionAgentId','divisionAgentBrokerage','divisionStaffId','divisionStaffBrokerage',
+ 'addTime','unique',
+] as const satisfies readonly (keyof typeof storeOrder.$inferSelect)[];
+export function assertSupplierProactiveInvoiceOrderIdentity(original:unknown,current:unknown):void{
+ const before=proactiveObject(original),after=proactiveObject(current);
+ if(proactiveOrderIdentityFields.some(key=>!Object.hasOwn(before,key)||!Object.hasOwn(after,key)||before[key]!==after[key]))throw manualRedInvalid();
+}
+
+function proactiveObject(value:unknown):Record<string,unknown>{
+ if(!value||typeof value!=='object'||Array.isArray(value))throw manualRedInvalid();return value as Record<string,unknown>;
+}
+function proactiveCents(value:unknown):number{const result=amountToCents(manualRedMoney(value));if(result===null||result<0)throw manualRedInvalid();return result;}
+function proactiveUuid(value:unknown):string{
+ if(typeof value!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value))throw manualRedInvalid();return value;
+}
+function proactiveJson(text:unknown,max:number):Record<string,unknown>{
+ if(typeof text!=='string'||new TextEncoder().encode(text).length>max)throw manualRedInvalid();
+ try{return proactiveObject(JSON.parse(text));}catch{throw manualRedInvalid();}
+}
+interface ProactiveOperationRow extends Record<string,unknown>{
+ operation_id:string;actor_id:number;supplier_id:number;order_id:number;state:string;kind:string;request_hash:string;
+ intent:unknown;intent_json:string;source:unknown;source_json:string;source_hash:string;result:unknown;
+}
+export interface SupplierWholeInvoiceBinding {
+ operationId:string;actorId:number;supplierId:number;orderId:number;refundId:number;requestHash:string;
+ firstRefunded:string;original:object;sourceHash?:string;
+}
+/** Read the actual immutable admission by its original UUID. The execution
+ * phase source has legitimate reservation changes and is not its source hash. */
+export async function readSupplierProactiveInvoiceOperation(tx:DbClient,binding:SupplierWholeInvoiceBinding){
+ if(Object.hasOwn(tx,'$client'))throw manualRedInvalid();
+ proactiveUuid(binding.operationId);const expectedInvoice=proactiveObject(binding.original);await assertSupplierProactiveRefundReady(tx,'read');
+ const rows=await tx.execute<ProactiveOperationRow>(sql`SELECT operation_id::text,actor_id,supplier_id,order_id,state,kind,request_hash,
+  intent,intent_json,source,source_json,source_hash,result FROM public.supplier_proactive_refund_operation_v1
+  WHERE operation_id=${binding.operationId}::uuid AND octet_length(intent_json)<=16384 AND octet_length(source_json)<=16777216 LIMIT 2`);
+ if(rows.length!==1)throw manualRedInvalid();const row=rows[0];
+ const intent=proactiveJson(row.intent_json,16384),source=proactiveJson(row.source_json,16777216),result=proactiveObject(row.result);
+ if(row.operation_id!==binding.operationId||row.actor_id!==binding.actorId||row.supplier_id!==binding.supplierId||row.order_id!==binding.orderId
+  ||row.state!=='committed'||row.kind!=='goods'||row.request_hash!==binding.requestHash||!proactiveHash(row.source_hash)
+  ||binding.sourceHash!==undefined&&binding.sourceHash!==row.source_hash||result.refund_id!==binding.refundId
+  ||await manualRedDigest(row.intent_json)!==row.request_hash||await outRequestHash(intent)!==row.request_hash||await outRequestHash(row.intent)!==row.request_hash
+  ||await manualRedDigest(row.source_json)!==row.source_hash||await outRequestHash(source)!==row.source_hash||await outRequestHash(row.source)!==row.source_hash
+  ||intent.version!=='supplier-proactive-refund-intent-v1'||intent.operation_id!==row.operation_id||intent.actor_id!==row.actor_id
+  ||intent.supplier_id!==row.supplier_id||intent.order_id!==row.order_id||intent.type!==1||intent.refund_price!==binding.firstRefunded
+  ||source.version!=='supplier-proactive-refund-source-v1'||!Array.isArray(source.invoices)||source.invoices.length>200
+  ||!Array.isArray(source.carts)||!source.carts.length||source.carts.length>200)throw manualRedInvalid();
+ const order=proactiveObject(source.order),invoices=source.invoices.map(proactiveObject),original=invoices.filter(r=>r.id===expectedInvoice.id);
+ // Hash agreement authenticates bytes, not a different protocol shape. Check
+ // the closed stored intent without inventing a live Supplier actor or
+ // claiming to re-evaluate the historical authVersion-bound revision MAC.
+ exactKeys(intent,['version','operation_id','actor_id','supplier_id','order_id','revision','refund_price','type',
+  ...(Object.hasOwn(intent,'cash_returned')?['cash_returned']:[])]);
+ const channel=order.payType,cash=channel==='cash'||channel==='offline',hasCash=Object.hasOwn(intent,'cash_returned');
+ if(!proactiveHash(intent.revision)||manualRedMoney(intent.refund_price)!==binding.firstRefunded
+  ||!['cash','offline','yue','weixin','alipay','integral'].includes(String(channel))
+  ||(cash&&proactiveCents(binding.firstRefunded)>0?(!hasCash||intent.cash_returned!==true):hasCash))throw manualRedInvalid();
+
+ if(order.id!==binding.orderId||order.supplierId!==binding.supplierId||order.uid!==expectedInvoice.uid||order.paid!==1
+  ||expectedInvoice.orderId!==order.id
+  ||order.payPrice!==expectedInvoice.invoiceAmount||original.length!==1||await outRequestHash(original[0])!==await outRequestHash(binding.original)
+  ||invoices.filter(r=>r.isDel===0).length!==1)throw manualRedInvalid();
+ return {sourceHash:row.source_hash,source,order,carts:source.carts.map(proactiveObject)};
+}
+
+/** Durable readers require both immutable admission and terminal decision.
+ * A serialized flag, a provider callback or today's invoice alone cannot
+ * authorize the special full-document / smaller-cash allocation. */
+export async function assertStoredSupplierProactiveInvoiceAllocation(tx:DbClient,text:string,uid:number,paymentOrderId:number,
+ mode:'reader'|'admin-read'='reader'):Promise<void>{
+ const a=proactiveJson(text,16384);exactKeys(a,['version','operation_id','actor_id','supplier_id','request_hash','source_hash',
+  'sourceOrderId','paymentOrderId','refundId','fingerprint','original','after_hash','selected','remaining','goods_quantity',
+  'first_refunded','unreturned_payment','manual_disposition']);
+ if(a.version!==SUPPLIER_WHOLE_INVOICE_VERSION||a.paymentOrderId!==paymentOrderId||!proactiveHash(a.request_hash)
+  ||!proactiveHash(a.source_hash)||!proactiveHash(a.fingerprint)||!proactiveHash(a.after_hash)||a.remaining!==null)throw manualRedInvalid();
+ const operationId=proactiveUuid(a.operation_id),actorId=manualRedId(a.actor_id),supplierId=manualRedId(a.supplier_id),orderId=manualRedId(a.sourceOrderId),refundId=manualRedId(a.refundId);
+ const original=proactiveObject(a.original),chosen=proactiveObject(a.selected);exactKeys(chosen,['invoiceId','orderId','amount']);
+ const invoiceId=manualRedId(original.id),firstRefunded=manualRedMoney(a.first_refunded),unreturned=manualRedMoney(a.unreturned_payment),amount=manualRedMoney(original.invoiceAmount);
+ if(original.uid!==uid||original.orderId!==orderId||original.category!=='order'||original.isPay!==1||original.isDel!==0||original.isRefund!==0
+  ||![-1,0,1].includes(Number(original.isInvoice))||typeof original.invoiceNumber!=='string'||chosen.invoiceId!==invoiceId||chosen.orderId!==orderId||chosen.amount!==amount
+  ||!Number.isSafeInteger(a.goods_quantity)||Number(a.goods_quantity)<1||proactiveCents(firstRefunded)+proactiveCents(unreturned)!==proactiveCents(amount))throw manualRedInvalid();
+ const bound=await readSupplierProactiveInvoiceOperation(tx,{operationId,actorId,supplierId,orderId,refundId,requestHash:a.request_hash,
+  sourceHash:a.source_hash,firstRefunded,original});
+ if((bound.order.pid||bound.order.id)!==paymentOrderId||bound.order.totalNum!==a.goods_quantity)throw manualRedInvalid();
+ const [refund]=await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id,refundId)).limit(1),
+  [record]=await tx.select().from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId,refundId)).limit(1);
+ if(!refund||!record||refund.uid!==uid||refund.supplierId!==supplierId||refund.storeOrderId!==orderId||refund.refundType!==6
+  ||refund.isDel||refund.isCancel||refund.refundPrice!==firstRefunded||refund.refundedPrice!==firstRefunded||refund.refundNum!==a.goods_quantity
+  ||record.invoiceAllocation!==text||record.disposition!=='whole'||record.sourceOrderId!==orderId||record.selectedOrderId!==orderId||record.remainingOrderId!==null
+  ||record.paymentOrderId!==paymentOrderId||record.uid!==uid||record.supplierId!==supplierId||record.fingerprint!==a.fingerprint
+  ||record.fingerprint!==await refundOrderSplitFingerprint(refund))throw manualRedInvalid();
+ const archived=proactiveJson(record.sourceSnapshot,16777216);
+ if(archived.version!=='refund-order-materialization-v1')throw manualRedInvalid();
+ const [selectedOrder]=await tx.select().from(storeOrder).where(eq(storeOrder.id,record.selectedOrderId)).limit(1);
+ if(!selectedOrder)throw manualRedInvalid();
+ assertSupplierProactiveInvoiceOrderIdentity(bound.order,archived.source);
+ assertSupplierProactiveInvoiceOrderIdentity(bound.order,selectedOrder);
+ const claim=readRefundQuantityReservation(refund);
+ if(!claim||claim.items.length!==bound.carts.length||claim.items.some(item=>{const c=bound.carts.find(row=>row.id===item.rowId);
+  return !c||c.oid!==orderId||c.uid!==uid||c.cartId!==refundClaimCartKey(item)||c.cartNum!==item.totalNum||item.cartNum!==item.totalNum||item.beforeRefundNum!==0;}))throw manualRedInvalid();
+ const decisions=await tx.execute<{actor_id:number;supplier_id:number;order_id:number;kind:string;outcome:string;request_hash:string;evidence:unknown;evidence_json:string;evidence_hash:string}>(sql`
+  SELECT actor_id,supplier_id,order_id,kind,outcome,request_hash,evidence,evidence_json,evidence_hash
+  FROM public.supplier_proactive_refund_decision_v1 WHERE operation_id=${operationId}::uuid AND octet_length(evidence_json)<=16777216 LIMIT 2`);
+ if(decisions.length!==1)throw manualRedInvalid();const decision=decisions[0],evidence=proactiveJson(decision.evidence_json,16777216);
+ if(decision.actor_id!==actorId||decision.supplier_id!==supplierId||decision.order_id!==orderId||decision.kind!=='goods'
+  ||decision.outcome!==(['weixin','alipay'].includes(String(bound.order.payType))?'provider-admitted':'local-settled')
+  ||decision.request_hash!==a.request_hash||evidence.refund_id!==refundId
+  ||!proactiveHash(decision.evidence_hash)||await manualRedDigest(decision.evidence_json)!==decision.evidence_hash
+  ||await outRequestHash(evidence)!==decision.evidence_hash||await outRequestHash(decision.evidence)!==decision.evidence_hash)throw manualRedInvalid();
+ const invoices=await tx.select().from(storeOrderInvoice).where(sql`${storeOrderInvoice.orderId} IN(${orderId},${paymentOrderId}) AND ${storeOrderInvoice.isDel}=0`).limit(3);
+ const after={...original,isRefund:1};
+ if(invoices.length!==1||invoices[0].id!==invoiceId||await outRequestHash(invoices[0])!==await outRequestHash(after)
+  ||await outRequestHash(after)!==a.after_hash)throw manualRedInvalid();
+ const [created]=await tx.select().from(storeOrderInvoiceEvidence).where(sql`${storeOrderInvoiceEvidence.invoiceId}=${invoiceId}
+  AND ${storeOrderInvoiceEvidence.kind}='created' AND ${storeOrderInvoiceEvidence.documentNumber}=''`).limit(1);
+ if(!created||created.uid!==uid||created.orderId!==orderId)throw manualRedInvalid();
+ if(a.manual_disposition===null){
+  if(![0,-1].includes(Number(original.isInvoice))||original.invoiceNumber!=='')throw manualRedInvalid();
+  const reported=await tx.select({id:storeOrderInvoiceEvidence.invoiceId}).from(storeOrderInvoiceEvidence)
+   .where(sql`${storeOrderInvoiceEvidence.orderId} IN(${orderId},${paymentOrderId}) AND ${storeOrderInvoiceEvidence.kind} IN('issued','unverified')`).limit(1);
+  if(reported.length)throw manualRedInvalid();
+ }else{
+  await assertStoredManualInvoiceDisposition(tx,a.manual_disposition,uid,paymentOrderId,mode);
+  const disposition=proactiveObject(a.manual_disposition);
+  if((original.isInvoice===1||original.invoiceNumber!=='')&&(!Array.isArray(disposition.invoice_ids)||!disposition.invoice_ids.includes(invoiceId)))throw manualRedInvalid();
+ }
+}

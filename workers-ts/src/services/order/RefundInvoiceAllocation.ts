@@ -1,4 +1,6 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import type {SupplierProactiveRefundApplicationCapability} from '@/services/supplier/SupplierProactiveRefundCapability';
+import {prepareSupplierProactiveWholeInvoice,isSupplierProactiveWholeInvoice,materializeSupplierProactiveWholeInvoice} from '@/services/supplier/SupplierProactiveRefundInvoice';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderInvoice } from '@/models/schema';
 import { amountToCents } from '@/services/payment/RefundGateway';
@@ -38,8 +40,9 @@ function validateInvoice(source: Order, invoice: RefundInvoiceSnapshot, selected
  * financial/user locks; coordinating other writers remains a rollout gate. Only
  * unissued applications can be partitioned, never actual issued documents. */
 export async function prepareRefundInvoice(tx: DbClient, source: Order, selectedPayment: string,
-  refundAmount: string): Promise<RefundInvoiceSnapshot | null> {
+  refundAmount: string, supplierProactiveRefundCapability?:SupplierProactiveRefundApplicationCapability): Promise<RefundInvoiceSnapshot | null> {
   if (Object.hasOwn(tx, '$client')) throw Error('Refund invoice requires a caller-owned transaction');
+  if(supplierProactiveRefundCapability)return prepareSupplierProactiveWholeInvoice(tx,supplierProactiveRefundCapability,source,selectedPayment,refundAmount);
   const rows = await tx.select().from(storeOrderInvoice).where(and(
     inArray(storeOrderInvoice.orderId, invoiceOrders(source)), eq(storeOrderInvoice.isDel, 0),
   )).orderBy(asc(storeOrderInvoice.id)).limit(3).for('update');
@@ -59,6 +62,7 @@ export async function prepareRefundInvoice(tx: DbClient, source: Order, selected
 export async function materializeRefundInvoice(tx: DbClient, source: Order, refund: RefundMaterializationIdentity,
   prepared: RefundInvoiceSnapshot | null | undefined, selectedOrderId: number, remainingOrderId: number | null): Promise<string> {
   if (Object.hasOwn(tx, '$client')) throw Error('Refund invoice requires a caller-owned transaction');
+  if(prepared&&isSupplierProactiveWholeInvoice(prepared))return materializeSupplierProactiveWholeInvoice(tx,source,refund,prepared,selectedOrderId,remainingOrderId);
   const rows = await tx.select().from(storeOrderInvoice).where(and(
     inArray(storeOrderInvoice.orderId, invoiceOrders(source)), eq(storeOrderInvoice.isDel, 0),
   )).orderBy(asc(storeOrderInvoice.id)).limit(3);

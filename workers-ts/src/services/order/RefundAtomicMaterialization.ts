@@ -1,3 +1,4 @@
+import type {SupplierProactiveRefundApplicationCapability} from '@/services/supplier/SupplierProactiveRefundCapability';
 import { loadUnpaidOrderGainIntegralProof } from './UnpaidOrderGainIntegralProof';
 import { asc, eq } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -45,10 +46,12 @@ export async function lockAtomicRefundOrder(tx: DbClient, orderId: number, allow
  * recheck before local settlement. This does not install DDL or refund money.
  * Issued-invoice/promotional adapters remain release gates, not fallbacks. */
 export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, selections: ReadonlyMap<string, number>,
-  held: boolean, refundAmount: string, supplied?: Cart[]): Promise<RefundInvoiceSnapshot | null> {
+  held: boolean, refundAmount: string, supplied?: Cart[], supplierProactiveRefundCapability?:SupplierProactiveRefundApplicationCapability): Promise<RefundInvoiceSnapshot | null> {
   if (order.type === 3) throw new ValidateException('拼团原子退款尚需团成员与实体子单归属适配');
   const rows = supplied ?? await tx.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id))
     .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('update');
+  if(supplierProactiveRefundCapability&&(selections.size!==rows.length||!rows.length||rows.length>200
+    ||rows.some(row=>selections.get(row.cartId)!==row.cartNum)||rows.reduce((n,row)=>n+row.cartNum,0)!==order.totalNum))throw invalid();
   if (![0, 1, 2, 3].includes(order.status) || order.refundPrice !== '0.00' || order.backIntegral !== '0.00'
     || rows.some(row => row.refundNum !== (held ? selections.get(row.cartId) ?? 0 : 0)
       || ![0, 1, 2].includes(row.splitStatus) || (order.status === 0
@@ -80,7 +83,7 @@ export async function assertAtomicRefundAdmission(tx: DbClient, order: Order, se
   if (!fullGift && (order.giveCoupon && !['[]', '{}', 'null'].includes(order.giveCoupon) || unversionedPromotionGift)) {
     throw new ValidateException('赠券与促销权益的原子退款尚需归属适配');
   }
-  const invoice = await prepareRefundInvoice(tx, order, plan.selected.payPrice, refundAmount);
+  const invoice = await prepareRefundInvoice(tx, order, plan.selected.payPrice, refundAmount,supplierProactiveRefundCapability);
   // Assert the exact candidate schema is present without scanning another
   // tenant's evidence or treating a missing table as permission to downgrade.
   await tx.select({ branch: storeOrderRefundSplit.baseBranchId, invoice: storeOrderRefundSplit.invoiceAllocation })
