@@ -350,7 +350,15 @@ export async function reverseOrderRewards(
     order.totalNum > 0 &&
     Number.isSafeInteger(cumulativeRefundNum) &&
     cumulativeRefundNum > 0;
-  if ((payCents <= 0 || cumulativeRefundCents <= 0) && !pureIntegralRefund) return;
+  // A genuine zero-cash purchase can still have spent discount points. The
+  // locked finalizer supplies its exact completed goods compensation; cash
+  // ratios cannot represent this return and must never divide by zero. Receipt
+  // recomputation without a completed quantity/plan keeps its legacy no-op.
+  const zeroCashLineRefund = payCents === 0 && cumulativeRefundCents === 0
+    && Number.isSafeInteger(order.totalNum) && order.totalNum > 0
+    && Number.isSafeInteger(cumulativeRefundNum) && cumulativeRefundNum > 0 && cumulativeRefundNum <= order.totalNum
+    && preparedLineCompensation != null;
+  if ((payCents <= 0 || cumulativeRefundCents <= 0) && !pureIntegralRefund && !zeroCashLineRefund) return;
   const lineCompensation = preparedLineCompensation === undefined
     ? await loadRefundLineCompensation(tx, order.id) : preparedLineCompensation;
   const accounts = await tx
@@ -364,7 +372,7 @@ export async function reverseOrderRewards(
   const linkId = String(order.id);
   let integralBalance = account.integral;
 
-  const grants = payCents > 0
+  const grants = payCents > 0 || zeroCashLineRefund
     ? await tx
         .select({ number: userBill.number, eventKey: userBill.eventKey })
         .from(userBill)
@@ -474,7 +482,7 @@ export async function reverseOrderRewards(
     }
   }
 
-  if (payCents <= 0) return;
+  if (payCents <= 0 && !zeroCashLineRefund) return;
   const usedPoints = decimalToWholePoints(order.useIntegral);
   if (usedPoints <= 0) return;
   const completedRefunds = await tx

@@ -22,6 +22,7 @@ import * as SupplierProductCopy from '@/controllers/supplier/SupplierProductCopy
 import * as SupplierUnpaidOrderEdit from '@/controllers/supplier/SupplierUnpaidOrderEditController';
 import * as SupplierOfflinePayment from '@/controllers/supplier/SupplierOfflinePaymentController';
 import * as SupplierManualRefund from '@/controllers/supplier/SupplierManualRefundController';
+import * as SupplierProactiveRefund from '@/controllers/supplier/SupplierProactiveRefundController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -59,6 +60,10 @@ supplierapiRoutes.use('/product/product/get_rule/*', SupplierProductRules.privat
 supplierapiRoutes.use('/product/product', SupplierProductRecycle.privateResponse);
 supplierapiRoutes.use('/product/product/*', SupplierProductRecycle.privateResponse);
 supplierapiRoutes.use('/product/type_header', SupplierProductRecycle.privateResponse);
+supplierapiRoutes.use('/order/refund', SupplierProactiveRefund.privateResponse);
+supplierapiRoutes.use('/order/refund/*', SupplierProactiveRefund.privateResponse);
+supplierapiRoutes.use('/order/refund_operations', SupplierProactiveRefund.privateResponse);
+supplierapiRoutes.use('/order/refund_operations/*', SupplierProactiveRefund.privateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -268,6 +273,10 @@ supplierapiRoutes.get("/product/product/:id", SupplierController.productDetail);
 supplierapiRoutes.get("/order/list", SupplierController.orderList);
 supplierapiRoutes.get('/order/edit/:id', SupplierUnpaidOrderEdit.seed);
 supplierapiRoutes.put('/order/update/:id', SupplierUnpaidOrderEdit.save);
+supplierapiRoutes.get('/order/refund/:id', SupplierProactiveRefund.seed);
+supplierapiRoutes.put('/order/refund/:id', SupplierProactiveRefund.execute);
+supplierapiRoutes.get('/order/refund_operations/:operationId', SupplierProactiveRefund.receipt);
+supplierapiRoutes.post('/order/refund_operations/:operationId/resolve', SupplierProactiveRefund.resolve);
 supplierapiRoutes.get('/order/edit_operations/:operationId', SupplierUnpaidOrderEdit.receipt);
 supplierapiRoutes.post('/order/edit_operations/:operationId/resolve', SupplierUnpaidOrderEdit.resolve);
 supplierapiRoutes.get('/order/pay_offline/:id', SupplierOfflinePayment.seed);

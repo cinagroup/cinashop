@@ -1,0 +1,873 @@
+{
+  "schema": "php-ts-supplier-proactive-refund-coordinator-v1",
+  "date": "2026-10-16",
+  "base_commit": "3a6998547e879ea289b1585bfd52b6d9dfc9c1ba",
+  "validated_at_utc": "2026-10-16T08:23:33.781221+00:00",
+  "status": "local_order_id_flow_validated_remaining_channels_incomplete",
+  "goal_status": "active",
+  "completion_claim": false,
+  "previous_phase_audit": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/order/Refund.php",
+      "sha256": "e6efab85cd4fdbdcfc8f5901fad403b471e66f393788fc93e99e401778f827cc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/LoginServices.php",
+      "sha256": "95d65bf54d3bf3a8dd35784c8d7f7e3b71ef1fee0893ef87ff4ee8c674a9a08e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/AuthTokenMiddleware.php",
+      "sha256": "3eb8736ca6fe37a30b66142bb4b638a61fb623f540141be9569c769188f2895c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/SupplierCheckRoleMiddleware.php",
+      "sha256": "51d000fe779095dc33bf820dc654b0a559232d4f7e7db619d0491ca86dcf2002"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/modalForm.js",
+      "sha256": "c13984c66e5074b7687bf86488698e546e37aab9d2ad8e1ba98e3bd173f24689"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/system/CapitalFlowJob.php",
+      "sha256": "191e8b2b62f0ed0d2a0dd3541bbfdc196685a3e05191e06b76a845c5a4d2a3cd"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/CapitalFlowServices.php",
+      "sha256": "102dc781bd25f15d113670b429e3e118f91ee83ade577a1373b808642c14d2e7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/supplier/SupplierFinanceJob.php",
+      "sha256": "092f47ace4e1b7abdb4d1b28b3360851e2f53590650c26e3340417f43f7eec5b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/finance/SupplierFlowingWaterServices.php",
+      "sha256": "254a1529edb53611b287ae1d2c7c940dc213f959d0002e170de6de0618a2e527"
+    }
+  ],
+  "legacy_http": {
+    "seed": "GET /supplierapi/order/refund/:id",
+    "write": "PUT /supplierapi/order/refund/:id",
+    "id": "store_order integer primary key",
+    "fields": [
+      "refund_price",
+      "type(default1)"
+    ],
+    "selection": "Whole order total_num and all purchase carts; no item selection input."
+  },
+  "implemented": {
+    "http": [
+      "GET /supplierapi/order/refund/:id",
+      "PUT /supplierapi/order/refund/:id",
+      "GET /supplierapi/order/refund_operations/:operationId",
+      "POST /supplierapi/order/refund_operations/:operationId/resolve"
+    ],
+    "principal": "Genuine live supplier.order.manage; read receipt/fence remains owner-only authenticated recovery after manage withdrawal. No Customer/Admin principal or serialized capability.",
+    "revision": "MAC of exact complete current source, actor and current auth version; original canonical body and full UUID are hashed and stored before goods finalization.",
+    "atomicity": "Actual goods application, immutable operation, existing financial/physical effects, invoice allocation, immutable decision and platform flow share the original SQL transaction. SET CONSTRAINTS ALL IMMEDIATE precedes terminal verification.",
+    "recovery": "Exact order/owner/body replay returns original result; foreign UUID cannot be reused. Unknown GET is read-only. Explicit absent fence checks derived full-UUID goods row and cash/money evidence. Committed receipt requires an exact canonical decision.",
+    "refuse": "PHP type2 common amount/open-refund checks then only order refundStatus0/refundType3; no monetary or physical claim. Four actual payment channels verified. The duplicated online payment.root is projected only when its root_id equals the action order and its entire original row equals source.order; only the same two state fields change. A distinct allocated root and all other source fields stay exact. This stage deliberately disallows changing completed-goods evidence.",
+    "local_channels": [
+      "offline/cash confirmation via mature0195",
+      "real yue credit and bill",
+      "zero actual checkout with omitted cash flag"
+    ],
+    "zero_cash_points": "Actual checkout spent100 points before its cash price was edited to0. Only a completed locked quantity plan enables zero-cash reward reversal; real bill/account/backIntegral and original replay remain exact. Mature materializer assertion retained.",
+    "goods_amounts": {
+      "paid": "18.75",
+      "first_refunded": "7.00",
+      "all_goods_quantity": 3,
+      "remaining_money": "11.75",
+      "remainder_implemented": false
+    },
+    "invoice": "Actual original18.75 unissued invoice only changes isRefund; v3 links actual protected operation and decision. No newly created partial fake tax invoice.",
+    "platform_flow": "Per-payout amount, negative price/tradingType2, full UUID event_key uniqueness, stable short flowId, exact original payment/tenant identity and final deferred readback. PHP channel set offline/weixin/alipay preserved; cash/yue/zero verify no row for this UUID.",
+    "unchanged_goods_settlement": "Uses mature first-goods supplier settlement only; no money continuation is fabricated."
+  },
+  "validation": {
+    "status": "accepted_distinct_checks_passed_with_documented_historical_failures",
+    "distinct_files": 14,
+    "distinct_tests": 208,
+    "summaries": [
+      {
+        "phase": "domain",
+        "files": 8,
+        "passed": 130,
+        "report": "/tmp/cinashop-supplier-proactive-coordinator-domain.json",
+        "report_sha256": "db355cdd932efeb3e0408b0fb1efaf474aaaca33ae0bb625089a7f3571149d11",
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-domain.log"
+      },
+      {
+        "phase": "workerd",
+        "files": 1,
+        "passed": 3,
+        "report": "/tmp/cinashop-supplier-proactive-coordinator-workerd.json",
+        "report_sha256": "800176eff1dab60d2419cf1bc05c856dc12cf2222c520304ed7410ff487c41d8",
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-workerd.log"
+      },
+      {
+        "phase": "rewards-pure-current",
+        "files": 2,
+        "passed": 17,
+        "report": "/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.json",
+        "report_sha256": "08739cebe85018ec2260ed8f8115cadec3bc28b901a7d505337377f8cfc60558",
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.log",
+        "historical_mixed_report": "/tmp/cinashop-supplier-proactive-coordinator-rewards.json",
+        "historical_mixed_report_sha256": "8a8b553c7f3e8908ffad781534a71542e93b16b3b894bd53b8b5b718e51ca732",
+        "historical_mixed_exit": 1,
+        "historical_line_compensation": {
+          "passed": 1,
+          "failed": 24,
+          "skipped": 2,
+          "accepted_count": 0
+        },
+        "duplicate_in_memory_line_compensation_excluded": true,
+        "note": "Historical mixed PGlite execution failed and is retained as such. Count only the final two-file17 pure pass and the distinct complete PG16 line27 below."
+      },
+      {
+        "phase": "native-line-compensation",
+        "files": 1,
+        "passed": 27,
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-native-rewards.log",
+        "sha256": "9b9f70c620dbd7e50577c0904522efa65df732c92784c22109be206cc0c826c1"
+      },
+      {
+        "phase": "native-accepted-current",
+        "files": 2,
+        "passed": 31,
+        "new_public_coordinator_cases": 20,
+        "mature_cash_cases": 11,
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-native-final.log",
+        "sha256": "d25321068f08f18eb4bcf2080d171278a37ee1f2f9d48ab01cab82f1adc099f1",
+        "raw_main_passed": 27,
+        "raw_main_failed": 1,
+        "raw_main_exit": 1,
+        "accepted_main_cases": 25,
+        "accepted_replacement_cases": 6,
+        "accepted_count_equation": "27 raw passes -1 same-pool concurrency -1 offline-only refusal +1 independent concurrency +1 repaired deferred writer +4 final channel refusals =31 distinct native cases",
+        "same_pool_concurrency_case_replaced": true,
+        "independent_session_replacement_log": "/tmp/cinashop-supplier-proactive-coordinator-independent-concurrency.log",
+        "independent_session_replacement_sha256": "f78fe19e390d1ecd18a7bfc3b984e7dc0eef4562b5d1e4bd8824d6b1f494fad1",
+        "deferred_case_fixed_and_revalidated": true,
+        "deferred_replacement_log": "/tmp/cinashop-supplier-proactive-coordinator-deferred-final.log",
+        "deferred_replacement_sha256": "bbc740902f7e8f99b36ab63953380e284e0060de2ce4def7424a8661102486d3",
+        "offline_only_refusal_replaced": true,
+        "four_channel_refusal_red": {
+          "log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-red.log",
+          "sha256": "69cb643cdd9f8cfb6828a6aa0fa5cae12a111c92074a4b83c6f259f7cac02279",
+          "passed": 1,
+          "failed": 3,
+          "unselected": 16,
+          "exit_code": 1,
+          "passed_channels": [
+            "offline"
+          ],
+          "failed_channels": [
+            "yue",
+            "weixin",
+            "alipay"
+          ],
+          "actual_failure": "Service.refuse:185 full-source comparison, HTTP409"
+        },
+        "four_channel_refusal_final": {
+          "log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-final.log",
+          "sha256": "35d1117ed22f69a76bc4b340b7756335a7f3e324aeb7b717665466208d371722",
+          "passed": 4,
+          "failed": 0,
+          "unselected": 16,
+          "exit_code": 0
+        }
+      }
+    ],
+    "commands": [
+      {
+        "name": "domain",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/supplier-rbac-migration.test.ts",
+          "test/supplier-refund-migration.test.ts",
+          "test/supplier-product-category-permission.test.ts",
+          "test/supplier-product-batch-permission.test.ts",
+          "test/supplier-proactive-refund-input.test.ts",
+          "test/supplier-proactive-refund-money-plan.test.ts",
+          "test/supplier-proactive-refund-invoice-plan.test.ts",
+          "test/data-migration.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-domain.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-domain.log",
+        "exit_code": 0,
+        "wall_seconds": 294.84
+      },
+      {
+        "name": "workerd",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "--config",
+          "vitest.worker.config.ts",
+          "test/runtime/supplier-proactive-refund-planning.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-workerd.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-workerd.log",
+        "exit_code": 0,
+        "wall_seconds": 204.84
+      },
+      {
+        "name": "type-runtime",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-runtime.log",
+        "exit_code": 0,
+        "wall_seconds": 112.25
+      },
+      {
+        "name": "type-unit-final",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-unit-final.log",
+        "exit_code": 0,
+        "wall_seconds": 654.58
+      },
+      {
+        "name": "rewards",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/order-reward.test.ts",
+          "test/order-reward-config-authority.test.ts",
+          "test/refund-line-compensation.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-rewards.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-rewards.log",
+        "exit_code": 1,
+        "wall_seconds": 153.27
+      },
+      {
+        "name": "type-unit-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-unit-current.log",
+        "exit_code": 0,
+        "wall_seconds": 124.0
+      },
+      {
+        "name": "type-runtime-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-runtime-current.log",
+        "exit_code": 0,
+        "wall_seconds": 77.59
+      },
+      {
+        "name": "rewards-pure-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/order-reward.test.ts",
+          "test/order-reward-config-authority.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.log",
+        "exit_code": 0,
+        "wall_seconds": 41.11
+      }
+    ],
+    "accepted_final_commands": [
+      {
+        "name": "type-unit-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-unit-current.log",
+        "exit_code": 0,
+        "wall_seconds": 124.0
+      },
+      {
+        "name": "type-runtime-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-type-runtime-current.log",
+        "exit_code": 0,
+        "wall_seconds": 77.59
+      },
+      {
+        "name": "rewards-pure-current",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/order-reward.test.ts",
+          "test/order-reward-config-authority.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.log",
+        "exit_code": 0,
+        "wall_seconds": 41.11
+      }
+    ],
+    "historical_failed_commands": [
+      {
+        "name": "rewards",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "test/order-reward.test.ts",
+          "test/order-reward-config-authority.test.ts",
+          "test/refund-line-compensation.test.ts",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-proactive-coordinator-rewards.json"
+        ],
+        "log": "/tmp/cinashop-supplier-proactive-coordinator-rewards.log",
+        "exit_code": 1,
+        "wall_seconds": 153.27
+      }
+    ],
+    "historical_mixed_pglite_report": {
+      "report": "/tmp/cinashop-supplier-proactive-coordinator-rewards.json",
+      "sha256": "8a8b553c7f3e8908ffad781534a71542e93b16b3b894bd53b8b5b718e51ca732",
+      "exit_code": 1,
+      "overall_passed": 18,
+      "overall_failed": 24,
+      "overall_skipped": 2,
+      "line_file_passed": 1,
+      "line_file_failed": 24,
+      "line_file_skipped": 2,
+      "accepted_additional_count": 0
+    },
+    "type_unit_before_zero_repair": {
+      "exit_code": 0,
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-type-unit.log",
+      "terminal_session": 34526,
+      "observed_at": "2026-10-16T07:49:20Z"
+    },
+    "type_heap_mib": 8192,
+    "native_final_batch_exit": 1,
+    "accepted_native_cases_verified_after_targeted_repairs": 31,
+    "new_public_coordinator_cases": 20,
+    "mature_cash_cases": 11,
+    "native_assertions_complete": true,
+    "calibration_counts_added_to_total": false,
+    "browser_acceptance_added": false,
+    "frontend_changed": false
+  },
+  "repairs": [
+    {
+      "finding": "Initial fixture expected app capital_flow privileges to equal SELECT/INSERT, but existing reviewed app profile also includes UPDATE.",
+      "resolution": "Prove existing profile contains SELECT/INSERT and grant only these append privileges plus identity-sequence USAGE to the independent owned runtime; never broaden a frozen profile.",
+      "initial_result": "15 failed before coordinator execution",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-first.log",
+      "calibration": "1 passed,16 unselected; not additional distinct acceptance"
+    },
+    {
+      "finding": "Zero-price genuine order retained100 actual discount points; cash early return skipped their reversal and actual materializer correctly rejected missing backIntegral.",
+      "resolution": "Use only the trusted completed line-compensation plan and real quantity for zero-cash points; read actual grants and use line targets, never divide by0 or remove materializer proof. Actual bill/account/backIntegral+100 and idempotency verified.",
+      "red_log": "/tmp/cinashop-supplier-proactive-coordinator-native-interrupted.log",
+      "qualification": "2 passed,15 unselected; no additional distinct count"
+    },
+    {
+      "finding": "Static review found one newly added missing-decision test borrowing its max1 runtime pool inside withTx.",
+      "resolution": "Read the order through the original tx. Stop the already failed batch before this pending test; preserve its partial results and recover only its exact stopped owned cluster to fixtures0/roles0.",
+      "recovery": "/tmp/cinashop-supplier-proactive-coordinator-interrupted-cleanup.json"
+    },
+    {
+      "finding": "The initial concurrent request case shared a max1 connection pool, which did not prove cross-session exclusion.",
+      "resolution": "Replace that case with distinct verified backend PIDs, one peer holding the real UUID advisory lock and concurrent distinct requests; exactly one goods refund/flow. Count replacement once.",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-independent-concurrency.log"
+    },
+    {
+      "finding": "Deferred-writer test routine retained default PUBLIC EXECUTE; the source-lock capability owners correctly rejected reachable unreviewed SECURITY DEFINER before payout.",
+      "resolution": "REVOKE ALL on only the newly owned test routine from PUBLIC. No execute grant to runtime/capability owners and no production catalog or permission exception. The actual deferred trigger still changes price, final check returns409 and rolls every write back.",
+      "initial_log": "/tmp/cinashop-supplier-proactive-coordinator-native-final.log",
+      "fixed_log": "/tmp/cinashop-supplier-proactive-coordinator-deferred-final.log"
+    },
+    {
+      "finding": "Actual online root-order type2 refusal updated source.order but left its duplicate payment.root expected snapshot unchanged; offline facts lacked this duplicate and the original single-channel case missed the failure.",
+      "resolution": "Before the write, require the full original root to equal the original action order whenever root_id equals order.id. Project only refundStatus0/refundType3 into both copies for the final complete-source comparison; distinct allocated roots and every other source field remain unchanged.",
+      "red_log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-red.log",
+      "red_result": {
+        "passed": 1,
+        "failed": 3,
+        "unselected": 16,
+        "exit_code": 1,
+        "passed_channels": [
+          "offline"
+        ],
+        "failed_channels": [
+          "yue",
+          "weixin",
+          "alipay"
+        ],
+        "actual_stack": "SupplierProactiveRefundService.ts:185:3",
+        "http_status": 409
+      },
+      "fixed_log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-final.log",
+      "fixed_result": {
+        "passed": 4,
+        "failed": 0,
+        "unselected": 16,
+        "exit_code": 0
+      },
+      "replacement_counting": "Exclude the earlier offline-only accepted case, then count the final four actual payment-channel cases once."
+    },
+    {
+      "finding": "A historical mixed rewards command also ran the PGlite line-compensation file and ended exit1:24 failures,2 native-only skips and1 line pass; the two pure files passed17 in that mixed report.",
+      "resolution": "Preserve the failed command and original report. Re-run only the two pure files on the final code for17 passes; separately use the complete PG16 line file27 passes. Do not count the historical duplicate pure or line pass again.",
+      "historical_log": "/tmp/cinashop-supplier-proactive-coordinator-rewards.log",
+      "historical_report": "/tmp/cinashop-supplier-proactive-coordinator-rewards.json",
+      "final_pure_report": "/tmp/cinashop-supplier-proactive-coordinator-rewards-pure-current.json",
+      "native_line_log": "/tmp/cinashop-supplier-proactive-coordinator-native-rewards.log"
+    },
+    {
+      "finding": "Default sandbox cannot write the mandatory parent shared validation lock; python alias absent.",
+      "resolution": "Authorized host validation uses the same shared wrapper and python3; neither failed invocation ran tests."
+    }
+  ],
+  "cleanup": [
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LZaKwe",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-first.log",
+      "log_sha256": "4589387c4ba247baccc8036486520cb2d85d54cfc8c821375ec371d87c3643a0",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ABS5jn",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-calibration.log",
+      "log_sha256": "db313030d157024130b3abf8f5ffe8b20dbb89bdc96ab3d96dadfba4f42ae523",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-CuDOTU",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-zero-diagnostic.log",
+      "log_sha256": "f9b2e54913b1a2bba692a4bf3faff2ad059ff7341d414286932ee609a6387618",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-TZqL4r",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-final.log",
+      "log_sha256": "d25321068f08f18eb4bcf2080d171278a37ee1f2f9d48ab01cab82f1adc099f1",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Pzt4GE",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-rewards.log",
+      "log_sha256": "9b9f70c620dbd7e50577c0904522efa65df732c92784c22109be206cc0c826c1",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-v17ttX",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-independent-concurrency.log",
+      "log_sha256": "f78fe19e390d1ecd18a7bfc3b984e7dc0eef4562b5d1e4bd8824d6b1f494fad1",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-y3zEmU",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-deferred-final.log",
+      "log_sha256": "bbc740902f7e8f99b36ab63953380e284e0060de2ce4def7424a8661102486d3",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-6SVKb9",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-red.log",
+      "log_sha256": "69cb643cdd9f8cfb6828a6aa0fa5cae12a111c92074a4b83c6f259f7cac02279",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-lkx6gd",
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-refuse-final.log",
+      "log_sha256": "35d1117ed22f69a76bc4b340b7756335a7f3e324aeb7b717665466208d371722",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true
+    },
+    {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-2bP4Rd",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "recovery": "Single-user cleanup of exact owned stopped cluster only",
+      "parent_exit": 1,
+      "log": "/tmp/cinashop-supplier-proactive-coordinator-native-interrupted.log",
+      "log_sha256": "488825ac1ae3bfdb241bb2441e38f8a86cec812de3cc77cd6dac5168a9472972",
+      "interrupted_then_recovered": true
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "636a70ba54c2b093860da2d06eefce5df065e2c5ece7d65f98c564b09d856894",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b44d36c7a49e100694785c625ed7591bd4b4b1ede6480698dbf72dcdf05f2a11",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "f1557c223e76e289988f7fdfd1fc833baaa6063fc9bbf488983d0aa9b438017b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    }
+  ],
+  "checkboxes": [
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "count": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "count": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562",
+      "byte_equal_to_base": true
+    }
+  ],
+  "base_ci": {
+    "sha": "3a6998547e879ea289b1585bfd52b6d9dfc9c1ba",
+    "status": "in_progress",
+    "conclusion": null,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/38868099524",
+    "checked_at": "2026-10-16T08:21:58.678Z",
+    "jobs": [
+      {
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "remaining": [
+    "Money-only remainder executor, durable exact chain and actual cumulative order amount with protected first-goods proof view.",
+    "Provider admission, original-operation resume, bound callback loader and reconciliation; current new-provider attempt503 before DML.",
+    "Refusal after completed whole goods requires a separate protected metadata baseline; current path fails closed.",
+    "Issued-invoice manual red-note public-path end-to-end and Supplier frontend desktop/mobile browser acceptance."
+  ],
+  "next_money_contract": {
+    "implemented": false,
+    "first_lookup": "Locate immutable goods operation/result.refund_id including archived/cancelled rows; never sum only active business refunds or reset budget.",
+    "leaf": "Verify whole split/fingerprint, exact first payment, compact canonical money operations/decisions/completions and actual per-payout bills; unique continuous before->after chain starts at first refund and equals actual order.refundPrice.",
+    "projection": "Opaque tx-bound proof can provide only a first-refund monetary view at deep verifier selected.refundPrice comparison; all other actual fields and old default assertions remain.",
+    "no_cycles": "Bottom evidence leaf must not import source/deep verifier/manual proof; upper verification composes leaf then complete deep proof.",
+    "atomicity": "No second goods finalizer, materializer, points/stock/coupon/commission or supplier goods settlement. Actual new money delta + cumulative CAS + decision + completion must commit together.",
+    "bounded_history": "Compact per-operation references<=64KiB, total record limits and one nonrecursive chain verification; avoid200x16MiB historical prefix expansion."
+  },
+  "statistics_script_contract": "Preserve user-selected restored PHP get_script behavior and already updated retirement audit.",
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false
+  },
+  "secret_scan": {
+    "status": "selected_sources_and_staged_passed_exact_commit_range_gate_required",
+    "exact_range_base": "3a6998547e879ea289b1585bfd52b6d9dfc9c1ba",
+    "source_log": "/tmp/cinashop-supplier-proactive-coordinator-source-final-secrets.log",
+    "staged_log": "/tmp/cinashop-supplier-proactive-coordinator-staged-secrets.log",
+    "exact_commit_range_log": "/tmp/cinashop-supplier-proactive-coordinator-commit-range-secrets.log",
+    "source_findings": 0,
+    "staged_findings": 0,
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "commit_range_terminal_evidence": "Recorded outside this immutable commit after its SHA exists."
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "270cbd31de6efee45f5f09d55f24d17c2ac182ae18ee350b26c110007613fb52"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "6f6073bbc74cd66c63bd31518ee0ed209de46027fbea9c66f15b32a2885165ec"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "cec70d36c4cab1e122c0fa6156232c96ab058d904cd534987c4e07adf34caac1"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "aee5546b574619a83287c35718408b22449470494eeb4acb65c3cfac94446dfa"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "29b55528bd6a41ba521f59a6e0e33424a6fc2f348f84f38e7842efc12fa3745d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "ffe542c46ac2a8a2e3c1aa7ee4645c8fdb7ae03fd31b3819fa836c0b29eceade"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "ea7d5c3000441ea9ea1f1c3b0a0d2d34cbdb044e373312a0be2e01bd3044b28b"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "d702e7c5125ff75818d2988d6c69623bccd94f8d515c529fe3a3a5e222a1596c"
+    }
+  ]
+}
