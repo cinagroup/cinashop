@@ -1,0 +1,4394 @@
+{
+  "schema": "php-ts-supplier-product-ensures-v1",
+  "created_at_utc": "2026-10-17T12:26:06.805514+00:00",
+  "base_commit": "c78c18991b0181f7c87afea7867b436e5b5ab178",
+  "goal_status": "active",
+  "completion_claim": false,
+  "scope": {
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "view/supplier-ts/src/api/productEnsures.ts",
+      "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+      "view/supplier-ts/src/pages/ProductForm.vue",
+      "view/supplier-ts/src/types.ts",
+      "view/supplier-ts/src/types/productEnsures.ts",
+      "view/supplier-ts/src/utils/productEnsures.ts",
+      "workers-ts/audit/php-ts-supplier-product-ensures-20261017.json",
+      "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+      "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+      "workers-ts/test/helpers/supplierProductBrand.ts",
+      "workers-ts/test/helpers/supplierProductEnsures.ts",
+      "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "workers-ts/test/supplier-product-brand-native.test.ts",
+      "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+      "workers-ts/test/supplier-product-ensures-native.test.ts",
+      "workers-ts/test/supplier-product-ensures-rules.test.ts",
+      "workers-ts/vitest.supplier-ensures-browser.config.ts"
+    ],
+    "execution_sources": 19,
+    "protected_full_files": 271,
+    "description": "Supplier assurance checkbox author/save/retained-remove/clear/reread and mature detail consumer with unchanged catalogs and complete copy; not whole PHP editor or migration."
+  },
+  "contract": {
+    "php_references": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 1052,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/product.js",
+        "first_line": 384,
+        "sha256": "7dfb7eff6339d71ec504a8461f33414a2fa3329ae83e219aacf3e003958e94ce"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+        "first_line": 168,
+        "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/product/StoreProduct.php",
+        "first_line": 231,
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "first_line": 757,
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943"
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/ensure/StoreProductEnsureServices.php",
+        "first_line": 45,
+        "sha256": "a98a8d965656d9f4ad42553ffe2bf3fa5135c8632e17411d160346b31f7cba21"
+      }
+    ],
+    "description": "# Supplier 商品服务保障选择、保存与回读\n\nPHP 实际商品编辑抽屉的 CheckboxGroup 绑定 ensure_id，经 all_ensure 目录选项提交完整多选集合，保存为主表CSV及 type=5、status=1、relation_pid=0 的关系。TS 普通新建和编辑页补齐此流程，目录沿用已有九字段响应，界面只显示名称；保留现有平台0/0与本供应商2/id隔离，不恢复旧PHP中被注释掉的租户过滤。\n\n可选 ensure_id 接受正整数或规范十进制字符串数组，归一后检查重复及int4边界，最多200项。该列为text，不套用品牌CSV的64字符限制。省略字段完全不更新原CSV及type5关系；明确[]清空。普通保存仍下架并待审，复制入口继续使用现有来源继承和成熟资格校验，创建后可从普通编辑页调整。已停用保障的保留资格只属于当前真实旧绑定；完整复制的新目标没有该历史资格，仍会拒绝来源中已停用的保障，不因本次保留能力放宽新绑定。\n\n新绑定必须实际存在、归属可读且启用。只有当前主CSV与type5集合、数量、status、relation_pid完全一致的实际旧绑定，才可以保留其中已停用的本店或平台项目；可以与新的启用项混选或移除，移除保存后不可重新新绑定该停用项。界面标注这些历史选项；未知或外店旧编号不返回私有名称，用户可明确清空后重选。坏CSV映射空选择时，主动选择新项同样是明确替换，不自动提交原始元数据。\n\n读取返回 ensure_id 数字数组与五字段 ensure_selection：原始ensure_id（保留null）、consistent、available、retained_ids、truncated。原始值最多展示4096个Unicode码点，超长值截断且不构成绑定权威；解析和显示使用有界前缀。现有编辑GET仍先读取完整商品行并执行成熟多次查询，不宣称SQL传输已受此展示上限约束或具有重复读快照。\n\n显式写入复用当前JWT、口令、有效期、所属供应商、manage权限及商品写入屏障；按编号锁定实际保障行并核对历史保留资格。仅改ensureId及type5关系，保存末端核对完整已有商品、其它隐藏关联及返回行。与品牌、标签、上下架计划同次保存时先完成保障核对，再让品牌操作核对新的保障列和关系，避免互相覆盖。显式保障写入执行SET CONSTRAINTS ALL IMMEDIATE，结算当前事务延后约束；省略时不执行，不宣称任意嵌套调用者的约束延后模式透明。\n\n刷新保留当前选择意图，目录失败且未改保障时仍可保存其它字段；明确清空不依赖目录成功。路由、卸载、真实会话或权限变化会取消在途与Axios排队请求，并永久失效当前控件。账号恢复需重新进入，取消浏览器请求不会撤销已经提交的服务端事务；普通保存没有复制专用UUID恢复协议。\n\n验证会调用未修改的readDetailEnsures消费实际已落库的平台和本店保障，区分直接消费函数证据与完整公开HTTP详情验收。现有目录、公开消费、完整复制、定时执行器、权限配置、财务及已恢复PHP兼容get_script保持；只使用本机合成App/JWT/PG16及生产构建浏览器，不涉及生产DDL、授权、部署或真实provider调用。参数模板及完整商品编辑器、整体迁移仍开放。实际命令和结果见同名审计。\n\n最终16个入口640个不同检查通过：544单元／组件、95真实App／JWT／独立PG16、1生产构建IAB。两套Worker类型、Supplier类型和生产构建通过。浏览器三次POST的保障分别为[201,202]、[202]、[]，未修改的详情消费函数逐次读取同一实际结果；37表与36条序列用于逐次GET零写和最终边界检查。账号21→22→21永久失效旧表单，扣留响应socket已取消，重新进入读取空保障；桌面1280×720及手机390×844截图目检、文档宽度与控制台抽样通过。\n\n前两次浏览器运行均保留失败：首次出现省略ensure_id的保存，严格夹具在join处拒绝，未计通过；当时清空按钮中心与固定页脚重叠且勾选未变，推断点击落在页脚；第二次CDP滚轮调用异常阻塞1178.38秒，15分钟夹具超时关闭。源代码未改；第三次使用可见标签和普通键盘操作，每次保存前核实勾选状态，完整运行正常exit0。初轮前端两处过强修复期望与原生夹具缺少关系行锁列资格的失败也保留，最终仅计一次各有效检查。单元执行输入未受仅原生／浏览器fixture授权修复影响，19份最终执行源与271份成熟受保护源逐项绑定；原迁移复选行逐字保持。\n",
+    "backend_review": {
+      "path": "/tmp/cinashop-supplier-product-ensures-backend-review.json",
+      "sha256": "f698dbf115f5b3a91895b849be696ab83ec7cd7646a64f7614eb3988e8f680d2",
+      "bytes": 7021
+    },
+    "wire_compatibility": {
+      "get_metadata_keys": [
+        "ensure_id",
+        "consistent",
+        "available",
+        "retained_ids",
+        "truncated"
+      ],
+      "max_ids": 200,
+      "raw_max_codepoints": 4096,
+      "explicit_constraint_settlement": "Explicit ensure HTTP writes settle all deferred constraints before complete row/relation readback; omitted writes never enter this helper. Not transparent to arbitrary nested deferred callers.",
+      "get_snapshot": "Existing editor GET remains the mature multi-query reader; no RR claim.",
+      "role": "Reader has 13 SELECT tables and no DML/sequences. Writer adds only ensure UPDATE(id) locking qualification; label/category read+UPDATE(id) for combined save. Deferred-hidden adverse fixture alone additionally grants relation UPDATE(status). Combined label type3 locking also needs relation UPDATE(id); this is column lock qualification, not UPDATE(status)."
+    },
+    "read_snapshot": "Mature multi-query editor GET; no repeatable-read claim.",
+    "browser_abort": "Cancelling browser requests does not undo an already committed server transaction. Ordinary save has no copy UUID recovery protocol."
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "566ba1db6cbdbbef4cd95ff2051846decdfebe2eb48494b8b89dfa7598d70842"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "aef9bcafd27dea368e656635e97f8ad5a224e8d4f68ebe9ca6858c21f0bb1a87"
+    },
+    {
+      "path": "view/supplier-ts/src/api/productEnsures.ts",
+      "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+      "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+    },
+    {
+      "path": "view/supplier-ts/src/types/productEnsures.ts",
+      "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productEnsures.ts",
+      "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+      "sha256": "166adf15e0f5d050d8370284e5caa9565c7157b98e732b3ee6f1482aeae01490"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+      "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+      "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+      "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+      "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+      "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+      "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+      "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+      "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+      "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+    }
+  ],
+  "execution_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/api/productEnsures.ts",
+      "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+      "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+    },
+    {
+      "path": "view/supplier-ts/src/types/productEnsures.ts",
+      "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productEnsures.ts",
+      "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+      "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+      "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+      "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+      "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+      "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+      "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+      "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+      "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+      "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "base_sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "bytes": 82041,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/admin-ts/src/api/refund.ts",
+      "sha256": "96639b8f72964049af4771412f62c6b0aa42b6378e86ae38fe9723afebadafbf",
+      "base_sha256": "96639b8f72964049af4771412f62c6b0aa42b6378e86ae38fe9723afebadafbf",
+      "bytes": 7065,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "base_sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "bytes": 811,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/admin-ts/src/pages/refund/RefundList.vue",
+      "sha256": "8df4c437169b53565b4a23039d6d6ee04ac2ddaee4aa6423c05d0a7d46000474",
+      "base_sha256": "8df4c437169b53565b4a23039d6d6ee04ac2ddaee4aa6423c05d0a7d46000474",
+      "bytes": 28268,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/common/articleRichText.ts",
+      "sha256": "cd8faa900c38e911727cf73cc3957354283be60a6bf341bdd3abceeaab3f27d3",
+      "base_sha256": "cd8faa900c38e911727cf73cc3957354283be60a6bf341bdd3abceeaab3f27d3",
+      "bytes": 7389,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "base_sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "bytes": 27238,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/common/productMediaReference.ts",
+      "sha256": "7e7d4795c775381012e0062441e2feaa5eeb3f7c89d52657083da92f7b75cabf",
+      "base_sha256": "7e7d4795c775381012e0062441e2feaa5eeb3f7c89d52657083da92f7b75cabf",
+      "bytes": 3559,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "base_sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "bytes": 2437,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/common/supplierRefundSettlement.ts",
+      "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b",
+      "base_sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b",
+      "bytes": 3471,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/http.ts",
+      "sha256": "130c8dfdc58ab6057406529e2cfcc2be53a86015ec80a04fab7b7853b87ea75d",
+      "base_sha256": "130c8dfdc58ab6057406529e2cfcc2be53a86015ec80a04fab7b7853b87ea75d",
+      "bytes": 1806,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/proactiveRefund.ts",
+      "sha256": "8609cdde2ca2055229c9bd82dd11477f5b114d2a7910f2fba99ce976bcc4f3c8",
+      "base_sha256": "8609cdde2ca2055229c9bd82dd11477f5b114d2a7910f2fba99ce976bcc4f3c8",
+      "bytes": 7912,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/productBrands.ts",
+      "sha256": "b81b53713ca4fc60ae9cc8a64dae676d7298e6c96f50d2a5c9eb98391f8f4b42",
+      "base_sha256": "b81b53713ca4fc60ae9cc8a64dae676d7298e6c96f50d2a5c9eb98391f8f4b42",
+      "bytes": 622,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "view/supplier-ts/src/api/productCopy.ts",
+      "sha256": "9b5917cb4467a281458f2b39846bda7c01adfaedb5afb66b419227ddd4b247c7",
+      "base_sha256": "9b5917cb4467a281458f2b39846bda7c01adfaedb5afb66b419227ddd4b247c7",
+      "bytes": 7751,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7",
+      "base_sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7",
+      "bytes": 82142,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBillExport.ts",
+      "sha256": "994901b06439510c8ab1ff7ede69206307ade7a8e6ad481d19f85b7a818318bc",
+      "base_sha256": "994901b06439510c8ab1ff7ede69206307ade7a8e6ad481d19f85b7a818318bc",
+      "bytes": 7596,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBills.ts",
+      "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876",
+      "base_sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876",
+      "bytes": 8165,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplication.ts",
+      "sha256": "dbb5237cd1e8f0a72036dd6d591ec2bece5c09dfee587bdc36711d1e1887cb54",
+      "base_sha256": "dbb5237cd1e8f0a72036dd6d591ec2bece5c09dfee587bdc36711d1e1887cb54",
+      "bytes": 13152,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplicationMedia.ts",
+      "sha256": "654828906313395b4c1966cefd5b2f0116a85103926d7c681708d5d602c8f7a1",
+      "base_sha256": "654828906313395b4c1966cefd5b2f0116a85103926d7c681708d5d602c8f7a1",
+      "bytes": 7543,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractMedia.ts",
+      "sha256": "80b2815f1750182186dfb52ab1f612cf1dce559fec63ef65939f00d7d8535d21",
+      "base_sha256": "80b2815f1750182186dfb52ab1f612cf1dce559fec63ef65939f00d7d8535d21",
+      "bytes": 7117,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtracts.ts",
+      "sha256": "c83dd1f4684869ee60b47d04ffb32e69eed066b4650427d405636a12030b65a9",
+      "base_sha256": "c83dd1f4684869ee60b47d04ffb32e69eed066b4650427d405636a12030b65a9",
+      "bytes": 7825,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFinanceAccounts.ts",
+      "sha256": "a3dc4af808f5ffc62c9ecb26b862436151d5d9d3e4275ac276ce29438058651f",
+      "base_sha256": "a3dc4af808f5ffc62c9ecb26b862436151d5d9d3e4275ac276ce29438058651f",
+      "bytes": 8013,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFlows.ts",
+      "sha256": "8f240cf15da482bf69c6ea15f8123a4c35612cbf60f795d3074f97e7fa12fe49",
+      "base_sha256": "8f240cf15da482bf69c6ea15f8123a4c35612cbf60f795d3074f97e7fa12fe49",
+      "bytes": 7533,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierProductDetail.ts",
+      "sha256": "d13faa98066169fb66a13eddf154d5179f7d241964e68675b9f8f5f7239936af",
+      "base_sha256": "d13faa98066169fb66a13eddf154d5179f7d241964e68675b9f8f5f7239936af",
+      "bytes": 2535,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/components/AppShell.vue",
+      "sha256": "1a052a4004230ddef819e692a286c2e5c2f5b2ba8c05661631ef775ed9220c4c",
+      "base_sha256": "1a052a4004230ddef819e692a286c2e5c2f5b2ba8c05661631ef775ed9220c4c",
+      "bytes": 5784,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/components/ProductImagePicker.vue",
+      "sha256": "bc49cc99e79e68daf065b6dafbf49630861437db0bf7f48319884e62d29653d7",
+      "base_sha256": "bc49cc99e79e68daf065b6dafbf49630861437db0bf7f48319884e62d29653d7",
+      "bytes": 10204,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierProductBrandPicker.vue",
+      "sha256": "5db9165f3ee259d0e9bc3316a54e4a0adb6f0683cd0bf226154727e89e827a74",
+      "base_sha256": "5db9165f3ee259d0e9bc3316a54e4a0adb6f0683cd0bf226154727e89e827a74",
+      "bytes": 5067,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "base_sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "bytes": 455,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Finance.vue",
+      "sha256": "da151e1237c7ac53448d5ffe910eac6fe1b39d9f38507825c90cb9220f313387",
+      "base_sha256": "da151e1237c7ac53448d5ffe910eac6fe1b39d9f38507825c90cb9220f313387",
+      "bytes": 4203,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceAccounts.vue",
+      "sha256": "3eb9ecf17cc978e6a4e7c9a3d69b857878b6f80eb0f24dfdc511ad45352221bb",
+      "base_sha256": "3eb9ecf17cc978e6a4e7c9a3d69b857878b6f80eb0f24dfdc511ad45352221bb",
+      "bytes": 15458,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceApply.vue",
+      "sha256": "84bdc2915b8093a029b90d13c987a16b957dc335c119c11fa232468eace7a772",
+      "base_sha256": "84bdc2915b8093a029b90d13c987a16b957dc335c119c11fa232468eace7a772",
+      "bytes": 21850,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+      "sha256": "3e54b31a359a0bbfda3cc057a43dfee6e55937fff2c8e32caa1183c3627fa349",
+      "base_sha256": "3e54b31a359a0bbfda3cc057a43dfee6e55937fff2c8e32caa1183c3627fa349",
+      "bytes": 15369,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceExtracts.vue",
+      "sha256": "7d53adbb6b618277f781fff147c1d4de6527804aacc1e3bfac70c044c35bdd1a",
+      "base_sha256": "7d53adbb6b618277f781fff147c1d4de6527804aacc1e3bfac70c044c35bdd1a",
+      "bytes": 22131,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceFlows.vue",
+      "sha256": "4ee7f359e3ef588231159eede49447052e457c23a2f4b9cb8d5e8373679b0c58",
+      "base_sha256": "4ee7f359e3ef588231159eede49447052e457c23a2f4b9cb8d5e8373679b0c58",
+      "bytes": 14513,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "base_sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "bytes": 43960,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProactiveRefund.vue",
+      "sha256": "5169c803e8966a142b772a941860e1cfacd4a2a315c84d13b7ddda0503af5531",
+      "base_sha256": "5169c803e8966a142b772a941860e1cfacd4a2a315c84d13b7ddda0503af5531",
+      "bytes": 15795,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductDetail.vue",
+      "sha256": "f5231e5f098bda9fb6d77213fe902a2db1ad29ce3b50150f5a986e9baf922381",
+      "base_sha256": "f5231e5f098bda9fb6d77213fe902a2db1ad29ce3b50150f5a986e9baf922381",
+      "bytes": 15299,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+      "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594",
+      "base_sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594",
+      "bytes": 13635,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "sha256": "ab7f3a167227a3015a17056a233738d7345fdd590db11102b17b7189959fb0f9",
+      "base_sha256": "ab7f3a167227a3015a17056a233738d7345fdd590db11102b17b7189959fb0f9",
+      "bytes": 33747,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "a4e208f6510e8f11fa88c42388ce2752e4c207729d245f43c0e918cca36a2021",
+      "base_sha256": "a4e208f6510e8f11fa88c42388ce2752e4c207729d245f43c0e918cca36a2021",
+      "bytes": 6951,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/types/productBrands.ts",
+      "sha256": "d06b20e9dda8dfa11bfa585f843aad4da00f8d1da2eeb6e8b635f665a773a6cb",
+      "base_sha256": "d06b20e9dda8dfa11bfa585f843aad4da00f8d1da2eeb6e8b635f665a773a6cb",
+      "bytes": 358,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "view/supplier-ts/src/types/productDetail.ts",
+      "sha256": "eff1428430825ce917e78dc79ec81f5fad3669801f2c1be83f265c57203b97ac",
+      "base_sha256": "eff1428430825ce917e78dc79ec81f5fad3669801f2c1be83f265c57203b97ac",
+      "bytes": 1291,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/legacy-export.ts",
+      "sha256": "04be4a10832c7eeeacb65347658561ab862beb20e15544c982c933d6155df45e",
+      "base_sha256": "04be4a10832c7eeeacb65347658561ab862beb20e15544c982c933d6155df45e",
+      "bytes": 3312,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productBrands.ts",
+      "sha256": "1be5379c7bd5ddef592f32e08e7196178f4af777bc148a863583aedff8ca407d",
+      "base_sha256": "1be5379c7bd5ddef592f32e08e7196178f4af777bc148a863583aedff8ca407d",
+      "bytes": 3530,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productDetail.ts",
+      "sha256": "6c7730cd6458ae21dcca62ed31f1857f57e029649c969fd824800f9ff72d75c7",
+      "base_sha256": "6c7730cd6458ae21dcca62ed31f1857f57e029649c969fd824800f9ff72d75c7",
+      "bytes": 7512,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productDetailRoute.ts",
+      "sha256": "6319c6cdc724d9d5405dc412baa8bc319da74292db94da61fdcd7d174ab8cc49",
+      "base_sha256": "6319c6cdc724d9d5405dc412baa8bc319da74292db94da61fdcd7d174ab8cc49",
+      "bytes": 608,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productMedia.ts",
+      "sha256": "9615aeaf96406a0e738845ac12e50d114ed299014626a52d6f330ea5e057230a",
+      "base_sha256": "9615aeaf96406a0e738845ac12e50d114ed299014626a52d6f330ea5e057230a",
+      "bytes": 4124,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productSchedule.ts",
+      "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb",
+      "base_sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb",
+      "bytes": 2925,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/supplierSession.ts",
+      "sha256": "a60504b75dda889f49936688431fa6b9ce35abec98f8cb2b207bac992fa126d0",
+      "base_sha256": "a60504b75dda889f49936688431fa6b9ce35abec98f8cb2b207bac992fa126d0",
+      "bytes": 1892,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-supplier-refund-settlement-runtime.mjs",
+      "sha256": "4804e5b0b24a852ea24c548357822ec036e25a9ed1a96a186de517febfa3906c",
+      "base_sha256": "4804e5b0b24a852ea24c548357822ec036e25a9ed1a96a186de517febfa3906c",
+      "bytes": 11263,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "base_sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "bytes": 1986,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkFinancial.ts",
+      "sha256": "4fb6199a453b626c6da98c769dcfeedb2bd8b035f03354fc7cd7eca474bb6798",
+      "base_sha256": "4fb6199a453b626c6da98c769dcfeedb2bd8b035f03354fc7cd7eca474bb6798",
+      "bytes": 3940,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerSupplierRefundSettlementPanel.vue",
+      "sha256": "4253da2e0b87ed8d32beb6e11a4ae69030866ac22ddc5acba3f2a4c7cda5c950",
+      "base_sha256": "4253da2e0b87ed8d32beb6e11a4ae69030866ac22ddc5acba3f2a4c7cda5c950",
+      "bytes": 2337,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerSupplierRefundSettlement.ts",
+      "sha256": "ad2be65b87720791e8f004e533e001965bd1531d25914048679d7d5a47e23259",
+      "base_sha256": "ad2be65b87720791e8f004e533e001965bd1531d25914048679d7d5a47e23259",
+      "bytes": 3392,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orderDetail.vue",
+      "sha256": "1c53e54467f4beff6a7ed6b37be2219c4aff3ec282df5ef1fb44384ffe91dfc9",
+      "base_sha256": "1c53e54467f4beff6a7ed6b37be2219c4aff3ec282df5ef1fb44384ffe91dfc9",
+      "bytes": 11345,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refundDetail.vue",
+      "sha256": "89c7d3a5bfe6640dbd0a1e57b2b3dab4501a977a73197c2620673b79df14cb6c",
+      "base_sha256": "89c7d3a5bfe6640dbd0a1e57b2b3dab4501a977a73197c2620673b79df14cb6c",
+      "bytes": 7175,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json",
+      "sha256": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+      "base_sha256": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+      "bytes": 39777,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "base_sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "bytes": 12531,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-bill-read-20261017.json",
+      "sha256": "66b167074e9c1f9b7c3f9ce490c37c538c6917b90d30f7e4889840c46d42722e",
+      "base_sha256": "66b167074e9c1f9b7c3f9ce490c37c538c6917b90d30f7e4889840c46d42722e",
+      "bytes": 166368,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-20261017.json",
+      "sha256": "6e8a270824adfe39195a224aa399eaad3910e30bf744275e0c693186841266b3",
+      "base_sha256": "6e8a270824adfe39195a224aa399eaad3910e30bf744275e0c693186841266b3",
+      "bytes": 248117,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-20261017.json",
+      "sha256": "ca3530216cd4231dcb56232fdb5c8795e82fc510ec189678db3bd97b49c8ed80",
+      "base_sha256": "ca3530216cd4231dcb56232fdb5c8795e82fc510ec189678db3bd97b49c8ed80",
+      "bytes": 549991,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-media-20261017.json",
+      "sha256": "9903debc67f9478d7d91420ab81b54dd2aa036c1d1569b8c9e20d997bc3c13ed",
+      "base_sha256": "9903debc67f9478d7d91420ab81b54dd2aa036c1d1569b8c9e20d997bc3c13ed",
+      "bytes": 827384,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-media-20261017.json",
+      "sha256": "147c491512ad11e0d3286e320245061ff1b8fb955ca06e885a42e734bf49f877",
+      "base_sha256": "147c491512ad11e0d3286e320245061ff1b8fb955ca06e885a42e734bf49f877",
+      "bytes": 525028,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-finance-accounts-20261017.json",
+      "sha256": "f58650126fe4664169ed062fd33e4932456ada066fce663a23bc399b0b684474",
+      "base_sha256": "f58650126fe4664169ed062fd33e4932456ada066fce663a23bc399b0b684474",
+      "bytes": 552878,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-flow-20261017.json",
+      "sha256": "4adeb872484f350e42be900d3dad12db61acf2d89aeff70aa11f761a4cf86d83",
+      "base_sha256": "4adeb872484f350e42be900d3dad12db61acf2d89aeff70aa11f761a4cf86d83",
+      "bytes": 288268,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-post-goods-refusal-20261017.json",
+      "sha256": "075aa39bab4e97fcca5893b7fd928819593eb6a3b2a9cd9ac32ce3972c39a262",
+      "base_sha256": "075aa39bab4e97fcca5893b7fd928819593eb6a3b2a9cd9ac32ce3972c39a262",
+      "bytes": 152639,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json",
+      "sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "base_sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "bytes": 117109,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "base_sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "bytes": 39823,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "base_sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "bytes": 30611,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "base_sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "bytes": 52388,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-brand-20261017.json",
+      "sha256": "1b6b9d8b35cee12a207185f66f8b4fe826fef31a2bc3aa710e233ea4d411cc0c",
+      "base_sha256": "1b6b9d8b35cee12a207185f66f8b4fe826fef31a2bc3aa710e233ea4d411cc0c",
+      "bytes": 166669,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_immutable_audit"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-detail-20261017.json",
+      "sha256": "5d2778d8981b7e80b13321a5defc3f7146ecdb6a9f719390d6afae064d4d482f",
+      "base_sha256": "5d2778d8981b7e80b13321a5defc3f7146ecdb6a9f719390d6afae064d4d482f",
+      "bytes": 767477,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-review-drilldown-20261017.json",
+      "sha256": "851f4fe352602ee054772bdfc154ce442cd44750aeb416e83ca3258320ff084e",
+      "base_sha256": "851f4fe352602ee054772bdfc154ce442cd44750aeb416e83ca3258320ff084e",
+      "bytes": 130368,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-schedule-20261017.json",
+      "sha256": "d92bc30b68a8639c51fbb483ad72d2357f5758bbbdf3f3217cebbbada85f59bf",
+      "base_sha256": "d92bc30b68a8639c51fbb483ad72d2357f5758bbbdf3f3217cebbbada85f59bf",
+      "bytes": 126714,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "sha256": "916ef902b967f1890f740407db45822beceed0dc178003f762a691510acbce10",
+      "base_sha256": "916ef902b967f1890f740407db45822beceed0dc178003f762a691510acbce10",
+      "bytes": 93595,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-ui-20261017.json",
+      "sha256": "ecfab320399da4aefe5c0cc7cde3e6a453d803926649d2d6ee5b8b0909211649",
+      "base_sha256": "ecfab320399da4aefe5c0cc7cde3e6a453d803926649d2d6ee5b8b0909211649",
+      "bytes": 149614,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "55d6677176b6dc6061da61ced859bf5530f56acd05d4943a2b1c2853be83c6d7",
+      "base_sha256": "55d6677176b6dc6061da61ced859bf5530f56acd05d4943a2b1c2853be83c6d7",
+      "bytes": 10480,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/audit/supplier-frontend-parity.json",
+      "sha256": "8cc946215c6cd3c8dd638803d920a1cde11e98f7b327a4d6921f3722b1068336",
+      "base_sha256": "8cc946215c6cd3c8dd638803d920a1cde11e98f7b327a4d6921f3722b1068336",
+      "bytes": 11035,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-application-media-20261017.md",
+      "sha256": "9a510d4f0ef9de3673c9dfacbe6c9cd07d09bd77e063aff49f0c4282dd27b4e9",
+      "base_sha256": "9a510d4f0ef9de3673c9dfacbe6c9cd07d09bd77e063aff49f0c4282dd27b4e9",
+      "bytes": 5377,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-media-20261017.md",
+      "sha256": "9f517a726185db76a635ea0aa8df9c452383c3fbe46d06f1cdce876be6db8e17",
+      "base_sha256": "9f517a726185db76a635ea0aa8df9c452383c3fbe46d06f1cdce876be6db8e17",
+      "bytes": 4916,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-finance-accounts-20261017.md",
+      "sha256": "bb3fb1546860ef799dd4ed6709d595d0bce3722cdf70b26b632424aa709f1640",
+      "base_sha256": "bb3fb1546860ef799dd4ed6709d595d0bce3722cdf70b26b632424aa709f1640",
+      "bytes": 4256,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-brand-20261017.md",
+      "sha256": "b335e333524450c173cb239fd1c04c4d4510e4d99646c8e964bea00b3f2f1577",
+      "base_sha256": "b335e333524450c173cb239fd1c04c4d4510e4d99646c8e964bea00b3f2f1577",
+      "bytes": 3795,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-detail-20261017.md",
+      "sha256": "8709174c47abd1e44281ad223ecdbecafca7bdae700d821433f190f1573c2d57",
+      "base_sha256": "8709174c47abd1e44281ad223ecdbecafca7bdae700d821433f190f1573c2d57",
+      "bytes": 4861,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+      "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a",
+      "base_sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a",
+      "bytes": 3569,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-schedule-20261017.md",
+      "sha256": "bf88e042aa7bdc5a4b1d96b5c11fc3214594ae5abba6db76cf036202c0b3fed6",
+      "base_sha256": "bf88e042aa7bdc5a4b1d96b5c11fc3214594ae5abba6db76cf036202c0b3fed6",
+      "bytes": 3761,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/docs/supplier-extract-application-contract.md",
+      "sha256": "8d2212c348cc7da8f884fc363111055f18acbf39ab189a73a7ddc0457c3bc4ed",
+      "base_sha256": "8d2212c348cc7da8f884fc363111055f18acbf39ab189a73a7ddc0457c3bc4ed",
+      "bytes": 8529,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/migrations/0176_product_auto_shelf.sql",
+      "sha256": "46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07",
+      "base_sha256": "46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07",
+      "bytes": 2429,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d",
+      "base_sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d",
+      "bytes": 108406,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminProductModerationController.ts",
+      "sha256": "20c76c182b33945ac4920bb7288f3b9f9187b3963d19a23b21a99c3d74fd3c99",
+      "base_sha256": "20c76c182b33945ac4920bb7288f3b9f9187b3963d19a23b21a99c3d74fd3c99",
+      "bytes": 1683,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminSupplierFinanceController.ts",
+      "sha256": "4305e01c65822d39388aa6a9a3ca8f024ffbf7a0dd2d411f0cef9f6785262740",
+      "base_sha256": "4305e01c65822d39388aa6a9a3ca8f024ffbf7a0dd2d411f0cef9f6785262740",
+      "bytes": 1981,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c",
+      "base_sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c",
+      "bytes": 3598,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "base_sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "bytes": 12471,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationController.ts",
+      "sha256": "bb622bc1e11e0a3988e373698c752b5dd4db9990651d1de0b8a43de945b2f432",
+      "base_sha256": "bb622bc1e11e0a3988e373698c752b5dd4db9990651d1de0b8a43de945b2f432",
+      "bytes": 1764,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationMediaController.ts",
+      "sha256": "84a53a0d1f13810ceaaba3581f2226f722abc6b5d65e7a1dc625339bbf205706",
+      "base_sha256": "84a53a0d1f13810ceaaba3581f2226f722abc6b5d65e7a1dc625339bbf205706",
+      "bytes": 1080,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractMediaController.ts",
+      "sha256": "244fb6524d0a445c31fc4475387f2391b97d6b1eb995fb7061a9a6c378540994",
+      "base_sha256": "244fb6524d0a445c31fc4475387f2391b97d6b1eb995fb7061a9a6c378540994",
+      "bytes": 1157,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierFinanceAccountsController.ts",
+      "sha256": "e47d1cb31c9d62a4d99a2bd007e90d38a4a739178106708299bdf2c33c39acfc",
+      "base_sha256": "e47d1cb31c9d62a4d99a2bd007e90d38a4a739178106708299bdf2c33c39acfc",
+      "bytes": 1650,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "base_sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "bytes": 2108,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCopyController.ts",
+      "sha256": "2a54e5be0d5be4dc570de3e61dd561ef0a33b086d584f23876834b1e794f5671",
+      "base_sha256": "2a54e5be0d5be4dc570de3e61dd561ef0a33b086d584f23876834b1e794f5671",
+      "bytes": 2182,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductDetailReadController.ts",
+      "sha256": "df2bfcff9e44b6b5df4ff77894520ae0a75caaa738e7a31111205a39503a6c03",
+      "base_sha256": "df2bfcff9e44b6b5df4ff77894520ae0a75caaa738e7a31111205a39503a6c03",
+      "bytes": 830,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+      "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1",
+      "base_sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1",
+      "bytes": 1931,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "854ac9784b46b5a434ba3610ab2079aa12490a433e72dc642894bae14bf9eb26",
+      "base_sha256": "854ac9784b46b5a434ba3610ab2079aa12490a433e72dc642894bae14bf9eb26",
+      "bytes": 15186,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/index.ts",
+      "sha256": "9e8b701d6072be8c64e4191871f0f474dcece31464d2384597abb82f6b704e0c",
+      "base_sha256": "9e8b701d6072be8c64e4191871f0f474dcece31464d2384597abb82f6b704e0c",
+      "bytes": 34653,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "base_sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "bytes": 3254,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "base_sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "bytes": 1000,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/cashierOrdinarySourceRights.ts",
+      "sha256": "990ae32bf07ab754d57d367adbec73b1b4492e28c245da8f33b8bb40287c80da",
+      "base_sha256": "990ae32bf07ab754d57d367adbec73b1b4492e28c245da8f33b8bb40287c80da",
+      "bytes": 6022,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+      "sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "base_sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "bytes": 2664,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/customerManualRefundRuntimePlan.ts",
+      "sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "base_sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "bytes": 2405,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWaybillActor.ts",
+      "sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "base_sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "bytes": 917,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+      "sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "base_sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "bytes": 3560,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "base_sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "bytes": 3029,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "base_sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "bytes": 12413,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "base_sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "bytes": 10585,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0197_supplier_extract_application.sql",
+      "sha256": "cda058d2f3b165c70db896a269d246ef392e9a27f296ddae48ec4564ee48c305",
+      "base_sha256": "cda058d2f3b165c70db896a269d246ef392e9a27f296ddae48ec4564ee48c305",
+      "bytes": 3180,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/productAutoShelf.ts",
+      "sha256": "34e430fbc2e3b984acc856d0c213d15433f5add90bdb6260ad45f63acebaa509",
+      "base_sha256": "34e430fbc2e3b984acc856d0c213d15433f5add90bdb6260ad45f63acebaa509",
+      "bytes": 2558,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/runCustomerWaybillActor.ts",
+      "sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "base_sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "bytes": 3050,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/runProductAutoShelf.ts",
+      "sha256": "6128ce829c6efa177f217c7e1050ec3b52e8aa5a2e7df484135129d44aa9798e",
+      "base_sha256": "6128ce829c6efa177f217c7e1050ec3b52e8aa5a2e7df484135129d44aa9798e",
+      "bytes": 485,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "base_sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "bytes": 8436,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "base_sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "bytes": 1813,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "base_sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "bytes": 18417,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierExtractApplication.ts",
+      "sha256": "ed832c04b34ce61362ae623734b55fed0974d82e5b57f1e58811364ce57ced5f",
+      "base_sha256": "ed832c04b34ce61362ae623734b55fed0974d82e5b57f1e58811364ce57ced5f",
+      "bytes": 13238,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "base_sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "bytes": 42178,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "base_sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "bytes": 15589,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOrderEditOperation.ts",
+      "sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "base_sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "bytes": 14888,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "base_sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "bytes": 35229,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f",
+      "base_sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f",
+      "bytes": 8549,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc",
+      "base_sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc",
+      "bytes": 108413,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "fc8bf69493a75523149ac5223b8deb3c538e019f0a1f9d072b8138e3e1b953ac",
+      "base_sha256": "fc8bf69493a75523149ac5223b8deb3c538e019f0a1f9d072b8138e3e1b953ac",
+      "bytes": 26252,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "base_sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "bytes": 173043,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleSupplierRefundProof.ts",
+      "sha256": "ef5caeb225d66988c519bb2fa0004899f2f39bf30b1e169157cdf7d57ffc9d89",
+      "base_sha256": "ef5caeb225d66988c519bb2fa0004899f2f39bf30b1e169157cdf7d57ffc9d89",
+      "bytes": 19909,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "base_sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "bytes": 113337,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationInput.ts",
+      "sha256": "4f9a743332552b7077cb553d96d9282e84d65eb25644ca2ab5b3ea86e9371887",
+      "base_sha256": "4f9a743332552b7077cb553d96d9282e84d65eb25644ca2ab5b3ea86e9371887",
+      "bytes": 3959,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationService.ts",
+      "sha256": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d",
+      "base_sha256": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d",
+      "bytes": 13460,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475",
+      "base_sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475",
+      "bytes": 7906,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSupplierFinanceService.ts",
+      "sha256": "ed89f73d630d441d837566507a667cdfd79aeb972b03e75dc54282de88a86801",
+      "base_sha256": "ed89f73d630d441d837566507a667cdfd79aeb972b03e75dc54282de88a86801",
+      "bytes": 20278,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5",
+      "base_sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5",
+      "bytes": 24571,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "dd4e8a482b382bb97e5310f7ba5dbb00f53991348a79dc58f8b200259377dbbf",
+      "base_sha256": "dd4e8a482b382bb97e5310f7ba5dbb00f53991348a79dc58f8b200259377dbbf",
+      "bytes": 36804,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+      "sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "base_sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "bytes": 9930,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "base_sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "bytes": 30357,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "base_sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "bytes": 24748,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/RefundOrderMaterialization.ts",
+      "sha256": "add357dfed742b71eeae1c3186b5662cb2145d2a469273976a786d689c09a5bb",
+      "base_sha256": "add357dfed742b71eeae1c3186b5662cb2145d2a469273976a786d689c09a5bb",
+      "bytes": 20019,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+      "sha256": "d6e61f16ccfa342e177ff419d29d927459fc1976951d97b1bae41366da876bda",
+      "base_sha256": "d6e61f16ccfa342e177ff419d29d927459fc1976951d97b1bae41366da876bda",
+      "bytes": 25161,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "base_sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "bytes": 125249,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5",
+      "base_sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5",
+      "bytes": 2844,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAssociationService.ts",
+      "sha256": "4e313af527821e22b6a237e2d41970640320a05e5ba5506bae03296ea73e99e2",
+      "base_sha256": "4e313af527821e22b6a237e2d41970640320a05e5ba5506bae03296ea73e99e2",
+      "bytes": 45282,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAutoShelfService.ts",
+      "sha256": "08af044b20f2e751df416778d2dc2e9d13fdfae25a4063bd66e2b1e064cf746b",
+      "base_sha256": "08af044b20f2e751df416778d2dc2e9d13fdfae25a4063bd66e2b1e064cf746b",
+      "bytes": 9066,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4",
+      "base_sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4",
+      "bytes": 22965,
+      "byte_equal_to_base": true,
+      "origin": "current_directory_and_existing_public_consumer"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductExperienceService.ts",
+      "sha256": "850fac97bb5979ac477c03524e8d5be91c739658d514bff1cbcf516a44019d50",
+      "base_sha256": "850fac97bb5979ac477c03524e8d5be91c739658d514bff1cbcf516a44019d50",
+      "bytes": 20891,
+      "byte_equal_to_base": true,
+      "origin": "current_directory_and_existing_public_consumer"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2",
+      "base_sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2",
+      "bytes": 32293,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f",
+      "base_sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f",
+      "bytes": 9617,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductVideoPolicy.ts",
+      "sha256": "78f7e56f50a8fff97531331552e2d3e1b11144fcfd8635de7d2a9b03aceaeeea",
+      "base_sha256": "78f7e56f50a8fff97531331552e2d3e1b11144fcfd8635de7d2a9b03aceaeeea",
+      "bytes": 5092,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillExportService.ts",
+      "sha256": "035fa46c1805a2725adf19eb5eed4abd4e5d27fc3d316421d63f5948471382a9",
+      "base_sha256": "035fa46c1805a2725adf19eb5eed4abd4e5d27fc3d316421d63f5948471382a9",
+      "bytes": 9288,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+      "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179",
+      "base_sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179",
+      "bytes": 15022,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExportService.ts",
+      "sha256": "51b0d96727a2cf87578ca56e764e70336b939d6b963b9a5f8313295563d3dd92",
+      "base_sha256": "51b0d96727a2cf87578ca56e764e70336b939d6b963b9a5f8313295563d3dd92",
+      "bytes": 26998,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationInput.ts",
+      "sha256": "e3a09cedfb13c892a47b1ff38307bc5a749c8dd5a37051105dc6c6b3bc1334c7",
+      "base_sha256": "e3a09cedfb13c892a47b1ff38307bc5a749c8dd5a37051105dc6c6b3bc1334c7",
+      "bytes": 7077,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationMediaService.ts",
+      "sha256": "4f21e86e13092177403390127a371ea6c85d858922c33fe52739460b93d0b6c5",
+      "base_sha256": "4f21e86e13092177403390127a371ea6c85d858922c33fe52739460b93d0b6c5",
+      "bytes": 6232,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationOperation.ts",
+      "sha256": "becd7519a70d30cdb3e3a01c1ff3180e718e5ebba21b557e72f5da6fe33f4857",
+      "base_sha256": "becd7519a70d30cdb3e3a01c1ff3180e718e5ebba21b557e72f5da6fe33f4857",
+      "bytes": 8732,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationService.ts",
+      "sha256": "91cfc006df820b0117c6ca6c327e0914d00e7470095752a6c7fe038f7ea2092f",
+      "base_sha256": "91cfc006df820b0117c6ca6c327e0914d00e7470095752a6c7fe038f7ea2092f",
+      "bytes": 14258,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractMediaService.ts",
+      "sha256": "651b12d51a93318eb2cb01a04a98bf94f5a70d55085622d7efd4d92c9fc033db",
+      "base_sha256": "651b12d51a93318eb2cb01a04a98bf94f5a70d55085622d7efd4d92c9fc033db",
+      "bytes": 8406,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractReadService.ts",
+      "sha256": "0767f1d0de7bbdce31a46789883f83b4511a650801c32573c36575ba0ae9b6cd",
+      "base_sha256": "0767f1d0de7bbdce31a46789883f83b4511a650801c32573c36575ba0ae9b6cd",
+      "bytes": 16997,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceAccountsService.ts",
+      "sha256": "4550e4d560944b821e4d33947e2eae8323de79fb4e2cf928057e36ca691411b4",
+      "base_sha256": "4550e4d560944b821e4d33947e2eae8323de79fb4e2cf928057e36ca691411b4",
+      "bytes": 14866,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "sha256": "5f92f93ffec2828468bf66602b4161fc8287f39030f3eafa9c5245c1aedce70b",
+      "base_sha256": "5f92f93ffec2828468bf66602b4161fc8287f39030f3eafa9c5245c1aedce70b",
+      "bytes": 22634,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowDescription.ts",
+      "sha256": "3fa4aef6fc701ba19b89c44de679087ddecf0eda0cc0b63b204583c1f3e08938",
+      "base_sha256": "3fa4aef6fc701ba19b89c44de679087ddecf0eda0cc0b63b204583c1f3e08938",
+      "bytes": 2638,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowReadService.ts",
+      "sha256": "df5d776957c1654ea5d0da0a49854b7eddfc36b8493e68c94f103a61a3cff225",
+      "base_sha256": "df5d776957c1654ea5d0da0a49854b7eddfc36b8493e68c94f103a61a3cff225",
+      "bytes": 13139,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "base_sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "bytes": 18323,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "18a959ce71688bc7ba0d8008e357baa602ec98a46a75c3ce480189849d66b4ce",
+      "base_sha256": "18a959ce71688bc7ba0d8008e357baa602ec98a46a75c3ce480189849d66b4ce",
+      "bytes": 20907,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "e6497201a4741c2ad41436f1d7908a94d614947827d55026ae4be02dbdfe2fc3",
+      "base_sha256": "e6497201a4741c2ad41436f1d7908a94d614947827d55026ae4be02dbdfe2fc3",
+      "bytes": 48508,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "dde0d79b54f5e71a3c88e72da09577e29ec73e80e01c3b8bec0b328d1f9db70b",
+      "base_sha256": "dde0d79b54f5e71a3c88e72da09577e29ec73e80e01c3b8bec0b328d1f9db70b",
+      "bytes": 10731,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "base_sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "bytes": 5496,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "base_sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "bytes": 3711,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "base_sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "bytes": 701,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "base_sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "bytes": 5888,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "base_sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "bytes": 5243,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "base_sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "bytes": 24076,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "deeeb1b213e1489cdf53962724467f9701668dcdad529cccc85f8a5efdd79292",
+      "base_sha256": "deeeb1b213e1489cdf53962724467f9701668dcdad529cccc85f8a5efdd79292",
+      "bytes": 21661,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "base_sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "bytes": 11520,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductBrandBindings.ts",
+      "sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd",
+      "base_sha256": "3d228e12a0243064ce58d82501120e0e0d0ae501f8684522deb82a19c91cf7dd",
+      "bytes": 7747,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCatalogService.ts",
+      "sha256": "e340f318dc4e44c6ae9c88cae8e8c21796729386282b0a9300e0500e1e9370bf",
+      "base_sha256": "e340f318dc4e44c6ae9c88cae8e8c21796729386282b0a9300e0500e1e9370bf",
+      "bytes": 7621,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+      "sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf",
+      "base_sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf",
+      "bytes": 6628,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918",
+      "base_sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918",
+      "bytes": 9436,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7",
+      "base_sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7",
+      "bytes": 13649,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductDetailReadService.ts",
+      "sha256": "2137433a45d76056e135209faddb5e108c4083b5d69cfe79dab7c77d2fa60c67",
+      "base_sha256": "2137433a45d76056e135209faddb5e108c4083b5d69cfe79dab7c77d2fa60c67",
+      "bytes": 11452,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductMediaService.ts",
+      "sha256": "2bbe4f7b946442be8d7dfe5d7c5896f8a5763dc28b25b7656298b882e394a1c2",
+      "base_sha256": "2bbe4f7b946442be8d7dfe5d7c5896f8a5763dc28b25b7656298b882e394a1c2",
+      "bytes": 10653,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2",
+      "base_sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2",
+      "bytes": 21977,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+      "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be",
+      "base_sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be",
+      "bytes": 3097,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+      "base_sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+      "bytes": 5421,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierVideoAuthority.ts",
+      "sha256": "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189",
+      "base_sha256": "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189",
+      "bytes": 3014,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/src/services/system/AttachmentService.ts",
+      "sha256": "c7a7c9100c2df65f1478d61437b32b5c7ee4a52d3915bbb9f3a7b886fc549f14",
+      "base_sha256": "c7a7c9100c2df65f1478d61437b32b5c7ee4a52d3915bbb9f3a7b886fc549f14",
+      "bytes": 58930,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts",
+      "sha256": "ec518d3a4cbf0148404ad7e100112e85c9f46eb134759ffc955b77b41aedd1b9",
+      "base_sha256": "ec518d3a4cbf0148404ad7e100112e85c9f46eb134759ffc955b77b41aedd1b9",
+      "bytes": 16420,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-bill-export.acceptance.ts",
+      "sha256": "7b5bf100630b3b2e89b37721bf9cd5f06262b3c2e7d39fb5e3cc8a4735b8d991",
+      "base_sha256": "7b5bf100630b3b2e89b37721bf9cd5f06262b3c2e7d39fb5e3cc8a4735b8d991",
+      "bytes": 12268,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application-media.acceptance.ts",
+      "sha256": "d6edc4301aa66d530e702eb90343d82bd6f0e17775afecc0af8d99e6655d5467",
+      "base_sha256": "d6edc4301aa66d530e702eb90343d82bd6f0e17775afecc0af8d99e6655d5467",
+      "bytes": 15701,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application.acceptance.ts",
+      "sha256": "cfb3932b683d30c83dabc99bb411a2c887adce0de89d813ea4094ac3a3ecef82",
+      "base_sha256": "cfb3932b683d30c83dabc99bb411a2c887adce0de89d813ea4094ac3a3ecef82",
+      "bytes": 15465,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-media.acceptance.ts",
+      "sha256": "d2b3d7a3d72ce158e42e4fcb211fc2e6cf914fc14615decaa614affd4b2c33dc",
+      "base_sha256": "d2b3d7a3d72ce158e42e4fcb211fc2e6cf914fc14615decaa614affd4b2c33dc",
+      "bytes": 14126,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract.acceptance.ts",
+      "sha256": "f9ab60a49720d69d5631db3ce8849c57c38a005b17ce02b06e86bddccca77681",
+      "base_sha256": "f9ab60a49720d69d5631db3ce8849c57c38a005b17ce02b06e86bddccca77681",
+      "bytes": 16573,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-finance-accounts.acceptance.ts",
+      "sha256": "299568a22e83270839184226a4cdab5ac9cc3d2a6edfc7adef650b20b79a89e5",
+      "base_sha256": "299568a22e83270839184226a4cdab5ac9cc3d2a6edfc7adef650b20b79a89e5",
+      "bytes": 14799,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-flow.acceptance.ts",
+      "sha256": "60369a246b175328133616d2455fa21d8c4ae7ad17a19108b1b0f1ade6cad924",
+      "base_sha256": "60369a246b175328133616d2455fa21d8c4ae7ad17a19108b1b0f1ade6cad924",
+      "bytes": 16038,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-proactive-refund.acceptance.ts",
+      "sha256": "847cefd3c42313bd4d0d32e20eedb3880a0a587c02592a14159dd018f21c7857",
+      "base_sha256": "847cefd3c42313bd4d0d32e20eedb3880a0a587c02592a14159dd018f21c7857",
+      "bytes": 31458,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-brand.acceptance.ts",
+      "sha256": "4692d17c16aad089f3d39e358548f4cc9f0ecddacaf1673272b7b7b109512ae0",
+      "base_sha256": "4692d17c16aad089f3d39e358548f4cc9f0ecddacaf1673272b7b7b109512ae0",
+      "bytes": 16020,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-detail.acceptance.ts",
+      "sha256": "69077c6286d578c06f5587cab80d37d2528e0361368f45d1842efad0ee2e00a8",
+      "base_sha256": "69077c6286d578c06f5587cab80d37d2528e0361368f45d1842efad0ee2e00a8",
+      "bytes": 11748,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+      "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232",
+      "base_sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232",
+      "bytes": 13424,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+      "sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301",
+      "base_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301",
+      "bytes": 14742,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-refund-settlement.acceptance.ts",
+      "sha256": "2e3b4e149ff50eb9a992d61afd70a1fcb5ac5b94685d273eda6820cf24a48ff6",
+      "base_sha256": "2e3b4e149ff50eb9a992d61afd70a1fcb5ac5b94685d273eda6820cf24a48ff6",
+      "bytes": 28160,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "15f6765dcb23e4c156f05e308df104bce629a4f4ad4f2d8675ff2ff1881d7563",
+      "base_sha256": "15f6765dcb23e4c156f05e308df104bce629a4f4ad4f2d8675ff2ff1881d7563",
+      "bytes": 80250,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "6d1faffd6612304a3085c64da520fd5543b00d5738e58ecc8050ac40804352c4",
+      "base_sha256": "6d1faffd6612304a3085c64da520fd5543b00d5738e58ecc8050ac40804352c4",
+      "bytes": 41232,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillExport.ts",
+      "sha256": "2086ceff39a2be05c8a1426b1f926035785d0282808ad73c8bacb3f238736aba",
+      "base_sha256": "2086ceff39a2be05c8a1426b1f926035785d0282808ad73c8bacb3f238736aba",
+      "bytes": 826,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillRead.ts",
+      "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905",
+      "base_sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905",
+      "bytes": 5529,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplication.ts",
+      "sha256": "5971f8fc7d17f43dc99112510b1819e210002425638b4197449896c99a6c533d",
+      "base_sha256": "5971f8fc7d17f43dc99112510b1819e210002425638b4197449896c99a6c533d",
+      "bytes": 2778,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplicationMedia.ts",
+      "sha256": "ff96e61fec9f6e52a0e9c18ab136f32903ff6bf25fc7aff3830d7c8125cb368a",
+      "base_sha256": "ff96e61fec9f6e52a0e9c18ab136f32903ff6bf25fc7aff3830d7c8125cb368a",
+      "bytes": 2588,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractMedia.ts",
+      "sha256": "f228cea7cf771980b9bb53ee8a64e0131cb4797b98e93db9deb51e0d912cc3fd",
+      "base_sha256": "f228cea7cf771980b9bb53ee8a64e0131cb4797b98e93db9deb51e0d912cc3fd",
+      "bytes": 2226,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractRead.ts",
+      "sha256": "61edade85fc505869212fbafdbdd450e13cf8de75f0dccec29e20d34636a1adc",
+      "base_sha256": "61edade85fc505869212fbafdbdd450e13cf8de75f0dccec29e20d34636a1adc",
+      "bytes": 7284,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFinanceAccounts.ts",
+      "sha256": "76ab9c8755d8194e546f215f564f44ea13113989d52b4420c5579980cd6ee4a4",
+      "base_sha256": "76ab9c8755d8194e546f215f564f44ea13113989d52b4420c5579980cd6ee4a4",
+      "bytes": 6853,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFlowRead.ts",
+      "sha256": "a703c6bbd0b4826f13611798337a8028d98dcd6d49dc1d8c0fe635e42e6ed348",
+      "base_sha256": "a703c6bbd0b4826f13611798337a8028d98dcd6d49dc1d8c0fe635e42e6ed348",
+      "bytes": 1087,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductDetail.ts",
+      "sha256": "02aab41075d03855cc9beb02d95ba0f7c38a595c4c7e21b05ea62bccca387258",
+      "base_sha256": "02aab41075d03855cc9beb02d95ba0f7c38a595c4c7e21b05ea62bccca387258",
+      "bytes": 6494,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductReply.ts",
+      "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09",
+      "base_sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09",
+      "bytes": 7823,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+      "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540",
+      "base_sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540",
+      "bytes": 8992,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa",
+      "base_sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa",
+      "bytes": 7264,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/presale-refund-baseline-postgres.test.ts",
+      "sha256": "cb6d1de725099707f719093117cbcd6d3913469fce4b6bc89dfbbef9049bd538",
+      "base_sha256": "cb6d1de725099707f719093117cbcd6d3913469fce4b6bc89dfbbef9049bd538",
+      "bytes": 30555,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf-native.test.ts",
+      "sha256": "02ba18354b81154103813af260fceb931f4aef394db48cf4f56d1afaea4c7115",
+      "base_sha256": "02ba18354b81154103813af260fceb931f4aef394db48cf4f56d1afaea4c7115",
+      "bytes": 7703,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf.test.ts",
+      "sha256": "90f7e8b413226cd5f7f396ba4ea5364b5deb3ef5f1a0f73c976fedced779eed6",
+      "base_sha256": "90f7e8b413226cd5f7f396ba4ea5364b5deb3ef5f1a0f73c976fedced779eed6",
+      "bytes": 9255,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/runtime/product-auto-shelf-queue-runtime.test.ts",
+      "sha256": "5823c139767a2999ebd2caede84af4c23d78745392b1f395ae2340a28a5a3703",
+      "base_sha256": "5823c139767a2999ebd2caede84af4c23d78745392b1f395ae2340a28a5a3703",
+      "bytes": 2942,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-native.test.ts",
+      "sha256": "6f1e7c6dc362f70a524f005df6d72df2b3b7812bb96203300125658119dd17c1",
+      "base_sha256": "6f1e7c6dc362f70a524f005df6d72df2b3b7812bb96203300125658119dd17c1",
+      "bytes": 13724,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-rules.test.ts",
+      "sha256": "1e542559f3a87423db92c6cfe5b9234d382610068fd58eeeb8af90e82e9242d9",
+      "base_sha256": "1e542559f3a87423db92c6cfe5b9234d382610068fd58eeeb8af90e82e9242d9",
+      "bytes": 3338,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+      "sha256": "dc5a162faca49f13529ebd4a7d07701b31a73db9558fb386e37531e3fe88eba4",
+      "base_sha256": "dc5a162faca49f13529ebd4a7d07701b31a73db9558fb386e37531e3fe88eba4",
+      "bytes": 28549,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-catalog-native.test.ts",
+      "sha256": "faa984ab34dcf4431274eba97ee3219a1e468f0a5289a2f0ce95c75e4f441042",
+      "base_sha256": "faa984ab34dcf4431274eba97ee3219a1e468f0a5289a2f0ce95c75e4f441042",
+      "bytes": 10062,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-frontend.test.ts",
+      "sha256": "23424be5f8aab53bc717b4f9be6622d8c78314e6d6758b8c4120c1934421c6ee",
+      "base_sha256": "23424be5f8aab53bc717b4f9be6622d8c78314e6d6758b8c4120c1934421c6ee",
+      "bytes": 28636,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-frontend.test.ts",
+      "sha256": "7079413f2e908ba85f525ead50741ab13deea491f7d84992cb443d156b803d5e",
+      "base_sha256": "7079413f2e908ba85f525ead50741ab13deea491f7d84992cb443d156b803d5e",
+      "bytes": 25150,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-native.test.ts",
+      "sha256": "e3043440c12832ad3ea60252e14cc35b0074eef22f385c860f66a357f6f88dca",
+      "base_sha256": "e3043440c12832ad3ea60252e14cc35b0074eef22f385c860f66a357f6f88dca",
+      "bytes": 18351,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-rules.test.ts",
+      "sha256": "e03fc458085bec67b8522fe8d2f9c0272f9147989fdf64af78af26a6b6c05494",
+      "base_sha256": "e03fc458085bec67b8522fe8d2f9c0272f9147989fdf64af78af26a6b6c05494",
+      "bytes": 2111,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-native.test.ts",
+      "sha256": "2e539d718e499d588a2b071bb530404fdb0656caeb84d8ff1b611f1f693116b8",
+      "base_sha256": "2e539d718e499d588a2b071bb530404fdb0656caeb84d8ff1b611f1f693116b8",
+      "bytes": 19849,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-rules.test.ts",
+      "sha256": "0700ffdf86bf15b7c4de6ad34b6ddc7c453862b4fc3ce3d0fd71be1f0b4e5a7b",
+      "base_sha256": "0700ffdf86bf15b7c4de6ad34b6ddc7c453862b4fc3ce3d0fd71be1f0b4e5a7b",
+      "bytes": 5274,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-frontend.test.ts",
+      "sha256": "f0d40fece6044833dce3ee8b65310af3bad38aedb1212c5800b8b67ab1800b27",
+      "base_sha256": "f0d40fece6044833dce3ee8b65310af3bad38aedb1212c5800b8b67ab1800b27",
+      "bytes": 23493,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-frontend.test.ts",
+      "sha256": "e2ee33905ce47b54f5aedd28e17e762f1b4649db8fd93f778ab27ead4ffeaafe",
+      "base_sha256": "e2ee33905ce47b54f5aedd28e17e762f1b4649db8fd93f778ab27ead4ffeaafe",
+      "bytes": 23251,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-native.test.ts",
+      "sha256": "5b851baa90beb416f4784b46bd0ce076d34a8685ae68208431829ac58e22c183",
+      "base_sha256": "5b851baa90beb416f4784b46bd0ce076d34a8685ae68208431829ac58e22c183",
+      "bytes": 13093,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-rules.test.ts",
+      "sha256": "e3d96ed88afc0f115cc9a1d5682a57c069d4220bf49920fdf7aa77d9687c87d7",
+      "base_sha256": "e3d96ed88afc0f115cc9a1d5682a57c069d4220bf49920fdf7aa77d9687c87d7",
+      "bytes": 2078,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-native.test.ts",
+      "sha256": "a5f1af45143f252ff6919aa6a652f0086fb36498ccc992f6b373815f89a5bff3",
+      "base_sha256": "a5f1af45143f252ff6919aa6a652f0086fb36498ccc992f6b373815f89a5bff3",
+      "bytes": 21554,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-rules.test.ts",
+      "sha256": "f28e513ac3bc4d82b6dcd0dff115caa51899af92b8851df4fe3f0f8c8533a2fa",
+      "base_sha256": "f28e513ac3bc4d82b6dcd0dff115caa51899af92b8851df4fe3f0f8c8533a2fa",
+      "bytes": 3852,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-frontend.test.ts",
+      "sha256": "af719bf7e68c480f88f762cd23923a984c878ff38367b80d71eb5236580d1a4c",
+      "base_sha256": "af719bf7e68c480f88f762cd23923a984c878ff38367b80d71eb5236580d1a4c",
+      "bytes": 28972,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-native.test.ts",
+      "sha256": "07e55ee9dfce099a379ff671dbd2bb550c6470ee8ce4508733eaa4440c4dbc06",
+      "base_sha256": "07e55ee9dfce099a379ff671dbd2bb550c6470ee8ce4508733eaa4440c4dbc06",
+      "bytes": 21055,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-rules.test.ts",
+      "sha256": "85ea83619887dcc80ebbd3c01cf16eade52268af8d83271ebd21a1ef053b45b9",
+      "base_sha256": "85ea83619887dcc80ebbd3c01cf16eade52268af8d83271ebd21a1ef053b45b9",
+      "bytes": 4624,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-frontend.test.ts",
+      "sha256": "01aaa0a838377832ec4fac17f8a2635674087bc3a43f0125bf193d97f38b20f3",
+      "base_sha256": "01aaa0a838377832ec4fac17f8a2635674087bc3a43f0125bf193d97f38b20f3",
+      "bytes": 21476,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-native.test.ts",
+      "sha256": "51c78385c5142aa85e84ddf9bd247e65117dfde84c3acad628c26d6ec5c0e734",
+      "base_sha256": "51c78385c5142aa85e84ddf9bd247e65117dfde84c3acad628c26d6ec5c0e734",
+      "bytes": 13002,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-rules.test.ts",
+      "sha256": "e5a0cec69ffee3267262b73b97fb222566a2994f4fc40ea69b054a9cedf3f792",
+      "base_sha256": "e5a0cec69ffee3267262b73b97fb222566a2994f4fc40ea69b054a9cedf3f792",
+      "bytes": 5861,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-refund-integration-native.test.ts",
+      "sha256": "ac77d8f49eb7b38720058500b10395f2807ed356203e8034445d5df296fec8c6",
+      "base_sha256": "ac77d8f49eb7b38720058500b10395f2807ed356203e8034445d5df296fec8c6",
+      "bytes": 8675,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-frontend-export.test.ts",
+      "sha256": "8b88932db526b494017393947cfee006bbaf29fc41acdb302ae3ad07e2b550fd",
+      "base_sha256": "8b88932db526b494017393947cfee006bbaf29fc41acdb302ae3ad07e2b550fd",
+      "bytes": 4287,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "base_sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "bytes": 23914,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+      "sha256": "e9a212b387842c4d6e9d58e549c641c2c9aa664784ed161fe0349584c9608f05",
+      "base_sha256": "e9a212b387842c4d6e9d58e549c641c2c9aa664784ed161fe0349584c9608f05",
+      "bytes": 26302,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "d0426d3cc73ef9350ab4d926606e248724b44ed4ec5fd21381d8a9097bc66e55",
+      "base_sha256": "d0426d3cc73ef9350ab4d926606e248724b44ed4ec5fd21381d8a9097bc66e55",
+      "bytes": 55527,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-brand-frontend.test.ts",
+      "sha256": "5a75017b960a486f151f40f424c080789a50ea21ed4d3f9edcb9f596f9507627",
+      "base_sha256": "5a75017b960a486f151f40f424c080789a50ea21ed4d3f9edcb9f596f9507627",
+      "bytes": 25824,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-brand-rules.test.ts",
+      "sha256": "e35ae5b4cf4aef364d44c77acc3a532c14ca7801415311a577d0c1de6b242655",
+      "base_sha256": "e35ae5b4cf4aef364d44c77acc3a532c14ca7801415311a577d0c1de6b242655",
+      "bytes": 2462,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-frontend.test.ts",
+      "sha256": "00c88576dfeff6ec16ab8f544bd39716301c5128d0f2e7fc8e4eb2bda5577692",
+      "base_sha256": "00c88576dfeff6ec16ab8f544bd39716301c5128d0f2e7fc8e4eb2bda5577692",
+      "bytes": 21696,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-native.test.ts",
+      "sha256": "ae9a45c9c5f7a25668718555de2bd87d21fc458c117df6d58448ff5c6aa32925",
+      "base_sha256": "ae9a45c9c5f7a25668718555de2bd87d21fc458c117df6d58448ff5c6aa32925",
+      "bytes": 12831,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-read-rules.test.ts",
+      "sha256": "faee78a0823cc4c0754a8672d2e010e747d62deb3241b569634bcc6a3312880b",
+      "base_sha256": "faee78a0823cc4c0754a8672d2e010e747d62deb3241b569634bcc6a3312880b",
+      "bytes": 2483,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+      "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1",
+      "base_sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1",
+      "bytes": 5336,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+      "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8",
+      "base_sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8",
+      "bytes": 17512,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+      "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c",
+      "base_sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c",
+      "bytes": 26492,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+      "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86",
+      "base_sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86",
+      "bytes": 19603,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+      "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c",
+      "base_sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c",
+      "bytes": 17155,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+      "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212",
+      "base_sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212",
+      "bytes": 2592,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e",
+      "base_sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e",
+      "bytes": 3241,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+      "sha256": "09bfc2471f3a56fae010b5bc783ba5ec09d25b01fda5e523a7ed6a17933f3e41",
+      "base_sha256": "09bfc2471f3a56fae010b5bc783ba5ec09d25b01fda5e523a7ed6a17933f3e41",
+      "bytes": 20333,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-bill-export-browser.config.ts",
+      "sha256": "9f941ac9b47e6e2d713974f2d6944fbc0cdddc193f5963cd56317965214ba30c",
+      "base_sha256": "9f941ac9b47e6e2d713974f2d6944fbc0cdddc193f5963cd56317965214ba30c",
+      "bytes": 571,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-brand-browser.config.ts",
+      "sha256": "aec5cebc368a362c839df29f042cbe6a9fdefed8a963b5a5a0577fc38502998e",
+      "base_sha256": "aec5cebc368a362c839df29f042cbe6a9fdefed8a963b5a5a0577fc38502998e",
+      "bytes": 561,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_source"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-detail-browser.config.ts",
+      "sha256": "4c5f38558c5690deb125dec3a087e2adb1a9a3a25c436e39102287879e300787",
+      "base_sha256": "4c5f38558c5690deb125dec3a087e2adb1a9a3a25c436e39102287879e300787",
+      "bytes": 564,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-browser.config.ts",
+      "sha256": "724a571e533f850bb0161b3f818aecb970a6e8ec562be59e2b98926808badc31",
+      "base_sha256": "724a571e533f850bb0161b3f818aecb970a6e8ec562be59e2b98926808badc31",
+      "bytes": 595,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-media-browser.config.ts",
+      "sha256": "7adbedd3b7734e8729be6e30e66adc1505881895cec4191935981e3d42cf3d0d",
+      "base_sha256": "7adbedd3b7734e8729be6e30e66adc1505881895cec4191935981e3d42cf3d0d",
+      "bytes": 605,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-browser.config.ts",
+      "sha256": "224a56aa935cfd6863ac1fbd2399d66ce59f7dbbdf899e56cc9a3e27e4c18945",
+      "base_sha256": "224a56aa935cfd6863ac1fbd2399d66ce59f7dbbdf899e56cc9a3e27e4c18945",
+      "bytes": 559,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-media-browser.config.ts",
+      "sha256": "3147c6a42c9232fec9c7d97ce2992da4774413e38bc1a1c1a0bd25b680f25377",
+      "base_sha256": "3147c6a42c9232fec9c7d97ce2992da4774413e38bc1a1c1a0bd25b680f25377",
+      "bytes": 577,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-finance-accounts-browser.config.ts",
+      "sha256": "fb56c549397932f54d67c432bddd1f7f09a0772c3e9599901aecfcfb38cf0021",
+      "base_sha256": "fb56c549397932f54d67c432bddd1f7f09a0772c3e9599901aecfcfb38cf0021",
+      "bytes": 586,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-flow-browser.config.ts",
+      "sha256": "118252cd84d69bb5a2bf6d62d29887aa1b898f54253e5d5de36682f3026c2228",
+      "base_sha256": "118252cd84d69bb5a2bf6d62d29887aa1b898f54253e5d5de36682f3026c2228",
+      "bytes": 550,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-proactive-refund-browser.config.ts",
+      "sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "base_sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "bytes": 586,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-refund-settlement-browser.config.ts",
+      "sha256": "9d711597a91c1d749bbef3e429ab508a2b73a2be8ee0751c431d66463393c0dc",
+      "base_sha256": "9d711597a91c1d749bbef3e429ab508a2b73a2be8ee0751c431d66463393c0dc",
+      "bytes": 582,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+      "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641",
+      "base_sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641",
+      "bytes": 564,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+      "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284",
+      "base_sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284",
+      "bytes": 570,
+      "byte_equal_to_base": true,
+      "origin": "previous_brand_protected"
+    }
+  ],
+  "protected_review": {
+    "path": "/tmp/cinashop-supplier-product-ensures-protected-review.json",
+    "sha256": "059e0abb867df26e9a2758d983ed15287963349f577cdf61eb5c9d78b23957bc",
+    "bytes": 102129
+  },
+  "validation": {
+    "status": "passed",
+    "distinct_tests": 640,
+    "distinct_files": 16,
+    "commands": [
+      {
+        "name": "unit-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "env",
+          "TZ=America/New_York",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--maxWorkers=1",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-product-ensures-unit-final.json",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/supplier-product-ensures-frontend.test.ts",
+          "test/supplier-product-ensures-rules.test.ts",
+          "test/supplier-product-brand-frontend.test.ts",
+          "test/supplier-product-brand-rules.test.ts",
+          "test/supplier-product-catalog.test.ts",
+          "test/supplier-product-copy-frontend.test.ts",
+          "test/supplier-product-label-picker-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/supplier-product-schedule-frontend.test.ts",
+          "test/supplier-product-management.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 30.05,
+        "started_at_utc": "2026-10-17T11:42:35.015706+00:00",
+        "finished_at_utc": "2026-10-17T11:43:05.061131+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "3e493e98be8d81d31e5f899993313cd9798451e467e660e5869b4b43564fb008"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-unit-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-unit-final-terminal.json",
+          "sha256": "c160ccc2428c306de5aa1bd804e1ef3739f3a56c9659461a3fb8b2d785bfdcfe",
+          "bytes": 4466
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-unit-final.log",
+          "sha256": "0b69498339f88ca90e3a83046c4e696d76482e28b2e4ac275516689dea731fc0",
+          "bytes": 78
+        }
+      },
+      {
+        "name": "native-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-product-ensures-native.test.ts",
+          "test/supplier-product-brand-native.test.ts",
+          "test/supplier-product-schedule-native.test.ts",
+          "test/supplier-product-copy-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 110.42,
+        "started_at_utc": "2026-10-17T11:46:57.128412+00:00",
+        "finished_at_utc": "2026-10-17T11:48:47.549980+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-native-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-native-final-2-terminal.json",
+          "sha256": "f62b67ad08e9d1a0d0bd44f2cc6fa31d2f47bbb212cd84116093bb1e608fcb14",
+          "bytes": 4242
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-native-final-2.log",
+          "sha256": "391da084da562859903163dd64bd74d7b626dc100ff06d07c7fab62e69a2b7f0",
+          "bytes": 28303
+        }
+      },
+      {
+        "name": "worker-unit-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 131.57,
+        "started_at_utc": "2026-10-17T11:48:47.620752+00:00",
+        "finished_at_utc": "2026-10-17T11:50:59.187766+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-worker-unit-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-worker-unit-types-final-terminal.json",
+          "sha256": "2034eaf50650cbbf187ad3053b53b04729637841c37024cea4d0f535b9f8e3fc",
+          "bytes": 3981
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-worker-unit-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "worker-runtime-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 76.81,
+        "started_at_utc": "2026-10-17T11:50:59.263586+00:00",
+        "finished_at_utc": "2026-10-17T11:52:16.077649+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-worker-runtime-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-worker-runtime-types-final-terminal.json",
+          "sha256": "65c9d24ef046a79aa739521bf059924701fe4097801aed757ef4cd72f054fd21",
+          "bytes": 4030
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-worker-runtime-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "supplier-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 8.52,
+        "started_at_utc": "2026-10-17T11:52:16.149635+00:00",
+        "finished_at_utc": "2026-10-17T11:52:24.673275+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-supplier-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-supplier-types-final-terminal.json",
+          "sha256": "cccf7974aef34bbf5c38a714f65296032ee3e23ed157508eabc34523f5a249e1",
+          "bytes": 3944
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-supplier-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "supplier-build-final",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 14.63,
+        "started_at_utc": "2026-10-17T11:52:24.724920+00:00",
+        "finished_at_utc": "2026-10-17T11:52:39.359627+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-supplier-build-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-supplier-build-final-terminal.json",
+          "sha256": "d03bedf6dc96c8094484ffbd8aecf88ac18a5efc6149e52a3543a0bba10dda1b",
+          "bytes": 3942
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-supplier-build-final.log",
+          "sha256": "e6f51d4a6c732efe93c8c8940ed3ea0dd647e34d8b88610fc6a19c9259303277",
+          "bytes": 6424
+        }
+      },
+      {
+        "name": "browser-final-3",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:supplier-ensures-browser"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 208.27,
+        "started_at_utc": "2026-10-17T12:19:03.812484+00:00",
+        "finished_at_utc": "2026-10-17T12:22:32.083779+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/productEnsures.ts",
+            "sha256": "2d58700901aa949a40c4a6aafeadaa88f434590f7732a7fd04d64e736048518f"
+          },
+          {
+            "path": "view/supplier-ts/src/components/SupplierProductEnsurePicker.vue",
+            "sha256": "e05d146da816abc71f538901b4bd9c470dc5d911a23c53fd95a27d7c4d838d8d"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "6f99d65aa597d2682633a7435e16dc7506c8b9b9d9c0b3d2a04d268edec3b569"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "9b3e1c5bf1d5c06fe3ccf5076c8516bd205f06342b709a395ae59107a121c652"
+          },
+          {
+            "path": "view/supplier-ts/src/types/productEnsures.ts",
+            "sha256": "6f5f7d5e99f2e9ba4b4f4d8966a5537802567391bf75c125eb0e33bae8a9116a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productEnsures.ts",
+            "sha256": "df47dd2e2c8ec56d413b7de7336bf2e4b76d4ee003b739d7226ae32ed3b6acb3"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-ensures-20261017.md",
+            "sha256": "1b2daa3d38ff92373427e39480947c95a16577435caf2bdf0aa444b3d4e4ca56"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "8b6da4494e37f110e538a3069b000a9a241d0f752663a1269c7b71f72835e1bb"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "4d184b4370e58ce53e45331817c6c5c14c76169e09d76fc91f7094270806c27e"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductEnsureBindings.ts",
+            "sha256": "23b56a05f97e46befb0af9daf879b3eb984dd9b032482dc2bb3bcfe27697567d"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "368a7d32f703812a4079115233d4583956b355f79bf6bf318686750ec37803ec"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-ensures.acceptance.ts",
+            "sha256": "0986ad5ebd3c18c21c4f3e12514046bac7bbff7390d3c07f7b5008e1d2110821"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductBrand.ts",
+            "sha256": "604e932093e79c80adced162e19882c291c5df6bdbac8e4ccdf034daa060f497"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductEnsures.ts",
+            "sha256": "108e9af5cf79bfa29e61e0404a8f0f28b7421f8114b41424da4f890aec84c920"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "be542cee734af5c67694ff5be1e36e3dc0a585e6d307a8fc2d3cf1405bcc337f"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-brand-native.test.ts",
+            "sha256": "d8a7b0b235f6120e74b65227e6ce171877380464bd30861a878e58b10e47b092"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+            "sha256": "f3b073176023bb6b2eb4a809f8899b3679771851844cb915aeb18e6d93ea6eee"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-native.test.ts",
+            "sha256": "169d15bc4300ef21c3179b387e27c763dbb208f4c4595afcf7a53c85dc0cf08e"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+            "sha256": "a5120cf06662ed65127b50d8c045d3fbb23c178873cacabb0b27530aad45034e"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-ensures-browser.config.ts",
+            "sha256": "593167826b605dc8795faa8efdeb15d6e429de928643554983fbab4a7cd85f8d"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-ensures-browser-final-3.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-browser-final-3-terminal.json",
+          "sha256": "01ff2a5aa6a1342ecd462fef4be9c3607b1b02115bd6c6ea674c68a943d536df",
+          "bytes": 4055
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-ensures-browser-final-3.log",
+          "sha256": "3752e4c42f87a32ce1c46e4f43b353e996590ccc97cc670ff431891a51b456e3",
+          "bytes": 9500
+        }
+      }
+    ],
+    "unit": {
+      "distinct_tests": 544,
+      "distinct_files": 11,
+      "report": {
+        "path": "/tmp/cinashop-supplier-product-ensures-unit-final.json",
+        "sha256": "9a658c6171e56b2aa8be0ff862e8ad915df114a6ed6ca90fe60c25afd86ae0fe",
+        "bytes": 220277
+      },
+      "files": [
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "tests": 232
+        },
+        {
+          "path": "workers-ts/test/supplier-product-brand-frontend.test.ts",
+          "tests": 48
+        },
+        {
+          "path": "workers-ts/test/supplier-product-brand-rules.test.ts",
+          "tests": 30
+        },
+        {
+          "path": "workers-ts/test/supplier-product-catalog.test.ts",
+          "tests": 23
+        },
+        {
+          "path": "workers-ts/test/supplier-product-copy-frontend.test.ts",
+          "tests": 27
+        },
+        {
+          "path": "workers-ts/test/supplier-product-ensures-frontend.test.ts",
+          "tests": 58
+        },
+        {
+          "path": "workers-ts/test/supplier-product-ensures-rules.test.ts",
+          "tests": 36
+        },
+        {
+          "path": "workers-ts/test/supplier-product-label-picker-frontend.test.ts",
+          "tests": 14
+        },
+        {
+          "path": "workers-ts/test/supplier-product-management.test.ts",
+          "tests": 12
+        },
+        {
+          "path": "workers-ts/test/supplier-product-media-frontend.test.ts",
+          "tests": 34
+        },
+        {
+          "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+          "tests": 30
+        }
+      ]
+    },
+    "native": {
+      "distinct_tests": 95,
+      "distinct_files": 4,
+      "files": {
+        "test/supplier-product-ensures-native.test.ts": 27,
+        "test/supplier-product-copy-native.test.ts": 24,
+        "test/supplier-product-brand-native.test.ts": 28,
+        "test/supplier-product-schedule-native.test.ts": 16
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-native-final-2.log",
+        "sha256": "391da084da562859903163dd64bd74d7b626dc100ff06d07c7fab62e69a2b7f0",
+        "bytes": 28303
+      },
+      "actual_App_JWT_independent_PG16_LOGINs": true
+    },
+    "browser": {
+      "distinct_tests": 1,
+      "result": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-result.json",
+        "sha256": "6cf5620ccaa4fb38a6ee4c57cf50ba71b82c8e1198111c062f24eb782b43141b",
+        "bytes": 78363
+      },
+      "qa": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-qa.json",
+        "sha256": "d5d9b83fb4a5a314d114445a3aed8b2360270c24f70873c41421aa651ea5797e",
+        "bytes": 6004
+      },
+      "production_inputs": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-production-inputs.json",
+        "sha256": "a56ab7b65e713afdac50e8a0b7b4ed978c839494030b8bdaaf62e61fcda7235a",
+        "bytes": 12728
+      },
+      "snapshot_tables": 37,
+      "public_sequences": 36,
+      "business_requests": [
+        {
+          "path": "/api/get_script",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [
+              41
+            ],
+            "ensure_selection": {
+              "ensure_id": "41",
+              "consistent": true,
+              "available": true,
+              "retained_ids": [],
+              "truncated": false
+            }
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "POST",
+          "status": 200,
+          "envelope": 200,
+          "body": {
+            "id": 80,
+            "product_type": 0,
+            "store_name": "本机定时商品",
+            "store_info": "定时计划完整编辑",
+            "keyword": "schedule",
+            "unit_name": "件",
+            "bar_code": "000080",
+            "cate_id": [
+              11
+            ],
+            "slider_image": [
+              "/owned-media/schedule.png"
+            ],
+            "description": "<p>本机定时商品</p>",
+            "spec_type": 0,
+            "items": [
+              {
+                "value": "规格",
+                "detail": [
+                  "默认"
+                ]
+              }
+            ],
+            "attrs": [
+              {
+                "id": 1,
+                "unique": "ef40bbc6",
+                "suk": "默认",
+                "detail": {
+                  "规格": "默认"
+                },
+                "image": "/owned-media/schedule.png",
+                "price": "19.99",
+                "cost": "10.00",
+                "stock": 7,
+                "weight": "0.00",
+                "volume": "0.00",
+                "brokerage": "0.00",
+                "code": "",
+                "sales": 0,
+                "sumStock": 7,
+                "is_retired": 0,
+                "settle_price": "12.34",
+                "ot_price": "29.99",
+                "vip_price": "18.00",
+                "bar_code": "",
+                "brokerage_two": "0.00",
+                "disk_info": "",
+                "write_times": 1,
+                "write_valid": 1,
+                "write_days": 0,
+                "write_start": 0,
+                "write_end": 0
+              }
+            ],
+            "freight": 1,
+            "postage": "0.00",
+            "temp_id": 0,
+            "is_postage": 0,
+            "is_support_refund": 1,
+            "is_limit": 0,
+            "limit_type": 0,
+            "limit_num": 0,
+            "sort": 0,
+            "ficti": 0,
+            "video_link": "",
+            "is_show": 0,
+            "is_verify": 1,
+            "refusal": "",
+            "ensure_id": [
+              201,
+              202
+            ]
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [
+              201,
+              202
+            ],
+            "ensure_selection": {
+              "ensure_id": "201,202",
+              "consistent": true,
+              "available": true,
+              "retained_ids": [],
+              "truncated": false
+            }
+          }
+        },
+        {
+          "path": "/api/get_script",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [
+              201,
+              202
+            ],
+            "ensure_selection": {
+              "ensure_id": "201,202",
+              "consistent": true,
+              "available": false,
+              "retained_ids": [
+                201
+              ],
+              "truncated": false
+            }
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "POST",
+          "status": 200,
+          "envelope": 200,
+          "body": {
+            "id": 80,
+            "product_type": 0,
+            "store_name": "本机定时商品",
+            "store_info": "定时计划完整编辑",
+            "keyword": "schedule",
+            "unit_name": "件",
+            "bar_code": "000080",
+            "cate_id": [
+              11
+            ],
+            "slider_image": [
+              "/owned-media/schedule.png"
+            ],
+            "description": "<p>本机定时商品</p>",
+            "spec_type": 0,
+            "items": [
+              {
+                "value": "规格",
+                "detail": [
+                  "默认"
+                ]
+              }
+            ],
+            "attrs": [
+              {
+                "id": 1,
+                "unique": "ef40bbc6",
+                "suk": "默认",
+                "detail": {
+                  "规格": "默认"
+                },
+                "image": "/owned-media/schedule.png",
+                "price": "19.99",
+                "cost": "10.00",
+                "stock": 7,
+                "weight": "0.00",
+                "volume": "0.00",
+                "brokerage": "0.00",
+                "code": "",
+                "sales": 0,
+                "sumStock": 7,
+                "is_retired": 0,
+                "settle_price": "12.34",
+                "ot_price": "29.99",
+                "vip_price": "18.00",
+                "bar_code": "",
+                "brokerage_two": "0.00",
+                "disk_info": "",
+                "write_times": 1,
+                "write_valid": 1,
+                "write_days": 0,
+                "write_start": 0,
+                "write_end": 0
+              }
+            ],
+            "freight": 1,
+            "postage": "0.00",
+            "temp_id": 0,
+            "is_postage": 0,
+            "is_support_refund": 1,
+            "is_limit": 0,
+            "limit_type": 0,
+            "limit_num": 0,
+            "sort": 0,
+            "ficti": 0,
+            "video_link": "",
+            "is_show": 0,
+            "is_verify": 0,
+            "refusal": "",
+            "ensure_id": [
+              202
+            ]
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [
+              202
+            ],
+            "ensure_selection": {
+              "ensure_id": "202",
+              "consistent": true,
+              "available": true,
+              "retained_ids": [],
+              "truncated": false
+            }
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "POST",
+          "status": 200,
+          "envelope": 200,
+          "body": {
+            "id": 80,
+            "product_type": 0,
+            "store_name": "本机定时商品",
+            "store_info": "定时计划完整编辑",
+            "keyword": "schedule",
+            "unit_name": "件",
+            "bar_code": "000080",
+            "cate_id": [
+              11
+            ],
+            "slider_image": [
+              "/owned-media/schedule.png"
+            ],
+            "description": "<p>本机定时商品</p>",
+            "spec_type": 0,
+            "items": [
+              {
+                "value": "规格",
+                "detail": [
+                  "默认"
+                ]
+              }
+            ],
+            "attrs": [
+              {
+                "id": 1,
+                "unique": "ef40bbc6",
+                "suk": "默认",
+                "detail": {
+                  "规格": "默认"
+                },
+                "image": "/owned-media/schedule.png",
+                "price": "19.99",
+                "cost": "10.00",
+                "stock": 7,
+                "weight": "0.00",
+                "volume": "0.00",
+                "brokerage": "0.00",
+                "code": "",
+                "sales": 0,
+                "sumStock": 7,
+                "is_retired": 0,
+                "settle_price": "12.34",
+                "ot_price": "29.99",
+                "vip_price": "18.00",
+                "bar_code": "",
+                "brokerage_two": "0.00",
+                "disk_info": "",
+                "write_times": 1,
+                "write_valid": 1,
+                "write_days": 0,
+                "write_start": 0,
+                "write_end": 0
+              }
+            ],
+            "freight": 1,
+            "postage": "0.00",
+            "temp_id": 0,
+            "is_postage": 0,
+            "is_support_refund": 1,
+            "is_limit": 0,
+            "limit_type": 0,
+            "limit_num": 0,
+            "sort": 0,
+            "ficti": 0,
+            "video_link": "",
+            "is_show": 0,
+            "is_verify": 0,
+            "refusal": "",
+            "ensure_id": []
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [],
+            "ensure_selection": {
+              "ensure_id": "",
+              "consistent": true,
+              "available": true,
+              "retained_ids": [],
+              "truncated": false
+            }
+          }
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/api/get_script",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/supplierapi/product/brand/cascader_list/2",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/all_ensure",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "ensures": {
+            "ensure_id": [],
+            "ensure_selection": {
+              "ensure_id": "",
+              "consistent": true,
+              "available": true,
+              "retained_ids": [],
+              "truncated": false
+            }
+          }
+        }
+      ],
+      "role": {
+        "role": "cinashop_runtime_e2d3d1ab599d4d8eb1ec0cb7d4a1da42",
+        "ensure_select": true,
+        "ensure_lock": true,
+        "ensure_edit": false
+      },
+      "release_attempts": [
+        {
+          "socket_destroyed": true
+        }
+      ],
+      "consumerResults": [
+        {
+          "ids": [
+            201,
+            202
+          ],
+          "rows": [
+            {
+              "id": 201,
+              "name": "平台七天保障",
+              "image": "",
+              "desc": "平台保障说明"
+            },
+            {
+              "id": 202,
+              "name": "本店品质保障",
+              "image": "",
+              "desc": "自有保障说明"
+            }
+          ]
+        },
+        {
+          "ids": [
+            202
+          ],
+          "rows": [
+            {
+              "id": 202,
+              "name": "本店品质保障",
+              "image": "",
+              "desc": "自有保障说明"
+            }
+          ]
+        },
+        {
+          "ids": [],
+          "rows": []
+        }
+      ],
+      "qa_summary": {
+        "browser_id": "2",
+        "desktop": {
+          "requested": {
+            "width": 1280,
+            "height": 720
+          },
+          "actual": {
+            "assuranceCard": {
+              "bottom": 535,
+              "height": 455,
+              "left": 947,
+              "right": 1247,
+              "top": 80,
+              "width": 300,
+              "x": 947,
+              "y": 80
+            },
+            "height": 720,
+            "scrollWidth": 1265,
+            "scrollY": 422,
+            "width": 1280
+          },
+          "screenshot": {
+            "path": "/tmp/cinashop-supplier-product-ensures-desktop.jpg",
+            "sha256": "daa378eb08bf868d45d583a808e90c79a64a4934329b92fefbe90470833d9600",
+            "bytes": 57220,
+            "mime_type": "image/jpeg"
+          }
+        },
+        "mobile": {
+          "requested": {
+            "width": 390,
+            "height": 844
+          },
+          "actual": {
+            "assuranceCard": {
+              "bottom": 457.1953125,
+              "height": 419,
+              "left": 0,
+              "right": 375,
+              "top": 38.1953125,
+              "width": 375,
+              "x": 0,
+              "y": 38.1953125
+            },
+            "height": 844,
+            "scrollWidth": 375,
+            "scrollY": 2599,
+            "width": 390
+          },
+          "screenshot": {
+            "path": "/tmp/cinashop-supplier-product-ensures-mobile.jpg",
+            "sha256": "45003ab32819709fc8e6ec99a82c1803b9d4db94f7db0d96b3d033f0f4804545",
+            "bytes": 23504,
+            "mime_type": "image/jpeg"
+          }
+        },
+        "console": {
+          "status": "collected",
+          "logs": []
+        }
+      },
+      "finished": true,
+      "backend_fetch_calls": 0
+    },
+    "identities": {
+      "path": "/tmp/cinashop-supplier-product-ensures-test-identities.json",
+      "sha256": "5f9ffc96596eb9229c4d53262c7eb624a2ea14ebe9e3f2958d80ba41e8e695ff",
+      "bytes": 157582
+    },
+    "accepted_inputs": {
+      "status": "Final native/types/build/Browser execute all19 final fingerprints. Unit544 uses identical executed unit/SFC/rule/production inputs; only the unexecuted native/Browser fixture has an added lock-column grant. Documentation additions are not execution inputs.",
+      "unit_fixture_difference": {
+        "path": "/tmp/cinashop-supplier-product-ensures-unit-accepted-input-difference.json",
+        "sha256": "1cbce66348b10c895b3babbbf558c78f659a17da9f88435292b639416a6d40ff",
+        "bytes": 571
+      },
+      "fixture_repair": {
+        "path": "/tmp/cinashop-supplier-product-ensures-fixture-lock-repair.json",
+        "sha256": "7d423e66771ef43b62688d3611ca32698884fcf9beb9551c78ddaa5dcf75cfde",
+        "bytes": 1609
+      }
+    }
+  },
+  "historical_executions": [
+    {
+      "name": "browser-final-2",
+      "exit_code": 1,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-final-2-terminal.json",
+        "sha256": "a101c7b6edb3831c4e71aa5267b0ac3bc939580ca5cdec99fdb4a0bb7d84fc51",
+        "bytes": 4055
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-final-2.log",
+        "sha256": "34a815ebc4fd4dc76a9703b3803d175035a4df57beebd738f75a8dfb6cf5631b",
+        "bytes": 1812
+      },
+      "additional_distinct_tests": 0,
+      "observed_failure": "Browser finish deadline reached while the recorded CDP driver call was blocked; no Browser pass accepted.",
+      "diagnostic": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-driver-timeout.json",
+        "sha256": "9ae10c37876524a2279b434f5850b24ff428cfe622d755c713666f4a3b1f947e",
+        "bytes": 519
+      }
+    },
+    {
+      "name": "browser-final",
+      "exit_code": 1,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-final-terminal.json",
+        "sha256": "f99a25f5ce73f5c9f5790e659fd27e55911a8653fab8cdbe21b025525cbe2dba",
+        "bytes": 4051
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-final.log",
+        "sha256": "8545592768e2e720677039f8dc07e2917ab1e9049a886fcdd67c8dc011a198b5",
+        "bytes": 1799
+      },
+      "additional_distinct_tests": 0,
+      "observed_failure": "Actual POST oracle received omitted ensure_id and failed its join; no Browser pass accepted.",
+      "diagnostic": {
+        "path": "/tmp/cinashop-supplier-product-ensures-browser-first-input-observation.json",
+        "sha256": "ad6b00c6e4c99a7cbe13eceff9c8ac45e48e4d9ea1f67cc0392e5b9b631ceb0e",
+        "bytes": 801
+      }
+    },
+    {
+      "name": "frontend-initial",
+      "exit_code": 1,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-ensures-frontend-initial-terminal.json",
+        "sha256": "7f79cc5220fbf2d3ef3c946f8d63c491c9479f2e20630f93f31900ce229b0ae1",
+        "bytes": 2924
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-frontend-initial.log",
+        "sha256": "9618946c761f1a58938a55ec7d54f77586a1efacdf407a456759298b9d6adddb",
+        "bytes": 84
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "frontend-second",
+      "exit_code": 0,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-ensures-frontend-second-terminal.json",
+        "sha256": "5d848038c5e620179680355ff2e9020d3c97a4c4872afa21ed3aca7901300074",
+        "bytes": 3520
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-frontend-second.log",
+        "sha256": "3bef36d33637f5b7d096154843455413037ef85cf3170971a2353044fd853c18",
+        "bytes": 83
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "native-final",
+      "exit_code": 1,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-ensures-native-final-terminal.json",
+        "sha256": "67eeb7561882ab203b917bc6b6248fa0288dbd6b2de2036f8d83c2ac6e863d7b",
+        "bytes": 4065
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-ensures-native-final.log",
+        "sha256": "19b98c79d5a6e5bfc17528b92d7f3200cdf57e6f8b48a6f7b57a210afe661862",
+        "bytes": 30128
+      },
+      "additional_distinct_tests": 0
+    }
+  ],
+  "history_notes": [
+    "Initial frontend58:56 passed; two expectations incorrectly required a clear before replacing malformed/truncated raw metadata already projected as empty ids. Active choice is an explicit replacement, so expectations corrected; actual second338 and final544 pass, repeats add zero tests.",
+    "Initial native95 had94 pass and one combined label save500. PostgreSQL log proves missing store_product_relation UPDATE lock qualification at legacy type3 FOR UPDATE NOWAIT; existing runtime profile already permits it. Only owned helper adds UPDATE(id), no production changes. Full native95 rerun passes on final helper; prior failed batch adds zero final tests.",
+    "Unit544 direct execution inputs unchanged by native-only helper correction; its single captured fingerprint difference and original command remain explicit. Full Worker types and final native/Browser execute final fixture.",
+    "Browser-final exited1 after its actual POST oracle received omitted ensure_id and failed join; the first-input observation preserves the observed checkbox/overlay state and inference, not a completed assurance clear.",
+    "Browser-final-2 exited1 at the real900-second finish deadline while a recorded CDP wheel-driver call remained blocked; driver-timeout records1178.38seconds and no code change. Neither failed Browser adds a final test; only browser-final-3 is accepted."
+  ],
+  "cleanup": {
+    "created_at_utc": "2026-10-17T12:26:03.492762+00:00",
+    "clusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-CJGIjv",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "pg_ctl_stderr": "",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-2-terminal.json",
+        "terminal_exit_code": 1,
+        "log": "/tmp/cinashop-supplier-product-ensures-browser-final-2.log",
+        "log_sha256": "34a815ebc4fd4dc76a9703b3803d175035a4df57beebd738f75a8dfb6cf5631b",
+        "observations": [
+          {
+            "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-2-terminal.json",
+            "terminal_sha256": "a101c7b6edb3831c4e71aa5267b0ac3bc939580ca5cdec99fdb4a0bb7d84fc51",
+            "terminal_exit_code": 1,
+            "log": "/tmp/cinashop-supplier-product-ensures-browser-final-2.log",
+            "log_sha256": "34a815ebc4fd4dc76a9703b3803d175035a4df57beebd738f75a8dfb6cf5631b",
+            "fixtures_remaining": 0
+          }
+        ]
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-pIzTLQ",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "pg_ctl_stderr": "",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-ensures-native-final-terminal.json",
+        "terminal_exit_code": 1,
+        "log": "/tmp/cinashop-supplier-product-ensures-native-final.log",
+        "log_sha256": "19b98c79d5a6e5bfc17528b92d7f3200cdf57e6f8b48a6f7b57a210afe661862",
+        "observations": [
+          {
+            "terminal": "/tmp/cinashop-supplier-product-ensures-native-final-terminal.json",
+            "terminal_sha256": "67eeb7561882ab203b917bc6b6248fa0288dbd6b2de2036f8d83c2ac6e863d7b",
+            "terminal_exit_code": 1,
+            "log": "/tmp/cinashop-supplier-product-ensures-native-final.log",
+            "log_sha256": "19b98c79d5a6e5bfc17528b92d7f3200cdf57e6f8b48a6f7b57a210afe661862",
+            "fixtures_remaining": 0
+          }
+        ]
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-tOGE1C",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "pg_ctl_stderr": "",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-3-terminal.json",
+        "terminal_exit_code": 0,
+        "log": "/tmp/cinashop-supplier-product-ensures-browser-final-3.log",
+        "log_sha256": "3752e4c42f87a32ce1c46e4f43b353e996590ccc97cc670ff431891a51b456e3",
+        "observations": [
+          {
+            "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-3-terminal.json",
+            "terminal_sha256": "01ff2a5aa6a1342ecd462fef4be9c3607b1b02115bd6c6ea674c68a943d536df",
+            "terminal_exit_code": 0,
+            "log": "/tmp/cinashop-supplier-product-ensures-browser-final-3.log",
+            "log_sha256": "3752e4c42f87a32ce1c46e4f43b353e996590ccc97cc670ff431891a51b456e3",
+            "fixtures_remaining": 0
+          }
+        ]
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-wgdBZS",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "pg_ctl_stderr": "",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-terminal.json",
+        "terminal_exit_code": 1,
+        "log": "/tmp/cinashop-supplier-product-ensures-browser-final.log",
+        "log_sha256": "8545592768e2e720677039f8dc07e2917ab1e9049a886fcdd67c8dc011a198b5",
+        "observations": [
+          {
+            "terminal": "/tmp/cinashop-supplier-product-ensures-browser-final-terminal.json",
+            "terminal_sha256": "f99a25f5ce73f5c9f5790e659fd27e55911a8653fab8cdbe21b025525cbe2dba",
+            "terminal_exit_code": 1,
+            "log": "/tmp/cinashop-supplier-product-ensures-browser-final.log",
+            "log_sha256": "8545592768e2e720677039f8dc07e2917ab1e9049a886fcdd67c8dc011a198b5",
+            "fixtures_remaining": 0
+          }
+        ]
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zakaa9",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "pg_ctl_stderr": "",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-ensures-native-final-2-terminal.json",
+        "terminal_exit_code": 0,
+        "log": "/tmp/cinashop-supplier-product-ensures-native-final-2.log",
+        "log_sha256": "391da084da562859903163dd64bd74d7b626dc100ff06d07c7fab62e69a2b7f0",
+        "observations": [
+          {
+            "terminal": "/tmp/cinashop-supplier-product-ensures-native-final-2-terminal.json",
+            "terminal_sha256": "f62b67ad08e9d1a0d0bd44f2cc6fa31d2f47bbb212cd84116093bb1e608fcb14",
+            "terminal_exit_code": 0,
+            "log": "/tmp/cinashop-supplier-product-ensures-native-final-2.log",
+            "log_sha256": "391da084da562859903163dd64bd74d7b626dc100ff06d07c7fab62e69a2b7f0",
+            "fixtures_remaining": 0
+          }
+        ]
+      }
+    ],
+    "identity_roots": [
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-CJGIjv",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-pIzTLQ",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-tOGE1C",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-wgdBZS",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zakaa9"
+    ],
+    "stopped_roots": [
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-CJGIjv",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-pIzTLQ",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-tOGE1C",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-wgdBZS",
+      "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zakaa9"
+    ],
+    "all_stopped": true,
+    "all_owned_fixtures_cleared": true,
+    "production_touched": false
+  },
+  "cleanup_artifact": {
+    "path": "/tmp/cinashop-supplier-product-ensures-cleanup-final.json",
+    "sha256": "566a4012f52b9b4434315f2262b6d671467ba1eb050d473b6edc4a4253ad6171",
+    "bytes": 6163
+  },
+  "checkboxes": {
+    "MIGRATION_AUDIT.md": {
+      "rows": 88,
+      "byte_equal_to_base": true,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    "MIGRATION_CHECKLIST.md": {
+      "rows": 404,
+      "byte_equal_to_base": true,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  },
+  "statistics_script_contract": "User-selected restored PHP-compatible get_script and its corrected retirement audit retained; actual production bundle Browser GET200.",
+  "base_ci": {
+    "main": {
+      "conclusion": "success",
+      "head_sha": "edd94872c0c558b3a82fd535071af926b1a24231",
+      "html_url": "https://github.com/cinagroup/cinashop/actions/runs/39024027066",
+      "id": 39024027066,
+      "status": "completed",
+      "updated_at": "2026-10-17T11:29:50Z"
+    },
+    "schedule_pr102": {
+      "conclusion": "success",
+      "head_sha": "ebc77df22df2a6f77d8fb3db6bd1e404f61ce911",
+      "html_url": "https://github.com/cinagroup/cinashop/actions/runs/39026825294",
+      "id": 39026825294,
+      "status": "completed",
+      "updated_at": "2026-10-17T12:12:07Z"
+    },
+    "brand_pr103": {
+      "conclusion": null,
+      "head_sha": "c78c18991b0181f7c87afea7867b436e5b5ab178",
+      "html_url": "https://github.com/cinagroup/cinashop/actions/runs/39028794814",
+      "id": 39028794814,
+      "status": "in_progress",
+      "updated_at": "2026-10-17T11:28:06Z"
+    }
+  },
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "limitations": [
+    "Owned synthetic data and production-bundle IAB do not replace production deployment validation.",
+    "Explicit assurance authoring settles current-transaction deferred constraints; arbitrary nested caller deferral-mode transparency is not claimed.",
+    "Backend fetch spy is not a full browser network inventory.",
+    "Held response socket cancellation is recorded; delivery of an old body is not claimed.",
+    "Mature detail consumer is invoked directly on actual persisted data, not a full public HTTP storefront acceptance.",
+    "Retaining a proven disabled assurance on the existing product does not grant eligibility to a new copy. The unchanged mature full-copy path creates a new target without historicalEnsureIds and rejects disabled assurances as new bindings.",
+    "Full five-tab editor and overall PHP-to-TS migration remain incomplete."
+  ],
+  "secret_scan": {
+    "status": "initial_source_and_staged_passed_final_bytes_and_exact_range_required",
+    "binary_path": "/tmp/cinashop-supplier-video-tools/gitleaks",
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "scope_files": 23,
+    "initial_scans": [
+      {
+        "phase": "source-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "dir",
+          ".",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-ensures-source-initial-secrets.json"
+        ],
+        "cwd": "/tmp/cinashop-supplier-product-ensures-scan-fk7om5h0/source-initial",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-ensures-source-initial-secrets.log",
+          "sha256": "4d4253ced4908ba86fc7546f39b293f6c16e1a5b91a9fd34c7d28878c3b7e423",
+          "bytes": 81
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-ensures-source-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      },
+      {
+        "phase": "staged-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "git",
+          "--pre-commit",
+          "--staged",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-ensures-staged-initial-secrets.json",
+          "."
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-ensures-staged-initial-secrets.log",
+          "sha256": "3ed49a5bce7c351700d0240a93732b785c894c0f154e211460faa9e44876c8cd",
+          "bytes": 113
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-ensures-staged-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      }
+    ],
+    "final_evidence_external": "/tmp/cinashop-supplier-product-ensures-publication-ready.json",
+    "exact_range_base": "c78c18991b0181f7c87afea7867b436e5b5ab178"
+  },
+  "publication": {
+    "status": "pending_normal_commit_feature_branch_push_and_stacked_draft_PR",
+    "branch": "codex/supplier-product-ensures",
+    "base_branch": "codex/supplier-product-brand",
+    "base_pr": 103,
+    "force": false,
+    "new_ci": "Observe exact new head after publication. Preserve existing main, PR102 and PR103 CI; do not merge or claim remote success."
+  }
+}
