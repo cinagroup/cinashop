@@ -51,6 +51,7 @@ const supplierCashBrowser = schemaMaintenance && tests.length === 1 && tests[0] 
 const supplierProactiveRefundBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-proactive-refund-browser';
 const supplierRefundSettlementBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-refund-settlement-browser';
 const supplierFlowBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-flow-browser';
+const supplierExtractBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-extract-browser';
 const supplierBillExportBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-bill-export-browser';
 const supplierBillBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-bill-browser';
 const supplierCopyBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-copy-browser';
@@ -61,7 +62,7 @@ const adminBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[
 const customerBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-order-browser';
 const adminOrderBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-order-browser';
 const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance;
-if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierOrderEditBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser,
+if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierOrderEditBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser,
   'Verbose reporting applies only to explicit native test files');
 if (browserAcceptance) {
   for (const key of ['TEST_BROWSER_PACKAGE_JSON', 'TEST_BROWSER_EXECUTABLE', 'TEST_BROWSER_OUTPUT_DIR']) {
@@ -72,7 +73,7 @@ if (browserAcceptance) {
   const inside = relative(checkout, output);
   assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');
 }
-for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || unitShard ? [] : tests) {
+for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || unitShard ? [] : tests) {
   assert.match(test, /^test\/[a-z0-9-]+\.test\.ts$/, 'Only explicit unit test paths are accepted');
   assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);
 }
@@ -646,6 +647,8 @@ if (schemaMaintenance) {
     'audit:supplier-proactive-refund-browser',
     'audit:supplier-refund-settlement-browser',
     'audit:supplier-flow-browser',
+    'audit:supplier-extract-browser',
+    'test/supplier-extract-read-native.test.ts',
     'audit:supplier-bill-export-browser',
     'test/supplier-bill-export-native.test.ts',
     'test/supplier-flow-read-native.test.ts',
@@ -765,6 +768,7 @@ try {
     inventoryFiles: preparedUnitGate.partition.files.length, selectedFiles: preparedUnitGate.partition.shards[unitShard - 1].length,
     inventorySha256: preparedUnitGate.partition.digest, inputFiles: preparedUnitGate.inputs.files.length, inputSha256: preparedUnitGate.inputs.sha256 })}`);
   const commandArgs = unitGate ? unitGate.unitGateArguments(unitShard, taskRoot)
+    : supplierExtractBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-extract-browser.config.ts', '--maxWorkers=1']
     : supplierFlowBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-flow-browser.config.ts', '--maxWorkers=1']
     : supplierBillExportBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-bill-export-browser.config.ts', '--maxWorkers=1']
     : supplierBillBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-bill-browser.config.ts', '--maxWorkers=1']
@@ -1022,12 +1026,12 @@ try {
     // These complete-schema assisted suites create two independent LOGIN
     // profiles for every case. Retain every original case and allow their full
     // files to finish; the individual SQL/HTTP lock deadlines remain bounded.
-    timeout: (unitShard ? 40 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser) ? 20 : tests.some(test => new Set([
+    timeout: (unitShard ? 40 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser) ? 20 : tests.some(test => new Set([
       'test/assisted-purchase-flow-postgres.test.ts',
       'test/assisted-purchase-runtime-postgres.test.ts',
     ]).has(test)) ? 20 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,
     env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)
-      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}) },
+      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}) },
   });
   if (unitGate) {
     const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);

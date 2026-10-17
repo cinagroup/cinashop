@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container, DbClient } from "@/lib/di";
 import {
@@ -10,12 +10,12 @@ import {
   systemSupplier,
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
-import { parsePagination } from "@/services/supplier/SupplierService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { RefundLineCompensation } from '@/services/order/OrderSplitFinance';
 import { lockSupplierFinance } from '@/services/supplier/SupplierFinanceLock';
 import {SupplierBillReadService,type SupplierBillParameters} from './SupplierBillReadService';
 import {SupplierFlowReadService,type SupplierFlowParameters} from './SupplierFlowReadService';
+import {SupplierExtractReadService,type SupplierExtractParameters} from './SupplierExtractReadService';
 import type {SupplierVideoActor} from './SupplierVideoAuthority';
 
 type SupplierFinanceDb = Pick<DbClient, "execute" | "insert" | "select" | "update">;
@@ -405,34 +405,12 @@ export class SupplierFinanceService {
     return new SupplierFlowReadService(this.container).updateMark(supplierId, id, body, actor);
   }
 
-  async extractList(supplierId: number, query: Record<string, string>) {
-    const page = parsePagination(query.page, query.limit);
-    const conditions: SQL[] = [eq(supplierExtract.supplierId, supplierId)];
-    if (["-1", "0", "1"].includes(query.status ?? "")) {
-      conditions.push(eq(supplierExtract.status, Number(query.status)));
-    }
-    if (query.pay_status === "0" || query.pay_status === "1") {
-      conditions.push(eq(supplierExtract.payStatus, Number(query.pay_status)));
-    }
-    if (EXTRACT_TYPES.includes(query.extract_type as ExtractType)) {
-      conditions.push(eq(supplierExtract.extractType, query.extract_type));
-    }
-    const where = and(...conditions);
-    const [list, count, summary] = await Promise.all([
-      this.container.db
-        .select()
-        .from(supplierExtract)
-        .where(where)
-        .orderBy(desc(supplierExtract.id))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(supplierExtract)
-        .where(where),
-      this.summary(supplierId),
-    ]);
-    return { list, count: count[0]?.count ?? 0, page: page.page, limit: page.limit, extract_statistics: summary };
+  async extractList(supplierId: number, query: SupplierExtractParameters) {
+    return new SupplierExtractReadService(this.container).list(supplierId, query);
+  }
+
+  async extractMark(supplierId: number, id: number, query: SupplierExtractParameters) {
+    return new SupplierExtractReadService(this.container).mark(supplierId, id, query);
   }
 
   async applyExtract(supplierId: number, input: Record<string, unknown>) {
@@ -532,15 +510,7 @@ export class SupplierFinanceService {
     }, { isolationLevel: 'read committed' });
   }
 
-  async updateExtractMark(supplierId: number, id: number, mark: string) {
-    const normalized = mark.trim();
-    if (!normalized) throw new ValidateException("请输入备注");
-    if (normalized.length > 255) throw new ValidateException("备注不能超过 255 个字符");
-    const rows = await this.container.db
-      .update(supplierExtract)
-      .set({ supplierMark: normalized })
-      .where(and(eq(supplierExtract.id, id), eq(supplierExtract.supplierId, supplierId)))
-      .returning({ id: supplierExtract.id });
-    if (!rows[0]) throw new NotFoundException("提现记录不存在或不属于当前供应商");
+  async updateExtractMark(supplierId: number, id: number, body: unknown, actor: SupplierVideoActor) {
+    return new SupplierExtractReadService(this.container).updateMark(supplierId, id, body, actor);
   }
 }

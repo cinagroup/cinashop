@@ -3,15 +3,15 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import {
   applyExtract,
-  getExtracts,
   getFinanceInfo,
   getFinanceSummary,
   updateFinanceInfo,
 } from "@/api/supplier";
-import type { FinanceInfo, FinanceSummary, SupplierExtract } from "@/types";
+import type { FinanceInfo, FinanceSummary } from "@/types";
 import { useAuthStore } from "@/stores/auth";
-import { formatMoney, formatTime } from "@/utils/format";
+import { formatMoney } from "@/utils/format";
 import FinanceFlows from '@/pages/FinanceFlows.vue';
+import FinanceExtracts from '@/pages/FinanceExtracts.vue';
 
 const auth = useAuthStore();
 const loading = ref(false);
@@ -32,25 +32,12 @@ const financeInfo = reactive<FinanceInfo>({
   wechat: "",
   wechat_qrcode_url: "",
 });
-const extracts = ref<SupplierExtract[]>([]);
-const extractTotal = ref(0);
-const extractFilters = reactive({ page: 1, limit: 20, status: "", pay_status: "", extract_type: "" });
+const extractRefresh = ref(0);
 const extractDialogOpen = ref(false);
 const extractSubmitting = ref(false);
 const extractForm = reactive({ extract_type: "bank", money: "", mark: "" });
 const infoSaving = ref(false);
 const canManageFinance = computed(() => auth.can("supplier.finance.manage"));
-
-function extractState(row: SupplierExtract) {
-  if (row.status === -1) return { label: "已拒绝", tone: "danger" };
-  if (row.status === 0) return { label: "审核中", tone: "warning" };
-  if (row.payStatus === 1) return { label: "已转账", tone: "success" };
-  return { label: "待转账", tone: "primary" };
-}
-
-function extractType(type: string) {
-  return type === "bank" ? "银行卡" : type === "alipay" ? "支付宝" : type === "weixin" ? "微信" : type;
-}
 
 async function loadSummaryAndInfo() {
   const [summaryData, infoData] = await Promise.all([getFinanceSummary(), getFinanceInfo()]);
@@ -58,17 +45,10 @@ async function loadSummaryAndInfo() {
   Object.assign(financeInfo, infoData);
 }
 
-async function loadExtracts() {
-  const result = await getExtracts(extractFilters);
-  extracts.value = result.list;
-  extractTotal.value = result.count;
-  summary.value = result.extract_statistics;
-}
-
 async function loadAll() {
   loading.value = true;
   try {
-    await Promise.all([loadSummaryAndInfo(), loadExtracts()]);
+    await loadSummaryAndInfo();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "财务数据加载失败");
   } finally {
@@ -107,7 +87,8 @@ async function submitExtract() {
   try {
     await applyExtract(extractForm.extract_type, extractForm.money, extractForm.mark);
     extractDialogOpen.value = false;
-    await Promise.all([loadExtracts(), loadSummaryAndInfo()]);
+    extractRefresh.value++;
+    await loadSummaryAndInfo();
     ElMessage.success("提现申请已提交");
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "提现申请失败");
@@ -141,24 +122,7 @@ onMounted(loadAll);
         </el-tab-pane>
 
         <el-tab-pane label="提现记录" name="extracts">
-          <div class="filter-row finance-filter-row">
-            <el-select v-model="extractFilters.extract_type" class="state-select" clearable placeholder="提现方式" @change="loadExtracts">
-              <el-option label="银行卡" value="bank" /><el-option label="支付宝" value="alipay" /><el-option label="微信" value="weixin" />
-            </el-select>
-            <el-select v-model="extractFilters.status" class="state-select" clearable placeholder="审核状态" @change="loadExtracts">
-              <el-option label="已拒绝" value="-1" /><el-option label="审核中" value="0" /><el-option label="已通过" value="1" />
-            </el-select>
-          </div>
-          <el-table :data="extracts" row-key="id">
-            <el-table-column prop="id" label="申请编号" width="110" />
-            <el-table-column label="提现方式" width="120"><template #default="scope">{{ extractType(scope.row.extractType) }}</template></el-table-column>
-            <el-table-column label="提现金额" width="150"><template #default="scope"><strong>{{ formatMoney(scope.row.extractPrice) }}</strong></template></el-table-column>
-            <el-table-column label="状态" width="120"><template #default="scope"><span class="status-text" :class="extractState(scope.row).tone">{{ extractState(scope.row).label }}</span></template></el-table-column>
-            <el-table-column prop="supplierMark" label="供应商备注" min-width="180" />
-            <el-table-column prop="failMsg" label="拒绝原因" min-width="180" />
-            <el-table-column label="申请时间" width="180"><template #default="scope">{{ formatTime(scope.row.addTime) }}</template></el-table-column>
-          </el-table>
-          <div class="pagination-row"><span>共 {{ extractTotal }} 条申请</span><el-pagination v-model:current-page="extractFilters.page" :page-size="extractFilters.limit" :total="extractTotal" layout="prev, pager, next" @current-change="loadExtracts" /></div>
+          <FinanceExtracts v-if="activeTab === 'extracts'" embedded :refresh-key="extractRefresh" />
         </el-tab-pane>
 
         <el-tab-pane label="收款设置" name="settings">

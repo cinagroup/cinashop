@@ -70,6 +70,8 @@ supplierapiRoutes.use('/export/financeRecord', SupplierController.financeBillPri
 supplierapiRoutes.use('/finance/supplier_flowing_water/list', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/type', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/mark/*', SupplierController.financeBillPrivateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/list', SupplierController.financeBillPrivateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/mark/*', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 
@@ -325,6 +327,7 @@ supplierapiRoutes.post("/finance/supplier_flowing_water/mark/:id", SupplierContr
 supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record", SupplierController.financeFundRecord);
 supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record_info", SupplierController.financeFundRecordInfo);
 supplierapiRoutes.get("/finance/supplier_extract/list", SupplierController.extractList);
+supplierapiRoutes.get('/finance/supplier_extract/mark/:id', SupplierController.extractMark);
 supplierapiRoutes.post("/finance/supplier_extract/cash", SupplierController.applyExtract);
 supplierapiRoutes.post("/finance/supplier_extract/mark/:id", SupplierController.updateExtractMark);
 

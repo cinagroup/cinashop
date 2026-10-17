@@ -27,6 +27,7 @@ const navigationCatalog = [
   { path: "/finance", label: "财务结算", icon: Wallet, permission: "supplier.finance.view" },
   { path: '/finance/bills', label: '周期账单', icon: Wallet, permission: 'supplier.finance.view' },
   { path: '/finance/flows', label: '资金流水', icon: Wallet, permission: 'supplier.finance.view' },
+  { path: '/finance/extracts', label: '提现记录', icon: Wallet, permission: 'supplier.finance.view' },
   { path: "/printers", label: "小票打印机", icon: Printer, permission: "supplier.print.view" },
   { path: "/waybills", label: "电子面单", icon: Tickets, permission: "supplier.waybill.view" },
   { path: "/settings", label: "履约配置", icon: Tools, permission: "supplier.config.view" },
