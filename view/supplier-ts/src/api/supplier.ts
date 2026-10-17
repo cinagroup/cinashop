@@ -1045,24 +1045,32 @@ const previewProductReviews: SupplierProductReview[] = [
 
 export async function getProductReviews(
   params: Record<string, string | number>,
+  signal?: AbortSignal,
 ): Promise<PageResult<SupplierProductReview>> {
+  signal?.throwIfAborted();
   if (previewMode) {
+    const productId = Number(params.product_id || 0);
+    const page = Number(params.page || 1), limit = Number(params.limit || 15);
     const isReply = String(params.is_reply ?? "");
     const productKeyword = String(params.store_name ?? "").trim().toLowerCase();
     const account = String(params.account ?? "").trim().toLowerCase();
     const list = previewProductReviews
+      .filter((row) => !productId || row.product_id === productId)
       .filter((row) => !isReply || row.is_reply === Number(isReply))
       .filter((row) => !productKeyword || row.store_name.toLowerCase().includes(productKeyword) || String(row.product_id).includes(productKeyword))
       .filter((row) => !account || row.nickname.toLowerCase().includes(account))
       .map((row) => ({ ...row, pics: [...row.pics], replyComment: row.replyComment ? { ...row.replyComment } : null }));
-    return { list, count: list.length, page: 1, limit: 15 };
+    return { list: list.slice((page - 1) * limit, page * limit), count: list.length, page, limit };
   }
-  return apiRequest<PageResult<SupplierProductReview>>({ method: "GET", url: "/product/reply", params });
+  return apiRequest<PageResult<SupplierProductReview>>({ method: "GET", url: "/product/reply", params, signal });
 }
 
-export async function replyProductReview(id: number, content: string) {
+export async function replyProductReview(id: number, content: string, signal?: AbortSignal, expectedProductId?: number) {
+  signal?.throwIfAborted();
+  if (expectedProductId !== undefined && (!Number.isSafeInteger(expectedProductId) || expectedProductId <= 0)) throw Error('商品ID无效');
   if (previewMode) {
     const row = previewProductReviews.find((item) => item.id === id);
+    if (expectedProductId !== undefined && row?.product_id !== expectedProductId) throw Error('评价与当前商品不符，请重新查询');
     if (row) {
       row.is_reply = 1;
       row.replyComment = {
@@ -1077,7 +1085,8 @@ export async function replyProductReview(id: number, content: string) {
   return apiRequest<{ id: number; comment_id: number; is_reply: 1 }>({
     method: "PUT",
     url: `/product/reply/set_reply/${id}`,
-    data: { content },
+    data: { content, ...(expectedProductId === undefined ? {} : { expected_product_id: expectedProductId }) },
+    signal,
   });
 }
 

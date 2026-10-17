@@ -1,9 +1,10 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
-import { SupplierProductReplyService } from "@/services/supplier/SupplierProductReplyService";
+import { parseSupplierProductReplyInput, SupplierProductReplyService } from "@/services/supplier/SupplierProductReplyService";
 import { ValidateException } from "@/utils/errors";
 import { jsonOk } from "@/utils/json";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { categoryActor } from './SupplierProductCategoryController';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -28,14 +29,21 @@ function positiveId(value: string | undefined): number {
 }
 
 export async function list(c: C) {
-  return jsonOk(c, await service(c).list(supplierId(c), c.req.query()));
+  const query: Record<string, string | undefined> = {};
+  for (const [key, values] of Object.entries(c.req.queries())) {
+    if (values.length !== 1) throw new ValidateException('评价查询参数不能重复');
+    query[key] = values[0];
+  }
+  const owner = supplierId(c);
+  return jsonOk(c, await service(c).list(owner, query, { ...await categoryActor(c), supplierId: owner }));
 }
 
 export async function setReply(c: C) {
-  const body = await readBoundedJsonObject(c.req.raw, 8 * 1024);
+  if (new URL(c.req.url).search) throw new ValidateException('评价回复不接受查询参数');
+  const body = parseSupplierProductReplyInput(await readBoundedJsonObject(c.req.raw, 8 * 1024)), owner = supplierId(c);
   return jsonOk(
     c,
-    await service(c).setReply(supplierId(c), positiveId(c.req.param("id")), body.content),
+    await service(c).setReply(owner, positiveId(c.req.param("id")), body.content, { ...await categoryActor(c), supplierId: owner }, body.expectedProductId),
     "回复成功",
   );
 }

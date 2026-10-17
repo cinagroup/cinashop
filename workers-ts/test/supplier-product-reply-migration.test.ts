@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeSupplierProductReplyContent,
   parseSupplierProductReplyQuery,
+  parseSupplierProductReplyInput,
 } from "@/services/supplier/SupplierProductReplyService";
 import { requiredSupplierPermissions } from "@/services/supplier/SupplierPermissionService";
 
@@ -35,6 +36,23 @@ describe("supplier product-review migration", () => {
     expect(normalizeSupplierProductReplyContent("  感\0谢反馈  ")).toBe("感谢反馈");
     expect(() => normalizeSupplierProductReplyContent(" \0 ")).toThrow("请输入回复内容");
     expect(() => normalizeSupplierProductReplyContent("评".repeat(501))).toThrow("不能超过500个字符");
+  });
+
+  it('keeps the old content-only PUT and accepts the exact displayed product binding', () => {
+    expect(parseSupplierProductReplyInput({ content: '  原回复  ' })).toEqual({ content: '原回复' });
+    expect(parseSupplierProductReplyInput({ content: '修改回复', expected_product_id: 80 }))
+      .toEqual({ content: '修改回复', expectedProductId: 80 });
+  });
+
+  it.each([0, -1, 2147483648, '80', null, 1.5])('rejects a forged displayed product binding %j', expected_product_id => {
+    expect(() => parseSupplierProductReplyInput({ content: '回复', expected_product_id })).toThrow();
+  });
+
+  it('does not admit body tenant owner state or arbitrary financial fields', () => {
+    for (const key of ['supplier_id', 'actor_id', 'product_id', 'is_reply', 'number']) {
+      expect(() => parseSupplierProductReplyInput({ content: '回复', [key]: 7 })).toThrow();
+    }
+    expect(() => parseSupplierProductReplyInput({ expected_product_id: 80 })).toThrow();
   });
 
   it("mounts list and reply behind exact product permissions", () => {

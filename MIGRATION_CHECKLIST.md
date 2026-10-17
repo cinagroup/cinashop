@@ -1,5 +1,15 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-17 Supplier 商品评价钻取与回复纵向
+
+实际商品列表新增“查看评价”，进入当前商品的评价；保留全店入口、旧 id 与 is_reply 入口。路由参数、评价 DTO 与回复回执严格校验，分页和状态过滤绑定当前商品；草稿、排队请求及迟到回包在路由、过滤、权限、真实账号 ABA 与卸载时清空并取消。开发 preview=1 兼容保持，生产不接受该参数；回复失去确认时只允许手动重查，不自动重放写入。
+
+原 GET /supplierapi/product/reply 与 PUT set_reply/:id、旧 content-only 合同保留；新增可选 expected_product_id 将界面原商品带回写入校验。读取使用七表纯 SELECT、REPEATABLE READ／READ ONLY 一致快照；HTTP 写入复用当前身份／权限屏障及商品先于评价的锁序。仅新增或修改本店官方回复并更新原评价 is_reply，不改客户原评价、评分、商品、SKU、财务资料；无新增生产权限或迁移 DDL。
+
+本批10入口395个不同检查通过：runner212、新实际SFC52、回复规则14、原复制SFC27、分类SFC18、RBAC10共333单元，真实App／JWT／独立受限PG16原生61（新Supplier24及成熟Admin并发37），生产构建IAB实际联合验收1。浏览器从商品80进入评价601，创建并修改同一官方回复1000，待回复结果移除601；切换商品81不混入80。真实跨窗口账号21→22→21永久清空旧页，已扣留响应释放时连接已取消；只读22可读81且无回复按钮。十表快照最终仅601.is_reply与新增官方评论1000变化，评论序列只消费一次；GET不改业务表或序列，实际 get_script 保持200。桌面1280×720、移动390×844截图目检与DOM宽度通过，宽表在自身容器滚动。Worker两套类型、Supplier类型及生产构建通过；四座本机PG16集群夹具清零并独立确认停止。
+
+初轮15个前端断言夹具显示失败、原生SKU长度错误、第二轮原生测试SQL空白错误及类型断言修复完整保留；最终受影响命令实际重验，类型擦除与非执行输入差异另有独立证明。193份成熟源逐字保持，共享Supplier API其余139条声明保持，商品页除新增入口六行之外逐字保持。精确命令、参数化身份与GUI证据见[本批账本](workers-ts/audit/php-ts-supplier-product-review-drilldown-20261017.json)和[合同说明](workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md)。保留已恢复的PHP兼容统计脚本行为；原复选行不变，无生产DDL／GRANT／部署或真实provider调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 当前申请与原UUID回执二维码纵向
 
 Supplier /finance/apply 私有二维码复用已有收款设置只读投影，完整六项收款值与当前seed一致才委托对应预览；设置revision不替代申请revision，任一值变化即清除申请资料并要求重新核对。/finance/application-result 新增独立 GET application_operations/:operationId/media?request_hash=...，在真实REPEATABLE READ／READ ONLY内核对当前原账号、供应商、实际已提交原操作、摘要及实际申请不可变列，只签发原result.qrcode_url的闭合8／preview4投影。原回执7／result13与申请服务／正文／原UUID持久协议不变，财务两项能力已撤销但有效的原账号仍可恢复自己的原QR，其他账号／租户与unknown／not_applied不获签发。七表纯SELECT角色无需业务DML、序列、图库或当前设置；新私有票据300秒，已发链接到期前仍为bearer capability。

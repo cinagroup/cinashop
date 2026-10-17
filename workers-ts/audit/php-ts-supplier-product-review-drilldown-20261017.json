@@ -1,0 +1,3181 @@
+{
+  "schema": "php-ts-supplier-product-review-drilldown-v1",
+  "created_at_utc": "2026-10-17T08:59:40.529528+00:00",
+  "base_commit": "20828d49e3052672f1c9256859a9e7e6f8b5e17c",
+  "goal_status": "active",
+  "completion_claim": false,
+  "scope": {
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "view/supplier-ts/src/api/supplier.ts",
+      "view/supplier-ts/src/pages/ProductReviews.vue",
+      "view/supplier-ts/src/pages/Products.vue",
+      "workers-ts/audit/php-ts-supplier-product-review-drilldown-20261017.json",
+      "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+      "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+      "workers-ts/test/helpers/supplierProductReply.ts",
+      "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "workers-ts/test/supplier-product-reply-migration.test.ts",
+      "workers-ts/test/supplier-product-reply-native.test.ts",
+      "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+      "workers-ts/vitest.supplier-review-browser.config.ts"
+    ],
+    "files": 17,
+    "source_files_before_root_docs": 14
+  },
+  "contract": {
+    "php_authority": {
+      "path": "/tmp/cinashop-supplier-product-review-php-authority.json",
+      "sha256": "1a49e2e2361666873da260f40895b3cbf53d9cc515908beb4348dc3c6ff5f22d",
+      "bytes": 1322
+    },
+    "description": "## 2026-10-17 Supplier 商品评价钻取与回复纵向\n\n实际商品列表新增“查看评价”，进入当前商品的评价；保留全店入口、旧 id 与 is_reply 入口。路由参数、评价 DTO 与回复回执严格校验，分页和状态过滤绑定当前商品；草稿、排队请求及迟到回包在路由、过滤、权限、真实账号 ABA 与卸载时清空并取消。开发 preview=1 兼容保持，生产不接受该参数；回复失去确认时只允许手动重查，不自动重放写入。\n\n原 GET /supplierapi/product/reply 与 PUT set_reply/:id、旧 content-only 合同保留；新增可选 expected_product_id 将界面原商品带回写入校验。读取使用七表纯 SELECT、REPEATABLE READ／READ ONLY 一致快照；HTTP 写入复用当前身份／权限屏障及商品先于评价的锁序。仅新增或修改本店官方回复并更新原评价 is_reply，不改客户原评价、评分、商品、SKU、财务资料；无新增生产权限或迁移 DDL。\n\n本批10入口395个不同检查通过：runner212、新实际SFC52、回复规则14、原复制SFC27、分类SFC18、RBAC10共333单元，真实App／JWT／独立受限PG16原生61（新Supplier24及成熟Admin并发37），生产构建IAB实际联合验收1。浏览器从商品80进入评价601，创建并修改同一官方回复1000，待回复结果移除601；切换商品81不混入80。真实跨窗口账号21→22→21永久清空旧页，已扣留响应释放时连接已取消；只读22可读81且无回复按钮。十表快照最终仅601.is_reply与新增官方评论1000变化，评论序列只消费一次；GET不改业务表或序列，实际 get_script 保持200。桌面1280×720、移动390×844截图目检与DOM宽度通过，宽表在自身容器滚动。Worker两套类型、Supplier类型及生产构建通过；四座本机PG16集群夹具清零并独立确认停止。\n\n初轮15个前端断言夹具显示失败、原生SKU长度错误、第二轮原生测试SQL空白错误及类型断言修复完整保留；最终受影响命令实际重验，类型擦除与非执行输入差异另有独立证明。193份成熟源逐字保持，共享Supplier API其余139条声明保持，商品页除新增入口六行之外逐字保持。精确命令、参数化身份与GUI证据见[本批账本](workers-ts/audit/php-ts-supplier-product-review-drilldown-20261017.json)和[合同说明](workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md)。保留已恢复的PHP兼容统计脚本行为；原复选行不变，无生产DDL／GRANT／部署或真实provider调用，整体goal active、completion false。\n\n",
+    "routes": [
+      "GET /supplierapi/product/reply",
+      "PUT /supplierapi/product/reply/set_reply/:id"
+    ],
+    "old_content_only_put_preserved": true,
+    "optional_expected_product_id": true,
+    "read_only_snapshot": "REPEATABLE READ READ ONLY;7 SELECT tables;no DML or sequence",
+    "write_scope": [
+      {
+        "table": "store_product_reply",
+        "row_id": 601,
+        "columns": [
+          "is_reply"
+        ],
+        "before": 0,
+        "after": 1
+      },
+      {
+        "table": "store_product_reply_comment",
+        "new_row_id": 1000,
+        "reply_id": 601,
+        "new_official_reply_then_same_row_edit": true
+      }
+    ],
+    "durable_operation_protocol_changes": false,
+    "runtime_profile_grants_changed": false
+  },
+  "validation": {
+    "status": "passed",
+    "distinct_tests": 395,
+    "distinct_files": 10,
+    "commands": [
+      {
+        "name": "unit-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/supplier-product-review-drilldown-frontend.test.ts",
+          "test/supplier-product-reply-migration.test.ts",
+          "test/supplier-product-copy-frontend.test.ts",
+          "test/supplier-product-category-frontend.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/supplier-rbac-migration.test.ts",
+          "--maxWorkers=1",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-product-review-unit-final-2.json"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 20.05,
+        "started_at_utc": "2026-10-17T08:38:27.846620+00:00",
+        "finished_at_utc": "2026-10-17T08:38:47.891682+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-unit-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-unit-final-2-terminal.json",
+          "sha256": "8a1f48e600dad922ec08b9c31e3c77152b146381268612be7bdc1a47c642164e",
+          "bytes": 3383
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-unit-final-2.log",
+          "sha256": "3b8115c8d692c1009bc886ee6b5c497fd3370d0fa1e7fd7cac1b857fda1cd8ba",
+          "bytes": 79
+        },
+        "current_input_differences": [],
+        "input_binding": "All fourteen captured source inputs remain byte-equal; root documentation and audit are nonexecution additions."
+      },
+      {
+        "name": "native-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-product-reply-native.test.ts",
+          "test/admin-product-reply-native.test.ts",
+          "test/admin-product-fictitious-reply-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 79.12,
+        "started_at_utc": "2026-10-17T08:28:49.775113+00:00",
+        "finished_at_utc": "2026-10-17T08:30:08.899508+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "58e148b26d9e51a821f67e3144c30fc9618f7c1ac3f9ec5f436f938ef0f66c76"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "1e1bc43e88335755f6b036b6dcd42db52a9231fd2918019095743a4420ed7bef"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "43f13324822f177e2b6a99d1fe3583f5511c80d29f1c0b9eb36e721ab6b78ebc"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-native-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final-2-terminal.json",
+          "sha256": "8df8a00d6fb383dc0f2413962d7289dcbd263a409c32db0e48260cc7f0f4730d",
+          "bytes": 3219
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final-2.log",
+          "sha256": "860c3f5a088144b3d3d561c70315503d5c257afbbe43cd03939ee32e11d97690",
+          "bytes": 17695
+        },
+        "current_input_differences": [
+          "view/supplier-ts/src/pages/ProductReviews.vue",
+          "workers-ts/test/supplier-product-reply-native.test.ts",
+          "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts"
+        ],
+        "input_binding": "Only two erased TypeScript assertions differ in the native test; emitted JS is independently byte-equal. Later Vue page and frontend SFC test changes are outside the native execution graph."
+      },
+      {
+        "name": "worker-runtime-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 81.3,
+        "started_at_utc": "2026-10-17T08:35:17.443957+00:00",
+        "finished_at_utc": "2026-10-17T08:36:38.739899+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "58e148b26d9e51a821f67e3144c30fc9618f7c1ac3f9ec5f436f938ef0f66c76"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "43f13324822f177e2b6a99d1fe3583f5511c80d29f1c0b9eb36e721ab6b78ebc"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-worker-runtime-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-worker-runtime-types-final-terminal.json",
+          "sha256": "ee1ad3ca72be41bc737fa3687aa73db165449c8f2f7d67ef2d5a80550e06fb8d",
+          "bytes": 3056
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-worker-runtime-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "current_input_differences": [
+          "view/supplier-ts/src/pages/ProductReviews.vue",
+          "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts"
+        ],
+        "input_binding": "Only the Vue page and non-runtime frontend unit test changed later; both are outside the actual runtime tsconfig include/exclude graph."
+      },
+      {
+        "name": "worker-unit-types-final-3",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 144.86,
+        "started_at_utc": "2026-10-17T08:39:19.336098+00:00",
+        "finished_at_utc": "2026-10-17T08:41:44.194867+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-3.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-3-terminal.json",
+          "sha256": "06efdc8e605f261572485e5d1e6cebc62886720b5e9b4014830104fb2c2a0e6c",
+          "bytes": 3012
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-3.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "current_input_differences": [],
+        "input_binding": "All fourteen captured source inputs remain byte-equal; root documentation and audit are nonexecution additions."
+      },
+      {
+        "name": "supplier-types-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 8.79,
+        "started_at_utc": "2026-10-17T08:41:44.250674+00:00",
+        "finished_at_utc": "2026-10-17T08:41:53.036157+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-supplier-types-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-supplier-types-final-2-terminal.json",
+          "sha256": "ed002d153b281d22c500da96500f5c410d749091dcff5f6e0873966669360a34",
+          "bytes": 2975
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-supplier-types-final-2.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "current_input_differences": [],
+        "input_binding": "All fourteen captured source inputs remain byte-equal; root documentation and audit are nonexecution additions."
+      },
+      {
+        "name": "supplier-build-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 15.47,
+        "started_at_utc": "2026-10-17T08:41:53.105848+00:00",
+        "finished_at_utc": "2026-10-17T08:42:08.578968+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-supplier-build-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-supplier-build-final-2-terminal.json",
+          "sha256": "7fb92f4e7154f483321373f7932dc2234162223400dd3de6758f4ac7720df9c9",
+          "bytes": 2973
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-supplier-build-final-2.log",
+          "sha256": "410e021de142e7bd94f96dd98d94170d4834149f8875fc084c3db32d1795fcc6",
+          "bytes": 6181
+        },
+        "current_input_differences": [],
+        "input_binding": "All fourteen captured source inputs remain byte-equal; root documentation and audit are nonexecution additions."
+      },
+      {
+        "name": "browser-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:supplier-review-browser"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 732.63,
+        "started_at_utc": "2026-10-17T08:44:31.471712+00:00",
+        "finished_at_utc": "2026-10-17T08:56:44.100851+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+            "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/Products.vue",
+            "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+          },
+          {
+            "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+            "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+            "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+            "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+            "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductReply.ts",
+            "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+            "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+            "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+            "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+            "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-review-browser-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-browser-final-terminal.json",
+          "sha256": "c90881a9aa44d75e23df6761b8c83923f0bc4f0ab35aedb97b9a1248573b8513",
+          "bytes": 3077
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-review-browser-final.log",
+          "sha256": "80b6d212f5e2c6cef2f146d28c725390463a8e27040b33b9c44b60cb1cc7fc08",
+          "bytes": 8970
+        },
+        "current_input_differences": [],
+        "input_binding": "All fourteen captured source inputs remain byte-equal; root documentation and audit are nonexecution additions."
+      }
+    ],
+    "unit": {
+      "distinct_tests": 333,
+      "distinct_files": 6,
+      "reports": [
+        {
+          "path": "/tmp/cinashop-supplier-product-review-unit-final-2.json",
+          "sha256": "26f08d2e119cc4fa2bcaf6afdd266543339cb22078cd8749e1775ab572de4cc1",
+          "bytes": 134984
+        }
+      ],
+      "counts": {
+        "runner": 212,
+        "actual_frontend": 52,
+        "rules": 14,
+        "copy_frontend": 27,
+        "category_frontend": 18,
+        "rbac": 10
+      }
+    },
+    "native": {
+      "distinct_tests": 61,
+      "distinct_files": 3,
+      "supplier_new": 24,
+      "mature_admin": 37,
+      "independent_type_erasure_proof": {
+        "path": "/tmp/cinashop-supplier-product-review-independent-type-input-proof.json",
+        "sha256": "c288b5cc35ad7fe208481391b82638bef46c4482734c3fc7dac30963393e6e64",
+        "bytes": 1973
+      }
+    },
+    "browser": {
+      "distinct_tests": 1,
+      "distinct_files": 1,
+      "result": {
+        "path": "/tmp/cinashop-supplier-product-review-browser-result.json",
+        "sha256": "cf7b1b73c3084a958a2d2fcf38a8fbdb2f48661cfc8b71aba08ce4536c9189a8",
+        "bytes": 67101
+      },
+      "qa_artifact": {
+        "path": "/tmp/cinashop-supplier-product-review-browser-qa.json",
+        "sha256": "7b2b3d8f18622cae59685071b6197ccb76a0bd13b1d456e667e979d104d0ebd7",
+        "bytes": 2377
+      },
+      "console": {
+        "path": "/tmp/cinashop-supplier-product-review-browser-console.json",
+        "sha256": "9a02c51230cced35aa0dbf6d9d457104c2dca2cd29b540dd517801f1f645a624",
+        "bytes": 270
+      },
+      "observations": {
+        "finished": true,
+        "outbound": 0,
+        "heldCount": 1,
+        "sessionChanges": 2,
+        "viewer": true,
+        "releaseAttempts": [
+          {
+            "socket_destroyed": true
+          }
+        ]
+      },
+      "allowed_final_changes": [
+        {
+          "table": "store_product_reply",
+          "row_id": 601,
+          "columns": [
+            "is_reply"
+          ],
+          "before": 0,
+          "after": 1
+        },
+        {
+          "table": "store_product_reply_comment",
+          "new_row_id": 1000,
+          "reply_id": 601,
+          "new_official_reply_then_same_row_edit": true
+        }
+      ],
+      "sequence_before": [
+        {
+          "last_value": "1000",
+          "is_called": false
+        }
+      ],
+      "sequence_after": [
+        {
+          "last_value": "1000",
+          "is_called": true
+        }
+      ],
+      "outbound_scope": "Node backend global fetch spy only; not a full browser external-request inventory",
+      "screenshots": "Actual JPEG bytes emitted and visually inspected through CUA; persistent local image files were not exported",
+      "production_bundle": {
+        "path": "/tmp/cinashop-supplier-product-review-browser-inputs.json",
+        "sha256": "2a7d65a59764a2e2bdbbb11b8c456617741098a7ac5aa27d85d25dd9a7b5412c",
+        "bytes": 14893
+      }
+    },
+    "test_identity": {
+      "path": "/tmp/cinashop-supplier-product-review-test-identity-final.json",
+      "sha256": "7c6f05d625e0909c1fc96224d851a8f5b8c624e9b703466df1fa1d3c20f54dd4",
+      "bytes": 472165
+    },
+    "accepted_inputs": {
+      "path": "/tmp/cinashop-supplier-product-review-accepted-inputs-final.json",
+      "sha256": "448db82297a718784677d6fbb06052ae196e8326a7486f36e55cede9303ad342",
+      "bytes": 42008
+    }
+  },
+  "historical_executions": [
+    {
+      "name": "frontend-initial",
+      "exit_code": 1,
+      "wall_seconds": 6.66,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-frontend-initial-terminal.json",
+        "sha256": "1f8c978e0242af0e5a211948783a276dbf151a3a3c078bca832130789ea155ae",
+        "bytes": 1484
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-frontend-initial.log",
+        "sha256": "1d78db902d9e3597a9322291674da72a8c936408639c8575c9c7957259a2e87e",
+        "bytes": 83
+      },
+      "interpretation": "38/53 passed; fifteen invalid-route assertions failed because the ElementPlus alert stub omitted its title. Actual invalid-route requests were already blocked. Render the stub title/description and rerun; business validation was not relaxed.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "frontend-second",
+      "exit_code": 0,
+      "wall_seconds": 7.92,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-frontend-second-terminal.json",
+        "sha256": "18433a7da8518d56eda4cf52375e3572372876f359048cd4d1053a9c4a475a77",
+        "bytes": 1532
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-frontend-second.log",
+        "sha256": "915351474e56d93ef567c825a4a80b7b617b90359049f124803fc55cfef4f246",
+        "bytes": 82
+      },
+      "interpretation": "80/80 intermediate pass, superseded by final333 distinct unit assertions; never added twice.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "native-initial",
+      "exit_code": 1,
+      "wall_seconds": 73.35,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-native-initial-terminal.json",
+        "sha256": "9cf62c863ac4aace5ddddefdf8512ddcc7dba974b42976d94f64ec0766df1e1e",
+        "bytes": 3219
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-native-initial.log",
+        "sha256": "04256bdc4fe4044388ce8e3084b2e466ec0e11992ac66a81cf933f9de6e8d690",
+        "bytes": 52929
+      },
+      "interpretation": "37 mature tests passed;24 new beforeEach failures: synthetic SKU unique exceeded existing char(8). Correct fixture to ownrev80, install cleanup spy before fixture setup and rerun all61.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "native-final",
+      "exit_code": 1,
+      "wall_seconds": 77.96,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-native-final-terminal.json",
+        "sha256": "eb27b35b50eb769caee854197963d0c409e5387e83f9ff99057b1bf3138e8c01",
+        "bytes": 3215
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-native-final.log",
+        "sha256": "72ce54cdcdface0eb7790f3988115e9da8ba32b3c7c87d572c50a9f97b7e20c3",
+        "bytes": 20234
+      },
+      "interpretation": "60/61 passed; native privilege-catalog test alone produced PostgreSQL42601 from missing whitespace after table interpolation. Add only SQL whitespace and rerun all61.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "worker-unit-types-final",
+      "exit_code": 2,
+      "wall_seconds": 131.79,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-terminal.json",
+        "sha256": "668e62d915667ed3ea5c1c80bf503abe45e8eb8d0538363d1f4fc10aba91d2c0",
+        "bytes": 3008
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final.log",
+        "sha256": "bce262ef02d0d09365c78b33f2c058dc74b74465a78240038095f8be49c35e43",
+        "bytes": 904
+      },
+      "interpretation": "Exit2: Drizzle transaction type lacks DbClient.$client at two test lock-helper calls. Add two erased assertions. Native JS byte-equality independently verified; no business change or repeated native count.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "unit-final",
+      "exit_code": 0,
+      "wall_seconds": 19.53,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-unit-final-terminal.json",
+        "sha256": "4b1c01587bd6ccb3307386c2c340ac1a3cd1a146a75f131668d8feec83230bc9",
+        "bytes": 3377
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-unit-final.log",
+        "sha256": "1562ed46b36b040f7b7c3e63d1b9e9e18fd2d01d0f2f201ab42bdfb3d05d3243",
+        "bytes": 77
+      },
+      "interpretation": "331/331 intermediate pass. Independent review found explicit DEV preview1 regression; whitelist only development preview, add DEV success and production rejection cases, rerun final333.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "worker-unit-types-final-2",
+      "exit_code": 0,
+      "wall_seconds": 130.94,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-2-terminal.json",
+        "sha256": "cbfa890a42f52a06f26f1f5efe11ab84fbdcc303a7ec6cd5f2bb41eee68f98f6",
+        "bytes": 3012
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-worker-unit-types-final-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "interpretation": "Intermediate typecheck passed; affected typecheck rerun after DEV preview regression fix.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "supplier-types-final",
+      "exit_code": 0,
+      "wall_seconds": 8.96,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-supplier-types-final-terminal.json",
+        "sha256": "55e200ce21502a52021ce0a2765da1d00a6d53a41aa59a9739e3804b76dda175",
+        "bytes": 2971
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-supplier-types-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "interpretation": "Intermediate supplier types passed; affected supplier types rerun after DEV preview regression fix.",
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "supplier-build-final",
+      "exit_code": 0,
+      "wall_seconds": 14.93,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-review-supplier-build-final-terminal.json",
+        "sha256": "90513d25ee2506e0056787e4d0262595a70d53d05b6f896db8a82578f9076cf2",
+        "bytes": 2969
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-review-supplier-build-final.log",
+        "sha256": "42d69b9cd8cf51a8e0d68adee00e0e06963b83c5c0bad125b8a3203ba5eaf86a",
+        "bytes": 6181
+      },
+      "interpretation": "Intermediate production build passed; rebuilt final production bundle after DEV preview regression fix.",
+      "additional_distinct_tests": 0
+    }
+  ],
+  "input_history": {
+    "frozen_manifests": [
+      {
+        "path": "/tmp/cinashop-supplier-product-review-frozen-sources.json",
+        "sha256": "02458f3500a59c289192474e4c7cbe335c1006bdf0f44b489d4ade0d22687016",
+        "bytes": 2433
+      },
+      {
+        "path": "/tmp/cinashop-supplier-product-review-frozen-sources-final.json",
+        "sha256": "c9287591f4ccb34a5b52d07743f707f78440138d89e97fe94c4b2294733194d5",
+        "bytes": 2598
+      },
+      {
+        "path": "/tmp/cinashop-supplier-product-review-frozen-sources-final-2.json",
+        "sha256": "d3015c336a737c4c925ca2261adb4496a1ccb0183beb4314afeadd3ac10c7718",
+        "bytes": 2552
+      },
+      {
+        "path": "/tmp/cinashop-supplier-product-review-frozen-sources-final-3.json",
+        "sha256": "879124478767896aea1c3f531fc521cb2849434c35ac497d28f1bbcd45d87db1",
+        "bytes": 2613
+      },
+      {
+        "path": "/tmp/cinashop-supplier-product-review-frozen-sources-final-4.json",
+        "sha256": "d77509ab35b960132dec9df23c39ad6da677211effd785c8d2ffee59ec78e6b6",
+        "bytes": 2606
+      }
+    ],
+    "root_type_proof": {
+      "path": "/tmp/cinashop-supplier-product-review-native-type-only-proof.json",
+      "sha256": "a925a7e058ef9041afd6d7c8ef24e965d18afa014f5f7efc36e44733f9b39dfe",
+      "bytes": 669
+    },
+    "clarification": "The root description imprecisely mentions a type-only import, but the actual before/after change is only two erased type assertions; the independent proof reverses exactly those two assertions.",
+    "historical_prebrowser_identities": [
+      {
+        "path": "/tmp/cinashop-supplier-product-review-test-identity-prebrowser.json",
+        "sha256": "24a26e065321df0bc5881a6e2895b5484e1a001b7ff73474852991d8f1a32514",
+        "bytes": 472866
+      },
+      {
+        "path": "/tmp/cinashop-supplier-product-review-test-identity-prebrowser-v2.json",
+        "sha256": "1ba5819addcd73d8018a4a3bcdafee56537c6a0e6309ab65edc2dbc75ff43996",
+        "bytes": 468195
+      }
+    ]
+  },
+  "cleanup": {
+    "schema": "supplier-product-review-cleanup-final-v1",
+    "base_commit": "20828d49e3052672f1c9256859a9e7e6f8b5e17c",
+    "observed_at_utc": "2026-10-17T08:59:01.992270+00:00",
+    "read_only_verification": true,
+    "cluster_count": 4,
+    "clusters": [
+      {
+        "name": "native-initial",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-product-review-native-initial-terminal.json",
+          "sha256": "9cf62c863ac4aace5ddddefdf8512ddcc7dba974b42976d94f64ec0766df1e1e"
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-native-initial.log",
+          "sha256": "04256bdc4fe4044388ce8e3084b2e466ec0e11992ac66a81cf933f9de6e8d690"
+        },
+        "terminal_exit_code": 1,
+        "actual_tests": 61,
+        "actual_passed": 37,
+        "actual_failed": 24,
+        "observed_pg_error_code": "22001",
+        "accepted_distinct_addition": 0,
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-HsCpuL",
+        "data_directory": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-HsCpuL/data",
+        "fixture_remaining": 0,
+        "stopped_marker_observed": true,
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "independent_pg_ctl": {
+          "command": [
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/pg_ctl",
+            "-D",
+            "/home/cina/cinagroup/cinashop/.cache/finance-postgres-HsCpuL/data",
+            "status"
+          ],
+          "exit_code": 3,
+          "stdout": "pg_ctl: no server running\n",
+          "stderr": ""
+        },
+        "scope": "Actual failed test attempts; no assertion passed in these runs is added to accepted totals.",
+        "independently_rechecked_at_utc": "2026-10-17T08:59:01.992270+00:00"
+      },
+      {
+        "name": "native-final",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final-terminal.json",
+          "sha256": "eb27b35b50eb769caee854197963d0c409e5387e83f9ff99057b1bf3138e8c01"
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final.log",
+          "sha256": "72ce54cdcdface0eb7790f3988115e9da8ba32b3c7c87d572c50a9f97b7e20c3"
+        },
+        "terminal_exit_code": 1,
+        "actual_tests": 61,
+        "actual_passed": 60,
+        "actual_failed": 1,
+        "observed_pg_error_code": "42601",
+        "accepted_distinct_addition": 0,
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-aN3j38",
+        "data_directory": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-aN3j38/data",
+        "fixture_remaining": 0,
+        "stopped_marker_observed": true,
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "independent_pg_ctl": {
+          "command": [
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/pg_ctl",
+            "-D",
+            "/home/cina/cinagroup/cinashop/.cache/finance-postgres-aN3j38/data",
+            "status"
+          ],
+          "exit_code": 3,
+          "stdout": "pg_ctl: no server running\n",
+          "stderr": ""
+        },
+        "scope": "Actual failed test attempts; no assertion passed in these runs is added to accepted totals.",
+        "independently_rechecked_at_utc": "2026-10-17T08:59:01.992270+00:00"
+      },
+      {
+        "name": "native-final-2",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final-2-terminal.json",
+          "sha256": "8df8a00d6fb383dc0f2413962d7289dcbd263a409c32db0e48260cc7f0f4730d"
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-native-final-2.log",
+          "sha256": "860c3f5a088144b3d3d561c70315503d5c257afbbe43cd03939ee32e11d97690"
+        },
+        "terminal_exit_code": 0,
+        "actual_tests": 61,
+        "actual_passed": 61,
+        "actual_failed": 0,
+        "accepted_distinct_addition": 61,
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-m9jD2C",
+        "data_directory": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-m9jD2C/data",
+        "fixture_remaining": 0,
+        "stopped_marker_observed": true,
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "independent_pg_ctl": {
+          "command": [
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/pg_ctl",
+            "-D",
+            "/home/cina/cinagroup/cinashop/.cache/finance-postgres-m9jD2C/data",
+            "status"
+          ],
+          "exit_code": 3,
+          "stdout": "pg_ctl: no server running\n",
+          "stderr": ""
+        },
+        "independently_rechecked_at_utc": "2026-10-17T08:59:01.992270+00:00"
+      },
+      {
+        "name": "browser-final",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-product-review-browser-final-terminal.json",
+          "sha256": "c90881a9aa44d75e23df6761b8c83923f0bc4f0ab35aedb97b9a1248573b8513",
+          "bytes": 3077
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-browser-final.log",
+          "sha256": "80b6d212f5e2c6cef2f146d28c725390463a8e27040b33b9c44b60cb1cc7fc08",
+          "bytes": 8970
+        },
+        "terminal_exit_code": 0,
+        "actual_tests": 1,
+        "actual_passed": 1,
+        "actual_failed": 0,
+        "accepted_distinct_addition": 1,
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zR4wHR",
+        "data_directory": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zR4wHR/data",
+        "fixture_remaining": 0,
+        "stopped_marker_observed": true,
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "independent_pg_ctl": {
+          "command": [
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin/pg_ctl",
+            "-D",
+            "/home/cina/cinagroup/cinashop/.cache/finance-postgres-zR4wHR/data",
+            "status"
+          ],
+          "exit_code": 3,
+          "stdout": "pg_ctl: no server running\n",
+          "stderr": ""
+        },
+        "independently_rechecked_at_utc": "2026-10-17T08:59:01.992270+00:00"
+      }
+    ],
+    "previous_proof": {
+      "path": "/tmp/cinashop-supplier-product-review-cleanup-prebrowser.json",
+      "sha256": "7fd69d055b761ec30baa03e4961a88fb6ffa88eb29c52c8611f34f021fc1c1fc",
+      "bytes": 4594
+    },
+    "all_owned_fixtures_remaining_zero": true,
+    "all_owned_pg_ctl_exit3": true,
+    "all_owned_postmaster_pid_absent": true,
+    "repository_writes": false,
+    "heavy_checks_executed": false
+  },
+  "cleanup_artifact": {
+    "path": "/tmp/cinashop-supplier-product-review-cleanup-final.json",
+    "sha256": "e7ccc6927abd00a59b0ff38b4b189411a8ff0693ed8249d2a01a8437db910e42",
+    "bytes": 6254
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "1808f380d35691eebee6d21879cd7758f5dbacca43621cb649d46835ca0302cf"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "a660d730f8f8ab81cd6cd856cabdc71cf2214d6af0ed2752ec120e9d50002f2e"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "sha256": "58057a5213943644974afb75ecee2cc1817ecab3efd2006df0af2a8a0a2441f1"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+      "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "sha256": "363565ca6633e0eec609c7f21f2faae2b658919fe9690899ffd21a9d9615cc92"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+      "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "acf4e1cde85139d3be178938f8a129baf3b5c4e613e3cf961eb7effb2b76ec1d"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+      "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+      "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductReply.ts",
+      "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "8679eda3f2424eb69825fb3f1da571b6fac4ec9447b4c2c763a48f73d379b1ea"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+      "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+      "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+      "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+      "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641"
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/api/refund.ts",
+      "sha256": "96639b8f72964049af4771412f62c6b0aa42b6378e86ae38fe9723afebadafbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/pages/refund/RefundList.vue",
+      "sha256": "8df4c437169b53565b4a23039d6d6ee04ac2ddaee4aa6423c05d0a7d46000474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/productMediaReference.ts",
+      "sha256": "7e7d4795c775381012e0062441e2feaa5eeb3f7c89d52657083da92f7b75cabf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/supplierRefundSettlement.ts",
+      "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/proactiveRefund.ts",
+      "sha256": "8609cdde2ca2055229c9bd82dd11477f5b114d2a7910f2fba99ce976bcc4f3c8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBillExport.ts",
+      "sha256": "994901b06439510c8ab1ff7ede69206307ade7a8e6ad481d19f85b7a818318bc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBills.ts",
+      "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplication.ts",
+      "sha256": "dbb5237cd1e8f0a72036dd6d591ec2bece5c09dfee587bdc36711d1e1887cb54",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplicationMedia.ts",
+      "sha256": "654828906313395b4c1966cefd5b2f0116a85103926d7c681708d5d602c8f7a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractMedia.ts",
+      "sha256": "80b2815f1750182186dfb52ab1f612cf1dce559fec63ef65939f00d7d8535d21",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtracts.ts",
+      "sha256": "c83dd1f4684869ee60b47d04ffb32e69eed066b4650427d405636a12030b65a9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFinanceAccounts.ts",
+      "sha256": "a3dc4af808f5ffc62c9ecb26b862436151d5d9d3e4275ac276ce29438058651f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFlows.ts",
+      "sha256": "8f240cf15da482bf69c6ea15f8123a4c35612cbf60f795d3074f97e7fa12fe49",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/components/AppShell.vue",
+      "sha256": "1a052a4004230ddef819e692a286c2e5c2f5b2ba8c05661631ef775ed9220c4c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/components/ProductImagePicker.vue",
+      "sha256": "bc49cc99e79e68daf065b6dafbf49630861437db0bf7f48319884e62d29653d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Finance.vue",
+      "sha256": "da151e1237c7ac53448d5ffe910eac6fe1b39d9f38507825c90cb9220f313387",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceAccounts.vue",
+      "sha256": "3eb9ecf17cc978e6a4e7c9a3d69b857878b6f80eb0f24dfdc511ad45352221bb",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceApply.vue",
+      "sha256": "84bdc2915b8093a029b90d13c987a16b957dc335c119c11fa232468eace7a772",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+      "sha256": "3e54b31a359a0bbfda3cc057a43dfee6e55937fff2c8e32caa1183c3627fa349",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceExtracts.vue",
+      "sha256": "7d53adbb6b618277f781fff147c1d4de6527804aacc1e3bfac70c044c35bdd1a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceFlows.vue",
+      "sha256": "4ee7f359e3ef588231159eede49447052e457c23a2f4b9cb8d5e8373679b0c58",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProactiveRefund.vue",
+      "sha256": "5169c803e8966a142b772a941860e1cfacd4a2a315c84d13b7ddda0503af5531",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "bdd6577ebb3ee3c51b6565bfd8bfff5a14591079efab86e59dd06dd09720626f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/legacy-export.ts",
+      "sha256": "04be4a10832c7eeeacb65347658561ab862beb20e15544c982c933d6155df45e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-supplier-refund-settlement-runtime.mjs",
+      "sha256": "4804e5b0b24a852ea24c548357822ec036e25a9ed1a96a186de517febfa3906c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkFinancial.ts",
+      "sha256": "4fb6199a453b626c6da98c769dcfeedb2bd8b035f03354fc7cd7eca474bb6798",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerSupplierRefundSettlementPanel.vue",
+      "sha256": "4253da2e0b87ed8d32beb6e11a4ae69030866ac22ddc5acba3f2a4c7cda5c950",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerSupplierRefundSettlement.ts",
+      "sha256": "ad2be65b87720791e8f004e533e001965bd1531d25914048679d7d5a47e23259",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orderDetail.vue",
+      "sha256": "1c53e54467f4beff6a7ed6b37be2219c4aff3ec282df5ef1fb44384ffe91dfc9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refundDetail.vue",
+      "sha256": "89c7d3a5bfe6640dbd0a1e57b2b3dab4501a977a73197c2620673b79df14cb6c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json",
+      "sha256": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-bill-read-20261017.json",
+      "sha256": "66b167074e9c1f9b7c3f9ce490c37c538c6917b90d30f7e4889840c46d42722e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-20261017.json",
+      "sha256": "6e8a270824adfe39195a224aa399eaad3910e30bf744275e0c693186841266b3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-20261017.json",
+      "sha256": "ca3530216cd4231dcb56232fdb5c8795e82fc510ec189678db3bd97b49c8ed80",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-media-20261017.json",
+      "sha256": "9903debc67f9478d7d91420ab81b54dd2aa036c1d1569b8c9e20d997bc3c13ed",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-media-20261017.json",
+      "sha256": "147c491512ad11e0d3286e320245061ff1b8fb955ca06e885a42e734bf49f877",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-finance-accounts-20261017.json",
+      "sha256": "f58650126fe4664169ed062fd33e4932456ada066fce663a23bc399b0b684474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-flow-20261017.json",
+      "sha256": "4adeb872484f350e42be900d3dad12db61acf2d89aeff70aa11f761a4cf86d83",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-post-goods-refusal-20261017.json",
+      "sha256": "075aa39bab4e97fcca5893b7fd928819593eb6a3b2a9cd9ac32ce3972c39a262",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json",
+      "sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "sha256": "916ef902b967f1890f740407db45822beceed0dc178003f762a691510acbce10",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-ui-20261017.json",
+      "sha256": "ecfab320399da4aefe5c0cc7cde3e6a453d803926649d2d6ee5b8b0909211649",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "55d6677176b6dc6061da61ced859bf5530f56acd05d4943a2b1c2853be83c6d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/supplier-frontend-parity.json",
+      "sha256": "8cc946215c6cd3c8dd638803d920a1cde11e98f7b327a4d6921f3722b1068336",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-application-media-20261017.md",
+      "sha256": "9a510d4f0ef9de3673c9dfacbe6c9cd07d09bd77e063aff49f0c4282dd27b4e9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-media-20261017.md",
+      "sha256": "9f517a726185db76a635ea0aa8df9c452383c3fbe46d06f1cdce876be6db8e17",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-finance-accounts-20261017.md",
+      "sha256": "bb3fb1546860ef799dd4ed6709d595d0bce3722cdf70b26b632424aa709f1640",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/supplier-extract-application-contract.md",
+      "sha256": "8d2212c348cc7da8f884fc363111055f18acbf39ab189a73a7ddc0457c3bc4ed",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminSupplierFinanceController.ts",
+      "sha256": "4305e01c65822d39388aa6a9a3ca8f024ffbf7a0dd2d411f0cef9f6785262740",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "70fa0b73594d70ef5d299e36a4e73cf5126fa336758b4cdf5b80b941bf9540d2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationController.ts",
+      "sha256": "bb622bc1e11e0a3988e373698c752b5dd4db9990651d1de0b8a43de945b2f432",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationMediaController.ts",
+      "sha256": "84a53a0d1f13810ceaaba3581f2226f722abc6b5d65e7a1dc625339bbf205706",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractMediaController.ts",
+      "sha256": "244fb6524d0a445c31fc4475387f2391b97d6b1eb995fb7061a9a6c378540994",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierFinanceAccountsController.ts",
+      "sha256": "e47d1cb31c9d62a4d99a2bd007e90d38a4a739178106708299bdf2c33c39acfc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "854ac9784b46b5a434ba3610ab2079aa12490a433e72dc642894bae14bf9eb26",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+      "sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerManualRefundRuntimePlan.ts",
+      "sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWaybillActor.ts",
+      "sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+      "sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0197_supplier_extract_application.sql",
+      "sha256": "cda058d2f3b165c70db896a269d246ef392e9a27f296ddae48ec4564ee48c305",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runCustomerWaybillActor.ts",
+      "sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierExtractApplication.ts",
+      "sha256": "ed832c04b34ce61362ae623734b55fed0974d82e5b57f1e58811364ce57ced5f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOrderEditOperation.ts",
+      "sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "4610e589bf8e07b57f3459e5b8146b5256c98e4ddec5916ea5b22c59007103b5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleSupplierRefundProof.ts",
+      "sha256": "ef5caeb225d66988c519bb2fa0004899f2f39bf30b1e169157cdf7d57ffc9d89",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSupplierFinanceService.ts",
+      "sha256": "ed89f73d630d441d837566507a667cdfd79aeb972b03e75dc54282de88a86801",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "dd4e8a482b382bb97e5310f7ba5dbb00f53991348a79dc58f8b200259377dbbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+      "sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillExportService.ts",
+      "sha256": "035fa46c1805a2725adf19eb5eed4abd4e5d27fc3d316421d63f5948471382a9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+      "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExportService.ts",
+      "sha256": "51b0d96727a2cf87578ca56e764e70336b939d6b963b9a5f8313295563d3dd92",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationInput.ts",
+      "sha256": "e3a09cedfb13c892a47b1ff38307bc5a749c8dd5a37051105dc6c6b3bc1334c7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationMediaService.ts",
+      "sha256": "4f21e86e13092177403390127a371ea6c85d858922c33fe52739460b93d0b6c5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationOperation.ts",
+      "sha256": "becd7519a70d30cdb3e3a01c1ff3180e718e5ebba21b557e72f5da6fe33f4857",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationService.ts",
+      "sha256": "91cfc006df820b0117c6ca6c327e0914d00e7470095752a6c7fe038f7ea2092f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractMediaService.ts",
+      "sha256": "651b12d51a93318eb2cb01a04a98bf94f5a70d55085622d7efd4d92c9fc033db",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractReadService.ts",
+      "sha256": "0767f1d0de7bbdce31a46789883f83b4511a650801c32573c36575ba0ae9b6cd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceAccountsService.ts",
+      "sha256": "4550e4d560944b821e4d33947e2eae8323de79fb4e2cf928057e36ca691411b4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "sha256": "5f92f93ffec2828468bf66602b4161fc8287f39030f3eafa9c5245c1aedce70b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowDescription.ts",
+      "sha256": "3fa4aef6fc701ba19b89c44de679087ddecf0eda0cc0b63b204583c1f3e08938",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowReadService.ts",
+      "sha256": "df5d776957c1654ea5d0da0a49854b7eddfc36b8493e68c94f103a61a3cff225",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "18a959ce71688bc7ba0d8008e357baa602ec98a46a75c3ce480189849d66b4ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "e6497201a4741c2ad41436f1d7908a94d614947827d55026ae4be02dbdfe2fc3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "dde0d79b54f5e71a3c88e72da09577e29ec73e80e01c3b8bec0b328d1f9db70b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "deeeb1b213e1489cdf53962724467f9701668dcdad529cccc85f8a5efdd79292",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductMediaService.ts",
+      "sha256": "2bbe4f7b946442be8d7dfe5d7c5896f8a5763dc28b25b7656298b882e394a1c2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierVideoAuthority.ts",
+      "sha256": "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/system/AttachmentService.ts",
+      "sha256": "c7a7c9100c2df65f1478d61437b32b5c7ee4a52d3915bbb9f3a7b886fc549f14",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts",
+      "sha256": "ec518d3a4cbf0148404ad7e100112e85c9f46eb134759ffc955b77b41aedd1b9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-bill-export.acceptance.ts",
+      "sha256": "7b5bf100630b3b2e89b37721bf9cd5f06262b3c2e7d39fb5e3cc8a4735b8d991",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application-media.acceptance.ts",
+      "sha256": "d6edc4301aa66d530e702eb90343d82bd6f0e17775afecc0af8d99e6655d5467",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application.acceptance.ts",
+      "sha256": "cfb3932b683d30c83dabc99bb411a2c887adce0de89d813ea4094ac3a3ecef82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-media.acceptance.ts",
+      "sha256": "d2b3d7a3d72ce158e42e4fcb211fc2e6cf914fc14615decaa614affd4b2c33dc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract.acceptance.ts",
+      "sha256": "f9ab60a49720d69d5631db3ce8849c57c38a005b17ce02b06e86bddccca77681",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-finance-accounts.acceptance.ts",
+      "sha256": "299568a22e83270839184226a4cdab5ac9cc3d2a6edfc7adef650b20b79a89e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-flow.acceptance.ts",
+      "sha256": "60369a246b175328133616d2455fa21d8c4ae7ad17a19108b1b0f1ade6cad924",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-proactive-refund.acceptance.ts",
+      "sha256": "847cefd3c42313bd4d0d32e20eedb3880a0a587c02592a14159dd018f21c7857",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-refund-settlement.acceptance.ts",
+      "sha256": "2e3b4e149ff50eb9a992d61afd70a1fcb5ac5b94685d273eda6820cf24a48ff6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillExport.ts",
+      "sha256": "2086ceff39a2be05c8a1426b1f926035785d0282808ad73c8bacb3f238736aba",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillRead.ts",
+      "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplication.ts",
+      "sha256": "5971f8fc7d17f43dc99112510b1819e210002425638b4197449896c99a6c533d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplicationMedia.ts",
+      "sha256": "ff96e61fec9f6e52a0e9c18ab136f32903ff6bf25fc7aff3830d7c8125cb368a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractMedia.ts",
+      "sha256": "f228cea7cf771980b9bb53ee8a64e0131cb4797b98e93db9deb51e0d912cc3fd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractRead.ts",
+      "sha256": "61edade85fc505869212fbafdbdd450e13cf8de75f0dccec29e20d34636a1adc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFinanceAccounts.ts",
+      "sha256": "76ab9c8755d8194e546f215f564f44ea13113989d52b4420c5579980cd6ee4a4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFlowRead.ts",
+      "sha256": "a703c6bbd0b4826f13611798337a8028d98dcd6d49dc1d8c0fe635e42e6ed348",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/presale-refund-baseline-postgres.test.ts",
+      "sha256": "cb6d1de725099707f719093117cbcd6d3913469fce4b6bc89dfbbef9049bd538",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-native.test.ts",
+      "sha256": "6f1e7c6dc362f70a524f005df6d72df2b3b7812bb96203300125658119dd17c1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-rules.test.ts",
+      "sha256": "1e542559f3a87423db92c6cfe5b9234d382610068fd58eeeb8af90e82e9242d9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+      "sha256": "dc5a162faca49f13529ebd4a7d07701b31a73db9558fb386e37531e3fe88eba4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-catalog-native.test.ts",
+      "sha256": "faa984ab34dcf4431274eba97ee3219a1e468f0a5289a2f0ce95c75e4f441042",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-frontend.test.ts",
+      "sha256": "23424be5f8aab53bc717b4f9be6622d8c78314e6d6758b8c4120c1934421c6ee",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-frontend.test.ts",
+      "sha256": "7079413f2e908ba85f525ead50741ab13deea491f7d84992cb443d156b803d5e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-native.test.ts",
+      "sha256": "e3043440c12832ad3ea60252e14cc35b0074eef22f385c860f66a357f6f88dca",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-rules.test.ts",
+      "sha256": "e03fc458085bec67b8522fe8d2f9c0272f9147989fdf64af78af26a6b6c05494",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-native.test.ts",
+      "sha256": "2e539d718e499d588a2b071bb530404fdb0656caeb84d8ff1b611f1f693116b8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-rules.test.ts",
+      "sha256": "0700ffdf86bf15b7c4de6ad34b6ddc7c453862b4fc3ce3d0fd71be1f0b4e5a7b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-frontend.test.ts",
+      "sha256": "f0d40fece6044833dce3ee8b65310af3bad38aedb1212c5800b8b67ab1800b27",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-frontend.test.ts",
+      "sha256": "e2ee33905ce47b54f5aedd28e17e762f1b4649db8fd93f778ab27ead4ffeaafe",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-native.test.ts",
+      "sha256": "5b851baa90beb416f4784b46bd0ce076d34a8685ae68208431829ac58e22c183",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-rules.test.ts",
+      "sha256": "e3d96ed88afc0f115cc9a1d5682a57c069d4220bf49920fdf7aa77d9687c87d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-native.test.ts",
+      "sha256": "a5f1af45143f252ff6919aa6a652f0086fb36498ccc992f6b373815f89a5bff3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-rules.test.ts",
+      "sha256": "f28e513ac3bc4d82b6dcd0dff115caa51899af92b8851df4fe3f0f8c8533a2fa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-frontend.test.ts",
+      "sha256": "af719bf7e68c480f88f762cd23923a984c878ff38367b80d71eb5236580d1a4c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-native.test.ts",
+      "sha256": "07e55ee9dfce099a379ff671dbd2bb550c6470ee8ce4508733eaa4440c4dbc06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-rules.test.ts",
+      "sha256": "85ea83619887dcc80ebbd3c01cf16eade52268af8d83271ebd21a1ef053b45b9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-frontend.test.ts",
+      "sha256": "01aaa0a838377832ec4fac17f8a2635674087bc3a43f0125bf193d97f38b20f3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-native.test.ts",
+      "sha256": "51c78385c5142aa85e84ddf9bd247e65117dfde84c3acad628c26d6ec5c0e734",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-rules.test.ts",
+      "sha256": "e5a0cec69ffee3267262b73b97fb222566a2994f4fc40ea69b054a9cedf3f792",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-refund-integration-native.test.ts",
+      "sha256": "ac77d8f49eb7b38720058500b10395f2807ed356203e8034445d5df296fec8c6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-frontend-export.test.ts",
+      "sha256": "8b88932db526b494017393947cfee006bbaf29fc41acdb302ae3ad07e2b550fd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+      "sha256": "e9a212b387842c4d6e9d58e549c641c2c9aa664784ed161fe0349584c9608f05",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "d0426d3cc73ef9350ab4d926606e248724b44ed4ec5fd21381d8a9097bc66e55",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+      "sha256": "09bfc2471f3a56fae010b5bc783ba5ec09d25b01fda5e523a7ed6a17933f3e41",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-bill-export-browser.config.ts",
+      "sha256": "9f941ac9b47e6e2d713974f2d6944fbc0cdddc193f5963cd56317965214ba30c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-browser.config.ts",
+      "sha256": "724a571e533f850bb0161b3f818aecb970a6e8ec562be59e2b98926808badc31",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-media-browser.config.ts",
+      "sha256": "7adbedd3b7734e8729be6e30e66adc1505881895cec4191935981e3d42cf3d0d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-browser.config.ts",
+      "sha256": "224a56aa935cfd6863ac1fbd2399d66ce59f7dbbdf899e56cc9a3e27e4c18945",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-media-browser.config.ts",
+      "sha256": "3147c6a42c9232fec9c7d97ce2992da4774413e38bc1a1c1a0bd25b680f25377",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-finance-accounts-browser.config.ts",
+      "sha256": "fb56c549397932f54d67c432bddd1f7f09a0772c3e9599901aecfcfb38cf0021",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-flow-browser.config.ts",
+      "sha256": "118252cd84d69bb5a2bf6d62d29887aa1b898f54253e5d5de36682f3026c2228",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-proactive-refund-browser.config.ts",
+      "sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-refund-settlement-browser.config.ts",
+      "sha256": "9d711597a91c1d749bbef3e429ab508a2b73a2be8ee0751c431d66463393c0dc",
+      "byte_equal_to_base": true
+    }
+  ],
+  "protected_manifest": {
+    "path": "/tmp/cinashop-supplier-product-review-protected-files.json",
+    "sha256": "1f628fa0c60889b203880e6b2d374cead2832b3ab878fb24546a3f28c365b449",
+    "bytes": 67394
+  },
+  "protected_proof": {
+    "shared_api": {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "excluded_functions": [
+        "getProductReviews",
+        "replyProductReview"
+      ],
+      "protected_statements": [
+        {
+          "index": 0,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "d5f480c856f3e352bff122095d97665f8676d594991a9c9cc319f75042919731"
+        },
+        {
+          "index": 1,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "72f64dcf0008e3244cb4aa9442f5cd32c79589395e5a9a55b09c748e5f19709f"
+        },
+        {
+          "index": 2,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "c13ed80ead2fd95b4026c62b16b3ff673a5ec92be4969236b8bbbe774cb52ed3"
+        },
+        {
+          "index": 3,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "a8182eadb36cb69eebe6e89d1acebd3bc000d45c391f8b74a72c318f2f3090c0"
+        },
+        {
+          "index": 4,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "eb495b02ad2d2f986d553d3dedd495a3a7bfab853071e6b6da5ae8c7ee9042b9"
+        },
+        {
+          "index": 5,
+          "kind": "ImportDeclaration",
+          "name": null,
+          "sha256": "a68a01442646de093315e7af0db80eeeeddfe6fca28256c46ccd3da8fe91de25"
+        },
+        {
+          "index": 6,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "c7457dc46636233382fb9e08c5c3fcedce82cb207fede3ae1bccbda6ae3473e8"
+        },
+        {
+          "index": 7,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "07a23a72c075c5e9ad596afe37c49b45d6464c43233f7fc1197cbc336eb70320"
+        },
+        {
+          "index": 8,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "fdc0262d28bd487c1ba5e7d295d2f2fea37b00e66dc09d80f6a54a0c8c8db99b"
+        },
+        {
+          "index": 9,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "cbafc09440dc1d9c1fafdfc3f5822c5dd8dc58bd97c31a44a40b760a7c2da21b"
+        },
+        {
+          "index": 10,
+          "kind": "FunctionDeclaration",
+          "name": "cloneProductRule",
+          "sha256": "8247500d0987f8701ca2754fe5f0419b1fc6f94f9662969294a87be32dc78d02"
+        },
+        {
+          "index": 11,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "ab6775d53c9201687eecf6f57dcacef140c7367abbc71c9af05024951c554d42"
+        },
+        {
+          "index": 12,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "9a893034d7880bdc2d18bb97e58f944256e39895a84fb7b7e7a55a2dbcd65676"
+        },
+        {
+          "index": 13,
+          "kind": "FunctionDeclaration",
+          "name": "clonePreviewDetail",
+          "sha256": "73a1d0d272b4a0c19acdd3c4c9a0f3730d119eaec641def9186965d0a0beb9db"
+        },
+        {
+          "index": 14,
+          "kind": "FunctionDeclaration",
+          "name": "defaultPreviewDetail",
+          "sha256": "8cd559a152bcf8761d66cdb90669f511b6ed07305fa27c3fb20a69e810197a64"
+        },
+        {
+          "index": 15,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "60ad628c82a1509a59d31a44fa58a3790ebec0b2b85d2a2ad52b42ee5461a603"
+        },
+        {
+          "index": 16,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "985da9bdd29ee280bc1b9fd494d22a0febcc8738441f5f14d68b552eb8f2d415"
+        },
+        {
+          "index": 17,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "924b02c6f076e2106852ca4f113c611f21d2b7ebbda301025186bbb4e0f4f18b"
+        },
+        {
+          "index": 18,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "1e7c8b43a2714104e9c4db91a4454d153dd6c5f8fe3121151c36b5a8382ef470"
+        },
+        {
+          "index": 19,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "d87068f97f3b0afe0d1202c63f21674eb9a7783c53bcba616fcb8969662932ea"
+        },
+        {
+          "index": 20,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "49680ba2896eceb7a0d63b509553940bf4cc3370cb9a456418a995993e6eaa8f"
+        },
+        {
+          "index": 21,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "3caf1fdcfe7f4090f27a002c44df7d180fbba52fd58252e63370fdfb808a57f0"
+        },
+        {
+          "index": 22,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "f6297d3e8ad7172cf6912564910acd1098cc4773c13ecf079a2df06c04626953"
+        },
+        {
+          "index": 23,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "eb3f012f69c669045b26527432bf05cd34c92e0f06cf40f9ecdda32ff59cc0a4"
+        },
+        {
+          "index": 24,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "58aa2d0c73d9604ef5d2adda5c76a27be9d08970315ed91236173b456a9e3deb"
+        },
+        {
+          "index": 25,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "710c53e6cc6c112e025b3416527cf39b6611b3c3a69c683a7ef729716ce8b09a"
+        },
+        {
+          "index": 26,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "46c0a2805d02f7310fd1b01c29a937070b892108e34aadcc6eaf44274e51b2ac"
+        },
+        {
+          "index": 27,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "134fa0d667c20ab8ee3bb47205d7b76cda65b1e34cfae7b49a804defd1db8e86"
+        },
+        {
+          "index": 28,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "aa55e8c780df1d23b80e78c7d6632b471274be5b8f859a8230b2895c9accc87f"
+        },
+        {
+          "index": 29,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "06eec409d0511cf316461f54c99dd3c775ae125f28b42ccc702aac96baf6e99a"
+        },
+        {
+          "index": 30,
+          "kind": "FunctionDeclaration",
+          "name": "previewSupplierRoleOptions",
+          "sha256": "9bc41ba80b6d02367880645a214a98d9dd6f8d877f63b1faee1ef40783afe3b3"
+        },
+        {
+          "index": 31,
+          "kind": "FunctionDeclaration",
+          "name": "login",
+          "sha256": "1dbf0d92063b62c572098c917a79f96dac6a4d98de6f1700dcffc078f2ce2b25"
+        },
+        {
+          "index": 32,
+          "kind": "FunctionDeclaration",
+          "name": "logout",
+          "sha256": "cfc50139e4ab412d3db99e6a2b46dd1df85912945cbafd0d255f2e7722ca4b3d"
+        },
+        {
+          "index": 33,
+          "kind": "FunctionDeclaration",
+          "name": "getDashboard",
+          "sha256": "9bc92c752a5bc30aa337e5ec67b7265fe43899d67ea2bfd48f5bce7efd0335ba"
+        },
+        {
+          "index": 34,
+          "kind": "FunctionDeclaration",
+          "name": "getProducts",
+          "sha256": "f8e153160876790f05ac56beae8bb6e38f131df21b0935999be3ea792c7bba29"
+        },
+        {
+          "index": 35,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "e68b9e2fc26b382054bcd4fa666448dce740385ca2505ecbb84f0584595960a4"
+        },
+        {
+          "index": 36,
+          "kind": "FunctionDeclaration",
+          "name": "previewBatchFacts",
+          "sha256": "e611074d6e1e0bfead80582bc5f34e36167a67a10996643bc909f131d86a95ff"
+        },
+        {
+          "index": 37,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierProductBatchSelection",
+          "sha256": "7ad2fb52ac8f0de12c32cb185e04d1c9e3389e3f372d882289b0767eb572d12a"
+        },
+        {
+          "index": 38,
+          "kind": "FunctionDeclaration",
+          "name": "applySupplierProductBatch",
+          "sha256": "f5defa490e899e5a60939da19d1d4895615f93e03d6f4dce7375b5859cf7a5da"
+        },
+        {
+          "index": 39,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierBatchForms",
+          "sha256": "826f42b1ab817685eb566a04213d0521b91110d050d7b352d6a475b7f6c35880"
+        },
+        {
+          "index": 40,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierBatchFormFields",
+          "sha256": "7f3132b094faeb6f8b985724c263ce48b4601e2d3a3b650dd219af5f8160d027"
+        },
+        {
+          "index": 41,
+          "kind": "FunctionDeclaration",
+          "name": "getProductRuleTemplates",
+          "sha256": "1840cd8d7f9903570bb5f70c448ff364cb09f8f229104cf8cf05b59dc25f4ff4"
+        },
+        {
+          "index": 42,
+          "kind": "FunctionDeclaration",
+          "name": "getProductRules",
+          "sha256": "ca2f67809cdefd661d9aaef35cc1fbb1655ddc4a2734a5456917d0ce48631ec8"
+        },
+        {
+          "index": 43,
+          "kind": "FunctionDeclaration",
+          "name": "getProductRule",
+          "sha256": "60f543e44153213ce1780e15c686d71e7c430a556636e361e50a717aa4df6468"
+        },
+        {
+          "index": 44,
+          "kind": "FunctionDeclaration",
+          "name": "saveProductRule",
+          "sha256": "4865d1b07b331a10813c8ad4c6e0e77abce9bb42efa0137c7acd2d8bf4d8ff0c"
+        },
+        {
+          "index": 45,
+          "kind": "FunctionDeclaration",
+          "name": "deleteProductRule",
+          "sha256": "a252ec63510392d2ec65a9963c37822dbae603d916e03f9dca60dd6e2a9a0f1a"
+        },
+        {
+          "index": 46,
+          "kind": "FunctionDeclaration",
+          "name": "getShippingTemplates",
+          "sha256": "64b992d7e49bae0205da4102bfcd9a233c1a01413897dba8210221a679173e4d"
+        },
+        {
+          "index": 47,
+          "kind": "FunctionDeclaration",
+          "name": "getShippingTemplate",
+          "sha256": "2f1e9587880dd87f5aeb0a69b7f5431484572ad8b8547ef191c1b61353f3c5f5"
+        },
+        {
+          "index": 48,
+          "kind": "FunctionDeclaration",
+          "name": "saveShippingTemplate",
+          "sha256": "85293eaebce8cd6fde2d90795804c4883d3273c0af8356e641ebe8e456ed9652"
+        },
+        {
+          "index": 49,
+          "kind": "FunctionDeclaration",
+          "name": "deleteShippingTemplate",
+          "sha256": "eb789a4516c79ca2fc29a11d7defc5b1ba900cb9e94923c5792949685ad4d5ec"
+        },
+        {
+          "index": 50,
+          "kind": "FunctionDeclaration",
+          "name": "getShippingCities",
+          "sha256": "a1d4a8229cea04744241c8c3bf50457f04c996457a0a11dabb4ca958907ba64a"
+        },
+        {
+          "index": 51,
+          "kind": "FunctionDeclaration",
+          "name": "setProductShow",
+          "sha256": "7e30dd6023f5ebebff0a1c8bef59358ed9ae3a2843ffd917168193e04f0b7ac3"
+        },
+        {
+          "index": 52,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "47a5e188dde4c90601ad4e35acd4f9bb005d56a7bb704d032161580f1aeadc98"
+        },
+        {
+          "index": 53,
+          "kind": "FunctionDeclaration",
+          "name": "previewCategoryRows",
+          "sha256": "260ac270d15336e70ef8b3a1cf2049f2b367a3e972f5062bb7382947c82f58ec"
+        },
+        {
+          "index": 54,
+          "kind": "FunctionDeclaration",
+          "name": "previewCategoryTree",
+          "sha256": "10bb839be456dbf9211f8d83f3270f2cf9930a276a63959abbf4e8032b4acd08"
+        },
+        {
+          "index": 55,
+          "kind": "FunctionDeclaration",
+          "name": "commitPreviewCategories",
+          "sha256": "924b1b1c485738829f184da8ef80f8c81de7afd5bd9f2d40756bfa8c85f27fe7"
+        },
+        {
+          "index": 56,
+          "kind": "FunctionDeclaration",
+          "name": "previewCategory",
+          "sha256": "dc0401ece8affd2e9c660488b0d95ad3a875965a3819e527c5f5520cc654c08a"
+        },
+        {
+          "index": 57,
+          "kind": "FunctionDeclaration",
+          "name": "checkPreviewCategoryRevision",
+          "sha256": "39462d188c19ac07fb909958e1a962905df93934f617ddf3fbe67964ab5b201a"
+        },
+        {
+          "index": 58,
+          "kind": "FunctionDeclaration",
+          "name": "previewCategoryDescendants",
+          "sha256": "798fa194291c686c79fdfeae8321dd096d21f0116d2abb5440462dd07cf89eea"
+        },
+        {
+          "index": 59,
+          "kind": "FunctionDeclaration",
+          "name": "getProductCategories",
+          "sha256": "68f5c23546e788b29691f5fa448e4fbea577eeb096690536d40cde8f62a3c74b"
+        },
+        {
+          "index": 60,
+          "kind": "FunctionDeclaration",
+          "name": "getProductCategoryDetail",
+          "sha256": "cfb9634e1b66b6bf62b1b647004ce94894af4e91ee8c4293846efca2ebdef05f"
+        },
+        {
+          "index": 61,
+          "kind": "FunctionDeclaration",
+          "name": "saveProductCategory",
+          "sha256": "76c03151a6f9319aa628688ddda948c39a8b46f4dab39134d4b4f5116b4b3455"
+        },
+        {
+          "index": 62,
+          "kind": "FunctionDeclaration",
+          "name": "deleteProductCategory",
+          "sha256": "3650647890acce4e01d00a9129d7404ff1f5b44aeaec20b6c2b27f285edf3c9d"
+        },
+        {
+          "index": 63,
+          "kind": "FunctionDeclaration",
+          "name": "setProductCategoryShow",
+          "sha256": "356c7d53955629e5f854607c1876481e208fc86dbe1190e167d65a5342f0bf7c"
+        },
+        {
+          "index": 64,
+          "kind": "FunctionDeclaration",
+          "name": "getProductDetail",
+          "sha256": "ceb06ae4382a3640aa328d5ef889bcc3c1115e75ae12a2e707efce63e46e2a58"
+        },
+        {
+          "index": 65,
+          "kind": "FunctionDeclaration",
+          "name": "saveProduct",
+          "sha256": "caf952e37bfb2e9c7a03fba24dbf1e5dc428899105e7e0255a85674c55a4c7f7"
+        },
+        {
+          "index": 66,
+          "kind": "InterfaceDeclaration",
+          "name": "ProductSkuRetirementResult",
+          "sha256": "5e154661e73a6b34df45981e2a85ccdd3d97e6a2cfb05d706d88313bf69d3a89"
+        },
+        {
+          "index": 67,
+          "kind": "FunctionDeclaration",
+          "name": "changePreviewProductSkus",
+          "sha256": "32864c38070069591f289a92b0f8c3d34520470a2ee955f569545618f542e760"
+        },
+        {
+          "index": 68,
+          "kind": "FunctionDeclaration",
+          "name": "retireProductSkus",
+          "sha256": "8317885dff7c09d5c342ca3dde605143433fdec8258944ab3c41feda902cc6d7"
+        },
+        {
+          "index": 69,
+          "kind": "FunctionDeclaration",
+          "name": "restoreProductSkus",
+          "sha256": "fe399c4cb931facf01e8f8bcf8ca8e17b2717d8a2d108a56eb350bda4e34b1f0"
+        },
+        {
+          "index": 70,
+          "kind": "FunctionDeclaration",
+          "name": "recycleProduct",
+          "sha256": "c6e8617820a189e6022cb9e420245c4b1f14c48b805e22ecfd2407ffe7a8c690"
+        },
+        {
+          "index": 71,
+          "kind": "FunctionDeclaration",
+          "name": "batchSetProductShow",
+          "sha256": "b23df3cd8854fce4486a1ab063c72e23721a5023a254db4713172d72a9e1c2f6"
+        },
+        {
+          "index": 72,
+          "kind": "FunctionDeclaration",
+          "name": "adjustProductStock",
+          "sha256": "d9729be3292e093ed0640c6812c0110a394713549609ed251b131619a5242f33"
+        },
+        {
+          "index": 73,
+          "kind": "FunctionDeclaration",
+          "name": "getVirtualInventory",
+          "sha256": "5ada5025f33fa6d910bdd926182828476b042eb3a8e760238b2a4462899db888"
+        },
+        {
+          "index": 74,
+          "kind": "FunctionDeclaration",
+          "name": "getVirtualInventoryAlerts",
+          "sha256": "d550290969406352554e844c5e61b8b8379ab138b1d2eb0de947c52a3a79ec44"
+        },
+        {
+          "index": 75,
+          "kind": "FunctionDeclaration",
+          "name": "importVirtualInventory",
+          "sha256": "cd73195aca43efeeaa77ec9ac0030887923a29c54d5520eba9dac485ca07eeec"
+        },
+        {
+          "index": 76,
+          "kind": "FunctionDeclaration",
+          "name": "createVirtualInventoryExportTicket",
+          "sha256": "7fcab69a31d44f2bd1c8a42eb3b1b2057bef6f738b86a8d9a1563d01ad0bddaa"
+        },
+        {
+          "index": 77,
+          "kind": "FunctionDeclaration",
+          "name": "consumeVirtualInventoryExportTicket",
+          "sha256": "2182cf3f676c388201d65a01c67a6d55f2ce412b58fe4f4adb417ad6580eb63a"
+        },
+        {
+          "index": 78,
+          "kind": "FunctionDeclaration",
+          "name": "getOrders",
+          "sha256": "b9927867431c4551504f4ac845a5d54522eef68b05a67b19eaaaa9a884927042"
+        },
+        {
+          "index": 79,
+          "kind": "FirstStatement",
+          "name": null,
+          "sha256": "5ddc168a570e863f3be35e887d2f3605a3f89d5526f64df9268ac8783a241194"
+        },
+        {
+          "index": 80,
+          "kind": "FunctionDeclaration",
+          "name": "previewManifest",
+          "sha256": "d9a4f52a67da3a5ddb41d753296ef9ea7e9f07834f8a8bc6c6ffcbddb2968d33"
+        },
+        {
+          "index": 81,
+          "kind": "FunctionDeclaration",
+          "name": "exportSupplierOrders",
+          "sha256": "8433faf290f9512df62ff9b719617568dc04c69cd167331a163f6669a824137e"
+        },
+        {
+          "index": 82,
+          "kind": "FunctionDeclaration",
+          "name": "exportSupplierExpressList",
+          "sha256": "827fa268c6a59cf3d2869d2e32092a99690be3394912d9aa74aed5c249f4bca4"
+        },
+        {
+          "index": 83,
+          "kind": "FunctionDeclaration",
+          "name": "exportSupplierBatchDelivery",
+          "sha256": "30cc958ab60a75a6f6d3f808d8f85de012438743877caadf86f251a660c0c61d"
+        },
+        {
+          "index": 84,
+          "kind": "FunctionDeclaration",
+          "name": "exportSupplierFinance",
+          "sha256": "6a7c3917982409ec486b5627c09eed16af719008d508e324d6b4d20f7a6c3b9f"
+        },
+        {
+          "index": 85,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierQueueHistory",
+          "sha256": "0f4f4f4352464945d8f2b5a22b0b15ec665ca0efcbd5f68b540771868b50e675"
+        },
+        {
+          "index": 86,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierQueueDeliveryLog",
+          "sha256": "90668912fbd843803d306ed993339b94d6d85ac0288846a7479e998e8cbc4773"
+        },
+        {
+          "index": 87,
+          "kind": "FunctionDeclaration",
+          "name": "getOrderDetail",
+          "sha256": "77b1114e3b00ea91fd72d24243a81da968f9fcb11a277fb998426244bb9bc881"
+        },
+        {
+          "index": 88,
+          "kind": "FunctionDeclaration",
+          "name": "getPickingSheets",
+          "sha256": "675fec03204e03df53df72b98464913e1c674a365209ce1c07fb631045cefde9"
+        },
+        {
+          "index": 89,
+          "kind": "FunctionDeclaration",
+          "name": "getSplitCartInfo",
+          "sha256": "4352034540632a4f2437bfd6fc43762926fb1cda8fdeaa09275e675963415cba"
+        },
+        {
+          "index": 90,
+          "kind": "FunctionDeclaration",
+          "name": "getSplitOrders",
+          "sha256": "f5e855e6432cac1477fb54ab6aae0ba9cdb6038164d75cf1d892e6ed1fef862c"
+        },
+        {
+          "index": 91,
+          "kind": "FunctionDeclaration",
+          "name": "updateOrderRemark",
+          "sha256": "43c6fc585740c2f6be38357ed53d6101c17d02ff931958d1d89a1b0c26861cdb"
+        },
+        {
+          "index": 92,
+          "kind": "FunctionDeclaration",
+          "name": "getExpressList",
+          "sha256": "e3f6ed0bffdfb57114ee55a52e35bc3f0f6f7365052fb947501b0f591511f7b7"
+        },
+        {
+          "index": 93,
+          "kind": "FunctionDeclaration",
+          "name": "deliverOrder",
+          "sha256": "528e2b26404a4034041883e81b5d49092d4e57a92061dd768b58ea35bb94c99d"
+        },
+        {
+          "index": 94,
+          "kind": "FunctionDeclaration",
+          "name": "splitDeliverOrder",
+          "sha256": "6b354f4e44a678690a1d906444327fb5b46e49fc7afa7c029ce737d93f6996e0"
+        },
+        {
+          "index": 95,
+          "kind": "FunctionDeclaration",
+          "name": "confirmOrderTake",
+          "sha256": "82f40a4b5a5a207c52fa9bc31d34cc3986ea26faffec4a449692b315c6b963d0"
+        },
+        {
+          "index": 96,
+          "kind": "FunctionDeclaration",
+          "name": "getOrderStatus",
+          "sha256": "d317b41b368c8b96cc8a21ee5d61fe697b46ccd474d0870d44ff14525e35ca3d"
+        },
+        {
+          "index": 97,
+          "kind": "FunctionDeclaration",
+          "name": "getRefunds",
+          "sha256": "f8c9eaab2aacde07005e952f32c5a91321cb6de02cd09b5b187fce32206a4a13"
+        },
+        {
+          "index": 98,
+          "kind": "FunctionDeclaration",
+          "name": "getRefundReasons",
+          "sha256": "83c0d725ee86c21ec03ea506852ad861e61bb80a2ccd492ef4de4b03f379f7fc"
+        },
+        {
+          "index": 99,
+          "kind": "FunctionDeclaration",
+          "name": "getRefundDetail",
+          "sha256": "efe8a7b68074b95a76cc901e8a5168c4867fa367fadef37761c6eef799e4f487"
+        },
+        {
+          "index": 100,
+          "kind": "FunctionDeclaration",
+          "name": "updateRefundRemark",
+          "sha256": "451c78d8a8a923583b340d5c6e86e7e7ea336ad8e79ace54a1405536cb7e901d"
+        },
+        {
+          "index": 101,
+          "kind": "FunctionDeclaration",
+          "name": "agreeRefundReturn",
+          "sha256": "47cd0bfdbb6530757220b8fdbecfdcfe66f2cf21f55dd0d2c8929866efe05af1"
+        },
+        {
+          "index": 102,
+          "kind": "FunctionDeclaration",
+          "name": "refuseRefund",
+          "sha256": "dbb39c1c4b5a98aa2abbf2909b8da7d29a95f3f3f7288619a3a069e2cbbb6673"
+        },
+        {
+          "index": 103,
+          "kind": "FunctionDeclaration",
+          "name": "refundOrder",
+          "sha256": "803053a4079f9ba8d17b725b4374cfa6c402db1042e8537cef521295a34238bc"
+        },
+        {
+          "index": 104,
+          "kind": "FunctionDeclaration",
+          "name": "getFinanceInfo",
+          "sha256": "1518db7e290a3c23db8200c24a67f93efdbb65e14fd07ee26dab38ee9eee7a2a"
+        },
+        {
+          "index": 105,
+          "kind": "FunctionDeclaration",
+          "name": "updateFinanceInfo",
+          "sha256": "89b5e412052491f14cf5697b685e3a1b04957354726815f6b899c811834dce77"
+        },
+        {
+          "index": 106,
+          "kind": "FunctionDeclaration",
+          "name": "getFinanceSummary",
+          "sha256": "df53912d384f62ea7e398b00ecbe5116e0304949bf1ca54ec4831c32c4917ada"
+        },
+        {
+          "index": 107,
+          "kind": "FunctionDeclaration",
+          "name": "getFinanceFlows",
+          "sha256": "7a6c8cf52e3de2b2c3b1913394c692c94baf61b3dfb46ff6dd19722dc9b2139f"
+        },
+        {
+          "index": 108,
+          "kind": "FunctionDeclaration",
+          "name": "getExtracts",
+          "sha256": "63fe54f58aeab7ee3c4853fbb40756542fe57411beb7083ee6b6fe41450eb41d"
+        },
+        {
+          "index": 109,
+          "kind": "TypeAliasDeclaration",
+          "name": "SupplierVersionedProfile",
+          "sha256": "bfe08ca2a618853824417cccd6eb2e1bea6a2831138009b1c22c2fcf007dfbde"
+        },
+        {
+          "index": 110,
+          "kind": "FunctionDeclaration",
+          "name": "getProfile",
+          "sha256": "5b856bfba8a41e78646994d65dd97b04bd705a9a41b65e65c82462775747934d"
+        },
+        {
+          "index": 111,
+          "kind": "FunctionDeclaration",
+          "name": "updateProfile",
+          "sha256": "8268d17a41dbe8af7e9a52e83b316f6e7bc59b3d307bbb65a589bf73adc239fd"
+        },
+        {
+          "index": 112,
+          "kind": "FunctionDeclaration",
+          "name": "updatePassword",
+          "sha256": "03d6cb7ba21bc3221594b7cb7d15c6928f078761b82444de451358ddda9bd13c"
+        },
+        {
+          "index": 113,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierAdministrators",
+          "sha256": "80fbcb727891c39af54c81bacb7b7fcb4c1147d13ea740e11c2fca8c6d8f8146"
+        },
+        {
+          "index": 114,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierAdministratorForm",
+          "sha256": "3d24b32f0819b949a878eecad04b61dac82041e724dab2d975dac81638c1c100"
+        },
+        {
+          "index": 115,
+          "kind": "FunctionDeclaration",
+          "name": "saveSupplierAdministrator",
+          "sha256": "b76f0b31559f8886ca85830b7ecfbccb322ddc05b3dc869b39341943e53ae8ff"
+        },
+        {
+          "index": 116,
+          "kind": "FunctionDeclaration",
+          "name": "setSupplierAdministratorStatus",
+          "sha256": "9124916f6a955a9b470cc275259f48ac630c1d82f5cc56150411a99fd2f10922"
+        },
+        {
+          "index": 117,
+          "kind": "FunctionDeclaration",
+          "name": "deleteSupplierAdministrator",
+          "sha256": "1155b2f10f92f5e4a785c4e68faf77179ebcd96d4967b871588a635bdb6ad345"
+        },
+        {
+          "index": 118,
+          "kind": "FunctionDeclaration",
+          "name": "getSupplierRoles",
+          "sha256": "3993e8a7941860bc6f156d6490ad7f2fbeedc30856114aba5e430b1cf627a138"
+        },
+        {
+          "index": 119,
+          "kind": "FunctionDeclaration",
+          "name": "saveSupplierRole",
+          "sha256": "ae118d1ec89d1ada83770bbd14206a43bf7eced4cf619367311a56f5ab45fbb9"
+        },
+        {
+          "index": 120,
+          "kind": "FunctionDeclaration",
+          "name": "deleteSupplierRole",
+          "sha256": "268c0871cdacdc28484b62616999104a1a44804a7ef0ca3811843a9a41617ad7"
+        },
+        {
+          "index": 121,
+          "kind": "FunctionDeclaration",
+          "name": "getStoreConfig",
+          "sha256": "a686bb01f2367099db269ba10f0a7facf5e64ea8484b8fa743345813508a259f"
+        },
+        {
+          "index": 122,
+          "kind": "FunctionDeclaration",
+          "name": "saveStoreConfig",
+          "sha256": "bae90ae3ed43e8ac14202fae01646df092a7e97d0e8d5808a2fd842cd535f209"
+        },
+        {
+          "index": 123,
+          "kind": "FunctionDeclaration",
+          "name": "refreshPreviewPrintReadiness",
+          "sha256": "842bfea7e53eaa080eba76d4b1c094ea673c0836ef5b8bf344a57d31b6210bdf"
+        },
+        {
+          "index": 124,
+          "kind": "FunctionDeclaration",
+          "name": "getPrintDocuments",
+          "sha256": "0afaf89266cfc2e7d9d2eafc00a73ee49bca2c1e374a55e20e94b172abe77f06"
+        },
+        {
+          "index": 125,
+          "kind": "FunctionDeclaration",
+          "name": "getPrintDocument",
+          "sha256": "aa474104452802f561728dc15ae54d0125e65018ae5b03f30f3c4c0ef7858736"
+        },
+        {
+          "index": 126,
+          "kind": "FunctionDeclaration",
+          "name": "savePrintDocument",
+          "sha256": "1745ed0187df50bc89c1f7c63cc42fc9f655141d706e60bf35629da24d11af72"
+        },
+        {
+          "index": 127,
+          "kind": "FunctionDeclaration",
+          "name": "setPrintDocumentStatus",
+          "sha256": "45e1ea0f1eb014dd23764c8436ccdd8773b98054152dcc75df873833a96caa01"
+        },
+        {
+          "index": 128,
+          "kind": "FunctionDeclaration",
+          "name": "deletePrintDocument",
+          "sha256": "8203449d9cbacd843640ef5f08fcfb0814c7cc00110a4e50778c663249505d28"
+        },
+        {
+          "index": 129,
+          "kind": "FunctionDeclaration",
+          "name": "getPrintContent",
+          "sha256": "b6b6c2d5ef01169abec14e3a2e89964f09cd030992f7cb36a8e00ae402a8b720"
+        },
+        {
+          "index": 130,
+          "kind": "FunctionDeclaration",
+          "name": "savePrintContent",
+          "sha256": "82e5ada15aa8edf70b9a1fc78622af2ca940ff635fb19abb313fcc7ccc7397a0"
+        },
+        {
+          "index": 131,
+          "kind": "FunctionDeclaration",
+          "name": "getPrintJobs",
+          "sha256": "bfd9d1d74d34461e20125bf7eefe63ce3be20a113e80af800262ca3fdd25a28f"
+        },
+        {
+          "index": 132,
+          "kind": "FunctionDeclaration",
+          "name": "createManualPrintJobs",
+          "sha256": "c4aa9957c64be04af91eb44afbb1e2568dfbf034e5cdba0cb2e4ff4e591cbc32"
+        },
+        {
+          "index": 133,
+          "kind": "FunctionDeclaration",
+          "name": "operatePrintJob",
+          "sha256": "3a796ed486904e940ae84eff3b1b41b8a149942e75ec2350a2ce5c7f947cd937"
+        },
+        {
+          "index": 134,
+          "kind": "FunctionDeclaration",
+          "name": "createWaybillJob",
+          "sha256": "e37c7bd9088df8933345b173aeecda1ce45a2c1820ea1abd3c1f1cd1088853d3"
+        },
+        {
+          "index": 135,
+          "kind": "FunctionDeclaration",
+          "name": "getWaybillJobs",
+          "sha256": "c73de16159801652e8a798a44eb1dba7dff20725c62bc96a9dfcf076c23d68a3"
+        },
+        {
+          "index": 136,
+          "kind": "FunctionDeclaration",
+          "name": "operateWaybillJob",
+          "sha256": "0c4a2eff6b49aba40d26cb71029f58cd1c5d817bd941b0d2e08f6d638b55a05b"
+        },
+        {
+          "index": 137,
+          "kind": "FunctionDeclaration",
+          "name": "previewOrderRows",
+          "sha256": "e53f13fc15a67253f77bd9b9b9ecb0b424cf7174284aa5e37eca3bf8e88e39df"
+        },
+        {
+          "index": 138,
+          "kind": "FunctionDeclaration",
+          "name": "previewProductRows",
+          "sha256": "cff7663f76b1c126728199bd6e5b448807a6d03615af835007fa28cb0297e3f1"
+        }
+      ],
+      "all_other_statements_byte_equal": true
+    },
+    "products": {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "added_handler_sha256": "76279d1f5aaf0070803952801cded476d3520c096c490062baae04e19d9b33da",
+      "added_button_sha256": "549b5662bfa006770e05dc7732f0d53ac80d8c8e8229337a4188112bce8fc7d8",
+      "removing_only_review_entry_restores_base_bytes": true
+    }
+  },
+  "checkboxes": {
+    "MIGRATION_AUDIT.md": {
+      "rows": 88,
+      "byte_equal_to_base": true,
+      "checkbox_rows_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    "MIGRATION_CHECKLIST.md": {
+      "rows": 404,
+      "byte_equal_to_base": true,
+      "checkbox_rows_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  },
+  "statistics_script_contract": "User-selected restored PHP-compatible /api/get_script behavior preserved; actual Browser GET200; prior retirement audit remains corrected.",
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "limitations": [
+    "Owned synthetic App/JWT/PG16 acceptance is not production deployment verification.",
+    "Browser fetch spy observes backend global fetch, not all browser network requests.",
+    "Held HTTP connection was already cancelled when release was attempted; old-body delivery is not claimed.",
+    "Screenshots were visually inspected from emitted JPEG bytes; local image export was not available.",
+    "Current base GitHub Actions run is tracked externally and is not claimed green until its actual terminal conclusion."
+  ],
+  "secret_scan": {
+    "status": "initial_source_and_staged_passed_final_bytes_and_exact_range_required",
+    "binary_path": "/tmp/cinashop-supplier-video-tools/gitleaks",
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "scope_files": 17,
+    "initial_scans": [
+      {
+        "phase": "source-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "dir",
+          ".",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-review-source-initial-secrets.json"
+        ],
+        "cwd": "/tmp/cinashop-supplier-product-review-scan-uu3xvw91/source-initial",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-source-initial-secrets.log",
+          "sha256": "cd1d3f1b84e7e61df069ce5dee1cfbe3845732df94060084f9a3dd5886b83840",
+          "bytes": 79
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-review-source-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      },
+      {
+        "phase": "staged-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "git",
+          "--pre-commit",
+          "--staged",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-review-staged-initial-secrets.json",
+          "."
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-review-staged-initial-secrets.log",
+          "sha256": "2f3584c2892278b2639547736657fc6e1717e878535b3c8dcb5b88671d437ee9",
+          "bytes": 110
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-review-staged-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      }
+    ],
+    "final_evidence_external": "/tmp/cinashop-supplier-product-review-publication-ready.json",
+    "exact_range_base": "20828d49e3052672f1c9256859a9e7e6f8b5e17c"
+  },
+  "publication": {
+    "status": "pending_normal_commit_and_push",
+    "branch": "main",
+    "force": false,
+    "base_ci": {
+      "path": "/tmp/cinashop-supplier-product-review-base-ci.json",
+      "sha256": "de3acafa62629a85c7dab4257de4f88cce204282a3279c9e09919cb1f8b65bbd",
+      "bytes": 563
+    },
+    "remote_and_new_ci": "Verify exact SHA through GitHub after ordinary push; do not claim an unobserved CI success."
+  }
+}
