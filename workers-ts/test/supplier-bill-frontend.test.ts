@@ -12,7 +12,7 @@ beforeAll(async () => {
   const result = await build({ absWorkingDir: root, stdin: { resolveDir: root, contents: `
     import Page from './src/pages/FinanceBills.vue';export {Page};export const captured={};
     const setup=Page.setup;Page.setup=(p,c)=>{const value=setup(p,c);captured.view=value;return value;};
-    export * as api from './src/api/supplierBills';export {http} from './src/api/http';
+    export * as billExport from './src/api/supplierBillExport';export * as api from './src/api/supplierBills';export {http} from './src/api/http';
     export {createPinia,disposePinia} from 'pinia';export {createRenderer,h,nextTick} from 'vue';
     export {createRouter,createMemoryHistory,RouterView} from 'vue-router';` },
     alias: { '@': resolve(root, 'src') }, define: { 'import.meta.env.DEV': 'false', 'import.meta.env.VITE_API_BASE_URL': '"/supplierapi"',
@@ -44,6 +44,117 @@ beforeEach(() => {
   vi.stubGlobal('localStorage', { getItem: (key: string) => local.get(key) ?? null,
     setItem: (key: string, value: string) => local.set(key, value), removeItem: (key: string) => local.delete(key) });
   login(); pinia = runtime.createPinia();
+});
+
+const exportQuery = (changes: Record<string, unknown> = {}) => ({ timeType: 'day', status: '', data: '', period: '2021-01-01', ...changes });
+function exported(q = exportQuery(), count = 105) {
+  return { version: 'supplier-bill-export-v1', selection: 'period', supplier_id: 7, ...q,
+    header: ['交易单号', '关联订单', '交易时间', '交易金额', '支出收入', '交易人', '交易类型', '支付方式'],
+    filekey: ['order_id', 'link_id', 'trade_time', 'number', 'pm', 'user_nickname', 'type_name', 'pay_type_name'],
+    export: Array.from({ length: count }, (_, i) => ({ id: count - i, order_id: `BILL-${count - i}`, link_id: 'ORDER', trade_time: '2021-01-01 12:00:00', number: '1.00', pm: '收入', user_nickname: '买家', type_name: '支付订单', pay_type_name: '余额支付' })),
+    filename: `账单导出_${q.timeType}_${q.period}_${q.status || 'all'}`, count,
+    income_num: `${count}.00`, exp_num: '0.00', entry_num: `${count}.00`, complete: true, bounded: true };
+}
+function downloads() {
+  const blobs: Blob[] = [], clicks: string[] = [], removed = vi.fn();
+  vi.spyOn(URL, 'createObjectURL').mockImplementation(blob => { blobs.push(blob as Blob); return 'blob:owned-bill'; });
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+  Object.assign(browser, { setTimeout: (fn: () => void) => { fn(); return 0; } });
+  Object.assign(hostDocument, { body: { appendChild: vi.fn() }, createElement: () => {
+    const anchor = { style: {}, href: '', download: '', click: () => clicks.push(anchor.download), remove: removed }; return anchor;
+  } });
+  return { blobs, clicks, removed };
+}
+describe('complete period download from the actual compiled Supplier page', () => {
+  it('downloads all105 rows once with the loaded group context, without IDs or a detail-page limit', async () => {
+    login(['supplier.finance.view', 'supplier.finance.manage']); const d = downloads();
+    const f = await mount('/finance/bills?status=1&from=2021-01-01&to=2021-01-02', c => c.url.endsWith('financeRecord') ? exported(c.params) : undefined);
+    try {
+      await f.view.exportBill(f.view.groups.value.list[0]); expect(d.clicks).toEqual(['账单导出_day_2021-01-01_1.csv']);
+      const call = f.calls.at(-1); expect(call.method).toBe('get');
+      expect(call.params).toEqual({ selection: 'period', ...exportQuery({ status: '1', data: '2021/01/01-2021/01/02' }) });
+      const csv = await d.blobs[0].text(); expect(csv.split('\r\n')).toHaveLength(106); expect(csv).toContain('BILL-1');
+      expect(f.view.exportNotice.value).toContain('105'); expect(d.removed).toHaveBeenCalledOnce();
+    } finally { f.close(); }
+  });
+  it('sends no export request under view-only permission, including a direct stale handler call', async () => {
+    const d = downloads(), f = await mount(); try {
+      await f.view.exportBill(f.view.groups.value.list[0]); expect(f.calls).toHaveLength(1); expect(d.blobs).toEqual([]);
+      expect(content(f.host)).not.toContain('下载账单');
+    } finally { f.close(); }
+  });
+  it.each(['filter', 'route', 'session', 'permission', 'unmount'])('never creates a URL for a late export after %s invalidation, even if transport ignores abort', async kind => {
+    login(['supplier.finance.view', 'supplier.finance.manage']); const d = downloads(), late = gate();
+    const f = await mount(undefined, c => { if (c.url.endsWith('financeRecord')) { c.signal = undefined; return late.promise; } });
+    let closed = false;
+    try {
+      const pending = f.view.exportBill(f.view.groups.value.list[0]); await flush(); expect(f.view.exportPeriod.value).toBe('2021-01-01');
+      if (kind === 'filter') { f.view.status.value = '1'; f.view.status.value = ''; }
+      if (kind === 'route') { await f.router.push('/finance/bills?timeType=week'); await flush(); }
+      if (kind === 'session') { login(['supplier.finance.view', 'supplier.finance.manage'], 'owned-export-b', 31, 8); browser.dispatchEvent(new Event('supplier-session-changed')); login(['supplier.finance.view', 'supplier.finance.manage']); browser.dispatchEvent(new Event('supplier-session-changed')); }
+      if (kind === 'permission') { login(['supplier.finance.view']); browser.dispatchEvent(new Event('supplier-session-changed')); }
+      if (kind === 'unmount') { f.close(); closed = true; }
+      late.resolve(exported()); await pending; expect(d.blobs).toEqual([]); expect(d.clicks).toEqual([]); expect(f.view.exportNotice.value).toBe('');
+    } finally { if (!closed) f.close(); }
+  });
+  it('blocks repeated clicks while one complete export is pending and clears loading on failure', async () => {
+    login(['supplier.finance.view', 'supplier.finance.manage']); const d = downloads(), late = gate();
+    const f = await mount(undefined, c => c.url.endsWith('financeRecord') ? late.promise : undefined);
+    try {
+      const row = f.view.groups.value.list[0], pending = f.view.exportBill(row); await flush();
+      await f.view.exportBill(row); expect(f.calls.filter(c => c.url.endsWith('financeRecord'))).toHaveLength(1);
+      late.resolve({ ...exported(), complete: false }); await pending;
+      expect(f.view.exportPeriod.value).toBe(''); expect(f.view.exportError.value).toContain('未下载'); expect(d.clicks).toEqual([]);
+    } finally { f.close(); }
+  });
+});
+
+describe('complete export boundary and CSV safety', () => {
+  it('accepts all10005 rows without the legacy1000 or10000 limit and allows empty full periods', () => {
+    expect(runtime.billExport.parseSupplierBillExport(exported(exportQuery(), 10005), exportQuery(), 7).count).toBe(10005);
+    expect(runtime.billExport.parseSupplierBillExport(exported(exportQuery(), 0), exportQuery(), 7).count).toBe(0);
+  });
+  it.each(['supplier', 'context', 'period', 'status', 'data', 'complete', 'bounded', 'count', 'truncated', 'duplicate', 'reordered', 'number', 'income', 'expense', 'net', 'header', 'filekey', 'filename', 'unknown', 'privateRow', 'time', 'direction'])('rejects %s corruption before any file or object URL exists', kind => {
+    const value: any = exported(), d = downloads();
+    if (kind === 'supplier') value.supplier_id = 8;
+    if (kind === 'context') value.timeType = 'month';
+    if (kind === 'period') value.period = '2021-01-02';
+    if (kind === 'status') value.status = '1';
+    if (kind === 'data') value.data = 'today';
+    if (kind === 'complete') value.complete = false;
+    if (kind === 'bounded') value.bounded = 'true';
+    if (kind === 'count') value.count++;
+    if (kind === 'truncated') value.export.pop();
+    if (kind === 'duplicate') value.export[1].id = value.export[0].id;
+    if (kind === 'reordered') [value.export[0], value.export[1]] = [value.export[1], value.export[0]];
+    if (kind === 'number') value.export[0].number = '=1+1';
+    if (kind === 'income') value.income_num = '105.01';
+    if (kind === 'expense') value.exp_num = '1.00';
+    if (kind === 'net') value.entry_num = '104.99';
+    if (kind === 'header') value.header[0] = '备注';
+    if (kind === 'filekey') value.filekey[0] = 'id';
+    if (kind === 'filename') value.filename = '../../other';
+    if (kind === 'unknown') value.has_more = false;
+    if (kind === 'privateRow') value.export[0].supplier_id = 8;
+    if (kind === 'time') value.export[0].trade_time = '2021-02-30 25:01:01';
+    if (kind === 'direction') value.export[0].pm = 1;
+    expect(() => runtime.billExport.downloadSupplierBillExport(value, exportQuery(), 7, () => true)).toThrow(); expect(d.blobs).toEqual([]); expect(d.clicks).toEqual([]);
+  });
+  it('keeps exact signed20,2 money and quotes formulas, commas, newlines and double quotes in text cells', async () => {
+    const value = exported(exportQuery(), 2);
+    value.export[0] = { ...value.export[0], number: '999999999999999999.99', order_id: ' \t=SUM(1,2)', link_id: 'line\n"quoted"' };
+    value.export[1] = { ...value.export[1], pm: '支出', number: '-0.01', user_nickname: '\u0085@other' };
+    value.income_num = '999999999999999999.99'; value.exp_num = '-0.01'; value.entry_num = '1000000000000000000.00';
+    // The aggregate exceeds numeric20,2, so no apparently complete file is published.
+    expect(() => runtime.billExport.supplierBillExportCsv(value, exportQuery(), 7)).toThrow();
+    value.export[0].number = '999999999999999998.99'; value.income_num = value.export[0].number; value.entry_num = '999999999999999999.00';
+    const blob = runtime.billExport.supplierBillExportCsv(value, exportQuery(), 7), csv = await blob.text();
+    expect(csv).toContain('"\' \t=SUM(1,2)"'); expect(csv).toContain('"line\n""quoted"""'); expect(csv).toContain('"\'\u0085@other"');
+    expect(csv).toContain('"-0.01"'); expect(csv).not.toContain('"\'-0.01"'); expect(csv).toContain('999999999999999998.99');
+  });
+  it('does not download an already invalidated valid manifest', () => {
+    const d = downloads(); expect(runtime.billExport.downloadSupplierBillExport(exported(), exportQuery(), 7, () => false)).toBe(false); expect(d.blobs).toEqual([]);
+  });
 });
 afterEach(() => { runtime.disposePinia(pinia); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const query = (changes: Record<string, unknown> = {}) => ({ timeType: 'day', status: '', data: '', page: 1, limit: 20, ...changes });

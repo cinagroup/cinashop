@@ -3,6 +3,7 @@ import { computed, onMounted, onScopeDispose, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
+import { getSupplierBillExport, downloadSupplierBillExport } from '@/api/supplierBillExport';
 import { getSupplierBillGroups, getSupplierBillDetails, supplierBillDateRange, supplierBillMoney,
   type SupplierBillPeriod, type SupplierBillStatus, type SupplierBillQuery, type SupplierBillGroup,
   type SupplierBillGroups, type SupplierBillDetails } from '@/api/supplierBills';
@@ -14,10 +15,13 @@ const groups = ref<SupplierBillGroups | null>(null), details = ref<SupplierBillD
 const groupLoading = ref(false), detailLoading = ref(false), error = ref(''), detailError = ref('');
 const detailPeriod = ref(''), active = ref(true);
 const routeValid = ref(false);
+const exportPeriod = ref(''), exportError = ref(''), exportNotice = ref('');
+let exportGeneration = 0, exportController: AbortController | undefined;
 let disposed = false, groupGeneration = 0, detailGeneration = 0;
 let groupController: AbortController | undefined, detailController: AbortController | undefined;
 let selectedQuery: SupplierBillQuery | undefined;
 const canRead = computed(() => active.value && !!auth.token && !!auth.user?.id && !!auth.user?.supplier_id && auth.can('supplier.finance.view'));
+const canExport = computed(() => canRead.value && auth.can('supplier.finance.manage'));
 const periodTitle = computed(() => ({ day: '日账单', week: '周账单', month: '月账单' })[timeType.value]);
 
 function closeDetails() {
@@ -25,7 +29,11 @@ function closeDetails() {
   detailPeriod.value = ''; detailLoading.value = false; detailError.value = ''; keyword.value = ''; selectedQuery = undefined;
 }
 function clearGroups() {
+  cancelExport();
   groupGeneration++; groupController?.abort(); groups.value = null; groupLoading.value = false; error.value = ''; closeDetails();
+}
+function cancelExport() {
+  exportGeneration++; exportController?.abort(); exportPeriod.value = ''; exportError.value = ''; exportNotice.value = '';
 }
 function invalidate() {
   clearGroups(); active.value = false; error.value = '登录会话或权限已改变，请重新打开周期账单';
@@ -35,11 +43,13 @@ function current() { return !disposed && session.isCurrent() && canRead.value &&
 function message(value: unknown) { return value instanceof Error ? value.message : '账单读取失败，请重新查询'; }
 watch([timeType, status, fromDate, toDate], clearGroups, { flush: 'sync' });
 watch(canRead, value => { if (!value) invalidate(); }, { flush: 'sync' });
+watch(canExport, value => { if (!value) cancelExport(); }, { flush: 'sync' });
 watch(keyword, () => { detailGeneration++; detailController?.abort(); details.value = null; detailLoading.value = false; detailError.value = ''; }, { flush: 'sync' });
 onScopeDispose(() => { disposed = true; clearGroups(); session.dispose(); });
 
 async function loadGroups(page = 1) {
   if (!current()) return;
+  cancelExport();
   const version = ++groupGeneration; groupController?.abort(); groupController = new AbortController();
   groups.value = null; closeDetails(); groupLoading.value = true; error.value = '';
   try {
@@ -50,6 +60,20 @@ async function loadGroups(page = 1) {
     groups.value = result;
   } catch (cause) { if (current() && version === groupGeneration) error.value = message(cause); }
   finally { if (version === groupGeneration) groupLoading.value = false; }
+}
+async function exportBill(row: SupplierBillGroup) {
+  if (!current() || !canExport.value || exportPeriod.value || !groups.value || !groups.value.list.includes(row)) return;
+  const source = groups.value, supplierId = auth.user!.supplier_id;
+  const query = { timeType: source.timeType, status: source.status, data: source.data, period: row.period };
+  const version = ++exportGeneration; exportController = new AbortController();
+  exportPeriod.value = row.period; exportError.value = ''; exportNotice.value = '';
+  const valid = () => current() && canExport.value && version === exportGeneration && groups.value === source;
+  try {
+    const result = await getSupplierBillExport(query, supplierId, exportController.signal);
+    if (!valid()) return;
+    if (downloadSupplierBillExport(result, query, supplierId, valid)) exportNotice.value = `已生成 ${result.count} 条完整账期流水的 CSV`;
+  } catch (cause) { if (valid()) exportError.value = cause instanceof Error ? cause.message : '账期导出失败，未下载文件'; }
+  finally { if (version === exportGeneration) exportPeriod.value = ''; }
 }
 async function changePeriod(type: SupplierBillPeriod) { if (!routeValid.value) return; timeType.value = type; await loadGroups(); }
 async function openDetails(row: SupplierBillGroup) {
@@ -107,6 +131,9 @@ onMounted(readRoute);
       </form>
     </div>
     <p v-if="error" class="bill-error" role="alert">{{ error }}</p>
+    <p v-if="exportError" class="bill-error" role="alert">{{ exportError }}</p>
+    <p v-if="exportPeriod" role="status">正在准备 {{ exportPeriod }} 的完整账期文件…</p>
+    <p v-if="exportNotice" role="status">{{ exportNotice }}</p>
     <section class="surface bill-panel" :aria-busy="groupLoading" aria-label="账单列表">
       <h2>{{ periodTitle }}</h2>
       <p v-if="groupLoading" role="status">正在读取账单…</p>
@@ -115,7 +142,8 @@ onMounted(readRoute);
           <thead><tr><th>账期</th><th>收入金额</th><th>支出金额</th><th>应入账金额</th><th>流水笔数</th><th>操作</th></tr></thead>
           <tbody><tr v-for="row in groups.list" :key="row.period"><th scope="row">{{ row.add_time }}</th>
             <td>{{ supplierBillMoney(row.income_num) }}</td><td>{{ supplierBillMoney(row.exp_num) }}</td><td><strong>{{ supplierBillMoney(row.entry_num) }}</strong></td><td>{{ row.detail_count }}</td>
-            <td><el-button link type="primary" :aria-label="`${row.add_time} 账单详情`" @click="openDetails(row)">账单详情</el-button></td></tr></tbody>
+            <td><el-button link type="primary" :aria-label="`${row.add_time} 账单详情`" @click="openDetails(row)">账单详情</el-button>
+              <el-button v-if="canExport" link type="primary" :aria-label="`${row.add_time} 下载账单`" :disabled="!!exportPeriod" @click="exportBill(row)">下载账单</el-button></td></tr></tbody>
         </table></div>
         <p v-if="!groups.count">当前筛选没有账单。</p>
         <div class="bill-pagination"><span>共 {{ groups.count }} 个账期 · 第 {{ groups.page }} 页</span><div>

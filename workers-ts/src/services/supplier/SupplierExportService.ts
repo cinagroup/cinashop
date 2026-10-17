@@ -28,6 +28,7 @@ import { readPromotionLineEvidence } from "@/services/order/RefundSplitAllocatio
 import { SUPPLIER_QUEUE_CACHE_TYPE_BY_QUEUE_TYPE } from "@/services/supplier/SupplierQueueHistoryService";
 import { ValidateException } from "@/utils/errors";
 import { readSupplierCarts, supplierReadSnapshot, supplierSnapshotObject } from "./SupplierReadSupport";
+import { SupplierBillExportService } from "./SupplierBillExportService";
 
 const MAX_ORDER_EXPORT_ROWS = 250;
 const MAX_BATCH_EXPORT_ROWS = 1_000;
@@ -491,6 +492,7 @@ export class SupplierExportService {
 
   async financeRecord(supplierId: number, query: Record<string, string | undefined>): Promise<LegacyExportManifest> {
     assertSupplierId(supplierId);
+    if (query.selection !== undefined) return new SupplierBillExportService(this.container).period(supplierId, query);
     const ids = parseSupplierExportIds(query.ids, true);
     const rows = await this.container.db.select({
       orderId: supplierFlowingWater.orderId,

@@ -66,6 +66,7 @@ supplierapiRoutes.use('/order/refund_operations', SupplierProactiveRefund.privat
 supplierapiRoutes.use('/order/refund_operations/*', SupplierProactiveRefund.privateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/fund_record', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/fund_record_info', SupplierController.financeBillPrivateResponse);
+supplierapiRoutes.use('/export/financeRecord', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
 supplierapiRoutes.use("/*", supplierPermissionMiddleware);
 

@@ -1,5 +1,15 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-17 Supplier 完整账期下载纵向
+
+Supplier 周期账单新增下载，沿用 GET /supplierapi/export/financeRecord 与真实 supplier.finance.manage 权限。显式 selection=period 绑定当前供应商、日／周／月、结算状态、创建日期及所选账期；同一次只读 REPEATABLE READ 事务内按 ID 倒序分批读取完整账期，核对全部笔数及收入／支出／净额，不以1000或10000条静默截断。16MiB容量或15秒事务应用预算超限时整单明确失败，不生成部分成功文件。既有省略selection的按IDs导出及旧下载helper保持兼容。
+
+前端核对闭合17字段清单、9字段流水、租户／账期、严格倒序和全额BigInt汇总后才生成旧8列CSV；文字公式前缀保持文本，金额使用规范两位小数。筛选、路由、会话、权限变化及卸载会取消导出；即使传输忽略取消，也不为迟到结果创建下载。只读账号保持账单查看，不显示下载。
+
+最终5入口288个不同检查：SFC／CSV67、查询与容量规则33、runner177、实际App／JWT／独立SELECT-only PG16原生10、实际IAB联合验收1。原生覆盖105／10005条全量、最大int4 ID、分批期间独立写入不改变当前快照、权限／跨租户、旧IDs及真实UTF8容量溢出。桌面和移动端实际下载日／周／月及已结算4份CSV；真实GET前后六表快照一致，扣留后切换筛选／会话不会增加下载，撤权后拒绝、恢复后可读。释放计数仅表示发送尝试；忽略取消的迟到载荷由SFC测试另证。证据及最初int4游标失败保留于[本批账本](workers-ts/audit/php-ts-supplier-bill-export-20261017.json)。完整Supplier／Worker类型、production构建通过，三个自建PG集群夹具清零且独立确认停止。
+
+账期下载这一纵向已实现并验证，历史复选行及默认旧parity manifest保持；未以本批关闭整个迁移。0194／0195／0196、运行角色方案、既有退款实现和用户选定的统计脚本PHP兼容合同保持，get_script实际响应。异步渠道provider admission／原操作恢复／回调／对账、实际已开票人工红冲及真实发布门禁继续开放；无生产DDL／GRANT／部署或真实支付／税务调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 周期账单与完整明细只读纵向
 
 Supplier 新周期账单入口按当前JWT供应商及真实finance.view读取日／周／月账单，选择结算状态、创建日期及交易单号／交易人搜索。已结算账单按finishTime分组，其他状态按addTime分组，日期筛选仍按创建时间；北京时间和PHP日历年周键00／53保持。收入、支出、净额及逐条流水使用精确十进制文本与BigInt显示。现代selection=period不依赖历史ID集合，完整账期可继续分页；真实105行与10005行读验收证明第100行之后仍完整可读，不以100／1000／10000行静默截断。既有GET省略selection继续提供完整旧IDs，超过1000项或混入不存在／他供应商／已删除流水时明确拒绝，不返回部分成功。合法旧日期预设及ModelTrait的quarter末日零点、闭区间端点quirk单独核对。
