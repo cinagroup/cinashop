@@ -43,6 +43,7 @@ import { SupplierProductLabelService, type SupplierProductLabelActor } from './S
 import { tryLockProductWrite } from '@/services/product/ProductAssociationService';
 import { lockProductUnitLifecycle } from '@/services/product/ProductUnitLifecycle';
 import { HttpApiException } from '@/utils/errors';
+import { supplierProductScheduleInput, type SupplierProductScheduleInput } from './SupplierProductScheduleInput';
 
 export {
   buildSkuCombinations,
@@ -66,7 +67,7 @@ const MAX_SKUS = 200;
 
 type UnknownRecord = Record<string, unknown>;
 
-export interface SupplierProductInput {
+export interface SupplierProductInput extends SupplierProductScheduleInput {
   productType: 0 | 1 | 3;
   storeName: string;
   storeInfo: string;
@@ -280,6 +281,7 @@ export function normalizeSupplierProductInput(
   }
 
   return {
+    ...supplierProductScheduleInput(input),
     productType,
     storeName: requiredString(firstValue(input, "store_name", "storeName"), "商品名称", 256),
     storeInfo: optionalString(firstValue(input, "store_info", "storeInfo"), "商品简介", 256),
@@ -404,6 +406,7 @@ export class SupplierProductManagementService {
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord, actor?: SupplierProductLabelActor) {
     const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
     const labelIds = supplierProductLabelInput(rawInput);
+    const hasSchedule = input.autoOnTime !== undefined || input.autoOffTime !== undefined;
     const labelAuthority = new SupplierProductLabelService(this.container);
     const labelPath = `/supplierapi/product/product/${productId}`;
     return withTx(this.container, async (tx) => {
@@ -412,11 +415,11 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined) {
+      if (labelIds !== undefined || hasSchedule) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
-        await assertSupplierProductLabelBindings(tx, supplierId, labelIds);
+        if (labelIds !== undefined) await assertSupplierProductLabelBindings(tx, supplierId, labelIds);
       }
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
@@ -426,7 +429,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if (labelIds !== undefined && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -492,6 +495,8 @@ export class SupplierProductManagementService {
         stock,
         isShow: 0,
         isVerify: 0,
+        ...(input.autoOnTime === undefined ? {} : { autoOnTime: input.autoOnTime }),
+        ...(input.autoOffTime === undefined ? {} : { autoOffTime: input.autoOffTime }),
         isPostage: input.isPostage,
         cost,
         videoOpen: input.videoLink ? 1 : 0,
@@ -554,9 +559,32 @@ export class SupplierProductManagementService {
       if (!existing) await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, savedProductId));
       if (labelIds !== undefined) {
         await replaceSupplierProductLabelBindings(tx, supplierId, savedProductId, labelIds);
-        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      }
+      if (labelIds !== undefined || hasSchedule) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (hasSchedule) {
+        const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
+          isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
+          autoOnTime: storeProduct.autoOnTime, autoOffTime: storeProduct.autoOffTime }).from(storeProduct)
+          .where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (!read || read.type !== SUPPLIER_TYPE || read.relationId !== supplierId || read.isDel !== 0
+          || read.isShow !== 0 || read.isVerify !== 0
+          || input.autoOnTime !== undefined && read.autoOnTime !== input.autoOnTime
+          || input.autoOffTime !== undefined && read.autoOffTime !== input.autoOffTime) {
+          throw new HttpApiException('定时计划保存核对失败，请刷新后重试', 409, 409);
+        }
       }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
+    }).catch((error: unknown) => {
+      if (hasSchedule) {
+        let cause = error;
+        for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+          if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
+            throw new HttpApiException('商品计划或权限正在修改，请刷新后重试', 409, 409);
+          }
+          cause = 'cause' in cause ? cause.cause : undefined;
+        }
+      }
+      throw error;
     });
   }
 
@@ -626,6 +654,8 @@ export class SupplierProductManagementService {
       video_link: supplierProductEditingMediaReference(product.videoLink),
       is_show: product.isShow,
       is_verify: product.isVerify,
+      auto_on_time: product.autoOnTime,
+      auto_off_time: product.autoOffTime,
       refusal: product.refusal,
     };
     const media = await projectSupplierProductMedia(this.container.db, supplierId, {

@@ -332,6 +332,8 @@ export interface ProductDetail {
   is_show?: number;
   is_verify?: number;
   refusal?: string;
+  auto_on_time?: number;
+  auto_off_time?: number;
   media?: import('./utils/productMedia').SupplierProductMedia;
 }
 

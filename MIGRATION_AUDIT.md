@@ -1,5 +1,15 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-17 Supplier 商品定时上下架作者与执行
+
+普通商品新建／编辑新增北京时间上下架计划，可保存、重读和单独取消。未修改列在实际UPDATE中完全省略，原生等待真实商品行的并发测试确认不会覆盖管理员另行提交的新计划。空字符串与0明确取消，合法过去／相同／逆序时间均保留；不增加PHP后端没有的24小时或未来规则。显式计划复用当前JWT身份、口令、有效期与manage屏障、成熟分类／商品锁和最终真实回读；跳过／篡改触发器均409并回滚。保存仍下架并待审，copy继续继承来源隐藏计划。
+
+成熟到期执行器、Queue、审核与资金路径保持：上架<=、下架<，同时到期先上后下；不清除时间列、不批准审核。实际执行器独立LOGIN仅获商品SELECT与is_show列UPDATE。读取失败或DTO非法禁写，路由、会话ABA和卸载取消在途／排队普通GET与POST；取消请求不能撤回已提交的普通保存，不声称新增UUID幂等协议。
+
+最终12入口428个不同检查通过：runner222、新计划规则34、实际新SFC30、原copy27、媒体34、保存12、到期6，共365单元；真实App／JWT／独立PG16原生62（新计划16、成熟timer4、copy24、详情18）；production构建IAB1。两套Worker类型、Supplier类型与生产构建通过。Browser实际两次保存、到期只改可见性并维持待审、取消后旧任务跳过、真实21→22→21清空与新读均通过；29GET的37表／36序列无写，最终变更仅限本商品完整保存，财务与其他商品不变。桌面1280×720／移动390×844图像已目检，新增卡片无横向溢出，控制台抽样0警告／错误；四座自有PG16夹具清零并独立确认停止。
+
+首轮SFC测试DOM与storage夹具、默认4GB类型堆退出、四处测试类型诊断、无npm启动器及Browser旧分类路径失败保留；最终受影响输入实际重验，不重复计数。原复选行与用户选定的已恢复PHP兼容get_script保持，实际GET200。精确PHP分发、命令、参数身份、输入差异、失败和截图见[本批账本](workers-ts/audit/php-ts-supplier-product-schedule-20261017.json)与[合同说明](workers-ts/docs/php-ts-supplier-product-schedule-20261017.md)。main基线edd94872的CI尚在运行，本批通过独立codex/supplier-product-schedule与草稿PR发布，保留原main工作流，不自动合入。无生产DDL／GRANT／部署或真实provider调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 只读商品详情与声明归属 CI 修复
 
 实际商品列表新增“详情”，进入独立 `/products/:id/view`，查看权限可读取基本资料、当前规格、库存、配送、售后和媒体；管理权限可另行进入原编辑页。PHP 原五页签抽屉包含保存行为，本批只完成此只读消费面，不称整个编辑抽屉或全部迁移完成。新 GET /supplierapi/product/product/:id/view 返回闭合9／product30／SKU10投影，在真实 REPEATABLE READ／READ ONLY 核对当前账号、供应商、权限和本店商品；纯SELECT账号只需九表读取，无DML或序列能力。明确边界超出即失败，十八位整数两位小数金额按字符串展示；商品类型2优惠券、3虚拟、4次卡按实际schema。

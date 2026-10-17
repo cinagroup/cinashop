@@ -798,12 +798,14 @@ export async function setProductCategoryShow(id: number, isShow: number, expecte
   return apiRequest<null>({ method: "PUT", url: `/product/category/set_show/${id}/${isShow}`, data: { expected_revision: expectedRevision } });
 }
 
-export async function getProductDetail(id: number): Promise<ProductDetail> {
+export async function getProductDetail(id: number, signal?: AbortSignal): Promise<ProductDetail> {
+  if (signal?.aborted) throw Error('商品读取已取消');
   if (previewMode) return clonePreviewDetail(previewProductDetails.get(id) ?? defaultPreviewDetail(id));
-  return apiRequest<ProductDetail>({ method: "GET", url: `/product/product/${id}` });
+  return apiRequest<ProductDetail>({ method: "GET", url: `/product/product/${id}`, signal });
 }
 
-export async function saveProduct(id: number, data: ProductDetail): Promise<ProductSaveResult> {
+export async function saveProduct(id: number, data: ProductDetail, signal?: AbortSignal): Promise<ProductSaveResult> {
+  if (signal?.aborted) throw Error('商品保存已取消');
   if (previewMode) {
     const savedId = id || Math.max(...previewProducts.map((item) => item.id)) + 1;
     const saved = clonePreviewDetail({ ...data, id: savedId, is_show: 0, is_verify: 0 });
@@ -815,7 +817,7 @@ export async function saveProduct(id: number, data: ProductDetail): Promise<Prod
     else previewProducts.unshift({ id: savedId, product_type: data.product_type, image: data.slider_image[0], store_name: data.store_name, price, stock, sales: 0, is_show: 0, is_verify: 0, add_time: Math.floor(Date.now() / 1000) });
     return { id: savedId, is_show: 0, is_verify: 0 };
   }
-  return apiRequest<ProductSaveResult>({ method: "POST", url: id ? `/product/product/${id}` : "/product/product", data });
+  return apiRequest<ProductSaveResult>({ method: "POST", url: id ? `/product/product/${id}` : "/product/product", data, signal });
 }
 
 export interface ProductSkuRetirementResult {
