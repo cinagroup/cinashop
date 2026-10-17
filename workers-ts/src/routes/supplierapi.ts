@@ -23,6 +23,7 @@ import * as SupplierUnpaidOrderEdit from '@/controllers/supplier/SupplierUnpaidO
 import * as SupplierOfflinePayment from '@/controllers/supplier/SupplierOfflinePaymentController';
 import * as SupplierManualRefund from '@/controllers/supplier/SupplierManualRefundController';
 import * as SupplierProactiveRefund from '@/controllers/supplier/SupplierProactiveRefundController';
+import * as SupplierExtractApplication from '@/controllers/supplier/SupplierExtractApplicationController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -70,6 +71,8 @@ supplierapiRoutes.use('/export/financeRecord', SupplierController.financeBillPri
 supplierapiRoutes.use('/finance/supplier_flowing_water/list', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/type', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/mark/*', SupplierController.financeBillPrivateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/cash', SupplierExtractApplication.privateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/application_operations/*', SupplierExtractApplication.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/list', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/mark/*', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
@@ -328,7 +331,10 @@ supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record", SupplierCon
 supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record_info", SupplierController.financeFundRecordInfo);
 supplierapiRoutes.get("/finance/supplier_extract/list", SupplierController.extractList);
 supplierapiRoutes.get('/finance/supplier_extract/mark/:id', SupplierController.extractMark);
+supplierapiRoutes.get("/finance/supplier_extract/cash", SupplierExtractApplication.seed);
 supplierapiRoutes.post("/finance/supplier_extract/cash", SupplierController.applyExtract);
+supplierapiRoutes.get('/finance/supplier_extract/application_operations/:operationId', SupplierExtractApplication.receipt);
+supplierapiRoutes.post('/finance/supplier_extract/application_operations/:operationId/resolve', SupplierExtractApplication.resolve);
 supplierapiRoutes.post("/finance/supplier_extract/mark/:id", SupplierController.updateExtractMark);
 
 supplierapiRoutes.all("/*", (c) =>

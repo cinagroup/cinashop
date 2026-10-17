@@ -56,6 +56,7 @@ import {
 import { readBoundedJsonObject as readRequestJsonObject } from "@/utils/request-body";
 import { categoryActor } from './SupplierProductCategoryController';
 import * as ProductRecycle from './SupplierProductRecycleController';
+import * as ExtractApplication from './SupplierExtractApplicationController';
 
 type SupplierContext = Context<{
   Bindings: Env;
@@ -916,9 +917,9 @@ export async function extractMark(c: SupplierContext) {
 }
 
 export async function applyExtract(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  await financeService(c).applyExtract(supplierId, await readJsonObject(c));
-  return jsonOk(c, null, "申请转账成功");
+  // Old public unkeyed requests explicitly fail the versioned closed parser.
+  // The mature internal method remains available to existing financial callers.
+  return ExtractApplication.execute(c);
 }
 
 export async function updateExtractMark(c: SupplierContext) {

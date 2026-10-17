@@ -28,6 +28,8 @@ const navigationCatalog = [
   { path: '/finance/bills', label: '周期账单', icon: Wallet, permission: 'supplier.finance.view' },
   { path: '/finance/flows', label: '资金流水', icon: Wallet, permission: 'supplier.finance.view' },
   { path: '/finance/extracts', label: '提现记录', icon: Wallet, permission: 'supplier.finance.view' },
+  { path: '/finance/apply', label: '申请提现', icon: Wallet, permission: 'supplier.finance.manage' },
+  { path: '/finance/application-result', label: '提现申请结果', icon: Wallet, permission: '' },
   { path: "/printers", label: "小票打印机", icon: Printer, permission: "supplier.print.view" },
   { path: "/waybills", label: "电子面单", icon: Tickets, permission: "supplier.waybill.view" },
   { path: "/settings", label: "履约配置", icon: Tools, permission: "supplier.config.view" },
@@ -35,7 +37,7 @@ const navigationCatalog = [
   { path: "/administrators", label: "子账号管理", icon: User, permission: "supplier.admin.view" },
 ];
 const navigation = computed(() =>
-  navigationCatalog.filter((item) => previewMode || auth.can(item.permission)),
+  navigationCatalog.filter((item) => previewMode || item.permission === '' || auth.can(item.permission)),
 );
 
 async function navigate(path: string) {

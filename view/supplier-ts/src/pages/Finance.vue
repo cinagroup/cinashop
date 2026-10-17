@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
 import {
-  applyExtract,
   getFinanceInfo,
   getFinanceSummary,
   updateFinanceInfo,
@@ -13,7 +13,7 @@ import { formatMoney } from "@/utils/format";
 import FinanceFlows from '@/pages/FinanceFlows.vue';
 import FinanceExtracts from '@/pages/FinanceExtracts.vue';
 
-const auth = useAuthStore();
+const auth = useAuthStore(), router = useRouter();
 const loading = ref(false);
 const activeTab = ref("flows");
 const summary = ref<FinanceSummary>({
@@ -32,10 +32,6 @@ const financeInfo = reactive<FinanceInfo>({
   wechat: "",
   wechat_qrcode_url: "",
 });
-const extractRefresh = ref(0);
-const extractDialogOpen = ref(false);
-const extractSubmitting = ref(false);
-const extractForm = reactive({ extract_type: "bank", money: "", mark: "" });
 const infoSaving = ref(false);
 const canManageFinance = computed(() => auth.can("supplier.finance.manage"));
 
@@ -69,34 +65,6 @@ async function saveFinanceInfo() {
   }
 }
 
-function openExtractDialog() {
-  if (!canManageFinance.value) return;
-  extractForm.extract_type = "bank";
-  extractForm.money = "";
-  extractForm.mark = "";
-  extractDialogOpen.value = true;
-}
-
-async function submitExtract() {
-  if (!canManageFinance.value) return;
-  if (!/^\d+(?:\.\d{1,2})?$/.test(extractForm.money) || Number(extractForm.money) <= 0) {
-    ElMessage.warning("请输入正确的提现金额");
-    return;
-  }
-  extractSubmitting.value = true;
-  try {
-    await applyExtract(extractForm.extract_type, extractForm.money, extractForm.mark);
-    extractDialogOpen.value = false;
-    extractRefresh.value++;
-    await loadSummaryAndInfo();
-    ElMessage.success("提现申请已提交");
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "提现申请失败");
-  } finally {
-    extractSubmitting.value = false;
-  }
-}
-
 onMounted(loadAll);
 </script>
 
@@ -104,7 +72,7 @@ onMounted(loadAll);
   <section v-loading="loading" class="page-section finance-page">
     <header class="page-heading finance-heading">
       <div><h1>财务结算</h1><p>订单收货后进入可提现余额，退款和提现申请均保留独立流水</p></div>
-      <el-button v-if="canManageFinance" type="primary" @click="openExtractDialog">申请提现</el-button>
+      <el-button v-if="canManageFinance" type="primary" @click="router.push('/finance/apply')">申请提现</el-button>
     </header>
 
     <div class="finance-summary-grid" aria-label="供应商财务指标">
@@ -122,7 +90,7 @@ onMounted(loadAll);
         </el-tab-pane>
 
         <el-tab-pane label="提现记录" name="extracts">
-          <FinanceExtracts v-if="activeTab === 'extracts'" embedded :refresh-key="extractRefresh" />
+          <FinanceExtracts v-if="activeTab === 'extracts'" embedded />
         </el-tab-pane>
 
         <el-tab-pane label="收款设置" name="settings">
@@ -136,14 +104,5 @@ onMounted(loadAll);
       </el-tabs>
     </div>
 
-    <el-dialog v-if="canManageFinance" v-model="extractDialogOpen" title="申请提现" width="min(480px, 92vw)">
-      <el-form label-position="top">
-        <el-form-item label="提现方式"><el-select v-model="extractForm.extract_type" style="width:100%"><el-option label="银行卡" value="bank" /><el-option label="支付宝" value="alipay" /><el-option label="微信" value="weixin" /></el-select></el-form-item>
-        <el-form-item label="提现金额"><el-input v-model="extractForm.money" inputmode="decimal" placeholder="0.00"><template #prefix>¥</template></el-input></el-form-item>
-        <el-form-item label="备注"><el-input v-model="extractForm.mark" type="textarea" :rows="3" maxlength="512" show-word-limit /></el-form-item>
-      </el-form>
-      <p class="security-note">申请提交后即预占可提现余额；审核拒绝后金额自动释放。</p>
-      <template #footer><el-button @click="extractDialogOpen = false">取消</el-button><el-button type="primary" :loading="extractSubmitting" @click="submitExtract">提交申请</el-button></template>
-    </el-dialog>
   </section>
 </template>

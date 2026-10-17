@@ -120,7 +120,7 @@ watch(() => route.fullPath, readRoute, { flush: 'sync' }); onMounted(readRoute);
         <article class="surface"><span>全账可提现余额</span><strong>{{ money(result.statistics.withdrawable) }}</strong></article>
       </div>
       <p class="extract-note">前三项保留日期和方式筛选；待审保留当前转账筛选，待转与已转账按各自状态汇总。可提现余额按全部账目计算。</p>
-      <p class="extract-note">提现限额配置：最低 {{ money(result.statistics.extract_min_price) }}，最高 {{ result.statistics.extract_max_price === '0.00' ? '未设上限' : money(result.statistics.extract_max_price) }}。申请以提交时核对为准。</p>
+      <p class="extract-note">提现限额配置：最低 {{ money(result.statistics.extract_min_price) }}，最高 {{ result.statistics.extract_max_price === '0.00' ? '¥0.00（暂不可申请）' : money(result.statistics.extract_max_price) }}。申请以提交时核对为准。</p>
     </template>
     <section class="surface extract-panel" aria-label="提现记录列表" :aria-busy="loading">
       <h2>提现记录</h2><p v-if="loading" role="status">正在读取提现记录…</p>

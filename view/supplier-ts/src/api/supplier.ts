@@ -1487,10 +1487,6 @@ export async function getExtracts(params: Record<string, string | number>): Prom
   return apiRequest<ExtractPageResult>({ method: "GET", url: "/finance/supplier_extract/list", params });
 }
 
-export async function applyExtract(extractType: string, money: string, mark: string) {
-  if (previewMode) return null;
-  return apiRequest<null>({ method: "POST", url: "/finance/supplier_extract/cash", data: { extract_type: extractType, money, mark } });
-}
 
 export type SupplierVersionedProfile = SupplierProfile & { revision: string };
 

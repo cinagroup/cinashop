@@ -56,7 +56,7 @@ describe("supplier frontend export and queue-history migration", () => {
     expect(orders).toContain('auth.can("supplier.print.manage")');
     expect(orders).toContain('auth.can("supplier.waybill.manage")');
     expect(finance).toContain('auth.can("supplier.finance.manage")');
-    expect(finance).toContain('v-if="canManageFinance" type="primary" @click="openExtractDialog"');
+    expect(finance).toContain(`v-if="canManageFinance" type="primary" @click="router.push('/finance/apply')"`);
   });
 
   it("does not restore retired global queue mutations", () => {
