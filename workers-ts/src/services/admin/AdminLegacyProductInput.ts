@@ -7,6 +7,7 @@ import { parseLevelActivationJson } from './AdminLevelActivationInput';
 import { adminProductModerationTime } from './AdminProductModerationInput';
 import { normalizeProductVideoReference } from '@/services/product/ProductVideoPolicy';
 import { classifyProductMediaReference } from '../../../../view/common/productMediaReference';
+import { supplierProductParameterCopyRows, type SupplierProductParameterCopyCapability } from '@/services/supplier/SupplierProductParameterCopyCapability';
 
 export const ADMIN_LEGACY_PRODUCT_MAX_BODY_BYTES = 1024 * 1024;
 const MAX_INTEGER = 2_147_483_647;
@@ -38,6 +39,8 @@ export interface AdminLegacyProductInputOptions {
   erpOpen?: boolean;
   /** The modern full editor writes controlled HTTPS MP4 or private asset references. */
   controlledVideo?: boolean;
+  /** Opaque server-only snapshot captured from the locked genuine Supplier source. */
+  supplierParameterCopy?: SupplierProductParameterCopyCapability;
 }
 export interface AdminLegacyProductCardImport {
   suk: string;
@@ -274,7 +277,8 @@ export function normalizeAdminLegacyProductInput(value: unknown, options: AdminL
   const customForm = source.custom_form === undefined ? [] : source.custom_form;
   if (!Array.isArray(customForm)) row(customForm, '自定义表单');
   if (Object.keys(customForm as object).length > 100) throw new ValidateException('自定义表单不能超过100项');
-  const parameterSpecs = specs(source.specs);
+  const parameterSpecs = options.supplierParameterCopy === undefined ? specs(source.specs)
+    : supplierProductParameterCopyRows(options.supplierParameterCopy, source.specs_id, source.specs);
   const sourceUserLabels = array(source.label_id, '用户标签', 100);
   // Exact source discrepancy: real Form submits numeric IDs, while saveData
   // applies array_column(..., 'id'). That array (empty or nonempty) is omitted

@@ -48,6 +48,8 @@ import { supplierProductBrandInput, lockSupplierProductBrandPath, readSupplierBr
   readSupplierProductBrandSelection, replaceSupplierProductBrandBindings } from './SupplierProductBrandBindings';
 import { supplierProductEnsureInput, lockSupplierProductEnsures, readSupplierEnsureProtectedRelations,
   readSupplierProductEnsureSelection, replaceSupplierProductEnsureBindings } from './SupplierProductEnsureBindings';
+import { supplierProductParameterInput, lockSupplierProductParameterTemplate, assertSupplierProductParameterTemplate, readSupplierParameterProtectedRelations,
+  readSupplierProductParameterSelection, replaceSupplierProductParameterBindings } from './SupplierProductParameterBindings';
 
 export {
   buildSkuCombinations,
@@ -412,6 +414,7 @@ export class SupplierProductManagementService {
     const labelIds = supplierProductLabelInput(rawInput);
     const brandIds = supplierProductBrandInput(rawInput);
     const ensureIds = supplierProductEnsureInput(rawInput);
+    const parameters = supplierProductParameterInput(rawInput);
     const hasSchedule = input.autoOnTime !== undefined || input.autoOffTime !== undefined;
     const labelAuthority = new SupplierProductLabelService(this.container);
     const labelPath = `/supplierapi/product/product/${productId}`;
@@ -421,7 +424,7 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined) {
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
@@ -436,7 +439,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -459,11 +462,14 @@ export class SupplierProductManagementService {
       if (existing && existing.productType !== input.productType) {
         throw new ValidateException("商品创建后不能修改履约类型");
       }
-      let protectedBrandRelations = brandIds !== undefined && existing && ensureIds === undefined
+      let protectedBrandRelations = brandIds !== undefined && existing && ensureIds === undefined && parameters === undefined
         ? await readSupplierBrandProtectedRelations(tx, productId, labelIds !== undefined) : [];
       const admittedEnsures = ensureIds === undefined ? [] : await lockSupplierProductEnsures(tx, supplierId, ensureIds, existing);
-      const protectedEnsureRelations = ensureIds !== undefined && existing
+      let protectedEnsureRelations = ensureIds !== undefined && existing
         ? await readSupplierEnsureProtectedRelations(tx, productId, labelIds !== undefined) : [];
+      const admittedParameter = parameters === undefined ? undefined : await lockSupplierProductParameterTemplate(tx, supplierId, parameters.specs_id);
+      const protectedParameterRelations = parameters !== undefined && existing
+        ? await readSupplierParameterProtectedRelations(tx, productId, labelIds !== undefined) : [];
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
       await lockSupplierProductMedia(tx, supplierId, input);
@@ -572,9 +578,17 @@ export class SupplierProductManagementService {
       if (labelIds !== undefined) {
         await replaceSupplierProductLabelBindings(tx, supplierId, savedProductId, labelIds);
       }
+      if (parameters !== undefined) {
+        await replaceSupplierProductParameterBindings(tx, supplierId, savedProductId, parameters, admittedParameter, existing ? {
+          ...existing, ...productValues, ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
+        } : undefined, protectedParameterRelations, labelIds !== undefined);
+        if (ensureIds !== undefined) protectedEnsureRelations = await readSupplierEnsureProtectedRelations(tx, savedProductId, labelIds !== undefined);
+        else if (brandIds !== undefined) protectedBrandRelations = await readSupplierBrandProtectedRelations(tx, savedProductId, labelIds !== undefined);
+      }
       if (ensureIds !== undefined) {
         await replaceSupplierProductEnsureBindings(tx, supplierId, savedProductId, ensureIds, admittedEnsures, existing ? {
           ...existing, ...productValues, ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
+          ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
         } : undefined, protectedEnsureRelations, labelIds !== undefined);
         if (brandIds !== undefined) protectedBrandRelations = await readSupplierBrandProtectedRelations(tx, savedProductId, labelIds !== undefined);
       }
@@ -582,9 +596,11 @@ export class SupplierProductManagementService {
         await replaceSupplierProductBrandBindings(tx, supplierId, savedProductId, brandIds, existing ? {
           ...existing, ...productValues, ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
           ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
+          ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
         } : undefined, protectedBrandRelations, labelIds !== undefined);
       }
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (parameters !== undefined) await assertSupplierProductParameterTemplate(tx, parameters.specs_id, admittedParameter);
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       if (hasSchedule) {
         const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
           isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
@@ -599,7 +615,7 @@ export class SupplierProductManagementService {
       }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
-      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined) {
+      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined) {
         let cause = error;
         for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
           if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
@@ -690,7 +706,8 @@ export class SupplierProductManagementService {
       ? this.env?.APP_KEY ? (await signAttachmentReferences(this.env.APP_KEY, [video]))[0] : '' : video;
     const brand = await readSupplierProductBrandSelection(this.container.db, product);
     const ensures = await readSupplierProductEnsureSelection(this.container.db, supplierId, product);
-    return { ...detail, ...brand, ...ensures, media, video_preview_url: videoPreview };
+    const parameters = await readSupplierProductParameterSelection(this.container.db, supplierId, product);
+    return { ...detail, ...brand, ...ensures, ...parameters, media, video_preview_url: videoPreview };
   }
 
   async recycleProduct(supplierId: number, productId: number) {
