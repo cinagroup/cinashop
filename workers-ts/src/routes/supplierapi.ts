@@ -25,6 +25,7 @@ import * as SupplierManualRefund from '@/controllers/supplier/SupplierManualRefu
 import * as SupplierProactiveRefund from '@/controllers/supplier/SupplierProactiveRefundController';
 import * as SupplierExtractApplication from '@/controllers/supplier/SupplierExtractApplicationController';
 import * as SupplierFinanceAccounts from '@/controllers/supplier/SupplierFinanceAccountsController';
+import * as SupplierExtractMedia from '@/controllers/supplier/SupplierExtractMediaController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -73,6 +74,7 @@ supplierapiRoutes.use('/finance/supplier_flowing_water/list', SupplierController
 supplierapiRoutes.use('/finance/supplier_flowing_water/type', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_flowing_water/mark/*', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/info', SupplierFinanceAccounts.privateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/:id/media', SupplierExtractMedia.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/cash', SupplierExtractApplication.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/application_operations/*', SupplierExtractApplication.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/list', SupplierController.financeBillPrivateResponse);
@@ -332,6 +334,7 @@ supplierapiRoutes.post("/finance/supplier_flowing_water/mark/:id", SupplierContr
 supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record", SupplierController.financeFundRecord);
 supplierapiRoutes.get("/finance/supplier_flowing_water/fund_record_info", SupplierController.financeFundRecordInfo);
 supplierapiRoutes.get("/finance/supplier_extract/list", SupplierController.extractList);
+supplierapiRoutes.get('/finance/supplier_extract/:id/media', SupplierExtractMedia.read);
 supplierapiRoutes.get('/finance/supplier_extract/mark/:id', SupplierController.extractMark);
 supplierapiRoutes.get("/finance/supplier_extract/cash", SupplierExtractApplication.seed);
 supplierapiRoutes.post("/finance/supplier_extract/cash", SupplierController.applyExtract);

@@ -1,5 +1,17 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-17 Supplier 历史提现二维码与转账凭证纵向
+
+Supplier /finance/extracts 新增按本笔历史行及版本读取图片的私有投影，补齐申请时二维码与 Admin 登记凭证。GET /supplierapi/finance/supplier_extract/:id/media 只接受唯一 revision；真实 JWT、当前身份与 finance.view、所属提现实际行及 xmin 版本在 REPEATABLE READ／READ ONLY 内核对。闭合七字段、两个闭合四字段媒体项；旧22字段列表与备注、提现／Admin转账业务方法保持。读取仅需六表SELECT的受限LOGIN，不授图库、DML或序列能力。
+
+二维码须属于该供应商；已审核并登记转账的凭证须由真实历史Admin记录委托且为正确共享Admin素材。历史禁用／软删除Admin与旧无0197 UUID记录仍可读取明确登记的合法图片，不从当前设置或臆测上传者推断归属。旧api／kefuapi精确私有引用（含格式正确的过期旧票据）重新校验行、类型、模块、命名空间后签发300秒规范图片链接；两类图片独立验证。旧票据不提供授权，已签发短期链接到期前仍为bearer capability。前端严格绑定原始行、身份和引用，版本冲突、真实会话ABA、撤权、列表或路由切换立即清空并取消迟到读取；到期隐藏且仅手动重试。
+
+本批9入口417个不同检查通过：runner202、旧历史SFC48、新媒体SFC56、媒体规则26、旧历史读取规则47、CSV6、RBAC10共395单元；真实App／JWT／纯SELECT PG16原生21；production构建IAB实际联合验收1，另有同源桌面1280×720及移动390×844图像与宽度证据。实际浏览器只登记一次本机合成提现2的五列转账凭证元数据，验证旧版本409、刷新后QR31及Admin42图片可见，并在跨窗口账号ABA后阻止扣留结果回灌；不执行银行付款。业务GET十一表及两序列不变，最终仅既有Admin服务允许的该笔五列元数据变化；无上传、申请或R2写入，实际get_script保持200。全套Supplier／Worker两套类型、生产构建通过，三集群独立确认停止；170项既有财务／申请／迁移／运行profiles与统计脚本源逐字保持。
+
+首轮浏览器业务验收1/1通过但外层143且缺终端凭据，原因未确认；保留原始记录和截图，未冒充命令成功。相同冻结源第二轮重演实际UI流程并正常退出0，仅计一个Browser检查。首轮单元命令误带的不存在旧规则过滤名不计覆盖，正确旧规则47另行实际执行。精确命令、断言身份、输入指纹与清理证据见[本批账本](workers-ts/audit/php-ts-supplier-extract-media-20261017.json)和[合同说明](workers-ts/docs/php-ts-supplier-extract-media-20261017.md)。
+
+原清单复选行保持；原申请回执页的独立媒体展示、真实支付／税务provider及生产发布门禁继续开放。无生产DDL／GRANT／部署或真实银行／支付／税务调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 收款设置、CAS保存与限域二维码纵向
 
 Supplier 新 /finance/accounts 与财务设置页签共用实际收款组件，补齐PHP六项收款资料的读取、修改、素材选择与上传。银行卡前导零保持；允许暂未填写的渠道，完整条件留在提现申请核对。旧无selection GET六项／POST非空子集合同保留；现代selection=accounts闭合八项上下文与精确六值+revision，真实xmin／身份HMAC使并发或旧接口同值ABA不能误用旧版本。六列之外及所有财务账表不得改变；短事务锁住真实授权行，supplier UPDATE NOWAIT与既有提现supplier SHARE互斥，强制延后约束后再次比较完整实际行。

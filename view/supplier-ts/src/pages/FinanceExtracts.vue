@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, onScopeDispose, ref, watch } from 'vue';
+import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
 import { supplierBillDateRange, supplierBillMoney } from '@/api/supplierBills';
-import { getSupplierExtractHistory, getSupplierExtractMark, saveSupplierExtractMark, supplierExtractImage,
+import { getSupplierExtractHistory, getSupplierExtractMark, saveSupplierExtractMark,
   type SupplierExtractQuery, type SupplierExtractHistory, type SupplierExtractRecord, type SupplierExtractMark } from '@/api/supplierExtracts';
+import { currentExtractMediaIdentity, extractHistoricalPrivateMediaId, extractMediaEligible, extractMediaReference, readSupplierExtractMedia, supplierExtractMediaImage,
+  type ExtractMediaKind, type SupplierExtractMedia } from '@/api/supplierExtractMedia';
 
 const props = defineProps<{ embedded?: boolean; refreshKey?: number }>();
 const auth = useAuthStore(), route = useRoute();
@@ -15,13 +17,16 @@ const result = ref<SupplierExtractHistory | null>(null), loading = ref(false), e
 const active = ref(true), routeValid = ref(false), viewingId = ref(0), brokenImages = ref(new Set<string>());
 const editingId = ref(0), mark = ref(''), markContext = ref<SupplierExtractMark | null>(null);
 const markLoading = ref(false), saving = ref(false), unknown = ref(false), markError = ref('');
+const media = shallowRef<SupplierExtractMedia>(), mediaLoading = ref(false), mediaError = ref(''), mediaTime = ref(Math.floor(Date.now() / 1000));
 let alive = true, readGeneration = 0, editGeneration = 0;
+let mediaGeneration = 0, mediaController: AbortController | undefined, mediaTimer: ReturnType<typeof setInterval> | undefined;
 let readController: AbortController | undefined, editController: AbortController | undefined;
 const canRead = computed(() => active.value && !!auth.token && !!auth.user?.id && !!auth.user.supplier_id && auth.can('supplier.finance.view'));
 const canManage = computed(() => canRead.value && auth.can('supplier.finance.manage'));
 const detail = computed(() => result.value?.list.find(row => row.id === viewingId.value));
-const session = createSupplierSessionScope(invalidate);
-const current = () => alive && session.isCurrent() && canRead.value && routeValid.value;
+let session: ReturnType<typeof createSupplierSessionScope> | undefined;
+try { session = createSupplierSessionScope(invalidate); } catch { invalidate(); }
+const current = () => { try { return alive && !!session?.isCurrent() && canRead.value && routeValid.value; } catch { invalidate(); return false; } };
 const message = (cause: unknown) => cause instanceof Error ? cause.message : '操作失败，请重新读取提现记录';
 const money = (value: string) => supplierBillMoney(value, 1);
 const typeName = (type: string) => type === 'bank' ? '银行卡' : type === 'alipay' ? '支付宝' : '微信';
@@ -32,14 +37,15 @@ function closeMark() {
 }
 function clear() {
   readGeneration++; readController?.abort(); result.value = null; loading.value = false; error.value = ''; notice.value = '';
-  viewingId.value = 0; brokenImages.value = new Set(); closeMark();
+  closeDetails(); closeMark();
 }
 function invalidate() { clear(); active.value = false; error.value = '登录会话或权限已改变，请重新打开提现记录'; }
 watch([status, payStatus, extractType, from, to], clear, { flush: 'sync' });
 watch(canRead, value => { if (!value) invalidate(); }, { flush: 'sync' });
 watch(canManage, value => { if (!value) closeMark(); }, { flush: 'sync' });
+watch(() => JSON.stringify([auth.token, auth.user?.id, auth.user?.supplier_id, auth.permissions, auth.permissionsLoaded]), invalidate, { flush: 'sync' });
 watch(() => props.refreshKey, () => { void load(); }, { flush: 'sync' });
-onScopeDispose(() => { alive = false; clear(); session.dispose(); });
+onScopeDispose(() => { alive = false; clear(); if (mediaTimer) clearInterval(mediaTimer); session?.dispose(); });
 async function load(page = 1) {
   if (!current()) return;
   clear(); const generation = ++readGeneration; readController = new AbortController(); loading.value = true;
@@ -52,10 +58,37 @@ async function load(page = 1) {
   finally { if (generation === readGeneration) loading.value = false; }
 }
 function reset() { status.value = ''; payStatus.value = ''; extractType.value = ''; from.value = ''; to.value = ''; void load(); }
-function openDetails(row: SupplierExtractRecord) { if (current() && result.value?.list.includes(row)) { viewingId.value = row.id; brokenImages.value = new Set(); } }
-function image(reference: string) { return brokenImages.value.has(reference) ? '' : supplierExtractImage(reference); }
-function imageError(reference: string) {
-  if (current() && detail.value && [detail.value.qrcode_url, detail.value.voucher_image].includes(reference)) brokenImages.value.add(reference);
+function clearMedia() {
+  mediaGeneration++; mediaController?.abort(); media.value = undefined; mediaLoading.value = false; mediaError.value = ''; brokenImages.value = new Set();
+}
+function closeDetails() { clearMedia(); viewingId.value = 0; }
+function openDetails(row: SupplierExtractRecord) {
+  if (!current() || !result.value?.list.includes(row)) return;
+  clearMedia(); viewingId.value = row.id; void loadMedia();
+}
+const privateMedia = computed(() => detail.value && (['qrcode', 'voucher'] as const).some(kind => extractMediaEligible(detail.value!, kind)
+  && !!extractHistoricalPrivateMediaId(extractMediaReference(detail.value!, kind))));
+async function loadMedia() {
+  if (!current() || !detail.value || !privateMedia.value || mediaLoading.value) return;
+  const source = detail.value; let identity: ReturnType<typeof currentExtractMediaIdentity>;
+  try { identity = currentExtractMediaIdentity(); if (identity.actor_id !== auth.user?.id || identity.supplier_id !== source.supplier_id) throw Error('提现图片身份已改变'); }
+  catch { invalidate(); return; }
+  clearMedia(); const generation = mediaGeneration, controller = new AbortController(); mediaController = controller; mediaLoading.value = true;
+  try {
+    const value = await readSupplierExtractMedia(identity, source, controller.signal);
+    if (current() && generation === mediaGeneration && detail.value === source && !controller.signal.aborted) {
+      mediaTime.value = Math.floor(Date.now() / 1000); media.value = value;
+    }
+  } catch (cause) {
+    if (current() && generation === mediaGeneration && detail.value === source && !controller.signal.aborted) mediaError.value = `${message(cause)}。若记录已变化，请重新查询提现记录。`;
+  } finally { if (current() && generation === mediaGeneration) mediaLoading.value = false; }
+}
+function image(kind: ExtractMediaKind) {
+  if (!current() || !detail.value || brokenImages.value.has(kind + extractMediaReference(detail.value, kind))) return '';
+  return supplierExtractMediaImage(media.value, detail.value, kind, mediaTime.value);
+}
+function imageError(kind: ExtractMediaKind) {
+  if (current() && detail.value) brokenImages.value = new Set([...brokenImages.value, kind + extractMediaReference(detail.value, kind)]);
 }
 async function openMark(row: SupplierExtractRecord) {
   if (!current() || !canManage.value || saving.value || !result.value?.list.includes(row)) return;
@@ -96,7 +129,9 @@ function readRoute() {
   extractType.value = (q.extract_type ?? '') as SupplierExtractQuery['extract_type']; from.value = String(q.from ?? ''); to.value = String(q.to ?? '');
   routeValid.value = true; void load();
 }
-watch(() => route.fullPath, readRoute, { flush: 'sync' }); onMounted(readRoute);
+watch(() => route.fullPath, readRoute, { flush: 'sync' }); onMounted(() => {
+  mediaTimer = setInterval(() => { if (alive && active.value) mediaTime.value = Math.floor(Date.now() / 1000); }, 1000); readRoute();
+});
 </script>
 
 <template>
@@ -134,14 +169,18 @@ watch(() => route.fullPath, readRoute, { flush: 'sync' }); onMounted(readRoute);
       </template>
     </section>
     <section v-if="detail" class="surface extract-panel" aria-label="提现申请明细">
-      <div class="extract-heading"><h2>提现申请 · {{ detail.id }}</h2><el-button @click="viewingId = 0">关闭提现明细</el-button></div>
+      <div class="extract-heading"><h2>提现申请 · {{ detail.id }}</h2><el-button @click="closeDetails">关闭提现明细</el-button></div>
+      <p v-if="mediaLoading" role="status">正在核对本笔提现的明细图片…</p>
+      <p v-if="mediaError" class="extract-error" role="alert">{{ mediaError }}</p>
+      <p v-if="privateMedia" class="extract-note">私有图片仅限本笔提现明细，预览到期或失败可重新核对。</p>
+      <el-button v-if="privateMedia" :disabled="mediaLoading || !canRead" @click="loadMedia">重新核对明细图片</el-button>
       <dl class="extract-detail"><div><dt>申请金额</dt><dd>{{ money(detail.extract_price) }}</dd></div><div><dt>申请后余额</dt><dd>{{ money(detail.balance) }}</dd></div><div><dt>审核状态</dt><dd>{{ reviewName(detail.status) }}</dd></div><div><dt>经办人</dt><dd>{{ detail.admin_name || '尚未登记' }}</dd></div>
         <template v-if="detail.extract_type === 'bank'"><div><dt>申请时银行卡号</dt><dd>{{ detail.bank_code || '未记录' }}</dd></div><div><dt>申请时开户行</dt><dd>{{ detail.bank_address || '未记录' }}</dd></div></template>
         <template v-else><div><dt>{{ detail.extract_type === 'alipay' ? '申请时支付宝账号' : '申请时微信号' }}</dt><dd>{{ detail.extract_type === 'alipay' ? detail.alipay_account || '未记录' : detail.wechat || '未记录' }}</dd></div>
-          <div><dt>申请时收款二维码</dt><dd><img v-if="image(detail.qrcode_url)" class="extract-image" :src="image(detail.qrcode_url)" alt="申请时收款二维码" referrerpolicy="no-referrer" @error="imageError(detail.qrcode_url)" /><span v-else>图片暂不可用，请联系财务确认</span></dd></div></template>
+          <div><dt>申请时收款二维码</dt><dd><img v-if="image('qrcode')" class="extract-image" :src="image('qrcode')" alt="申请时收款二维码" referrerpolicy="no-referrer" @error="imageError('qrcode')" /><span v-else>图片暂不可用，请联系财务确认</span></dd></div></template>
         <template v-if="detail.status === -1"><div><dt>拒绝原因</dt><dd>{{ detail.fail_msg || '未记录' }}</dd></div><div><dt>拒绝时间</dt><dd>{{ detail.fail_time || '未记录' }}</dd></div></template>
         <div><dt>转账状态</dt><dd>{{ detail.pay_status === 1 ? '已登记转账' : '未转账' }}</dd></div>
-        <template v-if="detail.pay_status === 1"><div><dt>转账说明</dt><dd>{{ detail.voucher_title || '未记录' }}</dd></div><div><dt>转账登记时间</dt><dd>{{ detail.pay_time || '未记录' }}</dd></div><div><dt>转账凭证</dt><dd><img v-if="image(detail.voucher_image)" class="extract-image" :src="image(detail.voucher_image)" alt="转账凭证" referrerpolicy="no-referrer" @error="imageError(detail.voucher_image)" /><span v-else>{{ detail.voucher_image ? '图片暂不可用，请联系财务确认' : '未上传凭证图片' }}</span></dd></div></template>
+        <template v-if="detail.pay_status === 1"><div><dt>转账说明</dt><dd>{{ detail.voucher_title || '未记录' }}</dd></div><div><dt>转账登记时间</dt><dd>{{ detail.pay_time || '未记录' }}</dd></div><div><dt>转账凭证</dt><dd><img v-if="image('voucher')" class="extract-image" :src="image('voucher')" alt="转账凭证" referrerpolicy="no-referrer" @error="imageError('voucher')" /><span v-else>{{ detail.voucher_image ? '图片暂不可用，请联系财务确认' : '未上传凭证图片' }}</span></dd></div></template>
         <div><dt>备注</dt><dd>{{ detail.supplier_mark || '—' }}</dd></div>
       </dl>
     </section>
