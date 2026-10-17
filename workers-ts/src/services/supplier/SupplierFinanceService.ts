@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container, DbClient } from "@/lib/di";
 import {
@@ -15,6 +15,8 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { RefundLineCompensation } from '@/services/order/OrderSplitFinance';
 import { lockSupplierFinance } from '@/services/supplier/SupplierFinanceLock';
 import {SupplierBillReadService,type SupplierBillParameters} from './SupplierBillReadService';
+import {SupplierFlowReadService,type SupplierFlowParameters} from './SupplierFlowReadService';
+import type {SupplierVideoActor} from './SupplierVideoAuthority';
 
 type SupplierFinanceDb = Pick<DbClient, "execute" | "insert" | "select" | "update">;
 type FinanceOrder = Pick<
@@ -383,38 +385,12 @@ export class SupplierFinanceService {
     };
   }
 
-  async flowList(supplierId: number, query: Record<string, string>) {
-    const page = parsePagination(query.page, query.limit);
-    const conditions: SQL[] = [
-      eq(supplierFlowingWater.supplierId, supplierId),
-      eq(supplierFlowingWater.isDel, 0),
-    ];
-    if (query.type === "1" || query.type === "2") {
-      conditions.push(eq(supplierFlowingWater.type, Number(query.type)));
-    }
-    const keyword = query.keyword?.trim();
-    if (keyword) {
-      const search = or(
-        ilike(supplierFlowingWater.orderId, `%${keyword}%`),
-        ilike(supplierFlowingWater.linkId, `%${keyword}%`),
-      );
-      if (search) conditions.push(search);
-    }
-    const where = and(...conditions);
-    const [list, count] = await Promise.all([
-      this.container.db
-        .select()
-        .from(supplierFlowingWater)
-        .where(where)
-        .orderBy(desc(supplierFlowingWater.id))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(supplierFlowingWater)
-        .where(where),
-    ]);
-    return { list, count: count[0]?.count ?? 0, page: page.page, limit: page.limit };
+  async flowList(supplierId: number, query: SupplierFlowParameters) {
+    return new SupplierFlowReadService(this.container).list(supplierId, query);
+  }
+
+  async flowMark(supplierId: number, id: number, query: SupplierFlowParameters) {
+    return new SupplierFlowReadService(this.container).mark(supplierId, id, query);
   }
 
   async fundRecord(supplierId: number, query: SupplierBillParameters) {
@@ -425,22 +401,8 @@ export class SupplierFinanceService {
     return new SupplierBillReadService(this.container).details(supplierId, query);
   }
 
-  async updateFlowMark(supplierId: number, id: number, mark: string) {
-    const normalized = mark.trim();
-    if (!normalized) throw new ValidateException("请输入备注");
-    if (normalized.length > 255) throw new ValidateException("备注不能超过 255 个字符");
-    const rows = await this.container.db
-      .update(supplierFlowingWater)
-      .set({ mark: normalized })
-      .where(
-        and(
-          eq(supplierFlowingWater.id, id),
-          eq(supplierFlowingWater.supplierId, supplierId),
-          eq(supplierFlowingWater.isDel, 0),
-        ),
-      )
-      .returning({ id: supplierFlowingWater.id });
-    if (!rows[0]) throw new NotFoundException("流水不存在或不属于当前供应商");
+  async updateFlowMark(supplierId: number, id: number, body: unknown, actor: SupplierVideoActor) {
+    return new SupplierFlowReadService(this.container).updateMark(supplierId, id, body, actor);
   }
 
   async extractList(supplierId: number, query: Record<string, string>) {

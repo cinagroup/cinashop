@@ -868,7 +868,12 @@ export async function financeSummary(c: SupplierContext) {
 
 export async function financeFlowList(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await financeService(c).flowList(supplierId, c.req.query()));
+  return jsonOk(c, await financeService(c).flowList(supplierId, supplierSingleQuery(c.req.queries())));
+}
+
+export async function financeFlowMark(c: SupplierContext) {
+  const { supplierId } = supplierIdentity(c);
+  return jsonOk(c, await financeService(c).flowMark(supplierId, positiveId(c.req.param('id'), '流水ID'), supplierSingleQuery(c.req.queries())));
 }
 
 export function financeFlowTypes(c: SupplierContext) {
@@ -879,10 +884,9 @@ export function financeFlowTypes(c: SupplierContext) {
 export async function updateFinanceFlowMark(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const id = positiveId(c.req.param("id"), "流水ID");
-  const body = await readJsonObject(c);
-  if (typeof body.mark !== "string") throw new ValidateException("请输入备注");
-  await financeService(c).updateFlowMark(supplierId, id, body.mark);
-  return jsonOk(c, null, "备注成功");
+  if (Object.keys(supplierSingleQuery(c.req.queries())).length) throw new ValidateException('流水备注不接受查询参数');
+  const body = await readRequestJsonObject(c.req.raw, 2048);
+  return jsonOk(c, await financeService(c).updateFlowMark(supplierId, id, body, { ...await categoryActor(c), supplierId }), '备注成功');
 }
 
 export async function financeFundRecord(c: SupplierContext) {

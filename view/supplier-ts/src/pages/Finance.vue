@@ -3,17 +3,15 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import {
   applyExtract,
-  exportSupplierFinance,
   getExtracts,
-  getFinanceFlows,
   getFinanceInfo,
   getFinanceSummary,
   updateFinanceInfo,
 } from "@/api/supplier";
-import type { FinanceFlow, FinanceInfo, FinanceSummary, SupplierExtract } from "@/types";
+import type { FinanceInfo, FinanceSummary, SupplierExtract } from "@/types";
 import { useAuthStore } from "@/stores/auth";
-import { formatMoney, formatTime, payType } from "@/utils/format";
-import { downloadLegacyExport } from "@/utils/legacy-export";
+import { formatMoney, formatTime } from "@/utils/format";
+import FinanceFlows from '@/pages/FinanceFlows.vue';
 
 const auth = useAuthStore();
 const loading = ref(false);
@@ -34,9 +32,6 @@ const financeInfo = reactive<FinanceInfo>({
   wechat: "",
   wechat_qrcode_url: "",
 });
-const flows = ref<FinanceFlow[]>([]);
-const flowTotal = ref(0);
-const flowFilters = reactive({ page: 1, limit: 20, keyword: "", type: "" });
 const extracts = ref<SupplierExtract[]>([]);
 const extractTotal = ref(0);
 const extractFilters = reactive({ page: 1, limit: 20, status: "", pay_status: "", extract_type: "" });
@@ -44,19 +39,7 @@ const extractDialogOpen = ref(false);
 const extractSubmitting = ref(false);
 const extractForm = reactive({ extract_type: "bank", money: "", mark: "" });
 const infoSaving = ref(false);
-const selectedFlows = ref<FinanceFlow[]>([]);
-const exportLoading = ref(false);
 const canManageFinance = computed(() => auth.can("supplier.finance.manage"));
-
-function flowType(type: number) {
-  return type === 1 ? "支付订单" : type === 2 ? "退款订单" : "其他";
-}
-
-function flowState(row: FinanceFlow) {
-  if (row.status === -1) return { label: "无效", tone: "danger" };
-  if (row.status === 0) return { label: "待结算", tone: "warning" };
-  return { label: "已结算", tone: "success" };
-}
 
 function extractState(row: SupplierExtract) {
   if (row.status === -1) return { label: "已拒绝", tone: "danger" };
@@ -75,12 +58,6 @@ async function loadSummaryAndInfo() {
   Object.assign(financeInfo, infoData);
 }
 
-async function loadFlows() {
-  const result = await getFinanceFlows(flowFilters);
-  flows.value = result.list;
-  flowTotal.value = result.count;
-}
-
 async function loadExtracts() {
   const result = await getExtracts(extractFilters);
   extracts.value = result.list;
@@ -91,7 +68,7 @@ async function loadExtracts() {
 async function loadAll() {
   loading.value = true;
   try {
-    await Promise.all([loadSummaryAndInfo(), loadFlows(), loadExtracts()]);
+    await Promise.all([loadSummaryAndInfo(), loadExtracts()]);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "财务数据加载失败");
   } finally {
@@ -139,27 +116,6 @@ async function submitExtract() {
   }
 }
 
-function selectFlows(selection: FinanceFlow[]) {
-  selectedFlows.value = selection;
-}
-
-async function downloadSelectedFlows() {
-  if (!canManageFinance.value) return;
-  if (!selectedFlows.value.length) {
-    ElMessage.warning("请先选择本页资金流水");
-    return;
-  }
-  exportLoading.value = true;
-  try {
-    downloadLegacyExport(await exportSupplierFinance(selectedFlows.value.map((row) => row.id)));
-    ElMessage.success("资金流水已下载");
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "资金流水导出失败");
-  } finally {
-    exportLoading.value = false;
-  }
-}
-
 onMounted(loadAll);
 </script>
 
@@ -181,25 +137,7 @@ onMounted(loadAll);
     <div class="surface finance-tabs-surface">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="资金流水" name="flows">
-          <div class="filter-row finance-filter-row">
-            <el-input v-model="flowFilters.keyword" class="search-input" clearable placeholder="交易单号或关联订单" @keyup.enter="loadFlows" />
-            <el-select v-model="flowFilters.type" class="state-select" clearable placeholder="交易类型" @change="loadFlows">
-              <el-option label="支付订单" value="1" /><el-option label="退款订单" value="2" />
-            </el-select>
-            <el-button type="primary" @click="loadFlows">查询</el-button>
-            <el-button v-if="canManageFinance" :disabled="!selectedFlows.length" :loading="exportLoading" @click="downloadSelectedFlows">导出选中流水</el-button>
-          </div>
-          <el-table :data="flows" row-key="id" @selection-change="selectFlows">
-            <el-table-column v-if="canManageFinance" type="selection" width="48" reserve-selection />
-            <el-table-column prop="orderId" label="交易单号" min-width="190" />
-            <el-table-column prop="linkId" label="关联订单" min-width="180" />
-            <el-table-column label="类型" width="110"><template #default="scope">{{ flowType(scope.row.type) }}</template></el-table-column>
-            <el-table-column label="支付方式" width="110"><template #default="scope">{{ payType(scope.row.payType) }}</template></el-table-column>
-            <el-table-column label="金额" width="130"><template #default="scope"><strong :class="scope.row.pm === 0 ? 'danger-value' : 'income-value'">{{ scope.row.pm === 0 ? "-" : "+" }}{{ formatMoney(scope.row.number) }}</strong></template></el-table-column>
-            <el-table-column label="状态" width="110"><template #default="scope"><span class="status-text" :class="flowState(scope.row).tone">{{ flowState(scope.row).label }}</span></template></el-table-column>
-            <el-table-column label="交易时间" width="180"><template #default="scope">{{ formatTime(scope.row.tradeTime) }}</template></el-table-column>
-          </el-table>
-          <div class="pagination-row"><span>共 {{ flowTotal }} 条流水</span><el-pagination v-model:current-page="flowFilters.page" :page-size="flowFilters.limit" :total="flowTotal" layout="prev, pager, next" @current-change="loadFlows" /></div>
+          <FinanceFlows embedded />
         </el-tab-pane>
 
         <el-tab-pane label="提现记录" name="extracts">

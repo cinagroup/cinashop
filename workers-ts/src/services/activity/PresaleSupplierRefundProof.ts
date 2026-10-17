@@ -3,6 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderRefundSplit, supplierFlowingWater,
   supplierTransactions, user } from '@/models/schema';
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
+import {projectSupplierFlowDescription} from '@/services/supplier/SupplierFlowDescription';
 
 type Flow = typeof supplierFlowingWater.$inferSelect;
 type Transaction = typeof supplierTransactions.$inferSelect;
@@ -24,6 +25,10 @@ function same(actual: object, expected: object, ignored: readonly string[] = [])
   if (Object.keys(left).filter(key => !ignored.includes(key)).length !== keys.length
     || keys.some(key => left[key] !== right[key])) throw invalid();
 }
+function sameFlow(actual:Flow,expected:Flow,ignored:readonly string[]=[]) {
+  const view=projectSupplierFlowDescription(actual,expected);if(!view)throw invalid();
+  same(view,expected,ignored);
+}
 const transactionKeys = ['id', 'supplierId', 'uid', 'orderId', 'linkId', 'pm', 'type', 'payType',
   'payPrice', 'totalPrice', 'payPostage', 'remark', 'mark', 'isDel', 'tradeTime', 'addTime'] as const;
 const flowKeys = [...transactionKeys, 'number', 'finishTime', 'status'] as const;
@@ -33,6 +38,10 @@ function text(value: unknown, max: number, required = false): string {
   return value;
 }
 function money(value: unknown): string { const result = text(value, 13, true); minor(result); return result; }
+function description(value:unknown):string {
+  if(typeof value!=='string'||[...value].length>255||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value))throw invalid();
+  return value;
+}
 function financialRow(value: unknown, flow: true): Flow;
 function financialRow(value: unknown, flow: false): Transaction;
 function financialRow(value: unknown, flow: boolean): Flow | Transaction {
@@ -42,7 +51,7 @@ function financialRow(value: unknown, flow: boolean): Flow | Transaction {
   const common: Transaction = { id: int(row.id, 1), supplierId: int(row.supplierId, 1), uid: int(row.uid, 1),
     orderId: text(row.orderId, 50, true), linkId: text(row.linkId, 50, true), pm: row.pm, type: row.type,
     payType: text(row.payType, 20, true), payPrice: money(row.payPrice), totalPrice: money(row.totalPrice),
-    payPostage: money(row.payPostage), remark: text(row.remark, 512), mark: text(row.mark, 255),
+    payPostage: money(row.payPostage), remark: text(row.remark, 512), mark: description(row.mark),
     isDel: 0, tradeTime: int(row.tradeTime), addTime: int(row.addTime) };
   if (!flow) return common;
   if (row.status !== 0 && row.status !== 1) throw invalid();
@@ -160,8 +169,8 @@ export async function assertPresaleSupplierRefundProof(tx: DbClient, paymentOrde
     if (!actualIncome || !actualExpense || !actualTransaction) throw invalid();
     same(actualTransaction, transaction);
     const whole = receipt.disposition === 'whole';
-    same(actualIncome, { ...income, status: whole ? income.status : -1 });
-    same(actualExpense, { ...expense, status: whole ? expense.status : -1 });
+    sameFlow(actualIncome, { ...income, status: whole ? income.status : -1 });
+    sameFlow(actualExpense, { ...expense, status: whole ? expense.status : -1 });
     if (whole && (income.status !== 1 || minor(income.number) !== minor(expense.number))) throw invalid();
     const ids: number[] = ledger.derivedFlowIds.filter((id): id is number => integer(id, 1));
     if (ids.length !== (whole ? 0 : 3) || new Set(ids).size !== ids.length) throw invalid();
@@ -186,7 +195,7 @@ export async function assertPresaleSupplierRefundProof(tx: DbClient, paymentOrde
       [remainingIncome, income, remaining, 'remaining'], [selectedExpense, expense, selected, 'selected']] as const) {
       const lineage = JSON.stringify({ version: 'supplier-refund-split-v1', refundId: receipt.refundId,
         sourceFlowId: base.id, sourceOrderId: receipt.sourceOrderId, role });
-      same(row, { ...base, id: row.id, orderId: row.orderId, linkId: child.orderId, number: row.number,
+      sameFlow(row, { ...base, id: row.id, orderId: row.orderId, linkId: child.orderId, number: row.number,
         payPrice: row.payPrice, totalPrice: row.totalPrice, payPostage: row.payPostage, remark: lineage }, ['status', 'finishTime']);
       if (row === selectedExpense && (row.number !== expense.number || row.payPrice !== expense.payPrice
         || row.totalPrice !== selectedIncome.totalPrice || row.payPostage !== '0.00')) throw invalid();
@@ -210,7 +219,8 @@ export async function assertPresaleSupplierRefundProof(tx: DbClient, paymentOrde
   for (const row of transactions.filter(row => !expectedTransactions.has(row.id))) {
     const matching = flows.find(flow => flow.orderId === row.orderId && expectedFlows.has(flow.id));
     if (!matching || row.orderId !== `P${row.linkId}` || matching.pm !== 1 || matching.type !== 1) throw invalid();
-    const { number: _number, finishTime: _finish, status: _status, ...common } = matching;
+    const described=projectSupplierFlowDescription(matching,{...matching,mark:row.mark});if(!described)throw invalid();
+    const { number: _number, finishTime: _finish, status: _status, ...common } = described;
     same(row, { ...common, id: row.id }); expectedTransactions.add(row.id);
   }
   if (flows.some(flow => !expectedFlows.has(flow.id)) || transactions.some(row => !expectedTransactions.has(row.id))) throw invalid();

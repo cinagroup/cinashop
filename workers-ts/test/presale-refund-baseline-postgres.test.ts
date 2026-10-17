@@ -294,8 +294,20 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
     expect(await benefits()).toEqual(after);
   }, 30000);
   it.each(['partial', 'two-partial', 'whole', 'partial-whole'])('proves actual supplier refund lineage without another payment: %s', async scenario => {
-    const rootId = await paid(true), first = await refund(rootId, scenario === 'whole' ? 3 : 1);
+    const rootId = await paid(true);
+    // Public note contract counts Unicode codepoints, matching varchar(255).
+    // Freeze a genuine200-codepoint note before materialization, then edit the
+    // descriptions again below without rewriting the protected archive.
+    await f.db.update(supplierFlowingWater).set({mark:'😀'.repeat(200)}).where(eq(supplierFlowingWater.linkId,(await order(rootId)).orderId));
+    const first = await refund(rootId, scenario === 'whole' ? 3 : 1);
     if (scenario === 'two-partial' || scenario === 'partial-whole') await refund(first.remainingOrderId!, scenario === 'two-partial' ? 1 : 2);
+    // These real materialized original and derived ledger rows each permit a
+    // descriptive note independent of the transaction record. This existing
+    // fixture explicitly uses synthetic payment marking; it is not a payment
+    // provider acceptance. Public authenticated note writes are covered by the
+    // separate actual checkout/collection Supplier ledger integration test.
+    const described = await f.db.select().from(supplierFlowingWater).orderBy(supplierFlowingWater.id);
+    for (const row of described) await f.db.update(supplierFlowingWater).set({ mark: `合法流水描述-${row.id}` }).where(eq(supplierFlowingWater.id, row.id));
     const before = await finance();
     const proof = await withTx(f.container, tx => assertPresaleSupplierRefundProof(tx, rootId));
     expect(proof.refundIds.size).toBe(scenario === 'two-partial' || scenario === 'partial-whole' ? 2 : 1);
@@ -307,10 +319,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
     const target = active[0];
     // The receipt table remains protected by the real append-only trigger.
     // Corrupt only test-owned live rows inside transactions which MUST roll back.
-    for (const fault of ['amount', 'uid', 'missing-flow', 'missing-payment', 'extra-flow', 'lineage', 'finish-time', 'order-price',
+    for (const fault of ['amount', 'uid', 'supplier', 'order-id', 'pm', 'type', 'add-time', 'trade-time', 'missing-flow', 'missing-payment', 'extra-flow', 'lineage', 'finish-time', 'order-price',
       ...(scenario === 'whole' ? [] : ['late-payment'])]) {
       await expect(withTx(f.container, async tx => {
         if (fault === 'amount') await tx.update(supplierFlowingWater).set({ number: '0.01' }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'supplier') await tx.update(supplierFlowingWater).set({ supplierId: 8 }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'order-id') await tx.update(supplierFlowingWater).set({ orderId: 'WRONG-PROOF-ID' }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'pm') await tx.update(supplierFlowingWater).set({ pm: 1 - target.pm }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'type') await tx.update(supplierFlowingWater).set({ type: target.type === 1 ? 2 : 1 }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'add-time') await tx.update(supplierFlowingWater).set({ addTime: target.addTime + 1 }).where(eq(supplierFlowingWater.id, target.id));
+        if (fault === 'trade-time') await tx.update(supplierFlowingWater).set({ tradeTime: target.tradeTime + 1 }).where(eq(supplierFlowingWater.id, target.id));
         if (fault === 'uid') await tx.update(supplierFlowingWater).set({ uid: 12 }).where(eq(supplierFlowingWater.id, target.id));
         if (fault === 'missing-flow') await tx.delete(supplierFlowingWater).where(eq(supplierFlowingWater.id, target.id));
         if (fault === 'missing-payment') await tx.delete(supplierTransactions).where(eq(supplierTransactions.orderId, baselineIncome.orderId));

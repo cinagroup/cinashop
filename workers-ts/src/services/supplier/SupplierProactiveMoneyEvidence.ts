@@ -9,6 +9,7 @@ import { readRefundQuantityReservation, refundClaimCartKey, CUSTOMER_ROW_REFUND_
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
 import { HttpApiException, ServiceUnavailableException } from '@/utils/errors';
 import type { SupplierProactiveRefundIntent } from './SupplierProactiveRefundInput';
+import {projectSupplierFlowDescription} from './SupplierFlowDescription';
 
 type Order = typeof storeOrder.$inferSelect;
 type Refund = typeof storeOrderRefund.$inferSelect;
@@ -439,7 +440,8 @@ export async function readSupplierProactiveMoneyEvidence(tx: DbClient, orderValu
   fact(originalFlowIds.size===2&&activeFlows.length===2&&activeFlows.every(row=>originalFlowIds.has(row.id)));
   for(const key of ['income','expense']) {
     const frozen=object(ledger[key]),rows=await tx.select().from(supplierFlowingWater).where(eq(supplierFlowingWater.id,integer(frozen.id))).limit(1);
-    fact(rows.length===1&&await outRequestHash(rows[0])===await outRequestHash(frozen));
+    const current=rows.length===1?projectSupplierFlowDescription(rows[0],frozen):null;
+    fact(current&&await outRequestHash(current)===await outRequestHash(frozen));
   }
   const frozenTransaction=object(ledger.transaction),firstTransactions=await tx.select().from(supplierTransactions).where(eq(supplierTransactions.id,integer(frozenTransaction.id))).limit(1);
   fact(firstTransactions.length===1&&await outRequestHash(firstTransactions[0])===await outRequestHash(frozenTransaction)

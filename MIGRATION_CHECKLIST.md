@@ -1,5 +1,17 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-17 Supplier 资金流水与描述备注纵向
+
+Supplier 资金流水补齐 PHP 的创建日期、交易类型、订单／交易人／UID 搜索、支付方式及游客标签和备注编辑，原 Finance 页签与新 /finance/flows 共用实际页面。selection=ledger 使用闭合11字段清单、20字段流水、真实单次 REPEATABLE READ 只读快照、严格分页及规范金额；订单／关联单号／有效交易人按字面子串搜索（保留旧TS关联单号能力，明确收窄PHP通配符含义）。旧无selection列表保留camel字段并补snake标签，旧备注POST保留null响应；本页所选流水仍使用既有8列CSV和原下载helper。
+
+备注先GET读取6字段上下文，再以租户／流水／xmin派生版本提交精确3字段POST。短事务锁住实际会话、供应商及角色／菜单行并重读权限，仅UPDATE(mark)；过期版本、撤权、跨租户及伪造资金字段均拒绝。界面按PHP输入上限200字；服务器保留255 Unicode字符描述。提交回执未知时禁用重交，必须手动GET核对当前值，结果一致也不冒认本次提交成功。筛选、路由、会话ABA、撤权及卸载隔离迟到列表／备注／下载，导出只包括当前页明确选择。
+
+真实集成先复现：商品退款7元及货款补退5元后，合法公开备注更新会使首笔冻结流水整行hash不符而409。本批新增闭合实际19列比较视图，仅将当前mark投影为归档mark；金额、归属、交易身份、行数、时间、状态及原事务证据保持原有严格证明。相同描述合同显式接入主动补退和预售拆分证明，未泛化到默认客户深层退款。最终验证原UUID结果、客户／Admin结算可读及余款6.75元可补退；独立篡改非备注列／添加流水仍拒绝。预售4场景增加归档前200emoji、归档后原／派生流水不同备注及资金负例；这些旧预售fixture含合成paid标记，不能称真实支付验收。
+
+8个入口286个不同检查通过：规则48、实际SFC35、旧CSV6、runner182、PG16读写8、实际退款链2、所选预售4、实际IAB1。完整Supplier／Worker类型和production构建通过。实际桌面／移动IAB验证105条分6页、交易人／UID／字面搜索、仅所选2行真实CSV、回执丢失后GET核对、正常保存及撤权拒绝；业务GET前后六表不变，所有成功POST与最终六表只允许flow1.mark变化。扣留响应释放仅计发送尝试，忽略取消的迟到载荷由SFC另证。11个自建PG集群夹具清零并独立确认停止，探索失败及修正原因完整保留于[本批账本](workers-ts/audit/php-ts-supplier-flow-20261017.json)。
+
+保留用户指定的统计脚本PHP兼容合同；本批浏览器通过实际get_script返回精确本机配置JavaScript与正确Content-Type。0194／0195／0196、旧账单读／完整账期导出、默认客户deep及既有主要资金边界等101文件字节等于基线；本批明确修改的主动／预售描述证明已单列验证。历史复选行未改，本批未关闭整个迁移；异步provider admission／回调／对账、实际已开票人工红冲及真实发布门禁继续开放。无生产DDL／GRANT／部署或真实支付／税务provider调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 完整账期下载纵向
 
 Supplier 周期账单新增下载，沿用 GET /supplierapi/export/financeRecord 与真实 supplier.finance.manage 权限。显式 selection=period 绑定当前供应商、日／周／月、结算状态、创建日期及所选账期；同一次只读 REPEATABLE READ 事务内按 ID 倒序分批读取完整账期，核对全部笔数及收入／支出／净额，不以1000或10000条静默截断。16MiB容量或15秒事务应用预算超限时整单明确失败，不生成部分成功文件。既有省略selection的按IDs导出及旧下载helper保持兼容。

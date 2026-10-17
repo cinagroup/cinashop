@@ -5,6 +5,8 @@ describe("supplier frontend export and queue-history migration", () => {
   const api = readFileSync("../view/supplier-ts/src/api/supplier.ts", "utf8");
   const orders = readFileSync("../view/supplier-ts/src/pages/Orders.vue", "utf8");
   const finance = readFileSync("../view/supplier-ts/src/pages/Finance.vue", "utf8");
+  const flows = readFileSync("../view/supplier-ts/src/pages/FinanceFlows.vue", "utf8");
+  const flowApi = readFileSync("../view/supplier-ts/src/api/supplierFlows.ts", "utf8");
   const exporter = readFileSync("../view/supplier-ts/src/utils/legacy-export.ts", "utf8");
   const parity = JSON.parse(readFileSync("audit/supplier-frontend-parity.json", "utf8")) as {
     counting: { legacy: Record<string, number>; target: Record<string, number> };
@@ -44,8 +46,9 @@ describe("supplier frontend export and queue-history migration", () => {
     expect(orders).toContain('const ids = selectedOrders.value.map(row => row.id)');
     expect(orders).toContain('ids: ids.join(","), type, page: 1, selection: "exact"');
     expect(orders).toContain('@selection-change="selectOrders"');
-    expect(finance).toContain("exportSupplierFinance(selectedFlows.value.map((row) => row.id))");
-    expect(finance).toContain('@selection-change="selectFlows"');
+    expect(finance).toContain("<FinanceFlows embedded />");
+    expect(flowApi).toContain("ids: selected.map(row => row.id).join(',')");
+    expect(flows).toContain("result.value.list.filter(row => selected.value.includes(row.id))");
   });
 
   it("keeps sensitive downloads and mutations behind manage permissions", () => {
