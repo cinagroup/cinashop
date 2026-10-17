@@ -1,0 +1,3739 @@
+{
+  "schema": "php-ts-supplier-bill-read-v1",
+  "date": "2026-10-17",
+  "validated_at_utc": "2026-10-17T02:33:29.091442+00:00",
+  "base_commit": "2388e4766d2b6a0e8ee95d84b2fd06695562e0c9",
+  "previous_phase_audit": "workers-ts/audit/php-ts-supplier-post-goods-refusal-20261017.json",
+  "status": "local_supplier_bill_read_verified",
+  "goal_status": "active",
+  "completion_claim": false,
+  "scope": {
+    "changed_files": 19,
+    "source_and_test_files": 16,
+    "root_documents": 2,
+    "new_audit_files": 1,
+    "source_fingerprint_count_excluding_audit": 18,
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "view/supplier-ts/src/api/supplierBills.ts",
+      "view/supplier-ts/src/components/AppShell.vue",
+      "view/supplier-ts/src/pages/FinanceBills.vue",
+      "view/supplier-ts/src/router.ts",
+      "workers-ts/audit/php-ts-supplier-bill-read-20261017.json",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "workers-ts/src/routes/supplierapi.ts",
+      "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+      "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "workers-ts/test/browser/supplier-bill.acceptance.ts",
+      "workers-ts/test/helpers/supplierBillRead.ts",
+      "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "workers-ts/test/supplier-bill-frontend.test.ts",
+      "workers-ts/test/supplier-bill-read-native.test.ts",
+      "workers-ts/test/supplier-bill-read-rules.test.ts",
+      "workers-ts/vitest.supplier-bill-browser.config.ts"
+    ]
+  },
+  "implemented": [
+    "Supplier JWT tenant and live finance.view only; both existing GET paths preserved with duplicate-query rejection and pre-auth private/no-store.",
+    "Closed versioned period DTO, exact numeric20,2 aggregation, BigInt rendering, complete bounded pagination and explicit capacity errors.",
+    "Finish-clock settled groups, add-clock date filters, PHP calendar-year week00/53 and authoritative legacy time presets/quirks.",
+    "Legacy complete IDs bounded1000 with whole-selection ownership/deletion validation before filters; no silent truncated success.",
+    "Read-only repeatable-read snapshot under an independent SELECT-only PG LOGIN; no write/export/withdrawal authority.",
+    "Supplier compiled UI clears stale views, rejects invalid routes and row-status mismatches, and fences late filter/route/session responses."
+  ],
+  "validation": {
+    "status": "accepted_distinct_checks_passed_with_documented_historical_attempts",
+    "assertions_complete": true,
+    "native_assertions_complete": true,
+    "browser_complete": true,
+    "distinct_tests": 249,
+    "distinct_files": 5,
+    "unit": {
+      "report": {
+        "path": "/tmp/cinashop-supplier-bill-unit-final-2.json",
+        "sha256": "ea2f24c0770832d193bf879542514896deffdbfa4193de60ff3468574ab09e7a",
+        "bytes": 97753
+      },
+      "distinct_tests": 240,
+      "distinct_files": 3,
+      "files": [
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "passed": 172
+        },
+        {
+          "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+          "passed": 34
+        },
+        {
+          "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+          "passed": 34
+        }
+      ],
+      "runner_parameter_binding": {
+        "source": {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20",
+          "bytes": 21101
+        },
+        "case_identity": "file_and_one_based_actual_assertion_ordinal",
+        "source_parameter_rows": 34,
+        "unique_parameter_vectors": 34,
+        "parameter_groups": [
+          {
+            "source_first_line": 83,
+            "display_template": "rejects invalid Supplier bill Browser admission $args",
+            "parameters": [
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:supplier-bill-browser"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:supplier-bill-browser",
+                  "test/price.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "--case",
+                  "bill",
+                  "unused-bin",
+                  "audit:supplier-bill-browser"
+                ],
+                "error": "Literal cases apply only to explicit test files"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "--verbose-tests",
+                  "unused-bin",
+                  "audit:supplier-bill-browser"
+                ],
+                "error": "Verbose reporting applies only to explicit native test files"
+              }
+            ],
+            "assertion_ordinals": [
+              10,
+              11,
+              12,
+              13
+            ]
+          },
+          {
+            "source_first_line": 143,
+            "display_template": "rejects browser output inside the repository before opening a database: $args",
+            "parameters": [
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "audit:admin-refund-browser"
+                ]
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "audit:customer-order-browser"
+                ]
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "audit:admin-order-browser"
+                ]
+              }
+            ],
+            "assertion_ordinals": [
+              49,
+              50,
+              51
+            ]
+          },
+          {
+            "source_first_line": 161,
+            "display_template": "rejects $args before runtime, port or cluster setup",
+            "parameters": [
+              {
+                "args": [],
+                "error": "Usage:"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:unit-shard-1"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:unit-shard-3"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:unit-shard-1",
+                  "audit:unit-shard-2"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:unit-shard-1",
+                  "--testNamePattern=pass"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:unit-shard-2",
+                  "test/price.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "--config=production"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "test/../admin-refund-decision.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "test/nonexistent-local-finance-probe.test.ts"
+                ],
+                "error": "Test does not exist:"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "test/admin-refund-decision.test.ts"
+                ],
+                "error": "Schema maintenance accepts only"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "--schema-maintenance",
+                  "test/admin-refund-operation-migration.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin"
+                ],
+                "error": "Usage:"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:orm"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:orm",
+                  "test/admin-refund-operation-migration.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:production"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:admin-refund-browser"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:admin-refund-browser",
+                  "test/admin-refund-operation-http.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:admin-refund-browser"
+                ],
+                "error": "Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:admin-refund-browser",
+                  "test/admin-refund-operation-http.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:customer-order-browser"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:customer-order-browser",
+                  "test/customer-order-deletion.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:customer-order-browser"
+                ],
+                "error": "Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:admin-order-browser"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "unused-bin",
+                  "audit:admin-offline-browser"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:admin-offline-browser",
+                  "test/admin-offline-order-read.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:admin-order-browser",
+                  "test/admin-order-generations.test.ts"
+                ],
+                "error": "Only explicit unit test paths are accepted"
+              },
+              {
+                "args": [
+                  "--schema-maintenance",
+                  "unused-bin",
+                  "audit:admin-order-browser"
+                ],
+                "error": "Browser acceptance requires an existing absolute TEST_BROWSER_PACKAGE_JSON"
+              }
+            ],
+            "assertion_ordinals": [
+              74,
+              75,
+              76,
+              77,
+              78,
+              79,
+              80,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86,
+              87,
+              88,
+              89,
+              90,
+              91,
+              92,
+              93,
+              94,
+              95,
+              96,
+              97,
+              98,
+              99,
+              100
+            ]
+          }
+        ],
+        "duplicate_display_groups": [
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects invalid Supplier bill Browser admission [ '--schema-maintenance', …(3) ]",
+            "assertion_rows": 2
+          },
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects browser output inside the repository before opening a database: [ '--schema-maintenance', …(1) ]",
+            "assertion_rows": 3
+          },
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "assertion_rows": 6
+          },
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "assertion_rows": 8
+          },
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "assertion_rows": 6
+          },
+          {
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(2) ] before runtime, port or cluster setup",
+            "assertion_rows": 2
+          }
+        ],
+        "assertions": [
+          {
+            "assertion_ordinal": 1,
+            "display_name": "local PostgreSQL runner cache boundary rejects nonabsolute override \"\" before native commands",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 2,
+            "display_name": "local PostgreSQL runner cache boundary rejects nonabsolute override \"relative-cache\" before native commands",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 3,
+            "display_name": "local PostgreSQL runner cache boundary admits an absolute local override up to the intercepted native command",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 4,
+            "display_name": "local PostgreSQL runner cache boundary keeps the original checkout cache default and explicitly rejects a Windows shared checkout",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 5,
+            "display_name": "local PostgreSQL runner cache boundary rejects Windows UNC override \"\\\\\\\\server\\\\share\\\\cache\" before native commands",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 6,
+            "display_name": "local PostgreSQL runner cache boundary rejects Windows UNC override \"//server/share/cache\" before native commands",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 7,
+            "display_name": "local PostgreSQL runner cache boundary rejects Windows UNC override \"\\\\\\\\?\\\\UNC\\\\server\\\\share\\\\cache\" before native commands",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 8,
+            "display_name": "local PostgreSQL runner cache boundary rejects drive-relative and current-drive-rooted Windows overrides",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 9,
+            "display_name": "local PostgreSQL runner command boundary admits the exact Supplier bill in-app mode without external browser settings",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 10,
+            "display_name": "local PostgreSQL runner command boundary rejects invalid Supplier bill Browser admission [ 'unused-bin', …(1) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 11,
+            "display_name": "local PostgreSQL runner command boundary rejects invalid Supplier bill Browser admission [ '--schema-maintenance', …(3) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 12,
+            "display_name": "local PostgreSQL runner command boundary rejects invalid Supplier bill Browser admission [ '--schema-maintenance', …(4) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 13,
+            "display_name": "local PostgreSQL runner command boundary rejects invalid Supplier bill Browser admission [ '--schema-maintenance', …(3) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 14,
+            "display_name": "local PostgreSQL runner command boundary admits only the complete native shard 1 maintenance alias",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 15,
+            "display_name": "local PostgreSQL runner command boundary admits only the complete native shard 2 maintenance alias",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 16,
+            "display_name": "local PostgreSQL runner command boundary admits the explicit in-app Browser host without external Playwright settings",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 17,
+            "display_name": "local PostgreSQL runner command boundary admits the explicit Supplier settlement in-app host without external browser tooling",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 18,
+            "display_name": "local PostgreSQL runner command boundary rejects Supplier settlement Browser mode without explicit owned schema maintenance",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 19,
+            "display_name": "local PostgreSQL runner command boundary rejects mixing Supplier settlement Browser mode with a second test or mode",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 20,
+            "display_name": "local PostgreSQL runner command boundary rejects literal case filtering for interactive Supplier settlement Browser mode",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 21,
+            "display_name": "local PostgreSQL runner command boundary rejects native verbose mode for interactive Supplier settlement Browser acceptance",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 22,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits bargain-cart-participation-migration before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 23,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits bargain-supplier-visibility-concurrency-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 24,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits bargain-visibility-writers-concurrency-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 25,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits shipping-lifecycle-rules before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 26,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits store-order-create-scenario-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 27,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-pricing-fixture before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 28,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-marketing-scenarios-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 29,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits brokerage-paid-business-transactions before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 30,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-confirmation before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 31,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-confirmation-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 32,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-confirmation-rules before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 33,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits pc-checkout-form-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 34,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-pricing-service-runtime before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 35,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-pricing-config-authority before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 36,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits admin-config-batch-postgres before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 37,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-pricing-lock-registration before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 38,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits brokerage-paid-runtime-permissions before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 39,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits checkout-pricing-lock before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 40,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-runtime-permissions before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 41,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-registration before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 42,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-installation before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 43,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-payment-query before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 44,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-query-recovery before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 45,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-payment-dispatch before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 46,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-payment-workerd before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 47,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits offline-order-http before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 48,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits admin-offline-order-read before validating the test binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 49,
+            "display_name": "local PostgreSQL runner command boundary rejects browser output inside the repository before opening a database: [ '--schema-maintenance', …(1) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 50,
+            "display_name": "local PostgreSQL runner command boundary rejects browser output inside the repository before opening a database: [ '--schema-maintenance', …(1) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 51,
+            "display_name": "local PostgreSQL runner command boundary rejects browser output inside the repository before opening a database: [ '--schema-maintenance', …(1) ]",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 52,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the invoice-evidence-migration suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 53,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the refund-split-migration suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 54,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the refund-runtime-permissions suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 55,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the refund-read-generations suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 56,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the staff-refund-history suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 57,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the customer-order-generations suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 58,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the customer-order-deletion suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 59,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the admin-order-generations suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 60,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the supplier-order-generations suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 61,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the supplier-split-order-reads suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 62,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the supplier-operational-reads suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 63,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the checkout-member-lifecycle suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 64,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the order-member-economize suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 65,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-quote suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 66,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-admission suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 67,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-balance suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 68,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-payment-selection suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 69,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-external-payment suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 70,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the offline-order-callback-pipeline suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 71,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the payment-reconciliation-membership suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 72,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the checkout-coupon-item-authority suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 73,
+            "display_name": "local PostgreSQL runner command boundary explicitly admits the checkout-coupon-relations-authority suite to maintenance mode before validating its binary",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 74,
+            "display_name": "local PostgreSQL runner command boundary rejects [] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 75,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', 'audit:unit-shard-1' ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 76,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 77,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 78,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 79,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 80,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', '--config=production' ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 81,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 82,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 83,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 84,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 85,
+            "display_name": "local PostgreSQL runner command boundary rejects [ Array(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 86,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', 'audit:orm' ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 87,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 88,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 89,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 90,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 91,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 92,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 93,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 94,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 95,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 96,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 97,
+            "display_name": "local PostgreSQL runner command boundary rejects [ 'unused-bin', …(1) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 98,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 99,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(3) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 100,
+            "display_name": "local PostgreSQL runner command boundary rejects [ '--schema-maintenance', …(2) ] before runtime, port or cluster setup",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 101,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-legacy-system-log maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 102,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-legacy-system-log-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 103,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-catalog maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 104,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-label maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 105,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-label-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 106,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-label-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 107,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-label-permission maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 108,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed public-product-label-icons maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 109,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-category-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 110,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-category-concurrency-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 111,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-category-permission maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 112,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed legacy-share-private-scan maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 113,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed legacy-share-private-scan-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 114,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed wechat-follow-poster maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 115,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed wechat-follow-poster-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 116,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed legacy-share-code maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 117,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed legacy-share-code-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 118,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-brand maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 119,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-brand-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 120,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-brand-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 121,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-product-brand-permission maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 122,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-batch-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 123,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-batch-concurrency-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 124,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed supplier-product-batch-permission maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 125,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed legacy-share-registered-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 126,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed user-spread-poster-data maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 127,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed user-spread-poster-data-native maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 128,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed cart-computation-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 129,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-refund-operation-http maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 130,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed runtime-business-login maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 131,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed assisted-purchase-runtime-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 132,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed assisted-purchase-flow-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 133,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-user-list-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 134,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed admin-runtime-login maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 135,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed presale-runtime-permissions maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 136,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed membership-pricing-policy maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 137,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-quota-refund-receipt-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 138,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-quota-payment-ledger-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 139,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed unpaid-mixed-order-cancellation-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 140,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-origin-evidence-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 141,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-origin-installation maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 142,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-cancellation-evidence-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 143,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed purchase-cancellation-installation maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 144,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed customer-cashier-abandon-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 145,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed customer-work-cash-refund-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 146,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed finance-fixture-advisory-isolation maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 147,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-line-finance maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 148,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-coupon-template-authority maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 149,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-membership-boundary maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 150,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-brokerage-boundary maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 151,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-brokerage-authority maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 152,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-brokerage-paid-authority maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 153,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-member-evidence maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 154,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-catalog-management maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 155,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-mobile-product-concurrency maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 156,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-out-product-concurrency maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 157,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed checkout-sku-lifecycle-concurrency maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 158,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed level-pricing-activation maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 159,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed pc-coupon-wallet-postgres maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 160,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed product-price-truncation maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 161,
+            "display_name": "local PostgreSQL runner command boundary admits the reviewed out-stock-candidate-boundary maintenance suite before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 162,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed admin-product-category-permission files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 163,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed admin-product-category files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 164,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed admin-product-category-http files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 165,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed admin-product-category-native files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 166,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed supplier-product-label-http files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 167,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed supplier-product-label-binding-http files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 168,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed supplier-product-label-native files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 169,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed division-staff-http files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 170,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed division-staff-method-http files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 171,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed division-staff-invite files before binary validation",
+            "status": "passed"
+          },
+          {
+            "assertion_ordinal": 172,
+            "display_name": "explicit category, Supplier label and employee isolated maintenance admission admits complete reviewed division-staff-postgres files before binary validation",
+            "status": "passed"
+          }
+        ],
+        "explanation": "Vitest truncates different $args vectors to identical display text; source vectors and actual reporter row order bind each passed assertion exactly once."
+      }
+    },
+    "native": {
+      "distinct_tests": 8,
+      "distinct_files": 1,
+      "entry": "workers-ts/test/supplier-bill-read-native.test.ts",
+      "actual_verbose_names": [
+        "derives the tenant from the actual JWT and grants reads without any write or sequence authority",
+        "preserves finish-clock groups, add-clock date filters and calendar-year week00/53",
+        "reads every row after100 through period pagination with a closed modern response",
+        "does not truncate modern periods above10000 rows and keeps SQL money exact beyond safe integer cents",
+        "keeps complete legacy ids and raw field compatibility while rejecting foreign/missing or excessive identities",
+        "searches literal transaction/user identity, hides deleted-user names and never broadens the tenant",
+        "rejects malformed/duplicate scopes and rechecks live finance permissions on the next actual GET",
+        "executes the service in an actual repeatable read read-only transaction"
+      ],
+      "case_identity": "frozen_literal_source_and_actual_complete_verbose_rows"
+    },
+    "browser": {
+      "distinct_tests": 1,
+      "entry": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+      "ready": {
+        "control": "http://127.0.0.1:36443/__supplier_bill_fixture/d4c3f17d-f5e6-41ea-9911-78520dcc8b30",
+        "bills": "http://127.0.0.1:36443/finance/bills"
+      },
+      "result": {
+        "path": "/tmp/cinashop-supplier-bill-browser-result.json",
+        "sha256": "50cfa400d3e0b91b1ed4497549999958539eef711ada7b91a8419c3fbf45f929",
+        "bytes": 8552
+      },
+      "business_assertions": {
+        "finished": true,
+        "outbound": 0,
+        "readonlyGets": 22,
+        "denied": true,
+        "restored": true,
+        "roleWithdrawn": false,
+        "groupHeld": 2,
+        "groupReleased": 2,
+        "accountChanges": 2,
+        "detailPages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "periodTypes": [
+          "day",
+          "month",
+          "week"
+        ],
+        "selectedStatuses": [
+          "",
+          "1"
+        ],
+        "keywordSearches": [
+          "MANY-0"
+        ],
+        "seenPeriods": [
+          "2026-09-04",
+          "2026-09-03",
+          "2026-09-01",
+          "2021-01-01",
+          "2020-12-31",
+          "2026-09-02",
+          "2026-36",
+          "2021-00",
+          "2020-53",
+          "2026-09",
+          "2021-01",
+          "2020-12"
+        ],
+        "explicitDate": true,
+        "closedDetails": true,
+        "scriptSeen": true,
+        "paths": [
+          {
+            "path": "/api/get_script",
+            "query": {},
+            "method": "GET",
+            "status": 200,
+            "principal": "anonymous"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "2",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "3",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "4",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "5",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "6",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20",
+              "period": "2026-09-04",
+              "keyword": "MANY-0"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "1",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "1",
+              "data": "2026/09/01-2026/09/01",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record_info",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "1",
+              "data": "2026/09/01-2026/09/01",
+              "page": "1",
+              "limit": "20",
+              "period": "2026-09-02",
+              "keyword": ""
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "2026/09/01-2026/09/01",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "week",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "month",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "month",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "month",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 400011,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "month",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          },
+          {
+            "path": "/api/get_script",
+            "query": {},
+            "method": "GET",
+            "status": 200,
+            "principal": "anonymous"
+          },
+          {
+            "path": "/supplierapi/finance/supplier_flowing_water/fund_record",
+            "query": {
+              "selection": "period",
+              "timeType": "day",
+              "status": "",
+              "data": "",
+              "page": "1",
+              "limit": "20"
+            },
+            "method": "GET",
+            "status": 200,
+            "envelope": 200,
+            "principal": "reader"
+          }
+        ]
+      },
+      "entry_binding": {
+        "runner": {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d",
+          "bytes": 63249
+        },
+        "config": {
+          "path": "/home/cina/cinagroup/cinashop/workers-ts/vitest.supplier-bill-browser.config.ts",
+          "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9",
+          "bytes": 550
+        },
+        "alias": "audit:supplier-bill-browser",
+        "unique_include": "test/browser/supplier-bill.acceptance.ts",
+        "default_log_may_omit_entry_filename": true
+      },
+      "gui": {
+        "manifest": {
+          "path": "/tmp/cinashop-supplier-bill-browser-qa.json",
+          "sha256": "f2efd75d8a6a5c01ccc6166e523378583628e4ce6ec18a0b9d35459ae91d0a36",
+          "bytes": 6333
+        },
+        "observations": {
+          "status": "passed",
+          "browser_control_verified": true,
+          "browser": {
+            "id": "2",
+            "type": "iab",
+            "name": "Codex In-app Browser",
+            "external_extension_connection_observed": false
+          },
+          "identity_verified": true,
+          "not_blank": true,
+          "no_blocking_overlay": true,
+          "unexplained_console_errors": [],
+          "source_fingerprints": [
+            {
+              "path": "view/supplier-ts/src/api/supplierBills.ts",
+              "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+            },
+            {
+              "path": "view/supplier-ts/src/components/AppShell.vue",
+              "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+            },
+            {
+              "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+              "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+            },
+            {
+              "path": "view/supplier-ts/src/router.ts",
+              "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+            },
+            {
+              "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+              "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+            },
+            {
+              "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+              "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+            },
+            {
+              "path": "workers-ts/src/routes/supplierapi.ts",
+              "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+            },
+            {
+              "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+              "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+            },
+            {
+              "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+              "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+            },
+            {
+              "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+              "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+            },
+            {
+              "path": "workers-ts/test/helpers/supplierBillRead.ts",
+              "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+            },
+            {
+              "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+              "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+            },
+            {
+              "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+              "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+            },
+            {
+              "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+              "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+            },
+            {
+              "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+              "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+            },
+            {
+              "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+              "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+            }
+          ],
+          "viewports": [
+            {
+              "name": "desktop",
+              "status": "passed",
+              "width": 1440,
+              "height": 900,
+              "scrollWidth": 1440,
+              "bodyScrollWidth": 1440
+            },
+            {
+              "name": "mobile",
+              "status": "passed",
+              "width": 390,
+              "height": 844,
+              "scrollWidth": 375,
+              "bodyScrollWidth": 375
+            }
+          ],
+          "screenshots": [
+            {
+              "viewport": "desktop",
+              "sha256": "3ece9d30ba019f4022956ad98534ee664b966ccba03e224d8aafb1d9068a5f44",
+              "bytes": 71799,
+              "inline_reference": "IAB emitted bill desktop capture 2026-10-17T02:29:50.401Z",
+              "width": 1440,
+              "height": 900,
+              "scrollWidth": 1440,
+              "bodyScrollWidth": 1440,
+              "source": "mcp__cua_repl.js billAppTab.getScreenshot({emit:false})",
+              "url": "http://127.0.0.1:36443/finance/bills",
+              "title": "CinaShop 供应商中心"
+            },
+            {
+              "viewport": "mobile",
+              "sha256": "f164bb2a79e0cdfa79d9077882e0d21c7f3c6e70330f6dae7f274b050965a1f5",
+              "bytes": 35826,
+              "inline_reference": "IAB emitted bill mobile capture 2026-10-17T02:30:22.027Z",
+              "width": 390,
+              "height": 844,
+              "scrollWidth": 375,
+              "bodyScrollWidth": 375,
+              "source": "mcp__cua_repl.js billAppTab.getScreenshot({emit:false})",
+              "url": "http://127.0.0.1:36443/finance/bills",
+              "title": "CinaShop 供应商中心"
+            }
+          ],
+          "console_log": "/tmp/cinashop-supplier-bill-browser-console.json",
+          "expected_network_errors": [],
+          "expected_business_rejections": [
+            {
+              "envelope_status": 400011,
+              "reason": "Actual finance.view withdrawal in owned fixture; page showed 暂时没有权限访问 and removed previous totals."
+            }
+          ],
+          "interaction_observations": [
+            "Actual finance.view-only Supplier session loaded bills with no withdraw/export/save action.",
+            "105 detail rows visited pages1..6; row counts20,20,20,20,20,5; final MANY-0 remained searchable.",
+            "Status1 daily bill filtered by Sep1 add_time displayed Sep2 finish date and net minus3; detail showed BILL-REFUND at Sep1 13:00.",
+            "Cleared dates and restored all statuses before week/month; week2021-00 and2020-53 were visibly retained.",
+            "Actual group GET completed SQL and was held; switched day to month, canceled old request and released held delivery attempt; month remained.",
+            "Actual server finance permission revoked then restored; next GET denied without stale values, then successful fresh query.",
+            "Held a second completed group GET, cross-tab storage changed Supplier A to B to A; old page stayed invalid with no table after release attempt. Reload mounted fresh A surface.",
+            "Fixture finish returned finishedtrue with22 write-freeGETs,2holds/2releaseattempts,2accountchanges,outbound0 and baseline-restored SQL snapshot."
+          ],
+          "wire_delivery_limitation": "The host release callback skips destroyed sockets. groupReleased counts release attempts; it does not prove an aborted response reached the browser. Separate compiled SFC tests disable transport cancellation and prove generation/session rejection of a late returned payload.",
+          "automation_observations": [
+            "Native select wrapped in label did not match getByLabel exact; fresh AX and observed single select were inspected, then documented locator.selectOption succeeded. No application edit was required."
+          ],
+          "viewport_override_reset": true,
+          "test_tabs_closed": true
+        },
+        "raw_console": {
+          "path": "/tmp/cinashop-supplier-bill-browser-console.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        },
+        "browser_control_verified": true,
+        "external_browser_extension_installation": "not_observed_or_claimed"
+      },
+      "scope_limits": [
+        "Synthetic ledger READ inputs are not actual payment/refund execution evidence.",
+        "GUI checks day status1 plus explicit dates; it clears dates and restores all statuses before week/month navigation.",
+        "Other/reader control changes prove mounted-session invalidation only; no supplier-B bill UI read is claimed.",
+        "Historical default bill parity metadata remains unchanged; this dated audit records the new read surface separately.",
+        "groupReleased counts a delivery attempt; destroyed sockets are skipped. Browser checks cancellation and stale-state clearing, not guaranteed delivery of an aborted payload. Independent SFC tests ignore transport cancellation and verify rejection of a late returned payload."
+      ]
+    },
+    "commands": [
+      {
+        "name": "supplier-types-final-1",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 7.26,
+        "started_at_utc": "2026-10-17T02:20:40.773975+00:00",
+        "finished_at_utc": "2026-10-17T02:20:48.031814+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-supplier-types-final-1.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-supplier-types-final-1.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "excluded_non_input_change": [
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "recorded_sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36",
+            "current_sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00",
+            "reason": "Only the standalone SFC test host changed from global document to a local hostDocument reference; outside Supplier src and explicitly excluded by Worker runtime types.",
+            "supplier_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.app.json",
+              "sha256": "3510c71ef9ab055979a2f6a628cd5bdb17940644ac5a3e3c97a343a09cf95d0e",
+              "bytes": 529
+            },
+            "supplier_node_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.node.json",
+              "sha256": "31de5f10e66cc8eaa8e5f666fff339f402267a395632aa99a224766a5f5cb740",
+              "bytes": 238
+            },
+            "worker_runtime_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/workers-ts/tsconfig.runtime-test.json",
+              "sha256": "12965a90180c0eba6a02d1193b1cf6921d9fa98c719e99bf431ca55cb195ce02",
+              "bytes": 365
+            },
+            "test_only_repair_evidence": {
+              "path": "/tmp/cinashop-supplier-bill-test-host-type-repair.json",
+              "sha256": "2500d4bc892e2f759504724c0704f8552f80377e80c29e942150b67ad1539ee6",
+              "bytes": 811
+            }
+          }
+        ]
+      },
+      {
+        "name": "supplier-build-final-1",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 13.19,
+        "started_at_utc": "2026-10-17T02:20:48.085311+00:00",
+        "finished_at_utc": "2026-10-17T02:21:01.279977+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-supplier-build-final-1.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-supplier-build-final-1.log",
+          "sha256": "2b61a0ba0bd53d569d438c456f5fff38723e8c0599a7e6da51b205496f526bd3",
+          "bytes": 5047
+        },
+        "excluded_non_input_change": [
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "recorded_sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36",
+            "current_sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00",
+            "reason": "Only the standalone SFC test host changed from global document to a local hostDocument reference; outside Supplier src and explicitly excluded by Worker runtime types.",
+            "supplier_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.app.json",
+              "sha256": "3510c71ef9ab055979a2f6a628cd5bdb17940644ac5a3e3c97a343a09cf95d0e",
+              "bytes": 529
+            },
+            "supplier_node_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.node.json",
+              "sha256": "31de5f10e66cc8eaa8e5f666fff339f402267a395632aa99a224766a5f5cb740",
+              "bytes": 238
+            },
+            "worker_runtime_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/workers-ts/tsconfig.runtime-test.json",
+              "sha256": "12965a90180c0eba6a02d1193b1cf6921d9fa98c719e99bf431ca55cb195ce02",
+              "bytes": 365
+            },
+            "test_only_repair_evidence": {
+              "path": "/tmp/cinashop-supplier-bill-test-host-type-repair.json",
+              "sha256": "2500d4bc892e2f759504724c0704f8552f80377e80c29e942150b67ad1539ee6",
+              "bytes": 811
+            }
+          }
+        ]
+      },
+      {
+        "name": "worker-runtime-types-final-1",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 81.26,
+        "started_at_utc": "2026-10-17T02:21:01.334386+00:00",
+        "finished_at_utc": "2026-10-17T02:22:22.589955+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-worker-runtime-types-final-1.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-worker-runtime-types-final-1.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "excluded_non_input_change": [
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "recorded_sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36",
+            "current_sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00",
+            "reason": "Only the standalone SFC test host changed from global document to a local hostDocument reference; outside Supplier src and explicitly excluded by Worker runtime types.",
+            "supplier_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.app.json",
+              "sha256": "3510c71ef9ab055979a2f6a628cd5bdb17940644ac5a3e3c97a343a09cf95d0e",
+              "bytes": 529
+            },
+            "supplier_node_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/tsconfig.node.json",
+              "sha256": "31de5f10e66cc8eaa8e5f666fff339f402267a395632aa99a224766a5f5cb740",
+              "bytes": 238
+            },
+            "worker_runtime_tsconfig": {
+              "path": "/home/cina/cinagroup/cinashop/workers-ts/tsconfig.runtime-test.json",
+              "sha256": "12965a90180c0eba6a02d1193b1cf6921d9fa98c719e99bf431ca55cb195ce02",
+              "bytes": 365
+            },
+            "test_only_repair_evidence": {
+              "path": "/tmp/cinashop-supplier-bill-test-host-type-repair.json",
+              "sha256": "2500d4bc892e2f759504724c0704f8552f80377e80c29e942150b67ad1539ee6",
+              "bytes": 811
+            }
+          }
+        ]
+      },
+      {
+        "name": "worker-unit-types-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 124.22,
+        "started_at_utc": "2026-10-17T02:25:41.881430+00:00",
+        "finished_at_utc": "2026-10-17T02:27:46.103463+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-worker-unit-types-final-2.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-worker-unit-types-final-2.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "excluded_non_input_change": []
+      },
+      {
+        "name": "unit-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/supplier-bill-frontend.test.ts",
+          "test/supplier-bill-read-rules.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "--maxWorkers=1",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-bill-unit-final-2.json"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 13.19,
+        "started_at_utc": "2026-10-17T02:27:46.175562+00:00",
+        "finished_at_utc": "2026-10-17T02:27:59.362662+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-unit-final-2.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-unit-final-2.log",
+          "sha256": "9b7cf28feeb9890fdd231c0008e57d13f389334b45ad725168e060ef60d69a00",
+          "bytes": 69
+        },
+        "excluded_non_input_change": []
+      },
+      {
+        "name": "native-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-bill-read-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 20.99,
+        "started_at_utc": "2026-10-17T02:27:59.416089+00:00",
+        "finished_at_utc": "2026-10-17T02:28:20.407108+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-native-final-2.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-native-final-2.log",
+          "sha256": "03a12cf135426f980c0c37d59f960c3f296ee2b3b634499613ad7d90da8f24ed",
+          "bytes": 2540
+        },
+        "excluded_non_input_change": []
+      },
+      {
+        "name": "browser-final-1",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:supplier-bill-browser"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 207.76,
+        "started_at_utc": "2026-10-17T02:28:47.228744+00:00",
+        "finished_at_utc": "2026-10-17T02:32:14.986084+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplierBills.ts",
+            "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+          },
+          {
+            "path": "view/supplier-ts/src/components/AppShell.vue",
+            "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+            "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+          },
+          {
+            "path": "view/supplier-ts/src/router.ts",
+            "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+          },
+          {
+            "path": "workers-ts/src/routes/supplierapi.ts",
+            "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+            "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+            "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+            "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierBillRead.ts",
+            "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+            "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+          },
+          {
+            "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+            "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+            "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-bill-browser-final-1.log",
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-bill-browser-final-1.log",
+          "sha256": "f0c0f93a953f4784f34d6beddcbf8f440e31d90c5f2e392cc7f2f2b9957ff601",
+          "bytes": 6585
+        },
+        "excluded_non_input_change": []
+      }
+    ],
+    "historical_attempts": [
+      {
+        "phase": "frontend-target-1",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-1-terminal.json",
+          "sha256": "e8c81b178ae7bbbe52ebb0337b08fb86f5f40c8eab8a711000e5f2472f9aeb93",
+          "bytes": 2510
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-1.log",
+          "sha256": "a59e656b2e6a4c89c4e9deef6444d7de72aa2e177f8fe75c03e18db911ae17f7",
+          "bytes": 133
+        },
+        "exit_code": 1,
+        "wall_seconds": 0.0,
+        "accepted_additional_tests": 0,
+        "reason": "The external shared-lock directory was read-only; Vitest never started and no report/tests/cluster were produced.",
+        "recorded_source_count": 11,
+        "actual_tests": 0,
+        "actual_clusters": 0,
+        "vitest_started": false
+      },
+      {
+        "phase": "frontend-target-2",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-2-terminal.json",
+          "sha256": "0340a7f973898db96f35597f6954e0f241eb9a8a9f3bf51bafa9b7af60ffaee1",
+          "bytes": 2511
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-2.log",
+          "sha256": "caacb495b5d79845ae92899494f4f22c941e64c453423d3c3988d02aa16ac9e5",
+          "bytes": 74
+        },
+        "exit_code": 1,
+        "wall_seconds": 3.34,
+        "accepted_additional_tests": 0,
+        "reason": "The custom SFC host lacked EventTarget.addEventListener; ten runtime assertions failed.",
+        "recorded_source_count": 11,
+        "report": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-2.json",
+          "sha256": "ecbe652b8c92d6598b47fc79537ca304fd42d97f2c5943b296540e22cbb2d3a8",
+          "bytes": 71270604
+        },
+        "actual_tests": 32,
+        "passed": 22,
+        "failed": 10,
+        "failure_excerpts": [
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz",
+          "TypeError: el.addEventListener is not a function\n    at addEventListener (data:text/javascript;base64,dmFyIF9fZGVmUHJvcCA9IE9iamVjdC5kZWZpbmVQcm9wZXJ0eTsKdmFyIF9fZXhwb3J0ID0gKHRhcmdldCwgYWxsMykgPT4gewogIGZvciAodmFyIG5hbWUgaW4gYWxsMykKICAgIF9fZGVmUHJvcCh0YXJnZXQsIG5hbWUsIHsgZ2V0OiBhbGwzW25hbWVdLCBlbnVtZXJhYmxlOiB0cnVlIH0pOwp9OwoKLy8gbm9kZV9tb2R1bGVz"
+        ]
+      },
+      {
+        "phase": "frontend-target-3",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-3-terminal.json",
+          "sha256": "fc3cdaeaaf55c3c79cc1ecb20428f444712283f813f3da061a9451c4d7384cab",
+          "bytes": 2511
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-3.log",
+          "sha256": "896ba6924c7285dbdc3e57a67d42f72a3e317c3112e46383c70d58c5f1dda4af",
+          "bytes": 74
+        },
+        "exit_code": 1,
+        "wall_seconds": 1.32,
+        "accepted_additional_tests": 0,
+        "reason": "The custom SFC host lacked getRootNode; three runtime assertions failed.",
+        "recorded_source_count": 11,
+        "report": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-3.json",
+          "sha256": "15cd9ace88a1bd4a19173cb1c689f26aeb4ef321c73e5a2f820c0ee27ad07980",
+          "bytes": 14338
+        },
+        "actual_tests": 32,
+        "passed": 29,
+        "failed": 3,
+        "failure_excerpts": [
+          "TypeError: el.getRootNode is not a function\n    at beforeUpdate (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:7990:25)\n    at callWithErrorHandling (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:2232:19)\n    at callWithAsyncErrorHandling (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:2239:17)\n    at invokeDirective",
+          "TypeError: Cannot read properties of null (reading 'type')\n    at unmountComponent (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6651:18)\n    at unmount (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6554:7)\n    at unmountChildren (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6677:7)\n    at unmount (/tmp/cinashop-",
+          "TypeError: Cannot read properties of null (reading 'type')\n    at unmountComponent (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6651:18)\n    at unmount (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6554:7)\n    at unmountChildren (/tmp/cinashop-supplier-bill-sfc-VS5gim/compiled-page.mjs:6677:7)\n    at unmount (/tmp/cinashop-"
+        ]
+      },
+      {
+        "phase": "frontend-target-4",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-4-terminal.json",
+          "sha256": "ca155de7cac7863f3e666fc2c5ef0a139b27871d24e6d5fd9c6d79c7e854b781",
+          "bytes": 2674
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-4.log",
+          "sha256": "f89579551499f5f61982161fd83aeaefa9b0d8c355ba33cfd906ee4726ae9b83",
+          "bytes": 74
+        },
+        "exit_code": 1,
+        "wall_seconds": 1.33,
+        "accepted_additional_tests": 0,
+        "reason": "The custom SFC host lacked Document; three runtime assertions failed.",
+        "recorded_source_count": 12,
+        "report": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-4.json",
+          "sha256": "581ec1105ee86db14690cac95d6e48d168cf76a41cfe98a8c5db2754a6da20eb",
+          "bytes": 14608
+        },
+        "actual_tests": 33,
+        "passed": 30,
+        "failed": 3,
+        "failure_excerpts": [
+          "ReferenceError: Document is not defined\n    at beforeUpdate (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:7991:30)\n    at callWithErrorHandling (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:2232:19)\n    at callWithAsyncErrorHandling (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:2239:17)\n    at invokeDirectiveHook",
+          "TypeError: Cannot read properties of null (reading 'type')\n    at unmountComponent (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6651:18)\n    at unmount (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6554:7)\n    at unmountChildren (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6677:7)\n    at unmount (/tmp/cinashop-",
+          "TypeError: Cannot read properties of null (reading 'type')\n    at unmountComponent (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6651:18)\n    at unmount (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6554:7)\n    at unmountChildren (/tmp/cinashop-supplier-bill-sfc-QKwahA/compiled-page.mjs:6677:7)\n    at unmount (/tmp/cinashop-"
+        ]
+      },
+      {
+        "phase": "frontend-target-5",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-5-terminal.json",
+          "sha256": "ac86b44a762559bf89d6b2f1627b4689075bc4a784e1a04e49f6d9f80e99963d",
+          "bytes": 3167
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-5.log",
+          "sha256": "e2f9a082cfb1c7f772ceba24be67f2176bd7a50a4a62fd3261a8bd50ac195111",
+          "bytes": 74
+        },
+        "exit_code": 0,
+        "wall_seconds": 1.25,
+        "accepted_additional_tests": 0,
+        "reason": "Thirty-three actual assertions passed before final parser/route-review additions.",
+        "recorded_source_count": 15,
+        "report": {
+          "path": "/tmp/cinashop-supplier-bill-frontend-target-5.json",
+          "sha256": "a62d15aad9deffd2a732077909c5c90324b44448ab80cc74b2deb7b72570d000",
+          "bytes": 11807
+        },
+        "actual_tests": 33,
+        "passed": 33,
+        "failed": 0,
+        "failure_excerpts": []
+      },
+      {
+        "phase": "native-target-1",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-native-target-1-terminal.json",
+          "sha256": "0452bd7b132d90b0a09ce6a362cc5520c2cd0e1d30f88731041814824266eb99",
+          "bytes": 3330
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-native-target-1.log",
+          "sha256": "77cb234119db50561d65ad1106c9266eda7f2092bd1f16db4f70e909ff930874",
+          "bytes": 2540
+        },
+        "exit_code": 0,
+        "wall_seconds": 21.25,
+        "accepted_additional_tests": 0,
+        "reason": "Actual8 target native assertions passed; the final-source run is counted instead.",
+        "recorded_source_count": 16,
+        "actual_tests": 8,
+        "passed": 8,
+        "failed": 0,
+        "native": {
+          "distinct_tests": 8,
+          "distinct_files": 1,
+          "entry": "workers-ts/test/supplier-bill-read-native.test.ts",
+          "actual_verbose_names": [
+            "derives the tenant from the actual JWT and grants reads without any write or sequence authority",
+            "preserves finish-clock groups, add-clock date filters and calendar-year week00/53",
+            "reads every row after100 through period pagination with a closed modern response",
+            "does not truncate modern periods above10000 rows and keeps SQL money exact beyond safe integer cents",
+            "keeps complete legacy ids and raw field compatibility while rejecting foreign/missing or excessive identities",
+            "searches literal transaction/user identity, hides deleted-user names and never broadens the tenant",
+            "rejects malformed/duplicate scopes and rechecks live finance permissions on the next actual GET",
+            "executes the service in an actual repeatable read read-only transaction"
+          ],
+          "case_identity": "frozen_literal_source_and_actual_complete_verbose_rows"
+        }
+      },
+      {
+        "phase": "unit-target-1",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-unit-target-1-terminal.json",
+          "sha256": "d576d6d786e0856e1409fd9a9bb526828f6829249040d452bf3a19cfaba88828",
+          "bytes": 3416
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-unit-target-1.log",
+          "sha256": "35d98af00e24dfb1950b86ab8f1aef2b5892efb118e1efe8be5eec3e9e1c5005",
+          "bytes": 70
+        },
+        "exit_code": 0,
+        "wall_seconds": 13.37,
+        "accepted_additional_tests": 0,
+        "reason": "Actual240 target assertions passed; the final-source run is counted instead.",
+        "recorded_source_count": 16,
+        "report": {
+          "path": "/tmp/cinashop-supplier-bill-unit-target-1.json",
+          "sha256": "f2d3ec707a4b9a88614be565c122fc1e37a538bdab375584b0f61949cceb8665",
+          "bytes": 97749
+        },
+        "actual_tests": 240,
+        "passed": 240,
+        "failed": 0,
+        "failure_excerpts": []
+      },
+      {
+        "phase": "worker-unit-types-final-1",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-bill-worker-unit-types-final-1-terminal.json",
+          "sha256": "92fbc730a449915e74619aa738c498a1db4979394461f3dfd7c7571f7b12834e",
+          "bytes": 3230
+        },
+        "log": {
+          "path": "/tmp/cinashop-supplier-bill-worker-unit-types-final-1.log",
+          "sha256": "1bd2b9ec355637410dc99f5b39404a13c7fbc9d6e5517b39df1da386242e291c",
+          "bytes": 188
+        },
+        "exit_code": 2,
+        "wall_seconds": 134.75,
+        "accepted_additional_tests": 0,
+        "reason": "Full Worker unit types exited2: the new SFC host referenced undeclared DOM global document. The test-only host now captures a local hostDocument; all15 other frozen sources are unchanged.",
+        "recorded_source_count": 16,
+        "type_diagnostics": [
+          "test/supplier-bill-frontend.test.ts(85,191): error TS2584: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'."
+        ],
+        "changed_file": "workers-ts/test/supplier-bill-frontend.test.ts",
+        "production_sources_changed": false
+      }
+    ],
+    "accepted_evidence_selection": {
+      "path": "/tmp/cinashop-supplier-bill-accepted-evidence.json",
+      "sha256": "accd6816f5494fcb18467b86d3c738adadbe273dd4e3c4d577257684812c29c9",
+      "bytes": 646
+    },
+    "frozen_sources_artifact": {
+      "path": "/tmp/cinashop-supplier-bill-frozen-sources-2.json",
+      "sha256": "b18163d0802178a3a82dca2099b3977e9e3c1a3417d0e385bcfefdb63eaf1025",
+      "bytes": 2455
+    },
+    "prior_freeze_artifact": {
+      "path": "/tmp/cinashop-supplier-bill-frozen-sources-1.json",
+      "sha256": "2a23ae4ad4516e38f90d0cadb3a7290529a9b4c34082c4aec00323deb717fe6e",
+      "bytes": 2455
+    },
+    "test_host_type_repair": {
+      "metadata": {
+        "path": "/tmp/cinashop-supplier-bill-test-host-type-repair.json",
+        "sha256": "2500d4bc892e2f759504724c0704f8552f80377e80c29e942150b67ad1539ee6",
+        "bytes": 811
+      },
+      "observation": {
+        "changes": [
+          {
+            "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+            "before": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36",
+            "after": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+          }
+        ],
+        "before_content_reconstructed_by_reversing_exact_recorded_test_only_edits_and_verified_against_original_phase_sha256": "/tmp/cinashop-supplier-bill-test-host-before-type-repair.ts",
+        "production_sources_changed": false,
+        "reason": "Worker unit compiler has no document DOM global; retain actual host object locally instead of referring to the stub through an untyped global.",
+        "source_exclusion_proofs": [
+          "view/supplier-ts/tsconfig.app.json",
+          "view/supplier-ts/tsconfig.node.json",
+          "workers-ts/tsconfig.runtime-test.json"
+        ]
+      },
+      "before_content": {
+        "path": "/tmp/cinashop-supplier-bill-test-host-before-type-repair.ts",
+        "sha256": "48c5e8504d9701ab15fb27b83b74881c72592e1c908405c642e1f9e2c57aae36",
+        "bytes": 19430
+      },
+      "before_content_provenance": "Reverse reconstructed exact recorded edits; hash verified against original frozen16 and actual phase rows. Not claimed as a pre-run saved copy."
+    },
+    "phase_plans": [
+      {
+        "path": "/tmp/cinashop-supplier-bill-final-phase-plan-1.json",
+        "sha256": "2bdee391342eae9cbfbd8bff6445e724856fc0aad3e55d1e2b7a043ff1f93838",
+        "bytes": 2625
+      },
+      {
+        "path": "/tmp/cinashop-supplier-bill-final-phase-plan-2.json",
+        "sha256": "3d4f12e4551d25c6b9b91987ee1fce3d0142f58aa30ddb162bf421144549632b",
+        "bytes": 1467
+      }
+    ],
+    "validation_ledgers": [
+      {
+        "path": "/tmp/cinashop-supplier-bill-final-validation-1.json",
+        "sha256": "06f561b21a90b986765dbe40078b637510eecfcbf24c974784b6bea7b94bfe93",
+        "bytes": 13607
+      },
+      {
+        "path": "/tmp/cinashop-supplier-bill-final-validation-2.json",
+        "sha256": "0a414b7e2c7f98efeba3a35820e37627352578e9e6761955af1a7ac6252d36df",
+        "bytes": 10495
+      }
+    ],
+    "excluded_non_input_change_policy": "Three earlier successful Supplier types/build and Worker runtime commands keep their original16 fingerprints; only the standalone SFC test host differs, outside their actual input configs. All later unit types/unit/native/Browser match the full current16.",
+    "deduplication": "Final240 unit + final8 actual native + one interactive Browser; historical target/retry passes and HTTP requests add zero."
+  },
+  "cleanup": [
+    {
+      "terminal_name": "browser-final-1",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LzQQ20",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "method": "actual_normal_owned_runner_and_independent_status",
+      "log": {
+        "path": "/tmp/cinashop-supplier-bill-browser-final-1.log",
+        "sha256": "f0c0f93a953f4784f34d6beddcbf8f440e31d90c5f2e392cc7f2f2b9957ff601",
+        "bytes": 6585
+      }
+    },
+    {
+      "terminal_name": "native-final-2",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-BeiigZ",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "method": "actual_normal_owned_runner_and_independent_status",
+      "log": {
+        "path": "/tmp/cinashop-supplier-bill-native-final-2.log",
+        "sha256": "03a12cf135426f980c0c37d59f960c3f296ee2b3b634499613ad7d90da8f24ed",
+        "bytes": 2540
+      }
+    },
+    {
+      "terminal_name": "native-target-1",
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-PqAwBw",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "method": "actual_normal_owned_runner_and_independent_status",
+      "log": {
+        "path": "/tmp/cinashop-supplier-bill-native-target-1.log",
+        "sha256": "77cb234119db50561d65ad1106c9266eda7f2092bd1f16db4f70e909ff930874",
+        "bytes": 2540
+      }
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/api/refund.ts",
+      "sha256": "96639b8f72964049af4771412f62c6b0aa42b6378e86ae38fe9723afebadafbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/pages/refund/RefundList.vue",
+      "sha256": "8df4c437169b53565b4a23039d6d6ee04ac2ddaee4aa6423c05d0a7d46000474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/supplierRefundSettlement.ts",
+      "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/proactiveRefund.ts",
+      "sha256": "8609cdde2ca2055229c9bd82dd11477f5b114d2a7910f2fba99ce976bcc4f3c8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProactiveRefund.vue",
+      "sha256": "5169c803e8966a142b772a941860e1cfacd4a2a315c84d13b7ddda0503af5531",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-supplier-refund-settlement-runtime.mjs",
+      "sha256": "4804e5b0b24a852ea24c548357822ec036e25a9ed1a96a186de517febfa3906c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkFinancial.ts",
+      "sha256": "4fb6199a453b626c6da98c769dcfeedb2bd8b035f03354fc7cd7eca474bb6798",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerSupplierRefundSettlementPanel.vue",
+      "sha256": "4253da2e0b87ed8d32beb6e11a4ae69030866ac22ddc5acba3f2a4c7cda5c950",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerSupplierRefundSettlement.ts",
+      "sha256": "ad2be65b87720791e8f004e533e001965bd1531d25914048679d7d5a47e23259",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orderDetail.vue",
+      "sha256": "1c53e54467f4beff6a7ed6b37be2219c4aff3ec282df5ef1fb44384ffe91dfc9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refundDetail.vue",
+      "sha256": "89c7d3a5bfe6640dbd0a1e57b2b3dab4501a977a73197c2620673b79df14cb6c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json",
+      "sha256": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-post-goods-refusal-20261017.json",
+      "sha256": "075aa39bab4e97fcca5893b7fd928819593eb6a3b2a9cd9ac32ce3972c39a262",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json",
+      "sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "sha256": "916ef902b967f1890f740407db45822beceed0dc178003f762a691510acbce10",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-ui-20261017.json",
+      "sha256": "ecfab320399da4aefe5c0cc7cde3e6a453d803926649d2d6ee5b8b0909211649",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "f1557c223e76e289988f7fdfd1fc833baaa6063fc9bbf488983d0aa9b438017b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/supplier-frontend-parity.json",
+      "sha256": "8cc946215c6cd3c8dd638803d920a1cde11e98f7b327a4d6921f3722b1068336",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+      "sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerManualRefundRuntimePlan.ts",
+      "sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWaybillActor.ts",
+      "sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+      "sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runCustomerWaybillActor.ts",
+      "sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOrderEditOperation.ts",
+      "sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "dd4e8a482b382bb97e5310f7ba5dbb00f53991348a79dc58f8b200259377dbbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+      "sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "29b55528bd6a41ba521f59a6e0e33424a6fc2f348f84f38e7842efc12fa3745d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "535b0f3b762c80a337461da7493188e879460bc8528038feca7d9d3a308ee453",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "dde0d79b54f5e71a3c88e72da09577e29ec73e80e01c3b8bec0b328d1f9db70b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "deeeb1b213e1489cdf53962724467f9701668dcdad529cccc85f8a5efdd79292",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts",
+      "sha256": "ec518d3a4cbf0148404ad7e100112e85c9f46eb134759ffc955b77b41aedd1b9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-proactive-refund.acceptance.ts",
+      "sha256": "847cefd3c42313bd4d0d32e20eedb3880a0a587c02592a14159dd018f21c7857",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-refund-settlement.acceptance.ts",
+      "sha256": "2e3b4e149ff50eb9a992d61afd70a1fcb5ac5b94685d273eda6820cf24a48ff6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+      "sha256": "e9a212b387842c4d6e9d58e549c641c2c9aa664784ed161fe0349584c9608f05",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "d0426d3cc73ef9350ab4d926606e248724b44ed4ec5fd21381d8a9097bc66e55",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+      "sha256": "09bfc2471f3a56fae010b5bc783ba5ec09d25b01fda5e523a7ed6a17933f3e41",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-proactive-refund-browser.config.ts",
+      "sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-refund-settlement-browser.config.ts",
+      "sha256": "9d711597a91c1d749bbef3e429ab508a2b73a2be8ee0751c431d66463393c0dc",
+      "byte_equal_to_base": true
+    }
+  ],
+  "checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "count": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562",
+      "byte_equal_to_base": true,
+      "legacy_checksum_source": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "raw_line_bytes_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "count": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007",
+      "byte_equal_to_base": true,
+      "legacy_checksum_source": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "raw_line_bytes_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  ],
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/order/Refund.php",
+      "sha256": "e6efab85cd4fdbdcfc8f5901fad403b471e66f393788fc93e99e401778f827cc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/LoginServices.php",
+      "sha256": "95d65bf54d3bf3a8dd35784c8d7f7e3b71ef1fee0893ef87ff4ee8c674a9a08e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/AuthTokenMiddleware.php",
+      "sha256": "3eb8736ca6fe37a30b66142bb4b638a61fb623f540141be9569c769188f2895c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/SupplierCheckRoleMiddleware.php",
+      "sha256": "51d000fe779095dc33bf820dc654b0a559232d4f7e7db619d0491ca86dcf2002"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/modalForm.js",
+      "sha256": "c13984c66e5074b7687bf86488698e546e37aab9d2ad8e1ba98e3bd173f24689"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/system/CapitalFlowJob.php",
+      "sha256": "191e8b2b62f0ed0d2a0dd3541bbfdc196685a3e05191e06b76a845c5a4d2a3cd"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/CapitalFlowServices.php",
+      "sha256": "102dc781bd25f15d113670b429e3e118f91ee83ade577a1373b808642c14d2e7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/supplier/SupplierFinanceJob.php",
+      "sha256": "092f47ace4e1b7abdb4d1b28b3360851e2f53590650c26e3340417f43f7eec5b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/finance/SupplierFlowingWaterServices.php",
+      "sha256": "254a1529edb53611b287ae1d2c7c940dc213f959d0002e170de6de0618a2e527"
+    }
+  ],
+  "php_bill_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/finance/SupplierFlowingWater.php",
+      "sha256": "b70beb7060dfb15f577cfce16f9213a932b890270b8f3a9ef52170bad32c4f9e",
+      "bytes": 3569
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/supplier/finance/SupplierFlowingWaterDao.php",
+      "sha256": "1a545b15f6c0799b4ec1fcbd539558c9db752e66a839872913f13f089e79bf93",
+      "bytes": 6351
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/finance/SupplierFlowingWaterServices.php",
+      "sha256": "254a1529edb53611b287ae1d2c7c940dc213f959d0002e170de6de0618a2e527",
+      "bytes": 9148
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/supplier/finance/SupplierFlowingWater.php",
+      "sha256": "3963c69816daf6d955508bfca027696fdf1eba5067ca8c7b07e8371acd343d2f",
+      "bytes": 4364
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+      "sha256": "b24ea2b61d05f877896390596cdfd3116b0631ca223c6d220b79273ca7405bdb",
+      "bytes": 6158
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+      "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+      "bytes": 4990
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php",
+      "sha256": "ef8e86ea916d7f419637e352abbd15a2b7213bbaa30c943007b974791ab0cdd1",
+      "bytes": 7494
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/capital/bill/index.vue",
+      "sha256": "ce481cf0bc570d3461a021a7414d30e40bf49d92ba5284421b847dd988e724f0",
+      "bytes": 7557
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/capital/components/commissionDetails.vue",
+      "sha256": "04e0cac930d51707b04d65d969f49c7c93c7df69a4ae3dc3eb5787addf439df1",
+      "bytes": 6689
+    }
+  ],
+  "php_semantics": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/finance/SupplierFlowingWater.php",
+      "line": 89,
+      "through_line": 118,
+      "meaning": "Supplier identity plus time/status/data groups and keyword/ID detail scope."
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/supplier/finance/SupplierFlowingWaterDao.php",
+      "line": 85,
+      "through_line": 110,
+      "meaning": "Status1 finish-time grouping; calendar-year %Y-%u periods and complete IDs."
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/Request.php",
+      "line": 59,
+      "through_line": 78,
+      "meaning": "getMore fourth argument renames data to time; it does not parse dates."
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+      "line": 27,
+      "through_line": 108,
+      "meaning": "Named presets, open/closed date ranges and quarter inclusive last-day-midnight quirk."
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php",
+      "line": 26,
+      "through_line": 34,
+      "meaning": "Other named periods end at the final second."
+    }
+  ],
+  "statistics_script_contract": "Restored PHP-compatible get_script handler and loaders preserved byte-for-byte from BASE.",
+  "legacy_parity_manifest_policy": "Preserved as historical metadata; this dated read audit supplements it without marking all bill/download behavior complete.",
+  "remaining": [
+    "Legacy period bill download/export behavior and actual release/publication gates remain open.",
+    "Other incomplete PHP to TypeScript migration checklist items, including asynchronous provider and actual issued-invoice public end-to-end work."
+  ],
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "secret_scan": {
+    "status": "selected_sources_and_staged_passed_exact_commit_range_gate_required",
+    "binary_path": "/tmp/cinashop-supplier-video-tools/gitleaks",
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "source_findings": 0,
+    "staged_findings": 0,
+    "scope_files": 19,
+    "source_scan": {
+      "phase": "source-initial",
+      "command": [
+        "/tmp/cinashop-supplier-video-tools/gitleaks",
+        "dir",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-supplier-bill-source-initial-secrets.json"
+      ],
+      "cwd": "/tmp/cinashop-supplier-bill-scan-2aiww6wa/source-initial",
+      "exit_code": 0,
+      "findings": 0,
+      "log": {
+        "path": "/tmp/cinashop-supplier-bill-source-initial-secrets.log",
+        "sha256": "81c5d7ea8a8862181e83b4735c5cb87dcae21b52c4e4b8c770664d658c428ad8",
+        "bytes": 79
+      },
+      "report": {
+        "path": "/tmp/cinashop-supplier-bill-source-initial-secrets.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      }
+    },
+    "staged_scan": {
+      "phase": "staged-initial",
+      "command": [
+        "/tmp/cinashop-supplier-video-tools/gitleaks",
+        "git",
+        "--pre-commit",
+        "--staged",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-supplier-bill-staged-initial-secrets.json",
+        "."
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "exit_code": 0,
+      "findings": 0,
+      "log": {
+        "path": "/tmp/cinashop-supplier-bill-staged-initial-secrets.log",
+        "sha256": "158f25405809202af5b518dc3fdf16d0562716651d30b9c7aed0f31347d4fdf1",
+        "bytes": 110
+      },
+      "report": {
+        "path": "/tmp/cinashop-supplier-bill-staged-initial-secrets.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      }
+    },
+    "final_byte_scan_evidence": "Final source/staged scans and exact BASE..commit scan are recorded externally after these audit bytes are frozen.",
+    "exact_range_base": "2388e4766d2b6a0e8ee95d84b2fd06695562e0c9",
+    "publication_metadata": "/tmp/cinashop-supplier-bill-publication-ready.json"
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "45f8d728d167e4e56fddef0c4593c5d320d8fc12d8017543565bae36561c1691"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "28e49800dc847af35bf024fcb698fea81720f8279d4dd443eafaef20bbf5ab85"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBills.ts",
+      "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876"
+    },
+    {
+      "path": "view/supplier-ts/src/components/AppShell.vue",
+      "sha256": "41b8d4b6547b47881ef49c47270f06c1ee3e601365feaa20224702dc83050c4e"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+      "sha256": "a775757bd858df5d0d9fa8ee3c1272e5c2aa68a97c22bfcb6eafe57769da3ed9"
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "d0ee05dc43de502d37a1e656221089d77dc6ad45c871a73e46ec7d5352688c0e"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "46b5c8d71c1871daad8a4b7e708ee1b0025ea104d6ab7d1007386fe88694a62d"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "376e1f6755608b67a4d86d5acc2c5ad51329d0b97c434030bb4b9ff7d8184c0f"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "bf977ca91c89d37f75a1bb6b63ef31e2d159dbc2800b1dc311d194155f88af15"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+      "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "sha256": "8eca1f147c360f67ec2af071641af039c279530b914cdb21ae22602de7163aff"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-bill.acceptance.ts",
+      "sha256": "0867290de07afefcc72cb3524c34d38c175aedf983b399402a358dcfb3cfce6d"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillRead.ts",
+      "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "bcbfe603a8ef1c1386de43a3de6a2ab9592ebd1b9aaa19929800105042728a20"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+      "sha256": "345fd8434054c566b21041c0c149e4ede2bc6b98f467d066a9bff6fde8364f00"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-read-native.test.ts",
+      "sha256": "61df73e76f1e5fecec00bd304abb10668c10a051f4296afaeb2c96d11a04ac78"
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-read-rules.test.ts",
+      "sha256": "4c163933d792c6f7b5d13babf79900cd0ca2225c1611b4f4cb890400ab386c97"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-bill-browser.config.ts",
+      "sha256": "daf0b757f4de10ed53459ec2ed53ec6f2705621ade9d2f1ae424f0688e5aeff9"
+    }
+  ]
+}

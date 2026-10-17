@@ -25,6 +25,7 @@ const navigationCatalog = [
   { path: "/orders", label: "订单管理", icon: List, permission: "supplier.order.view" },
   { path: "/refunds", label: "售后管理", icon: RefreshLeft, permission: "supplier.refund.view" },
   { path: "/finance", label: "财务结算", icon: Wallet, permission: "supplier.finance.view" },
+  { path: '/finance/bills', label: '周期账单', icon: Wallet, permission: 'supplier.finance.view' },
   { path: "/printers", label: "小票打印机", icon: Printer, permission: "supplier.print.view" },
   { path: "/waybills", label: "电子面单", icon: Tickets, permission: "supplier.waybill.view" },
   { path: "/settings", label: "履约配置", icon: Tools, permission: "supplier.config.view" },

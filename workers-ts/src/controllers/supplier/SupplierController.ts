@@ -29,6 +29,7 @@ import {
   SupplierAfterSaleService,
 } from "@/services/supplier/SupplierAfterSaleService";
 import { SupplierFinanceService } from "@/services/supplier/SupplierFinanceService";
+import { supplierSingleQuery } from '@/services/supplier/SupplierReadSupport';
 import {
   buildSkuCombinations,
   normalizeSupplierProductDimensions,
@@ -886,12 +887,18 @@ export async function updateFinanceFlowMark(c: SupplierContext) {
 
 export async function financeFundRecord(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await financeService(c).fundRecord(supplierId, c.req.query()));
+  return jsonOk(c, await financeService(c).fundRecord(supplierId, supplierSingleQuery(c.req.queries())));
 }
 
 export async function financeFundRecordInfo(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await financeService(c).fundRecordInfo(supplierId, c.req.query()));
+  return jsonOk(c, await financeService(c).fundRecordInfo(supplierId, supplierSingleQuery(c.req.queries())));
+}
+
+export async function financeBillPrivateResponse(c: SupplierContext, next: () => Promise<void>) {
+  c.header('Cache-Control', 'private, no-store, max-age=0');
+  c.header('Pragma', 'no-cache');
+  await next();
 }
 
 export async function extractList(c: SupplierContext) {

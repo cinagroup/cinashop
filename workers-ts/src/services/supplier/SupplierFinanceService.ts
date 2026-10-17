@@ -14,6 +14,7 @@ import { parsePagination } from "@/services/supplier/SupplierService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { RefundLineCompensation } from '@/services/order/OrderSplitFinance';
 import { lockSupplierFinance } from '@/services/supplier/SupplierFinanceLock';
+import {SupplierBillReadService,type SupplierBillParameters} from './SupplierBillReadService';
 
 type SupplierFinanceDb = Pick<DbClient, "execute" | "insert" | "select" | "update">;
 type FinanceOrder = Pick<
@@ -416,83 +417,12 @@ export class SupplierFinanceService {
     return { list, count: count[0]?.count ?? 0, page: page.page, limit: page.limit };
   }
 
-  async fundRecord(supplierId: number, query: Record<string, string>) {
-    const page = parsePagination(query.page, query.limit);
-    const timeType = ["day", "week", "month"].includes(query.timeType ?? "")
-      ? query.timeType
-      : "day";
-    const period: SQL<string> =
-      timeType === "week"
-        ? sql`TO_CHAR(TO_TIMESTAMP(${supplierFlowingWater.addTime}) AT TIME ZONE 'Asia/Shanghai', 'IYYY-IW')`
-        : timeType === "month"
-          ? sql`TO_CHAR(TO_TIMESTAMP(${supplierFlowingWater.addTime}) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM')`
-          : sql`TO_CHAR(TO_TIMESTAMP(${supplierFlowingWater.addTime}) AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD')`;
-    const where = and(
-      eq(supplierFlowingWater.supplierId, supplierId),
-      eq(supplierFlowingWater.status, 1),
-      eq(supplierFlowingWater.isDel, 0),
-    );
-    const [list, count] = await Promise.all([
-      this.container.db
-        .select({
-          period,
-          add_time: sql<number>`MIN(${supplierFlowingWater.addTime})::int`,
-          ids: sql<string>`STRING_AGG(${supplierFlowingWater.id}::text, ',' ORDER BY ${supplierFlowingWater.id})`,
-          income_num: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.pm} = 1 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
-          exp_num: sql<string>`COALESCE(SUM(CASE WHEN ${supplierFlowingWater.pm} = 0 THEN ${supplierFlowingWater.number} ELSE 0 END), 0)::numeric(12,2)`,
-        })
-        .from(supplierFlowingWater)
-        .where(where)
-        .groupBy(period)
-        .orderBy(desc(sql`MAX(${supplierFlowingWater.addTime})`))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.container.db
-        .select({ count: sql<number>`COUNT(DISTINCT ${period})::int` })
-        .from(supplierFlowingWater)
-        .where(where),
-    ]);
-    return {
-      list: list.map((item) => ({
-        ...item,
-        title: timeType === "week" ? "周账单" : timeType === "month" ? "月账单" : "日账单",
-        entry_num: centsToDecimal(
-          decimalToCents(item.income_num) - decimalToCents(item.exp_num),
-        ),
-      })),
-      count: count[0]?.count ?? 0,
-      page: page.page,
-      limit: page.limit,
-    };
+  async fundRecord(supplierId: number, query: SupplierBillParameters) {
+    return new SupplierBillReadService(this.container).groups(supplierId, query);
   }
 
-  async fundRecordInfo(supplierId: number, query: Record<string, string>) {
-    const ids = (query.ids ?? "")
-      .split(",")
-      .map((value) => Number(value))
-      .filter((value) => Number.isInteger(value) && value > 0)
-      .slice(0, 100);
-    if (ids.length === 0) throw new ValidateException("账单明细ID不能为空");
-    const page = parsePagination(query.page, query.limit);
-    const where = and(
-      eq(supplierFlowingWater.supplierId, supplierId),
-      eq(supplierFlowingWater.isDel, 0),
-      inArray(supplierFlowingWater.id, ids),
-    );
-    const [list, count] = await Promise.all([
-      this.container.db
-        .select()
-        .from(supplierFlowingWater)
-        .where(where)
-        .orderBy(desc(supplierFlowingWater.id))
-        .limit(page.limit)
-        .offset(page.offset),
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(supplierFlowingWater)
-        .where(where),
-    ]);
-    return { list, count: count[0]?.count ?? 0, page: page.page, limit: page.limit };
+  async fundRecordInfo(supplierId: number, query: SupplierBillParameters) {
+    return new SupplierBillReadService(this.container).details(supplierId, query);
   }
 
   async updateFlowMark(supplierId: number, id: number, mark: string) {
