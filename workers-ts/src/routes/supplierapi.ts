@@ -8,6 +8,7 @@ import * as ProductShippingOptions from '@/controllers/supplier/SupplierProductS
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
 import * as SupplierProductReplyController from "@/controllers/supplier/SupplierProductReplyController";
+import * as SupplierProductDetailRead from '@/controllers/supplier/SupplierProductDetailReadController';
 import * as SupplierProductCatalogController from "@/controllers/supplier/SupplierProductCatalogController";
 import * as SupplierCategory from "@/controllers/supplier/SupplierProductCategoryController";
 import * as SupplierBatch from "@/controllers/supplier/SupplierProductBatchController";
@@ -285,6 +286,7 @@ supplierapiRoutes.delete("/product/product/:id", SupplierController.recycleProdu
 supplierapiRoutes.delete('/product/product/thorough/:id', SupplierProductRecycle.thorough);
 supplierapiRoutes.get('/product/type_header', SupplierProductRecycle.header);
 supplierapiRoutes.put("/product/product/set_show/:id/:is_show", SupplierController.setProductShow);
+supplierapiRoutes.get('/product/product/:id/view', SupplierProductDetailRead.read);
 supplierapiRoutes.get("/product/product/:id", SupplierController.productDetail);
 
 supplierapiRoutes.get("/order/list", SupplierController.orderList);

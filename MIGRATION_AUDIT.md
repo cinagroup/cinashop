@@ -1,5 +1,15 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-17 Supplier 只读商品详情与声明归属 CI 修复
+
+实际商品列表新增“详情”，进入独立 `/products/:id/view`，查看权限可读取基本资料、当前规格、库存、配送、售后和媒体；管理权限可另行进入原编辑页。PHP 原五页签抽屉包含保存行为，本批只完成此只读消费面，不称整个编辑抽屉或全部迁移完成。新 GET /supplierapi/product/product/:id/view 返回闭合9／product30／SKU10投影，在真实 REPEATABLE READ／READ ONLY 核对当前账号、供应商、权限和本店商品；纯SELECT账号只需九表读取，无DML或序列能力。明确边界超出即失败，十八位整数两位小数金额按字符串展示；商品类型2优惠券、3虚拟、4次卡按实际schema。
+
+图片与视频复用成熟归属校验和短期票据；正文只解析一次已消毒规范引用，外店图片占位。到期或失败只占位并手动刷新；原编辑与保存、卡密交付秘密、成本结算佣金不进入投影。路由、权限、实际会话ABA、存储事件和卸载清空旧资料并取消在途／排队GET。真实IAB从商品80切81、signed31 PNG实际解码、只读详情无编辑以及跨窗口22→21→22隔离通过；扣留响应释放时socket已取消，不声称旧正文已送达。八次业务GET的13表和12条实际public序列均不变，backend fetch=0不代替完整浏览器网络清单，合成视频不声称可解码播放。
+
+本批11入口472个不同检查通过：runner217、实际新SFC42、详情规则37、原评价SFC52、回复规则14、原复制SFC27、分类SFC18、RBAC10、声明审计36共453单元；实际App／JWT／受限PG16原生18，production构建IAB联合验收1。Worker两套类型、Supplier类型与构建通过。211份成熟源逐字保持，原复选行保持；四座自有PG集群均有夹具清零和停止证据。首轮description夹具误用id的类型失败已修复；Browser首轮列表无签名私有封面404，仅校正合成公开封面；第二轮真实桌面1280×720／移动390×844及长名换行截图已目检，但组合CUA调用1392秒触发15分钟夹具超时，保留exit1；同源第三轮重演全部UI并正常exit0，只计一次。
+
+GitHub基线20828d49的CI实际失败为shard2单例：独立supplierExtractApplication.ts误入固定历史声明集。仅测试按完整源SHA／十二列加入独立current-supplier-extract，保持300／304／309／311／314／318历史边界，当前完整声明319；不修改生产迁移、cohort或运行profiles。本地36项对应审计已通过，新推送CI仍须观察实际终态。逐项命令、身份、历史PHP分发和失败／修复见[本批账本](workers-ts/audit/php-ts-supplier-product-detail-20261017.json)与[合同说明](workers-ts/docs/php-ts-supplier-product-detail-20261017.md)。保留用户选定的PHP兼容get_script行为（实际200）；无生产DDL／GRANT／部署或真实provider调用，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 商品评价钻取与回复纵向
 
 实际商品列表新增“查看评价”，进入当前商品的评价；保留全店入口、旧 id 与 is_reply 入口。路由参数、评价 DTO 与回复回执严格校验，分页和状态过滤绑定当前商品；草稿、排队请求及迟到回包在路由、过滤、权限、真实账号 ABA 与卸载时清空并取消。开发 preview=1 兼容保持，生产不接受该参数；回复失去确认时只允许手动重查，不自动重放写入。

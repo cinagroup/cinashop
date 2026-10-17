@@ -80,6 +80,11 @@ function viewProductReviews(row: ProductRow) {
     || !Number.isSafeInteger(row.id) || row.id <= 0 || !rows.value.some(item => item.id === row.id)) return;
   void router.push({ path: '/product-reviews', query: { product_id: String(row.id) } });
 }
+function viewProductDetail(row: ProductRow) {
+  if (!categoryCurrent(categoryContext()) || !productFresh.value || loading.value || productWriting.value
+    || !Number.isSafeInteger(row.id) || row.id <= 0 || !rows.value.some(item => item.id === row.id)) return;
+  void router.push(`/products/${row.id}/view`);
+}
 watch(() => route.fullPath, clearCategoryContext, { flush: 'sync' });
 watch(categoryVisible, visible => {
   if (!visible) { categoryReadGeneration += 1; categoryFormGeneration += 1; categoryFormVisible.value = false; categoryLoading.value = false; }
@@ -426,6 +431,7 @@ onMounted(load);
         <el-table-column label="创建时间" width="165"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
         <el-table-column label="操作" width="400" fixed="right">
           <template #default="scope">
+            <el-button v-if="canViewCategories" link type="primary" :disabled="!productFresh || loading || productWriting" @click="viewProductDetail(scope.row)">详情</el-button>
             <el-button v-if="canViewCategories" link type="primary" :disabled="!productFresh || loading || productWriting" @click="viewProductReviews(scope.row)">查看评价</el-button>
             <el-button v-if="[0, 1, 3].includes(scope.row.product_type)" link type="primary" :icon="Edit" @click="router.push(`/products/${scope.row.id}/edit`)">编辑</el-button>
             <el-button v-if="canManageCategories && [0, 1, 3].includes(scope.row.product_type)" link type="primary" :disabled="!productFresh || productWriting || loading" @click="copyProduct(scope.row)">复制</el-button>

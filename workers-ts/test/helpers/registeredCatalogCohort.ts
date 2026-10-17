@@ -202,8 +202,17 @@ const supplierProactiveExplicitColumns = {
   supplier_refund_money_payment_v1: ['id','operation_id','order_id','payment_order_id','provider','out_refund_no','transaction_id','request_amount','total_amount','provider_status','provider_refund_id','last_error','attempts','request_lease_until','next_retry_at','last_queried_at','query_count','request','request_json','request_hash','created_at','updated_at'],
   supplier_refund_money_completion_v1: ['operation_id','actor_id','supplier_id','order_id','first_refund_id','payment_order_id','amount','pay_type','source_hash','request_hash','before_refunded','after_refunded','proof','proof_json','proof_hash','created_at'],
 } as const;
-export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'|'current-supplier-proactive'='historical') {
-  assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash','current-supplier-proactive'].includes(scope),'Unknown independently commissioned declaration scope');
+// 0197 is a separately commissioned Supplier application addon. Its declaration
+// must not change any historical, ordinary, product, order, cash or proactive
+// view and it remains outside all three table construction cohorts.
+const supplierExtractExplicitDeclarations = [
+  ['supplierExtractApplication.ts','ed832c04b34ce61362ae623734b55fed0974d82e5b57f1e58811364ce57ced5f',['supplier_extract_application_operation_v1']],
+] as const;
+const supplierExtractExplicitColumns = {
+  supplier_extract_application_operation_v1: ['operation_id','actor_id','supplier_id','extract_id','state','request_hash','intent','source','source_hash','result','result_hash','created_at'],
+} as const;
+export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'|'current-supplier-proactive'|'current-supplier-extract'='historical') {
+  assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash','current-supplier-proactive','current-supplier-extract'].includes(scope),'Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
     const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
@@ -293,7 +302,22 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
   assert.equal(proactiveCurrentTables.length,36);assert.equal(new Set(proactiveCurrentTables).size,36);
   const proactiveCurrentOnly=proactiveCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
   assert.equal(proactiveCurrentOnly.length,35);assert.equal(new Set(proactiveCurrentOnly).size,35);
-  return proactiveCurrentOnly;
+  if(scope==='current-supplier-proactive')return proactiveCurrentOnly;
+  for(const [file,sha256,names] of supplierExtractExplicitDeclarations){
+    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n'),parsed=parseCreateTables(source,'postgres');
+    assert.equal(digest(source),sha256,'Complete independently commissioned Supplier extract DDL source changed: '+file);
+    assert.deepEqual([...parsed.keys()].sort(),[...names].sort());
+    for(const name of names)assert.deepEqual([...parsed.get(name)!.columns.keys()],[...supplierExtractExplicitColumns[name]]);
+  }
+  const extractTables=supplierExtractExplicitDeclarations.flatMap(([, , names])=>[...names]).sort();
+  assert.equal(extractTables.length,1);assert.equal(new Set(extractTables).size,1);
+  assert.deepEqual(Object.keys(supplierExtractExplicitColumns).sort(),extractTables);
+  for(const name of extractTables)assert.ok(!proactiveCurrentTables.includes(name),'Extract declaration must not replace an existing declaration');
+  const extractCurrentTables=[...proactiveCurrentTables,...extractTables].sort();
+  assert.equal(extractCurrentTables.length,37);assert.equal(new Set(extractCurrentTables).size,37);
+  const extractCurrentOnly=extractCurrentTables.filter(name=>!Object.hasOwn(externalAdditions,name));
+  assert.equal(extractCurrentOnly.length,36);assert.equal(new Set(extractCurrentOnly).size,36);
+  return extractCurrentOnly;
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();

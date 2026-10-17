@@ -44,6 +44,7 @@ const router = createRouter({
         { path: 'product-labels', component: () => import('@/pages/ProductLabels.vue'), meta: { permission: 'supplier.product.view' } },
         { path: "products/new", component: () => import("@/pages/ProductForm.vue"), meta: { permission: "supplier.product.manage" } },
         { path: "products/:id/edit", component: () => import("@/pages/ProductForm.vue"), meta: { permission: "supplier.product.manage" } },
+        { path: 'products/:id/view', component: () => import('@/pages/ProductDetail.vue'), meta: { permission: 'supplier.product.view' } },
         { path: "products/virtual-alerts", component: () => import("@/pages/VirtualInventoryAlerts.vue"), meta: { permission: "supplier.product.view" } },
         { path: "products/:id/virtual-inventory", component: () => import("@/pages/VirtualInventory.vue"), meta: { permission: "supplier.product.manage" } },
         { path: "shipping-templates", component: () => import("@/pages/ShippingTemplates.vue"), meta: { permission: "supplier.shipping.view" } },
