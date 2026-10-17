@@ -114,6 +114,7 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
   }
   if (route === 'finance/supplier_extract/application_operations' || route.startsWith('finance/supplier_extract/application_operations/')) {
     const uuid='(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:operationid|<operationid>)';
+    if (method.toUpperCase() === 'GET' && new RegExp(`^finance/supplier_extract/application_operations/${uuid}/media$`).test(route)) return [];
     if (readMethod(method) && new RegExp(`^finance/supplier_extract/application_operations/${uuid}$`).test(route)
       || method.toUpperCase() === 'POST' && new RegExp(`^finance/supplier_extract/application_operations/${uuid}/resolve$`).test(route)) return [];
     return null;

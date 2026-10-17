@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onScopeDispose, ref, watch } from 'vue';
+import { computed, onMounted, onScopeDispose, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { previewMode } from '@/api/supplier';
@@ -7,8 +7,11 @@ import { createSupplierSessionScope } from '@/utils/supplierSession';
 import { supplierBillMoney } from '@/api/supplierBills';
 import { getExtractApplicationSeed, makeExtractApplicationIntent, normalizeExtractApplicationMoney, parsePendingExtractApplication, extractApplicationRequestHash,
   extractApplicationStorageKey, reserveExtractApplication, clearExtractApplication, submitExtractApplication, recoverExtractApplication,
-  extractApplicationImage, type ExtractApplicationType, type ExtractApplicationSeed, type PendingExtractApplication,
+  type ExtractApplicationType, type ExtractApplicationSeed, type PendingExtractApplication,
   type ExtractApplicationReceipt } from '@/api/supplierExtractApplication';
+import { extractHistoricalPrivateMediaId } from '@/api/supplierExtractMedia';
+import { ExtractSeedMediaChanged, extractSeedQrImage, extractReceiptQrImage, readExtractSeedMedia, readExtractReceiptMedia,
+  type ExtractSeedMedia, type ExtractReceiptMedia } from '@/api/supplierExtractApplicationMedia';
 
 const auth = useAuthStore(), route = useRoute(), router = useRouter();
 const actor = Object.freeze({ id: Number(auth.user?.id), supplier: Number(auth.user?.supplier_id) });
@@ -18,6 +21,9 @@ const source = ref<ExtractApplicationSeed | null>(null), pending = ref<PendingEx
 const receipt = ref<ExtractApplicationReceipt | null>(null), loading = ref(false), saving = ref(false), recovering = ref(false);
 const error = ref(''), storageError = ref(''), notice = ref(''), invalidated = ref(false), confirmed = ref(false), closeConfirmed = ref(false);
 const extractType = ref<ExtractApplicationType>('bank'), money = ref(''), mark = ref(''), brokenImages = ref(new Set<string>());
+const seedMedia = shallowRef<ExtractSeedMedia>(), receiptMedia = shallowRef<ExtractReceiptMedia>();
+const mediaLoading = ref(false), mediaError = ref(''), mediaTime = ref(Math.floor(Date.now() / 1000));
+let mediaGeneration = 0, mediaController: AbortController | undefined, mediaTimer: ReturnType<typeof setInterval> | undefined;
 let alive = true, generation = 0, formVersion = 0, readController: AbortController | undefined, postController: AbortController | undefined;
 let session: ReturnType<typeof createSupplierSessionScope> | undefined;
 try { session = createSupplierSessionScope(invalidate); } catch { storageError.value = '本机存储不可读，不能申请或核对提现，请保留原申请记录'; }
@@ -33,13 +39,16 @@ const account = computed(() => source.value?.accounts[extractType.value]);
 const typeName = (type: string) => type === 'bank' ? '银行卡' : type === 'alipay' ? '支付宝' : '微信';
 const displayMoney = (value: string) => supplierBillMoney(value, 1);
 const message = (cause: unknown) => cause instanceof Error ? cause.message : '请重新核对提现申请';
-function clearSensitive() { source.value = null; receipt.value = null; mark.value = ''; money.value = ''; confirmed.value = false; closeConfirmed.value = false; brokenImages.value = new Set(); }
+function clearMedia() { mediaGeneration++; mediaController?.abort(); seedMedia.value = undefined; receiptMedia.value = undefined; mediaLoading.value = false; mediaError.value = ''; brokenImages.value = new Set(); }
+function clearSensitive() { clearMedia(); source.value = null; receipt.value = null; mark.value = ''; money.value = ''; confirmed.value = false; closeConfirmed.value = false; }
 function invalidate() {
   if (!alive) return; invalidated.value = true; generation++; readController?.abort(); postController?.abort(); clearSensitive(); pending.value = null;
   loading.value = saving.value = recovering.value = false; notice.value = ''; error.value = '会话、权限或本机原申请已变化，请重新打开页面核对';
 }
 watch([extractType, money, mark], () => { formVersion++; confirmed.value = false; }, { flush: 'sync' });
+watch(extractType, () => { clearMedia(); void loadMedia(); }, { flush: 'sync' });
 watch(canManage, (value, previous) => { if (previous && !value) invalidate(); }, { flush: 'sync' });
+watch(() => JSON.stringify([auth.token, auth.user?.id, auth.user?.supplier_id, auth.permissions, auth.permissionsLoaded]), invalidate, { flush: 'sync' });
 function readPending() {
   pending.value = null; storageError.value = '';
   try {
@@ -54,20 +63,46 @@ async function load() {
   readPending(); if (!active() || pending.value || storageError.value || recoveryOnly.value) return;
   if (Object.keys(route.query).length || !canManage.value) { error.value = '请从有财务管理权限的真实供应商会话进入'; return; }
   loading.value = true;
-  try { const value = await getExtractApplicationSeed(actor.id, actor.supplier, readController.signal); if (active() && ticket === generation && canManage.value) source.value = value; }
+  try { const value = await getExtractApplicationSeed(actor.id, actor.supplier, readController.signal); if (active() && ticket === generation && canManage.value) { source.value = value; void loadMedia(); } }
   catch (cause) { if (active() && ticket === generation) error.value = message(cause); }
   finally { if (ticket === generation) loading.value = false; }
 }
-function image(reference: string) { return brokenImages.value.has(reference) ? '' : extractApplicationImage(reference); }
-function imageError(reference: string) { if (active()) brokenImages.value.add(reference); }
+const privateSeedQr = computed(() => !!source.value && extractType.value !== 'bank' && !!extractHistoricalPrivateMediaId(source.value.accounts[extractType.value].qrcode_url));
+const privateReceiptQr = computed(() => receipt.value?.state === 'committed' && receipt.value.result?.extract_type !== 'bank'
+  && !!extractHistoricalPrivateMediaId(receipt.value.result?.qrcode_url ?? ''));
+async function loadMedia() {
+  if (!active() || mediaLoading.value) return;
+  const seed = source.value, original = receipt.value, pageGeneration = generation, channel = extractType.value;
+  if (!(seed && privateSeedQr.value && canManage.value) && !(original && privateReceiptQr.value)) return;
+  clearMedia(); const ticket = mediaGeneration, controller = new AbortController(); mediaController = controller; mediaLoading.value = true;
+  const current = () => active() && generation === pageGeneration && mediaGeneration === ticket && !controller.signal.aborted
+    && source.value === seed && receipt.value === original && extractType.value === channel;
+  try {
+    if (seed && privateSeedQr.value) { const value = await readExtractSeedMedia(seed, controller.signal); if (current()) seedMedia.value = value; }
+    else if (original) { const value = await readExtractReceiptMedia(original, controller.signal); if (current()) receiptMedia.value = value; }
+    if (current()) mediaTime.value = Math.floor(Date.now() / 1000);
+  } catch (cause) {
+    if (current()) {
+      if (cause instanceof ExtractSeedMediaChanged) { source.value = null; confirmed.value = false; }
+      mediaError.value = message(cause);
+    }
+  } finally { if (active() && generation === pageGeneration && mediaGeneration === ticket) mediaLoading.value = false; }
+}
+function image(kind: 'seed' | 'receipt') {
+  if (!active() || brokenImages.value.has(kind)) return '';
+  if (kind === 'seed') return source.value && extractType.value !== 'bank' ? extractSeedQrImage(seedMedia.value, source.value, extractType.value, mediaTime.value) : '';
+  return receipt.value ? extractReceiptQrImage(receiptMedia.value, receipt.value, mediaTime.value) : '';
+}
+function imageError(kind: 'seed' | 'receipt') { if (active()) brokenImages.value = new Set([...brokenImages.value, kind]); }
 async function accept(value: ExtractApplicationReceipt, operation: PendingExtractApplication, ticket: number) {
   if (!active() || ticket !== generation || pending.value?.operation_id !== operation.operation_id) return;
-  if (value.state === 'unknown') { receipt.value = null; notice.value = '原申请结果尚未确认，请稍后查询，或核对并封存原申请；核对前不能再次申请。'; return; }
+  if (value.state === 'unknown') { clearMedia(); receipt.value = null; notice.value = '原申请结果尚未确认，请稍后查询，或核对并封存原申请；核对前不能再次申请。'; return; }
   await clearExtractApplication(operation, () => active() && ticket === generation && pending.value?.operation_id === operation.operation_id);
   if (!active() || ticket !== generation || pending.value?.operation_id !== operation.operation_id) return;
-  pending.value = null; source.value = null; receipt.value = value; confirmed.value = closeConfirmed.value = false; money.value = ''; mark.value = '';
+  clearMedia(); pending.value = null; source.value = null; receipt.value = value; confirmed.value = closeConfirmed.value = false; money.value = ''; mark.value = '';
   notice.value = value.state === 'committed' ? '原提现申请已提交，结果来自该次申请的持久记录。当前审核及转账状态请查看提现记录。'
     : '原申请已确认未提交并封存，可重新核对后发起申请。';
+  void loadMedia();
 }
 async function submit() {
   if (!canSubmit.value || !source.value || saving.value) return;
@@ -85,7 +120,7 @@ async function submit() {
     // From this point the durable original key remains even if this component
     // disappears. A lost/canceled reply never proves non-application; only
     // the original receipt or a server fence permits a fresh application.
-    pending.value = operation; source.value = null; confirmed.value = false;
+    clearMedia(); pending.value = operation; source.value = null; confirmed.value = false;
     if (!active() || ticket !== generation) return;
     if (!formUnchanged) { notice.value = '提交前申请资料已变化，请先核对并封存原申请；未发送提现申请。'; return; }
     await accept(await submitExtractApplication(intent, operation, () => active() && ticket === generation && pending.value?.operation_id === operation.operation_id, postController.signal), operation, ticket);
@@ -108,8 +143,8 @@ function journalChanged(event: Event) {
   if (key === null || key === extractApplicationStorageKey(actor.id, actor.supplier)) invalidate();
 }
 watch(() => route.fullPath, () => { generation++; readController?.abort(); postController?.abort(); clearSensitive(); pending.value = null; saving.value = recovering.value = false; void load(); }, { flush: 'sync' });
-onMounted(() => { window.addEventListener('storage', journalChanged); void load(); });
-onScopeDispose(() => { alive = false; generation++; readController?.abort(); postController?.abort(); clearSensitive(); pending.value = null; session?.dispose(); window.removeEventListener('storage', journalChanged); });
+onMounted(() => { mediaTimer = setInterval(() => { if (alive && !invalidated.value) mediaTime.value = Math.floor(Date.now() / 1000); }, 1000); window.addEventListener('storage', journalChanged); void load(); });
+onScopeDispose(() => { alive = false; generation++; readController?.abort(); postController?.abort(); clearSensitive(); if (mediaTimer) clearInterval(mediaTimer); pending.value = null; session?.dispose(); window.removeEventListener('storage', journalChanged); });
 </script>
 
 <template>
@@ -117,6 +152,7 @@ onScopeDispose(() => { alive = false; generation++; readController?.abort(); pos
     <header><div><h1>{{ recoveryOnly ? '提现申请结果' : '申请提现' }}</h1><p>申请提交后预占可提现余额，审核拒绝后释放；转账由财务另外登记。</p></div>
       <el-button v-if="auth.can('supplier.finance.view')" @click="router.push('/finance/extracts')">查看提现记录</el-button></header>
     <p v-if="error || storageError" role="alert" class="application-error">{{ error || storageError }}</p><p v-if="notice" role="status">{{ notice }}</p>
+    <p v-if="mediaLoading" role="status">正在核对本次收款二维码…</p><p v-if="mediaError" role="alert" class="application-error">{{ mediaError }}</p>
     <p v-if="loading" role="status">正在核对可提现余额和收款资料…</p>
     <article v-if="pending" class="surface" aria-label="原提现申请待核对">
       <h2>原提现申请结果待核对</h2><p>{{ typeName(pending.extract_type) }} · {{ displayMoney(pending.money) }}。核对前不能再次申请，刷新后仍会保留。</p>
@@ -132,8 +168,9 @@ onScopeDispose(() => { alive = false; generation++; readController?.abort(); pos
         <section class="application-account" aria-label="本次申请收款资料">
           <template v-if="extractType === 'bank'"><p>银行卡号：{{ source.accounts.bank.bank_code || '未配置' }}</p><p>开户行：{{ source.accounts.bank.bank_address || '未配置' }}</p></template>
           <template v-else><p>{{ extractType === 'alipay' ? '支付宝账号' : '微信号' }}：{{ source.accounts[extractType].account || '未配置' }}</p>
-            <img v-if="image(source.accounts[extractType].qrcode_url)" :src="image(source.accounts[extractType].qrcode_url)" alt="本次申请收款二维码" referrerpolicy="no-referrer" @error="imageError(source.accounts[extractType].qrcode_url)" />
-            <p v-else>{{ source.accounts[extractType].qrcode_url ? '二维码已配置，图片暂不可预览，请核对收款资料' : '收款二维码未配置' }}</p></template>
+            <img v-if="image('seed')" :src="image('seed')" alt="本次申请收款二维码" referrerpolicy="no-referrer" @error="imageError('seed')" />
+            <p v-else>{{ source.accounts[extractType].qrcode_url ? '二维码已配置，图片暂不可预览，请核对收款资料' : '收款二维码未配置' }}</p>
+            <el-button v-if="privateSeedQr" :disabled="mediaLoading || saving" @click="loadMedia">重新核对申请二维码</el-button></template>
           <p v-if="!account?.ready" role="alert">请先在收款设置补齐{{ extractType === 'bank' ? '银行卡号和开户行' : '账号和收款二维码' }}。</p>
           <el-button @click="router.push('/finance/accounts')">打开财务收款设置</el-button>
         </section>
@@ -147,7 +184,10 @@ onScopeDispose(() => { alive = false; generation++; readController?.abort(); pos
       <h2>申请已提交 · {{ receipt.result.id }}</h2><p>{{ typeName(receipt.result.extract_type) }} · {{ displayMoney(receipt.result.extract_price) }}</p><p>该次申请后余额：{{ displayMoney(receipt.result.balance) }}</p>
       <p>以下为申请提交时的收款快照，当前审核和转账状态请查看提现记录。</p>
       <template v-if="receipt.result.extract_type === 'bank'"><p>银行卡号：{{ receipt.result.bank_code }}</p><p>开户行：{{ receipt.result.bank_address }}</p></template>
-      <p v-else>{{ receipt.result.extract_type === 'alipay' ? '支付宝账号' : '微信号' }}：{{ receipt.result.extract_type === 'alipay' ? receipt.result.alipay_account : receipt.result.wechat }}</p>
+      <template v-else><p>{{ receipt.result.extract_type === 'alipay' ? '支付宝账号' : '微信号' }}：{{ receipt.result.extract_type === 'alipay' ? receipt.result.alipay_account : receipt.result.wechat }}</p>
+        <img v-if="image('receipt')" class="application-receipt-qr" :src="image('receipt')" alt="原申请收款二维码" referrerpolicy="no-referrer" @error="imageError('receipt')" />
+        <p v-else>原申请二维码暂不可预览，收款快照保持原记录。</p>
+        <el-button v-if="privateReceiptQr" :disabled="mediaLoading" @click="loadMedia">重新核对原申请二维码</el-button></template>
       <p>申请时备注：{{ receipt.result.supplier_mark || '—' }}</p>
     </article>
     <el-button v-if="!pending && !storageError && canManage && !recoveryOnly" :disabled="loading || saving || recovering" @click="load">重新核对申请资料</el-button>
@@ -157,5 +197,6 @@ onScopeDispose(() => { alive = false; generation++; readController?.abort(); pos
 </template>
 
 <style scoped>
+.application-receipt-qr{width:160px;height:160px;max-width:100%;object-fit:contain}
 .application-page{display:grid;gap:20px;max-width:960px;min-width:0;margin:0 auto}.application-page header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.application-page h1{font-size:24px;margin:0 0 8px}.application-page h2{font-size:18px;margin:0 0 12px}.application-page p{line-height:1.7;margin:0;overflow-wrap:anywhere}.application-page .surface{padding:24px;display:grid;gap:18px;min-width:0}.application-page form{display:grid;gap:18px}.application-page label{display:grid;gap:8px;font-size:14px}.application-page input,.application-page select,.application-page textarea{border:1px solid var(--border,#dcdfe6);padding:9px 12px;border-radius:5px;background:#fff;color:inherit;max-width:100%;box-sizing:border-box;font:inherit}.application-page input:focus-visible,.application-page select:focus-visible,.application-page textarea:focus-visible{outline:2px solid var(--accent,#10b9ae);outline-offset:2px}.application-page .application-check{display:flex;align-items:flex-start;line-height:1.6}.application-check input{margin:4px 0 0;flex:none}.application-amounts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.application-amounts>div{display:grid;gap:10px}.application-amounts span{color:var(--text-muted,#64748b);font-size:14px}.application-amounts strong{font-size:22px;overflow-wrap:anywhere}.application-account{display:grid;gap:10px;background:#f8fafc;padding:16px;border-radius:6px;min-width:0}.application-account img{width:160px;height:160px;max-width:100%;object-fit:contain}.application-error{color:#b42318}.application-actions{display:flex;flex-wrap:wrap;gap:12px}.application-page :deep(.el-button){max-width:100%;white-space:normal;height:auto;min-height:32px}.application-page :deep(.el-button+.el-button){margin-left:0}@media(max-width:600px){.application-page{width:100%;box-sizing:border-box}.application-page header{flex-direction:column}.application-page .surface{padding:18px}.application-amounts{grid-template-columns:1fr}.application-page form>label input{width:100%}.application-page .application-check input{width:auto}}
 </style>

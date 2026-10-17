@@ -26,6 +26,7 @@ import * as SupplierProactiveRefund from '@/controllers/supplier/SupplierProacti
 import * as SupplierExtractApplication from '@/controllers/supplier/SupplierExtractApplicationController';
 import * as SupplierFinanceAccounts from '@/controllers/supplier/SupplierFinanceAccountsController';
 import * as SupplierExtractMedia from '@/controllers/supplier/SupplierExtractMediaController';
+import * as SupplierExtractApplicationMedia from '@/controllers/supplier/SupplierExtractApplicationMediaController';
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import * as VirtualProductInventory from "@/controllers/api/v1/VirtualProductInventoryController";
 
@@ -77,6 +78,7 @@ supplierapiRoutes.use('/finance/info', SupplierFinanceAccounts.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/:id/media', SupplierExtractMedia.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/cash', SupplierExtractApplication.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/application_operations/*', SupplierExtractApplication.privateResponse);
+supplierapiRoutes.use('/finance/supplier_extract/application_operations/:operationId/media', SupplierExtractApplicationMedia.privateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/list', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use('/finance/supplier_extract/mark/*', SupplierController.financeBillPrivateResponse);
 supplierapiRoutes.use("/*", supplierAuthMiddleware);
@@ -339,6 +341,7 @@ supplierapiRoutes.get('/finance/supplier_extract/mark/:id', SupplierController.e
 supplierapiRoutes.get("/finance/supplier_extract/cash", SupplierExtractApplication.seed);
 supplierapiRoutes.post("/finance/supplier_extract/cash", SupplierController.applyExtract);
 supplierapiRoutes.get('/finance/supplier_extract/application_operations/:operationId', SupplierExtractApplication.receipt);
+supplierapiRoutes.get('/finance/supplier_extract/application_operations/:operationId/media', SupplierExtractApplicationMedia.read);
 supplierapiRoutes.post('/finance/supplier_extract/application_operations/:operationId/resolve', SupplierExtractApplication.resolve);
 supplierapiRoutes.post("/finance/supplier_extract/mark/:id", SupplierController.updateExtractMark);
 

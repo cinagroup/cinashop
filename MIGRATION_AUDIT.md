@@ -1,5 +1,15 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-17 Supplier 当前申请与原UUID回执二维码纵向
+
+Supplier /finance/apply 私有二维码复用已有收款设置只读投影，完整六项收款值与当前seed一致才委托对应预览；设置revision不替代申请revision，任一值变化即清除申请资料并要求重新核对。/finance/application-result 新增独立 GET application_operations/:operationId/media?request_hash=...，在真实REPEATABLE READ／READ ONLY内核对当前原账号、供应商、实际已提交原操作、摘要及实际申请不可变列，只签发原result.qrcode_url的闭合8／preview4投影。原回执7／result13与申请服务／正文／原UUID持久协议不变，财务两项能力已撤销但有效的原账号仍可恢复自己的原QR，其他账号／租户与unknown／not_applied不获签发。七表纯SELECT角色无需业务DML、序列、图库或当前设置；新私有票据300秒，已发链接到期前仍为bearer capability。
+
+两处前端各自绑定身份、原引用与seed或原UUID／摘要，渠道、路由、权限、原结果、真实会话ABA或存储失效清空并取消迟到GET；图片失败／到期仅占位，保留原回执且只手动重试，不重建已清除日志、申请或封存。旧非日期申请合同文档同步修正，成熟申请Service／Input／Operation／前端API和既有0194—0197等179份源逐字保持。
+
+本批9入口508个不同检查通过：runner207、原申请SFC62、新媒体SFC54、媒体规则24、原申请规则53、旧收款SFC62、RBAC10共472单元，实际App／JWT／纯SELECT PG16原生35，生产构建IAB联合验收1。浏览器读取当前私有QR31后，仅由本机控制夹具修改两项当前设置并撤去财务能力；旧原申请205、25.50金额、709.50申请后余额、不可变原回执和QR31仍可恢复。十一表业务GET与两序列不变，最终仅两设置列与role.rules有控制变更，无新浏览器申请／上传／R2写入或银行付款，实际get_script保持200。全套Worker两套类型、Supplier类型和构建通过，PG夹具全部独立确认停止。初轮微信测试夹具超出15字、首轮Browser夹具两回调缺类型的失败记录保留，修正后实际重验。首轮浏览器业务1/1与截图通过但外层143且缺终端，原因未确认；保全该轮证据，同源第二轮重演完整实际UI后正常退出0，仅计同一个Browser检查。
+
+精确命令、重复显示名的真实参数身份、15到16输入说明及GUI／清理证据见[本批账本](workers-ts/audit/php-ts-supplier-extract-application-media-20261017.json)与[媒体合同](workers-ts/docs/php-ts-supplier-extract-application-media-20261017.md)。原复选行保持，无生产DDL／GRANT／部署或真实支付／税务provider调用；其余迁移与生产发布门禁继续开放，整体goal active、completion false。
+
 ## 2026-10-17 Supplier 历史提现二维码与转账凭证纵向
 
 Supplier /finance/extracts 新增按本笔历史行及版本读取图片的私有投影，补齐申请时二维码与 Admin 登记凭证。GET /supplierapi/finance/supplier_extract/:id/media 只接受唯一 revision；真实 JWT、当前身份与 finance.view、所属提现实际行及 xmin 版本在 REPEATABLE READ／READ ONLY 内核对。闭合七字段、两个闭合四字段媒体项；旧22字段列表与备注、提现／Admin转账业务方法保持。读取仅需六表SELECT的受限LOGIN，不授图库、DML或序列能力。
