@@ -85,6 +85,38 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');
     expect(result.stderr).toContain('ENOENT');expect(result.stderr).not.toContain('TEST_BROWSER');
   });
+  it('admits the explicit Supplier settlement in-app host without external browser tooling', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:supplier-refund-settlement-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it('rejects Supplier settlement Browser mode without explicit owned schema maintenance', () => {
+    const result = spawnSync(process.execPath, [script, 'unused-bin', 'audit:supplier-refund-settlement-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it('rejects mixing Supplier settlement Browser mode with a second test or mode', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:supplier-refund-settlement-browser', 'test/price.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it('rejects literal case filtering for interactive Supplier settlement Browser mode', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', '--case', 'joins Customer', 'unused-bin', 'audit:supplier-refund-settlement-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Literal cases apply only to explicit test files'); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it('rejects native verbose mode for interactive Supplier settlement Browser acceptance', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:supplier-refund-settlement-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Verbose reporting applies only to explicit native test files'); expect(result.stderr).not.toContain('ENOENT');
+  });
   it.each(['bargain-cart-participation-migration', 'bargain-supplier-visibility-concurrency-postgres', 'bargain-visibility-writers-concurrency-postgres', 'shipping-lifecycle-rules', 'store-order-create-scenario-postgres', 'checkout-pricing-fixture', 'checkout-marketing-scenarios-postgres', 'brokerage-paid-business-transactions', 'checkout-confirmation', 'checkout-confirmation-postgres', 'checkout-confirmation-rules', 'pc-checkout-form-postgres', 'checkout-pricing-service-runtime', 'checkout-pricing-config-authority', 'admin-config-batch-postgres', 'checkout-pricing-lock-registration', 'brokerage-paid-runtime-permissions', 'checkout-pricing-lock', 'offline-runtime-permissions', 'offline-order-registration', 'offline-order-installation', 'offline-order-payment-query', 'offline-order-query-recovery', 'offline-order-payment-dispatch', 'offline-order-payment-workerd', 'offline-order-http', 'admin-offline-order-read'])('explicitly admits %s before validating the test binary', name => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `test/${name}.test.ts`],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

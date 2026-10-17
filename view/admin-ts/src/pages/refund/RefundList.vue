@@ -4,7 +4,8 @@ import { useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import dayjs from 'dayjs';
 import RefundCreation from './RefundCreation.vue';
-import { apiAdminRefundList, apiAdminRefundDetail, apiAdminRefundOperation, previewMode, type AdminRefund, type AdminRefundDetail } from '@/api/refund';
+import { apiAdminRefundList, apiAdminRefundDetail, apiAdminRefundOperation, apiAdminRefundSettlement, previewMode,
+  type AdminRefund, type AdminRefundDetail, type SupplierRefundSettlement } from '@/api/refund';
 import { getAdminSession } from '@/utils/auth';
 import { createAdminSessionScope } from '@/utils/adminSessionScope';
 import { refundIntentKey } from '@/utils/refundIntent';
@@ -17,9 +18,11 @@ const keyword = ref(''), status = ref(''), before = ref<string>(), nextCursor = 
 const recoveryId = ref('');
 const selectedId = ref(0), detailOpen = ref(false), detailLoading = ref(false), current = ref<AdminRefundDetail | null>(null);
 const actionLoading = ref(false), sessionInvalid = ref(false), received = ref(false);
+const settlement = ref<SupplierRefundSettlement | null>(null), settlementLoading = ref(false), settlementError = ref('');
 const brokenImages = reactive(new Set<string>()), uncertainIds = reactive(new Set<number>());
 let listGeneration = 0, detailGeneration = 0, actionGeneration = 0;
 let detailController: AbortController | undefined;
+let settlementGeneration = 0, settlementController: AbortController | undefined;
 let ownsConfirmation = false;
 const actorId = identity?.userInfo.id ?? (previewMode ? 1 : 0);
 const pendingReadable = ref(true), legacyPending = ref(false), pendingIntent = ref<RefundOperation | null>(null), reconcileMessage = ref('');
@@ -34,6 +37,11 @@ function clearDetail(preserveAction = false) {
   current.value = null; detailError.value = ''; detailLoading.value = false;
   pendingIntent.value = null; observedRaw = null; legacyPending.value = false; reconcileMessage.value = '';
   received.value = false; brokenImages.clear();
+  clearSettlement();
+}
+function clearSettlement() {
+  settlementGeneration++; settlementController?.abort(); settlementController = undefined;
+  settlement.value = null; settlementLoading.value = false; settlementError.value = '';
 }
 function invalidate() {
   sessionInvalid.value = true; listGeneration++; loading.value = false; list.value = []; listError.value = '';
@@ -44,6 +52,13 @@ function invalidate() {
 }
 const scope = createAdminSessionScope(invalidate, previewMode);
 const active = () => scope.isCurrent() && route.fullPath === routeKey && !sessionInvalid.value;
+const canViewSettlement = computed(() => !previewMode && !sessionInvalid.value
+  && (identity?.userInfo.level === 0 || identity?.uniqueAuth.includes('refund.view')));
+const settlementCandidate = computed(() => !!current.value && current.value.supplierId > 0
+  && current.value.refundType === 6 && current.value.applyType === 4 && !current.value.isCancel && !current.value.isDel
+  && ['cash', 'offline', 'yue'].includes(current.value.payType));
+const canVerifySettlement = computed(() => active() && canViewSettlement.value && settlementCandidate.value
+  && !detailLoading.value && !actionLoading.value && !settlementLoading.value);
 const canManage = computed(() => !sessionInvalid.value && (previewMode || identity?.userInfo.level === 0 || identity?.uniqueAuth.includes('refund.manage')));
 const canWrite = computed(() => !previewMode && !!current.value && canManage.value && !actionLoading.value && !detailLoading.value
   && current.value.isCancel === 0 && current.value.isDel === 0 && [0,1,2,4,5].includes(current.value.refundType) && pendingReadable.value
@@ -118,8 +133,27 @@ async function openRecovery() {
   }
   await openRefund({ id: Number(recoveryId.value) });
 }
+async function verifySettlement() {
+  if (!canVerifySettlement.value || !current.value) return;
+  const selected = current.value, target = Object.freeze({ ...selected }), detail = detailGeneration;
+  clearSettlement(); const generation = settlementGeneration;
+  settlementController = new AbortController(); settlementLoading.value = true;
+  const owns = () => active() && canViewSettlement.value && generation === settlementGeneration
+    && detail === detailGeneration && detailOpen.value && selectedId.value === target.id && current.value === selected
+    && (['id', 'storeOrderId', 'originalOrderId', 'uid', 'storeId', 'supplierId', 'orderId', 'refundPrice', 'payType'] as const)
+      .every(key => current.value?.[key] === target[key]);
+  try {
+    const result = await apiAdminRefundSettlement(target, settlementController.signal);
+    if (owns()) settlement.value = result;
+  } catch (error) {
+    if (owns()) settlementError.value = '尚未完成累计退款核验：' + (error instanceof Error ? error.message : '请重新读取后再核验');
+  } finally {
+    if (owns()) { settlementLoading.value = false; settlementController = undefined; }
+  }
+}
 async function mutate(kind: RefundAction) {
   if (!active() || !canWrite.value || !current.value || (kind === 'return' && !canReturn.value) || (kind === 'refund' && !canRefund.value)) return;
+  clearSettlement();
   const target = Object.freeze({ ...current.value }), expectedRaw = observedRaw, action = ++actionGeneration;
   const owns = () => active() && action === actionGeneration && detailOpen.value && selectedId.value === target.id;
   actionLoading.value = true; let dispatched = false;
@@ -179,6 +213,7 @@ async function recordResult(intent: RefundOperation, raw: string, result: Operat
 async function reconcilePending() { return recoverPending('receipt'); }
 async function recoverPending(mode: OperationMode) {
   if (!active() || !canReconcile.value || !pendingIntent.value || observedRaw === null) return;
+  clearSettlement();
   const intent = pendingIntent.value, raw = observedRaw, action = ++actionGeneration;
   const owns = () => active() && action === actionGeneration && detailOpen.value && selectedId.value === intent.refundId;
   actionLoading.value = true;
@@ -273,6 +308,24 @@ onMounted(load);
             <dt>拒绝原因</dt><dd>{{ current.refuseReason || '—' }}</dd>
             <dt>商家收件信息</dt><dd>{{ current.returnContact.name || '未配置' }} / {{ current.returnContact.phone || '—' }}<br>{{ current.returnContact.address || '未配置退货地址' }}</dd>
           </dl>
+          <section v-if="settlementCandidate && canViewSettlement" class="supplier-settlement" aria-label="供应商累计退款核验">
+            <h3>供应商累计退款核验</h3>
+            <el-button :disabled="!canVerifySettlement" :loading="settlementLoading" @click="verifySettlement">核验供应商累计退款</el-button>
+            <p v-if="settlementLoading" role="status">正在重新核验累计退款，金额尚未确认。</p>
+            <el-alert v-else-if="settlementError" :title="settlementError" type="warning" :closable="false" />
+            <template v-else-if="settlement">
+              <p role="status">累计退款已核验 · 只读结果</p>
+              <dl class="details">
+                <dt>原付款金额</dt><dd>¥{{ settlement.paid }}</dd>
+                <dt>商品退款</dt><dd>¥{{ settlement.goods_refunded }}</dd>
+                <dt>补退货款</dt><dd>¥{{ settlement.money_refunded }}</dd>
+                <dt>累计已退</dt><dd>¥{{ settlement.refunded }}</dd>
+                <dt>可退余款</dt><dd>¥{{ settlement.available }}</dd>
+                <dt>货款补退次数</dt><dd>{{ settlement.money_payouts }}</dd>
+              </dl>
+            </template>
+            <p v-else>尚未核验本订单的累计退款。原退款金额仍表示这笔商品退款记录。</p>
+          </section>
           <section v-if="current.refundHistory" class="refund-history" aria-label="退款商品快照">
             <h3>退款商品快照</h3>
             <p>以下为退款完成时的归档商品，不随后续拆单或商品编辑变化。</p>
@@ -322,6 +375,7 @@ dt { color:#666; } dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; 
 .evidence img { width:130px; height:130px; object-fit:contain; border:1px solid #ddd; border-radius:6px; }
 .actions .el-button { margin-left:0; }.detail-body p { overflow-wrap:anywhere; }
 .refund-history { margin:20px 0; border-top:1px solid #ddd; }.refund-history ul { padding-left:20px; }
+.supplier-settlement { margin:20px 0; padding-top:12px; border-top:1px solid #ddd; }
 .refund-history li { margin:12px 0; overflow-wrap:anywhere; }.refund-history li span { display:block; margin-top:4px; }
 @media (max-width:600px) { .details { grid-template-columns:1fr; gap:6px; } dd { margin-bottom:8px; } .actions { align-items:stretch; flex-direction:column; } }
 </style>

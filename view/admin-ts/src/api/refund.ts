@@ -4,7 +4,9 @@ import { createAdminSessionScope } from '@/utils/adminSessionScope';
 import { AdminResponseError } from '@/utils/request';
 import { parseAdminRefund, parseAdminRefundDetail, type AdminRefundDetail } from '@/utils/refundDetail';
 import { operationBody, operationVersion, parseRefundOperation, verifyRefundOperation, parseOperationResult, type RefundOperation, type OperationMode } from '@/utils/refundOperation';
+import { parseSupplierRefundSettlement } from '../../../common/supplierRefundSettlement';
 export type { AdminRefund, AdminRefundDetail } from '@/utils/refundDetail';
+export type { SupplierRefundSettlement } from '../../../common/supplierRefundSettlement';
 export const previewMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview') === '1';
 
 // Capture credentials synchronously, not from the global late-dispatch interceptor.
@@ -70,4 +72,19 @@ export async function apiAdminRefundList(query: RefundListQuery, signal?: AbortS
 }
 export async function apiAdminRefundDetail(id: number, signal?: AbortSignal) {
   return parseAdminRefundDetail(previewMode ? previewRows.find(row => row.id === id) : await send('/refund/detail/' + id, 'get', undefined, undefined, signal), id);
+}
+/** Independent read evidence, never a receipt or permission to execute. The
+ * reviewed first-goods identity/amount must remain the selected detail's own. */
+export async function apiAdminRefundSettlement(target: AdminRefundDetail, signal?: AbortSignal) {
+  if (previewMode) throw Error('预览不能核验真实累计退款，请连接实际退款接口');
+  const row = parseAdminRefund(target);
+  if (row.supplierId <= 0 || row.refundType !== 6 || row.applyType !== 4 || row.isCancel
+    || !['cash', 'offline', 'yue'].includes(row.payType)) throw Error('当前退款暂不能核验供应商累计退款');
+  const result = parseSupplierRefundSettlement(
+    await send('/refund/settlement/' + row.id, 'get', undefined, undefined, signal),
+    { order_id: row.storeOrderId, order_no: row.originalOrderId, uid: row.uid,
+      supplier_id: row.supplierId, store_id: row.storeId, refund_id: row.id,
+      refund_no: row.orderId, goods_refunded: row.refundPrice });
+  if (result.pay_type !== row.payType) throw Error('累计退款核验结果与当前付款渠道不匹配，请重新读取');
+  return result;
 }

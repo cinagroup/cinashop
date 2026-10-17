@@ -1,5 +1,15 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-17 Customer／Admin 供应商累计退款核验界面
+
+Customer 手机经营订单详情、退款详情和仅持 refund.view 的 Admin 退款详情新增独立“核验供应商累计退款”按钮，读取既有 versioned summary。原首笔商品退款申请7.00元保持；核验结果另列实付18.75元、商品首退、后续补退、累计金额、余款及笔数，真实阶段为7.00→12.00→18.75，最后余款0.00。结果只对应本次明确读取的快照；刷新详情、目标／路由／会话变化、写操作开始均清除旧值，409／503显示尚未完整核验，不发布旧成功金额。闭合parser同时绑定订单、首退款、归属和本地付款渠道，原写入／未知结果恢复流程和权限保持独立。
+
+生产 Admin bundle 和 UniApp H5 bundle 已通过实际 IAB Browser、真实 App／JWT及两个独立纯读取 PG16 LOGIN联合验收。主单真实offline付款18.75元、首商品退7.00元后，由可见本机夹具控制按实际 Supplier 服务补退5.00元和6.75元；独立fresh-cart真实yue订单供A→B→A核对。界面业务请求全部为GET，每次前后完整SQL快照相等；首goods、库存、积分、未开原票和供应商商品结算不重复。历史Supplier管理权限撤销后，两域仍以自身当前授权读取；Customer／Admin实时撤权各自拒绝，显式凭据SELECT撤销503及受控首退款损坏409均恢复后核对。真实GET完成SQL后仅扣留HTTP回包，切换目标后释放，验证迟到隔离；desktop／mobile及三处界面均有实际渲染、交互、控制台和截图证据。Browser控制能力已验证，未据此声称外部Chrome／Edge插件安装状态。
+
+本批8个验收入口共502个不同检查：Admin四文件145、UniApp两入口189、runner167共501项unit，以及真实Browser一项；HTTP调用次数不额外算用例。完整Admin类型／生产build、UniApp H5／完整类型及Worker完整类型均经8192MiB适用配置和共享串行锁通过。runner五组截断显示名以冻结源码30个唯一参数向量和实际assertion序号绑定，167行独立通过；UniApp189行完整显示名唯一。早期24项、重复执行和失败尝试仅保留历史：首次driver为保护现有日志在下一命令执行前exit1；下一build启动因npm路径不存在exit127，未执行build；随后完整Uni类型真实报两处TS2322渠道类型被扩宽，仅补两页类型import与computed泛型后六项全部重跑。没有把早期通过重复计数。首轮Browser业务finish和六处实际Cua截图完成后外层会话真实143中断，底层Vitest终态未捕获，原日志没有通过汇总或正常清理标记，信号来源未定；该轮不计原生通过，仅保留真实业务／渲染证据。其停止后的唯一自建集群按实证名单离线single-user清掉遗留夹具并独立确认停止；正常第二轮原生通过才计Browser一项。全部本批自建Browser PG16集群最终夹具清零、独立pg_ctl为3且pid不存在，实际集群数及失败历史见[本批账本](workers-ts/audit/php-ts-supplier-refund-settlement-ui-20261017.json)。
+
+共享闭合DTO、既有后端读API／默认deep、0194／0195／0196及旧运行profiles保持BASE字节，统计脚本保持已恢复PHP兼容；原复选行字节不变。没有生产DDL／GRANT／部署或真实支付／税务外连。异步provider admission／恢复／回调／对账、商品整单完成后的拒绝、实际已开票人工红冲公开E2E仍待后续纵向，整体迁移active，未声明完成。
+
 ## 2026-10-17 Supplier 累计退款核验只读 API（界面消费待接入）
 
 新增独立versioned只读核验接口：Customer沿真实普通UserJWT及当前全局手机订单管理权限，以订单ID＋order_no及可选scope_key查询；Admin沿实际refund.view及独立读取连接，以首笔退款ID查询，两条既有Admin前缀均可用。原订单／退款审查v1闭合DTO和默认deep合同保持。新summary仅发布已完整核实的首笔商品退款、后续补退款、累计金额、剩余额度及补退笔数，不发布原UUID、历史actor或完整来源，不授予新的执行／恢复能力。

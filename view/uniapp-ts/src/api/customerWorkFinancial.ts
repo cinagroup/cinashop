@@ -2,7 +2,7 @@ import {useAuthStore} from '@/stores/auth';
 import {API_BASE,getFormType,RequestError} from '@/utils/request';
 import {customerWorkCanonicalJson,CUSTOMER_FINANCIAL_KINDS,financialId,financialUuid} from '../../../common/customerWorkFinancial';
 export function customerFinancialRequestEndpoint(path:string,method:'GET'|'POST'):boolean{
- if(method==='GET'){const entity=path.match(/^\/mobile\/work\/financial\/(orders|refunds)\/([1-9]\d{0,9})$/u);return !!entity&&financialId(Number(entity[2]))||/^\/mobile\/work\/financial\/operations\/[a-f0-9-]+$/u.test(path)&&financialUuid(path.split('/').at(-1));}
+ if(method==='GET'){const entity=path.match(/^\/mobile\/work\/financial\/(orders|refunds)\/([1-9]\d{0,9})$/u),settlement=path.match(/^\/mobile\/work\/financial\/orders\/([1-9]\d{0,9})\/supplier-refund-settlement$/u);return !!entity&&financialId(Number(entity[2]))||!!settlement&&financialId(Number(settlement[1]))||/^\/mobile\/work\/financial\/operations\/[a-f0-9-]+$/u.test(path)&&financialUuid(path.split('/').at(-1));}
  return path==='/mobile/work/financial/refund-quote'||CUSTOMER_FINANCIAL_KINDS.some(kind=>path==='/mobile/work/financial/'+kind.replaceAll('_','-'))||/^\/mobile\/work\/financial\/operations\/[a-f0-9-]+\/abandon$/u.test(path)&&financialUuid(path.split('/').at(-2));
 }
 export function createCustomerFinancialRequests(current:()=>boolean,deadlineMs=12_000){
