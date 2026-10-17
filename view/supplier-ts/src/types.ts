@@ -312,6 +312,8 @@ export interface ProductDetail {
   bar_code: string;
   cate_id: number[];
   store_label_id?: number[] | string;
+  brand_id?: number[];
+  brand_selection?: import('./types/productBrands').SupplierProductBrandSelection;
   slider_image: string[];
   description: string;
   spec_type: 0 | 1;
