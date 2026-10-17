@@ -22,6 +22,7 @@ import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.
 import type { SupplierAttachment } from '@/api/attachments';
 import { escapeProductText, formatProductDescription, productDescriptionPreview, productImagePreview, type ProductMediaPreview } from '@/utils/productMedia';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
+import { productScheduleEditor, productSchedulePayload } from '@/utils/productSchedule';
 import { useAuthStore } from "@/stores/auth";
 import { getProductCopySeed, parsePendingProductCopy, productCopyPayload, recoverProductCopy, saveProductCopy,
   type PendingProductCopy, type ProductCopyContext, type ProductCopyReceipt } from '@/api/productCopy';
@@ -32,6 +33,12 @@ const auth = useAuthStore();
 const copyActor = computed(() => auth.user ?? (previewMode ? { id: 1, supplier_id: 1 } : null));
 const productId = computed(() => Number(route.params.id ?? 0));
 const editing = computed(() => Number.isInteger(productId.value) && productId.value > 0);
+const formRouteError = computed(() => {
+  const id = route.params.id;
+  if (['/products/new', '/products/copy-result'].includes(route.path)) return id === undefined ? '' : '商品入口无效，请从商品列表重新进入';
+  return typeof id === 'string' && /^[1-9]\d{0,9}$/.test(id) && Number(id) <= 2147483647 && route.path === `/products/${id}/edit`
+    ? '' : '商品入口无效，请从商品列表重新进入';
+});
 const copyEntry = computed(() => {
   if (route.query.copy === undefined) return { source: 0, error: '' };
   const raw = route.query.copy;
@@ -51,6 +58,15 @@ const videoContext = computed(() => `${auth.user?.supplier_id ?? 0}:${formEntry.
 const videoDisabled = computed(() => loading.value || saving.value || copyBlocked.value || mediaInvalidated.value || !canManageProducts.value);
 const loading = ref(false);
 const saving = ref(false);
+const schedule = reactive(productScheduleEditor());
+const productReadReady = ref(false), productReadError = ref('');
+let formReadRequest: AbortController | undefined, formSaveRequest: AbortController | undefined;
+function cancelFormRequests() { formReadRequest?.abort(); formSaveRequest?.abort(); }
+function scheduleChanged(field: 'on' | 'off' | 'both' = 'both') {
+  schedule.changed = true;
+  if (field !== 'off') schedule.onChanged = true;
+  if (field !== 'on') schedule.offChanged = true;
+}
 const skuActionLoading = ref(false);
 const retiredAttrs = ref<ProductSku[]>([]);
 const selectedActiveSkuIds = ref<number[]>([]);
@@ -72,6 +88,7 @@ const descriptionInput = ref<{ textarea?: HTMLTextAreaElement }>();
 const descriptionCursor = ref({ start: 0, end: 0 });
 let mediaReadGeneration = 0, formReadGeneration = 0, formSaveGeneration = 0, skuActionGeneration = 0;
 const mediaSession = createSupplierSessionScope(() => {
+  cancelFormRequests();
   mediaInvalidated.value = true; videoUploaderOpen.value = false; videoPreviewUrl.value = ''; mediaPickerOpen.value = false; mediaTarget.value = null;
   mediaPreviews.value = {}; showDescriptionPreview.value = false; mediaReadGeneration += 1;
   failedPreviewSources.value = new Set(); skuActionGeneration += 1; skuActionLoading.value = false; mediaReading.value = false;
@@ -79,7 +96,7 @@ const mediaSession = createSupplierSessionScope(() => {
   copyContext.value = null; copyReady.value = false; pendingCopy.value = null; copyRecovering.value = false; copyNotice.value = ''; copyError.value = '';
   categories.value = []; ruleTemplates.value = []; retiredAttrs.value = []; selectedActiveSkuIds.value = []; selectedRetiredSkuIds.value = []; selectedRuleId.value = null; loading.value = false;
 }, previewMode);
-onBeforeUnmount(() => { mediaReadGeneration += 1; formReadGeneration += 1; formSaveGeneration += 1; skuActionGeneration += 1; mediaSession.dispose(); });
+onBeforeUnmount(() => { cancelFormRequests(); mediaReadGeneration += 1; formReadGeneration += 1; formSaveGeneration += 1; skuActionGeneration += 1; mediaSession.dispose(); });
 
 function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
   const suk = Object.values(detail).join(",");
@@ -194,6 +211,7 @@ function initialForm(): ProductDetail {
 
 const form = reactive<ProductDetail>(initialForm());
 function resetProductForm() {
+  Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
   labelAvailability.value = { ids: [], ready: false };
@@ -216,6 +234,7 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  Object.assign(schedule, productScheduleEditor(detail));
   videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
   const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
@@ -311,12 +330,13 @@ async function refreshMediaPreview() {
   finally { if (generation === mediaReadGeneration) mediaReading.value = false; }
 }
 watch(formEntry, () => {
+  cancelFormRequests();
   skuActionGeneration += 1; skuActionLoading.value = false; formSaveGeneration += 1; saving.value = false;
   selectedActiveSkuIds.value = []; selectedRetiredSkuIds.value = []; retiredAttrs.value = []; failedPreviewSources.value = new Set();
   invalidateMediaTarget(); mediaPreviews.value = {}; resetProductForm();
   copyContext.value = null; copyReady.value = false; copyRecovering.value = false; copyError.value = ''; copyNotice.value = '';
   void load();
-});
+}, { flush: 'sync' });
 
 function cardBackedSku(sku: ProductSku) {
   return isCardProduct.value && sku.delivery_mode !== "fixed";
@@ -465,6 +485,8 @@ function removeSlider(index: number) {
 }
 
 function validateForm() {
+  if (!productReadReady.value) return '请先成功读取完整商品资料';
+  if (!copying.value) try { productSchedulePayload(schedule); } catch (error) { return error instanceof Error ? error.message : '上下架计划无效'; }
   if (labelsChanged.value && !labelAvailability.value.ready) return '请刷新商品标签后再保存标签修改';
   if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
@@ -488,7 +510,7 @@ function validateForm() {
 }
 
 async function submit() {
-  if (recoveryOnly.value || saving.value || loading.value || copyBlocked.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value) return;
+  if (formRouteError.value || recoveryOnly.value || saving.value || loading.value || !productReadReady.value || copyBlocked.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value) return;
   const validation = validateForm();
   if (validation) return ElMessage.warning(validation);
   saving.value = true;
@@ -501,8 +523,10 @@ async function submit() {
       ...sku,
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
-    const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
-    const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}) };
+    const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
+      auto_on_time: _autoOn, auto_off_time: _autoOff, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+    const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
+      ...(!copying.value ? productSchedulePayload(schedule) : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
       // Persist only the recovery identity before the first POST. Product text,
@@ -514,7 +538,8 @@ async function submit() {
       if (current()) await acceptCopyReceipt(receipt, pending);
       return;
     }
-    const result = await saveProduct(id, payload);
+    formSaveRequest?.abort(); const request = new AbortController(); formSaveRequest = request;
+    const result = await saveProduct(id, payload, request.signal);
     if (!current()) return;
     ElMessage.success(`商品 #${result.id} 已保存并进入待审核状态`);
     await router.push(form.product_type === 1 ? `/products/${result.id}/virtual-inventory` : "/products");
@@ -570,6 +595,9 @@ async function reloadCopy() {
 async function load() {
   if (!mediaSession.isCurrent()) return;
   const generation = ++formReadGeneration, id = productId.value, entry = formEntry.value;
+  formReadRequest?.abort(); const request = new AbortController(); formReadRequest = request;
+  productReadReady.value = false; productReadError.value = '';
+  if (formRouteError.value) { productReadError.value = formRouteError.value; loading.value = false; return; }
   readPendingCopy(); copyReady.value = false; copyContext.value = null; copyError.value = copyEntry.value.error;
   if (recoveryOnly.value) { loading.value = false; return; }
   if (copyError.value || copying.value && !canManageProducts.value) {
@@ -590,13 +618,15 @@ async function load() {
       if (!current()) return;
       applyProductDetail(seed.product); copyContext.value = seed.copy; copyReady.value = true;
     } else if (Number.isSafeInteger(id) && id > 0) {
-      const detail = await getProductDetail(id);
+      const detail = await getProductDetail(id, request.signal);
       if (!current()) return;
       applyProductDetail(detail);
     }
+    if (current()) productReadReady.value = true;
   } catch (error) {
     if (current()) {
       if (copying.value) copyError.value = error instanceof Error ? error.message : '复制来源读取失败，保存已禁用';
+      productReadError.value = error instanceof Error ? error.message : '商品资料读取失败，保存已暂停';
       ElMessage.error(error instanceof Error ? error.message : "商品资料加载失败");
     }
   } finally {
@@ -611,6 +641,7 @@ onMounted(load);
   <section v-loading="loading" class="page-section product-form-page">
     <el-alert v-if="mediaInvalidated" title="登录身份或权限已改变，请重新进入商品页" type="warning" :closable="false" />
     <el-alert v-if="copyError || copyStorageError" :title="copyError || copyStorageError" type="error" :closable="false" />
+    <div v-if="productReadError && !mediaInvalidated" role="alert"><p>{{ productReadError }}</p><el-button :disabled="loading || saving" @click="load">重新读取商品资料</el-button></div>
     <div v-if="pendingCopy" class="surface product-form-card" role="status">
       <h2>复制结果待确认</h2><p>来源商品 #{{ pendingCopy.source_id }} · 操作 {{ pendingCopy.operation_id }}。请先核对原请求，当前窗口已暂停保存。</p>
       <el-button :disabled="saving || copyRecovering" :loading="copyRecovering" @click="recoverCopy(false)">查询复制结果</el-button>
@@ -629,7 +660,7 @@ onMounted(load);
       </div>
       <div class="heading-actions">
         <el-button v-if="copying && canManageProducts" :disabled="!!pendingCopy || saving || loading || mediaInvalidated" @click="reloadCopy">重新载入来源</el-button>
-        <el-button v-if="canManageProducts" type="primary" :disabled="copyBlocked || loading || mediaInvalidated" :loading="saving" @click="submit">保存并提交审核</el-button>
+        <el-button v-if="canManageProducts" type="primary" :disabled="copyBlocked || loading || !productReadReady || mediaInvalidated" :loading="saving" @click="submit">保存并提交审核</el-button>
       </div>
     </header>
 
@@ -835,6 +866,16 @@ onMounted(load);
             </template>
           </el-form>
         </article>
+        <article v-if="!copying" class="surface product-form-card compact-card schedule-card">
+          <header><h2>定时上下架</h2></header>
+          <p>按北京时间填写，保存后仍下架并重新待审核；计划不会自动通过审核。</p>
+          <el-checkbox v-model="schedule.onEnabled" :disabled="loading || saving || !productReadReady" @change="scheduleChanged('on')">启用定时上架</el-checkbox>
+          <label v-if="schedule.onEnabled" class="schedule-time">定时上架时间（北京时间）<input v-model="schedule.onTime" aria-label="定时上架时间（北京时间）" type="datetime-local" step="1" :disabled="loading || saving || !productReadReady" @input="scheduleChanged('on')" /></label>
+          <el-checkbox v-model="schedule.offEnabled" :disabled="loading || saving || !productReadReady" @change="scheduleChanged('off')">启用定时下架</el-checkbox>
+          <label v-if="schedule.offEnabled" class="schedule-time">定时下架时间（北京时间）<input v-model="schedule.offTime" aria-label="定时下架时间（北京时间）" type="datetime-local" step="1" :disabled="loading || saving || !productReadReady" @input="scheduleChanged('off')" /></label>
+          <p>关闭并保存可取消对应计划。已到期时间交由定时任务处理；实际购买仍需审核通过。</p>
+        </article>
+        <p v-else class="schedule-copy-note">复制保留来源的上下架计划，创建后可在编辑页调整。</p>
         <article v-if="editing" class="surface review-card">
           <span>当前审核状态</span>
           <strong :class="form.is_verify === 1 ? 'success' : form.is_verify && form.is_verify < 0 ? 'danger' : 'warning'">{{ form.is_verify === 1 ? "已通过" : form.is_verify === -1 ? "已拒绝" : form.is_verify === -2 ? "强制下架" : "审核中" }}</strong>
@@ -843,7 +884,7 @@ onMounted(load);
       </aside>
     </div>
 
-    <footer class="product-form-footer"><span>{{ copying ? "复制会创建新商品，来源商品保持原状；交付内容保存后另行配置。" : isCardProduct ? "保存后将进入卡密库存页；一次性卡密不会通过此表单传输。" : "保存会重置为待审核并下架，避免未审核改动直接对外销售。" }}</span><div><el-button @click="router.push('/products')">取消</el-button><el-button v-if="canManageProducts" type="primary" :disabled="copyBlocked || loading || mediaInvalidated" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
+    <footer class="product-form-footer"><span>{{ copying ? "复制会创建新商品，来源商品保持原状；交付内容保存后另行配置。" : isCardProduct ? "保存后将进入卡密库存页；一次性卡密不会通过此表单传输。" : "保存会重置为待审核并下架，避免未审核改动直接对外销售。" }}</span><div><el-button @click="router.push('/products')">取消</el-button><el-button v-if="canManageProducts" type="primary" :disabled="copyBlocked || loading || !productReadReady || mediaInvalidated" :loading="saving" @click="submit">保存并提交审核</el-button></div></footer>
     <ProductVideoUploader v-if="auth.user?.supplier_id" v-model:open="videoUploaderOpen" :supplier-id="auth.user.supplier_id" :context-key="videoContext" :disabled="videoDisabled" @use="useUploadedVideo" />
     <ProductImagePicker v-if="mediaPickerOpen && canChooseMedia" :key="mediaContext" v-model="mediaPickerOpen" :supplier-id="auth.user!.supplier_id" :context-key="mediaContext" :limit="mediaLimit" @selected="receiveMedia" />
     </template>
@@ -851,6 +892,10 @@ onMounted(load);
 </template>
 
 <style scoped>
+.schedule-card p, .schedule-copy-note { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.schedule-card > .el-checkbox { display: flex; margin: 10px 0; }
+.schedule-time { display: grid; gap: 6px; margin: 8px 0 16px; font-size: 12px; }
+.schedule-time input { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px; border: 1px solid var(--el-border-color); border-radius: 4px; color: inherit; background: var(--el-bg-color); font: inherit; }
 .card-heading-row { flex-wrap: wrap; }
 .video-reference { overflow-wrap: anywhere; }
 .product-form-card video { display: block; width: 100%; max-height: 360px; background: #111; }

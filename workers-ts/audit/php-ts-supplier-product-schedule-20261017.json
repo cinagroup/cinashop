@@ -1,0 +1,3034 @@
+{
+  "schema": "php-ts-supplier-product-schedule-v1",
+  "created_at_utc": "2026-10-17T10:55:14.640266+00:00",
+  "base_commit": "edd94872c0c558b3a82fd535071af926b1a24231",
+  "goal_status": "active",
+  "completion_claim": false,
+  "scope": {
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "view/supplier-ts/src/api/supplier.ts",
+      "view/supplier-ts/src/pages/ProductForm.vue",
+      "view/supplier-ts/src/types.ts",
+      "view/supplier-ts/src/utils/productSchedule.ts",
+      "workers-ts/audit/php-ts-supplier-product-schedule-20261017.json",
+      "workers-ts/docs/php-ts-supplier-product-schedule-20261017.md",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+      "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+      "workers-ts/test/helpers/supplierProductSchedule.ts",
+      "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+      "workers-ts/test/supplier-product-schedule-native.test.ts",
+      "workers-ts/test/supplier-product-schedule-rules.test.ts",
+      "workers-ts/vitest.supplier-schedule-browser.config.ts"
+    ],
+    "execution_sources": 15,
+    "protected_full_files": 244,
+    "description": "Supplier ordinary plan author save/cancel/readback and unchanged mature scheduler consumption; not the whole five-tab PHP editor or overall migration."
+  },
+  "contract": {
+    "php_references": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+        "first_line": 206,
+        "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+        "authority": "Registered Supplier POST product/:id dispatches StoreProduct/save."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/product/StoreProduct.php",
+        "first_line": 226,
+        "sha256": "f277e42009e9a4250c15e9731f8d54b47f502f36ce5a8e6fd8d62a37e1fb93c1",
+        "authority": "Both schedule fields accepted; lines238/241 force pending review and pass current Supplier owner."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "first_line": 794,
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "authority": "Truthy strings use strtotime, empty cancels, nonzero on forces hidden; no server future/order assertion here."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "first_line": 398,
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "authority": "Old editor conditionally hides schedules; new editor deliberately returns actual epochs to support reread/cancel."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 276,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "Actual editable five-tab drawer has datetime schedule authoring."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 291,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "Optional off switch and datetime."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 1974,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "Widget disabledDate plus/minus86400000 is not a server storage rule."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 2300,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "Datetime change retains original wall-time string."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 2418,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "goodsOn/goodsOff use explicit empty-string cancellation."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/product/components/productDetails.vue",
+        "first_line": 3120,
+        "sha256": "aadad14662a3791fd4e5af0b26b37ed7e637cf8694a6f5d14320e6606ce3a6e6",
+        "authority": "Require selected dates, without adding a server time/order restriction."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/product/product/StoreProductDao.php",
+        "first_line": 467,
+        "sha256": "2cdc901c673a11e699a23bd2d4ddcd01abe108d10854ddd3588099ec712ec5e8",
+        "authority": "Live on<=now then off<now changes only is_show; no review approval or timestamp clearing."
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+        "first_line": 38,
+        "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+        "authority": "Default timezone Asia/Shanghai."
+      }
+    ],
+    "description": "# Supplier 商品定时上下架作者与执行\n\nPHP 实际商品编辑抽屉允许填写定时上架和下架日期，经注册的 Supplier 商品保存入口持久化 auto_on_time / auto_off_time。TS 普通新建和编辑页补齐相应控件，以北京时间显示与解释；用户仅修改其中一项时只提交该列。关闭开关并保存是明确取消，未修改计划则完全省略，旧客户端省略两列的保存不会读旧值后覆盖管理员并发修改。复制继续继承来源计划，创建后可从编辑页调整。\n\n后端接受0到2147483647的整数秒、明确带Z的UTC时间和PHP日期控件的上海本地时间。空字符串按PHP strtotime空值取消为0；缺失值保持。拒绝空对象、null、布尔值、负数、数值字符串、非法日期和无时区的ISO文本；合法过去、相同或逆序时间均可保存，不增加PHP后端没有的24小时或未来时间规则。前端遇到历史夏令时含义不唯一的手动输入会要求重选，读取后未修改的原秒值保持。\n\n显式计划写入复用当前JWT身份、口令、有效期、所属供应商与product.manage事务屏障，以及现有分类和商品锁顺序。锁冲突返回409；事务末端重查实际保存的归属、审核、可见性和明确计划。真实跳过或改写触发器不能产生虚假的成功回执。普通商品保存依然下架并重置审核为待审，不接受调用方伪造批准。\n\n成熟ProductAutoShelfService及Queue分发保持逐字不变：到期上架使用<=、下架使用<；同时到期先上后下，不清除计划列，取得商品锁后按实际数据库时钟决定。该执行器只修改is_show，不改is_verify；实际购买资格仍需审核通过。取消后到达的旧任务重新读取当前计划并跳过。原生证据使用独立LOGIN，执行器只获商品SELECT和is_show列UPDATE，不能更新审核列。\n\n完整读取失败、计划DTO缺项或非法时禁止保存，用户可手动重读。路由、真实会话A→B→A及卸载取消正在执行或Axios排队的普通GET/POST，旧响应不回填；复制的原UUID恢复协议保持。取消浏览器请求不代表已经提交的服务器事务会撤销；此批不为普通保存增加幂等重放协议。\n\n验证范围、真实命令和失败历史见同名审计。仅本机合成App/JWT/PG16与生产构建浏览器验收，不替代生产发布；原五页签抽屉的其余能力及整体迁移仍开放。保留用户选定的已恢复PHP兼容get_script合同；无生产DDL、授权、部署或真实provider调用。\n\n最终12个测试入口428项通过：365单元／组件、62真实App／JWT／独立PG16与1生产构建IAB。Worker两套类型、Supplier类型与生产构建通过；37表及36序列按实际允许变更核对，29业务GET均不写，2POST仅修改本商品完整保存允许项。独立scheduler只获商品SELECT和is_show列UPDATE；到期任务仅is_show变化，取消后无变化。真实会话21→22→21后旧表单清空，扣留响应socket已取消，重新进入后两计划0。1280×720与390×844视口的计划卡片可读且无横向溢出，控制台抽样0warning／error；截图实际JPEG1265×712与375×812。\n\n初轮测试DOM／真实storage校准、默认4GB堆退出、四处测试类型诊断、npm不可用和Browser旧分类路径夹具失败均保留。最终测试重复只计一次，Browser独立路径字面量修正与此前命令输入差异明确记录；最终全Worker类型和真实Browser都再次通过。四座本机PG16均独立核验停止与夹具清零。当前main的edd94872 CI运行中；本批发布codex/supplier-product-schedule与草稿PR，保留原main CI结果，不自动合入或宣称云端通过。\n",
+    "independent_review": {
+      "path": "/tmp/cinashop-supplier-product-schedule-review.json",
+      "sha256": "0f7eeccea238bab8027f11f528ee9802056979020f18b623b5fb38425174d0f1",
+      "bytes": 20439
+    },
+    "omitted_fields": "Omitted columns are absent from actual UPDATE; native waiting-row test preserves a separate Admin commit. Modern editor independently tracks on/off intent.",
+    "explicit_cancellation": "PHP empty string and numeric0 cancel; new editor sends numeric0.",
+    "time_contract": "Shanghai literal or UTC Z or safe signed-int32 nonnegative seconds; no new future/order/24hour rule. Modern ambiguous historical hour requires reselection.",
+    "approval": "save forces isShow0/isVerify0; mature consumer may set isShow1 but never approves review or clears plans."
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "eed957d87855362b453be07d349105f9574a389caa661870bfa4e2655d765064"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "3473e86e9199b1148148a949931dbd59f90ade4503067cdbbb36a269dba8c77e"
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productSchedule.ts",
+      "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-schedule-20261017.md",
+      "sha256": "bf88e042aa7bdc5a4b1d96b5c11fc3214594ae5abba6db76cf036202c0b3fed6"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+      "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+      "sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+      "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+      "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+      "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+      "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+      "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+    }
+  ],
+  "execution_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/api/supplier.ts",
+      "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductForm.vue",
+      "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productSchedule.ts",
+      "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+      "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+      "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+      "sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+      "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+      "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+      "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+      "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+      "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/api/refund.ts",
+      "sha256": "96639b8f72964049af4771412f62c6b0aa42b6378e86ae38fe9723afebadafbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/pages/refund/RefundList.vue",
+      "sha256": "8df4c437169b53565b4a23039d6d6ee04ac2ddaee4aa6423c05d0a7d46000474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/articleRichText.ts",
+      "sha256": "cd8faa900c38e911727cf73cc3957354283be60a6bf341bdd3abceeaab3f27d3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/productMediaReference.ts",
+      "sha256": "7e7d4795c775381012e0062441e2feaa5eeb3f7c89d52657083da92f7b75cabf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/supplierRefundSettlement.ts",
+      "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/http.ts",
+      "sha256": "130c8dfdc58ab6057406529e2cfcc2be53a86015ec80a04fab7b7853b87ea75d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/proactiveRefund.ts",
+      "sha256": "8609cdde2ca2055229c9bd82dd11477f5b114d2a7910f2fba99ce976bcc4f3c8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/productCopy.ts",
+      "sha256": "9b5917cb4467a281458f2b39846bda7c01adfaedb5afb66b419227ddd4b247c7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBillExport.ts",
+      "sha256": "994901b06439510c8ab1ff7ede69206307ade7a8e6ad481d19f85b7a818318bc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierBills.ts",
+      "sha256": "f0868bfd476a3854cf257fa6cc5ce4f986905af10d8c0cea58c41ac9bc9a1876",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplication.ts",
+      "sha256": "dbb5237cd1e8f0a72036dd6d591ec2bece5c09dfee587bdc36711d1e1887cb54",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractApplicationMedia.ts",
+      "sha256": "654828906313395b4c1966cefd5b2f0116a85103926d7c681708d5d602c8f7a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtractMedia.ts",
+      "sha256": "80b2815f1750182186dfb52ab1f612cf1dce559fec63ef65939f00d7d8535d21",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierExtracts.ts",
+      "sha256": "c83dd1f4684869ee60b47d04ffb32e69eed066b4650427d405636a12030b65a9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFinanceAccounts.ts",
+      "sha256": "a3dc4af808f5ffc62c9ecb26b862436151d5d9d3e4275ac276ce29438058651f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierFlows.ts",
+      "sha256": "8f240cf15da482bf69c6ea15f8123a4c35612cbf60f795d3074f97e7fa12fe49",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/supplierProductDetail.ts",
+      "sha256": "d13faa98066169fb66a13eddf154d5179f7d241964e68675b9f8f5f7239936af",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/components/AppShell.vue",
+      "sha256": "1a052a4004230ddef819e692a286c2e5c2f5b2ba8c05661631ef775ed9220c4c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/components/ProductImagePicker.vue",
+      "sha256": "bc49cc99e79e68daf065b6dafbf49630861437db0bf7f48319884e62d29653d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Finance.vue",
+      "sha256": "da151e1237c7ac53448d5ffe910eac6fe1b39d9f38507825c90cb9220f313387",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceAccounts.vue",
+      "sha256": "3eb9ecf17cc978e6a4e7c9a3d69b857878b6f80eb0f24dfdc511ad45352221bb",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceApply.vue",
+      "sha256": "84bdc2915b8093a029b90d13c987a16b957dc335c119c11fa232468eace7a772",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceBills.vue",
+      "sha256": "3e54b31a359a0bbfda3cc057a43dfee6e55937fff2c8e32caa1183c3627fa349",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceExtracts.vue",
+      "sha256": "7d53adbb6b618277f781fff147c1d4de6527804aacc1e3bfac70c044c35bdd1a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/FinanceFlows.vue",
+      "sha256": "4ee7f359e3ef588231159eede49447052e457c23a2f4b9cb8d5e8373679b0c58",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProactiveRefund.vue",
+      "sha256": "5169c803e8966a142b772a941860e1cfacd4a2a315c84d13b7ddda0503af5531",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductDetail.vue",
+      "sha256": "f5231e5f098bda9fb6d77213fe902a2db1ad29ce3b50150f5a986e9baf922381",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProductReviews.vue",
+      "sha256": "1e944409f833ecc194da9c5c1faaf7c1e21767c1a83fa22a031661e7247eb594",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Products.vue",
+      "sha256": "ab7f3a167227a3015a17056a233738d7345fdd590db11102b17b7189959fb0f9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "a4e208f6510e8f11fa88c42388ce2752e4c207729d245f43c0e918cca36a2021",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/types/productDetail.ts",
+      "sha256": "eff1428430825ce917e78dc79ec81f5fad3669801f2c1be83f265c57203b97ac",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/legacy-export.ts",
+      "sha256": "04be4a10832c7eeeacb65347658561ab862beb20e15544c982c933d6155df45e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productDetail.ts",
+      "sha256": "6c7730cd6458ae21dcca62ed31f1857f57e029649c969fd824800f9ff72d75c7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productDetailRoute.ts",
+      "sha256": "6319c6cdc724d9d5405dc412baa8bc319da74292db94da61fdcd7d174ab8cc49",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/productMedia.ts",
+      "sha256": "9615aeaf96406a0e738845ac12e50d114ed299014626a52d6f330ea5e057230a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/utils/supplierSession.ts",
+      "sha256": "a60504b75dda889f49936688431fa6b9ce35abec98f8cb2b207bac992fa126d0",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/scripts/test-customer-supplier-refund-settlement-runtime.mjs",
+      "sha256": "4804e5b0b24a852ea24c548357822ec036e25a9ed1a96a186de517febfa3906c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/api/customerWorkFinancial.ts",
+      "sha256": "4fb6199a453b626c6da98c769dcfeedb2bd8b035f03354fc7cd7eca474bb6798",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/components/customerWork/CustomerSupplierRefundSettlementPanel.vue",
+      "sha256": "4253da2e0b87ed8d32beb6e11a4ae69030866ac22ddc5acba3f2a4c7cda5c950",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCustomerSupplierRefundSettlement.ts",
+      "sha256": "ad2be65b87720791e8f004e533e001965bd1531d25914048679d7d5a47e23259",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/orderDetail.vue",
+      "sha256": "1c53e54467f4beff6a7ed6b37be2219c4aff3ec282df5ef1fb44384ffe91dfc9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/customer-work/refundDetail.vue",
+      "sha256": "89c7d3a5bfe6640dbd0a1e57b2b3dab4501a977a73197c2620673b79df14cb6c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/admin-legacy-supplier-agent-route-parity-supplier-bill-followup-20260928.json",
+      "sha256": "a1b8c01f3cdc75646b0fafc44f510f476824b69888774ac9114cbd65e7662904",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-bill-read-20261017.json",
+      "sha256": "66b167074e9c1f9b7c3f9ce490c37c538c6917b90d30f7e4889840c46d42722e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-20261017.json",
+      "sha256": "6e8a270824adfe39195a224aa399eaad3910e30bf744275e0c693186841266b3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-20261017.json",
+      "sha256": "ca3530216cd4231dcb56232fdb5c8795e82fc510ec189678db3bd97b49c8ed80",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-application-media-20261017.json",
+      "sha256": "9903debc67f9478d7d91420ab81b54dd2aa036c1d1569b8c9e20d997bc3c13ed",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-extract-media-20261017.json",
+      "sha256": "147c491512ad11e0d3286e320245061ff1b8fb955ca06e885a42e734bf49f877",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-finance-accounts-20261017.json",
+      "sha256": "f58650126fe4664169ed062fd33e4932456ada066fce663a23bc399b0b684474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-flow-20261017.json",
+      "sha256": "4adeb872484f350e42be900d3dad12db61acf2d89aeff70aa11f761a4cf86d83",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-post-goods-refusal-20261017.json",
+      "sha256": "075aa39bab4e97fcca5893b7fd928819593eb6a3b2a9cd9ac32ce3972c39a262",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json",
+      "sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-detail-20261017.json",
+      "sha256": "5d2778d8981b7e80b13321a5defc3f7146ecdb6a9f719390d6afae064d4d482f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-product-review-drilldown-20261017.json",
+      "sha256": "851f4fe352602ee054772bdfc154ce442cd44750aeb416e83ca3258320ff084e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "sha256": "916ef902b967f1890f740407db45822beceed0dc178003f762a691510acbce10",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-refund-settlement-ui-20261017.json",
+      "sha256": "ecfab320399da4aefe5c0cc7cde3e6a453d803926649d2d6ee5b8b0909211649",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "55d6677176b6dc6061da61ced859bf5530f56acd05d4943a2b1c2853be83c6d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/supplier-frontend-parity.json",
+      "sha256": "8cc946215c6cd3c8dd638803d920a1cde11e98f7b327a4d6921f3722b1068336",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-application-media-20261017.md",
+      "sha256": "9a510d4f0ef9de3673c9dfacbe6c9cd07d09bd77e063aff49f0c4282dd27b4e9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-extract-media-20261017.md",
+      "sha256": "9f517a726185db76a635ea0aa8df9c452383c3fbe46d06f1cdce876be6db8e17",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-finance-accounts-20261017.md",
+      "sha256": "bb3fb1546860ef799dd4ed6709d595d0bce3722cdf70b26b632424aa709f1640",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-detail-20261017.md",
+      "sha256": "8709174c47abd1e44281ad223ecdbecafca7bdae700d821433f190f1573c2d57",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/php-ts-supplier-product-review-drilldown-20261017.md",
+      "sha256": "dd7a2f72c24718c9fc1837360bbc9dd5a0c178b4a11849ae4a272178e2e6775a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/docs/supplier-extract-application-contract.md",
+      "sha256": "8d2212c348cc7da8f884fc363111055f18acbf39ab189a73a7ddc0457c3bc4ed",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/migrations/0176_product_auto_shelf.sql",
+      "sha256": "46b3e860bfafbd29bd17596c88f9b0299c3b04dd776ed81818a919bef92e9f07",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminProductModerationController.ts",
+      "sha256": "20c76c182b33945ac4920bb7288f3b9f9187b3963d19a23b21a99c3d74fd3c99",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminSupplierFinanceController.ts",
+      "sha256": "4305e01c65822d39388aa6a9a3ca8f024ffbf7a0dd2d411f0cef9f6785262740",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationController.ts",
+      "sha256": "bb622bc1e11e0a3988e373698c752b5dd4db9990651d1de0b8a43de945b2f432",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractApplicationMediaController.ts",
+      "sha256": "84a53a0d1f13810ceaaba3581f2226f722abc6b5d65e7a1dc625339bbf205706",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierExtractMediaController.ts",
+      "sha256": "244fb6524d0a445c31fc4475387f2391b97d6b1eb995fb7061a9a6c378540994",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierFinanceAccountsController.ts",
+      "sha256": "e47d1cb31c9d62a4d99a2bd007e90d38a4a739178106708299bdf2c33c39acfc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductCopyController.ts",
+      "sha256": "2a54e5be0d5be4dc570de3e61dd561ef0a33b086d584f23876834b1e794f5671",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductDetailReadController.ts",
+      "sha256": "df2bfcff9e44b6b5df4ff77894520ae0a75caaa738e7a31111205a39503a6c03",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProductReplyController.ts",
+      "sha256": "72b2cc6425f0b1625b668bde14d7a3439762a9dea61b0c9603c93583a5f963b1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "854ac9784b46b5a434ba3610ab2079aa12490a433e72dc642894bae14bf9eb26",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/index.ts",
+      "sha256": "9e8b701d6072be8c64e4191871f0f474dcece31464d2384597abb82f6b704e0c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+      "sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerManualRefundRuntimePlan.ts",
+      "sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWaybillActor.ts",
+      "sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+      "sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0197_supplier_extract_application.sql",
+      "sha256": "cda058d2f3b165c70db896a269d246ef392e9a27f296ddae48ec4564ee48c305",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/productAutoShelf.ts",
+      "sha256": "34e430fbc2e3b984acc856d0c213d15433f5add90bdb6260ad45f63acebaa509",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runCustomerWaybillActor.ts",
+      "sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runProductAutoShelf.ts",
+      "sha256": "6128ce829c6efa177f217c7e1050ec3b52e8aa5a2e7df484135129d44aa9798e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierExtractApplication.ts",
+      "sha256": "ed832c04b34ce61362ae623734b55fed0974d82e5b57f1e58811364ce57ced5f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOrderEditOperation.ts",
+      "sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "fc8bf69493a75523149ac5223b8deb3c538e019f0a1f9d072b8138e3e1b953ac",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleSupplierRefundProof.ts",
+      "sha256": "ef5caeb225d66988c519bb2fa0004899f2f39bf30b1e169157cdf7d57ffc9d89",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationInput.ts",
+      "sha256": "4f9a743332552b7077cb553d96d9282e84d65eb25644ca2ab5b3ea86e9371887",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminProductModerationService.ts",
+      "sha256": "55eb1343feaca81e8a8a56e3c0659a693db7fd007289c76c42967f7b72c1b51d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSupplierFinanceService.ts",
+      "sha256": "ed89f73d630d441d837566507a667cdfd79aeb972b03e75dc54282de88a86801",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "dd4e8a482b382bb97e5310f7ba5dbb00f53991348a79dc58f8b200259377dbbf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+      "sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/RefundOrderMaterialization.ts",
+      "sha256": "add357dfed742b71eeae1c3186b5662cb2145d2a469273976a786d689c09a5bb",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/ScheduledMaintenanceService.ts",
+      "sha256": "d6e61f16ccfa342e177ff419d29d927459fc1976951d97b1bae41366da876bda",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductAutoShelfService.ts",
+      "sha256": "08af044b20f2e751df416778d2dc2e9d13fdfae25a4063bd66e2b1e064cf746b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuEditorService.ts",
+      "sha256": "579c27f721ef0a01cf37685da8d923c2e1ae8f7aceba9b279554d0d3c4acc2b2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductSkuInput.ts",
+      "sha256": "c96247e8ac7befe362e9d2596c2d2a69d9b113930aa6c388ec1a78755ab1f23f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/product/ProductVideoPolicy.ts",
+      "sha256": "78f7e56f50a8fff97531331552e2d3e1b11144fcfd8635de7d2a9b03aceaeeea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillExportService.ts",
+      "sha256": "035fa46c1805a2725adf19eb5eed4abd4e5d27fc3d316421d63f5948471382a9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierBillReadService.ts",
+      "sha256": "d784b63b83e1c16dc5de255d3db28dcb291d4bfbbd378d8363a69749b5034179",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExportService.ts",
+      "sha256": "51b0d96727a2cf87578ca56e764e70336b939d6b963b9a5f8313295563d3dd92",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationInput.ts",
+      "sha256": "e3a09cedfb13c892a47b1ff38307bc5a749c8dd5a37051105dc6c6b3bc1334c7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationMediaService.ts",
+      "sha256": "4f21e86e13092177403390127a371ea6c85d858922c33fe52739460b93d0b6c5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationOperation.ts",
+      "sha256": "becd7519a70d30cdb3e3a01c1ff3180e718e5ebba21b557e72f5da6fe33f4857",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractApplicationService.ts",
+      "sha256": "91cfc006df820b0117c6ca6c327e0914d00e7470095752a6c7fe038f7ea2092f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractMediaService.ts",
+      "sha256": "651b12d51a93318eb2cb01a04a98bf94f5a70d55085622d7efd4d92c9fc033db",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierExtractReadService.ts",
+      "sha256": "0767f1d0de7bbdce31a46789883f83b4511a650801c32573c36575ba0ae9b6cd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceAccountsService.ts",
+      "sha256": "4550e4d560944b821e4d33947e2eae8323de79fb4e2cf928057e36ca691411b4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFinanceService.ts",
+      "sha256": "5f92f93ffec2828468bf66602b4161fc8287f39030f3eafa9c5245c1aedce70b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowDescription.ts",
+      "sha256": "3fa4aef6fc701ba19b89c44de679087ddecf0eda0cc0b63b204583c1f3e08938",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierFlowReadService.ts",
+      "sha256": "df5d776957c1654ea5d0da0a49854b7eddfc36b8493e68c94f103a61a3cff225",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "18a959ce71688bc7ba0d8008e357baa602ec98a46a75c3ce480189849d66b4ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "e6497201a4741c2ad41436f1d7908a94d614947827d55026ae4be02dbdfe2fc3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "dde0d79b54f5e71a3c88e72da09577e29ec73e80e01c3b8bec0b328d1f9db70b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "deeeb1b213e1489cdf53962724467f9701668dcdad529cccc85f8a5efdd79292",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyOperation.ts",
+      "sha256": "27264aca5cb7b8f6694d513a656a7778b6f70f12330d8cdf6aacb29cba8b6caf",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopyService.ts",
+      "sha256": "5d7d23e0578ffdb9c8e43024e4facdd9cfc4f1e8bb9b8e5da5cd7de8e77a5918",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductCopySource.ts",
+      "sha256": "eee6eccdf9f6a2e1558e03f9536c33539eb3a23824ad6c13024abb10680f09a7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductDetailReadService.ts",
+      "sha256": "2137433a45d76056e135209faddb5e108c4083b5d69cfe79dab7c77d2fa60c67",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductMediaService.ts",
+      "sha256": "2bbe4f7b946442be8d7dfe5d7c5896f8a5763dc28b25b7656298b882e394a1c2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProductReplyService.ts",
+      "sha256": "c875ed55bc4038ba565a39fa0008a3c42f2fa8a8ead3d0a37947bab1d4dc8fd2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierVideoAuthority.ts",
+      "sha256": "0662e066e3944db80444012df3ebe52bd983a28d64aaa16ac0ee8d0ff4bdf189",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/system/AttachmentService.ts",
+      "sha256": "c7a7c9100c2df65f1478d61437b32b5c7ee4a52d3915bbb9f3a7b886fc549f14",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts",
+      "sha256": "ec518d3a4cbf0148404ad7e100112e85c9f46eb134759ffc955b77b41aedd1b9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-bill-export.acceptance.ts",
+      "sha256": "7b5bf100630b3b2e89b37721bf9cd5f06262b3c2e7d39fb5e3cc8a4735b8d991",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application-media.acceptance.ts",
+      "sha256": "d6edc4301aa66d530e702eb90343d82bd6f0e17775afecc0af8d99e6655d5467",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-application.acceptance.ts",
+      "sha256": "cfb3932b683d30c83dabc99bb411a2c887adce0de89d813ea4094ac3a3ecef82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract-media.acceptance.ts",
+      "sha256": "d2b3d7a3d72ce158e42e4fcb211fc2e6cf914fc14615decaa614affd4b2c33dc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-extract.acceptance.ts",
+      "sha256": "f9ab60a49720d69d5631db3ce8849c57c38a005b17ce02b06e86bddccca77681",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-finance-accounts.acceptance.ts",
+      "sha256": "299568a22e83270839184226a4cdab5ac9cc3d2a6edfc7adef650b20b79a89e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-flow.acceptance.ts",
+      "sha256": "60369a246b175328133616d2455fa21d8c4ae7ad17a19108b1b0f1ade6cad924",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-proactive-refund.acceptance.ts",
+      "sha256": "847cefd3c42313bd4d0d32e20eedb3880a0a587c02592a14159dd018f21c7857",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-detail.acceptance.ts",
+      "sha256": "69077c6286d578c06f5587cab80d37d2528e0361368f45d1842efad0ee2e00a8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-product-review.acceptance.ts",
+      "sha256": "faaad1cf1d351c95295c5a8514af15cd95da9752cbb348cb6ac1277feb6c3232",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-refund-settlement.acceptance.ts",
+      "sha256": "2e3b4e149ff50eb9a992d61afd70a1fcb5ac5b94685d273eda6820cf24a48ff6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "15f6765dcb23e4c156f05e308df104bce629a4f4ad4f2d8675ff2ff1881d7563",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "6d1faffd6612304a3085c64da520fd5543b00d5738e58ecc8050ac40804352c4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillExport.ts",
+      "sha256": "2086ceff39a2be05c8a1426b1f926035785d0282808ad73c8bacb3f238736aba",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierBillRead.ts",
+      "sha256": "fffe800504eacf4c125b3b934aedd39595f873b31c9ef6e5d7c7c096bc529905",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplication.ts",
+      "sha256": "5971f8fc7d17f43dc99112510b1819e210002425638b4197449896c99a6c533d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractApplicationMedia.ts",
+      "sha256": "ff96e61fec9f6e52a0e9c18ab136f32903ff6bf25fc7aff3830d7c8125cb368a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractMedia.ts",
+      "sha256": "f228cea7cf771980b9bb53ee8a64e0131cb4797b98e93db9deb51e0d912cc3fd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierExtractRead.ts",
+      "sha256": "61edade85fc505869212fbafdbdd450e13cf8de75f0dccec29e20d34636a1adc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFinanceAccounts.ts",
+      "sha256": "76ab9c8755d8194e546f215f564f44ea13113989d52b4420c5579980cd6ee4a4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierFlowRead.ts",
+      "sha256": "a703c6bbd0b4826f13611798337a8028d98dcd6d49dc1d8c0fe635e42e6ed348",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductDetail.ts",
+      "sha256": "02aab41075d03855cc9beb02d95ba0f7c38a595c4c7e21b05ea62bccca387258",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductReply.ts",
+      "sha256": "21ea2ef1893057be0706b971c32474f80d3eef957466ce71aee5f7917482dd09",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/presale-refund-baseline-postgres.test.ts",
+      "sha256": "cb6d1de725099707f719093117cbcd6d3913469fce4b6bc89dfbbef9049bd538",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf-native.test.ts",
+      "sha256": "02ba18354b81154103813af260fceb931f4aef394db48cf4f56d1afaea4c7115",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/product-auto-shelf.test.ts",
+      "sha256": "90f7e8b413226cd5f7f396ba4ea5364b5deb3ef5f1a0f73c976fedced779eed6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/runtime/product-auto-shelf-queue-runtime.test.ts",
+      "sha256": "5823c139767a2999ebd2caede84af4c23d78745392b1f395ae2340a28a5a3703",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-native.test.ts",
+      "sha256": "6f1e7c6dc362f70a524f005df6d72df2b3b7812bb96203300125658119dd17c1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-export-rules.test.ts",
+      "sha256": "1e542559f3a87423db92c6cfe5b9234d382610068fd58eeeb8af90e82e9242d9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-bill-frontend.test.ts",
+      "sha256": "dc5a162faca49f13529ebd4a7d07701b31a73db9558fb386e37531e3fe88eba4",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-catalog-native.test.ts",
+      "sha256": "faa984ab34dcf4431274eba97ee3219a1e468f0a5289a2f0ce95c75e4f441042",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-frontend.test.ts",
+      "sha256": "23424be5f8aab53bc717b4f9be6622d8c78314e6d6758b8c4120c1934421c6ee",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-frontend.test.ts",
+      "sha256": "7079413f2e908ba85f525ead50741ab13deea491f7d84992cb443d156b803d5e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-native.test.ts",
+      "sha256": "e3043440c12832ad3ea60252e14cc35b0074eef22f385c860f66a357f6f88dca",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-media-rules.test.ts",
+      "sha256": "e03fc458085bec67b8522fe8d2f9c0272f9147989fdf64af78af26a6b6c05494",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-native.test.ts",
+      "sha256": "2e539d718e499d588a2b071bb530404fdb0656caeb84d8ff1b611f1f693116b8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-application-rules.test.ts",
+      "sha256": "0700ffdf86bf15b7c4de6ad34b6ddc7c453862b4fc3ce3d0fd71be1f0b4e5a7b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-frontend.test.ts",
+      "sha256": "f0d40fece6044833dce3ee8b65310af3bad38aedb1212c5800b8b67ab1800b27",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-frontend.test.ts",
+      "sha256": "e2ee33905ce47b54f5aedd28e17e762f1b4649db8fd93f778ab27ead4ffeaafe",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-native.test.ts",
+      "sha256": "5b851baa90beb416f4784b46bd0ce076d34a8685ae68208431829ac58e22c183",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-media-rules.test.ts",
+      "sha256": "e3d96ed88afc0f115cc9a1d5682a57c069d4220bf49920fdf7aa77d9687c87d7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-native.test.ts",
+      "sha256": "a5f1af45143f252ff6919aa6a652f0086fb36498ccc992f6b373815f89a5bff3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-extract-read-rules.test.ts",
+      "sha256": "f28e513ac3bc4d82b6dcd0dff115caa51899af92b8851df4fe3f0f8c8533a2fa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-frontend.test.ts",
+      "sha256": "af719bf7e68c480f88f762cd23923a984c878ff38367b80d71eb5236580d1a4c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-native.test.ts",
+      "sha256": "07e55ee9dfce099a379ff671dbd2bb550c6470ee8ce4508733eaa4440c4dbc06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-finance-accounts-rules.test.ts",
+      "sha256": "85ea83619887dcc80ebbd3c01cf16eade52268af8d83271ebd21a1ef053b45b9",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-frontend.test.ts",
+      "sha256": "01aaa0a838377832ec4fac17f8a2635674087bc3a43f0125bf193d97f38b20f3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-native.test.ts",
+      "sha256": "51c78385c5142aa85e84ddf9bd247e65117dfde84c3acad628c26d6ec5c0e734",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-read-rules.test.ts",
+      "sha256": "e5a0cec69ffee3267262b73b97fb222566a2994f4fc40ea69b054a9cedf3f792",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-flow-refund-integration-native.test.ts",
+      "sha256": "ac77d8f49eb7b38720058500b10395f2807ed356203e8034445d5df296fec8c6",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-frontend-export.test.ts",
+      "sha256": "8b88932db526b494017393947cfee006bbaf29fc41acdb302ae3ad07e2b550fd",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+      "sha256": "e9a212b387842c4d6e9d58e549c641c2c9aa664784ed161fe0349584c9608f05",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "d0426d3cc73ef9350ab4d926606e248724b44ed4ec5fd21381d8a9097bc66e55",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-frontend.test.ts",
+      "sha256": "00c88576dfeff6ec16ab8f544bd39716301c5128d0f2e7fc8e4eb2bda5577692",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-native.test.ts",
+      "sha256": "ae9a45c9c5f7a25668718555de2bd87d21fc458c117df6d58448ff5c6aa32925",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-detail-read-rules.test.ts",
+      "sha256": "faee78a0823cc4c0754a8672d2e010e747d62deb3241b569634bcc6a3312880b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-migration.test.ts",
+      "sha256": "712ac0c44af872a327c6623db4fbb7958180e2da14ae40c28aea2150c2ed96e1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-reply-native.test.ts",
+      "sha256": "cb2403e339f355612b69bf5f342692bd729539317a1eb9ac988d0c4f6b89d9a8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-product-review-drilldown-frontend.test.ts",
+      "sha256": "5d4863637c8775a1a88bcbd4309510fd2623ead463f14613f29d737c94caad7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+      "sha256": "09bfc2471f3a56fae010b5bc783ba5ec09d25b01fda5e523a7ed6a17933f3e41",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-bill-export-browser.config.ts",
+      "sha256": "9f941ac9b47e6e2d713974f2d6944fbc0cdddc193f5963cd56317965214ba30c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-detail-browser.config.ts",
+      "sha256": "4c5f38558c5690deb125dec3a087e2adb1a9a3a25c436e39102287879e300787",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-browser.config.ts",
+      "sha256": "724a571e533f850bb0161b3f818aecb970a6e8ec562be59e2b98926808badc31",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-application-media-browser.config.ts",
+      "sha256": "7adbedd3b7734e8729be6e30e66adc1505881895cec4191935981e3d42cf3d0d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-browser.config.ts",
+      "sha256": "224a56aa935cfd6863ac1fbd2399d66ce59f7dbbdf899e56cc9a3e27e4c18945",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-extract-media-browser.config.ts",
+      "sha256": "3147c6a42c9232fec9c7d97ce2992da4774413e38bc1a1c1a0bd25b680f25377",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-finance-accounts-browser.config.ts",
+      "sha256": "fb56c549397932f54d67c432bddd1f7f09a0772c3e9599901aecfcfb38cf0021",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-flow-browser.config.ts",
+      "sha256": "118252cd84d69bb5a2bf6d62d29887aa1b898f54253e5d5de36682f3026c2228",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-proactive-refund-browser.config.ts",
+      "sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-refund-settlement-browser.config.ts",
+      "sha256": "9d711597a91c1d749bbef3e429ab508a2b73a2be8ee0751c431d66463393c0dc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-review-browser.config.ts",
+      "sha256": "9cc5807084083b90fb28f9bd1c42aeb3ef8a30acbc952d232fb66804b7484641",
+      "byte_equal_to_base": true
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "distinct_tests": 428,
+    "distinct_files": 12,
+    "commands": [
+      {
+        "name": "unit-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "env",
+          "TZ=America/New_York",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/supplier-product-schedule-rules.test.ts",
+          "test/supplier-product-schedule-frontend.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/supplier-product-copy-frontend.test.ts",
+          "test/supplier-product-media-frontend.test.ts",
+          "test/supplier-product-management.test.ts",
+          "test/product-auto-shelf.test.ts",
+          "--maxWorkers=1",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-product-schedule-unit-final-2.json"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 28.79,
+        "started_at_utc": "2026-10-17T10:38:16.904096+00:00",
+        "finished_at_utc": "2026-10-17T10:38:45.691066+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-unit-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-unit-final-2-terminal.json",
+          "sha256": "9dc52cbac75771ca2d52ab436505a3f4386cc05bae6ddbe60a73d140d4b019b4",
+          "bytes": 3592
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-unit-final-2.log",
+          "sha256": "c19f777a7c23b4ada71bd7296764b2685282282b9a4b52425a04176027ed3c51",
+          "bytes": 81
+        }
+      },
+      {
+        "name": "native-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-product-schedule-native.test.ts",
+          "test/product-auto-shelf-native.test.ts",
+          "test/supplier-product-copy-native.test.ts",
+          "test/supplier-product-detail-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 86.43,
+        "started_at_utc": "2026-10-17T10:38:45.749589+00:00",
+        "finished_at_utc": "2026-10-17T10:40:12.177543+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-native-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-native-final-terminal.json",
+          "sha256": "99b2b5d38afc20dc31cc5e9f2c98e97a70eb0d06fd1097003374d1c5a4333319",
+          "bytes": 3397
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-native-final.log",
+          "sha256": "631981c518a98df6f78e5c9c07ccb47ed273af8a95678340f354ad7ad2133ae5",
+          "bytes": 22921
+        }
+      },
+      {
+        "name": "worker-unit-types-final-3",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 127.03,
+        "started_at_utc": "2026-10-17T10:51:32.243881+00:00",
+        "finished_at_utc": "2026-10-17T10:53:39.273161+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-3.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-3-terminal.json",
+          "sha256": "49524f418f2e20af8332463c30a676e025012a4a26abf75c34aa17b662633c67",
+          "bytes": 3150
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-3.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "worker-runtime-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 86.38,
+        "started_at_utc": "2026-10-17T10:42:47.973101+00:00",
+        "finished_at_utc": "2026-10-17T10:44:14.352029+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-worker-runtime-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-worker-runtime-types-final-terminal.json",
+          "sha256": "2d3438086960cecd71184b1f70e0fc5c2b2f3d5df0a610d6623ddf23b15707fc",
+          "bytes": 3195
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-worker-runtime-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "supplier-types-final",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vue-tsc/bin/vue-tsc.js",
+          "-b"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 9.37,
+        "started_at_utc": "2026-10-17T10:44:30.836233+00:00",
+        "finished_at_utc": "2026-10-17T10:44:40.210207+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-supplier-types-final.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-supplier-types-final-terminal.json",
+          "sha256": "7660fca6a4d1e6c5463904334e4991de6d1e57db870311f0f8069d3555b4f1a1",
+          "bytes": 3109
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-supplier-types-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "supplier-build-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/view/supplier-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vite/bin/vite.js",
+          "build"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 17.94,
+        "started_at_utc": "2026-10-17T10:44:40.270157+00:00",
+        "finished_at_utc": "2026-10-17T10:44:58.207966+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-supplier-build-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-supplier-build-final-2-terminal.json",
+          "sha256": "7ce2bff0221a86dbcd7dec7cce9a398679d4458f257a6fc7ff64eb05b97b4bcf",
+          "bytes": 3111
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-supplier-build-final-2.log",
+          "sha256": "50eee41589205469236c749ccafa021b3cb1261a9f187183d84ac0bf8bedcdbf",
+          "bytes": 6424
+        }
+      },
+      {
+        "name": "browser-final-2",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:supplier-schedule-browser"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 253.75,
+        "started_at_utc": "2026-10-17T10:46:52.439472+00:00",
+        "finished_at_utc": "2026-10-17T10:51:06.193030+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/supplier-ts/src/api/supplier.ts",
+            "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7"
+          },
+          {
+            "path": "view/supplier-ts/src/pages/ProductForm.vue",
+            "sha256": "06100125e2e2666136e921bb6ef107a03e879e110855a8f5c5fdc9772cfeca16"
+          },
+          {
+            "path": "view/supplier-ts/src/types.ts",
+            "sha256": "ac471ee35eac648e5f64be9b6412fd277d4e7916d722bafb8b56ce388172870a"
+          },
+          {
+            "path": "view/supplier-ts/src/utils/productSchedule.ts",
+            "sha256": "b0713bacb68eb733062af771f04570b7150d00b601f9866183f2443d65aa23bb"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "62a8b20ed05d7db404d147f607de43b62128d2ebf1d90284597c0e835c92551f"
+          },
+          {
+            "path": "workers-ts/src/controllers/supplier/SupplierController.ts",
+            "sha256": "d606e4b1c1b37324880d45f0f6b2c56fef4bce3659b47514ca40c84f27567098"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductManagementService.ts",
+            "sha256": "ebf81af44ab9dea96c336c73b3f10a30c5f3caee24f622c36d0d928d72bd54ac"
+          },
+          {
+            "path": "workers-ts/src/services/supplier/SupplierProductScheduleInput.ts",
+            "sha256": "bf58bde99010d477c9c78831e4e6a57cd98506f9b0f6d6ea1b57e054d413a6be"
+          },
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductSchedule.ts",
+            "sha256": "471728b7e508cfe4e4a97b359557f0ab7755ef8e0d53ad798e84cbd5cfde2540"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "5c60d8871b647d137f65d3e83ec495b03580bf27dd3388e8daf6c18abbdf008c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+            "sha256": "474a48aa8a9a641d1d2675eadefe2d45ffff02c863d3a792a3c32697b55a6e86"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-native.test.ts",
+            "sha256": "0c947c9a83fd1970403a3f374e637559b07a6e4f31a183031c6916166c9f238c"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+            "sha256": "eaf0542ac55ecb669ea9726d106196c8d3c8d79ec5a25e243857d12b03280212"
+          },
+          {
+            "path": "workers-ts/vitest.supplier-schedule-browser.config.ts",
+            "sha256": "7ad71d852e789ce982c64862a5613b0cf95884cf02732c3595d7fe2c69e25284"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-supplier-product-schedule-browser-final-2.log",
+        "terminal_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-browser-final-2-terminal.json",
+          "sha256": "36436fe522548eae6645fde6dc1ca29e13741c21c0516d554dc6a529c476cd02",
+          "bytes": 3221
+        },
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-product-schedule-browser-final-2.log",
+          "sha256": "a1b2000bef48289fdfb41ef17fbb0225b6fbb19b979389dab53b54917e496dfd",
+          "bytes": 6877
+        }
+      }
+    ],
+    "unit": {
+      "distinct_tests": 365,
+      "distinct_files": 7,
+      "report": {
+        "path": "/tmp/cinashop-supplier-product-schedule-unit-final-2.json",
+        "sha256": "7866a623898ded86222b0a2b804f293d1473f794e000e5255c7dd52dacb8923c",
+        "bytes": 149253
+      },
+      "files": [
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "tests": 222
+        },
+        {
+          "path": "workers-ts/test/product-auto-shelf.test.ts",
+          "tests": 6
+        },
+        {
+          "path": "workers-ts/test/supplier-product-copy-frontend.test.ts",
+          "tests": 27
+        },
+        {
+          "path": "workers-ts/test/supplier-product-management.test.ts",
+          "tests": 12
+        },
+        {
+          "path": "workers-ts/test/supplier-product-media-frontend.test.ts",
+          "tests": 34
+        },
+        {
+          "path": "workers-ts/test/supplier-product-schedule-frontend.test.ts",
+          "tests": 30
+        },
+        {
+          "path": "workers-ts/test/supplier-product-schedule-rules.test.ts",
+          "tests": 34
+        }
+      ]
+    },
+    "native": {
+      "distinct_tests": 62,
+      "distinct_files": 4,
+      "files": {
+        "test/supplier-product-copy-native.test.ts": 24,
+        "test/supplier-product-schedule-native.test.ts": 16,
+        "test/supplier-product-detail-native.test.ts": 18,
+        "test/product-auto-shelf-native.test.ts": 4
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-native-final.log",
+        "sha256": "631981c518a98df6f78e5c9c07ccb47ed273af8a95678340f354ad7ad2133ae5",
+        "bytes": 22921
+      },
+      "actual_App_JWT_independent_PG16_LOGINs": true
+    },
+    "browser": {
+      "distinct_tests": 1,
+      "result": {
+        "path": "/tmp/cinashop-supplier-product-schedule-browser-result.json",
+        "sha256": "02e524c756987b33ee741a83b73e529d45a3c125579f8fcfd0439b573d829282",
+        "bytes": 60857
+      },
+      "qa": {
+        "path": "/tmp/cinashop-supplier-product-schedule-browser-qa.json",
+        "sha256": "f226ba7b7caf7976711198879eae87a04fc7ed3e0329033bdfe3794da88953f7",
+        "bytes": 3522
+      },
+      "production_inputs": {
+        "path": "/tmp/cinashop-supplier-product-schedule-browser-production-inputs.json",
+        "sha256": "ddd1c9e797fdd69eaaa0b619cdf96cd87317fc10e3edffb6e8d23edd6c741f8f",
+        "bytes": 12828
+      },
+      "snapshot_tables": 37,
+      "public_sequences": 36,
+      "business_requests": [
+        {
+          "path": "/api/get_script",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 1792237629,
+            "auto_off_time": 1792241229
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "POST",
+          "status": 200,
+          "envelope": 200,
+          "body": {
+            "id": 80,
+            "product_type": 0,
+            "store_name": "本机定时商品",
+            "store_info": "定时计划完整编辑",
+            "keyword": "schedule",
+            "unit_name": "件",
+            "bar_code": "000080",
+            "cate_id": [
+              11
+            ],
+            "slider_image": [
+              "/owned-media/schedule.png"
+            ],
+            "description": "<p>本机定时商品</p>",
+            "spec_type": 0,
+            "items": [
+              {
+                "value": "规格",
+                "detail": [
+                  "默认"
+                ]
+              }
+            ],
+            "attrs": [
+              {
+                "id": 1,
+                "unique": "8baf4254",
+                "suk": "默认",
+                "detail": {
+                  "规格": "默认"
+                },
+                "image": "/owned-media/schedule.png",
+                "price": "19.99",
+                "cost": "10.00",
+                "stock": 7,
+                "weight": "0.00",
+                "volume": "0.00",
+                "brokerage": "0.00",
+                "code": "",
+                "sales": 0,
+                "sumStock": 7,
+                "is_retired": 0,
+                "settle_price": "12.34",
+                "ot_price": "29.99",
+                "vip_price": "18.00",
+                "bar_code": "",
+                "brokerage_two": "0.00",
+                "disk_info": "",
+                "write_times": 1,
+                "write_valid": 1,
+                "write_days": 0,
+                "write_start": 0,
+                "write_end": 0
+              }
+            ],
+            "freight": 1,
+            "postage": "0.00",
+            "temp_id": 0,
+            "is_postage": 0,
+            "is_support_refund": 1,
+            "is_limit": 0,
+            "limit_type": 0,
+            "limit_num": 0,
+            "sort": 0,
+            "ficti": 0,
+            "video_link": "",
+            "is_show": 0,
+            "is_verify": 1,
+            "refusal": "",
+            "auto_on_time": 1577836800,
+            "auto_off_time": 0
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 1577836800,
+            "auto_off_time": 0
+          }
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 1577836800,
+            "auto_off_time": 0
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "POST",
+          "status": 200,
+          "envelope": 200,
+          "body": {
+            "id": 80,
+            "product_type": 0,
+            "store_name": "本机定时商品",
+            "store_info": "定时计划完整编辑",
+            "keyword": "schedule",
+            "unit_name": "件",
+            "bar_code": "000080",
+            "cate_id": [
+              11
+            ],
+            "slider_image": [
+              "/owned-media/schedule.png"
+            ],
+            "description": "<p>本机定时商品</p>",
+            "spec_type": 0,
+            "items": [
+              {
+                "value": "规格",
+                "detail": [
+                  "默认"
+                ]
+              }
+            ],
+            "attrs": [
+              {
+                "id": 1,
+                "unique": "8baf4254",
+                "suk": "默认",
+                "detail": {
+                  "规格": "默认"
+                },
+                "image": "/owned-media/schedule.png",
+                "price": "19.99",
+                "cost": "10.00",
+                "stock": 7,
+                "weight": "0.00",
+                "volume": "0.00",
+                "brokerage": "0.00",
+                "code": "",
+                "sales": 0,
+                "sumStock": 7,
+                "is_retired": 0,
+                "settle_price": "12.34",
+                "ot_price": "29.99",
+                "vip_price": "18.00",
+                "bar_code": "",
+                "brokerage_two": "0.00",
+                "disk_info": "",
+                "write_times": 1,
+                "write_valid": 1,
+                "write_days": 0,
+                "write_start": 0,
+                "write_end": 0
+              }
+            ],
+            "freight": 1,
+            "postage": "0.00",
+            "temp_id": 0,
+            "is_postage": 0,
+            "is_support_refund": 1,
+            "is_limit": 0,
+            "limit_type": 0,
+            "limit_num": 0,
+            "sort": 0,
+            "ficti": 0,
+            "video_link": "",
+            "is_show": 1,
+            "is_verify": 0,
+            "refusal": "",
+            "auto_on_time": 0
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 0,
+            "auto_off_time": 0
+          }
+        },
+        {
+          "path": "/supplierapi/product/product/list",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 0,
+            "auto_off_time": 0
+          }
+        },
+        {
+          "path": "/api/get_script",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/supplierapi/product/product_label",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/category/tree",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/get_rule",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200
+        },
+        {
+          "path": "/supplierapi/product/product/80",
+          "method": "GET",
+          "status": 200,
+          "envelope": 200,
+          "plans": {
+            "auto_on_time": 0,
+            "auto_off_time": 0
+          }
+        }
+      ],
+      "timer_results": [
+        {
+          "result": {
+            "event": "scheduled_product_shelf_processed",
+            "productId": 80,
+            "isShow": 1,
+            "transitions": [
+              "on"
+            ],
+            "appliedAt": 1792234110
+          },
+          "only_visibility_changed": true,
+          "approval_unchanged": true
+        },
+        {
+          "result": {
+            "event": "scheduled_product_shelf_skipped",
+            "productId": 80,
+            "reason": "no_longer_eligible"
+          },
+          "only_visibility_changed": false,
+          "approval_unchanged": true
+        }
+      ],
+      "roles": [
+        {
+          "profile": "writer",
+          "role": "cinashop_runtime_3c6da4c270304894b7f49c2de8624635",
+          "readable": true,
+          "visibility_update": true,
+          "approval_update": true
+        },
+        {
+          "profile": "scheduler",
+          "role": "cinashop_runtime_9a3472e488684b66a3d77dc8b9ee269c",
+          "readable": true,
+          "visibility_update": true,
+          "approval_update": false
+        }
+      ],
+      "release_attempts": [
+        {
+          "socket_destroyed": true
+        }
+      ],
+      "finished": true,
+      "backend_fetch_calls": 0,
+      "queue_dispatch_calls": 0
+    },
+    "identities": {
+      "path": "/tmp/cinashop-supplier-product-schedule-test-identities.json",
+      "sha256": "8a855d622ffe754d67c818709ca66106f136e4767ea562577f618cf8a12d007a",
+      "bytes": 106864
+    },
+    "accepted_inputs": [
+      {
+        "command": "unit-final-2",
+        "differences": [
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "executed_sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d",
+            "final_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          }
+        ],
+        "proof": "Only standalone Browser acceptance literal route/message changed; no production or executed unit/native/runtime/frontend/build input changed. Final full Worker types and Browser execute final source."
+      },
+      {
+        "command": "native-final",
+        "differences": [
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "executed_sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d",
+            "final_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          }
+        ],
+        "proof": "Only standalone Browser acceptance literal route/message changed; no production or executed unit/native/runtime/frontend/build input changed. Final full Worker types and Browser execute final source."
+      },
+      {
+        "command": "worker-unit-types-final-3",
+        "differences": [],
+        "proof": "All15 captured source fingerprints equal final."
+      },
+      {
+        "command": "worker-runtime-types-final",
+        "differences": [
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "executed_sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d",
+            "final_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          }
+        ],
+        "proof": "Only standalone Browser acceptance literal route/message changed; no production or executed unit/native/runtime/frontend/build input changed. Final full Worker types and Browser execute final source."
+      },
+      {
+        "command": "supplier-types-final",
+        "differences": [
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "executed_sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d",
+            "final_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          }
+        ],
+        "proof": "Only standalone Browser acceptance literal route/message changed; no production or executed unit/native/runtime/frontend/build input changed. Final full Worker types and Browser execute final source."
+      },
+      {
+        "command": "supplier-build-final-2",
+        "differences": [
+          {
+            "path": "workers-ts/test/browser/supplier-product-schedule.acceptance.ts",
+            "executed_sha256": "88c5238f3f0465d126cb6b28cfc55a0dcaaca0cb7730890e9d914b386375dc4d",
+            "final_sha256": "dbb7b3b7670bce668106640ed659dc3693bb3773170fef26498636d08011a301"
+          }
+        ],
+        "proof": "Only standalone Browser acceptance literal route/message changed; no production or executed unit/native/runtime/frontend/build input changed. Final full Worker types and Browser execute final source."
+      },
+      {
+        "command": "browser-final-2",
+        "differences": [],
+        "proof": "All15 captured source fingerprints equal final."
+      }
+    ],
+    "browser_route_fix": {
+      "path": "/tmp/cinashop-supplier-product-schedule-browser-route-fix.json",
+      "sha256": "e1754886fe15f41ac525a7c8a69634632b6db9a356953b38fe32220d99279751",
+      "bytes": 402
+    }
+  },
+  "historical_executions": [
+    {
+      "name": "browser-final",
+      "exit_code": 1,
+      "wall_seconds": 34.94,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-browser-final-terminal.json",
+        "sha256": "8fcd459fd79d99551f8279641a80523fb37e8db2b786a1f9837d7edd8c6252d7",
+        "bytes": 3216
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-browser-final.log",
+        "sha256": "e325ab4901f69dd62ba6c5663b8adfc09ab36f617cd025ebba5337bd8f10a22d",
+        "bytes": 2593
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "frontend-initial",
+      "exit_code": 1,
+      "wall_seconds": 8.49,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-frontend-initial-terminal.json",
+        "sha256": "0bc4dd719a7e61a26dd0eb695e5b5a0dc76dbb310a5faedcdb6004ea3b607c16",
+        "bytes": 2237
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-frontend-initial.log",
+        "sha256": "8f9a9ce12f057d7a78147c2eabbd1ee89fde15714a00de14cb4f33b7915d9e3c",
+        "bytes": 85
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "frontend-second",
+      "exit_code": 0,
+      "wall_seconds": 4.46,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-frontend-second-terminal.json",
+        "sha256": "9da0c8b4eb1bc8c63a28ef254c46f423fedea1072c0b02ec18892981b91332f4",
+        "bytes": 2234
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-frontend-second.log",
+        "sha256": "b50abe062e4db742d66b0b934d3215aefcf96f75ba56d7294975460ed52d4fac",
+        "bytes": 84
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "native-initial",
+      "exit_code": 0,
+      "wall_seconds": 78.8,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-native-initial-terminal.json",
+        "sha256": "a509787e852ee5695f8a7247dc9c1674810956caf3742a1232e3a400d0c83dfd",
+        "bytes": 3400
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-native-initial.log",
+        "sha256": "74cb16333f31faabbff59a2d5d84e4eb77229e03cdfc97f0d2d69d4db271be0a",
+        "bytes": 22916
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "supplier-build-final",
+      "exit_code": 127,
+      "wall_seconds": 0.01,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-supplier-build-final-terminal.json",
+        "sha256": "0eb4047d0b2a295359d47adf93ff245b55e7f277b35e7c6dd7677eaee776ab07",
+        "bytes": 3133
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-supplier-build-final.log",
+        "sha256": "f0f721db9101a8ad08380c45ad37319978f2a7c1852f725d08a1a69f5d346f5b",
+        "bytes": 86
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "supplier-types-initial",
+      "exit_code": 0,
+      "wall_seconds": 11.57,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-supplier-types-initial-terminal.json",
+        "sha256": "f10389f2fad636ee3e5d9d49a9978688db69f4f604d9850d02aba2f3daac36b5",
+        "bytes": 2641
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-supplier-types-initial.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "unit-final",
+      "exit_code": 0,
+      "wall_seconds": 26.46,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-unit-final-terminal.json",
+        "sha256": "3eed705c9c848318f9ae629e32c60485e1331dbed2ee2157d29bdf34b9bf51a1",
+        "bytes": 3586
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-unit-final.log",
+        "sha256": "640ff46a8f4f65eb3059e0c717807907f46e0b7697adb6011131c6c8a1299f95",
+        "bytes": 79
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "worker-unit-types-final-2",
+      "exit_code": 0,
+      "wall_seconds": 155.65,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-2-terminal.json",
+        "sha256": "0fb8eb6c42215ed3cb6ecfa626314962cc298ffdba875107a78337a026607482",
+        "bytes": 3150
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "worker-unit-types-final",
+      "exit_code": 2,
+      "wall_seconds": 133.17,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final-terminal.json",
+        "sha256": "1c51b7edf243da76f99ba178c13ef2b797a3b5a47f93a64a56356583e2ef9a9d",
+        "bytes": 3146
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-final.log",
+        "sha256": "94357daf337fc45a7a86bdadf5a42d65e3233a1796271910c8a9d13926fefa67",
+        "bytes": 481
+      },
+      "additional_distinct_tests": 0
+    },
+    {
+      "name": "worker-unit-types-initial",
+      "exit_code": -6,
+      "wall_seconds": 103.12,
+      "source_unchanged_at_exit": true,
+      "terminal": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-initial-terminal.json",
+        "sha256": "8926323fe7450b7d0c49bc4fdd126f4de9baaa14597305d5e5616d86c576a786",
+        "bytes": 3118
+      },
+      "log": {
+        "path": "/tmp/cinashop-supplier-product-schedule-worker-unit-types-initial.log",
+        "sha256": "0bfdbc1a560a1f452431bf80d9be185d6032688428aaf355fd6e162ccfbc25fa",
+        "bytes": 1531
+      },
+      "additional_distinct_tests": 0
+    }
+  ],
+  "history_notes": [
+    "Initial SFC91 had10 failures: native vModelText test DOM lacked getRootNode and session fixture changed Pinia without actual storage. Test environment corrected; final365 re-executed actual cases.",
+    "Initial all-Worker type command used default4GB heap and exited-6 before diagnostics; repeated with existing repository8GB option under shared serial lock. Full types then found only four fixture type/import diagnostics, fixed and actual365+62 tests re-executed.",
+    "Initial build launcher exit127: no npm in runtime. Existing installed vue-tsc and Vite invoked directly under serial lock, both passed.",
+    "Initial Browser exit1: fixture exact GET allowlist incorrectly used old /category. Corrected to actual /category/tree and added assertion path message; full second Browser passed normally. Final all-Worker types rerun passed.",
+    "Accepted source remains bound to exact15 fingerprints; repeats do not add case count."
+  ],
+  "cleanup": {
+    "created_at_utc": "2026-10-17T10:51:36.562571+00:00",
+    "clusters": [
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Kylqjd",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-schedule-browser-final-2-terminal.json",
+        "log": "/tmp/cinashop-supplier-product-schedule-browser-final-2.log",
+        "log_sha256": "a1b2000bef48289fdfb41ef17fbb0225b6fbb19b979389dab53b54917e496dfd"
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-yln1v1",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-schedule-browser-final-terminal.json",
+        "log": "/tmp/cinashop-supplier-product-schedule-browser-final.log",
+        "log_sha256": "e325ab4901f69dd62ba6c5663b8adfc09ab36f617cd025ebba5337bd8f10a22d"
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-97E7ww",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-schedule-native-final-terminal.json",
+        "log": "/tmp/cinashop-supplier-product-schedule-native-final.log",
+        "log_sha256": "631981c518a98df6f78e5c9c07ccb47ed273af8a95678340f354ad7ad2133ae5"
+      },
+      {
+        "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-eImkvl",
+        "pg_version": "16",
+        "postmaster_pid_absent": true,
+        "pg_ctl_status": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "fixtures_remaining": 0,
+        "terminal": "/tmp/cinashop-supplier-product-schedule-native-initial-terminal.json",
+        "log": "/tmp/cinashop-supplier-product-schedule-native-initial.log",
+        "log_sha256": "74cb16333f31faabbff59a2d5d84e4eb77229e03cdfc97f0d2d69d4db271be0a"
+      }
+    ],
+    "all_stopped": true,
+    "all_owned_fixtures_cleared": true,
+    "production_touched": false
+  },
+  "cleanup_artifact": {
+    "path": "/tmp/cinashop-supplier-product-schedule-cleanup-final.json",
+    "sha256": "0fd7448460e8d5514eb6054a5ba4f52f26e0a2b7111cba567485a4676ca88bab",
+    "bytes": 2227
+  },
+  "checkboxes": {
+    "MIGRATION_AUDIT.md": {
+      "rows": 88,
+      "byte_equal_to_base": true,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    "MIGRATION_CHECKLIST.md": {
+      "rows": 404,
+      "byte_equal_to_base": true,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  },
+  "statistics_script_contract": "User-selected restored PHP-compatible get_script retained; retirement audit remains corrected and actual Browser GET200 observed.",
+  "base_ci": {
+    "conclusion": null,
+    "head_sha": "edd94872c0c558b3a82fd535071af926b1a24231",
+    "html_url": "https://github.com/cinagroup/cinashop/actions/runs/39024027066",
+    "id": 39024027066,
+    "status": "in_progress"
+  },
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "limitations": [
+    "Owned synthetic App/JWT/PG16 and production-bundle IAB is not production deployment validation.",
+    "Normal save does not acquire the copy UUID/recovery protocol; aborting the browser request cannot undo an already committed server transaction.",
+    "Original five-tab editor and overall PHP-to-TS migration remain incomplete.",
+    "Backend fetch spy is Node-side evidence and not a full browser network inventory.",
+    "Held response socket was already cancelled at release; delivery of the old body is not claimed."
+  ],
+  "secret_scan": {
+    "status": "initial_source_and_staged_passed_final_bytes_and_exact_range_required",
+    "binary_path": "/tmp/cinashop-supplier-video-tools/gitleaks",
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "scope_files": 19,
+    "initial_scans": [
+      {
+        "phase": "source-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "dir",
+          ".",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-schedule-source-initial-secrets.json"
+        ],
+        "cwd": "/tmp/cinashop-supplier-product-schedule-scan-ud6kybmh/source-initial",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-schedule-source-initial-secrets.log",
+          "sha256": "560a227ff6483dec35bd30138886d4c3865ef0756797b648300380e016db654d",
+          "bytes": 81
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-schedule-source-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      },
+      {
+        "phase": "staged-initial",
+        "command": [
+          "/tmp/cinashop-supplier-video-tools/gitleaks",
+          "git",
+          "--pre-commit",
+          "--staged",
+          "--redact=100",
+          "--no-banner",
+          "--config",
+          "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+          "--report-format",
+          "json",
+          "--report-path",
+          "/tmp/cinashop-supplier-product-schedule-staged-initial-secrets.json",
+          "."
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop",
+        "exit_code": 0,
+        "findings": 0,
+        "log": {
+          "path": "/tmp/cinashop-supplier-product-schedule-staged-initial-secrets.log",
+          "sha256": "03ee645976e2a9c05e359b1bd95f80bf19c54565fefe7028bb947cc408edf9ba",
+          "bytes": 113
+        },
+        "report": {
+          "path": "/tmp/cinashop-supplier-product-schedule-staged-initial-secrets.json",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "bytes": 3
+        }
+      }
+    ],
+    "final_evidence_external": "/tmp/cinashop-supplier-product-schedule-publication-ready.json",
+    "exact_range_base": "edd94872c0c558b3a82fd535071af926b1a24231"
+  },
+  "publication": {
+    "status": "pending_normal_commit_feature_branch_push_and_draft_PR",
+    "branch": "codex/supplier-product-schedule",
+    "force": false,
+    "remote_base": "edd94872c0c558b3a82fd535071af926b1a24231",
+    "new_ci": "Observe exact new branch/PR head and workflow state after push; preserve live base-main run39024027066 without cancellation. No main update or merge in this batch."
+  }
+}

@@ -609,7 +609,7 @@ export async function saveProduct(c: SupplierContext) {
   const productId = Number(c.req.param("id"));
   if (!Number.isInteger(productId) || productId < 0) throw new ValidateException("商品ID错误");
   const input = await readBoundedJsonObject(c);
-  const labelActor = Object.hasOwn(input, 'store_label_id') || Object.hasOwn(input, 'labelIds') ? await categoryActor(c) : undefined;
+  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     productId,
@@ -622,7 +622,7 @@ export async function saveProduct(c: SupplierContext) {
 export async function createProduct(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);
   const input = await readBoundedJsonObject(c);
-  const labelActor = Object.hasOwn(input, 'store_label_id') || Object.hasOwn(input, 'labelIds') ? await categoryActor(c) : undefined;
+  const labelActor = ['store_label_id', 'labelIds', 'auto_on_time', 'auto_off_time'].some(key => Object.hasOwn(input, key)) ? await categoryActor(c) : undefined;
   const result = await productManagementService(c).saveProduct(
     supplierId,
     0,
