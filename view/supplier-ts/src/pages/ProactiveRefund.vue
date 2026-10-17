@@ -73,7 +73,9 @@ async function save() {
     body = proactiveRefundPayload(seed, operation, amount.value, action.value, cashConfirmed.value);
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '退款内容无效'; return; }
   confirming = true;
-  const message = body.type === 2 ? `订单 ${seed.order_no}：确认拒绝本次退款？不会退还货款。`
+  const message = body.type === 2 ? seed.kind === 'money'
+    ? `订单 ${seed.order_no}：确认拒绝本次补退 ${formatMoney(body.refund_price)}？本次不退还货款，累计已退 ${formatMoney(seed.refunded)} 和已完成商品处理保持不变。`
+    : `订单 ${seed.order_no}：确认拒绝本次退款？不会退还货款。`
     : `订单 ${seed.order_no}：本次${seed.kind === 'money' ? '补退货款' : '整单退款'} ${formatMoney(body.refund_price)}。${seed.kind === 'goods' ? `将退回全部 ${seed.quantity} 件商品。` : '商品退货已完成，本次只退货款。'}`;
   try { await ElMessageBox.confirm(message, body.type === 2 ? '拒绝退款' : title.value, { type: 'warning', confirmButtonText: '确认已核对', cancelButtonText: '取消' }); }
   catch { return; } finally { confirming = false; }
@@ -129,22 +131,23 @@ onBeforeUnmount(() => { disposed = true; generation++; readController?.abort(); 
       <dl><div><dt>订单编号</dt><dd>{{ source.order_no }}</dd></div><div><dt>原支付方式</dt><dd>{{ payType(source.pay_type) }}</dd></div>
         <div><dt>实付金额</dt><dd>{{ formatMoney(source.paid) }}</dd></div><div><dt>累计已退货款</dt><dd>{{ formatMoney(source.refunded) }}</dd></div>
         <div><dt>当前可退货款</dt><dd class="amount">{{ formatMoney(source.amount) }}</dd></div></dl>
-      <p>{{ source.kind === 'money' ? '商品退货已完成。本次只补退货款，不重复退回商品或积分。' : `本次将退回全部 ${source.quantity} 件商品；货款可在可退金额内填写。` }}</p>
+      <p>{{ source.kind === 'money' ? action === 2 ? '本次只拒绝补退货款，累计已退金额和已完成商品处理保持不变；需要继续补退时，请重新核对当前可退金额。' : '商品退货已完成。本次只补退货款，不重复退回商品或积分。' : `本次将退回全部 ${source.quantity} 件商品；货款可在可退金额内填写。` }}</p>
       <el-alert v-if="source.settlement === 'provider'" title="此订单暂不支持原渠道退款，可处理拒绝退款。" type="info" :closable="false" />
       <div class="form-fields">
-        <label v-if="source.kind === 'goods'" for="proactive-refund-action">处理方式
-          <el-select id="proactive-refund-action" v-model="action" :disabled="!canWrite"><el-option :value="1" label="退款" /><el-option :value="2" label="拒绝退款" /></el-select></label>
+        <label for="proactive-refund-action">处理方式
+          <el-select id="proactive-refund-action" v-model="action" :disabled="!canWrite"><el-option :value="1" :label="source.kind === 'money' ? '补退货款' : '退款'" /><el-option :value="2" :label="source.kind === 'money' ? '拒绝本次补退' : '拒绝退款'" /></el-select></label>
         <label for="proactive-refund-amount">{{ action === 2 ? '本次核对金额' : '本次实际退款金额' }}
           <el-input id="proactive-refund-amount" v-model="amount" inputmode="decimal" :disabled="!canWrite" maxlength="13" /></label>
         <el-checkbox v-if="cashRequired" v-model="cashConfirmed" :disabled="!canWrite">我已向买家实际退还本次填写的现金</el-checkbox>
         <p v-else-if="action === 1 && source.settlement === 'balance'">本次款项将退回买家的账户余额。</p>
         <p v-else-if="action === 1 && source.settlement === 'zero'">本单实付为零，无需资金交接。</p>
       </div>
-      <div class="actions"><el-button type="primary" :loading="saving" :disabled="!canWrite || (cashRequired && !cashConfirmed) || (action === 1 && source.settlement === 'provider')" @click="save">{{ action === 2 ? '确认拒绝退款' : source.kind === 'money' ? '确认补退货款' : '确认整单退款' }}</el-button></div>
+      <div class="actions"><el-button type="primary" :loading="saving" :disabled="!canWrite || (cashRequired && !cashConfirmed) || (action === 1 && source.settlement === 'provider')" @click="save">{{ action === 2 ? source.kind === 'money' ? '确认拒绝本次补退' : '确认拒绝退款' : source.kind === 'money' ? '确认补退货款' : '确认整单退款' }}</el-button></div>
     </article>
     <article v-if="receipt?.state === 'committed' && receipt.result" class="surface" role="status">
       <h2>{{ receipt.result.kind === 'refuse' ? '本次退款已拒绝' : receipt.result.kind === 'money' ? '货款补退已完成' : '整单退款已完成' }}</h2>
       <p>订单 #{{ receipt.order_id }} · {{ receipt.result.kind === 'refuse' ? '核对金额' : '本次已退' }} {{ formatMoney(receipt.result.amount) }}</p>
+      <p v-if="receipt.result.kind === 'refuse'">本次未新增退款；此前已退货款和已完成的商品处理保持不变。继续处理前请重新核对当前可退金额。</p>
       <p>原操作 {{ receipt.operation_id }}</p>
       <el-button v-if="recoveryOnly && auth.can('supplier.order.manage')" class="result-link" @click="router.push(`/orders/${receipt.order_id}/refund`)">核对订单可退金额</el-button>
     </article>

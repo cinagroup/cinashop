@@ -104,6 +104,63 @@ describe('actual Supplier order-ID refund page and recovery',()=>{
    expect(JSON.parse(writes(f)[0].data)).toMatchObject({type:2});expect(JSON.parse(writes(f)[0].data)).not.toHaveProperty('cash_returned');expect(content(f.host)).toContain('本次退款已拒绝');
   }finally{f.close();}
  });
+ it('keeps the completed goods7 and existing money totals when refusing, explicitly reloading, paying5 and refusing again',async()=>{
+  const f=await mount();try{
+   f.view.amount.value='7.00';f.view.cashConfirmed.value=true;await f.view.save();
+   expect(f.fixture.current).toMatchObject({kind:'money',quantity:0,refunded:'7.00',refund_price:'11.75'});
+   await f.view.load();f.view.cashConfirmed.value=true;f.view.action.value=2;f.view.amount.value='5.00';await flush();
+   expect(f.view.cashConfirmed.value).toBe(false);expect(f.view.cashRequired.value).toBe(false);
+   expect(walk(f.host).some(node=>node.tag==='el-option'&&node.props.value===2&&node.props.label==='拒绝本次补退')).toBe(true);
+   expect(walk(f.host).some(node=>node.tag==='el-checkbox')).toBe(false);
+   expect(content(f.host)).toContain('累计已退金额和已完成商品处理保持不变');
+   const confirm=vi.spyOn(runtime.dialogs.ElMessageBox,'confirm');await f.view.save();
+   expect(confirm.mock.calls[0][0]).toContain('累计已退');expect(confirm.mock.calls[0][0]).toContain('7.00');
+   expect(f.fixture.current).toMatchObject({kind:'money',quantity:0,refunded:'7.00',refund_price:'11.75'});
+   expect(f.view.receipt.value.result).toMatchObject({kind:'refuse',amount:'5.00',refund_id:null,status:'REFUSED'});
+   expect(content(f.host)).toContain('本次未新增退款');expect(f.view.source.value).toBeNull();
+   const beforeReload=f.calls.length;await f.view.load();expect(f.calls.length).toBe(beforeReload+1);
+   expect(f.view.source.value).toMatchObject({kind:'money',refunded:'7.00',amount:'11.75',quantity:0});
+   expect(f.view.action.value).toBe(1);f.view.amount.value='5.00';await f.view.save();expect(writes(f)).toHaveLength(2);
+   f.view.cashConfirmed.value=true;await f.view.save();expect(f.fixture.current).toMatchObject({refunded:'12.00',refund_price:'6.75',quantity:0});
+   await f.view.load();f.view.action.value=2;f.view.amount.value='2.00';await f.view.save();
+   expect(f.fixture.current).toMatchObject({refunded:'12.00',refund_price:'6.75',quantity:0});
+   const bodies=writes(f).map((config:any)=>JSON.parse(config.data));
+   expect(bodies.map((body:any)=>[body.type,body.refund_price])).toEqual([[1,'7.00'],[2,'5.00'],[1,'5.00'],[2,'2.00']]);
+   expect(bodies.filter((body:any)=>body.type===2).every((body:any)=>!Object.hasOwn(body,'cash_returned'))).toBe(true);
+   expect(new Set(bodies.map((body:any)=>body.operation_id)).size).toBe(4);expect(sessionStorage.getItem(key())).toBeNull();
+   await f.view.load();expect(f.view.source.value).toMatchObject({kind:'money',refunded:'12.00',amount:'6.75',quantity:0});
+  }finally{f.close();}
+ });
+ it('retains the original lost post-goods refusal UUID and uses only GET recovery after manage withdrawal',async()=>{
+  const f=await mount(undefined,(config,fixture)=>{if(config.method==='put'&&JSON.parse(config.data).type===2){fixture.apply(config);throw Error('owned committed refusal reply loss');}});
+  let done:any,original:any;
+  try{
+   f.view.amount.value='7.00';f.view.cashConfirmed.value=true;await f.view.save();await f.view.load();
+   f.view.action.value=2;f.view.amount.value='5.00';await f.view.save();done=f.fixture.receipt;
+   original=JSON.parse(sessionStorage.getItem(key())!);expect(Object.keys(original).sort()).toEqual(['actor_id','operation_id','order_id','supplier_id']);
+   expect(done).toMatchObject({...original,state:'committed',result:{kind:'refuse',amount:'5.00',refund_id:null,status:'REFUSED'}});
+   expect(f.fixture.current).toMatchObject({refunded:'7.00',refund_price:'11.75',quantity:0});
+   expect(JSON.parse(writes(f)[1].data)).not.toHaveProperty('cash_returned');expect(content(f.host)).toContain('退款结果待确认');
+   const count=f.calls.length;await f.view.load();await f.view.save();expect(f.calls.length).toBe(count);expect(writes(f)).toHaveLength(2);
+  }finally{f.close();}
+  localStorage.setItem('supplier-permissions','["supplier.order.view"]');
+  const recovered=await mount('/orders/refund-result');try{
+   recovered.fixture.receipt=done;expect(recovered.calls).toEqual([]);expect(recovered.view.canWrite.value).toBe(false);
+   expect(recovered.view.pending.value).toEqual(original);await recovered.view.recover(false);
+   expect(recovered.calls.map((config:any)=>[config.method,config.url])).toEqual([['get','/order/refund_operations/'+original.operation_id]]);
+   expect(recovered.view.receipt.value).toMatchObject({...original,state:'committed',result:{kind:'refuse',amount:'5.00'}});
+   expect(content(recovered.host)).toContain('本次未新增退款');expect(sessionStorage.getItem(key())).toBeNull();
+   await recovered.view.save();expect(writes(recovered)).toEqual([]);expect(recovered.calls).toHaveLength(1);
+  }finally{recovered.close();}
+ });
+ it.each(['0.00','11.76'])('rejects money refusal amount %s before confirmation, UUID persistence or dispatch',async amount=>{
+  const f=await mount(undefined,config=>config.method==='get'?seed({kind:'money',quantity:0,refunded:'7.00',refund_price:'11.75'}):undefined);
+  try{
+   f.view.action.value=2;f.view.amount.value=amount;const confirm=vi.spyOn(runtime.dialogs.ElMessageBox,'confirm');await f.view.save();
+   expect(confirm).not.toHaveBeenCalled();expect(writes(f)).toEqual([]);expect(sessionStorage.getItem(key())).toBeNull();
+   expect(f.view.error.value).toContain('退款金额须在当前可退金额内');expect(f.view.source.value.refunded).toBe('7.00');
+  }finally{f.close();}
+ });
  it('keeps a lost committed reply pending across reload and recovers only by GET after manage permission is withdrawn',async()=>{
   const f=await mount(undefined,(config,fixture)=>{if(config.method==='put'){fixture.apply(config);throw Error('owned post-commit reply loss');}});let done:any;
   try{f.view.amount.value='7.00';f.view.cashConfirmed.value=true;await f.view.save();done=f.fixture.receipt;expect(content(f.host)).toContain('退款结果待确认');await f.view.save();expect(writes(f)).toHaveLength(1);}finally{f.close();}
@@ -177,12 +234,14 @@ describe('strict proactive quote, amount and result boundaries',()=>{
   for(const value of ['18.76','0','-1','7.001','1e1','1,00'])expect(()=>runtime.api.proactiveRefundPayload(source,marker(),value,1,true)).toThrow();
   expect(()=>runtime.api.proactiveRefundPayload(source,marker(),'7',1,false)).toThrow();
  });
- it('keeps unavailable provider payouts and money-only refusals out of the write path',()=>{
+ it('keeps provider payouts unavailable and permits bounded money refusals without a cash claim',()=>{
   const provider=runtime.api.parseProactiveRefundSeed(seed({pay_type:'weixin',settlement:'provider'}),80);
   expect(()=>runtime.api.proactiveRefundPayload(provider,marker(),'7',1,false)).toThrow('原渠道');
   expect(runtime.api.proactiveRefundPayload(provider,marker(),'7',2,false)).not.toHaveProperty('cash_returned');
   const money=runtime.api.parseProactiveRefundSeed(seed({kind:'money',quantity:0,refunded:'7.00',refund_price:'11.75'}),80);
-  expect(()=>runtime.api.proactiveRefundPayload(money,marker(),'5',2,false)).toThrow();
+  expect(runtime.api.proactiveRefundPayload(money,marker(),'5',2,false)).toEqual({operation_id:marker().operation_id,revision:'a'.repeat(64),refund_price:'5.00',type:2});
+  expect(runtime.api.proactiveRefundPayload(money,marker(),'5',2,true)).not.toHaveProperty('cash_returned');
+  expect(()=>runtime.api.proactiveRefundPayload(money,marker(),'5',1,false)).toThrow('现金');
  });
  it('rejects extraneous local authority fields and impossible committed result combinations',()=>{
   expect(()=>runtime.api.parsePendingProactiveRefund({...marker(),cash_returned:true},21,7)).toThrow();

@@ -11,7 +11,7 @@ import {StoreOrderPayService} from '@/services/order/StoreOrderPayService';
 import {StoreOrderCreateService} from '@/services/order/StoreOrderCreateService';
 import {SupplierProactiveRefundService} from '@/services/supplier/SupplierProactiveRefundService';
 import {readSupplierProactiveRefundSource} from '@/services/supplier/SupplierProactiveRefundSource';
-import {parseSupplierProactiveRefundIntent} from '@/services/supplier/SupplierProactiveRefundInput';
+import {parseSupplierProactiveRefundIntent,supplierProactiveRefundJson} from '@/services/supplier/SupplierProactiveRefundInput';
 import {appendSupplierProactiveRefundOperation} from '@/services/supplier/SupplierProactiveRefundOperation';
 import {requiredSupplierPermissions} from '@/services/supplier/SupplierPermissionService';
 import {installSupplierProactiveRefund} from '@/migrations/supplierProactiveRefund';
@@ -275,6 +275,144 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Supplier 
    const before=await snapshot();await expect(service.receipt(body.operation_id,actor())).rejects.toMatchObject({httpStatus:409});
    await expect(service.execute(id,{...body,type:2},actor())).rejects.toMatchObject({httpStatus:409});
    await expect(service.resolve(body.operation_id,id,actor())).rejects.toMatchObject({httpStatus:409});expect(await snapshot()).toEqual(before);
+  });
+ },120000);
+ it.each(['offline','yue'] as const)('preserves completed %s goods and money across a public post-goods refusal and subsequent payouts',async channel=>{
+  const id=await paid(channel);await commissioned(async(runtime,service)=>{
+   const first=await service.execute(id,await request(service,id),actor());
+   const seed=await service.seed(id,actor()),body={operation_id:randomUUID(),revision:seed.revision,refund_price:'5.00',type:2};
+   const before=await snapshot(),done=await http('PUT',`/order/refund/${id}`,body);
+   expect(done.body).toMatchObject({status:200,data:{state:'committed',result:{kind:'refuse',refund_id:null,amount:'5.00',status:'REFUSED'}}});
+   const after=await snapshot(),expected=structuredClone(before) as typeof before&Record<string,unknown>;
+   expected.store_order=(expected.store_order as Array<{row:Record<string,unknown>}>).map(entry=>({row:entry.row.id===id
+    ?{...entry.row,refund_status:0,refund_type:3}:entry.row}));
+   expected.proactive=after.proactive;expected.decisions=after.decisions;expect(after).toEqual(expected);
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'7.00',refundStatus:0,refundType:3});
+   expect(await service.seed(id,actor())).toMatchObject({kind:'money',refunded:'7.00',refund_price:'11.75',quantity:0});
+   expect((await http('PUT',`/order/refund/${id}`,body)).body).toEqual(done.body);
+   expect(await service.receipt(body.operation_id,actor())).toEqual(done.body.data);expect(await snapshot()).toEqual(after);
+   await service.execute(id,await request(service,id,'5.00'),actor());
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'12.00',refundStatus:2,refundType:6});
+   const next=await service.seed(id,actor());
+   expect(await service.execute(id,{operation_id:randomUUID(),revision:next.revision,refund_price:'3.00',type:2},actor()))
+    .toMatchObject({result:{kind:'refuse',status:'REFUSED'}});
+   const tail=await service.execute(id,await request(service,id,'6.75'),actor());expect(tail.result).toMatchObject({kind:'money',amount:'6.75'});
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'18.75',refundStatus:2,refundType:6});
+   expect(await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,id)))
+    .toMatchObject([{id:first.result!.refund_id,refundPrice:'7.00',refundedPrice:'7.00',refundType:6,refundNum:3}]);
+   const final=await snapshot();onlyMoneyChanged(before,final);
+   expect(await service.receipt(body.operation_id,actor())).toEqual(done.body.data);
+   await expect(service.seed(id,actor())).rejects.toMatchObject({code:400});expect(await snapshot()).toEqual(final);
+  });
+ },120000);
+ it('allows the genuine completed-refund remark route after refusal without freezing description into its financial basis',async()=>{
+  const id=await paid('yue');await commissioned(async(runtime,service)=>{
+   const first=await service.execute(id,await request(service,id),actor()),seed=await service.seed(id,actor());
+   await service.execute(id,{operation_id:randomUUID(),revision:seed.revision,refund_price:'5.00',type:2},actor());
+   await f.db.update(systemRole).set({rules:'supplier.order.manage,supplier.refund.manage'}).where(eq(systemRole.id,21));
+   expect((await http('PUT','/refund/remark/'+first.result!.refund_id,{remark:'已与买家核对，继续补退余款'})).body.status).toBe(200);
+   expect(await service.seed(id,actor())).toMatchObject({refunded:'7.00',refund_price:'11.75'});
+   const money=await service.execute(id,await request(service,id,'5.00'),actor());
+   expect((await http('PUT','/refund/remark/'+first.result!.refund_id,{remark:'第二次核对说明'})).body.status).toBe(200);
+   expect(await service.receipt(money.operation_id,actor())).toEqual(money);
+   await service.execute(id,await request(service,id,'6.75'),actor());
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'18.75',refundType:6,refundStatus:2});
+   expect(await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,id)))
+    .toMatchObject([{id:first.result!.refund_id,remark:'第二次核对说明',refundPrice:'7.00',refundedPrice:'7.00',refundNum:3}]);
+  });
+ },120000);
+ it('binds repeated refusals to the same real basis and preserves original recovery after live manage withdrawal',async()=>{
+  const id=await paid();await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const stale=await request(service,id,'5.00');
+   const firstSeed=await service.seed(id,actor()),firstBody={operation_id:randomUUID(),revision:firstSeed.revision,refund_price:'5.00',type:2};
+   const first=await service.execute(id,firstBody,actor()),nextSeed=await service.seed(id,actor());
+   const second=await service.execute(id,{operation_id:randomUUID(),revision:nextSeed.revision,refund_price:'3.00',type:2},actor());
+   expect(second.result).toMatchObject({kind:'refuse',status:'REFUSED'});
+   expect(await runtime.order(id)).toMatchObject({refundPrice:'7.00',refundStatus:0,refundType:3});
+   const before=await snapshot();await expect(service.execute(id,stale,actor())).rejects.toMatchObject({httpStatus:409});
+   expect(await snapshot()).toEqual(before);
+   const evidence=await withTx(runtime.container,async tx=>{
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id)),proof=await readSupplierProactiveMoneyEvidence(tx,order);
+    expect(await projectSupplierProactiveMoneyBaseline(tx,proof.baseline,order,proof.firstRefund,proof.firstSplit))
+     .toEqual({...order,refundPrice:'7.00',refundType:6,refundStatus:2});
+    await expect(verifyFinancialCompletedRefund(tx,proof.firstRefund,readBoundManualRefundProof)).rejects.toMatchObject({code:400});
+    await verifyFinancialCompletedRefund(tx,proof.firstRefund,readBoundManualRefundProof,proof.baseline);return proof;
+   });
+   await withTx(runtime.container,async tx=>{
+    const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id));
+    await expect(projectSupplierProactiveMoneyBaseline(tx,evidence.baseline,order,evidence.firstRefund,evidence.firstSplit)).rejects.toMatchObject({httpStatus:409});
+    await expect(projectSupplierProactiveMoneyBaseline(tx,{} as typeof evidence.baseline,order,evidence.firstRefund,evidence.firstSplit)).rejects.toMatchObject({httpStatus:409});
+   });
+   await f.db.update(systemRole).set({rules:'supplier.order.view'}).where(eq(systemRole.id,21));
+   expect(await service.receipt(first.operation_id,actor())).toEqual(first);expect(await service.execute(id,firstBody,actor())).toEqual(first);
+   expect(await service.resolve(first.operation_id,id,actor())).toEqual(first);
+   const withdrawn=await snapshot();await expect(service.execute(id,{...firstBody,operation_id:randomUUID()},actor())).rejects.toMatchObject({code:400011});
+   expect(await snapshot()).toEqual(withdrawn);
+  });
+ },120000);
+ it.each(['missing-decision','no-completed-anchor','later-basis-only','wrong-first-refund'] as const)(
+  'rejects post-goods refusal evidence %s in a historical money source despite a valid later anchor',async damage=>{
+   const id=await paid('yue');await commissioned(async(runtime,service)=>{
+    await service.execute(id,await request(service,id),actor());
+    const refuse=async()=>{const seed=await service.seed(id,actor());return service.execute(id,
+     {operation_id:randomUUID(),revision:seed.revision,refund_price:'3.00',type:2},actor());};
+    const seven=await refuse(),money=await service.execute(id,await request(service,id,'5.00'),actor());
+    await refuse();await service.execute(id,await request(service,id,'6.75'),actor());
+    if(damage==='missing-decision')await f.db.transaction(async tx=>{
+     await tx.execute(sql`ALTER TABLE public.supplier_proactive_refund_decision_v1 DISABLE TRIGGER USER`);
+     await tx.execute(sql`DELETE FROM public.supplier_proactive_refund_decision_v1 WHERE operation_id=${seven.operation_id}::uuid`);
+     await tx.execute(sql`ALTER TABLE public.supplier_proactive_refund_decision_v1 ENABLE TRIGGER USER`);
+    });else {
+     const [stored]=await f.db.execute<{source:Record<string,any>}>(sql`SELECT source FROM public.supplier_proactive_refund_operation_v1 WHERE operation_id=${seven.operation_id}::uuid`);
+     const source=structuredClone(stored.source);
+     if(damage==='no-completed-anchor'){source.order.refundStatus=0;source.order.refundType=3;}
+     if(damage==='later-basis-only')source.order.refundPrice='12.00';
+     if(damage==='wrong-first-refund')source.refunds[0].id+=1000;
+     const text=supplierProactiveRefundJson(source),hash=await outRequestHash(source);
+     await f.db.transaction(async tx=>{
+      await tx.execute(sql`ALTER TABLE public.supplier_proactive_refund_operation_v1 DISABLE TRIGGER USER`);
+      await tx.execute(sql`UPDATE public.supplier_proactive_refund_operation_v1 SET source=${text}::jsonb,source_json=${text},source_hash=${hash} WHERE operation_id=${seven.operation_id}::uuid`);
+      await tx.execute(sql`ALTER TABLE public.supplier_proactive_refund_operation_v1 ENABLE TRIGGER USER`);
+     });
+    }
+    const before=await snapshot();
+    await expect(service.receipt(money.operation_id,actor())).rejects.toMatchObject({httpStatus:409});
+    await withTx(runtime.container,async tx=>{
+     const [order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,id));await expect(readSupplierProactiveMoneyEvidence(tx,order)).rejects.toMatchObject({httpStatus:409});
+    });expect(await snapshot()).toEqual(before);
+   });
+  },120000);
+ it.each(['settled money','buyer points','SKU stock'] as const)('rolls back a post-goods refusal and its original operation when deferred SQL changes %s',async damage=>{
+  const id=await paid();await commissioned(async(_runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const seed=await service.seed(id,actor());
+   const body={operation_id:randomUUID(),revision:seed.revision,refund_price:'5.00',type:2};
+   const mutation=damage==='settled money'?'UPDATE public.store_order SET refund_price=refund_price+0.01 WHERE id=NEW.id':damage==='buyer points'?'UPDATE public.user SET integral=integral+1 WHERE uid=NEW.uid':'UPDATE public.store_product_attr_value SET stock=stock+1 WHERE product_id IN(SELECT product_id FROM public.store_order_cart_info WHERE oid=NEW.id)';
+   await f.exec(`CREATE FUNCTION public.owned_refusal_deferred() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+    BEGIN ${mutation};RETURN NEW;END $$;
+    REVOKE ALL ON FUNCTION public.owned_refusal_deferred() FROM PUBLIC;
+    CREATE CONSTRAINT TRIGGER owned_refusal_deferred AFTER UPDATE ON public.store_order DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW WHEN(OLD.refund_type<>3 AND NEW.refund_type=3) EXECUTE FUNCTION public.owned_refusal_deferred()`);
+   try{const before=await snapshot();await expect(service.execute(id,body,actor())).rejects.toMatchObject({httpStatus:409});
+    expect(await snapshot()).toEqual(before);expect(await service.receipt(body.operation_id,actor())).toMatchObject({state:'unknown'});
+   }finally{await f.exec('DROP TRIGGER owned_refusal_deferred ON public.store_order;DROP FUNCTION public.owned_refusal_deferred()');}
+  });
+ },120000);
+ it('serializes a post-goods refusal against a real independent money writer using the same original quote',async()=>{
+  const id=await paid();await commissioned(async(runtime,service)=>{
+   await service.execute(id,await request(service,id),actor());const body=await request(service,id,'5.00');
+   const {cash_returned:_cash,...refused}=body;
+   const peer=createDbFromConnectionString(runtime.connectionString,1,{searchPath:'public,pg_temp',applicationName:'supplier-refusal-money-peer'});
+   try{
+    const [a]=await runtime.container.db.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`),[b]=await peer.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`);expect(a.pid).not.toBe(b.pid);
+    const other=new SupplierProactiveRefundService(createContainerFromDb(peer),supplierOrderEditAppKey,f.paymentEnvironment);
+    const results=await Promise.allSettled([service.execute(id,{...refused,type:2},actor()),other.execute(id,{...body,operation_id:randomUUID()},actor())]);
+    expect(results.filter(row=>row.status==='fulfilled')).toHaveLength(1);
+    const failed=results.find(row=>row.status==='rejected');expect(failed&&failed.status==='rejected'&&failed.reason).toMatchObject({httpStatus:409});
+    const success=results.find(row=>row.status==='fulfilled');if(!success||success.status!=='fulfilled')throw Error('Actual winner absent');
+    expect(await runtime.order(id)).toMatchObject(success.value.result!.kind==='refuse'
+     ?{refundPrice:'7.00',refundStatus:0,refundType:3}:{refundPrice:'12.00',refundStatus:2,refundType:6});
+    expect(await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId,id))).toHaveLength(1);
+   }finally{await peer.$client.end();}
   });
  },120000);
  it.each(['offline','yue'] as const)('executes real %s money-only remainder through JWT in two exact payouts without repeating goods effects',async channel=>{

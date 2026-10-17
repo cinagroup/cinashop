@@ -48,9 +48,9 @@ export async function executeSupplierProactiveMoneyRefund(tx:DbClient,actorValue
  assertSupplierProactiveRefundRevision(intent.revision,supplierProactiveRefundMac(appKey,moneySource,actor));
  const operation=await appendSupplierProactiveRefundOperation(tx,{operationId:intent.operation_id,orderId:order.id,actor,now,intent,requestHash,source:moneySource,
   result:{order_id:order.id,refund_id:evidence.first.refund_id,amount:intent.refund_price,kind:'money',status:order.payType==='yue'?'BALANCE_SUCCESS':'CASH_SUCCESS'}});
- const written=await tx.update(storeOrder).set({refundPrice:plan.after_refunded}).where(and(eq(storeOrder.id,order.id),eq(storeOrder.supplierId,actor.supplierId),
-  eq(storeOrder.refundPrice,plan.refunded),eq(storeOrder.refundStatus,2),eq(storeOrder.refundType,6))).returning();
- fact(written.length===1&&await outRequestHash(written[0])===await outRequestHash({...order,refundPrice:plan.after_refunded}));
+ const written=await tx.update(storeOrder).set({refundPrice:plan.after_refunded,refundStatus:2,refundType:6}).where(and(eq(storeOrder.id,order.id),eq(storeOrder.supplierId,actor.supplierId),
+  eq(storeOrder.refundPrice,plan.refunded),eq(storeOrder.refundStatus,order.refundStatus),eq(storeOrder.refundType,order.refundType))).returning();
+ fact(written.length===1&&await outRequestHash(written[0])===await outRequestHash({...order,refundPrice:plan.after_refunded,refundStatus:2,refundType:6}));
  let bill:typeof userBill.$inferSelect|null=null;
  const priorBills=await tx.select().from(userBill).where(eq(userBill.linkId,businessNo)).limit(2);fact(priorBills.length===0);
  let expectedAccount=before.account;
@@ -93,12 +93,12 @@ export async function executeSupplierProactiveMoneyRefund(tx:DbClient,actorValue
  // Read the full rows after deferred SQL writers. The monetary history leaf
  // verifies the actual bill, flow and transaction through canonical references.
  const current=(await tx.select().from(storeOrder).where(eq(storeOrder.id,order.id)).limit(1))[0];fact(current);
- const expectedOrder={...order,refundPrice:plan.after_refunded},payment=source.payment as Record<string,unknown>;
+ const expectedOrder={...order,refundPrice:plan.after_refunded,refundStatus:2,refundType:6},payment=source.payment as Record<string,unknown>;
  if(payment.root_id===order.id&&Object.hasOwn(payment,'root'))fact(await outRequestHash(payment.root)===await outRequestHash(order));
  const expectedPayment=payment.root_id===order.id&&Object.hasOwn(payment,'root')?{...payment,root:expectedOrder}:source.payment;
  fact(await outRequestHash(await readSupplierProactiveRefundSource(tx,current))===await outRequestHash({...source,order:expectedOrder,payment:expectedPayment}));
  const after=await captureFinancialEffects(tx,current,evidence.firstRefund);
- fact(await outRequestHash(after)===await outRequestHash({...before,order:{...order,refundPrice:plan.after_refunded},account:expectedAccount}));
+ fact(await outRequestHash(after)===await outRequestHash({...before,order:{...order,refundPrice:plan.after_refunded,refundStatus:2,refundType:6},account:expectedAccount}));
  fact(await outRequestHash((await tx.select().from(userBill).where(eq(userBill.linkId,businessNo)).limit(2)))===await outRequestHash(bill?[bill]:[]));
  const complete=await readSupplierProactiveMoneyEvidence(tx,current);
  fact(complete.refunded===plan.after_refunded&&complete.completions.some(row=>row.operation_id===intent.operation_id));

@@ -174,7 +174,7 @@ export function verifySupplierProactiveMoneySource(value: unknown, intent: Suppl
   fact(order.id===intent.order_id&&order.supplierId===intent.supplier_id&&order.uid===payment.uid&&order.paid===1
     &&order.payType===payment.pay_type&&order.payTime===payment.pay_time&&(order.pid||order.id)===payment.id
     &&goods.order_id===order.id&&goods.supplier_id===order.supplierId&&intent.type===1&&minor(intent.refund_price)>0n
-    &&['cash','offline','yue'].includes(String(order.payType))&&order.refundType===6&&order.refundStatus===2&&!order.isDel&&!order.isSystemDel);
+    &&['cash','offline','yue'].includes(String(order.payType))&&completedMetadata(order)&&!order.isDel&&!order.isSystemDel);
   fact((['cash','offline'].includes(String(order.payType))) ? intent.cash_returned===true : !Object.hasOwn(intent,'cash_returned'));
   let refunded=minor(goods.amount);const seen=new Set<string>([goods.operation_id,uuid(intent.operation_id)]);
   for(const entry of history.completions as unknown[]) {
@@ -201,17 +201,19 @@ async function readOperation(tx: DbClient, operationId: string, maximum: number)
     CASE WHEN octet_length(source_json)<=${maximum} THEN source_json END AS source_json,source_hash,result,created_at
     FROM public.supplier_proactive_refund_operation_v1 WHERE operation_id=${uuid(operationId)}::uuid LIMIT 2`);
   fact(rows.length===1);const row=object(snapshot(rows[0],100_800_768));exact(row,operationKeys);
-  fact(row.operation_id===operationId&&row.state==='committed'&&['goods','money'].includes(String(row.kind)));
+  fact(row.operation_id===operationId&&row.state==='committed'&&['goods','money','refuse'].includes(String(row.kind)));
+  const refused=row.kind==='refuse';
   integer(row.actor_id);integer(row.supplier_id);integer(row.order_id);integer(row.created_at);hash(row.request_hash);hash(row.source_hash);
   const intent=parsed(row.intent_json,16_384),source=parsed(row.source_json,maximum),cash=Object.hasOwn(intent,'cash_returned');
   exact(intent,['version','operation_id','actor_id','supplier_id','order_id','revision','refund_price','type',...(cash?['cash_returned']:[])]);
   fact(intent.version==='supplier-proactive-refund-intent-v1'&&intent.operation_id===operationId&&intent.actor_id===row.actor_id
-    &&intent.supplier_id===row.supplier_id&&intent.order_id===row.order_id&&intent.type===1);hash(intent.revision);fact(minor(intent.refund_price)>0n);
-  fact(!cash||intent.cash_returned===true);
+    &&intent.supplier_id===row.supplier_id&&intent.order_id===row.order_id&&intent.type===(refused?2:1));hash(intent.revision);fact(minor(intent.refund_price)>0n);
+  fact(refused?!cash:!cash||intent.cash_returned===true);
   fact(canonical(intent)===canonical(row.intent)&&canonical(source)===canonical(row.source)
     &&await outRequestHash(intent)===row.request_hash&&await outRequestHash(source)===row.source_hash);
   const result=object(row.result);exact(result,['order_id','refund_id','amount','kind','status']);
-  fact(result.order_id===row.order_id&&result.kind===row.kind&&result.amount===intent.refund_price);integer(result.refund_id);
+  fact(result.order_id===row.order_id&&result.kind===row.kind&&result.amount===intent.refund_price);
+  if(refused)fact(result.refund_id===null&&result.status==='REFUSED');else integer(result.refund_id);
   return {row,intent:intent as unknown as SupplierProactiveRefundIntent,source,result};
 }
 async function readDecision(tx: DbClient, operation: Awaited<ReturnType<typeof readOperation>>) {
@@ -219,9 +221,63 @@ async function readDecision(tx: DbClient, operation: Awaited<ReturnType<typeof r
     evidence,evidence_json,evidence_hash,created_at FROM public.supplier_proactive_refund_decision_v1 WHERE operation_id=${String(operation.row.operation_id)}::uuid LIMIT 2`);
   fact(rows.length===1);const row=object(snapshot(rows[0],131_072));exact(row,decisionKeys);const evidence=parsed(row.evidence_json,65_536);exact(evidence,['refund_id']);
   fact(row.operation_id===operation.row.operation_id&&row.actor_id===operation.row.actor_id&&row.supplier_id===operation.row.supplier_id
-    &&row.order_id===operation.row.order_id&&row.kind===operation.row.kind&&row.outcome==='local-settled'&&row.request_hash===operation.row.request_hash
+    &&row.order_id===operation.row.order_id&&row.kind===operation.row.kind&&row.outcome===(operation.row.kind==='refuse'?'refused':'local-settled')&&row.request_hash===operation.row.request_hash
     &&evidence.refund_id===operation.result.refund_id&&canonical(evidence)===canonical(row.evidence)
     &&await outRequestHash(evidence)===hash(row.evidence_hash)&&integer(row.created_at)>=Number(operation.row.created_at));return row;
+}
+function completedMetadata(order: Pick<Order,'refundType'|'refundStatus'> | Record<string,unknown>): boolean {
+  return order.refundType===6&&order.refundStatus===2||order.refundType===3&&order.refundStatus===0;
+}
+/** A refusal changes presentation metadata, never the already settled goods
+ * or money. A0/3 row is accepted only with an immutable6/2 admission at the
+ * SAME cumulative amount. Later, larger amounts cannot certify an older money
+ * source. Repeated0/3 decisions share that anchor, not a timestamp/UUID order.
+ * IDs are loaded once per financial leaf; each requested basis is checked once.
+ */
+function refusalMetadataReader(tx: DbClient, current: Order, firstRefund: Refund,
+  payment: SupplierProactiveMoneyPaymentIdentity, firstTime: number) {
+  let admissions: Promise<Array<{operation_id:string;basis:string}>> | undefined;
+  const checked=new Map<string,Promise<void>>();
+  return async (order: Order): Promise<void> => {
+    fact(completedMetadata(order));sameOrder(current,order);
+    fact(order.backIntegral===current.backIntegral);
+    if(order.refundType===6)return;
+    const basis=money(order.refundPrice);
+    if(!checked.has(basis))checked.set(basis,(async()=>{
+      admissions??=Promise.resolve(tx.execute<{operation_id:string;basis:string}>(sql`SELECT operation_id::text,
+        source->'order'->>'refundPrice' AS basis FROM public.supplier_proactive_refund_operation_v1
+        WHERE order_id=${order.id} AND kind='refuse' ORDER BY operation_id LIMIT 201`)).then(rows=>[...rows]);
+      const all=await admissions;fact(all.length<=200);
+      const rows=all.filter(row=>row.basis===basis);fact(rows.length>0);
+      let anchor=false;
+      for(const identity of rows) {
+        const admission=await readOperation(tx,identity.operation_id,16_777_216);await readDecision(tx,admission);
+        const {source,intent,row}=admission;
+        fact(row.kind==='refuse'&&row.order_id===order.id&&row.supplier_id===order.supplierId&&Number(row.created_at)>=firstTime);
+        exact(source,['version','order','carts','payment','refunds','refund_payments','invoices','promotion_rows']);
+        fact(source.version==='supplier-proactive-refund-source-v1');
+        const before=object(source.order);exact(before,orderKeys);sameOrder(before,order);
+        fact(completedMetadata(before)&&before.refundPrice===basis&&before.backIntegral===order.backIntegral
+          &&minor(intent.refund_price)>0n&&minor(intent.refund_price)<=minor(order.payPrice)-minor(basis));
+        for(const key of ['carts','refunds','refund_payments','invoices','promotion_rows'])
+          fact(Array.isArray(source[key])&&(source[key] as unknown[]).length<=200);
+        fact((source.carts as unknown[]).length>0);
+        const first=(source.refunds as unknown[]).map(object).filter(refund=>refund.id===firstRefund.id);
+        fact(first.length===1);exact(first[0],Object.keys(getTableColumns(storeOrderRefund)));
+        // Completed refunds retain their public editable remark. This one
+        // descriptive field cannot alter any quantity, ownership or money.
+        fact(typeof first[0].remark==='string'&&first[0].remark.length<=255
+          &&await outRequestHash({...first[0],remark:firstRefund.remark})===await outRequestHash(firstRefund));
+        const original=object(source.payment);fact(original.root_id===payment.id);
+        if(order.payType==='yue')fact(canonical(paymentIdentity(object(original.root) as unknown as Order))===canonical(payment));
+        else fact(original.order_no===payment.order_no&&original.buyer_uid===payment.uid&&original.pay_type===payment.pay_type
+          &&original.pay_time===payment.pay_time&&original.amount===payment.pay_price);
+        if(before.refundType===6)anchor=true;
+      }
+      fact(anchor);
+    })());
+    await checked.get(basis);
+  };
 }
 function rowReference(value: unknown): SupplierProactiveMoneyRowReference {
   const row=object(value);exact(row,['id','hash']);integer(row.id);hash(row.hash);return row as unknown as SupplierProactiveMoneyRowReference;
@@ -319,7 +375,7 @@ export async function readSupplierProactiveMoneyEvidence(tx: DbClient, orderValu
   const order=snapshot(orderValue,262_144);exact(object(order),orderKeys);
   const identity=await transaction(tx);await assertSupplierProactiveRefundReady(tx,'read');
   if(!['cash','offline','yue'].includes(order.payType))throw new ServiceUnavailableException('原渠道资金补退的持久回调与对账尚未就绪');
-  fact(order.paid===1&&!order.isDel&&!order.isSystemDel&&order.pid>=0&&order.refundType===6&&order.refundStatus===2&&order.supplierId>0);
+  fact(order.paid===1&&!order.isDel&&!order.isSystemDel&&order.pid>=0&&completedMetadata(order)&&order.supplierId>0);
   const [actualOrder]=await tx.select().from(storeOrder).where(eq(storeOrder.id,order.id)).limit(1);
   fact(actualOrder&&await outRequestHash(actualOrder)===await outRequestHash(order));
   // Inspect protected goods identities before loading any full16MiB source.
@@ -395,6 +451,7 @@ export async function readSupplierProactiveMoneyEvidence(tx: DbClient, orderValu
     order_id:order.id,refund_id:refundId,request_hash:String(original.row.request_hash),source_hash:String(original.row.source_hash),amount:firstRefund.refundPrice,
     split_fingerprint:firstSplit.fingerprint,invoice_allocation_hash:await outRequestHash(allocation)});
   verifyFirst(first);
+  const verifyMetadata=refusalMetadataReader(tx,order,firstRefund,payment,Number(original.row.created_at));
   const paymentRows=await tx.execute(sql`SELECT operation_id FROM public.supplier_refund_money_payment_v1 WHERE order_id=${order.id} LIMIT 201`);fact(paymentRows.length===0);
   const moneyOperations=await tx.execute<{operation_id:string}>(sql`SELECT operation_id::text FROM public.supplier_proactive_refund_operation_v1
     WHERE order_id=${order.id} AND kind='money' ORDER BY operation_id LIMIT 201`);fact(moneyOperations.length<=200);
@@ -422,12 +479,14 @@ export async function readSupplierProactiveMoneyEvidence(tx: DbClient, orderValu
     const source=verifySupplierProactiveMoneySource(operation.source,operation.intent);sameOrder(source.order,order);
     fact(canonical(source.goods)===canonical(first)&&canonical(source.payment)===canonical(payment)&&canonical(source.history.completions)===canonical(completions)
       &&source.order.refundPrice===proof.before_refunded&&minor(proof.after_refunded)<=minor(order.payPrice));
+    await verifyMetadata(source.order);
     await actualMoneyRows(tx,proof,source);refunded=minor(proof.after_refunded);
     actualTransactionIds.push(proof.supplier_transaction.id);if(proof.flow)actualFlowIds.push(proof.flow.id);
     completions.push(Object.freeze({operation_id:proof.operation_id,amount:proof.amount,before_refunded:proof.before_refunded,after_refunded:proof.after_refunded,proof_hash:String(row.proof_hash)}));
   }
   fact(operations.size===0&&refunded===minor(order.refundPrice)&&refunded<=minor(order.payPrice));
   await assertNoUnregisteredMoneyEffects(tx,order,actualTransactionIds,actualFlowIds);
+  await verifyMetadata(order);
   const baseline=Object.freeze({}) as SupplierProactiveMoneyBaseline;
   baselines.set(baseline,{transaction:identity,orderHash:await outRequestHash(order),first});
   const evidence=Object.freeze({first,firstRefund:snapshot(firstRefund,262_144),firstSplit:snapshot(firstSplit,100_800_768),originalInvoice,
@@ -435,8 +494,9 @@ export async function readSupplierProactiveMoneyEvidence(tx: DbClient, orderValu
     refunded:decimal(refunded),paid:money(order.payPrice),available:decimal(minor(order.payPrice)-refunded),baseline});
   evidenceStates.set(evidence,{orderJson:canonical(order)});return evidence;
 }
-/** Only the first-goods monetary equality receives a projected view. Callers
- * keep the real selected row for every other deep invariant and every write. */
+/** Only the certified first-goods amount and its proven completed metadata
+ * receive a projected view. Every other field and every write uses the actual
+ * row; unproved0/3 state never mints this same-transaction baseline. */
 export async function projectSupplierProactiveMoneyBaseline(tx: DbClient, baseline: SupplierProactiveMoneyBaseline,
   selected: Order, refund: Refund, record: Split): Promise<Order> {
   const order=snapshot(selected,262_144),state=baselines.get(baseline);fact(state);if(!state)throw fail();
@@ -447,7 +507,7 @@ export async function projectSupplierProactiveMoneyBaseline(tx: DbClient, baseli
     &&record.refundId===refund.id&&record.sourceOrderId===order.id&&record.selectedOrderId===order.id&&record.disposition==='whole'
     &&record.remainingOrderId===null&&record.fingerprint===first.split_fingerprint&&await refundOrderSplitFingerprint(refund)===first.split_fingerprint);
   const [actual]=await tx.select().from(storeOrder).where(eq(storeOrder.id,order.id)).limit(1);fact(actual&&await outRequestHash(actual)===state.orderHash);
-  return {...order,refundPrice:first.amount};
+  return {...order,refundPrice:first.amount,refundType:6,refundStatus:2};
 }
 /** Append within the owning payout transaction, after its actual rows and
  * immutable decision exist. Read the COMPLETE resulting history before return;

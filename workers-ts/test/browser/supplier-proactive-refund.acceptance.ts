@@ -28,7 +28,7 @@ vi.mock('@/lib/di', async original => ({ ...await original<typeof import('@/lib/
   return wiring.container;
 } }));
 
-it('executes actual goods and money refunds in Browser and recovers the original committed UUID without another write', async () => {
+it('executes actual goods, postgoods refusals and money refunds in Browser and recovers the original refused UUID without another write', async () => {
   const root = resolve(import.meta.dirname, '../../../view/supplier-ts/dist');
   expect((await stat(resolve(root, 'index.html'))).isFile()).toBe(true);
   const f = await supplierManualRefundFixture(), actor = supplierOrderEditActor();
@@ -43,7 +43,8 @@ it('executes actual goods and money refunds in Browser and recovers the original
   const writes = new Map<string, { order: number; kind: string; amount: string }>();
   let mainId = 0, yueId = 0, mainNo = '', origin = '', outbound = 0, finished = false;
   let dropped = false, recovered = false, withdrawn = false, restored = false, viewerObserved = false;
-  let firstOperation = '', lostOperation = '', tailOperation = '', refuseOperation = '', yueOperation = '';
+  let firstOperation = '', lostOperation = '', moneyOperation = '', postMoneyRefuseOperation = '', tailOperation = '', refuseOperation = '', yueOperation = '';
+  let readonlyGets = 0, refusalSnapshots = 0, postMoneyRefuseReloaded = false;
   let mainRefundId = 0, yueRefundId = 0;
   let apiChain = Promise.resolve(), deadline: ReturnType<typeof setTimeout> | undefined;
   let finish!: () => void, fail!: (error: Error) => void;
@@ -55,7 +56,7 @@ it('executes actual goods and money refunds in Browser and recovers the original
     decisions: await f.exec('SELECT * FROM public.supplier_proactive_refund_decision_v1 ORDER BY operation_id'),
     money_completions: await f.exec('SELECT * FROM public.supplier_refund_money_completion_v1 ORDER BY operation_id'),
     money_payments: await f.exec('SELECT * FROM public.supplier_refund_money_payment_v1 ORDER BY operation_id') });
-  type Snapshot = Awaited<ReturnType<typeof snapshot>>;
+  type Snapshot = Awaited<ReturnType<typeof snapshot>> & Record<string, unknown>;
   let firstGoods: Snapshot | undefined, afterMain: Snapshot | undefined;
   let firstGoodsBuyer: typeof user.$inferSelect | undefined, paidBuyer: typeof user.$inferSelect | undefined;
   const buyer = async () => (await f.db.select().from(user).where(eq(user.uid, 11)))[0]!;
@@ -71,9 +72,31 @@ it('executes actual goods and money refunds in Browser and recovers the original
       } else expect((after as Record<string, unknown>)[table]).toEqual(rows);
     }
   }
+  function onlyRefusalChanged(before: Snapshot, after: Snapshot, orderId: number, operationId: string) {
+    // The whole finite scenario must remain identical except the target's two
+    // presentation fields and its one immutable operation/decision pair.
+    expect(Array.isArray(before.store_order) && Array.isArray(after.store_order)).toBe(true);
+    const oldOrders = before.store_order as Array<{ row: Record<string, unknown> }>,
+      newOrders = after.store_order as Array<{ row: Record<string, unknown> }>;
+    expect(oldOrders.filter(value => value.row.id === orderId)).toHaveLength(1);
+    const byId = (left: { row: Record<string, unknown> }, right: { row: Record<string, unknown> }) => Number(left.row.id) - Number(right.row.id);
+    expect([...newOrders].sort(byId)).toEqual(oldOrders.map(value => value.row.id === orderId
+      ? { ...value, row: { ...value.row, refund_status: 0, refund_type: 3 } } : value).sort(byId));
+    expect(after.proactive.filter(row => row.operation_id === operationId)).toMatchObject([
+      { operation_id: operationId, order_id: orderId, kind: 'refuse', state: 'committed' }]);
+    expect(after.decisions.filter(row => row.operation_id === operationId)).toMatchObject([
+      { operation_id: operationId, order_id: orderId, kind: 'refuse', outcome: 'refused' }]);
+    expect(after.proactive.filter(row => row.operation_id === operationId)).toHaveLength(1);
+    expect(after.decisions.filter(row => row.operation_id === operationId)).toHaveLength(1);
+    expect({ ...after, store_order: before.store_order,
+      proactive: after.proactive.filter(row => row.operation_id !== operationId),
+      decisions: after.decisions.filter(row => row.operation_id !== operationId) }).toEqual(before);
+    refusalSnapshots++;
+  }
   const state = async () => ({ main: await order(mainId), yue: await order(yueId), mainRefundId, yueRefundId,
     paths, writes: [...writes].map(([operation_id, value]) => ({ operation_id, ...value })),
-    firstOperation, lostOperation, tailOperation, refuseOperation, yueOperation,
+    firstOperation, lostOperation, moneyOperation, postMoneyRefuseOperation, tailOperation, refuseOperation, yueOperation,
+    readonlyGets, refusalSnapshots, postMoneyRefuseReloaded,
     dropped, recovered, withdrawn, restored, viewerObserved, finished, outbound });
   const send = (res: ServerResponse, body: string | Buffer, status = 200, type = 'text/html; charset=utf-8') => {
     res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'private, no-store' }); res.end(body);
@@ -83,7 +106,7 @@ it('executes actual goods and money refunds in Browser and recovers the original
       return send(res, 'Owned loopback only', 403, 'text/plain');
     const url = new URL(req.url ?? '/', origin), path = url.pathname, method = req.method ?? 'GET';
     if (path === control && method === 'GET') return send(res, `<!doctype html><html lang="zh"><meta charset="utf-8"><title>供应商主动退款 PG16 验收</title><h1>真实供应商主动退款联合验收</h1>
-      <p>仅本机合成数据。先 offline 商品退款7.00，再补退5.00（真实提交后故意丢回执）；撤权后只读恢复原 UUID，恢复权限后补退6.75。最后在独立余额单拒绝7.00，再退款7.00。</p>
+      <p>仅本机合成数据。先 offline 商品退款7.00，再拒绝补退5.00（真实提交后故意丢回执，累计仍7.00）；撤权后只读恢复原 UUID。恢复权限后补退5.00至累计12.00，再拒绝补退3.00，显式重新核对后补退尾款6.75。最后在独立余额单拒绝7.00，再退款7.00。</p>
       <p>线下订单 #${mainId}；独立余额订单 #${yueId}。查看子账号应没有“主动退款”按钮。</p>
       <button id="login">进入订单管理</button><button id="viewer">查看子账号进入订单管理</button><button id="withdraw">撤销管理权并核对原结果</button><button id="restore">恢复管理权并核对余款</button><button id="yue">进入独立余额订单</button><button id="status">读取 SQL 状态</button><button id="finish">完成并关闭夹具</button><pre id="state"></pre><script>
       const ownerToken=${JSON.stringify(token)},viewerToken=${JSON.stringify(viewerToken)},control=${JSON.stringify(control)};
@@ -96,7 +119,7 @@ it('executes actual goods and money refunds in Browser and recovers the original
     if ([control + '/status', control + '/finish', control + '/withdraw', control + '/restore'].includes(path)) {
       expect(method).toBe('POST'); expect(req.headers.origin).toBe(origin);
       if (path.endsWith('/withdraw')) {
-        expect(dropped && !!lostOperation && !tailOperation).toBe(true);
+        expect(dropped && !!lostOperation && !moneyOperation && !tailOperation).toBe(true);
         await f.db.update(systemRole).set({ rules: 'supplier.order.view' }).where(eq(systemRole.id, 21)); withdrawn = true;
       }
       if (path.endsWith('/restore')) {
@@ -105,9 +128,15 @@ it('executes actual goods and money refunds in Browser and recovers the original
       }
       if (path.endsWith('/finish')) {
         expect(dropped && recovered && withdrawn && restored && viewerObserved).toBe(true);
-        expect([firstOperation, lostOperation, tailOperation, refuseOperation, yueOperation].every(Boolean)).toBe(true);
-        expect(new Set([firstOperation, lostOperation, tailOperation, refuseOperation, yueOperation]).size).toBe(5);
-        expect(writes.size).toBe(5);
+        const operationIds = [firstOperation, lostOperation, moneyOperation, postMoneyRefuseOperation, tailOperation, refuseOperation, yueOperation];
+        expect(operationIds.every(Boolean)).toBe(true); expect(new Set(operationIds).size).toBe(7);
+        expect(writes.size).toBe(7); expect(refusalSnapshots).toBe(3); expect(postMoneyRefuseReloaded).toBe(true);
+        expect(readonlyGets).toBeGreaterThan(0);
+        expect([...writes.values()]).toEqual([
+          { order: mainId, kind: 'goods', amount: '7.00' }, { order: mainId, kind: 'refuse', amount: '5.00' },
+          { order: mainId, kind: 'money', amount: '5.00' }, { order: mainId, kind: 'refuse', amount: '3.00' },
+          { order: mainId, kind: 'money', amount: '6.75' }, { order: yueId, kind: 'refuse', amount: '7.00' },
+          { order: yueId, kind: 'goods', amount: '7.00' }]);
         expect(await order(mainId)).toMatchObject({ paid: 1, payType: 'offline', payPrice: '18.75', refundPrice: '18.75', refundStatus: 2, refundType: 6 });
         expect(await order(yueId)).toMatchObject({ paid: 1, payType: 'yue', payPrice: '18.75', refundPrice: '7.00', refundStatus: 2, refundType: 6 });
         const mainRefunds = await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.storeOrderId, mainId));
@@ -117,8 +146,13 @@ it('executes actual goods and money refunds in Browser and recovers the original
         expect(await f.db.select().from(storeOrderRefundSplit)).toHaveLength(2);
         expect(await f.db.select().from(storeOrderRefundPayment)).toHaveLength(0);
         expect(await f.exec('SELECT operation_id FROM public.supplier_refund_money_payment_v1')).toHaveLength(0);
-        expect(await f.exec('SELECT operation_id FROM public.supplier_proactive_refund_operation_v1')).toHaveLength(5);
-        expect(await f.exec('SELECT operation_id FROM public.supplier_proactive_refund_decision_v1')).toHaveLength(5);
+        const operations = await f.exec('SELECT operation_id::text,kind FROM public.supplier_proactive_refund_operation_v1 ORDER BY operation_id');
+        expect(operations.map(row => row.operation_id)).toEqual([...operationIds].sort());
+        expect(operations.filter(row => row.kind === 'goods')).toHaveLength(2);
+        expect(operations.filter(row => row.kind === 'money')).toHaveLength(2);
+        expect(operations.filter(row => row.kind === 'refuse')).toHaveLength(3);
+        expect((await f.exec('SELECT operation_id::text FROM public.supplier_proactive_refund_decision_v1 ORDER BY operation_id'))
+          .map(row => row.operation_id)).toEqual([...operationIds].sort());
         expect(await f.exec('SELECT refund_id FROM public.supplier_manual_refund_proof_v1')).toHaveLength(1);
         const completions = await f.exec('SELECT amount::text,before_refunded::text,after_refunded::text FROM public.supplier_refund_money_completion_v1 AS completion ORDER BY completion.before_refunded');
         expect(completions).toEqual([{ amount: '5.00', before_refunded: '7.00', after_refunded: '12.00' }, { amount: '6.75', before_refunded: '12.00', after_refunded: '18.75' }]);
@@ -131,7 +165,7 @@ it('executes actual goods and money refunds in Browser and recovers the original
         expect(BigInt((await buyer()).nowMoney.replace('.', '')) - BigInt(paidBuyer!.nowMoney.replace('.', ''))).toBe(700n);
         expect((await f.db.select().from(storeOrderInvoice)).map(row => ({ amount: row.invoiceAmount, refunded: row.isRefund, issued: row.isInvoice })))
           .toEqual([{ amount: '18.75', refunded: 1, issued: 0 }, { amount: '18.75', refunded: 1, issued: 0 }]);
-        expect(paths.filter(row => row.method === 'PUT' && row.path === `/supplierapi/order/refund/${mainId}`)).toHaveLength(3);
+        expect(paths.filter(row => row.method === 'PUT' && row.path === `/supplierapi/order/refund/${mainId}`)).toHaveLength(5);
         expect(paths.filter(row => row.method === 'PUT' && row.path === `/supplierapi/order/refund/${yueId}`)).toHaveLength(2);
         expect(paths.some(row => row.method === 'GET' && row.path === `/supplierapi/order/refund_operations/${lostOperation}` && row.actor === 21)).toBe(true);
         expect(paths.filter(row => row.actor === 22 && row.method !== 'GET')).toEqual([]);
@@ -152,50 +186,76 @@ it('executes actual goods and money refunds in Browser and recovers the original
         const isWrite = method === 'PUT' && [mainId, yueId].some(id => path === `/supplierapi/order/refund/${id}`);
         if (withdrawn && !restored) expect(isWrite).toBe(false);
         const recoveringOriginal = withdrawn && method === 'GET' && path === `/supplierapi/order/refund_operations/${lostOperation}`;
-        const before = isWrite || recoveringOriginal ? await snapshot() : undefined;
+        const before = isWrite || method === 'GET' ? await snapshot() : undefined;
         const response = await app.fetch(new Request(origin + req.url, { method, headers,
           ...(bytes.length ? { body: new Uint8Array(bytes).buffer } : {}) }), env);
         const text = await response.text();
+        const after = before ? await snapshot() : undefined;
+        if (method === 'GET') { expect(after).toEqual(before); readonlyGets++; }
         if (path === '/api/get_script') {
           paths.push({ path, method, status: response.status, actor: principal }); expect(response.status).toBe(200);
           expect(response.headers.get('content-type')).toContain('application/javascript'); expect(text).toBe('');
           res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(text); return;
         }
-        const body = JSON.parse(text) as { status: number; data?: SupplierProactiveRefundReceipt };
+        const body = JSON.parse(text) as { status: number; data?: SupplierProactiveRefundReceipt & {
+          kind?: string; refunded?: string; refund_price?: string; quantity?: number } };
         const receipt = body.data;
         paths.push({ path, method, status: response.status, actor: principal, envelope: body.status,
           ...(isWrite && receipt ? { operation_id: receipt.operation_id, kind: receipt.result?.kind, amount: receipt.result?.amount } : {}) });
         if (principal === 22 && method === 'GET' && path === '/supplierapi/order/list' && body.status === 200) viewerObserved = true;
+        if (postMoneyRefuseOperation && !tailOperation && method === 'GET' && path === `/supplierapi/order/refund/${mainId}`) {
+          expect(body).toMatchObject({ status: 200, data: { order_id: mainId, kind: 'money', refunded: '12.00', refund_price: '6.75', quantity: 0 } });
+          expect(await order(mainId)).toMatchObject({ refundPrice: '12.00', refundStatus: 0, refundType: 3 }); postMoneyRefuseReloaded = true;
+        }
         if (isWrite && body.status === 200) {
           expect(principal).toBe(21); expect(response.headers.get('cache-control')).toContain('private, no-store');
           expect(receipt).toMatchObject({ state: 'committed', actor_id: 21, supplier_id: 7 });
-          const result = receipt!.result!, submitted = JSON.parse(bytes.toString('utf8')) as { operation_id: string; refund_price: string; type?: number };
+          const result = receipt!.result!, submitted = JSON.parse(bytes.toString('utf8')) as {
+            operation_id: string; refund_price: string; type?: number; cash_returned?: boolean };
           expect(receipt!.operation_id).toBe(submitted.operation_id); expect(result.amount).toBe(submitted.refund_price);
+          expect(submitted.type).toBe(result.kind === 'refuse' ? 2 : 1);
+          if (result.kind === 'refuse') expect(Object.hasOwn(submitted, 'cash_returned')).toBe(false);
           expect(writes.has(receipt!.operation_id)).toBe(false);
           writes.set(receipt!.operation_id, { order: result.order_id, kind: result.kind, amount: result.amount });
           if (path === `/supplierapi/order/refund/${mainId}`) {
             if (!firstOperation) {
               expect(result).toMatchObject({ order_id: mainId, kind: 'goods', amount: '7.00', status: 'CASH_SUCCESS' });
+              expect(submitted.cash_returned).toBe(true);
               firstOperation = receipt!.operation_id; mainRefundId = result.refund_id!;
               expect(await order(mainId)).toMatchObject({ refundPrice: '7.00', refundStatus: 2, refundType: 6 });
-              firstGoods = await snapshot(); firstGoodsBuyer = await buyer();
+              firstGoods = after!; firstGoodsBuyer = await buyer();
             } else {
-              expect(result).toMatchObject({ order_id: mainId, refund_id: mainRefundId, kind: 'money', status: 'CASH_SUCCESS' });
-              onlyMoneyChanged(firstGoods!, await snapshot()); expect(await buyer()).toEqual(firstGoodsBuyer);
               if (!lostOperation) {
-                expect(result.amount).toBe('5.00'); lostOperation = receipt!.operation_id; dropped = true;
-                expect(await order(mainId)).toMatchObject({ refundPrice: '12.00' });
-                return send(res, JSON.stringify({ status: 502, msg: 'Owned committed money acknowledgement deliberately discarded', data: null }), 502, 'application/json');
+                expect(result).toMatchObject({ order_id: mainId, refund_id: null, kind: 'refuse', amount: '5.00', status: 'REFUSED' });
+                onlyRefusalChanged(before!, after!, mainId, receipt!.operation_id);
+                lostOperation = receipt!.operation_id; dropped = true;
+                expect(await order(mainId)).toMatchObject({ refundPrice: '7.00', refundStatus: 0, refundType: 3 });
+                return send(res, JSON.stringify({ status: 502, msg: 'Owned committed refusal acknowledgement deliberately discarded', data: null }), 502, 'application/json');
               }
-              expect(restored && recovered && !tailOperation).toBe(true); expect(result.amount).toBe('6.75');
-              tailOperation = receipt!.operation_id; expect(await order(mainId)).toMatchObject({ refundPrice: '18.75' }); afterMain = await snapshot();
+              expect(restored && recovered && !tailOperation).toBe(true);
+              if (!moneyOperation) {
+                expect(result).toMatchObject({ order_id: mainId, refund_id: mainRefundId, kind: 'money', amount: '5.00', status: 'CASH_SUCCESS' });
+                expect(submitted.cash_returned).toBe(true); onlyMoneyChanged(firstGoods!, after!); expect(await buyer()).toEqual(firstGoodsBuyer);
+                moneyOperation = receipt!.operation_id;
+                expect(await order(mainId)).toMatchObject({ refundPrice: '12.00', refundStatus: 2, refundType: 6 });
+              } else if (!postMoneyRefuseOperation) {
+                expect(result).toMatchObject({ order_id: mainId, refund_id: null, kind: 'refuse', amount: '3.00', status: 'REFUSED' });
+                onlyRefusalChanged(before!, after!, mainId, receipt!.operation_id);
+                postMoneyRefuseOperation = receipt!.operation_id;
+                expect(await order(mainId)).toMatchObject({ refundPrice: '12.00', refundStatus: 0, refundType: 3 });
+              } else {
+                expect(postMoneyRefuseReloaded).toBe(true);
+                expect(result).toMatchObject({ order_id: mainId, refund_id: mainRefundId, kind: 'money', amount: '6.75', status: 'CASH_SUCCESS' });
+                expect(submitted.cash_returned).toBe(true); onlyMoneyChanged(firstGoods!, after!); expect(await buyer()).toEqual(firstGoodsBuyer);
+                tailOperation = receipt!.operation_id;
+                expect(await order(mainId)).toMatchObject({ refundPrice: '18.75', refundStatus: 2, refundType: 6 }); afterMain = after!;
+              }
             }
           } else {
             expect(!!tailOperation && !!afterMain).toBe(true);
             if (!refuseOperation) {
               expect(submitted.type).toBe(2); expect(result).toMatchObject({ order_id: yueId, refund_id: null, kind: 'refuse', amount: '7.00', status: 'REFUSED' });
-              const after = await snapshot();
-              expect({ ...after, store_order: [], proactive: [], decisions: [] }).toEqual({ ...before!, store_order: [], proactive: [], decisions: [] });
+              onlyRefusalChanged(before!, after!, yueId, receipt!.operation_id);
               expect(await order(yueId)).toMatchObject({ refundPrice: '0.00', refundStatus: 0, refundType: 3 }); refuseOperation = receipt!.operation_id;
             } else {
               expect(!yueOperation).toBe(true); expect(result).toMatchObject({ order_id: yueId, kind: 'goods', amount: '7.00', status: 'BALANCE_SUCCESS' });
@@ -205,8 +265,8 @@ it('executes actual goods and money refunds in Browser and recovers the original
         }
         if (recoveringOriginal) {
           expect(body).toMatchObject({ status: 200, data: { operation_id: lostOperation, actor_id: 21, supplier_id: 7, order_id: mainId,
-            state: 'committed', result: { kind: 'money', refund_id: mainRefundId, amount: '5.00', status: 'CASH_SUCCESS' } } });
-          expect(await snapshot()).toEqual(before); recovered = true;
+            state: 'committed', result: { kind: 'refuse', refund_id: null, amount: '5.00', status: 'REFUSED' } } });
+          expect(after).toEqual(before); expect(await order(mainId)).toMatchObject({ refundPrice: '7.00', refundStatus: 0, refundType: 3 }); recovered = true;
         }
         res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(text);
       }).catch(error => { send(res, 'Owned proactive refund fixture failed', 500, 'text/plain'); fail(error); });
@@ -265,8 +325,10 @@ it('executes actual goods and money refunds in Browser and recovers the original
       process.stdout.write('SUPPLIER_PROACTIVE_REFUND_BROWSER_READY ' + JSON.stringify({ control: origin + control,
         orders: origin + '/orders', refund: origin + `/orders/${mainId}/refund`, result: origin + '/orders/refund-result',
         yue: origin + `/orders/${yueId}/refund`, mainId, yueId,
-        steps: ['viewer has no proactive refund button', 'owner offline goods7.00', 'offline money5.00 loses committed reply',
-          'withdraw manage, reload result, GET original UUID', 'restore manage, money6.75', 'fresh yue refuse7.00', 'fresh yue goods7.00', 'finish'] }) + '\n');
+        steps: ['viewer has no proactive refund button', 'owner offline goods7.00', 'reload, postgoods refuse5.00 loses committed reply, cumulative7.00',
+          'withdraw manage, reload result, GET original UUID REFUSED5.00', 'restore manage, money5.00 restores completed metadata, cumulative12.00',
+          'reload, postgoods refuse3.00 preserves cumulative12.00', 'explicit reload, tail money6.75 restores completed metadata, cumulative18.75',
+          'fresh yue refuse7.00', 'fresh yue goods7.00', 'finish'] }) + '\n');
       deadline = setTimeout(() => fail(Error('Supplier proactive refund Browser finish not received')), 18 * 60_000);
       await completion;
       process.stdout.write('SUPPLIER_PROACTIVE_REFUND_BROWSER_RESULT ' + JSON.stringify(await state()) + '\n');

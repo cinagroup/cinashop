@@ -146,7 +146,7 @@ export class SupplierProactiveRefundService {
    assertSupplierProactiveRefundRevision(intent.revision,supplierProactiveRefundMac(this.appKey,money??source,owner));
    assertSupplierProactiveRefundCash(intent,settlement(source.order,intent.refund_price));
    if(money) {
-    if(intent.type===2)throw new ServiceUnavailableException('整单完成后的拒绝须保留原商品完成状态与凭据');
+    if(intent.type===2)return this.refuse(tx,source,intent,hash,owner,true);
     const operation=await executeSupplierProactiveMoneyRefund(tx,owner,intent,hash,source,await clock(tx),this.appKey);
     return completeReceipt(tx,operation,owner);
    }
@@ -198,8 +198,10 @@ export class SupplierProactiveRefundService {
    if(!stored)throw supplierProactiveRefundConflict();return completeReceipt(tx,stored,owner);
   });
  }
- private async refuse(tx:DbClient,source:Source,intent:SupplierProactiveRefundIntent,hash:string,actor:SupplierVideoActor) {
+ private async refuse(tx:DbClient,source:Source,intent:SupplierProactiveRefundIntent,hash:string,actor:SupplierVideoActor,completed=false) {
   const order=source.order,expected={...order,refundStatus:0,refundType:3};
+  const first=completed?(await verifiedSupplierProactiveMoneyEvidence(tx,source)).firstRefund:undefined;
+  const effects=first?await captureFinancialEffects(tx,order,first):undefined;
   let expectedPayment=source.payment;
   const originalPayment=source.payment as Record<string,unknown>;
   // An online root order appears twice in the complete source. Prove that
@@ -217,6 +219,11 @@ export class SupplierProactiveRefundService {
   await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
   const actual=await current(tx,order.id,actor);
   fact(await outRequestHash(actual)===await outRequestHash({...source,order:expected,payment:expectedPayment}));
+  if(completed){
+   await moneySource(tx,actual);
+   fact(first&&effects);
+   fact(await outRequestHash(await captureFinancialEffects(tx,actual.order,first!))===await outRequestHash({...effects,order:expected}));
+  }
   await assertSupplierVideoAuthority(tx,actor,'supplier.order.manage');return completeReceipt(tx,operation,actor);
  }
  async receipt(value:string,actor:SupplierVideoActor):Promise<SupplierProactiveRefundReceipt> {

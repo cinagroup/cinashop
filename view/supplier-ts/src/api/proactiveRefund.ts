@@ -44,7 +44,7 @@ export function parseProactiveRefundSeed(value: unknown, orderId: number): Proac
 }
 export function proactiveRefundPayload(seed: ProactiveRefundSeed, pending: PendingProactiveRefund, input: string, type: 1 | 2, cash: boolean) {
   parsePendingProactiveRefund(pending, pending.actor_id, pending.supplier_id);
-  if (pending.order_id !== seed.order_id || ![1, 2].includes(type) || type === 2 && seed.kind === 'money') throw fail();
+  if (pending.order_id !== seed.order_id || ![1, 2].includes(type)) throw fail();
   if (typeof input !== 'string' || !/^\d{1,10}(?:\.\d{1,2})?$/.test(input.trim())) throw Error('退款金额最多保留两位小数');
   const [whole, fraction = ''] = input.trim().split('.'), amount = `${BigInt(whole!).toString()}.${fraction.padEnd(2, '0')}`;
   if (!money.test(amount) || cents(amount) > cents(seed.amount) || cents(amount) === 0n && seed.paid !== '0.00') throw Error('退款金额须在当前可退金额内，且大于零');

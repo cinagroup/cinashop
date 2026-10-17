@@ -113,6 +113,45 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier settlem
    }));
   });
  },120000);
+ it.each(['offline','yue'] as const)('keeps both SELECT-only realms readable across real %s completed-goods refusals and payouts',async channel=>{
+  const id=await f.paid(channel);await f.withWriter(async(runtime,service)=>{
+   const first=await f.execute(service,id,'7.00');
+   const refuse=async(amount:string)=>{const seed=await service.seed(id,supplierOrderEditActor());
+    return service.execute(id,{operation_id:crypto.randomUUID(),revision:seed.revision,refund_price:amount,type:2},supplierOrderEditActor());};
+   const refused=await refuse('5.00');
+   expect(refused.result).toMatchObject({kind:'refuse',refund_id:null,status:'REFUSED'});
+   await withTx(runtime.container,async tx=>{
+    const r=await refund(id);
+    await expect(verifyFinancialCompletedRefund(tx,r,readBoundManualRefundProof)).rejects.toMatchObject({code:400});
+   });
+   await readers(async()=>{
+    await readBoth(id,{refunded:'7.00',money_refunded:'0.00',available:'11.75',money_payouts:0});
+    await f.db.update(systemRole).set({rules:'supplier.order.view'}).where(eq(systemRole.id,21));
+    try{await readBoth(id,{refunded:'7.00',money_refunded:'0.00',available:'11.75',money_payouts:0});}
+    finally{await f.db.update(systemRole).set({rules:'supplier.order.manage,supplier.refund.manage'}).where(eq(systemRole.id,21));}
+    await f.execute(service,id,'5.00');await refuse('3.00');
+    await readBoth(id,{refunded:'12.00',money_refunded:'5.00',available:'6.75',money_payouts:1});
+    await f.execute(service,id,'6.75');await readBoth(id,{refunded:'18.75',money_refunded:'11.75',available:'0.00',money_payouts:2});
+    const stable=await f.snapshot();
+    expect(await service.receipt(refused.operation_id,supplierOrderEditActor())).toEqual(refused);
+    expect(await service.receipt(first.body.operation_id,supplierOrderEditActor())).toEqual(first.result);
+    expect(await f.snapshot()).toEqual(stable);
+   });
+  });
+ },120000);
+ it('rejects unproved refused metadata on both realms despite an older valid anchor at a different amount',async()=>{
+  const id=await f.paid();await f.withWriter(async(_runtime,service)=>{
+   await f.execute(service,id,'7.00');const seed=await service.seed(id,supplierOrderEditActor());
+   await service.execute(id,{operation_id:crypto.randomUUID(),revision:seed.revision,refund_price:'5.00',type:2},supplierOrderEditActor());
+   await f.execute(service,id,'5.00');
+   await f.db.update(storeOrder).set({refundStatus:0,refundType:3}).where(eq(storeOrder.id,id));
+   await readers(async()=>{const before=await f.snapshot(),r=await refund(id);
+    expect((await http(await path(id))).body.status).toBe(409);
+    expect((await http('/adminapi/refund/settlement/'+r.id,'admin')).body.status).toBe(409);
+    expect(await f.snapshot()).toEqual(before);
+   });
+  });
+ },120000);
  it('commissions exactly eight SELECT privileges and no DML, owned sequence or Supplier write-function execution',async()=>{
   await f.withWriter(async()=>f.withReader(async(reader,commission)=>{
    expect((await supplierRefundSettlementReadOnlyRole(reader.db)).ready).toBe(false);await commission();
