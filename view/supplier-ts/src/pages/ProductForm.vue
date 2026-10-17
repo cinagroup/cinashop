@@ -19,6 +19,9 @@ import ProductImagePicker from '@/components/ProductImagePicker.vue';
 import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
 import { videoPreviewSource } from '@/api/productVideoUpload';
 import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.vue';
+import SupplierProductBrandPicker from '@/components/SupplierProductBrandPicker.vue';
+import type { SupplierProductBrandSelection } from '@/types/productBrands';
+import { productBrandDetail, productBrandPath, productBrandPayload } from '@/utils/productBrands';
 import type { SupplierAttachment } from '@/api/attachments';
 import { escapeProductText, formatProductDescription, productDescriptionPreview, productImagePreview, type ProductMediaPreview } from '@/utils/productMedia';
 import { createSupplierSessionScope } from '@/utils/supplierSession';
@@ -73,6 +76,13 @@ const selectedActiveSkuIds = ref<number[]>([]);
 const selectedRetiredSkuIds = ref<number[]>([]);
 const categories = ref<ProductCategory[]>([]);
 const selectedLabelIds = ref<number[]>([]), labelsChanged = ref(false);
+const selectedBrandPath = ref<number[]>([]), brandSelection = ref<SupplierProductBrandSelection | null>(null), brandChanged = ref(false);
+const brandAvailability = ref({ ready: false, valid: false });
+function changeBrand(value: number[]) {
+  if (loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
+  try { selectedBrandPath.value = productBrandPath(value); brandChanged.value = true; }
+  catch (error) { ElMessage.warning(error instanceof Error ? error.message : '品牌选择无效'); }
+}
 const labelAvailability = ref({ ids: [] as number[], ready: false });
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
 const selectedRuleId = ref<number | null>(null);
@@ -214,6 +224,7 @@ function resetProductForm() {
   Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
+  selectedBrandPath.value = []; brandSelection.value = null; brandChanged.value = false; brandAvailability.value = { ready: false, valid: false };
   labelAvailability.value = { ids: [], ready: false };
   for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
   Object.assign(form, initialForm());
@@ -234,7 +245,9 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
+  const brand = productBrandDetail(detail);
   Object.assign(schedule, productScheduleEditor(detail));
+  selectedBrandPath.value = brand.path; brandSelection.value = brand.selection; brandChanged.value = false;
   videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
   const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
@@ -487,6 +500,7 @@ function removeSlider(index: number) {
 function validateForm() {
   if (!productReadReady.value) return '请先成功读取完整商品资料';
   if (!copying.value) try { productSchedulePayload(schedule); } catch (error) { return error instanceof Error ? error.message : '上下架计划无效'; }
+  if (!copying.value && brandChanged.value && selectedBrandPath.value.length && (!brandAvailability.value.ready || !brandAvailability.value.valid)) return '请刷新品牌并重新选择完整品牌路径，或清空品牌选择';
   if (labelsChanged.value && !labelAvailability.value.ready) return '请刷新商品标签后再保存标签修改';
   if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
@@ -524,9 +538,9 @@ async function submit() {
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
-      auto_on_time: _autoOn, auto_off_time: _autoOff, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+      auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
     const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
-      ...(!copying.value ? productSchedulePayload(schedule) : {}) };
+      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
       // Persist only the recovery identity before the first POST. Product text,
@@ -695,6 +709,8 @@ onMounted(load);
                 <el-tree-select v-model="form.cate_id" :data="categories" :props="treeProps" multiple check-strictly show-checkbox clearable style="width: 100%" placeholder="选择本供应商分类" />
               </el-form-item>
               <el-form-item label="计量单位"><el-input v-model="form.unit_name" maxlength="32" /></el-form-item>
+              <el-form-item v-if="!copying" label="商品品牌"><SupplierProductBrandPicker :model-value="selectedBrandPath" :selection="brandSelection" :changed="brandChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeBrand" @availability="brandAvailability = $event" /></el-form-item>
+              <p v-else class="brand-copy-note">复制保留来源的品牌，创建后可在编辑页调整。</p>
               <el-form-item class="wide" label="商品标签"><SupplierProductLabelPicker :model-value="selectedLabelIds" :context="copyEntry.source || productId" :disabled="loading || saving || copyBlocked || !canManageProducts" @update:model-value="selectedLabelIds = $event; labelsChanged = true" @availability="labelAvailability = $event" /></el-form-item>
               <el-form-item label="搜索关键词"><el-input v-model="form.keyword" maxlength="256" placeholder="多个关键词可用逗号分隔" /></el-form-item>
               <el-form-item label="商品条码"><el-input v-model="form.bar_code" maxlength="15" /></el-form-item>
@@ -892,6 +908,7 @@ onMounted(load);
 </template>
 
 <style scoped>
+.brand-copy-note { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .schedule-card p, .schedule-copy-note { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .schedule-card > .el-checkbox { display: flex; margin: 10px 0; }
 .schedule-time { display: grid; gap: 6px; margin: 8px 0 16px; font-size: 12px; }

@@ -44,6 +44,8 @@ import { tryLockProductWrite } from '@/services/product/ProductAssociationServic
 import { lockProductUnitLifecycle } from '@/services/product/ProductUnitLifecycle';
 import { HttpApiException } from '@/utils/errors';
 import { supplierProductScheduleInput, type SupplierProductScheduleInput } from './SupplierProductScheduleInput';
+import { supplierProductBrandInput, lockSupplierProductBrandPath, readSupplierBrandProtectedRelations,
+  readSupplierProductBrandSelection, replaceSupplierProductBrandBindings } from './SupplierProductBrandBindings';
 
 export {
   buildSkuCombinations,
@@ -406,6 +408,7 @@ export class SupplierProductManagementService {
   async saveProduct(supplierId: number, productId: number, rawInput: UnknownRecord, actor?: SupplierProductLabelActor) {
     const input = normalizeSupplierProductInput(prepareSupplierProductMediaInput(rawInput));
     const labelIds = supplierProductLabelInput(rawInput);
+    const brandIds = supplierProductBrandInput(rawInput);
     const hasSchedule = input.autoOnTime !== undefined || input.autoOffTime !== undefined;
     const labelAuthority = new SupplierProductLabelService(this.container);
     const labelPath = `/supplierapi/product/product/${productId}`;
@@ -415,11 +418,12 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined || hasSchedule) {
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
         if (labelIds !== undefined) await assertSupplierProductLabelBindings(tx, supplierId, labelIds);
+        if (brandIds !== undefined) await lockSupplierProductBrandPath(tx, brandIds);
       }
       if (productId > 0) {
         await boundBargainSourceProductChange(tx);
@@ -429,7 +433,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if ((labelIds !== undefined || hasSchedule) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -452,6 +456,8 @@ export class SupplierProductManagementService {
       if (existing && existing.productType !== input.productType) {
         throw new ValidateException("商品创建后不能修改履约类型");
       }
+      const protectedBrandRelations = brandIds !== undefined && existing
+        ? await readSupplierBrandProtectedRelations(tx, productId, labelIds !== undefined) : [];
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
       await lockSupplierProductMedia(tx, supplierId, input);
@@ -560,7 +566,12 @@ export class SupplierProductManagementService {
       if (labelIds !== undefined) {
         await replaceSupplierProductLabelBindings(tx, supplierId, savedProductId, labelIds);
       }
-      if (labelIds !== undefined || hasSchedule) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (brandIds !== undefined) {
+        await replaceSupplierProductBrandBindings(tx, supplierId, savedProductId, brandIds, existing ? {
+          ...existing, ...productValues, ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
+        } : undefined, protectedBrandRelations, labelIds !== undefined);
+      }
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       if (hasSchedule) {
         const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
           isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
@@ -575,7 +586,7 @@ export class SupplierProductManagementService {
       }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
-      if (hasSchedule) {
+      if (hasSchedule || brandIds !== undefined) {
         let cause = error;
         for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
           if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
@@ -664,7 +675,8 @@ export class SupplierProductManagementService {
     const video = await resolveProductVideoReference(this.container.db, detail.video_link, { type: 2, relationId: supplierId }, { allowLegacyRelative: true });
     const videoPreview = video && parseCanonicalAttachmentId(video) !== null
       ? this.env?.APP_KEY ? (await signAttachmentReferences(this.env.APP_KEY, [video]))[0] : '' : video;
-    return { ...detail, media, video_preview_url: videoPreview };
+    const brand = await readSupplierProductBrandSelection(this.container.db, product);
+    return { ...detail, ...brand, media, video_preview_url: videoPreview };
   }
 
   async recycleProduct(supplierId: number, productId: number) {
