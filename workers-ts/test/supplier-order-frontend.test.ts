@@ -59,13 +59,22 @@ async function mount(override: (config: any) => unknown = () => undefined) {
       config.url.startsWith('/order/status/') ? [{ id, oid:id, changeType:'pay',changeMessage:'已支付',changeTime:1700000001 }] : order(id) };
     return { config, data: body, status: 200, statusText: 'local fixture', headers: {} };
   };
-  const router = runtime.createRouter({ history: runtime.createMemoryHistory(), routes: [{ path: '/orders', component: { setup(p: unknown, c: unknown) { view = runtime.Component.setup(p, c); return () => null; } } }, { path: '/away', component: { render: () => null } }] });
+  const router = runtime.createRouter({ history: runtime.createMemoryHistory(), routes: [{ path: '/orders', component: { setup(p: unknown, c: unknown) { view = runtime.Component.setup(p, c); return () => null; } } }, { path: '/orders/:id/refund', component: { render: () => null } }, { path: '/away', component: { render: () => null } }] });
   const renderer = runtime.createRenderer({ createElement: () => ({ children: [] }), createText: (text: string) => ({ text }), createComment: (text: string) => ({ text }),
     insert(n: any, p: any) { n.parent = p; (p.children ??= []).push(n); }, remove() {}, parentNode: (n: any) => n.parent, nextSibling: () => null, patchProp() {}, setText() {}, setElementText() {} });
   const app = renderer.createApp({ render: () => runtime.h(runtime.RouterView) }); app.use(pinia); app.use(router); await router.push('/orders'); app.mount({ children: [] }); await flush();
   return { view, calls, router, writes: () => calls.filter(c => c.method === 'put' || c.method === 'post'), close: () => app.unmount() };
 }
 function fillDelivery(view: any) { view.selectExpress(1); view.deliveryForm.company_id = 1; view.deliveryForm.delivery_id = 'LOCAL-TRACKING'; }
+it('opens proactive refunds by a paid order ID and never treats an unpaid row as a refund',async()=>{
+ const f=await mount();try{expect(f.view.canProactiveRefund(order())).toBe(true);expect(f.view.canProactiveRefund(order(25,{paid:0}))).toBe(false);
+  f.view.uncertainIds.add(25);expect(f.view.canProactiveRefund(order())).toBe(false);f.view.uncertainIds.clear();
+  await f.view.openProactiveRefund(order());expect(f.router.currentRoute.value.path).toBe('/orders/25/refund');expect(f.writes()).toEqual([]);
+ }finally{f.close();}
+});
+it('hides proactive refund entry for view-only accounts',async()=>{
+ localStorage.setItem('supplier-permissions','["supplier.order.view"]');const f=await mount();try{expect(f.view.canProactiveRefund(order())).toBe(false);await f.view.openProactiveRefund(order());expect(f.router.currentRoute.value.path).toBe('/orders');}finally{f.close();}
+});
 it('clears old order details synchronously and ignores late content after drawer close', async () => {
   const wait = gate(), f = await mount(c => c.url === '/order/info/32' ? wait.promise : undefined);
   try { await f.view.openOrder(order(25)); const pending = f.view.openOrder(order(32));
