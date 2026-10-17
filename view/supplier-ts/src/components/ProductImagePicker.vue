@@ -4,7 +4,7 @@ import { uploadSupplierImage, type SupplierAttachment } from '@/api/attachments'
 import { useAttachmentSelection } from '@/utils/attachmentSelection';
 import { useAuthStore } from '@/stores/auth';
 
-const props = defineProps<{ modelValue: boolean; supplierId: number; limit: number; contextKey: string }>();
+const props = defineProps<{ modelValue: boolean; supplierId: number; limit: number; contextKey: string; purpose?: 'product' | 'finance' }>();
 const emit = defineEmits<{ 'update:modelValue': [open: boolean]; selected: [images: SupplierAttachment[], contextKey: string] }>();
 const auth = useAuthStore();
 const state = useAttachmentSelection({ supplierId: props.supplierId, limit: props.limit });
@@ -20,6 +20,9 @@ const closed = ref(false);
 let alive = true;
 const canUpload = computed(() => auth.can('supplier.attachment.manage') && !invalidated.value && !unknownUpload.value);
 const frozenContext = props.contextKey;
+const dialogTitle = computed(() => props.purpose === 'finance' ? '选择收款二维码' : '选择商品图片');
+const pickerNote = computed(() => props.purpose === 'finance'
+  ? '从当前供应商素材中选择；确认后更新收款表单，保存后生效。' : '从当前供应商素材中选择；确认后只更新商品表单。');
 
 function current() { return alive && !closed.value && props.modelValue && props.contextKey === frozenContext && !invalidated.value; }
 async function readFolder() {
@@ -82,8 +85,8 @@ onBeforeUnmount(() => { alive = false; uploadController.abort(); state.dispose()
 </script>
 
 <template>
-  <el-dialog :model-value="modelValue" title="选择商品图片" width="min(880px, 96vw)" append-to-body :close-on-click-modal="false" @update:model-value="(value: boolean) => !value && close()">
-    <p class="picker-note">从当前供应商素材中选择；确认后只更新商品表单。</p>
+  <el-dialog :model-value="modelValue" :title="dialogTitle" width="min(880px, 96vw)" append-to-body :close-on-click-modal="false" @update:model-value="(value: boolean) => !value && close()">
+    <p class="picker-note">{{ pickerNote }}</p>
     <nav class="folders" aria-label="图片分类路径">
       <el-button v-for="(item, index) in trail" :key="item.id" link :disabled="uploading || invalidated" @click="parentFolder(index)">{{ item.name }}</el-button>
     </nav>
@@ -97,7 +100,7 @@ onBeforeUnmount(() => { alive = false; uploadController.abort(); state.dispose()
       <el-button :disabled="uploading || invalidated" @click="search">搜索</el-button>
       <el-button :disabled="uploading || loading || invalidated" @click="refresh">重读图片</el-button>
       <el-button v-if="auth.can('supplier.attachment.manage')" :loading="uploading" :disabled="!canUpload" @click="uploadInput?.click()">上传图片</el-button>
-      <input ref="uploadInput" class="hidden-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label="上传商品图片" @change="upload" />
+      <input ref="uploadInput" class="hidden-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" :aria-label="purpose === 'finance' ? '上传收款二维码' : '上传商品图片'" @change="upload" />
     </div>
     <p v-if="uploadMessage" role="status">{{ uploadMessage }}</p>
     <div v-if="error" role="alert"><p>{{ error }}；未更新图片，请重试。</p><el-button :disabled="loading || invalidated" @click="refresh">重试图片列表</el-button></div>

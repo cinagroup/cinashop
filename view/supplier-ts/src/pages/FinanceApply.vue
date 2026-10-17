@@ -135,7 +135,7 @@ onScopeDispose(() => { alive = false; generation++; readController?.abort(); pos
             <img v-if="image(source.accounts[extractType].qrcode_url)" :src="image(source.accounts[extractType].qrcode_url)" alt="本次申请收款二维码" referrerpolicy="no-referrer" @error="imageError(source.accounts[extractType].qrcode_url)" />
             <p v-else>{{ source.accounts[extractType].qrcode_url ? '二维码已配置，图片暂不可预览，请核对收款资料' : '收款二维码未配置' }}</p></template>
           <p v-if="!account?.ready" role="alert">请先在收款设置补齐{{ extractType === 'bank' ? '银行卡号和开户行' : '账号和收款二维码' }}。</p>
-          <el-button @click="router.push('/finance')">打开财务收款设置</el-button>
+          <el-button @click="router.push('/finance/accounts')">打开财务收款设置</el-button>
         </section>
         <label>提现金额<input v-model="money" inputmode="decimal" placeholder="0.00" :disabled="saving" /></label>
         <label>申请备注（最多255字）<textarea v-model="mark" rows="3" maxlength="510" :disabled="saving" /></label>

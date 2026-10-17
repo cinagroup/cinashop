@@ -57,6 +57,7 @@ import { readBoundedJsonObject as readRequestJsonObject } from "@/utils/request-
 import { categoryActor } from './SupplierProductCategoryController';
 import * as ProductRecycle from './SupplierProductRecycleController';
 import * as ExtractApplication from './SupplierExtractApplicationController';
+import * as FinanceAccounts from './SupplierFinanceAccountsController';
 
 type SupplierContext = Context<{
   Bindings: Env;
@@ -851,16 +852,9 @@ export async function refundOrder(c: SupplierContext) {
   return jsonOk(c, result, result.completed ? "退款成功" : "退款已受理，等待渠道确认");
 }
 
-export async function financeInfo(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  return jsonOk(c, await financeService(c).info(supplierId));
-}
+export async function financeInfo(c: SupplierContext) { return FinanceAccounts.info(c); }
 
-export async function updateFinanceInfo(c: SupplierContext) {
-  const { supplierId } = supplierIdentity(c);
-  await financeService(c).updateInfo(supplierId, await readJsonObject(c));
-  return jsonOk(c, null, "设置成功");
-}
+export async function updateFinanceInfo(c: SupplierContext) { return FinanceAccounts.update(c); }
 
 export async function financeSummary(c: SupplierContext) {
   const { supplierId } = supplierIdentity(c);

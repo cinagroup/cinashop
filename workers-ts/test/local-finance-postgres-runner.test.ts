@@ -158,6 +158,23 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
     expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
   });
+  it('admits the exact Supplier finance accounts in-app mode without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:supplier-finance-accounts-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER'); expect(result.stderr).not.toContain('Only explicit');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:supplier-finance-accounts-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:supplier-finance-accounts-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'bill', 'unused-bin', 'audit:supplier-finance-accounts-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:supplier-finance-accounts-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid Supplier finance accounts Browser admission $args', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
   it.each([1, 2])('admits only the complete native shard %i maintenance alias', shard => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `audit:unit-shard-${shard}`],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

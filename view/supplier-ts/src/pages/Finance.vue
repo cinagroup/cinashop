@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
-import {
-  getFinanceInfo,
-  getFinanceSummary,
-  updateFinanceInfo,
-} from "@/api/supplier";
-import type { FinanceInfo, FinanceSummary } from "@/types";
+import { useRoute, useRouter } from "vue-router";
+import { getFinanceSummary } from "@/api/supplier";
+import type { FinanceSummary } from "@/types";
 import { useAuthStore } from "@/stores/auth";
 import { formatMoney } from "@/utils/format";
 import FinanceFlows from '@/pages/FinanceFlows.vue';
 import FinanceExtracts from '@/pages/FinanceExtracts.vue';
+import FinanceAccounts from '@/pages/FinanceAccounts.vue';
+import { createSupplierSessionScope } from '@/utils/supplierSession';
 
-const auth = useAuthStore(), router = useRouter();
+const auth = useAuthStore(), router = useRouter(), route = useRoute();
 const loading = ref(false);
 const activeTab = ref("flows");
-const summary = ref<FinanceSummary>({
+const emptySummary = (): FinanceSummary => ({
   available: "0.00",
   pending_settlement: "0.00",
   total_income: "0.00",
@@ -24,48 +22,33 @@ const summary = ref<FinanceSummary>({
   pending_extract: "0.00",
   paid_extract: "0.00",
 });
-const financeInfo = reactive<FinanceInfo>({
-  bank_code: "",
-  bank_address: "",
-  alipay_account: "",
-  alipay_qrcode_url: "",
-  wechat: "",
-  wechat_qrcode_url: "",
-});
-const infoSaving = ref(false);
+const summary = ref(emptySummary());
 const canManageFinance = computed(() => auth.can("supplier.finance.manage"));
-
-async function loadSummaryAndInfo() {
-  const [summaryData, infoData] = await Promise.all([getFinanceSummary(), getFinanceInfo()]);
-  summary.value = summaryData;
-  Object.assign(financeInfo, infoData);
+let alive = true, invalidated = false, generation = 0, controller: AbortController | undefined;
+let session: ReturnType<typeof createSupplierSessionScope> | undefined;
+function invalidate() {
+  invalidated = true; generation++; controller?.abort(); summary.value = emptySummary(); loading.value = false;
 }
+try { session = createSupplierSessionScope(invalidate); } catch { invalidate(); }
+function current() { try { return alive && !invalidated && !!session?.isCurrent() && route.path === '/finance' && auth.can('supplier.finance.view'); } catch { invalidate(); return false; } }
+watch(() => route.fullPath, invalidate);
+watch(() => JSON.stringify([auth.token, auth.user?.id, auth.user?.supplier_id, auth.permissions, auth.permissionsLoaded]), invalidate);
 
 async function loadAll() {
+  if (!current()) return;
+  const id = ++generation; controller?.abort(); controller = new AbortController(); const signal = controller.signal;
   loading.value = true;
   try {
-    await loadSummaryAndInfo();
+    const value = await getFinanceSummary(signal);
+    if (current() && id === generation && !signal.aborted) summary.value = value;
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "财务数据加载失败");
+    if (current() && id === generation && !signal.aborted) ElMessage.error(error instanceof Error ? error.message : "财务数据加载失败");
   } finally {
-    loading.value = false;
+    if (current() && id === generation) loading.value = false;
   }
 }
-
-async function saveFinanceInfo() {
-  if (!canManageFinance.value) return;
-  infoSaving.value = true;
-  try {
-    await updateFinanceInfo({ ...financeInfo });
-    ElMessage.success("收款信息已保存");
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "收款信息保存失败");
-  } finally {
-    infoSaving.value = false;
-  }
-}
-
 onMounted(loadAll);
+onBeforeUnmount(() => { alive = false; invalidate(); session?.dispose(); });
 </script>
 
 <template>
@@ -94,12 +77,7 @@ onMounted(loadAll);
         </el-tab-pane>
 
         <el-tab-pane label="收款设置" name="settings">
-          <div class="finance-settings">
-            <section><h2>银行卡</h2><el-form label-position="top"><el-form-item label="银行卡号"><el-input v-model="financeInfo.bank_code" maxlength="32" :disabled="!canManageFinance" /></el-form-item><el-form-item label="开户行"><el-input v-model="financeInfo.bank_address" maxlength="256" :disabled="!canManageFinance" /></el-form-item></el-form></section>
-            <section><h2>支付宝</h2><el-form label-position="top"><el-form-item label="支付宝账号"><el-input v-model="financeInfo.alipay_account" maxlength="64" :disabled="!canManageFinance" /></el-form-item><el-form-item label="二维码地址"><el-input v-model="financeInfo.alipay_qrcode_url" maxlength="255" :disabled="!canManageFinance" /></el-form-item></el-form></section>
-            <section><h2>微信</h2><el-form label-position="top"><el-form-item label="微信号"><el-input v-model="financeInfo.wechat" maxlength="15" :disabled="!canManageFinance" /></el-form-item><el-form-item label="二维码地址"><el-input v-model="financeInfo.wechat_qrcode_url" maxlength="255" :disabled="!canManageFinance" /></el-form-item></el-form></section>
-          </div>
-          <div v-if="canManageFinance" class="finance-settings-actions"><el-button type="primary" :loading="infoSaving" @click="saveFinanceInfo">保存收款信息</el-button></div>
+          <FinanceAccounts v-if="activeTab === 'settings'" embedded />
         </el-tab-pane>
       </el-tabs>
     </div>

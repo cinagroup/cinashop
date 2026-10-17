@@ -1470,9 +1470,9 @@ export async function updateFinanceInfo(data: FinanceInfo) {
   return apiRequest<null>({ method: "POST", url: "/finance/info", data });
 }
 
-export async function getFinanceSummary(): Promise<FinanceSummary> {
+export async function getFinanceSummary(signal?: AbortSignal): Promise<FinanceSummary> {
   if (previewMode) return { ...previewFinanceSummary };
-  return apiRequest<FinanceSummary>({ method: "GET", url: "/finance/summary" });
+  return apiRequest<FinanceSummary>({ method: "GET", url: "/finance/summary", signal });
 }
 
 export async function getFinanceFlows(params: Record<string, string | number>): Promise<PageResult<FinanceFlow>> {
