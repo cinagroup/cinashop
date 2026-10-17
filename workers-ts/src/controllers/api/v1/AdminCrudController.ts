@@ -957,6 +957,12 @@ export async function adminRefundDetail(c: C) {
   return jsonOk(c, await new AdminRefundReadService(c.get('container'), c.env).detail(adminRefundId(c.req.param('id'))));
 }
 
+export async function adminRefundSettlement(c: C) {
+  privateNoStore(c);
+  if (Object.keys(c.req.query()).length) throw new ValidateException('累计退款核验不接受查询身份');
+  return jsonOk(c, await new AdminRefundReadService(c.get('container'), c.env).settlement(adminRefundId(c.req.param('id'))));
+}
+
 // Retain the registered names, not their former unkeyed execution paths.
 export { retiredAdminRefundMutation as adminRefundAgree,
   retiredAdminRefundMutation as adminRefundRefuse } from './AdminRefundOperationController';

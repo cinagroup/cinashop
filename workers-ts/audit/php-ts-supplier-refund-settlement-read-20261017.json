@@ -1,0 +1,1985 @@
+{
+  "schema": "php-ts-supplier-refund-settlement-read-v1",
+  "date": "2026-10-17",
+  "validated_at_utc": "2026-10-17T00:39:38.015503+00:00",
+  "base_commit": "daac58c60bebf0b3a7b26f7799d21add5b583168",
+  "status": "authorized_supplier_settlement_read_api_verified_ui_and_provider_boundaries_open",
+  "goal_status": "active",
+  "completion_claim": false,
+  "previous_phase_audit": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/listener/order/Refund.php",
+      "sha256": "e6efab85cd4fdbdcfc8f5901fad403b471e66f393788fc93e99e401778f827cc"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/event.php",
+      "sha256": "e5acceb2df39f31f68e8d2388d8d2188819c0748f4935ee575c9f19f3408ae38"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/LoginServices.php",
+      "sha256": "95d65bf54d3bf3a8dd35784c8d7f7e3b71ef1fee0893ef87ff4ee8c674a9a08e"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/AuthTokenMiddleware.php",
+      "sha256": "3eb8736ca6fe37a30b66142bb4b638a61fb623f540141be9569c769188f2895c"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/http/middleware/supplier/SupplierCheckRoleMiddleware.php",
+      "sha256": "51d000fe779095dc33bf820dc654b0a559232d4f7e7db619d0491ca86dcf2002"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/utils/modalForm.js",
+      "sha256": "c13984c66e5074b7687bf86488698e546e37aab9d2ad8e1ba98e3bd173f24689"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/system/CapitalFlowJob.php",
+      "sha256": "191e8b2b62f0ed0d2a0dd3541bbfdc196685a3e05191e06b76a845c5a4d2a3cd"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/CapitalFlowServices.php",
+      "sha256": "102dc781bd25f15d113670b429e3e118f91ee83ade577a1373b808642c14d2e7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/jobs/supplier/SupplierFinanceJob.php",
+      "sha256": "092f47ace4e1b7abdb4d1b28b3360851e2f53590650c26e3340417f43f7eec5b"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/supplier/finance/SupplierFlowingWaterServices.php",
+      "sha256": "254a1529edb53611b287ae1d2c7c940dc213f959d0002e170de6de0618a2e527"
+    }
+  ],
+  "scope": {
+    "changed_files": 16,
+    "source_and_test_files": 13,
+    "root_documents": 2,
+    "new_audit_files": 1,
+    "source_fingerprint_count_excluding_audit": 15,
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "view/common/supplierRefundSettlement.ts",
+      "workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "workers-ts/src/routes/adminapi.ts",
+      "workers-ts/src/routes/v1/index.ts",
+      "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "workers-ts/test/supplier-refund-settlement-read-native.test.ts"
+    ]
+  },
+  "implemented": {
+    "api": [
+      "GET /api/mobile/work/financial/orders/:id/supplier-refund-settlement",
+      "GET /adminapi/refund/settlement/:id",
+      "GET /api/admin/refund/settlement/:id"
+    ],
+    "customer_authority": "Real ordinary UserJWT plus live global customer-order-manager scope; order ID and order_no bind the tuple; optional scope_key and post-snapshot authorization are checked.",
+    "admin_authority": "Actual ordinary-connection AdminJWT/live refund.view check precedes the independent Admin read connection; strict no-query first-refund ID binding.",
+    "closed_summary": "supplier-refund-settlement-v1; first goods, later money, actual cumulative refund, availability and payout count only; no operation UUID/actor/full source/capability.",
+    "proof_composition": "Same READ ONLY repeatable-read transaction: reviewed addon readiness, actual Supplier money evidence, exact first-refund identity, readBoundManualRefundProof and mature deep verifier with opaque transaction-bound baseline.",
+    "default_dto_and_deep_unchanged": true,
+    "read_snapshot_equal": true,
+    "explicit_select_only_feature_tables": [
+      "supplier_order_edit_operation_v1",
+      "supplier_offline_payment_operation_v1",
+      "supplier_manual_refund_operation_v1",
+      "supplier_manual_refund_proof_v1",
+      "supplier_proactive_refund_operation_v1",
+      "supplier_proactive_refund_decision_v1",
+      "supplier_refund_money_payment_v1",
+      "supplier_refund_money_completion_v1"
+    ],
+    "commissioning": "Explicit owner-maintenance SELECT-only addon for a reviewed pure target; no role creation, installation, ownership transfer, sequence/function grant or startup/HTTP repair.",
+    "runtime_combined_writer_compatible": true,
+    "default_missing_select_503_and_same_transaction_live": true,
+    "pure_reader_native_scope": "Actual independent LOGIN: all public business table/column DML denied; all public sequence privileges denied; three Supplier write functions not executable. Existing business SELECT profiles are separate from this eight-table feature addon.",
+    "historical_supplier_manage_withdrawal_does_not_revoke_current_other_authorized_read_subjects": true,
+    "native_corruption_cases_both_realms_exact_409": [
+      "missing completion",
+      "missing decision",
+      "wrong first refund amount",
+      "wrong actual money bill"
+    ],
+    "ui_consumption_implemented": false
+  },
+  "validation": {
+    "status": "accepted_distinct_checks_passed_with_documented_historical_fixture_failure",
+    "assertions_complete": true,
+    "native_assertions_complete": true,
+    "distinct_tests": 263,
+    "distinct_files": 5,
+    "unit": {
+      "report": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-unit-final-2.json",
+        "sha256": "e2a9d1e374b0ef683ca53475c1485ba499421c8f0065131134230cd41c546ad1",
+        "bytes": 82869
+      },
+      "distinct_tests": 214,
+      "distinct_files": 3,
+      "files": [
+        {
+          "path": "workers-ts/test/admin-permission.test.ts",
+          "tests": 25,
+          "status": "passed",
+          "case_identity": "file_and_full_name"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "tests": 162,
+          "status": "passed",
+          "case_identity": "source_bound_assertion_ordinal"
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+          "tests": 27,
+          "status": "passed",
+          "case_identity": "file_and_full_name"
+        }
+      ],
+      "runner_parameter_identity": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-runner-parameters.json",
+        "sha256": "4508eccfa94511d2e215031e33e1bed5f02f2424b11de8dbea50a45e6c3c57fa",
+        "bytes": 45161
+      }
+    },
+    "native": [
+      {
+        "file": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+        "passed": 12,
+        "failed": 0,
+        "total": 12,
+        "log": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-new-native-3.log",
+          "sha256": "a215e2e13f9c3c91dfe775a8b2d8dfd091fc2822949ca7bf5c36c17eea26c544",
+          "bytes": 36968
+        },
+        "case_identities": [
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > reads actual offline goods7 then money5 then tail6.75 on both independent SELECT-only realms"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > reads actual yue goods7 then money5 then tail6.75 on both independent SELECT-only realms"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > preflights absent eight-table SELECT as503 without aborting the actual reader transaction"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > commissions exactly eight SELECT privileges and no DML, owned sequence or Supplier write-function execution"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > allows an existing reviewed combined writer to use only the explicit READ ONLY composition"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-completion while every public GET remains write-free"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-decision while every public GET remains write-free"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-first-refund while every public GET remains write-free"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-money-bill while every public GET remains write-free"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > rechecks live Customer grant and rejects forged scope, query identity, token realm and path identity"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > requires live Admin refund.view before opening its independent read connection and forbids all query fields"
+          ],
+          [
+            "supplier-refund-settlement-read-native.test.ts",
+            "Supplier settlement explicit authorized cross-realm reads > binds the optional refund ID to the actual first goods proof and does not accept a root or writable transaction"
+          ]
+        ],
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-new-native-3-terminal.json",
+          "sha256": "998d6e460a643018c86031ccd63ab83787635fe3761c3f54b788fcdff5b1cc11",
+          "bytes": 2882
+        }
+      },
+      {
+        "file": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+        "passed": 37,
+        "failed": 0,
+        "total": 37,
+        "log": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-regression-native-1.log",
+          "sha256": "c6c02773fef534cc0036ecf624e70f9a5790175e61e2c95b8d2ac7556f0addcf",
+          "bytes": 21647
+        },
+        "case_identities": [
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real offline whole-goods7.00 through JWT and recovers one result without duplicate effects"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real yue whole-goods7.00 through JWT and recovers one result without duplicate effects"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > settles the actual zero-priced checkout with cash confirmation omitted and no balance or platform cash movement"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine offline type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine yue type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine weixin type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > persists a genuine alipay type2 refusal without creating a refund, ledger, stock, point or supplier-settlement effect"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > preserves the complete original18.75 unissued invoice while executing the public7.00 goods concession"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects missing cash confirmation, bad money, unknown fields and decoded duplicate JSON with no SQL effects"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > binds the signed revision to the full actual order and rejects changed source before creating a goods claim"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > enforces tenant, view and manage JWT boundaries and keeps denied responses private"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > recovers a committed UUID after manage withdrawal and seals an absent UUID without replaying or granting authority"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > serializes independent original requests and never creates two whole-goods claims or cash flows"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects new weixin payout admission before business DML while its durable callback path is unavailable"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects new alipay payout admission before business DML while its durable callback path is unavailable"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back real stock, points, refund and immutable operation when platform flow insertion loses its reviewed privilege"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects an actual late cash-flow amount rewrite and rolls every goods, financial and immutable write back"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > keeps raw complete PHP purchase facts unchanged while the real coordinator settles the full goods and only the requested cash"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > refuses to publish a committed result when only the original operation exists and its durable decision is absent"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real offline money-only remainder through JWT in two exact payouts without repeating goods effects"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > executes real yue money-only remainder through JWT in two exact payouts without repeating goods effects"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only excess and stale history before payout and preserves a new actual UUID for the retry"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > recovers a money-only original UUID after manage withdrawal without authorizing a new payout"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_del"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never resets money-only budget when the original whole-goods refund becomes is_cancel"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back a money-only payout when a real deferred writer changes its platform amount"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only writes before payout when completion append loses its explicit privilege"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > binds money-only first-goods comparison to the real transaction and retains the mature default amount assertion"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > serializes independent money-only requests so two current quotes cannot both consume the same remainder"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rejects money-only history when an extra bill reuses its full original business identity"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > rolls back money-only writes when a deferred writer creates another supplier entitlement"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never publishes a money-only operation and decision without its atomic completion"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > credits a real money-only refund into an existing negative balance without changing other account fields"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan bill exists for another actor"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan flow exists for another actor"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > never seals a money-only original UUID as absent when an orphan supplier_transaction exists for another actor"
+          ],
+          [
+            "supplier-proactive-refund-service-native.test.ts",
+            "actual Supplier proactive order-ID coordination > checks the real flow again after deferred SQL writers and rolls the complete payout back on a changed amount"
+          ]
+        ],
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-regression-native-1-terminal.json",
+          "sha256": "fd731b73b75b07f38d137958840d1e2da7e800d39579e6e637050647519a87c8",
+          "bytes": 2898
+        }
+      }
+    ],
+    "commands": [
+      {
+        "name": "unit-final",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/supplier-refund-settlement-contract.test.ts",
+          "test/admin-permission.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "--maxWorkers=1",
+          "--reporter=default",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-supplier-refund-settlement-unit-final-2.json"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "log": "/tmp/cinashop-supplier-refund-settlement-unit-final-2.log",
+        "wall_seconds": 29.01,
+        "finished_at_utc": "2026-10-17T00:26:15.836290+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/common/supplierRefundSettlement.ts",
+            "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+            "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+            "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+          },
+          {
+            "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+            "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+          },
+          {
+            "path": "workers-ts/src/routes/adminapi.ts",
+            "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+          },
+          {
+            "path": "workers-ts/src/routes/v1/index.ts",
+            "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+          },
+          {
+            "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+            "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+          },
+          {
+            "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+            "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+          },
+          {
+            "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+            "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+            "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+            "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+            "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+          }
+        ],
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-unit-final-2.log",
+          "sha256": "30307204425f72231767519821d3888a0688be956145028ebc04e7faff097643",
+          "bytes": 1802
+        }
+      },
+      {
+        "name": "worker-runtime-types",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "log": "/tmp/cinashop-supplier-refund-settlement-worker-runtime-types-2.log",
+        "wall_seconds": 60.31,
+        "finished_at_utc": "2026-10-17T00:27:16.144611+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/common/supplierRefundSettlement.ts",
+            "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+            "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+            "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+          },
+          {
+            "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+            "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+          },
+          {
+            "path": "workers-ts/src/routes/adminapi.ts",
+            "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+          },
+          {
+            "path": "workers-ts/src/routes/v1/index.ts",
+            "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+          },
+          {
+            "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+            "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+          },
+          {
+            "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+            "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+          },
+          {
+            "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+            "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+            "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+            "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+            "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+          }
+        ],
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-worker-runtime-types-2.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "worker-unit-types",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "exit_code": 0,
+        "log": "/tmp/cinashop-supplier-refund-settlement-worker-unit-types-2.log",
+        "wall_seconds": 103.71,
+        "finished_at_utc": "2026-10-17T00:28:59.856119+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/common/supplierRefundSettlement.ts",
+            "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+            "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+            "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+          },
+          {
+            "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+            "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+          },
+          {
+            "path": "workers-ts/src/routes/adminapi.ts",
+            "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+          },
+          {
+            "path": "workers-ts/src/routes/v1/index.ts",
+            "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+          },
+          {
+            "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+            "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+          },
+          {
+            "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+            "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+          },
+          {
+            "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+            "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+            "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+            "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+            "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+          }
+        ],
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-worker-unit-types-2.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "name": "new-native",
+        "attempt": 3,
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-refund-settlement-read-native.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "log": "/tmp/cinashop-supplier-refund-settlement-new-native-3.log",
+        "exit_code": 0,
+        "wall_seconds": 165.79,
+        "finished_at_utc": "2026-10-17T00:32:05.129951+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/common/supplierRefundSettlement.ts",
+            "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+            "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+            "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+          },
+          {
+            "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+            "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+          },
+          {
+            "path": "workers-ts/src/routes/adminapi.ts",
+            "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+          },
+          {
+            "path": "workers-ts/src/routes/v1/index.ts",
+            "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+          },
+          {
+            "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+            "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+          },
+          {
+            "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+            "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+          },
+          {
+            "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+            "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+            "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+            "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+            "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+          }
+        ],
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-new-native-3.log",
+          "sha256": "a215e2e13f9c3c91dfe775a8b2d8dfd091fc2822949ca7bf5c36c17eea26c544",
+          "bytes": 36968
+        }
+      },
+      {
+        "name": "regression-native",
+        "attempt": 1,
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-proactive-refund-service-native.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "log": "/tmp/cinashop-supplier-refund-settlement-regression-native-1.log",
+        "exit_code": 0,
+        "wall_seconds": 431.19,
+        "finished_at_utc": "2026-10-17T00:39:16.369301+00:00",
+        "source_fingerprints": [
+          {
+            "path": "view/common/supplierRefundSettlement.ts",
+            "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+            "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+            "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+          },
+          {
+            "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+            "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+          },
+          {
+            "path": "workers-ts/src/routes/adminapi.ts",
+            "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+          },
+          {
+            "path": "workers-ts/src/routes/v1/index.ts",
+            "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+          },
+          {
+            "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+            "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+          },
+          {
+            "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+            "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+          },
+          {
+            "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+            "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+            "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+            "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+          },
+          {
+            "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+            "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+          }
+        ],
+        "log_artifact": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-regression-native-1.log",
+          "sha256": "c6c02773fef534cc0036ecf624e70f9a5790175e61e2c95b8d2ac7556f0addcf",
+          "bytes": 21647
+        }
+      }
+    ],
+    "commands_artifact": {
+      "path": "/tmp/cinashop-supplier-refund-settlement-validation.json",
+      "sha256": "f36941e2bcac0b76c4614318e80bb351330e937982582067949545f85f33bc89",
+      "bytes": 8968
+    },
+    "accepted_native_artifact": {
+      "path": "/tmp/cinashop-supplier-refund-settlement-accepted-native.json",
+      "sha256": "4af5f3d01366e681a0134d241d969889d80c2feb9ef22aa63c1a7e5b0827b5f6",
+      "bytes": 156
+    },
+    "frozen_sources_artifact": {
+      "path": "/tmp/cinashop-supplier-refund-settlement-frozen-sources.json",
+      "sha256": "a155a17096a847ea4d5012f90d3450761c7ff1ed63a7d0670d489600e39b0c26",
+      "bytes": 2088
+    },
+    "frozen_final_sources": [
+      {
+        "path": "view/common/supplierRefundSettlement.ts",
+        "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+        "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+        "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+      },
+      {
+        "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+        "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+      },
+      {
+        "path": "workers-ts/src/routes/adminapi.ts",
+        "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+      },
+      {
+        "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+        "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+      },
+      {
+        "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+        "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+      },
+      {
+        "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+        "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+      },
+      {
+        "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+        "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+      },
+      {
+        "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+        "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+      },
+      {
+        "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+        "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+      }
+    ],
+    "historical_attempts": [
+      {
+        "phase": "new-native-first",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-new-native-1-terminal.json",
+          "sha256": "910b5f191ff6f7dbd2c8e558796b98a6b7eaa4556e668c972474ec307d8dc792",
+          "bytes": 2882
+        },
+        "command": {
+          "name": "new-native",
+          "attempt": 1,
+          "command": [
+            "bash",
+            "/home/cina/cinagroup/tools/validate-serial.sh",
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--schema-maintenance",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/supplier-refund-settlement-read-native.test.ts"
+          ],
+          "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+          "log": "/tmp/cinashop-supplier-refund-settlement-new-native-1.log",
+          "exit_code": 1,
+          "wall_seconds": 146.56,
+          "finished_at_utc": "2026-10-17T00:15:32.172837+00:00",
+          "source_fingerprints": [
+            {
+              "path": "view/common/supplierRefundSettlement.ts",
+              "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+            },
+            {
+              "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+              "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+            },
+            {
+              "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+              "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+            },
+            {
+              "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+              "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+            },
+            {
+              "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+              "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+            },
+            {
+              "path": "workers-ts/src/routes/adminapi.ts",
+              "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+            },
+            {
+              "path": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+            },
+            {
+              "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+              "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+            },
+            {
+              "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+              "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+            },
+            {
+              "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+              "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+            },
+            {
+              "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+              "sha256": "7ff8385ce3278fadfe927ecd85881680cc893a1f5caff9521a8d100e187a9b9b"
+            },
+            {
+              "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+              "sha256": "57d87671a4c3640cd60607031f4a2332319a8fe3f32816057156cc7185779699"
+            },
+            {
+              "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+              "sha256": "9d70abd8325a2997fad2286e4ca8a00fb518e8980d2cd4a52739b0b5ea5215e5"
+            }
+          ],
+          "log_artifact": {
+            "path": "/tmp/cinashop-supplier-refund-settlement-new-native-1.log",
+            "sha256": "62a89e3feee6cd2a62bded50379273ac8c1ab33ed02f133b06d1489c34de164b",
+            "bytes": 20233
+          }
+        },
+        "summary": {
+          "file": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+          "passed": 8,
+          "failed": 4,
+          "total": 12,
+          "log": {
+            "path": "/tmp/cinashop-supplier-refund-settlement-new-native-1.log",
+            "sha256": "62a89e3feee6cd2a62bded50379273ac8c1ab33ed02f133b06d1489c34de164b",
+            "bytes": 20233
+          },
+          "case_identities": [
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > preflights absent eight-table SELECT as503 without aborting the actual reader transaction"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > commissions exactly eight SELECT privileges and no DML, owned sequence or Supplier write-function execution"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-completion while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-decision while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-first-refund while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-money-bill while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > requires live Admin refund.view before opening its independent read connection and forbids all query fields"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > binds the optional refund ID to the actual first goods proof and does not accept a root or writable transaction"
+            ]
+          ]
+        },
+        "accepted_additional_tests": 0,
+        "postgres_log": {
+          "path": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-YIVl1J/postgres.log",
+          "sha256": "a8914d95ca6cce9fe3aa8c96bccfdca31b3c1f6bbfef04ad5088b9f00afc0922",
+          "bytes": 21004
+        },
+        "error": "column w.actor_service_id does not exist",
+        "sqlstate": "42703",
+        "fix": "New owned fixture requires exact published legacy0091 waybill shape, then calls existing runCustomerWaybillActor. Production implementation unchanged throughout calibration. Four damaged-proof negative cases now require409 on both realms.",
+        "before_catalog_sha256": "8d005e7b3c6fbf5fbd20a975e5629236f10ef454af39a227707478af42f6af9d",
+        "after_catalog_sha256": "9f11872296dc1fa07e5853d572ab4d0786abc6e58199d5176da5e424a096e401"
+      },
+      {
+        "phase": "validation-type-first",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-validation-type-first.json",
+          "sha256": "396cd466ac46e390d7a55d89d998fd974aeedd8468403bb9e6b505fbfa8a7a66",
+          "bytes": 8960
+        },
+        "commands": [
+          {
+            "name": "unit-final",
+            "command": [
+              "bash",
+              "/home/cina/cinagroup/tools/validate-serial.sh",
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/supplier-refund-settlement-contract.test.ts",
+              "test/admin-permission.test.ts",
+              "test/local-finance-postgres-runner.test.ts",
+              "--maxWorkers=1",
+              "--reporter=default",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-supplier-refund-settlement-unit-final.json"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "log": "/tmp/cinashop-supplier-refund-settlement-unit-final.log",
+            "wall_seconds": 29.32,
+            "finished_at_utc": "2026-10-17T00:20:32.570321+00:00",
+            "source_fingerprints": [
+              {
+                "path": "view/common/supplierRefundSettlement.ts",
+                "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+              },
+              {
+                "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+                "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+                "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+                "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+              },
+              {
+                "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+                "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+              },
+              {
+                "path": "workers-ts/src/routes/adminapi.ts",
+                "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+              },
+              {
+                "path": "workers-ts/src/routes/v1/index.ts",
+                "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+              },
+              {
+                "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+                "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+              },
+              {
+                "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+                "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+              },
+              {
+                "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+                "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+              },
+              {
+                "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+                "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+                "sha256": "57d87671a4c3640cd60607031f4a2332319a8fe3f32816057156cc7185779699"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+                "sha256": "84991be2c97262fdb34c16ea03104ad590b4b3afd98de3945f4c88f37230064e"
+              }
+            ],
+            "log_artifact": {
+              "path": "/tmp/cinashop-supplier-refund-settlement-unit-final.log",
+              "sha256": "bd1a98ed330dff660bda5aa9e96e15c637d2837bba5da922b4b264f616c56f6f",
+              "bytes": 1800
+            }
+          },
+          {
+            "name": "worker-runtime-types",
+            "command": [
+              "bash",
+              "/home/cina/cinagroup/tools/validate-serial.sh",
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--max-old-space-size=8192",
+              "node_modules/typescript/bin/tsc",
+              "-p",
+              "tsconfig.runtime-test.json",
+              "--noEmit"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "log": "/tmp/cinashop-supplier-refund-settlement-worker-runtime-types.log",
+            "wall_seconds": 61.26,
+            "finished_at_utc": "2026-10-17T00:21:33.826162+00:00",
+            "source_fingerprints": [
+              {
+                "path": "view/common/supplierRefundSettlement.ts",
+                "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+              },
+              {
+                "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+                "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+                "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+                "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+              },
+              {
+                "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+                "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+              },
+              {
+                "path": "workers-ts/src/routes/adminapi.ts",
+                "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+              },
+              {
+                "path": "workers-ts/src/routes/v1/index.ts",
+                "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+              },
+              {
+                "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+                "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+              },
+              {
+                "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+                "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+              },
+              {
+                "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+                "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+              },
+              {
+                "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+                "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+                "sha256": "57d87671a4c3640cd60607031f4a2332319a8fe3f32816057156cc7185779699"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+                "sha256": "84991be2c97262fdb34c16ea03104ad590b4b3afd98de3945f4c88f37230064e"
+              }
+            ],
+            "log_artifact": {
+              "path": "/tmp/cinashop-supplier-refund-settlement-worker-runtime-types.log",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          {
+            "name": "worker-unit-types",
+            "command": [
+              "bash",
+              "/home/cina/cinagroup/tools/validate-serial.sh",
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--max-old-space-size=8192",
+              "node_modules/typescript/bin/tsc",
+              "--noEmit"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 2,
+            "log": "/tmp/cinashop-supplier-refund-settlement-worker-unit-types.log",
+            "wall_seconds": 103.19,
+            "finished_at_utc": "2026-10-17T00:23:17.018593+00:00",
+            "source_fingerprints": [
+              {
+                "path": "view/common/supplierRefundSettlement.ts",
+                "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+              },
+              {
+                "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+                "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+                "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+              },
+              {
+                "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+                "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+              },
+              {
+                "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+                "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+              },
+              {
+                "path": "workers-ts/src/routes/adminapi.ts",
+                "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+              },
+              {
+                "path": "workers-ts/src/routes/v1/index.ts",
+                "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+              },
+              {
+                "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+                "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+              },
+              {
+                "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+                "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+              },
+              {
+                "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+                "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+              },
+              {
+                "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+                "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+                "sha256": "57d87671a4c3640cd60607031f4a2332319a8fe3f32816057156cc7185779699"
+              },
+              {
+                "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+                "sha256": "84991be2c97262fdb34c16ea03104ad590b4b3afd98de3945f4c88f37230064e"
+              }
+            ],
+            "log_artifact": {
+              "path": "/tmp/cinashop-supplier-refund-settlement-worker-unit-types.log",
+              "sha256": "14a8f97bba79c0b460935e1e12b2a7f97b476bfe6a39add57a5ebc9fa3a65ca4",
+              "bytes": 1622
+            }
+          }
+        ],
+        "frozen_sources": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-frozen-sources-type-first.json",
+          "sha256": "a50489bc406675c4b5bc306c855d795e50580460f9b79371806d0ffbae91b300",
+          "bytes": 2088
+        },
+        "unit_report": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-unit-final.json",
+          "sha256": "582f8b0a5fadf955f7764f99f39ccf41c987f2e8e0b157e299bb2e7f4092e993",
+          "bytes": 82853
+        },
+        "unit_passed": 214,
+        "runtime_full_types_exit_code": 0,
+        "unit_full_types_exit_code": 2,
+        "diagnostics": {
+          "TS7023": 1,
+          "TS2345": 3,
+          "total": 4
+        },
+        "accepted_additional_tests": 0,
+        "fix": "Contract test adds explicit toString():string; three native calls use existing withTx(container) transaction normalization without a DbClient cast. Only contract/native test files changed from this frozen source. Final full new-native, unit and both types rerun."
+      },
+      {
+        "phase": "new-native-second-superseded",
+        "terminal": {
+          "path": "/tmp/cinashop-supplier-refund-settlement-new-native-2-terminal.json",
+          "sha256": "1de2ccc1c2fa11b8be89752ec0de8cdd35c709a10586229f2560aa68335675d6",
+          "bytes": 2882
+        },
+        "command": {
+          "name": "new-native",
+          "attempt": 2,
+          "command": [
+            "bash",
+            "/home/cina/cinagroup/tools/validate-serial.sh",
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "scripts/run-local-finance-postgres.mjs",
+            "--schema-maintenance",
+            "--verbose-tests",
+            "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+            "test/supplier-refund-settlement-read-native.test.ts"
+          ],
+          "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+          "log": "/tmp/cinashop-supplier-refund-settlement-new-native-2.log",
+          "exit_code": 0,
+          "wall_seconds": 155.61,
+          "finished_at_utc": "2026-10-17T00:19:49.775244+00:00",
+          "source_fingerprints": [
+            {
+              "path": "view/common/supplierRefundSettlement.ts",
+              "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+            },
+            {
+              "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+              "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+            },
+            {
+              "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+              "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+            },
+            {
+              "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+              "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+            },
+            {
+              "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+              "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+            },
+            {
+              "path": "workers-ts/src/routes/adminapi.ts",
+              "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+            },
+            {
+              "path": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+            },
+            {
+              "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+              "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+            },
+            {
+              "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+              "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+            },
+            {
+              "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+              "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+            },
+            {
+              "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+              "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+            },
+            {
+              "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+              "sha256": "57d87671a4c3640cd60607031f4a2332319a8fe3f32816057156cc7185779699"
+            },
+            {
+              "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+              "sha256": "84991be2c97262fdb34c16ea03104ad590b4b3afd98de3945f4c88f37230064e"
+            }
+          ],
+          "log_artifact": {
+            "path": "/tmp/cinashop-supplier-refund-settlement-new-native-2.log",
+            "sha256": "0cb3f93b4167a229f887d8f3e768bb0ccb2df9c5c360edc69149fb1fae41d0d7",
+            "bytes": 36965
+          }
+        },
+        "summary": {
+          "file": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "total": 12,
+          "log": {
+            "path": "/tmp/cinashop-supplier-refund-settlement-new-native-2.log",
+            "sha256": "0cb3f93b4167a229f887d8f3e768bb0ccb2df9c5c360edc69149fb1fae41d0d7",
+            "bytes": 36965
+          },
+          "case_identities": [
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > reads actual offline goods7 then money5 then tail6.75 on both independent SELECT-only realms"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > reads actual yue goods7 then money5 then tail6.75 on both independent SELECT-only realms"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > preflights absent eight-table SELECT as503 without aborting the actual reader transaction"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > commissions exactly eight SELECT privileges and no DML, owned sequence or Supplier write-function execution"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > allows an existing reviewed combined writer to use only the explicit READ ONLY composition"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-completion while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual missing-decision while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-first-refund while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > fails closed on actual wrong-money-bill while every public GET remains write-free"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > rechecks live Customer grant and rejects forged scope, query identity, token realm and path identity"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > requires live Admin refund.view before opening its independent read connection and forbids all query fields"
+            ],
+            [
+              "supplier-refund-settlement-read-native.test.ts",
+              "Supplier settlement explicit authorized cross-realm reads > binds the optional refund ID to the actual first goods proof and does not accept a root or writable transaction"
+            ]
+          ]
+        },
+        "accepted_additional_tests": 0,
+        "reason": "Actual twelve passed with fixture correction, then superseded by the complete native-third run after test-only typing corrections. No production change or extra accepted count."
+      }
+    ],
+    "deduplication": "Only final unit214, new-native12 and old Supplier-native37 count, five distinct files. Initial native8, superseded native12 and earlier unit214 passes are historical, not additional. Runner162 uses source-bound assertion ordinals for abbreviated parameter displays; all30 complete parameter vectors are unique."
+  },
+  "cleanup": [
+    {
+      "phase": "new-native",
+      "attempt": 1,
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-YIVl1J",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "terminal_log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-new-native-1.log",
+        "sha256": "62a89e3feee6cd2a62bded50379273ac8c1ab33ed02f133b06d1489c34de164b",
+        "bytes": 20233
+      }
+    },
+    {
+      "phase": "new-native",
+      "attempt": 2,
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vkd0GP",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "terminal_log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-new-native-2.log",
+        "sha256": "0cb3f93b4167a229f887d8f3e768bb0ccb2df9c5c360edc69149fb1fae41d0d7",
+        "bytes": 36965
+      }
+    },
+    {
+      "phase": "new-native",
+      "attempt": 3,
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VUaAqy",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "terminal_log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-new-native-3.log",
+        "sha256": "a215e2e13f9c3c91dfe775a8b2d8dfd091fc2822949ca7bf5c36c17eea26c544",
+        "bytes": 36968
+      }
+    },
+    {
+      "phase": "regression-native",
+      "attempt": 1,
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-eEz1OO",
+      "fixture_databases_remaining": 0,
+      "fixture_roles_remaining": 0,
+      "pg_ctl_status": 3,
+      "postmaster_pid_absent": true,
+      "terminal_log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-regression-native-1.log",
+        "sha256": "c6c02773fef534cc0036ecf624e70f9a5790175e61e2c95b8d2ac7556f0addcf",
+        "bytes": 21647
+      }
+    }
+  ],
+  "frozen_files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "531238e196fe581e545a410d0555add3864c8b120884e951a0c69b1453fa3a7c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/admin-ts/src/main.ts",
+      "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/customerWorkFinancial.ts",
+      "sha256": "6b585122810771260d08b1f786387d3f85cfcc6b18205bf25613f31200961dc0",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/common/statisticsScript.ts",
+      "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/api/proactiveRefund.ts",
+      "sha256": "207271b07984e832a610e6f08cdb9710a3f848583f060327e444954022a56738",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/main.ts",
+      "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "b2c0bf83d9824e26bed94bfde040a83e3261c0da67c7e792a5e724cf540c8059",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/pages/ProactiveRefund.vue",
+      "sha256": "886d303c3ff8177122dd9b23a84ed0d47f98f8f8db6252b64cd59128fc8df88b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/supplier-ts/src/router.ts",
+      "sha256": "124c09a64f82805e197371d9139fdda0da60546bc727babc883120650c7b994d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-money-local-20261016.json",
+      "sha256": "430644802278309fb814f1572ec22f69278dbfede43a926fa125e0fcbfe839ab",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-coordinator-20261016.json",
+      "sha256": "25325d55202fee52c6188a6c8e821ba61b351ec4e456cfe4ed241d77f493fee8",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-kernel-20261016.json",
+      "sha256": "e6adb9e1f925f628edca1b1a9787b0b2a1325c525348bd9d4d1ac1faa9458731",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "sha256": "aa60b1e3fae36469477008932665e6bd4067a6300fe1536ba9c254de88603a63",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "f1557c223e76e289988f7fdfd1fc833baaa6063fc9bbf488983d0aa9b438017b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierProactiveRefundController.ts",
+      "sha256": "047da06ff857bd72e34fa2ce813a9511ad8bf176a02d38fe1c2c874ecaa713e5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-auth.ts",
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerFinancialRuntimePlan.ts",
+      "sha256": "b5ee06ec76a78895290b28a5565ff4b204316ff2b57ddcfcd2e96205c45ed474",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerManualRefundRuntimePlan.ts",
+      "sha256": "4111afa40b8f129480c5d5ad424ad84008f09f0c50c9f17143a2a22e9f0a2e38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWaybillActor.ts",
+      "sha256": "86e3bcf40926005763e5429b4c0660f20e2370299da67c19c0cc89cf3418eba2",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/customerWorkRuntimePrivilegePlan.ts",
+      "sha256": "670f25a95f3cd9753e4c175e2e18cfa7033daac00aa4dd315c204e955c9250ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0194_supplier_offline_payment_operation.sql",
+      "sha256": "63e2e8287f684d4ba3a48f48fa801c16e48b5e65ef827165da9994220e6911ff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0195_supplier_manual_refund.sql",
+      "sha256": "8d0abe89e0407f4aaf3a711318c02ac17492c7c456e54daa6e0079189da51d06",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/maintenance/0196_supplier_proactive_refund.sql",
+      "sha256": "b66d85e493311a3bd24510ce4cfad08566d53bbfe35962a9a2a204044c03f246",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runCustomerWaybillActor.ts",
+      "sha256": "ba884427aaabb8db899ee31afd193aee5cb8e5c4871a48288e9ce9ca27f4cb62",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeAdminBoundary.ts",
+      "sha256": "505a79f9e399953d8e7572a33ec784d82bcfda6f8c70d044ae8220d9ebc12c0f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessGrantSql.ts",
+      "sha256": "05963e50d01ab1bb01617422f96835fe7e4ca941d8eab3af453bc482032a29cc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "23166b41cec3f0679f382b471b5c4ce95e3bfbc2ea602ebf987c5f103b4dd5a1",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierManualRefund.ts",
+      "sha256": "d07408a1199d9e5002a021c36ecdb80c317c3a74ff44cfc85787a1e94c88f9a3",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOfflinePaymentOperation.ts",
+      "sha256": "be9ecd08b8a88df233e0fffa97d05c0f171d9c81544917c9e97424fa701e1355",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierOrderEditOperation.ts",
+      "sha256": "a886f493c24d96496ad6abd4b505af5fc5f226394b3f7ac452811d3241483d00",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierProactiveRefund.ts",
+      "sha256": "575ea8e572f7be2d42c3fb263c638b46aea60ee011cb4e6ab299f028b2bfe66f",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "aee5546b574619a83287c35718408b22449470494eeb4acb65c3cfac94446dfa",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "sha256": "245c0ec73c56471156453a6167b68aac653400263e1d2a32d68ff19601656a93",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialVerification.ts",
+      "sha256": "46c8602a86731fbcd7a51b0ec27657269f4cf35627c54af2acf5be9c697b694b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkScope.ts",
+      "sha256": "63623cb6afa59825147f3cde8fdc7e3307557025ef82d999f75cfc11043ed44a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/InvoiceManualRedNoteEvidence.ts",
+      "sha256": "50029e9460c80a2a1976f5175bcbca16fc407c5ff83a7d8ec7770d7998372e12",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/OrderRewardService.ts",
+      "sha256": "fcbe511b746812b1fb2ec6a8e6824b16bbd3b40de382859d6a3a7bd8d4389855",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierManualRefundProof.ts",
+      "sha256": "aa715e98974ee2bf48ddfe6ce27dc3456ac5c4d29c721d3dde4c54c431a68e82",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "29b55528bd6a41ba521f59a6e0e33424a6fc2f348f84f38e7842efc12fa3745d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyEvidence.ts",
+      "sha256": "102ade1649f2655d685754f93f197868b229046fb44eb244c3ba134f30760ea7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveMoneyExecutor.ts",
+      "sha256": "9b140005a04ecf404f17fa9c791466c01263bb26a5041d15770315ce24d96fa5",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundCapability.ts",
+      "sha256": "33864a9b8f96fc1f4acdb58ee36096a0030523a9fe491857a4ed2f0fc1a7326d",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundFlow.ts",
+      "sha256": "1f3a2e5a1791903f1875ee14ab3e52d835be84739687fafaeeaeabb0f223ea68",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundIdentity.ts",
+      "sha256": "c7c253c15e8b46df5d9335c3c4e2852fe659e72528dbe14bedd4c9f11c1a973c",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundInput.ts",
+      "sha256": "b06bf018ccc89200efc6a13eee55611d16446bd5690ea567ae72c20424cfee38",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundMoneyPlan.ts",
+      "sha256": "cf1d04cb17d083e06ec47fb8fd32e1377b50b27e67629da07983f1228db1391b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundOperation.ts",
+      "sha256": "b30d123aece557cee283cce6d8e6e68c0850ef5bd5e2c7cf205d611fc9207d2a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundService.ts",
+      "sha256": "5d5d2776ed094e6b50df89108c1920320fe166c553faede3f5b5e073eb39972b",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierProactiveRefundSource.ts",
+      "sha256": "976167685a448e78833f451de964e6f82914ac4fc9532f78a94f80e1ef6a2ced",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-proactive-refund.acceptance.ts",
+      "sha256": "94c07f8ec9de79b65aad2c13df147f962cb8ad0c57dd15e08be89285b1336d2a",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/data-migration.test.ts",
+      "sha256": "5dc0949a856d75101420e389f69f9da8b55e266f3aa6bc2f18252b13f45af1ea",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/helpers/registeredCatalogCohort.ts",
+      "sha256": "f628f84deabf4b277eaa9ae83991b07badddad89af9877913322c2cbff15d407",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "ce0383f9a63ee450a8489e53068461e2a7aa18ccd3482b9819bd15a6e640e597",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "sha256": "21763f0b0f19e781f007300ea766c66aa33d71c8ad030bb28c29b8670281e5e7",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+      "sha256": "e983d36d7f1db1289a1ad282cd197e665a60f46e0ce2539349ee2604f048cbec",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/test/supplier-proactive-refund-service-native.test.ts",
+      "sha256": "00dc1a807768b3cff0e45b5c90f1c914ace73ab9e1a26dd036c4f9e0b96f9afc",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "workers-ts/vitest.supplier-proactive-refund-browser.config.ts",
+      "sha256": "1bc2361a1734322269dfacbc38bb32bbe0f69f39e91ae41df51a53fd9769ae22",
+      "byte_equal_to_base": true
+    }
+  ],
+  "checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "count": 88,
+      "checked": 50,
+      "unchecked": 38,
+      "sha256": "29e28d95909a6edbb9967464bee3ee677b2fb5dddb06bf62a61bf901be218562",
+      "byte_equal_to_base": true,
+      "legacy_checksum_source": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "raw_line_bytes_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "count": 404,
+      "checked": 249,
+      "unchecked": 155,
+      "sha256": "ce0b93a0cbe6ce3ed4d2009162b675c82fd78ca3c724f6ca28d004b708355007",
+      "byte_equal_to_base": true,
+      "legacy_checksum_source": "workers-ts/audit/php-ts-supplier-proactive-refund-ui-20261016.json",
+      "raw_line_bytes_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  ],
+  "base_ci": {
+    "schema": "github-ci-observation-v1",
+    "sha": "daac58c60bebf0b3a7b26f7799d21add5b583168",
+    "run_id": 38984296611,
+    "status": "in_progress",
+    "conclusion": null,
+    "html_url": "https://github.com/cinagroup/cinashop/actions/runs/38984296611",
+    "checked_at_utc": "2026-10-17 00:38:03 UTC"
+  },
+  "remaining": [
+    "UI consumption of the new explicit versioned Customer/Admin settlement summary remains unimplemented.",
+    "Asynchronous Weixin/Alipay provider admission, original-operation recovery, callbacks and reconciliation.",
+    "Refusal after completed whole goods and its separately protected metadata baseline.",
+    "Issued-invoice manual red-note public end-to-end and actual provider/tax delivery."
+  ],
+  "statistics_script_contract": "Preserve restored PHP-compatible get_script handler, frontend loaders and retirement audit; no reinstatement of the old retirement decision.",
+  "production": {
+    "ddl": false,
+    "grant": false,
+    "deploy": false,
+    "real_provider_calls": false,
+    "real_tax_calls": false
+  },
+  "secret_scan": {
+    "status": "selected_sources_and_staged_passed_exact_commit_range_gate_required",
+    "binary_path": "/tmp/cinashop-supplier-video-tools/gitleaks",
+    "binary_version": "8.29.0",
+    "binary_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "source_findings": 0,
+    "staged_findings": 0,
+    "scope_files": 16,
+    "source_scan": {
+      "phase": "source-initial",
+      "command": [
+        "/tmp/cinashop-supplier-video-tools/gitleaks",
+        "dir",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-supplier-refund-settlement-source-initial-secrets.json"
+      ],
+      "cwd": "/tmp/cinashop-supplier-refund-settlement-scan-xe5eoszy/source-initial",
+      "exit_code": 0,
+      "findings": 0,
+      "log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-source-initial-secrets.log",
+        "sha256": "009b5783698c6f8c5d1e698d2f0fc11c7b4c83c55052c400c7f0a442e52c0f89",
+        "bytes": 81
+      },
+      "report": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-source-initial-secrets.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      }
+    },
+    "staged_scan": {
+      "phase": "staged-initial",
+      "command": [
+        "/tmp/cinashop-supplier-video-tools/gitleaks",
+        "git",
+        "--pre-commit",
+        "--staged",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-supplier-refund-settlement-staged-initial-secrets.json",
+        "."
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "exit_code": 0,
+      "findings": 0,
+      "log": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-staged-initial-secrets.log",
+        "sha256": "be031cc40d40231663f02f4ca164ef7c86f85907135d025f06710032d3d43792",
+        "bytes": 113
+      },
+      "report": {
+        "path": "/tmp/cinashop-supplier-refund-settlement-staged-initial-secrets.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      }
+    },
+    "final_byte_scan_evidence": "Final source/staged scans and exact BASE..commit scan are recorded externally after these audit bytes are frozen.",
+    "exact_range_base": "daac58c60bebf0b3a7b26f7799d21add5b583168",
+    "publication_metadata": "/tmp/cinashop-supplier-refund-settlement-publication-ready.json"
+  },
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "84dacc41073f4f05ab077d34054a91c51422415262336e7ea26c42541ea89788"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "0de863a3b174b0b8322b009d6fddcbf515451d8c72a89051d6177b4cc95b9589"
+    },
+    {
+      "path": "view/common/supplierRefundSettlement.ts",
+      "sha256": "b37f461a78aacba9413d8f98ff9584c99343a9e09df931f1e4686fe87969316b"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "e5c22e5ca7aa4f48ac8159a0e2464d05cd3ab3e4d6035f120c1358c8a718492f"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "e475b7094a762432fc195a1e1b970b32e0ce3a5064e2d548ebae73e557dd480d"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CustomerWorkFinancialController.ts",
+      "sha256": "3da781471e9798e52a8b5895b727cd4a9c35ff1aca2aae2d4d646d32da2b720c"
+    },
+    {
+      "path": "workers-ts/src/migrations/supplierRefundSettlementRead.ts",
+      "sha256": "85de43978f755b9b7fc9acfa76d3cd284e852df175a121431f612c3154ed6b9f"
+    },
+    {
+      "path": "workers-ts/src/routes/adminapi.ts",
+      "sha256": "b14925a2d0a31ed45ee7df59412878947ea5b18151d2ed9937216d58e9e77bbc"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminRefundReadService.ts",
+      "sha256": "0334734c4708fe4f30d986761725f32ed247df36481fa95b50b2119b099d7475"
+    },
+    {
+      "path": "workers-ts/src/services/customer-work/CustomerWorkFinancialReadService.ts",
+      "sha256": "68f78fedbb6316d959f980ec8ee02ef0cfbf27c23ef14054596fa8dc061116f5"
+    },
+    {
+      "path": "workers-ts/src/services/order/SupplierRefundSettlementReadService.ts",
+      "sha256": "c172fc07b8a4c558684c45f2ea17b0a5291fbccf7d28ea9c391957badb6c86e5"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundSettlementRead.ts",
+      "sha256": "7567b1b20bb4474ccbe122a80e18c51c95b2dd24046e518339e68c3225eb74aa"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-contract.test.ts",
+      "sha256": "9ed57fd8316c2b17033aa57a933c3c533373d347a0aa23cd755d9228b6836b2e"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-settlement-read-native.test.ts",
+      "sha256": "c4fc510fa30eb3ff21cedced84f0921fa245188d6f920c0e276bc0eeff3f5eff"
+    }
+  ]
+}

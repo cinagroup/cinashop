@@ -601,6 +601,7 @@ v1Routes.post('/mobile/work/operations/:key/abandon',authMiddleware({force:true}
 v1Routes.get('/mobile/work/operations/city-jobs/:id',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobOutcome);
 v1Routes.post('/mobile/work/operations/city-jobs/:id/recover',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobRecover);
 v1Routes.get('/mobile/work/financial/orders/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialOrder);
+v1Routes.get('/mobile/work/financial/orders/:id/supplier-refund-settlement',authMiddleware({force:true}),CustomerWorkFinancial.supplierRefundSettlement);
 v1Routes.get('/mobile/work/financial/refunds/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundReview);
 v1Routes.post('/mobile/work/financial/refund-quote',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundQuote);
 v1Routes.post('/mobile/work/financial/change-price',authMiddleware({force:true}),CustomerWorkFinancial.changePrice);
@@ -1870,6 +1871,7 @@ v1Routes.put("/admin/save_set_label", adminAuth, AdminCrud.adminUsersSetLabel);
 // 退款审核
 v1Routes.get("/admin/refund/list", adminAuth, AdminCrud.adminRefundList);
 v1Routes.get("/admin/refund/detail/:id", adminAuth, AdminCrud.adminRefundDetail);
+v1Routes.get("/admin/refund/settlement/:id", adminAuth, AdminCrud.adminRefundSettlement);
 v1Routes.get("/admin/refund_order/list", adminAuth, AdminCrud.adminRefundOrderList);
 v1Routes.get("/admin/refund_order/detail/:uni", adminAuth, AdminCrud.adminRefundOrderDetail);
 v1Routes.post("/admin/refund_order/remark", adminAuth, AdminCrud.adminRefundOrderRemark);

@@ -12,6 +12,7 @@ async function body(c:C){if(new URL(c.req.url).search||!/^application\/json(?:\s
 async function write(c:C,kind:FinancialKind){const s=input(c),context={actor:s.actor,request_key:c.req.header('Idempotency-Key')??''},value=await body(c);const result=kind==='change_price'?await s.service.price(context,value):kind==='confirm_offline'?await s.service.offline(context,value):kind==='refund_create'?await s.service.create(context,value):kind==='refund_remark'?await s.service.remark(context,value):await s.service.execute(kind,context,value);return jsonOk(c,result);}
 export async function financialOrder(c:C){const s=input(c);return jsonOk(c,await s.service.reader.order(s.actor,c.req.param('id'),s.query));}
 export async function financialRefundReview(c:C){const s=input(c);return jsonOk(c,await s.service.reader.review(s.actor,c.req.param('id'),s.query));}
+export async function supplierRefundSettlement(c:C){const s=input(c);return jsonOk(c,await s.service.reader.supplierRefundSettlement(s.actor,c.req.param('id'),s.query));}
 /** Read quote does not consume an Idempotency-Key or admit any mutation. */
 export async function financialRefundQuote(c:C){const s=input(c);return jsonOk(c,await s.service.reader.quote(s.actor,await body(c)));}
 export async function changePrice(c:C){return write(c,'change_price');}

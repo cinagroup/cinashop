@@ -618,6 +618,7 @@ adminapiRoutes.put("/save_set_label", adminAuth, AdminCrud.adminUsersSetLabel);
 // ─── 退款审核 ───────────────────────────────────────────────
 adminapiRoutes.get("/refund/list", adminAuth, AdminCrud.adminRefundList);
 adminapiRoutes.get("/refund/detail/:id", adminAuth, AdminCrud.adminRefundDetail);
+adminapiRoutes.get("/refund/settlement/:id", adminAuth, AdminCrud.adminRefundSettlement);
 // Explicit Unavailable handler keeps route-parity from counting HTTP410 as a
 // functional PHP migration. Old controller exports also fail closed.
 adminapiRoutes.post("/refund/refund/:id", privateRefundOperationResponse, adminAuth, adminRefundMutationUnavailable);

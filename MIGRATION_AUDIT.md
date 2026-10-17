@@ -1,5 +1,17 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-17 Supplier 累计退款核验只读 API（界面消费待接入）
+
+新增独立versioned只读核验接口：Customer沿真实普通UserJWT及当前全局手机订单管理权限，以订单ID＋order_no及可选scope_key查询；Admin沿实际refund.view及独立读取连接，以首笔退款ID查询，两条既有Admin前缀均可用。原订单／退款审查v1闭合DTO和默认deep合同保持。新summary仅发布已完整核实的首笔商品退款、后续补退款、累计金额、剩余额度及补退笔数，不发布原UUID、历史actor或完整来源，不授予新的执行／恢复能力。
+
+真实App／JWT和独立受限PG16 LOGIN分别完成offline及yue付款18.75元、商品首退7.00元、补退5.00元和尾款6.75元的两个读取表面核验；每阶段完整SQL快照在GET前后相等，首笔商品实体、库存、积分、未开票原整票及供应商商品结算均不重复。历史Supplier管理权限撤回后，有权Customer／Admin仍以自身真实权限读取；Customer scope／会话／撤权、Admin实时refund.view／账号、订单与首退款tuple均独立核对。完整首goods operation／decision、split／原票／付款来源、所有money completion及实际账单／流水／交易先由底层叶子验证，再显式带同一事务的opaque baseline调用成熟deep；默认deep在累计金额与首退7.00不符时仍拒绝。
+
+读取角色须由维护端显式追加八张凭据表的SELECT；没有自动GRANT、生产commission或角色冒用。缺SELECT在元数据预检返回503，同一实际事务仍可继续SELECT；运行readiness允许已经安全commission的combined Supplier writer合法追加权限，接口自身仍只在READ ONLY快照执行。独立纯reader原生验收另证明全部public业务表无表／列DML、全部public序列无权限、三项Supplier写函数无EXECUTE；此验收不把八表feature addon冒充整个业务读profile。
+
+本批5文件263个不同检查通过：闭合summary27＋Admin权限25＋runner162共214项，新增只读原生12项，旧Supplier主动退款原生37项。Worker两套完整类型以8192MiB及共享串行锁通过。runner截断显示名按冻结源码30个唯一参数向量及实际assertion序号绑定，各独立行只计一次。首轮原生真实4失败／8通过／12项、exit1及146.56秒如实留档，失败为新夹具尚未安装既有Customer waybill actor addon，实际PG报42703列w.actor_service_id缺失；仅在新夹具对精确0091目录执行既有维护升级，四种损坏的两个读取表面均加强为精确409。随后原生12项确已通过；完整验证中的unit214和runtime全类型通过，但默认测试全类型真实exit2，四处错误仅涉及测试返回类型标注和事务类型，按既有withTx规范修正后重新验收完整新native12、unit214和两套全类型。校准期间生产源码未改，先前8项／12项／214项通过均不额外计数。四个本批自建PG16集群夹具清零、独立pg_ctl均返回3且pid文件不存在，详见[本批验证账本](workers-ts/audit/php-ts-supplier-refund-settlement-read-20261017.json)。
+
+本批仅完成后端独立只读API，UI消费新summary仍待接入；异步渠道provider admission／恢复／回调／对账、整单后拒绝和实际已开票人工红冲公开E2E继续开放。0194／0195／0196、旧app／Admin运行方案、默认财务deep及统计脚本PHP兼容行为保持，原复选行字节不变。没有生产DDL／GRANT／部署或真实支付／税务调用，整体迁移继续active，未声明完成。
+
 ## 2026-10-16 Supplier 主动退款与余款界面、原UUID恢复
 
 供应商订单页已接入主动退款和独立结果页。页面按真实当前seed显示商品整退或补退余款，允许在当前剩余范围填写实际金额；现金交接必须单独确认，金额或处理方式变化即清除旧确认。首次拒绝显示实际拒绝结果；整单完成后的拒绝和微信／支付宝资金退款继续受既有后端边界限制。每次提交先只保存原UUID、管理员、供应商和订单身份；回执丢失后保留原记录，重载只展示待核对状态，由用户查询原结果或明确核对原事务，不自动重发、不自动换UUID。撤销管理权限后仍能只读查询本人的原结果，查看子账号没有主动退款入口；会话、权限或路由变化会清除旧可写状态，迟到的A→B→A确认不能恢复旧单提交。

@@ -8,6 +8,7 @@ import { resolveRefundReturnContact } from '@/services/order/RefundReturnContact
 import type { RefundExecutionScope } from '@/services/order/StoreOrderRefundService';
 import { decimalToCents } from '@/services/order/OrderBrokerageService';
 import { readStaffRefundHistory } from '@/services/order/RefundReadSnapshot';
+import { readVerifiedSupplierRefundSettlement } from '@/services/order/SupplierRefundSettlementReadService';
 
 export function adminRefundId(value: unknown): number {
   if (typeof value !== 'string' || !/^[1-9]\d{0,9}$/.test(value) || Number(value) > 2147483647) throw new ValidateException('退款单标识无效');
@@ -43,6 +44,20 @@ const visible = () => and(eq(refund.isDel, 0), eq(storeOrder.isDel, 0), eq(store
 
 export class AdminRefundReadService {
   constructor(private readonly container: Container, private readonly env: Env) {}
+
+  async settlement(id: number) {
+    return withTx(this.container, async db => {
+      await db.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await db.execute(sql`SELECT set_config('statement_timeout',
+        LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true)`);
+      const [row] = await db.select({ orderId: storeOrder.id }).from(refund)
+        .innerJoin(storeOrder, eq(storeOrder.id, refund.storeOrderId)).where(and(visible(), eq(refund.id, id))).limit(1);
+      if (!row) throw new NotFoundException('退款记录不存在或关联订单不可读取');
+      const [order] = await db.select().from(storeOrder).where(eq(storeOrder.id, row.orderId)).limit(1);
+      if (!order) throw new NotFoundException('退款关联订单不存在');
+      return readVerifiedSupplierRefundSettlement(db, order, id);
+    });
+  }
 
   async list(query: Record<string, string>) {
     const rawLimit = query.limit ?? '20';
