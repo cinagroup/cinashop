@@ -20,6 +20,9 @@ import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
 import { videoPreviewSource } from '@/api/productVideoUpload';
 import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.vue';
 import SupplierProductBrandPicker from '@/components/SupplierProductBrandPicker.vue';
+import SupplierProductEnsurePicker from '@/components/SupplierProductEnsurePicker.vue';
+import type { SupplierProductEnsureSelection } from '@/types/productEnsures';
+import { productEnsureDetail, productEnsureIds, productEnsurePayload } from '@/utils/productEnsures';
 import type { SupplierProductBrandSelection } from '@/types/productBrands';
 import { productBrandDetail, productBrandPath, productBrandPayload } from '@/utils/productBrands';
 import type { SupplierAttachment } from '@/api/attachments';
@@ -78,6 +81,13 @@ const categories = ref<ProductCategory[]>([]);
 const selectedLabelIds = ref<number[]>([]), labelsChanged = ref(false);
 const selectedBrandPath = ref<number[]>([]), brandSelection = ref<SupplierProductBrandSelection | null>(null), brandChanged = ref(false);
 const brandAvailability = ref({ ready: false, valid: false });
+const selectedEnsureIds = ref<number[]>([]), ensureSelection = ref<SupplierProductEnsureSelection | null>(null), ensuresChanged = ref(false);
+const ensureAvailability = ref({ ready: false, valid: false });
+function changeEnsures(value: number[]) {
+  if (loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
+  try { selectedEnsureIds.value = productEnsureIds(value); ensuresChanged.value = true; }
+  catch (error) { ElMessage.warning(error instanceof Error ? error.message : '服务保障选择无效'); }
+}
 function changeBrand(value: number[]) {
   if (loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
   try { selectedBrandPath.value = productBrandPath(value); brandChanged.value = true; }
@@ -225,6 +235,7 @@ function resetProductForm() {
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
   selectedBrandPath.value = []; brandSelection.value = null; brandChanged.value = false; brandAvailability.value = { ready: false, valid: false };
+  selectedEnsureIds.value = []; ensureSelection.value = null; ensuresChanged.value = false; ensureAvailability.value = { ready: false, valid: false };
   labelAvailability.value = { ids: [], ready: false };
   for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
   Object.assign(form, initialForm());
@@ -245,9 +256,10 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
-  const brand = productBrandDetail(detail);
+  const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail);
   Object.assign(schedule, productScheduleEditor(detail));
   selectedBrandPath.value = brand.path; brandSelection.value = brand.selection; brandChanged.value = false;
+  selectedEnsureIds.value = ensures.ids; ensureSelection.value = ensures.selection; ensuresChanged.value = false;
   videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
   const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
@@ -501,6 +513,7 @@ function validateForm() {
   if (!productReadReady.value) return '请先成功读取完整商品资料';
   if (!copying.value) try { productSchedulePayload(schedule); } catch (error) { return error instanceof Error ? error.message : '上下架计划无效'; }
   if (!copying.value && brandChanged.value && selectedBrandPath.value.length && (!brandAvailability.value.ready || !brandAvailability.value.valid)) return '请刷新品牌并重新选择完整品牌路径，或清空品牌选择';
+  if (!copying.value && ensuresChanged.value && selectedEnsureIds.value.length && (!ensureAvailability.value.ready || !ensureAvailability.value.valid)) return '请刷新服务保障并重新选择，或清空保障选择';
   if (labelsChanged.value && !labelAvailability.value.ready) return '请刷新商品标签后再保存标签修改';
   if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
@@ -538,9 +551,9 @@ async function submit() {
       disk_info: form.product_type === 1 && delivery_mode === "fixed" ? sku.disk_info?.trim() ?? "" : "",
     }));
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
-      auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+      auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
     const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
-      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value) } : {}) };
+      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
       // Persist only the recovery identity before the first POST. Product text,
@@ -868,6 +881,8 @@ onMounted(load);
             </template>
             <el-alert v-else :title="isCardProduct ? '自动交付，无需物流和运费' : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />
             <el-form-item><el-checkbox v-model="form.is_support_refund" :true-value="1" :false-value="0">支持退款退货</el-checkbox></el-form-item>
+            <el-form-item v-if="!copying" label="服务保障"><SupplierProductEnsurePicker :model-value="selectedEnsureIds" :selection="ensureSelection" :changed="ensuresChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeEnsures" @availability="ensureAvailability = $event" /></el-form-item>
+            <p v-else class="brand-copy-note">复制保留来源的服务保障，创建后可在编辑页调整。</p>
           </el-form>
         </article>
         <article class="surface product-form-card compact-card">

@@ -314,6 +314,8 @@ export interface ProductDetail {
   store_label_id?: number[] | string;
   brand_id?: number[];
   brand_selection?: import('./types/productBrands').SupplierProductBrandSelection;
+  ensure_id?: number[];
+  ensure_selection?: import('./types/productEnsures').SupplierProductEnsureSelection;
   slider_image: string[];
   description: string;
   spec_type: 0 | 1;

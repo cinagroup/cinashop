@@ -35,14 +35,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier complet
     for (const name of Object.keys(snapshot)) if (!['store_product','store_product_attr','store_product_attr_result','store_product_relation'].includes(name)) expect(current[name], name).toEqual(snapshot[name]);
   }
 
-  it('reads the exact stored brand path and consistency state using a pure twelve-table SELECT viewer', async () => f.withReader(async runtime => {
+  it('reads the exact stored brand path and consistency state using a pure thirteen-table SELECT viewer', async () => f.withReader(async runtime => {
     wiring.container = runtime.container;
     await unchanged(async () => { const result = await request('GET', '/product/product/80', undefined, 'viewer'); expect(result.status).toBe(200);
       expect(result.data).toMatchObject({ brand_id: [101,102], brand_selection: { brand_id: 102, brand_com: '101,102', consistent: true, available: true } }); });
     const [rights] = await runtime.db.execute(sql`SELECT count(*) FILTER(WHERE has_table_privilege(current_user,c.oid,'SELECT'))::int AS selected,
       bool_and(NOT(has_table_privilege(current_user,c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') OR has_any_column_privilege(current_user,c.oid,'INSERT,UPDATE,REFERENCES'))) AS pure
       FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
-    expect(rights).toMatchObject({ selected: 12, pure: true });
+    expect(rights).toMatchObject({ selected: 13, pure: true });
   }));
 
   it.each([{ ids: [101] }, { ids: [101,102] }, { ids: [101,102,103] }])('creates and then replaces brand path $ids without losing hidden fields or other associations', async ({ ids }) => f.withWriter(async runtime => {
