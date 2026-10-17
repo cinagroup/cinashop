@@ -51,9 +51,9 @@ export function integralPublicH5Origin(value: unknown): string {
 export function integralDetailText(value: unknown, maximum: number): string {
   return typeof value === 'string' && [...value].length <= maximum && !/[\u0000-\u001f\u007f]/u.test(value) ? value : '';
 }
-export function integralDetailJson(value: string | null, issues: string[], issue: string): unknown {
+export function integralDetailJson(value: string | null, issues: string[], issue: string, maximum: number = INTEGRAL_DETAIL_LIMITS.json): unknown {
   if (!value) return null;
-  if (value.length > INTEGRAL_DETAIL_LIMITS.json) { issues.push(issue); return null; }
+  if (value.length > maximum) { issues.push(issue); return null; }
   try { return parseLevelActivationJson(value); } catch { issues.push(issue); return null; }
 }
 export function integralDetailIds(value: string | null, issues: string[], issue: string): number[] {
@@ -64,7 +64,9 @@ export function integralDetailIds(value: string | null, issues: string[], issue:
   return [...new Set(pieces.map(part => Number(part.trim())))];
 }
 export function integralDetailSpecs(value: string | null, issues: string[]): IntegralDetail['storeInfo']['specs'] {
-  const parsed = integralDetailJson(value, issues, 'specs_invalid'); if (parsed === null) return [];
+  // A complete 100-row PHP parameter snapshot can exceed the generic JSON
+  // limit through Unicode surrogate pairs or PHP's escaped Unicode encoding.
+  const parsed = integralDetailJson(value, issues, 'specs_invalid', 1_048_576); if (parsed === null) return [];
   if (!Array.isArray(parsed) || parsed.length > INTEGRAL_DETAIL_LIMITS.definitions) { issues.push('specs_invalid'); return []; }
   const result: IntegralDetail['storeInfo']['specs'] = [];
   for (const row of parsed) {

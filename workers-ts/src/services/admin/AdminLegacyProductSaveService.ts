@@ -27,6 +27,7 @@ import { admitProductCopy } from './AdminProductCopy';
 import { authorizeAdminLegacyProductRead } from './AdminLegacyProductReadAuthority';
 import { assertProductVideoReference } from '@/services/product/ProductVideoPolicy';
 import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
+import { assertSupplierProductParameterCopySource, captureSupplierProductParameterCopy } from '@/services/supplier/SupplierProductParameterCopyCapability';
 
 export interface AdminLegacyProductSaveEffects { dispatch(outboxId: number): Promise<void> }
 export interface AdminLegacyProductSaveContext { localCopy?: boolean; editorOperation?: ProductEditorIntent }
@@ -161,8 +162,10 @@ export class AdminLegacyProductSaveService {
         if (!['', '0', 'false', '1', 'true'].includes(erpValue) || !/^(?:0|[1-9]\d*)$/.test(thresholdValue)
           || Number(thresholdValue) > 2_147_483_647) throw productSaveConflict('商品库存配置无效');
         const threshold = Number(thresholdValue);
+        const supplierParameterCopy = supplier && copySource
+          ? await captureSupplierProductParameterCopy(tx, supplier.supplierId, copySource) : undefined;
         const input = normalizeAdminLegacyProductInput(body, { now, localCopy: context.localCopy || copying,
-          erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url'), controlledVideo: editorContract });
+          erpOpen: ['1', 'true'].includes(erpValue), siteUrl: settings.get('site_url'), controlledVideo: editorContract, supplierParameterCopy });
         if (input.copyMode === -1) throw new ValidateException('采集图片处理尚未接入，请先使用本地图文素材保存');
         // Ordinary editing cannot replace trusted import provenance via its
         // intentionally blank source-context fields.
@@ -217,7 +220,7 @@ export class AdminLegacyProductSaveService {
         const creation = { star: '5.0', spu: spu() };
         const saved = await new ProductAssociationService(createContainerFromDb(tx)).saveInTransaction(tx, productId,
           { ...input.normalized, attrs: baselineAttrs }, { id: actor.id, name: '', ip: '' }, {
-            now, locks: 'already-held', audit: 'outer', legacy: { owner, mainValues: input.productValues,
+            now, locks: 'already-held', audit: 'outer', supplierParameterCopy, legacy: { owner, mainValues: input.productValues,
               verifiedState, creation, deliveryPolicy: 'legacy', allowHiddenDeleted: true,
               relationPolicy: editorContract ? 'replace-all' : 'preserve-empty' },
           });
@@ -275,6 +278,18 @@ export class AdminLegacyProductSaveService {
         const verify = async () => {
           if (supplier) await supplier.admitSource(tx);
           else if (copy) await admitProductCopy(tx, copy, this.appKey);
+          if (supplierParameterCopy !== undefined) {
+            await assertSupplierProductParameterCopySource(tx, supplierParameterCopy);
+            // The capability changes parameter shape admission only. A same-tx
+            // deferred effect cannot turn the copied ensures into new foreign
+            // or disabled bindings after their ordinary initial validation.
+            const ids = input.normalized.ensure_id as number[];
+            const ensures = ids.length ? await tx.select().from(storeProductEnsure).where(inArray(storeProductEnsure.id, ids))
+              .orderBy(asc(storeProductEnsure.id)).for('share', { noWait: true }) : [];
+            if (ensures.length !== ids.length || ensures.some(row => row.status !== 1
+              || !(row.type === 0 && row.relationId === 0 || row.type === owner.type && row.relationId === owner.relationId)))
+              throw productSaveConflict('复制保障服务已变化，请重新载入来源');
+          }
           const [main] = await tx.select().from(storeProduct).where(eq(storeProduct.id, actualId)).limit(1);
           assertProductSaveSame(main, expectedMain, '主表');
           verifyProductSavePlan({ input, existing, before, after: await readProductSaveState(tx, actualId), actualId, owner,
@@ -304,16 +319,25 @@ export class AdminLegacyProductSaveService {
           if (!live || !productSaveSame(authority(live), authority(finalLive))) throw new AuthException('管理员权限已变化', ApiErrorCode.ERR_AUTH);
         }
         await verify();
-        assertProductSaveSame(await tx.select().from(systemLog).where(and(eq(systemLog.path, auditPath), eq(systemLog.type, 'product_save'))).orderBy(asc(systemLog.id)),
-          [...auditBefore, insertedAudit[0]].sort((a, b) => a.id - b.id), '审计');
-        assertProductSaveSame(await tx.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateType, 'product'), eq(storeOrderOutbox.aggregateId, actualId))).orderBy(asc(storeOrderOutbox.id)),
-          [...outboxBefore, outbox].sort((a, b) => a.id - b.id), '事件');
+        const verifyEffects = async () => {
+          assertProductSaveSame(await tx.select().from(systemLog).where(and(eq(systemLog.path, auditPath), eq(systemLog.type, 'product_save'))).orderBy(asc(systemLog.id)),
+            [...auditBefore, insertedAudit[0]].sort((a, b) => a.id - b.id), '审计');
+          assertProductSaveSame(await tx.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateType, 'product'), eq(storeOrderOutbox.aggregateId, actualId))).orderBy(asc(storeOrderOutbox.id)),
+            [...outboxBefore, outbox].sort((a, b) => a.id - b.id), '事件');
+        };
+        await verifyEffects();
         await dbClock(tx, actor);
         const receipt = context.editorOperation ? await completeProductEditorSave(tx, context.editorOperation,
           { id: actualId, created: requestedId === 0 }, actor) : undefined;
         if (supplier) {
           await supplier.complete(tx, actualId);
-          await verify(); await supplier.check(tx); await dbClock(tx, actor);
+          // The new source-derived parameter composition settles deferred
+          // effects before its final full main/collection/source receipt.
+          // Existing Admin and generic copy transactions keep their contract.
+          if (supplierParameterCopy !== undefined) await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+          await verify();
+          if (supplierParameterCopy !== undefined) await verifyEffects();
+          await supplier.check(tx); await dbClock(tx, actor);
         }
         return { id: actualId, committed: true as const, outboxId: outbox.id,
           receipt,

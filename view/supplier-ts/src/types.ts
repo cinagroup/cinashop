@@ -316,6 +316,9 @@ export interface ProductDetail {
   brand_selection?: import('./types/productBrands').SupplierProductBrandSelection;
   ensure_id?: number[];
   ensure_selection?: import('./types/productEnsures').SupplierProductEnsureSelection;
+  specs_id?: number;
+  specs?: import('./types/productParameters').SupplierProductParameterRow[];
+  specs_selection?: import('./types/productParameters').SupplierProductParameterSelection;
   slider_image: string[];
   description: string;
   spec_type: 0 | 1;

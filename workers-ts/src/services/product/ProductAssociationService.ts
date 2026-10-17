@@ -43,6 +43,8 @@ import {
 } from "@/services/product/ProductSkuEditorService";
 import { tryLockVirtualProductInventory } from "@/services/product/VirtualProductInventoryService";
 import { HttpApiException, NotFoundException, ValidateException } from "@/utils/errors";
+import { assertSupplierProductParameterCopy, supplierProductParameterCopyRows, type SupplierProductParameterCopyCapability } from '@/services/supplier/SupplierProductParameterCopyCapability';
+import type { SupplierProductParameterRow } from '@/services/supplier/SupplierProductParameterBindings';
 
 const PRODUCT_WRITE_LOCK_NAMESPACE = 731_617;
 const CATEGORY_RELATION = 1;
@@ -94,6 +96,7 @@ export interface ProductSaveTransactionContext {
   now: number;
   locks: 'acquire' | 'already-held';
   audit: 'primitive' | 'outer';
+  supplierParameterCopy?: SupplierProductParameterCopyCapability;
   /** A code-only argument. Never construct this from an HTTP body flag. */
   legacy?: {
     owner: { type: number; relationId: number };
@@ -145,7 +148,7 @@ export interface ProductAssociations {
   productLabelIds: number[];
   ensureIds: number[];
   parameterTemplateId: number;
-  parameterSpecs: ProductParameterSnapshot[];
+  parameterSpecs: Array<ProductParameterSnapshot | SupplierProductParameterRow>;
 }
 
 function textValue(value: unknown, field: string, maximum: number, fallback = ""): string {
@@ -299,6 +302,7 @@ export function productAssociationReadbackMatches(
   } | undefined,
   relations: Array<{ type: number; relationId: number }>,
   expected: ProductAssociations,
+  supplierParameterCopy?: SupplierProductParameterCopyCapability,
 ): boolean {
   if (!product) return false;
   try {
@@ -308,7 +312,8 @@ export function productAssociationReadbackMatches(
       && sameIds(normalizeProductAssociationIds(product.storeLabelId), expected.productLabelIds)
       && sameIds(normalizeProductAssociationIds(product.ensureId), expected.ensureIds)
       && product.specsId === expected.parameterTemplateId
-      && JSON.stringify(normalizeProductParameterSnapshot(product.specs)) === JSON.stringify(expected.parameterSpecs)
+      && JSON.stringify(supplierParameterCopy === undefined ? normalizeProductParameterSnapshot(product.specs)
+        : supplierProductParameterCopyRows(supplierParameterCopy, product.specsId, product.specs)) === JSON.stringify(expected.parameterSpecs)
       && sameIds(relationIds(relations, CATEGORY_RELATION), expected.categoryIds)
       && sameIds(relationIds(relations, BRAND_RELATION), expected.brandIds)
       && sameIds(relationIds(relations, PRODUCT_LABEL_RELATION), expected.productLabelIds)
@@ -704,7 +709,7 @@ export class ProductAssociationService {
       historicalEnsureIds = fallback.ensure_id;
     }
     const associations = hasAssociations
-      ? await this.validateAssociations(tx, owner, associationBody, historicalParameters, historicalEnsureIds)
+      ? await this.validateAssociations(tx, owner, associationBody, historicalParameters, historicalEnsureIds, context.supplierParameterCopy, productId)
       : null;
 
     const values = {
@@ -815,7 +820,7 @@ export class ProductAssociationService {
         ? MANAGED_RELATIONS.filter((type) => !associationRelationIds(associations, type).length)
         : [];
       await this.replaceRelations(tx, savedProductId, isShow, associations, now, preservedTypes);
-      await this.assertAssociationReadback(tx, savedProductId, associations, preservedTypes, currentRelations);
+      await this.assertAssociationReadback(tx, savedProductId, associations, preservedTypes, currentRelations, context.supplierParameterCopy);
     }
     let assignedSkuRows: ProductSkuEditorRow[] = [];
     if (skuPayload) {
@@ -906,13 +911,16 @@ export class ProductAssociationService {
     body: Record<string, unknown>,
     historicalParameters?: { templateId: number; specs: ProductParameterSnapshot[] },
     historicalEnsureIds: readonly number[] = [],
+    supplierParameterCopy?: SupplierProductParameterCopyCapability,
+    targetId = 0,
   ): Promise<ProductAssociations> {
     const categoryIds = normalizeProductAssociationIds(body.cate_id, "商品分类", 20);
     const brandIds = normalizeProductAssociationIds(body.brand_id, "商品品牌", 20);
     const productLabelIds = normalizeProductAssociationIds(body.store_label_id, "商品标签");
     const ensureIds = normalizeProductAssociationIds(body.ensure_id, "保障服务");
     const parameterTemplateId = integerValue(body.specs_id, "参数模板", 0);
-    const parameterSpecs = normalizeProductParameterSnapshot(body.specs);
+    const parameterSpecs = supplierParameterCopy === undefined ? normalizeProductParameterSnapshot(body.specs)
+      : await assertSupplierProductParameterCopy(tx, supplierParameterCopy, owner, targetId, body.specs_id, body.specs);
     const [categories, brands, labels, ensures, templates] = await Promise.all([
       categoryIds.length ? tx.select({ id: storeProductCategory.id }).from(storeProductCategory)
         .where(and(inArray(storeProductCategory.id, categoryIds), readableScope(storeProductCategory, owner)))
@@ -941,8 +949,8 @@ export class ProductAssociationService {
       throw new ValidateException('保障服务已停用，不能新绑定');
     }
     if (parameterTemplateId > 0 && !templates[0]) throw new ValidateException("参数模板不存在或不属于当前商品");
-    if (parameterTemplateId === 0 && parameterSpecs.length) throw new ValidateException("请选择参数模板后再填写商品参数");
-    if (parameterTemplateId > 0) {
+    if (supplierParameterCopy === undefined && parameterTemplateId === 0 && parameterSpecs.length) throw new ValidateException("请选择参数模板后再填写商品参数");
+    if (supplierParameterCopy === undefined && parameterTemplateId > 0) {
       const templateSpecs = await tx.select({ name: storeProductSpecs.name })
         .from(storeProductSpecs).where(and(
           eq(storeProductSpecs.tempId, parameterTemplateId),
@@ -1013,6 +1021,7 @@ export class ProductAssociationService {
     expected: ProductAssociations,
     preservedTypes: readonly number[] = [],
     previousRelations: readonly (typeof storeProductRelation.$inferSelect)[] = [],
+    supplierParameterCopy?: SupplierProductParameterCopyCapability,
   ): Promise<void> {
     const [products, relations] = await Promise.all([
       tx.select({
@@ -1031,7 +1040,7 @@ export class ProductAssociationService {
         )).orderBy(asc(storeProductRelation.id)),
     ]);
     const verified = productAssociationReadbackMatches(products[0],
-      relations.filter((row) => !preservedTypes.includes(row.type)), expected)
+      relations.filter((row) => !preservedTypes.includes(row.type)), expected, supplierParameterCopy)
       && JSON.stringify(relations.filter((row) => preservedTypes.includes(row.type)))
         === JSON.stringify(previousRelations.filter((row) => preservedTypes.includes(row.type)));
     if (!verified) throw new Error("商品关联资料数据库回读校验失败");

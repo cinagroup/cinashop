@@ -37,7 +37,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier complet
     for (const name of Object.keys(snapshot)) if (!['store_product','store_product_attr','store_product_attr_result','store_product_relation'].includes(name)) expect(current[name], name).toEqual(snapshot[name]);
   }
 
-  it('reads exact five-key historical metadata through a thirteen-table SELECT-only viewer', async () => f.withReader(async runtime => {
+  it('reads exact five-key historical metadata through a fourteen-table SELECT-only viewer', async () => f.withReader(async runtime => {
     wiring.container = runtime.container;
     await unchanged(async () => { const result = await request('GET', '/product/product/80', undefined, 'viewer'); expect(result.status).toBe(200);
       expect(result.data.ensure_id).toEqual([41]); expect(result.data.ensure_selection).toEqual({ ensure_id: '41', consistent: true, available: true, retained_ids: [], truncated: false });
@@ -49,7 +49,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier complet
     const [rights] = await runtime.db.execute(sql`SELECT count(*) FILTER(WHERE has_table_privilege(current_user,c.oid,'SELECT'))::int AS selected,
       bool_and(NOT(has_table_privilege(current_user,c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') OR has_any_column_privilege(current_user,c.oid,'INSERT,UPDATE,REFERENCES'))) AS pure
       FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
-    expect(rights).toMatchObject({ selected: 13, pure: true });
+    expect(rights).toMatchObject({ selected: 14, pure: true });
     const [sequences] = await runtime.db.execute(sql`SELECT bool_and(NOT has_sequence_privilege(current_user,c.oid,'USAGE,SELECT,UPDATE')) AS pure FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='S'`);
     expect(sequences).toEqual({ pure: true });
   }));

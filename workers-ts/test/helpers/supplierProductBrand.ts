@@ -21,10 +21,10 @@ export async function supplierProductBrandFixture() {
       { productId: 80, type: 5, relationId: 41, status: 1 }, { productId: 80, type: 6, relationId: 51, status: 1 },
     ]);
     const withReader = <T>(work: (runtime: SupplierProductScheduleRuntime) => Promise<T>) => f.withReader(async runtime => {
-      await f.exec(`GRANT SELECT ON public.store_brand,public.store_product_ensure TO "${runtime.role}"`); return work(runtime);
+      await f.exec(`GRANT SELECT ON public.store_brand,public.store_product_ensure,public.category TO "${runtime.role}"`); return work(runtime);
     });
     const withWriter = <T>(work: (runtime: SupplierProductScheduleRuntime) => Promise<T>) => f.withWriter(async runtime => {
-      await f.exec(`GRANT SELECT ON public.store_brand,public.store_product_ensure TO "${runtime.role}"; GRANT UPDATE(id) ON public.store_brand TO "${runtime.role}"`);
+      await f.exec(`GRANT SELECT ON public.store_brand,public.store_product_ensure,public.category TO "${runtime.role}"; GRANT UPDATE(id) ON public.store_brand TO "${runtime.role}"`);
       return work(runtime);
     });
     return { ...f, withReader, withWriter, actor: supplierProductScheduleActor(),
