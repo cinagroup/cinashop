@@ -187,7 +187,7 @@
     {
       "role": "worker_route",
       "file": "workers-ts/src/routes/v1/index.ts",
-      "sha256": "d081c2c55fcf87a50c260ee4fc0f407681bf15910637589743f7a52297d53a89",
+      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
       "evidence_lines": [
         197
       ]
@@ -278,5 +278,30 @@
       "inventory_fix": "Explicitly retain the four restored statistics sources; live full-source comparison remains mandatory."
     },
     "production_or_new_browser_acceptance_claimed": false
-  }
+  },
+  "source_fingerprint_followups": [
+    {
+      "date": "2026-10-17",
+      "base_commit": "fee44e5fe482da70d1664253368e25e292d60b85",
+      "reason": "303d81a3 added cumulative Supplier refund staff read routes; get_script at line197 and its handler/loaders remain byte-identical. Update whole route-file evidence rather than retiring restored PHP behavior.",
+      "previous_worker_route_proof": {
+        "role": "worker_route",
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "d081c2c55fcf87a50c260ee4fc0f407681bf15910637589743f7a52297d53a89",
+        "evidence_lines": [
+          197
+        ]
+      },
+      "current_worker_route_proof": {
+        "role": "worker_route",
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+        "evidence_lines": [
+          197
+        ]
+      },
+      "diagnostic_audit": "workers-ts/audit/ci-source-fingerprint-refresh-20261017.json",
+      "original_validation_retained": "The original validation object above records the October15 restoration run; current refresh validation is in the diagnostic audit."
+    }
+  ]
 }
