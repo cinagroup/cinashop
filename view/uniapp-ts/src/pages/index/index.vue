@@ -93,7 +93,7 @@
           <view class="goods-name">{{ item.store_name }}</view>
           <view class="goods-bottom">
             <text class="price">¥{{ item.price }}</text>
-            <text class="sales">已售 {{ item.sales }}</text>
+            <text class="sales">已售 {{ item.sales }}{{ item.unit_name }}</text>
           </view>
         </view>
       </view>

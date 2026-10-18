@@ -31,8 +31,8 @@
           <text v-if="displayVipPrice !== null" class="vip-tag">SVIP专享 ¥{{ displayVipPrice }}</text>
         </view>
         <view class="meta-row">
-          <text v-if="design.isOpen.includes(1)">已售 {{ detail.fsales }}</text>
-          <text v-if="design.isOpen.includes(2)">库存 {{ selectedSku?.stock ?? detail.stock }}</text>
+          <text v-if="design.isOpen.includes(1)" class="product-sales">已售 {{ detail.fsales }}{{ detail.unit_name }}</text>
+          <text v-if="design.isOpen.includes(2)" class="product-stock">库存 {{ selectedSku?.stock ?? detail.stock }}{{ detail.unit_name }}</text>
         </view>
       </view>
 

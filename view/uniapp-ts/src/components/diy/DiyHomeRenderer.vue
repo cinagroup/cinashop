@@ -82,7 +82,7 @@
             <text class="diy-product-name">{{ product.store_name }}</text>
             <view class="diy-price-row">
               <text class="diy-price">¥{{ product.price }}</text>
-              <text class="diy-sales">已售 {{ product.sales ?? 0 }}</text>
+              <text v-if="showProductSales(block)" class="diy-sales">已售 {{ product.sales ?? 0 }}{{ product.unit_name }}</text>
             </view>
           </view>
         </view>
@@ -274,6 +274,10 @@ const props = withDefaults(defineProps<{
 }>(), {
   microPage: false,
 });
+function showProductSales(block: DiyComponent) {
+  const choices = asDiyRecord(block.checkboxInfo)?.type;
+  return block.checkboxInfo === undefined || Array.isArray(choices) && choices.includes(3);
+}
 const theme = useThemeStore();
 function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
 

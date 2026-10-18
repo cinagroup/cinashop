@@ -20,6 +20,7 @@ import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
 import { videoPreviewSource } from '@/api/productVideoUpload';
 import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.vue';
 import SupplierProductBrandPicker from '@/components/SupplierProductBrandPicker.vue';
+import SupplierProductUnitPicker from '@/components/SupplierProductUnitPicker.vue';
 import SupplierProductEnsurePicker from '@/components/SupplierProductEnsurePicker.vue';
 import SupplierProductParameterEditor from '@/components/SupplierProductParameterEditor.vue';
 import SupplierProductSystemFormPicker from '@/components/SupplierProductSystemFormPicker.vue';
@@ -775,7 +776,7 @@ onMounted(load);
               <el-form-item label="商品分类" required>
                 <el-tree-select v-model="form.cate_id" :data="categories" :props="treeProps" node-key="id" multiple check-strictly show-checkbox clearable style="width: 100%" placeholder="选择本供应商分类" />
               </el-form-item>
-              <el-form-item label="计量单位"><el-input v-model="form.unit_name" maxlength="32" /></el-form-item>
+              <el-form-item label="计量单位"><SupplierProductUnitPicker v-model="form.unit_name" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated || copyBlocked" /></el-form-item>
               <el-form-item v-if="!copying" label="商品品牌"><SupplierProductBrandPicker :model-value="selectedBrandPath" :selection="brandSelection" :changed="brandChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeBrand" @availability="brandAvailability = $event" /></el-form-item>
               <p v-else class="brand-copy-note">复制保留来源的品牌，创建后可在编辑页调整。</p>
               <el-form-item class="wide" label="商品标签"><SupplierProductLabelPicker :model-value="selectedLabelIds" :context="copyEntry.source || productId" :disabled="loading || saving || copyBlocked || !canManageProducts" @update:model-value="selectedLabelIds = $event; labelsChanged = true" @availability="labelAvailability = $event" /></el-form-item>

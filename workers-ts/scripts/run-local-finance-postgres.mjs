@@ -68,6 +68,7 @@ const supplierParametersBrowser = schemaMaintenance && tests.length === 1 && tes
 const supplierSystemFormBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-system-form-browser';
 const supplierSkuBatchBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-sku-batch-browser';
 const supplierRecommendImageBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-product-recommend-image-browser';
+const supplierUnitBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-product-unit-browser';
 const productEditorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-product-editor-browser';
 // Refund fixtures now install the reviewed NOLOGIN checkout pricing owner too.
 // Require explicit maintenance of a newly owned local cluster, never elevate an existing host.
@@ -75,7 +76,7 @@ const adminBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[
 const customerBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-order-browser';
 const adminOrderBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-order-browser';
 const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance;
-if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierOrderEditBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,
+if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierOrderEditBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,
   'Verbose reporting applies only to explicit native test files');
 if (browserAcceptance) {
   for (const key of ['TEST_BROWSER_PACKAGE_JSON', 'TEST_BROWSER_EXECUTABLE', 'TEST_BROWSER_OUTPUT_DIR']) {
@@ -86,7 +87,7 @@ if (browserAcceptance) {
   const inside = relative(checkout, output);
   assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');
 }
-for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {
+for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {
   assert.match(test, /^test\/[a-z0-9-]+\.test\.ts$/, 'Only explicit unit test paths are accepted');
   assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);
 }
@@ -108,6 +109,7 @@ if (schemaMaintenance) {
     'test/supplier-product-system-form-native.test.ts',
     'test/supplier-sku-batch-native.test.ts',
     'test/supplier-product-recommend-image-native.test.ts',
+    'test/supplier-product-unit-native.test.ts',
     'test/supplier-product-copy-operation-catalog-native.test.ts',
     'test/supplier-order-generations.test.ts',
     'test/supplier-unpaid-order-edit-cashier-native.test.ts',
@@ -685,6 +687,7 @@ if (schemaMaintenance) {
     'audit:supplier-system-form-browser',
     'audit:supplier-sku-batch-browser',
     'audit:supplier-product-recommend-image-browser',
+    'audit:supplier-product-unit-browser',
     'test/supplier-extract-application-media-native.test.ts',
     'test/supplier-extract-read-native.test.ts',
     'test/supplier-extract-application-native.test.ts',
@@ -828,6 +831,7 @@ try {
     : supplierSystemFormBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-system-form-browser.config.ts', '--maxWorkers=1']
     : supplierSkuBatchBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-sku-batch-browser.config.ts', '--maxWorkers=1']
     : supplierRecommendImageBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-product-recommend-image-browser.config.ts', '--maxWorkers=1']
+    : supplierUnitBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-product-unit-browser.config.ts', '--maxWorkers=1']
     : supplierEnsuresBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-ensures-browser.config.ts', '--maxWorkers=1']
     : supplierCopyBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-copy-browser.config.ts', '--maxWorkers=1']
     : supplierRecycleBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-recycle-browser.config.ts', '--maxWorkers=1']
@@ -858,6 +862,7 @@ try {
     'test/supplier-product-system-form-native.test.ts',
     'test/supplier-sku-batch-native.test.ts',
     'test/supplier-product-recommend-image-native.test.ts',
+    'test/supplier-product-unit-native.test.ts',
     'test/supplier-product-copy-operation-catalog-native.test.ts',
     'test/supplier-unpaid-order-edit-cashier-native.test.ts',
     'test/supplier-order-price-revision-native.test.ts',
@@ -1088,12 +1093,12 @@ try {
     // These complete-schema assisted suites create two independent LOGIN
     // profiles for every case. Retain every original case and allow their full
     // files to finish; the individual SQL/HTTP lock deadlines remain bounded.
-    timeout: (unitShard ? 40 : supplierRecommendImageBrowser ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([
+    timeout: (unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([
       'test/assisted-purchase-flow-postgres.test.ts',
       'test/assisted-purchase-runtime-postgres.test.ts',
     ]).has(test)) ? 20 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,
     env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)
-      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },
+      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },
   });
   if (unitGate) {
     const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);
