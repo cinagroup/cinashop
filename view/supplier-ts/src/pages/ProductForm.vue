@@ -22,6 +22,9 @@ import SupplierProductLabelPicker from '@/components/SupplierProductLabelPicker.
 import SupplierProductBrandPicker from '@/components/SupplierProductBrandPicker.vue';
 import SupplierProductEnsurePicker from '@/components/SupplierProductEnsurePicker.vue';
 import SupplierProductParameterEditor from '@/components/SupplierProductParameterEditor.vue';
+import SupplierProductSystemFormPicker from '@/components/SupplierProductSystemFormPicker.vue';
+import type { SupplierProductSystemFormSelection } from '@/types/productSystemForms';
+import { productSystemFormDetail, productSystemFormId, productSystemFormPayload } from '@/utils/productSystemForms';
 import type { SupplierProductParameterDraft, SupplierProductParameterSelection } from '@/types/productParameters';
 import { productParameterDetail, productParameterDraft, productParameterPayload } from '@/utils/productParameters';
 import type { SupplierProductEnsureSelection } from '@/types/productEnsures';
@@ -88,6 +91,13 @@ const selectedEnsureIds = ref<number[]>([]), ensureSelection = ref<SupplierProdu
 const ensureAvailability = ref({ ready: false, valid: false });
 const parameterDraft = ref<SupplierProductParameterDraft>({ specs_id: 0, specs: [] }), parameterSelection = ref<SupplierProductParameterSelection | null>(null), parametersChanged = ref(false);
 const parameterAvailability = ref({ ready: false, valid: false });
+const selectedSystemFormId = ref(0), systemFormSelection = ref<SupplierProductSystemFormSelection | null>(null), systemFormChanged = ref(false);
+const systemFormAvailability = ref({ ready: false, valid: false });
+function changeSystemForm(value: number) {
+  if (loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
+  try { selectedSystemFormId.value = productSystemFormId(value); systemFormChanged.value = true; }
+  catch (error) { ElMessage.warning(error instanceof Error ? error.message : '留言模板无效'); }
+}
 function changeParameters(value: SupplierProductParameterDraft) {
   if (loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value || copying.value) return;
   try { parameterDraft.value = productParameterDraft(value); parametersChanged.value = true; }
@@ -251,6 +261,7 @@ function resetProductForm() {
   selectedBrandPath.value = []; brandSelection.value = null; brandChanged.value = false; brandAvailability.value = { ready: false, valid: false };
   selectedEnsureIds.value = []; ensureSelection.value = null; ensuresChanged.value = false; ensureAvailability.value = { ready: false, valid: false };
   parameterDraft.value = { specs_id: 0, specs: [] }; parameterSelection.value = null; parametersChanged.value = false; parameterAvailability.value = { ready: false, valid: false };
+  selectedSystemFormId.value = 0; systemFormSelection.value = null; systemFormChanged.value = false; systemFormAvailability.value = { ready: false, valid: false };
   labelAvailability.value = { ids: [], ready: false };
   for (const key of Object.keys(form)) Reflect.deleteProperty(form, key);
   Object.assign(form, initialForm());
@@ -271,11 +282,12 @@ function editableSku(sku: ProductSku, productType: ProductDetail['product_type']
 }
 
 function applyProductDetail(detail: ProductDetail) {
-  const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail), parameters = productParameterDetail(detail);
+  const brand = productBrandDetail(detail), ensures = productEnsureDetail(detail), parameters = productParameterDetail(detail), systemForm = productSystemFormDetail(detail);
   Object.assign(schedule, productScheduleEditor(detail));
   selectedBrandPath.value = brand.path; brandSelection.value = brand.selection; brandChanged.value = false;
   selectedEnsureIds.value = ensures.ids; ensureSelection.value = ensures.selection; ensuresChanged.value = false;
   parameterDraft.value = parameters.draft; parameterSelection.value = parameters.selection; parametersChanged.value = false;
+  selectedSystemFormId.value = systemForm.id; systemFormSelection.value = systemForm.selection; systemFormChanged.value = false;
   videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
   const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
@@ -535,6 +547,7 @@ function validateForm() {
     if (parameterDraft.value.specs_id && (!parameterAvailability.value.ready || !parameterAvailability.value.valid)) return '请刷新参数模板并重新选择，或清除模板选择后保存自定义参数';
   }
   if (labelsChanged.value && !labelAvailability.value.ready) return '请刷新商品标签后再保存标签修改';
+  if (!copying.value && systemFormChanged.value && (!systemFormAvailability.value.valid || selectedSystemFormId.value > 0 && !systemFormAvailability.value.ready)) return '请选择可预览的留言模板，或关闭自定义留言';
   if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
   if (!form.cate_id.length) return "请选择商品分类";
@@ -572,9 +585,10 @@ async function submit() {
     }));
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
-      specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+      specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
+      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
     const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
-      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value) } : {}) };
+      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
       // Persist only the recovery identity before the first POST. Product text,
@@ -883,6 +897,11 @@ onMounted(load);
           <header><h2>商品参数</h2><p>选择参数模板或手动填写，按排序从高到低展示</p></header>
           <SupplierProductParameterEditor v-if="!copying" :model-value="parameterDraft" :selection="parameterSelection" :changed="parametersChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeParameters" @availability="parameterAvailability = $event" />
           <p v-else>复制保留来源的商品参数，创建后可在普通编辑页调整。</p>
+        </article>
+        <article class="surface product-form-card">
+          <header><h2>自定义留言</h2><p>设置顾客下单时需要填写的资料</p></header>
+          <SupplierProductSystemFormPicker v-if="!copying" :model-value="selectedSystemFormId" :selection="systemFormSelection" :changed="systemFormChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeSystemForm" @availability="systemFormAvailability = $event" />
+          <p v-else>复制保留来源的留言模板，创建后可在普通编辑页调整。</p>
         </article>
       </main>
 

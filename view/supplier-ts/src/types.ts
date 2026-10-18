@@ -319,6 +319,8 @@ export interface ProductDetail {
   specs_id?: number;
   specs?: import('./types/productParameters').SupplierProductParameterRow[];
   specs_selection?: import('./types/productParameters').SupplierProductParameterSelection;
+  system_form_id?: number;
+  system_form_selection?: import('./types/productSystemForms').SupplierProductSystemFormSelection;
   slider_image: string[];
   description: string;
   spec_type: 0 | 1;

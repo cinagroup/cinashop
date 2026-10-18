@@ -49,7 +49,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier complet
     const [rights] = await runtime.db.execute(sql`SELECT count(*) FILTER(WHERE has_table_privilege(current_user,c.oid,'SELECT'))::int AS selected,
       bool_and(NOT(has_table_privilege(current_user,c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') OR has_any_column_privilege(current_user,c.oid,'INSERT,UPDATE,REFERENCES'))) AS pure
       FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
-    expect(rights).toMatchObject({ selected: 14, pure: true });
+    expect(rights).toMatchObject({ selected: 15, pure: true });
     const [sequences] = await runtime.db.execute(sql`SELECT bool_and(NOT has_sequence_privilege(current_user,c.oid,'USAGE,SELECT,UPDATE')) AS pure FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND c.relkind='S'`);
     expect(sequences).toEqual({ pure: true });
   }));
