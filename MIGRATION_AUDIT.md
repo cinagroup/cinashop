@@ -1,5 +1,13 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-18 Supplier 商品页内运费模板作者
+
+接通 PHP 实际启用的商品编辑页内查看、编辑、新增运费模板弹窗，复用完整配送／包邮／禁配、shipping-v1版本及UUID回执协议。模板更新与创建确认仅刷新目录，商品草稿和temp_id保持；新模板明确选择后才改变草稿绑定。共享作者同时接回独立模板列表页，实测修复sticky aside导致的弹窗遮挡。
+
+相关回归、实际PG16与Browser合计1428项去重通过，包含最终166项前端、266项runner严格准入、53项原生，以及1次生产构建Browser。39项普通运行中依赖PG的条件用例已在真实原生阶段执行；重复执行不重复计数。实际Customer JWT qty2运费10→14、旧报价拒绝和历史订单保持通过，Buyer SQL明确为隔离夹具maintenance连接。Browser覆盖53表／51序列，28个GET与回执查询零写、1模板更新／1创建／1原键恢复，4次比较102个输入的商品草稿，商品POST为0；1200×844与390×844 iframe检查输入和页脚未遮挡，控制台error/warn采样为空。所有3座自有数据库（含失败验收）清零停止。
+
+保留用户裁定的已恢复PHP get_script与修订退役审计，Browser实际GET200。完整合同、最终命令和指纹见[本批说明](workers-ts/docs/php-ts-supplier-product-shipping-editor-20261018.md)及[验证账本](workers-ts/audit/php-ts-supplier-product-shipping-editor-20261018.json)。原88／404复选行逐字保持；目标服务为active，整体PHP→TS迁移仍在推进。本批通过codex/supplier-product-shipping-editor及基于PR109的草稿PR发布，实际提交和CI以后续回执为准。
+
 ## 2026-10-18 Supplier 计量单位目录与实际数量单位展示
 
 接通现有平台／本店单位目录，可搜索选择名称并保留自由文本、历史值和空→件规则；目录失败／空／迟到不覆盖草稿或阻止合法保存。原身份／权限和路由代次取消旧请求，复制保持成熟UUID/HMAC及安全文本作者。目录50字符历史名完整保留，弹层按输入宽度省略显示，超过商品32 UTF-16单位边界的选项禁用，重复名称按原顺序折叠。实际普通详情、首页／商品列表瀑布流及DIY商品销量接上单位，保持数量、SKU和价格。对照PHP纠正初始侦察：分类销量原本不带单位，当前分类卡片逐字保留；详情和DIY仍遵守原显示开关。

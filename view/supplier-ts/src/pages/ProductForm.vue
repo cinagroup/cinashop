@@ -14,7 +14,7 @@ import {
   previewMode,
 } from "@/api/supplier";
 import type { ProductCategory, ProductDetail, ProductRuleTemplate, ProductSku } from "@/types";
-import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
+import SupplierProductShippingTemplates from '@/components/SupplierProductShippingTemplates.vue';
 import ProductImagePicker from '@/components/ProductImagePicker.vue';
 import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
 import { videoPreviewSource } from '@/api/productVideoUpload';
@@ -958,8 +958,7 @@ onMounted(load);
               </el-form-item>
               <el-form-item v-if="form.freight === 2" label="固定邮费（元）"><el-input v-model="form.postage" /></el-form-item>
               <el-form-item v-if="form.freight === 3" label="运费模板">
-                <ShippingTemplatePicker v-model="form.temp_id" :disabled="loading || saving" />
-                <el-button v-if="auth.can('supplier.shipping.view')" link type="primary" @click="router.push('/shipping-templates')">管理运费模板</el-button>
+                <SupplierProductShippingTemplates :key="formEntry" v-model="form.temp_id" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated || copyBlocked" />
               </el-form-item>
             </template>
             <el-alert v-else :title="isCardProduct ? '自动交付，无需物流和运费' : '人工虚拟交付，无需物流和运费'" type="success" show-icon :closable="false" />

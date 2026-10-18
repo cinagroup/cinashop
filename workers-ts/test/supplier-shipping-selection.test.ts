@@ -77,12 +77,16 @@ describe('Supplier product shipping selection', () => {
       'session.dispose()', 'rows.value.some(row => row.id === id)', 'aria-label="商品运费模板分页"', '@click="search"',
       '@click="list.retry"', '@click="selection.hydrate(modelValue)"', 'emit(\'update:modelValue\', id)']) expect(component).toContain(contract);
     const product = readFileSync(resolve(import.meta.dirname, '../../view/supplier-ts/src/pages/ProductForm.vue'), 'utf8');
-    expect(product).toContain('<ShippingTemplatePicker v-model="form.temp_id"');
+    expect(product).toContain('<SupplierProductShippingTemplates :key="formEntry" v-model="form.temp_id"');
+    const integration = readFileSync(resolve(import.meta.dirname, '../../view/supplier-ts/src/components/SupplierProductShippingTemplates.vue'), 'utf8');
+    expect(integration).toContain('<ShippingTemplatePicker :key="`${context}:${catalogVersion}`" :model-value="modelValue"');
     expect(product).not.toContain('getShippingTemplates({ page: 1, limit: 100 })');
     expect(component).toContain('getProductShippingOptions');
     expect(component).toContain('getProductShippingOption(id, session.signal)');
     expect(component).not.toContain('getShippingTemplate(');
-    expect(product).toContain('v-if="auth.can(\'supplier.shipping.view\')" link type="primary" @click="router.push(\'/shipping-templates\')"');
+    expect(integration).toContain('v-if="canView && modelValue"');
+    expect(integration).toContain('useSupplierShippingTemplateEditor');
+    expect(product).not.toContain("router.push('/shipping-templates')");
   });
   it('does not label a failed request as a successful empty result', () => {
     const component = readFileSync(resolve(import.meta.dirname, '../../view/supplier-ts/src/components/ShippingTemplatePicker.vue'), 'utf8');
