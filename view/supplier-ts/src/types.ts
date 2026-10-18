@@ -303,6 +303,7 @@ export interface ProductSku {
 }
 
 export interface ProductDetail {
+  recommend_image?: string;
   id: number;
   product_type: 0 | 1 | 3;
   store_name: string;

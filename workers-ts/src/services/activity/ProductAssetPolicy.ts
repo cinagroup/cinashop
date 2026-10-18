@@ -12,10 +12,11 @@ const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif
 /** Catalogue media authority comes from the persisted product owner, never an
  * attachment id supplied by the client. Resolve in the read transaction, then
  * sign after it ends. There are no HTTP or R2 reads in this policy. */
-export async function publicProductPictures(db: Pick<DbClient, 'select'>, values: readonly ProductPicture[]): Promise<string[]> {
+export async function publicProductPictures(db: Pick<DbClient, 'select'>, values: readonly ProductPicture[],
+  maxReferenceChars: 255 | 256 = 255): Promise<string[]> {
   if (values.length > 10000) throw new ValidateException('商品图片超过完整预览容量');
   const validOwner = (row: ProductPicture) => [0, 1].includes(row.type) ? row.relationId === 0 : row.type === 2 && Number.isSafeInteger(row.relationId) && row.relationId > 0 && row.relationId <= 2147483647;
-  const references = values.map(value => { try { return !validOwner(value) || value.image === '' ? '' : seckillTimePicture(value.image); } catch { return ''; } });
+  const references = values.map(value => { try { return !validOwner(value) || value.image === '' ? '' : seckillTimePicture(value.image, maxReferenceChars); } catch { return ''; } });
   const ids = [...new Set(references.map(parseCanonicalAttachmentId).filter((id): id is number => id !== null))];
   // Static catalogue references do not depend on a database or APP_KEY.
   if (!ids.length) return references;

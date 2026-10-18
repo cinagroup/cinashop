@@ -34,8 +34,9 @@ import {
 } from "@/services/product/ProductSkuEditorService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { Env } from '@/env';
-import { lockSupplierProductMedia, prepareSupplierProductMediaInput, projectSupplierProductMedia,
+import { lockSupplierProductMedia, normalizeSupplierProductMediaReference, prepareSupplierProductMediaInput, projectSupplierProductMedia,
   supplierProductEditingHtml, supplierProductEditingMediaReference } from './SupplierProductMediaService';
+import { publicProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { SupplierProductCategoryService, lockSupplierCategoryScope, assertSupplierProductCategoryBindings,
   type SupplierCategoryActor } from './SupplierProductCategoryService';
 import { assertSupplierProductLabelBindings, replaceSupplierProductLabelBindings, supplierProductLabelInput } from './SupplierProductLabelBindings';
@@ -136,6 +137,29 @@ function optionalString(value: unknown, field: string, maxLength: number): strin
   const normalized = value.trim();
   if (normalized.length > maxLength) throw new ValidateException(`${field}不能超过${maxLength}个字符`);
   return normalized;
+}
+
+/** Absence is not an instruction to restore an earlier editing snapshot. */
+function supplierProductRecommendImageInput(input: UnknownRecord): string | undefined {
+  if (!Object.hasOwn(input, 'recommend_image') || input.recommend_image === undefined) return undefined;
+  if (typeof input.recommend_image !== 'string') throw new ValidateException('商品推荐图格式错误');
+  const reference = normalizeSupplierProductMediaReference(input.recommend_image);
+  if (reference.length > 256) throw new ValidateException('商品推荐图不能超过256个字符');
+  return reference;
+}
+
+const recommendationConflict = () => new HttpApiException('商品推荐图或素材已变化，请刷新后重试', 409, 409);
+const sameRecommendationState = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+
+/** Reuse the existing private-image row lock and public consumer authority.
+ * The full metadata snapshot also detects same-transaction trigger rewrites. */
+async function lockSupplierRecommendImage(db: DbClient, supplierId: number, reference: string) {
+  await lockSupplierProductMedia(db, supplierId, { sliderImages: [reference], skus: [], description: '' });
+  const id = parseCanonicalAttachmentId(reference);
+  if (id === null) return undefined;
+  const [eligible] = await publicProductPictures(db, [{ image: reference, type: SUPPLIER_TYPE, relationId: supplierId }]);
+  if (eligible !== reference) throw new ValidateException('商品推荐图素材不可用，请重新选择');
+  return (await db.select().from(systemAttachment).where(eq(systemAttachment.attId, id)).limit(1))[0];
 }
 
 /** Invalid historical public values may be retained unchanged while an editor
@@ -417,6 +441,7 @@ export class SupplierProductManagementService {
     const ensureIds = supplierProductEnsureInput(rawInput);
     const parameters = supplierProductParameterInput(rawInput);
     const systemFormId = supplierProductSystemFormInput(rawInput);
+    const recommendImage = supplierProductRecommendImageInput(rawInput);
     const hasSchedule = input.autoOnTime !== undefined || input.autoOffTime !== undefined;
     const labelAuthority = new SupplierProductLabelService(this.container);
     const labelPath = `/supplierapi/product/product/${productId}`;
@@ -426,7 +451,7 @@ export class SupplierProductManagementService {
       // any product/SKU/bargain lock, so no stale parent or missing category can
       // be committed while classification management is changing the tree.
       await lockSupplierCategoryScope(tx, supplierId);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined) {
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) {
         await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
         await tx.execute(sql`SET LOCAL statement_timeout='10s'`);
         await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
@@ -441,7 +466,7 @@ export class SupplierProductManagementService {
       // Legacy schema only indexed SKU unique; serialize saves so new rows can be checked globally
       // without racing another supplier product save. Historical duplicates remain a migration audit item.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_LOCK_NAMESPACE}, 0)`);
-      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
+      if ((labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) && productId > 0 && !await tryLockProductWrite(tx, productId)) {
         throw new HttpApiException('商品正在修改，请刷新后重试', 409, 409);
       }
       const existing = productId > 0
@@ -476,6 +501,7 @@ export class SupplierProductManagementService {
       const categories = await this.assertCategories(tx, supplierId, input.cateIds);
       await this.assertShippingTemplate(tx, supplierId, input);
       await lockSupplierProductMedia(tx, supplierId, input);
+      const admittedRecommendImage = recommendImage === undefined ? undefined : await lockSupplierRecommendImage(tx, supplierId, recommendImage);
       if (parseCanonicalAttachmentId(input.videoLink) !== null) {
         await tx.execute(sql`LOCK TABLE ONLY ${systemAttachment} IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
       }
@@ -496,6 +522,7 @@ export class SupplierProductManagementService {
         type: SUPPLIER_TYPE,
         relationId: supplierId,
         image: input.sliderImages[0],
+        ...(recommendImage === undefined ? {} : { recommendImage }),
         sliderImage: JSON.stringify(input.sliderImages),
         storeName: input.storeName,
         storeInfo: input.storeInfo,
@@ -530,17 +557,30 @@ export class SupplierProductManagementService {
         isSold: stock > 0 ? 0 : 1,
       } as const;
       let savedProductId = productId;
+      let recommendationMain: typeof storeProduct.$inferSelect | undefined;
       if (existing) {
         // Checkout claims carts before SKU and product stock. Disable carts
         // before either row write so a checkout-owned cart cannot form a cycle.
         await tx.update(storeCart).set({ status: 0 }).where(eq(storeCart.productId, productId));
-        await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
+        if (recommendImage === undefined) {
+          await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
+        } else {
+          const rows = await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId)).returning();
+          if (rows.length !== 1 || !sameRecommendationState(rows[0], { ...existing, ...productValues })) throw recommendationConflict();
+        }
       } else {
         const rows = await tx
           .insert(storeProduct)
           .values({ ...productValues, addTime: now, isDel: 0 })
           .returning({ id: storeProduct.id });
+        if (recommendImage !== undefined && rows.length !== 1) throw recommendationConflict();
         savedProductId = rows[0].id;
+      }
+      if (recommendImage !== undefined) {
+        const [read] = await tx.select().from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (!read || read.isDel !== 0 || Object.entries(productValues).some(([key, value]) => read[key as keyof typeof productValues] !== value)
+          || existing && !sameRecommendationState(read, { ...existing, ...productValues })) throw recommendationConflict();
+        recommendationMain = read;
       }
 
       await tx.delete(storeProductRelation).where(
@@ -631,7 +671,7 @@ export class SupplierProductManagementService {
         }
       }
       if (parameters !== undefined) await assertSupplierProductParameterTemplate(tx, parameters.specs_id, admittedParameter);
-      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      if (labelIds !== undefined || hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
       if (hasSchedule) {
         const [read] = await tx.select({ id: storeProduct.id, type: storeProduct.type, relationId: storeProduct.relationId,
           isDel: storeProduct.isDel, isShow: storeProduct.isShow, isVerify: storeProduct.isVerify,
@@ -644,9 +684,27 @@ export class SupplierProductManagementService {
           throw new HttpApiException('定时计划保存核对失败，请刷新后重试', 409, 409);
         }
       }
+      if (recommendImage !== undefined) {
+        // Settle triggers only after every requested author has finished. The
+        // expected row includes their approved columns, not a stale GET value.
+        await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+        const expected = { ...recommendationMain,
+          ...(labelIds === undefined ? {} : { storeLabelId: labelIds.join(',') }),
+          ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
+          ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
+          ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
+          ...(systemFormId === undefined ? {} : { systemFormId }),
+        };
+        const [actual] = await tx.select().from(storeProduct).where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (!sameRecommendationState(actual, expected)) throw recommendationConflict();
+        try {
+          if (!sameRecommendationState(await lockSupplierRecommendImage(tx, supplierId, recommendImage), admittedRecommendImage)) throw recommendationConflict();
+        } catch (error) { if (error instanceof ValidateException) throw recommendationConflict(); throw error; }
+        await labelAuthority.assertBindingAuthority(tx, supplierId, actor!, labelPath);
+      }
       return { id: savedProductId, is_verify: 0, is_show: 0 };
     }).catch((error: unknown) => {
-      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined) {
+      if (hasSchedule || brandIds !== undefined || ensureIds !== undefined || parameters !== undefined || systemFormId !== undefined || recommendImage !== undefined) {
         let cause = error;
         for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
           if ('code' in cause && ['55P03', '40P01', '40001'].includes(String(cause.code))) {
@@ -698,6 +756,7 @@ export class SupplierProductManagementService {
       keyword: product.keyword,
       unit_name: product.unitName,
       bar_code: product.barCode,
+      recommend_image: supplierProductEditingMediaReference(product.recommendImage),
       cate_id: relations.map((relation) => relation.relation_id),
       store_label_id: product.storeLabelId,
       slider_image: (() => {
@@ -730,8 +789,15 @@ export class SupplierProductManagementService {
       refusal: product.refusal,
     };
     const media = await projectSupplierProductMedia(this.container.db, supplierId, {
-      sliderImages: detail.slider_image, skus: [...detail.attrs, ...detail.retired_attrs], description: detail.description,
+      sliderImages: [...detail.slider_image, detail.recommend_image], skus: [...detail.attrs, ...detail.retired_attrs], description: detail.description,
     }, this.env?.APP_KEY);
+    if (detail.recommend_image && parseCanonicalAttachmentId(detail.recommend_image) !== null) {
+      const [eligible] = await publicProductPictures(this.container.db, [{ image: detail.recommend_image, type: SUPPLIER_TYPE, relationId: supplierId }]);
+      if (eligible !== detail.recommend_image) {
+        media.previews[detail.recommend_image] = { status: 'unavailable', expires_at: null };
+        media.status = 'partial';
+      }
+    }
     const video = await resolveProductVideoReference(this.container.db, detail.video_link, { type: 2, relationId: supplierId }, { allowLegacyRelative: true });
     const videoPreview = video && parseCanonicalAttachmentId(video) !== null
       ? this.env?.APP_KEY ? (await signAttachmentReferences(this.env.APP_KEY, [video]))[0] : '' : video;

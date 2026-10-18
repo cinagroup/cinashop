@@ -26,6 +26,7 @@ import SupplierProductSystemFormPicker from '@/components/SupplierProductSystemF
 import SupplierSkuBatchEditor from '@/components/SupplierSkuBatchEditor.vue';
 import { prepareSupplierSkuBatch } from '@/utils/skuBatch';
 import type { SupplierSkuBatchIntent } from '@/types/skuBatch';
+import { productRecommendImagePayload } from '@/utils/productRecommendImage';
 import type { SupplierProductSystemFormSelection } from '@/types/productSystemForms';
 import { productSystemFormDetail, productSystemFormId, productSystemFormPayload } from '@/utils/productSystemForms';
 import type { SupplierProductParameterDraft, SupplierProductParameterSelection } from '@/types/productParameters';
@@ -123,7 +124,9 @@ const labelAvailability = ref({ ids: [] as number[], ready: false });
 const ruleTemplates = ref<ProductRuleTemplate[]>([]);
 const selectedRuleId = ref<number | null>(null);
 const mediaPickerOpen = ref(false), mediaGeneration = ref(0), showDescriptionPreview = ref(false);
-const mediaTarget = ref<{ kind: 'slider' | 'sku' | 'sku-batch' | 'description'; sku?: ProductSku; skus?: ProductSku[] } | null>(null);
+const mediaTarget = ref<{ kind: 'slider' | 'sku' | 'sku-batch' | 'description' | 'recommend'; sku?: ProductSku; skus?: ProductSku[] } | null>(null);
+const recommendImageChanged = ref(false);
+const recommendImageDisabled = computed(() => copying.value || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || !canManageProducts.value);
 const mediaPreviews = ref<Record<string, ProductMediaPreview>>({});
 const failedPreviewSources = ref(new Set<string>());
 const mediaReading = ref(false), mediaInvalidated = ref(false);
@@ -268,6 +271,7 @@ function initialForm(): ProductDetail {
     sort: 0,
     ficti: 0,
     video_link: "",
+    recommend_image: "",
   };
 }
 
@@ -276,6 +280,7 @@ function resetProductForm() {
   Object.assign(schedule, productScheduleEditor()); productReadReady.value = false; productReadError.value = '';
   videoUploaderOpen.value = false; videoPreviewUrl.value = ''; videoGeneration.value++;
   selectedLabelIds.value = []; labelsChanged.value = false;
+  recommendImageChanged.value = false;
   selectedBrandPath.value = []; brandSelection.value = null; brandChanged.value = false; brandAvailability.value = { ready: false, valid: false };
   selectedEnsureIds.value = []; ensureSelection.value = null; ensuresChanged.value = false; ensureAvailability.value = { ready: false, valid: false };
   parameterDraft.value = { specs_id: 0, specs: [] }; parameterSelection.value = null; parametersChanged.value = false; parameterAvailability.value = { ready: false, valid: false };
@@ -309,7 +314,8 @@ function applyProductDetail(detail: ProductDetail) {
   videoUploaderOpen.value = false; videoGeneration.value++;
   invalidateMediaTarget();
   const { video_preview_url: preview, ...editable } = detail as ProductDetail & { video_preview_url?: unknown };
-  Object.assign(form, { ...editable, attrs: detail.attrs.map(sku => editableSku(sku, detail.product_type)) });
+  Object.assign(form, { ...editable, recommend_image: typeof detail.recommend_image === 'string' ? detail.recommend_image : '', attrs: detail.attrs.map(sku => editableSku(sku, detail.product_type)) });
+  recommendImageChanged.value = false;
   videoPreviewUrl.value = videoPreviewSource(form.video_link, preview);
   const labels = Array.isArray(detail.store_label_id) ? detail.store_label_id : String(detail.store_label_id ?? '').split(',').filter(Boolean).map(Number);
   selectedLabelIds.value = [...new Set(labels.filter(id => Number.isSafeInteger(id) && id > 0))]; labelsChanged.value = false;
@@ -334,8 +340,13 @@ watch(() => form.video_link, (value, previous) => { if (value !== previous && !v
 function invalidateMediaTarget() {
   mediaPickerOpen.value = false; mediaTarget.value = null; mediaGeneration.value += 1; mediaReadGeneration += 1; mediaReading.value = false;
 }
-function openMedia(kind: 'slider' | 'sku' | 'sku-batch' | 'description', sku?: ProductSku) {
+function changeRecommendImage(value: unknown) {
+  if (recommendImageDisabled.value || !mediaSession.isCurrent() || typeof value !== 'string') return;
+  invalidateMediaTarget(); form.recommend_image = value; recommendImageChanged.value = true;
+}
+function openMedia(kind: 'slider' | 'sku' | 'sku-batch' | 'description' | 'recommend', sku?: ProductSku) {
   if (!canChooseMedia.value || !mediaSession.isCurrent() || loading.value || saving.value) return;
+  if (kind === 'recommend' && recommendImageDisabled.value) return;
   if (kind === 'slider' && form.slider_image.filter(item => item.trim()).length >= 20) return void ElMessage.warning('轮播图不能超过20张');
   if (kind === 'sku' && (!sku || !form.attrs.includes(sku))) return;
   const skus = kind === 'sku-batch' ? form.attrs.filter(item => selectedActiveSkuIds.value.includes(item.id ?? 0)) : undefined;
@@ -347,6 +358,7 @@ function receiveMedia(images: SupplierAttachment[], contextKey = mediaContext.va
   if (!mediaPickerOpen.value || contextKey !== mediaContext.value || !target || !canChooseMedia.value || !mediaSession.isCurrent() || loading.value || saving.value || !images.length || images.length > mediaLimit.value) return;
   if (target.kind === 'sku' && !form.attrs.includes(target.sku!)) return;
   if (target.kind === 'sku-batch' && target.skus?.some(sku => !form.attrs.includes(sku))) return;
+  if (target.kind === 'recommend' && recommendImageDisabled.value) return;
   const previews = { ...mediaPreviews.value };
   for (const image of images) {
     const expires = image.previewUrl.startsWith('/api/assets/') ? Number(new URL(image.previewUrl, 'https://supplier.invalid').searchParams.get('expires')) : null;
@@ -356,6 +368,7 @@ function receiveMedia(images: SupplierAttachment[], contextKey = mediaContext.va
   if (target.kind === 'slider') form.slider_image = [...form.slider_image.filter(item => item.trim()), ...images.map(image => image.canonicalUrl)];
   else if (target.kind === 'sku') target.sku!.image = images[0].canonicalUrl;
   else if (target.kind === 'sku-batch') for (const sku of target.skus!) sku.image = images[0].canonicalUrl;
+  else if (target.kind === 'recommend') { form.recommend_image = images[0].canonicalUrl; recommendImageChanged.value = true; }
   else {
     const text = /<[a-z][^>]*>/i.test(form.description) ? form.description : escapeProductText(form.description).replaceAll('\n', '<br>');
     const insertion = images.map(image => `<p><img src="${escapeProductText(image.canonicalUrl)}" alt="${escapeProductText(image.name)}"></p>`).join('');
@@ -555,6 +568,7 @@ function validateForm() {
   if (!copying.value && systemFormChanged.value && (!systemFormAvailability.value.valid || selectedSystemFormId.value > 0 && !systemFormAvailability.value.ready)) return '请选择可预览的留言模板，或关闭自定义留言';
   if (labelsChanged.value && labelAvailability.value.ids.length) return '请先移除暂不可选的原标签，再保存标签修改';
   if (!form.store_name.trim()) return "请填写商品名称";
+  if (!copying.value) { try { productRecommendImagePayload(form.recommend_image, recommendImageChanged.value); } catch (cause) { return cause instanceof Error ? cause.message : '推荐图地址无效'; } }
   if (!form.cate_id.length) return "请选择商品分类";
   if (!form.slider_image.some((item) => item.trim())) return "请至少填写一张商品图片地址";
   if (!form.attrs.length) return "请生成SKU";
@@ -591,9 +605,9 @@ async function submit() {
     const { media: _preview, store_label_id: _originalLabels, video_preview_url: _videoPreview, retired_attrs: _retired,
       auto_on_time: _autoOn, auto_off_time: _autoOff, brand_id: _originalBrand, brand_selection: _brandSelection, ensure_id: _originalEnsures, ensure_selection: _ensureSelection,
       specs_id: _originalTemplate, specs: _originalParameters, specs_selection: _parameterSelection,
-      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
+      system_form_id: _originalSystemForm, system_form_selection: _systemFormSelection, recommend_image: _originalRecommendImage, ...editableForm } = form as ProductDetail & { video_preview_url?: unknown };
     const payload = { ...editableForm, attrs, ...(labelsChanged.value ? { store_label_id: [...selectedLabelIds.value] } : {}),
-      ...(!copying.value ? { ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
+      ...(!copying.value ? { ...productRecommendImagePayload(form.recommend_image, recommendImageChanged.value), ...productSchedulePayload(schedule), ...productBrandPayload(selectedBrandPath.value, brandChanged.value), ...productEnsurePayload(selectedEnsureIds.value, ensuresChanged.value), ...productParameterPayload(parameterDraft.value, parametersChanged.value), ...productSystemFormPayload(selectedSystemFormId.value, systemFormChanged.value) } : {}) };
     if (copying.value) {
       if (!copyContext.value || copyContext.value.source_id !== copyEntry.value.source) throw Error('请重新读取复制来源');
       // Persist only the recovery identity before the first POST. Product text,
@@ -759,7 +773,7 @@ onMounted(load);
               <el-form-item class="wide" label="商品名称" required><el-input v-model="form.store_name" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item class="wide" label="商品简介"><el-input v-model="form.store_info" maxlength="256" show-word-limit /></el-form-item>
               <el-form-item label="商品分类" required>
-                <el-tree-select v-model="form.cate_id" :data="categories" :props="treeProps" multiple check-strictly show-checkbox clearable style="width: 100%" placeholder="选择本供应商分类" />
+                <el-tree-select v-model="form.cate_id" :data="categories" :props="treeProps" node-key="id" multiple check-strictly show-checkbox clearable style="width: 100%" placeholder="选择本供应商分类" />
               </el-form-item>
               <el-form-item label="计量单位"><el-input v-model="form.unit_name" maxlength="32" /></el-form-item>
               <el-form-item v-if="!copying" label="商品品牌"><SupplierProductBrandPicker :model-value="selectedBrandPath" :selection="brandSelection" :changed="brandChanged" :context="formEntry" :disabled="loading || saving || !productReadReady || mediaInvalidated" @update:model-value="changeBrand" @availability="brandAvailability = $event" /></el-form-item>
@@ -782,6 +796,22 @@ onMounted(load);
               <el-button text type="danger" :icon="Delete" aria-label="删除图片" @click="removeSlider(index)" />
             </div>
           </div>
+        </article>
+
+        <article class="surface product-form-card">
+          <header><h2>商品推荐图</h2><p>用于分类大图展示，建议比例5:2；未设置时使用商品主图。</p></header>
+          <p v-if="copying" class="brand-copy-note">推荐图沿用来源商品，创建后可在普通编辑中调整。</p>
+          <template v-else>
+            <div v-if="previewImage(form.recommend_image || '')" class="recommend-preview"><img :src="previewImage(form.recommend_image || '')!" alt="商品推荐图预览" @error="imagePreviewFailed" /></div>
+            <p v-else-if="form.recommend_image">推荐图引用已保留，当前预览不可用；可重选、清空或保留原值。</p>
+            <p v-else>尚未设置商品推荐图</p>
+            <el-input :model-value="form.recommend_image ?? ''" aria-label="商品推荐图地址" placeholder="图片引用或 HTTPS 地址" maxlength="4096" :disabled="recommendImageDisabled" @update:model-value="changeRecommendImage" />
+            <div class="media-actions">
+              <el-button v-if="canChooseMedia" :disabled="recommendImageDisabled" @click="openMedia('recommend')">选择商品推荐图</el-button>
+              <el-button v-if="form.recommend_image" :disabled="recommendImageDisabled" @click="changeRecommendImage('')">清空商品推荐图</el-button>
+              <el-button v-if="editing && form.recommend_image" :disabled="recommendImageDisabled" :loading="mediaReading" @click="refreshMediaPreview">重读推荐图预览</el-button>
+            </div>
+          </template>
         </article>
 
         <article class="surface product-form-card">
@@ -982,6 +1012,8 @@ onMounted(load);
 .schedule-time input { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px; border: 1px solid var(--el-border-color); border-radius: 4px; color: inherit; background: var(--el-bg-color); font: inherit; }
 .card-heading-row { flex-wrap: wrap; }
 .video-reference { overflow-wrap: anywhere; }
+.recommend-preview { width: min(100%, 500px); aspect-ratio: 5 / 2; background: var(--el-fill-color-light); margin-bottom: 12px; }
+.recommend-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .product-form-card video { display: block; width: 100%; max-height: 360px; background: #111; }
 .card-heading-row > .el-button, .media-actions > .el-button { margin-left: 0; }
 .media-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }

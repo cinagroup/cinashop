@@ -20,10 +20,15 @@ export async function decoratePublicProductCards(tx: DbClient, list: Record<stri
       eq(storeCart.isDel, 0), eq(storeCart.isNew, 0), eq(storeCart.status, 1))).groupBy(storeCart.productId) : [];
   if (cart.some(row => !Number.isSafeInteger(Number(row.quantity)) || Number(row.quantity) < 0 || Number(row.quantity) > 2147483647)) throw new ValidateException('购物车数量无效');
   const byBrand = new Map(brands.map(row => [row.id, integralDetailText(row.name, 100)])), quantities = new Map(cart.map(row => [row.id, Number(row.quantity)]));
-  const references = await publicProductPictures(tx, list.flatMap(row => {
+  const picture = (row: Record<string, unknown>, image: unknown) => {
     const type = Number(row.type) === 1 ? 0 : Number(row.type), relationId = Number(row.type) === 1 ? 0 : Number(row.relation_id);
-    return [{ image: row.image, type, relationId }, { image: row.recommend_image, type, relationId }];
-  }));
+    return { image, type, relationId };
+  };
+  const [main, recommended] = await Promise.all([
+    publicProductPictures(tx, list.map(row => picture(row, row.image))),
+    publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256),
+  ]);
+  const references = list.flatMap((_, index) => [main[index], recommended[index]]);
   const images = await renderProductPictures(env?.APP_KEY, references);
   return list.map((row,index) => ({ ...row, image: images[index * 2], recommend_image: images[index * 2 + 1],
     brand_name: byBrand.get(Number(row.brand_id)) ?? '', cart_num: quantities.get(Number(row.id)) ?? 0,

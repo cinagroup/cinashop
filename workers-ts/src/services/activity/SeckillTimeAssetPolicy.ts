@@ -5,12 +5,13 @@ import { canonicalizePublishedAttachmentReference, renderPublishedArticleMediaRe
 import { adminAttachmentScope, parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 import { ValidateException } from '@/utils/errors';
 
-/** Only platform catalogue images can become public slot images. This never
- * contacts image URLs, reads R2 objects, or grants attachment operations. */
-export function seckillTimePicture(value: unknown): string {
+/** Public slots retain their existing255-character default. Only the distinct
+ * product recommendation field opts into its256-character storage contract.
+ * This never contacts URLs, reads R2, or grants attachment operations. */
+export function seckillTimePicture(value: unknown, maxReferenceChars: 255 | 256 = 255): string {
   if (typeof value !== 'string' || value.length > 4096 || /[\u0000-\u001f\u007f\\]/.test(value)) throw new ValidateException('图片格式错误');
   const reference = canonicalizePublishedAttachmentReference(value);
-  if (!reference || [...reference].length > 255 || /\s/u.test(reference)) throw new ValidateException('图片须为1至255个字符');
+  if (!reference || [...reference].length > maxReferenceChars || /\s/u.test(reference)) throw new ValidateException(`图片须为1至${maxReferenceChars}个字符`);
   if (reference.startsWith('/api/assets/')) {
     const id = parseCanonicalAttachmentId(reference);
     if (id === null || id > 2_147_483_647) throw new ValidateException('平台图片标识无效');

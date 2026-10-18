@@ -1,5 +1,6 @@
 import type { CategoryNode, GoodsItem } from '../uniapp-ts/src/types/product';
 import { isProductCategoryStyleValue, type PublicProductCategoryStyle } from './productCategoryStyle';
+import { classifyProductMediaReference } from './productMediaReference';
 
 export type CategoryStyle = PublicProductCategoryStyle;
 export interface CategoryScope { cid?: number; sid?: number; tid?: number }
@@ -17,6 +18,7 @@ export function parseOrdinaryRecovery(raw: unknown, actor: number): OrdinaryCart
 }
 export interface CategoryProduct extends GoodsItem {
   brand_name: string; spec_type: 0 | 1; is_presale_product: 0 | 1; cart_num: number;
+  recommend_image?: string;
 }
 export type CategoryTemplate = 'tree' | 'top-products' | 'side-products' | 'filter-products';
 export function categoryTemplate(style: Pick<CategoryStyle, 'level' | 'index'>): CategoryTemplate {
@@ -51,6 +53,19 @@ export function categoryImage(value: unknown): string {
     if (depth === 3) return ''; try { layer = decodeURIComponent(layer); } catch { return ''; }
   }
   return '';
+}
+/** Private recommendation images are public projection tickets, never durable
+ * editing references. Actual asset delivery remains the signature authority. */
+export function categoryRecommendationImage(value: unknown, now = Date.now()): string {
+  const safe = categoryImage(value);
+  if (!safe) return '';
+  const reference = classifyProductMediaReference(safe);
+  if (reference.kind === 'invalid') return '';
+  if (reference.kind === 'public') return reference.reference.length <= 256 ? safe : '';
+  const ticket = new RegExp(`^${reference.reference}\\?expires=([1-9]\\d*)&signature=([A-Za-z0-9_-]{43})$`).exec(safe);
+  if (!ticket) return '';
+  const expires = Number(ticket[1]);
+  return Number.isSafeInteger(expires) && expires * 1000 > now && expires * 1000 <= now + 3600_000 ? safe : '';
 }
 export function parseCategoryStyle(value: unknown): CategoryStyle {
   const raw = record(value), layout = record(raw.product_category);
@@ -96,7 +111,7 @@ export function parseCategoryProducts(value: unknown): { list: CategoryProduct[]
     const money = (value: unknown): string => { if (typeof value !== 'string' || !/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/u.test(value) || BigInt(value.split('.')[0]) > 9999999999n) throw Error('分类商品报价无效'); const [a, b = ''] = value.split('.'); return `${a}.${b.padEnd(2, '0')}`; };
     const spec = numeric('spec_type', 'specType'), presale = numeric('is_presale_product', 'isPresaleProduct'), cart = numeric('cart_button', 'cartButton', 1);
     if (spec > 1 || presale > 1 || cart > 1) throw Error('分类商品购买标记无效');
-    return { id, store_name: text(p.store_name ?? p.storeName, 512), image: categoryImage(p.image), price: money(p.price),
+    return { id, store_name: text(p.store_name ?? p.storeName, 512), image: categoryImage(p.image), recommend_image: categoryRecommendationImage(p.recommend_image ?? p.recommendImage), price: money(p.price),
       ot_price: money(p.ot_price ?? p.otPrice ?? '0'), vip_price: p.vip_price === '' || p.vipPrice === '' ? '' : money(p.vip_price ?? p.vipPrice ?? '0'), sales: numeric('sales', 'sales'), stock: numeric('stock', 'stock'),
       is_vip: numeric('is_vip', 'isVip'), is_vip_product: numeric('is_vip_product', 'isVipProduct'), cart_button: cart, unit_name: typeof (p.unit_name ?? p.unitName) === 'string' ? text(p.unit_name ?? p.unitName, 64) : '', star: typeof p.star === 'string' ? p.star : '',
       brand_name: typeof (p.brand_name ?? p.brandName) === 'string' ? text(p.brand_name ?? p.brandName, 256) : '', spec_type: spec as 0 | 1, is_presale_product: presale as 0 | 1, cart_num: numeric('cart_num', 'cartNum') };
