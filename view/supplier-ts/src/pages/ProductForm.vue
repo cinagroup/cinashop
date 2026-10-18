@@ -13,7 +13,7 @@ import {
   saveProduct,
   previewMode,
 } from "@/api/supplier";
-import type { ProductCategory, ProductDetail, ProductDimension, ProductRuleTemplate, ProductSku } from "@/types";
+import type { ProductCategory, ProductDetail, ProductRuleTemplate, ProductSku } from "@/types";
 import ShippingTemplatePicker from '@/components/ShippingTemplatePicker.vue';
 import ProductImagePicker from '@/components/ProductImagePicker.vue';
 import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
@@ -23,6 +23,9 @@ import SupplierProductBrandPicker from '@/components/SupplierProductBrandPicker.
 import SupplierProductEnsurePicker from '@/components/SupplierProductEnsurePicker.vue';
 import SupplierProductParameterEditor from '@/components/SupplierProductParameterEditor.vue';
 import SupplierProductSystemFormPicker from '@/components/SupplierProductSystemFormPicker.vue';
+import SupplierSkuBatchEditor from '@/components/SupplierSkuBatchEditor.vue';
+import { prepareSupplierSkuBatch } from '@/utils/skuBatch';
+import type { SupplierSkuBatchIntent } from '@/types/skuBatch';
 import type { SupplierProductSystemFormSelection } from '@/types/productSystemForms';
 import { productSystemFormDetail, productSystemFormId, productSystemFormPayload } from '@/utils/productSystemForms';
 import type { SupplierProductParameterDraft, SupplierProductParameterSelection } from '@/types/productParameters';
@@ -59,6 +62,9 @@ const copyEntry = computed(() => {
   return { source: Number(raw), error: '' };
 });
 const formEntry = computed(() => `${route.path}:${JSON.stringify(route.query.copy)}`);
+const skuBatchGeneration = ref(0);
+const skuBatchContext = computed(() => `${formEntry.value}:batch:${skuBatchGeneration.value}`);
+watch(formEntry, () => { skuBatchGeneration.value++; }, { flush: 'sync' });
 const copying = computed(() => copyEntry.value.source > 0);
 const recoveryOnly = computed(() => route.path === '/products/copy-result');
 const copyContext = ref<ProductCopyContext | null>(null), copyReady = ref(false), copyError = ref('');
@@ -142,8 +148,7 @@ watch(() => `${auth.user?.id ?? 0}:${auth.user?.supplier_id ?? 0}:${auth.can('su
 }, { flush: 'sync' });
 onBeforeUnmount(() => { cancelFormRequests(); mediaReadGeneration += 1; formReadGeneration += 1; formSaveGeneration += 1; skuActionGeneration += 1; mediaSession.dispose(); });
 
-function blankSku(detail: Record<string, string>, previous?: ProductSku): ProductSku {
-  const suk = Object.values(detail).join(",");
+function blankSku(detail: Record<string, string>, previous?: ProductSku, suk = Object.values(detail).join(",")): ProductSku {
   return {
     id: previous?.id,
     unique: previous?.unique,
@@ -177,6 +182,19 @@ function selectableHistoricalSku(row: ProductSku) {
 
 function selectActiveSkus(rows: ProductSku[]) {
   selectedActiveSkuIds.value = rows.flatMap((row) => row.id ? [row.id] : []);
+}
+
+function applySkuBatch(intent: SupplierSkuBatchIntent, previews: Record<string, ProductMediaPreview> = {}) {
+  if (intent?.context !== skuBatchContext.value || !isPhysicalProduct.value || form.spec_type !== 1 || loading.value || saving.value || skuActionLoading.value || !productReadReady.value || copyBlocked.value || mediaInvalidated.value || !mediaSession.isCurrent() || !canManageProducts.value) return;
+  try {
+    const staged = prepareSupplierSkuBatch(form.items, form.attrs, intent);
+    const image = staged.patch.image;
+    const preview = image && productImagePreview(image, previews) ? previews[image] : undefined;
+    invalidateMediaTarget();
+    if (image && preview) mediaPreviews.value = { ...mediaPreviews.value, [image]: { ...preview } };
+    for (const sku of staged.targets) Object.assign(sku, staged.patch);
+    ElMessage.success(`已填充 ${staged.targets.length} 个SKU，请核对后保存商品`);
+  } catch (cause) { ElMessage.warning(cause instanceof Error ? cause.message : '批量填充失败'); }
 }
 
 function selectRetiredSkus(rows: ProductSku[]) {
@@ -406,38 +424,25 @@ function changeSkuDeliveryMode(sku: ProductSku, mode: "card" | "fixed") {
 
 const treeProps = { label: "cate_name", children: "children", value: "id" };
 
-function cartesian(dimensions: ProductDimension[]) {
-  let result: Array<Record<string, string>> = [{}];
-  for (const dimension of dimensions) {
-    result = result.flatMap((current) =>
-      dimension.detail.map((detail) => ({ ...current, [dimension.value.trim()]: detail.trim() })),
-    );
-  }
-  return result;
-}
-
 function regenerateSkus(showMessage = true) {
-  invalidateMediaTarget();
+  if (!canManageProducts.value || !mediaSession.isCurrent() || loading.value || saving.value || mediaInvalidated.value) return;
   if (form.spec_type === 0) {
+    invalidateMediaTarget();
     const previous = form.attrs.find((item) => item.suk === "默认") ?? form.attrs[0];
     form.items = [{ value: "规格", detail: ["默认"] }];
     form.attrs = [blankSku({ 规格: "默认" }, previous)];
     return;
   }
-  if (!form.items.length || form.items.some((item) => !item.value.trim() || !item.detail.length || item.detail.some((value) => !value.trim()))) {
-    if (showMessage) ElMessage.warning("请先完整填写每个规格名称和规格值");
-    return;
-  }
-  const names = form.items.map((item) => item.value.trim());
-  if (new Set(names).size !== names.length) return void ElMessage.warning("规格名称不能重复");
-  const combinations = cartesian(form.items);
-  if (combinations.length > 200) return void ElMessage.warning("SKU组合不能超过200项");
-  const bySuk = new Map(form.attrs.map((item) => [item.suk, item]));
-  form.attrs = combinations.map((detail) => {
-    const suk = Object.values(detail).join(",");
-    return blankSku(detail, bySuk.get(suk));
-  });
-  if (showMessage) ElMessage.success(`已生成 ${form.attrs.length} 个 SKU`);
+  try {
+    const staged = prepareSupplierProductRuleApplication(form.items);
+    const bySuk = new Map(form.attrs.map((item) => [item.suk, item]));
+    const attrs = staged.details.map(detail => {
+      const suk = staged.items.map(item => detail[item.value]).join(',');
+      return blankSku(detail, bySuk.get(suk), suk);
+    });
+    invalidateMediaTarget(); form.items = staged.items; form.attrs = attrs;
+    if (showMessage) ElMessage.success(`已生成 ${form.attrs.length} 个 SKU`);
+  } catch (cause) { if (showMessage) ElMessage.warning(cause instanceof Error ? cause.message : '规格组合无法生成'); }
 }
 
 function changeSpecType(value: unknown) {
@@ -514,7 +519,7 @@ async function applyProductRule() {
     );
     if (generation !== formReadGeneration || id !== productId.value || !mediaSession.isCurrent()) return;
     const candidate = prepareSupplierProductRuleApplication(template.spec);
-    const attrs = candidate.details.map((detail) => blankSku(detail));
+    const attrs = candidate.details.map(detail => blankSku(detail, undefined, candidate.items.map(item => detail[item.value]).join(',')));
     invalidateMediaTarget();
     form.items = candidate.items;
     form.attrs = attrs;
@@ -824,6 +829,7 @@ onMounted(load);
             </div>
             <div class="dimension-actions"><el-button :icon="Plus" :disabled="form.items.length >= 3" @click="addDimension">添加规格维度</el-button><el-button type="primary" plain @click="regenerateSkus()">生成 / 刷新 SKU</el-button></div>
           </div>
+          <SupplierSkuBatchEditor v-if="isPhysicalProduct && form.spec_type === 1" :items="form.items" :skus="form.attrs" :context="skuBatchContext" :disabled="loading || saving || skuActionLoading || !productReadReady || copyBlocked || mediaInvalidated" :allow-media="canChooseMedia" @apply="applySkuBatch" />
           <div class="sku-table-wrap">
             <el-table :data="form.attrs" row-key="suk" empty-text="请先生成SKU" class="sku-table" @selection-change="selectActiveSkus">
               <el-table-column v-if="editing" type="selection" width="48" :selectable="selectableHistoricalSku" />
@@ -858,6 +864,7 @@ onMounted(load);
               <el-table-column label="一级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage" /></template></el-table-column>
               <el-table-column label="二级佣金" width="130"><template #default="scope"><el-input v-model="scope.row.brokerage_two" /></template></el-table-column>
               <el-table-column label="SKU编码" width="160"><template #default="scope"><el-input v-model="scope.row.code" maxlength="50" /></template></el-table-column>
+              <el-table-column label="SKU条码" width="160"><template #default="scope"><el-input v-model="scope.row.bar_code" :aria-label="`SKU条码 ${scope.row.suk}`" maxlength="50" /></template></el-table-column>
               <el-table-column v-if="isPhysicalProduct" label="重量" width="120"><template #default="scope"><el-input v-model="scope.row.weight" /></template></el-table-column>
               <el-table-column v-if="isPhysicalProduct" label="体积" width="120"><template #default="scope"><el-input v-model="scope.row.volume" /></template></el-table-column>
             </el-table>

@@ -85,6 +85,11 @@ describe("FE-001E5E4 second-card product lifecycle", () => {
     const row = {
       suk: "默认",
       unique: "scard001",
+      image: "",
+      barCode: "",
+      code: "",
+      weight: "0.00",
+      volume: "0.00",
       stock: 10,
       price: "88.00",
       settlePrice: "0.00",

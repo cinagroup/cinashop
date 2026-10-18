@@ -39,7 +39,7 @@ export async function supplierProductSystemFormsFixture() {
 /** Real existing quote fixture over this owned database. Its pricing capability
  * is installed by the existing explicit native commissioner; the source table
  * fixture gains only missing ORM tables/indexes required by actual checkout. */
-export async function supplierSystemFormCheckoutFixture(f: Awaited<ReturnType<typeof supplierProductSystemFormsFixture>>) {
+export async function supplierSystemFormCheckoutFixture(f: Pick<Awaited<ReturnType<typeof supplierProductSystemFormsFixture>>, 'db' | 'exec' | 'env'>) {
   const dialect = new PgDialect();
   // Both mature fixtures reserve SKU id1. Move only this freshly owned source
   // fixture's synthetic IDs before any checkout baseline, preserving unique

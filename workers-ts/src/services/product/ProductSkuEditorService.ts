@@ -451,6 +451,11 @@ export async function rebuildActiveProductSkuState(
       cost: storeProductAttrValue.cost,
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
+      image: storeProductAttrValue.image,
+      barCode: storeProductAttrValue.barCode,
+      code: storeProductAttrValue.code,
+      weight: storeProductAttrValue.weight,
+      volume: storeProductAttrValue.volume,
       diskInfo: storeProductAttrValue.diskInfo,
       writeTimes: storeProductAttrValue.writeTimes,
       writeValid: storeProductAttrValue.writeValid,
@@ -505,6 +510,11 @@ export function productSkuReadbackMatches(
     cost: string;
     otPrice: string;
     vipPrice: string;
+    image: string;
+    barCode: string;
+    code: string;
+    weight: string;
+    volume: string;
     diskInfo?: string | null;
     writeTimes?: number;
     writeValid?: number;
@@ -515,6 +525,7 @@ export function productSkuReadbackMatches(
   result: string | undefined,
   expected: ProductSkuEditorPayload,
   assigned: ProductSkuEditorRow[],
+  imageFallback = "",
 ): boolean {
   if (!product || !result) return false;
   const summary = productSkuSummary(expected);
@@ -541,6 +552,11 @@ export function productSkuReadbackMatches(
       || row.cost !== wanted.cost
       || row.otPrice !== wanted.otPrice
       || row.vipPrice !== wanted.vipPrice
+      || row.image !== (wanted.image || imageFallback.slice(0, 128))
+      || row.barCode !== wanted.barCode
+      || row.code !== wanted.code
+      || row.weight !== wanted.weight
+      || row.volume !== wanted.volume
       || (row.diskInfo ?? "") !== wanted.diskInfo
       || (row.writeTimes ?? 1) !== wanted.writeTimes
       || (row.writeValid ?? 1) !== wanted.writeValid
@@ -556,6 +572,11 @@ export function productSkuReadbackMatches(
     const snapshotRows = snapshot.value as Array<{
       suk?: unknown;
       unique?: unknown;
+      image?: unknown;
+      barCode?: unknown;
+      code?: unknown;
+      weight?: unknown;
+      volume?: unknown;
       diskInfo?: unknown;
       writeTimes?: unknown;
       writeValid?: unknown;
@@ -567,6 +588,11 @@ export function productSkuReadbackMatches(
       typeof row.suk === "string"
       && typeof row.unique === "string"
       && expectedBySuk.get(row.suk)?.unique === row.unique
+      && expectedBySuk.get(row.suk)?.image === row.image
+      && expectedBySuk.get(row.suk)?.barCode === row.barCode
+      && expectedBySuk.get(row.suk)?.code === row.code
+      && expectedBySuk.get(row.suk)?.weight === row.weight
+      && expectedBySuk.get(row.suk)?.volume === row.volume
       && expectedBySuk.get(row.suk)?.diskInfo === (
         typeof row.diskInfo === "string" ? row.diskInfo : ""
       )
@@ -820,6 +846,11 @@ export async function replaceProductSkuEditor(
       cost: storeProductAttrValue.cost,
       otPrice: storeProductAttrValue.otPrice,
       vipPrice: storeProductAttrValue.vipPrice,
+      image: storeProductAttrValue.image,
+      barCode: storeProductAttrValue.barCode,
+      code: storeProductAttrValue.code,
+      weight: storeProductAttrValue.weight,
+      volume: storeProductAttrValue.volume,
       diskInfo: storeProductAttrValue.diskInfo,
       writeTimes: storeProductAttrValue.writeTimes,
       writeValid: storeProductAttrValue.writeValid,
@@ -842,6 +873,7 @@ export async function replaceProductSkuEditor(
     results[0]?.result,
     payload,
     assigned,
+    product.image,
   );
   if (!verified) throw new Error("商品SKU数据库回读校验失败");
   return assigned;

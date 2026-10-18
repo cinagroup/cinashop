@@ -99,7 +99,8 @@ describe("FE-001E5A product SKU editor migration", () => {
     const payload = normalizeProductSkuEditorPayload({
       spec_type: 0,
       items: [{ value: "规格", detail: ["默认"] }],
-      attrs: [{ suk: "默认", price: 99, cost: 40, ot_price: 120, vip_price: 88, stock: 7 }],
+      attrs: [{ suk: "默认", price: 99, cost: 40, ot_price: 120, vip_price: 88, stock: 7,
+        image: "/api/assets/31", bar_code: "sku-barcode", code: "sku-code", weight: "1.2", volume: "0.35" }],
     });
     const assigned: ProductSkuEditorRow[] = [{
       ...payload.skus[0],
@@ -127,6 +128,11 @@ describe("FE-001E5A product SKU editor migration", () => {
       cost: "40.00",
       otPrice: "120.00",
       vipPrice: "88.00",
+      image: "/api/assets/31",
+      barCode: "sku-barcode",
+      code: "sku-code",
+      weight: "1.20",
+      volume: "0.35",
     }];
     const result = JSON.stringify({ attr: dimensions, value: assigned });
 
@@ -142,6 +148,22 @@ describe("FE-001E5A product SKU editor migration", () => {
       payload,
       assigned,
     )).toBe(false);
+
+    for (const [field, value] of Object.entries({ image: "/rewritten.png", barCode: "rewritten-barcode",
+      code: "rewritten-code", weight: "1.21", volume: "0.36" })) {
+      expect(productSkuReadbackMatches(product, dimensions, [{ ...rows[0], [field]: value }], result, payload, assigned), field).toBe(false);
+      expect(productSkuReadbackMatches(product, dimensions, rows,
+        JSON.stringify({ attr: dimensions, value: [{ ...assigned[0], [field]: value }] }), payload, assigned), `${field} snapshot`).toBe(false);
+    }
+    // The mature writer stores the main image when a SKU image is empty, while
+    // its editor snapshot deliberately preserves the submitted empty value.
+    const emptyImagePayload = { ...payload, skus: [{ ...payload.skus[0], image: "" }] };
+    const emptyImageAssigned = [{ ...assigned[0], image: "" }];
+    const emptyImageResult = JSON.stringify({ attr: dimensions, value: emptyImageAssigned });
+    expect(productSkuReadbackMatches(product, dimensions, [{ ...rows[0], image: "/main-fallback.png" }],
+      emptyImageResult, emptyImagePayload, emptyImageAssigned, "/main-fallback.png")).toBe(true);
+    expect(productSkuReadbackMatches(product, dimensions, [{ ...rows[0], image: "/wrong-fallback.png" }],
+      emptyImageResult, emptyImagePayload, emptyImageAssigned, "/main-fallback.png")).toBe(false);
   });
 
   it("uses locks, stable suk identity, fail-closed retirement, stock audit and DB readback", () => {
