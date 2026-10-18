@@ -1,5 +1,9 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-18 商品页内新增规格模板
+
+接通 PHP 当前启用的多规格商品“添加规格模板”弹窗，复用成熟模板作者与 GET 事实恢复。取消、创建确认和目录刷新保留商品草稿与原选择；用户明确选择并确认套用后才生成新规格行，商品另行保存。本批919个不同用例通过，实际Browser覆盖48张表／47序列、23次GET零写、3×103项草稿输入一致，模板只创建1次，商品POST为零。详细合同与最终验证见[本批说明](workers-ts/docs/php-ts-supplier-product-rule-inline-20261018.md)和[验证账本](workers-ts/audit/php-ts-supplier-product-rule-inline-20261018.json)。保留已恢复 get_script 与修订退役审计，原复选行不变，整体迁移继续 active。草稿 PR 基于 PR110，新提交与 CI 以发布回执为准。
+
 ## 2026-10-18 Supplier 商品页内运费模板作者
 
 接通 PHP 实际启用的商品编辑页内查看、编辑、新增运费模板弹窗，复用完整配送／包邮／禁配、shipping-v1版本及UUID回执协议。模板更新与创建确认仅刷新目录，商品草稿和temp_id保持；新模板明确选择后才改变草稿绑定。共享作者同时接回独立模板列表页，实测修复sticky aside导致的弹窗遮挡。

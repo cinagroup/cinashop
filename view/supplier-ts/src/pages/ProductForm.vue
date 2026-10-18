@@ -15,6 +15,8 @@ import {
 } from "@/api/supplier";
 import type { ProductCategory, ProductDetail, ProductRuleTemplate, ProductSku } from "@/types";
 import SupplierProductShippingTemplates from '@/components/SupplierProductShippingTemplates.vue';
+import SupplierProductRuleCreate from '@/components/SupplierProductRuleCreate.vue';
+import type { SupplierProductRuleTemplate } from '@/types/productRules';
 import ProductImagePicker from '@/components/ProductImagePicker.vue';
 import ProductVideoUploader from '@/components/ProductVideoUploader.vue';
 import { videoPreviewSource } from '@/api/productVideoUpload';
@@ -520,6 +522,11 @@ function removeDimension(index: number) {
   form.attrs = [];
 }
 
+function updateProductRuleDirectory(value: { context: string; templates: SupplierProductRuleTemplate[] }) {
+  if (value.context !== formEntry.value || !mediaSession.isCurrent() || loading.value || saving.value || !productReadReady.value || mediaInvalidated.value || copyBlocked.value || !canManageProducts.value) return;
+  ruleTemplates.value = value.templates.map(row => ({ ...row, rule_value: JSON.stringify(row.rule_value) }));
+}
+
 async function applyProductRule() {
   if (!canManageProducts.value || !mediaSession.isCurrent() || loading.value || saving.value) return;
   const generation = formReadGeneration, id = productId.value;
@@ -851,7 +858,7 @@ onMounted(load);
                 <el-option v-for="template in ruleTemplates" :key="template.id" :label="template.rule_name" :value="template.id" />
               </el-select>
               <el-button type="primary" plain :disabled="!selectedRuleId" @click="applyProductRule">套用模板</el-button>
-              <el-button link type="primary" @click="router.push('/product-specifications')">管理模板</el-button>
+              <SupplierProductRuleCreate :key="formEntry" :context="formEntry" :disabled="loading || saving || skuActionLoading || !productReadReady || mediaInvalidated || copyBlocked || !canManageProducts" @updated="updateProductRuleDirectory" />
             </div>
             <div v-for="(dimension, index) in form.items" :key="index" class="dimension-row">
               <el-input v-model="dimension.value" class="dimension-name" placeholder="规格名称，如颜色" />
