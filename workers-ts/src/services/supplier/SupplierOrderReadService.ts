@@ -7,6 +7,8 @@ import { supplierOrderListConditions } from './SupplierOrderListFilter';
 import { readSupplierOrderReview, supplierOrderReviewColumns } from './SupplierOrderReview';
 import { readSupplierOrderInvoiceReview } from './SupplierOrderInvoiceReview';
 import { readSupplierOrderPromotionReview } from './SupplierOrderPromotionReview';
+import { readSupplierOrderVirtualReview } from './SupplierOrderVirtualReview';
+import { supplierPublicCartText } from './SupplierReadSupport';
 export type { SupplierOrderQuery } from './SupplierOrderListInput';
 
 const maximumId = 2_147_483_647;
@@ -91,7 +93,10 @@ export class SupplierOrderReadService {
       const review = await readSupplierOrderReview(db, reviewSource, cartInfo, appKey);
       const invoice = await readSupplierOrderInvoiceReview(db, reviewSource);
       const promotions = await readSupplierOrderPromotionReview(db, reviewSource, cartInfo);
-      return { ...order, cart_info: cartInfo, review: { ...review, invoice, promotions } };
+      const virtualDelivery = await readSupplierOrderVirtualReview(db, { ...reviewSource, orderId: order.order_id,
+        productType: order.product_type, paid: order.paid, status: order.status, deliveryType: order.delivery_type }, cartInfo);
+      return { ...order, cart_info: cartInfo.map(cart => ({ ...cart, cartInfo: supplierPublicCartText(cart.cartInfo, order.product_type === 1 ? 1 : cart.productType) })),
+        review: { ...review, invoice, promotions, virtual_delivery: virtualDelivery } };
     });
   }
 }

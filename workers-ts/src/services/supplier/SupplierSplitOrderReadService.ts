@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, or, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo } from '@/models/schema';
 import { NotFoundException, ValidateException } from '@/utils/errors';
-import { supplierCartGiftFlag } from './SupplierReadSupport';
+import { supplierCartGiftFlag, supplierPublicCartSnapshot } from './SupplierReadSupport';
 
 const header = {
   id: storeOrder.id, pid: storeOrder.pid, order_id: storeOrder.orderId,
@@ -67,7 +67,7 @@ export class SupplierSplitOrderReadService {
         id: storeOrderCartInfo.id, oid: storeOrderCartInfo.oid, uid: storeOrderCartInfo.uid,
         type: storeOrderCartInfo.type, relationId: storeOrderCartInfo.relationId,
         cart_id: storeOrderCartInfo.cartId, product_id: storeOrderCartInfo.productId,
-        sku_unique: storeOrderCartInfo.skuUnique, cart_num: storeOrderCartInfo.cartNum,
+        sku_unique: storeOrderCartInfo.skuUnique, productType: storeOrderCartInfo.productType, cart_num: storeOrderCartInfo.cartNum,
         refund_num: storeOrderCartInfo.refundNum, surplus_num: storeOrderCartInfo.splitSurplusNum,
         is_gift: storeOrderCartInfo.isGift,
         raw: sql<string | null>`CASE WHEN ${bytes}<=65536 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
@@ -87,13 +87,13 @@ export class SupplierSplitOrderReadService {
             && (cart.relationId !== supplierId || ![0, 2].includes(cart.type)))) {
             throw new ValidateException('订单商品归属不一致或明细过大，请核对');
           }
-          const { oid: _oid, uid: _cartUid, type: _type, relationId: _relation, raw, oversized: _oversized, ...row } = cart;
+          const { oid: _oid, uid: _cartUid, type: _type, relationId: _relation, productType: _productType, raw, oversized: _oversized, ...row } = cart;
           const record = snapshot(raw), product = object(record?.product), productInfo = object(record?.productInfo);
           const sku = object(record?.sku), attrInfo = object(productInfo?.attrInfo);
           return { ...row, is_gift: supplierCartGiftFlag(row.is_gift),
             product_name: String(product?.storeName ?? productInfo?.store_name ?? '商品快照'),
             image: String(product?.image ?? productInfo?.image ?? ''),
-            sku: String(sku?.suk ?? attrInfo?.suk ?? row.sku_unique), cart_info: record,
+            sku: String(sku?.suk ?? attrInfo?.suk ?? row.sku_unique), cart_info: supplierPublicCartSnapshot(record, order.product_type === 1 ? 1 : cart.productType),
           };
         });
         return { ...order, cart_info: cartInfo };

@@ -1,3 +1,4 @@
+import { checkSupplierOrderVirtualReview, type SupplierOrderVirtualReview } from './orderVirtualReview';
 import type { OrderRow } from '@/types';
 import { checkSupplierOrderInvoiceReview, type SupplierOrderInvoiceReview } from './orderInvoiceReview';
 import { checkSupplierOrderPromotionsReview, type SupplierOrderPromotionsReview } from './orderPromotionsReview';
@@ -19,6 +20,7 @@ export interface SupplierOrderReview {
   form: Array<{ id: string; title: string; value: string; images: string[] }>;
   invoice?: SupplierOrderInvoiceReview;
   promotions?: SupplierOrderPromotionsReview;
+  virtual_delivery?: SupplierOrderVirtualReview;
 }
 export type SupplierOrderDetail = OrderRow & { cart_info: unknown[]; review?: SupplierOrderReview };
 
@@ -65,6 +67,7 @@ export function checkSupplierOrderReview(value: unknown, header: OrderRow): asse
     || !Array.isArray(value.form) || value.form.length > 100
     || !value.form.every((field: unknown) => record(field) && text(field.id, 255) && text(field.title, 1024)
       && text(field.value) && Array.isArray(field.images) && field.images.length <= 9 && field.images.every(reviewImageUrl))) fail();
+  if (Object.hasOwn(value, 'virtual_delivery')) checkSupplierOrderVirtualReview(value.virtual_delivery, header, value.items);
   if (Object.hasOwn(value, 'invoice')) checkSupplierOrderInvoiceReview(value.invoice, header);
   if (Object.hasOwn(value, 'promotions')) checkSupplierOrderPromotionsReview(value.promotions, header, value.amounts.promotions_price);
 }

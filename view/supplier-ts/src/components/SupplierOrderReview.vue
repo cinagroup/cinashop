@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import SupplierOrderVirtualReview from './SupplierOrderVirtualReview.vue';
 import SupplierOrderItemKind from './SupplierOrderItemKind.vue';
 import type { SupplierOrderReview } from '@/utils/orderReview';
 import { reviewMoney } from '@/utils/orderReview';
 import SupplierOrderInvoiceReview from './SupplierOrderInvoiceReview.vue';
 import SupplierOrderPromotionsReview from './SupplierOrderPromotionsReview.vue';
-defineProps<{ review: SupplierOrderReview; paid: number }>();
+defineProps<{ review: SupplierOrderReview; paid: number; productType: number }>();
 </script>
 
 <template>
   <section class="order-review" aria-label="订单核对">
     <p v-if="review.order_kind === 'payment_summary'" class="review-note" role="note">这是拆分前的付款汇总，请按各实际包裹履约，金额勿与子订单重复相加。</p>
     <p v-if="review.original_order_id" class="original-number">原订单号：{{ review.original_order_id }}</p>
+    <SupplierOrderVirtualReview :delivery="review.virtual_delivery" :product-type="productType" />
     <h3>收货与买家要求</h3>
     <dl class="review-facts">
       <div><dt>收货人</dt><dd>{{ review.recipient.name || '未记录' }} {{ review.recipient.phone }}</dd></div>

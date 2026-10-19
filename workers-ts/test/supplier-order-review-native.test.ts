@@ -40,9 +40,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier ordinar
       items: [{ id: 1001, product_id: 70, product_name: '冻结核对商品', sku: '冻结红色,S', code: 'FROZEN-CODE', bar_code: 'FROZEN-BAR',
         quantity: 2, refund_quantity: 0, settlement_unit: '2.50', settlement_subtotal: '5.00' }] } });
     expect(typeof detail.cart_info[0].cartInfo).toBe('string'); expect(detail.cart_info[0].settlePrice).toBe('2.50');
-    expect(Object.keys(detail.review).sort()).toEqual(['version','order_kind','original_order_id','recipient','buyer','amounts','items','settlement','form','invoice','promotions'].sort());
+    expect(Object.keys(detail.review).sort()).toEqual(['version','order_kind','original_order_id','recipient','buyer','amounts','items','settlement','form','invoice','promotions','virtual_delivery'].sort());
     expect(detail.review.invoice).toEqual({ state: 'none', reason: '', record: null });
     expect(detail.review.promotions).toEqual({ order_id: 100, state: 'none', reason: '', basis: null, total: null, items: [] });
+    expect(detail.review.virtual_delivery).toEqual({ order_id: 100, state: 'not_applicable', basis: null, reason: '', entries: [] });
     expect(detail).not.toHaveProperty('user_address'); expect(detail).not.toHaveProperty('customForm');
     expect(JSON.stringify(detail.review)).not.toMatch(/costPrice|pwd|trade_no|user_ip|PRIVATE-UNCHANGED-ANSWER|spread_uid|余额|已到账/);
     const [rights] = await peer.db.execute(sql`SELECT current_user=session_user AS independent,

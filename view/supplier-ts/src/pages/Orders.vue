@@ -653,7 +653,7 @@ onMounted(load);
             <div v-if="current.delivery_type"><dt>发货方式</dt><dd>{{ current.delivery_type === "express" ? "快递" : current.delivery_type === "send" ? "同城配送" : "虚拟发货" }}</dd></div>
             <div v-if="current.delivery_type"><dt>物流 / 交付信息</dt><dd>{{ current.delivery_type === "fictitious" ? current.fictitious_content : `${current.delivery_name} ${current.delivery_id}` }}</dd></div>
           </dl>
-          <SupplierOrderReview v-if="current.review" :review="current.review" :paid="current.paid" />
+          <SupplierOrderReview v-if="current.review" :review="current.review" :paid="current.paid" :product-type="current.product_type" />
           <p v-else class="review-unavailable" role="status">订单核对信息未返回，请重新读取详情。</p>
           <div class="drawer-actions delivery-actions">
             <el-button v-if="canTrack(current)" plain @click="openTracking(current)">查看物流</el-button>

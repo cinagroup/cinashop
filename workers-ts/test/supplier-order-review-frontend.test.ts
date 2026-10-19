@@ -518,3 +518,138 @@ it.each(['dialog','route','session'] as const)('does not restore late gift selec
     expect(f.calls.every(c=>c.method==='get')).toBe(true);
   } finally {wait.resolve();f.close();}
 });
+
+const virtualEntry = (overrides: any = {}) => ({ kind: 'card', product_id: 70, sku_unique: 'FROZEN1',
+  product_name: '下单历史商品', sku: '历史蓝色 XL', quantity: 1, card_no: 'LOCAL-CARD', card_pwd: '本机测试口令', ...overrides });
+const virtualReview = (overrides: any = {}) => ({ order_id: 25, state: 'recorded', basis: 'modern', reason: '', entries: [virtualEntry()], ...overrides });
+const virtualDetail = (value = virtualReview(), header: any = {}, valueReview: any = {}, id = 25) => detail(id,
+  review({ virtual_delivery: value, ...valueReview }), { product_type: 1, delivery_type: 'fictitious', ...header });
+async function openVirtual(value = virtualReview(), header = {}, valueReview = {}) {
+  const f = await mount(c => c.url === '/order/info/25' ? virtualDetail(value, header, valueReview) : undefined);
+  await f.view.openOrder(order()); await flush(); return f;
+}
+const virtualPanel = (f: Awaited<ReturnType<typeof mount>>) => nodes(f.host).find(n => n.props['aria-label'] === '卡密与固定内容交付记录');
+it('renders the exact authorized card record for an order-view-only staff member without a delivery mutation', async () => {
+  localStorage.setItem('supplier-permissions', '["supplier.order.view"]');
+  const f = await openVirtual(); try {
+    for (const text of ['卡密与固定内容交付记录','LOCAL-CARD','本机测试口令','下单历史商品','历史蓝色 XL','1 件']) expect(contents(virtualPanel(f)!)).toContain(text);
+    expect(f.calls.every(c => c.method === 'get')).toBe(true); expect(f.calls.some(c => /virtual|card|product/.test(c.url))).toBe(false);
+    expect(nodes(virtualPanel(f)!).some(n => n.tag === 'el-button' || n.tag === 'button')).toBe(false);
+  } finally { f.close(); }
+});
+it('preserves multiline fixed content as text without executing HTML or following its URLs', async () => {
+  const content = '<img src="https://example.invalid/do-not-fetch">\n<script>不会执行</script>\nhttps://example.invalid/license\n' + '长交付内容'.repeat(300);
+  const { card_no: _no, card_pwd: _pwd, ...product } = virtualEntry();
+  const f = await openVirtual(virtualReview({ entries: [{ ...product, kind: 'content', content }] }));
+  try { const panel = virtualPanel(f)!; expect(contents(panel)).toContain(content); expect(nodes(panel).some(n => n.props.innerHTML || ['img','script','a','iframe'].includes(n.tag ?? ''))).toBe(false); }
+  finally { f.close(); }
+});
+it('supports the genuine password-only card contract and full Unicode database limits', async () => {
+  const password = '🔑'.repeat(255), f = await openVirtual(virtualReview({ entries: [virtualEntry({ card_no: '', card_pwd: password, sku_unique: '📦'.repeat(20) })] }));
+  try { expect(contents(virtualPanel(f)!)).toContain('未记录卡号'); expect(contents(virtualPanel(f)!)).toContain(password); }
+  finally { f.close(); }
+});
+it('labels a mapped historical PHP delivery without pretending it is a new shipment', async () => {
+  const f = await openVirtual(virtualReview({ basis: 'php_legacy' }));
+  try { expect(contents(virtualPanel(f)!)).toContain('历史交付记录'); expect(contents(virtualPanel(f)!)).toContain('本机测试口令'); }
+  finally { f.close(); }
+});
+it('retains a legitimate delivered secret after its quantity was subsequently refunded', async () => {
+  const value = review(); value.items[0].refund_quantity = 1;
+  const f = await openVirtual(virtualReview(), { refund_status: 2 }, { items: value.items });
+  try { expect(contents(virtualPanel(f)!)).toContain('本机测试口令'); expect(contents(virtualPanel(f)!)).toContain('退款记录'); }
+  finally { f.close(); }
+});
+it.each(['not_delivered','unavailable'])('shows honest %s state with no secret or send action', async state => {
+  const f = await openVirtual(virtualReview({ state, reason: '本机记录待核对', basis: null, entries: [] }));
+  try { expect(contents(virtualPanel(f)!)).toContain('本机记录待核对'); expect(contents(virtualPanel(f)!)).not.toContain('本机测试口令'); }
+  finally { f.close(); }
+});
+it('does not aggregate descendant secrets into an owned payment summary', async () => {
+  const f = await openVirtual(virtualReview({ state: 'unavailable', reason: '请查看实际子订单交付记录', basis: null, entries: [] }), { pid: -1 }, { order_kind: 'payment_summary' });
+  try { expect(contents(virtualPanel(f)!)).toContain('请查看实际子订单'); expect(contents(virtualPanel(f)!)).not.toContain('本机测试口令'); }
+  finally { f.close(); }
+});
+it('keeps older type1 details readable while explicitly reporting the missing delivery field', async () => {
+  const f = await mount(c => c.url === '/order/info/25' ? detail(25, review(), { product_type: 1, delivery_type: 'fictitious' }) : undefined);
+  try { await f.view.openOrder(order()); await flush(); expect(contents(virtualPanel(f)!)).toContain('卡密交付信息未返回'); expect(f.view.current.value).not.toBeNull(); }
+  finally { f.close(); }
+});
+it('does not invent a card panel for a physical order whose closed projection is not applicable', async () => {
+  const f = await openVirtual(virtualReview({ state: 'not_applicable', reason: '', basis: null, entries: [] }), { product_type: 0 });
+  try { expect(virtualPanel(f)).toBeUndefined(); expect(f.view.current.value).not.toBeNull(); }
+  finally { f.close(); }
+});
+it.each([
+  ['foreign physical order', (v: any) => { v.order_id = 32; }],
+  ['array state', (v: any) => { v.state = ['recorded']; }],
+  ['unknown state', (v: any) => { v.state = 'sent'; }],
+  ['unknown basis', (v: any) => { v.basis = 'current_catalog'; }],
+  ['missing basis', (v: any) => { delete v.basis; }],
+  ['not applicable virtual record', (v: any) => { Object.assign(v, { state: 'not_applicable', basis: null, entries: [] }); }],
+  ['unavailable with secret', (v: any) => { v.state = 'unavailable'; v.reason = 'bad'; }],
+  ['unexplained unavailable', (v: any) => { Object.assign(v, { state: 'unavailable', basis: null, entries: [] }); }],
+  ['extra export URL', (v: any) => { v.export_url = 'https://example.invalid'; }],
+  ['object entries', (v: any) => { v.entries = {}; }],
+  ['empty recorded delivery', (v: any) => { v.entries = []; }],
+  ['excess entries', (v: any) => { v.entries = Array(2001).fill(v.entries[0]); }],
+  ['foreign product', (v: any) => { v.entries[0].product_id = 81; }],
+  ['changed frozen label', (v: any) => { v.entries[0].product_name = '当前目录标题'; }],
+  ['changed frozen SKU', (v: any) => { v.entries[0].sku = '当前目录规格'; }],
+  ['unbounded SKU identity', (v: any) => { v.entries[0].sku_unique = '📦'.repeat(21); }],
+  ['empty SKU identity', (v: any) => { v.entries[0].sku_unique = ''; }],
+  ['unknown entry kind', (v: any) => { v.entries[0].kind = 'download'; }],
+  ['string quantity', (v: any) => { v.entries[0].quantity = '1'; }],
+  ['zero quantity', (v: any) => { v.entries[0].quantity = 0; }],
+  ['plural card entry', (v: any) => { v.entries[0].quantity = 2; }],
+  ['empty password', (v: any) => { v.entries[0].card_pwd = ' \n'; }],
+  ['oversized Unicode password', (v: any) => { v.entries[0].card_pwd = '密'.repeat(256); }],
+  ['duplicated card exceeding ordered count', (v: any) => { v.entries.push({ ...v.entries[0] }); }],
+  ['extra content in card', (v: any) => { v.entries[0].content = 'EXTRA-SECRET'; }],
+  ['empty content', (v: any) => { const {card_no,card_pwd,...entry}=v.entries[0];v.entries=[{...entry,kind:'content',content:' \n'}]; }],
+  ['oversized UTF8 secret', (v: any) => { const {card_no,card_pwd,...entry}=v.entries[0];v.entries=[{...entry,kind:'content',content:'汉'.repeat(350000)}]; }],
+  ['null projection', (_v: any) => {}],
+])('rejects %s virtual delivery before displaying secrets and explicitly retries the real detail endpoint', async (name, change: (v: any) => void) => {
+  const broken = virtualReview(); change(broken); let current = name === 'null projection' ? null : broken;
+  const f = await mount(c => c.url === '/order/info/25' ? virtualDetail(current) : undefined);
+  try {
+    await f.view.openOrder(order()); await flush(); expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('本机测试口令');
+    expect(nodes(f.host).find(n => n.tag === 'el-alert' && String(n.props.title).includes('卡密交付信息不完整'))).toBeTruthy();
+    current = virtualReview(); button(f, '重新读取详情').props.onClick(); await flush(); expect(contents(virtualPanel(f)!)).toContain('本机测试口令');
+    expect(f.calls.filter(c => c.url === '/order/info/25')).toHaveLength(2);
+  } finally { f.close(); }
+});
+it.each([{ paid: 0 },{ status: 0 },{ delivery_type: 'express' },{ pid: -1 }])('rejects recorded virtual secrets against contradictory header %j', async (header: Record<string, any>) => {
+  const f = await openVirtual(virtualReview(), header, header.pid === -1 ? { order_kind: 'payment_summary' } : {});
+  try { expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('本机测试口令'); }
+  finally { f.close(); }
+});
+it('does not show fewer delivered items than the protected unrefunded order quantity', async () => {
+  const item = { ...review().items[0], quantity: 2 };
+  const f = await openVirtual(virtualReview(), { total_num: 2 }, { items: [item], amounts: { ...review().amounts, quantity: 2 } });
+  try { expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('本机测试口令'); }
+  finally { f.close(); }
+});
+it.each(['close','route','session'])('clears delivered secrets on %s and discards the late old response', async action => {
+  const pending = gate(); let hold = false; const value = virtualDetail();
+  const f = await mount(c => c.url === '/order/info/25' ? hold ? pending.promise : value : undefined);
+  try {
+    await f.view.openOrder(order()); expect(contents(virtualPanel(f)!)).toContain('本机测试口令'); hold = true;
+    const reading = f.view.refreshCurrent(); await flush();
+    if (action === 'close') f.view.drawerOpen.value = false;
+    if (action === 'route') await f.router.push('/away');
+    if (action === 'session') for (const token of ['virtual-other-account','tracking-a']) { localStorage.setItem('supplier-token',token);const e=new Event('storage');Object.assign(e,{key:'supplier-token',storageArea:localStorage});surface.dispatchEvent(e); }
+    pending.resolve(value); await reading; await flush(); expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('本机测试口令');
+  } finally { pending.resolve(value); f.close(); }
+});
+it('does not revive an old secret after navigating order A to B to A', async () => {
+  const pending = gate(); let hold = true;
+  const fresh = (id: number) => virtualDetail(virtualReview({ order_id: id, entries: [virtualEntry({ card_pwd: `当前测试口令-${id}` })] }), id === 32 ? { pid: -1 } : {}, id === 32 ? { order_kind: 'payment_summary', virtual_delivery: { order_id: 32, state: 'unavailable', basis: null, reason: '请查看子单', entries: [] } } : {}, id);
+  const f = await mount(c => c.url.startsWith('/order/info/') ? c.url === '/order/info/25' && hold ? pending.promise : fresh(Number(c.url.split('/').at(-1))) : undefined);
+  try {
+    const reading=f.view.openOrder(order());await flush();await f.view.openOrder(order(32));hold=false;await f.view.openOrder(order());
+    pending.resolve(virtualDetail(virtualReview({ entries:[virtualEntry({card_pwd:'过时测试口令'})] })));await reading;await flush();
+    expect(contents(virtualPanel(f)!)).toContain('当前测试口令-25'); expect(contents(f.host)).not.toContain('过时测试口令');
+    expect(f.calls.find(c=>c.url==='/order/info/25').signal.aborted).toBe(true);
+  } finally { pending.resolve(virtualDetail());f.close(); }
+});

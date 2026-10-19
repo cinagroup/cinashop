@@ -1,6 +1,6 @@
-import { asc, inArray, sql } from 'drizzle-orm';
+import { asc, eq, inArray, sql } from 'drizzle-orm';
 import { withTx, type Container, type DbClient } from '@/lib/di';
-import { storeOrderCartInfo } from '@/models/schema';
+import { storeOrder, storeOrderCartInfo } from '@/models/schema';
 import { ValidateException } from '@/utils/errors';
 
 export function supplierReadIdentity(id: number) {
@@ -40,6 +40,36 @@ export function parseSupplierSnapshot(raw: string | null, maximumBytes: number) 
   return record;
 }
 
+/** Remove only the known authoritative type-1 fixed-delivery snapshot paths.
+ * This is an output copy: financial/fulfillment readers retain the original.
+ * Arbitrary historical JSON is not certified secret-free by this operation. */
+export function supplierPublicCartSnapshot(record: Record<string, unknown> | null, productType: number) {
+  if (productType !== 1 || !record) return record;
+  let result = record;
+  const sku = supplierSnapshotObject(record.sku);
+  if (sku && Object.hasOwn(sku, 'disk_info')) {
+    const { disk_info: _disk, ...publicSku } = sku;
+    result = { ...result, sku: publicSku };
+  }
+  // PHP StoreCartServices stores attrInfo both at the root and under productInfo.
+  const rootAttr = supplierSnapshotObject(record.attrInfo);
+  if (rootAttr && Object.hasOwn(rootAttr, 'disk_info')) {
+    const { disk_info: _disk, ...publicAttr } = rootAttr;
+    result = { ...result, attrInfo: publicAttr };
+  }
+  const productInfo = supplierSnapshotObject(record.productInfo), attr = supplierSnapshotObject(productInfo?.attrInfo);
+  if (productInfo && attr && Object.hasOwn(attr, 'disk_info')) {
+    const { disk_info: _disk, ...publicAttr } = attr;
+    result = { ...result, productInfo: { ...productInfo, attrInfo: publicAttr } };
+  }
+  return result;
+}
+export function supplierPublicCartText(raw: string | null, productType: number) {
+  if (productType !== 1 || raw === null || raw === '') return raw;
+  const record = supplierSnapshotObject(JSON.parse(raw)), visible = supplierPublicCartSnapshot(record, productType);
+  return visible === record ? raw : JSON.stringify(visible);
+}
+
 /** Call inside the caller's read snapshot. Validate the complete order/cart
  * collection before filtering deliverable rows or projecting printable prices. */
 export async function readSupplierCarts(db: DbClient, supplierId: number,
@@ -53,13 +83,14 @@ export async function readSupplierCarts(db: DbClient, supplierId: number,
     id: storeOrderCartInfo.id, oid: storeOrderCartInfo.oid, uid: storeOrderCartInfo.uid,
     type: storeOrderCartInfo.type, relationId: storeOrderCartInfo.relationId,
     cartId: storeOrderCartInfo.cartId, productId: storeOrderCartInfo.productId,
-    skuUnique: storeOrderCartInfo.skuUnique, cartNum: storeOrderCartInfo.cartNum,
+    skuUnique: storeOrderCartInfo.skuUnique, productType: storeOrderCartInfo.productType, cartNum: storeOrderCartInfo.cartNum,
     refundNum: storeOrderCartInfo.refundNum, splitSurplusNum: storeOrderCartInfo.splitSurplusNum,
     splitStatus: storeOrderCartInfo.splitStatus, settlePrice: storeOrderCartInfo.settlePrice,
-    isGift: storeOrderCartInfo.isGift,
+    isGift: storeOrderCartInfo.isGift, orderProductType: storeOrder.productType,
     cartInfo: sql<string | null>`CASE WHEN NOT (${oversized}) THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
     oversized: sql<boolean>`${oversized}`,
-  }).from(storeOrderCartInfo).where(inArray(storeOrderCartInfo.oid, orders.map(order => order.id)))
+  }).from(storeOrderCartInfo).innerJoin(storeOrder, eq(storeOrder.id, storeOrderCartInfo.oid))
+    .where(inArray(storeOrderCartInfo.oid, orders.map(order => order.id)))
     .orderBy(asc(storeOrderCartInfo.id)).limit(maximumRows + 1);
   if (carts.length > maximumRows) throw new ValidateException('订单商品明细过多，请缩小范围');
   const counts = new Map<number, number>();
@@ -90,6 +121,6 @@ export function supplierDisplayCart(row: Awaited<ReturnType<typeof readSupplierC
     is_gift: supplierCartGiftFlag(row.isGift),
     product_name: String(product?.storeName ?? productInfo?.store_name ?? '商品快照'),
     image: String(product?.image ?? productInfo?.image ?? ''),
-    sku: String(sku?.suk ?? attrInfo?.suk ?? row.skuUnique), cart_info: record,
+    sku: String(sku?.suk ?? attrInfo?.suk ?? row.skuUnique), cart_info: supplierPublicCartSnapshot(record, row.orderProductType === 1 ? 1 : row.productType),
   };
 }
