@@ -1,41 +1,22 @@
-import { and, asc, desc, eq, getTableColumns, gte, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo } from '@/models/schema';
 import { NotFoundException, ValidateException } from '@/utils/errors';
+import { supplierOrderListInput, type SupplierOrderQuery } from './SupplierOrderListInput';
+import { supplierOrderListConditions } from './SupplierOrderListFilter';
+export type { SupplierOrderQuery } from './SupplierOrderListInput';
 
 const maximumId = 2_147_483_647;
-export type SupplierOrderQuery = Record<string, string | string[]>;
-function parameter(query: SupplierOrderQuery, name: string) {
-  const value = query[name];
-  if (Array.isArray(value)) {
-    if (value.length !== 1) throw new ValidateException('订单查询参数重复');
-    return value[0];
-  }
-  return value;
-}
-function integer(value: string | undefined, fallback: number, min: number, max: number) {
-  if (value === undefined || value === '') return fallback;
-  if (!/^\d{1,10}$/.test(value)) throw new ValidateException('订单查询参数错误');
-  const n = Number(value);
-  if (!Number.isSafeInteger(n) || n < min || n > max) throw new ValidateException('订单查询参数错误');
-  return n;
-}
 function identity(id: number) {
   if (!Number.isSafeInteger(id) || id <= 0 || id > maximumId) throw new ValidateException('订单查询身份错误');
 }
-function text(value: string | undefined, maximum: number) {
-  if (value === undefined) return '';
-  if (value.length > maximum || /[\u0000-\u001f\u007f]/.test(value)) throw new ValidateException('订单查询参数错误');
-  return value.trim();
-}
-
 // Preserve the established Supplier snake-case DTO. Only bounded scalar header
 // fields cross the wire; no SELECT * of unrelated private/TEXT order columns.
 const header = {
   id: storeOrder.id, pid: storeOrder.pid, order_id: storeOrder.orderId,
   real_name: storeOrder.realName, user_phone: storeOrder.userPhone,
   total_num: storeOrder.totalNum, pay_price: storeOrder.payPrice,
-  paid: storeOrder.paid, status: storeOrder.status, pay_type: storeOrder.payType,
+  paid: storeOrder.paid, status: storeOrder.status, pay_type: storeOrder.payType, type: storeOrder.type, is_del: storeOrder.isDel,
   refund_status: storeOrder.refundStatus, shipping_type: storeOrder.shippingType,
   product_type: storeOrder.productType, delivery_type: storeOrder.deliveryType,
   delivery_name: storeOrder.deliveryName, delivery_code: storeOrder.deliveryCode,
@@ -61,19 +42,8 @@ export class SupplierOrderReadService {
 
   async list(supplierId: number, query: SupplierOrderQuery) {
     identity(supplierId);
-    const page = integer(parameter(query, 'page'), 1, 1, 10000);
-    const limit = integer(parameter(query, 'limit'), 20, 1, 100);
-    const name = text(parameter(query, 'real_name'), 256), order = text(parameter(query, 'order'), 256);
-    const paid = parameter(query, 'paid'), status = parameter(query, 'status');
-    const payType = text(parameter(query, 'pay_type'), 32);
-    const conditions: SQL[] = [visible(supplierId)!, gte(storeOrder.pid, 0)];
-    // Keep the existing keyword precedence and wildcard search contract.
-    const keyword = name || order;
-    if (keyword) conditions.push(or(ilike(storeOrder.orderId, `%${keyword}%`),
-      ilike(storeOrder.realName, `%${keyword}%`), ilike(storeOrder.userPhone, `%${keyword}%`))!);
-    if (paid !== undefined && paid !== '') conditions.push(eq(storeOrder.paid, integer(paid, 0, 0, 1)));
-    if (status !== undefined && status !== '') conditions.push(eq(storeOrder.status, integer(status, 0, 0, 5)));
-    if (payType) conditions.push(eq(storeOrder.payType, payType));
+    const input = supplierOrderListInput(query), { page, limit } = input;
+    const conditions = supplierOrderListConditions(supplierId, input);
     return this.snapshot(async db => {
       const where = and(...conditions);
       const list = await db.select(header).from(storeOrder).where(where)

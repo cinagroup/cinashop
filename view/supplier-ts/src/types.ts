@@ -458,6 +458,8 @@ export interface SupplierProductReview {
 
 export interface OrderRow {
   id: number;
+  type?: number;
+  is_del?: number;
   pid?: number;
   order_id: string;
   real_name: string;

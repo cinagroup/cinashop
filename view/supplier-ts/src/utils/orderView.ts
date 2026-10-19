@@ -11,6 +11,7 @@ function requireContract(valid: unknown): asserts valid {
 export function checkOrder(row: OrderRow) {
   requireContract(row && positiveId(row.id) && text(row.order_id) && text(row.real_name) && text(row.user_phone)
     && text(row.remark) && money(row.pay_price)
+    && (row.type === undefined || Number.isInteger(row.type)) && (row.is_del === undefined || [0, 1].includes(row.is_del))
     && [row.paid, row.status, row.refund_status, row.product_type, row.shipping_type].every(Number.isInteger));
 }
 export function checkOrderPage(result: { list: OrderRow[]; count: number }, limit: number) {

@@ -1,0 +1,2170 @@
+{
+  "scope": "Complete Supplier order list filter flow and coherent original-number discovery; overall PHP-to-TS migration active",
+  "base_commit": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a",
+  "generated_at_utc": "2026-10-19T01:45:05.159907+00:00",
+  "route": "GET /supplierapi/order/list",
+  "contract": {
+    "rank": 1,
+    "title": "Supplier完整订单列表筛选与安全父订单号发现",
+    "business_value": "Find current owned fulfillments by actual PHP business stage, activity, payment, buyer field/current catalog and date instead of simplified ambiguous raw status; parent payment number locates only coherent owned fulfillment leaves.",
+    "active_php_chain": [
+      "Supplier orderList mounted filters -> orderList API -> route/supplier.php order/list -> actual supplier Order::lst override -> StoreOrderServices::getOrderList -> StoreOrderDao::search/list/count."
+    ],
+    "current_ts_gap": "Orders only keyword/paid/raw status; SupplierOrderReadService accepts raw equality and optional named pay_type only, ignoring field_key/type/time. Existing current flat pid>=0 and SQL snapshot/count/read authority are mature and must remain.",
+    "php_exact_semantics": {
+      "ui_business_statuses": [
+        "0 unpaid",
+        "1 unshipped",
+        "2 await receipt",
+        "3 await review",
+        "4 completed",
+        "-4 user deleted"
+      ],
+      "full_business_predicate_source": "OrderReadStatusPredicate already matches DAO14 cases; selector2 deliberately shipping1(raw1/5) OR shipping2(raw0/5), excluding shipping3. Read status does not grant writeoff.",
+      "activity_type": "store_order.type0..8, not product_type. DAO also supports105/106/107; not exposed by this PHP list dropdown.",
+      "payment": {
+        "1": "weixin",
+        "2": "yue",
+        "3": "offline",
+        "4": "alipay",
+        "5": "integral"
+      },
+      "field_key": "Non-title uid/order_id/real_name/user_phone/total_num are exact equality. all uses fuzzy order/name/phone, current user and address identity, current product name/keyword via actual cart product_id and3 activity tables. title uses CURRENT product store_name/keyword, not frozen cart JSON.",
+      "time": "PHP data alias -> time on add_time, Asia/Shanghai. Actual picker sends slash datetime pair and expands midnight end to23:59:59; ORM between is inclusive.",
+      "list_family": "Supplier lst sets no pid selector. It may include own audit roots, unlike mature TS physical pid>=0 list. No evidence PHP had an independent safe root-to-leaf resolution feature.",
+      "activity_collision": "PHP all activity OR compares activity_id without order.type; typed mapping in new TS is an explicit stricter correction against cross-type same numeric ID false matches."
+    },
+    "accepted_modern_compatibility_boundaries": [
+      "Keep no-field_key legacy3-column fuzzy keyword and rawstatus0..5.",
+      "Add explicit field_key mode for expanded PHP search; business_status is a new disjoint selector and mutually exclusive with nonempty rawstatus.",
+      "Keep flat pid>=0; root-number discovery only widens number branches to coherent owned leaves, never root payloads or foreign siblings.",
+      "Title/all searches use actual current product rows with cart/owner lineage checks, never fake historical snapshot semantics.",
+      "Time start/end canonical int4 epoch seconds independently optional, closed range.",
+      "No new fulfillment types/authors, DDL or production GRANT; no reinterpretation of export.type0/1 as activity filter."
+    ],
+    "validation_plan": [
+      "Actual App/JWT true SELECT-only LOGIN and all-public rows/seq snapshots for every read.",
+      "Rawstatus1 remains equality; business_status1 selects paid/unshipped raw0/4, correctrefund/shipping/deletion; selector2 asymmetry.",
+      "Nine activity types, four actually mounted payment choices plus mapped integral alias, named payment compatibility, numeric0 truthiness.",
+      "Five exact fields, title-current-product mutation vs immutable historical snapshot, all-user/address/product/typed activity positives and collision negatives.",
+      "Unknown enum/duplicate/bad epoch/overflow/inverted interval/oversized/control characters reject before business transaction.",
+      "Count/list in same real READ ONLY RR snapshot, exact pagination stable/order preserved; concurrent injected child changes cannot split count/list.",
+      "Root/child exact numbers, legacy substring, coherent own/platform-allocation roots and foreign/mismatched uid/store/tenant/sysdel roots; no private root columns selected.",
+      "Existing supplier generation real checkout+three refund materializations stays valid; mature broad checkout actor distinguished from dedicated SELECT reader.",
+      "Production Browser actual UI combines date/type/business/payment/field selectors, query/reset/pagination and result/detail mapping under GET zero-write proof; request/cancel/route/session ABA frontend coverage."
+    ]
+  },
+  "source_evidence": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05",
+      "lines": [
+        [
+          13,
+          100
+        ],
+        [
+          466,
+          481
+        ],
+        [
+          621,
+          632
+        ],
+        [
+          1080,
+          1122
+        ],
+        [
+          1133,
+          1137
+        ]
+      ],
+      "evidence": "Mounted actual datetime/type/business-status/payment/search/reset/pagination controls",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3",
+      "lines": [
+        [
+          14,
+          20
+        ]
+      ],
+      "evidence": "GET order/list forwards live filter model",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+      "lines": [
+        [
+          313,
+          315
+        ],
+        [
+          378,
+          381
+        ]
+      ],
+      "evidence": "Active list route and explicitly commented Supplier writeoff routes",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3",
+      "lines": [
+        [
+          80,
+          100
+        ]
+      ],
+      "evidence": "Actual Supplier controller override enforces actor supplier and maps data to time",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/order/StoreOrderDao.php",
+      "sha256": "b9a69a31b55ff6b10e6bf0c3a80762f089d6daaaf3cef4a79bdfa0aee3213503",
+      "lines": [
+        [
+          34,
+          34
+        ],
+        [
+          80,
+          131
+        ],
+        [
+          132,
+          217
+        ],
+        [
+          342,
+          364
+        ]
+      ],
+      "evidence": "Business/type/payment/exact/all/current-product/activity search and sort",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/model/order/StoreOrder.php",
+      "sha256": "23f3a80f464cded2ba769de8def897ae143978d4376c7702c8793b23e4c3d8ab",
+      "lines": [
+        [
+          370,
+          390
+        ],
+        [
+          411,
+          424
+        ],
+        [
+          691,
+          699
+        ]
+      ],
+      "evidence": "Explicit pid search only; pay string/number mapping; supplier scope",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/crmeb/traits/ModelTrait.php",
+      "sha256": "0b821909ee4b6bcffd51834f7b213e46ad001e64215d73dd27d951637cbb1fe6",
+      "lines": [
+        [
+          27,
+          89
+        ]
+      ],
+      "evidence": "Shanghai add_time range default and inclusive boundaries",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/config/app.php",
+      "sha256": "2fb949c2609d813c05ae974aef4379957decc2be6ad56d56be822c264820cfb3",
+      "lines": [
+        [
+          38,
+          38
+        ]
+      ],
+      "evidence": "PHP Asia/Shanghai timezone",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderServices.php",
+      "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+      "lines": [
+        [
+          116,
+          162
+        ],
+        [
+          812,
+          832
+        ]
+      ],
+      "evidence": "Real result count/list and presentation statuses",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7",
+      "lines": [
+        [
+          57,
+          66
+        ],
+        [
+          532,
+          577
+        ]
+      ],
+      "evidence": "Mounted but inactive-API writeoff excluded; remaining customer-answer/detail read fields",
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "0187160fb27adf6178342d7d2d71b984470262696824d97a3ddeef1180c867d7",
+      "lines": [
+        [
+          56,
+          56
+        ],
+        [
+          566,
+          575
+        ],
+        [
+          596,
+          647
+        ]
+      ],
+      "evidence": "Current simplified keyword/paid/raw-status UI; current actual details",
+      "original_scout_capture_sha256": "79784511c448801067988b0d4f8f8fdacbf7be9534b756bb9ad17e38a8580b10",
+      "original_scout_capture_verified": false,
+      "correction": "Scout captured an intermediate working Orders.vue while implementation was in progress; independently reread exact base commit and confirmed the cited simplified filter/detail lines. Original capture is retained as unverified, not relabelled as the base.",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+      "sha256": "9133221b356ce8413a601ae977653309562a962383454d19cbaa0f4b507e4a7a",
+      "lines": [
+        [
+          46,
+          83
+        ],
+        [
+          86,
+          119
+        ]
+      ],
+      "evidence": "Legacy narrow selectors and mature flat read-only snapshot",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderReadStatusPredicate.ts",
+      "sha256": "b8c8d0abf113b3119d0f5f5c8c1a3849d7745c00fce54dede0beca34305d11e6",
+      "lines": [
+        [
+          1,
+          44
+        ]
+      ],
+      "evidence": "Existing complete14 PHP business predicates reusable",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminOrderReadService.ts",
+      "sha256": "9dc4e91ad949b83863b3f2250c2733bea3ce768d5c7afb65cfbca9493d3b99ad",
+      "lines": [
+        [
+          76,
+          95
+        ]
+      ],
+      "evidence": "Existing modern root-number-to-current-fulfillment discovery pattern, not Supplier-ready authority",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierExportService.ts",
+      "sha256": "51b0d96727a2cf87578ca56e764e70336b939d6b963b9a5f8313295563d3dd92",
+      "lines": [
+        [
+          208,
+          255
+        ],
+        [
+          262,
+          309
+        ]
+      ],
+      "evidence": "Mature business status/date export semantics; export.type is layout, never list activity type",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/supplier/SupplierController.ts",
+      "sha256": "2b9be213dcabdbf115d106a182cf596a1bc619ee7649b262a372aab7e28747fc",
+      "lines": [
+        [
+          719,
+          722
+        ]
+      ],
+      "evidence": "Real queries() duplicate-preserving HTTP list",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierService.ts",
+      "sha256": "80b2d0dc9a9efa5a5cc729b374fe528045ae58134042ebd8f07e0ac626b1735a",
+      "lines": [
+        [
+          599,
+          601
+        ]
+      ],
+      "evidence": "Existing real list delegation",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/api/supplier.ts",
+      "sha256": "c9813cef71d10836d71cac47c0e955e63285e85700aa484c6b4eaf8bf8e46cb7",
+      "lines": [
+        [
+          1004,
+          1007
+        ]
+      ],
+      "evidence": "Real list API and preview limitation",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Refunds.vue",
+      "sha256": "4c52f0b76eac8e1cc01ebaceea79e210c921e4af1b98e7c133e5084c68bb1dc3",
+      "lines": [
+        [
+          300,
+          350
+        ]
+      ],
+      "evidence": "Existing after-sale return evidence and history; no generic missing-detail claim",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/supplier-order-generations.test.ts",
+      "sha256": "24c958be72677954d20665a3bb00491d3fb1a1454dee1fbe72fd969bbdcee604",
+      "lines": [
+        [
+          128,
+          159
+        ],
+        [
+          191,
+          203
+        ]
+      ],
+      "evidence": "Existing full real checkout/refund generations + legacy raw selectors",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/supplierOrderDistribution.ts",
+      "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc",
+      "lines": [
+        [
+          1,
+          70
+        ]
+      ],
+      "evidence": "Owned App/JWT fixture reusable without modifying mature helper",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "74284ef75ea2ba47a705021777c813eb91494d8455fba56bcf0c506515fc24f9",
+      "lines": [
+        [
+          58,
+          161
+        ]
+      ],
+      "evidence": "Registered schema real checkout/three-refund test bridge",
+      "baseline_sha_verified": true,
+      "source_state": "3bff515e1af0eedb73d796e2e9ab1fc85520cd5a"
+    }
+  ],
+  "excluded_inactive_or_existing_flows": [
+    {
+      "candidate": "Supplier立即核销/raw5作者",
+      "reason": "Details shows a button but actual supplier route write/write_update are commented with TODO Supplier暂时无需核销. No legitimate new author based on this dead route; raw5 read classification may be included without new fulfillment."
+    },
+    {
+      "candidate": "Generic售后详情/退货凭证",
+      "reason": "Current Refunds.vue already renders real return shipping/proofs and immutable refundHistory, with actual routes. A blanket missing-detail claim would duplicate existing migration; initial-application proof could be a narrower future read gap but is lower priority."
+    }
+  ],
+  "final_execution_source_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "8f4a48ff820d50570b05bdde2c8dff1d9aeb70bf067f22991cd81ae4ab07d4c4"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "58a9d735c2df3bfb2622378d34893ec36df5b04cbd651f089bb404f18e605c75"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/format.ts",
+      "sha256": "3ef0a3f885cac2797f2383ef26674b4c371fa8998f7563f9c9f38db0af8deb92"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/orderFilters.ts",
+      "sha256": "723737bf135475d499dc43032f60a92ae764b908aca99d3b0b71903c516cc343"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/orderView.ts",
+      "sha256": "73491c4bd41a1d813c36f4a89be676bff5a543e915160f149df0a52d8e915592"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderListFilter.ts",
+      "sha256": "9ec8ffc6d584038a26ac388890bafdcff59f053eaa54b5edf7c57f2e5918c54c"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderListInput.ts",
+      "sha256": "f1bd7db84a486d566ef0a5f7082353ed37861c5b55ae08a9a57db153b8cd34af"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+      "sha256": "0d733626f5c0f17baff17e77c22296da26533c3f3168c9d9589e1d57bff9a488"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-order-filters.acceptance.ts",
+      "sha256": "a269a45e09fa9c1bbf37f2eceaa336f017b873fe402f990d8cf3ebc4430b1b1f"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierOrderFilters.ts",
+      "sha256": "0c1d9821f2c92873d07cb17a4f8814bbedc58755ddfdf5503956cfe8111a4679"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "b0d3d10f9655fc4818fe8b748e9c01b4c7c16b0054f6e2dbb5e09ead3cea4d5f"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+      "sha256": "dfa5f6e58ec8996ea901ce73e201bdd9a0cc12748daf7c56ae34f1f41c17c9af"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-filters-native.test.ts",
+      "sha256": "470dc2197df2e8274386b45db244392f9ba4e90be47adee901945ef1150d5757"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-order-filters-browser.config.ts",
+      "sha256": "6071f92dfdcf3a31902e475b023f9d56d05f00cac9af380307326481f3a47cb5"
+    }
+  ],
+  "validation": [
+    {
+      "label": "frontend-final-corrected",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run test/supplier-order-filters-frontend.test.ts test/supplier-order-frontend.test.ts test/supplier-order-tracking-frontend.test.ts test/supplier-order-distribution-frontend.test.ts test/local-finance-postgres-runner.test.ts test/supplier-pages-acceptance.test.ts test/supplier-rbac-migration.test.ts test/supplier-operations-migration.test.ts --maxWorkers=1 --reporter=default --reporter=json --outputFile=/tmp/cinashop-supplier-order-filters-frontend-final-corrected-vitest.json && cd ../view/supplier-ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vue-tsc/bin/vue-tsc.js -b && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:34:25.751654+00:00",
+      "finished_at_utc": "2026-10-19T01:35:17.275206+00:00",
+      "wall_seconds": 51.52,
+      "tests_passed": 450,
+      "log_path": "/tmp/cinashop-supplier-order-filters-20261019-frontend-final-corrected.log",
+      "log_sha256": "5d739b485c252d9b89bb1bd4c88c3248bdc6f0c9b18948925f5a3c9f41684b20",
+      "terminal_path": "/tmp/cinashop-supplier-order-filters-20261019-frontend-final-corrected-terminal.json",
+      "terminal_sha256": "4b30454674e6fa2f0319180ce911bbfffea4d116f8b8bdce421adc359937b50a",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "8f4a48ff820d50570b05bdde2c8dff1d9aeb70bf067f22991cd81ae4ab07d4c4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "58a9d735c2df3bfb2622378d34893ec36df5b04cbd651f089bb404f18e605c75",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/format.ts",
+          "sha256": "3ef0a3f885cac2797f2383ef26674b4c371fa8998f7563f9c9f38db0af8deb92",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderFilters.ts",
+          "sha256": "723737bf135475d499dc43032f60a92ae764b908aca99d3b0b71903c516cc343",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "73491c4bd41a1d813c36f4a89be676bff5a543e915160f149df0a52d8e915592",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b0d3d10f9655fc4818fe8b748e9c01b4c7c16b0054f6e2dbb5e09ead3cea4d5f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+          "sha256": "dfa5f6e58ec8996ea901ce73e201bdd9a0cc12748daf7c56ae34f1f41c17c9af",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "native-corrected",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-order-filters-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:33:10.493987+00:00",
+      "finished_at_utc": "2026-10-19T01:33:58.034640+00:00",
+      "wall_seconds": 47.54,
+      "tests_passed": 34,
+      "log_path": "/tmp/cinashop-supplier-order-filters-20261019-native-corrected.log",
+      "log_sha256": "ad336a8df3e31aecaf88970feadbb9da17ac332aba7cd5969b5e6e3e4e3374ca",
+      "terminal_path": "/tmp/cinashop-supplier-order-filters-20261019-native-corrected-terminal.json",
+      "terminal_sha256": "6b2f2b12410a57a0336fad952d71a6709cf47a88a3a6a9dea22fd82998fc3ab9",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListFilter.ts",
+          "sha256": "9ec8ffc6d584038a26ac388890bafdcff59f053eaa54b5edf7c57f2e5918c54c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListInput.ts",
+          "sha256": "f1bd7db84a486d566ef0a5f7082353ed37861c5b55ae08a9a57db153b8cd34af",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+          "sha256": "0d733626f5c0f17baff17e77c22296da26533c3f3168c9d9589e1d57bff9a488",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderFilters.ts",
+          "sha256": "0c1d9821f2c92873d07cb17a4f8814bbedc58755ddfdf5503956cfe8111a4679",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-native.test.ts",
+          "sha256": "470dc2197df2e8274386b45db244392f9ba4e90be47adee901945ef1150d5757",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "worker-types-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:35:34.444640+00:00",
+      "finished_at_utc": "2026-10-19T01:39:30.251490+00:00",
+      "wall_seconds": 235.81,
+      "tests_passed": null,
+      "log_path": "/tmp/cinashop-supplier-order-filters-20261019-worker-types-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminal_path": "/tmp/cinashop-supplier-order-filters-20261019-worker-types-final-terminal.json",
+      "terminal_sha256": "ebcdd427c8e002986d1e242dcd5e97b10b1dc3f7e0aa86f9e884cf9070c2e442",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "8f4a48ff820d50570b05bdde2c8dff1d9aeb70bf067f22991cd81ae4ab07d4c4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "58a9d735c2df3bfb2622378d34893ec36df5b04cbd651f089bb404f18e605c75",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/format.ts",
+          "sha256": "3ef0a3f885cac2797f2383ef26674b4c371fa8998f7563f9c9f38db0af8deb92",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderFilters.ts",
+          "sha256": "723737bf135475d499dc43032f60a92ae764b908aca99d3b0b71903c516cc343",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "73491c4bd41a1d813c36f4a89be676bff5a543e915160f149df0a52d8e915592",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListFilter.ts",
+          "sha256": "9ec8ffc6d584038a26ac388890bafdcff59f053eaa54b5edf7c57f2e5918c54c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListInput.ts",
+          "sha256": "f1bd7db84a486d566ef0a5f7082353ed37861c5b55ae08a9a57db153b8cd34af",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+          "sha256": "0d733626f5c0f17baff17e77c22296da26533c3f3168c9d9589e1d57bff9a488",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-filters.acceptance.ts",
+          "sha256": "a269a45e09fa9c1bbf37f2eceaa336f017b873fe402f990d8cf3ebc4430b1b1f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderFilters.ts",
+          "sha256": "0c1d9821f2c92873d07cb17a4f8814bbedc58755ddfdf5503956cfe8111a4679",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b0d3d10f9655fc4818fe8b748e9c01b4c7c16b0054f6e2dbb5e09ead3cea4d5f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+          "sha256": "dfa5f6e58ec8996ea901ce73e201bdd9a0cc12748daf7c56ae34f1f41c17c9af",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-native.test.ts",
+          "sha256": "470dc2197df2e8274386b45db244392f9ba4e90be47adee901945ef1150d5757",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-filters-browser.config.ts",
+          "sha256": "6071f92dfdcf3a31902e475b023f9d56d05f00cac9af380307326481f3a47cb5",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "browser-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:supplier-order-filters-browser"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:39:48.817133+00:00",
+      "finished_at_utc": "2026-10-19T01:44:13.545058+00:00",
+      "wall_seconds": 264.73,
+      "tests_passed": 1,
+      "log_path": "/tmp/cinashop-supplier-order-filters-20261019-browser-final.log",
+      "log_sha256": "205f178b4bb7c54cf94c73c62b6898ca709996200974c2aa1cf813b373bd67e6",
+      "terminal_path": "/tmp/cinashop-supplier-order-filters-20261019-browser-final-terminal.json",
+      "terminal_sha256": "fda49e99de1249d7405037bede6e8aa1c3106f501bb9f7c5ab62d5af133f7b82",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "8f4a48ff820d50570b05bdde2c8dff1d9aeb70bf067f22991cd81ae4ab07d4c4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "58a9d735c2df3bfb2622378d34893ec36df5b04cbd651f089bb404f18e605c75",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/format.ts",
+          "sha256": "3ef0a3f885cac2797f2383ef26674b4c371fa8998f7563f9c9f38db0af8deb92",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderFilters.ts",
+          "sha256": "723737bf135475d499dc43032f60a92ae764b908aca99d3b0b71903c516cc343",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "73491c4bd41a1d813c36f4a89be676bff5a543e915160f149df0a52d8e915592",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListFilter.ts",
+          "sha256": "9ec8ffc6d584038a26ac388890bafdcff59f053eaa54b5edf7c57f2e5918c54c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderListInput.ts",
+          "sha256": "f1bd7db84a486d566ef0a5f7082353ed37861c5b55ae08a9a57db153b8cd34af",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+          "sha256": "0d733626f5c0f17baff17e77c22296da26533c3f3168c9d9589e1d57bff9a488",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-filters.acceptance.ts",
+          "sha256": "a269a45e09fa9c1bbf37f2eceaa336f017b873fe402f990d8cf3ebc4430b1b1f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderFilters.ts",
+          "sha256": "0c1d9821f2c92873d07cb17a4f8814bbedc58755ddfdf5503956cfe8111a4679",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b0d3d10f9655fc4818fe8b748e9c01b4c7c16b0054f6e2dbb5e09ead3cea4d5f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+          "sha256": "dfa5f6e58ec8996ea901ce73e201bdd9a0cc12748daf7c56ae34f1f41c17c9af",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-filters-native.test.ts",
+          "sha256": "470dc2197df2e8274386b45db244392f9ba4e90be47adee901945ef1150d5757",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-filters-browser.config.ts",
+          "sha256": "6071f92dfdcf3a31902e475b023f9d56d05f00cac9af380307326481f3a47cb5",
+          "matches_final": true
+        }
+      ]
+    }
+  ],
+  "mature_regression_evidence_from_initial_native": {
+    "aggregate_exit_code": 1,
+    "aggregate_passed": 55,
+    "aggregate_failed": 1,
+    "retained_passed_cases": 22,
+    "retained_successful_file": {
+      "path": "workers-ts/test/supplier-order-generations.test.ts",
+      "sha256": "24c958be72677954d20665a3bb00491d3fb1a1454dee1fbe72fd969bbdcee604"
+    },
+    "excluded_file": "test/supplier-order-filters-native.test.ts",
+    "excluded_passed_cases": 33,
+    "reason": "The new test changed root200.pid to400, so row200 itself correctly enters the mature pid>=0 flat list and exact direct-number match; no children are discovered. Only this expected result was corrected to [200] plus explicit no201/202, then the entire new34-case file reran. The unrelated successful mature22 file and its final backend inputs are retained, not relabelled as a green aggregate.",
+    "command": [
+      "bash",
+      "/home/cina/cinagroup/tools/validate-serial.sh",
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+      "test/supplier-order-filters-native.test.ts",
+      "test/supplier-order-generations.test.ts"
+    ],
+    "started_at_utc": "2026-10-19T01:28:17.815588+00:00",
+    "finished_at_utc": "2026-10-19T01:32:48.501180+00:00",
+    "log_path": "/tmp/cinashop-supplier-order-filters-20261019-native-initial.log",
+    "log_sha256": "fed52307561e669dc632e077be7351a890113ab511d244212f31a2004c4daf86",
+    "terminal_path": "/tmp/cinashop-supplier-order-filters-20261019-native-initial-terminal.json",
+    "relevant_final_inputs": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "56fdd3d34dbcb17b84a1a4191d2f5f045aaa523d90d246720a2ecba1fbeefc37"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierOrderListFilter.ts",
+        "sha256": "9ec8ffc6d584038a26ac388890bafdcff59f053eaa54b5edf7c57f2e5918c54c"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierOrderListInput.ts",
+        "sha256": "f1bd7db84a486d566ef0a5f7082353ed37861c5b55ae08a9a57db153b8cd34af"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+        "sha256": "0d733626f5c0f17baff17e77c22296da26533c3f3168c9d9589e1d57bff9a488"
+      },
+      {
+        "path": "workers-ts/test/helpers/supplierOrderFilters.ts",
+        "sha256": "0c1d9821f2c92873d07cb17a4f8814bbedc58755ddfdf5503956cfe8111a4679"
+      }
+    ]
+  },
+  "distinct_passed_tests": 507,
+  "new_tests": 61,
+  "test_file_count": 11,
+  "frontend_files": [
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "passed": 287
+    },
+    {
+      "path": "workers-ts/test/supplier-operations-migration.test.ts",
+      "passed": 4
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+      "passed": 41
+    },
+    {
+      "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+      "passed": 21
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "passed": 42
+    },
+    {
+      "path": "workers-ts/test/supplier-order-tracking-frontend.test.ts",
+      "passed": 21
+    },
+    {
+      "path": "workers-ts/test/supplier-pages-acceptance.test.ts",
+      "passed": 24
+    },
+    {
+      "path": "workers-ts/test/supplier-rbac-migration.test.ts",
+      "passed": 10
+    }
+  ],
+  "browser": {
+    "paths": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "2",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          104,
+          103,
+          102,
+          100
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "7",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "offline",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "offline",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": "1700000700"
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-200",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          202,
+          201
+        ],
+        "count": 2
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-300",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-900",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [],
+        "count": 0
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "当前筛选商品",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "title",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          110,
+          100
+        ],
+        "count": 2
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/110",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/110",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/110",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "当前秒杀活动",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          111
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "当前买家昵称",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "11",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "uid",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "8",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "total_num",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "筛选客户7",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "real_name",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "13800138000",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "user_phone",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "-4",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          123
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "NO-MATCH-BROWSER",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [],
+        "count": 0
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "NO-MATCH-BROWSER",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [],
+        "count": 0,
+        "injected_http": 503
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-200",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          202,
+          201
+        ],
+        "count": 2
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "7",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "1700000700",
+          "end_time": "1700000700"
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "1700000700",
+          "end_time": "1700000700"
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "offline",
+          "field_key": "all",
+          "start_time": "1700000700",
+          "end_time": "1700000700"
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "1",
+          "type": "7",
+          "pay_type": "offline",
+          "field_key": "all",
+          "start_time": "1700000700",
+          "end_time": "1700000700"
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          117
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-200",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          202,
+          201
+        ],
+        "count": 2
+      }
+    ],
+    "evidence": [
+      {
+        "stage": "desktop",
+        "width": 1200,
+        "height": 844,
+        "page_client_width": 1200,
+        "page_scroll_width": 1200,
+        "controls": [
+          {
+            "label": "搜索字段\n全部",
+            "left": 254.8000030517578,
+            "right": 406.875
+          },
+          {
+            "label": "订单搜索",
+            "left": 416.875,
+            "right": 678.9624938964844
+          },
+          {
+            "label": "订单类型\n新人订单",
+            "left": 688.9625244140625,
+            "right": 841.0375213623047
+          },
+          {
+            "label": "订单状态\n未发货",
+            "left": 851.0375366210938,
+            "right": 1003.1250457763672
+          },
+          {
+            "label": "支付状态\n全部",
+            "left": 1013.125,
+            "right": 1165.1999969482422
+          },
+          {
+            "label": "支付方式\n线下支付",
+            "left": 254.8000030517578,
+            "right": 455.8625030517578
+          },
+          {
+            "label": "下单开始时间（本地）",
+            "left": 465.8625183105469,
+            "right": 741.9375305175781
+          },
+          {
+            "label": "下单结束时间（本地）",
+            "left": 751.9375,
+            "right": 1028
+          }
+        ],
+        "content": "搜索字段\n全部\n订单搜索\n订单类型\n新人订单\n订单状态\n未发货\n支付状态\n全部\n支付方式\n线下支付\n下单开始时间（本地）\n下单结束时间（本地）\n查询\n重置"
+      },
+      {
+        "stage": "phone",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 375,
+        "page_scroll_width": 375,
+        "controls": [
+          {
+            "label": "搜索字段\n订单号",
+            "left": 16,
+            "right": 359.20001220703125
+          },
+          {
+            "label": "订单搜索",
+            "left": 16,
+            "right": 359.20001220703125
+          },
+          {
+            "label": "订单类型\n全部订单",
+            "left": 16,
+            "right": 182.60000610351562
+          },
+          {
+            "label": "订单状态\n全部状态",
+            "left": 192.60000610351562,
+            "right": 359.20001220703125
+          },
+          {
+            "label": "支付状态\n全部",
+            "left": 16,
+            "right": 182.60000610351562
+          },
+          {
+            "label": "支付方式\n全部方式",
+            "left": 192.60000610351562,
+            "right": 359.20001220703125
+          },
+          {
+            "label": "下单开始时间（本地）",
+            "left": 16,
+            "right": 359.20001220703125
+          },
+          {
+            "label": "下单结束时间（本地）",
+            "left": 16,
+            "right": 359.20001220703125
+          }
+        ],
+        "content": "搜索字段\n订单号\n订单搜索\n订单类型\n全部订单\n订单状态\n全部状态\n支付状态\n全部\n支付方式\n全部方式\n下单开始时间（本地）\n下单结束时间（本地）\n查询\n重置"
+      }
+    ],
+    "finished": true,
+    "table_count": 24,
+    "sequence_count": 23,
+    "provider_calls": 0,
+    "business_writes": 0
+  },
+  "browser_ui": {
+    "started_at": "2026-10-19T01:41:53.033Z",
+    "initial_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "tracking-allocation-301普通订单13800138000¥0.00—已发货—详情配货单",
+      "tracking-child-202普通订单13800138000¥0.00—已发货—详情配货单",
+      "tracking-child-201普通订单13800138000¥0.00—已发货—详情配货单",
+      "FILTER-STATE-127普通订单状态客户12713800138000¥0.00—部分发货2023/11/14 22:32详情配货单",
+      "FILTER-STATE-126普通订单状态客户12613800138000¥0.00—部分收货2023/11/14 22:32详情配货单",
+      "FILTER-STATE-125普通订单状态客户12513800138000¥0.00—部分核销2023/11/14 22:32详情配货单",
+      "FILTER-STATE-123普通订单状态客户12313800138000¥0.00—用户已删除2023/11/14 22:32详情配货单",
+      "FILTER-STATE-122普通订单状态客户12213800138000¥0.00—已完成2023/11/14 22:32详情配货单",
+      "FILTER-STATE-121普通订单状态客户12113800138000¥0.00—已收货2023/11/14 22:32详情配货单",
+      "FILTER-STATE-120普通订单状态客户12013800138000¥0.00—已发货2023/11/14 22:32详情配货单",
+      "FILTER-STATE-119普通订单状态客户11913800138000¥0.00—待付款2023/11/14 22:31详情配货单",
+      "FILTER-TYPE-8抽奖订单筛选客户813800138000¥0.00支付宝待发货2023/11/14 22:26详情配货单",
+      "FILTER-TYPE-7新人订单筛选客户713800138000¥0.00线下支付部分退款 · 部分发货2023/11/14 22:25详情配货单",
+      "FILTER-TYPE-6预售订单筛选客户613800138000¥0.00余额支付待发货2023/11/14 22:23详情配货单",
+      "FILTER-TYPE-5套餐订单筛选客户513800138000¥0.00微信支付待发货2023/11/14 22:21详情配货单",
+      "FILTER-TYPE-4积分订单筛选客户413800138000¥0.00积分支付待发货2023/11/14 22:20详情配货单",
+      "FILTER-TYPE-3拼团订单筛选客户313800138000¥0.00支付宝待发货2023/11/14 22:18详情配货单",
+      "FILTER-TYPE-2砍价订单筛选客户213800138000¥0.00线下支付待发货2023/11/14 22:16详情配货单",
+      "FILTER-TYPE-1秒杀订单筛选客户113800138000¥0.00余额支付待发货2023/11/14 22:15详情配货单",
+      "FILTER-TYPE-0普通订单筛选客户013800138000¥0.00微信支付待发货2023/11/14 22:13详情配货单"
+    ],
+    "observations": [],
+    "pagination_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "managed-send-104普通订单13800138000¥0.00—已发货—详情配货单",
+      "legacy-send-103普通订单13800138000¥0.00—已发货—详情配货单",
+      "manual-virtual-102普通订单13800138000¥0.00—已发货—详情配货单",
+      "tracking-own-100普通订单13800138000¥0.00—已发货—详情配货单"
+    ],
+    "combined_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作"
+    ],
+    "combined_controls": [
+      {
+        "label": "搜索字段",
+        "value": ""
+      },
+      {
+        "label": "订单搜索",
+        "value": ""
+      },
+      {
+        "label": "订单类型",
+        "value": ""
+      },
+      {
+        "label": "订单状态",
+        "value": ""
+      },
+      {
+        "label": "支付状态",
+        "value": ""
+      },
+      {
+        "label": "支付方式",
+        "value": ""
+      },
+      {
+        "label": "下单开始时间",
+        "value": "2023-11-14T22:25"
+      },
+      {
+        "label": "下单结束时间",
+        "value": "2023-11-14T22:25"
+      },
+      {
+        "label": null,
+        "value": "on"
+      }
+    ],
+    "own_root_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "tracking-child-202普通订单13800138000¥0.00—已发货—详情配货单",
+      "tracking-child-201普通订单13800138000¥0.00—已发货—详情配货单"
+    ],
+    "current_product_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "FILTER-TYPE-0普通订单筛选客户013800138000¥0.00微信支付待发货2023/11/14 22:13详情配货单",
+      "tracking-own-100普通订单13800138000¥0.00—已发货—详情配货单"
+    ],
+    "frozen_detail": "订单详情\nFILTER-TYPE-0\n客户\n筛选客户0\n手机号\n13800138000\n订单金额\n¥0.00\n支付方式\n微信支付\n订单状态\n待发货\n下单时间\n2023/11/14 22:13\n发货方式\n快递\n物流 / 交付信息\n本机真实快递 OWN-100\n查看物流\n发货包裹\nFILTER-TYPE-0\n1 件 · ¥0.00\n待发货\n本机真实快递 OWN-100 \n查看物流\n冻结历史商品标题冻结规格\n× 1\n供应商备注",
+    "deleted_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "FILTER-STATE-123普通订单状态客户12313800138000¥0.00—用户已删除2023/11/14 22:32详情配货单"
+    ],
+    "expected_error": "Request failed with status code 503",
+    "recovered": "共 24 个订单",
+    "phone_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "tracking-child-202普通订单13800138000¥0.00—已发货—详情配货单",
+      "tracking-child-201普通订单13800138000¥0.00—已发货—详情配货单"
+    ],
+    "phone_dimensions": {
+      "height": 845.6000366210938,
+      "src": "/orders",
+      "width": 391.6000061035156,
+      "x": 12,
+      "y": -62.900001525878906
+    },
+    "console_entries": [],
+    "corrected_combined_rows": [
+      "订单号订单类型客户金额支付方式状态下单时间操作",
+      "FILTER-TYPE-7新人订单筛选客户713800138000¥0.00线下支付部分退款 · 部分发货2023/11/14 22:25详情配货单"
+    ],
+    "reset_dates": [
+      {
+        "label": "下单开始时间",
+        "value": ""
+      },
+      {
+        "label": "下单结束时间",
+        "value": ""
+      }
+    ],
+    "date_tool_normalization": "First fill with redundant :00 normalized native DOM then tool timed out before input event; re-entered canonical minute-format through UI; full combined query and date reset reverified.",
+    "unexplained_console_entries": [],
+    "screenshots": [
+      "/tmp/cinashop-supplier-order-filters-desktop.png",
+      "/tmp/cinashop-supplier-order-filters-phone.png"
+    ],
+    "finished_at": "2026-10-19T01:44:12.619Z"
+  },
+  "owned_pg_cleanup": {
+    "clusters": [
+      {
+        "phase": "browser-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-9ena7N",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      },
+      {
+        "phase": "native-corrected",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Ckz8ui",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      },
+      {
+        "phase": "native-initial",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Mwgae1",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 1
+      }
+    ],
+    "all_stopped_and_empty": true
+  },
+  "root_checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total_lines": 88,
+      "checked": 50,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac",
+      "unchanged_against_base": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total_lines": 404,
+      "checked": 249,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd",
+      "unchanged_against_base": true
+    }
+  ],
+  "earlier_runs": {
+    "native_initial": {
+      "exit_code": 1,
+      "tests_passed": 55,
+      "tests_failed": 1,
+      "reason": "The new test changed root200.pid to400, so row200 itself correctly enters the mature pid>=0 flat list and exact direct-number match; no children are discovered. Only this expected result was corrected to [200] plus explicit no201/202, then the entire new34-case file reran. The unrelated successful mature22 file and its final backend inputs are retained, not relabelled as a green aggregate."
+    },
+    "frontend_initial_and_build_final_and_release": "All passed at their captured source; superseded by final complete frontend450 plus build after static review corrected raw5/partial refund display and property-name payment fallback. Earlier results are not added again."
+  },
+  "get_script": "Keep restored PHP compatibility and revised retirement audit; Browser real startup GET200.",
+  "limits": [
+    "No production deployment, DDL, GRANT, real role or device acceptance.",
+    "Current SQL catalogs are searched; historical cart JSON is not substituted for current product/user/activity name.",
+    "Modern explicit all mode treats wildcard characters literally; old unversioned three-column wildcard behavior remains.",
+    "Time input is viewer-local converted to exact closed epoch bounds; no implicit PHP server-midnight expansion.",
+    "Flat actual row listing is preserved; root-number discovery never claims PHP grouped DTO parity.",
+    "Minimal owned fixture column DDL is not a full migration catalog installation.",
+    "Browser503 is an explicitly injected transport failure after real App/SQL success, and is identified separately from unexpected application console errors.",
+    "The successful mature22 file came from an exit1 aggregate and is qualified separately; all33 successes in the failed new file are excluded before counting its full corrected34 rerun."
+  ]
+}

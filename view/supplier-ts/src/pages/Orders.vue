@@ -43,6 +43,7 @@ import SupplierOrderTracking from '@/components/SupplierOrderTracking.vue';
 import type { SupplierTrackingTarget } from '@/api/orderTracking';
 import SupplierOrderDistribution from '@/components/SupplierOrderDistribution.vue';
 import type { SupplierDistributionTarget } from '@/api/orderDistribution';
+import { emptyOrderFilters, orderSearchFields, supplierOrderTypes, supplierOrderStatuses, supplierOrderFilterQuery } from '@/utils/orderFilters';
 
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
 
@@ -53,7 +54,8 @@ const mountedPath = route.fullPath;
 const loading = ref(false);
 const rows = ref<OrderRow[]>([]);
 const total = ref(0);
-const filters = reactive({ page: 1, limit: 20, order: "", paid: "", status: "" });
+const filters = reactive(emptyOrderFilters());
+const searchPlaceholder = computed(() => orderSearchFields.find(field => field.value === filters.field_key)?.placeholder ?? '请输入搜索内容');
 const selectedOrders = ref<OrderRow[]>([]);
 const exportLoading = ref(false);
 const queueDialogOpen = ref(false);
@@ -139,7 +141,7 @@ function invalidate() {
   queueRows.value = []; queueTotal.value = 0; queueDetailRows.value = []; queueDetailTotal.value = 0; queueDetailCurrent.value = null;
   drawerOpen.value = deliveryDialogOpen.value = queueDialogOpen.value = queueDetailOpen.value = false;
   loading.value = queueLoading.value = queueDetailLoading.value = exportLoading.value = false;
-  Object.assign(filters, { page: 1, limit: 20, order: "", paid: "", status: "" });
+  Object.assign(filters, emptyOrderFilters());
   Object.assign(queueFilters, { page: 1, limit: 20, type: "", status: "" });
   listError.value = "会话或页面已变化，请重新进入订单页";
 }
@@ -338,13 +340,14 @@ async function downloadQueueHistory(row: SupplierQueueHistoryRow) {
 
 async function load() {
   if (!active()) return false;
-  const request = listRequest.start(), params = { ...filters };
+  const request = listRequest.start(), draft = { ...filters };
   loading.value = true; rows.value = []; selectedOrders.value = []; listError.value = "";
   // Keep the last total while pending, otherwise Element Plus clamps page > 1 to 1.
   try {
+    const params = supplierOrderFilterQuery(draft);
     const result = await getOrders(params, request.signal);
     if (!request.current()) return false;
-    checkOrderPage(result, params.limit);
+    checkOrderPage(result, draft.limit);
     rows.value = result.list; total.value = result.count;
     return true;
   } catch (error) {
@@ -354,8 +357,15 @@ async function load() {
 }
 
 function search() {
+  if (!active()) return;
   filters.page = 1;
+  drawerOpen.value = false; clearDetail();
   void load();
+}
+function resetFilters() {
+  if (!active()) return;
+  Object.assign(filters, emptyOrderFilters());
+  search();
 }
 
 async function loadOrderDetail(id: number) {
@@ -562,17 +572,45 @@ onMounted(load);
     <el-alert v-if="listError" :title="listError" type="error" :closable="false" show-icon />
     <el-alert v-if="uncertainIds.size" title="存在结果未知的提交，本页已暂停对应订单写入。请先核对订单或打印/面单账本，勿重复提交。" type="warning" :closable="false" show-icon />
     <div class="surface list-surface">
-      <div class="filter-row">
-        <el-input v-model="filters.order" class="search-input" clearable placeholder="订单号、客户或手机号" @keyup.enter="search">
+      <div class="filter-row order-filter-row">
+        <label class="order-filter-control"><span>搜索字段</span>
+          <el-select v-model="filters.field_key" aria-label="搜索字段">
+            <el-option v-for="field in orderSearchFields" :key="field.value" :label="field.label" :value="field.value" />
+          </el-select>
+        </label>
+        <label class="order-filter-control order-keyword"><span>订单搜索</span>
+        <el-input v-model="filters.order" clearable aria-label="订单搜索" :placeholder="searchPlaceholder" maxlength="256" @keyup.enter="search">
           <template #prefix><el-icon><Search /></el-icon></template>
         </el-input>
-        <el-select v-model="filters.paid" class="state-select" placeholder="支付状态" clearable @change="search">
+        </label>
+        <label class="order-filter-control"><span>订单类型</span>
+          <el-select v-model="filters.type" aria-label="订单类型" placeholder="全部订单" clearable @change="search">
+            <el-option v-for="(name, type) in supplierOrderTypes" :key="type" :label="name" :value="String(type)" />
+          </el-select>
+        </label>
+        <label class="order-filter-control"><span>订单状态</span>
+          <el-select v-model="filters.business_status" aria-label="订单状态" placeholder="全部状态" clearable @change="search">
+            <el-option v-for="state in supplierOrderStatuses" :key="state.value" :label="state.label" :value="state.value" />
+          </el-select>
+        </label>
+        <label class="order-filter-control"><span>支付状态</span>
+        <el-select v-model="filters.paid" aria-label="支付状态" placeholder="全部" clearable @change="search">
           <el-option label="未支付" value="0" /><el-option label="已支付" value="1" />
         </el-select>
-        <el-select v-model="filters.status" class="state-select" placeholder="订单状态" clearable @change="search">
-          <el-option label="待发货" value="0" /><el-option label="已发货" value="1" /><el-option label="已收货" value="2" /><el-option label="已完成" value="3" />
-        </el-select>
+        </label>
+        <label class="order-filter-control"><span>支付方式</span>
+          <el-select v-model="filters.pay_type" aria-label="支付方式" placeholder="全部方式" clearable @change="search">
+            <el-option label="微信支付" value="weixin" /><el-option label="支付宝支付" value="alipay" />
+            <el-option label="余额支付" value="yue" /><el-option label="线下支付" value="offline" />
+            <el-option label="积分支付" value="integral" /><el-option label="现金支付" value="cash" />
+          </el-select>
+        </label>
+        <label class="order-filter-control order-date"><span>下单开始时间（本地）</span><el-input v-model="filters.start_time" aria-label="下单开始时间" type="datetime-local" step="1" @keyup.enter="search" /></label>
+        <label class="order-filter-control order-date"><span>下单结束时间（本地）</span><el-input v-model="filters.end_time" aria-label="下单结束时间" type="datetime-local" step="1" @keyup.enter="search" /></label>
+        <div class="order-filter-actions">
         <el-button type="primary" :disabled="invalidated" @click="search">查询</el-button>
+        <el-button :disabled="invalidated" @click="resetFilters">重置</el-button>
+        </div>
       </div>
       <div class="export-toolbar">
         <span>已选 {{ selectedOrders.length }} 个本页订单</span>
@@ -583,10 +621,11 @@ onMounted(load);
       <el-table v-loading="loading" :data="rows" row-key="id" @selection-change="selectOrders" @row-click="openOrder">
         <el-table-column type="selection" width="48" />
         <el-table-column prop="order_id" label="订单号" min-width="190" />
+        <el-table-column label="订单类型" width="120"><template #default="scope">{{ supplierOrderTypes[scope.row.type] ?? '—' }}</template></el-table-column>
         <el-table-column label="客户" min-width="170"><template #default="scope"><div class="customer-cell"><strong>{{ scope.row.real_name }}</strong><span>{{ scope.row.user_phone }}</span></div></template></el-table-column>
         <el-table-column label="金额" width="120"><template #default="scope">{{ formatMoney(scope.row.pay_price) }}</template></el-table-column>
         <el-table-column label="支付方式" width="120"><template #default="scope">{{ payType(scope.row.pay_type) }}</template></el-table-column>
-        <el-table-column label="状态" width="110"><template #default="scope"><span class="status-text" :class="orderStatus(scope.row).tone">{{ orderStatus(scope.row).label }}</span></template></el-table-column>
+        <el-table-column label="状态" min-width="170"><template #default="scope"><span class="status-text" :class="orderStatus(scope.row).tone">{{ orderStatus(scope.row).label }}</span></template></el-table-column>
         <el-table-column label="下单时间" width="180"><template #default="scope">{{ formatTime(scope.row.add_time) }}</template></el-table-column>
         <el-table-column label="操作" width="370"><template #default="scope"><el-button link type="primary" @click.stop="openOrder(scope.row)">详情</el-button><el-button v-if="canEditUnpaidOrder(scope.row)" link type="primary" @click.stop="openUnpaidOrderEdit(scope.row)">修改</el-button><el-button v-if="canReceiveOffline(scope.row)" link type="primary" @click.stop="openOfflineReceipt(scope.row)">确认收款</el-button><el-button v-if="canProactiveRefund(scope.row)" link type="danger" @click.stop="openProactiveRefund(scope.row)">主动退款</el-button><el-button link type="primary" @click.stop="openPickingSheets([scope.row])">配货单</el-button><el-button v-if="canManagePrint" link type="primary" :disabled="actionLoading || uncertainIds.has(scope.row.id)" @click.stop="printOrder(scope.row)">打印</el-button><el-button v-if="canDeliver(scope.row)" link type="primary" :disabled="actionLoading" @click.stop="openDelivery(scope.row)">发货</el-button><el-button v-if="canConfirmTake(scope.row)" link type="success" :disabled="actionLoading" @click.stop="confirmTake(scope.row)">确认收货</el-button></template></el-table-column>
       </el-table>
@@ -761,7 +800,17 @@ onMounted(load);
   margin-top: 16px;
 }
 
+.order-filter-row { flex-wrap: wrap; align-items: flex-end; }
+.order-filter-control { display: flex; flex: 1 1 150px; min-width: 0; max-width: 240px; flex-direction: column; gap: 6px; }
+.order-filter-control > span { color: var(--el-text-color-secondary); font-size: 13px; }
+.order-keyword { flex-basis: 260px; max-width: 380px; }
+.order-date { flex-basis: 225px; max-width: 300px; }
+.order-filter-actions { display: flex; gap: 8px; }
+.order-filter-actions :deep(.el-button) { margin-left: 0; }
+
 @media (max-width: 720px) {
+  .order-filter-control { max-width: none; }
+  .order-keyword, .order-date { flex-basis: 100%; }
   .heading-actions {
     width: 100%;
   }
