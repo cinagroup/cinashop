@@ -270,12 +270,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Suppli
         statements.push(args[0].sql); return actual.apply(this, args);
       });
       let detail: Record<string, unknown>;
-      try { detail = await read(`/order/info/${source.id}`); } finally { spy.mockRestore(); }
+      try { detail = await read(`/order/info/${source.id}`); await read('/order/list'); } finally { spy.mockRestore(); }
       const carts = rows(detail.cart_info);
       expect(carts).toHaveLength(200); expect(carts[0].cartInfo).toBe(exact);
       expect(detail).not.toHaveProperty('customForm');
+      expect(object(detail.review).form).toEqual([]);
       const headerQuery = statements.find(statement => /^select .* from "store_order" where /s.test(statement));
-      expect(headerQuery).toBeDefined(); expect(headerQuery).not.toMatch(/custom_form|virtual_info|trade_no|express_dump/);
+      expect(headerQuery).toBeDefined(); expect(headerQuery).not.toMatch(/virtual_info|trade_no|express_dump/);
+      expect(headerQuery).toMatch(/CASE WHEN octet_length\((?:"store_order"\.)?"custom_form"\)<=1000000 THEN (?:"store_order"\.)?"custom_form" ELSE NULL END/);
+      const listQuery = statements.find(statement => /^select .* from "store_order" where .*order by (?:"store_order"\.)?"id" desc/s.test(statement));
+      expect(listQuery).toBeDefined(); expect(listQuery).not.toMatch(/custom_form|user_address|virtual_info|trade_no|express_dump/);
       expect(await f.state()).toEqual(before);
     });
   });
@@ -285,7 +289,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Suppli
       const source = await writer.createPaid();
       await f.withRuntimeRole!(async peer => {
         const container = createContainerFromDb(peer.db); await wire({ ...peer, container });
-        await f.exec(`GRANT SELECT ON store_order,store_order_cart_info TO "${peer.role}"`);
+        await f.exec(`GRANT SELECT ON store_order,store_order_cart_info,"user" TO "${peer.role}"`);
         expect(peer.pid).not.toBe(writer.pid);
         const [role] = await peer.db.execute(sql`SELECT current_user,session_user,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls,
           has_table_privilege(current_user,'store_order','UPDATE') AS can_write,

@@ -44,6 +44,8 @@ import type { SupplierTrackingTarget } from '@/api/orderTracking';
 import SupplierOrderDistribution from '@/components/SupplierOrderDistribution.vue';
 import type { SupplierDistributionTarget } from '@/api/orderDistribution';
 import { emptyOrderFilters, orderSearchFields, supplierOrderTypes, supplierOrderStatuses, supplierOrderFilterQuery } from '@/utils/orderFilters';
+import SupplierOrderReview from '@/components/SupplierOrderReview.vue';
+import type { SupplierOrderDetail } from '@/utils/orderReview';
 
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
 
@@ -71,7 +73,7 @@ const queueDetailPage = ref(1);
 const queueDetailCurrent = ref<SupplierQueueHistoryRow | null>(null);
 const drawerOpen = ref(false);
 const detailLoading = ref(false);
-const current = ref<(OrderRow & { cart_info: unknown[] }) | null>(null);
+const current = ref<SupplierOrderDetail | null>(null);
 const remark = ref("");
 const statusLogs = ref<OrderStatusLog[]>([]);
 const shipments = ref<SplitOrder[]>([]);
@@ -646,9 +648,12 @@ onMounted(load);
             <div><dt>支付方式</dt><dd>{{ payType(current.pay_type) }}</dd></div>
             <div><dt>订单状态</dt><dd>{{ orderStatus(current).label }}</dd></div>
             <div><dt>下单时间</dt><dd>{{ formatTime(current.add_time) }}</dd></div>
+            <div><dt>付款时间</dt><dd>{{ current.paid === 1 ? formatTime(current.pay_time) : '尚未支付' }}</dd></div>
             <div v-if="current.delivery_type"><dt>发货方式</dt><dd>{{ current.delivery_type === "express" ? "快递" : current.delivery_type === "send" ? "同城配送" : "虚拟发货" }}</dd></div>
             <div v-if="current.delivery_type"><dt>物流 / 交付信息</dt><dd>{{ current.delivery_type === "fictitious" ? current.fictitious_content : `${current.delivery_name} ${current.delivery_id}` }}</dd></div>
           </dl>
+          <SupplierOrderReview v-if="current.review" :review="current.review" :paid="current.paid" />
+          <p v-else class="review-unavailable" role="status">订单核对信息未返回，请重新读取详情。</p>
           <div class="drawer-actions delivery-actions">
             <el-button v-if="canTrack(current)" plain @click="openTracking(current)">查看物流</el-button>
             <el-button v-if="canReviseDistribution(current)" plain @click="openDistribution(current)">配送信息</el-button>

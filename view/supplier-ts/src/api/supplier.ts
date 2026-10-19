@@ -3,6 +3,7 @@ import { parseSupplierRefundDetail } from '@/utils/refundDetail';
 import { parsePickingSheets } from '@/utils/pickingSheet';
 import type { SupplierProfilePatch } from '@/utils/supplierProfilePatch';
 import { productImagePreview } from '@/utils/productMedia';
+import type { SupplierOrderDetail } from '@/utils/orderReview';
 import type {
   DashboardStats,
   ExpressCompany,
@@ -1246,12 +1247,12 @@ export async function getSupplierQueueDeliveryLog(
   });
 }
 
-export async function getOrderDetail(id: number, signal?: AbortSignal): Promise<OrderRow & { cart_info: unknown[] }> {
+export async function getOrderDetail(id: number, signal?: AbortSignal): Promise<SupplierOrderDetail> {
   if (previewMode) {
     const order = previewOrders.find((item) => item.id === id) ?? previewOrders[0];
     return { ...order, cart_info: previewOrderCarts.get(order.id) ?? [] };
   }
-  return apiRequest<OrderRow & { cart_info: unknown[] }>({ method: "GET", signal, url: `/order/info/${id}` });
+  return apiRequest<SupplierOrderDetail>({ method: "GET", signal, url: `/order/info/${id}` });
 }
 
 export async function getPickingSheets(ids: number[], signal?: AbortSignal): Promise<PickingSheetResult> {

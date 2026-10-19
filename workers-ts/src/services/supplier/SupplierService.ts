@@ -605,7 +605,7 @@ export class SupplierService {
   }
 
   async orderDetail(supplierId: number, orderId: number) {
-    return new SupplierOrderReadService(this.container).detail(supplierId, orderId);
+    return new SupplierOrderReadService(this.container).detail(supplierId, orderId, this.env.APP_KEY);
   }
 
   async updateOrderRemark(supplierId: number, orderId: number, remark: string) {

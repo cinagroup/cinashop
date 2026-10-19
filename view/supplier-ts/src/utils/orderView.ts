@@ -1,4 +1,5 @@
 import type { ExpressCompany, OrderRow, OrderStatusLog, SplitCartItem, SplitOrder } from '@/types';
+import { checkSupplierOrderReview, type SupplierOrderDetail } from './orderReview';
 
 export const positiveId = (value: unknown): value is number => Number.isInteger(value) && Number(value) > 0 && Number(value) <= 2147483647;
 const text = (value: unknown): value is string => typeof value === 'string';
@@ -19,9 +20,10 @@ export function checkOrderPage(result: { list: OrderRow[]; count: number }, limi
     && result.count >= result.list.length && new Set(result.list.map(row => row?.id)).size === result.list.length);
   result.list.forEach(checkOrder);
 }
-export function checkOrderDetail(detail: OrderRow & { cart_info: unknown[] }, id: number, logs: OrderStatusLog[], shipments: SplitOrder[]) {
+export function checkOrderDetail(detail: SupplierOrderDetail, id: number, logs: OrderStatusLog[], shipments: SplitOrder[]) {
   checkOrder(detail);
   requireContract(detail.id === id && Array.isArray(detail.cart_info) && detail.cart_info.length <= 200);
+  if (detail.review !== undefined) checkSupplierOrderReview(detail.review, detail);
   requireContract(Array.isArray(logs) && logs.length <= 500 && logs.every(log => log && positiveId(log.id)
     && log.oid === id && text(log.changeMessage) && Number.isInteger(log.changeTime)));
   requireContract(Array.isArray(shipments) && shipments.length <= 200 && shipments.every(row => row && positiveId(row.id)

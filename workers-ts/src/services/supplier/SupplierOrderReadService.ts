@@ -4,6 +4,7 @@ import { storeOrder, storeOrderCartInfo } from '@/models/schema';
 import { NotFoundException, ValidateException } from '@/utils/errors';
 import { supplierOrderListInput, type SupplierOrderQuery } from './SupplierOrderListInput';
 import { supplierOrderListConditions } from './SupplierOrderListFilter';
+import { readSupplierOrderReview, supplierOrderReviewColumns } from './SupplierOrderReview';
 export type { SupplierOrderQuery } from './SupplierOrderListInput';
 
 const maximumId = 2_147_483_647;
@@ -53,23 +54,24 @@ export class SupplierOrderReadService {
     });
   }
 
-  async detail(supplierId: number, orderId: number) {
+  async detail(supplierId: number, orderId: number, appKey?: string) {
     identity(supplierId); identity(orderId);
     return this.snapshot(async db => {
-      const [source] = await db.select({ ...header, ownerUid: storeOrder.uid }).from(storeOrder)
+      const [source] = await db.select({ ...header, reviewSource: supplierOrderReviewColumns }).from(storeOrder)
         .where(and(eq(storeOrder.id, orderId), visible(supplierId))).limit(1);
       if (!source) throw new NotFoundException('订单不存在或不属于当前供应商');
-      const { ownerUid, ...order } = source;
+      const { reviewSource, ...order } = source;
       // Guard both variable-width fields before SQL sends them to the Worker.
       const bytes = sql`COALESCE(octet_length(${storeOrderCartInfo.cartInfo})::bigint,0)
         +COALESCE(octet_length(${storeOrderCartInfo.promotionsId}),0)`;
+      const oversized = sql`${bytes}>65536 OR SUM(${bytes}) OVER ()>8388608`;
       const carts = await db.select({ ...getTableColumns(storeOrderCartInfo),
-        cartInfo: sql<string | null>`CASE WHEN ${bytes}<=65536 THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
-        promotionsId: sql<string | null>`CASE WHEN ${bytes}<=65536 THEN ${storeOrderCartInfo.promotionsId} ELSE NULL END`,
-        oversized: sql<boolean>`${bytes}>65536`,
+        cartInfo: sql<string | null>`CASE WHEN NOT (${oversized}) THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
+        promotionsId: sql<string | null>`CASE WHEN NOT (${oversized}) THEN ${storeOrderCartInfo.promotionsId} ELSE NULL END`,
+        oversized: sql<boolean>`${oversized}`,
       }).from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, order.id)).orderBy(asc(storeOrderCartInfo.id)).limit(201);
       const legacyOwnership = carts.every(cart => cart.type === 0 && cart.relationId === 0);
-      if (carts.length > 200 || carts.some(cart => cart.uid !== ownerUid || cart.oversized
+      if (carts.length > 200 || carts.some(cart => cart.uid !== reviewSource.uid || cart.oversized
         || (!legacyOwnership && (cart.relationId !== supplierId || ![0, 2].includes(cart.type))))) {
         throw new ValidateException('订单商品归属不一致或明细过大，请核对');
       }
@@ -84,7 +86,8 @@ export class SupplierOrderReadService {
         }
         return row;
       });
-      return { ...order, cart_info: cartInfo };
+      const review = await readSupplierOrderReview(db, reviewSource, cartInfo, appKey);
+      return { ...order, cart_info: cartInfo, review };
     });
   }
 }
