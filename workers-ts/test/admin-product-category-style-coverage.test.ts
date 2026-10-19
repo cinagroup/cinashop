@@ -17,7 +17,7 @@ function gates(): Gates {
   const source = readFileSync('scripts/admin-setting-frontend-parity-audit.ts', 'utf8');
   const tree = ts.createSourceFile('category-audit.ts', source, ts.ScriptTarget.Latest, true);
   const names = new Set(['classifyProductCategoryStyleCoverage', 'categoryAuditCode', 'hasProductCategoryStyleMatrix',
-    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'inspectProductCategoryStyleCoverage']);
+    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'hasPublishedProductCardPictures', 'inspectProductCategoryStyleCoverage']);
   const selected = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && !!node.name && names.has(node.name.text));
   expect(selected).toHaveLength(names.size);
   const result = ts.transpileModule(selected.map(node => node.getText(tree)).join('\n'),
@@ -109,6 +109,26 @@ describe('complete legacy product-category layout source coverage', () => {
     loses(gate, source, 'taxonomy', 'publicProductCategoryPictures(tx', 'unsafePictures(tx', 'publicTaxonomy');
     loses(gate, source, 'cards', 'publicProductPictures(tx', 'unsafePictures(tx', 'publishedProducts');
     loses(gate, source, 'products', 'await decoratePublicProductCards(', 'await unvalidatedCards(', 'publishedProducts');
+  });
+
+  it('follows both awaited product-card picture projections and their returned slots rather than unrelated or commentary calls', () => {
+    const gate = gates(), source = currentSources(gate);
+    for (const [before, after] of [
+      ["from '@/services/activity/ProductAssetPolicy'", "from './UncheckedProductPictures'"],
+      ['const [main, recommended] = await Promise.all([', 'const [main, recommended] = Promise.all(['],
+      ['publicProductPictures(tx, list.map(row => picture(row, row.image)))', 'publicProductPictures(tx, [])'],
+      ['publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256)', 'publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)))'],
+      ['picture(row, row.recommend_image)), 256', 'picture(row, row.recommend_image)), 4096'],
+      ['[main[index], recommended[index]]', '[main[index], row.recommend_image]'],
+      ['await renderProductPictures(env?.APP_KEY, references)', 'await uncheckedRender(env?.APP_KEY, references)'],
+      ['image: images[index * 2], recommend_image: images[index * 2 + 1]', 'image: row.image, recommend_image: row.recommend_image'],
+    ]) loses(gate, source, 'cards', before, after, 'publishedProducts');
+    const fake = mutated(source, 'cards', 'publicProductPictures(tx, list.map(row => picture(row, row.image)))', 'uncheckedPictures(tx, list.map(row => picture(row, row.image)))');
+    fake.cards += `\nasync function unrelated(tx: unknown, list: any[]) { const [main, recommended] = await Promise.all([publicProductPictures(tx, list.map(row => picture(row, row.image))), publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256)]); }`;
+    expect(gate.inspectProductCategoryStyleCoverage(screens, fake).publishedProducts).toBe(false);
+    const commented = mutated(source, 'cards', 'publicProductPictures(tx, list.map(row => picture(row, row.image)))', 'uncheckedPictures(tx, list.map(row => picture(row, row.image)))');
+    commented.cards += `\n/* ${source.cards.replace(/\*\//g, '')} */`;
+    expect(gate.inspectProductCategoryStyleCoverage(screens, commented).publishedProducts).toBe(false);
   });
 
   it('follows the category picture delegate without bypassing canonical owner, module, MIME or column bounds', () => {

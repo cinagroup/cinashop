@@ -286,6 +286,43 @@ export function hasProductCategoryPictureDelegation(sources: Record<string,strin
       "'attachments/admin/1/'",'mime!==expectedMime'].every(token=>product.includes(compact(token)));
 }
 
+/** Product-card pictures use two independently bounded public projections:
+ * main keeps the default column limit, recommendation uses its actual 256
+ * column boundary. Follow the awaited batch and its returned image slots. */
+export function hasPublishedProductCardPictures(sources: Record<string, string>): boolean {
+  const source = sources.cards ?? "", tree = ts.createSourceFile('cards.ts', source, ts.ScriptTarget.Latest, true);
+  const compact = (value: string) => value.replace(/\s+/g, '').replace(/"/g, "'");
+  const imported = tree.statements.some(node => ts.isImportDeclaration(node)
+    && ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === '@/services/activity/ProductAssetPolicy'
+    && node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)
+    && ['publicProductPictures', 'renderProductPictures'].every(name => node.importClause!.namedBindings
+      && ts.isNamedImports(node.importClause!.namedBindings)
+      && node.importClause!.namedBindings.elements.some(binding => binding.name.text === name && (binding.propertyName?.text ?? name) === name)));
+  const functions = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node)
+    && node.name?.text === 'decoratePublicProductCards' && !!node.body);
+  if (!imported || functions.length !== 1) return false;
+  const body = functions[0].body!;
+  const batch = body.statements.filter(ts.isVariableStatement).flatMap(statement => [...statement.declarationList.declarations])
+    .find(declaration => compact(declaration.name.getText(tree)) === '[main,recommended]');
+  if (!batch?.initializer || !ts.isAwaitExpression(batch.initializer)) return false;
+  const promise = batch.initializer.expression;
+  if (!ts.isCallExpression(promise) || compact(promise.expression.getText(tree)) !== 'Promise.all'
+    || promise.arguments.length !== 1 || !ts.isArrayLiteralExpression(promise.arguments[0]) || promise.arguments[0].elements.length !== 2) return false;
+  const expected = [
+    ['tx', 'list.map(row=>picture(row,row.image))'],
+    ['tx', 'list.map(row=>picture(row,row.recommend_image))', '256'],
+  ];
+  if (!promise.arguments[0].elements.every((element, index) => ts.isCallExpression(element)
+    && element.expression.getText(tree) === 'publicProductPictures' && element.arguments.length === expected[index].length
+    && expected[index].every((arg, position) => compact(element.arguments[position].getText(tree)) === arg))) return false;
+  const printed = compact(ts.createPrinter({ removeComments: true }).printNode(ts.EmitHint.Unspecified, body, tree));
+  return [
+    'constreferences=list.flatMap((_,index)=>[main[index],recommended[index]])',
+    'constimages=awaitrenderProductPictures(env?.APP_KEY,references)',
+    'returnlist.map((row,index)=>({...row,image:images[index*2],recommend_image:images[index*2+1]',
+  ].every(token => printed.includes(token));
+}
+
 /** Require connected current implementations, not comments or legacy fixtures. */
 export function inspectProductCategoryStyleCoverage(targetScreens: string[], sources: Record<string, string>): ProductCategoryStyleCoverage {
   const code = (key: string) => categoryAuditCode(sources[key] ?? "").replace(/"/g, "'").replace(/\s+/g, " ");
@@ -358,7 +395,7 @@ export function inspectProductCategoryStyleCoverage(targetScreens: string[], sou
       && has("searcher", "publicCatalog: (value) => value ? publicOrdinaryProductIdentitySql() : undefined")
       && has("ordinary", ".is_show=1", ".is_del=0", ".is_verify=1", "public_owner_store.is_store=1", "public_owner_supplier.is_show=1",
         "public_parent.type=0", "public_parent.relation_id=0")
-      && has("cards", "eq(storeCart.uid, uid)", "await publicProductPictures(tx,", "await renderProductPictures("),
+      && has("cards", "eq(storeCart.uid, uid)") && hasPublishedProductCardPictures(sources),
     safeSkuPurchase: has("ordinary", "readOrdinaryProductSnapshot", "eq(storeProductAttrValue.productId, id)", "eq(storeProductAttrValue.type, type)",
       "eq(storeProductAttrValue.isRetired, 0)", "ORDINARY_PRODUCT_SKU_LIMIT + 1", "new Set(unique).size !== unique.length", "Math.min(counter(row.stock), counter(product.stock))", "await publicProductPictures(tx,")
       && has("products", "await readOrdinaryProductSnapshot(tx, id, uid, type)")

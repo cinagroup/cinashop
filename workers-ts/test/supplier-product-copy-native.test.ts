@@ -360,6 +360,37 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier trusted
     });
   }, 60000);
 
+  it('confines background maintenance scheduling to the two owned copy fixture relations', async () => {
+    const configured = await f.exec(`SELECT c.relname AS name,c.reloptions AS options FROM pg_class c
+      JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.reloptions IS NOT NULL ORDER BY c.relname`);
+    expect(configured).toEqual([
+      { name: 'store_order_outbox', options: ['autovacuum_enabled=false'] },
+      { name: 'store_product', options: ['autovacuum_enabled=false'] },
+    ]);
+  });
+
+  it.each(['store_product', 'store_order_outbox'] as const)('retains genuine NOWAIT conflict with an independent maintenance-mode lock on %s and succeeds only after release', async table => {
+    const body = await f.body(80), before = await f.snapshot();
+    await withFinancePeers(f.db, async ([writer, blocker]) => {
+      const ready = signal(), release = signal();
+      const held = outcome(blocker.db.transaction(async tx => {
+        await tx.execute(sql`LOCK TABLE ONLY ${sql.identifier(table)} IN SHARE UPDATE EXCLUSIVE MODE`);
+        ready.resolve(); await release.promise;
+      }));
+      try {
+        await Promise.race([ready.promise, held.then(result => { if (!result.ok) throw result.error; throw Error('Maintenance-mode holder exited before admission'); })]);
+        expect(await f.exec(`SELECT mode,granted FROM pg_locks WHERE pid=${blocker.pid} AND relation='public.${table}'::regclass`))
+          .toEqual(expect.arrayContaining([{ mode: 'ShareUpdateExclusiveLock', granted: true }]));
+        await expect(service(writer.db).save(80, body, supplierCopyActor())).rejects.toMatchObject({ code: 409 });
+        expect(await f.snapshot()).toEqual(before);
+        expect(await f.service.receipt(body.operation_id, supplierCopyActor())).toMatchObject({ state: 'unknown', result: null });
+      } finally { release.resolve(); const done = await held; if (!done.ok) throw done.error; }
+      const saved = await service(writer.db).save(80, body, supplierCopyActor());
+      expect(saved.state).toBe('committed'); expect(saved.result!.id).toBeGreaterThan(82);
+      expect(await f.service.receipt(body.operation_id, supplierCopyActor())).toEqual(saved); await preserved(before);
+    });
+  });
+
   it('serializes an absent source-relation phantom behind the executed full table barrier and preserves the later independent writer', async () => {
     const body = await f.body(80);
     await withFinancePeers(f.db, async ([writer, peer]) => {

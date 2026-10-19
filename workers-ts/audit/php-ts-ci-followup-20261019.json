@@ -1,0 +1,560 @@
+{
+  "schema": "php-ts-ci-followup-v1",
+  "created_at_utc": "2026-10-19T00:06:48.239236+00:00",
+  "base_commit": "0f6247f39afcba3910bca09c30ce7b3c08e63e61",
+  "goal": {
+    "objective": "继续推进php到ts的迁移",
+    "status": "active",
+    "completion_claim": false
+  },
+  "scope": {
+    "expected_files": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "workers-ts/audit/php-ts-ci-followup-20261019.json",
+      "workers-ts/docs/php-ts-ci-followup-20261019.md",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "workers-ts/test/helpers/supplierProductCopy.ts",
+      "workers-ts/test/supplier-product-copy-native.test.ts"
+    ],
+    "execution_sources": 4,
+    "no_production_source_changes": true,
+    "same_pr": "https://github.com/cinagroup/cinashop/pull/111"
+  },
+  "original_linux_ci": {
+    "workflow_url": "https://github.com/cinagroup/cinashop/actions/runs/39126126307",
+    "PR": "https://github.com/cinagroup/cinashop/pull/111",
+    "pr_head": "0f6247f39afcba3910bca09c30ce7b3c08e63e61",
+    "tested_merge": "6c86083c9a722337b9daec0ac8bbd4f1de8313b3",
+    "merge_parents": [
+      "f28997ff13bd9932419afd0fadeea6cc1d6cdee8",
+      "0f6247f39afcba3910bca09c30ce7b3c08e63e61"
+    ],
+    "verified_tree": "fdb28548fa69b2dc9fcd94b3616a7ae7966b678b",
+    "local_head_tree_matches": true,
+    "files": 1219,
+    "total_tests": 20855,
+    "passed": 20853,
+    "failed": 2,
+    "skipped": 0,
+    "reports": [
+      {
+        "name": "unit-shard-1-6c86083c9a722337b9daec0ac8bbd4f1de8313b3",
+        "raw_report": "/tmp/cinashop-rule-inline-ci-39126126307/unit-shard-1-6c86083c9a722337b9daec0ac8bbd4f1de8313b3/unit-shard-results.json",
+        "sha256": "4b045c1c71ea72447edf7d25a2f3f9512f9402e2650b0ebbdcec1dc93c171be9",
+        "executed_files": 610,
+        "total_tests": 11213,
+        "passed": 11212,
+        "failed": 1,
+        "pending": 0,
+        "failures": [
+          {
+            "file": "test/admin-product-category-style-coverage.test.ts",
+            "name": "complete legacy product-category layout source coverage connects all current implementations and rejects page-only or commentary-only replacements",
+            "status": "failed",
+            "failure_messages": [
+              "AssertionError: expected [ [ 'publishedProducts', false ] ] to deeply equal []\n    at /home/runner/work/cinashop/cinashop/workers-ts/test/admin-product-category-style-coverage.test.ts:70:68\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "unit-shard-2-6c86083c9a722337b9daec0ac8bbd4f1de8313b3",
+        "raw_report": "/tmp/cinashop-rule-inline-ci-39126126307/unit-shard-2-6c86083c9a722337b9daec0ac8bbd4f1de8313b3/unit-shard-results.json",
+        "sha256": "893b799a77a3fafa3897f60a379ab4291cdf4c26f6cda235cb77da80e6e88568",
+        "executed_files": 609,
+        "total_tests": 9642,
+        "passed": 9641,
+        "failed": 1,
+        "pending": 0,
+        "failures": [
+          {
+            "file": "test/supplier-product-copy-native.test.ts",
+            "name": "Supplier trusted complete copy on owned PG16, real JWT and independent LOGIN allows self-service committed recovery after manage revocation but still rejects moved, disabled, deleted and credential-changed live identities",
+            "status": "failed",
+            "failure_messages": [
+              "HttpApiException: 商品或复制操作正在变化，请查询原结果\n    at fail (/home/runner/work/cinashop/cinashop/workers-ts/src/services/supplier/SupplierProductCopyService.ts:22:69)\n    at SupplierProductCopyService.transaction (/home/runner/work/cinashop/cinashop/workers-ts/src/services/supplier/SupplierProductCopyService.ts:60:29)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at SupplierProductCopyService.save (/home/runner/work/cinashop/cinashop/workers-ts/src/services/supplier/SupplierProductCopyService.ts:75:21)\n    at /home/runner/work/cinashop/cinashop/workers-ts/test/supplier-product-copy-native.test.ts:319:46\n    at file:///home/runner/work/cinashop/cinashop/workers-ts/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+            ]
+          }
+        ]
+      }
+    ],
+    "copy_failure": {
+      "sqlstate": "55P03",
+      "relation": "store_order_outbox",
+      "operation": "SHARE ROW EXCLUSIVE MODE NOWAIT",
+      "historical_blocker_identified": false,
+      "no_claim_that_autovacuum_was_the_historical_blocker": true
+    }
+  },
+  "changes": {
+    "category_scanner": "Trace the actual awaited Promise.all main/recommendation projections, 256 bound, image-reference interleave, render function and returned slots; preserve17axes and original negative controls.",
+    "copy_fixture": "Extend prior strictly owned product maintenance scheduling to exactly product+store_order_outbox. No production NOWAIT, timeout, retry, grant or behavior changes.",
+    "historical_blocker_identified": false,
+    "no_claim_of_historical_autovacuum_root_cause": true
+  },
+  "validation": {
+    "status": "passed",
+    "distinct_cases": 44,
+    "files": 3,
+    "deduplication": "27 full Supplier copy-native +6 copy operation catalog native +11 category source coverage; disjoint files, executed once. CLI and typecheck are not test cases; original20853 CI passes are historical, not rerun credit.",
+    "buckets": [
+      {
+        "name": "copy-native",
+        "cases": 27,
+        "new_cases": 3,
+        "boundary": "Real service/PG16 independent maintenance connections for new lock controls; existing file also exercises actual App/JWT and restricted LOGINs."
+      },
+      {
+        "name": "copy-catalog",
+        "cases": 6
+      },
+      {
+        "name": "source-coverage",
+        "cases": 11,
+        "new_cases": 1
+      }
+    ],
+    "commands": [
+      {
+        "name": "copy-native",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-product-copy-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 52.86,
+        "started_at_utc": "2026-10-19T00:00:10.104657+00:00",
+        "finished_at_utc": "2026-10-19T00:01:02.969139+00:00",
+        "source_fingerprints": [
+          {
+            "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+            "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+          },
+          {
+            "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+            "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+            "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-php-ts-ci-followup-20261019-copy-native.log",
+        "current_execution_source_differences": []
+      },
+      {
+        "name": "source-coverage",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "--maxWorkers=1",
+          "test/admin-product-category-style-coverage.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 5.44,
+        "started_at_utc": "2026-10-19T00:02:48.970478+00:00",
+        "finished_at_utc": "2026-10-19T00:02:54.409605+00:00",
+        "source_fingerprints": [
+          {
+            "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+            "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+          },
+          {
+            "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+            "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+            "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-php-ts-ci-followup-20261019-source-coverage.log",
+        "current_execution_source_differences": []
+      },
+      {
+        "name": "copy-catalog",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/supplier-product-copy-operation-catalog-native.test.ts"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 5.97,
+        "started_at_utc": "2026-10-19T00:03:19.716865+00:00",
+        "finished_at_utc": "2026-10-19T00:03:25.687868+00:00",
+        "source_fingerprints": [
+          {
+            "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+            "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+          },
+          {
+            "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+            "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+            "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-php-ts-ci-followup-20261019-copy-catalog.log",
+        "current_execution_source_differences": []
+      },
+      {
+        "name": "category-cli",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/tsx/dist/cli.mjs",
+          "scripts/admin-setting-frontend-parity-audit.ts",
+          "--product-category-style-followup"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 2.72,
+        "started_at_utc": "2026-10-19T00:03:48.426688+00:00",
+        "finished_at_utc": "2026-10-19T00:03:51.142532+00:00",
+        "source_fingerprints": [
+          {
+            "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+            "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+          },
+          {
+            "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+            "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+            "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-php-ts-ci-followup-20261019-category-cli.log",
+        "current_execution_source_differences": []
+      },
+      {
+        "name": "worker-unit-types",
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 151.35,
+        "started_at_utc": "2026-10-19T00:04:04.227115+00:00",
+        "finished_at_utc": "2026-10-19T00:06:35.580459+00:00",
+        "source_fingerprints": [
+          {
+            "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+            "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+          },
+          {
+            "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+            "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+          },
+          {
+            "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+            "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+          },
+          {
+            "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+            "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+          }
+        ],
+        "source_unchanged_at_exit": true,
+        "log": "/tmp/cinashop-php-ts-ci-followup-20261019-worker-unit-types.log",
+        "current_execution_source_differences": []
+      }
+    ],
+    "source_binding_note": "All four final execution sources match every successful command. Prose/checklist additions may change raw source_unchanged flags during typecheck; those flags are preserved.",
+    "actual_category_cli": {
+      "status": "candidate",
+      "coverage": {
+        "adminScreen": true,
+        "tenLayoutMatrix": true,
+        "sharedStyleAuthority": true,
+        "dedicatedWrite": true,
+        "permissions": true,
+        "genericWriteProtection": true,
+        "recovery": true,
+        "publicTaxonomy": true,
+        "categoryScopes": true,
+        "publishedProducts": true,
+        "safeSkuPurchase": true,
+        "cartRecovery": true,
+        "draftFilters": true,
+        "paginationSort": true,
+        "treeScrollSelection": true,
+        "cartLayoutBoundary": true,
+        "actorLifecycle": true
+      },
+      "gaps": [],
+      "evidenceBoundary": "Source-only connected coverage; actual runtime/browser/native receipts are not inferred from file existence or test declarations."
+    },
+    "actual_owned_table_options": [
+      "store_product:autovacuum_enabled=false",
+      "store_order_outbox:autovacuum_enabled=false"
+    ],
+    "independent_lock_controls": [
+      "store_product",
+      "store_order_outbox"
+    ],
+    "lock_mode": "ShareUpdateExclusiveLock",
+    "while_held": {
+      "copy_refusal": 409,
+      "business_rows_unchanged": true,
+      "original_uuid_receipt": "unknown"
+    },
+    "after_release": {
+      "same_uuid": "committed",
+      "preexisting_rows_preserved": true
+    },
+    "no_provider_fetch": true
+  },
+  "prior_supplier_rule_batch": {
+    "audit": "workers-ts/audit/php-ts-supplier-product-rule-inline-20261018.json",
+    "sha256": "0867ef3f8a5ddcb9990b1edf02f706a0500718d1ea75f4b1841ac0e318f94d3a",
+    "all12execution_sources_unchanged": true,
+    "historical_distinct_cases": 919,
+    "historical_bound_commit": "0f6247f39afcba3910bca09c30ce7b3c08e63e61",
+    "declared_changes_to_prior_protected_sources": [],
+    "remaining_protected_files_unchanged": 413,
+    "remaining_protected_fingerprints_sha256": "80d93aec5c96d329486e3a8f217c242e9e4dbb759e4f03a4151cc3532d40f59e"
+  },
+  "execution_fingerprints": [
+    {
+      "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+    },
+    {
+      "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+      "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    }
+  ],
+  "source_fingerprints": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "sha256": "65f9278f02bdb864c7a0d7b8f1b315040d1c365ee2061e1dd0a40bb83c8d36e8"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "sha256": "6d1e8a73aac194d445990a643cbcf7f46344a83659a65efc6d3c2a3d238694f4"
+    },
+    {
+      "path": "workers-ts/docs/php-ts-ci-followup-20261019.md",
+      "sha256": "ca9826f629adde550939ae9e7d3e148f8ec75657b837b962fb059676ca622372"
+    },
+    {
+      "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+    },
+    {
+      "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+      "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+    },
+    {
+      "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+      "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+    }
+  ],
+  "checkboxes": {
+    "MIGRATION_AUDIT.md": {
+      "rows": 88,
+      "sha256": "98e1e2474c080149b334b9d1268d7be1ed0e25638154bb09cc5dd037f6bbbd3a"
+    },
+    "MIGRATION_CHECKLIST.md": {
+      "rows": 404,
+      "sha256": "5b62d7aa8af841e842294b2400f89ee2ef0ce23a3aeab58f79d907a40d32eaa3"
+    }
+  },
+  "cleanup": {
+    "owned_clusters": 2,
+    "all_stopped": true,
+    "clusters": [
+      {
+        "execution": "copy-native",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-aHcXnI",
+        "fixtures_remaining": 0,
+        "pg_ctl_status": 3,
+        "postmaster_pid_exists": false
+      },
+      {
+        "execution": "copy-catalog",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ooI1XU",
+        "fixtures_remaining": 0,
+        "pg_ctl_status": 3,
+        "postmaster_pid_exists": false
+      }
+    ]
+  },
+  "reviews": [
+    {
+      "path": "/tmp/cinashop-pr111-category-style-scanner-fix-review.json",
+      "sha256": "f8124345bc7a5f248871fd086ff673c6007488b8404f8c1a1beb8e0ecfa07ef5",
+      "bytes": 1917
+    },
+    {
+      "path": "/tmp/cinashop-pr111-copy-maintenance-static-review.json",
+      "sha256": "e62438359f368798092496a1540b41d24051737580ce2f26f44a236703b32194",
+      "bytes": 3864
+    }
+  ],
+  "secret_scans": [
+    {
+      "phase": "source-initial",
+      "command": [
+        "/tmp/cinashop-ci-followup-tools/gitleaks",
+        "dir",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-php-ts-ci-followup-20261019-source-initial-secrets.json"
+      ],
+      "cwd": "/tmp/cinashop-ci-followup-scan-ia5htv42",
+      "exit_code": 0,
+      "findings": 0,
+      "source_fingerprints": [
+        {
+          "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+        },
+        {
+          "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+          "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+          "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+        },
+        {
+          "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+          "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+        }
+      ],
+      "report": "/tmp/cinashop-php-ts-ci-followup-20261019-source-initial-secrets.json",
+      "log": "/tmp/cinashop-php-ts-ci-followup-20261019-source-initial-secrets.log"
+    },
+    {
+      "phase": "source-preledger",
+      "command": [
+        "/tmp/cinashop-ci-followup-tools/gitleaks",
+        "dir",
+        ".",
+        "--redact=100",
+        "--no-banner",
+        "--config",
+        "/home/cina/cinagroup/cinashop/.gitleaks.toml",
+        "--report-format",
+        "json",
+        "--report-path",
+        "/tmp/cinashop-php-ts-ci-followup-20261019-source-preledger-secrets.json"
+      ],
+      "cwd": "/tmp/cinashop-ci-followup-scan-4z37sx2x",
+      "exit_code": 0,
+      "findings": 0,
+      "source_fingerprints": [
+        {
+          "path": "MIGRATION_AUDIT.md",
+          "sha256": "65f9278f02bdb864c7a0d7b8f1b315040d1c365ee2061e1dd0a40bb83c8d36e8"
+        },
+        {
+          "path": "MIGRATION_CHECKLIST.md",
+          "sha256": "6d1e8a73aac194d445990a643cbcf7f46344a83659a65efc6d3c2a3d238694f4"
+        },
+        {
+          "path": "workers-ts/docs/php-ts-ci-followup-20261019.md",
+          "sha256": "ca9826f629adde550939ae9e7d3e148f8ec75657b837b962fb059676ca622372"
+        },
+        {
+          "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "sha256": "45939d8bc138b2eca239f77fb601821af3d1c531c20a4e5d9a01d4e7752ab317"
+        },
+        {
+          "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+          "sha256": "08a6cdac1e83da1c87460a6e3fff80eda7395605139aea978ba57a1c37ba4ec7"
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierProductCopy.ts",
+          "sha256": "8bb76dd5481ebbbf8ac337616c7b7edf24037f1bd3d29fc8c3faced9af8a16aa"
+        },
+        {
+          "path": "workers-ts/test/supplier-product-copy-native.test.ts",
+          "sha256": "38525e635b7035785c77d80e16f2f6a27353406c895bc9184ac9a43472b3f530"
+        }
+      ],
+      "report": "/tmp/cinashop-php-ts-ci-followup-20261019-source-preledger-secrets.json",
+      "log": "/tmp/cinashop-php-ts-ci-followup-20261019-source-preledger-secrets.log"
+    }
+  ],
+  "publication": {
+    "branch": "codex/supplier-product-rule-inline",
+    "mode": "normal push to existing draft PR111; fresh full CI pending; external receipt records actual commit/status"
+  },
+  "limits": [
+    "Overall PHP→TS migration incomplete.",
+    "Original CI55P03 blocker unknown; controlled fixture scheduling is not a production fix.",
+    "Local44 and source candidate classification do not prove the next complete Linux run passes.",
+    "No production schema, role, provider, frontend deployment or live-device change."
+  ]
+}

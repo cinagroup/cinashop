@@ -1,5 +1,9 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-19 PR111 迁移 CI 跟进
+
+原PR111 Linux两个分片在20855项中失败2项：陈旧分类图片调用链审计，以及复制测试outbox的NOWAIT冲突。修复源码审计并增强负对照；仅隔离两张新建自有PG16夹具表的后台维护调度，保留真实独立会话持锁409和释放后同UUID成功。历史锁持有者未记录，不认定autovacuum为根因。44项本机专项通过，新的完整CI以GitHub自身提交为准；原复选行、生产服务与整体未完成状态保持。见[说明](workers-ts/docs/php-ts-ci-followup-20261019.md)与[账本](workers-ts/audit/php-ts-ci-followup-20261019.json)。
+
 ## 2026-10-18 商品页内新增规格模板
 
 接通 PHP 当前启用的多规格商品“添加规格模板”弹窗，复用成熟模板作者与 GET 事实恢复。取消、创建确认和目录刷新保留商品草稿与原选择；用户明确选择并确认套用后才生成新规格行，商品另行保存。本批919个不同用例通过，实际Browser覆盖48张表／47序列、23次GET零写、3×103项草稿输入一致，模板只创建1次，商品POST为零。详细合同与最终验证见[本批说明](workers-ts/docs/php-ts-supplier-product-rule-inline-20261018.md)和[验证账本](workers-ts/audit/php-ts-supplier-product-rule-inline-20261018.json)。保留已恢复 get_script 与修订退役审计，原复选行不变，整体迁移继续 active。草稿 PR 基于 PR110，新提交与 CI 以发布回执为准。

@@ -18,7 +18,7 @@ const schema={...legacySaveSchema,storeProductSkuRetirementLog,storeOrder,storeO
 export const supplierCopyActor=(id=21)=>({id,supplierId:id>=30?30:20,authVersion:md5(supplierProductCopyPassword),expiresAt:Math.floor(Date.now()/1000)+3600});
 
 /** Repeated reset/seed writes can invite background maintenance. Isolate only
- * this newly owned fixture table's scheduling; production NOWAIT and the real
+ * these two newly owned fixture tables' scheduling; production NOWAIT and the real
  * independent-session DML contention cases remain unchanged. The historical
  * CI 55P03 did not identify its blocker, so this does not attribute its cause. */
 async function isolateSupplierCopyMaintenanceScheduling(f: Awaited<ReturnType<typeof financePostgres>>) {
@@ -35,20 +35,22 @@ async function isolateSupplierCopyMaintenanceScheduling(f: Awaited<ReturnType<ty
       current_setting('server_version_num')::integer AS version,current_user AS role,
       c.oid::text AS table_oid,pg_get_userbyid(c.relowner) AS owner,c.relkind::text AS kind,c.reloptions AS options
       FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
-      WHERE n.nspname='public' AND c.relname='store_product'`);
-    const before = await capture(), row = before[0];
-    if (before.length !== 1 || !row || row.search_schema !== 'public' || row.schema !== 'public'
-      || row.table_name !== 'store_product' || row.role !== 'finance_test' || row.owner !== row.role
+      WHERE n.nspname='public' AND c.relname IN ('store_order_outbox','store_product') ORDER BY c.relname`);
+    const expected = ['store_order_outbox', 'store_product'], before = await capture();
+    if (before.length !== expected.length || before.some((row, index) => row.search_schema !== 'public' || row.schema !== 'public'
+      || row.table_name !== expected[index] || row.role !== 'finance_test' || row.owner !== row.role
       || row.kind !== 'r' || !/^[1-9]\d*$/.test(row.table_oid) || Math.floor(row.version / 10000) !== 16
       || !ownsFinanceFixtureEndpoint(row.database, row.schema, base.href, row.host, row.port)
-      || row.options !== null && JSON.stringify(row.options) !== '["autovacuum_enabled=false"]') {
-      throw Error('Supplier copy scheduling requires its exact owned native product table');
+      || row.options !== null && JSON.stringify(row.options) !== '["autovacuum_enabled=false"]')) {
+      throw Error('Supplier copy scheduling requires its exact two owned native tables');
     }
     await tx.execute(sql`ALTER TABLE public.store_product SET (autovacuum_enabled=false)`);
+    await tx.execute(sql`ALTER TABLE public.store_order_outbox SET (autovacuum_enabled=false)`);
     const after = await capture();
-    if (after.length !== 1 || JSON.stringify({ ...after[0], options: row.options }) !== JSON.stringify(row)
-      || JSON.stringify(after[0].options) !== '["autovacuum_enabled=false"]') {
-      throw Error('Supplier copy fixture product identity or scheduling changed unexpectedly');
+    if (after.length !== before.length || after.some((row, index) =>
+      JSON.stringify({ ...row, options: before[index].options }) !== JSON.stringify(before[index])
+      || JSON.stringify(row.options) !== '["autovacuum_enabled=false"]')) {
+      throw Error('Supplier copy fixture table identity or scheduling changed unexpectedly');
     }
     return { before, after, historical_blocker_identified: false };
   });
