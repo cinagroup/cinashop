@@ -5,6 +5,7 @@ import { supplierAuthMiddleware } from "@/middleware/supplier-auth";
 import { supplierPermissionMiddleware } from "@/middleware/supplier-permission";
 import * as SupplierController from "@/controllers/supplier/SupplierController";
 import * as SupplierOrderTracking from '@/controllers/supplier/SupplierOrderTrackingController';
+import * as SupplierOrderDistribution from "@/controllers/supplier/SupplierOrderDistributionController";
 import * as ProductShippingOptions from '@/controllers/supplier/SupplierProductShippingOptionsController';
 import * as SupplierQueueController from "@/controllers/supplier/SupplierQueueController";
 import * as SupplierExportController from "@/controllers/supplier/SupplierExportController";
@@ -67,6 +68,7 @@ supplierapiRoutes.use('/product/product', SupplierProductRecycle.privateResponse
 supplierapiRoutes.use('/product/product/*', SupplierProductRecycle.privateResponse);
 supplierapiRoutes.use('/product/type_header', SupplierProductRecycle.privateResponse);
 supplierapiRoutes.use('/order/express/*', SupplierOrderTracking.privateResponse);
+supplierapiRoutes.use('/order/distribution/*', SupplierOrderDistribution.privateResponse);
 supplierapiRoutes.use('/order/refund', SupplierProactiveRefund.privateResponse);
 supplierapiRoutes.use('/order/refund/*', SupplierProactiveRefund.privateResponse);
 supplierapiRoutes.use('/order/refund_operations', SupplierProactiveRefund.privateResponse);
@@ -314,6 +316,8 @@ supplierapiRoutes.post("/order/waybill/:id", WaybillJobController.supplierCreate
 supplierapiRoutes.put("/order/remark/:id", SupplierController.updateOrderRemark);
 supplierapiRoutes.get("/order/express_list", SupplierController.expressList);
 supplierapiRoutes.get('/order/express/:id', SupplierOrderTracking.read);
+supplierapiRoutes.get('/order/distribution/:id', SupplierOrderDistribution.read);
+supplierapiRoutes.put('/order/distribution/:id', SupplierOrderDistribution.save);
 supplierapiRoutes.put("/order/delivery/:id", SupplierController.deliverOrder);
 supplierapiRoutes.get("/order/status/:id", SupplierController.orderStatus);
 supplierapiRoutes.put("/order/take/:id", SupplierController.confirmOrderTake);

@@ -41,6 +41,8 @@ import { createSupplierSessionScope } from "@/utils/supplierSession";
 import { checkOrderPage, checkOrderDetail, checkDeliveryInputs, checkNullReceipt, positiveId } from "@/utils/orderView";
 import SupplierOrderTracking from '@/components/SupplierOrderTracking.vue';
 import type { SupplierTrackingTarget } from '@/api/orderTracking';
+import SupplierOrderDistribution from '@/components/SupplierOrderDistribution.vue';
+import type { SupplierDistributionTarget } from '@/api/orderDistribution';
 
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
 
@@ -72,6 +74,7 @@ const remark = ref("");
 const statusLogs = ref<OrderStatusLog[]>([]);
 const shipments = ref<SplitOrder[]>([]);
 const trackingTarget = ref<SupplierTrackingTarget | null>(null);
+const distributionTarget = ref<SupplierDistributionTarget | null>(null);
 const expressCompanies = ref<ExpressCompany[]>([]);
 const deliveryDialogOpen = ref(false);
 const actionLoading = ref(false);
@@ -117,6 +120,7 @@ const session = createSupplierSessionScope(invalidate, previewMode);
 function active() { return !invalidated.value && route.fullPath === mountedPath && session.isCurrent(); }
 function clearDetail() {
   trackingTarget.value = null;
+  distributionTarget.value = null;
   detailRequest.cancel(); selectedId.value = null; current.value = null;
   remark.value = ""; statusLogs.value = []; shipments.value = []; detailLoading.value = false; detailError.value = "";
   if (confirming) ElMessageBox.close();
@@ -161,6 +165,22 @@ function openTracking(row: SupplierTrackingTarget & { pid?: number }) {
   if (!canTrack(row) || !current.value || ![current.value, ...shipments.value].some(visible => visible.id === row.id)) return;
   trackingTarget.value = { id: row.id, order_id: row.order_id, delivery_type: row.delivery_type,
     delivery_name: row.delivery_name, delivery_code: row.delivery_code, delivery_id: row.delivery_id };
+}
+function canReviseDistribution(row: Pick<OrderRow, 'id' | 'pid' | 'order_id' | 'paid' | 'status' | 'refund_status' | 'delivery_type'> & { shipping_type?: number }) {
+  return active() && !previewMode && canManageOrders.value && drawerOpen.value && !detailLoading.value && !actionLoading.value
+    && !uncertainIds.has(row.id) && positiveId(row.id) && row.pid !== -1 && row.paid === 1 && row.status === 1
+    && row.refund_status === 0 && (row.shipping_type === undefined || [1, 3].includes(row.shipping_type)) && ['express', 'send', 'fictitious'].includes(row.delivery_type);
+}
+function openDistribution(row: OrderRow | SplitOrder) {
+  if (!canReviseDistribution(row) || !current.value || ![current.value, ...shipments.value].some(visible => visible.id === row.id)) return;
+  trackingTarget.value = null;
+  distributionTarget.value = { id: row.id, order_id: row.order_id, delivery_type: row.delivery_type };
+}
+async function distributionSaved() {
+  distributionTarget.value = null;
+  if (!active() || !drawerOpen.value) return;
+  await Promise.all([refreshCurrent(), load()]);
+  if (active()) ElMessage.success('配送信息已保存');
 }
 const canManagePrint = computed(() => !invalidated.value && auth.can("supplier.print.manage"));
 const canManageWaybills = computed(() => !invalidated.value && auth.can("supplier.waybill.manage"));
@@ -342,6 +362,7 @@ async function loadOrderDetail(id: number) {
   if (!active() || !drawerOpen.value || selectedId.value !== id) return false;
   const request = detailRequest.start();
   trackingTarget.value = null;
+  distributionTarget.value = null;
   current.value = null; remark.value = ""; statusLogs.value = []; shipments.value = [];
   detailError.value = ""; detailLoading.value = true;
   try {
@@ -591,6 +612,7 @@ onMounted(load);
           </dl>
           <div class="drawer-actions delivery-actions">
             <el-button v-if="canTrack(current)" plain @click="openTracking(current)">查看物流</el-button>
+            <el-button v-if="canReviseDistribution(current)" plain @click="openDistribution(current)">配送信息</el-button>
             <el-button v-if="canEditUnpaidOrder(current)" type="primary" plain @click="openUnpaidOrderEdit(current)">修改金额与积分</el-button>
             <el-button v-if="canReceiveOffline(current)" type="primary" @click="openOfflineReceipt(current)">确认线下收款</el-button>
             <el-button v-if="canManagePrint" plain :disabled="uncertainIds.has(current.id)" :loading="actionLoading" @click="printOrder(current)">打印小票</el-button>
@@ -607,6 +629,7 @@ onMounted(load);
               <div v-if="shipment.delivery_type" class="shipment-logistics">
                 {{ shipment.delivery_type === 'fictitious' ? shipment.fictitious_content : `${shipment.delivery_name} ${shipment.delivery_id}` }}
                 <el-button v-if="canTrack(shipment)" link type="primary" @click="openTracking(shipment)">查看物流</el-button>
+                <el-button v-if="canReviseDistribution(shipment)" link type="primary" @click="openDistribution(shipment)">配送信息</el-button>
               </div>
               <ul class="shipment-products">
                 <li v-for="item in shipment.cart_info" :key="item.id"><span>{{ item.product_name }}<small v-if="item.sku">{{ item.sku }}</small></span><strong>× {{ item.cart_num }}</strong></li>
@@ -626,6 +649,7 @@ onMounted(load);
     </el-drawer>
 
     <SupplierOrderTracking :target="trackingTarget" :disabled="invalidated || !drawerOpen" @close="trackingTarget = null" />
+    <SupplierOrderDistribution :target="distributionTarget" :disabled="invalidated || !drawerOpen" @close="distributionTarget = null" @saved="distributionSaved" />
 
     <el-dialog v-model="deliveryDialogOpen" :title="deliveryTitle" width="min(680px, 94vw)">
       <p v-if="deliveryTarget" class="delivery-target">发货订单：{{ deliveryTarget.order_id }} · {{ deliveryTarget.real_name }}</p>

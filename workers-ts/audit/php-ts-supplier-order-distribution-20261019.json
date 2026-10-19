@@ -1,0 +1,1573 @@
+{
+  "scope": "Supplier shipped concrete-package delivery metadata author; local candidate, overall migration active",
+  "base_commit": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb",
+  "generated_at_utc": "2026-10-19T01:17:08.144315+00:00",
+  "routes": [
+    "GET /supplierapi/order/distribution/:id",
+    "PUT /supplierapi/order/distribution/:id"
+  ],
+  "contract": {
+    "GET_and_PUT": "/supplierapi/order/distribution/:id",
+    "dto": [
+      "id",
+      "order_id",
+      "delivery_type",
+      "delivery_name",
+      "delivery_code",
+      "delivery_id",
+      "fictitious_content",
+      "revision",
+      "express_companies[{id,name,code}]",
+      "editable",
+      "reason"
+    ],
+    "PUT_exact_keys": [
+      "expected_revision",
+      "delivery_name",
+      "delivery_id",
+      "fictitious_content"
+    ],
+    "write_scope": "paid1/status1/refund0/shipping[1,3]/undeleted concrete leaf; physical0 express or legacy manual send delivery_uid0 with no managed marker, or manual3 fictitious; managed send/city remains read-only",
+    "PHP_difference": "PHP business status4 = paid1/rawstatus[1,5]/shipping[1,3]/refund0. Final TS scope is strict status1/refund0; no refund3 expansion, raw5 unsupported partial writeoff/delivery intentionally read-only.",
+    "revision_reconciliation": "actor and actual authority row versions + owned order and coherent parent row versions + provider flags/catalog versions; optimistic revision conflicts409, no-op emits no new audit; response is current facts, not historical operation result. No new finance UUID journal or DDL.",
+    "provider_policy": "existing managed waybill or merchant shipment or city authority must produce editable=false/reason, not raw metadata mutation. Pending/UNKNOWN/DEAD statuses block, issued SENT+tracking/label/express_dump remain authoritative even though initial-delivery fence no longer treats SENT as active."
+  },
+  "php_source_chain": "OrderList mounts details(formType1)+editFrom → shipped ordinary or leaf child 配送信息 → parent delivery(row,num) → getDistribution numericID → distributionForm returns existing type form with PUT action → actual generic request POSTs selected fields via configured PUT → update_distribution derives express code → updateDistribution writes order and distribution status → success refresh list/details/children.",
+  "source_evidence": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7",
+      "lines": [
+        {
+          "start": 52,
+          "end": 56,
+          "evidence": "mounted ordinary detail delivery edit button"
+        },
+        {
+          "start": 829,
+          "end": 834,
+          "evidence": "mounted shipped child edit button"
+        },
+        {
+          "start": 1192,
+          "end": 1197,
+          "evidence": "delivery delegates actual target to parent"
+        }
+      ],
+      "line_count": 1534,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05",
+      "lines": [
+        {
+          "start": 300,
+          "end": 316,
+          "evidence": "editFrom and detailsFrom mounted formType1"
+        },
+        {
+          "start": 822,
+          "end": 837,
+          "evidence": "load distribution form and open actual editor"
+        },
+        {
+          "start": 866,
+          "end": 872,
+          "evidence": "save success refreshes list and appropriate detail or split children"
+        },
+        {
+          "start": 13,
+          "end": 98,
+          "evidence": "actual time/type/business-status/pay/field search controls"
+        }
+      ],
+      "line_count": 1180,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/components/from/from.vue",
+      "sha256": "05bfb19863d9c24ae18b7135171c43fb5cdf8b1ce05d231ec9106449c6d51e1c",
+      "lines": [
+        {
+          "start": 56,
+          "end": 76,
+          "evidence": "actual form request uses supplied action/method and emits submitFail after success"
+        }
+      ],
+      "line_count": 102,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3",
+      "lines": [
+        {
+          "start": 192,
+          "end": 202,
+          "evidence": "actual GET distribution wrapper"
+        }
+      ],
+      "line_count": 420,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+      "lines": [
+        {
+          "start": 374,
+          "end": 377,
+          "evidence": "actual GET+PUT distribution routes"
+        },
+        {
+          "start": 77,
+          "end": 79,
+          "evidence": "home/header is dashboard not an order-list header contract"
+        }
+      ],
+      "line_count": 521,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3",
+      "lines": [
+        {
+          "start": 13,
+          "end": 32,
+          "evidence": "CommonOrder trait is actually mixed into Supplier authenticated controller"
+        },
+        {
+          "start": 80,
+          "end": 102,
+          "evidence": "Supplier list binds real supplier scope and asks existing PHP list service for grouped relations"
+        }
+      ],
+      "line_count": 227,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d",
+      "lines": [
+        {
+          "start": 884,
+          "end": 886,
+          "evidence": "_status_new derives tidyOrderList integer _status"
+        },
+        {
+          "start": 932,
+          "end": 968,
+          "evidence": "distribution form/read and PUT parse actual three fields and derives express code from real catalog by name"
+        }
+      ],
+      "line_count": 1342,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderDeliveryServices.php",
+      "sha256": "2991d5ac8e33b1970288aa9df842fd8e3e52f9ea1cf5789138d218292f832da5",
+      "lines": [
+        {
+          "start": 555,
+          "end": 580,
+          "evidence": "express or send or fictitious form of existing immutable delivery channel"
+        },
+        {
+          "start": 588,
+          "end": 628,
+          "evidence": "actual field validation, order update and distribution audit"
+        }
+      ],
+      "line_count": 706,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderServices.php",
+      "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+      "lines": [
+        {
+          "start": 824,
+          "end": 827,
+          "evidence": "business status4 means paid/status1 or5/shipping1 or3/refund0: do not confuse raw status4 with already shipped"
+        }
+      ],
+      "line_count": 2550,
+      "baseline_sha_verified": true,
+      "source_state": "unchanged local PHP source"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "fc360f91ee5b940ebcad03856c604f15155384700f695540c22c649b8203acbb",
+      "lines": [
+        {
+          "start": 206,
+          "end": 212,
+          "evidence": "current deliver only raw status0 and receive status1"
+        },
+        {
+          "start": 384,
+          "end": 397,
+          "evidence": "current first delivery prep, not shipped metadata editor"
+        },
+        {
+          "start": 583,
+          "end": 627,
+          "evidence": "detail and shipment cards read current delivery values plus separate tracking; no edit metadata author"
+        },
+        {
+          "start": 543,
+          "end": 559,
+          "evidence": "current UI has only keyword/paid/raw status filters"
+        }
+      ],
+      "line_count": 750,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/supplierapi.ts",
+      "sha256": "0fb5bf339728d2766d5518d49395bb845ea4711f4edd0a669b34ae23bbdbc748",
+      "lines": [
+        {
+          "start": 295,
+          "end": 318,
+          "evidence": "unpaid update, distribution_info picking, express tracking, first delivery; distribution/:id absent"
+        }
+      ],
+      "line_count": 355,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+      "sha256": "79258adad2c3217aa1efaf93b23a2cb00dfd06d789e1e238e90c4a90ef111232",
+      "lines": [
+        {
+          "start": 591,
+          "end": 690,
+          "evidence": "owned child/root resolution and shared settlement advisory lock then root/child row locks; current function selects pending state for root so cannot call blindly for metadata edit"
+        },
+        {
+          "start": 694,
+          "end": 774,
+          "evidence": "first fulfillment mutation and audit/outbox; metadata edit must not redo these effects"
+        },
+        {
+          "start": 789,
+          "end": 794,
+          "evidence": "actual enabled express catalog narrow id/name/code"
+        },
+        {
+          "start": 797,
+          "end": 835,
+          "evidence": "actual first delivery writer"
+        }
+      ],
+      "line_count": 1278,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/out/OutApiService.ts",
+      "sha256": "f30f32281ef796d5aae9abd20def4cdb20eff875e361a027353070bcf056b389",
+      "lines": [
+        {
+          "start": 403,
+          "end": 409,
+          "evidence": "Out metadata parser lacks fictitious_content"
+        },
+        {
+          "start": 2222,
+          "end": 2371,
+          "evidence": "mature similar Out delivery metadata writer uses Out account/orderNo/store0 and Out replay evidence; not Supplier API and not directly safe to call with fabricated identity"
+        }
+      ],
+      "line_count": 3207,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierUnpaidOrderEditService.ts",
+      "sha256": "6767d8fbf06f50a28113ed64a4fca5f02dafafc3d991123870a6be5f0173d20f",
+      "lines": [
+        {
+          "start": 95,
+          "end": 111,
+          "evidence": "real Supplier actor authority barrier/recheck and transactional error mapping pattern, but its unpaid eligibility excludes shipped records"
+        }
+      ],
+      "line_count": 218,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderBrokerageService.ts",
+      "sha256": "aea8513e878d5d362f4fb3db01353bfd5a14894b7a8bda9416765e72c2e21474",
+      "lines": [
+        {
+          "start": 110,
+          "end": 113,
+          "evidence": "mature transaction advisory settlement lock"
+        }
+      ],
+      "line_count": 951,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/ManualVirtualDeliveryPolicy.ts",
+      "sha256": "ae6858ae0d717729e30754f10db055d6898c066ab700d800577cbd9a7c3f5014",
+      "lines": [
+        {
+          "start": 30,
+          "end": 59,
+          "evidence": "immutable manual fulfillment type0 physical/type3 fictitious, no type1 automatic card or type4 writeoff override"
+        }
+      ],
+      "line_count": 48,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderTrackingService.ts",
+      "sha256": "e0085a527433ae95892ebb02e636abf56660325f28beca8106bfdec54201bc47",
+      "lines": [
+        {
+          "start": 70,
+          "end": 109,
+          "evidence": "new bounded owned tracking reads fresh authoritative transport, follows coherent child; direct split root prohibited"
+        }
+      ],
+      "line_count": 116,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/ExpressService.ts",
+      "sha256": "52a03143e7996b8639481e3ab78aa92017f41460ac4c11c8d35f251c7efdf2fa",
+      "lines": [
+        {
+          "start": 267,
+          "end": 271,
+          "evidence": "tracking cache key actual PK/code/number; replacement does not reuse old waybill cache"
+        },
+        {
+          "start": 304,
+          "end": 316,
+          "evidence": "actual scoped before/after authorized tracking"
+        },
+        {
+          "start": 427,
+          "end": 441,
+          "evidence": "raw live transport projected from order"
+        }
+      ],
+      "line_count": 620,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04",
+      "lines": [
+        {
+          "start": 205,
+          "end": 218,
+          "evidence": "manual type3 content only buyer paid delivered orders"
+        },
+        {
+          "start": 3421,
+          "end": 3445,
+          "evidence": "actual customer-owned detail entry"
+        },
+        {
+          "start": 3527,
+          "end": 3558,
+          "evidence": "live manual virtual content in detail and split detail"
+        }
+      ],
+      "line_count": 3708,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "1983e20693409d9d3bdb56b819c78549b2018735934375a5a2f96d0b81b0e455",
+      "lines": [
+        {
+          "start": 462,
+          "end": 470,
+          "evidence": "actual authenticated customer detail HTTP consumer"
+        }
+      ],
+      "line_count": 896,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/src/pages/order/express.vue",
+      "sha256": "62968e8aba6f152735b0b11b9539788d8509f98574d0e5f4b9c0948aca522c12",
+      "lines": [
+        {
+          "start": 13,
+          "end": 36,
+          "evidence": "actual public buyer shows latest carrier/no from transport DTO"
+        }
+      ],
+      "line_count": 265,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "bfd5e91fff8921e2a11078cdee668f4ccddd926efa6d1d547b82649db155ba47",
+      "lines": [
+        {
+          "start": 49,
+          "end": 59,
+          "evidence": "actual manual content DOM"
+        },
+        {
+          "start": 237,
+          "end": 245,
+          "evidence": "real type3 content selector"
+        }
+      ],
+      "line_count": 1086,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "3780ea0e84fa70a45dc27a715ee6251b4ac3015b828bbb30b01f6052096149cc",
+      "lines": [
+        {
+          "start": 46,
+          "end": 56,
+          "evidence": "actual manual content DOM"
+        },
+        {
+          "start": 308,
+          "end": 316,
+          "evidence": "real type3 content selector"
+        }
+      ],
+      "line_count": 1092,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/integration/OutApiFulfillmentPostgresScenario.ts",
+      "sha256": "cce18d0b1c74c68ab83fa6546a66a058865010f5361a723396afa5e53c186c38",
+      "lines": [
+        {
+          "start": 578,
+          "end": 664,
+          "evidence": "existing actual similar Out update/replay/newer-save/delayed-replay/lock/rollback evidence; not Supplier acceptance"
+        }
+      ],
+      "line_count": 820,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "74284ef75ea2ba47a705021777c813eb91494d8455fba56bcf0c506515fc24f9",
+      "lines": [
+        {
+          "start": 154,
+          "end": 170,
+          "evidence": "actual checkout/allocation with explicit maintenance payment marker boundary"
+        }
+      ],
+      "line_count": 163,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/supplierOrderTracking.ts",
+      "sha256": "760b4b01eaaba0abe3935b0d64b04963af511f762aaead7247f34cd23e1f1377",
+      "lines": [
+        {
+          "start": 17,
+          "end": 47,
+          "evidence": "prior own single/child/platform/foreign stable transport fixture; extend a new helper rather than mutate frozen helper"
+        }
+      ],
+      "line_count": 98,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/MIGRATION_CHECKLIST.md",
+      "sha256": "63a29d60c2fa21dd6e70beb04582c503f136abe6307020496fd903df572ac5e2",
+      "lines": [
+        {
+          "start": 2334,
+          "end": 2334,
+          "evidence": "SUP-001 remains open, previous list/info/split/operations completed do not claim full order workflow"
+        }
+      ],
+      "line_count": 2583,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/CustomerCityFulfillmentFence.ts",
+      "sha256": "5165da524b8cb0ea2e5e1b42428b0e008c0b55c868a44b350241e820faf0b4d3",
+      "lines": [
+        {
+          "start": 1,
+          "end": 28,
+          "evidence": "Existing all-absent compatibility, partial catalog fails, root lock required, delivery-table NOWAIT to avoid callback reverse lock graph; pending/process/unknown or admitted-active blocks"
+        }
+      ],
+      "line_count": 24,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/waybill/OrderWaybillJobService.ts",
+      "sha256": "fc3c50e67c795bcfdff91c09cacbb7d9fdc467083c1040c7fb13aa87ca9d8260",
+      "lines": [
+        {
+          "start": 239,
+          "end": 245,
+          "evidence": "Existing metadata revision facts include request/status/lease/provider/tracking/label/fulfilled order; this alone not Supplier edit authority"
+        }
+      ],
+      "line_count": 1470,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/waybill/OrderWaybillJobService.ts",
+      "sha256": "fc3c50e67c795bcfdff91c09cacbb7d9fdc467083c1040c7fb13aa87ca9d8260",
+      "lines": [
+        {
+          "start": 591,
+          "end": 625,
+          "evidence": "Actual job creation resolves/locks active root then reads blocking root jobs, so correction must own root lock too"
+        }
+      ],
+      "line_count": 1470,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/waybill_job.ts",
+      "sha256": "c8c966d1a6309f0c367dd3def1e65f998562145e502005396ab595f1b6716c7a",
+      "lines": [
+        {
+          "start": 13,
+          "end": 22,
+          "evidence": "Actual statuses SENT and CLOSED, not hypothetical SUCCEEDED"
+        }
+      ],
+      "line_count": 154,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/waybill_job.ts",
+      "sha256": "c8c966d1a6309f0c367dd3def1e65f998562145e502005396ab595f1b6716c7a",
+      "lines": [
+        {
+          "start": 38,
+          "end": 75,
+          "evidence": "Root/order/fulfilled order IDs plus tracking label provider fields identify concrete managed result"
+        }
+      ],
+      "line_count": 154,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/shipping/MerchantShipmentCallbackService.ts",
+      "sha256": "bc736b8db33889cefd6c2c6964289d8365c9e33984bf487e1ea0fdd6793f9669",
+      "lines": [
+        {
+          "start": 476,
+          "end": 545,
+          "evidence": "Actual callbacks match store_order.kuaidi_task_id and can update carrier/no; revision must bind this marker and editor refuse it"
+        }
+      ],
+      "line_count": 707,
+      "baseline_sha_verified": true,
+      "source_state": "3b6896e0ef12e91c5f74c0670d2d6da2c7d4d5fb"
+    }
+  ],
+  "final_execution_source_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/api/orderDistribution.ts",
+      "sha256": "63eb13bfebf456b6224265dcd2f2d96142e970dd9429fd8e97f7845e9bc6e514"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierOrderDistribution.vue",
+      "sha256": "c03edef551887f62bd9f2ba0f8cd1613268e45c5866ad24752686b4641191e0a"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "0187160fb27adf6178342d7d2d71b984470262696824d97a3ddeef1180c867d7"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71"
+    },
+    {
+      "path": "workers-ts/src/controllers/supplier/SupplierOrderDistributionController.ts",
+      "sha256": "22cc09fbd77350088e109b32210745b713c3f9323c3daefb9b6bbb337333383d"
+    },
+    {
+      "path": "workers-ts/src/routes/supplierapi.ts",
+      "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderDistributionInput.ts",
+      "sha256": "a37bf66b5ae9ed2e405295db71c880de95bf2f3313e14a73e21f4286b183bc53"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+      "sha256": "04f25862249cf6bf152514a3a69217f510565387cdcbcac28bac8a81c57a36d6"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+      "sha256": "aad51e0798f91107f4096b1570ce3df54856d010bdbc1399288290df587026f3"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-order-distribution.acceptance.ts",
+      "sha256": "e7aacba2c1aac80b6c6210e623f0ced0fb4baa6fdff062ea437b010b1fb64e6e"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierOrderDistribution.ts",
+      "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "096acfc67428827a397931d640447e6fb0d5276f96b534d57d79f0c273df54a8"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+      "sha256": "a911432ae6f17a6620596ed4c1ebd3b879a0dab2e2c0ef048940359513dfd1a8"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-native.test.ts",
+      "sha256": "414ef857f496cf23f960663971816cda89143ecf56aa13e1626fd3708402cbc2"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-order-distribution-browser.config.ts",
+      "sha256": "3d0dfd491fd5dfeedafcef4950c2b22a6aa354ae0c6aca3b496045961df44955"
+    }
+  ],
+  "validation": [
+    {
+      "label": "frontend-unicode-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run test/supplier-order-distribution-frontend.test.ts test/supplier-order-tracking-frontend.test.ts test/supplier-order-frontend.test.ts test/local-finance-postgres-runner.test.ts --maxWorkers=1 --reporter=default --reporter=json --outputFile.json=/tmp/cinashop-supplier-order-distribution-frontend-unicode-vitest.json && cd /home/cina/cinagroup/cinashop/view/supplier-ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vue-tsc/bin/vue-tsc.js -b && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T00:53:31.321429+00:00",
+      "finished_at_utc": "2026-10-19T00:54:15.425129+00:00",
+      "wall_seconds": 44.1,
+      "tests_passed": 386,
+      "log_path": "/tmp/cinashop-supplier-order-distribution-20261019-frontend-unicode-final.log",
+      "log_sha256": "694f3eba3c149950c273b2c5d0ba96236f1f48ef91e7798dca20649bf934f73a",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-frontend-unicode-final-terminal.json",
+      "terminal_sha256": "13161989b4e0e485cbc68e045e3f6207cb3e4ffb9afb6f3c0b17bc966b009e38",
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/api/orderDistribution.ts",
+          "sha256": "63eb13bfebf456b6224265dcd2f2d96142e970dd9429fd8e97f7845e9bc6e514",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderDistribution.vue",
+          "sha256": "c03edef551887f62bd9f2ba0f8cd1613268e45c5866ad24752686b4641191e0a",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "0187160fb27adf6178342d7d2d71b984470262696824d97a3ddeef1180c867d7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "096acfc67428827a397931d640447e6fb0d5276f96b534d57d79f0c273df54a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+          "sha256": "a911432ae6f17a6620596ed4c1ebd3b879a0dab2e2c0ef048940359513dfd1a8",
+          "matches_final": true
+        }
+      ],
+      "captured_input_set_unchanged": false
+    },
+    {
+      "label": "native-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-order-distribution-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:10:57.868378+00:00",
+      "finished_at_utc": "2026-10-19T01:12:07.755064+00:00",
+      "wall_seconds": 69.89,
+      "tests_passed": 61,
+      "log_path": "/tmp/cinashop-supplier-order-distribution-20261019-native-final.log",
+      "log_sha256": "29412df439d668799fb8f07d07bfe2a324c8c19124664a741378da2d52a97db6",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-native-final-terminal.json",
+      "terminal_sha256": "65848af48af4cf3db316a369fc84a0db57387682c8f8e954829137c1342df7df",
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/controllers/supplier/SupplierOrderDistributionController.ts",
+          "sha256": "22cc09fbd77350088e109b32210745b713c3f9323c3daefb9b6bbb337333383d",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/routes/supplierapi.ts",
+          "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionInput.ts",
+          "sha256": "a37bf66b5ae9ed2e405295db71c880de95bf2f3313e14a73e21f4286b183bc53",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+          "sha256": "04f25862249cf6bf152514a3a69217f510565387cdcbcac28bac8a81c57a36d6",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+          "sha256": "aad51e0798f91107f4096b1570ce3df54856d010bdbc1399288290df587026f3",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-distribution.acceptance.ts",
+          "sha256": "e7aacba2c1aac80b6c6210e623f0ced0fb4baa6fdff062ea437b010b1fb64e6e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderDistribution.ts",
+          "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "096acfc67428827a397931d640447e6fb0d5276f96b534d57d79f0c273df54a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+          "sha256": "a911432ae6f17a6620596ed4c1ebd3b879a0dab2e2c0ef048940359513dfd1a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-native.test.ts",
+          "sha256": "414ef857f496cf23f960663971816cda89143ecf56aa13e1626fd3708402cbc2",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-distribution-browser.config.ts",
+          "sha256": "3d0dfd491fd5dfeedafcef4950c2b22a6aa354ae0c6aca3b496045961df44955",
+          "matches_final": true
+        }
+      ],
+      "captured_input_set_unchanged": true
+    },
+    {
+      "label": "worker-types-corrected",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:06:11.511478+00:00",
+      "finished_at_utc": "2026-10-19T01:10:02.388053+00:00",
+      "wall_seconds": 230.88,
+      "tests_passed": null,
+      "log_path": "/tmp/cinashop-supplier-order-distribution-20261019-worker-types-corrected.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-worker-types-corrected-terminal.json",
+      "terminal_sha256": "052411d8627bcbeaf4a077d63dc2b8b383f517687d25e92be381bb55cfc5dbab",
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/controllers/supplier/SupplierOrderDistributionController.ts",
+          "sha256": "22cc09fbd77350088e109b32210745b713c3f9323c3daefb9b6bbb337333383d",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/routes/supplierapi.ts",
+          "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionInput.ts",
+          "sha256": "a37bf66b5ae9ed2e405295db71c880de95bf2f3313e14a73e21f4286b183bc53",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+          "sha256": "04f25862249cf6bf152514a3a69217f510565387cdcbcac28bac8a81c57a36d6",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+          "sha256": "aad51e0798f91107f4096b1570ce3df54856d010bdbc1399288290df587026f3",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-distribution.acceptance.ts",
+          "sha256": "e7aacba2c1aac80b6c6210e623f0ced0fb4baa6fdff062ea437b010b1fb64e6e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderDistribution.ts",
+          "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "096acfc67428827a397931d640447e6fb0d5276f96b534d57d79f0c273df54a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+          "sha256": "a911432ae6f17a6620596ed4c1ebd3b879a0dab2e2c0ef048940359513dfd1a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-native.test.ts",
+          "sha256": "b8214a57b2b376eec12ced8faf9e1a5abede8d3c116c827d18329bd174ceab81",
+          "matches_final": false,
+          "fixture_uuid_values_only_type_contract_unchanged": true,
+          "only_two_public_test_uuid_string_values_changed": true,
+          "final_source_sha256": "414ef857f496cf23f960663971816cda89143ecf56aa13e1626fd3708402cbc2",
+          "final_values_reexecuted_in": "native-final"
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-distribution-browser.config.ts",
+          "sha256": "3d0dfd491fd5dfeedafcef4950c2b22a6aa354ae0c6aca3b496045961df44955",
+          "matches_final": true
+        }
+      ],
+      "captured_input_set_unchanged": false
+    },
+    {
+      "label": "browser-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:supplier-order-distribution-browser"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-19T01:12:19.332709+00:00",
+      "finished_at_utc": "2026-10-19T01:16:29.413492+00:00",
+      "wall_seconds": 250.08,
+      "tests_passed": 1,
+      "log_path": "/tmp/cinashop-supplier-order-distribution-20261019-browser-final.log",
+      "log_sha256": "8d475b6494020c67674c061dddef8a5f33dac2fe045b91244f8d861a7f692505",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-browser-final-terminal.json",
+      "terminal_sha256": "e4d1ac9accab19093a1fc49518d21f777e8b139ea2441c1e2405e19f302fc372",
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/api/orderDistribution.ts",
+          "sha256": "63eb13bfebf456b6224265dcd2f2d96142e970dd9429fd8e97f7845e9bc6e514",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderDistribution.vue",
+          "sha256": "c03edef551887f62bd9f2ba0f8cd1613268e45c5866ad24752686b4641191e0a",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "0187160fb27adf6178342d7d2d71b984470262696824d97a3ddeef1180c867d7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/controllers/supplier/SupplierOrderDistributionController.ts",
+          "sha256": "22cc09fbd77350088e109b32210745b713c3f9323c3daefb9b6bbb337333383d",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/routes/supplierapi.ts",
+          "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionInput.ts",
+          "sha256": "a37bf66b5ae9ed2e405295db71c880de95bf2f3313e14a73e21f4286b183bc53",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+          "sha256": "04f25862249cf6bf152514a3a69217f510565387cdcbcac28bac8a81c57a36d6",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+          "sha256": "aad51e0798f91107f4096b1570ce3df54856d010bdbc1399288290df587026f3",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-distribution.acceptance.ts",
+          "sha256": "e7aacba2c1aac80b6c6210e623f0ced0fb4baa6fdff062ea437b010b1fb64e6e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderDistribution.ts",
+          "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "096acfc67428827a397931d640447e6fb0d5276f96b534d57d79f0c273df54a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+          "sha256": "a911432ae6f17a6620596ed4c1ebd3b879a0dab2e2c0ef048940359513dfd1a8",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-distribution-native.test.ts",
+          "sha256": "414ef857f496cf23f960663971816cda89143ecf56aa13e1626fd3708402cbc2",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-distribution-browser.config.ts",
+          "sha256": "3d0dfd491fd5dfeedafcef4950c2b22a6aa354ae0c6aca3b496045961df44955",
+          "matches_final": true
+        }
+      ],
+      "captured_input_set_unchanged": true
+    }
+  ],
+  "regression_evidence_from_initial_native": {
+    "aggregate_exit_code": 1,
+    "aggregate_passed": 141,
+    "aggregate_failed": 1,
+    "excluded_failed_file": "test/supplier-order-distribution-native.test.ts",
+    "excluded_file_cases": 61,
+    "retained_successful_files": [
+      {
+        "path": "workers-ts/test/supplier-order-tracking-native.test.ts",
+        "sha256": "02fcc5811f1fc45fb73f8a813924f8c191fa6f4b353dda407dcb6ad018034c1c"
+      },
+      {
+        "path": "workers-ts/test/supplier-order-generations.test.ts",
+        "sha256": "24c958be72677954d20665a3bb00491d3fb1a1454dee1fbe72fd969bbdcee604"
+      }
+    ],
+    "retained_passed_cases": 81,
+    "relevant_final_inputs": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "99e665bfba384bd77e0cc546c348f8484de5a452c6d5f1af3b94a380754b5a71"
+      },
+      {
+        "path": "workers-ts/src/controllers/supplier/SupplierOrderDistributionController.ts",
+        "sha256": "22cc09fbd77350088e109b32210745b713c3f9323c3daefb9b6bbb337333383d"
+      },
+      {
+        "path": "workers-ts/src/routes/supplierapi.ts",
+        "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierOrderDistributionInput.ts",
+        "sha256": "a37bf66b5ae9ed2e405295db71c880de95bf2f3313e14a73e21f4286b183bc53"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierOrderDistributionService.ts",
+        "sha256": "04f25862249cf6bf152514a3a69217f510565387cdcbcac28bac8a81c57a36d6"
+      },
+      {
+        "path": "workers-ts/src/services/supplier/SupplierPermissionService.ts",
+        "sha256": "aad51e0798f91107f4096b1570ce3df54856d010bdbc1399288290df587026f3"
+      },
+      {
+        "path": "workers-ts/test/helpers/supplierOrderDistribution.ts",
+        "sha256": "26dd1aef2491afbe36db8fa14a24385e8b0b7f6bee425c1f6bf3c924488ee5bc"
+      }
+    ],
+    "command": [
+      "bash",
+      "/home/cina/cinagroup/tools/validate-serial.sh",
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+      "test/supplier-order-distribution-native.test.ts",
+      "test/supplier-order-tracking-native.test.ts",
+      "test/supplier-order-generations.test.ts"
+    ],
+    "started_at_utc": "2026-10-19T00:54:43.012385+00:00",
+    "finished_at_utc": "2026-10-19T01:00:21.741005+00:00",
+    "log_path": "/tmp/cinashop-supplier-order-distribution-20261019-native.log",
+    "log_sha256": "65e2ec41233ba8593c63038b5852519e8059fa70e767f21c2d84f01f224f3ecf",
+    "reason": "Both mature files completed successfully. The only failed case was in the new distribution file, before business HTTP, due to a GRANT on absent optional city fixture tables. The entire corrected new 61-case file is separately rerun and counted once."
+  },
+  "distinct_passed_tests": 529,
+  "frontend_files": [
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "passed": 282
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+      "passed": 41
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "passed": 42
+    },
+    {
+      "path": "workers-ts/test/supplier-order-tracking-frontend.test.ts",
+      "passed": 21
+    }
+  ],
+  "browser": {
+    "paths": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "PUT",
+        "path": "/supplierapi/order/distribution/100",
+        "http": 200,
+        "id": 100,
+        "only_delivery_fields_and_one_audit_changed": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/100",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "PUT",
+        "path": "/supplierapi/order/distribution/202",
+        "http": 200,
+        "id": 202,
+        "only_delivery_fields_and_one_audit_changed": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/202",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "PUT",
+        "path": "/supplierapi/order/distribution/102",
+        "http": 200,
+        "id": 102,
+        "only_delivery_fields_and_one_audit_changed": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "PUT",
+        "path": "/supplierapi/order/distribution/103",
+        "http": 200,
+        "id": 103,
+        "only_delivery_fields_and_one_audit_changed": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/103",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/104",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/104",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/104",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/104",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/distribution/102",
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      }
+    ],
+    "evidence": [
+      {
+        "stage": "desktop",
+        "width": 1200,
+        "height": 844,
+        "dialog": {
+          "left": 320,
+          "right": 880,
+          "top": 265,
+          "bottom": 579
+        },
+        "footer_visible": true,
+        "unobscured": true,
+        "content": "配送信息\n\n包裹：tracking-own-100\n\n快递公司\n本机新快递\n运单号\n重新读取\n保存配送信息\n关闭"
+      },
+      {
+        "stage": "phone",
+        "width": 390,
+        "height": 844,
+        "dialog": {
+          "left": 11.71250057220459,
+          "right": 378.6875066757202,
+          "top": 247.5,
+          "bottom": 596.5
+        },
+        "footer_visible": true,
+        "unobscured": true,
+        "content": "配送信息\n\n包裹：manual-virtual-102\n\n交付备注\n22 / 500 字\n重新读取\n保存配送信息\n关闭"
+      }
+    ],
+    "cancelled": true,
+    "finished": true,
+    "table_count": 19,
+    "sequence_count": 18,
+    "provider_calls": 0,
+    "writes": 4
+  },
+  "browser_ui": {
+    "app_identity": "CinaShop 供应商中心 /orders",
+    "iframe_src": "/orders",
+    "desktop_screenshot": "/tmp/cinashop-supplier-order-distribution-desktop.png",
+    "desktop_editor": "配送信息\n\n包裹：tracking-own-100\n\n快递公司\n本机新快递\n运单号\n重新读取\n保存配送信息\n关闭",
+    "saved_single_waybill": "BROWSER-100",
+    "saved_child_detail": "订单详情\ntracking-child-202\n客户\n手机号\n13800138000\n订单金额\n¥0.00\n支付方式\n—\n订单状态\n已发货\n下单时间\n—\n发货方式\n快递\n物流 / 交付信息\n本机新快递 BROWSER-202\n查看物流\n配送信息\n确认收货\n发货包裹\ntracking-child-201\n0 件 · ¥0.00\n已发货\n本机真实快递 CHILD-201 \n查看物流\n配送信息\ntracking-child-202\n0 件 · ¥0.00\n已发货\n本机新快递 BROWSER-202 \n查看物流\n配送信息\n订单轨迹\n{\"actor_id\":21,\"supplier_id\":7,\"delivery_type\":\"express\"}\n2026/10/19 01:15\n供应商备注\n0 / 512\n保存备注",
+    "unicode_input": {
+      "codepoints": 500,
+      "maxLength": 1000,
+      "utf16_length": 1000
+    },
+    "unicode_counter": "配送信息\n\n包裹：manual-virtual-102\n\n交付备注\n500 / 500 字\n重新读取\n保存配送信息\n关闭",
+    "saved_virtual_detail": "订单详情\nmanual-virtual-102\n客户\n手机号\n13800138000\n订单金额\n¥0.00\n支付方式\n—\n订单状态\n已发货\n下单时间\n—\n发货方式\n虚拟发货\n物流 / 交付信息\n修订后的交付说明 请按订单内的下载说明领取。\n配送信息\n确认收货\n发货包裹\nmanual-virtual-102\n0 件 · ¥0.00\n已发货\n修订后的交付说明 请按订单内的下载说明领取。 \n配送信息\n订单轨迹\n{\"actor_id\":21,\"supplier_id\":7,\"delivery_type\":\"fictitious\"}\n2026/10/19 01:15\n供应商备注\n0 / 512\n保存备注",
+    "saved_legacy_detail": "订单详情\nlegacy-send-103\n客户\n手机号\n13800138000\n订单金额\n¥0.00\n支付方式\n—\n订单状态\n已发货\n下单时间\n—\n发货方式\n同城配送\n物流 / 交付信息\n补正后的历史送货人 13900139000\n配送信息\n确认收货\n发货包裹\nlegacy-send-103\n0 件 · ¥0.00\n已发货\n补正后的历史送货人 13900139000 \n配送信息\n订单轨迹\n{\"actor_id\":21,\"supplier_id\":7,\"delivery_type\":\"send\"}\n2026/10/19 01:15\n供应商备注\n0 / 512\n保存备注",
+    "managed_readonly": "配送信息\n\n包裹：managed-send-104\n\n配送信息由配送员、面单或第三方任务管理，请到对应履约记录核对\n送货人姓名\n送货人电话\n重新读取\n关闭",
+    "phone_note_reread": "修订后的交付说明\n请按订单内的下载说明领取。",
+    "phone_screenshot": "/tmp/cinashop-supplier-order-distribution-phone.png",
+    "console_warning_error_sample": [],
+    "checked": [
+      "desktop",
+      "phone"
+    ],
+    "iframe_dimensions": [
+      {
+        "width": 1200,
+        "height": 844
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "captured_at_utc": "2026-10-19T01:16:25.314Z"
+  },
+  "owned_pg_cleanup": {
+    "clusters": [
+      {
+        "phase": "browser-corrected",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-6ZsQUE",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 1
+      },
+      {
+        "phase": "browser-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-m8IYra",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      },
+      {
+        "phase": "browser",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vypAnX",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 1
+      },
+      {
+        "phase": "native-corrected",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-xh9JRq",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      },
+      {
+        "phase": "native-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ovPagQ",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      },
+      {
+        "phase": "native",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-em4KkQ",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 1
+      },
+      {
+        "phase": "native-type-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7PWW4G",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "exit_code": 0
+      }
+    ],
+    "all_stopped_and_empty": true
+  },
+  "earlier_nonpassing_runs": [
+    {
+      "label": "frontend-initial",
+      "exit_code": 1,
+      "reason": "Two test assertions used text spacing/alert text rather than actual title prop; corrected, final actual SFC suite passed.",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-frontend-initial-terminal.json",
+      "log_sha256": "fa51be61dc6f9feef9041b86362ecb39e1020a3c683850acd09406b3c9fa209b"
+    },
+    {
+      "label": "worker-types-final",
+      "exit_code": 2,
+      "reason": "One test Env cast overlapped production NODE_ENV literal incorrectly; corrected test-only unknown conversion and reran final native and both type configurations.",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-worker-types-final-terminal.json",
+      "log_sha256": "2d0e9d582e7cb1dbc909fffa22992ff10fe536f120311b28343a7ddc49bf179e"
+    },
+    {
+      "label": "browser",
+      "exit_code": 1,
+      "reason": "Bridge parsed restored raw get_script JavaScript as JSON; corrected without changing product behavior.",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-browser-terminal.json",
+      "log_sha256": "683bd32b0e562c160ff47ff723b0a127969c16b34052f7e636ab31af538a671f"
+    },
+    {
+      "label": "native",
+      "exit_code": 1,
+      "reason": "New file60/61 passed; the final real-checkout case attempted GRANT on absent optional city runtime tables before business HTTP. Corrected only the fixture assumption, asserted all3 absent, and reran all61; the two successful mature files are qualified separately.",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-native-terminal.json",
+      "log_sha256": "65e2ec41233ba8593c63038b5852519e8059fa70e767f21c2d84f01f224f3ecf"
+    },
+    {
+      "label": "browser-corrected",
+      "exit_code": 1,
+      "reason": "Explicitly ended before entering app/any PUT to incorporate final SQL scope and Unicode hardening; premature finish rejected and this run is not counted as passing.",
+      "terminal_path": "/tmp/cinashop-supplier-order-distribution-20261019-browser-corrected-terminal.json",
+      "log_sha256": "dc0fb4b0962ee1c796f162c8de6ae05c4e4f712e6b4e54bf1ae4268754ce62bf"
+    }
+  ],
+  "root_checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total_lines": 88,
+      "checked": 50,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac",
+      "unchanged_against_base": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total_lines": 404,
+      "checked": 249,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd",
+      "unchanged_against_base": true
+    }
+  ],
+  "get_script": "Keep the restored PHP-compatible behavior and corrected retirement audit; actual Browser startup script GET executed. No script retirement in this patch.",
+  "limits": [
+    "No production deployment, DDL, GRANT or real provider account acceptance.",
+    "Raw status5/managed provider label revision/rider reassignment are not implemented by this author.",
+    "GET reconciliation means current facts, not durable operation attribution; no UUID receipt journal.",
+    "Owned helper minimal ORM column DDL does not prove full schema migration catalog; real checkout case uses mature registered fixture and explicit synthetic maintenance payment marker.",
+    "Browser iframe dimensions are responsive web evidence, not real phone/device emulation.",
+    "Frontend overall flag is false due to parallel backend scope hardening; relevant frontend+runner inputs match final. Worker type checks used identical business/runtime source, with only two public test UUID string literal values changed afterward; exact reconstruction verifies that narrow difference and final61 reexecutes those values. No type annotation or test logic changed in that transition."
+  ]
+}

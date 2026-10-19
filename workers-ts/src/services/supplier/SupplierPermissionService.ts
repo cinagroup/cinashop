@@ -119,6 +119,12 @@ export function requiredSupplierPermissions(method: string, routePath: string): 
       || method.toUpperCase() === 'POST' && new RegExp(`^finance/supplier_extract/application_operations/${uuid}/resolve$`).test(route)) return [];
     return null;
   }
+  if (route === 'order/distribution' || route.startsWith('order/distribution/')) {
+    if (!/^order\/distribution\/(?:[1-9][0-9]{0,9}|:id|<id>)$/.test(route)) return null;
+    if (method.toUpperCase() === 'GET') return ['supplier.order.view'];
+    if (method.toUpperCase() === 'PUT') return ['supplier.order.manage'];
+    return null;
+  }
   if (route === 'order/refund' || route.startsWith('order/refund/')
     || route === 'order/refund_operations' || route.startsWith('order/refund_operations/')) {
     const id = '(?:[1-9][0-9]{0,9}|:id|<id>)', uuid = '(?:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|:operationid|<operationid>)';
