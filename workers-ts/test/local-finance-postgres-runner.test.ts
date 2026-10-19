@@ -73,6 +73,17 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits only the exact customer order-repurchase native file in schema-maintenance mode', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/customer-order-repurchase-native.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('allowlist');
+  });
+  it.each(['test/customer-order-repurchase-native.test.ts.extra', 'test/customer-order-repurchase-native.other.ts'])('rejects a malformed order-repurchase native spelling %s', path => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stderr).toContain('Only explicit unit test paths');
+  });
+
   it('admits only the exact customer refund-quantities native file in schema-maintenance mode', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/customer-refund-quantities-native.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
@@ -92,6 +103,22 @@ describe('local PostgreSQL runner command boundary', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
     expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stderr).toContain('Only explicit unit test paths');
+  });
+  it('admits the exact customer order repurchase in-app mode without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:customer-order-repurchase-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER'); expect(result.stderr).not.toContain('Only explicit');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:customer-order-repurchase-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:customer-order-repurchase-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'review', 'unused-bin', 'audit:customer-order-repurchase-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:customer-order-repurchase-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid customer order repurchase Browser admission $args', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe(''); expect(result.stderr).toContain(error);
   });
   it('admits the exact refund application evidence in-app mode without external browser settings', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:refund-application-evidence-browser'],

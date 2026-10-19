@@ -41,7 +41,8 @@ export function registerOrderDetailTests(getContext) {
     let view; const component = (await server.ssrLoadModule(script)).default;
     const router = createRouter({ history: createMemoryHistory(), routes: [
       { path: '/order/:orderId', component: { setup(props, ctx) { view = component.setup(props, ctx); return () => null; } } },
-      { path: '/away', component: { render: () => null } }] });
+      { path: '/away', component: { render: () => null } },
+      { path: '/checkout', component: { render: () => null } }] });
     const app = renderer.createApp({ render: () => h(RouterView) }); app.use(router);
     await router.push('/order/local_A'); app.mount({ children: [] }); await flush(); let closed = false;
     return { get view() { return view; }, calls, dialog, router, writes: () => calls.filter(c => c.method === 'post'),
@@ -157,5 +158,106 @@ export function registerOrderDetailTests(getContext) {
       getContext().authUtils.setAuth('new-session',22); waiting.resolve({status:200,data:null}); await pending;
       assert.equal(f.writes().length,1); assert.equal(f.view.reviewForm.value.comment,''); assert.equal(f.dialog.messages.length,0);
     } finally { waiting.resolve({status:400}); f.close(); }
+  });
+
+  const repurchaseDetail = (id = 'local_A', change = {}) => ({ ...detail(id), id: 501, paid: 1, status: 2,
+    refundStatus: 0, supplierAllocationStatus: 2, cartInfo: [{ id: 701, type: 0, cartNum: 2 }], ...change });
+  const repurchaseResult = (change = {}) => ({ cartIds: [901, 902], cateId: '901,902', sourceOrderId: 'local_A', sourceRowId: 501, ...change });
+  const repurchaseMount = (override = () => undefined) => mount(async c => (await override(c))
+    ?? (c.url.includes('/detail/') ? { status: 200, data: repurchaseDetail(c.url.split('/').at(-1)) }
+      : c.url === '/order/again' ? { status: 200, data: repurchaseResult() } : undefined));
+
+  it('PC actual order detail prepares once with PHP uni and opens only acknowledged direct-buy IDs', async () => {
+    const f = await repurchaseMount();
+    try { assert.equal(f.view.canRepurchase.value, true); await f.view.prepareRepurchase();
+      assert.equal(f.writes().length, 1); assert.equal(f.writes()[0].url, '/order/again');
+      assert.deepEqual(JSON.parse(f.writes()[0].data), { uni: 'local_A' });
+      assert.equal(f.router.currentRoute.value.path, '/checkout');
+      assert.deepEqual(f.router.currentRoute.value.query, { mode: 'buy', cartIds: '901,902' });
+    } finally { f.close(); }
+  });
+  it('PC duplicate repurchase clicks share one captured write', async () => {
+    const waiting = gate(), f = await repurchaseMount(c => c.method === 'post' ? waiting.promise : undefined);
+    try { const first = f.view.prepareRepurchase(); await f.view.prepareRepurchase(); await flush(); assert.equal(f.writes().length, 1);
+      waiting.resolve({ status: 200, data: repurchaseResult() }); await first;
+      assert.equal(f.router.currentRoute.value.path, '/checkout');
+    } finally { waiting.resolve({ status: 400 }); f.close(); }
+  });
+  for (const change of [{ sourceOrderId: 'local_B' }, { sourceRowId: 502 }, { cartIds: [] },
+    { cartIds: [901, 901], cateId: '901,901' }, { cartIds: ['901'], cateId: '901' }, { cateId: '902,901' }]) {
+    it(`PC malformed repurchase acknowledgement stays uncertain after reload ${JSON.stringify(change)}`, async () => {
+      const f = await repurchaseMount(c => c.method === 'post' ? { status: 200, data: repurchaseResult(change) } : undefined);
+      try { await f.view.prepareRepurchase(); assert.equal(f.view.repurchase.uncertain, true); assert.match(f.view.repurchase.error, /尚未确认/);
+        await f.view.load(); await f.view.prepareRepurchase(); assert.equal(f.writes().length, 1); assert.equal(f.router.currentRoute.value.path, '/order/local_A');
+      } finally { f.close(); }
+    });
+  }
+  it('PC definitive repurchase rejection permits a corrected retry without navigating the failed result', async () => {
+    let reject = true; const f = await repurchaseMount(c => reject && c.method === 'post' ? { status: 400, msg: '商品已下架' } : undefined);
+    try { await f.view.prepareRepurchase(); assert.equal(f.view.repurchase.uncertain, false); assert.match(f.view.repurchase.error, /下架/);
+      reject = false; await f.view.prepareRepurchase(); assert.equal(f.writes().length, 2); assert.equal(f.router.currentRoute.value.path, '/checkout');
+    } finally { f.close(); }
+  });
+  it('PC blocked checkout navigation reuses acknowledged rows without another repurchase write', async () => {
+    const f = await repurchaseMount(); let block = true;
+    const remove = f.router.beforeEach(to => to.path === '/checkout' && block ? false : undefined);
+    try { await f.view.prepareRepurchase(); assert.deepEqual([...f.view.repurchase.cartIds], [901, 902]); assert.match(f.view.repurchase.error, /结算页未打开/);
+      block = false; await f.view.prepareRepurchase(); assert.equal(f.writes().length, 1); assert.equal(f.router.currentRoute.value.path, '/checkout');
+    } finally { remove(); f.close(); }
+  });
+  for (const ending of ['identity', 'route', 'unmount']) it(`PC late repurchase cannot navigate or expose rows after ${ending}`, async () => {
+    const waiting = gate(), f = await repurchaseMount(c => c.method === 'post' ? waiting.promise : undefined);
+    try { const pending = f.view.prepareRepurchase(); await flush();
+      if (ending === 'identity') getContext().authUtils.setAuth('repurchase-owner', 22);
+      else if (ending === 'route') { await f.router.push('/order/local_B'); await flush(); }
+      else f.close();
+      waiting.resolve({ status: 200, data: repurchaseResult() }); await pending;
+      assert.notEqual(f.router.currentRoute.value.path, '/checkout'); assert.deepEqual([...f.view.repurchase.cartIds], []);
+    } finally { waiting.resolve({ status: 400 }); f.close(); }
+  });
+  it('PC refresh while preparing retains the single write and requires explicit continuation of its exact rows', async () => {
+    const waiting = gate(), f = await repurchaseMount(c => c.method === 'post' ? waiting.promise : undefined);
+    try { const pending = f.view.prepareRepurchase(); await flush(); await f.view.load(); await f.view.prepareRepurchase();
+      assert.equal(f.writes().length, 1); waiting.resolve({ status: 200, data: repurchaseResult() }); await pending;
+      assert.equal(f.router.currentRoute.value.path, '/order/local_A'); assert.deepEqual([...f.view.repurchase.cartIds], [901, 902]);
+      await f.view.prepareRepurchase(); assert.equal(f.writes().length, 1); assert.equal(f.router.currentRoute.value.path, '/checkout');
+    } finally { waiting.resolve({ status: 400 }); f.close(); }
+  });
+  it('PC source row replacement invalidates a pending repurchase even when the public order ID stays the same', async () => {
+    let rowId = 501; const waiting = gate(), f = await repurchaseMount(c => c.method === 'post' ? waiting.promise
+      : c.url.includes('/detail/') ? { status: 200, data: repurchaseDetail('local_A', { id: rowId }) } : undefined);
+    try { const pending = f.view.prepareRepurchase(); await flush(); rowId = 502; await f.view.load();
+      waiting.resolve({ status: 200, data: repurchaseResult() }); await pending;
+      assert.deepEqual([...f.view.repurchase.cartIds], []); assert.equal(f.router.currentRoute.value.path, '/order/local_A');
+    } finally { waiting.resolve({ status: 400 }); f.close(); }
+  });
+  it('PC PHP repurchase entry excludes pending/activity/refunded/empty source rows', async () => {
+    for (const change of [{ status: 0 }, { type: 1 }, { refundStatus: 1 }, { supplierAllocationStatus: 1 },
+      { cartInfo: [] }]) {
+      const f = await repurchaseMount(c => c.url.includes('/detail/') ? { status: 200, data: repurchaseDetail('local_A', change) } : undefined);
+      try { assert.equal(f.view.canRepurchase.value, false); await f.view.prepareRepurchase(); assert.equal(f.writes().length, 0); }
+      finally { f.close(); }
+    }
+  });
+  it('PC ordinary Supplier snapshot type is not mistaken for an activity type', async () => {
+    const f = await repurchaseMount(c => c.url.includes('/detail/') ? { status: 200,
+      data: repurchaseDetail('local_A', { cartInfo: [{ id: 701, type: 2, cartNum: 2 }] }) } : undefined);
+    try { assert.equal(f.view.canRepurchase.value, true); await f.view.prepareRepurchase(); assert.equal(f.writes().length, 1);
+      assert.equal(f.router.currentRoute.value.path, '/checkout');
+    } finally { f.close(); }
+  });
+  it('PC lost repurchase response remains uncertain through an explicit source reread', async () => {
+    const f = await repurchaseMount(c => c.url === '/order/again' ? Promise.reject(Error('owned lost acknowledgement')) : undefined);
+    try { await f.view.prepareRepurchase(); assert.equal(f.view.repurchase.uncertain, true);
+      await f.view.load(); assert.equal(f.view.order.value.order_id, 'local_A'); await f.view.prepareRepurchase();
+      assert.equal(f.writes().length, 1); assert.equal(f.router.currentRoute.value.path, '/order/local_A');
+    } finally { f.close(); }
+  });
+  it('PC returning to the same order cannot accept a response from the earlier view generation', async () => {
+    const waiting = gate(), f = await repurchaseMount(c => c.method === 'post' ? waiting.promise : undefined);
+    try { const pending = f.view.prepareRepurchase(); await flush(); await f.router.push('/order/local_B'); await flush();
+      await f.router.push('/order/local_A'); await flush(); waiting.resolve({ status: 200, data: repurchaseResult() }); await pending;
+      assert.deepEqual([...f.view.repurchase.cartIds], []); assert.equal(f.router.currentRoute.value.path, '/order/local_A');
+    } finally { waiting.resolve({ status: 400 }); f.close(); }
   });
 }

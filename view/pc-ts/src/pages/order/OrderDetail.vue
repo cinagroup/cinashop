@@ -171,6 +171,17 @@
         <p>{{ cashierError || actionError }}</p>
         <el-button :disabled="paying || taking || reviewing" @click="load">刷新订单核对</el-button>
       </div>
+
+      <div v-if="canRepurchase" class="detail-card repurchase-card">
+        <p>按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。</p>
+        <p v-if="repurchase.error" role="alert">{{ repurchase.error }}</p>
+        <el-button v-if="repurchase.error" :disabled="repurchase.pending || repurchase.opening" @click="load">重新读取原订单</el-button>
+        <el-button class="repurchase-button" type="primary" :loading="repurchase.pending || repurchase.opening"
+          :disabled="repurchase.pending || repurchase.opening || repurchase.uncertain || !!actionError"
+          @click="prepareRepurchase">
+          {{ repurchase.cartIds.length ? '继续进入结算' : '再次购买' }}
+        </el-button>
+      </div>
       <div v-if="order.paid === 0" class="pay-bar">
         <el-button
           type="primary"
@@ -263,11 +274,11 @@
 
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import QRCode from "qrcode";
-import { apiOrderCashier, apiOrderDetail, apiOrderPay, apiOrderTake } from "@/api/order";
+import { apiOrderCashier, apiOrderDetail, apiOrderPay, apiOrderTake, apiOrderAgain } from "@/api/order";
 import { apiReplySubmit } from "@/api/product";
 import type {
   CheckoutCashier,
@@ -279,6 +290,8 @@ import type { SystemFormComponent } from "@/types/systemForm";
 import dayjs from "dayjs";
 import { captureAuthSession, isCurrentAuthSession, getUid, onAuthChange } from "@/utils/auth";
 import { orderDetailId, assertOrderDetailIdentity, assertOrderCashierIdentity, assertOrderPaymentIdentity } from "../../../../common/orderDetailIdentity";
+import { ApiResponseError } from '@/utils/apiError';
+import { initialOrderRepurchase, createOrderRepurchase, canRepurchaseOrder } from '../../../../common/orderRepurchase';
 
 const route = useRoute();
 const router = useRouter();
@@ -289,6 +302,18 @@ const paying = ref(false);
 const taking = ref(false);
 const loadError = ref(''), cashierError = ref(''), actionError = ref('');
 let revision = 0, disposed = false, confirming = false;
+const repurchase = reactive(initialOrderRepurchase());
+const canRepurchase = computed(() => canRepurchaseOrder(order.value, 'pc'));
+const repurchaseController = createOrderRepurchase(repurchase, 'pc', {
+  key: () => `${disposed}:${getUid()}:${captureAuthSession().generation}:${route.fullPath}`,
+  capture: currentView, order: () => order.value,
+  busy: () => loading.value || paying.value || taking.value || reviewing.value || qrVisible.value || !!actionError.value,
+  write: apiOrderAgain,
+  open: async ids => { const failure = await router.push({ path: '/checkout', query: { mode: 'buy', cartIds: ids.join(',') } });
+    if (failure) throw Error('请重试打开结算页'); },
+  isRejected: error => error instanceof ApiResponseError && error.status === 400,
+});
+const prepareRepurchase = repurchaseController.prepare;
 const payType = ref<CheckoutPaymentMethod>("yue");
 const qrVisible = ref(false);
 const qrCanvas = ref<HTMLCanvasElement | null>(null);
@@ -625,6 +650,7 @@ function currentView() {
 }
 function clearView() {
   revision++; stopPaymentPolling();
+  repurchaseController.contextChanged();
   order.value = null; cashier.value = null; qrVisible.value = false; reviewVisible.value = false;
   if (confirming) { confirming = false; ElMessageBox.close(); }
   paying.value = false; taking.value = false; reviewing.value = false; loading.value = false;
@@ -643,6 +669,7 @@ async function load() {
     if (!scope.current()) return;
     assertOrderDetailIdentity(latest, scope.id, scope.uid);
     order.value = latest;
+    repurchaseController.bindOrder();
     if (latest.paid === 0) {
       try {
         const nextCashier = await apiOrderCashier(scope.id);

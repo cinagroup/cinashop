@@ -868,11 +868,14 @@ export async function orderDel(c: C) {
 export async function orderAgain(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { order_id?: string; uni?: string };
   const svc = new StoreOrderCreateService(c.get("container"), c.env);
   try {
+    const body = await readBoundedJsonObject(c);
+    if (body.order_id !== undefined && body.uni !== undefined && body.order_id !== body.uni) {
+      throw new ValidateException('订单标识不一致');
+    }
     const result = await svc.again(uid, body.order_id ?? body.uni ?? "");
-    return jsonOk(c, result, "已加入购物车");
+    return jsonOk(c, result, "已准备再次购买商品");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

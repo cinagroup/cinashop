@@ -3,6 +3,7 @@
  */
 import { http } from "@/utils/request";
 import { orderDeleteRequest, assertOrderDeleteResult } from '../../../common/orderDeletion';
+import { orderRepurchaseRequest } from '../../../common/orderRepurchase';
 import type {
   CartItem,
   CheckoutCashier,
@@ -353,6 +354,11 @@ export function apiReplySubmit(params: {
 /** 取消订单 (POST /api/order/cancel) */
 export function apiOrderCancel(orderId: string): Promise<null> {
   return http.post<null>("/order/cancel", { order_id: orderId });
+}
+
+/** Prepare a new selection using current product availability; no order/payment. */
+export function apiOrderAgain(orderId: string): Promise<unknown> {
+  return http.post('/order/again', orderRepurchaseRequest(orderId));
 }
 
 /** 删除订单；非空成功响应也按结果未知处理，不自动重试。 */

@@ -19,6 +19,7 @@ import { normalizeCheckoutQuote, type CheckoutQuoteOptions } from "./checkoutQuo
 import { normalizeOrderCouponPage, orderCouponRequest, type OrderCouponScope } from "./orderCoupons";
 import { normalizeBargainShipping } from '../../../common/bargainShipping';
 import { orderDeleteRequest, assertOrderDeleteResult } from '../../../common/orderDeletion';
+import { orderRepurchaseRequest } from '../../../common/orderRepurchase';
 
 export async function apiBargainShipping(cartIds: number[]) {
   const ids = [...cartIds];
@@ -151,6 +152,11 @@ export function apiRechargePay(orderId: string, from = "pc"): Promise<CheckoutPa
 /** 取消订单 */
 export function apiOrderCancel(orderId: string): Promise<null> {
   return getData(request.post<null>("/order/cancel", { order_id: orderId }));
+}
+
+/** Prepare current products in a separate direct-buy selection, without placing an order. */
+export function apiOrderAgain(orderId: string): Promise<unknown> {
+  return getData(request.post('/order/again', orderRepurchaseRequest(orderId)));
 }
 
 /** 删除订单；非空成功响应也按结果未知处理，不自动重试。 */

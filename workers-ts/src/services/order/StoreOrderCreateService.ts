@@ -136,6 +136,7 @@ import { cashierOrdinaryCreationFacts, assertCashierOrdinaryParams, authorizeCas
   captureCashierOrdinaryCreation, assertCashierOrdinaryCreationReplay, type CashierOrdinaryCreationCapability } from './CashierOrdinaryOrigin';
 import { lockOrdinaryCashierRequest } from '@/services/customer-work/CustomerOrdinaryCashierLedger';
 import { loadOrdinaryCashierFormSubmission } from '@/services/customer-work/CustomerOrdinaryCashierForm';
+import { repurchaseCustomerOrder } from './CustomerOrderRepurchase';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -3646,25 +3647,9 @@ export class StoreOrderCreateService {
     });
   }
 
-  /** 再次购买 (order/again, 简化: 返回商品加入购物车) */
-  async again(uid: number, orderId: string): Promise<{ cartIds: number[] }> {
-    const order = await this.container.storeOrderDao.findByOrderId(orderId);
-    if (!order || order.uid !== uid) throw new NotFoundException("订单不存在");
-    const cartInfos = await this.container.storeOrderCartInfoDao.getByOid(order.id);
-
-    const cartIds: number[] = [];
-    for (const ci of cartInfos) {
-      const row = await this.container.storeCartDao.save({
-        uid,
-        productId: ci.productId,
-        productAttrUnique: ci.skuUnique,
-        cartNum: ci.cartNum,
-        addTime: Math.floor(Date.now() / 1000),
-        status: 1,
-      });
-      cartIds.push(row.id);
-    }
-    return { cartIds };
+  /** Prepare fresh direct-buy selections using current catalogue authority. */
+  async again(uid: number, orderId: unknown) {
+    return repurchaseCustomerOrder(this.container, this.env, uid, orderId);
   }
 }
 

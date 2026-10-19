@@ -1,0 +1,4135 @@
+{
+  "captured_at_utc": "2026-10-19T12:02:25.011087+00:00",
+  "baseline": "d1cf68c062770593e50db57252e30ee80491ba8e",
+  "branch": "codex/customer-order-repurchase",
+  "goal_active": true,
+  "overall_migration_complete": false,
+  "accepted_distinct_tests": 830,
+  "new_tests": {
+    "PC": 19,
+    "UniApp": 19,
+    "runner": 8,
+    "native": 52,
+    "Browser": 2,
+    "total": 100
+  },
+  "direct_test_entries": [
+    "view/pc-ts/test/auth-session.test.mjs",
+    "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+    "workers-ts/test/local-finance-postgres-runner.test.ts",
+    "workers-ts/test/pc-direct-purchase-cart.test.ts",
+    "workers-ts/test/prepared-product-cart.test.ts",
+    "workers-ts/test/presale-schedule.test.ts",
+    "workers-ts/test/presale-cart-postgres.test.ts",
+    "workers-ts/test/customer-order-repurchase-native.test.ts",
+    "workers-ts/test/browser/customer-order-repurchase.acceptance.ts"
+  ],
+  "validated_runtime_source_count": 17,
+  "runtime_fingerprints": [
+    {
+      "path": "view/common/orderRepurchase.ts",
+      "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+    },
+    {
+      "path": "view/pc-ts/src/api/order.ts",
+      "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+    },
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+    },
+    {
+      "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+      "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+      "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/order.ts",
+      "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+    },
+    {
+      "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+      "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+    },
+    {
+      "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+      "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+    },
+    {
+      "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+      "sha256": "4016f885ac564cb4f3307ab3445804014c2e533d42a80167f1a40be780fb4344"
+    },
+    {
+      "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+      "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+      "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+    },
+    {
+      "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+      "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+    }
+  ],
+  "source_authority": {
+    "captured_at_utc": "2026-10-19T11:10:31.211269+00:00",
+    "base_commit": "d1cf68c062770593e50db57252e30ee80491ba8e",
+    "sources": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/PC/pages/order_detail.vue",
+        "relative_path": "view/PC/pages/order_detail.vue",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "378fe63411e2100aa9a808fc2aca000cbf13174cce7e76a342263578f7494439",
+        "ranges": [
+          {
+            "start": 603,
+            "end": 615,
+            "claim": "mounted desktop receipt/completion repurchase"
+          },
+          {
+            "start": 876,
+            "end": 892,
+            "claim": "PHP uni POST and new=1 checkout IDs"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/goods/order_details/index.vue",
+        "relative_path": "view/uniapp/pages/goods/order_details/index.vue",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "5067867eba1161020791f983e58cfda1a41586c462d9933f5e89ec9e58ae8ca8",
+        "ranges": [
+          {
+            "start": 390,
+            "end": 402,
+            "claim": "only mounted mobile repurchase button uses class_status5"
+          },
+          {
+            "start": 904,
+            "end": 927,
+            "claim": "only received/completed class_status5 is mounted; class_again6 for other paid states has no template consumer"
+          },
+          {
+            "start": 940,
+            "end": 956,
+            "claim": "mounted again and direct-buy route"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/api/v1/order/StoreOrder.php",
+        "relative_path": "app/controller/api/v1/order/StoreOrder.php",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "3cc0cda63a02d86ca577bcc2ba924cbb54672a01bc49d7fe5d512dc43e87ca70",
+        "ranges": [
+          {
+            "start": 326,
+            "end": 355,
+            "claim": "ordinary cart activity selection and PHP cateId result"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderServices.php",
+        "relative_path": "app/services/order/StoreOrderServices.php",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+        "ranges": [
+          {
+            "start": 395,
+            "end": 449,
+            "claim": "tidy parses JSON type; physical merchant-origin type never overwrites it; gifts retained"
+          },
+          {
+            "start": 612,
+            "end": 620,
+            "claim": "PHP raw status2/3 maps to display_type3/4"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreCartServices.php",
+        "relative_path": "app/services/order/StoreCartServices.php",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+        "ranges": [
+          {
+            "start": 227,
+            "end": 305,
+            "claim": "current stock/product/SKU admission"
+          },
+          {
+            "start": 376,
+            "end": 420,
+            "claim": "new=true default; current product type/price and presale conversion"
+          },
+          {
+            "start": 1069,
+            "end": 1109,
+            "claim": "PHP single-order and cumulative purchase limit; full cumulative support remains a separate unfinished requirement"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/api/order.js",
+        "relative_path": "view/uniapp/api/order.js",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "a9db2a019ba0cfcad8cbce4caecc404514c8a76d89c270648eb1d449cca76a21",
+        "ranges": [
+          {
+            "start": 176,
+            "end": 188,
+            "claim": "registered native uni wire adapter"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/api.php",
+        "relative_path": "route/api.php",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "3c1f8fa017ddaf941e839ca575e98c8168198fbdcc1f8308bb7c068312759936",
+        "ranges": [
+          {
+            "start": 308,
+            "end": 317,
+            "claim": "registered authenticated again endpoint"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "relative_path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04",
+        "ranges": [
+          {
+            "start": 3649,
+            "end": 3673,
+            "claim": "unmigrated direct save omitted current authority/new1/atomicity"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreCartService.ts",
+        "relative_path": "workers-ts/src/services/order/StoreCartService.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "df9f1d7eab386c69ab0c4b3a12a06af8c4fc25809e34c4b114d132f6a8308d8c",
+        "ranges": [
+          {
+            "start": 207,
+            "end": 226,
+            "claim": "mature ordinary/activity add entry"
+          },
+          {
+            "start": 376,
+            "end": 494,
+            "claim": "current product/SKU checks and distinct direct-buy rows"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/PresaleCartService.ts",
+        "relative_path": "workers-ts/src/services/activity/PresaleCartService.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "e9b9297ab6c357764e22194576f930c7c9c597cefc3092ce9d70c3f74bfab5a8",
+        "ranges": [
+          {
+            "start": 33,
+            "end": 90,
+            "claim": "current SKU then product locks and complete standalone admission"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/controllers/api/v1/OrderController.ts",
+        "relative_path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "1983e20693409d9d3bdb56b819c78549b2018735934375a5a2f96d0b81b0e455",
+        "ranges": [
+          {
+            "start": 867,
+            "end": 882,
+            "claim": "existing route aliases and old cartIds response"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/pc-ts/src/pages/order/OrderDetail.vue",
+        "relative_path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "3780ea0e84fa70a45dc27a715ee6251b4ac3015b828bbb30b01f6052096149cc",
+        "ranges": [
+          {
+            "start": 174,
+            "end": 203,
+            "claim": "desktop detail actions lacked repurchase"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/src/pages/order/detail.vue",
+        "relative_path": "view/uniapp-ts/src/pages/order/detail.vue",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "bfd5e91fff8921e2a11078cdee668f4ccddd926efa6d1d547b82649db155ba47",
+        "ranges": [
+          {
+            "start": 166,
+            "end": 203,
+            "claim": "mobile detail actions lacked repurchase"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/common/checkoutSelection.ts",
+        "relative_path": "view/common/checkoutSelection.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "b2dc4eb95a8f0889d6e99566aaf912025618014757d1bc2d287381c9fd76fa37",
+        "ranges": [
+          {
+            "start": 39,
+            "end": 57,
+            "claim": "strict direct-buy mode with exact positive IDs"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/order.ts",
+        "relative_path": "workers-ts/src/models/schema/order.ts",
+        "capture_kind": "exact_base_Git_blob",
+        "sha256": "8564b8508b477c797a94e8040c887e1ec9fd1be240d87c5bfe04c769ff322e14",
+        "ranges": [
+          {
+            "start": 28,
+            "end": 67,
+            "claim": "persistent isolated direct-buy cart representation"
+          },
+          {
+            "start": 215,
+            "end": 235,
+            "claim": "physical historical merchant-origin type separate from snapshot JSON"
+          }
+        ]
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/user/UserServices.php",
+        "relative_path": "app/services/user/UserServices.php",
+        "capture_kind": "actual_local_PHP",
+        "sha256": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+        "ranges": [
+          {
+            "start": 158,
+            "end": 166,
+            "claim": "member_card_status gates paid-member exclusive eligibility; price discount switch is independent"
+          }
+        ]
+      }
+    ],
+    "qualification": [
+      "Actual local PHP is source authority, exact d1cf68c0 TS is the migration baseline. Source proof does not imply executed provider/production compatibility.",
+      "PHP order type and JSON cart activity type determine repeat scope. Physical store_order_cart_info.type identifies platform/store/Supplier and does not exclude Supplier ordinary lines. Initial contrary interpretation was corrected before testing the implementation.",
+      "PHP preserves gift lines and uses current normal prices; no historical gift entitlement or old price is replayed. Both actual mounted surfaces expose repurchase after receipt/completion.",
+      "New PostgreSQL cart IDs replace PHP Redis cache identities, and modern mode=buy routes use the same independent selection meaning.",
+      "Cumulative limit2 remains an explicit PHP parity gap; rejection is not completion or equivalent to verified available quota.",
+      "Initial mobile eligibility inferred from unmounted class_again6 was corrected after template verification. Both modern mounted surfaces use rawstatus2/3; other paid states do not expose repurchase. API itself keeps PHP broader source status admission."
+    ]
+  },
+  "accepted_phases": {
+    "frontend-v4": {
+      "name": "frontend-v4",
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "/tmp/cinashop-customer-order-repurchase-frontend.sh"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 53.11,
+      "started_at_utc": "2026-10-19T11:28:47.403975+00:00",
+      "finished_at_utc": "2026-10-19T11:29:40.511741+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-frontend-v4.log",
+      "receipt_sha256": "9bcbb52946f9a0a7c0a23707548d5f9dbfd2ed85401dd91e2e674ac228180aae",
+      "log_sha256": "216fe72b175c784ad9de751ec744b62af05053625a1a5119f352ad3443e49db2",
+      "accepted_tests": 385
+    },
+    "presale-v1": {
+      "name": "presale-v1",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/presale-cart-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.41,
+      "started_at_utc": "2026-10-19T11:27:31.265419+00:00",
+      "finished_at_utc": "2026-10-19T11:27:41.677353+00:00",
+      "source_fingerprints": [
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/presale-cart-postgres.test.ts",
+          "sha256": "7d1b82d09008ac5bf6656957d6e68305454a15a69b6a944267d2647f903f1e58"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-presale-v1.log",
+      "receipt_sha256": "5bbb5cc78639821b473eafcbf27747b1bf15ffa5d31470f01c2a43d9cf0023e7",
+      "log_sha256": "ca03091d46537d9fe2320b9eabce2e61e7c061e5acc5f60bcd71caf48353bc69",
+      "accepted_tests": 22
+    },
+    "worker-v1": {
+      "name": "worker-v1",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "/tmp/cinashop-customer-order-repurchase-worker.sh"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 201.26,
+      "started_at_utc": "2026-10-19T11:29:53.156910+00:00",
+      "finished_at_utc": "2026-10-19T11:33:14.420305+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+          "sha256": "b1d169dd82bd39653fdb89ada6e7f1b9a3112a86cb36430bd41b075daf3e670b"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "31e1f0871331cb957f5c8ecee576f0229b8a8e94a5f10194b83cb2d831f811bc"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        },
+        {
+          "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+          "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-worker-v1.log",
+      "receipt_sha256": "246650198e957bd544be8e47fe72b92801b90c1f48508526d5af928a2dd89634",
+      "log_sha256": "e468d9b59aa7974011a79c16f1c5b9b6d164394dae038e8c1d97c0d00dea7d0b",
+      "accepted_tests": 369
+    },
+    "native-v3": {
+      "name": "native-v3",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/customer-order-repurchase-native.test.ts"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 435.94,
+      "started_at_utc": "2026-10-19T11:37:33.776011+00:00",
+      "finished_at_utc": "2026-10-19T11:44:49.716257+00:00",
+      "source_fingerprints": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-native-v3.log",
+      "receipt_sha256": "f8894a843a528e1d9c142e8e6b0eed4f51bd827fb9200f23ec45f0d4eb9589cf",
+      "log_sha256": "1d7b8c21f5593b6de1377d99d931b7b4944ed1118428579920e342ba0c01eb52",
+      "accepted_tests": 52
+    },
+    "browser-v2": {
+      "name": "browser-v2",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:customer-order-repurchase-browser"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 177.42,
+      "started_at_utc": "2026-10-19T11:50:14.598704+00:00",
+      "finished_at_utc": "2026-10-19T11:53:12.019086+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+          "sha256": "4016f885ac564cb4f3307ab3445804014c2e533d42a80167f1a40be780fb4344"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        },
+        {
+          "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+          "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-browser-v2.log",
+      "receipt_sha256": "40587bbebd89503e9ca29bf0f527306d2b1718b8bb797fa497c1183becc8996e",
+      "log_sha256": "1688b7a65dc1b08554995b16743e15c6df315de2d3490e1a5952c1dd0a7ff027",
+      "accepted_tests": 2
+    },
+    "final-types-v1": {
+      "name": "final-types-v1",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "/tmp/cinashop-customer-order-repurchase-final-types.sh"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 180.56,
+      "started_at_utc": "2026-10-19T11:53:39.625487+00:00",
+      "finished_at_utc": "2026-10-19T11:56:40.189039+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+          "sha256": "4016f885ac564cb4f3307ab3445804014c2e533d42a80167f1a40be780fb4344"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        },
+        {
+          "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+          "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-final-types-v1.log",
+      "receipt_sha256": "0cc81e23b020570af855cb2334aa001518bfeb92e7b10ef41ba83e183cdc7a7c",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "diagnostic_only_gift_probe": {
+    "name": "native-gift-v1",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "command": [
+      "bash",
+      "/home/cina/cinagroup/tools/validate-serial.sh",
+      "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "scripts/run-local-finance-postgres.mjs",
+      "--schema-maintenance",
+      "--case",
+      "retains gift products as fresh ordinary-price selections without copying historical gift entitlement",
+      "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+      "test/customer-order-repurchase-native.test.ts"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.24,
+    "started_at_utc": "2026-10-19T11:36:58.807405+00:00",
+    "finished_at_utc": "2026-10-19T11:37:21.045101+00:00",
+    "source_fingerprints": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+        "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+      },
+      {
+        "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+        "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+      },
+      {
+        "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+        "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+      },
+      {
+        "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+        "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+        "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+      }
+    ],
+    "source_unchanged_at_exit": true,
+    "log": "/tmp/cinashop-customer-order-repurchase-20261019-native-gift-v1.log",
+    "receipt_sha256": "84a73dee4d7084ae05b25c14bc4f8b8ef14fcd5722427e6d129493b3efce1c8c",
+    "log_sha256": "b6330cf5affb9ee5f43b2c4d14f9cf746c660012b4904163268176dbecb37c75",
+    "accepted_additional_tests": 0,
+    "qualification": "One exact regression and51 deliberately filtered cases; full native-v3 accepts all52 and prevents double-count."
+  },
+  "final_types": {
+    "name": "final-types-v1",
+    "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+    "command": [
+      "bash",
+      "/home/cina/cinagroup/tools/validate-serial.sh",
+      "bash",
+      "/tmp/cinashop-customer-order-repurchase-final-types.sh"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 180.56,
+    "started_at_utc": "2026-10-19T11:53:39.625487+00:00",
+    "finished_at_utc": "2026-10-19T11:56:40.189039+00:00",
+    "source_fingerprints": [
+      {
+        "path": "view/common/orderRepurchase.ts",
+        "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+      },
+      {
+        "path": "view/pc-ts/src/api/order.ts",
+        "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+      },
+      {
+        "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+        "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+      },
+      {
+        "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+        "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+        "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+      },
+      {
+        "path": "view/uniapp-ts/src/api/order.ts",
+        "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/order/detail.vue",
+        "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+      },
+      {
+        "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+        "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+      },
+      {
+        "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+        "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+      },
+      {
+        "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+        "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+      },
+      {
+        "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+        "sha256": "4016f885ac564cb4f3307ab3445804014c2e533d42a80167f1a40be780fb4344"
+      },
+      {
+        "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+        "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+      },
+      {
+        "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+        "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+      },
+      {
+        "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+        "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+      }
+    ],
+    "source_unchanged_at_exit": true,
+    "log": "/tmp/cinashop-customer-order-repurchase-20261019-final-types-v1.log",
+    "receipt_sha256": "0cc81e23b020570af855cb2334aa001518bfeb92e7b10ef41ba83e183cdc7a7c",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "worker_v1_qualification": "369 unit cases retain their exact source inputs; later native test literal10.00-to10 and Browser visible-price assertion corrections are outside these four unit input files. Full final Worker type projects rerun against all final17 sources.",
+  "superseded_successful_frontend": [
+    "frontend-v2",
+    "frontend-v3"
+  ],
+  "failed_aggregates_excluded": [
+    {
+      "name": "frontend-v1",
+      "cwd": "/home/cina/cinagroup/cinashop",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "/tmp/cinashop-customer-order-repurchase-frontend.sh"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 29.14,
+      "started_at_utc": "2026-10-19T11:01:41.178218+00:00",
+      "finished_at_utc": "2026-10-19T11:02:10.313343+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "3d34b726c0361db33f5703b2de9cba9fba66f1b4aef7a361266b59a6edb173d5"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "b5a96b32ba4cdc0663cc244063acbd98f4c2d136146e5a7c10ac5a35f5bc25c0"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a05b4fca8342fb4b33f7c0aa9e024b18b3c4721be741c794f216fa540ebcbd86"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "d16f63542969a42348623b49b2a7c89bea6de0b443be9ee4a30c6d3e3ddda2a3"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "8cbc410428d4123f7b4933b5684bd6e46c012c9d9d99bd245b392ae8ef43870d"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-frontend-v1.log",
+      "accepted_tests": 0,
+      "receipt_sha256": "f8287d06bae5dd47d0a9fef30aa1b09181588a01a57cdc8ee65644744a9b0aab",
+      "log_sha256": "7134e2ac70375e356e54e57157f91e4abcd2185f98930deaaab3b52fb08b551d"
+    },
+    {
+      "name": "native-v1",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/customer-order-repurchase-native.test.ts"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 434.82,
+      "started_at_utc": "2026-10-19T11:19:49.704669+00:00",
+      "finished_at_utc": "2026-10-19T11:27:04.520699+00:00",
+      "source_fingerprints": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "2d7c0009aef258f964d4543612ba7de9943ffb1e3eb0825f6331d272038fcacd"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-native-v1.log",
+      "accepted_tests": 0,
+      "receipt_sha256": "932a43b778097f7cbc182e25f9014666f60e682bc33b1f973958ef4370f6c640",
+      "log_sha256": "145a8c2051c8eb4325c9d4f8c8c168e97beecf5e6493c68948d773fde064e570"
+    },
+    {
+      "name": "native-v2",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/customer-order-repurchase-native.test.ts"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 163.46,
+      "started_at_utc": "2026-10-19T11:33:37.974050+00:00",
+      "finished_at_utc": "2026-10-19T11:36:21.437254+00:00",
+      "source_fingerprints": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "31e1f0871331cb957f5c8ecee576f0229b8a8e94a5f10194b83cb2d831f811bc"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-native-v2.log",
+      "accepted_tests": 0,
+      "receipt_sha256": "83eee1e38814ca9a256fbe65834ae62ad42b8013b08910efd654c49191a843d5",
+      "log_sha256": "fdf600d05a85f94cef455eff212ea788f814a2be433a92ae7e0ae84a1224feea"
+    },
+    {
+      "name": "browser-v1",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:customer-order-repurchase-browser"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 285.31,
+      "started_at_utc": "2026-10-19T11:45:02.362669+00:00",
+      "finished_at_utc": "2026-10-19T11:49:47.671730+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+          "sha256": "b1d169dd82bd39653fdb89ada6e7f1b9a3112a86cb36430bd41b075daf3e670b"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        },
+        {
+          "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+          "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-browser-v1.log",
+      "accepted_tests": 0,
+      "receipt_sha256": "45f76efdd0065f5316291754e08ec4c9d763662a6cc48444440b7cd3defd76bb",
+      "log_sha256": "74355f151b25c18c6b19fa3eed117146d75f6e19827a522e6ec2f76e58de83b5"
+    }
+  ],
+  "failure_explanation": [
+    "Frontend-v1 receipt does not record HTTP method; corrected count assertion to exact endpoint while retaining actual POST boundary assertion.",
+    "Native-v1: fixture recreation exceeded default5s; expected gift SKU price10 was incorrectly12.80; zero-padding collision in 101-line fixture. All49pass excluded, corrected full52 rerun accepted.",
+    "Native-v1 and interrupted-v2 automatic cleanup each left1DB/2roles; exact stopped clusters verified and cleaned in single-user mode. No HBA change or listener.",
+    "Native-v2 interrupted after evidence proved corrected expected10.00 still disagreed with actual DTO10; whole0accepted. Exact gift probe later diagnostic-only, followed by complete52 rerun.",
+    "Browser-v1 1pass1fail whole excluded: H5 renders line37.76 and subtotal67.76, not unit18.88. Only visible-text assertion corrected; actual serverunit18.88/quote/SQL invariants retained."
+  ],
+  "frontend_final_matching_source_count": 7,
+  "backend_final_matching_native_source_count": 8,
+  "independent_reviews": [
+    {
+      "path": "/tmp/cinashop-customer-order-repurchase-root9-independent-source-review-v4-20261019.json",
+      "sha256": "a3c0045277352597441bd1022f6ce728586b90fb6c8437ce7c43e47632e1d64d"
+    },
+    {
+      "path": "/tmp/cinashop-customer-order-repurchase-backend-independent-review-v2.json",
+      "sha256": "ff61e44f2130f87f3afeee4a6a60b43c1d0ae73140a00c195ba9a220a89d81bd"
+    },
+    {
+      "path": "/tmp/cinashop-customer-order-repurchase-backend-validation-review-v1-20261019.json",
+      "sha256": "e08b18bc5081c676b2c3812357b8b9e0aeb51d26e9644562215254a9d2f5aae1"
+    },
+    {
+      "path": "/tmp/cinashop-customer-order-repurchase-browser-v2-independent-review-20261019.json",
+      "sha256": "68c0b6270020bb7db3b7edcd443e228810e20d9a21f9b516bb97fede9a53c1b2"
+    }
+  ],
+  "browser": [
+    {
+      "kind": "pc",
+      "source_order": "repurchase_source",
+      "source_row_id": 1,
+      "traces": [
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/count",
+          "search": "?scope=cart",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/list",
+          "search": "?scope=cart",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/again",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": false,
+          "exact_body": {
+            "uni": "repurchase_source"
+          },
+          "prepared_ids": [
+            9003,
+            9004
+          ],
+          "original_and_unrelated_carts_unchanged": true,
+          "only_cart_rows_and_cart_sequence_changed": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/list",
+          "search": "?scope=buy&ids=9003,9004",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "exact_direct_buy_selection": true,
+          "current_first_sku_price": "18.88"
+        },
+        {
+          "method": "GET",
+          "path": "/api/address/list",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/store/list",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coupons/order/0",
+          "search": "?cartId=9003,9004&new=1&shipping_type=1&store_id=0&limit=20",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/confirm",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "actual_current_price_quote": true,
+          "server_line_totals": [
+            "37.76",
+            "30.00"
+          ],
+          "server_goods_subtotal": "67.76",
+          "quote_cache_qualification": "Legacy preview may store its short-lived KV key; SQL/R2 mutation is forbidden"
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/confirm",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "actual_current_price_quote": true,
+          "server_line_totals": [
+            "37.76",
+            "30.00"
+          ],
+          "server_goods_subtotal": "67.76",
+          "quote_cache_qualification": "Legacy preview may store its short-lived KV key; SQL/R2 mutation is forbidden"
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/count",
+          "search": "?scope=cart",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/list",
+          "search": "?scope=cart",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/again",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": false,
+          "exact_body": {
+            "uni": "repurchase_source"
+          },
+          "prepared_ids": [
+            9005,
+            9006
+          ],
+          "original_and_unrelated_carts_unchanged": true,
+          "only_cart_rows_and_cart_sequence_changed": true,
+          "injected_http": 503
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "injected_http": 503
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        }
+      ],
+      "evidence": [
+        {
+          "stage": "source-ready",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出订单详情已收货订单号repurchase_source下单时间2026-10-19 11:50收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号商品数量3支付方式余额支付商品清单完整报价隔离样本¥10.00x2暂无商品图片Local runtime remainder¥30.00x1商品金额¥50.00实付金额¥55.00按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。再次购买 评价订单 © 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": false,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "checkout-ready",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出确认订单配送方式快递配送门店自提收货地址本地地址甲00000000000默认本地省测试甲市测试甲区隔离样本一号本地地址乙00000000000本地省测试乙市测试乙区隔离样本二号+ 新增地址商品清单商品商品单价数量商品小计完整报价隔离样本红色,大号¥18.882¥37.76暂无商品图片Local runtime remainderStandard¥30.001¥30.00完整报价隔离样本红色,大号商品单价¥18.88数量2商品小计¥37.76暂无商品图片Local runtime remainderStandard商品单价¥30.00数量1商品小计¥30.00使用积分抵扣（可用额度由系统计算）优惠券以下优惠券已按当前商品和配送方式筛选；选择和提交时仍由服务端重新校验。首单优惠优先且不与优惠券叠加。不使用优惠券刷新优惠券当前订单暂无可用优惠券（可能受首单优惠或适用范围限制）。费用明细商品原价¥67.76商品小计¥67.76运费¥6.00应付金额¥73.76订单备注:应付: ¥73.76提交订单© 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/checkout?mode=buy&cartIds=9003,9004",
+          "repurchase_buttons": [],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "unknown-source-ready",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出订单详情已收货订单号repurchase_source下单时间2026-10-19 11:50收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号商品数量3支付方式余额支付商品清单完整报价隔离样本¥10.00x2暂无商品图片Local runtime remainder¥30.00x1商品金额¥50.00实付金额¥55.00按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。再次购买 评价订单 © 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": false,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "unknown-locked",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出订单详情已收货订单号repurchase_source下单时间2026-10-19 11:50收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号商品数量3支付方式余额支付商品清单完整报价隔离样本¥10.00x2暂无商品图片Local runtime remainder¥30.00x1商品金额¥50.00实付金额¥55.00按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买 评价订单 © 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "unknown-reloaded",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出订单详情已收货订单号repurchase_source下单时间2026-10-19 11:50收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号商品数量3支付方式余额支付商品清单完整报价隔离样本¥10.00x2暂无商品图片Local runtime remainder¥30.00x1商品金额¥50.00实付金额¥55.00按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买 评价订单 © 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "source-cleared",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出Request failed with status code 503重新加载订单© 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        },
+        {
+          "stage": "source-recovered",
+          "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 1个人中心退出订单详情已收货订单号repurchase_source下单时间2026-10-19 11:50收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号商品数量3支付方式余额支付商品清单完整报价隔离样本¥10.00x2暂无商品图片Local runtime remainder¥30.00x1商品金额¥50.00实付金额¥55.00按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买 评价订单 © 2026 本地再次购买验收\n  \n\n",
+          "href": "http://127.0.0.1:40751/order/repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 1185,
+          "page_scroll_width": 1185
+        }
+      ],
+      "acknowledgements": [
+        {
+          "cartIds": [
+            9003,
+            9004
+          ],
+          "cateId": "9003,9004",
+          "sourceOrderId": "repurchase_source",
+          "sourceRowId": 1
+        },
+        {
+          "cartIds": [
+            9005,
+            9006
+          ],
+          "cateId": "9005,9006",
+          "sourceOrderId": "repurchase_source",
+          "sourceRowId": 1
+        }
+      ],
+      "required_stages": [
+        "source-ready",
+        "checkout-ready",
+        "unknown-source-ready",
+        "unknown-locked",
+        "unknown-reloaded",
+        "source-cleared",
+        "source-recovered"
+      ],
+      "finished": true,
+      "provider_calls": 0,
+      "r2_reads": 0,
+      "r2_puts": 0,
+      "r2_deletes": 0,
+      "fixture_thumbnail_reads": 2,
+      "table_count": 282,
+      "sequence_count": 229,
+      "artifact": {
+        "path": "/tmp/cinashop-customer-order-repurchase-browser-pc-result.json",
+        "sha256": "da61ab5f40fe2a87fafce5d9f139ff919f63067af734193c0db16457e130215e"
+      }
+    },
+    {
+      "kind": "mobile",
+      "source_order": "repurchase_source",
+      "source_row_id": 1,
+      "traces": [
+        {
+          "method": "GET",
+          "path": "/api/v2/diy/color_change/color_change",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/get_script",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/again",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": false,
+          "exact_body": {
+            "uni": "repurchase_source"
+          },
+          "prepared_ids": [
+            9003,
+            9004
+          ],
+          "original_and_unrelated_carts_unchanged": true,
+          "only_cart_rows_and_cart_sequence_changed": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/cart/list",
+          "search": "?scope=buy&ids=9003%2C9004",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "exact_direct_buy_selection": true,
+          "current_first_sku_price": "18.88"
+        },
+        {
+          "method": "GET",
+          "path": "/api/address/list",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/store/list",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coupons/order/0",
+          "search": "?cartId=9003%2C9004&new=1&shipping_type=1&store_id=0&limit=20",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/confirm",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "actual_current_price_quote": true,
+          "server_line_totals": [
+            "37.76",
+            "30.00"
+          ],
+          "server_goods_subtotal": "67.76",
+          "quote_cache_qualification": "Legacy preview may store its short-lived KV key; SQL/R2 mutation is forbidden"
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/v2/diy/color_change/color_change",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/order/again",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": false,
+          "exact_body": {
+            "uni": "repurchase_source"
+          },
+          "prepared_ids": [
+            9005,
+            9006
+          ],
+          "original_and_unrelated_carts_unchanged": true,
+          "only_cart_rows_and_cart_sequence_changed": true,
+          "injected_http": 503
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true,
+          "injected_http": 503
+        },
+        {
+          "method": "GET",
+          "path": "/api/order/detail/repurchase_source",
+          "search": "",
+          "http": 200,
+          "boundary": "owned_fixture_maintenance_SQL",
+          "SQL_rows_sequences_unchanged_expected": true,
+          "all_public_tables_sequences_unchanged": true
+        }
+      ],
+      "evidence": [
+        {
+          "stage": "source-ready",
+          "text": "\n    订单详情已收货感谢您的购买订单号repurchase_source下单时间2026-10-19 11:51收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号完整报价隔离样本¥10.00x2Local runtime remainder¥30.00x1商品金额¥50.00实付¥55.00✍️ 评价订单›按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。再次购买📋 退款记录›首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": false,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 375,
+          "page_scroll_width": 375
+        },
+        {
+          "stage": "checkout-ready",
+          "text": "\n    确认订单配送方式快递配送门店自提本地地址甲 00000000000本地省测试甲市测试甲区隔离样本一号本地地址乙 00000000000本地省测试乙市测试乙区隔离样本二号新增或管理地址结算商品完整报价隔离样本红色,大号 × 2¥37.76Local runtime remainderStandard × 1¥30.00使用积分抵扣（额度由系统计算）当前订单优惠券不使用优惠券刷新优惠券当前订单暂无适用优惠券，可能受首单优惠或适用范围限制。费用明细商品金额¥67.76会员优惠-¥0.00商品小计¥67.76首单优惠-¥0.00优惠券-¥0.00积分抵扣（0积分）-¥0.00运费¥6.00运费优惠-¥0.00应付金额¥73.76订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。合计 ¥73.76提交订单首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/confirm?mode=buy&cartIds=9003,9004",
+          "repurchase_buttons": [],
+          "page_width": 375,
+          "page_scroll_width": 375
+        },
+        {
+          "stage": "unknown-source-ready",
+          "text": "\n    订单详情已收货感谢您的购买订单号repurchase_source下单时间2026-10-19 11:51收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号完整报价隔离样本¥10.00x2Local runtime remainder¥30.00x1商品金额¥50.00实付¥55.00✍️ 评价订单›按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。再次购买📋 退款记录›首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": false,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 375,
+          "page_scroll_width": 375
+        },
+        {
+          "stage": "unknown-locked",
+          "text": "\n    订单详情已收货感谢您的购买订单号repurchase_source下单时间2026-10-19 11:51收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号完整报价隔离样本¥10.00x2Local runtime remainder¥30.00x1商品金额¥50.00实付¥55.00✍️ 评价订单›按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买📋 退款记录›首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 375,
+          "page_scroll_width": 375
+        },
+        {
+          "stage": "unknown-reloaded",
+          "text": "\n    订单详情已收货感谢您的购买订单号repurchase_source下单时间2026-10-19 11:51收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号完整报价隔离样本¥10.00x2Local runtime remainder¥30.00x1商品金额¥50.00实付¥55.00✍️ 评价订单›按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买📋 退款记录›首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 375,
+          "page_scroll_width": 375
+        },
+        {
+          "stage": "source-cleared",
+          "text": "\n    订单详情请求失败重新加载订单首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [],
+          "page_width": 390,
+          "page_scroll_width": 390
+        },
+        {
+          "stage": "source-recovered",
+          "text": "\n    订单详情已收货感谢您的购买订单号repurchase_source下单时间2026-10-19 11:51收货人本地地址甲 00000000000收货地址本地省本地省 测试甲市 测试甲区 隔离样本一号完整报价隔离样本¥10.00x2Local runtime remainder¥30.00x1商品金额¥50.00实付¥55.00✍️ 评价订单›按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。准备结果尚未确认，请勿重复操作；本操作不会创建订单或发起付款。重新读取原订单再次购买📋 退款记录›首页分类逛逛购物车我的\n  \n\n",
+          "href": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+          "repurchase_buttons": [
+            {
+              "disabled": true,
+              "text": "再次购买"
+            }
+          ],
+          "page_width": 375,
+          "page_scroll_width": 375
+        }
+      ],
+      "acknowledgements": [
+        {
+          "cartIds": [
+            9003,
+            9004
+          ],
+          "cateId": "9003,9004",
+          "sourceOrderId": "repurchase_source",
+          "sourceRowId": 1
+        },
+        {
+          "cartIds": [
+            9005,
+            9006
+          ],
+          "cateId": "9005,9006",
+          "sourceOrderId": "repurchase_source",
+          "sourceRowId": 1
+        }
+      ],
+      "required_stages": [
+        "source-ready",
+        "checkout-ready",
+        "unknown-source-ready",
+        "unknown-locked",
+        "unknown-reloaded",
+        "source-cleared",
+        "source-recovered"
+      ],
+      "finished": true,
+      "provider_calls": 0,
+      "r2_reads": 0,
+      "r2_puts": 0,
+      "r2_deletes": 0,
+      "fixture_thumbnail_reads": 2,
+      "table_count": 282,
+      "sequence_count": 229,
+      "artifact": {
+        "path": "/tmp/cinashop-customer-order-repurchase-browser-mobile-result.json",
+        "sha256": "a72de960d91377ed5304415b8653277b182329a569eaa9ff25903dc404d09429"
+      }
+    }
+  ],
+  "browser_ui_receipt": {
+    "captured_at_utc": "2026-10-19T11:56:06.436795+00:00",
+    "accepted": true,
+    "records": [
+      {
+        "kind": "pc",
+        "stage": "source",
+        "matched_actual_browser_stage": "source-ready",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/cb8c3641-6ed8-4621-9b18-d3cccbf834fd",
+        "actual_route": "http://127.0.0.1:40751/order/repurchase_source",
+        "width": 1185,
+        "scroll_width": 1185,
+        "buttons": [
+          {
+            "disabled": false,
+            "text": "再次购买"
+          }
+        ],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-pc-source.jpg",
+        "screenshot_sha256": "fb9581ee23f6759088e23d84c95b4322a213b492632389dbf1a4d066b9e2e679",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-pc-source-ax.txt",
+        "ax_sha256": "895a189514c6eb2ef5b2afa8f9a3df0752c152984c7ad4a0ff0afed6088c06a0",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-pc-source.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:51:11.152386+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "pc",
+        "stage": "checkout",
+        "matched_actual_browser_stage": "checkout-ready",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/cb8c3641-6ed8-4621-9b18-d3cccbf834fd",
+        "actual_route": "http://127.0.0.1:40751/checkout?mode=buy&cartIds=9003,9004",
+        "width": 1185,
+        "scroll_width": 1185,
+        "buttons": [],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-pc-checkout.jpg",
+        "screenshot_sha256": "aaefeba8748d9c4ed589dbcf216f360471a3b9b393662e7fbf65a4e69e386e92",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-pc-checkout-ax.txt",
+        "ax_sha256": "2aaf8216f8c1591eedd1988e7ec439ed0714ced8b1e5d27cf7301cb4d53501b6",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-pc-checkout.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:51:19.359385+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "pc",
+        "stage": "cleared",
+        "matched_actual_browser_stage": "source-cleared",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/cb8c3641-6ed8-4621-9b18-d3cccbf834fd",
+        "actual_route": "http://127.0.0.1:40751/order/repurchase_source",
+        "width": 1185,
+        "scroll_width": 1185,
+        "buttons": [],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-pc-cleared.jpg",
+        "screenshot_sha256": "7328ebc484fd387361b01e058365b6b886ca460c7b8f35631136264b596de100",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-pc-cleared-ax.txt",
+        "ax_sha256": "e1bbb6e638c503b34fb5cd2f90fa8cb4db36204b85cd5d85d0b0260ee462f925",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-pc-cleared.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:51:39.632384+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "pc",
+        "stage": "recovered",
+        "matched_actual_browser_stage": "source-recovered",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/cb8c3641-6ed8-4621-9b18-d3cccbf834fd",
+        "actual_route": "http://127.0.0.1:40751/order/repurchase_source",
+        "width": 1185,
+        "scroll_width": 1185,
+        "buttons": [
+          {
+            "disabled": true,
+            "text": "再次购买"
+          }
+        ],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-pc-recovered.jpg",
+        "screenshot_sha256": "5925957f8813a6c98477075662943e6fee04cc7c539346aa8344f7bae1033217",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-pc-recovered-ax.txt",
+        "ax_sha256": "fd1c9f1239095924146c4c637f5477cd532ee81f1134cbf1656c02cbe5309d1e",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-pc-recovered.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:51:45.384383+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "source",
+        "matched_actual_browser_stage": "source-ready",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/e3f7c31d-3fd7-441e-9fc3-6c504ad79a7c",
+        "actual_route": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+        "width": 375,
+        "scroll_width": 375,
+        "buttons": [
+          {
+            "disabled": false,
+            "text": "再次购买"
+          }
+        ],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-mobile-source.jpg",
+        "screenshot_sha256": "95a5bbc43e732599a316315cdfe7fa1cc478ad077375930d29b0c00792c20c7e",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-mobile-source-ax.txt",
+        "ax_sha256": "fa2fa45aea2d569343409f2c012824063c777b3a50af6c03b3cb26d40fbd0786",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-mobile-source.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:52:09.077381+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "checkout",
+        "matched_actual_browser_stage": "checkout-ready",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/e3f7c31d-3fd7-441e-9fc3-6c504ad79a7c",
+        "actual_route": "http://127.0.0.1:40751/#/pages/order/confirm?mode=buy&cartIds=9003,9004",
+        "width": 375,
+        "scroll_width": 375,
+        "buttons": [],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-mobile-checkout.jpg",
+        "screenshot_sha256": "f78942b31fe1d6e91af3cddd8983513adecbb2979fa912e9ce6cdb4860be6eed",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-mobile-checkout-ax.txt",
+        "ax_sha256": "984d39c2417db2a7db82405f1a5c70332ee98f02257989c1e7649c881745a0b1",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-mobile-checkout.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:52:15.722380+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "cleared",
+        "matched_actual_browser_stage": "source-cleared",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/e3f7c31d-3fd7-441e-9fc3-6c504ad79a7c",
+        "actual_route": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+        "width": 390,
+        "scroll_width": 390,
+        "buttons": [],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-mobile-cleared.jpg",
+        "screenshot_sha256": "f812130cd0f2ddfb481511002263a9ef8cf85a34fd937f43164ac77477580483",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-mobile-cleared-ax.txt",
+        "ax_sha256": "3962d91cc71c2c90825e236cf8220aba61d04674b62982661ef7483bddb8c577",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-mobile-cleared.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:53:05.866375+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "recovered",
+        "matched_actual_browser_stage": "source-recovered",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/e3f7c31d-3fd7-441e-9fc3-6c504ad79a7c",
+        "actual_route": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+        "width": 375,
+        "scroll_width": 375,
+        "buttons": [
+          {
+            "disabled": true,
+            "text": "再次购买"
+          }
+        ],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-mobile-recovered.jpg",
+        "screenshot_sha256": "a9f7484fd6de935b9bacba243d682ac46daf43bfa8f417403330df80504beb7b",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-mobile-recovered-ax.txt",
+        "ax_sha256": "f54ba3645f8b0651252b4290c5e9adc838675bf37df2633784ac05df1a4154c0",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-mobile-recovered.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:53:11.290375+00:00",
+        "native_capture_within_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "recovered-bottom",
+        "matched_actual_browser_stage": "source-recovered",
+        "outer_url": "http://127.0.0.1:40751/__order_repurchase/e3f7c31d-3fd7-441e-9fc3-6c504ad79a7c",
+        "actual_route": "http://127.0.0.1:40751/#/pages/order/detail?orderId=repurchase_source",
+        "width": 375,
+        "scroll_width": 375,
+        "buttons": [
+          {
+            "disabled": true,
+            "text": "再次购买"
+          }
+        ],
+        "screenshot": "/tmp/cinashop-customer-order-repurchase-mobile-recovered-bottom.jpg",
+        "screenshot_sha256": "33f60a1e7640337432918c6406d006d665a77222ac2a5fc0573ee5706b37b0ff",
+        "native_image_format": "JPEG",
+        "image_dimensions": [
+          1265,
+          712
+        ],
+        "ax": "/tmp/cinashop-customer-order-repurchase-mobile-recovered-bottom-ax.txt",
+        "ax_sha256": "d1c8b256e495d59a13384ca870b194171ca4c585b54ca6dc462156966ae7defe",
+        "DOM_evidence_source": "Actual same-case7stage browser result; Cua JPEG and AX independently saved and visually inspected",
+        "native_capture_artifact": "/tmp/cinashop-customer-order-repurchase-mobile-recovered-bottom.png",
+        "native_capture_format": "JPEG bytes initially named .png; .jpg copy is byte-identical",
+        "native_capture_at_utc": "2026-10-19T11:53:51.495371+00:00",
+        "native_capture_within_browser_run": false,
+        "post_terminal_seconds": 39.476,
+        "qualification": "Supplemental scroll of same already recovered page after successful terminal; not an additional business stage or validation case."
+      }
+    ],
+    "screenshots_accepted": 9,
+    "PC_logs": [],
+    "mobile_logs": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-19T11:52:06.048Z",
+        "url": "http://127.0.0.1:40751/assets/index-CsyTfDkJ.js"
+      },
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-19T11:52:49.109Z",
+        "url": "http://127.0.0.1:40751/assets/index-CsyTfDkJ.js"
+      }
+    ],
+    "browser_id": "2",
+    "background": true,
+    "viewport_override": false,
+    "browser_terminal": {
+      "name": "browser-v2",
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:customer-order-repurchase-browser"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 177.42,
+      "started_at_utc": "2026-10-19T11:50:14.598704+00:00",
+      "finished_at_utc": "2026-10-19T11:53:12.019086+00:00",
+      "source_fingerprints": [
+        {
+          "path": "view/common/orderRepurchase.ts",
+          "sha256": "a84381cd5e4b762d42ac477326e2283deefc0daed268e16145032e2deaa344fe"
+        },
+        {
+          "path": "view/pc-ts/src/api/order.ts",
+          "sha256": "c1db550f9a9457dc0a1ae8358c6ee0c646eb52360582af2ebf15ba525b004b53"
+        },
+        {
+          "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+          "sha256": "add59794278687739138054ae0393c663d9ec2f9c93c38c5bc2624fccc229b1d"
+        },
+        {
+          "path": "view/pc-ts/test/order-detail-lifecycle.test.mjs",
+          "sha256": "a063ca5c3d4f07b575a71241afc5268b964410f11cd4056010df78e13ad15bc2"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/order-detail-lifecycle.test.cjs",
+          "sha256": "f89d46e6e0512797c364239a97e898317f0be479fdd8cdc15aa091a5c7b736e2"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/order.ts",
+          "sha256": "dde720e54ad90f016ed8179a4a46f3d8d5d0af86f787dca0b22906384ac3b674"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/order/detail.vue",
+          "sha256": "53e3b70a4ad1f42f88967bd8b3c9bdeab6077f832ff549697ce161dd4f18377b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "846615a5a0e75200a70bad59dce9ce692078d6233b411852c078430988bb0bd1"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "7a8a24ef88dd2ea7784676bb164c60bfa77ba0d41d97e7640e2a682a4a808ac9"
+        },
+        {
+          "path": "workers-ts/src/services/activity/PresaleCartService.ts",
+          "sha256": "510a9e74830fa20788dc2d43733047cf78d596d3f4ceddb2eecbb49f25f0e6a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+          "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+          "sha256": "e05a54daf3eb4d0592060704462f59c69169cb50b433a44edf3779e9daecfb7c"
+        },
+        {
+          "path": "workers-ts/test/browser/customer-order-repurchase.acceptance.ts",
+          "sha256": "4016f885ac564cb4f3307ab3445804014c2e533d42a80167f1a40be780fb4344"
+        },
+        {
+          "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+          "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49"
+        },
+        {
+          "path": "workers-ts/test/helpers/customerOrderRepurchase.ts",
+          "sha256": "cad595e146ab1c14dbf8208b222b49c4605548d4c6b97abc0c0704dd36f3e27a"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "15eadbf60ebaad3d3b6a65ee005aa95964631548830e0562c8bee025b92283aa"
+        },
+        {
+          "path": "workers-ts/vitest.customer-order-repurchase-browser.config.ts",
+          "sha256": "3578acb34b0fd4ac6983840c8169b0bd926fffda8c4a8e5626c2df5bf43e12d6"
+        }
+      ],
+      "source_unchanged_at_exit": true,
+      "log": "/tmp/cinashop-customer-order-repurchase-20261019-browser-v2.log"
+    },
+    "manual_h5_full_reload": "After arming post-commit response loss, fragment navigation correctly retained acknowledged IDs. Whole wrapper reload and explicit enter created a fresh second intent; no application state or storage was injected.",
+    "visual_review": "Root directly viewed all9 native JPEGs. Source/action/current quote readable; H5 recovered-bottom explicitly shows warning, reload and disabled action. Failure screens intentionally show error+reload with no old order. No horizontal overflow.",
+    "receipt_assembly_qualification": "Raw REPL helper accumulator unexpectedly saved0rows despite9 successful native JPEG/AX writes. This receipt is assembled from those9 files, matching actual complete7stage DOM evidence and direct image review. No invented helper observations.",
+    "excluded_artifacts": "Supplemental native ROI screenshot includes wrapper due page-coordinate clipping and is not used for visual acceptance or final proof. Failed browser-v1 aggregate is entirely excluded; its diagnostic accumulator also had no rows.",
+    "cleanup": "Only own current batch tabs41/42 closed; no other tab closed. Temporary viewport reset; no security/permission setting changes.",
+    "capture_timing": "8 native screenshots within actual Browser run; ninth mobile recovered-bottom supplemental visual scroll after terminal, same retained page. JPEG copy timestamps are not capture timestamps."
+  },
+  "build_byte_comparison": {
+    "captured_at_utc": "2026-10-19T11:54:33.074538+00:00",
+    "baseline": "/tmp/cinashop-customer-order-repurchase-dist-before-v2.json",
+    "baseline_sha256": "2ce5c854daeef6d9f8b2476bb2bf342ce6a3d5c7df64d9d5aa7f84eabf847b48",
+    "files": [
+      {
+        "path": "view/pc-ts/dist/assets/AddressList-BT3dCqey.css",
+        "sha256": "1b3dfae7dff86a7d1bac2cb55c49490be02b5914696efc47a5a8b96ad2c20d32"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/AddressList-DXPndEmm.js",
+        "sha256": "1a2c313c7142813a32e49006f909cbe6ad5ffd6f302acb5a5534e4e97cec6d60"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/BalanceList-BivAMpz3.js",
+        "sha256": "493852975900ccef804fcc860a8d1bb537ff600e9716f0122f32d74997d09c90"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/BalanceList-kpMC8-HT.css",
+        "sha256": "e8113bbd8c696139e753b5bde28f4845b0f5ce6a5a69c30e712a752f5b1cfb5c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Bargain-CFu2VP3G.css",
+        "sha256": "08d4019a6b7e8840e07076bd4ba82dcac017759c7b48e3d7923025bd43ea6a5c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Bargain-Kwy5_MwW.js",
+        "sha256": "abac9a1c088d81d38a9bd20c9f8b3f265ba4f62546e0a5292e09ef41afeaa9ed"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/BargainDetail-Bg4VZegP.css",
+        "sha256": "7c719b77d47fc0f3371c79f2f7206628fd962304499a5b9d9983d76ffc8cc8b9"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/BargainDetail-h0fE-0cO.js",
+        "sha256": "d4af58dde2cb4c39905f0c76d5e3a2669a2d40b5d7c23844607227c8f3e3f2b3"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Cart-BPh-FcdF.js",
+        "sha256": "1300cbc8c53e682b4fed875da116cef7820243e925cdf1eff1bfe9324d487908"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Cart-bQOTpbUy.css",
+        "sha256": "963d21bebf0efb3478072e7c4bb2e7ac9f5e28482756ff057c015b49fedcdb4c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Checkout-BC_ceUZG.js",
+        "sha256": "a8907e5ea5b76aad988225b57a5ab4659b3ef464f4e9c72fe26d9048a0267713"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Checkout-Bv73047m.css",
+        "sha256": "49a9f075c018e1342f65fcd71be3025eb98c241b1ae1cf95ac6df74e21b6b8a6"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CollectList-C0bwGFUt.js",
+        "sha256": "34e8cadd2f6a5bfe7cfa57612a8c5034c807a20f4343950979f38e6618a6bd7e"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CollectList-C2HwtQfC.css",
+        "sha256": "f5022a63399efc065f6328d9cb1a15b10cbb813aa4420ea9cbd367764cd7c5c9"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Combination-DsBHRcqi.js",
+        "sha256": "42413a4333cafb9b2c3047cb774b7ba85a8e6478cb1d8162eca4d3b3e35bdeda"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Combination-XLvaqXCY.css",
+        "sha256": "c1a37f44f468c89e1ec59f2629e3eb956b13cf019e670529b21382da3e302b9a"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CombinationDetail-BEHTZYHH.css",
+        "sha256": "e0a02c9e83f8104eaf5ba86b97273b0d08adc0f3187ce34d2a95b50686fc3fd6"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CombinationDetail-CsCZyIMd.js",
+        "sha256": "b9e017cf8508d332347681bc9f5be585add60e8fa66f59fac16d72f430503056"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Community-BLuuQbyI.css",
+        "sha256": "5c75ff129d4419b24705ea1ee65b09e08f3ca10b9e0c6b448f3e1d5b084746de"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Community-CsLU6yCy.js",
+        "sha256": "2fb6b57ac81a3f4415620d958cfc023a364424ec674c66725ac04f4af8763a0f"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponCards-DOefG_D7.js",
+        "sha256": "d501a2c18f1723405de06ac8254835b21cfdd0329455a3a901e60ff407c19cb2"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponCards-nEIB6Gbe.css",
+        "sha256": "f2ac2874cd9da7794dbf1a2d25e600bbc38d433d98720882fecc58dad259be43"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponList-DB5ckAeq.js",
+        "sha256": "bbc71b0f12952135a1c3aec63d1fa017de2d3559d438f35012cf5147917ba5e9"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponList-DMCcsQSt.css",
+        "sha256": "8e9426adb596e3e211596d77147cbe00184aa83d8c4cb760722b0e2e373bbe60"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponProducts-Cczu3KRd.css",
+        "sha256": "4c28bffa1f49dccf0e54c8d99206a9fe87d8b46a29d1df97eaaed25e60e8080d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CouponProducts-CdEqk-jx.js",
+        "sha256": "95509d2b58a4a1a1ad0b936ace9e93424da01d9a3ac8097221bbd775d416200f"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CustomerService-B3PKrInX.js",
+        "sha256": "ff95af7f78cf33bf8d8e25a39ce6b5566e943366ca4a79fa6fc59662b40e3861"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/CustomerService-B_qdsZCa.css",
+        "sha256": "e5db74acbede549f0cd6910ac56db1371a4dfd4d03436062d2f4c2f812f224f7"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/DefaultLayout-CZ8oNVCg.css",
+        "sha256": "5afb371adcd1a94a309ce29a5c8271cd918a4c37af07459235921c953a00cb70"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/DefaultLayout-nnAJkqG4.js",
+        "sha256": "7880a6cc31bf748b3331b271aedc9694192dbcd804e2aa33ea50d5f59bf5f3dc"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/ForgotPassword--35sm88Q.css",
+        "sha256": "1a61fa5c93c7f8fd337fb11afc9b623c916cb7fb0e57ea622ba2790408bf148d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/ForgotPassword-D-7xLOtO.js",
+        "sha256": "0dcd12fcf5fd4569f8ddf97cb9fd1bc894d6d9811959499c063bafeafe707930"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsCate-BMHR3ZMs.js",
+        "sha256": "03ca88a8ea28cc599b6dae4b2423f79dc27919ec72e8fbc1affa98823f427cc1"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsCate-CZZzYb39.css",
+        "sha256": "943fe885914a490875972aa8f9612e1e08bbaf5db00ecb86c4ab1ef83df69840"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsDetail-BS5WtHzm.js",
+        "sha256": "8d712c4473412e4b70cd86806e08d1407b45fca2fa5320f89f52a779928a26cc"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsDetail-CWTTxDq6.css",
+        "sha256": "a10437e0916bd101d39e2b334fc2272aed0fe6bde035a9c72629ecab26f4e2ef"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsList-C_iRnYDb.css",
+        "sha256": "062e4926a58b5799e0504670b4a5cdbc68dcb99ce95a1871a380ac0ce01f42ae"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsList-RBf8-GJZ.js",
+        "sha256": "5d33e69af9677c933abf1cbb5f4038f823752299baba31ea355281be3d35d091"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsSearch-CUuAmWUI.css",
+        "sha256": "9cffbfe6ae36b868d9764c168e8f2ecc4fa6e5ceeac9da49af1ccaefe71a4523"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/GoodsSearch-DvPlIFLU.js",
+        "sha256": "a4f161be94de1b75344ce9a38db7d7a2d611129c7758a128fede41a993ac5f66"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Home-CqtrhGPZ.css",
+        "sha256": "12ae115444e1889d33b73d78c8fdb990081af9bd75f7b9ddc0b7e92015ef9cbe"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Home-Kh4aj-AF.js",
+        "sha256": "21f3343f6ba7f54609756101c6bb9f6b94f5c8923c5f9d27318251c1a41d6894"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/InvoiceList-CUCK-4zm.js",
+        "sha256": "699407586cfeb53808ef21d2489264c77eff1fed7764ea753de92abaa81c78af"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/InvoiceList-DUbL7R3_.css",
+        "sha256": "ac25da7b629d68c992c44b3601f6c5906dae6a46a73bb537a626df6a9b95f906"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Login--yPccTiT.js",
+        "sha256": "368e1ae7856bbda9465019250933719473efbc1447bc0082fd17fb2ce6bcb22d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Login-DU6aEto_.css",
+        "sha256": "5dceb481df1023684b2f59548687908b7773735e75db7e264433c84b08c21bc0"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OfflineCashier-C3wYESQB.css",
+        "sha256": "6be6abdf71ce4ad71e7dd9c4c0a4c9a5165a6b524f1d68bbc248bb23476f5829"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OfflineCashier-QB9aUWnF.js",
+        "sha256": "257a437f64250ea13ca7b57f3b72d65f25a35aac85d213bb1082ac8a0a2d6b42"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OfflineResult-BSMUYWJj.js",
+        "sha256": "e4e847aead8f679fb7b8bfe2502b98f402821e92265a0df409ee866d65be039b"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderDetail-ClYJJEUt.css",
+        "sha256": "a9a4aae09faf0bcf7cdbb2e359995e46a16e3ca8edcddb064aeb636a43cf28e4"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderDetail-SnfgkRV1.js",
+        "sha256": "4ea922f4a523f17fb0b49e47a5d643dd860c3dcf7b22ce0cb724217fda6a8b4b"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderExpress-BW6WBlcK.js",
+        "sha256": "0dfd9e6399dd78f3d6d0f37156d29f5296b0a4528ecdc73cd08931d859d0e10c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderExpress-DgyXc3C-.css",
+        "sha256": "82640cf155e5ecfa80583e69c535ce477a45a05a2fe80b531f075ca336f99ddf"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderList-DbIKWl8p.css",
+        "sha256": "4f2c76a7811e8e222c44275f42ad8dea3b9629bcfa1deefef9316ce980e0ec5d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/OrderList-Io7SGzur.js",
+        "sha256": "47d96961bad64a2b1e8e444b3f96ee70a4b2c820e71d1a98725920aad73a966d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/PhoneSettings-B5t93aPT.css",
+        "sha256": "2c7dd9d7f7bb04af384b858a071e5378a95cd6a1f77ef08988fa858ebf4afd29"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/PhoneSettings-Dakr1vG1.js",
+        "sha256": "330e4b72e9d9018b33220667e999f0ae44ae4dc1c3b7d63125eef2b26654dd1d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Presale-4qpm45RG.css",
+        "sha256": "bbfeb22a4287c84c15456d9618b5e5e8a3223083e42566c5d5d2342ec42aae2c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Presale-DBGytmm1.js",
+        "sha256": "85fe0ea38481df1778b7950e2572b41908cd61cf06b24992389c7edc75e7ca6e"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/PresaleDetail-C2rsyz8Q.js",
+        "sha256": "23a642cbe5d28ef436e227abaf06c76bd49d526b385e229c2966717937d965c2"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/PresaleDetail-D5flklt2.css",
+        "sha256": "6038937d7a10f21bf1fee8ceeb2eb6a930f8d9ca1e465e40fdd4d476fb14fa6a"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/ProductImage-BA7uULYW.js",
+        "sha256": "116f0a85b2fc57e8d17bfd079141c66fd36917951abaaeaf59d62c54793d1454"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/ProductImage-ButUxy6H.css",
+        "sha256": "a68ca47085a00c9efb6dc5c767370c423bc1ef8e94d75e45f5efbfe7e41e281a"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Recharge-Zu7jLovQ.css",
+        "sha256": "92af9001fe38daa671b2561e1ffadd51a486f52e8bb972c72b2498db41a17a2b"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Recharge-osczYQ5l.js",
+        "sha256": "853cb49668a2e24f69cbe4dbe64937d11799b0257f08b38e825ae22db9a3b14c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundApply-EdxUkPUq.js",
+        "sha256": "d8c27ef29a6cecaa09ab03d63cb0242ade2c75d0c5c508051ae335e3f2909dfd"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundApply-LPHGshxU.css",
+        "sha256": "9285e3a60e7103b1dcf135fb4b69b25e3745fbbed6ebd61c3c447fc7d7ad6117"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundDetail-BNmnQKuD.js",
+        "sha256": "ab9417766340dcc6fcdde32594dc2093b5b73fa6712a8a90926b267231a09458"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundDetail-DYtOrf8q.css",
+        "sha256": "2b70dca0d752b9a3e695f6157f9db506f63d5228910ebde4b1886b3f9d0d657a"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundList-VdDvpX0q.js",
+        "sha256": "e64c21846a27ffcbb79bb6e6c4dd188972c55e33c2d37895853067010057c028"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/RefundList-hSy4lm8X.css",
+        "sha256": "0676af179c1e9743566ef4fd432f6acf0c268661f286e92c9d050532681e399f"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Register-VAfB0HHv.js",
+        "sha256": "c1fab59b7dc33e0ca8ede090072e6d92ca60a9a10910448da1be6017c956d01b"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Register-wyAlACCV.css",
+        "sha256": "ebad51e51e7e614be1debd293b046de7ecd5f5fa30092d90333cf7a3ffc0b6f4"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Seckill-B4DHnI9q.js",
+        "sha256": "03bc60d61a60bc94782dcfc2d1cdf3baa5a18a1dc498b03e7fdacc8ffbf09bcd"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/Seckill-CsMmSJDi.css",
+        "sha256": "799a52d86caf8dbadf05e387f4794eea37c394a99cda0f5732b8209582496a45"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/SeckillDetail-DTLPYZJw.css",
+        "sha256": "1d4bc7ccced2a26d711c9329b5568afd3d2580e07894123e4e982ee7f042de83"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/SeckillDetail-DXQty8Eh.js",
+        "sha256": "8f6befb8bc6754edbea4c53a8cad52fe540e36925e27bb7a41e0003189483c4f"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/SpreadCenter-BO9Uq_6q.js",
+        "sha256": "3d1cce483a24868832118213a83bb951a442d43832ea45dbebfd45f1425e4664"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/SpreadCenter-BvqU5pKU.css",
+        "sha256": "fbac50ee4aa1ab801c2beb6eb07fe80415f3bdfbc4ff16ef696f1bce2c40ef3c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/UserCenter-CL0CGVaQ.js",
+        "sha256": "96bb45a08b9f25b6fb4ac23eb6b0021c899e8e04447636f80caf2cf3a7a61419"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/UserCenter-D6Gz7pU5.css",
+        "sha256": "8d493b8ba1cc4fde402e59259c7b4c8d93b3326ae82e4098b441163a9bfeac41"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/UserLevel-6dIMkgNn.css",
+        "sha256": "93a26ed7754ff1c76d5e1a199e2df8721255dc86fcb212022b0345e2ace69900"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/UserLevel-Dzz0Lokg.js",
+        "sha256": "2ada1086b00efc8a020821da49ce13ccd445bea60edd106c0dd376143e3ed54d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/activity-BYqaSxdp.js",
+        "sha256": "ce8a8cb373cc86b4a5fa52b04fcd3560dfe0869774c8f3a36d9d36dc762dfca5"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/browser-BWKd5kKi.js",
+        "sha256": "d9558378d45d6a5784f7d8de714312afe2516d37dc806e1c08c16f02778fdb1b"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/community-C57BaiG9.js",
+        "sha256": "85d70aa6697d417f847cd8d4eb1504d703ec9042f723b911c6b2a422a10ed35d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/couponWallet-Bs_sWbY8.js",
+        "sha256": "564f1c3a62062e583437aee9785f1f25730dd6f232577436db608a24c2436196"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/finance-BaZXXlYV.js",
+        "sha256": "ebde42c7716f3ebefc9f27485d6680c74eb30e470d36d0487c6c2fd42c2b27f7"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/index-BRsUBo6Z.css",
+        "sha256": "4d5ef182afd373e4dfa33ae7566092f077573c67d4dcba6a349e0eb3a7e2a78c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/index-Bt0Wvt8W.js",
+        "sha256": "d8ed46b63e459f1050204760a0b02a09a0274ce432f05a678a131ba79db9db0a"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/order-CxyQ5NQg.js",
+        "sha256": "837a479c4eb96c96340ebfdf488dea66064c41588e595eeadb27ea12c6a8e7ba"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/orderDetailIdentity-Cj8tXs82.js",
+        "sha256": "1479358544116b70ff1cbdf277df47f0c943713c404db35689bc93847cc4ba6c"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/presale-y6iFuYrz.js",
+        "sha256": "8f5c7de07d55de88212a2575eda9f804e725d6207892f4bf72af72c927e5397e"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/product-DJbbhzlZ.js",
+        "sha256": "9d9b428f8f026788eb5bd3337cce6725cf799b820fbecc4135f8c729e51e25f2"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/refund-DykvsHAo.js",
+        "sha256": "020588adf85c2cd1709aeba7ab02e5c167728188b9f039bdc25627e6bc760026"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/seckillPurchase-DvQ9smA6.js",
+        "sha256": "7a03540ea79312562d9da988197e7eab61414a1ab763d4c1354d7ec6e729bb48"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/useRefundRecords-Dhklnle_.js",
+        "sha256": "60e6834d5c37ce6135cb00ba01f07bacf5129513d1006b028aefbc59bd663d4d"
+      },
+      {
+        "path": "view/pc-ts/dist/assets/user-eepXcL2u.js",
+        "sha256": "7223360490a4173f5dc89192a6d6264a3e152788673804bfafee54cd2f64f89a"
+      },
+      {
+        "path": "view/pc-ts/dist/favicon.ico",
+        "sha256": "fbf220331fe513d63cbfdb0987a6e4243afd91e6b57f821af50fa4c261b756d0"
+      },
+      {
+        "path": "view/pc-ts/dist/index.html",
+        "sha256": "662396cc17a0117d091b3023f5110faad3695a99535964900f34b739d9386119"
+      },
+      {
+        "path": "view/pc-ts/dist/logo.png",
+        "sha256": "1434d0a85a9b265e01fc3f1e2dc15438ef3e2ed571dfba2304954ec58528eee2"
+      },
+      {
+        "path": "view/pc-ts/dist/test-media/product-a.svg",
+        "sha256": "88cbb4a4c97a7234bc8af9d50753f81e8cf83ab9b81ed5982aba2cbc7bb898d0"
+      },
+      {
+        "path": "view/pc-ts/dist/test-media/product-b.svg",
+        "sha256": "227561979c6bc80e188182236647282267e246648f20a934a39e17c23c8e4681"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ActivityDetailContent-ct0EmR2E.css",
+        "sha256": "76ac8a1dde135c91875bf8799ff98d914386ed10935efa97904a0b0c348c5529"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ActivityDetailContent.1Jp1xAln.js",
+        "sha256": "2a10c5304a9bbedf5d07eb54ba1a5d5635605ee6717590cf2381bf94023173fc"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ActivityDetailMenu-a78O4duV.css",
+        "sha256": "f18c33c23c600f59cd942b11dfeb2dff0af4dcc9a70df1ef9f54d62a02b04a81"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ActivityDetailMenu.Cl54ydTJ.js",
+        "sha256": "953c6d0f00cd44a15140473fc0a1b5d601e190a77da61f499b210965b9ac8fd4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/AgentApplicationForm-5TxyjYhx.css",
+        "sha256": "ed2b9b7b44105d1885898b0057ffbc27f0cf2a4f4da6076878c746e76f84738b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/AgentApplicationForm.DVeVDkX0.js",
+        "sha256": "40fc1aec91c118e075b114a94eeb3c0e1930f1c4fa4371003b9abbcd4befd391"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CommunityDeepLinkFeed-CTapI_U4.css",
+        "sha256": "f6b7ad6f6529d115d6bf47dcd8bdf4adf29885b7b96cfd44d3622ff3df400c16"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CommunityDeepLinkFeed.Dycp3_a-.js",
+        "sha256": "f835da874eda031f1a0194fcc996a39d7a6b34760492aa2af3488da1a1b6000b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkFinancialDialog.vue_vue_type_script_setup_true_lang.BARaJd7q.js",
+        "sha256": "72fd9022bbe52026580b0dc071cd66a40bfb7c510d5baa95d5daa21c8b685ffd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkProductEditor.vue_vue_type_script_setup_true_lang.WXAt5Gml.js",
+        "sha256": "76e1dc6ba7641085bb9a36fdfbbd354f1846a93f5959188852c52504f0950d02"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkProductRecoveryPanel.vue_vue_type_script_setup_true_lang.CwWRW-J4.js",
+        "sha256": "13102a53460f5be7ed05d408c66b2937c7c015e8f5a58b1aaf36578743fb07c8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkUserCouponDialog-BDltb-MU.css",
+        "sha256": "2391166abf43dd186e5b62b89766416635c45eb530d5dfde68adb034a7377b23"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkUserCouponDialog.vue_vue_type_script_setup_true_lang.CBHWkfZD.js",
+        "sha256": "b658d02fdd6ffcbdadbed89f2bccebc17cc879171df3fb5a7c7538e85052eac4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/CustomerWorkWriteoffRecoveryPanel.vue_vue_type_script_setup_true_lang.BY6myeac.js",
+        "sha256": "6f167e2afa6506f6db2c896ea2fe92eaa5e20dc10a3136408c3ab4874f44575d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/DeliveryCart.vue_vue_type_script_setup_true_lang.S5IAMk3c.js",
+        "sha256": "1a8b2b08e31306f47c13762f64162ceb031b9192f29a0598631aed2123b2a8d1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/DiyHomeRenderer-CgV0B--R.css",
+        "sha256": "22a027a9d7cdd2dda8d186cc8d7a12f2fc86b972091b57f469792b91a718287d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/DiyHomeRenderer.BU-7neLq.js",
+        "sha256": "4b5790c0d06f0c15d62833c6386b5c270ea94824bdcce5a23321774318e0fe91"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/IntegralSharePoster-CV5Wu2Tr.css",
+        "sha256": "c0b0258e817ac39eac0797ac6d47b8ba69cee9b4af61b3040a05dced3b94139b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/IntegralSharePoster.BvhmOBk0.js",
+        "sha256": "549d009a5dec75af9dd8a871076cde5609d79616aa58a44d3c85f5b08c2f7405"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/LegacyShareCode-QfX9Ysmo.css",
+        "sha256": "088db2e8c3d2564525d2f8064ca2fa522777683997c36f83f7e5b916761a8eb0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/LegacyShareCode.SrJ236-f.js",
+        "sha256": "2118f7989c9c325c52d585fc91b73c32ea05b25e7711bb75960ad623cef1f702"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/MerchantCart.vue_vue_type_script_setup_true_lang.Bw0MJMdZ.js",
+        "sha256": "9fb30c7014f24e5246a2d32a78a1c30a1fe7f3fd2aca778333151bcbca707069"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/MerchantOperationPanel.vue_vue_type_script_setup_true_lang.QnChGRnr.js",
+        "sha256": "b133c35ec30e81cbf572cafdf96f5b4c769a07c0145c56a51a0e017fd3e2aec8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ProductMedia-ehqraUQ6.css",
+        "sha256": "13d618e3bc1efe9b4ac91c935ed4c93e0178df42b243a613df6758c8452d59d1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ProductMedia.6khBvBIT.js",
+        "sha256": "97eb8ecfcba3b1a1334b8fc11e9b03a2af8c48e01d7483638a5aac376e7b58a3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/SystemFormFields-BKleBNpK.css",
+        "sha256": "11f776c62bf949fb9840a5df82ddcb9554d0ab0b107b86038e877bc371c78bb0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/SystemFormFields.DpvMscHA.js",
+        "sha256": "ba38bc497eeeff223293b61867f9504b1778ea551c96492c4feb419446054346"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ThemePage-DG5u_wEW.css",
+        "sha256": "3972b4db918604162b1d0491b92748b4da7919ceea14877e04ae624e745fd0f0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ThemePage.Db6XxrEG.js",
+        "sha256": "8ddc86769a4a0c3aacd428c67959c3447d6ec3569873a5ab8d10c1508e7f64f2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/WorkNav-qIhZTY55.css",
+        "sha256": "d3d53f6d6bd52964d86ce55a16eacb0de3b8c3deb21cef73c56d4ba6d9d365e5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/WorkNav.CcK6KkuO.js",
+        "sha256": "55678658b8ec20ca03345a8f42c201cf448389405babb393506e1d0422ee6a4f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/activity.CxeTNnjE.js",
+        "sha256": "f654faf26fa210207b1936bba00e3c96062f41c8f919fd275756c0c3bc35f5c3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/address-DWmWWIvO.css",
+        "sha256": "1190d432682b1b249b09e5f7b826e4d815af863129f6c91ea8dfd6bad62b215f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/adminRequest.DNRUdn5b.js",
+        "sha256": "096816423024e6e6a1abcce5dbc806e7862465e480a9671aeede0a5e457addc4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/adminSession.BzvFPgVL.js",
+        "sha256": "a50a1813d1dbe3e5408052d873ae1c440eb5beed8edfe2337c2d6d4035eb40a0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/agentSelfService.BNz1So1p.js",
+        "sha256": "a20fceac97752de8a5f01ba1aa24943d138943dad2d4cd6a8b45d28085832c92"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/agreements-Ck_7QRU7.css",
+        "sha256": "e2c52d444a83ca40be7c71653ae005144e12b796c9f7ef69979a956f8ee24abf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/article.w7jXx26M.js",
+        "sha256": "0221aeb775e9ca4a25c4c5075d5b8c71cc10e9622c27e90c89c83912dbd8ac6d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/articleRichText.hhbng4D_.js",
+        "sha256": "3da10ec5852dbcebab5aa9ce038882cd7089b442fce88f0875aa4f382f3f4c55"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/assistedDetail.DIUVfmqJ.js",
+        "sha256": "f2c36beffe30f84ac7cbb73a85a631583875098bddb2081d5c5f86a75bd9cb70"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/assistedRecords.Dycmr6wh.js",
+        "sha256": "8de22fd68c18a64e3325df18f979ea7ba2f7587fff5810011d229805fc7cefe5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/assistedSelection.D452kg5O.js",
+        "sha256": "0f5242220d70f0cbd89fc47ed6ee8b59a991cb7866ccb7f9a934d3e1f6d14315"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/auth.CRzDnu7E.js",
+        "sha256": "c93c3f00e698190e10b39d8b3d5cd452c6c1abe1889f931ebc234602a92a6eb6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/balanceLogs-BSkXaDEI.css",
+        "sha256": "f998aeed8d162fd3ae9aadada51d495c2b1639a72f062dcad51364b46313caf4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/bank-BwCP9X-1.css",
+        "sha256": "30aa71a36b5d78c7382785158924525747833b051c9b8f4e60079efcf170b4e1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/bargain.BDu_ta6y.js",
+        "sha256": "7101a29dd9ec058b703cec80c1b2a2f465476175e2e1d8ccc433a7381dc1e8ff"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/bargainDetail-D7KfBZfT.css",
+        "sha256": "043f7b695b5d7a2e720ae8240e0337327235c300ab0f2a628bda18825a91a21f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/bind-DWcdQgNi.css",
+        "sha256": "62342208ea51245d7a3fe6d22cf73affb68bb72bcb0e9e068600dcc94ee60af7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/cashier-JrOf1YZr.css",
+        "sha256": "10dc9f49aab79d89993d626dcd8b82fb0af0baeebd8114d56406d51199130f96"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/cate-Dhp2pT2x.css",
+        "sha256": "9c9ae05d2f46d870db23061f93a8f0902d7cf307c4412a3fe53c10b35368279c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/changePassword-rHVXhbHa.css",
+        "sha256": "b86506559efb9d3ed22c932f68d7bc0a8821eff1682d179c9ee1f1fefdf35a7d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/checkoutSelection.BObZELeV.js",
+        "sha256": "9ee6f32ab68f6136119e5a0e1b83535be391cbb2e6cf4c414e33a624fc2e2e97"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/collect-CExmzVXG.css",
+        "sha256": "dae18484dd194f46be31fa019ea00eaed644bff7647864cd2594e9dea7c2a3fa"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/combination.vmOwam8b.js",
+        "sha256": "7dd42a2570f14e7fade1d161d88aa409ff9d0d094cab8eb16a4be37257dba4ed"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/combinationPurchase.DC7HzNKg.js",
+        "sha256": "eecc29097dd07e57ab113182fbfc0bc2d37212c139743d569bad1098763bb99c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/commentDetail-BZKeKj6B.css",
+        "sha256": "c04bfb59b8feeb3ab1364c2b35330eb91f8b59f24e1730cf748a2a0f38cdb063"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/commentList-DYqtQ2Yu.css",
+        "sha256": "f76bc23e095bb45015a58e7620df2f964610e2f28e91872db173388a8534105d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/community.BAkzGILN.js",
+        "sha256": "561f89df2af5ab75d66e29553228087fd8dd4aede862ae7fb52df6f90b02d30b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/confirm-AE9yfWap.css",
+        "sha256": "96f247f6053f9f8b851d025a87e4ab781a1171fa7f8a6d8792c286ccc0554b57"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/coupon-BFEfh0OI.css",
+        "sha256": "4f40faff2b0a690559237aee9975ddfdceca987222b7a1b7baf8391a52245cbb"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/couponCenter-5bcH-DkW.css",
+        "sha256": "686669605823d4042bd5f841f05b08219bc3ee0b23882063255ee13f9155d323"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/couponProducts-Dm3lsf-z.css",
+        "sha256": "1fcb41b79e31b7bf41dd68f52aa1386ab57b8d662de13cb7d9772f867c1c5c1e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/couponWallet.NZQElLJM.js",
+        "sha256": "ed42d99f68860741c09cbd69be2d41a54956c37b5046229a6c7559acb89a8947"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/customerWorkCashier.C6gPDV4n.js",
+        "sha256": "54c9f7ad4c9a540fb3f594e7ebeb985c6e1f9bed405aa6b00e13f3068d10ea44"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/customerWorkCashierRead.I8nDp3Mu.js",
+        "sha256": "3b9efc729df943db8167af1d1de7778ab64084e0e1546e5377946640486f055b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/customerWorkFulfillment.CLryWZ0Z.js",
+        "sha256": "29acc7440c47678f1d1853f5572b468b64152e3d0cea82d7d39f2d314b24acfa"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/customerWorkUsersContract.MQgDEnKm.js",
+        "sha256": "54a3753fd1e49b84c7e093bb651c243d389ff4fad7b242c66bcb4d464c7c15b7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/customerWorkWechatScan.TIOEots5.js",
+        "sha256": "2f6bece6748f2d9f4ea58a8fe2c40aabceb43c8c1bf3e6574763c35c6e442a66"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/detail-CPXxmppq.css",
+        "sha256": "e2b2d1c93f11b4be1ba57ec11edbe20c503e2a7cd3c795abdfe33c1c556887d7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/detail-Cb0fXaiU.css",
+        "sha256": "5f8c25281cc77e3682e2d11a6f9ba3fe4d971fe71b6896a0e708bce6de29442e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/detail-DA5GUbn-.css",
+        "sha256": "56d14375adde4e3bac4528c8ce8c90b8dc9c9c9435fc9609845a67bfa4499467"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/detail-_Wgx9NLc.css",
+        "sha256": "a991523a0a37333d35556ff84f49ef8d8154bc6b296a825a4521db1780e75ab2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/detail-tD07NvWG.css",
+        "sha256": "5941e12c948a9ee0759a885f6657f43fbeee4822eddd8401d93e31e64260e18d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/divisionStaff.Dp4le_EU.js",
+        "sha256": "ba870f22205dddc89e22cfcaa1be521c8885be6b6b19367bc91ead8220e0af61"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/diy.sAoalStf.js",
+        "sha256": "e9975206cabadf13f1f56efddaf5fb882af27fcbfcfa58d77e95e6f3a1692518"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/express-CHDk6uKe.css",
+        "sha256": "702c5222bcfcb76cd736da3abda11f081df726105439073ab2fea7847df66ce5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/fabWebView-B3aZJxED.css",
+        "sha256": "9a963c416380f7193fadd7e6a43387523ebff90503beed266148f3be28686337"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/feedback-DNPUNs9l.css",
+        "sha256": "121ebf1e5b0ff81a0983175c4fab36950a15f3a0dc0e905bfe567bdee7711ea8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/finance-CTXLyuoM.css",
+        "sha256": "b351fef17e5bb827253dfbf556dbff9e9015d9674ce6ecb1e01a9bcf8defd152"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-8z5cHmOz.css",
+        "sha256": "38422d0496653d7a02f4f30f16fe6d3f0a252e372d4b54eaa2bbb4ec34d9f58a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-B3BHjOPT.css",
+        "sha256": "fbf208d976bc8f2e0095d8a49c27682ae63a48d472998dc1bc16933fca7bc452"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-B7kfUVGh.css",
+        "sha256": "31d0e3103f9cdbe8e63be53d5d1cdea237e75fced7bdcbc246e001dde89c01a2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-BBCER9FE.css",
+        "sha256": "7c0b213e0f1600d783ade9ed62b45e1085558b7e16d1a6d6cd17995d913ebd1d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-BHgOs07J.css",
+        "sha256": "3e09d51765c4da28e0522b6951fbe4e530bda74ac0ea72a519fc497d14eccd85"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-BdAz06IM.css",
+        "sha256": "cdd9c3a5704efcb142a52f93e514eb5725b6b78a13050745251ca7ca4deaeca2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-C3lbvHC8.css",
+        "sha256": "516f06cb64bdc97116e64fa395beef2aa1c068caa4cbb3d0f9a60594b35820ee"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-C5rSkaX-.css",
+        "sha256": "4a4f5f52de29ce08c4dc80bf3c79db22798efbea6fc296fbe9f3c613912644df"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-CCHTpowg.css",
+        "sha256": "30186e8b673d68f27fb8e392acfd7741b9c0c577262b6d1826f58a6fecb0503c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-COadkzLP.css",
+        "sha256": "709e721ce9d55dac1eb975664887f163ee303bbed20d9125d3b808e52d0726ac"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-CkYrd2k8.css",
+        "sha256": "c262d056508ddf0a443631c6ecf5e2836fad134b97019a24277b83089a55e66a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-CsyTfDkJ.js",
+        "sha256": "2e78e5111906a1c67f0ad394f80bf0365fedc143190cada20de3450893bf53c7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DDsKyqht.css",
+        "sha256": "2369d40086de82584b55e31c7600387470ca053bfeb27cc6afdc6a89b5139eb1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DJRFXZ33.css",
+        "sha256": "82c37f327babe23f0c67ac20716d70675d7a21cdf926b2e71e7e634d22ddeebb"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DKIy6vKW.css",
+        "sha256": "cff3f5b83bdc1f0e1a2e3d68f73416a84420fa0501de997d0f46abf2620b2867"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DNUjb9OV.css",
+        "sha256": "464cf723048f01363277c78cbd6de3707468054be9f637720ea0ef37a11d0ad9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DRU84LFh.css",
+        "sha256": "23ffaff2e3b5908fed51ec4d6ae799926a9385bb51c4d8625df1b826e3240ab3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DSpTj0sT.css",
+        "sha256": "a805f53164f0a2a7d9b0b5fc82a25ef00640acb92eb369dcdac50cd4f5adb3e9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DTcMjyaN.css",
+        "sha256": "684f03c0aceb0741ffd764c2c9ad87b743f1214bf3831f42b3b25eda3d52b657"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DWUO1eNZ.css",
+        "sha256": "aa48986e28e55567d5638607f5c47ca677c5254159a28093d8f5a2e5af00af9d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DWbqsTOg.css",
+        "sha256": "d34c5d9401bc8e5dfd4c8e2aedb5b83aa98d556dfa4922afcbc2c32ef2d84db0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-DfqmjfpN.css",
+        "sha256": "4ce34d6c28aa242c2a574969f0269d6175f9881a3f1c0505132335ded491019a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-FpIqLrs6.css",
+        "sha256": "113722938d2fe2989e28286e1e4aef9829abcf6a81eee69112cb488f934979ff"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-OfFS8KUA.css",
+        "sha256": "13d95bca44145bfb47bda18d4bbd0adf62a29c9ecdd8d2f9c6901fa52864aeb1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index-eoadqnNH.css",
+        "sha256": "285aa43102f0dc012c03efe6c7bcd8967abb9dac1de68b4621db852f64ab8e41"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/index.pvV02eEF.js",
+        "sha256": "4eb9393f96a10e468c9dea2c58a9195801df865141e5aec16904284fd1408a3b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/integral-BT0y0CKo.css",
+        "sha256": "05815e60874ae43991f51bf1fa700821933dd975ba4c80cee129b367f296a0bd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/integralDetail-z-tsz9-j.css",
+        "sha256": "80dede5fd3293d1b1539e46b968801eefa860aa3f2196bc96b72648179f2a8a3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/integralLogs-Cl-_njMH.css",
+        "sha256": "3fc159163f30bc1e512a979287dde6553b40061199b324f810741da8a2a5940d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/integralPurchase.DtZYcO0p.js",
+        "sha256": "6db0d68a7a399786e319720937f05bc0a270d747a590de006788c0ce42bc420a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/invoice-CG2qPyXQ.css",
+        "sha256": "1ead191abd16018f53fd5de802a22d74804dec60911a3dfda89e7b7c108f3189"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/kefu-DthZTZ94.css",
+        "sha256": "89a32eae3b6decf5c64a0d1537f2b272f20f68350a95de6f6f881caff362bf1e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/landing-BLocMQo6.css",
+        "sha256": "470a37da1ead8a9409bfe1331eaeb90dfea070418dc69eb461c7caf32efdc4a1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/legacyContent.CLRLPY0L.js",
+        "sha256": "da2cb354bd0df5449d338675fd5c59c1c9f976fe8e90f5629e1e471483cceef3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/legacyShare.C-0ABQtw.js",
+        "sha256": "ac9e739d70f6b40249bd06f6a52fc560503525e84d91af4f8c80e270291641b5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/legacyShare.D5UOtS1A.js",
+        "sha256": "dbedcd78810015550f4a9c2e055b19427c71dd44d22ad670c1ee73fa3d064009"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/legalContent-Lm2x3GgO.css",
+        "sha256": "6a8140f26c55d9324fd808e6c5581c28485ecef00e52fa45bc4e5500ee2131bb"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/level-DDc6vf6m.css",
+        "sha256": "a2d0e0e14a08a88fbee75b53afc7202edc09bab50404393a49df1bc0e8bdd804"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/list-BtzQ1RfY.css",
+        "sha256": "e95082f33fad4bef30a3ecfd0d385d712cd4320c6a36ab4a88ec02bd2ad7e6aa"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/list-DCWInh_z.css",
+        "sha256": "400ddcabae4b3cd3c823bc5cf040a2b7179125bc955a1099085217dc80cbf88d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/list-o4XdlYUY.css",
+        "sha256": "66c049d4c0db712c1b1ccdad7cf8acf99fe815bfd53c7c462463a1db5e754cb4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/login-Dsjrkg1A.css",
+        "sha256": "20a56a97598c771730316285fb3e7e2f461faaf0a7bf1470c48602cf5bd9f538"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/lottery-CVmlWwCn.css",
+        "sha256": "33c0a7221bf7fb143cf03ace032e63138b4c698e0ebb8a5bf676b8c181d08e15"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/lottery.uBN6P5Gg.js",
+        "sha256": "a829ae299180a701da5bdbcf117b663caf98ce5e58322c17e973bbab7dacab07"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/lotteryRecords-BvKT3BGi.css",
+        "sha256": "49af128882d433ef84f5854bd3bd88b709a3bac6f47e3c201160b9baa35915cf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/memberCode-Dx_dS4_S.css",
+        "sha256": "73f35b39386594246c4977361b93c079d123c03ef8a3a423a35c4160ee4e4b73"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/membership.9KpMrWnh.js",
+        "sha256": "ec1833b130a61d492ce2b68ac06e3b9057bc27ef2d74a8cd48e7374beefae4d5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/merchantIntentHash.CK0QK5v3.js",
+        "sha256": "effd324bea3b4960b330c9371965df8c63990ff66e3e7163536aaf8734f6f23a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/message-HuWhc-wQ.css",
+        "sha256": "8f2f0efab8ee0f663293572b1c826d1b3a8b9db618118c46e992324eba387d45"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/messageDetail-CZbi_w_9.css",
+        "sha256": "fc3c29b6af8a2748d8be585f7a0dbaa5607e22a8f01796de14b47cb6e14db44e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/newcomer.B7zD_Ghd.js",
+        "sha256": "52c8f8045b7f97a97d238e0b1cdaa61653d0e047ccb3297f50baeb2a9d279459"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/newcomerDetail-DOynwfaw.css",
+        "sha256": "06611860274b0f2ff103e22d82a710dd29d25d976b5055a274b5daa9da87cff9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/offlinePayment.CUR11CHV.js",
+        "sha256": "eefe479ece6554d137a92a292d1138a6a6722358aaa12cc993ba08ede379de11"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/operatorScanCode.Bsijn5l_.js",
+        "sha256": "9b2933e0b37a8c64728ba2bffee0e3ac298753fece3f8b30713cba33c6f61c0a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/order-system-form.KmOUr2r-.js",
+        "sha256": "0c2daf402e8dc5241f7afc769295fc0fc02ccc3e313db2c11918274e380f70a6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/order.RW2B1f21.js",
+        "sha256": "f73bad82c81a44f177dc0dec87e278fd4654ba0e75ac54b3174d3c87ada89cfb"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/orderDetailIdentity.DKJiui6b.js",
+        "sha256": "681c42ecb243bb5692f8bf1ff8a25622620552f07b11061a6b334712399c6395"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ordinaryCashier-Wn5WFKCQ.css",
+        "sha256": "f2e353d0782aee324e1c929cd57ca362af2b5a4aa2e68dd48d6cc5780a87c2e9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/ordinaryWechatShare.D2sPN0jR.js",
+        "sha256": "28045dcb09e51e37d83a8cdfb70b3e1822c50c91c34b9587e458ef2858df2265"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-bargainDetail.DMVee11f.js",
+        "sha256": "f4a4e91271b7d3c40c3469a23410d6594c4ea294ee89c60d016c399fadaac29c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-detail.B_9SxrWp.js",
+        "sha256": "1ff1ad590a0d7d9083db73386879594f510d743c796c66930dcdcdf084af0c54"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-goods_combination_status-index.D67TiZIN.js",
+        "sha256": "d343d4d9b70fcb5edc7d1c55ba93fe2a5203f60d18680eb3eee201cd028b736a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-index.BOY1hpYr.js",
+        "sha256": "22447a7107c3c24d1a250a2e9a20d2421bbd44c04c94dbeb1a0dabc4b37c123a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-integralDetail.CasJrh_b.js",
+        "sha256": "7f2bd2cb0ba49f0a5f097f1e2939a224119dfe3d84a06aa0b844a2e8996afc36"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-lottery.DNo6TRCV.js",
+        "sha256": "0c145be62f2a08bc3464ebddb639f118d91043412c4e64524233650ca27d347f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-lotteryRecords.Diwc9MEo.js",
+        "sha256": "82900f10a5112cdd8f010fd3542d4962ecb7b490246c5b61b7b80f10874fd651"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-new_customer-index.BGWwF0-9.js",
+        "sha256": "d455ce20894586f64597a17f89d66cdbb0c461c2ad46c94ace6d2c7cc8a8e1e3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-newcomerDetail.BQbMzC5H.js",
+        "sha256": "fd46214173575084f6e1392e21ba424d01df0c367cc9eb551c51ca26f38b9740"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-presale.Dxwx9uob.js",
+        "sha256": "b9b0d18af7edab0836113437a1b9eed23e143995572395265d355ecfb17992d4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-presaleDetail.Gn6Po-i0.js",
+        "sha256": "4a05ddaa2d49ae1d5ae245aef2de2bacb52d6280a649cdb5688e0b208994629c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-activity-seckillDetail.CwFEk9b4.js",
+        "sha256": "c5a004601ecc4f8d8f00fd098b635288e6a436d6060c1af7aa01954c6d8c20d0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-annex-offline_pay-index.BDHfr450.js",
+        "sha256": "0f2d8c834a6c4e807c2dc5cfd9dec7f4b174ac2f41260cf222af113e58ac2b0c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-annex-offline_result-index.DyLnN-BQ.js",
+        "sha256": "9b2798307e145bd9ad7d9c4eaf622547377943fc4367c099520c2eba92d44c34"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-annex-vip_active-index.C8Dndcgx.js",
+        "sha256": "bf5f82b2d6f10842d0effaa67696995e7d96ba39e9529dac52750d43afcda2ed"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-article-detail.COeRPKL0.js",
+        "sha256": "0a4dd620203e64c90bad6d1416beed345d3486f97e5c7f6efbd70f8c0c03d172"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-article-list.DzovnE4C.js",
+        "sha256": "365b80f8f1230e8712e5e9819c5d6aab6d9563394bc9ceebe53bc384def7c6fd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-auth-login.BxZ0D0TR.js",
+        "sha256": "384e1645c0ed0ba3c19debcd4bb90a9c06ecec3d5a18c5e191558fbd7ece5ceb"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-auth-register.BgrnaY1y.js",
+        "sha256": "9fdc942060584470e4cd9df3bcc6db369cfc247a0b53b7694c5357052af43684"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-auth-reset.CA2HQKMl.js",
+        "sha256": "4aadbfccf36ad65aa43ea4498bbdc535b4148240424ca8350c441a8298a7b863"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-auth-scanLogin.DVztz72p.js",
+        "sha256": "75c6d77b88f3829cf88ac90908510f20197a29d7a077685c6971d0b42271ed07"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-auth-smsChallenge.Cb0-BDmw.js",
+        "sha256": "28d5a3213d2ced38ec018ac89d8fce6976fef11bf9b6ab6a19285f7a3c6cbf8e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-cashier-index.dqKxCHpl.js",
+        "sha256": "db069c01c8461efd16113f1ceb23c936c7d81a3d6f2723bc49aa39389f16cb5b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-goods_list-index.CKYHs8F7.js",
+        "sha256": "85888bd94759ac1d4cf5a7de83985803672f01c8d3e25c74ec537e32d607058b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-order_confirm-index.Ddn7A0gx.js",
+        "sha256": "354bcc59928cd65c3bdafb0b1d90e9f3646abb3ff9c513f0e0207caf4f7ff4c6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-order_detail-index.DF9IN2La.js",
+        "sha256": "42b686348bf3cb7277be531f91950976b97831bb273ceb760e894504b4709136"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-record-index.D5L19e-l.js",
+        "sha256": "210646f4bbee2288645b5e95fbe9069ef09145ae6f38f05639eb7a16bdb22cd8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-behalf-user_list-index.ZSIIZVsz.js",
+        "sha256": "665ba376dedc67c7329bddb4e7d900e8f85e28c3aed3f5c3f55e1138fe2ccd07"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-cart-index.UWar4F47.js",
+        "sha256": "f83f3052d56cfd25deba640d68022bdc957a8af72b4813002bbfe83ab94a5369"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-columnGoods-live_list-index.DnOpJitv.js",
+        "sha256": "01e075bbfc4de877e6b805e1a5776d25a188db80f06689e472974cae1a1da8b1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-columnGoods-rank-index.C3KEwcww.js",
+        "sha256": "84cd82e3a4fa11760683b5800fac111fa656df60cca03c8835d5f2b9d480fc18"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-common-fabWebView.gHDvEX7d.js",
+        "sha256": "48e0ed98b838d4f06aba09e2ea6bc278e2b185b46b7e8996ed1e69b376171710"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-cashier.FZj4iuB-.js",
+        "sha256": "56e9a2b3b3c09f3638322871c271973923d05a73843683087d97bc56e85a8275"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-cashierRecord.D75QEahS.js",
+        "sha256": "7a906c4d46cc92747bc5e2631224ea7ac90dcf8ec8fd0618068e64e7fda12689"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-cashierRecords.mV9Df3bV.js",
+        "sha256": "59f3dae777b266be9819d09ed1dc4d04a3b327b3b532e357a3fc05011ceddccd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-delivery.CqV0fIDR.js",
+        "sha256": "da6871dff8cd0f34943ca0d4ca46eeaa684486bec442fb2589c57542ba15bd2c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-index.CaiN77dv.js",
+        "sha256": "d5cd4ead18d03ac31f4a2c30020e6818027e6622a038e525f82b94f75f4b1f1b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-logistics.DABbf-g-.js",
+        "sha256": "fd251760532b3bc0d02687e1cdaa4313e6a98df98886a220ff00ad0f1eb4e0a6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-orderDetail.hgE9DY69.js",
+        "sha256": "28b0ebbeb54507ea956ec212bb609959e4a0f9894758387a1fa75909325e487e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-orders.CW5k7X8L.js",
+        "sha256": "b11b9d29cc079b5de6daca3fc16b0b6f409b7c31ffa639e30e386efc9005bcb1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-ordinaryCashier.D9tKgi7r.js",
+        "sha256": "4fc72ec2773bff67159ecbbf2bb779c8dfe642bc08d020ef69c662eacb20b0ca"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-productSkus.CSEC0DLE.js",
+        "sha256": "f7d6e12eb4fa01e383e892b3cb5b5a7e621d91a795f78bf452477c44813ceafe"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-products.CPIE6AL4.js",
+        "sha256": "a241784ec155da7c25e03f0814cb6abc622d23a3a32cbd5c35f68fa2ab1f64ac"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-refund.CW1CirmT.js",
+        "sha256": "8a5514d3778e8cd946fe43ef4daa97754d25ad6656020bb2a0e3186f506d4fa3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-refundDetail.Cl7rlMhi.js",
+        "sha256": "8a2457ad4a0d97fdc38478e5aeb893a1a274bb7ddc9e702045ab92340cd53a08"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-refunds.Chs2uzY-.js",
+        "sha256": "2293ca27fe6cc8723ec9e9c8951057c64b383720cf395109a83005a4c430d610"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-scanning.DfFdErwV.js",
+        "sha256": "839fa9fe932731369993e372f7cb714a99a60959abb7e2722240b05819cd321a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-statistics.BFfw3EcO.js",
+        "sha256": "f5b8205f7b01ecf9b4d9a66288121d1da0e2af5a2e88a90d46a42b4d650eba08"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-userDetail.Cq01CqcW.js",
+        "sha256": "d12f2497e423605be3fc3fd3a9871c1dff60b380af65f2de8f13f0433506c6cf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-users.DVTvCN_g.js",
+        "sha256": "15dc21d8b1c264dae79a09d2a130421076feaf9e4f62b94e16a086edb8773d27"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-writeoff.D2PCmFDB.js",
+        "sha256": "3a42040b1bde4e7783eda8928f66c9ff71a523e5916594a330d8066a9377794b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-writeoffRecords.BjXt21s0.js",
+        "sha256": "88f74b4a473400161c326b4c2117f55d808c3e93ba71ce61e1fb20761c04aee8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-customer-work-writeoffResult.DkEwGmHe.js",
+        "sha256": "9ceb7778bd86d2ac94d826760f0a41874f414885785d6e3bebe57ef03a9cad78"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-delivery-index.BDqdFX5m.js",
+        "sha256": "cd55210b0ae04317af997abbfb7195ff97938614df4f4017181e5329cca5decc"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-delivery-orderDetail.UItREQZW.js",
+        "sha256": "49138a1be62d00417975e03d497e5ff16b448228e2b3e4bab4217ed3bf8e49f8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-delivery-scanDetail.DurezTzT.js",
+        "sha256": "525790fa9c3f0d51c1e7ab928a61f9d4b7e99e047cb1823519ea3838c69d8a7e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-delivery-scanning.DqrqO84o.js",
+        "sha256": "99c6c717264a1adf87f0cfe991a0da6d77458ba53c828a0b6b1b95e0002e7a21"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-discoverSearch-index.DRNpm_gn.js",
+        "sha256": "0ea293ec19c83423bd989ba0b171a047f6f74b7c5b487022fc47b9390acb4365"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-discoverTopic-index.CLIfC-E1.js",
+        "sha256": "33eb42c1fa3b1b5477994d528a848627405a3e62220371441c6c4e656796d89e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-discoverVideo-app.CCjnoBMf.js",
+        "sha256": "112098aa6dbe90d3a773ead61570d3ad39a200a6fa2f066cdf25c4bc7f02906b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-discoverVideo-index.Dajnozzy.js",
+        "sha256": "1d553c4075d92324069720de7792283ff3c921cb281d1be61faddc9bae190ae8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-index.DE140fjl.js",
+        "sha256": "a582e0f656faee7082eaf7fe428864c97e1b1f596c0ce1074922f6faf7579556"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-discover-people.CaF0sI7z.js",
+        "sha256": "758b008fb3b4435157c4f984f381f014331ecf486818667977ec5519ba5b22c8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-diy-detail.q2L69Kv2.js",
+        "sha256": "f918596fe532be276f51aed7f56af9daaff17d575831ddf1f461ecde41af932b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-extension-customer_list-feedback.DjfROjIO.js",
+        "sha256": "efb6262187e7c0e051b6948c77cf163749c1b3903f5ab51afcff7c2527e75814"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-cate.C2a8P5Fk.js",
+        "sha256": "71d82c3877470ded7522d19e2b5dd0d81185e7e80c1d97fad3e355679d155e4f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-commentDetail.C45240Zo.js",
+        "sha256": "ad3458ef1243228815f8013a57d4947ddd36cb291f08c419e002dcad7753cbc1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-commentList.Bk2sPujx.js",
+        "sha256": "59c5b97e1511fe9b56b593253af3ed0cc7359db3d4d83ff975e3e0e01c7bf6fd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-detail.Di4wA5xl.js",
+        "sha256": "672906cbac09e96f7f61ed464d62f55fb81d571d3eaff1567abf727096896f0d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-list.BB4fiyDC.js",
+        "sha256": "c6a755fb801a7701ec8e845ba52104466316c009454d2b3d4333beaf7c78a046"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-productCommunity.BwUYbwHO.js",
+        "sha256": "d3636a73ab46090d33b6a8f2c13f50ee5956ef853faaa562b4e1ae57091fa774"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-goods-search.BWSMizEW.js",
+        "sha256": "c008e1dcc69f3f0ca00f697b8c725bca91e7d8924eeb2d34c2a9d5e177b1295e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-index-index.DHwAcObs.js",
+        "sha256": "cee9f3edbaa2211e8271a5d5922d883bcf588d58c9f0a46a552cf506e728808c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-delivery.BQVf_zl2.js",
+        "sha256": "465b6e5f7086ecc414cab676116eeee6ee3d93979e2af85716803dbc780c46ef"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-logistics.CO0QdTKZ.js",
+        "sha256": "8c3c745b5255541568f4e3061138d6c029b69d8f6f0b957b32fbe172563c998a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-orderDetail.D61guJbC.js",
+        "sha256": "4d7fdd9161d2ebe7594481372a32cd793a66b5f75a2805f42fa311ede53d77be"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-orders.D22Uwk8A.js",
+        "sha256": "faae85b677a3dbfa8322c230d26b0503ca5502c9ad39988fdaf0a102894299e3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-refund.DNsbaFf7.js",
+        "sha256": "c656afadfed3591d0f697ddd4a665b554e3b31aa43e026a4f48f127e2a70bdbd"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-merchant-statistics.BtApu9bD.js",
+        "sha256": "fee380c27b4bb351427cec61f56488f4ea31a391337f09385dc21f7acb2dffa7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-operator-writeoff.CVqEyKkR.js",
+        "sha256": "2b6076b9e9d11156a0815f86af8424bc8bdab324520c075aa8901f8674ce4a76"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-confirm.C_fI1oKA.js",
+        "sha256": "67fd6f51bd7d07308a8451940b9ecd3e451d40c958105565ec735cef7644d34a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-detail.CKznF4TJ.js",
+        "sha256": "83d4f2ee77b4eba76f3eab202a2ff492049f0fa8557c960c3a8c9f9c26808abc"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-express.OD13ZgFy.js",
+        "sha256": "b52b4acab18d562c7e8c50d12e2cda362ee2774f978a651d7348190e058d08cf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-list.BzMugAhj.js",
+        "sha256": "b46af2ad11c98f7fd34ccc1ca891c447392b40007b4507150cae8eeabf0f9cdf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-payResult.DnwJ9Opu.js",
+        "sha256": "893f295d2e40cf494486f5b319d2de7921ef5c6331c79f4e9755826ea0f0a982"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-refundApply.B9tDNkeC.js",
+        "sha256": "a6335d656dfef399cf917ff7832bc4a8d41b417762a6c181576b8d3941caf39f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-refundDetail.C_UxlGsZ.js",
+        "sha256": "01031fa0f760cd219e590f3d98ef271baab3ddbb8cfa14da730996248b9887c8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-refundList.EDq04f4M.js",
+        "sha256": "ae1975c8bf6c4c622b3443438546630d0fcff3c44a3cdf43f9a4e99748d77314"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-order-reply.8t3dTgvt.js",
+        "sha256": "d33efe2da0b14f388b0e2df2c84a6af0dc25c3b5cd38f314d4f4fb4445ac524a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-share-landing.COJI4RDB.js",
+        "sha256": "8bf8d825ed8bfcc0b76a67ba325761117a53baed34338380f984638b7808e9c2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-address.CLDebmfC.js",
+        "sha256": "f6b580e176bb2eec47f86575be246fe385e38ebc90a3af9a7b29c528e8a5fc52"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-agreements.CPiX5wOg.js",
+        "sha256": "73391820891f2423453fb6a23c3892d976ece814a1a731999e3969eb5ef6a989"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-balanceLogs.Cc-IFYce.js",
+        "sha256": "665872143d76b2c9b73ad7d1604a4d472ef304114d299abd028617935eb61c85"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-bank.BegTVb1E.js",
+        "sha256": "24b5682e52949e067a75a9be6fa5fff0fab5e6aaad0d55338a247e1fb9d45958"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-changePassword.CP48qECL.js",
+        "sha256": "e112815b0a8a0a3d9e8116dee32a1be3a8e378601f091117b90dd5fd851d45e1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-collect.CcZA6WZt.js",
+        "sha256": "cae09a2ef3430c492e8e336da408440f7bc483e9c4542bcbb6d45e32bb9676b0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-coupon.BUz41KT6.js",
+        "sha256": "aefa9d1181c07d3388db87699d4b2b2027638b20f4e2d00be29cc5cb750dad4d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-couponCenter.CSHM0g6A.js",
+        "sha256": "394d03e291ad7b5512ffde508ec8ab4b2db1b0b0d718ba3495c2c40a6a965e85"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-couponProducts.C9xfJYZy.js",
+        "sha256": "4e6c3a4bec34c3587aef2753b81d578f1d33fb7d356f97dad675ace0936d6db8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-finance.DQ2rcK3n.js",
+        "sha256": "cd9e0656323801828abb39f8c9b610a2ed97e343039a20bc86e319a0d70ef27c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-index.Ldupml5i.js",
+        "sha256": "afbad57e96d55060cc18bf60949c142b24516458fdfe7764a5bbb7d096bb0884"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-integral.DtDRdVxX.js",
+        "sha256": "e2b1171211aca94bbd65c828995c89c076652094ce4746d22af70a83a32954d6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-integralLogs.TlD3T20p.js",
+        "sha256": "045950e2b6b7628977a41bbd6d3f1cf7c56c706c83ebce201f621211e264d91a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-invoice.B0AZwVAS.js",
+        "sha256": "774fca24cb4e64ab74db2d165ed20eb32a91c61c0806c1ac4c6a9f251a3a64a8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-kefu.BwfNJx13.js",
+        "sha256": "dba723a63870a9f507a0dace4c181d39efdedec7969cb63242bb7565400df690"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-legalContent.DmJyDmVh.js",
+        "sha256": "71a5dd8320ffe1a7c3a163414e183c897f52413d00e8aac492d7e835845f4571"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-level.CmY4MHHg.js",
+        "sha256": "ca5e67ca988200ef7db6bd9c7755282c7e1b85ab56a3df2fd1df9d4ba7d23fbc"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-memberCode.BqENt-WA.js",
+        "sha256": "4032c50a2ea0f17603902018e4e754998f94f77fcbe019dda14c19f2963b105b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-message.DECgu-4x.js",
+        "sha256": "674112f10c0ac50f60aa71a1c6d3973b2b93a49ef7b4161be39c90a4fc7ee599"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-messageDetail.06-EQ_--.js",
+        "sha256": "78c30c78257ade64163a60b1c8cfc8f87962b5903da4f00de5b3eafaa66a9883"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-payPassword.BOsV--eq.js",
+        "sha256": "ab349d511dfb3c5d35b79e3bc8b2244de4d775b82f0b691c85eb94834f2653ce"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-phone.CFYxwrDc.js",
+        "sha256": "3a7232bd5f09a4752e0b6d1a969e3730ebc86c897df0c95e835f591c8db454bc"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-profile.C1jI4Fxw.js",
+        "sha256": "b2c3170243e2508ca6f38d1e325927ed39e393f0811b18bc164ec024c8b1cb27"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-recharge.Cs5YRZO1.js",
+        "sha256": "f96906cc355b979aa503c8984aee085bd292d93ec6617ba0555703188f19841d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-sign.DHTNgyRF.js",
+        "sha256": "e2d4ce09f5c294aaa56cac40a6fdc116047f2fb0cc4247d05262f109e7aef059"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-spread.BUzivXJq.js",
+        "sha256": "01a5237c7dcc36ddcb90ba2d0f8387b2fcbcf9c124b201a2d69fc47db979e901"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-supplierApply.NAhHuHTe.js",
+        "sha256": "4f448efef24e25cdef9d298fe8db560b8eb982c6e2cf52e05d40d9747b2df0cf"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-vipOpen.cqoJlXT1.js",
+        "sha256": "068d06f2255627fb936b621f1e644fb4f400f782c6268e4b7fbbcba9de1a6981"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-user-visitHistory.GckLccUG.js",
+        "sha256": "7456d5e756ef0f7d7a851e5d65dd7315c9426ee69411cb9196c17918155a8c90"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-agent-apply._rBSc2OD.js",
+        "sha256": "2b433fa2b1852825b34e1531ac433cd0279e4c10be38bb081dba2cbe128e5ee7"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-agent-bind.Y7RAgiCv.js",
+        "sha256": "28de2bade2bf527f505bb951cbdf84152990cfb83cfd2ed07cd43cb2b53b05b1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-agent-record.B9tCvBsj.js",
+        "sha256": "5df19077b53ce8d9a8b78b5a100a2fd9f234b89793684db18842a3b94c1239a8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-agent-staff_list.DcAYqk0l.js",
+        "sha256": "80d1bbc6f912a9a91937d91fad36aff4b064e0759ec3369bca116c4d312136b8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-agent-state.BhCY1e3h.js",
+        "sha256": "29f5758fc636d697b696806084d7167834dadfd8ac96ef87c015c652c13f8618"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-distributor-apply.D-VLdCjJ.js",
+        "sha256": "1c5af195778c7cec278c0e41d35f5fc8ac0ee402fff06d39415456296041a7ea"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-user_distribution_level-index.BVmfrazx.js",
+        "sha256": "b99dda88ec073a624132855028965d6bbbe74265defc8ea80e0087114b009a67"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-users-user_member_code-index.DUZBS-nm.js",
+        "sha256": "3177c2593dea5406e80701ca3758f19d55f69a93ece3523e7371617cb04d66e4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-work-groupInfo-index.DOjgO984.js",
+        "sha256": "ca3813184f80eecb6df192cd61d686a3887b0f1d2fb50e19ff866ee353eee49e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-work-orderDetail-index.BiPbTXUa.js",
+        "sha256": "51a05c8cb1ef2f40b88760d4df80366fe3c41179a8870804a2e71ad0d6d2ec0a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-work-orderList-index.Nvpz-8tr.js",
+        "sha256": "f27168c0602229aeac3934070f0228ac712af2b21012d15deaccdd2877e90010"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-work-record-index.CYeUlX7X.js",
+        "sha256": "2c334b562ff8899659787d158a8ff2a70f552e196554cbc766074f648c6efaa8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/pages-work-userInfo-index.BwaNyAbJ.js",
+        "sha256": "551f7edd04556287f555c30d56784bc9d481dc7dfc1d38b4f8d6477d9eedd421"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/payPassword-DzwOFcDO.css",
+        "sha256": "264bf903d15980677515a17c478f9a2c5e21c1b8dc550206a2a03f4c945ff8e5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/payResult-HEgTks64.css",
+        "sha256": "9ca8058ca2cef0e96c57ad214dc358f130c4dd9a01280f33c5da8ac4046c01ec"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/people-Bfw2oGBJ.css",
+        "sha256": "83afb82ae3aa9e3814ad9c53c2288e24c2d545369854243cf2bd27f214c07d9c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/phone-CuCPyoF1.css",
+        "sha256": "3c1250c083ecc01974cbb8023460a3c829a273c8e647c78eb4e49bed4cc8d7e0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/preparedProductCart.BEkpUXhD.js",
+        "sha256": "5d25d80a4db2c90b8d2cd59a19a1171823d5c507fe59f0fc759f405283b40cd5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/presale-C7-djaKK.css",
+        "sha256": "e89c3288ab07b798736dc1efe2e8838d10b8e0d24e4832ccbfcad30b18754e67"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/presale.Bz2Huhnx.js",
+        "sha256": "791e12019120d3f9506ce7af547944c179837b5ca9ae63a5f358f65a562792f1"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/presaleDetail-BQfzGYjP.css",
+        "sha256": "db4ae009fde215711994e42dde6cf43026d315a44744957e0db41a1492508230"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/privateShareScan.Dq9CaBhG.js",
+        "sha256": "9f72b81ae8145bf88bc0b239b58402b7dca2ad8f102eab73fe7b68ec979cfc13"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/product.BZsf0y2B.js",
+        "sha256": "72045dca89849771c5dd26a0c5942f12512c1d09c71511be69cf293dbf68a282"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productCommunity-Dh4AF-p4.css",
+        "sha256": "daed1526a8cfaa5e3ba69ef9b96c16fa27b3fe4102c5ecd35f9f9778db344967"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productDetailDesign.BeQW8Quj.js",
+        "sha256": "529f4558a676c5eeb14037fca06848c3170046dbcded22b0f4162280d7f0d482"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productDetailDesign.CPYTQKlD.js",
+        "sha256": "ef6c188d6b6dc8cbe9e87d98ab14dcdef3dcc45e4a39dbd263bb56f1e3b74ac6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productDetailDesign.DSxnGd2-.js",
+        "sha256": "2324fc2dd7444af2f905c835f767b9fef8df91d10392fed3611807b915372108"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productDetailRoute.De4Iz5gd.js",
+        "sha256": "9a2f3913f7a05e17b98854d662ee95ed43dc71cb242d25ed469fb0a35154cf20"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/productRank.BWBXIch5.js",
+        "sha256": "bded8c131abc5cad70de09a79f57a92c7aaa099dba94d62a3d7d8cf45e66a266"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/products-cy6Rl8o5.css",
+        "sha256": "1273dd2b464f059c694a8ecc7b12ba5c9e9c025c08f72d577a2dceb6bd3c9340"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/profile-CDBMPn2J.css",
+        "sha256": "6a391194b5e1bc0177a3674c3c29e5ba2724f31b9ccd4406d553a97dff09428a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/recharge-BgZfC-01.css",
+        "sha256": "6f0f360ab6f729ae7d3c508481a6087201951b39adfa213ea6da4439c50edcc4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/record-D50bJnsg.css",
+        "sha256": "9300b7131ba67cce2f963043498e71c6a5bbd97298a53df7a2f78c8a789d73a3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundApply-CD33gk8F.css",
+        "sha256": "eba19f6fbea0499fe152ef01fd6f4856acbe4feecebf97254ec97f59045ca955"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundDetail-EWMTp_hJ.css",
+        "sha256": "1fcbaf59a7840b4a686c329d6fed73d580c971805fa023a85f7a3e1067c1ed2d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundDetail-tgNoX96G.css",
+        "sha256": "781a06439ff820eb2e6b4313d5b6910cf7742be5da4f1198252ea5a59a210295"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundList-D3PkCH_G.css",
+        "sha256": "2423d6b00570a6557bcc931654d0d4d88c4dc4e3db63106b1c6a7d3078615574"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundReturn.DWbZ2aQF.js",
+        "sha256": "db2720e59c8de5fe8531b7820f4b0f0f6a0d7cab1adbaa62d668f6e5d70d8960"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/refundReturn.VcV3mkNw.js",
+        "sha256": "457174f0219ea6a83fe6fdca99124d1bea1505ce5007ecbb8efab2ada83ceb2e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/register-BPnXoPII.css",
+        "sha256": "2a414e5877e8e2e8b9d8ff230f286e697473c39608f634ab541b3736073ad73c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/reply-BxhbsBdy.css",
+        "sha256": "4412d0b27bc28d454ce6fe48606d94ad8532c68de53d14398bf7601fb07edb78"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/reply.CQbC3kpI.js",
+        "sha256": "6ec10fef17582b93b130a95cb4c076da1637f61450c9bf4ae52f3ba95fc2147b"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/reset-DZrCjcq2.css",
+        "sha256": "6e18b553faeb199cbd54e91b61f63283f0e534814f3c243990e0c3b60409ef36"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/scanLogin-CS5voeUd.css",
+        "sha256": "4b704ed1c29c35e046f8e828bd0fa75f1cf92f9890323fc14c0dde957c27b673"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/search-BKgqZSJx.css",
+        "sha256": "b4f12da5d88272970d3bac9b5c58c31bf8a7857d71712ea9ebc11ed7c7d76a3e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/seckill.CcwufwQ7.js",
+        "sha256": "e2cd12a6766f1c3a4be3a44fdeb9b8e333c6890e402243c431b847bba83c3f86"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/seckillDetail-ChfvlnGp.css",
+        "sha256": "4945efab4e9ea1ce9bdf06a95109492d6e4c49650794827e476d1ae242d98322"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/seckillPurchase.DcvhnZnz.js",
+        "sha256": "a0bf56b8d2769093c9da9e9057635357f82256e06da87f311b9be09c558a25e8"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/shareImage.D8n33AiK.js",
+        "sha256": "635e201c3114af125fb94c6914c02e53b5f59f211cdae08b257712b018c567c9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/shareScanTransfer.aFTd8Xjv.js",
+        "sha256": "3c5a3921c22e267d6203eed97d2421bdeb01089072f0a5412e240b6a4632548d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/sign-B6BMrc8p.css",
+        "sha256": "51bd117efb9a401c19bd5e13167c2ae3e9a080abb0561d30aec9db9d9f58112f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/smsChallenge-DqIhkMiV.css",
+        "sha256": "ac9ca44f8abc32da5dd537e042a430195b63a92371707c53328dcd0c07135cb0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/smsChallenge.JZmlaIkb.js",
+        "sha256": "786f21358a75bbb9b7e7df3240edd02a452cf8e5af446e2aa8c352164f4dc105"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/spread-xgEeJJCf.css",
+        "sha256": "2d69e1c5ffbe70e1385c3f54b33bb27b0beb40c8f5a14095248374951ad68742"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/staff_list-DP6hrSJv.css",
+        "sha256": "402924539e18107f077678be7cf89eafab67843aa10ad9ab79f2eee009cdf195"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/state-DzPKW3dd.css",
+        "sha256": "4c719323b732315e0501febc370c1dd51b9751cc447200be955e5a295a652895"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/supplierApplication.TFAYf-Vq.js",
+        "sha256": "fdc600e7c7c19dc7c47c3055a12c5294cac68a4a93e6600481bbf007c2e35ce2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/supplierApply-Dzr7H4vX.css",
+        "sha256": "d0d2f2947dab7a29776e765d1c57e58e52c04e5d74a9634626b5063a1313ea45"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/uni.038b6cf8.css",
+        "sha256": "038b6cf85b929456d8d130ceabd8c172c6663b469723fb910fac3303a7a56ce2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useActivityDetailDesign.j0hskuB_.js",
+        "sha256": "bda1a072fa11805b8a808c6b0f917198573017ac081f96da4517d23b812d9ba0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerCashierRead.BPH1E8hq.js",
+        "sha256": "91a1fecfff2dff0e43b1f906fef44552b2b109e323d6dd72ef07e3cfce13a84f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerSupplierRefundSettlement.Cvf77uhf.js",
+        "sha256": "55d1901ce13cd567e2effd3c1174370742fe6f936022508491c5839154ff1b65"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerWork-BFf7X6dp.css",
+        "sha256": "7cc51f9c92dcd9f14a00d9d66c2f02ebee00193e85923b8718b195080be8a90f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerWork.C46bFPfW.js",
+        "sha256": "4963dd2a414e982985dd378c11035613b19423c669341587fa7a19b173d4afe9"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerWorkFinancialOperations.Cq_7LyBP.js",
+        "sha256": "6eca9613b78005d672e479b9fa201a107025f2721a7977542d331ef8805d3126"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerWorkOperations.DjgsbcK4.js",
+        "sha256": "67b23e613588c930d10a562f12b81e2a5f3fb12a164d096e6457ebf68cb15eca"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useCustomerWorkUserOperations.B7uMFxYg.js",
+        "sha256": "dccd4d35d280ff3149c3b56e59696efa289d9e27f8ac2f14915a46d1f6a4b969"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useDeliveryWorkbench-BSpqLVbB.css",
+        "sha256": "95f309e6eabd5676f99e49113cca108afffa77b976ce759f3b967777eac4c842"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useDeliveryWorkbench.EOwka10I.js",
+        "sha256": "297872478678c11afb8b2da2997f69d47b75ae4156846559a4555b181b52e214"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useIntegralPurchase-DCEJZtXV.css",
+        "sha256": "62f5c480265a1f4959631408157fb11bb43a4a1505af0cc630c786c9473705b4"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useIntegralPurchase.C-VBV7qU.js",
+        "sha256": "a961c1635a4a21b52b20981672ccfca5c807bf45e2dd147f60176d81adc299f0"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useMerchantOrders-ClH0DSOn.css",
+        "sha256": "a30bb22edd386e99b571dcae55e9fd438ddaa30fa696ff659c1c098355762baa"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useMerchantOrders.DexQaVoi.js",
+        "sha256": "ef40bcccd32854389c50d13e738aa04c682e06e0915b6a8e3124a12e4fda5650"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useOfflineCashier-B-CX7k85.css",
+        "sha256": "32d75df3de61a0825773530c245e598d6b162bcd4ff7a1193206824eee5ac3a3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useOfflineCashier.C6HbJKmr.js",
+        "sha256": "8d7fa92156cba337d0d45c3c2f7582351f4cbf29759500b8ff2e05f87c8027b5"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useRefundRecords.CPg7nncd.js",
+        "sha256": "d1bcf03e100fe734e1aaf4f8502a9892c5de2a85f9b47036ffe0a219b4018e1a"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useUserCenter.m7BDgNlS.js",
+        "sha256": "e2bc1570ade221ab7107ce2f2f4105e71933819a94fa6c300a3e8d8ceace106c"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/useWorkAccess.sk5kFURe.js",
+        "sha256": "67008b1949c07a52a14e77468efad5607ab7e67a7e47ecb5daf7eb3fa570709f"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/userCenter.DtXvr2tO.js",
+        "sha256": "ddf00e4b41fbe380ba1882cf45f4d07378830ca4486417d572a7376d737affd2"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/userCenter.lJJSq4qI.js",
+        "sha256": "20a623069b0d76def6417aeab07e6dbdf6e5a8cf8bbe3efea64e2530f579a681"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/users-B79ovO0R.css",
+        "sha256": "e631a1bf4f1564871c0a916db653eeffc2b7601e528b42e7cbc333e12193f0c6"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/vipOpen-I9Fd_tPD.css",
+        "sha256": "a4cfb0397623997686445a87d3a53a8c2a2bea0442731ccfaf7f9cb909382cd3"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/visitHistory-B2VcxqKn.css",
+        "sha256": "5ad6acfb608956e39a4d03a899cdf5301839b10d98c77e77b4de0266ecaca729"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/writeoff-BK4VEIHQ.css",
+        "sha256": "e704bddbf7e1275524f75e87270f0597724d7f0463e33b55e263afe911540eda"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/assets/writeoff-C-jNI-y6.css",
+        "sha256": "98a261f1689c8fd3fd842f3d3ad13b546c9e895e14e9537cf693ba7a22161e4e"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/index.html",
+        "sha256": "8202ee6fc77b5f50a1d7189d8c1dfc5f89b7e3be824c89511b7ecd46a12e117d"
+      },
+      {
+        "path": "view/uniapp-ts/dist/build/h5/static/logo.png",
+        "sha256": "1434d0a85a9b265e01fc3f1e2dc15438ef3e2ed571dfba2304954ec58528eee2"
+      }
+    ],
+    "all_447_unchanged": true
+  },
+  "pg_cleanup": {
+    "captured_at_utc": "2026-10-19T11:53:44.493823+00:00",
+    "clusters": [
+      {
+        "phase": "browser-v1",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-S5iScY",
+        "validation_exit_code": 1,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-browser-v1-terminal.json",
+        "terminal_sha256": "45f76efdd0065f5316291754e08ec4c9d763662a6cc48444440b7cd3defd76bb",
+        "automatic_remaining_zero": true
+      },
+      {
+        "phase": "browser-v2",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xbk3D4",
+        "validation_exit_code": 0,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-browser-v2-terminal.json",
+        "terminal_sha256": "40587bbebd89503e9ca29bf0f527306d2b1718b8bb797fa497c1183becc8996e",
+        "automatic_remaining_zero": true
+      },
+      {
+        "phase": "native-gift-v1",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-qCXDpE",
+        "validation_exit_code": 0,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-native-gift-v1-terminal.json",
+        "terminal_sha256": "84a73dee4d7084ae05b25c14bc4f8b8ef14fcd5722427e6d129493b3efce1c8c",
+        "automatic_remaining_zero": true
+      },
+      {
+        "phase": "native-v1",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZcLvHk",
+        "validation_exit_code": 1,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-native-v1-terminal.json",
+        "terminal_sha256": "932a43b778097f7cbc182e25f9014666f60e682bc33b1f973958ef4370f6c640",
+        "automatic_remaining_zero": false,
+        "manual_cleanup_receipt": {
+          "path": "/tmp/cinashop-customer-order-repurchase-native-v1-offline-cleanup.json",
+          "sha256": "2bad5f244950ce2bdf8beb3833a3c926cc6f8137dec011049af2710600f64a6c"
+        },
+        "qualification": "Automatic fixture cleanup failed; exact stopped cluster was verified and cleaned offline, without a listener or HBA changes."
+      },
+      {
+        "phase": "native-v2",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-gRNQB1",
+        "validation_exit_code": 1,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-native-v2-terminal.json",
+        "terminal_sha256": "83eee1e38814ca9a256fbe65834ae62ad42b8013b08910efd654c49191a843d5",
+        "automatic_remaining_zero": false,
+        "manual_cleanup_receipt": {
+          "path": "/tmp/cinashop-customer-order-repurchase-native-v2-offline-cleanup.json",
+          "sha256": "555a493e6914420970010ab27e17793fea63dc2e63c3c3706a410380d6bf81d7"
+        },
+        "qualification": "Automatic fixture cleanup failed; exact stopped cluster was verified and cleaned offline, without a listener or HBA changes."
+      },
+      {
+        "phase": "native-v3",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Wnx2uK",
+        "validation_exit_code": 0,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-native-v3-terminal.json",
+        "terminal_sha256": "f8894a843a528e1d9c142e8e6b0eed4f51bd827fb9200f23ec45f0d4eb9589cf",
+        "automatic_remaining_zero": true
+      },
+      {
+        "phase": "presale-v1",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-saAw2G",
+        "validation_exit_code": 0,
+        "remaining_zero": true,
+        "stopped": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "shutdown_in_log": true,
+        "terminal": "/tmp/cinashop-customer-order-repurchase-20261019-presale-v1-terminal.json",
+        "terminal_sha256": "5bbb5cc78639821b473eafcbf27747b1bf15ffa5d31470f01c2a43d9cf0023e7",
+        "automatic_remaining_zero": true
+      }
+    ],
+    "all_stopped_and_empty": true
+  },
+  "root_checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "checked": 50,
+      "checkbox_lines_identical_to_base": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "checked": 249,
+      "checkbox_lines_identical_to_base": true
+    }
+  ],
+  "remaining_php_parity": [
+    "Cumulative limitType2 historical completeness and concurrent quota debit/release authority remain unimplemented. Rejection is not compatibility completion.",
+    "Exact SKU, valid physical quantities and aggregate per-order limits are intentional stricter semantics than PHP fallback.",
+    "Source-paid/status fixture does not prove real payment, receipt/reward or complete mixed-presale checkout acceptance."
+  ],
+  "boundaries": {
+    "SQL": "Owned fixture maintenance connection for actual App reads and authors; no independent SELECT-only or production runtime GRANT acceptance",
+    "source_fixture": "Registered checkout/allocation; synthetic payment and receipt/completion display admission",
+    "quote": "Actual legacy confirm/computed server prices; allowed short-lived KV preview key, all282public SQL rows/229sequences unchanged",
+    "again": "Only new direct-buy cart rows and own SERIAL allocation change; no stock reserve/order/pay; unknown ack cannot be recovered across remount without a server ledger",
+    "read_failure": "503 injected after actual backend200 read, not real backend outage",
+    "provider": 0,
+    "R2": "in-memory fake,0read/put/delete; owned thumbnail is separate static fixture",
+    "browser": "Background IAB; fixed40751, no global confirmation/security settings changed; installed external extension is not listed as connected",
+    "rollback": "SQL rows transactional, PostgreSQL sequences may have gaps",
+    "production_actions": false,
+    "get_script": "Restored PHP-compatible behavior and corrected retirement audit retained",
+    "publication": "User already authorized GitHub push; draft PR based on PR123. Exact commit/remote and own CI snapshot in separate local publication receipt; no merge/deploy",
+    "local_artifacts": "/tmp references are current workstation diagnostics, not permanent remote attachments"
+  }
+}

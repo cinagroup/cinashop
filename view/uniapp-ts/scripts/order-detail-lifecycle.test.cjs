@@ -3,6 +3,121 @@ const assert = require('node:assert/strict');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const detail = id => ({ orderId: id, uid: 11, paid: 0, payPrice: '10.00', totalPrice: '10.00', status: 0, type: 0,
   pid: 0, supplierAllocationStatus: 0, productType: 0, cartInfo: [], customForm: [], realName: '本地私有联系人' });
+const repurchaseDetail = (id = 'local_A', change = {}) => ({ ...detail(id), id: 501, paid: 1, status: 2,
+  refundStatus: 0, supplierAllocationStatus: 2, cartInfo: [{ id: 701, type: 2, cartNum: 2 }], ...change });
+const repurchaseResult = (change = {}) => ({ cartIds: [901, 902], cateId: '901,902', sourceOrderId: 'local_A', sourceRowId: 501, ...change });
+function repurchaseSetup(override = () => undefined) {
+  return setup(c => {
+    if (c.url.endsWith('/order/again')) assert.equal(c.method, 'POST');
+    return override(c) ?? (c.url.includes('/order/detail/') ? { data: repurchaseDetail(c.url.split('/').at(-1)) }
+      : c.url.endsWith('/order/again') ? { data: repurchaseResult() } : undefined);
+  });
+}
+test('UniApp actual repurchase posts PHP uni and navigates only to its acknowledged direct-buy selection', async () => {
+  const r = repurchaseSetup();
+  try { await r.start({ orderId: 'local_A' }); assert.equal(r.checkout.canRepurchase.value, true);
+    await r.checkout.prepareRepurchase();
+    const writes = r.calls.filter(c => c.url.endsWith('/order/again')); assert.equal(writes.length, 1);
+    assert.match(writes[0].url, /\/order\/again$/); assert.deepEqual(writes[0].data, { uni: 'local_A' });
+    assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartIds=901,902']);
+  } finally { r.stop(); }
+});
+test('UniApp duplicate repurchase taps keep one frozen original order request', async () => {
+  const waiting = deferred(), r = repurchaseSetup(c => c.url.endsWith('/order/again') ? waiting.promise : undefined);
+  try { await r.start({ orderId: 'local_A' }); const pending = r.checkout.prepareRepurchase();
+    await r.checkout.prepareRepurchase(); await tick(); assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1);
+    waiting.resolve({ data: repurchaseResult() }); await pending;
+    assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartIds=901,902']);
+  } finally { waiting.resolve({ status: 400 }); r.stop(); }
+});
+for (const change of [{ sourceOrderId: 'local_B' }, { sourceRowId: 502 }, { cartIds: [] },
+  { cartIds: [901, 901], cateId: '901,901' }, { cartIds: ['901'], cateId: '901' }, { cateId: '902,901' }]) {
+  test(`UniApp malformed repurchase result cannot navigate or retry after refresh ${JSON.stringify(change)}`, async () => {
+    const r = repurchaseSetup(c => c.url.endsWith('/order/again') ? { data: repurchaseResult(change) } : undefined);
+    try { await r.start({ orderId: 'local_A' }); await r.checkout.prepareRepurchase();
+      assert.equal(r.checkout.repurchase.uncertain, true); assert.match(r.checkout.repurchase.error, /尚未确认/);
+      await r.checkout.load(); await r.checkout.prepareRepurchase();
+      assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1); assert.deepEqual(r.navigations, []);
+    } finally { r.stop(); }
+  });
+}
+test('UniApp definitive repurchase rejection can be retried after correcting current product availability', async () => {
+  let reject = true; const r = repurchaseSetup(c => reject && c.url.endsWith('/order/again') ? { status: 400, msg: '商品已下架' } : undefined);
+  try { await r.start({ orderId: 'local_A' }); await r.checkout.prepareRepurchase();
+    assert.equal(r.checkout.repurchase.uncertain, false); assert.match(r.checkout.repurchase.error, /下架/);
+    reject = false; await r.checkout.prepareRepurchase();
+    assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 2); assert.equal(r.navigations.length, 1);
+  } finally { r.stop(); }
+});
+test('UniApp navigation failure retains acknowledged rows and continuation sends no second repurchase', async () => {
+  const r = repurchaseSetup(); let fail = true;
+  r.uni.navigateTo = options => { r.navigations.push(options.url); if (fail) options.fail?.(); else options.success?.(); };
+  try { await r.start({ orderId: 'local_A' }); await r.checkout.prepareRepurchase();
+    assert.deepEqual([...r.checkout.repurchase.cartIds], [901, 902]); assert.match(r.checkout.repurchase.error, /结算页未打开/);
+    fail = false; await r.checkout.prepareRepurchase();
+    assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1); assert.equal(r.navigations.length, 2);
+  } finally { r.stop(); }
+});
+for (const ending of ['identity', 'route', 'onUnload']) test(`UniApp late repurchase cannot affect a new context after ${ending}`, async () => {
+  const waiting = deferred(), r = repurchaseSetup(c => c.url.endsWith('/order/again') ? waiting.promise : undefined);
+  try { await r.start({ orderId: 'local_A' }); const pending = r.checkout.prepareRepurchase(); await tick();
+    if (ending === 'identity') r.auth.setLogin('repurchase-owner', 22);
+    else if (ending === 'route') await r.start({ orderId: 'local_B' });
+    else r.hooks.onUnload();
+    waiting.resolve({ data: repurchaseResult() }); await pending;
+    assert.deepEqual(r.navigations, []); assert.deepEqual([...r.checkout.repurchase.cartIds], []);
+  } finally { waiting.resolve({ status: 400 }); r.stop(); }
+});
+test('UniApp hide/show during repurchase keeps one request and retains its acknowledged IDs for explicit continuation', async () => {
+  const waiting = deferred(), r = repurchaseSetup(c => c.url.endsWith('/order/again') ? waiting.promise : undefined);
+  try { await r.start({ orderId: 'local_A' }); const pending = r.checkout.prepareRepurchase(); await tick();
+    r.hooks.onHide(); r.hooks.onShow(); await tick(); await r.checkout.prepareRepurchase();
+    assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1);
+    waiting.resolve({ data: repurchaseResult() }); await pending;
+    assert.deepEqual(r.navigations, []); assert.deepEqual([...r.checkout.repurchase.cartIds], [901, 902]);
+    await r.checkout.prepareRepurchase(); assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1);
+    assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartIds=901,902']);
+  } finally { waiting.resolve({ status: 400 }); r.stop(); }
+});
+test('UniApp pending repurchase cannot attach to a replacement physical source with the same public ID', async () => {
+  let rowId = 501; const waiting = deferred(), r = repurchaseSetup(c => c.url.endsWith('/order/again') ? waiting.promise
+    : c.url.includes('/detail/') ? { data: repurchaseDetail('local_A', { id: rowId }) } : undefined);
+  try { await r.start({ orderId: 'local_A' }); const pending = r.checkout.prepareRepurchase(); await tick(); rowId = 502; await r.checkout.load();
+    waiting.resolve({ data: repurchaseResult() }); await pending;
+    assert.deepEqual([...r.checkout.repurchase.cartIds], []); assert.deepEqual(r.navigations, []);
+  } finally { waiting.resolve({ status: 400 }); r.stop(); }
+});
+test('UniApp Supplier lines expose repurchase only in the mounted PHP received/completed states', async () => {
+  for (const status of [0, 1, 2, 3, 5]) {
+    const r = repurchaseSetup(c => c.url.includes('/detail/') ? { data: repurchaseDetail('local_A', { status }) } : undefined);
+    try { await r.start({ orderId: 'local_A' }); assert.equal(r.checkout.canRepurchase.value, [2, 3].includes(status));
+      if (![2, 3].includes(status)) { await r.checkout.prepareRepurchase(); assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 0); } }
+    finally { r.stop(); }
+  }
+});
+test('UniApp pending allocation, activity, refund and empty source do not expose repurchase', async () => {
+  for (const change of [{ type: 1 }, { refundStatus: 1 }, { supplierAllocationStatus: 1 }, { cartInfo: [] }]) {
+    const r = repurchaseSetup(c => c.url.includes('/detail/') ? { data: repurchaseDetail('local_A', change) } : undefined);
+    try { await r.start({ orderId: 'local_A' }); assert.equal(r.checkout.canRepurchase.value, false);
+      await r.checkout.prepareRepurchase(); assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 0);
+    } finally { r.stop(); }
+  }
+});
+test('UniApp lost repurchase acknowledgement stays uncertain after an explicit source read', async () => {
+  const r = repurchaseSetup(c => c.url.endsWith('/order/again') ? { transport: 'owned lost acknowledgement' } : undefined);
+  try { await r.start({ orderId: 'local_A' }); await r.checkout.prepareRepurchase(); assert.equal(r.checkout.repurchase.uncertain, true);
+    await r.checkout.load(); assert.equal(r.checkout.order.value.order_id, 'local_A'); await r.checkout.prepareRepurchase();
+    assert.equal(r.calls.filter(c => c.url.endsWith('/order/again')).length, 1); assert.deepEqual(r.navigations, []);
+  } finally { r.stop(); }
+});
+test('UniApp order A to B to A invalidates the first view generation acknowledgement', async () => {
+  const waiting = deferred(), r = repurchaseSetup(c => c.url.endsWith('/order/again') ? waiting.promise : undefined);
+  try { await r.start({ orderId: 'local_A' }); const pending = r.checkout.prepareRepurchase(); await tick();
+    await r.start({ orderId: 'local_B' }); await r.start({ orderId: 'local_A' });
+    waiting.resolve({ data: repurchaseResult() }); await pending;
+    assert.deepEqual([...r.checkout.repurchase.cartIds], []); assert.deepEqual(r.navigations, []);
+  } finally { waiting.resolve({ status: 400 }); r.stop(); }
+});
 const cashier = id => ({ type: 'order', order_id: id, paid: false, payable: true, payable_reason: '', zero_pay: false,
   pay_price: '10.00', now_money: '20.00', integral: 0, pay_integral: 0,
   methods: Object.fromEntries(['yue','weixin','alipay','offline'].map(key => [key, { enabled: key === 'yue', reason: '' }])) });

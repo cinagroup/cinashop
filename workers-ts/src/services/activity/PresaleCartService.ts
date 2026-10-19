@@ -75,15 +75,29 @@ export async function addPresaleCart(container: Container, params: {
   }
   return withTx(container, async tx => {
     await boundTransaction(tx);
-    const context = await lockedSelection(tx, params.uid, params.productId, params.unique, params.cartNum);
-    const [cart] = await tx.insert(storeCart).values({ uid: params.uid, type: 6, activityId: 0,
-      productId: params.productId, productType: context.product.productType, productAttrUnique: params.unique,
-      cartNum: params.cartNum, isNew: 1, status: 1, addTime: Math.floor(Date.now() / 1000),
-    }).returning({ id: storeCart.id });
-    if (!cart) throw new Error("预售购物车写入失败");
-    await assertCurrentWindow(tx, context);
-    return { id: cart.id, cartNum: params.cartNum };
+    return addPresaleCartInTransaction(tx, params);
   });
+}
+
+/** Compose the same admission inside an already bounded caller transaction.
+ * In particular, a multi-line repurchase must roll back every newly added row.
+ * The caller must not reset transaction isolation after reading its source. */
+export async function addPresaleCartInTransaction(tx: DbClient, params: {
+  uid: number; productId: number; unique: string; cartNum: number; type?: number; isNew?: number; activityId?: number;
+}): Promise<{ id: number; cartNum: number }> {
+  if (Object.hasOwn(tx, '$client')) throw Error('Presale cart composition requires a caller-owned transaction');
+  selection(params.uid, params.productId, params.unique, params.cartNum);
+  if (![0, 6].includes(params.type ?? 0) || (params.isNew ?? 0) !== 1 || (params.activityId ?? 0) !== 0) {
+    throw new ValidateException("预售商品请使用立即购买，不能混入其它活动或普通购物车");
+  }
+  const context = await lockedSelection(tx, params.uid, params.productId, params.unique, params.cartNum);
+  const [cart] = await tx.insert(storeCart).values({ uid: params.uid, type: 6, activityId: 0,
+    productId: params.productId, productType: context.product.productType, productAttrUnique: params.unique,
+    cartNum: params.cartNum, isNew: 1, status: 1, addTime: Math.floor(Date.now() / 1000),
+  }).returning({ id: storeCart.id });
+  if (!cart) throw new Error("预售购物车写入失败");
+  await assertCurrentWindow(tx, context);
+  return { id: cart.id, cartNum: params.cartNum };
 }
 
 export async function setPresaleCartQuantity(container: Container, uid: number, id: number, quantity: number): Promise<void> {

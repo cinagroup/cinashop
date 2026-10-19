@@ -187,6 +187,16 @@
       <text class="arrow">›</text>
     </view>
 
+    <view v-if="canRepurchase" class="section repurchase-card">
+      <text>按原商品件数和当前售价重新准备结算，原赠品也按当前商品价格核算。优惠及新赠品以本次结算为准。</text>
+      <text v-if="repurchase.error" class="repurchase-error" role="alert">{{ repurchase.error }}</text>
+      <button v-if="repurchase.error" :disabled="repurchase.pending || repurchase.opening" @tap="load">重新读取原订单</button>
+      <button class="repurchase-button" :loading="repurchase.pending || repurchase.opening"
+        :disabled="repurchase.pending || repurchase.opening || repurchase.uncertain || !!actionError" @tap="prepareRepurchase">
+        {{ repurchase.cartIds.length ? '继续进入结算' : '再次购买' }}
+      </button>
+    </view>
+
     <!-- 退款入口 (已支付未收货) -->
     <view v-if="canApplyRefund" class="express-link" @tap="goRefund">
       <text>↩️ 申请退款</text>
@@ -208,9 +218,9 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import LegacyShareCode from '@/components/LegacyShareCode.vue';
-import { ref, computed, watch } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
-import { apiOrderCashier, apiOrderDetail, apiOrderPay } from "@/api/order";
+import { apiOrderCashier, apiOrderDetail, apiOrderPay, apiOrderAgain } from "@/api/order";
 import type {
   CheckoutCashier,
   CheckoutPaymentMethod,
@@ -218,9 +228,10 @@ import type {
   OrderInfo,
 } from "@/types/order";
 import type { SystemFormComponent } from "@/types/systemForm";
-import { API_BASE, getFormType } from "@/utils/request";
+import { API_BASE, getFormType, RequestError } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
 import { orderDetailId, orderDetailHashId, assertOrderDetailIdentity, assertOrderCashierIdentity, assertOrderPaymentIdentity } from "../../../../common/orderDetailIdentity";
+import { initialOrderRepurchase, createOrderRepurchase, canRepurchaseOrder } from '../../../../common/orderRepurchase';
 
 // Route parameters are validated in onLoad; do not forward them onto fragment roots.
 defineOptions({ inheritAttrs: false });
@@ -231,6 +242,20 @@ const order = ref<OrderInfo | null>(null);
 const cashier = ref<CheckoutCashier | null>(null);
 const payType = ref<CheckoutPaymentMethod>("yue");
 const paying = ref(false);
+const repurchase = reactive(initialOrderRepurchase());
+const canRepurchase = computed(() => canRepurchaseOrder(order.value, 'mobile'));
+const repurchaseController = createOrderRepurchase(repurchase, 'mobile', {
+  key: () => `${disposed}:${authStore.uid}:${authStore.sessionVersion}:${currentOrderId}`,
+  capture: currentView, order: () => order.value,
+  busy: () => loading.value || paying.value || !!actionError.value,
+  write: apiOrderAgain,
+  open: ids => new Promise<void>((resolve, reject) => uni.navigateTo({
+    url: `/pages/order/confirm?mode=buy&cartIds=${ids.join(',')}`,
+    success: () => resolve(), fail: () => reject(Error('请重试打开结算页')),
+  })),
+  isRejected: error => error instanceof RequestError && error.status === 400,
+});
+const prepareRepurchase = repurchaseController.prepare;
 const customForm = computed(() => order.value?.custom_form ?? []);
 const virtualItems = computed(() =>
   order.value?.product_type === 1 && Array.isArray(order.value.virtual_info) ? order.value.virtual_info : [],
@@ -565,6 +590,7 @@ function currentView() {
 }
 function clearView() {
   revision++; order.value = null; cashier.value = null; loading.value = false;
+  repurchaseController.contextChanged();
   loadError.value = ''; cashierError.value = ''; actionError.value = ''; payType.value = 'yue';
 }
 async function load() {
@@ -580,6 +606,7 @@ async function load() {
     if (!scope.current()) return;
     assertOrderDetailIdentity(latest, scope.id, scope.uid);
     order.value = latest;
+    repurchaseController.bindOrder();
     if (latest.paid === 0) {
       try {
         const nextCashier = await apiOrderCashier(scope.id);
@@ -663,6 +690,10 @@ onUnload(() => {
   padding: 24rpx;
   margin-bottom: 20rpx;
 }
+
+.repurchase-card { overflow-wrap:anywhere; line-height:1.6; }
+.repurchase-error { display:block; color:#9b3020; margin:16rpx 0; }
+.repurchase-button { margin-top:16rpx; }
 
 .second-card-panel {
   border: 2rpx solid #f3d19e;
