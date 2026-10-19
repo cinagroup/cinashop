@@ -76,6 +76,11 @@ export interface ExpressQueryResult extends TrackingPackage {
   };
 }
 
+/** Only the authoritative scalars needed for a scoped transport read. Callers
+ * need not load private order JSON, answers, addresses or payment columns. */
+export type ScopedTrackingOrder = Pick<typeof storeOrder.$inferSelect,
+  'id' | 'pid' | 'orderId' | 'status' | 'deliveryType' | 'deliveryName' | 'deliveryCode' | 'deliveryId' | 'userPhone' | 'isDel' | 'isSystemDel'>;
+
 interface ShipmentInput {
   orderPk: number;
   orderId: string;
@@ -296,9 +301,9 @@ export class ExpressService {
   /** Internal scoped reader: its caller obtains these authoritative rows in a
    * short read-only transaction. The hook rechecks actor/scope/order facts
    * before and after external I/O; no customer or Admin identity is fabricated. */
-  async queryScopedOrders(orders:readonly (typeof storeOrder.$inferSelect)[],authorize:()=>Promise<void>,options:{allowUserDeleted?:true}={}):Promise<ExpressQueryResult>{
-    // Only an independently authorized customer-work caller opts into legacy
-    // user-deleted detail tracking. The default manager/customer readers keep
+  async queryScopedOrders(orders:readonly ScopedTrackingOrder[],authorize:()=>Promise<void>,options:{allowUserDeleted?:true}={}):Promise<ExpressQueryResult>{
+    // Independently authorized staff callers explicitly opt into legacy
+    // user-deleted history tracking. The default manager/customer readers keep
     // their existing deletion policy, and system deletion is never bypassed.
     if(!orders.length||orders.length>MAX_SPLIT_PACKAGES||new Set(orders.map(order=>order.id)).size!==orders.length||orders.some(order=>order.id<1||order.isDel&&options.allowUserDeleted!==true||order.isSystemDel))throw new ValidateException('物流订单范围无效');
     await authorize();
@@ -413,7 +418,7 @@ export class ExpressService {
     return this.response(tracked, [tracked]);
   }
 
-  private fromOrder(order: typeof storeOrder.$inferSelect): ShipmentInput {
+  private fromOrder(order: ScopedTrackingOrder): ShipmentInput {
     return {
       orderPk: order.id,
       orderId: order.orderId,

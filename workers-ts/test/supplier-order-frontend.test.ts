@@ -19,7 +19,7 @@ beforeAll(async () => {
     export { createRouter, createMemoryHistory, RouterView } from 'vue-router';
   ` }, alias: { '@': resolve(root, 'src') }, define: { 'import.meta.env.DEV': 'false', 'import.meta.env.VITE_API_BASE_URL': '"/supplierapi"', '__VUE_OPTIONS_API__': 'true', '__VUE_PROD_DEVTOOLS__': 'false', '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': 'false' },
     plugins: [{ name: 'actual-order-sfc', setup(builder) {
-      builder.onLoad({ filter: /Orders\.vue$/ }, ({ path }) => ({ contents: compileScript(parse(readFileSync(path, 'utf8'), { filename: path }).descriptor, { id: 'supplier-order-test' }).content, loader: 'ts' }));
+      builder.onLoad({ filter: /\.vue$/ }, ({ path }) => ({ contents: compileScript(parse(readFileSync(path, 'utf8'), { filename: path }).descriptor, { id: 'supplier-order-test' }).content, loader: 'ts' }));
       builder.onLoad({ filter: /legacy-export\.ts$/ }, () => ({ contents: 'export const saved=[]; export const downloadLegacyExport=m=>saved.push(m);' }));
       builder.onResolve({ filter: /^element-plus$/ }, () => ({ path: 'dialogs', namespace: 'fixture' }));
       builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `export const state={confirm:async()=>{},messages:[],closed:0};

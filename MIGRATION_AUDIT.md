@@ -1,5 +1,11 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-19 Supplier 单单与拆单包裹物流
+
+恢复 PHP 供应商详情与具体拆单包裹的“查看物流”，复用真实承运商／缓存合同及 legacy result 字段；原订单状态日志保持独立。查询只接受归属当前供应商的实际快递单，核对子单买家／门店／父单；网络前后使用新的短只读事务复核实际会话、权限与运输事实，权限撤回后恢复仍拒绝旧请求。
+
+最终547项去重通过：6文件377项前端／纯回归、5文件110项既有PG、59项新增实际App／JWT／独立只读PG及1次生产构建Browser。Worker两套类型与Supplier类型／构建通过。Browser的12次GET对12表／12序列逐次零SQL写，3次受控承运商请求、3次物流缓存与1次启动配置缓存写入；1200×844与390×844弹窗及页脚未遮挡，控制台error/warn抽样为空。原生首轮59项均因夹具SKU超过既有char(8)而停在初始化，修正合成标识后全59重验成功；5座自有PG包括失败运行均清零停止。保留已恢复get_script与修订退役审计，原88／404复选行逐字保持。完整合同及当前源码指纹见[说明](workers-ts/docs/php-ts-supplier-order-tracking-20261019.md)与[账本](workers-ts/audit/php-ts-supplier-order-tracking-20261019.json)。本批为本地候选，整体迁移继续active；真实设备／承运商账号及发布仍待验收，新提交CI以自身GitHub结果为准。
+
 ## 2026-10-19 PR111 迁移 CI 跟进
 
 原PR111 Linux两个分片在20855项中失败2项：陈旧分类图片调用链审计，以及复制测试outbox的NOWAIT冲突。修复源码审计并增强负对照；仅隔离两张新建自有PG16夹具表的后台维护调度，保留真实独立会话持锁409和释放后同UUID成功。历史锁持有者未记录，不认定autovacuum为根因。44项本机专项通过，新的完整CI以GitHub自身提交为准；原复选行、生产服务与整体未完成状态保持。见[说明](workers-ts/docs/php-ts-ci-followup-20261019.md)与[账本](workers-ts/audit/php-ts-ci-followup-20261019.json)。
