@@ -311,3 +311,118 @@ it.each(['close','route','session'])('clears private invoice facts on %s and rej
     pending.resolve(value); await reading; await flush(); expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('申请时企业抬头');
   } finally { pending.resolve(value); f.close(); }
 });
+
+const promotionItem = (overrides: any = {}) => ({ promotion_id: 701, promotion_type: 1, frozen_name: '下单时的活动名称',
+  current_title: '当前已改名的活动标题', amount: '1.00', ...overrides });
+const promotionsReview = (overrides: any = {}) => ({ order_id: 25, state: 'recorded', reason: '', basis: 'modern', total: '1.00', items: [promotionItem()], ...overrides });
+it('renders separate frozen campaign name and current PHP title with exact allocation facts for a read-only viewer', async () => {
+  localStorage.setItem('supplier-permissions', '["supplier.order.view"]');
+  const f = await open(review({ promotions: promotionsReview() }));
+  try {
+    const text = contents(f.host);
+    for (const fact of ['促销分摊记录参考','活动 #701','下单快照中的活动名称','下单时的活动名称','当前活动标题','当前已改名的活动标题','本单分摊记录','本单促销分摊合计','¥1.00','已与下单快照及订单促销账本核对','不用于重新计算优惠']) expect(text).toContain(fact);
+    expect(f.calls.every(c => c.method === 'get')).toBe(true); expect(f.calls.some(c => /promotions|marketing/.test(c.url))).toBe(false);
+    expect(text).not.toContain('立即参加'); expect(text).not.toContain('领取优惠');
+  } finally { f.close(); }
+});
+it('shows multiple grouped campaign allocations whose exact cents sum to the recorded header total', async () => {
+  const value = promotionsReview({ items: [promotionItem({ amount: '0.34' }),promotionItem({ promotion_id: 702, promotion_type: 3, frozen_name: '另一活动', amount: '0.66' })] });
+  const f = await open(review({ promotions: value }));
+  try { for (const text of ['活动 #701','活动 #702','¥0.34','¥0.66','¥1.00','另一活动']) expect(contents(f.host)).toContain(text); }
+  finally { f.close(); }
+});
+it('labels a legacy ledger reference without inventing a frozen campaign name or recomputing current discounts', async () => {
+  const value = promotionsReview({ basis: 'legacy', items: [promotionItem({ promotion_type: 4, frozen_name: null })] });
+  const f = await open(review({ promotions: value }));
+  try { expect(contents(f.host)).toContain('历史订单账本参考'); expect(contents(f.host)).toContain('当前已改名的活动标题'); expect(contents(f.host)).not.toContain('下单快照中的活动名称'); expect(contents(f.host)).toContain('¥1.00'); }
+  finally { f.close(); }
+});
+it.each(['modern','legacy'])('keeps %s recorded money readable when the current activity title is unavailable', async basis => {
+  const value = promotionsReview({ basis, items: [promotionItem({ current_title: null, frozen_name: basis === 'modern' ? '历史名称仍保留' : null, promotion_type: basis === 'modern' ? 1 : null })] });
+  const f = await open(review({ promotions: value }));
+  try { expect(contents(f.host)).toContain('当前活动标题不可用'); expect(contents(f.host)).toContain('¥1.00'); expect(contents(f.host)).not.toContain('促销分摊暂无法核对'); }
+  finally { f.close(); }
+});
+it('distinguishes an explicit recorded zero allocation from no ledger record', async () => {
+  const value = promotionsReview({ basis: 'legacy', total: '0.00', items: [promotionItem({ frozen_name: null, amount: '0.00' })] });
+  const f = await open(review({ promotions: value, amounts: { ...review().amounts, promotions_price: '0.00' } }));
+  try { expect(contents(f.host)).toContain('本单促销分摊合计'); expect(contents(f.host)).toContain('¥0.00'); expect(contents(f.host)).not.toContain('本订单未记录促销分摊'); }
+  finally { f.close(); }
+});
+it.each([
+  { value: undefined, expected: '促销分摊信息未返回，请重新读取详情', omit: true },
+  { value: { order_id: 25, state: 'none', reason: '', basis: null, total: null, items: [] }, expected: '本订单未记录促销分摊', omit: false },
+  { value: { order_id: 25, state: 'unavailable', reason: '促销账本与商品记录不一致', basis: null, total: null, items: [] }, expected: '促销账本与商品记录不一致', omit: false },
+])('separates old contract, no record and unavailable allocation: $expected', async ({ value, expected, omit }) => {
+  const data = review({ amounts: { ...review().amounts, promotions_price: '0.00' } }); if (!omit) data.promotions = value;
+  const f = await open(data); try { expect(contents(f.host)).toContain(expected); expect(contents(f.host)).toContain('下单时的历史地址'); expect(contents(f.host)).not.toContain('下单时的活动名称'); }
+  finally { f.close(); }
+});
+it('labels own payment-summary allocations without adding them to physical child amounts', async () => {
+  const f = await open(review({ order_kind: 'payment_summary', promotions: promotionsReview() }), { pid: -1 });
+  try { expect(contents(f.host)).toContain('付款汇总的历史促销分摊'); expect(contents(f.host)).toContain('勿与各子订单重复相加'); }
+  finally { f.close(); }
+});
+it('supports valid frozen UTF-16 and current database-Unicode title boundaries as safe plain text', async () => {
+  const frozen = '🎁'.repeat(127)+'礼', current = '🛍'.repeat(255);
+  const value = promotionsReview({ items: [promotionItem({ frozen_name: frozen, current_title: current }),promotionItem({ promotion_id: 702, amount: '0.00', frozen_name: '<script>历史名称</script>', current_title: '<img onerror=alert(1)>' })] });
+  const f = await open(review({ promotions: value }));
+  try { for (const text of [frozen,current,'<script>历史名称</script>','<img onerror=alert(1)>']) expect(contents(f.host)).toContain(text); expect(nodes(f.host).some(n=>n.props.innerHTML)).toBe(false); }
+  finally { f.close(); }
+});
+it('sums allocation cents exactly at the schema amount boundary without floating-point rounding', async () => {
+  const value = promotionsReview({ total: '9999999999.99', items: [promotionItem({ amount: '9999999999.98' }),promotionItem({ promotion_id: 702, amount: '0.01' })] });
+  const f = await open(review({ amounts: { ...review().amounts, promotions_price: '9999999999.99' }, promotions: value }));
+  try { expect(contents(f.host)).toContain('¥9,999,999,999.99'); expect(contents(f.host)).toContain('¥0.01'); }
+  finally { f.close(); }
+});
+it.each([
+  ['array state', (v: any) => { v.state = ['recorded']; }],
+  ['wrong physical order', (v: any) => { v.order_id = 32; }],
+  ['unknown basis', (v: any) => { v.basis = 'current'; }],
+  ['unexplained unavailable', (v: any) => { v.state = 'unavailable'; v.basis = null; v.total = null; v.items = []; }],
+  ['unavailable with private rows', (v: any) => { v.state = 'unavailable'; v.reason = '请核对'; }],
+  ['none with nonzero header', (v: any) => { v.state = 'none'; v.basis = null; v.total = null; v.items = []; }],
+  ['empty recorded list', (v: any) => { v.items = []; }],
+  ['duplicate grouped identity', (v: any) => { v.items.push({ ...v.items[0], amount: '0.00' }); }],
+  ['row total mismatch', (v: any) => { v.items[0].amount = '0.99'; }],
+  ['header total mismatch', (v: any) => { v.total = '2.00'; v.items[0].amount = '2.00'; }],
+  ['float amount', (v: any) => { v.items[0].amount = 1; }],
+  ['negative amount', (v: any) => { v.items[0].amount = '-1.00'; }],
+  ['exponent amount', (v: any) => { v.items[0].amount = '1e0'; }],
+  ['missing modern name', (v: any) => { v.items[0].frozen_name = null; }],
+  ['oversized frozen name', (v: any) => { v.items[0].frozen_name = '🎁'.repeat(128); }],
+  ['oversized current title', (v: any) => { v.items[0].current_title = 'x'.repeat(511); }],
+  ['forbidden text control', (v: any) => { v.items[0].current_title = 'bad\u0000title'; }],
+  ['modern type from current-only metadata', (v: any) => { v.items[0].promotion_type = 4; }],
+  ['invented legacy frozen name', (v: any) => { v.basis = 'legacy'; }],
+  ['oversized record list', (v: any) => { v.items = Array.from({ length: 601 },(_,i)=>promotionItem({ promotion_id: i+1, amount: '0.00' })); }],
+  ['extra current campaign data', (v: any) => { v.items[0].eligibility = { uid: 999 }; }],
+  ['null envelope', (_v: any) => {}],
+])('rejects %s promotion response before showing misleading allocation and retries the real detail endpoint', async (name, change: (v: any) => void) => {
+  const broken = promotionsReview(); change(broken); let current = name === 'null envelope' ? null : broken;
+  const f = await mount(c => c.url === '/order/info/25' ? detail(25, review({ promotions: current })) : undefined);
+  try {
+    await f.view.openOrder(order()); await flush(); expect(f.view.current.value).toBeNull();
+    expect(nodes(f.host).find(n=>n.tag==='el-alert'&&String(n.props.title).includes('促销分摊信息不完整'))).toBeTruthy(); expect(contents(f.host)).not.toContain('下单时的活动名称');
+    current = promotionsReview(); button(f,'重新读取详情').props.onClick(); await flush(); expect(contents(f.host)).toContain('下单时的活动名称'); expect(f.calls.filter(c=>c.url==='/order/info/25')).toHaveLength(2);
+  } finally { f.close(); }
+});
+it('does not revive an older named allocation after order A to B to A navigation', async () => {
+  const pending=gate(); let hold=true;
+  const fresh=(id: number)=>detail(id,review({ promotions: promotionsReview({ order_id: id, items: [promotionItem({ frozen_name:`当前分摊-${id}` })] }),...(id===32?{order_kind:'payment_summary'}:{}) }),id===32?{pid:-1,delivery_type:'split'}:{});
+  const f=await mount(c=>c.url.startsWith('/order/info/')?c.url==='/order/info/25'&&hold?pending.promise:fresh(Number(c.url.split('/').at(-1))):undefined);
+  try { const reading=f.view.openOrder(order()); await flush(); await f.view.openOrder(order(32)); hold=false; await f.view.openOrder(order());
+    pending.resolve(detail(25,review({promotions:promotionsReview({items:[promotionItem({frozen_name:'过时活动分摊'})]})}))); await reading; await flush(); expect(contents(f.host)).toContain('当前分摊-25'); expect(contents(f.host)).not.toContain('过时活动分摊'); expect(f.calls.find(c=>c.url==='/order/info/25').signal.aborted).toBe(true);
+  } finally { pending.resolve(detail()); f.close(); }
+});
+it.each(['close','route','session'])('clears private promotion facts on %s and ignores the delayed detail response', async action => {
+  const pending=gate(); let hold=false; const value=detail(25,review({promotions:promotionsReview()}));
+  const f=await mount(c=>c.url==='/order/info/25'?hold?pending.promise:value:undefined);
+  try { await f.view.openOrder(order()); expect(contents(f.host)).toContain('下单时的活动名称'); hold=true; const reading=f.view.refreshCurrent(); await flush();
+    if(action==='close')f.view.drawerOpen.value=false;
+    if(action==='route')await f.router.push('/away');
+    if(action==='session')for(const token of ['other-account','tracking-a']){localStorage.setItem('supplier-token',token);const e=new Event('storage');Object.assign(e,{key:'supplier-token',storageArea:localStorage});surface.dispatchEvent(e);}
+    pending.resolve(value);await reading;await flush();expect(f.view.current.value).toBeNull();expect(contents(f.host)).not.toContain('下单时的活动名称');
+  } finally {pending.resolve(value);f.close();}
+});

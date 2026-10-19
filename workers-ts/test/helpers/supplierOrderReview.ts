@@ -1,6 +1,6 @@
 import { eq, inArray, SQL, sql } from 'drizzle-orm';
 import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
-import { storeOrder, storeOrderCartInfo, storeOrderInvoice, systemAttachment } from '@/models/schema';
+import { storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderPromotions, storePromotions, systemAttachment } from '@/models/schema';
 import { supplierOrderFiltersFixture } from './supplierOrderFilters';
 
 export const supplierReviewForm = () => [
@@ -20,7 +20,7 @@ export async function supplierOrderReviewFixture() {
     const dialect = new PgDialect();
     // Detail now reads the actual frozen invoice record, even when absent.
     // Install its real ORM shape; missing tables/permissions must not fake none.
-    for (const table of [systemAttachment, storeOrderInvoice]) {
+    for (const table of [systemAttachment, storeOrderInvoice, storeOrderPromotions, storePromotions]) {
       const definition = getTableConfig(table), columns = definition.columns.map(column => {
         const value = column.default, initial = value === undefined ? '' : ` DEFAULT ${value instanceof SQL ? dialect.sqlToQuery(value).sql : dialect.sqlToQuery(sql`${value}`.inlineParams()).sql}`;
         return `"${column.name}" ${column.getSQLType()}${initial}${column.notNull ? ' NOT NULL' : ''}${column.primary ? ' PRIMARY KEY' : ''}`;
@@ -56,7 +56,7 @@ export async function supplierOrderReviewFixture() {
     } } });
     const grantReviewReader = async (role: string) => {
       if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(role)) throw Error('Unowned order review LOGIN');
-      await f.grantReader(role); await f.exec(`GRANT SELECT ON public.system_attachment,public.store_order_invoice TO "${role}"`);
+      await f.grantReader(role); await f.exec(`GRANT SELECT ON public.system_attachment,public.store_order_invoice,public.store_order_promotions,public.store_promotions TO "${role}"`);
     };
     type Peer = Parameters<Parameters<typeof f.withReader>[0]>[0];
     const withReader = <T>(work: (peer: Peer) => Promise<T>) => f.withReader(async peer => { await grantReviewReader(peer.role); return work(peer); });

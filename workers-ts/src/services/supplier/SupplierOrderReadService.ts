@@ -6,6 +6,7 @@ import { supplierOrderListInput, type SupplierOrderQuery } from './SupplierOrder
 import { supplierOrderListConditions } from './SupplierOrderListFilter';
 import { readSupplierOrderReview, supplierOrderReviewColumns } from './SupplierOrderReview';
 import { readSupplierOrderInvoiceReview } from './SupplierOrderInvoiceReview';
+import { readSupplierOrderPromotionReview } from './SupplierOrderPromotionReview';
 export type { SupplierOrderQuery } from './SupplierOrderListInput';
 
 const maximumId = 2_147_483_647;
@@ -89,7 +90,8 @@ export class SupplierOrderReadService {
       });
       const review = await readSupplierOrderReview(db, reviewSource, cartInfo, appKey);
       const invoice = await readSupplierOrderInvoiceReview(db, reviewSource);
-      return { ...order, cart_info: cartInfo, review: { ...review, invoice } };
+      const promotions = await readSupplierOrderPromotionReview(db, reviewSource, cartInfo);
+      return { ...order, cart_info: cartInfo, review: { ...review, invoice, promotions } };
     });
   }
 }

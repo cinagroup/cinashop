@@ -197,7 +197,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier invoice
           const frozen = await whole.db.select().from(storeOrderInvoice).orderBy(storeOrderInvoice.id);
           await whole.db.update(userInvoice).set({ name: '当前模板已彻底改变', bank: '当前银行', isDel: 1 }).where(eq(userInvoice.id, 1));
           await whole.withRuntimeRole!(async peer => {
-            await whole.exec(`GRANT SELECT ON public.system_admin,public.system_role,public.system_supplier,public.system_menus,public.store_order,public.store_order_cart_info,public.store_order_invoice,public."user",public.system_attachment TO "${peer.role}"`);
+            await whole.exec(`GRANT SELECT ON public.system_admin,public.system_role,public.system_supplier,public.system_menus,public.store_order,public.store_order_cart_info,public.store_order_invoice,public.store_order_promotions,public.store_promotions,public."user",public.system_attachment TO "${peer.role}"`);
             wiring.container = createContainerFromDb(peer.db);
             const [rights] = await peer.db.execute(sql`SELECT current_user=session_user AS independent,
               has_table_privilege(current_user,'store_order_invoice','UPDATE') AS writes,
