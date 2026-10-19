@@ -35,6 +35,7 @@ import {
   loadOrderSystemFormSubmission,
 } from "@/services/order/OrderSystemFormService";
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
+import { recordPurchaseOriginEvidence } from '@/services/order/PurchaseOriginEvidence';
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { renderPublishedArticleMediaReferences } from '@/services/content/ArticleContentPolicy';
@@ -781,7 +782,9 @@ export class ActivityService {
           payPostage: "0.00",
           cost: orderCost,
           payIntegral: needIntegral,
-          paid: 1,
+          // Modern direct exchange captures original units while the new root
+          // is still unpaid, then pays it before this same transaction commits.
+          paid: modernSku ? 0 : 1,
           payType: "integral",
           payTime: now,
           status: 0,
@@ -793,7 +796,7 @@ export class ActivityService {
           addTime: now,
         })
         .returning();
-      const order = inserted[0];
+      let order = inserted[0];
       if (!order) throw new Error("积分订单创建失败");
       await collectOrderSystemForm(tx, preparedSystemForm, uid, order.id, now);
 
@@ -908,8 +911,24 @@ export class ActivityService {
         // Direct checkout has no store_cart row. Use its real order-line id as
         // the immutable, positive refund selector, without fabricating a cart.
         cartSnapshot.id = String(orderLine.id);
-        await tx.update(storeOrderCartInfo).set({ cartId: cartSnapshot.id, cartInfo: JSON.stringify(cartSnapshot) })
-          .where(eq(storeOrderCartInfo.id, orderLine.id));
+        const lines = await tx.update(storeOrderCartInfo).set({ cartId: cartSnapshot.id, cartInfo: JSON.stringify(cartSnapshot) })
+          .where(and(eq(storeOrderCartInfo.id, orderLine.id), eq(storeOrderCartInfo.oid, order.id)))
+          .returning({ id: storeOrderCartInfo.id });
+        if (lines.length !== 1) throw new Error('积分订单商品凭据创建失败');
+        const roots = await tx.update(storeOrder).set({ cartId: cartSnapshot.id })
+          .where(and(eq(storeOrder.id, order.id), eq(storeOrder.uid, uid), eq(storeOrder.paid, 0)))
+          .returning({ id: storeOrder.id });
+        if (roots.length !== 1) throw new Error('积分订单原购凭据创建失败');
+        // No store_cart ownership is inferred from this selector. SQL captures
+        // the new root and its real immutable line before payment or delivery;
+        // existing/replayed and legacy orders are never backfilled here.
+        await recordPurchaseOriginEvidence(tx as unknown as DbClient, { orderId: order.id, buyerId: uid });
+        const [paidOrder] = await tx.update(storeOrder).set({ paid: 1 })
+          .where(and(eq(storeOrder.id, order.id), eq(storeOrder.uid, uid), eq(storeOrder.paid, 0),
+            eq(storeOrder.cartId, cartSnapshot.id)))
+          .returning();
+        if (!paidOrder) throw new Error('积分订单支付状态更新失败');
+        order = paidOrder;
       }
 
       await tx.insert(storeOrderStatus).values({

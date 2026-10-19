@@ -134,6 +134,9 @@
           <span>实付金额</span>
           <span class="price">¥{{ order.pay_price }}</span>
         </div>
+        <div v-if="order.paid === 1 && order.pay_integral" class="amount-row">
+          <span>已付积分</span><span>{{ order.pay_integral }} 积分</span>
+        </div>
       </div>
 
       <div v-if="order.paid === 0 && cashier" class="detail-card cashier-card">
@@ -450,6 +453,7 @@ const payTypeText = computed(() => {
     case "weixin": return "微信支付";
     case "alipay": return "支付宝";
     case "offline": return "线下支付";
+    case "integral": return "积分支付";
     default: return "未支付";
   }
 });

@@ -40,6 +40,7 @@ export interface OrderInfo {
   total_num: number;
   total_price: string;
   pay_price: string;
+  pay_integral?: number;
   pay_type: string;
   paid: number;
   status: number;

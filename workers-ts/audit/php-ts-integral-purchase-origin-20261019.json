@@ -1,0 +1,388 @@
+{
+  "version": 1,
+  "date": "2026-10-19",
+  "objective": "继续推进php到ts的迁移",
+  "goal_status": "active",
+  "increment": "Modern direct integral exchange purchase-origin capture and paid-points detail display",
+  "base_commit": "04356a97a6efe81a582f9710b6fe9aae6fe1ab16",
+  "base_branch": "codex/customer-order-repurchase",
+  "branch": "codex/integral-purchase-origin",
+  "files": 16,
+  "execution_sources": 12,
+  "accepted_distinct_tests": 926,
+  "new_tests": 19,
+  "counts": {
+    "PC": 346,
+    "H5": 39,
+    "Worker_unit": 512,
+    "new_native": 11,
+    "mature_native": 16,
+    "Browser": 2
+  },
+  "front": {
+    "path": "/tmp/cinashop-integral-origin-front-v2-result.json",
+    "sha256": "6479353ea52259209c84b622f63d329a50c51103243b464d90fdf6b790ad483c"
+  },
+  "accepted_phases": [
+    {
+      "name": "unit-v1",
+      "accepted_tests": 512,
+      "path": "/tmp/cinashop-integral-origin-20261019-unit-v1-terminal.json",
+      "sha256": "e370a848a82269df9d78a007eeaa5865dd848f4fa7e46749ca5c6b6d55bda73b",
+      "log": {
+        "path": "/tmp/cinashop-integral-origin-20261019-unit-v1.log",
+        "sha256": "5057e720c45afd6faa050796a006e0bfc66f70341ae67cf31982cd094e14c8ed"
+      },
+      "elapsed_seconds": 20.64,
+      "run_sources_unchanged_at_exit": true,
+      "later_source_changes": [
+        "workers-ts/test/browser/integral-purchase-origin.acceptance.ts",
+        "workers-ts/test/integral-purchase-origin-postgres.test.ts"
+      ]
+    },
+    {
+      "name": "native-v2",
+      "accepted_tests": 27,
+      "path": "/tmp/cinashop-integral-origin-20261019-native-v2-terminal.json",
+      "sha256": "8d37907e9dcf4b2547d4dc5e33c360e4be54bfd4194951617ecb30291163f0d7",
+      "log": {
+        "path": "/tmp/cinashop-integral-origin-20261019-native-v2.log",
+        "sha256": "1f45fc0abf9c520f853d3329ce4ce7f25fc7b04a1782d5c19cab103b8b52b78a"
+      },
+      "elapsed_seconds": 42.86,
+      "run_sources_unchanged_at_exit": true,
+      "later_source_changes": [
+        "workers-ts/test/browser/integral-purchase-origin.acceptance.ts"
+      ]
+    },
+    {
+      "name": "browser-v2",
+      "accepted_tests": 2,
+      "path": "/tmp/cinashop-integral-origin-20261019-browser-v2-terminal.json",
+      "sha256": "b71d2c8c7b54d8b2d28a3de372279d741670bf6eff88226002dbc5349cb4fb2b",
+      "log": {
+        "path": "/tmp/cinashop-integral-origin-20261019-browser-v2.log",
+        "sha256": "a22d8ae897c8cc2cae891fa0a0c7ce8490f40eafd05cec84d20782471726b78b"
+      },
+      "elapsed_seconds": 140.45,
+      "run_sources_unchanged_at_exit": true,
+      "later_source_changes": [
+        "workers-ts/test/browser/integral-purchase-origin.acceptance.ts"
+      ]
+    },
+    {
+      "name": "final-types-v2",
+      "accepted_tests": 0,
+      "path": "/tmp/cinashop-integral-origin-20261019-final-types-v2-terminal.json",
+      "sha256": "768ac1e1842d5f0d647af94b44c575240d37e704ab11bf80ebd2c980e197954e",
+      "log": {
+        "path": "/tmp/cinashop-integral-origin-20261019-final-types-v2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "elapsed_seconds": 179.67,
+      "run_sources_unchanged_at_exit": true,
+      "later_source_changes": []
+    }
+  ],
+  "final_worker_type_projects": 2,
+  "final_worker_types_exit": 0,
+  "source_fingerprints": [
+    {
+      "path": "view/pc-ts/src/pages/order/OrderDetail.vue",
+      "sha256": "b52dd20cb32be1385c39d3cd594a7ef0a87d0e9524a59426026207dbe3776ac9"
+    },
+    {
+      "path": "view/pc-ts/src/types/order.ts",
+      "sha256": "106c18818bed933528f603398187e8d35089d37649b47afe18f73068824538c8"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/order/detail.vue",
+      "sha256": "f46f7cbf8a6e4e92773474bb2f7eeeba933234db24535b04949ee4c14289d1ec"
+    },
+    {
+      "path": "view/uniapp-ts/src/types/order.ts",
+      "sha256": "817b92ac4fededaf7143d4afaa78592d97b68bdacb8b17048166dd08a6e42f2c"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "fdfc26b4904d4e9f70a82b517c8beab81002b272d06282460bbc623e0d866efd"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "5b2921f83790f653611e1d302203d9f0904a5cc5800055895d558a4abc69230a"
+    },
+    {
+      "path": "workers-ts/src/services/order/PurchaseOriginEvidence.ts",
+      "sha256": "952eb3742e5ae844e1bcbfe0d02afae8ee9bbc45b09f3844070c77a1facc08f4"
+    },
+    {
+      "path": "workers-ts/test/browser/integral-purchase-origin.acceptance.ts",
+      "sha256": "53e59da0dd80d8132c24899d5fc2a540ad2fb79b199695ffe99456bf23c4dda3"
+    },
+    {
+      "path": "workers-ts/test/helpers/integralPurchaseOriginFixture.ts",
+      "sha256": "151786566d22523c8fea15cde1fc214551206894b8ebdce4fdb614f9d1148229"
+    },
+    {
+      "path": "workers-ts/test/integral-purchase-origin-postgres.test.ts",
+      "sha256": "75587ce1e8b174567d7f7138b885186c371a6a7aff5c3805cc97916c62a46510"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "f284e4000768210a70046a3d26b5e402b25fbb95992dc2fa6648243acdb16b69"
+    },
+    {
+      "path": "workers-ts/vitest.integral-purchase-origin-browser.config.ts",
+      "sha256": "2b5dc809914352bb225a4aaade0226557d5c0017c0a59fd67dc85641c6245453"
+    }
+  ],
+  "docs": {
+    "path": "/home/cina/cinagroup/cinashop/workers-ts/docs/php-ts-integral-purchase-origin-20261019.md",
+    "sha256": "fdbd7110a96df6957330a6e5083e70e938709af403dda30d6a7fbd47869bb75b"
+  },
+  "root_checkbox_rows_unchanged": {
+    "MIGRATION_AUDIT.md": {
+      "count": 88,
+      "checked": 50,
+      "sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4"
+    },
+    "MIGRATION_CHECKLIST.md": {
+      "count": 404,
+      "checked": 249,
+      "sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2"
+    }
+  },
+  "browser": {
+    "cases": 2,
+    "stages": 6,
+    "actual_HTTP_POST": 4,
+    "GET": 13,
+    "preflight_qualification": "Real App/JWT direct author create+replay on owned full registered PG16 maintenance SQL; storefront direct-exchange UI is not claimed",
+    "results": [
+      {
+        "kind": "pc",
+        "path": "/tmp/cinashop-integral-purchase-origin-browser-pc-result.json",
+        "sha256": "fc20c09c23035deacd297d1cc8d41ac1fd89f8904020904b8dccd23277ceb681",
+        "GET": 7,
+        "actual_HTTP_POST": 2,
+        "stages": 3,
+        "public_tables": 282,
+        "sequences": 229
+      },
+      {
+        "kind": "mobile",
+        "path": "/tmp/cinashop-integral-purchase-origin-browser-mobile-result.json",
+        "sha256": "305d2c3cb45a4c97ed7bf1c2d46fb60c50c2ac6227317c82a83cafda96d7e684",
+        "GET": 6,
+        "actual_HTTP_POST": 2,
+        "stages": 3,
+        "public_tables": 282,
+        "sequences": 229
+      }
+    ],
+    "ui_records": [
+      {
+        "kind": "pc",
+        "stage": "loaded",
+        "path": "/tmp/cinashop-integral-origin-pc-loaded.json",
+        "sha256": "41667e0e960d781b6f828074874c11099fa6d732527110ea427f0815af147578",
+        "width": 1185
+      },
+      {
+        "kind": "pc",
+        "stage": "cleared",
+        "path": "/tmp/cinashop-integral-origin-pc-cleared.json",
+        "sha256": "b1af0627b741c3a8b728119731cd94657d5baee87809b2595db3642cc9b176d7",
+        "width": 1185
+      },
+      {
+        "kind": "pc",
+        "stage": "recovered",
+        "path": "/tmp/cinashop-integral-origin-pc-recovered.json",
+        "sha256": "72163e9245259dadfe03591d226208e2e784da0f31dfb70ea5669edd8c59f42b",
+        "width": 1185
+      },
+      {
+        "kind": "mobile",
+        "stage": "loaded",
+        "path": "/tmp/cinashop-integral-origin-mobile-loaded.json",
+        "sha256": "117f96f9d6a0f408f230b40dd7c934a5f49ad7cb8d48ffd89baece5223739fed",
+        "width": 390
+      },
+      {
+        "kind": "mobile",
+        "stage": "cleared",
+        "path": "/tmp/cinashop-integral-origin-mobile-cleared.json",
+        "sha256": "1f03dbcd6420f9a1dad8543047cf209793f2042813257f279535ba20d2738e3b",
+        "width": 390
+      },
+      {
+        "kind": "mobile",
+        "stage": "recovered",
+        "path": "/tmp/cinashop-integral-origin-mobile-recovered.json",
+        "sha256": "2725649ac5734a4c54952b276ad689ded2f36458176339168a53a3b685bdf03c",
+        "width": 390
+      }
+    ],
+    "screenshots": [
+      {
+        "kind": "pc",
+        "stage": "loaded",
+        "path": "/tmp/cinashop-integral-origin-pc-loaded.jpg",
+        "sha256": "be0ca15afaab797f3d24a64e3be38231a72395f0a3315a79092cb58eb5c7f675",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      },
+      {
+        "kind": "pc",
+        "stage": "cleared",
+        "path": "/tmp/cinashop-integral-origin-pc-cleared.jpg",
+        "sha256": "a1eb27d99a7fa272dbc96352d8dea76fac0dbc43d7f41c78f688c34d2e88fec0",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      },
+      {
+        "kind": "pc",
+        "stage": "recovered",
+        "path": "/tmp/cinashop-integral-origin-pc-recovered.jpg",
+        "sha256": "aa4fa5083ff71a43cf1f31a96263da0c60e62849fba462da8c1fad8091a73f65",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "loaded",
+        "path": "/tmp/cinashop-integral-origin-mobile-loaded.jpg",
+        "sha256": "5c9ac8cf47c888423c2412a2050aaf98c5af8c9b766a8f7b2075667a472a68fc",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "cleared",
+        "path": "/tmp/cinashop-integral-origin-mobile-cleared.jpg",
+        "sha256": "ef7aab599b899a8cb1d50532ef0202c68955386e912dc7472b3254ff2221560c",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      },
+      {
+        "kind": "mobile",
+        "stage": "recovered",
+        "path": "/tmp/cinashop-integral-origin-mobile-recovered.jpg",
+        "sha256": "6ef0ae47bb8235c9d9c940c72427fe366daa9761f6fe1dbf6fc7ca5301b91406",
+        "native_media_type": "image/jpeg",
+        "captured_within_final_browser_run": true
+      }
+    ],
+    "PC_console_warn_error": 0,
+    "H5_known_unique_warning_events": 2,
+    "H5_warning": "Existing vue-router deprecated import only; two load events, zero captured error entries",
+    "fixed_origin": "http://127.0.0.1:40751",
+    "background": true,
+    "created_tabs_closed": [
+      43,
+      44,
+      45
+    ],
+    "inventory": {
+      "path": "/tmp/cinashop-integral-origin-browser-inventory.json",
+      "sha256": "653729c0d9118b5a39ccac747ed396d0e0d574dd2a43c62cc6b400cc60d2a35f"
+    },
+    "external_extension_connected": false,
+    "global_safety_or_approval_settings_changed": false,
+    "runtime_source_followup": {
+      "path": "/tmp/cinashop-integral-origin-browser-type-only-equivalence.json",
+      "sha256": "c3ccdeda6779cc61f1cc9996a973f5d0918f918075ef6892abba8cb78c1a96a4"
+    }
+  },
+  "build": {
+    "files": 447,
+    "pc_files": 103,
+    "H5_files": 344,
+    "byte_unchanged_after_acceptance": true,
+    "manifest": {
+      "path": "/tmp/cinashop-integral-origin-build-manifest-v1.json",
+      "sha256": "880ade4babe65c205e611040fadde604a6ae5792527ff19bd8023baa0b6ea6ec"
+    }
+  },
+  "cleanup": {
+    "path": "/tmp/cinashop-integral-origin-cleanup-v1.json",
+    "sha256": "9f2207fb596ac92336a1b0807050e5777e155ef290bff5b84d66b7f181c11937"
+  },
+  "independent_reviews": [
+    {
+      "path": "/tmp/cinashop-integral-purchase-origin-backend-final-receipt-v1-20261019.json",
+      "sha256": "3b66b63bce1f308e03ca9b12100c109757b1838712c41b4761459c0cddf2f29a"
+    },
+    {
+      "path": "/tmp/cinashop-integral-purchase-origin-browser-v2-independent-review-20261019.json",
+      "sha256": "0009d6106365be5240241a75622f40adb11db1506edeafb6857dcc3e48e5fc5c"
+    },
+    {
+      "path": "/tmp/cinashop-integral-purchase-origin-php-scope-independent-review-v1-20261019.json",
+      "sha256": "513155754b9a0720893c7c3aedf2d7b64cb5fce2a9c7fb711c5c632b54241da4"
+    },
+    {
+      "path": "/tmp/cinashop-integral-origin-browser-type-only-independent-equivalence-v1.json",
+      "sha256": "e7e12a7e615b806159062e66157e7b9c52d935994d1a985af22f852859c31f3a"
+    }
+  ],
+  "native_fixture_freeze": {
+    "path": "/tmp/cinashop-integral-purchase-origin-native-freeze-v2-20261019.json",
+    "sha256": "a9f470c778f8d1d89c91f8a2d901ee789da5c9a2638da809d9796c80a88996e7"
+  },
+  "failed_or_superseded_runs": [
+    {
+      "name": "frontend-v1",
+      "accepted_tests": 0,
+      "path": "/tmp/cinashop-integral-origin-front-v1-failure.json",
+      "sha256": "faee8603113bc0470a73b79fd3348eb46a3a85cd801ce2331268aa02d6589417",
+      "reason": "npm absent before test launch; follow-up uses existing bundled node/local CLI"
+    },
+    {
+      "name": "native-v1",
+      "accepted_tests": 0,
+      "raw_passed": 23,
+      "raw_failed": 2,
+      "path": "/tmp/cinashop-integral-origin-20261019-native-v1-terminal.json",
+      "sha256": "7857f390484e7c1f8c196c46e38070e7fce8904fd1573cadbc09ef7605238577",
+      "reason": "Default completed refund lacks protected materialization receipt; strict ledger kept. Repaired test expectations and added two real internal receipt-path cases."
+    },
+    {
+      "name": "browser-v1",
+      "accepted_tests": 0,
+      "raw_failed": 2,
+      "path": "/tmp/cinashop-integral-origin-20261019-browser-v1-terminal.json",
+      "sha256": "22fe8967b294f417c2bed3d93dd6c37380f68397dc28d1684d160cfcdd1100d5",
+      "reason": "Exact fixture read allowlist missed PC cart/list; after first failure the retained old tab crossed fixture reset and triggered products on mobile build. Owned tab closed, exact GET admitted, full v2 passed."
+    },
+    {
+      "name": "final-types-v1",
+      "accepted_tests": 0,
+      "path": "/tmp/cinashop-integral-origin-20261019-final-types-v1-terminal.json",
+      "sha256": "4ed4c587e4e5aed39e599d6c94c62d692143d12963f837ce32a19341be2e5c46",
+      "reason": "TS2352 on test NODE_ENV annotation versus generated production-only binding; actual JS unchanged after annotation correction."
+    }
+  ],
+  "runtime_scope": [
+    "Modern new direct roots: same transaction paid0 capture then paid1; real line id/root cart selector; rollback includes origin and outbox.",
+    "Replayed or legacy roots are never backfilled; legacy no-origin remains unknown.",
+    "payIntegral20 redemption is distinct from useIntegral0 offset points.",
+    "Default refund without immutable quantity receipt is rejected by History; explicit internal materialization with receipt remains incomplete.",
+    "Current PHP mounts unified create/pay, not the Worker direct exchange compatibility author."
+  ],
+  "remaining": [
+    "Certified preactivation/import history coverage, deleted-history limits and authenticated account birth.",
+    "All true root authors and gifted quantities, parent/child deduplication, refund lineage and whole purchase quota reservation/release under common concurrency authority.",
+    "Existing direct cap zero versus PHP minus-one semantics and deleted/child SUM differences.",
+    "Production role/schema deployment, provider settlement/delivery, native devices and externally connected browser extension."
+  ],
+  "get_script": "Restored PHP compatibility and corrected retirement audit retained; no retirement reversal.",
+  "publication": {
+    "draft_PR_base": "codex/customer-order-repurchase",
+    "actual_head_CI_and_three_secret_scans": "Bound separately in the publication receipt after immutable commit, without a self-referential audit hash.",
+    "merged": false,
+    "deployed": false
+  },
+  "created_at_utc": "2026-10-19T12:40:03.855555+00:00"
+}

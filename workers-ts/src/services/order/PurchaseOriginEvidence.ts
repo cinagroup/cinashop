@@ -56,8 +56,9 @@ export async function readPurchaseOriginEvidence(tx: Query, expected: PurchaseOr
  * SQL re-reads and locks the original order/lines; callers cannot supply a
  * snapshot. A saved receipt is replayed, not recomputed from later live rows.
  * The SQL proves a consistent active-unpaid snapshot, not that its caller is
- * currently creating the order. StoreOrderCreateService enforces that call
- * site; existing orders must NOT be backfilled without separate provenance.
+ * currently creating the order. StoreOrderCreateService and modern direct
+ * ActivityService.exchange enforce new-root call sites; existing orders must
+ * NOT be backfilled without separate provenance.
  * Runtime business writers and DB owners remain trusted, as with existing
  * refund evidence. This does not certify history before capture. */
 export async function recordPurchaseOriginEvidence(tx: Query, expected: PurchaseOriginScope): Promise<PurchaseOriginEvidence> {

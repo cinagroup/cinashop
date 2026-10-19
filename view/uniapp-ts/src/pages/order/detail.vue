@@ -138,6 +138,7 @@
       <view class="amount-row"><text>商品金额</text><text>¥{{ order.total_price }}</text></view>
       <view v-if="cashier?.pay_integral" class="amount-row"><text>所需积分</text><text>{{ cashier.pay_integral }} 积分</text></view>
       <view class="amount-row total-row"><text>实付</text><text class="amount-price">¥{{ order.pay_price }}</text></view>
+      <view v-if="order.paid === 1 && order.pay_integral" class="amount-row"><text>已付积分</text><text>{{ order.pay_integral }} 积分</text></view>
     </view>
 
     <view v-if="order.paid === 0 && cashier" class="section cashier-card">
