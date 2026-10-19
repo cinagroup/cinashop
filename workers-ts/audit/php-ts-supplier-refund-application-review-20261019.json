@@ -1,0 +1,2312 @@
+{
+  "scope": "Supplier refund selected application goods and linked stored order review; overall migration stays active",
+  "base_commit": "1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+  "generated_at_utc": "2026-10-19T05:39:13.127703+00:00",
+  "routes": [
+    "GET /supplierapi/refund/detail/:id"
+  ],
+  "contract": {
+    "top_keys": [
+      "version",
+      "refund_id",
+      "source_order_id",
+      "state",
+      "basis",
+      "items",
+      "error",
+      "order_context"
+    ],
+    "states": [
+      "recorded",
+      "archived",
+      "unavailable"
+    ],
+    "basis": [
+      "quantity_claim",
+      "php_legacy_snapshot",
+      null
+    ],
+    "items": "Complete PHP code/spec/gift/qty/settlement unit+subtotal; modern identity from full protected cart set, legacy from actual full frozen application arrays. Modern cancelled/refused rows must retain original identities; no remainder/catalog fallback.",
+    "archived": "Only noncancelled completed materialized v2/v3; empty application items, unchanged refundHistory archive. Completed v1 unavailable.",
+    "raw": "Both old raw cartInfo/orderInfo keys remain null; explicit bounded order/payment columns replace old whole-row transfer. No tax/provider/secret payload is introduced.",
+    "budgets": "Modern claims64KiB and PHP arrays1MiB before SQL transport; complete selected-cart collection200rows/64KiB each/8MiB existing support; up to100 application items/512KiB successful JSON total; labels4096bytes; cart key<=128codepoints/512bytes. RR/READONLY, each SQL statement timeout<=5s.",
+    "history_compatibility": "Completed-history helper retains independent original64KiB admission; large complete PHP array can render application without a fabricated archive error.",
+    "context": "Linked order stored record only; invalid unrelated context yields null, not lost application goods. No promise of application-time frozen address/payment.",
+    "price": "Integer cents *requestedqty, nonnegative canonical two decimals. Recorded zero requires actual modern financial marker without legacy source or explicit legacyattr0. Otherwise both line price fields null."
+  },
+  "source_evidence_count": 22,
+  "source_evidence": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/refund/index.vue",
+      "sha256": "2f1814f081255aa5884de7ae785e6b506a0f966047fbc6bf76f98ad143303d45",
+      "line_count": 696,
+      "references": [
+        {
+          "line": 160,
+          "end_line": 190,
+          "evidence": "Actual pending/refused/completed refund row includes order-detail action",
+          "excerpt_sha256": "9a0b2fe46571a0eeb2b0e049d5b46e0bae624e35f251784ac3a6a3ed85d0a99f"
+        },
+        {
+          "line": 212,
+          "end_line": 220,
+          "evidence": "Mounted shared orderDetails with default formType0, not ordinary formType1",
+          "excerpt_sha256": "40af22c648cf0f8aa8e9a487fb3088a2a1e92404bd75bbbbf418981cbb308444"
+        },
+        {
+          "line": 369,
+          "end_line": 378,
+          "evidence": "Actual getRefundDataInfo opens this detail",
+          "excerpt_sha256": "652046e38401fd969c41aa7219fbc2dd4cd59526e7aa3bf6a3eae56771eada46"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3",
+      "line_count": 420,
+      "references": [
+        {
+          "line": 390,
+          "end_line": 400,
+          "evidence": "Actual GET /refund/detail/:id wrapper",
+          "excerpt_sha256": "a66d68cb4d9ddcde94ff05ae741402be6a2cadff8c6a264f9dd47937938ad982"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+      "line_count": 521,
+      "references": [
+        {
+          "line": 486,
+          "end_line": 500,
+          "evidence": "Enabled Supplier refund detail route with live surrounding actions",
+          "excerpt_sha256": "8e79ed6164e05a33f1b4915048ba320878cdb9021b6055459a708427119505c5"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Refund.php",
+      "sha256": "dc38660390da59f812bae8c991b09c54a5143311e498fc1a1bc079d71eb38125",
+      "line_count": 231,
+      "references": [
+        {
+          "line": 55,
+          "end_line": 86,
+          "evidence": "Actual controller calls refundDetail then provides orderInfo/userInfo",
+          "excerpt_sha256": "6cc0237583cdf5a5a4ddcf7e0c7177bf88350c9f8a1672268c3888c3d67c56b0"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+      "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89",
+      "line_count": 1404,
+      "references": [
+        {
+          "line": 350,
+          "end_line": 368,
+          "evidence": "PHP application freezes selected cart_info",
+          "excerpt_sha256": "1861c03eabe32d5466e4147f9c0b53967fa9930e3ecbe2cf87320e624408cacf"
+        },
+        {
+          "line": 1205,
+          "end_line": 1234,
+          "evidence": "Actual refund detail maps requested cartInfo, parent physical order scalar and linked read records",
+          "excerpt_sha256": "627462d49167563c3ad2c95ca2e16b45b2c4c5846d3bc3f2ae0cce0e8b4f982c"
+        },
+        {
+          "line": 1327,
+          "end_line": 1331,
+          "evidence": "Actual order recipient fields copied for refund review",
+          "excerpt_sha256": "6f7bacfea91d0ba45e2965f45d7031256c2e544d17d2440fa3a1d44d2cec37ee"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7",
+      "line_count": 1534,
+      "references": [
+        {
+          "line": 224,
+          "end_line": 279,
+          "evidence": "formType0 actual refund application facts and detail pane",
+          "excerpt_sha256": "650498e4c4c79dc8bf903a843f27bd2f19478590c46d9dce754686b1af54b87e"
+        },
+        {
+          "line": 325,
+          "end_line": 379,
+          "evidence": "Actual current user and frozen recipient fields",
+          "excerpt_sha256": "4b3ed29ff541385cde4e8534f7cae78f5f0fb6125c825e824ba0809ae0d28f7b"
+        },
+        {
+          "line": 656,
+          "end_line": 712,
+          "evidence": "Actual requested goods tab with frozen label/SKU/gift/quantity/settlement references",
+          "excerpt_sha256": "d30991b3c54808fbb56a97ab273609e09aa0af5625440eab9f22a68c848d9c76"
+        }
+      ],
+      "base_git_bytes_equal": null
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/router.ts",
+      "sha256": "a4e208f6510e8f11fa88c42388ce2752e4c207729d245f43c0e918cca36a2021",
+      "line_count": 91,
+      "references": [
+        {
+          "line": 13,
+          "end_line": 16,
+          "evidence": "Supplier refund.view navigation authority",
+          "excerpt_sha256": "b4f820ed24044f9d8cbd94adc5a060c87e63283ab600baca3fc818eb7dbd4e0f"
+        },
+        {
+          "line": 56,
+          "end_line": 61,
+          "evidence": "Actual Refunds page route",
+          "excerpt_sha256": "f249172038db98b2f4708b12bb3eb280a4694935498b155e3158c968ebd7efd6"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Refunds.vue",
+      "sha256": "4c52f0b76eac8e1cc01ebaceea79e210c921e4af1b98e7c133e5084c68bb1dc3",
+      "line_count": 371,
+      "references": [
+        {
+          "line": 155,
+          "end_line": 179,
+          "evidence": "Actual detail request stores response under immutable opening generation",
+          "excerpt_sha256": "69f80d3d52b152ff4f24151116c33983ed1955ba99e8f50906ed0f964bd916fe"
+        },
+        {
+          "line": 295,
+          "end_line": 319,
+          "evidence": "Current product section only renders refundHistory archived items",
+          "excerpt_sha256": "1c00e1543a42aed24cd0b510d373c26828f61575cd381ae5791f004085428683"
+        },
+        {
+          "line": 320,
+          "end_line": 349,
+          "evidence": "Already implemented return logistics/evidence and actions are separate and preserved",
+          "excerpt_sha256": "ae0df5c2e6160537d18f88c520cb3316e7c145efce7ff0e55b13de82833d8c66"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/types.ts",
+      "sha256": "2451ef9c2eb69d7a870e5beb91d264e11ea91486152912f77b49739511abdd7c",
+      "line_count": 907,
+      "references": [
+        {
+          "line": 661,
+          "end_line": 674,
+          "evidence": "cartInfo/orderInfo remain unknown types; no closed pending-request item contract",
+          "excerpt_sha256": "a609950a33715da6c93cff62900990c56953ed711c057f6a8949d1400f9cefe5"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/routes/supplierapi.ts",
+      "sha256": "30db545c4ec6b813c1792bd74c789426f40ebcc98b0c6eb0563ae3ecc66888d7",
+      "line_count": 359,
+      "references": [
+        {
+          "line": 325,
+          "end_line": 336,
+          "evidence": "Actual Supplier refund read/action HTTP routes",
+          "excerpt_sha256": "ff87caf85da2e0babbdf9a62374fb872a5c3be14fce54306169bd574bcb7664e"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+      "sha256": "5390239da3498654234a88fe021c839b7e8bbaa977110ba9948e36efb542939d",
+      "line_count": 496,
+      "references": [
+        {
+          "line": 177,
+          "end_line": 194,
+          "evidence": "Actual RR/READONLY and statement budget",
+          "excerpt_sha256": "c8e0f55b8cbb4b3c42bf93fd303ea500f0f5dd5f8d34d132e0a41b9efd748800"
+        },
+        {
+          "line": 195,
+          "end_line": 225,
+          "evidence": "Scoped exact refund+order/UID/store/supplier join; existing bounded raw application JSON",
+          "excerpt_sha256": "f2ac3c3114e653cd453e26d935d1ebe7c4981e1f05519748b55410cdb752b650"
+        },
+        {
+          "line": 261,
+          "end_line": 271,
+          "evidence": "Raw parsed cartInfo, completed refundHistory and whole orderInfo returned",
+          "excerpt_sha256": "6332536c2c5711d06aa79367c6b812e5f3b8243d4bd850e2feedf20850ffa188"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/RefundReadSnapshot.ts",
+      "sha256": "bc37c333940924080226d64c8bb46501d5e222d29b25f4338942ec33da383e48",
+      "line_count": 160,
+      "references": [
+        {
+          "line": 28,
+          "end_line": 38,
+          "evidence": "Completed materialized history only, not current pending carts",
+          "excerpt_sha256": "8bdbb2ddee2da2fe3884548b7b19129a84a6374e652ae9e60964f65982969829"
+        },
+        {
+          "line": 148,
+          "end_line": 160,
+          "evidence": "Explicit nonterminal refundType!=6 null; no history is not empty goods",
+          "original_end_line": 161,
+          "excerpt_sha256": "83751e8919118b7105e02dde54c49f8caf7c55ef1547d4c0cf77f8f83c546048"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/RefundQuantityReservation.ts",
+      "sha256": "c1acd0f686d0c193bad4d7acd30237894967e31a7c76b1af0f010f4cb07d9fb7",
+      "line_count": 119,
+      "references": [
+        {
+          "line": 3,
+          "end_line": 16,
+          "evidence": "Actual v1/v2/v3 immutable requested row identity versions",
+          "excerpt_sha256": "82803abe37854168f77f6753c92f7611a564812ff55188e3f72408c8cca26a3f"
+        },
+        {
+          "line": 33,
+          "end_line": 62,
+          "evidence": "Strict exact claim parser / qty/UID/order association",
+          "excerpt_sha256": "731f9b8519386defced21f61bf70d882a88145710fe8cb7098d0154506837646"
+        },
+        {
+          "line": 70,
+          "end_line": 90,
+          "evidence": "Actual author reserves selected rows and stores IDs/quantities, not product display labels",
+          "excerpt_sha256": "d3591b347173e24935ef3e74f0d8897a465047c4d94bbfc5757522fff865b294"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderRefundService.ts",
+      "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+      "line_count": 2669,
+      "references": [
+        {
+          "line": 1314,
+          "end_line": 1342,
+          "evidence": "Actual apply author uses selected quantities then inserts pending refund0",
+          "excerpt_sha256": "a5884ae2621e3d70610e83f14588318d5532788d48104715f3c1d1ac833b8220"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "74284ef75ea2ba47a705021777c813eb91494d8455fba56bcf0c506515fc24f9",
+      "line_count": 163,
+      "references": [
+        {
+          "line": 136,
+          "end_line": 159,
+          "evidence": "Reusable actual registered checkout, synthetic paid boundary, real apply and finalize operations",
+          "excerpt_sha256": "e205c3d503865365cb4c6275f75c3e50ae38b70194f3c2252ccc3c8172e7cd0c"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/docs/refund-read-generations.md",
+      "sha256": "d9021328925298476a7ab9b0f3f09897170571df12ecb1218f64c63a43e79a9f",
+      "line_count": 276,
+      "references": [
+        {
+          "line": 1,
+          "end_line": 20,
+          "evidence": "Prior completed historical-read scope; pending review is a separate gap",
+          "excerpt_sha256": "36b3a2a9af8ff7d0720dbc6e6f456a4456fc508a5338dd4c29b790ca4929e9a4"
+        }
+      ],
+      "base_git_bytes_equal": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+      "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594",
+      "line_count": 530,
+      "references": [
+        {
+          "line": 378,
+          "end_line": 410,
+          "evidence": "Actual PHP selects exact cart_id, splits requested quantity and writes snapshot.id",
+          "excerpt_sha256": "16742b0e3da9a098821d3ec3fb19c1240e48e0cf36fd8993a2e437a9a31434ec"
+        },
+        {
+          "line": 505,
+          "end_line": 528,
+          "evidence": "Actual PHP partial snapshot cart_num becomes requested cart_num",
+          "excerpt_sha256": "d2484a57c0b6fc260b13a2b00d214190561af785bd06c096e1fcaae01e3d03cb"
+        }
+      ],
+      "read_authority": "actual filesystem PHP",
+      "worktree_matches_at_v2_read": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/models/schema/order.ts",
+      "sha256": "8564b8508b477c797a94e8040c887e1ec9fd1be240d87c5bfe04c769ff322e14",
+      "line_count": 320,
+      "references": [
+        {
+          "line": 72,
+          "end_line": 85,
+          "evidence": "Linked order recipient columns are bounded VARCHAR facts",
+          "excerpt_sha256": "e8911ce555e789ef10c047fb0d96946441c559576a238e8f7eeedf188b42a484"
+        },
+        {
+          "line": 119,
+          "end_line": 133,
+          "evidence": "Linked mark and payment time columns",
+          "excerpt_sha256": "1b81f8b3429173f74f2bbf0fec9ccdc56e3c3f92d7af9a04ff3f45427832f073"
+        }
+      ],
+      "read_authority": "actual git-show 1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+      "worktree_matches_at_v2_read": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/utils/refundDetail.ts",
+      "sha256": "6565cfcc53b2fc99cdd76ce8b18f8618c85843bd16f87d8057493ca4b34250b9",
+      "line_count": 32,
+      "references": [
+        {
+          "line": 1,
+          "end_line": 32,
+          "evidence": "Prior detail parser preserves raw unknown fields but does not consume them",
+          "excerpt_sha256": "6565cfcc53b2fc99cdd76ce8b18f8618c85843bd16f87d8057493ca4b34250b9"
+        }
+      ],
+      "read_authority": "actual git-show 1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+      "worktree_matches_at_v2_read": false
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/api/supplier.ts",
+      "sha256": "2c8e81102545eac2ef2fc312c5fd9f2eaed4ecfca0a8c8032643c4d636a85a3b",
+      "line_count": 1915,
+      "references": [
+        {
+          "line": 1401,
+          "end_line": 1425,
+          "evidence": "Actual Supplier detail API and honest older preview behavior",
+          "excerpt_sha256": "cda779889d2fbe664fb346c5b0b721b98bc1f7e02f8bf744c2b78a366fc0d42e"
+        }
+      ],
+      "read_authority": "actual git-show 1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+      "worktree_matches_at_v2_read": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/common/refundHistory.ts",
+      "sha256": "0919825c0901f519c2963bc3c51ab934caadbde032f4d42933f35d93a9410aac",
+      "line_count": 44,
+      "references": [
+        {
+          "line": 1,
+          "end_line": 44,
+          "evidence": "Existing completed archive receipt and exact quantity matching",
+          "excerpt_sha256": "0919825c0901f519c2963bc3c51ab934caadbde032f4d42933f35d93a9410aac"
+        }
+      ],
+      "read_authority": "actual git-show 1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+      "worktree_matches_at_v2_read": true
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "c1646a8c38cc407681012bcaaab9bcba796ec681609e3cc1d295ffcf6fcc0f8d",
+      "line_count": 126,
+      "references": [
+        {
+          "line": 102,
+          "end_line": 126,
+          "evidence": "Protected complete cart collection validates tenant/UID/gift and pre-transfer byte/row budgets",
+          "excerpt_sha256": "e30c94d02e9d31ea98a8aa3075fc35f9032314d97ffd15eec36745bfa5945ed6"
+        }
+      ],
+      "read_authority": "actual git-show 1bba8bfa775040f08dfb4b3d76e9024b9347db03",
+      "worktree_matches_at_v2_read": true
+    }
+  ],
+  "parent_independent_authority": "Actual PHP bytes and base git-show TS reopened; exact ranges and SHA independently rechecked.",
+  "backend_freeze": {
+    "path": "/tmp/cinashop-supplier-refund-application-review-backend-freeze-v3-20261019.json",
+    "sha256": "37cc6678c82b02791409608f012986d4771afe900bc9d53e759d54eb02920f26"
+  },
+  "registered_writer_boundaries": [
+    {
+      "mode": "customer-v1",
+      "source": "Real registered checkout + allocation and synthetic paid admission; actual Customer App/api JWT apply+cancel on explicit maintenance SQL boundary; independent Supplier SELECT-only App/JWT reads."
+    },
+    {
+      "mode": "materialized-v2",
+      "source": "Real registered checkout+allocation and synthetic paid admission; actual applyOrderRefundWithMaterialization, refuseRefund, second apply and registered finalizer. Independent Supplier reads before/after show old refused request unavailable after source mutation and new protected archived history."
+    },
+    {
+      "mode": "customer-work-v3",
+      "source": "Real established CustomerWorkFinancialService quote/revision/operation-receipt creates v3 claim, not hand-written request. Original paid row/Supplier scope/labels are explicitly owned synthetic fixture setup; not a third checkout or allocation claim. Independent Supplier SELECT-only App/JWT reads."
+    }
+  ],
+  "final_execution_source_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+      "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Refunds.vue",
+      "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+      "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/refundDetail.ts",
+      "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+      "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+      "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+      "sha256": "4d403628968a4f1618d37a162f6b835f2482a01c10e2bff1d898336fdb3cde7a"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+      "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "f639f1c7db02536d4a91a5f1f08cec28776b9f0077085d9c2426459a3ff96dfb"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-application-review-frontend.test.ts",
+      "sha256": "66e9546aa22d5e15047e4db28d29b92edb233d25afaec26ce4de303205b80b57"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-application-review-native.test.ts",
+      "sha256": "98eb84e966b8e3914b2b3c2cb3a4824c77a6da773dda734a17c3297c1f0a6070"
+    },
+    {
+      "path": "workers-ts/test/supplier-refund-frontend.test.ts",
+      "sha256": "badcb5e32fd26ddda0f65882593d13d6e617424f33dbd9c02e3c27ee88f93772"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-refund-application-review-browser.config.ts",
+      "sha256": "854acac785ee67ce14cb1fd9a70c200f24f84b4b47cbb4e7d7e0d55be295122d"
+    }
+  ],
+  "independent_static_review": {
+    "path": "/tmp/cinashop-supplier-refund-application-review-publication-readonly-review-v3-20261019.json",
+    "sha256": "0868df83bbd3f488800319cdd08dd9a931d63fb74da96b16a4e464e0bae05b79",
+    "result": "no_remaining_static_blocker; 15 final fingerprints refreshed after exactly one EOF LF removal",
+    "all_15_final_source_fingerprints_match": true,
+    "runtime_acceptance_supplied_separately_by_terminal_receipts": true
+  },
+  "validation": [
+    {
+      "label": "frontend-v5",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=1 test/supplier-refund-application-review-frontend.test.ts test/supplier-refund-frontend.test.ts test/supplier-proactive-refund-frontend.test.ts test/supplier-cash-operations-frontend.test.ts test/admin-supplier-refund-settlement-frontend.test.ts && cd ../view/supplier-ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vue-tsc/bin/vue-tsc.js -b && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 141,
+      "accepted_files": {
+        "files": [
+          "workers-ts/test/supplier-refund-application-review-frontend.test.ts",
+          "workers-ts/test/supplier-refund-frontend.test.ts",
+          "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+          "workers-ts/test/supplier-cash-operations-frontend.test.ts",
+          "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts"
+        ],
+        "group_passed": 141
+      },
+      "started_at_utc": "2026-10-19T05:36:00.867446+00:00",
+      "finished_at_utc": "2026-10-19T05:36:32.528702+00:00",
+      "wall_seconds": 31.66,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v5.log",
+      "log_sha256": "999c8f4fd2828e96cb42e79f1b9027498231fc6dd07180fceaf80a6216d8a015",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v5-terminal.json",
+      "terminal_sha256": "47471938fb79f562ff2599e3279bc65041315378b07df14accab273dd2f4cb7c",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+          "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Refunds.vue",
+          "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+          "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundDetail.ts",
+          "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-application-review-frontend.test.ts",
+          "sha256": "66e9546aa22d5e15047e4db28d29b92edb233d25afaec26ce4de303205b80b57",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-frontend.test.ts",
+          "sha256": "badcb5e32fd26ddda0f65882593d13d6e617424f33dbd9c02e3c27ee88f93772",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Actual compiled Vue/SFC/API/parser tests141, complete Supplier types and production build; final exact bytes after removing only one extra trailing EOF empty line detected when new files were staged."
+    },
+    {
+      "label": "runner",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "test/local-finance-postgres-runner.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 317,
+      "accepted_files": {
+        "files": [
+          "workers-ts/test/local-finance-postgres-runner.test.ts"
+        ],
+        "group_passed": 317
+      },
+      "started_at_utc": "2026-10-19T05:02:35.932680+00:00",
+      "finished_at_utc": "2026-10-19T05:02:52.828657+00:00",
+      "wall_seconds": 16.9,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-runner.log",
+      "log_sha256": "9df2ea414c8708b2b5222ba84710a2731fd00ce2c39738181a993b5f8c73892a",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-runner-terminal.json",
+      "terminal_sha256": "843e87719ebb0bd37a116b8f970cdb46c721374e63be64dfcd3900994b78a5ce",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "f639f1c7db02536d4a91a5f1f08cec28776b9f0077085d9c2426459a3ff96dfb",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Exact allow-list/resource/cleanup boundary regressions; five newly expanded native/Browser cases."
+    },
+    {
+      "label": "worker-types-v2",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=1 test/staff-refund-history-contract.test.ts test/supplier-refund-migration.test.ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 21,
+      "accepted_files": {
+        "files": [
+          "workers-ts/test/staff-refund-history-contract.test.ts",
+          "workers-ts/test/supplier-refund-migration.test.ts"
+        ],
+        "group_passed": 21
+      },
+      "started_at_utc": "2026-10-19T05:16:03.001542+00:00",
+      "finished_at_utc": "2026-10-19T05:20:01.106080+00:00",
+      "wall_seconds": 238.1,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-types-v2.log",
+      "log_sha256": "496ebe1acc33f8bef0c8a791a50f0ced567c29d934e76cc2a264991eaef49fdc",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-types-v2-terminal.json",
+      "terminal_sha256": "ff416e9783d62e01b77ea143348877fa1b2d3dbb842a9eca22f6b0bcea93c147",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+          "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Refunds.vue",
+          "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+          "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundDetail.ts",
+          "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+          "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+          "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+          "sha256": "4d403628968a4f1618d37a162f6b835f2482a01c10e2bff1d898336fdb3cde7a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+          "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "f639f1c7db02536d4a91a5f1f08cec28776b9f0077085d9c2426459a3ff96dfb",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-frontend.test.ts",
+          "sha256": "badcb5e32fd26ddda0f65882593d13d6e617424f33dbd9c02e3c27ee88f93772",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-refund-application-review-browser.config.ts",
+          "sha256": "854acac785ee67ce14cb1fd9a70c200f24f84b4b47cbb4e7d7e0d55be295122d",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Contract regressions21 counted once. Full normal and runtime Worker tsc passed here. Later native-only registry import and frontend-test-only trailing EOF empty-line removal require final normal tsc below. Runtime project excludes test/*.test.ts and all its runtime inputs remain unchanged."
+    },
+    {
+      "label": "evidence-and-worker-unit-types-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run --maxWorkers=1 test/supplier-refund-evidence.test.ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 12,
+      "accepted_files": {
+        "files": [
+          "workers-ts/test/supplier-refund-evidence.test.ts"
+        ],
+        "group_passed": 12
+      },
+      "started_at_utc": "2026-10-19T05:30:49.054219+00:00",
+      "finished_at_utc": "2026-10-19T05:33:18.072970+00:00",
+      "wall_seconds": 149.02,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-evidence-and-worker-unit-types-final.log",
+      "log_sha256": "e69be89c5f29c9bd7d8f991031a8f0c48389827d9d3164facc903795b4b3fd5b",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-evidence-and-worker-unit-types-final-terminal.json",
+      "terminal_sha256": "66bcdfbe9e30eb4cd52b82918eb5bb7135ac8f20ef9dcea76ff242037a901887",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+          "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Refunds.vue",
+          "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+          "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundDetail.ts",
+          "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+          "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+          "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+          "sha256": "4d403628968a4f1618d37a162f6b835f2482a01c10e2bff1d898336fdb3cde7a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+          "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "f639f1c7db02536d4a91a5f1f08cec28776b9f0077085d9c2426459a3ff96dfb",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-application-review-native.test.ts",
+          "sha256": "98eb84e966b8e3914b2b3c2cb3a4824c77a6da773dda734a17c3297c1f0a6070",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-frontend.test.ts",
+          "sha256": "badcb5e32fd26ddda0f65882593d13d6e617424f33dbd9c02e3c27ee88f93772",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-refund-application-review-browser.config.ts",
+          "sha256": "854acac785ee67ce14cb1fd9a70c200f24f84b4b47cbb4e7d7e0d55be295122d",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Mature return evidence12 actual SQL, upload/signature and Pages proxy under PGlite, not PG16. Full normal Worker tsc passed after native registry correction; later frontend-test-only EOF empty-line removal is covered by final publication normal tsc below. No production input changed."
+    },
+    {
+      "label": "native-v2",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-refund-application-review-native.test.ts",
+        "test/staff-refund-history.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 70,
+      "accepted_files": {
+        "workers-ts/test/supplier-refund-application-review-native.test.ts": 55,
+        "workers-ts/test/staff-refund-history.test.ts": 15
+      },
+      "started_at_utc": "2026-10-19T05:26:29.860718+00:00",
+      "finished_at_utc": "2026-10-19T05:30:38.211609+00:00",
+      "wall_seconds": 248.35,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-native-v2.log",
+      "log_sha256": "c473532e29b5efc5fa09deb03f59cd471662ec67a3eb4480b9bb83c1b244afee",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-native-v2-terminal.json",
+      "terminal_sha256": "ec0f134e9e1e7970ff16f1c34bf0db4539514a5aca90ac50c09f20262e24504b",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+          "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+          "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+          "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-application-review-native.test.ts",
+          "sha256": "98eb84e966b8e3914b2b3c2cb3a4824c77a6da773dda734a17c3297c1f0a6070",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Final whole70 on native PG16:55 new actual App/JWT/SELECT-only scenarios and15 existing staff physical-generation histories, all public table/sequence snapshots; exact two owned registry admission."
+    },
+    {
+      "label": "browser-v3",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:supplier-refund-application-review-browser"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 1,
+      "accepted_files": {
+        "files": [
+          "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts"
+        ],
+        "group_passed": 1
+      },
+      "started_at_utc": "2026-10-19T05:33:25.129831+00:00",
+      "finished_at_utc": "2026-10-19T05:35:01.094085+00:00",
+      "wall_seconds": 95.96,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-v3.log",
+      "log_sha256": "8e5671c647b6f555d1ea0ec31631edd1d2c080610d611b9ca5a44f20da8c79b6",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-v3-terminal.json",
+      "terminal_sha256": "2908c67d69609592223d9e3dcca3d2b7412b3a39f671242520d7690e65d375d3",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+          "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+          "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+          "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+          "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Refunds.vue",
+          "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+          "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundDetail.ts",
+          "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+          "sha256": "4d403628968a4f1618d37a162f6b835f2482a01c10e2bff1d898336fdb3cde7a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-refund-application-review-browser.config.ts",
+          "sha256": "854acac785ee67ce14cb1fd9a70c200f24f84b4b47cbb4e7d7e0d55be295122d",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Complete final production UI via actual App/JWT/SELECT-only PG16; seven accepted stages plus503 retry, same-origin desktop/mobile iframe. Synthetic display archive distinct from native actual writers."
+    },
+    {
+      "label": "worker-unit-types-publication",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed_counted": 0,
+      "accepted_files": {
+        "files": [],
+        "group_passed": 0
+      },
+      "started_at_utc": "2026-10-19T05:36:43.367212+00:00",
+      "finished_at_utc": "2026-10-19T05:39:06.978204+00:00",
+      "wall_seconds": 143.61,
+      "log_path": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-unit-types-publication.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminal_path": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-unit-types-publication-terminal.json",
+      "terminal_sha256": "b12539b25e92794c11d0a47af7499477d708f08d78583fbc011d993b17df7fc2",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierRefundApplicationReview.vue",
+          "sha256": "0517225b00b08c48b4ce1e3e686eefa6ed71c64b7e31b4f666950687af7f03b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Refunds.vue",
+          "sha256": "8fac7910ed6507460cda09ad2d38cb13bb48f3407295f4ddff49aab0afb4fea9",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "b6c6015cb4df4fcd9b63ff18f6e100b782c7f09100ca6a254bef6ac86809b7a2",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundApplicationReview.ts",
+          "sha256": "6fd14a2e6cc6887bee91e123cc1ed39584ca6858e4226bba055f80795816cba3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/refundDetail.ts",
+          "sha256": "8643e06dd6ea9d6e7b33d3bf6b057dc4601670b6ac572aa653570aed676f4312",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "2c3307d94c9a1be8654dd1c2891807c9ce4fa128f2673f5dc3b14bf201cc6245",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierAfterSaleService.ts",
+          "sha256": "050f81e1a1b9b7c4e15654c6c510bae01fea4b0fb5583d529f2b4bb7b90f377a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierRefundApplicationReview.ts",
+          "sha256": "724184dbb0da0cfb6a9036bebcab9a90422694dcaf40250394767a33f0b977fe",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+          "sha256": "4d403628968a4f1618d37a162f6b835f2482a01c10e2bff1d898336fdb3cde7a",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierRefundApplicationReview.ts",
+          "sha256": "463c385d6a456415a155d4e0ec0dc03a49d902b00733b34bbae66ee10632786f",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "f639f1c7db02536d4a91a5f1f08cec28776b9f0077085d9c2426459a3ff96dfb",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-application-review-frontend.test.ts",
+          "sha256": "66e9546aa22d5e15047e4db28d29b92edb233d25afaec26ce4de303205b80b57",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-application-review-native.test.ts",
+          "sha256": "98eb84e966b8e3914b2b3c2cb3a4824c77a6da773dda734a17c3297c1f0a6070",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-refund-frontend.test.ts",
+          "sha256": "badcb5e32fd26ddda0f65882593d13d6e617424f33dbd9c02e3c27ee88f93772",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-refund-application-review-browser.config.ts",
+          "sha256": "854acac785ee67ce14cb1fd9a70c200f24f84b4b47cbb4e7d7e0d55be295122d",
+          "matches_final": true
+        }
+      ],
+      "qualification": "Final complete normal Worker tsc --noEmit on all15 final execution file bytes after only an extra trailing EOF empty line was removed in the new frontend test. No new tests counted. Prior runtime complete project excludes that top-level test and its relevant bytes are unchanged."
+    }
+  ],
+  "distinct_passed_tests": 562,
+  "new_tests": 101,
+  "test_file_count": 12,
+  "test_files": [
+    "workers-ts/test/admin-supplier-refund-settlement-frontend.test.ts",
+    "workers-ts/test/browser/supplier-refund-application-review.acceptance.ts",
+    "workers-ts/test/local-finance-postgres-runner.test.ts",
+    "workers-ts/test/staff-refund-history-contract.test.ts",
+    "workers-ts/test/staff-refund-history.test.ts",
+    "workers-ts/test/supplier-cash-operations-frontend.test.ts",
+    "workers-ts/test/supplier-proactive-refund-frontend.test.ts",
+    "workers-ts/test/supplier-refund-application-review-frontend.test.ts",
+    "workers-ts/test/supplier-refund-application-review-native.test.ts",
+    "workers-ts/test/supplier-refund-evidence.test.ts",
+    "workers-ts/test/supplier-refund-frontend.test.ts",
+    "workers-ts/test/supplier-refund-migration.test.ts"
+  ],
+  "browser": {
+    "paths": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "keyword": "",
+          "refund_type": "",
+          "apply_type": "",
+          "refund_reason": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          110,
+          100
+        ],
+        "count": 5
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/reason",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 100,
+        "review": {
+          "state": "recorded",
+          "basis": "quantity_claim",
+          "quantities": [
+            1
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/201",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 201,
+        "review": {
+          "state": "recorded",
+          "basis": "php_legacy_snapshot",
+          "quantities": [
+            1,
+            1
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/301",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 301,
+        "review": {
+          "state": "archived",
+          "basis": null,
+          "quantities": []
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/202",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 202,
+        "review": {
+          "state": "unavailable",
+          "basis": null,
+          "quantities": []
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 100,
+        "review": {
+          "state": "recorded",
+          "basis": "quantity_claim",
+          "quantities": [
+            1
+          ]
+        },
+        "injected_http": 503
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/refund/detail/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "refund_id": 100,
+        "review": {
+          "state": "recorded",
+          "basis": "quantity_claim",
+          "quantities": [
+            1
+          ]
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "stage": "modern",
+        "width": 1200,
+        "height": 844,
+        "page_client_width": 1200,
+        "page_scroll_width": 1200,
+        "refund_order_id": "refund-application-100",
+        "panel_count": 1,
+        "drawer": {
+          "left": 640,
+          "right": 1200,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 1148,
+          "right": 1180,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 660,
+          "right": 1164.8000183105469,
+          "top": 595.7999877929688,
+          "bottom": 1511.9124755859375
+        },
+        "item_boxes": [
+          {
+            "left": 660,
+            "right": 1164.8000183105469,
+            "top": 693.6124877929688,
+            "bottom": 1161.6124877929688
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 760.4125366210938,
+            "bottom": 1038.8125305175781
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 760.4125366210938,
+            "bottom": 914.0125427246094
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1069.612548828125,
+            "bottom": 1088.8125495910645
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 1069.612548828125,
+            "bottom": 1088.8125495910645
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1119.612548828125,
+            "bottom": 1138.8125495910645
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1326.7125244140625,
+            "bottom": 1345.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1326.7125244140625,
+            "bottom": 1349.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1380.7125244140625,
+            "bottom": 1399.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1380.7125244140625,
+            "bottom": 1403.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1434.7125244140625,
+            "bottom": 1457.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1434.7125244140625,
+            "bottom": 1453.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1488.7125244140625,
+            "bottom": 1507.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1488.7125244140625,
+            "bottom": 1511.912525177002
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "444b1d585b3f66aef42c712aa06df245ff76524f32491f3b45fb0e36e014424a"
+      },
+      {
+        "stage": "desktop",
+        "width": 1200,
+        "height": 844,
+        "page_client_width": 1200,
+        "page_scroll_width": 1200,
+        "refund_order_id": "refund-application-100",
+        "panel_count": 1,
+        "drawer": {
+          "left": 640,
+          "right": 1200,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 1148,
+          "right": 1180,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 660,
+          "right": 1164.8000183105469,
+          "top": -1.8000000715255737,
+          "bottom": 914.3124877214432
+        },
+        "item_boxes": [
+          {
+            "left": 660,
+            "right": 1164.8000183105469,
+            "top": 96.01250457763672,
+            "bottom": 564.0125045776367
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 162.8125,
+            "bottom": 441.2124938964844
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 162.8125,
+            "bottom": 316.4125061035156
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 472.01251220703125,
+            "bottom": 491.2125129699707
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 472.01251220703125,
+            "bottom": 491.2125129699707
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 522.0125122070312,
+            "bottom": 541.2125129699707
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 729.1124877929688,
+            "bottom": 748.3124885559082
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 729.1124877929688,
+            "bottom": 752.3124885559082
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 783.1124877929688,
+            "bottom": 802.3124885559082
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 783.1124877929688,
+            "bottom": 806.3124885559082
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 837.1124877929688,
+            "bottom": 860.3124885559082
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 837.1124877929688,
+            "bottom": 856.3124885559082
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 891.1124877929688,
+            "bottom": 910.3124885559082
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 891.1124877929688,
+            "bottom": 914.3124885559082
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "444b1d585b3f66aef42c712aa06df245ff76524f32491f3b45fb0e36e014424a"
+      },
+      {
+        "stage": "legacy",
+        "width": 1200,
+        "height": 844,
+        "page_client_width": 1200,
+        "page_scroll_width": 1200,
+        "refund_order_id": "refund-application-201",
+        "panel_count": 1,
+        "drawer": {
+          "left": 640,
+          "right": 1200,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 1148,
+          "right": 1180,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 660,
+          "right": 1164.8000183105469,
+          "top": 595.7999877929688,
+          "bottom": 1759.9125366210938
+        },
+        "item_boxes": [
+          {
+            "left": 660,
+            "right": 1164.8000183105469,
+            "top": 693.6124877929688,
+            "bottom": 1184.8125
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 760.4125366210938,
+            "bottom": 1062.0125427246094
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 760.4125366210938,
+            "bottom": 779.6125373840332
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1092.8125,
+            "bottom": 1112.0125007629395
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 1092.8125,
+            "bottom": 1112.0125007629395
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1142.8125,
+            "bottom": 1162.0125007629395
+          },
+          {
+            "left": 660,
+            "right": 1164.8000183105469,
+            "top": 1196.8125,
+            "bottom": 1409.6125030517578
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1263.612548828125,
+            "bottom": 1286.8125495910645
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 1263.612548828125,
+            "bottom": 1282.8125495910645
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1317.612548828125,
+            "bottom": 1336.8125495910645
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1152.0000305175781,
+            "top": 1317.612548828125,
+            "bottom": 1336.8125495910645
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 907.3999938964844,
+            "top": 1367.612548828125,
+            "bottom": 1386.8125495910645
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1574.7125244140625,
+            "bottom": 1593.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1574.7125244140625,
+            "bottom": 1597.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1628.7125244140625,
+            "bottom": 1647.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1628.7125244140625,
+            "bottom": 1651.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1682.7125244140625,
+            "bottom": 1705.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1682.7125244140625,
+            "bottom": 1701.912525177002
+          },
+          {
+            "left": 660,
+            "right": 907.4000091552734,
+            "top": 1736.7125244140625,
+            "bottom": 1755.912525177002
+          },
+          {
+            "left": 917.4000244140625,
+            "right": 1164.800033569336,
+            "top": 1736.7125244140625,
+            "bottom": 1759.912525177002
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "90af9c1c278347494296bd26900158a83ce4dfcc3f37a2bf280253159f9e5c9d"
+      },
+      {
+        "stage": "phone",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "refund_order_id": "refund-application-201",
+        "panel_count": 1,
+        "drawer": {
+          "left": 23.42500114440918,
+          "right": 390.4000072479248,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 338.3999938964844,
+          "right": 370.3999938964844,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 43.42499923706055,
+          "right": 355.1999931335449,
+          "top": -221.40000915527344,
+          "bottom": 1319.512466430664
+        },
+        "item_boxes": [
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": -123.5875015258789,
+            "bottom": 444.4124984741211
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": -33.587501525878906,
+            "bottom": 221.61249542236328
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 252.41250610351562,
+            "bottom": 271.6125068664551
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 302.4125061035156,
+            "bottom": 321.6125068664551
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 352.4125061035156,
+            "bottom": 371.6125068664551
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 402.4125061035156,
+            "bottom": 421.6125068664551
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 456.4125061035156,
+            "bottom": 769.2125244140625
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 523.2125244140625,
+            "bottom": 546.412525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 577.2125244140625,
+            "bottom": 596.412525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 627.2125244140625,
+            "bottom": 646.412525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 677.2125244140625,
+            "bottom": 696.412525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 727.2125244140625,
+            "bottom": 746.412525177002
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 934.3125,
+            "bottom": 953.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 984.3125,
+            "bottom": 1007.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1038.3125,
+            "bottom": 1057.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1088.3125,
+            "bottom": 1111.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1142.3125,
+            "bottom": 1165.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1196.3125,
+            "bottom": 1215.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1246.3125,
+            "bottom": 1265.5125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1296.3125,
+            "bottom": 1319.5125007629395
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "90af9c1c278347494296bd26900158a83ce4dfcc3f37a2bf280253159f9e5c9d"
+      },
+      {
+        "stage": "completed",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "refund_order_id": "refund-application-301",
+        "panel_count": 1,
+        "drawer": {
+          "left": 23.42500114440918,
+          "right": 390.4000072479248,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 338.3999938964844,
+          "right": 370.3999938964844,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 43.42499923706055,
+          "right": 355.1999931335449,
+          "top": 789,
+          "bottom": 1383.0125122070312
+        },
+        "item_boxes": [
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 997.8125,
+            "bottom": 1017.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1047.8125,
+            "bottom": 1071.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1101.8125,
+            "bottom": 1121.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1151.8125,
+            "bottom": 1175.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1205.8125,
+            "bottom": 1229.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1259.8125,
+            "bottom": 1279.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1309.8125,
+            "bottom": 1329.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1359.8125,
+            "bottom": 1383.0125007629395
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "402a72b5f37085bd405597fd054eb6c3954c12e0db1722dabd52b7db2118d69d"
+      },
+      {
+        "stage": "unavailable",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "refund_order_id": "refund-application-202",
+        "panel_count": 1,
+        "drawer": {
+          "left": 23.42500114440918,
+          "right": 390.4000072479248,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 338.3999938964844,
+          "right": 370.3999938964844,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 43.42499923706055,
+          "right": 355.1999931335449,
+          "top": 789,
+          "bottom": 1377.8125
+        },
+        "item_boxes": [
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 992.6124877929688,
+            "bottom": 1011.8124885559082
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1042.612548828125,
+            "bottom": 1065.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1096.612548828125,
+            "bottom": 1115.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1146.612548828125,
+            "bottom": 1169.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1200.612548828125,
+            "bottom": 1223.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1254.612548828125,
+            "bottom": 1273.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1304.612548828125,
+            "bottom": 1323.8125495910645
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1354.612548828125,
+            "bottom": 1377.8125495910645
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "5b4bd0d60f853f84910c702cad1155527d75598a19dba4fe598952042eb89add"
+      },
+      {
+        "stage": "error",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "refund_order_id": "",
+        "panel_count": 0,
+        "drawer": null,
+        "close": null,
+        "panel": null,
+        "item_boxes": [],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "4a8fa033a940e7a08177c84caccf0b28d5a090146af1b74a183819bfb75054a6"
+      },
+      {
+        "stage": "modern",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "refund_order_id": "refund-application-100",
+        "panel_count": 1,
+        "drawer": {
+          "left": 23.42500114440918,
+          "right": 390.4000072479248,
+          "top": 0,
+          "bottom": 844
+        },
+        "close": {
+          "left": 338.3999938964844,
+          "right": 370.3999938964844,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "panel": {
+          "left": 43.42499923706055,
+          "right": 355.1999931335449,
+          "top": 789,
+          "bottom": 2096.0125732421875
+        },
+        "item_boxes": [
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 908.9125366210938,
+            "bottom": 1545.7125244140625
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 994.9125366210938,
+            "bottom": 1226.9125366210938
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 1257.7125244140625,
+            "bottom": 1372.9125289916992
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 1403.7125244140625,
+            "bottom": 1422.912525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 1453.7125244140625,
+            "bottom": 1472.912525177002
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 342.40002059936523,
+            "top": 1503.7125244140625,
+            "bottom": 1522.912525177002
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1710.8125,
+            "bottom": 1730.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1760.8125,
+            "bottom": 1784.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1814.8125,
+            "bottom": 1834.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1864.8125,
+            "bottom": 1888.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1918.8125,
+            "bottom": 1942.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 1972.8125,
+            "bottom": 1992.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 2022.8125,
+            "bottom": 2042.0125007629395
+          },
+          {
+            "left": 43.42499923706055,
+            "right": 355.1999931335449,
+            "top": 2072.8125,
+            "bottom": 2096.0125007629395
+          }
+        ],
+        "executable_children": 0,
+        "write_buttons_enabled": 0,
+        "rendered_text_sha256": "444b1d585b3f66aef42c712aa06df245ff76524f32491f3b45fb0e36e014424a"
+      }
+    ],
+    "finished": true,
+    "table_count": 31,
+    "sequence_count": 29,
+    "provider_calls": 0,
+    "business_writes": 0
+  },
+  "browser_ui": {
+    "captured_at_utc": "2026-10-19T05:35:07.640Z",
+    "browser_inventory": [
+      {
+        "id": "1",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex MCP Apps",
+        "type": "mcpapps"
+      },
+      {
+        "id": "2",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex In-app Browser",
+        "type": "iab"
+      }
+    ],
+    "external_extension_connection_observed": false,
+    "browser_id": "2",
+    "tab_id": "15",
+    "control_url": "http://127.0.0.1:32823/__refund_application_review/b9375dcc-8db7-4b41-8bad-7b2fe8079b55",
+    "visible_result": "{\"requests\":9,\"checked\":[\"modern\",\"desktop\",\"legacy\",\"phone\",\"completed\",\"unavailable\",\"error\",\"modern\"],\"finished\":true}",
+    "page_identity": "供应商退款申请核对 PG16 验收",
+    "application_panels_after_successful_retry": 1,
+    "console_entries": [],
+    "explained_console_entries": [],
+    "unexplained_console_entries": [],
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-supplier-refund-application-review-desktop-quantities.jpg",
+        "sha256": "3abb69aee2444cd3450137fee7ef234b2e224cef9569352dad2708578cb7bacb",
+        "mime": "image/jpeg"
+      },
+      {
+        "path": "/tmp/cinashop-supplier-refund-application-review-phone.jpg",
+        "sha256": "d6cafc560e09513a1cafff82922b70866af89cf1428a34ccd61cdb73647b70d3",
+        "mime": "image/jpeg"
+      }
+    ],
+    "layout_qualification": "Production page in same-origin1200x844 and390x844 iframe; phone image clips outer host to420x1120; no real-device or external extension acceptance."
+  },
+  "production_build_file_count": 70,
+  "production_build_unchanged_before_after_browser": true,
+  "owned_pg_cleanup": {
+    "clusters": [
+      {
+        "phase": "browser-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-XDZwvm",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 1
+      },
+      {
+        "phase": "browser-v2",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-o1XWmi",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 1
+      },
+      {
+        "phase": "browser-v3",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-GNrUoM",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      },
+      {
+        "phase": "native-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-O9YG9x",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 1
+      },
+      {
+        "phase": "native-v2",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-M23G81",
+        "remaining_zero": true,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      }
+    ],
+    "all_stopped_and_empty": true
+  },
+  "root_checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "checked": 50,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac",
+      "unchanged_against_base": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "checked": 249,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd",
+      "unchanged_against_base": true
+    }
+  ],
+  "earlier_failed_or_superseded_runs": [
+    {
+      "label": "frontend-early",
+      "exit_code": 1,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-early.log",
+      "log_sha256": "d800b034c4083bf0ed9c8d65aceed7516aa31bdb2c6a7675a5d219933e19d16b",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-early-terminal.json",
+      "terminal_sha256": "c0ea562a3b77ef4f5da9d8143b971d110f9adabbb3b7ca2890f5e80fceb24c91",
+      "counted": false,
+      "qualification": "New40 passed but mature21 loader failure; superseded by frontend-v4."
+    },
+    {
+      "label": "frontend-final",
+      "exit_code": 127,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-final.log",
+      "log_sha256": "d8b887bdb3ed1662a47070167757119f4808a42ff43d9f69642458b909d0f417",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-final-terminal.json",
+      "terminal_sha256": "18fddb972137293a0e1ea5c7c270d6edb0f31d7c997616d05ed6d43c48cae098",
+      "counted": false,
+      "qualification": "92 matching tests passed but missing npm entry; ignored missing filters not counted. Superseded by explicit direct Node commands."
+    },
+    {
+      "label": "frontend-v2",
+      "exit_code": 1,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v2.log",
+      "log_sha256": "ffcd76fb9b230a0bdc1968ceacb1e790c82f24db57213375507fa173d79a8500",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v2-terminal.json",
+      "terminal_sha256": "c9a4d55d5cef8bd3085759ec7250a131aeacb3fc1e4e80d8a8352d33cc643079",
+      "counted": false,
+      "qualification": "141 tests passed but Supplier complete types failed; superseded by frontend-v4."
+    },
+    {
+      "label": "frontend-v3",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v3.log",
+      "log_sha256": "292f8913763d5a0bf7e9a0dd76969ddff0df5d6d897fbd73011cf3893e6e1bae",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v3-terminal.json",
+      "terminal_sha256": "67899bcacbd79f4de4f6a51f220479d1f2b0506cc4b36c83811b4a6349ad53ad",
+      "counted": false,
+      "qualification": "Successful141/types/build before later type-only import correction; final frontend-v4 counted instead."
+    },
+    {
+      "label": "contracts",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-contracts.log",
+      "log_sha256": "7b3ab55b6d7fc3d5c6d43c447673b4ef699cbad4b5e14b9a344527999f5019ed",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-contracts-terminal.json",
+      "terminal_sha256": "5ecc1e9dc65a7964d20c7b1491cadecd2d4ac8bed89e098dc6b2c56f0b1804aa",
+      "counted": false,
+      "qualification": "Successful21 before final input binding; counted once in worker-types-v2."
+    },
+    {
+      "label": "worker-types-final",
+      "exit_code": 2,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-types-final.log",
+      "log_sha256": "079ca12c8380ae62b72736827e23b10f4785f079fc7be304d07cc9e876c971c6",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-worker-types-final-terminal.json",
+      "terminal_sha256": "d9684470685b2a72c4c9d2ae789ebbdcf8f0355b68b2a2413e65156bf6a95b51",
+      "counted": false,
+      "qualification": "Contract21 passed but normal Worker types failed; fixed relative shared type-only alias and fixture NODE_ENV binding."
+    },
+    {
+      "label": "browser-final",
+      "exit_code": 1,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-final.log",
+      "log_sha256": "5b73fc4e909641da26a5ef45c980c16d0bcb223367bf8b396eb1a487146d4c28",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-final-terminal.json",
+      "terminal_sha256": "8819fe54f2e5d62bcf4ed159d9b1a99def4d4c8f2b7a81dff6b28caed83488b2",
+      "counted": false,
+      "qualification": "Fixture duplicated already existing store_order_refund DDL; never reached Browser_READY and not UI acceptance."
+    },
+    {
+      "label": "browser-v2",
+      "exit_code": 1,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-v2.log",
+      "log_sha256": "c915076e8c3eafc97b23d4f3619ff8f838213dadb9ba458765cdce7956424985",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-browser-v2-terminal.json",
+      "terminal_sha256": "c76e443aa4c539776af82d0908e2b87129568eff246ece51bcba089655624ffd",
+      "counted": false,
+      "qualification": "Visible goods/layout stages worked, but503 assertion expected translated server body instead of actual HTTP client status message. Final bridge checks actual503/cleared ID/panel, full final acceptance rerun."
+    },
+    {
+      "label": "native-final",
+      "exit_code": 1,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-native-final.log",
+      "log_sha256": "aa3cf285bf19466eb6f51fa77f312ec6b88179f9dfe99d4a954479b2733bab01",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-native-final-terminal.json",
+      "terminal_sha256": "68707e16c03be13495636d70c32e90f47e9b5f1b839c060fdaee55b5e78993f4",
+      "counted": false,
+      "qualification": "68/70 passed; two real registered v1/v2 writers used exact sequenceRunner database registry while reader admitted finance registry only. Fixed same exact OR used by mature checkoutPricingFixture; no production code or privileges relaxed. Whole70 rerun as native-v2."
+    },
+    {
+      "label": "frontend-v4",
+      "exit_code": 0,
+      "log": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v4.log",
+      "log_sha256": "01c387b2fe298d08bab42dcc00b6b921fc806facafce5b66dd3187942ad35f8d",
+      "terminal": "/tmp/cinashop-supplier-refund-application-review-20261019-frontend-v4-terminal.json",
+      "terminal_sha256": "a6a15bc6559e2066404927f6e1b52be31371feda3903e972c8afad3a0fdc54b5",
+      "counted": false,
+      "qualification": "Successful141/types/build; superseded only by removal of one extra trailing EOF empty line detected upon staging an untracked test. Entire relevant frontend/types/build rerun as frontend-v5, counted once."
+    }
+  ],
+  "get_script": "User-selected restored PHP compatibility and revised retirement audit retained; actual Browser startup GET200.",
+  "remaining": [
+    "Overall PHP-to-TS migration remains active; this is one Supplier refund application detail batch.",
+    "Original refund application refund_img is a separate next flow from already migrated returned-goods evidence; inspect ownership and historical compatibility separately.",
+    "External browser extension connection not observed in available inventory; in-app Browser acceptance only.",
+    "Follow GitHub checks for the exact new commit; no merge or production deployment implied."
+  ],
+  "limits": [
+    "Modern claim freezes IDs/selected quantities, not application-time names/address/payment. UI distinguishes linked stored order records and exact still-associated cart labels from the full PHP application snapshot.",
+    "Completed materialized history remains the protected existing archive; completed v1 and missing/changed request identities never fall back to today's remainder or catalog.",
+    "Known raw cartInfo/orderInfo detail keys remain null; explicit closed application projection. This does not certify arbitrary data at all Supplier endpoints.",
+    "Browser uses synthetic owned display/archived fixture, production build/App/JWT, independent SELECT-only LOGIN and same-origin1200x844/390x844 iframe; actual authors separately exercised, not real devices.",
+    "Two actual registered checkout chains use explicitly synthetic payment admission. v1 Customer API/JWT uses maintenance SQL; v2 uses reviewed writer; v3 author is real CustomerWork quote/revision/receipt over explicitly synthetic original rows, not a third checkout.",
+    "RR READ ONLY, statement_timeout<=5s for each SQL, not a total transaction deadline. True42501/schema failures remain errors.",
+    "No production deployment/GRANT, no provider/callback/payment-account or external extension connection acceptance. Browser local control POSTs do not mutate business data.",
+    "Node fetch spy and plain-text DOM are bounded evidence, not certification of every browser network request or production log."
+  ]
+}

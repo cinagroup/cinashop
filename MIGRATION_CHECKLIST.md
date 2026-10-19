@@ -1,5 +1,13 @@
 # CinaShop PHP → Cloudflare 迁移完成 Checklist
 
+## 2026-10-19 Supplier 退款申请商品与关联订单核对
+
+接通 PHP 实际 formType0 退款申请详情的商品、SKU、编码、赠品、申请数量及结算参考，明确区分现代数量 claim 与 PHP 完整申请快照；关联收货/付款记录说明来源。取消/拒绝后仅在原关联仍可证时展示，已完成物化退款沿用受保护归档，无当前剩余单/目录回退。原 raw cartInfo/orderInfo 键保留 null，未知新合同明确提示，非法合同拒绝绑定，现有退款作者继续沿用。
+
+最终12文件562项去重通过（101项新增），Supplier类型/构建和Worker两完整类型项目通过。Browser9次GET对31表/29序列逐次零写、provider0，1200×844/390×844的部分申请、PHP赠品/编码、完成归档、失联及503重试通过；70份构建字节保持，5座自有PG含失败候选全部自动清零并确认停止。真实三代申请作者与合成付款/原单边界、初期类型/夹具/验收预期修正均见[说明](workers-ts/docs/php-ts-supplier-refund-application-review-20261019.md)与[账本](workers-ts/audit/php-ts-supplier-refund-application-review-20261019.json)。
+
+保留用户选定已恢复的PHP get_script及修订退役审计；原88/404复选行逐字保持，整体迁移继续active。本批分支codex/supplier-refund-application-review，草稿PR基于PR119，新提交CI按自身GitHub结果记录。退款申请原始图片与既有退货凭证是不同流程，后续单独核实；外部扩展连接、真实设备、生产角色/部署和provider验收仍开放。
+
 ## 2026-10-19 Supplier 普通订单卡密与固定内容交付记录
 
 接通PHP实际formType1的卡密发货面板，普通详情按精确物理订单只读核对现代卡密/冻结固定内容及已证PHP旧格式；区分尚未交付、已记录与无法核对，退款不抹去真实交付历史。HTML和网址保持纯文本，关闭/路由/会话变化清除旧资料。三个普通原始快照出口移除已证disk_info路径，坏商品类型标志不能绕过；真正type0/0原文与打印DTO保持。

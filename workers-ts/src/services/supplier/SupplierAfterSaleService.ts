@@ -18,6 +18,7 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { previewReturnImages } from "@/services/order/RefundReturnPayload";
 import { readStaffRefundHistory } from "@/services/order/RefundReadSnapshot";
+import { readSupplierRefundApplicationReview, supplierRefundApplicationCartInfo, supplierRefundApplicationOrderColumns } from "./SupplierRefundApplicationReview";
 
 const MAX_REFUND_REASON_LENGTH = 255;
 const MAX_REFUND_REASONS = 100;
@@ -73,15 +74,6 @@ export function parseSupplierRefundReasons(value: string): string[] {
     .map((item) => item.trim().slice(0, MAX_REFUND_REASON_LENGTH))
     .filter(Boolean)
     .slice(0, MAX_REFUND_REASONS);
-}
-
-function parseCartInfo(value: string | null): unknown {
-  if (!value) return null;
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return null;
-  }
 }
 
 export class SupplierAfterSaleService {
@@ -192,9 +184,13 @@ export class SupplierAfterSaleService {
         ...getTableColumns(storeOrderRefund),
         // Do not materialize unbounded legacy JSON in the Worker.
         refundImg: sql<null>`NULL`,
-        cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.cartInfo}) <= 65536 THEN ${storeOrderRefund.cartInfo} ELSE NULL END`,
+        cartInfo: supplierRefundApplicationCartInfo,
         refundGoodsImg: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg} WHEN ${storeOrderRefund.refundGoodsImg} IS NULL THEN NULL ELSE '__invalid__' END`,
-      }, order: storeOrder, payment: storeOrderRefundPayment })
+      }, order: supplierRefundApplicationOrderColumns, payment: {
+        provider: storeOrderRefundPayment.provider, providerStatus: storeOrderRefundPayment.providerStatus,
+        providerRefundId: storeOrderRefundPayment.providerRefundId, outRefundNo: storeOrderRefundPayment.outRefundNo,
+        lastError: storeOrderRefundPayment.lastError, updateTime: storeOrderRefundPayment.updateTime,
+      } })
       .from(storeOrderRefund)
       .innerJoin(storeOrder, eq(storeOrder.id, storeOrderRefund.storeOrderId))
       .leftJoin(
@@ -216,7 +212,12 @@ export class SupplierAfterSaleService {
       .limit(1);
     if (!rows[0]) throw new NotFoundException("售后记录不存在或不属于当前供应商");
     const { refund, order, payment } = rows[0];
-    const refundHistory = await readStaffRefundHistory(container.db, refund);
+    // Keep the existing completed-history 64KiB admission unchanged. The new
+    // application reader separately accepts complete PHP arrays up to 1MiB.
+    const historyRefund = { ...refund, cartInfo: refund.cartInfo !== null
+      && new TextEncoder().encode(refund.cartInfo).length > 65536 ? null : refund.cartInfo };
+    const refundHistory = await readStaffRefundHistory(container.db, historyRefund);
+    const applicationReview = await readSupplierRefundApplicationReview(container.db, refund, order);
     let returnImages: Array<{ url: string; src: string }> = [];
     let returnImagesError = "";
     try {
@@ -259,9 +260,10 @@ export class SupplierAfterSaleService {
       out_refund_no: payment?.outRefundNo ?? null,
       provider_error: payment?.lastError ?? null,
       provider_update_time: payment?.updateTime ?? 0,
-      cartInfo: parseCartInfo(refund.cartInfo),
+      cartInfo: null,
       refundHistory,
-      orderInfo: order,
+      application_review: applicationReview,
+      orderInfo: null,
     };
   }
 

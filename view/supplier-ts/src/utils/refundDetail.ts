@@ -1,6 +1,7 @@
 import type { RefundDetail } from '@/types';
 import { returnPreview } from '../../../common/refundReturn';
 import { parseRefundHistory } from '../../../common/refundHistory';
+import { parseSupplierRefundApplicationReview } from './refundApplicationReview';
 
 /** Never bind actions or image elements to an unchecked/stale detail receipt. */
 export function parseSupplierRefundDetail(value: unknown, id: number): RefundDetail {
@@ -28,5 +29,7 @@ export function parseSupplierRefundDetail(value: unknown, id: number): RefundDet
   if (new Set(returnImages.map(image => image.url)).size !== returnImages.length || (row.returnImagesError && returnImages.length)) throw Error('退货凭证列表无效');
   const refundHistory = parseRefundHistory(row.refundHistory, { id, sourceOrderId: row.store_order_id,
     refundNum: Number(row.refund_num), refundType: Number(row.refund_type), isCancel: Number(row.is_cancel) });
-  return { ...row, returnImages, refundHistory } as RefundDetail;
+  const application_review = Object.hasOwn(row, 'application_review')
+    ? parseSupplierRefundApplicationReview(row.application_review, row as unknown as RefundDetail) : undefined;
+  return { ...row, returnImages, refundHistory, application_review } as RefundDetail;
 }

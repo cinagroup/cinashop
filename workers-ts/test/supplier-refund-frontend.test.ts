@@ -18,7 +18,7 @@ beforeAll(async () => {
     export { createRouter, createMemoryHistory, RouterView } from 'vue-router';
   ` }, alias: { '@': resolve(root, 'src') }, define: { 'import.meta.env.DEV': 'false', 'import.meta.env.VITE_API_BASE_URL': '"/supplierapi"' },
     plugins: [{ name: 'actual-refund-sfc', setup(builder) {
-      builder.onLoad({ filter: /Refunds\.vue$/ }, ({ path }) => ({ contents: compileScript(parse(readFileSync(path, 'utf8'), { filename: path }).descriptor, { id: 'supplier-refund-test' }).content, loader: 'ts' }));
+      builder.onLoad({ filter: /\.vue$/ }, ({ path }) => ({ contents: compileScript(parse(readFileSync(path, 'utf8'), { filename: path }).descriptor, { id: 'supplier-refund-test' }).content, loader: 'ts' }));
       builder.onResolve({ filter: /^element-plus$/ }, () => ({ path: 'dialogs', namespace: 'fixture' }));
       builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `export const state={confirm:async()=>{},messages:[],closed:0};
         export const ElMessage={success:m=>state.messages.push(['success',m]),warning:m=>state.messages.push(['warning',m]),error:m=>state.messages.push(['error',m])};

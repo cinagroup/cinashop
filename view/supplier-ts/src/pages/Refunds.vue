@@ -18,6 +18,7 @@ import { createSupplierSessionScope } from '@/utils/supplierSession';
 import { useAuthStore } from '@/stores/auth';
 import type { RefundDetail, RefundRow } from "@/types";
 import { formatMoney, formatTime, payType } from "@/utils/format";
+import SupplierRefundApplicationReview from '@/components/SupplierRefundApplicationReview.vue';
 
 const loading = ref(false);
 const rows = ref<RefundRow[]>([]);
@@ -303,6 +304,7 @@ onMounted(() => {
           </dl>
           <div class="refund-reason"><span>用户原因</span><p>{{ current.refund_reason || "未填写" }}</p></div>
           <div v-if="current.refund_explain" class="refund-reason"><span>申请说明</span><p>{{ current.refund_explain }}</p></div>
+          <SupplierRefundApplicationReview :review="current.application_review" />
           <section v-if="current.refundHistory" class="refund-history" aria-label="退款商品快照">
             <h3>退款商品快照</h3>
             <p>以下为退款完成时的归档商品，不随后续拆单或商品编辑变化。</p>

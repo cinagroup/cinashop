@@ -660,6 +660,7 @@ export interface RefundExecutionResult {
 
 export interface RefundDetail extends RefundRow {
   refundHistory?: import('../../common/refundHistory').RefundHistory | null;
+  application_review?: import('./utils/refundApplicationReview').SupplierRefundApplicationReview;
   cartInfo: unknown;
   orderInfo: unknown;
   is_cancel: number;
