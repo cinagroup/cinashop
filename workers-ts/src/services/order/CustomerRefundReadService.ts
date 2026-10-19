@@ -140,7 +140,9 @@ export class CustomerRefundReadService {
         requestImageJson: sql<string | null>`CASE
           WHEN octet_length(${storeOrderRefund.refundImg}) <= 8192 THEN ${storeOrderRefund.refundImg}
           WHEN ${storeOrderRefund.refundImg} IS NULL THEN NULL ELSE '__invalid__' END`,
-        returnImageJson: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg} ELSE '__invalid__' END`,
+        returnImageJson: sql<string | null>`CASE
+          WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg}
+          WHEN ${storeOrderRefund.refundGoodsImg} IS NULL THEN NULL ELSE '__invalid__' END`,
         cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.cartInfo}) <= 65536 THEN ${storeOrderRefund.cartInfo} ELSE NULL END`,
       }).from(storeOrderRefund).innerJoin(storeOrder, joinedOrder)
         .where(and(eq(storeOrderRefund.id, Number(identifier)), eq(storeOrderRefund.uid, uid), eq(storeOrderRefund.isDel, 0))).limit(1);

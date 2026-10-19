@@ -23,12 +23,23 @@
       <el-form v-if="order" :model="form" :disabled="!editable" label-width="100px" style="max-width: 560px">
         <el-form-item label="退款商品" required>
           <el-checkbox-group v-model="selectedIds" class="refund-items">
-            <el-checkbox v-for="item in state.items" :key="item.id" :value="item.id" :disabled="!editable || !item.refundable">
-              {{ item.name }} {{ item.sku }}（订单数量 {{ item.quantity }}）{{ item.refundable ? '' : ' — 暂不可退' }}
-            </el-checkbox>
+            <div v-for="item in state.items" :key="item.id" class="refund-line">
+              <el-checkbox :value="item.id" :disabled="!editable || !item.refundable">
+                {{ item.name }} {{ item.sku }}{{ item.refundable ? '' : ' — 暂不可退' }}
+              </el-checkbox>
+              <p class="refund-note">订单数量 {{ item.quantity }} · 本次读取剩余 {{ item.remainingQuantity }}</p>
+              <div v-if="selectedIds.includes(item.id) && item.refundable" class="quantity-controls">
+                <label :for="`refund-quantity-${item.id}`">申请数量</label>
+                <button type="button" :aria-label="`减少 ${item.name} ${item.sku} 申请数量`" :disabled="!editable || requestedQuantity(item) === null || (requestedQuantity(item) || 0) <= 1" @click="adjustQuantity(item, -1)">−</button>
+                <input :id="`refund-quantity-${item.id}`" class="refund-quantity-input" type="number" inputmode="numeric" min="1" :max="item.remainingQuantity" step="1"
+                  :aria-label="`${item.name} ${item.sku} 申请数量`" :aria-invalid="requestedQuantity(item) === null" :value="state.quantities[item.id]" :disabled="!editable" @input="editQuantity(item, $event)" @keydown.enter.prevent />
+                <button type="button" :aria-label="`增加 ${item.name} ${item.sku} 申请数量`" :disabled="!editable || requestedQuantity(item) === null || (requestedQuantity(item) || 0) >= item.remainingQuantity" @click="adjustQuantity(item, 1)">+</button>
+              </div>
+              <p v-if="selectedIds.includes(item.id) && item.refundable && requestedQuantity(item) === null" class="quantity-error" role="alert">请输入 1 至 {{ item.remainingQuantity }} 之间的整数件数</p>
+            </div>
           </el-checkbox-group>
         </el-form-item>
-        <p class="refund-note">申请所选商品的剩余可退数量，资格和退款金额由服务端最终核算。</p>
+        <p class="refund-note">可分别填写所选商品的申请数量。剩余数量为本次读取结果，资格和退款金额由服务端最终核算。</p>
         <el-form-item label="退款类型" required>
           <el-radio-group v-model="form.applyType">
             <el-radio :value="1">仅退款</el-radio>
@@ -68,6 +79,7 @@
         </el-form-item>
         <el-form-item>
           <el-button
+            class="refund-submit"
             type="danger"
             :loading="submitting"
             :disabled="!canSubmit || !selectedIds.length || !form.refundReason.trim()"
@@ -88,7 +100,7 @@ import type { OrderInfo } from "@/types/order";
 import request, { getData } from "@/utils/request";
 import { ApiResponseError } from "@/utils/apiError";
 import { captureAuthSession, isCurrentAuthSession, getUid, onAuthChange } from "@/utils/auth";
-import { createRefundApplication, initialRefundApplication, refundBlockReason } from "../../../../common/refundApplication";
+import { createRefundApplication, initialRefundApplication, refundBlockReason, type RefundItem } from "../../../../common/refundApplication";
 import { orderDetailId } from "../../../../common/orderDetailIdentity";
 import { apiReturnImage } from '@/api/refund';
 
@@ -110,7 +122,11 @@ function capture(){
 }
 const controller=createRefundApplication(state,{capture,read:apiOrderDetail,write:(id,body)=>getData(request.post(`/order/refund/apply/${id}`,body)),
   isRejected:error=>error instanceof ApiResponseError&&error.status===400});
-const canSubmit=computed(()=>controller.canSubmit()&&!navigating.value),editable=computed(()=>canSubmit.value);
+const editable=computed(()=>controller.canSubmit()&&!navigating.value);
+const canSubmit=computed(()=>editable.value&&!controller.quantityError());
+const requestedQuantity=controller.requestedQuantity;
+function editQuantity(item:RefundItem,event:Event){if(editable.value)controller.setQuantity(item,(event.target as HTMLInputElement).value);}
+function adjustQuantity(item:RefundItem,delta:number){if(editable.value)controller.shiftQuantity(item,delta);}
 function clear(){imagePickerOwner=undefined;controller.clear();navigationVersion++;navigating.value=false;navigationError.value='';}
 async function load(){if(disposed||navigating.value)return;await controller.load();}
 async function submit(){if(!navigating.value)await controller.submit();}
@@ -160,6 +176,12 @@ onBeforeUnmount(()=>{disposed=true;stopAuth();clear();});
 .refund-items { display:flex; flex-direction:column; min-width:0; }
 .refund-items :deep(.el-checkbox) { height:auto; white-space:normal; margin:8px 0; }
 .refund-items :deep(.el-checkbox__label) { white-space:normal; overflow-wrap:anywhere; }
+.refund-line { padding:8px 0; border-bottom:1px solid #eee; min-width:0; }
+.refund-line p { margin:4px 0 8px; }
+.quantity-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:14px; line-height:1.5; }
+.quantity-controls button { min-width:44px; min-height:44px; border:1px solid #bbb; border-radius:4px; background:#fff; font:inherit; }
+.refund-quantity-input { box-sizing:border-box; width:100px; max-width:100%; min-height:44px; border:1px solid #bbb; border-radius:4px; padding:8px; font:inherit; }
+.quantity-error { color:#9b3020; font-size:13px; }
 .refund-note { color:#666; font-size:13px; line-height:1.6; }
 .application-evidence { width:100%; min-width:0; }
 .application-evidence input { max-width:100%; }

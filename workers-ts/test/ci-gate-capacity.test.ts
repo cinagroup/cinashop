@@ -43,9 +43,9 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Verify NOT VALID generator semantics on isolated PostgreSQL 16", "Verify sequence generator semantics on isolated PostgreSQL 16",
       "Measure FK statistics candidates on isolated PostgreSQL 16",
       "Verify formal shipping indexes and measure isolated read/write costs", "Preserve complete synthetic shipping plans"]);
-    // Run 35553068667 exhausted the 40-minute job budget while tests continued.
+    // Run 39218895760 exhausted the 90-minute job budget while tests continued.
     // Only unit-job capacity changed; no per-test deadline or gate is relaxed.
-    expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 90"]);
+    expect(unit.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 120"]);
     expect(catalog.match(/^    timeout-minutes: (\d+)$/gm)).toEqual(["    timeout-minutes: 20"]);
     for(const block of [unit,catalog]) {
       expect(block).toContain("image: postgres:16.14-alpine");

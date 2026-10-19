@@ -73,7 +73,7 @@ export function registerRefundApplyTests(getContext){
   it('PC refund snapshots body and preserves receipt when order navigation fails',async()=>{
     const waiting=gate(),f=await mount(c=>c.method==='post'?waiting.promise:undefined);
     try{fill(f);f.view.form.applyType=2;const pending=f.view.submit();f.view.selectedIds.value.push(999);f.view.form.refundReason='changed';await flush();
-      assert.deepEqual(JSON.parse(posts(f)[0].data),{cartIds:[1],applyType:2,refundReason:'其他原因',refundExplain:''});
+      assert.deepEqual(JSON.parse(posts(f)[0].data),{cart_ids:[{cart_id:1,cart_num:2}],applyType:2,refundReason:'其他原因',refundExplain:''});
       waiting.resolve({status:200,data:{refundId:91}});await pending;assert.equal(f.view.state.refundId,91);assert.equal(f.router.currentRoute.value.path,'/refund/local_A');
       f.router.beforeEach(()=>false);await f.view.goOrder();assert.match(f.view.navigationError.value,/不会重复/);await f.view.goOrder();
       await f.view.load();fill(f);await f.view.submit();assert.equal(f.view.state.refundId,91);assert.equal(posts(f).length,1);
@@ -159,5 +159,94 @@ export function registerRefundApplyTests(getContext){
       if (ending === 'unmount') f.close();
       await view.uploadApplicationImage(selected); assert.equal(f.calls.filter(c => c.url === '/upload/image').length, 0); assert.deepEqual(view.state.images, []);
     } finally { if (ending !== 'unmount') f.close(); }
+  });
+  const quantityInput = (f, value, item = f.view.state.items[0]) => f.view.editQuantity(item, { target: { value } });
+  const appliedBody = f => JSON.parse(f.calls.find(c => c.url.includes('/refund/apply/')).data);
+  it('PC partial refund distinguishes purchased, previously claimed and selected quantities in the actual HTTP body', async () => {
+    const f = await mount(c => c.method === 'post' ? undefined : { status: 200, data: detail('local_A', { cartInfo: [{ ...detail('local_A').cartInfo[0], cartNum: 5, refundNum: 2 }] }) });
+    try {
+      fill(f); const item = f.view.state.items[0]; assert.equal(item.quantity, 5); assert.equal(item.remainingQuantity, 3); assert.equal(f.view.state.quantities[1], '3');
+      quantityInput(f, '1'); await f.view.submit(); assert.deepEqual(appliedBody(f), { cart_ids: [{ cart_id: 1, cart_num: 1 }], applyType: 1, refundReason: '其他原因', refundExplain: '' });
+      assert.equal(Object.hasOwn(appliedBody(f), 'cartIds'), false); assert.equal(Object.hasOwn(appliedBody(f), 'cartSelections'), false);
+    } finally { f.close(); }
+  });
+  it('PC partial refund defaults to the observed remainder without altering purchased quantity', async () => {
+    const f = await mount(c => c.method === 'post' ? undefined : { status: 200, data: detail('local_A', { cartInfo: [{ ...detail('local_A').cartInfo[0], cartNum: 3, refundNum: 1 }] }) });
+    try { fill(f); await f.view.submit(); assert.equal(appliedBody(f).cart_ids[0].cart_num, 2); assert.equal(f.view.state.items[0].quantity, 3); }
+    finally { f.close(); }
+  });
+  it('PC partial refund freezes independent quantities for each selected line and excludes unselected lines', async () => {
+    const rows = [detail('local_A').cartInfo[0], { ...detail('local_A').cartInfo[0], id: 2, cartNum: 4, refundNum: 1 }, { ...detail('local_A').cartInfo[0], id: 3 }];
+    const f = await mount(c => c.method === 'post' ? undefined : { status: 200, data: detail('local_A', { cartInfo: rows }) });
+    try {
+      fill(f); f.view.selectedIds.value = [1, 2]; quantityInput(f, '1'); quantityInput(f, '2', f.view.state.items[1]); quantityInput(f, '1', f.view.state.items[2]);
+      assert.equal(f.view.state.quantities[3], '2'); await f.view.submit(); assert.deepEqual(appliedBody(f).cart_ids, [{ cart_id: 1, cart_num: 1 }, { cart_id: 2, cart_num: 2 }]);
+    } finally { f.close(); }
+  });
+  it('PC invalid quantity stays editable, blocks actual POST and permits an explicit correction', async () => {
+    const f = await mount(); try {
+      fill(f);
+      for (const value of ['', '0', '-1', '1.5', '1e2', '01', '3', '9007199254740992']) {
+        quantityInput(f, value); assert.equal(f.view.canSubmit.value, false); assert.equal(f.view.editable.value, true); await f.view.submit(); assert.equal(posts(f).length, 0); assert.match(f.view.state.submitError, /整数件数/);
+      }
+      quantityInput(f, '1'); assert.equal(f.view.canSubmit.value, true); await f.view.submit(); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1);
+    } finally { f.close(); }
+  });
+  it('PC missing or forged numeric quantity state cannot bypass the shared submission gate', async () => {
+    const f = await mount(); try {
+      fill(f); for (const value of [undefined, null, 1, {}, NaN, Infinity]) { f.view.state.quantities[1] = value; await f.view.submit(); assert.equal(posts(f).length, 0); }
+    } finally { f.close(); }
+  });
+  it('PC quantity buttons respect both limits and cannot edit unselected or forged line objects', async () => {
+    const f = await mount(); try {
+      const item = f.view.state.items[0]; quantityInput(f, '1'); assert.equal(f.view.state.quantities[1], '2'); fill(f);
+      f.view.adjustQuantity(item, 1); assert.equal(f.view.state.quantities[1], '2'); f.view.adjustQuantity(item, -1); f.view.adjustQuantity(item, -1); assert.equal(f.view.state.quantities[1], '1');
+      quantityInput(f, '2', { ...item }); f.view.adjustQuantity({ ...item }, 1); f.view.adjustQuantity(item, 2); assert.equal(f.view.state.quantities[1], '1');
+      f.view.adjustQuantity(item, 1); assert.equal(f.view.state.quantities[1], '2');
+    } finally { f.close(); }
+  });
+  it('PC reload uses fresh remaining quantity and rejects a late event from the previous row object', async () => {
+    let remaining = 2; const f = await mount(c => c.method === 'post' ? undefined : { status: 200, data: detail('local_A', { cartInfo: [{ ...detail('local_A').cartInfo[0], refundNum: 2 - remaining }] }) });
+    try {
+      fill(f); quantityInput(f, '1'); const oldItem = f.view.state.items[0]; remaining = 1; await f.view.load(); fill(f);
+      assert.equal(f.view.state.quantities[1], '1'); quantityInput(f, '2', oldItem); assert.equal(f.view.state.quantities[1], '1'); await f.view.submit(); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1);
+    } finally { f.close(); }
+  });
+  it('PC account, route and unmount clear selected quantities and invalidate old controls', async () => {
+    for (const ending of ['auth', 'route', 'unmount']) {
+      const f = await mount(), view = f.view; try {
+        fill(f); quantityInput(f, '1'); const item = view.state.items[0];
+        if (ending === 'auth') getContext().authUtils.setAuth('replacement', 22);
+        if (ending === 'route') { await f.router.push('/refund/local_B'); await flush(); }
+        if (ending === 'unmount') f.close();
+        assert.deepEqual(view.state.selectedIds, []); assert.deepEqual(view.state.quantities, ending === 'route' ? { 1: '2' } : {});
+        view.editQuantity(item, { target: { value: '1' } }); assert.deepEqual(view.state.quantities, ending === 'route' ? { 1: '2' } : {}); assert.equal(posts(f).length, 0);
+      } finally { if (ending !== 'unmount') f.close(); getContext().authUtils.setAuth('session-a', 11); }
+    }
+  });
+  it('PC pending quantity request cannot be changed by controls or double submit and stays a frozen HTTP intent', async () => {
+    const wait = gate(), f = await mount(c => c.method === 'post' ? wait.promise : undefined); try {
+      fill(f); quantityInput(f, '1'); const item = f.view.state.items[0], pending = f.view.submit();
+      quantityInput(f, '2'); f.view.adjustQuantity(item, 1); await f.view.submit(); assert.equal(f.view.state.quantities[1], '1');
+      f.view.state.quantities[1] = '2'; await flush(); assert.equal(posts(f).length, 1); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1);
+      wait.resolve({ status: 200, data: { refundId: 91 } }); await pending;
+    } finally { wait.resolve({ status: 400 }); f.close(); }
+  });
+  it('PC uncertain partial request cannot be replaced by a different quantity after refresh', async () => {
+    const f = await mount(c => c.method === 'post' ? { status: 500, msg: 'lost' } : undefined); try {
+      fill(f); quantityInput(f, '1'); await f.view.submit(); await f.view.load(); fill(f); quantityInput(f, '2'); await f.view.submit();
+      assert.equal(f.view.state.uncertain, true); assert.equal(f.view.editable.value, false); assert.equal(posts(f).length, 1); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1);
+    } finally { f.close(); }
+  });
+  it('PC upload in progress cannot mutate the selected quantity before submission', async () => {
+    const wait = gate(), f = await mount(c => c.url === '/upload/image' ? wait.promise : undefined); try {
+      fill(f); quantityInput(f, '1'); const pending = f.view.uploadApplicationImage(selectFile(f)); quantityInput(f, '2'); f.view.adjustQuantity(f.view.state.items[0], 1); assert.equal(f.view.state.quantities[1], '1');
+      wait.resolve({ status: 200, data: image() }); await pending; await f.view.submit(); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1); assert.equal(appliedBody(f).refundImg, '["/api/assets/31"]');
+    } finally { wait.resolve({ status: 400 }); f.close(); }
+  });
+  it('PC large safe purchased count uses bounded scalar controls and emits only the selected remainder', async () => {
+    const f = await mount(c => c.method === 'post' ? undefined : { status: 200, data: detail('local_A', { cartInfo: [{ ...detail('local_A').cartInfo[0], cartNum: Number.MAX_SAFE_INTEGER, refundNum: Number.MAX_SAFE_INTEGER - 2 }] }) });
+    try { fill(f); quantityInput(f, '1'); await f.view.submit(); assert.equal(f.view.state.items[0].remainingQuantity, 2); assert.equal(appliedBody(f).cart_ids[0].cart_num, 1); }
+    finally { f.close(); }
   });
 }

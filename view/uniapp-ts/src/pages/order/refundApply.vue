@@ -16,25 +16,33 @@
       <!-- 订单商品 (可勾选) -->
       <view class="goods-card">
         <view class="card-title">选择退款商品</view>
-        <view
-          v-for="item in orderItems"
-          :key="item.id"
-          class="goods-line"
-          :class="{ disabled: !item.refundable || !editable }"
-          role="checkbox"
-          :aria-checked="selectedIds.includes(item.id)"
-          :aria-disabled="!item.refundable || !editable"
-          @tap="toggleItem(item)"
-        >
-          <view class="check" :class="{ checked: selectedIds.includes(item.id) }">
-            <text v-if="selectedIds.includes(item.id)">✓</text>
+        <view v-for="item in orderItems" :key="item.id" class="goods-entry">
+          <view
+            class="goods-line"
+            :class="{ disabled: !item.refundable || !editable }"
+            role="checkbox"
+            :aria-checked="selectedIds.includes(item.id)"
+            :aria-disabled="!item.refundable || !editable"
+            @tap="toggleItem(item)"
+          >
+            <view class="check" :class="{ checked: selectedIds.includes(item.id) }">
+              <text v-if="selectedIds.includes(item.id)">✓</text>
+            </view>
+            <view class="goods-info">
+              <view class="goods-name">{{ item.name }}</view>
+              <view class="goods-sku">{{ item.sku }} · 订单数量 {{ item.quantity }} · 本次读取剩余 {{ item.remainingQuantity }}{{ item.refundable ? '' : ' · 暂不可退' }}</view>
+            </view>
           </view>
-          <view class="goods-info">
-            <view class="goods-name">{{ item.name }}</view>
-            <view class="goods-sku">{{ item.sku }} · 订单数量 {{ item.quantity }}{{ item.refundable ? '' : ' · 暂不可退' }}</view>
+          <view v-if="selectedIds.includes(item.id) && item.refundable" class="quantity-controls">
+            <text>申请数量</text>
+            <button size="mini" class="quantity-button" :aria-label="`减少 ${item.name} ${item.sku} 申请数量`" :disabled="!editable || requestedQuantity(item) === null || (requestedQuantity(item) || 0) <= 1" @tap.stop="adjustQuantity(item, -1)">−</button>
+            <input class="refund-quantity-input" type="number" inputmode="numeric" :maxlength="16" :aria-label="`${item.name} ${item.sku} 申请数量`" :aria-invalid="requestedQuantity(item) === null"
+              :value="state.quantities[item.id]" :disabled="!editable" @input="editQuantity(item, $event)" />
+            <button size="mini" class="quantity-button" :aria-label="`增加 ${item.name} ${item.sku} 申请数量`" :disabled="!editable || requestedQuantity(item) === null || (requestedQuantity(item) || 0) >= item.remainingQuantity" @tap.stop="adjustQuantity(item, 1)">+</button>
           </view>
+          <view v-if="selectedIds.includes(item.id) && item.refundable && requestedQuantity(item) === null" class="policy-warning" role="alert">请输入 1 至 {{ item.remainingQuantity }} 之间的整数件数</view>
         </view>
-        <view class="refund-note">申请所选商品的剩余可退数量，资格和退款金额由服务端最终核算。</view>
+        <view class="refund-note">可分别填写所选商品的申请数量。剩余数量为本次读取结果，资格和退款金额由服务端最终核算。</view>
       </view>
 
       <!-- 退款原因 -->
@@ -79,7 +87,7 @@
         </view>
       </view>
 
-      <button class="submit-btn" :disabled="!canSubmit || !selectedIds.length || !reason.trim()" :loading="state.submitting" @tap="submit">提交退款申请</button>
+      <button class="submit-btn refund-submit" :disabled="!canSubmit || !selectedIds.length || !reason.trim()" :loading="state.submitting" @tap="submit">提交退款申请</button>
     </view>
     <view v-else-if="state.loading" class="empty">正在核对退款订单…</view>
   </view>
@@ -126,7 +134,16 @@ function capture() {
 }
 const controller = createRefundApplication(state, { capture, read: apiOrderDetail, write: apiRefundApply,
   isRejected: error => error instanceof RequestError && error.status === 400 });
-const canSubmit = computed(() => controller.canSubmit() && !navigating.value), editable = computed(() => canSubmit.value);
+const editable = computed(() => controller.canSubmit() && !navigating.value);
+const canSubmit = computed(() => editable.value && !controller.quantityError());
+const requestedQuantity = controller.requestedQuantity;
+function editQuantity(item: RefundItem, event: unknown) {
+  if (!editable.value) return;
+  const detail = event && typeof event === 'object' && 'detail' in event ? event.detail : undefined;
+  const value = detail && typeof detail === 'object' && 'value' in detail ? detail.value : undefined;
+  controller.setQuantity(item, value);
+}
+function adjustQuantity(item: RefundItem, delta: number) { if (editable.value) controller.shiftQuantity(item, delta); }
 function clear(preserveOutcome = false) {
   controller.clear(preserveOutcome); navigationVersion++; navigating.value = false; navigationError.value = '';
 }
@@ -314,6 +331,11 @@ onUnload(() => {
   background: var(--view-theme, #e93323);
   color: #fff;
 }
+
+.goods-entry { min-width:0; border-bottom:1rpx solid #eee; padding-bottom:16rpx; margin-bottom:16rpx; }
+.quantity-controls { display:flex; flex-wrap:wrap; align-items:center; gap:16rpx; padding:12rpx 0; }
+.quantity-controls .quantity-button { margin:0; min-width:88rpx; height:88rpx; line-height:88rpx; padding:0; font-size:32rpx; }
+.refund-quantity-input { box-sizing:border-box; width:160rpx; max-width:100%; height:88rpx; min-height:88rpx; border:1rpx solid #bbb; border-radius:8rpx; padding:12rpx; font-size:28rpx; }
 
 .explain-input {
   width: 100%;

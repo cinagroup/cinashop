@@ -73,6 +73,16 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits only the exact customer refund-quantities native file in schema-maintenance mode', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/customer-refund-quantities-native.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('allowlist');
+  });
+  it.each(['test/customer-refund-quantities-native.test.ts.extra', 'test/customer-refund-quantities-native.other.ts'])('rejects a malformed refund-quantities native spelling %s', path => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stderr).toContain('Only explicit unit test paths');
+  });
   it('admits only the exact new customer request-image native file in schema-maintenance mode', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/customer-refund-request-images-native.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

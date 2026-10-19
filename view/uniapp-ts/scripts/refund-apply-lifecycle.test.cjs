@@ -57,7 +57,7 @@ test('UniApp refund snapshots the body and preserves the exact receipt for navig
   const waiting=deferred(),r=setup(c=>c.url.includes('/refund/apply/')?waiting.promise:undefined);
   try{await r.start({orderId:'local_A'});fill(r);r.checkout.state.form.applyType=2;
     const pending=r.checkout.submit();r.checkout.selectedIds.value.push(999);r.checkout.reason.value='changed';await tick();
-    assert.deepEqual(posts(r)[0].data,{cartIds:[1],applyType:2,refundReason:'其他',refundExplain:''});
+    assert.deepEqual(posts(r)[0].data,{cart_ids:[{cart_id:1,cart_num:2}],applyType:2,refundReason:'其他',refundExplain:''});
     waiting.resolve({data:{refundId:91}});await pending;assert.equal(r.checkout.state.refundId,91);assert.equal(r.navigations.length,0);
     r.uni.navigateTo=opts=>{r.navigations.push(opts.url);opts.fail();};r.checkout.goRefund();assert.match(r.checkout.navigationError.value,/不会重复/);
     r.checkout.goRefund();await r.checkout.load();fill(r);await r.checkout.submit();
@@ -186,4 +186,96 @@ test('application picker cancellation, oversized local files and failed transfer
     r.uni.chooseImage = options => options.success({ tempFilePaths: ['owned.png'], tempFiles: [{ size: 68 }] }); await r.checkout.uploadApplicationImage();
     assert.equal(uploads, 1); assert.equal(r.checkout.state.uncertain, false); assert.deepEqual(r.checkout.state.images, []); assert.equal(r.checkout.state.uploading, false);
   } finally { r.stop(); }
+});
+
+const quantityInput = (r, value, item = r.checkout.state.items[0]) => r.checkout.editQuantity(item, { detail: { value } });
+const appliedBody = r => posts(r)[0].data;
+test('UniApp partial refund distinguishes purchased and remaining counts and sends explicit quantities through the actual HTTP adapter', async () => {
+  const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: [{ ...detail().cartInfo[0], cartNum: 5, refundNum: 2 }] }) });
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); const item = r.checkout.state.items[0]; assert.equal(item.quantity, 5); assert.equal(item.remainingQuantity, 3); assert.equal(r.checkout.state.quantities[1], '3');
+    quantityInput(r, '1'); await r.checkout.submit(); assert.deepEqual(appliedBody(r), { cart_ids: [{ cart_id: 1, cart_num: 1 }], applyType: 1, refundReason: '其他', refundExplain: '' });
+    assert.equal(Object.hasOwn(appliedBody(r), 'cartIds'), false); assert.equal(Object.hasOwn(appliedBody(r), 'cartSelections'), false);
+  } finally { r.stop(); }
+});
+test('UniApp partial refund defaults to the currently read remainder without rewriting purchased quantity', async () => {
+  const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: [{ ...detail().cartInfo[0], cartNum: 3, refundNum: 1 }] }) });
+  try { await r.start({ orderId: 'local_A' }); fill(r); await r.checkout.submit(); assert.equal(appliedBody(r).cart_ids[0].cart_num, 2); assert.equal(r.checkout.state.items[0].quantity, 3); }
+  finally { r.stop(); }
+});
+test('UniApp selected lines retain separate integer quantities and unselected rows never enter the request', async () => {
+  const rows = [detail().cartInfo[0], { ...detail().cartInfo[0], id: 2, cartNum: 4, refundNum: 1 }, { ...detail().cartInfo[0], id: 3 }];
+  const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: rows }) });
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); r.checkout.selectedIds.value = [1, 2]; quantityInput(r, '1'); quantityInput(r, '2', r.checkout.state.items[1]); quantityInput(r, '1', r.checkout.state.items[2]);
+    assert.equal(r.checkout.state.quantities[3], '2'); await r.checkout.submit(); assert.deepEqual(appliedBody(r).cart_ids, [{ cart_id: 1, cart_num: 1 }, { cart_id: 2, cart_num: 2 }]);
+  } finally { r.stop(); }
+});
+test('UniApp invalid quantity disables submit while retaining editable controls and a correction can be submitted', async () => {
+  const r = setup(); try {
+    await r.start({ orderId: 'local_A' }); fill(r);
+    for (const value of ['', '0', '-1', '1.5', '1e2', '01', '3', '9007199254740992']) {
+      quantityInput(r, value); assert.equal(r.checkout.canSubmit.value, false); assert.equal(r.checkout.editable.value, true); await r.checkout.submit(); assert.equal(posts(r).length, 0); assert.match(r.checkout.state.submitError, /整数件数/);
+    }
+    quantityInput(r, '1'); assert.equal(r.checkout.canSubmit.value, true); await r.checkout.submit(); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1);
+  } finally { r.stop(); }
+});
+test('UniApp malformed quantity state cannot bypass the ordinary shared author gate', async () => {
+  const r = setup(); try {
+    await r.start({ orderId: 'local_A' }); fill(r); for (const value of [undefined, null, 1, {}, NaN, Infinity]) { r.checkout.state.quantities[1] = value; await r.checkout.submit(); assert.equal(posts(r).length, 0); }
+  } finally { r.stop(); }
+});
+test('UniApp quantity buttons enforce bounds and ignore foreign or unselected row controls', async () => {
+  const r = setup(); try {
+    await r.start({ orderId: 'local_A' }); const item = r.checkout.state.items[0]; quantityInput(r, '1'); assert.equal(r.checkout.state.quantities[1], '2'); fill(r);
+    r.checkout.adjustQuantity(item, 1); assert.equal(r.checkout.state.quantities[1], '2'); r.checkout.adjustQuantity(item, -1); r.checkout.adjustQuantity(item, -1); assert.equal(r.checkout.state.quantities[1], '1');
+    quantityInput(r, '2', { ...item }); r.checkout.adjustQuantity({ ...item }, 1); r.checkout.adjustQuantity(item, 2); assert.equal(r.checkout.state.quantities[1], '1');
+    r.checkout.adjustQuantity(item, 1); assert.equal(r.checkout.state.quantities[1], '2');
+  } finally { r.stop(); }
+});
+test('UniApp a fresh read initializes current remaining counts and late events cannot target the new row object', async () => {
+  let remaining = 2; const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: [{ ...detail().cartInfo[0], refundNum: 2 - remaining }] }) });
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); const oldItem = r.checkout.state.items[0]; remaining = 1; await r.checkout.load(); fill(r);
+    assert.equal(r.checkout.state.quantities[1], '1'); quantityInput(r, '2', oldItem); assert.equal(r.checkout.state.quantities[1], '1'); await r.checkout.submit(); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1);
+  } finally { r.stop(); }
+});
+test('UniApp auth, hide, route and unload discard selected quantities and invalidate former controls', async () => {
+  for (const ending of ['auth', 'hide', 'route', 'unload']) {
+    const r = setup(); try {
+      await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); const item = r.checkout.state.items[0];
+      if (ending === 'auth') r.auth.setLogin('replacement', 22);
+      if (ending === 'hide') r.hooks.onHide();
+      if (ending === 'route') { r.hooks.onLoad({ orderId: 'local_B' }); assert.deepEqual(r.checkout.state.quantities, {}); r.hooks.onShow(); await tick(); }
+      if (ending === 'unload') r.hooks.onUnload();
+      assert.deepEqual(r.checkout.state.selectedIds, []); const fresh = ending === 'route' ? { 1: '2' } : {}; assert.deepEqual(r.checkout.state.quantities, fresh);
+      quantityInput(r, '1', item); assert.deepEqual(r.checkout.state.quantities, fresh); assert.equal(posts(r).length, 0);
+    } finally { r.stop(); }
+  }
+});
+test('UniApp pending quantity intent is frozen and controls or a second tap cannot alter the request', async () => {
+  const wait = deferred(), r = setup(c => c.url.includes('/refund/apply/') ? wait.promise : undefined); try {
+    await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); const pending = r.checkout.submit(); quantityInput(r, '2'); r.checkout.adjustQuantity(r.checkout.state.items[0], 1); await r.checkout.submit();
+    assert.equal(r.checkout.state.quantities[1], '1'); r.checkout.state.quantities[1] = '2'; await tick(); assert.equal(posts(r).length, 1); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1);
+    wait.resolve({ data: { refundId: 91 } }); await pending;
+  } finally { wait.resolve({ status: 400 }); r.stop(); }
+});
+test('UniApp an uncertain quantity intent cannot be replaced by another quantity after refresh', async () => {
+  const r = setup(c => c.url.includes('/refund/apply/') ? { status: 500, msg: 'lost' } : undefined); try {
+    await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); await r.checkout.submit(); await r.checkout.load(); fill(r); quantityInput(r, '2'); await r.checkout.submit();
+    assert.equal(r.checkout.state.uncertain, true); assert.equal(r.checkout.editable.value, false); assert.equal(posts(r).length, 1); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1);
+  } finally { r.stop(); }
+});
+test('UniApp choosing an image locks the exact selected quantity until its upload completes', async () => {
+  const r = setup(); let pendingUpload; applicationUpload(r); r.uni.uploadFile = options => { pendingUpload = options; };
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); const pending = r.checkout.uploadApplicationImage(); await tick(); quantityInput(r, '2'); r.checkout.adjustQuantity(r.checkout.state.items[0], 1);
+    assert.equal(r.checkout.state.quantities[1], '1'); pendingUpload.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: uploadedImage() }) }); await pending;
+    await r.checkout.submit(); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1); assert.equal(appliedBody(r).refundImg, '["/api/assets/31"]');
+  } finally { r.stop(); }
+});
+test('UniApp large safe purchased counts require no quantity-sized array and send the small selected remainder', async () => {
+  const r = setup(c => c.url.includes('/refund/apply/') ? undefined : { data: detail('local_A', { cartInfo: [{ ...detail().cartInfo[0], cartNum: Number.MAX_SAFE_INTEGER, refundNum: Number.MAX_SAFE_INTEGER - 2 }] }) });
+  try { await r.start({ orderId: 'local_A' }); fill(r); quantityInput(r, '1'); await r.checkout.submit(); assert.equal(r.checkout.state.items[0].remainingQuantity, 2); assert.equal(appliedBody(r).cart_ids[0].cart_num, 1); }
+  finally { r.stop(); }
 });

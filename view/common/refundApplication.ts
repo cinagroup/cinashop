@@ -21,6 +21,7 @@ export interface RefundItem {
     name: string;
     sku: string;
     quantity: number;
+    remainingQuantity: number;
     refundable: boolean;
 }
 export interface RefundForm {
@@ -29,11 +30,12 @@ export interface RefundForm {
     refundExplain: string;
 }
 export interface RefundBody extends RefundForm {
-    cartIds: number[];
+    cart_ids: Array<{ cart_id: number; cart_num: number }>;
     refundImg?: string;
 }
 export function initialRefundApplication<T extends RefundOrder>() {
     return { order: null as T | null, items: [] as RefundItem[], selectedIds: [] as number[],
+        quantities: {} as Record<number, string>,
         form: { applyType: 1, refundReason: '', refundExplain: '' } as RefundForm,
         images: [] as ReturnImage[], uploading: false,
         loading: false, submitting: false, loadError: '', submitError: '', uncertain: false, refundId: 0, revision: 0 };
@@ -70,7 +72,8 @@ function itemsFor(order: RefundOrder): RefundItem[] {
         const info = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot as Record<string, unknown> : {};
         const product = info.product as Record<string, unknown> | undefined, sku = info.sku as Record<string, unknown> | undefined;
         return { id: Number(row.id), name: typeof product?.storeName === 'string' ? product.storeName : '订单商品', sku: typeof sku?.suk === 'string' ? sku.suk : '',
-            quantity: Number(row.cart_num), refundable: row.is_support_refund === 1 && Number(row.refund_num) < Number(row.cart_num) && Number(row.write_times) <= Number(row.write_surplus_times) };
+            quantity: Number(row.cart_num), remainingQuantity: Number(row.cart_num) - Number(row.refund_num),
+            refundable: row.is_support_refund === 1 && Number(row.refund_num) < Number(row.cart_num) && Number(row.write_times) <= Number(row.write_surplus_times) };
     });
 }
 export function refundBlockReason(order: RefundOrder | null): string {
@@ -104,6 +107,7 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
         state.order = null;
         state.items = [];
         state.selectedIds = [];
+        state.quantities = {};
         state.loading = false;
         state.submitting = false;
         state.images = [];
@@ -138,6 +142,7 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
             const items = itemsFor(order);
             state.order = order;
             state.items = items;
+            state.quantities = Object.fromEntries(items.map(item => [item.id, String(item.remainingQuantity)]));
         }
         catch (error) {
             if (current())
@@ -172,15 +177,40 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
             return;
         state.selectedIds = state.selectedIds.includes(item.id) ? state.selectedIds.filter(id => id !== item.id) : [...state.selectedIds, item.id];
     }
+    function requestedQuantity(item: RefundItem): number | null {
+        const value = state.quantities[item.id];
+        if (!state.items.includes(item) || typeof value !== 'string' || !/^[1-9]\d{0,15}$/.test(value)) return null;
+        const quantity = Number(value);
+        return Number.isSafeInteger(quantity) && quantity <= item.remainingQuantity ? quantity : null;
+    }
+    function quantityError(): string {
+        const ids = state.selectedIds;
+        if (!ids.length || new Set(ids).size !== ids.length || ids.some(id => !state.items.some(item => item.id === id && item.refundable)))
+            return '请选择当前订单可退款商品';
+        if (ids.some(id => requestedQuantity(state.items.find(item => item.id === id)!) === null))
+            return '请填写每项商品当前剩余可申请范围内的整数件数';
+        return '';
+    }
+    function setQuantity(item: RefundItem, value: unknown) {
+        if (!canSubmit() || !state.items.includes(item) || !item.refundable || !state.selectedIds.includes(item.id)) return;
+        state.quantities[item.id] = typeof value === 'string' && value.length <= 16 ? value : '';
+        state.submitError = '';
+    }
+    function shiftQuantity(item: RefundItem, delta: number) {
+        const quantity = requestedQuantity(item);
+        if (quantity === null || (delta !== -1 && delta !== 1)) return;
+        const next = quantity + delta;
+        if (Number.isSafeInteger(next) && next >= 1 && next <= item.remainingQuantity) setQuantity(item, String(next));
+    }
     async function submit() {
         if (!canSubmit())
             return;
         const owner = io.capture(), version = state.revision, current = () => version === state.revision && owner.current();
         let body: RefundBody;
         try {
-            const ids = [...state.selectedIds];
-            if (!ids.length || new Set(ids).size !== ids.length || ids.some(id => !state.items.some(item => item.id === id && item.refundable)))
-                throw Error('请选择当前订单可退款商品');
+            const error = quantityError();
+            if (error) throw Error(error);
+            const selections = state.selectedIds.map(id => ({ cart_id: id, cart_num: requestedQuantity(state.items.find(item => item.id === id)!)! }));
             const { applyType } = state.form, refundReason = state.form.refundReason.trim(), refundExplain = state.form.refundExplain.trim();
             if (![1, 2].includes(applyType) || ([1, 3, 4].includes(state.order!.product_type) && applyType !== 1))
                 throw Error('该订单退款类型无效');
@@ -192,7 +222,7 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
                 return parsed.url;
             });
             if (images.length > 3 || new Set(images).size !== images.length) throw Error('最多上传三张不同的申请凭证');
-            body = { applyType, refundReason, refundExplain, cartIds: ids,
+            body = { applyType, refundReason, refundExplain, cart_ids: selections,
                 ...(images.length ? { refundImg: JSON.stringify(images) } : {}) };
         }
         catch (error) {
@@ -227,5 +257,5 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
                 state.submitting = false;
         }
     }
-    return { clear, load, canSubmit, toggle, uploadImage, removeImage, submit };
+    return { clear, load, canSubmit, toggle, requestedQuantity, quantityError, setQuantity, shiftQuantity, uploadImage, removeImage, submit };
 }
