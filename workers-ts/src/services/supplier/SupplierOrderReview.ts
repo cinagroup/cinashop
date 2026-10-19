@@ -4,7 +4,7 @@ import { storeOrder, storeOrderCartInfo, user } from '@/models/schema';
 import { readOrderSystemFormForOrder } from '@/services/order/OrderSystemFormService';
 import { signAttachmentReferences } from '@/services/system/AttachmentService';
 import { ValidateException } from '@/utils/errors';
-import { supplierSnapshotObject } from './SupplierReadSupport';
+import { supplierCartGiftFlag, supplierSnapshotObject } from './SupplierReadSupport';
 
 // Detail-only: never merge these private fields into the shared list header.
 export const supplierOrderReviewColumns = {
@@ -62,7 +62,7 @@ function projectItem(row: Cart) {
   const count = quantity(row.cartNum), refunded = quantity(row.refundNum);
   if (refunded > count) throw bad();
   const unit = minor(row.settlePrice), known = unit !== 0n || zeroEvidence(record);
-  return { id: row.id, product_id: row.productId,
+  return { id: row.id, product_id: row.productId, is_gift: supplierCartGiftFlag(row.isGift),
     product_name: text(product?.storeName ?? product?.store_name ?? legacy?.store_name ?? legacy?.storeName, 1024, '商品快照'),
     sku: text(sku?.suk ?? attr?.suk, 1024, row.skuUnique),
     code: text(sku?.code ?? attr?.code ?? legacy?.code, 1024),

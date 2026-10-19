@@ -45,6 +45,7 @@ import SupplierOrderDistribution from '@/components/SupplierOrderDistribution.vu
 import type { SupplierDistributionTarget } from '@/api/orderDistribution';
 import { emptyOrderFilters, orderSearchFields, supplierOrderTypes, supplierOrderStatuses, supplierOrderFilterQuery } from '@/utils/orderFilters';
 import SupplierOrderReview from '@/components/SupplierOrderReview.vue';
+import SupplierOrderItemKind from '@/components/SupplierOrderItemKind.vue';
 import type { SupplierOrderDetail } from '@/utils/orderReview';
 
 type DeliveryType = "express" | "waybill" | "send" | "fictitious";
@@ -676,7 +677,7 @@ onMounted(load);
                 <el-button v-if="canReviseDistribution(shipment)" link type="primary" @click="openDistribution(shipment)">配送信息</el-button>
               </div>
               <ul class="shipment-products">
-                <li v-for="item in shipment.cart_info" :key="item.id"><span>{{ item.product_name }}<small v-if="item.sku">{{ item.sku }}</small></span><strong>× {{ item.cart_num }}</strong></li>
+                <li v-for="item in shipment.cart_info" :key="item.id"><span><SupplierOrderItemKind :is-gift="item.is_gift" />{{ item.product_name }}<small v-if="item.sku">{{ item.sku }}</small></span><strong>× {{ item.cart_num }}</strong></li>
               </ul>
             </article>
           </div>
@@ -695,7 +696,7 @@ onMounted(load);
     <SupplierOrderTracking :target="trackingTarget" :disabled="invalidated || !drawerOpen" @close="trackingTarget = null" />
     <SupplierOrderDistribution :target="distributionTarget" :disabled="invalidated || !drawerOpen" @close="distributionTarget = null" @saved="distributionSaved" />
 
-    <el-dialog v-model="deliveryDialogOpen" :title="deliveryTitle" width="min(680px, 94vw)">
+    <el-dialog v-model="deliveryDialogOpen" :title="deliveryTitle" class="supplier-order-delivery-dialog" width="min(680px, 94vw)">
       <p v-if="deliveryTarget" class="delivery-target">发货订单：{{ deliveryTarget.order_id }} · {{ deliveryTarget.real_name }}</p>
       <p v-if="deliveryLoading" role="status">正在读取当前订单的可发商品…</p>
       <el-alert v-if="deliveryError" :title="deliveryError" type="error" :closable="false" show-icon />
@@ -712,6 +713,7 @@ onMounted(load);
           <div class="split-picker__summary"><strong>选择本批商品</strong><span>已选 {{ selectedQuantity }} / {{ availableQuantity }} 件</span></div>
           <div v-for="item in splitItems" :key="item.cart_id" class="split-picker__item">
             <el-checkbox :model-value="(selectedQuantities[item.cart_id] ?? 0) > 0" @change="toggleSplitItem(item, $event)">
+              <SupplierOrderItemKind :is-gift="item.is_gift" />
               <span class="split-product-name">{{ item.product_name }}</span>
               <small v-if="item.sku">{{ item.sku }}</small>
             </el-checkbox>
@@ -786,6 +788,15 @@ onMounted(load);
 .order-detail :deep(dd) {
   overflow-wrap: anywhere;
 }
+.shipment-products li > span { min-width: 0; overflow-wrap: anywhere; }
+.shipment-products li > strong { flex-shrink: 0; white-space: nowrap; }
+.split-picker__item :deep(.el-checkbox) { height: auto; width: 100%; max-width: 100%; align-items: flex-start; }
+.split-picker__item :deep(.el-checkbox__label) { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.split-picker__item small { display: block; margin-left: 0; }
+:global(.supplier-order-delivery-dialog) { --el-dialog-margin-top: 16px; margin-bottom: 16px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+:global(.supplier-order-delivery-dialog .el-dialog__body) { min-height: 0; overflow: auto; }
+:global(.supplier-order-delivery-dialog .el-dialog__header),
+:global(.supplier-order-delivery-dialog .el-dialog__footer) { flex-shrink: 0; }
 
 .heading-actions,
 .export-toolbar {

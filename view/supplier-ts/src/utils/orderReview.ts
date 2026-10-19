@@ -13,7 +13,7 @@ export interface SupplierOrderReview {
     coupon_price: string; deduction_price: string; use_integral: string; promotions_price: string;
     first_order_price: string; change_price: string; pay_price: string; refund_price: string;
   };
-  items: Array<{ id: number; product_id: number; product_name: string; sku: string; code: string; bar_code: string;
+  items: Array<{ id: number; product_id: number; is_gift?: 0 | 1; product_name: string; sku: string; code: string; bar_code: string;
     quantity: number; refund_quantity: number; settlement_unit: string | null; settlement_subtotal: string | null }>;
   settlement: { items_total: string | null; postage: string; total: string | null; availability: 'recorded' | 'incomplete' };
   form: Array<{ id: string; title: string; value: string; images: string[] }>;
@@ -53,6 +53,7 @@ export function checkSupplierOrderReview(value: unknown, header: OrderRow): asse
     || !text(value.amounts.change_price, 32) || !/^-?\d{1,24}\.\d{2}$/.test(value.amounts.change_price)
     || value.amounts.pay_price !== header.pay_price || !Array.isArray(value.items) || value.items.length > 200) fail();
   if (!value.items.every((item: unknown) => record(item) && integer(item.id) && item.id > 0 && integer(item.product_id)
+    && (!Object.hasOwn(item, 'is_gift') || item.is_gift === 0 || item.is_gift === 1)
     && ['product_name','sku','code','bar_code'].every(k => text(item[k], 1024))
     && integer(item.quantity) && integer(item.refund_quantity) && item.refund_quantity <= item.quantity
     && nullableMoney(item.settlement_unit) && nullableMoney(item.settlement_subtotal)

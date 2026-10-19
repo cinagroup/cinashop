@@ -426,3 +426,95 @@ it.each(['close','route','session'])('clears private promotion facts on %s and i
     pending.resolve(value);await reading;await flush();expect(f.view.current.value).toBeNull();expect(contents(f.host)).not.toContain('下单时的活动名称');
   } finally {pending.resolve(value);f.close();}
 });
+
+const giftIdentityCart = (id: number, flag: unknown = 0) => ({ id, cart_id: `identity-${id}`, product_id: 70, sku_unique: 'same-sku',
+  cart_num: 2, refund_num: 0, surplus_num: 2, product_name: '同款冻结商品', sku: '同款规格', image: '',
+  is_gift: flag, cart_info: { is_gift: flag === 1 ? 0 : 1 } });
+function giftIdentityReview(flag: unknown): any {
+  const base = review(); return { ...base, amounts: { ...base.amounts, quantity: 2 }, items: [
+    { ...base.items[0], is_gift: 0, product_name: '同款冻结商品', settlement_unit: '0.00', settlement_subtotal: '0.00' },
+    { ...base.items[0], id: 252, is_gift: flag, product_name: '同款冻结商品', settlement_unit: '0.00', settlement_subtotal: '0.00' },
+  ] };
+}
+function giftKindLabels(host: Node) {
+  return nodes(host).filter(n => n.tag === 'span' && String(n.props.class).split(' ').includes('order-item-kind')).map(contents).map(s => s.trim());
+}
+async function giftIdentityMount(surfaceName: 'detail' | 'shipment' | 'delivery', flag: unknown = 1, oldServer = false) {
+  const value = giftIdentityReview(flag), carts: any[] = [giftIdentityCart(251, 0), giftIdentityCart(252, flag)];
+  if (oldServer) { for (const item of value.items) delete item.is_gift; for (const item of carts) delete item.is_gift; }
+  const target = order(25, { status: 0, total_num: 2 });
+  const f = await mount(c => c.url.startsWith('/order/info/') ? detail(25, value, { status: 0, total_num: 2 })
+    : c.url.startsWith('/order/split_order/') ? [order(25, { status: 0, total_num: 4, cart_info: surfaceName === 'shipment' ? carts : [] })]
+    : c.url === '/order/express_list' ? [{ id: 1, name: '本地快递', code: 'LOCAL' }]
+    : c.url.startsWith('/order/split_cart_info/') ? carts : undefined);
+  if (surfaceName === 'delivery') { await f.view.openDelivery(target); f.view.deliveryMode.value = 'partial'; }
+  else await f.view.openOrder(target);
+  await flush(); return { ...f, carts };
+}
+it('renders protected purchase and gift identities separately even for the same product and zero settlement', async () => {
+  const f = await giftIdentityMount('detail'); try {
+    expect(f.view.detailError.value).toBe(''); const table = nodes(f.host).find(n => n.tag === 'table' && n.props['aria-label'] === '下单商品结算明细')!;
+    expect(giftKindLabels(table)).toEqual(['购买商品','赠品']); expect(contents(table)).toContain('同款冻结商品');
+    expect(contents(table)).toContain('¥0.00'); expect(f.calls.every(c => c.method === 'get')).toBe(true);
+  } finally { f.close(); }
+});
+it('renders purchase and gift labels on each historical shipment without deriving them from forged snapshot fields', async () => {
+  const f = await giftIdentityMount('shipment'); try {
+    const shipment = nodes(f.host).find(n => String(n.props.class).includes('shipment-section'))!;
+    expect(giftKindLabels(shipment)).toEqual(['购买商品','赠品']); expect(contents(shipment)).toContain('同款规格');
+    expect(f.calls.every(c => c.method === 'get')).toBe(true);
+  } finally { f.close(); }
+});
+it('identifies the exact gift cart in the actual partial-delivery selector without submitting a delivery', async () => {
+  const f = await giftIdentityMount('delivery'); try {
+    expect(f.view.deliveryError.value).toBe(''); expect(giftKindLabels(f.host)).toEqual(['购买商品','赠品']);
+    f.view.toggleSplitItem(f.carts[1], true); await flush(); expect(f.view.selectedQuantities['identity-252']).toBe(1);
+    expect(f.view.selectedQuantities['identity-251'] ?? 0).toBe(0); expect(f.view.selectedQuantity.value).toBe(1);
+    expect(f.calls.every(c => c.method === 'get')).toBe(true);
+  } finally { f.close(); }
+});
+it.each(['detail','shipment','delivery'] as const)('keeps missing old-server gift identity honestly unknown in %s instead of inferring a purchase or gift', async surfaceName => {
+  const f = await giftIdentityMount(surfaceName, 1, true); try {
+    expect(giftKindLabels(f.host).length).toBeGreaterThan(0); expect(giftKindLabels(f.host).every(v => v === '商品性质未返回')).toBe(true);
+    expect(f.calls.every(c => c.method === 'get')).toBe(true);
+  } finally { f.close(); }
+});
+it.each((['detail','shipment','delivery'] as const).flatMap(surfaceName => [true,'1','0',null,undefined,-1,2,0.5,[],{}].map(flag => ({ surfaceName, flag }))))
+  ('rejects present malformed gift flag in $surfaceName: $flag and permits an explicit correct reread', async ({ surfaceName, flag }) => {
+    let malformed = true; const carts = [giftIdentityCart(251, 0),giftIdentityCart(252,1)];
+    const f = await mount(c => c.url.startsWith('/order/info/') ? detail(25,giftIdentityReview(surfaceName === 'detail' && malformed ? flag : 1),{status:0,total_num:2})
+      : c.url.startsWith('/order/split_order/') ? [order(25,{status:0,total_num:4,cart_info: surfaceName === 'shipment' ? carts.map((item,i)=>({...item,is_gift:i===1 && malformed ? flag:item.is_gift})) : []})]
+      : c.url === '/order/express_list' ? [{id:1,name:'本地快递',code:'LOCAL'}]
+      : c.url.startsWith('/order/split_cart_info/') ? carts.map((item,i)=>({...item,is_gift:i===1 && malformed ? flag:item.is_gift})) : undefined);
+    try {
+      const target=order(25,{status:0,total_num:2});
+      if(surfaceName==='delivery') await f.view.openDelivery(target); else await f.view.openOrder(target);
+      await flush(); expect(surfaceName==='delivery'?f.view.deliveryError.value:f.view.detailError.value).toBeTruthy();
+      expect(giftKindLabels(f.host)).toEqual([]); malformed=false;
+      if(surfaceName==='delivery'){await f.view.retryDelivery();f.view.deliveryMode.value='partial';}else await f.view.refreshCurrent();
+      await flush(); expect(giftKindLabels(f.host)).toContain('赠品'); expect(f.calls.every(c=>c.method==='get')).toBe(true);
+    } finally { f.close(); }
+  });
+it.each(['drawer','route','session'] as const)('does not restore a late gift identity after %s invalidates detail and shipments', async why => {
+  const wait=gate(),f=await mount(c=>c.url==='/order/info/25'?wait.promise:undefined);
+  try {
+    const pending=f.view.openOrder(order());await flush();
+    if(why==='drawer')f.view.drawerOpen.value=false;
+    if(why==='route')await f.router.push('/away');
+    if(why==='session'){localStorage.setItem('supplier-token','identity-b');surface.dispatchEvent(new Event('supplier-session-changed'));localStorage.setItem('supplier-token','tracking-a');surface.dispatchEvent(new Event('supplier-session-changed'));}
+    wait.resolve(detail(25,giftIdentityReview(1),{total_num:2}));await pending;await flush();
+    expect(f.view.current.value).toBeNull();expect(f.view.shipments.value).toEqual([]);expect(giftKindLabels(f.host)).toEqual([]);
+  } finally {wait.resolve();f.close();}
+});
+it.each(['dialog','route','session'] as const)('does not restore late gift selection rows after %s invalidates delivery', async why => {
+  const wait=gate(),f=await mount(c=>c.url==='/order/express_list'?[{id:1,name:'本地快递',code:'LOCAL'}]
+    :c.url==='/order/split_cart_info/25'?wait.promise:undefined);
+  try {
+    const pending=f.view.openDelivery(order(25,{status:0}));await flush();
+    if(why==='dialog')f.view.deliveryDialogOpen.value=false;
+    if(why==='route')await f.router.push('/away');
+    if(why==='session'){localStorage.setItem('supplier-token','identity-b');surface.dispatchEvent(new Event('supplier-session-changed'));localStorage.setItem('supplier-token','tracking-a');surface.dispatchEvent(new Event('supplier-session-changed'));}
+    wait.resolve([giftIdentityCart(252,1)]);await pending;await flush();expect(f.view.splitItems.value).toEqual([]);expect(giftKindLabels(f.host)).toEqual([]);
+    expect(f.calls.every(c=>c.method==='get')).toBe(true);
+  } finally {wait.resolve();f.close();}
+});

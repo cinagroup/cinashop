@@ -1,0 +1,2395 @@
+{
+  "scope": "Supplier ordinary order protected purchased/gift identity; overall PHP-to-TS migration remains active",
+  "base_commit": "f93a4bb686bf002d1cb209e13d12ca8c280aff77",
+  "generated_at_utc": "2026-10-19T04:07:11.583504+00:00",
+  "routes": [
+    "GET /supplierapi/order/info/:id",
+    "GET /supplierapi/order/split_order/:id",
+    "GET /supplierapi/order/split_cart_info/:id"
+  ],
+  "source_evidence": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+      "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05",
+      "line_count": 1180,
+      "references": [
+        {
+          "line": 305,
+          "end_line": 311,
+          "evidence": "Mounted ordinary details component formType1."
+        },
+        {
+          "line": 897,
+          "end_line": 900,
+          "evidence": "Enabled row action2 calls getData."
+        },
+        {
+          "line": 996,
+          "end_line": 1003,
+          "evidence": "Real detail GET opens modal and assigns response."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+      "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3",
+      "line_count": 420,
+      "references": [
+        {
+          "line": 139,
+          "end_line": 144,
+          "evidence": "Actual Supplier GET /order/info/id wrapper."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+      "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+      "line_count": 521,
+      "references": [
+        {
+          "line": 347,
+          "end_line": 349,
+          "evidence": "Actual active Supplier detail route."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+      "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3",
+      "line_count": 227,
+      "references": [
+        {
+          "line": 29,
+          "end_line": 38,
+          "evidence": "Actual Supplier controller uses common Order behavior."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+      "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d",
+      "line_count": 1342,
+      "references": [
+        {
+          "line": 828,
+          "end_line": 831,
+          "evidence": "Exact physical-order detail handler."
+        },
+        {
+          "line": 854,
+          "end_line": 855,
+          "evidence": "Actual tidyOrder(detail=true) produces cartInfo for the mounted panel."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderServices.php",
+      "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+      "line_count": 2550,
+      "references": [
+        {
+          "line": 395,
+          "end_line": 425,
+          "evidence": "Exact order cart read and authoritative is_gift row value overwrites legacy cart JSON before UI."
+        },
+        {
+          "line": 1638,
+          "end_line": 1654,
+          "evidence": "Real cart/quote result merges actual gift carts with purchases, separate from price savings."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderCartInfoServices.php",
+      "sha256": "a7c2556beae47dd3ade1cc9bba211e41d8ccbd6e0f428a10273b522d65f0b2f4",
+      "line_count": 393,
+      "references": [
+        {
+          "line": 175,
+          "end_line": 197,
+          "evidence": "Actual PHP author freezes row owner/UID/product/SKU/cart_num and is_gift flag."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+      "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7",
+      "line_count": 1534,
+      "references": [
+        {
+          "line": 656,
+          "end_line": 689,
+          "evidence": "Unconditional product tab renders [赠品] from row.is_gift for ordinary detail."
+        },
+        {
+          "line": 738,
+          "end_line": 766,
+          "evidence": "Historical split shipment products also render [赠品]."
+        },
+        {
+          "line": 996,
+          "end_line": 1025,
+          "evidence": "Ordinary product columns are code/product/settlement/quantity/subtotal; no ordinary VIP column here."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+      "sha256": "32238187e37418598b0d1233fcf6251718ea490b59acfd4aad8527d6400595e4",
+      "line_count": 97,
+      "references": [
+        {
+          "line": 59,
+          "end_line": 94,
+          "evidence": "Actual exact Supplier detail already reads full protected cart rows with scoped UID/owner guards and composes bounded review."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderReview.ts",
+      "sha256": "ae372a71edccd578d554641e34cb535664bd7477e0379d87bf7fa66511bffa1e",
+      "line_count": 138,
+      "references": [
+        {
+          "line": 58,
+          "end_line": 72,
+          "evidence": "Current projection omits protected isGift despite retaining quantity and zero settlement facts."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/utils/orderReview.ts",
+      "sha256": "74b265963e05a4f099f944f34366fcf69b2dc8032bc10d7f4060c222828a9f36",
+      "line_count": 76,
+      "references": [
+        {
+          "line": 16,
+          "end_line": 18,
+          "evidence": "Current bounded item DTO has no purchased/gift discriminator."
+        },
+        {
+          "line": 55,
+          "end_line": 60,
+          "evidence": "Current item decoder verifies quantities and reference money without gift identity."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/components/SupplierOrderReview.vue",
+      "sha256": "e86622ca52add31f530389a91caf9d5f147d3cfa4bfe84e3de0537ced0a43108",
+      "line_count": 97,
+      "references": [
+        {
+          "line": 27,
+          "end_line": 35,
+          "evidence": "Actual ordinary item table shows name/SKU/quantity/reference money but no gift marker."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+      "sha256": "e46a60bddc32833bd00a3f6c47991fbfc84fe72ccc797777602d62eb75f80357",
+      "line_count": 101,
+      "references": [
+        {
+          "line": 65,
+          "end_line": 73,
+          "evidence": "Actual historical shipment SELECT omits isGift."
+        },
+        {
+          "line": 83,
+          "end_line": 97,
+          "evidence": "Scoped shipment cart projection omits gift identity."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+      "line_count": 87,
+      "references": [
+        {
+          "line": 40,
+          "end_line": 55,
+          "evidence": "Shared actual pending/picking cart SELECT omits isGift."
+        },
+        {
+          "line": 64,
+          "end_line": 85,
+          "evidence": "Existing full ownership checks and display projector reusable, currently no gift discriminator."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "e0f248b0cd0b8fe6fbdfe648d04801a08fbb647d4d4b527af73464c3c78c634a",
+      "line_count": 828,
+      "references": [
+        {
+          "line": 668,
+          "end_line": 679,
+          "evidence": "Actual shipment cards show names/SKUs/quantity, no gift identity."
+        },
+        {
+          "line": 711,
+          "end_line": 726,
+          "evidence": "Actual partial-delivery selector shows products/available quantity, no gift identity."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminFullGiftService.ts",
+      "sha256": "498595590480223fbe1b36a5a9e7e43e72fec4f07a4443831bf81410aad23bf9",
+      "line_count": 935,
+      "references": [
+        {
+          "line": 36,
+          "end_line": 37,
+          "evidence": "Eligible campaign product query does not artificially restrict Supplier product ownership."
+        },
+        {
+          "line": 628,
+          "end_line": 642,
+          "evidence": "Actual author admits selected active approved root product/SKU identities."
+        },
+        {
+          "line": 677,
+          "end_line": 696,
+          "evidence": "Actual gift author admits physical active approved non-presale root SKU, no platform-only owner restriction."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+      "sha256": "b4babfea04cd582f0d1643c4fceb96fa676c92504196021b7e9d1759be566f56",
+      "line_count": 509,
+      "references": [
+        {
+          "line": 100,
+          "end_line": 114,
+          "evidence": "Actual gift eligibility requires same owner tuple as eligible purchased lines, permitting Supplier2:7 gift with Supplier2:7 purchase."
+        },
+        {
+          "line": 119,
+          "end_line": 147,
+          "evidence": "Actual registered Customer ordinary quote admits active type4 platform campaign for registered buyers."
+        },
+        {
+          "line": 211,
+          "end_line": 227,
+          "evidence": "Owner set derives from actual eligible purchased products, gift SKU validated against it."
+        },
+        {
+          "line": 326,
+          "end_line": 375,
+          "evidence": "Actual reserve decrements campaign/physical SKU stock, freezes zero-money gift snapshot and exact own UID/type/relation/product/isGift1/cart_num/settle0 row."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04",
+      "line_count": 3708,
+      "references": [
+        {
+          "line": 1693,
+          "end_line": 1696,
+          "evidence": "Actual checkout confirm invokes gift quote."
+        },
+        {
+          "line": 3086,
+          "end_line": 3093,
+          "evidence": "Actual transaction invokes reserveOrderPromotionGifts after purchase rows."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+      "sha256": "e3c03ab0c0852357edf3ea704ac098b0663a6528bb6ca98b8498d7c092c63ad9",
+      "line_count": 373,
+      "references": [
+        {
+          "line": 101,
+          "end_line": 113,
+          "evidence": "Real allocation clone spreads protected cart base including isGift."
+        },
+        {
+          "line": 299,
+          "end_line": 325,
+          "evidence": "Real supplier allocation creates scoped child and cloned cart rows."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+      "sha256": "79258adad2c3217aa1efaf93b23a2cb00dfd06d789e1e238e90c4a90ef111232",
+      "line_count": 1278,
+      "references": [
+        {
+          "line": 375,
+          "end_line": 403,
+          "evidence": "Real fulfillment clone preserves protected cart flags, partitions quantity and frozen JSON, changes only planned identities."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderSplitFinance.ts",
+      "sha256": "b6422fe5af793b50a6277cfb08d630087900e990f5937bbb7756e5dff2966652",
+      "line_count": 426,
+      "references": [
+        {
+          "line": 61,
+          "end_line": 93,
+          "evidence": "Existing exact financial planner validates protected gift0/1 and requires all gifted financial amounts0; does not infer gift from zero price."
+        },
+        {
+          "line": 185,
+          "end_line": 193,
+          "evidence": "Existing real split partitions snapshots using protected source.isGift."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/order-full-gift-checkout.test.ts",
+      "sha256": "f7de7b93cbcf382ff34c4f126d9a70c0a20df3e853c5c94abe1c02515eb79840",
+      "line_count": 313,
+      "references": [
+        {
+          "line": 35,
+          "end_line": 42,
+          "evidence": "Existing mature actual Admin full-gift author payload."
+        },
+        {
+          "line": 49,
+          "end_line": 78,
+          "evidence": "Registered quote fixture and real approved gift SKU setup, currently platform seeds."
+        },
+        {
+          "line": 133,
+          "end_line": 145,
+          "evidence": "Actual confirmation demonstrates gift0-price/qty/SKU and frozen reward before author."
+        },
+        {
+          "line": 210,
+          "end_line": 227,
+          "evidence": "Actual creation proves protected gift row and stock reservation."
+        }
+      ]
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+      "sha256": "74284ef75ea2ba47a705021777c813eb91494d8455fba56bcf0c506515fc24f9",
+      "line_count": 163,
+      "references": [
+        {
+          "line": 25,
+          "end_line": 60,
+          "evidence": "Existing independently commissioned registered runtime roles/permissions; gift auxiliary update authority must be explicit fixture-only if added."
+        },
+        {
+          "line": 136,
+          "end_line": 160,
+          "evidence": "Actual checkout/createPaid/fulfillment/allocation fixture API, synthetic paid admission remains explicit."
+        }
+      ]
+    }
+  ],
+  "source_evidence_count": 23,
+  "source_authority_notes": {
+    "at_utc": "2026-10-19T03:39:51.145841+00:00",
+    "base_commit": "f93a4bb686bf002d1cb209e13d12ca8c280aff77",
+    "source_count": 23,
+    "all_source_hashes_and_ranges_match": true,
+    "checks": [
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/index.vue",
+        "sha256": "c4a0f91a815c2b19489b4f3c28ea9ddc820cd435f9bd3c23c1d8396af4d44c05",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/api/order.js",
+        "sha256": "abdbbb2f5f0d1d60e62d76315dd32fc6c21a5ba783d501f7cd40218e898247b3",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/route/supplier.php",
+        "sha256": "2566fd8dd6b2150e072312eb941a315960e15cf044a9596a482f8d3b0452c4ed",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/controller/supplier/Order.php",
+        "sha256": "1d5de3b369e36c93e4b5090af37d0a1e879f6cf2cc4687e30e6c0e5986bbd3e3",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/common/controller/Order.php",
+        "sha256": "367b4863ca48847a7f30500c7120fb0808e51b726cefb79fb25c581936ee123d",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderServices.php",
+        "sha256": "6a6b960eecccdfbd6007248f14b4e83cedf4388df8c1018e0420abbe7b7e8c5c",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderCartInfoServices.php",
+        "sha256": "a7c2556beae47dd3ade1cc9bba211e41d8ccbd6e0f428a10273b522d65f0b2f4",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop-php/view/supplier/src/pages/order/orderList/components/orderDetails.vue",
+        "sha256": "14a8a37f70d61cf755437ea9199f1ddbc4f828ae7636915f613686037c68b1f7",
+        "origin": "actual PHP source bytes",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderReadService.ts",
+        "sha256": "32238187e37418598b0d1233fcf6251718ea490b59acfd4aad8527d6400595e4",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierOrderReview.ts",
+        "sha256": "ae372a71edccd578d554641e34cb535664bd7477e0379d87bf7fa66511bffa1e",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/utils/orderReview.ts",
+        "sha256": "74b265963e05a4f099f944f34366fcf69b2dc8032bc10d7f4060c222828a9f36",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/components/SupplierOrderReview.vue",
+        "sha256": "e86622ca52add31f530389a91caf9d5f147d3cfa4bfe84e3de0537ced0a43108",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+        "sha256": "e46a60bddc32833bd00a3f6c47991fbfc84fe72ccc797777602d62eb75f80357",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierReadSupport.ts",
+        "sha256": "17d8ad0edba53e370a50b23eecd23b4df61fb1d175dd6f2952b44c6232e30bdb",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/view/supplier-ts/src/pages/Orders.vue",
+        "sha256": "e0f248b0cd0b8fe6fbdfe648d04801a08fbb647d4d4b527af73464c3c78c634a",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/admin/AdminFullGiftService.ts",
+        "sha256": "498595590480223fbe1b36a5a9e7e43e72fec4f07a4443831bf81410aad23bf9",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+        "sha256": "b4babfea04cd582f0d1643c4fceb96fa676c92504196021b7e9d1759be566f56",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "1b12d75db3006cb78b8bbbccecf0d30100c71c709e55655f7133fd030654db04",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+        "sha256": "e3c03ab0c0852357edf3ea704ac098b0663a6528bb6ca98b8498d7c092c63ad9",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+        "sha256": "79258adad2c3217aa1efaf93b23a2cb00dfd06d789e1e238e90c4a90ef111232",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderSplitFinance.ts",
+        "sha256": "b6422fe5af793b50a6277cfb08d630087900e990f5937bbb7756e5dff2966652",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/order-full-gift-checkout.test.ts",
+        "sha256": "f7de7b93cbcf382ff34c4f126d9a70c0a20df3e853c5c94abe1c02515eb79840",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      },
+      {
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/helpers/refundRuntimeFixture.ts",
+        "sha256": "74284ef75ea2ba47a705021777c813eb91494d8455fba56bcf0c506515fc24f9",
+        "origin": "base git-show blob",
+        "ranges_valid": true
+      }
+    ]
+  },
+  "php_reachable_flow": "Supplier orderList mounted formType1 -> ordinary orderDetails product tab and historical split product rows label protected cart is_gift. PHP StoreOrderServices overrides JSON identity from cart-row is_gift.",
+  "contract": {
+    "fields": [
+      "detail.review.items[].is_gift",
+      "GET split_order/:id[].cart_info[].is_gift",
+      "GET split_cart_info/:id[].is_gift"
+    ],
+    "type": "required numeric0|1 from protected row only; no truthiness/String coercion",
+    "error": "Existing ValidateException/status400 for invalid protected value; SQL errors propagate. All pending cart flags validated before filtering.",
+    "json": "cart_info.is_gift/isGift ignored for identity; raw string preserved, no rewrite",
+    "zero": "Genuine zero-price/zero-settlement purchase remains0; no inference from monetary amount",
+    "picking": "Shared complete cart reader now validates flag; independent printable picking DTO unchanged and no gift label claim",
+    "privacy": "Existing auth/wholecartowner/parent policies,budgets,RR/RO,lock/order/stock/amounts unchanged; no new author/provider/productionDDL/GRANT"
+  },
+  "frontend_contract": {
+    "required_on_current_server": "numeric 0|1 only",
+    "rollout": "Own field missing only: explicit 商品性质未返回; present undefined/null/coercions rejected and explicit retry",
+    "zero_price": "Purchase flag0 remains purchase regardless of zero price/settlement",
+    "surfaces": [
+      "detail review table",
+      "historical shipment product rows",
+      "partial delivery selector"
+    ],
+    "pending_selection": "Only gift selected, quantity1/total3; cancellation, no delivery submitted",
+    "stale": "Close, route departure and session A-B-A never revive old details or selector"
+  },
+  "backend_freeze_receipt": {
+    "path": "/tmp/cinashop-supplier-order-gift-identity-backend-publication-freeze.json",
+    "sha256": "6925251a3b6a6fda1d0f14cfb1eb23c2158016a74b10e4c36301caeabe526b50"
+  },
+  "final_execution_source_fingerprints": [
+    {
+      "path": "view/supplier-ts/src/components/SupplierOrderItemKind.vue",
+      "sha256": "9860e49cd48499502dec95f6af2757a455a94031840c7d097ce572bf90e593b3"
+    },
+    {
+      "path": "view/supplier-ts/src/components/SupplierOrderReview.vue",
+      "sha256": "8259df8c75125beff2d10e205699df33f0f9b1e7cf0903c126cf0877a99e66bc"
+    },
+    {
+      "path": "view/supplier-ts/src/pages/Orders.vue",
+      "sha256": "0f8cbf08db3297915189f2a9fe01cc025fab3e2deb45ff3824f0fbdb17aae122"
+    },
+    {
+      "path": "view/supplier-ts/src/types.ts",
+      "sha256": "2451ef9c2eb69d7a870e5beb91d264e11ea91486152912f77b49739511abdd7c"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/orderReview.ts",
+      "sha256": "ba0b8f019a7ff0de1cb4bbd9189d014945b3649bb14873b014beb3f858a891b4"
+    },
+    {
+      "path": "view/supplier-ts/src/utils/orderView.ts",
+      "sha256": "76a5c6419e578e2867fb28b1f2269e2cc036d9ead4eb5a6edc69468336f2b41e"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+      "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+      "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198"
+    },
+    {
+      "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+      "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7"
+    },
+    {
+      "path": "workers-ts/test/browser/supplier-order-gift-identity.acceptance.ts",
+      "sha256": "1ae68c920185e6d8cf96d9406eba6277f87c02b88ef5211f08fa83baeada8a5e"
+    },
+    {
+      "path": "workers-ts/test/helpers/supplierOrderGiftIdentity.ts",
+      "sha256": "f801197656dc26ff91e17f13073adf3a6905e9bba306722b153da6622cf6df6c"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "8fecffc52af13537ab1a2247aa064ac568642eaf2c11bdf49bfa1d5c11b7a8eb"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-gift-identity-native.test.ts",
+      "sha256": "02e6cde837657e78713cbb983f197b30a0cbc2ae19e84e68030fe3abf46e97e6"
+    },
+    {
+      "path": "workers-ts/test/supplier-order-review-frontend.test.ts",
+      "sha256": "2fb6ca9edbef25faa46a22511e1c174ed502e185188f43459528d6675d1e5f78"
+    },
+    {
+      "path": "workers-ts/vitest.supplier-order-gift-identity-browser.config.ts",
+      "sha256": "b1e47d0f40f43d2dea6e0f70de75d03b8d81f374ebef41d728e3dcad36afe36b"
+    }
+  ],
+  "validation": [
+    {
+      "label": "frontend-browser-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vitest/vitest.mjs run test/supplier-order-review-frontend.test.ts test/supplier-order-filters-frontend.test.ts test/supplier-order-frontend.test.ts test/supplier-order-tracking-frontend.test.ts test/supplier-order-distribution-frontend.test.ts test/local-finance-postgres-runner.test.ts test/supplier-pages-acceptance.test.ts test/supplier-rbac-migration.test.ts test/supplier-operations-migration.test.ts --maxWorkers=1 --reporter=default --reporter=json --outputFile=/tmp/cinashop-supplier-order-gift-identity-frontend-browser-final-vitest.json && cd ../view/supplier-ts && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vue-tsc/bin/vue-tsc.js -b && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 612,
+      "started_at_utc": "2026-10-19T03:46:35.902687+00:00",
+      "finished_at_utc": "2026-10-19T03:47:35.973656+00:00",
+      "wall_seconds": 60.07,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-frontend-browser-final.log",
+      "log_sha256": "a28d9909d4f849b2fb92d715853a5f4c243ce52d372d6a7d8de32244b5c9651e",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-frontend-browser-final-terminal.json",
+      "terminal_sha256": "6ea8224faacae051af3611b7abc24a34f0427db322f3d1d34c61497cee5a6419",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderItemKind.vue",
+          "sha256": "9860e49cd48499502dec95f6af2757a455a94031840c7d097ce572bf90e593b3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderReview.vue",
+          "sha256": "8259df8c75125beff2d10e205699df33f0f9b1e7cf0903c126cf0877a99e66bc",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "0f8cbf08db3297915189f2a9fe01cc025fab3e2deb45ff3824f0fbdb17aae122",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "2451ef9c2eb69d7a870e5beb91d264e11ea91486152912f77b49739511abdd7c",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderReview.ts",
+          "sha256": "ba0b8f019a7ff0de1cb4bbd9189d014945b3649bb14873b014beb3f858a891b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "76a5c6419e578e2867fb28b1f2269e2cc036d9ead4eb5a6edc69468336f2b41e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "8fecffc52af13537ab1a2247aa064ac568642eaf2c11bdf49bfa1d5c11b7a8eb",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-review-frontend.test.ts",
+          "sha256": "2fb6ca9edbef25faa46a22511e1c174ed502e185188f43459528d6675d1e5f78",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "picking-regressions",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/supplier-picking-sheet-migration.test.ts",
+        "test/supplier-picking-promotion-lines.test.ts",
+        "--maxWorkers=1",
+        "--reporter=default",
+        "--reporter=json",
+        "--outputFile=/tmp/cinashop-supplier-order-gift-identity-picking-vitest.json"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 8,
+      "started_at_utc": "2026-10-19T03:32:13.761829+00:00",
+      "finished_at_utc": "2026-10-19T03:32:20.658424+00:00",
+      "wall_seconds": 6.9,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-picking-regressions.log",
+      "log_sha256": "13ae3fddbc5e8994f930866459ff8ba857b1b1460dbecc4536a73535b97b9518",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-picking-regressions-terminal.json",
+      "terminal_sha256": "91cb36e842c4ac6490d702e1f7c7fbab584001d1a4cd9f6a412caf154a9152a7",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "native-publication",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-order-gift-identity-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 38,
+      "started_at_utc": "2026-10-19T04:01:57.147943+00:00",
+      "finished_at_utc": "2026-10-19T04:03:14.021165+00:00",
+      "wall_seconds": 76.87,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-publication.log",
+      "log_sha256": "682a75f48c8c027ea6b447e9144b0bba2ff34756c6e541a54e4167e7e9303ac6",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-publication-terminal.json",
+      "terminal_sha256": "80da110b1e3e1db9282ac68d09d7fca04ed6cebf294e362c5d9ef7e4b956e717",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderGiftIdentity.ts",
+          "sha256": "f801197656dc26ff91e17f13073adf3a6905e9bba306722b153da6622cf6df6c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-gift-identity-native.test.ts",
+          "sha256": "02e6cde837657e78713cbb983f197b30a0cbc2ae19e84e68030fe3abf46e97e6",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "native-shared",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-split-order-reads.test.ts",
+        "test/supplier-operational-reads.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 31,
+      "started_at_utc": "2026-10-19T03:39:12.707403+00:00",
+      "finished_at_utc": "2026-10-19T03:44:35.344131+00:00",
+      "wall_seconds": 322.64,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-shared.log",
+      "log_sha256": "1f9efbe106c640ab3bbd522772ae2d561f35f99633951add6610a18f5e2e9faf",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-shared-terminal.json",
+      "terminal_sha256": "7814acad8bef3f1865bfa5afe963c5fc263b81f095685178282811bdb6c818c2",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "native-core",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/supplier-order-review-native.test.ts",
+        "test/supplier-order-generations.test.ts",
+        "test/supplier-order-promotions-review-native.test.ts"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 112,
+      "started_at_utc": "2026-10-19T03:50:50.029419+00:00",
+      "finished_at_utc": "2026-10-19T03:56:52.959309+00:00",
+      "wall_seconds": 362.93,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-core.log",
+      "log_sha256": "d949a3a730937b4c07e012bb56c552d2919fe7e2e98baabfb585f3ae251f6d59",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-core-terminal.json",
+      "terminal_sha256": "dde855662def26565f330689405dbe2ac28a1d247ae128a7f2cf38df157f1b38",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "worker-types-publication",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "bash",
+        "-c",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit && /home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --max-old-space-size=8192 node_modules/typescript/bin/tsc -p tsconfig.runtime-test.json --noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": null,
+      "started_at_utc": "2026-10-19T04:03:23.163042+00:00",
+      "finished_at_utc": "2026-10-19T04:07:08.662733+00:00",
+      "wall_seconds": 225.5,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-worker-types-publication.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-worker-types-publication-terminal.json",
+      "terminal_sha256": "35a02e6cd5f06948bd8fde734b5e88614ddaed40ef03a58f6f0cfca5a70e5312",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderItemKind.vue",
+          "sha256": "9860e49cd48499502dec95f6af2757a455a94031840c7d097ce572bf90e593b3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderReview.vue",
+          "sha256": "8259df8c75125beff2d10e205699df33f0f9b1e7cf0903c126cf0877a99e66bc",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "0f8cbf08db3297915189f2a9fe01cc025fab3e2deb45ff3824f0fbdb17aae122",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "2451ef9c2eb69d7a870e5beb91d264e11ea91486152912f77b49739511abdd7c",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderReview.ts",
+          "sha256": "ba0b8f019a7ff0de1cb4bbd9189d014945b3649bb14873b014beb3f858a891b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "76a5c6419e578e2867fb28b1f2269e2cc036d9ead4eb5a6edc69468336f2b41e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-gift-identity.acceptance.ts",
+          "sha256": "1ae68c920185e6d8cf96d9406eba6277f87c02b88ef5211f08fa83baeada8a5e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderGiftIdentity.ts",
+          "sha256": "f801197656dc26ff91e17f13073adf3a6905e9bba306722b153da6622cf6df6c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "8fecffc52af13537ab1a2247aa064ac568642eaf2c11bdf49bfa1d5c11b7a8eb",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-gift-identity-native.test.ts",
+          "sha256": "02e6cde837657e78713cbb983f197b30a0cbc2ae19e84e68030fe3abf46e97e6",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/supplier-order-review-frontend.test.ts",
+          "sha256": "2fb6ca9edbef25faa46a22511e1c174ed502e185188f43459528d6675d1e5f78",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-gift-identity-browser.config.ts",
+          "sha256": "b1e47d0f40f43d2dea6e0f70de75d03b8d81f374ebef41d728e3dcad36afe36b",
+          "matches_final": true
+        }
+      ]
+    },
+    {
+      "label": "browser-final",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:supplier-order-gift-identity-browser"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+      "exit_code": 0,
+      "tests_passed": 1,
+      "started_at_utc": "2026-10-19T03:47:56.103765+00:00",
+      "finished_at_utc": "2026-10-19T03:50:31.388793+00:00",
+      "wall_seconds": 155.28,
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-final.log",
+      "log_sha256": "3bec429857184875ee3595779dfe2538826e8561dda8a021f0ed1a1d48617093",
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-final-terminal.json",
+      "terminal_sha256": "87be24eb2eddabb684453b3ae9e28afa79d92a188711a310567287257d0d2d21",
+      "captured_input_set_unchanged": true,
+      "relevant_final_inputs": [
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderItemKind.vue",
+          "sha256": "9860e49cd48499502dec95f6af2757a455a94031840c7d097ce572bf90e593b3",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/components/SupplierOrderReview.vue",
+          "sha256": "8259df8c75125beff2d10e205699df33f0f9b1e7cf0903c126cf0877a99e66bc",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/pages/Orders.vue",
+          "sha256": "0f8cbf08db3297915189f2a9fe01cc025fab3e2deb45ff3824f0fbdb17aae122",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/types.ts",
+          "sha256": "2451ef9c2eb69d7a870e5beb91d264e11ea91486152912f77b49739511abdd7c",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderReview.ts",
+          "sha256": "ba0b8f019a7ff0de1cb4bbd9189d014945b3649bb14873b014beb3f858a891b4",
+          "matches_final": true
+        },
+        {
+          "path": "view/supplier-ts/src/utils/orderView.ts",
+          "sha256": "76a5c6419e578e2867fb28b1f2269e2cc036d9ead4eb5a6edc69468336f2b41e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "19c43f7629b722d2c9f9542f49758ed1fd1683ac247cdf8c921d1c2b60812a73",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierOrderReview.ts",
+          "sha256": "1d0cd15aa0aa60a70492c240598389801e2d72362e9baa9a47d3923995f95d43",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierReadSupport.ts",
+          "sha256": "ed3681bd900a4201dc9b385e78e2be582aa018bbf47ccbc17237198a014cc198",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/src/services/supplier/SupplierSplitOrderReadService.ts",
+          "sha256": "e1153e89e00948344169c847361e9f4b918fbe82029b64d2fe8d59da20f8ead7",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/browser/supplier-order-gift-identity.acceptance.ts",
+          "sha256": "1ae68c920185e6d8cf96d9406eba6277f87c02b88ef5211f08fa83baeada8a5e",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/test/helpers/supplierOrderGiftIdentity.ts",
+          "sha256": "f801197656dc26ff91e17f13073adf3a6905e9bba306722b153da6622cf6df6c",
+          "matches_final": true
+        },
+        {
+          "path": "workers-ts/vitest.supplier-order-gift-identity-browser.config.ts",
+          "sha256": "b1e47d0f40f43d2dea6e0f70de75d03b8d81f374ebef41d728e3dcad36afe36b",
+          "matches_final": true
+        }
+      ]
+    }
+  ],
+  "distinct_passed_tests": 802,
+  "new_tests": 86,
+  "test_file_count": 18,
+  "frontend_files": [
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "passed": 307
+    },
+    {
+      "path": "workers-ts/test/supplier-operations-migration.test.ts",
+      "passed": 4
+    },
+    {
+      "path": "workers-ts/test/supplier-order-distribution-frontend.test.ts",
+      "passed": 41
+    },
+    {
+      "path": "workers-ts/test/supplier-order-filters-frontend.test.ts",
+      "passed": 21
+    },
+    {
+      "path": "workers-ts/test/supplier-order-frontend.test.ts",
+      "passed": 42
+    },
+    {
+      "path": "workers-ts/test/supplier-order-review-frontend.test.ts",
+      "passed": 142
+    },
+    {
+      "path": "workers-ts/test/supplier-order-tracking-frontend.test.ts",
+      "passed": 21
+    },
+    {
+      "path": "workers-ts/test/supplier-pages-acceptance.test.ts",
+      "passed": 24
+    },
+    {
+      "path": "workers-ts/test/supplier-rbac-migration.test.ts",
+      "passed": 10
+    }
+  ],
+  "native_files": [
+    {
+      "path": "workers-ts/test/supplier-order-gift-identity-native.test.ts",
+      "passed": 38,
+      "new": true
+    },
+    {
+      "path": "workers-ts/test/supplier-split-order-reads.test.ts",
+      "passed": 10,
+      "new": false
+    },
+    {
+      "path": "workers-ts/test/supplier-operational-reads.test.ts",
+      "passed": 21,
+      "new": false
+    },
+    {
+      "path": "workers-ts/test/supplier-order-review-native.test.ts",
+      "passed": 46,
+      "new": false
+    },
+    {
+      "path": "workers-ts/test/supplier-order-generations.test.ts",
+      "passed": 22,
+      "new": false
+    },
+    {
+      "path": "workers-ts/test/supplier-order-promotions-review-native.test.ts",
+      "passed": 44,
+      "new": false
+    }
+  ],
+  "picking_files": [
+    {
+      "path": "workers-ts/test/supplier-picking-sheet-migration.test.ts",
+      "passed": 6
+    },
+    {
+      "path": "workers-ts/test/supplier-picking-promotion-lines.test.ts",
+      "passed": 2
+    }
+  ],
+  "actual_writer_boundaries": {
+    "campaign": "Mature AdminFullGiftService.mutate create type4, real validation/auxiliary/log write on owned maintenance connection; explicit not independent Admin ACL/HTTP proof",
+    "checkout": "Registered actual refundRuntimeFixture writer, sameownerSupplier2:7 purchased/gift physicalSKU, real gift reservations+stock and quota assertions",
+    "writer_extra_permissions": "Only owned writer SELECT plus UPDATE(surplus_num) on store_promotions_auxiliary; no INSERT/DELETE/production grants. No coupon/points claimed",
+    "payment": "Explicit synthetic paid admission, actual allocatePaidOrderBySupplier and actual recordSupplierPayment using registered authors, then actual SupplierFulfillmentService split; no provider/callback proof.",
+    "reads": "ActualApp/SupplierJWT/independentSELECT-only afterwriter; dynamiceverypublictable+everysequence snapshots unchanged around each read",
+    "execution": "Successful full38 actual App/JWT/independent SELECT-only PG16 cases; exact relevant source SHA bound to native-publication terminal."
+  },
+  "native_input_qualification": "Accepted native-publication binds five final backend/helper/native inputs plus runner. Mature shared/core regressions bind their three changed production readers plus runner. Browser binds its actual13 changed inputs, excluding three non-imported unit/native test files; later native-only erased type annotation does not affect it. Frontend binds nine relevant inputs. Full Worker projects bind final captured16 source hashes and Supplier checks its frontend project; no whole Browser16-final-SHA claim. Type-repair emit equality is retained separately. Repeated/failed runs are excluded.",
+  "browser": {
+    "paths": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "all",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301,
+          202,
+          201,
+          127,
+          126,
+          125,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114,
+          113,
+          112,
+          111,
+          110
+        ],
+        "count": 24
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-100",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          100
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 1001,
+            "is_gift": 0,
+            "quantity": 2,
+            "product_name": "冻结核对商品",
+            "sku": "冻结红色,S",
+            "settlement_unit": "2.50"
+          },
+          {
+            "id": 1002,
+            "is_gift": 1,
+            "quantity": 1,
+            "product_name": "冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明",
+            "sku": "赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+            "settlement_unit": "0.00"
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 100,
+            "items": [
+              {
+                "id": 1001,
+                "is_gift": 0,
+                "quantity": 2
+              },
+              {
+                "id": 1002,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/31",
+        "query": {
+          "signed_image": true
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/express_list",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "company_ids": [
+          11,
+          12
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_cart_info/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "pending": [
+          {
+            "id": 1001,
+            "cart_id": "1001",
+            "is_gift": 0,
+            "quantity": 2,
+            "available": 2
+          },
+          {
+            "id": 1002,
+            "cart_id": "1002",
+            "is_gift": 1,
+            "quantity": 1,
+            "available": 1
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-200",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          202,
+          201
+        ],
+        "count": 2
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/201",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 2002,
+            "is_gift": 0,
+            "quantity": 1,
+            "product_name": "冻结核对商品",
+            "sku": "冻结红色,S",
+            "settlement_unit": "2.50"
+          },
+          {
+            "id": 2011,
+            "is_gift": 1,
+            "quantity": 1,
+            "product_name": "冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明",
+            "sku": "赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+            "settlement_unit": "0.00"
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/201",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/201",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 201,
+            "items": [
+              {
+                "id": 2002,
+                "is_gift": 0,
+                "quantity": 1
+              },
+              {
+                "id": 2011,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": 202,
+            "items": [
+              {
+                "id": 2003,
+                "is_gift": 0,
+                "quantity": 1
+              },
+              {
+                "id": 2021,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/31",
+        "query": {
+          "signed_image": true
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/express_list",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "company_ids": [
+          11,
+          12
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_cart_info/202",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "pending": [
+          {
+            "id": 2003,
+            "cart_id": "2003",
+            "is_gift": 0,
+            "quantity": 1,
+            "available": 1
+          },
+          {
+            "id": 2021,
+            "cart_id": "2021",
+            "is_gift": 1,
+            "quantity": 1,
+            "available": 1
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-300",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          301
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/301",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 2004,
+            "is_gift": 0,
+            "quantity": 1,
+            "product_name": "旧分摊商品",
+            "sku": "旧规格",
+            "settlement_unit": "2.50"
+          },
+          {
+            "id": 3011,
+            "is_gift": 1,
+            "quantity": 1,
+            "product_name": "旧赠品礼盒",
+            "sku": "旧赠品规格",
+            "settlement_unit": null
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/301",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/301",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 301,
+            "items": [
+              {
+                "id": 2004,
+                "is_gift": 0,
+                "quantity": 1
+              },
+              {
+                "id": 3011,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/31",
+        "query": {
+          "signed_image": true
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "FILTER-TYPE-1",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          111
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/111",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 1111,
+            "is_gift": 0,
+            "quantity": 2,
+            "product_name": "现代零结算商品",
+            "sku": "默认",
+            "settlement_unit": "0.00"
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/111",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/111",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 111,
+            "items": [
+              {
+                "id": 1111,
+                "is_gift": 0,
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/list",
+        "query": {
+          "page": "1",
+          "limit": "20",
+          "order": "tracking-own-100",
+          "paid": "",
+          "status": "",
+          "business_status": "",
+          "type": "",
+          "pay_type": "",
+          "field_key": "order_id",
+          "start_time": "",
+          "end_time": ""
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "ids": [
+          100
+        ],
+        "count": 1
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 1001,
+            "is_gift": 0,
+            "quantity": 2,
+            "product_name": "冻结核对商品",
+            "sku": "冻结红色,S",
+            "settlement_unit": "2.50"
+          },
+          {
+            "id": 1002,
+            "is_gift": 1,
+            "quantity": 1,
+            "product_name": "冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明",
+            "sku": "赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+            "settlement_unit": "0.00"
+          }
+        ],
+        "injected_http": 503
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 100,
+            "items": [
+              {
+                "id": 1001,
+                "is_gift": 0,
+                "quantity": 2
+              },
+              {
+                "id": 1002,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/info/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "items": [
+          {
+            "id": 1001,
+            "is_gift": 0,
+            "quantity": 2,
+            "product_name": "冻结核对商品",
+            "sku": "冻结红色,S",
+            "settlement_unit": "2.50"
+          },
+          {
+            "id": 1002,
+            "is_gift": 1,
+            "quantity": 1,
+            "product_name": "冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明",
+            "sku": "赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+            "settlement_unit": "0.00"
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/status/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_order/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "shipments": [
+          {
+            "id": 100,
+            "items": [
+              {
+                "id": 1001,
+                "is_gift": 0,
+                "quantity": 2
+              },
+              {
+                "id": 1002,
+                "is_gift": 1,
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/31",
+        "query": {
+          "signed_image": true
+        },
+        "http": 200,
+        "sql_and_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/express_list",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "company_ids": [
+          11,
+          12
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/supplierapi/order/split_cart_info/100",
+        "query": {},
+        "http": 200,
+        "sql_and_sequences_unchanged": true,
+        "pending": [
+          {
+            "id": 1001,
+            "cart_id": "1001",
+            "is_gift": 0,
+            "quantity": 2,
+            "available": 2
+          },
+          {
+            "id": 1002,
+            "cart_id": "1002",
+            "is_gift": 1,
+            "quantity": 1,
+            "available": 1
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "stage": "desktop",
+        "width": 1200,
+        "height": 844,
+        "page_client_width": 1200,
+        "page_scroll_width": 1200,
+        "drawer": {
+          "left": 640,
+          "right": 1200,
+          "top": 0,
+          "bottom": 844
+        },
+        "review": {
+          "left": 660,
+          "right": 1164.8000183105469,
+          "top": -1751.300048828125,
+          "bottom": -1406.9000549316406
+        },
+        "close": {
+          "left": 1148,
+          "right": 1180,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "dialog": {
+          "left": 260,
+          "right": 940,
+          "top": 16,
+          "bottom": 813.7250366210938
+        },
+        "footer": {
+          "left": 276,
+          "right": 924,
+          "top": 749.7250366210938,
+          "bottom": 797.7250366210938
+        },
+        "kind_boxes": [
+          {
+            "left": 672.7999877929688,
+            "right": 734.4124870300293,
+            "top": -1670.300048828125,
+            "bottom": -1647.5000476837158
+          },
+          {
+            "left": 672.7999877929688,
+            "right": 710.4124870300293,
+            "top": -1574.7000732421875,
+            "bottom": -1551.9000720977783
+          },
+          {
+            "left": 676.7999877929688,
+            "right": 738.4124870300293,
+            "top": 616,
+            "bottom": 638.8000011444092
+          },
+          {
+            "left": 676.7999877929688,
+            "right": 714.4124870300293,
+            "top": 654.7999877929688,
+            "bottom": 677.5999889373779
+          },
+          {
+            "left": 312.8000183105469,
+            "right": 374.4125175476074,
+            "top": 252.8000030517578,
+            "bottom": 275.600004196167
+          },
+          {
+            "left": 312.8000183105469,
+            "right": 350.4125175476074,
+            "top": 316.0625,
+            "bottom": 338.8625011444092
+          }
+        ],
+        "detail_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "shipment_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "selector_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "selector_checked": [
+          false,
+          true
+        ],
+        "selector_text": "选择本批商品\n已选 1 / 3 件\n购买商品冻结核对商品\n冻结红色,S\n可发 2 件\n赠品冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明\n赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+        "content": "收货与买家要求\n收货人\n冻结收货人 13800138000\n下单收货地址\n冻结省市区地址 旧小区12号\n买家留言\n买家冻结备注：请勿放驿站\n当前买家资料\n用户 UID\n11\n当前昵称\n当前买家昵称\n当前绑定电话\n13955556666\n\n当前资料可能已更改；收货与商品信息以本订单记录为准。\n\n下单商品明细\n商品 / 规格\t编码 / 条码\t数量 / 已退\t结算单价参考\t结算小计参考\n购买商品冻结核对商品\n冻结红色,S\n\t\nFROZEN-CODE\nFROZEN-BAR\n\t2 / 0\t¥2.50\t¥5.00\n赠品冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明\n赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-\n\t\nGIFT-CODE\nGIFT-BAR\n\t1 / 0\t¥0.00\t¥0.00\n结算记录参考\n商品结算参考合计\n¥5.00\n纳入参考的运费\n¥3.00\n结算记录参考合计\n¥8.00\n\n结算记录参考不代表已到账，退款及实际结算以资金账本为准。\n\n客户付款与优惠\n订单商品件数\n3\n商品总额\n¥60.00\n原运费\n¥3.00\n应付运费\n¥3.00\n优惠券优惠\n¥0.00\n积分抵扣\n¥0.00 · 0.00 积分\n促销优惠\n¥6.00\n首单优惠\n¥0.00\n订单改价记录\n¥0.00\n客户已付金额\n¥57.00\n累计退款记录\n¥0.00\n促销分摊记录参考\n\n分摊金额已与下单快照及订单促销账本核对。\n\n活动 #101\n下单快照中的活动名称\n下单九折活动\n当前活动标题\n当前九折活动标题\n本单分摊记录\n¥4.00\n活动 #102\n下单快照中的活动名称\n下单满减活动\n当前活动标题\n当前满减活动标题\n本单分摊记录\n¥2.00\n本单促销分摊合计\n¥6.00\n\n当前标题可能与下单时不同，仅供辨认，不用于重新计算优惠。分摊记录不代表当前活动资格、赠品交付或资金到账。\n\n发票申请记录\n发票类型\n电子普通发票\n抬头类型\n企业\n发票抬头\n冻结发票抬头\n税号\nFROZEN-TAX-ONLY\n邮箱\nfrozen@example.invalid\n开户银行\n冻结开户银行\n企业地址\n冻结企业地址12号\n企业电话\n01012345678\n申请记录金额\n¥57.00\n记录中的开票状态\n待开票\n\n此处显示本订单的发票申请记录，金额与状态不代表税务平台核验结果。\n\n下单补充信息\n收货要求\n请保留原包装\n工作日配送\n预约日期\n2026-10-20 / 2026-10-21\n客户上传凭证"
+      },
+      {
+        "stage": "phone",
+        "width": 390,
+        "height": 844,
+        "page_client_width": 390,
+        "page_scroll_width": 390,
+        "drawer": {
+          "left": 23.42500114440918,
+          "right": 390.4000072479248,
+          "top": 0,
+          "bottom": 844
+        },
+        "review": {
+          "left": 43.42499923706055,
+          "right": 355.1999931335449,
+          "top": -2646,
+          "bottom": -2301.6000061035156
+        },
+        "close": {
+          "left": 338.3999938964844,
+          "right": 370.3999938964844,
+          "top": 20.600000381469727,
+          "bottom": 42.60000038146973
+        },
+        "dialog": {
+          "left": 11.71250057220459,
+          "right": 378.6875066757202,
+          "top": 16,
+          "bottom": 828
+        },
+        "footer": {
+          "left": 27.712499618530273,
+          "right": 362.6875057220459,
+          "top": 764,
+          "bottom": 812
+        },
+        "kind_boxes": [
+          {
+            "left": 56.22500228881836,
+            "right": 117.8375015258789,
+            "top": -2565,
+            "bottom": -2542.199998855591
+          },
+          {
+            "left": 56.22500228881836,
+            "right": 93.8375015258789,
+            "top": -2469.400146484375,
+            "bottom": -2446.600145339966
+          },
+          {
+            "left": 60.22500228881836,
+            "right": 121.8375015258789,
+            "top": 616,
+            "bottom": 638.8000011444092
+          },
+          {
+            "left": 60.22500228881836,
+            "right": 97.8375015258789,
+            "top": 654.7999877929688,
+            "bottom": 677.5999889373779
+          },
+          {
+            "left": 64.51250457763672,
+            "right": 126.12500381469727,
+            "top": 252.8000030517578,
+            "bottom": 275.600004196167
+          },
+          {
+            "left": 64.51250457763672,
+            "right": 102.12500381469727,
+            "top": 340.8625183105469,
+            "bottom": 363.66251945495605
+          }
+        ],
+        "detail_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "shipment_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "selector_kinds": [
+          "购买商品",
+          "赠品"
+        ],
+        "selector_checked": [
+          false,
+          true
+        ],
+        "selector_text": "选择本批商品\n已选 1 / 3 件\n购买商品冻结核对商品\n冻结红色,S\n可发 2 件\n赠品冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明\n赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-",
+        "content": "收货与买家要求\n收货人\n冻结收货人 13800138000\n下单收货地址\n冻结省市区地址 旧小区12号\n买家留言\n买家冻结备注：请勿放驿站\n当前买家资料\n用户 UID\n11\n当前昵称\n当前买家昵称\n当前绑定电话\n13955556666\n\n当前资料可能已更改；收货与商品信息以本订单记录为准。\n\n下单商品明细\n商品 / 规格\t编码 / 条码\t数量 / 已退\t结算单价参考\t结算小计参考\n购买商品冻结核对商品\n冻结红色,S\n\t\nFROZEN-CODE\nFROZEN-BAR\n\t2 / 0\t¥2.50\t¥5.00\n赠品冻结赠品礼盒 礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明礼盒说明\n赠品规格 LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-LONG-SKU-\n\t\nGIFT-CODE\nGIFT-BAR\n\t1 / 0\t¥0.00\t¥0.00\n结算记录参考\n商品结算参考合计\n¥5.00\n纳入参考的运费\n¥3.00\n结算记录参考合计\n¥8.00\n\n结算记录参考不代表已到账，退款及实际结算以资金账本为准。\n\n客户付款与优惠\n订单商品件数\n3\n商品总额\n¥60.00\n原运费\n¥3.00\n应付运费\n¥3.00\n优惠券优惠\n¥0.00\n积分抵扣\n¥0.00 · 0.00 积分\n促销优惠\n¥6.00\n首单优惠\n¥0.00\n订单改价记录\n¥0.00\n客户已付金额\n¥57.00\n累计退款记录\n¥0.00\n促销分摊记录参考\n\n分摊金额已与下单快照及订单促销账本核对。\n\n活动 #101\n下单快照中的活动名称\n下单九折活动\n当前活动标题\n当前九折活动标题\n本单分摊记录\n¥4.00\n活动 #102\n下单快照中的活动名称\n下单满减活动\n当前活动标题\n当前满减活动标题\n本单分摊记录\n¥2.00\n本单促销分摊合计\n¥6.00\n\n当前标题可能与下单时不同，仅供辨认，不用于重新计算优惠。分摊记录不代表当前活动资格、赠品交付或资金到账。\n\n发票申请记录\n发票类型\n电子普通发票\n抬头类型\n企业\n发票抬头\n冻结发票抬头\n税号\nFROZEN-TAX-ONLY\n邮箱\nfrozen@example.invalid\n开户银行\n冻结开户银行\n企业地址\n冻结企业地址12号\n企业电话\n01012345678\n申请记录金额\n¥57.00\n记录中的开票状态\n待开票\n\n此处显示本订单的发票申请记录，金额与状态不代表税务平台核验结果。\n\n下单补充信息\n收货要求\n请保留原包装\n工作日配送\n预约日期\n2026-10-20 / 2026-10-21\n客户上传凭证"
+      }
+    ],
+    "finished": true,
+    "table_count": 29,
+    "sequence_count": 28,
+    "provider_calls": 0,
+    "business_writes": 0,
+    "owned_r2_reads": 4
+  },
+  "browser_ui": {
+    "browser": "Codex In-app Browser",
+    "browser_id": "2",
+    "available_browsers": [
+      {
+        "id": "1",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex MCP Apps",
+        "type": "mcpapps"
+      },
+      {
+        "id": "2",
+        "metadata": {
+          "codexSessionId": "01a13811-3465-7b62-98e5-0a1bbf92b6a5"
+        },
+        "name": "Codex In-app Browser",
+        "type": "iab"
+      }
+    ],
+    "external_extension_connection_observed": false,
+    "availability": "Browser plugin/browser skill absent from catalog; supported Cua IAB available and used",
+    "url": "http://127.0.0.1:33375/__order_gift_identity/d633eaa7-9a12-4347-9bca-e2b4b76233fd",
+    "title": "供应商订单赠品身份 PG16 验收",
+    "iframe": "/orders",
+    "viewports": [
+      {
+        "width": 1200,
+        "height": 844
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "checks": {
+      "identity": true,
+      "meaningful_content": true,
+      "no_framework_overlay": true,
+      "console": true,
+      "screenshots": true,
+      "interaction": true
+    },
+    "console_entries": [],
+    "unexplained_console_entries": [],
+    "interaction": [
+      "physical100 detail protected01; conflicting JSON ignored",
+      "desktop partial gift only1/3; canceled",
+      "201 history child201+202 protected01",
+      "202 pending protected01; canceled",
+      "301 legacy gift1",
+      "111 modern zero purchase0",
+      "actual100 read injected503 clears detail then explicit retry",
+      "phone390 partial gift only1/3 bounded scroll/body+footer; canceled",
+      "finish actual full table/sequence no-write comparison"
+    ],
+    "layout_fix": {
+      "before_receipt": "/tmp/cinashop-supplier-order-gift-identity-browser-before-layout.json",
+      "before_footer_bottom": 879.5250244140625,
+      "viewport_height": 844,
+      "fix": "Bound only Supplier delivery dialog to viewport; scroll full body, header/footer retain size",
+      "desktop_footer_bottom": 797.7250366210938,
+      "phone_footer_bottom": 812,
+      "phone_body_client_height": 692,
+      "phone_body_scroll_height": 799
+    },
+    "screenshots": [
+      {
+        "label": "desktop-before",
+        "path": "/tmp/cinashop-supplier-order-gift-identity-desktop-before.png",
+        "sha256": "d12da93004e1f8a85867a3f4dd57750e9bf9b52c515ed55bfcff799152c422ad"
+      },
+      {
+        "label": "desktop-detail",
+        "path": "/tmp/cinashop-supplier-order-gift-identity-desktop-detail.png",
+        "sha256": "68511fc0d4e492276828bf9ad615270f7948f31bc6aaeb9ae6aed42386cce121"
+      },
+      {
+        "label": "desktop-selector",
+        "path": "/tmp/cinashop-supplier-order-gift-identity-desktop-selector.png",
+        "sha256": "cbc4093223e97fe0e5579ccbbb0ebd39218887215ba859ff12440619e8a9b7d3"
+      },
+      {
+        "label": "desktop-history",
+        "path": "/tmp/cinashop-supplier-order-gift-identity-desktop-history.png",
+        "sha256": "9533b694016b34b593f64571858a0f2d8d32dac35f1c5b87098d7958b25e1315"
+      },
+      {
+        "label": "phone-selector-full",
+        "path": "/tmp/cinashop-supplier-order-gift-identity-phone-selector-full.png",
+        "sha256": "af46c6453a128dbb319898183c6b018fb190d32d28a5ad7755d34d8e78d5ab61"
+      }
+    ],
+    "limits": [
+      "Owned synthetic PG16 data and actual App/JWT read-only login",
+      "Iframe viewport sizes, not physical mobile devices",
+      "Business GET only; no delivery submitted",
+      "External Chrome extension connection not observed; installation itself not disproved"
+    ]
+  },
+  "owned_pg_cleanup": {
+    "clusters": [
+      {
+        "phase": "browser-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-oaNNRm",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      },
+      {
+        "phase": "browser-layout",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-M2vZlo",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 1
+      },
+      {
+        "phase": "native-core",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-KJwhlJ",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      },
+      {
+        "phase": "native-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nlZH7I",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      },
+      {
+        "phase": "native-initial",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nj8MyG",
+        "remaining_zero": true,
+        "empty_evidence_method": "independently identified stopped owned cluster; offline single-user dropped exact 3 fixture DBs and 3 runtime roles, no network listener or authentication change",
+        "initial_manual_cleanup_receipt": "/tmp/cinashop-supplier-order-gift-identity-initial-manual-cleanup.json",
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 1
+      },
+      {
+        "phase": "native-publication",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-h8fnCh",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      },
+      {
+        "phase": "native-shared",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7N8jx3",
+        "remaining_zero": true,
+        "empty_evidence_method": "runner remaining=0",
+        "initial_manual_cleanup_receipt": null,
+        "stopped": true,
+        "postmaster_pid_absent": true,
+        "pg_ctl_status_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "validation_exit_code": 0
+      }
+    ],
+    "all_stopped_and_empty": true,
+    "initial_offline_cleanup": {
+      "captured_at": "2026-10-19T03:36:22.501251+00:00",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nj8MyG",
+      "mode": "offline single-user only; no listener or pg_hba change",
+      "before": {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nj8MyG/data",
+        "version": "160014",
+        "role": "finance_bootstrap",
+        "databases": [
+          "finance_fixture_e2a03d297de94fb19fbd96d709de9c18",
+          "finance_fixture_9df6f1c2126846e09d4b85d95b5b9fb4",
+          "finance_fixture_0674345e41944497b82acb3f0718d3e7"
+        ],
+        "roles": [
+          "cinashop_runtime_da28038d861c4d64a9163b18f6e1703d",
+          "cinashop_runtime_5a165b1efd6b47c3b0e4b87865c264e0",
+          "cinashop_runtime_da1e4f6186ca46a88da8b69b9568ddbf"
+        ]
+      },
+      "after": {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nj8MyG/data",
+        "version": "160014",
+        "databases": [],
+        "roles": []
+      },
+      "dropped_databases": [
+        "finance_fixture_0674345e41944497b82acb3f0718d3e7",
+        "finance_fixture_9df6f1c2126846e09d4b85d95b5b9fb4",
+        "finance_fixture_e2a03d297de94fb19fbd96d709de9c18"
+      ],
+      "dropped_roles": [
+        "cinashop_runtime_5a165b1efd6b47c3b0e4b87865c264e0",
+        "cinashop_runtime_da1e4f6186ca46a88da8b69b9568ddbf",
+        "cinashop_runtime_da28038d861c4d64a9163b18f6e1703d"
+      ],
+      "remaining_zero": true,
+      "pg_ctl_status_exit": 3,
+      "postmaster_pid_absent": true,
+      "pg_hba_sha256_unchanged": "b061836dd7ca38cc8426c744d7e90dbb9acd83d699ead2101cf99e5abce2b620",
+      "cleanup_log": "/tmp/cinashop-supplier-order-gift-identity-initial-offline-cleanup.log",
+      "cleanup_log_sha256": "3ff67052e95a5a1b708384a6122f28a94b76fe23b7e54cddb7abaa954d384751"
+    }
+  },
+  "root_checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total_lines": 88,
+      "checked": 50,
+      "sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac",
+      "unchanged_against_base": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total_lines": 404,
+      "checked": 249,
+      "sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd",
+      "unchanged_against_base": true
+    }
+  ],
+  "earlier_failed_or_superseded_runs": [
+    {
+      "label": "native-initial",
+      "exit_code": 1,
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-initial-terminal.json",
+      "terminal_sha256": "b76c2e0cbeb565da9e5dbf9076575e0a884938d47c457df5115df8a7dc794eb5",
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-initial.log",
+      "log_sha256": "b2efe0553673c30572818fa4c7b07b054315ec64e0739191277036157e5ad00f",
+      "captured_input_set_unchanged": false,
+      "reason": "Three RR harness callbacks borrowed max1 root pool while transaction held it; fixed by using transaction session.client.unsafe. Synthetic paid writer fixture lacked actual recordSupplierPayment entry; use registered writer. Allocation fixture order_id exceeded real varchar32; shorten test IDs. Production read code unchanged; corrected complete38 reexecuted. Initial33passed/5failed excluded. Stopped initial cluster retained3 DBs/roles; independent exact-owned offline cleanup proof retained.",
+      "included_in_distinct_test_count": false,
+      "passed": 33,
+      "failed": 5,
+      "corrected_inputs": [
+        "workers-ts/test/supplier-order-gift-identity-native.test.ts"
+      ]
+    },
+    {
+      "label": "browser-initial",
+      "exit_code": 1,
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-initial-terminal.json",
+      "terminal_sha256": "66c8102e953c3be168b3fcec6e82e2469e490e7954109715226b2d5c3630c50e",
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-initial.log",
+      "log_sha256": "1e2560f14b7352431bdd2bda6696894972e19a4323de0286b5be14f2b1e27a07",
+      "included_in_distinct_test_count": false,
+      "qualification": "Invalid --verbose-tests Browser alias combination rejected before any DB startup."
+    },
+    {
+      "label": "browser-layout",
+      "exit_code": 1,
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-layout-terminal.json",
+      "terminal_sha256": "4993ca852fb60de2c2cd387f473f69e939dd0ef86bf8d5970af67924ad4c48b2",
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-browser-layout.log",
+      "log_sha256": "c5c7157480e4d6701caf313128a957d03cfe937e3ea3cd4c0b30eade8bfc9614",
+      "included_in_distinct_test_count": false,
+      "qualification": "Actual desktop long gift selector footer bottom879.525 exceeded height844+1. Bounded dialog height and scrollable body; final complete Browser reruns desktop and phone unchanged long text."
+    },
+    {
+      "label": "native-final",
+      "exit_code": 0,
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-final-terminal.json",
+      "terminal_sha256": "81096a13cf02ffd93581a033b9e39a4d393771fc7b69afb6a6d5d8aeb01d15e2",
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-native-final.log",
+      "log_sha256": "d3a1bd2db5d786643e66edb7a84b13e1be1d4caf9a3f530e7958235fa030d00f",
+      "included_in_distinct_test_count": false,
+      "qualification": "First full38 passed; later Worker typecheck found only unknown result typing at newnativeL138. Added erased Array<{column_name:unknown}> assertion, preserving runtime guards and identical emitted JS. Complete38 and both Worker projects reexecute final source; this run is excluded from distinct counts."
+    },
+    {
+      "label": "worker-types-final",
+      "exit_code": 2,
+      "terminal_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-worker-types-final-terminal.json",
+      "terminal_sha256": "be4dc12c77438ca594b7ce651d651e146558e543aaec8553f72f3a459db38a60",
+      "log_path": "/tmp/cinashop-supplier-order-gift-identity-20261019-worker-types-final.log",
+      "log_sha256": "ace4e676bd3bc317f9a79b1d9f142e4906bfb3da904fdafa3f355eba42447809",
+      "included_in_distinct_test_count": false,
+      "qualification": "TS2571/TS7006 in new native test query result typing, ordinary project exited2 before runtime project. Type-only assertion repaired; both full projects reexecuted."
+    }
+  ],
+  "type_erasure_repair": {
+    "receipt_path": "/tmp/cinashop-supplier-order-gift-identity-native-publication-type-erasure.json",
+    "receipt_sha256": "36e912dabacf0228b48916952e23080e114d194af57c1fabd715419909257b79",
+    "evidence": {
+      "schema_version": 1,
+      "tool": "TypeScript.transpileModule",
+      "typescript_version": "5.9.3",
+      "scope": "Isolated parser/transpiler equivalence, not full Worker typechecking or native execution",
+      "source_path": "workers-ts/test/supplier-order-gift-identity-native.test.ts",
+      "changed_line": 138,
+      "source_before": {
+        "path": "/tmp/cinashop-supplier-order-gift-identity-native-publication-before.ts",
+        "sha256": "520a9b48af710668f0ab58398359a59e8439962d215b525efb8f6df885548a54"
+      },
+      "source_after": {
+        "path": "/tmp/cinashop-supplier-order-gift-identity-native-publication-after.ts",
+        "sha256": "02e6cde837657e78713cbb983f197b30a0cbc2ae19e84e68030fe3abf46e97e6"
+      },
+      "compiler_options": {
+        "target": 9,
+        "module": 99,
+        "sourceMap": false,
+        "inlineSourceMap": false,
+        "removeComments": false
+      },
+      "emitted_before": {
+        "path": "/tmp/cinashop-supplier-order-gift-identity-native-publication-before.js",
+        "sha256": "185dcb41a08323581d79c2650d50297e546a8522be245ca8609a608f06135659"
+      },
+      "emitted_after": {
+        "path": "/tmp/cinashop-supplier-order-gift-identity-native-publication-after.js",
+        "sha256": "185dcb41a08323581d79c2650d50297e546a8522be245ca8609a608f06135659"
+      },
+      "emitted_runtime_byte_identical": true,
+      "error_diagnostics": [],
+      "change": "Only Array<{ column_name: unknown }> assertion added to the actual column-query result; existing typeof/regex runtime validation, SQL and all assertions unchanged."
+    }
+  },
+  "superseded_frontend_runs": [
+    "frontend-initial",
+    "frontend-final"
+  ],
+  "get_script": "Preserved user-selected restored PHP compatibility and revised retirement audit; actual Browser startup GET200.",
+  "remaining": [
+    "Next evidence-backed candidate is ordinary virtual-card/fixed-content detail; not implemented in this batch.",
+    "Membership ordinary formType1 UI consumer still not proven; controller field alone is not reachability.",
+    "Production role/deployment, physical devices, provider and broader migration acceptance remain open."
+  ],
+  "limits": [
+    "No production deployment, DDL or GRANT. Fixture maintenance and minimal writer grants are isolated and explicit.",
+    "Picking complete-reader validation now checks flag, but printable DTO unchanged; no printed gift-label acceptance claimed.",
+    "Current JSON/catalog, zero monetary amounts, and current promotion eligibility do not establish gift identity.",
+    "Actual Admin author service executes on owned maintenance connection, not independent Admin HTTP/ACL proof.",
+    "Payment admission is synthetic; real registered allocation, payment ledger and fulfillment writers execute; no callback/provider proof.",
+    "Browser uses synthetic owned data, real App/JWT independent SELECT-only LOGIN and same-origin iframe widths, not physical devices.",
+    "Business GET-only; loopback test-control POSTs do not mutate business data.",
+    "Console sample bounded to actual tab interval; not production-log certification."
+  ]
+}

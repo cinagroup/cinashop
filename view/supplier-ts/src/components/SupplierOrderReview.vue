@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SupplierOrderItemKind from './SupplierOrderItemKind.vue';
 import type { SupplierOrderReview } from '@/utils/orderReview';
 import { reviewMoney } from '@/utils/orderReview';
 import SupplierOrderInvoiceReview from './SupplierOrderInvoiceReview.vue';
@@ -29,7 +30,7 @@ defineProps<{ review: SupplierOrderReview; paid: number }>();
       <table class="review-items" aria-label="下单商品结算明细">
         <thead><tr><th>商品 / 规格</th><th>编码 / 条码</th><th>数量 / 已退</th><th>结算单价参考</th><th>结算小计参考</th></tr></thead>
         <tbody><tr v-for="item in review.items" :key="item.id">
-          <td><strong>{{ item.product_name }}</strong><span>{{ item.sku || '默认规格' }}</span></td>
+          <td><SupplierOrderItemKind :is-gift="item.is_gift" /><strong>{{ item.product_name }}</strong><span>{{ item.sku || '默认规格' }}</span></td>
           <td><span>{{ item.code || '未记录编码' }}</span><span>{{ item.bar_code || '未记录条码' }}</span></td>
           <td>{{ item.quantity }} / {{ item.refund_quantity }}</td>
           <td>{{ reviewMoney(item.settlement_unit) }}</td><td>{{ reviewMoney(item.settlement_subtotal) }}</td>
@@ -90,6 +91,7 @@ defineProps<{ review: SupplierOrderReview; paid: number }>();
 .review-items td:first-child { min-width: 150px; max-width: 260px; overflow-wrap: anywhere; }
 .review-items td:nth-child(2) { max-width: 140px; overflow-wrap: anywhere; }
 .review-items td span { display: block; margin-top: 5px; }
+.review-items :deep(.order-item-kind) { display: inline-flex; }
 .review-items td:nth-child(n+3) { white-space: nowrap; }
 .review-form-images { display: flex; gap: 8px; flex-wrap: wrap; }
 .review-form-images :deep(.el-image) { width: 78px; height: 78px; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; }

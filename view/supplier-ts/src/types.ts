@@ -517,6 +517,7 @@ export interface PickingSheetResult {
 
 export interface SplitCartItem {
   id: number;
+  is_gift?: 0 | 1;
   cart_id: string;
   product_id: number;
   sku_unique: string;

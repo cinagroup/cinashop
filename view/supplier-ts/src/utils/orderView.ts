@@ -29,7 +29,8 @@ export function checkOrderDetail(detail: SupplierOrderDetail, id: number, logs: 
   requireContract(Array.isArray(shipments) && shipments.length <= 200 && shipments.every(row => row && positiveId(row.id)
     && text(row.order_id) && money(row.pay_price) && [row.paid, row.status, row.refund_status, row.total_num].every(Number.isInteger)
     && Array.isArray(row.cart_info) && row.cart_info.length <= 200 && row.cart_info.every(item => item && positiveId(item.id)
-      && text(item.product_name) && Number.isSafeInteger(item.cart_num) && item.cart_num >= 0))
+      && text(item.product_name) && Number.isSafeInteger(item.cart_num) && item.cart_num >= 0
+      && (!Object.hasOwn(item, 'is_gift') || item.is_gift === 0 || item.is_gift === 1)))
     && shipments.reduce((sum, row) => sum + row.cart_info.length, 0) <= 200);
 }
 export function checkDeliveryInputs(companies: ExpressCompany[], items: SplitCartItem[]) {
@@ -37,7 +38,8 @@ export function checkDeliveryInputs(companies: ExpressCompany[], items: SplitCar
     && new Set(companies.map(row => row.id)).size === companies.length);
   requireContract(Array.isArray(items) && items.length > 0 && items.length <= 200 && new Set(items.map(row => row?.cart_id)).size === items.length
     && items.every(row => row && positiveId(row.id) && text(row.cart_id) && row.cart_id.length > 0 && text(row.product_name)
-      && Number.isSafeInteger(row.cart_num) && positiveId(row.surplus_num) && row.surplus_num <= row.cart_num));
+      && Number.isSafeInteger(row.cart_num) && positiveId(row.surplus_num) && row.surplus_num <= row.cart_num
+      && (!Object.hasOwn(row, 'is_gift') || row.is_gift === 0 || row.is_gift === 1)));
 }
 export function checkNullReceipt(result: unknown) {
   if (result !== null) throw new Error('提交结果未知，请先核对订单或任务账本，勿重复提交');

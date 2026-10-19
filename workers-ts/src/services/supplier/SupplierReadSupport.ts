@@ -25,6 +25,11 @@ export function supplierReadSnapshot<T>(container: Container, read: (db: DbClien
 export function supplierSnapshotObject(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
+/** Gift identity is an order-row fact; JSON and a zero price cannot supply it. */
+export function supplierCartGiftFlag(value: unknown): 0 | 1 {
+  if (value !== 0 && value !== 1) throw new ValidateException('订单商品赠品标识错误，请核对历史数据');
+  return value;
+}
 export function parseSupplierSnapshot(raw: string | null, maximumBytes: number) {
   if (raw === null || raw === '') return null;
   if (new TextEncoder().encode(raw).length > maximumBytes) throw new ValidateException('订单商品快照过大');
@@ -51,6 +56,7 @@ export async function readSupplierCarts(db: DbClient, supplierId: number,
     skuUnique: storeOrderCartInfo.skuUnique, cartNum: storeOrderCartInfo.cartNum,
     refundNum: storeOrderCartInfo.refundNum, splitSurplusNum: storeOrderCartInfo.splitSurplusNum,
     splitStatus: storeOrderCartInfo.splitStatus, settlePrice: storeOrderCartInfo.settlePrice,
+    isGift: storeOrderCartInfo.isGift,
     cartInfo: sql<string | null>`CASE WHEN NOT (${oversized}) THEN ${storeOrderCartInfo.cartInfo} ELSE NULL END`,
     oversized: sql<boolean>`${oversized}`,
   }).from(storeOrderCartInfo).where(inArray(storeOrderCartInfo.oid, orders.map(order => order.id)))
@@ -65,6 +71,7 @@ export async function readSupplierCarts(db: DbClient, supplierId: number,
   const legacy = new Set(orders.map(order => order.id));
   for (const cart of carts) if (cart.type !== 0 || cart.relationId !== 0) legacy.delete(cart.oid);
   return carts.map(cart => {
+    supplierCartGiftFlag(cart.isGift);
     if (cart.uid !== owners.get(cart.oid) || cart.oversized || (!legacy.has(cart.oid)
       && (cart.relationId !== supplierId || ![0, 2].includes(cart.type)))) {
       throw new ValidateException('订单商品归属不一致或明细过大，请核对');
@@ -80,6 +87,7 @@ export function supplierDisplayCart(row: Awaited<ReturnType<typeof readSupplierC
   return {
     id: row.id, cart_id: row.cartId, product_id: row.productId, sku_unique: row.skuUnique,
     cart_num: row.cartNum, refund_num: row.refundNum, surplus_num: row.splitSurplusNum,
+    is_gift: supplierCartGiftFlag(row.isGift),
     product_name: String(product?.storeName ?? productInfo?.store_name ?? '商品快照'),
     image: String(product?.image ?? productInfo?.image ?? ''),
     sku: String(sku?.suk ?? attrInfo?.suk ?? row.skuUnique), cart_info: record,
