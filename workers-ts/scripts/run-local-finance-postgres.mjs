@@ -134,6 +134,7 @@ if (schemaMaintenance) {
     'test/supplier-order-virtual-review-native.test.ts',
     'test/supplier-refund-application-review-native.test.ts',
     'test/refund-application-evidence-native.test.ts',
+    'test/customer-refund-request-images-native.test.ts',
     // Existing selector/creation/concurrency contracts run against the same owned native host.
     'test/supplier-product-shipping-options.test.ts',
     'test/shipping-create-entrypoints.test.ts',
@@ -927,6 +928,7 @@ try {
     'test/supplier-order-virtual-review-native.test.ts',
     'test/supplier-refund-application-review-native.test.ts',
     'test/refund-application-evidence-native.test.ts',
+    'test/customer-refund-request-images-native.test.ts',
     // Existing selector/creation/concurrency contracts run against the same owned native host.
     'test/supplier-product-shipping-options.test.ts',
     'test/shipping-create-entrypoints.test.ts',

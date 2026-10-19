@@ -35,6 +35,40 @@ export function registerRefundRecordsTests(getContext) {
     const app=renderer.createApp({render:()=>h(RouterView)});app.use(router);await router.push(path);app.mount({children:[]});await flush();let closed=false;
     return{get view(){return view;},calls,dialog,router,posts:()=>calls.filter(c=>c.method==='post'),close(){if(!closed){closed=true;app.unmount();}}};
   }
+  const signedRequest = id => ({url:`/api/assets/${id}`,src:`/api/assets/${id}?expires=1999999999&signature=${'a'.repeat(43)}`});
+  it('PC own detail distinguishes original application images from later return images without writes',async()=>{
+    const f=await mount('detail',()=>({status:200,data:detail(25,{requestImages:[signedRequest(31)],requestImagesError:'',returnImages:[signedRequest(33)],returnImagesError:''})}));
+    try{assert.deepEqual(f.view.detail.value.requestImages,[signedRequest(31)]);assert.deepEqual(f.view.detail.value.returnImages,[signedRequest(33)]);assert.equal(f.view.detail.value.requestEvidenceReady,true);assert.equal(f.posts().length,0);}finally{f.close();}
+  });
+  it('PC old server absence differs from explicit empty, unavailable and historical original evidence',async()=>{
+    for(const fields of [{},{requestImages:[],requestImagesError:''},{requestImages:[],requestImagesError:'暂不可读取'},
+      {requestImages:[{url:'https://legacy.invalid/request.png',src:'https://legacy.invalid/request.png'}],requestImagesError:''}]){
+      const f=await mount('detail',()=>({status:200,data:detail(25,fields)}));try{assert.equal(f.view.detail.value.requestEvidenceReady,'requestImages'in fields);assert.equal(f.view.detail.value.requestImagesError,fields.requestImagesError??'');}finally{f.close();}
+    }
+  });
+  for(const [label,fields] of Object.entries({partial:{requestImages:[]},undefined:{requestImages:undefined,requestImagesError:''},null:{requestImages:null,requestImagesError:''},
+    badError:{requestImages:[],requestImagesError:null},duplicate:{requestImages:[signedRequest(31),signedRequest(31)],requestImagesError:''},
+    tooMany:{requestImages:[31,32,33,34].map(signedRequest),requestImagesError:''},unsafe:{requestImages:[{url:'javascript:bad',src:'javascript:bad'}],requestImagesError:''},
+    wrongTicket:{requestImages:[{url:'/api/assets/31',src:signedRequest(32).src}],requestImagesError:''},extra:{requestImages:[{...signedRequest(31),uid:22}],requestImagesError:''},
+    conflict:{requestImages:[signedRequest(31)],requestImagesError:'不可读取'}})){
+    it(`PC own detail rejects malformed original evidence ${label}`,async()=>{
+      const f=await mount('detail',()=>({status:200,data:detail(25,fields)}));try{assert.equal(f.view.detail.value,null);assert.ok(f.view.state.error);assert.equal(f.posts().length,0);}finally{f.close();}
+    });
+  }
+  it('PC original image failure is scoped to current objects and resets on reread',async()=>{
+    const f=await mount('detail',()=>({status:200,data:detail(25,{requestImages:[signedRequest(31)],requestImagesError:''})}));
+    try{const old=f.view.detail.value.requestImages[0];f.view.requestImageFailed(old);assert.equal(f.view.failedRequestImages.value.length,1);
+      await f.view.load();f.view.requestImageFailed(old);assert.deepEqual(f.view.failedRequestImages.value,[]);assert.equal(f.view.detail.value.requestImages.length,1);
+    }finally{f.close();}
+  });
+  for(const ending of ['auth','route','unmount']){
+    it(`PC original evidence clears on ${ending} and ignores stale image errors`,async()=>{
+      const f=await mount('detail',()=>({status:200,data:detail(25,{requestImages:[signedRequest(31)],requestImagesError:''})})),view=f.view;
+      try{const old=view.detail.value.requestImages[0];if(ending==='auth')getContext().authUtils.setAuth('new',22);else if(ending==='route')await f.router.push('/away');else f.close();
+        view.requestImageFailed(old);assert.equal(view.detail.value,null);assert.deepEqual(view.failedRequestImages.value,[]);
+      }finally{f.close();}
+    });
+  }
   it('PC refund history fails explicitly and retries its exact cursor',async()=>{
     let fail=true;const rows=Array.from({length:20},(_,i)=>record(45-i));
     const f=await mount('list',c=>c.params.cursor?(fail?{status:500,msg:'append offline'}:{status:200,data:page(c.params,[record(25)])}):{status:200,data:page(c.params,rows,'c25')});

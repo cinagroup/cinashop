@@ -4,6 +4,7 @@ import { storeOrder, storeOrderCartInfo, storeOrderRefund } from '@/models/schem
 import { NotFoundException, ValidateException } from '@/utils/errors';
 import { resolveRefundReturnContact } from './RefundReturnContactService';
 import { previewReturnImages } from './RefundReturnPayload';
+import { previewRefundApplicationEvidence } from './RefundApplicationEvidence';
 import { readMaterializedRefundSnapshot, type RefundReadItem } from './RefundReadSnapshot';
 
 const filters = ['all', 'pending', 'returning', 'transit', 'completed', 'rejected', 'cancelled'] as const;
@@ -134,6 +135,11 @@ export class CustomerRefundReadService {
         refundExplain: storeOrderRefund.refundExplain, refuseReason: storeOrderRefund.refuseReason,
         refundExpress: storeOrderRefund.refundExpress, refundExpressName: storeOrderRefund.refundExpressName,
         refundPhone: storeOrderRefund.refundPhone, refundGoodsExplain: storeOrderRefund.refundGoodsExplain,
+        // Original application evidence has its own bounded transport and may
+        // remain readable even when the selected goods history is unavailable.
+        requestImageJson: sql<string | null>`CASE
+          WHEN octet_length(${storeOrderRefund.refundImg}) <= 8192 THEN ${storeOrderRefund.refundImg}
+          WHEN ${storeOrderRefund.refundImg} IS NULL THEN NULL ELSE '__invalid__' END`,
         returnImageJson: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg} ELSE '__invalid__' END`,
         cartInfo: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.cartInfo}) <= 65536 THEN ${storeOrderRefund.cartInfo} ELSE NULL END`,
       }).from(storeOrderRefund).innerJoin(storeOrder, joinedOrder)
@@ -156,8 +162,12 @@ export class CustomerRefundReadService {
       let returnImages: Array<{ url: string; src: string }> = [], returnImagesError = '';
       try { returnImages = await previewReturnImages(container, uid, row.returnImageJson, this.appKey); }
       catch (error) { if (!(error instanceof ValidateException)) throw error; returnImagesError = '退货凭证暂不可读取，请联系商家核对'; }
-      const { cartInfo: _cartInfo, returnImageJson: _returnImageJson, isDel: _isDel, storeId: _storeId, supplierId: _supplierId, ...summary } = row;
-      return { version: 1 as const, ...summary, physicalOrderId, items, itemsError, returnContact, returnImages, returnImagesError };
+      const requestEvidence = await previewRefundApplicationEvidence(container, uid, row.requestImageJson, this.appKey);
+      const { cartInfo: _cartInfo, requestImageJson: _requestImageJson, returnImageJson: _returnImageJson,
+        isDel: _isDel, storeId: _storeId, supplierId: _supplierId, ...summary } = row;
+      return { version: 1 as const, ...summary, physicalOrderId, items, itemsError, returnContact, returnImages, returnImagesError,
+        requestImages: requestEvidence.requestImages,
+        requestImagesError: requestEvidence.requestImagesError ? '申请凭证暂不可读取，请联系商家核对' : '' };
     });
   }
 }

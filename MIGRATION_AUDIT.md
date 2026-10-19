@@ -1,5 +1,13 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-19 买家售后详情原始申请图片回看
+
+接通实际PHP UniApp售后详情的原始refund_img展示，并为PC共用详情提供一致回看与全图预览。Customer自有版本化详情按SQL8192UTF8有界读取，原RR只读快照内核对UID和图片元数据；与申请商品历史、后来refund_goods_img退货图各自独立。无图片、旧服务缺字段、不可核对和加载失败明确区分，刷新或账号/路由/页面生命周期清除旧图；过期图片回调不能污染新记录。
+
+最终15文件含11份执行源，816项去重通过（63项新增、原Browser两例扩展，9个直接测试入口），PC/UniApp完整类型与生产构建、Worker两个完整类型项目通过。实际PC/H5上传、移除、重传和申请后，买家自有详情与商家详情同笔回读、原图预览及图片/详情503恢复共10阶段均通过。43次GET逐次核对全282表/229序列及R2写入不变，6次真实上传/申请POST单列；买家详情、商家和图片GET用独立SELECT-only LOGIN，作者为自有maintenance/合成付款边界。517份构建字节保持，6座自有PG清零并独立确认停止。来源、精确42501断言重验与完整边界见[说明](workers-ts/docs/php-ts-customer-refund-request-images-20261019.md)和[账本](workers-ts/audit/php-ts-customer-refund-request-images-20261019.json)。
+
+保留用户选定已恢复PHP get_script与修订退役审计，商家实际启动GET200；原88/404复选行逐字保持，整体迁移继续active。本批codex/customer-refund-request-images草稿PR基于PR121，新提交CI按自身GitHub结果记录。PHP PC原图消费和旧缩略图绑定全图预览没有被证实，故明确作为现代一致性扩展；外部浏览器扩展连接、真实设备、生产角色/部署和provider验收仍开放。
+
 ## 2026-10-19 退款申请原始图片：买家上传与 Supplier 核对
 
 接通 PHP 实际 PC/UniApp 申请页最多三张原始凭证：双端上传、预览与移除，普通 Customer 作者校验归属并仅保存规范引用，Supplier 独立展示申请图片。原始 refund_img 与后来退货 refund_goods_img 分开，旧公开 HTTPS 明示历史来源，非法或失联图片明确提示；路由、会话、迟到选图及详情失败均清除旧状态。

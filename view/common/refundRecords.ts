@@ -16,6 +16,7 @@ export interface RefundRecordDetail extends RefundRecord {
   version: 1; refundExplain: string; refuseReason: string; refundExpress: string; refundExpressName: string;
   refundPhone: string; refundGoodsExplain: string; itemsError: string;
   returnImages: ReturnImage[]; returnImagesError: string; returnEvidenceReady: boolean;
+  requestImages: ReturnImage[]; requestImagesError: string; requestEvidenceReady: boolean;
   items: Array<{ id: number; cartId: number; name: string; sku: string; image: string; quantity: number | null }>;
   returnContact: { source: 'platform' | 'supplier' | 'store'; name: string; phone: string; address: string } | null;
 }
@@ -98,8 +99,20 @@ export function parseRefundDetail(value: unknown, uid: number, id: number): Refu
   if (returnEvidenceReady && (!Array.isArray(raw.returnImages) || raw.returnImages.length > 3 || !text(raw.returnImagesError))) throw Error('退货凭证响应无效');
   const returnImages = returnEvidenceReady ? (raw.returnImages as unknown[]).map(returnPreview) : [];
   if (new Set(returnImages.map(image => image.url)).size !== returnImages.length || (raw.returnImagesError && returnImages.length)) throw Error('退货凭证重复或状态冲突');
+  const requestEvidenceReady = Object.hasOwn(raw, 'requestImages') || Object.hasOwn(raw, 'requestImagesError');
+  let requestImages: ReturnImage[] = [];
+  if (requestEvidenceReady) {
+    if (!Array.isArray(raw.requestImages) || raw.requestImages.length > 3 || !text(raw.requestImagesError)) throw Error('申请凭证响应无效');
+    requestImages = raw.requestImages.map(value => {
+      const image = object(value);
+      if (Object.keys(image).sort().join(',') !== 'src,url') throw Error('申请凭证响应无效');
+      return returnPreview(image);
+    });
+    if (new Set(requestImages.map(image => image.url)).size !== requestImages.length || (raw.requestImagesError && requestImages.length)) throw Error('申请凭证重复或状态冲突');
+  }
   return { version: 1, ...row, items, returnContact, itemsError: raw.itemsError as string, returnEvidenceReady,
     returnImages, returnImagesError: returnEvidenceReady ? raw.returnImagesError as string : '',
+    requestImages, requestImagesError: requestEvidenceReady ? raw.requestImagesError as string : '', requestEvidenceReady,
     refundExplain: raw.refundExplain as string, refuseReason: raw.refuseReason as string,
     refundExpress: raw.refundExpress, refundPhone: raw.refundPhone, refundExpressName: raw.refundExpressName as string,
     refundGoodsExplain: raw.refundGoodsExplain as string };

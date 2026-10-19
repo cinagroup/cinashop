@@ -15,6 +15,18 @@
           <dt>申请时间</dt><dd>{{ refundTime(detail.addTime) }}</dd>
           <dt v-if="detail.refuseReason">拒绝原因</dt><dd v-if="detail.refuseReason">{{ detail.refuseReason }}</dd></dl>
       </section>
+      <section class="record-card request-evidence" aria-label="本次退款申请凭证"><h3>申请凭证</h3>
+        <p>以下图片随本次售后申请提交，与后来寄回商品时的退货凭证分别保存。</p>
+        <p v-if="!detail.requestEvidenceReady" role="alert">当前服务未返回申请凭证，请更新后重新读取详情</p>
+        <p v-else-if="detail.requestImagesError" role="alert">{{ detail.requestImagesError }}</p>
+        <p v-else-if="!detail.requestImages.length">本次申请未上传凭证</p>
+        <div v-else class="request-images"><div v-for="(image, index) in detail.requestImages" :key="image.src">
+          <p v-if="failedRequestImages.includes(image)" role="alert">申请凭证 {{ index + 1 }} 读取失败，请重新读取详情</p>
+          <a v-else :href="image.src" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" :aria-label="`查看申请凭证 ${index + 1}`">
+            <img :src="image.src" :alt="`本次申请凭证 ${index + 1}`" referrerpolicy="no-referrer" @error="requestImageFailed(image)" />
+          </a><p v-if="image.url.startsWith('https://')">历史图片链接</p>
+        </div></div>
+      </section>
       <section class="record-card"><h3>退款商品</h3>
         <el-alert v-if="detail.itemsError" :title="detail.itemsError" type="warning" :closable="false" />
         <div v-for="item in detail.items" :key="item.id" class="record-item"><ProductImage :src="item.image" :alt="item.name" />
@@ -50,16 +62,23 @@
   </div>
 </template>
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import ProductImage from '@/components/ProductImage.vue';
 import { returnEligible } from '../../../../common/refundReturn';
 import { useRefundRecords } from '@/composables/useRefundRecords';
 import { refundStatus, refundStatusDescription, refundTime, refundableCancellation } from '../../../../common/refundRecords';
+import type { ReturnImage } from '../../../../common/refundReturn';
 async function confirmCancel() {
   try { await ElMessageBox.confirm('确认撤销本次退款申请？退款渠道处理中的申请可能无法撤销。', '撤销售后', { type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '保留申请' }); return true; }
   catch (error) { if (error === 'cancel' || error === 'close') return false; throw error; }
 }
 const { state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, navigationError, routeError, load, goList, goOrder, goService, cancel } = useRefundRecords('detail', confirmCancel);
+const failedRequestImages = ref<ReturnImage[]>([]);
+watch(detail, () => { failedRequestImages.value = []; }, { flush: 'sync' });
+function requestImageFailed(image: ReturnImage) {
+  if (detail.value?.requestImages.includes(image) && !failedRequestImages.value.includes(image)) failedRequestImages.value.push(image);
+}
 function chooseReturnImage(event: Event) {
   const input = event.target as HTMLInputElement, file = input.files?.[0]; input.value = '';
   if (file) void uploadReturnImage(file);
@@ -80,4 +99,6 @@ p, dd, strong { overflow-wrap: anywhere; line-height: 1.6; } p { margin: 8px 0; 
 .submit-return { padding: 12px; background: #a84916; color: white; border: 0; border-radius: 4px; font: inherit; } .submit-return:disabled { opacity: .5; }
 .evidence { display: flex; flex-wrap: wrap; gap: 12px; } .evidence :deep(.product-media) { width: 100px; height: 100px; }
 .evidence button { display: block; margin-top: 8px; }
+.request-images { display:flex; flex-wrap:wrap; gap:12px; } .request-images > div { width:140px; max-width:100%; min-width:0; }
+.request-images a { display:block; } .request-images img { width:100%; height:140px; object-fit:contain; border:1px solid #ddd; border-radius:8px; }
 </style>

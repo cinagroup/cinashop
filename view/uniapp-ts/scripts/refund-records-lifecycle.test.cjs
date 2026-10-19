@@ -9,6 +9,42 @@ const detail = (id = 25, changes = {}) => ({ version: 1, ...record(id), refundEx
   items: [{ id, cartId: 2000 + id, name: '本地退款商品', sku: '红色', image: '', quantity: 1 }], ...changes });
 const setup = (override = () => undefined, component = 'refundDetail') => runtime({ component: `pages/order/${component}.vue`,
   send: call => override(call) ?? { data: detail(Number(call.url.split('/').at(-1))) } });
+const requestImage=id=>({url:`/api/assets/${id}`,src:`/api/assets/${id}?expires=1999999999&signature=${'a'.repeat(43)}`});
+const requestSetup=fields=>setup(()=>({data:detail(25,{requestImages:[requestImage(31)],requestImagesError:'',...fields})}));
+test('own original evidence previews only validated original images and keeps return evidence separate',async()=>{
+  const r=requestSetup({returnImages:[requestImage(33)],returnImagesError:''}),previews=[];r.uni.previewImage=call=>previews.push(call);
+  try{await r.start({id:'25'});r.checkout.previewRequestImage(r.checkout.detail.value.requestImages[0]);assert.deepEqual(previews[0].urls,[requestImage(31).src]);assert.equal(previews[0].current,requestImage(31).src);assert.deepEqual(r.checkout.detail.value.returnImages,[requestImage(33)]);assert.equal(r.calls.some(c=>c.url.includes('/cancel/')),false);}finally{r.stop();}
+});
+test('own original evidence distinguishes old server, known empty, unavailable and historical URL',async()=>{
+  for(const fields of [{},{requestImages:[],requestImagesError:''},{requestImages:[],requestImagesError:'不可读取'},
+    {requestImages:[{url:'https://legacy.invalid/request.png',src:'https://legacy.invalid/request.png'}],requestImagesError:''}]){
+    const r=setup(()=>({data:detail(25,fields)}));try{await r.start({id:'25'});assert.equal(r.checkout.detail.value.requestEvidenceReady,'requestImages'in fields);assert.equal(r.checkout.detail.value.requestImagesError,fields.requestImagesError??'');}finally{r.stop();}
+  }
+});
+for(const [label,fields]of Object.entries({partial:{requestImages:[]},undefined:{requestImages:undefined,requestImagesError:''},null:{requestImages:null,requestImagesError:''},
+  wrongError:{requestImages:[],requestImagesError:22},duplicate:{requestImages:[requestImage(31),requestImage(31)],requestImagesError:''},
+  tooMany:{requestImages:[31,32,33,34].map(requestImage),requestImagesError:''},unsafe:{requestImages:[{url:'javascript:bad',src:'javascript:bad'}],requestImagesError:''},
+  mismatch:{requestImages:[{url:'/api/assets/31',src:requestImage(32).src}],requestImagesError:''},extra:{requestImages:[{...requestImage(31),uid:22}],requestImagesError:''},
+  conflict:{requestImages:[requestImage(31)],requestImagesError:'不可读取'}})){
+  test(`own detail rejects malformed original evidence ${label}`,async()=>{
+    const r=setup(()=>({data:detail(25,fields)}));try{await r.start({id:'25'});assert.equal(r.checkout.detail.value,null);assert.ok(r.checkout.state.error);}finally{r.stop();}
+  });
+}
+test('own original failed preview resets on reread and old callback cannot fail new evidence',async()=>{
+  const r=requestSetup(),previews=[];r.uni.previewImage=call=>previews.push(call);
+  try{await r.start({id:'25'});const old=r.checkout.detail.value.requestImages[0];r.checkout.previewRequestImage(old);previews[0].fail();assert.equal(r.checkout.failedRequestImages.value.length,1);
+    r.checkout.previewRequestImage(old);assert.equal(previews.length,1);await r.checkout.load();previews[0].fail();r.checkout.previewRequestImage(old);assert.deepEqual(r.checkout.failedRequestImages.value,[]);assert.equal(previews.length,1);
+    r.checkout.previewRequestImage(r.checkout.detail.value.requestImages[0]);assert.equal(previews.length,2);
+  }finally{r.stop();}
+});
+for(const ending of ['auth','hide','unload']){
+  test(`own original evidence clears after ${ending} and cannot preview old references`,async()=>{
+    const r=requestSetup(),previews=[];r.uni.previewImage=call=>previews.push(call);
+    try{await r.start({id:'25'});const old=r.checkout.detail.value.requestImages[0];if(ending==='auth')r.auth.setLogin('replacement',22);else r.hooks[ending==='hide'?'onHide':'onUnload']();
+      r.checkout.requestImageFailed(old);r.checkout.previewRequestImage(old);assert.equal(r.checkout.detail.value,null);assert.deepEqual(r.checkout.failedRequestImages.value,[]);assert.deepEqual(previews,[]);
+    }finally{r.stop();}
+  });
+}
 
 test('refund detail clears private fields immediately when the account changes', async () => {
   const r = setup(); try { await r.start({ id: '25' }); assert.equal(r.checkout.detail.value.id, 25);

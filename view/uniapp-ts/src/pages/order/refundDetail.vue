@@ -20,6 +20,18 @@
         <view class="info-row"><text>申请时间</text><text>{{ refundTime(detail.addTime) }}</text></view>
         <view v-if="detail.refuseReason" class="info-row"><text>拒绝原因</text><text>{{ detail.refuseReason }}</text></view>
       </view>
+      <view class="info-card request-evidence" role="region" aria-label="本次退款申请凭证"><view class="card-title">申请凭证</view>
+        <view>以下图片随本次售后申请提交，与后来寄回商品时的退货凭证分别保存。</view>
+        <view v-if="!detail.requestEvidenceReady" class="notice">当前服务未返回申请凭证，请更新后重新读取详情</view>
+        <view v-else-if="detail.requestImagesError" class="notice">{{ detail.requestImagesError }}</view>
+        <view v-else-if="!detail.requestImages.length">本次申请未上传凭证</view>
+        <view v-else class="request-images"><view v-for="(image, index) in detail.requestImages" :key="image.src">
+          <view v-if="failedRequestImages.includes(image)" class="notice">申请凭证 {{ index + 1 }} 读取失败，请重新读取详情</view>
+          <button v-else class="request-preview" :aria-label="`查看申请凭证 ${index + 1}`" @tap="previewRequestImage(image)">
+            <image :src="image.src" :alt="`本次申请凭证 ${index + 1}`" mode="aspectFit" @error="requestImageFailed(image)" />
+          </button><view v-if="image.url.startsWith('https://')">历史图片链接</view>
+        </view></view>
+      </view>
       <view class="items-card"><view class="card-title">退款商品</view>
         <view v-if="detail.itemsError" class="notice">{{ detail.itemsError }}</view>
         <view v-for="item in detail.items" :key="item.id" class="item-row">
@@ -65,6 +77,7 @@ import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from 'vue';
 import { useRefundRecords } from '@/composables/useRefundRecords';
 import { returnEligible } from '../../../../common/refundReturn';
+import type { ReturnImage } from '../../../../common/refundReturn';
 import { refundStatus, refundStatusDescription, refundTime, refundableCancellation, type RefundRecordDetail } from '../../../../common/refundRecords';
 defineOptions({ inheritAttrs: false });
 const { auth, state, detail, busy, canCancel, canReturn, uploadReturnImage, submitReturn, removeReturnImage, routeError, navigationError, load, goList, goOrder, goService, login, cancel } = useRefundRecords('detail');
@@ -78,7 +91,17 @@ const statusText = computed(() => detail.value ? refundStatus(detail.value) : ''
 const statusSub = computed(() => detail.value ? refundStatusDescription(detail.value) : '');
 const isDone = computed(() => detail.value?.isCancel === 0 && detail.value?.refundType === 6);
 const failedImages = ref<number[]>([]);
+const failedRequestImages = ref<ReturnImage[]>([]);
 watch(detail, () => { failedImages.value = []; }, { flush: 'sync' });
+watch(detail, () => { failedRequestImages.value = []; }, { flush: 'sync' });
+function requestImageFailed(image: ReturnImage) {
+  if (detail.value?.requestImages.includes(image) && !failedRequestImages.value.includes(image)) failedRequestImages.value.push(image);
+}
+function previewRequestImage(image: ReturnImage) {
+  if (!detail.value?.requestImages.includes(image) || failedRequestImages.value.includes(image)) return;
+  uni.previewImage({ current: image.src, urls: detail.value.requestImages.filter(item => !failedRequestImages.value.includes(item)).map(item => item.src),
+    fail: () => requestImageFailed(image) });
+}
 function imageFailed(item: RefundRecordDetail['items'][number]) {
   if (detail.value?.items.includes(item) && !failedImages.value.includes(item.id)) failedImages.value.push(item.id);
 }
@@ -99,4 +122,7 @@ function imageFailed(item: RefundRecordDetail['items'][number]) {
 .return-form > view { margin: 12rpx 0; } .field { box-sizing: border-box; border: 1rpx solid #bbb; border-radius: 8rpx; padding: 16rpx; min-height: 72rpx; height: auto; }
 .return-form checkbox-group { margin: 24rpx 0; } .submit-return { background: #a84916; color: white; font-size: 28rpx; }
 .evidence { display: flex; flex-wrap: wrap; gap: 16rpx; } .evidence image { width: 140rpx; height: 140rpx; display: block; }
+.request-images { display:flex; flex-wrap:wrap; gap:20rpx; margin-top:20rpx; } .request-images > view { width:260rpx; max-width:100%; min-width:0; }
+.request-preview { padding:0; margin:0; width:100%; background:transparent; } .request-preview::after { border:0; }
+.request-preview image { display:block; width:100%; height:260rpx; }
 </style>
