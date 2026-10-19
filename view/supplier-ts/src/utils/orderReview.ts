@@ -1,4 +1,5 @@
 import type { OrderRow } from '@/types';
+import { checkSupplierOrderInvoiceReview, type SupplierOrderInvoiceReview } from './orderInvoiceReview';
 
 export interface SupplierOrderReview {
   version: 1;
@@ -15,6 +16,7 @@ export interface SupplierOrderReview {
     quantity: number; refund_quantity: number; settlement_unit: string | null; settlement_subtotal: string | null }>;
   settlement: { items_total: string | null; postage: string; total: string | null; availability: 'recorded' | 'incomplete' };
   form: Array<{ id: string; title: string; value: string; images: string[] }>;
+  invoice?: SupplierOrderInvoiceReview;
 }
 export type SupplierOrderDetail = OrderRow & { cart_info: unknown[]; review?: SupplierOrderReview };
 
@@ -60,6 +62,7 @@ export function checkSupplierOrderReview(value: unknown, header: OrderRow): asse
     || !Array.isArray(value.form) || value.form.length > 100
     || !value.form.every((field: unknown) => record(field) && text(field.id, 255) && text(field.title, 1024)
       && text(field.value) && Array.isArray(field.images) && field.images.length <= 9 && field.images.every(reviewImageUrl))) fail();
+  if (Object.hasOwn(value, 'invoice')) checkSupplierOrderInvoiceReview(value.invoice, header);
 }
 
 export function reviewMoney(value: string | null) {

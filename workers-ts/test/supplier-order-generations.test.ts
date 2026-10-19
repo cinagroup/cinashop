@@ -289,7 +289,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Suppli
       const source = await writer.createPaid();
       await f.withRuntimeRole!(async peer => {
         const container = createContainerFromDb(peer.db); await wire({ ...peer, container });
-        await f.exec(`GRANT SELECT ON store_order,store_order_cart_info,"user" TO "${peer.role}"`);
+        await f.exec(`GRANT SELECT ON store_order,store_order_cart_info,store_order_invoice,"user" TO "${peer.role}"`);
         expect(peer.pid).not.toBe(writer.pid);
         const [role] = await peer.db.execute(sql`SELECT current_user,session_user,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls,
           has_table_privilege(current_user,'store_order','UPDATE') AS can_write,

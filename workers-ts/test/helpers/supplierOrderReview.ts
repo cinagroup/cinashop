@@ -1,6 +1,6 @@
 import { eq, inArray, SQL, sql } from 'drizzle-orm';
 import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
-import { storeOrder, storeOrderCartInfo, systemAttachment } from '@/models/schema';
+import { storeOrder, storeOrderCartInfo, storeOrderInvoice, systemAttachment } from '@/models/schema';
 import { supplierOrderFiltersFixture } from './supplierOrderFilters';
 
 export const supplierReviewForm = () => [
@@ -17,12 +17,16 @@ export const supplierReviewLine = (quantity = 2) => ({ financial_version: 'check
 export async function supplierOrderReviewFixture() {
   const f = await supplierOrderFiltersFixture();
   try {
-    const definition = getTableConfig(systemAttachment), dialect = new PgDialect();
-    const columns = definition.columns.map(column => {
-      const value = column.default, initial = value === undefined ? '' : ` DEFAULT ${value instanceof SQL ? dialect.sqlToQuery(value).sql : dialect.sqlToQuery(sql`${value}`.inlineParams()).sql}`;
-      return `"${column.name}" ${column.getSQLType()}${initial}${column.notNull ? ' NOT NULL' : ''}${column.primary ? ' PRIMARY KEY' : ''}`;
-    });
-    await f.exec(`CREATE TABLE public."${definition.name}" (${columns.join(',')})`);
+    const dialect = new PgDialect();
+    // Detail now reads the actual frozen invoice record, even when absent.
+    // Install its real ORM shape; missing tables/permissions must not fake none.
+    for (const table of [systemAttachment, storeOrderInvoice]) {
+      const definition = getTableConfig(table), columns = definition.columns.map(column => {
+        const value = column.default, initial = value === undefined ? '' : ` DEFAULT ${value instanceof SQL ? dialect.sqlToQuery(value).sql : dialect.sqlToQuery(sql`${value}`.inlineParams()).sql}`;
+        return `"${column.name}" ${column.getSQLType()}${initial}${column.notNull ? ' NOT NULL' : ''}${column.primary ? ' PRIMARY KEY' : ''}`;
+      });
+      await f.exec(`CREATE TABLE public."${definition.name}" (${columns.join(',')})`);
+    }
     await f.db.insert(systemAttachment).values([{ attId: 31, type: 3, relationId: 11, moduleType: 3, fileType: 1, imageType: 8,
       name: 'attachments/owned-order-review.png', attDir: '/api/assets/31', sattDir: '/api/assets/31', attType: 'image/png' },
     { attId: 32, type: 3, relationId: 12, moduleType: 3, fileType: 1, imageType: 8,
@@ -52,7 +56,7 @@ export async function supplierOrderReviewFixture() {
     } } });
     const grantReviewReader = async (role: string) => {
       if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(role)) throw Error('Unowned order review LOGIN');
-      await f.grantReader(role); await f.exec(`GRANT SELECT ON public.system_attachment TO "${role}"`);
+      await f.grantReader(role); await f.exec(`GRANT SELECT ON public.system_attachment,public.store_order_invoice TO "${role}"`);
     };
     type Peer = Parameters<Parameters<typeof f.withReader>[0]>[0];
     const withReader = <T>(work: (peer: Peer) => Promise<T>) => f.withReader(async peer => { await grantReviewReader(peer.role); return work(peer); });

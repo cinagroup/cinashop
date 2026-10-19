@@ -5,6 +5,7 @@ import { NotFoundException, ValidateException } from '@/utils/errors';
 import { supplierOrderListInput, type SupplierOrderQuery } from './SupplierOrderListInput';
 import { supplierOrderListConditions } from './SupplierOrderListFilter';
 import { readSupplierOrderReview, supplierOrderReviewColumns } from './SupplierOrderReview';
+import { readSupplierOrderInvoiceReview } from './SupplierOrderInvoiceReview';
 export type { SupplierOrderQuery } from './SupplierOrderListInput';
 
 const maximumId = 2_147_483_647;
@@ -87,7 +88,8 @@ export class SupplierOrderReadService {
         return row;
       });
       const review = await readSupplierOrderReview(db, reviewSource, cartInfo, appKey);
-      return { ...order, cart_info: cartInfo, review };
+      const invoice = await readSupplierOrderInvoiceReview(db, reviewSource);
+      return { ...order, cart_info: cartInfo, review: { ...review, invoice } };
     });
   }
 }

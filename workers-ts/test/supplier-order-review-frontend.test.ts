@@ -213,3 +213,101 @@ it.each(['close','route','session'])('erases private review on %s and rejects an
     expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('下单时的历史地址'); expect(f.calls.filter(c => c.url === '/order/info/25').at(-1).signal.aborted).toBe(true);
   } finally { pending.resolve(detail()); f.close(); }
 });
+
+const invoiceRecord = (overrides: any = {}) => ({ id: 41, order_id: 25, type: 2, header_type: 2,
+  name: '申请时企业抬头', duty_number: 'LOCAL-TAX-2026', email: 'invoice@example.invalid', bank: '申请记录开户银行',
+  address: '申请记录企业地址\n东侧二层', drawer_phone: '01000000000', recorded_amount: '8.25', issuance_state: 0, archived: false, ...overrides });
+const invoiceReview = (overrides: any = {}) => ({ state: 'recorded', reason: '', record: invoiceRecord(), ...overrides });
+it('renders all eight PHP invoice facts and labels amount and issuance as application records for a read-only viewer', async () => {
+  localStorage.setItem('supplier-permissions', '["supplier.order.view"]');
+  const f = await open(review({ invoice: invoiceReview() }));
+  try {
+    const text = contents(f.host);
+    for (const fact of ['发票申请记录','纸质专用发票','企业','申请时企业抬头','LOCAL-TAX-2026','invoice@example.invalid','申请记录开户银行','申请记录企业地址','01000000000','申请记录金额','¥8.25','待开票','不代表税务平台核验结果']) expect(text).toContain(fact);
+    expect(text).not.toContain('发送邮件'); expect(text).not.toContain('确认开票');
+    expect(nodes(f.host).some(n => n.tag === 'a' && String(n.props.href).startsWith('mailto:'))).toBe(false);
+    expect(f.calls.every(c => c.method === 'get')).toBe(true);
+    expect(f.calls.some(c => /invoice|user_invoice/.test(c.url))).toBe(false);
+  } finally { f.close(); }
+});
+it.each([{ state: -1, text: '已拒绝' },{ state: 0, text: '待开票' },{ state: 1, text: '已开票' }])
+  ('shows issuance record state $state without claiming tax verification', async ({ state, text }) => {
+    const f = await open(review({ invoice: invoiceReview({ record: invoiceRecord({ type: 1, header_type: 1, issuance_state: state }) }) }));
+    try { expect(contents(f.host)).toContain(text); expect(contents(f.host)).toContain('电子普通发票'); expect(contents(f.host)).toContain('个人'); expect(contents(f.host)).toContain('不代表税务平台核验结果'); }
+    finally { f.close(); }
+  });
+it('keeps a recorded zero application amount and missing optional fiscal fields distinct from no application', async () => {
+  const f = await open(review({ invoice: invoiceReview({ record: invoiceRecord({ recorded_amount: '0.00', duty_number: '', email: '', bank: '', address: '', drawer_phone: '' }) }) }));
+  try { expect(contents(f.host)).toContain('¥0.00'); expect(contents(f.host)).toContain('未记录'); expect(contents(f.host)).not.toContain('本订单未记录发票申请'); }
+  finally { f.close(); }
+});
+it('labels an exact own payment-root archived application without adding its amount to child applications', async () => {
+  const f = await open(review({ order_kind: 'payment_summary', invoice: invoiceReview({ record: invoiceRecord({ archived: true }) }) }), { pid: -1 });
+  try { expect(contents(f.host)).toContain('已归档的发票申请记录'); expect(contents(f.host)).toContain('付款汇总的历史申请'); expect(contents(f.host)).toContain('金额勿与子订单重复相加'); }
+  finally { f.close(); }
+});
+it.each([
+  { invoice: undefined, expected: '发票申请信息未返回，请重新读取详情', omit: true },
+  { invoice: { state: 'none', reason: '', record: null }, expected: '本订单未记录发票申请', omit: false },
+  { invoice: { state: 'unavailable', reason: '原支付主单申请待处理归属', record: null }, expected: '原支付主单申请待处理归属', omit: false },
+])('distinguishes missing contract, no application and unavailable association: $expected', async ({ invoice, expected, omit }) => {
+  const value = review(); if (!omit) value.invoice = invoice;
+  const f = await open(value); try { expect(contents(f.host)).toContain(expected); expect(contents(f.host)).toContain('下单时的历史地址'); expect(contents(f.host)).not.toContain('申请时企业抬头'); }
+  finally { f.close(); }
+});
+it('renders long valid Unicode fiscal fields as plain text with no HTML execution', async () => {
+  const name = '🏢'.repeat(100), address = '📍'.repeat(255), value = invoiceRecord({ name, address,
+    duty_number: '🧾'.repeat(50), email: '<script>stored fiscal text</script>', bank: '🏦'.repeat(50), drawer_phone: '📞'.repeat(30) });
+  const f = await open(review({ invoice: invoiceReview({ record: value }) }));
+  try { expect(contents(f.host)).toContain(name); expect(contents(f.host)).toContain(address); expect(contents(f.host)).toContain('<script>stored fiscal text</script>'); expect(nodes(f.host).some(n => n.props.innerHTML)).toBe(false); }
+  finally { f.close(); }
+});
+it.each([
+  ['foreign physical order', (v: any) => { v.record.order_id = 32; }],
+  ['missing association', (v: any) => { delete v.record.order_id; }],
+  ['unknown invoice type', (v: any) => { v.record.type = 9; }],
+  ['unknown header type', (v: any) => { v.record.header_type = 0; }],
+  ['unknown issuance state', (v: any) => { v.record.issuance_state = 2; }],
+  ['float amount', (v: any) => { v.record.recorded_amount = 8.25; }],
+  ['negative amount', (v: any) => { v.record.recorded_amount = '-8.25'; }],
+  ['oversized tax field', (v: any) => { v.record.duty_number = 'x'.repeat(101); }],
+  ['forbidden control', (v: any) => { v.record.name = 'bad\u0000title'; }],
+  ['extra bank account', (v: any) => { v.record.card_number = 'MUST-NOT-RENDER'; }],
+  ['ambiguous unavailable payload', (v: any) => { v.state = 'unavailable'; v.reason = '重复申请'; }],
+  ['unexplained unavailable', (v: any) => { v.state = 'unavailable'; v.record = null; }],
+  ['none with reason', (v: any) => { v.state = 'none'; v.record = null; v.reason = 'wrong'; }],
+  ['array state', (v: any) => { v.state = ['unavailable']; v.record = null; v.reason = '待核对'; }],
+  ['null invoice', (_v: any) => {}],
+])('rejects %s invoice response before displaying fiscal details and retries the actual detail endpoint', async (name, change: (v: any) => void) => {
+  const broken = invoiceReview(); change(broken); let current = name === 'null invoice' ? null : broken;
+  const f = await mount(c => c.url === '/order/info/25' ? detail(25, review({ invoice: current })) : undefined);
+  try {
+    await f.view.openOrder(order()); await flush(); expect(f.view.current.value).toBeNull();
+    expect(nodes(f.host).find(n => n.tag === 'el-alert' && String(n.props.title).includes('发票申请信息不完整'))).toBeTruthy();
+    expect(contents(f.host)).not.toContain('申请时企业抬头');
+    current = invoiceReview(); button(f, '重新读取详情').props.onClick(); await flush();
+    expect(contents(f.host)).toContain('申请时企业抬头'); expect(f.calls.filter(c => c.url === '/order/info/25')).toHaveLength(2);
+  } finally { f.close(); }
+});
+it('never revives an old invoice detail after order A to B to A navigation', async () => {
+  const pending = gate(); let hold = true;
+  const fresh = (id: number) => detail(id, review({ invoice: invoiceReview({ record: invoiceRecord({ order_id: id, name: `当前申请-${id}` }) }), ...(id === 32 ? { order_kind: 'payment_summary' } : {}) }), id === 32 ? { pid: -1, delivery_type: 'split' } : {});
+  const f = await mount(c => c.url.startsWith('/order/info/') ? c.url === '/order/info/25' && hold ? pending.promise : fresh(Number(c.url.split('/').at(-1))) : undefined);
+  try {
+    const reading = f.view.openOrder(order()); await flush(); await f.view.openOrder(order(32)); hold = false; await f.view.openOrder(order());
+    pending.resolve(detail(25, review({ invoice: invoiceReview({ record: invoiceRecord({ name: '过时其他发票抬头' }) }) }))); await reading; await flush();
+    expect(contents(f.host)).toContain('当前申请-25'); expect(contents(f.host)).not.toContain('过时其他发票抬头'); expect(f.calls.find(c => c.url === '/order/info/25').signal.aborted).toBe(true);
+  } finally { pending.resolve(detail()); f.close(); }
+});
+it.each(['close','route','session'])('clears private invoice facts on %s and rejects the delayed fiscal response', async action => {
+  const pending = gate(); let hold = false;
+  const value = detail(25, review({ invoice: invoiceReview() }));
+  const f = await mount(c => c.url === '/order/info/25' ? hold ? pending.promise : value : undefined);
+  try {
+    await f.view.openOrder(order()); expect(contents(f.host)).toContain('申请时企业抬头'); hold = true; const reading = f.view.refreshCurrent(); await flush();
+    if (action === 'close') f.view.drawerOpen.value = false;
+    if (action === 'route') await f.router.push('/away');
+    if (action === 'session') for (const token of ['other-account','tracking-a']) { localStorage.setItem('supplier-token',token); const e = new Event('storage'); Object.assign(e,{key:'supplier-token',storageArea:localStorage}); surface.dispatchEvent(e); }
+    pending.resolve(value); await reading; await flush(); expect(f.view.current.value).toBeNull(); expect(contents(f.host)).not.toContain('申请时企业抬头');
+  } finally { pending.resolve(value); f.close(); }
+});

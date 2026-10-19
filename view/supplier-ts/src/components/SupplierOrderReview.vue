@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SupplierOrderReview } from '@/utils/orderReview';
 import { reviewMoney } from '@/utils/orderReview';
+import SupplierOrderInvoiceReview from './SupplierOrderInvoiceReview.vue';
 defineProps<{ review: SupplierOrderReview; paid: number }>();
 </script>
 
@@ -56,6 +57,7 @@ defineProps<{ review: SupplierOrderReview; paid: number }>();
       <div><dt>{{ paid === 1 ? '客户已付金额' : '客户应付金额' }}</dt><dd>{{ reviewMoney(review.amounts.pay_price) }}</dd></div>
       <div><dt>累计退款记录</dt><dd>{{ reviewMoney(review.amounts.refund_price) }}</dd></div>
     </dl>
+    <SupplierOrderInvoiceReview :invoice="review.invoice" :payment-summary="review.order_kind === 'payment_summary'" />
     <section v-if="review.form.length" class="review-form" aria-label="下单补充信息">
       <h3>下单补充信息</h3>
       <dl class="review-facts"><div v-for="(field, index) in review.form" :key="`${field.id}-${index}`">
