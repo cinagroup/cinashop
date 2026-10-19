@@ -659,6 +659,8 @@ export interface RefundExecutionResult {
 }
 
 export interface RefundDetail extends RefundRow {
+  requestImages?: Array<{ url: string; src: string }>;
+  requestImagesError?: string;
   refundHistory?: import('../../common/refundHistory').RefundHistory | null;
   application_review?: import('./utils/refundApplicationReview').SupplierRefundApplicationReview;
   cartInfo: unknown;

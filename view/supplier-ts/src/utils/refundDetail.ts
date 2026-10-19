@@ -27,9 +27,22 @@ export function parseSupplierRefundDetail(value: unknown, id: number): RefundDet
   if (!Array.isArray(row.returnImages) || row.returnImages.length > 3) throw Error('退货凭证列表无效');
   const returnImages = row.returnImages.map(returnPreview);
   if (new Set(returnImages.map(image => image.url)).size !== returnImages.length || (row.returnImagesError && returnImages.length)) throw Error('退货凭证列表无效');
+  let requestImages: Array<{ url: string; src: string }> | undefined;
+  let requestImagesError: string | undefined;
+  if (Object.hasOwn(row, 'requestImages') || Object.hasOwn(row, 'requestImagesError')) {
+    if (!Array.isArray(row.requestImages) || row.requestImages.length > 3
+      || typeof row.requestImagesError !== 'string' || row.requestImagesError.length > 255) throw Error('申请凭证响应无效，请刷新详情');
+    requestImages = row.requestImages.map(value => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)
+        || Object.keys(value).sort().join(',') !== 'src,url') throw Error('申请凭证响应无效，请刷新详情');
+      return returnPreview(value);
+    });
+    requestImagesError = row.requestImagesError;
+    if (new Set(requestImages.map(image => image.url)).size !== requestImages.length || (requestImagesError && requestImages.length)) throw Error('申请凭证列表无效');
+  }
   const refundHistory = parseRefundHistory(row.refundHistory, { id, sourceOrderId: row.store_order_id,
     refundNum: Number(row.refund_num), refundType: Number(row.refund_type), isCancel: Number(row.is_cancel) });
   const application_review = Object.hasOwn(row, 'application_review')
     ? parseSupplierRefundApplicationReview(row.application_review, row as unknown as RefundDetail) : undefined;
-  return { ...row, returnImages, refundHistory, application_review } as RefundDetail;
+  return { ...row, returnImages, requestImages, requestImagesError, refundHistory, application_review } as RefundDetail;
 }

@@ -7,8 +7,8 @@
       <view v-if="navigationError" class="policy-warning" role="alert">{{ navigationError }}</view>
       <view v-if="state.refundId" class="receipt" role="status">退款申请 #{{ state.refundId }} 已提交，等待商家处理；不代表退款已到账。</view>
       <button v-if="orderId && !auth.isLoggedIn" :disabled="navigating" @tap="login">登录后申请</button>
-      <button v-if="orderId && auth.isLoggedIn" :disabled="state.loading || state.submitting || navigating" @tap="load">{{ state.loading ? '正在加载订单…' : '重新加载订单' }}</button>
-      <button v-if="state.refundId || state.uncertain" :disabled="state.loading || state.submitting || navigating" @tap="goRefund">{{ state.refundId ? '查看退款申请' : '核对退款记录' }}</button>
+      <button v-if="orderId && auth.isLoggedIn" :disabled="state.loading || state.submitting || state.uploading || navigating" @tap="load">{{ state.loading ? '正在加载订单…' : '重新加载订单' }}</button>
+      <button v-if="state.refundId || state.uncertain" :disabled="state.loading || state.submitting || state.uploading || navigating" @tap="goRefund">{{ state.refundId ? '查看退款申请' : '核对退款记录' }}</button>
     </view>
     <view v-if="order" class="body">
       <view class="order-summary">订单号：{{ order.order_id }} · 订单金额 ¥{{ order.pay_price }}</view>
@@ -66,6 +66,19 @@
         />
       </view>
 
+      <view class="form-card application-evidence" role="region" aria-label="退款申请凭证">
+        <view class="card-title">申请凭证（选填，最多三张）</view>
+        <view class="refund-note">上传与本次退款原因有关的图片，提交后供商家核对。</view>
+        <button :disabled="!editable || state.images.length >= 3" :loading="state.uploading" @tap="uploadApplicationImage">{{ state.uploading ? '正在上传申请凭证…' : '上传申请凭证' }}</button>
+        <view class="application-images">
+          <view v-for="(image, index) in state.images" :key="image.url" class="application-image">
+            <view v-if="failedImages.includes(image.url)" role="alert" class="policy-warning">申请凭证 {{ index + 1 }} 预览失败，可移除后重新上传</view>
+            <image v-else :src="image.src" mode="aspectFit" :alt="`退款申请凭证 ${index + 1}`" @error="imageFailed(image.url)" @tap="previewApplicationImage(image.url)" />
+            <button size="mini" :disabled="!editable" @tap="removeApplicationImage(index)">移除申请凭证 {{ index + 1 }}</button>
+          </view>
+        </view>
+      </view>
+
       <button class="submit-btn" :disabled="!canSubmit || !selectedIds.length || !reason.trim()" :loading="state.submitting" @tap="submit">提交退款申请</button>
     </view>
     <view v-else-if="state.loading" class="empty">正在核对退款订单…</view>
@@ -82,6 +95,7 @@ import { apiOrderDetail, apiRefundApply } from "@/api/order";
 import type { OrderInfo } from "@/types/order";
 import { useAuthStore } from "@/stores/auth";
 import { RequestError } from "@/utils/request";
+import { apiReturnImage } from '@/api/refundReturn';
 import { createRefundApplication, initialRefundApplication, refundBlockReason, refundHashId, type RefundItem } from "../../../../common/refundApplication";
 import { orderDetailId } from "../../../../common/orderDetailIdentity";
 
@@ -93,6 +107,8 @@ const selectedIds = computed({ get: () => state.selectedIds, set: value => { sta
 const reason = computed({ get: () => state.form.refundReason, set: value => { state.form.refundReason = value; } });
 const explain = computed({ get: () => state.form.refundExplain, set: value => { state.form.refundExplain = value; } });
 const orderId = ref(''), routeError = ref(''), navigating = ref(false), navigationError = ref('');
+const failedImages = ref<string[]>([]);
+watch(() => state.images, () => { failedImages.value = []; }, { flush: 'sync' });
 let visible = false, disposed = false, lastHash = '', navigationVersion = 0;
 const reasons = ["不想要了", "商品质量问题", "发错货", "与描述不符", "其他"];
 const refundBlockedReason = computed(() => order.value ? refundBlockReason(order.value) : '');
@@ -119,6 +135,32 @@ async function load() {
   await controller.load();
 }
 async function submit() { if (!navigating.value) await controller.submit(); }
+async function uploadApplicationImage() {
+  if (navigating.value) return;
+  await controller.uploadImage(async current => {
+    const file = await new Promise<{ path: string; size: number } | null>((resolve, reject) => uni.chooseImage({ count: 1, sizeType: ['original'],
+      success(result) {
+        const files = result.tempFiles, paths = result.tempFilePaths;
+        if (!Array.isArray(files) || files.length !== 1 || !Array.isArray(paths) || paths.length !== 1 || typeof paths[0] !== 'string' || !paths[0]) { reject(Error('请选择一张图片')); return; }
+        resolve({ path: paths[0], size: files[0].size });
+      }, fail(error) { if (error.errMsg?.includes('cancel')) resolve(null); else reject(Error('无法选择图片，请重试')); },
+    }));
+    if (!current() || !file) return null;
+    if (!Number.isFinite(file.size) || file.size <= 0 || file.size > 10 * 1024 * 1024) throw Error('图片大小须在10 MiB以内');
+    return apiReturnImage(file.path);
+  });
+}
+function removeApplicationImage(index: number) {
+  if (!navigating.value) { const image = state.images[index]; controller.removeImage(index); if (image && !state.images.includes(image)) failedImages.value = failedImages.value.filter(url => url !== image.url); }
+}
+function imageFailed(url: string) { if (state.images.some(image => image.url === url) && !failedImages.value.includes(url)) failedImages.value.push(url); }
+function previewApplicationImage(url: string) {
+  if (!editable.value || failedImages.value.includes(url)) return;
+  const image = state.images.find(item => item.url === url); if (!image) return;
+  const owner = capture();
+  try { uni.previewImage({ current: image.src, urls: state.images.map(item => item.src), fail() { if (owner.current()) state.submitError = '图片预览未打开，请重试'; } }); }
+  catch { if (owner.current()) state.submitError = '图片预览未打开，请重试'; }
+}
 function toggleItem(item: RefundItem) { if (editable.value) controller.toggle(item); }
 function setReason(value: string) { if (editable.value) reason.value = value; }
 function setType(value: number) { if (editable.value && (value === 1 || (value === 2 && !isVirtualOrder.value))) state.form.applyType = value; }
@@ -135,7 +177,7 @@ function readHashRoute() {
 }
 function hashChanged() { if (visible && !disposed) readHashRoute(); }
 function navigate(url: string) {
-  if (!visible || disposed || navigating.value || state.loading || state.submitting) return;
+  if (!visible || disposed || navigating.value || state.loading || state.submitting || state.uploading) return;
   const version = ++navigationVersion; navigating.value = true; navigationError.value = '';
   // Anonymous login navigation is allowed, but its callbacks are still identity/route scoped.
   const uid = auth.uid, session = auth.sessionVersion, id = orderId.value;
@@ -173,6 +215,10 @@ onUnload(() => {
 .body {
   padding: 20rpx;
 }
+.application-images { display:flex; flex-wrap:wrap; gap:20rpx; margin-top:20rpx; }
+.application-image { min-width:0; width:calc(50% - 10rpx); }
+.application-image image { display:block; width:100%; height:220rpx; }
+.application-image button { font-size:24rpx; overflow-wrap:anywhere; }
 .page-status { padding: 20rpx; display: flex; flex-direction: column; gap: 16rpx; }
 .page-status button { width: 100%; font-size: 28rpx; }
 .order-summary, .refund-note { font-size: 24rpx; color: #666; line-height: 1.6; overflow-wrap: anywhere; margin-bottom: 20rpx; }

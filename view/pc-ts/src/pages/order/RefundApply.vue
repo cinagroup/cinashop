@@ -6,9 +6,9 @@
     <el-alert v-if="navigationError" :title="navigationError" type="warning" :closable="false" class="policy-alert" />
     <el-alert v-if="state.refundId" :title="`退款申请 #${state.refundId} 已提交，等待商家处理；不代表退款已到账`" type="success" :closable="false" class="policy-alert" />
     <div class="page-actions">
-      <el-button :disabled="loading || submitting || navigating" @click="load">重新加载订单</el-button>
-      <el-button v-if="state.refundId || state.uncertain" :disabled="loading || submitting || navigating" @click="goOrder">查看订单</el-button>
-      <el-button v-if="state.refundId || state.uncertain" :disabled="loading || submitting || navigating" @click="goRefund">查看退款记录</el-button>
+      <el-button :disabled="loading || submitting || state.uploading || navigating" @click="load">重新加载订单</el-button>
+      <el-button v-if="state.refundId || state.uncertain" :disabled="loading || submitting || state.uploading || navigating" @click="goOrder">查看订单</el-button>
+      <el-button v-if="state.refundId || state.uncertain" :disabled="loading || submitting || state.uploading || navigating" @click="goRefund">查看退款记录</el-button>
     </div>
 
     <el-card v-loading="loading" shadow="never" class="refund-card">
@@ -52,6 +52,20 @@
             placeholder="请描述退款原因"
           />
         </el-form-item>
+        <el-form-item label="申请凭证">
+          <section class="application-evidence" aria-label="退款申请凭证">
+            <p class="refund-note">选填，最多三张。上传与本次退款原因有关的图片，提交后供商家核对。</p>
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="上传申请凭证" :disabled="!editable || state.images.length >= 3" @click="beginApplicationImageSelection" @change="uploadApplicationImage" />
+            <p v-if="state.uploading" role="status">正在上传申请凭证…</p>
+            <div class="application-images">
+              <div v-for="(image, index) in state.images" :key="image.url">
+                <p v-if="failedImages.includes(image.url)" role="alert">申请凭证 {{ index + 1 }} 预览失败，可移除后重新上传</p>
+                <a v-else :href="image.src" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" :aria-label="`查看申请凭证 ${index + 1}`"><img :src="image.src" :alt="`退款申请凭证 ${index + 1}`" @error="imageFailed(image.url)" /></a>
+                <el-button :disabled="!editable" @click="removeApplicationImage(index)">移除申请凭证 {{ index + 1 }}</el-button>
+              </div>
+            </div>
+          </section>
+        </el-form-item>
         <el-form-item>
           <el-button
             type="danger"
@@ -76,6 +90,7 @@ import { ApiResponseError } from "@/utils/apiError";
 import { captureAuthSession, isCurrentAuthSession, getUid, onAuthChange } from "@/utils/auth";
 import { createRefundApplication, initialRefundApplication, refundBlockReason } from "../../../../common/refundApplication";
 import { orderDetailId } from "../../../../common/orderDetailIdentity";
+import { apiReturnImage } from '@/api/refund';
 
 const route = useRoute();
 const router = useRouter();
@@ -83,6 +98,9 @@ const state=reactive(initialRefundApplication<OrderInfo>());
 const order=computed(()=>state.order),loading=computed(()=>state.loading),submitting=computed(()=>state.submitting);
 const form=state.form,selectedIds=computed({get:()=>state.selectedIds,set:value=>{state.selectedIds=value;}});
 const navigating=ref(false),navigationError=ref('');let disposed=false,navigationVersion=0,id='';
+const failedImages=ref<string[]>([]);
+let imagePickerOwner: ReturnType<typeof capture> | undefined;
+watch(()=>state.images,()=>{failedImages.value=[];},{flush:'sync'});
 const isVirtualOrder = computed(() => [1, 3, 4].includes(order.value?.product_type ?? 0));
 const refundBlockedReason=computed(()=>order.value?refundBlockReason(order.value):'');
 function capture(){
@@ -93,11 +111,22 @@ function capture(){
 const controller=createRefundApplication(state,{capture,read:apiOrderDetail,write:(id,body)=>getData(request.post(`/order/refund/apply/${id}`,body)),
   isRejected:error=>error instanceof ApiResponseError&&error.status===400});
 const canSubmit=computed(()=>controller.canSubmit()&&!navigating.value),editable=computed(()=>canSubmit.value);
-function clear(){controller.clear();navigationVersion++;navigating.value=false;navigationError.value='';}
+function clear(){imagePickerOwner=undefined;controller.clear();navigationVersion++;navigating.value=false;navigationError.value='';}
 async function load(){if(disposed||navigating.value)return;await controller.load();}
 async function submit(){if(!navigating.value)await controller.submit();}
+function beginApplicationImageSelection(){imagePickerOwner=editable.value?capture():undefined;}
+async function uploadApplicationImage(event: Event) {
+  const owner=imagePickerOwner;imagePickerOwner=undefined;
+  const input=event.target as HTMLInputElement,file=input.files?.[0];input.value='';
+  if(file&&!navigating.value&&owner?.current()) await controller.uploadImage(async current=>current()&&owner.current()?apiReturnImage(file):null);
+}
+function removeApplicationImage(index:number) {
+  if(navigating.value)return;const image=state.images[index];controller.removeImage(index);
+  if(image&&!state.images.includes(image))failedImages.value=failedImages.value.filter(url=>url!==image.url);
+}
+function imageFailed(url:string){if(state.images.some(image=>image.url===url)&&!failedImages.value.includes(url))failedImages.value.push(url);}
 async function navigateResult(refund = false){
-  if(disposed||loading.value||submitting.value||navigating.value||!capture().current())return;
+  if(disposed||loading.value||submitting.value||state.uploading||navigating.value||!capture().current())return;
   const owner=capture(),version=++navigationVersion;navigating.value=true;navigationError.value='';
   const target = refund ? (state.refundId ? `/user/refunds/${state.refundId}` : `/user/refunds?q=${encodeURIComponent(owner.id)}`) : `/order/${owner.id}`;
   try{const result=await router.push(target);if(owner.current()&&isNavigationFailure(result))navigationError.value='页面未打开，请重试查看，不会重复提交申请';}
@@ -132,4 +161,10 @@ onBeforeUnmount(()=>{disposed=true;stopAuth();clear();});
 .refund-items :deep(.el-checkbox) { height:auto; white-space:normal; margin:8px 0; }
 .refund-items :deep(.el-checkbox__label) { white-space:normal; overflow-wrap:anywhere; }
 .refund-note { color:#666; font-size:13px; line-height:1.6; }
+.application-evidence { width:100%; min-width:0; }
+.application-evidence input { max-width:100%; }
+.application-images { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
+.application-images > div { width:140px; max-width:100%; min-width:0; }
+.application-images img { display:block; width:100%; height:140px; object-fit:contain; }
+.application-images :deep(button) { max-width:100%; margin:8px 0; }
 </style>

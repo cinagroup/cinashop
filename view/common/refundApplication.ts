@@ -1,4 +1,5 @@
 import { assertOrderDetailIdentity, orderDetailId } from './orderDetailIdentity';
+import { parseReturnUpload, returnPreview, type ReturnImage } from './refundReturn';
 export interface RefundOrder {
     id: number;
     uid: number;
@@ -29,10 +30,12 @@ export interface RefundForm {
 }
 export interface RefundBody extends RefundForm {
     cartIds: number[];
+    refundImg?: string;
 }
 export function initialRefundApplication<T extends RefundOrder>() {
     return { order: null as T | null, items: [] as RefundItem[], selectedIds: [] as number[],
         form: { applyType: 1, refundReason: '', refundExplain: '' } as RefundForm,
+        images: [] as ReturnImage[], uploading: false,
         loading: false, submitting: false, loadError: '', submitError: '', uncertain: false, refundId: 0, revision: 0 };
 }
 export type RefundState<T extends RefundOrder> = ReturnType<typeof initialRefundApplication<T>>;
@@ -103,6 +106,8 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
         state.selectedIds = [];
         state.loading = false;
         state.submitting = false;
+        state.images = [];
+        state.uploading = false;
         state.loadError = '';
         state.submitError = '';
         state.uncertain = false;
@@ -112,7 +117,7 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
             Object.assign(state, outcome);
     }
     async function load() {
-        if (state.loading || state.submitting)
+        if (state.loading || state.submitting || state.uploading)
             return;
         clear(true);
         const owner = io.capture(), version = state.revision;
@@ -143,7 +148,25 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
                 state.loading = false;
         }
     }
-    function canSubmit() { return !!state.order && !refundBlockReason(state.order) && !state.loading && !state.submitting && !state.uncertain && !state.refundId && io.capture().current(); }
+    function canSubmit() { return !!state.order && !refundBlockReason(state.order) && !state.loading && !state.submitting && !state.uploading && !state.uncertain && !state.refundId && io.capture().current(); }
+    async function uploadImage(pickAndUpload: (current: () => boolean) => Promise<unknown | null>) {
+        if (!canSubmit() || state.images.length >= 3) return;
+        const owner = io.capture(), revision = state.revision;
+        const current = () => revision === state.revision && owner.current();
+        state.uploading = true; state.submitError = '';
+        try {
+            const raw = await pickAndUpload(current);
+            if (!current() || raw === null) return;
+            const image = parseReturnUpload(raw);
+            if (state.images.some(value => value.url === image.url)) throw Error('该申请凭证已添加');
+            state.images.push(image);
+        } catch (error) {
+            if (current()) state.submitError = error instanceof Error ? error.message : '申请凭证上传失败，请重试';
+        } finally { if (current()) state.uploading = false; }
+    }
+    function removeImage(index: number) {
+        if (canSubmit() && Number.isInteger(index) && index >= 0 && index < state.images.length) state.images.splice(index, 1);
+    }
     function toggle(item: RefundItem) {
         if (!canSubmit() || !state.items.includes(item) || !item.refundable)
             return;
@@ -163,7 +186,14 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
                 throw Error('该订单退款类型无效');
             if (!refundReason || refundReason.length > 255 || refundExplain.length > 255)
                 throw Error('请填写退款原因，原因和说明均不能超过255字');
-            body = { applyType, refundReason, refundExplain, cartIds: ids };
+            const images = state.images.map(image => {
+                const parsed = returnPreview(image);
+                if (!/^\/api\/assets\/[1-9]\d*$/.test(parsed.url)) throw Error('请使用已上传的申请凭证');
+                return parsed.url;
+            });
+            if (images.length > 3 || new Set(images).size !== images.length) throw Error('最多上传三张不同的申请凭证');
+            body = { applyType, refundReason, refundExplain, cartIds: ids,
+                ...(images.length ? { refundImg: JSON.stringify(images) } : {}) };
         }
         catch (error) {
             state.submitError = error instanceof Error ? error.message : '申请内容无效';
@@ -197,5 +227,5 @@ export function createRefundApplication<T extends RefundOrder>(state: RefundStat
                 state.submitting = false;
         }
     }
-    return { clear, load, canSubmit, toggle, submit };
+    return { clear, load, canSubmit, toggle, uploadImage, removeImage, submit };
 }

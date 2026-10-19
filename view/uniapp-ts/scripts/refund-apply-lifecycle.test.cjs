@@ -110,3 +110,80 @@ test('UniApp refund H5 hash changes clear the form and reject duplicate order ID
     window.location.hash='#/pages/order/list';handlers.get('hashchange')();assert.equal(r.checkout.order.value,null);assert.equal(r.calls.length,2);
   }finally{r.stop();assert.equal(handlers.size,0);if(descriptor)Object.defineProperty(globalThis,'window',descriptor);else delete globalThis.window;}
 });
+
+
+const uploadedImage = (id = 31) => ({ att_id: id, url: `/api/assets/${id}`, src: `/api/assets/${id}?expires=1700001000&signature=${'a'.repeat(43)}`, size: 68, type: 'image/png' });
+function applicationUpload(r, id = 31) {
+  r.uni.chooseImage = options => options.success({ tempFilePaths: ['owned-local.png'], tempFiles: [{ size: 68 }] });
+  const calls = [];
+  r.uni.uploadFile = options => { calls.push(options); options.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: uploadedImage(id) }) }); };
+  return calls;
+}
+test('application images use actual upload API and store only canonical references in the frozen request', async () => {
+  const wait = deferred(), r = setup(c => c.url.includes('/refund/apply/') ? wait.promise : undefined), uploads = applicationUpload(r);
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); await r.checkout.uploadApplicationImage();
+    assert.equal(uploads.length, 1); assert.equal(uploads[0].url, '/api/upload/image'); assert.equal(uploads[0].header['Authori-zation'], 'Bearer synthetic-local-token');
+    assert.equal(r.checkout.state.images.length, 1); const pending = r.checkout.submit(); await tick();
+    r.checkout.state.images.push(uploadedImage(32));
+    assert.equal(posts(r)[0].data.refundImg, '["/api/assets/31"]'); assert.ok(!JSON.stringify(posts(r)[0].data).includes('signature'));
+    wait.resolve({ data: { refundId: 91 } }); await pending;
+  } finally { wait.resolve({ status: 400 }); r.stop(); }
+});
+test('application image upload locks repeated picker, submit, refresh and navigation until completion', async () => {
+  const r = setup(); let pendingUpload, picks = 0;
+  r.uni.chooseImage = options => { picks++; options.success({ tempFilePaths: ['owned.png'], tempFiles: [{ size: 68 }] }); };
+  r.uni.uploadFile = options => { pendingUpload = options; };
+  try {
+    await r.start({ orderId: 'local_A' }); fill(r); const pending = r.checkout.uploadApplicationImage(); await tick();
+    await r.checkout.uploadApplicationImage(); await r.checkout.submit(); await r.checkout.load(); r.checkout.goRefund();
+    assert.equal(picks, 1); assert.equal(posts(r).length, 0); assert.equal(r.calls.length, 1); assert.equal(r.checkout.editable.value, false);
+    pendingUpload.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: uploadedImage() }) }); await pending;
+    assert.equal(r.checkout.state.uploading, false); assert.equal(r.checkout.editable.value, true);
+  } finally { r.stop(); }
+});
+for (const ending of ['auth', 'hide', 'unload', 'route']) test(`application image late upload cannot cross ${ending}`, async () => {
+  const r = setup(); let pendingUpload;
+  applicationUpload(r); r.uni.uploadFile = options => { pendingUpload = options; };
+  try {
+    await r.start({ orderId: 'local_A' }); const pending = r.checkout.uploadApplicationImage(); await tick();
+    if (ending === 'auth') r.auth.setLogin('replacement', 22);
+    if (ending === 'hide') r.hooks.onHide();
+    if (ending === 'unload') r.hooks.onUnload();
+    if (ending === 'route') r.hooks.onLoad({ orderId: 'local_B' });
+    pendingUpload.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: uploadedImage() }) }); await pending;
+    assert.deepEqual(r.checkout.state.images, []); assert.equal(r.checkout.state.uploading, false); assert.equal(posts(r).length, 0);
+  } finally { r.stop(); }
+});
+for (const invalid of [
+  { ...uploadedImage(), url: '/api/assets/32' }, { ...uploadedImage(), att_id: '31' }, { ...uploadedImage(), size: 0 },
+  { ...uploadedImage(), src: 'javascript:alert(1)' }, { ...uploadedImage(), type: 'text/html' },
+  { ...uploadedImage(), url: 'https://legacy.invalid/img.png', src: 'https://legacy.invalid/img.png' },
+]) test(`application image rejects invalid upload receipt ${JSON.stringify(invalid)}`, async () => {
+  const r = setup(); applicationUpload(r); r.uni.uploadFile = options => options.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: invalid }) });
+  try { await r.start({ orderId: 'local_A' }); await r.checkout.uploadApplicationImage(); assert.deepEqual(r.checkout.state.images, []); assert.ok(r.checkout.state.submitError); assert.equal(r.checkout.state.uploading, false); }
+  finally { r.stop(); }
+});
+test('application upload enforces three distinct images, removal and explicit failure recovery', async () => {
+  const r = setup(); const calls = applicationUpload(r);
+  try {
+    await r.start({ orderId: 'local_A' }); await r.checkout.uploadApplicationImage(); await r.checkout.uploadApplicationImage();
+    assert.equal(r.checkout.state.images.length, 1); assert.match(r.checkout.state.submitError, /已添加/);
+    for (const id of [32, 33]) { r.uni.uploadFile = options => options.success({ statusCode: 200, data: JSON.stringify({ status: 200, data: uploadedImage(id) }) }); await r.checkout.uploadApplicationImage(); }
+    r.uni.chooseImage = () => { throw Error('must not pick fourth'); }; await r.checkout.uploadApplicationImage(); assert.equal(r.checkout.state.images.length, 3);
+    r.checkout.imageFailed('/api/assets/31'); assert.deepEqual(r.checkout.failedImages.value, ['/api/assets/31']);
+    r.checkout.removeApplicationImage(0); assert.equal(r.checkout.state.images.length, 2); assert.deepEqual(r.checkout.failedImages.value, []);
+    r.hooks.onHide(); assert.deepEqual(r.checkout.state.images, []);
+  } finally { r.stop(); }
+});
+test('application picker cancellation, oversized local files and failed transfer preserve retry without claiming submit uncertainty', async () => {
+  const r = setup(); let uploads = 0;
+  try {
+    await r.start({ orderId: 'local_A' }); r.uni.chooseImage = options => options.fail({ errMsg: 'chooseImage:fail cancel' });
+    await r.checkout.uploadApplicationImage(); assert.equal(r.checkout.state.submitError, '');
+    r.uni.chooseImage = options => options.success({ tempFilePaths: ['large.png'], tempFiles: [{ size: 10485761 }] });
+    r.uni.uploadFile = options => { uploads++; options.fail({}); }; await r.checkout.uploadApplicationImage(); assert.equal(uploads, 0);
+    r.uni.chooseImage = options => options.success({ tempFilePaths: ['owned.png'], tempFiles: [{ size: 68 }] }); await r.checkout.uploadApplicationImage();
+    assert.equal(uploads, 1); assert.equal(r.checkout.state.uncertain, false); assert.deepEqual(r.checkout.state.images, []); assert.equal(r.checkout.state.uploading, false);
+  } finally { r.stop(); }
+});

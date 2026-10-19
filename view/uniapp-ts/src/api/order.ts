@@ -363,7 +363,7 @@ export async function apiOrderDelete(orderId: string): Promise<void> {
 /** 退款申请 (POST /api/order/refund/apply/:orderId) */
 export function apiRefundApply(
   orderId: string,
-  params: { refundReason: string; refundExplain?: string; applyType?: number; cartIds?: number[] },
+  params: { refundReason: string; refundExplain?: string; applyType?: number; cartIds?: number[]; refundImg?: string },
 ): Promise<{ refundId: number }> {
   return http.post(`/order/refund/apply/${orderId}`, params);
 }

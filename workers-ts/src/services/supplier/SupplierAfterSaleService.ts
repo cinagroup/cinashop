@@ -17,6 +17,7 @@ import { parsePagination } from "@/services/supplier/SupplierService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { previewReturnImages } from "@/services/order/RefundReturnPayload";
+import { previewRefundApplicationEvidence, supplierRefundApplicationImagesSql } from "@/services/order/RefundApplicationEvidence";
 import { readStaffRefundHistory } from "@/services/order/RefundReadSnapshot";
 import { readSupplierRefundApplicationReview, supplierRefundApplicationCartInfo, supplierRefundApplicationOrderColumns } from "./SupplierRefundApplicationReview";
 
@@ -183,7 +184,7 @@ export class SupplierAfterSaleService {
       .select({ refund: {
         ...getTableColumns(storeOrderRefund),
         // Do not materialize unbounded legacy JSON in the Worker.
-        refundImg: sql<null>`NULL`,
+        refundImg: supplierRefundApplicationImagesSql,
         cartInfo: supplierRefundApplicationCartInfo,
         refundGoodsImg: sql<string | null>`CASE WHEN octet_length(${storeOrderRefund.refundGoodsImg}) <= 8192 THEN ${storeOrderRefund.refundGoodsImg} WHEN ${storeOrderRefund.refundGoodsImg} IS NULL THEN NULL ELSE '__invalid__' END`,
       }, order: supplierRefundApplicationOrderColumns, payment: {
@@ -218,6 +219,7 @@ export class SupplierAfterSaleService {
       && new TextEncoder().encode(refund.cartInfo).length > 65536 ? null : refund.cartInfo };
     const refundHistory = await readStaffRefundHistory(container.db, historyRefund);
     const applicationReview = await readSupplierRefundApplicationReview(container.db, refund, order);
+    const requestEvidence = await previewRefundApplicationEvidence(container, refund.uid, refund.refundImg, this.env.APP_KEY);
     let returnImages: Array<{ url: string; src: string }> = [];
     let returnImagesError = "";
     try {
@@ -246,6 +248,7 @@ export class SupplierAfterSaleService {
       refund_express_name: refund.refundExpressName,
       refund_phone: refund.refundPhone,
       refund_goods_explain: refund.refundGoodsExplain,
+      ...requestEvidence,
       returnImages,
       returnImagesError,
       refuse_reason: refund.refuseReason,

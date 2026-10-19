@@ -102,4 +102,62 @@ export function registerRefundApplyTests(getContext){
       }finally{waiting.resolve({status:400});if(ending!=='unmount')f.close();getContext().authUtils.setAuth('synthetic-local-token',11);}
     }
   });
+
+  const image = (id = 31) => ({ att_id: id, url: `/api/assets/${id}`, src: `/api/assets/${id}?expires=1700001000&signature=${'a'.repeat(43)}`, size: 68, type: 'image/png' });
+  const fileInput = () => ({ target: { value: 'local.png', files: [new File([new Uint8Array([137,80,78,71])], 'local.png', { type: 'image/png' })] } });
+  const selectFile = f => { f.view.beginApplicationImageSelection(); return fileInput(); };
+  it('PC application images upload via actual multipart API and submit canonical references only', async () => {
+    const f = await mount(c => c.url === '/upload/image' ? { status: 200, data: image() } : undefined);
+    try {
+      const event = selectFile(f); await f.view.uploadApplicationImage(event); assert.equal(event.target.value, '');
+      const upload = f.calls.find(c => c.url === '/upload/image'); assert.ok(upload.data instanceof FormData); assert.ok(upload.data.get('file') instanceof File);
+      assert.equal(upload.headers.get('Authori-zation'), 'Bearer session-a'); assert.equal(f.view.state.images[0].url, '/api/assets/31');
+      fill(f); await f.view.submit(); const request = f.calls.find(c => c.url.includes('/refund/apply/'));
+      assert.equal(JSON.parse(request.data).refundImg, '["/api/assets/31"]'); assert.ok(!request.data.includes('signature'));
+    } finally { f.close(); }
+  });
+  it('PC application upload locks submit, refresh and overlapping selections then recovers', async () => {
+    const wait = gate(), f = await mount(c => c.url === '/upload/image' ? wait.promise : undefined);
+    try {
+      fill(f); const pending = f.view.uploadApplicationImage(selectFile(f)); await flush();
+      await f.view.uploadApplicationImage(selectFile(f)); await f.view.submit(); await f.view.load();
+      assert.equal(f.calls.filter(c => c.url === '/upload/image').length, 1); assert.equal(f.calls.filter(c => c.url.includes('/refund/apply/')).length, 0); assert.equal(f.calls.length, 2);
+      assert.equal(f.view.editable.value, false); wait.resolve({ status: 200, data: image() }); await pending; assert.equal(f.view.editable.value, true);
+    } finally { wait.resolve({ status: 400 }); f.close(); }
+  });
+  for (const ending of ['route', 'auth', 'unmount']) it(`PC application late image cannot cross ${ending}`, async () => {
+    const wait = gate(), f = await mount(c => c.url === '/upload/image' ? wait.promise : undefined), view = f.view;
+    try {
+      const pending = view.uploadApplicationImage(selectFile(f)); await flush();
+      if (ending === 'route') await f.router.push('/refund/local_B');
+      if (ending === 'auth') getContext().authUtils.setAuth('replacement', 22);
+      if (ending === 'unmount') f.close();
+      wait.resolve({ status: 200, data: image() }); await pending; assert.deepEqual(view.state.images, []); assert.equal(view.state.uploading, false);
+    } finally { wait.resolve({ status: 400 }); if (ending !== 'unmount') f.close(); }
+  });
+  it('PC application image limit, duplicate, failed preview and removal preserve exact references', async () => {
+    let id = 31; const f = await mount(c => c.url === '/upload/image' ? { status: 200, data: image(id) } : undefined);
+    try {
+      await f.view.uploadApplicationImage(selectFile(f)); await f.view.uploadApplicationImage(selectFile(f)); assert.equal(f.view.state.images.length, 1); assert.match(f.view.state.submitError, /已添加/);
+      for (id of [32, 33]) await f.view.uploadApplicationImage(selectFile(f)); await f.view.uploadApplicationImage(selectFile(f));
+      assert.equal(f.calls.filter(c => c.url === '/upload/image').length, 4); assert.equal(f.view.state.images.length, 3);
+      f.view.imageFailed('/api/assets/31'); assert.deepEqual(f.view.failedImages.value, ['/api/assets/31']); f.view.removeApplicationImage(0);
+      assert.deepEqual(f.view.failedImages.value, []); assert.deepEqual(f.view.state.images.map(x => x.url), ['/api/assets/32', '/api/assets/33']);
+    } finally { f.close(); }
+  });
+  for (const malformed of [{ ...image(), att_id: '31' }, { ...image(), size: 0 }, { ...image(), src: 'javascript:alert(1)' }, { ...image(), url: '/api/assets/32' }]) it('PC application rejects malformed image upload receipt '+JSON.stringify(malformed), async () => {
+    const f = await mount(c => c.url === '/upload/image' ? { status: 200, data: malformed } : undefined);
+    try { await f.view.uploadApplicationImage(selectFile(f)); assert.deepEqual(f.view.state.images, []); assert.ok(f.view.state.submitError); assert.equal(f.view.state.uncertain, false); assert.equal(f.view.state.uploading, false); }
+    finally { f.close(); }
+  });
+
+  for (const ending of ['route', 'auth', 'unmount']) it(`PC application picker result cannot move to a new context after ${ending}`, async () => {
+    const f = await mount(), view = f.view, selected = selectFile(f);
+    try {
+      if (ending === 'route') { await f.router.push('/refund/local_B'); await flush(); }
+      if (ending === 'auth') getContext().authUtils.setAuth('replacement', 22);
+      if (ending === 'unmount') f.close();
+      await view.uploadApplicationImage(selected); assert.equal(f.calls.filter(c => c.url === '/upload/image').length, 0); assert.deepEqual(view.state.images, []);
+    } finally { if (ending !== 'unmount') f.close(); }
+  });
 }

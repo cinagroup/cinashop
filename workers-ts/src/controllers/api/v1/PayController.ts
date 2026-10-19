@@ -26,6 +26,7 @@ import {
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { readBoundedUtf8Text } from "@/utils/request-body";
 import { ownedReturnImages, parseReturnPayload, returnImageReferences } from '@/services/order/RefundReturnPayload';
+import { normalizeRefundApplicationEvidence } from '@/services/order/RefundApplicationEvidence';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_PAYMENT_CALLBACK_BODY_BYTES = 32 * 1024;
@@ -327,7 +328,16 @@ export async function refundApply(c: C) {
   if (!uid) return jsonFail(c, "请先登录");
   const orderId = c.req.param("id");
   if (!orderId) return jsonFail(c, "参数错误");
-  const body = (await c.req.json().catch(() => ({}))) as {
+  let input: unknown;
+  try {
+    const raw = await readBoundedUtf8Text(c.req.raw, 32 * 1024);
+    try { input = JSON.parse(raw); } catch { throw new ValidateException('退款申请格式无效'); }
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ValidateException('退款申请格式无效');
+  } catch (error) {
+    if (error instanceof ValidateException) return jsonFail(c, error.message);
+    throw error;
+  }
+  const body = input as {
     refundReason?: string;
     refundExplain?: string;
     refundImg?: string;
@@ -362,18 +372,15 @@ export async function refundApply(c: C) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);
     throw error;
   }
-  const legacyImage = Array.isArray(body.refund_reason_wap_img)
-    ? JSON.stringify(body.refund_reason_wap_img)
-    : body.refund_reason_wap_img;
-
   const svc = new StoreOrderRefundService(c.get("container"), c.env);
   try {
+    const refundImg = await normalizeRefundApplicationEvidence(c.get("container"), uid, input as Record<string, unknown>);
     const result = await svc.applyRefund({
       uid,
       orderId: authoritativeOrderId,
       refundReason: body.refundReason ?? body.text ?? "",
       refundExplain: body.refundExplain ?? body.refund_reason_wap_explain ?? "",
-      refundImg: body.refundImg ?? legacyImage,
+      ...(refundImg === undefined ? {} : { refundImg }),
       applyType: body.applyType ?? body.refund_type ?? 1,
       ...(legacySelections ? { cartSelections: legacySelections } : { cartIds: body.cartIds }),
     });

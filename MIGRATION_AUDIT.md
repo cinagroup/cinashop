@@ -1,5 +1,13 @@
 # CinaShop PHP → TypeScript/Cloudflare 迁移审计
 
+## 2026-10-19 退款申请原始图片：买家上传与 Supplier 核对
+
+接通 PHP 实际 PC/UniApp 申请页最多三张原始凭证：双端上传、预览与移除，普通 Customer 作者校验归属并仅保存规范引用，Supplier 独立展示申请图片。原始 refund_img 与后来退货 refund_goods_img 分开，旧公开 HTTPS 明示历史来源，非法或失联图片明确提示；路由、会话、迟到选图及详情失败均清除旧状态。
+
+最终24文件含20份执行源，921项去重通过（101项新增，13个直接测试入口），Supplier/PC/UniApp完整类型与生产构建、Worker两个完整类型项目通过。Browser PC/H5两例通过真实选图控件移除首图后重传，实际申请仅保存第二图；36次业务请求含6次真实上传/申请POST，其余30次GET逐次核对282表/229序列及R2写入不变，provider0。Supplier与图片GET使用独立SELECT-only LOGIN，买家写入使用自有maintenance连接；517份构建字节保持，三座自有PG全部清零并独立确认停止。来源、早期缺依赖/夹具类型修正、失败注入与合成付款边界见[说明](workers-ts/docs/php-ts-refund-application-evidence-20261019.md)和[账本](workers-ts/audit/php-ts-refund-application-evidence-20261019.json)。
+
+保留用户选定已恢复的PHP get_script及修订退役审计，双端商家启动实际GET200；原88/404复选行逐字保持，整体迁移继续active。本批分支codex/refund-application-evidence，草稿PR基于PR120，新提交CI按自身GitHub结果记录。移动端仅有既有UniApp路由依赖弃用提示；外部扩展连接、真实设备、生产角色/部署与provider验收仍开放。
+
 ## 2026-10-19 Supplier 退款申请商品与关联订单核对
 
 接通 PHP 实际 formType0 退款申请详情的商品、SKU、编码、赠品、申请数量及结算参考，明确区分现代数量 claim 与 PHP 完整申请快照；关联收货/付款记录说明来源。取消/拒绝后仅在原关联仍可证时展示，已完成物化退款沿用受保护归档，无当前剩余单/目录回退。原 raw cartInfo/orderInfo 键保留 null，未知新合同明确提示，非法合同拒绝绑定，现有退款作者继续沿用。

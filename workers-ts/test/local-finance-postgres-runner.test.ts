@@ -73,6 +73,22 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits the exact refund application evidence in-app mode without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:refund-application-evidence-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER'); expect(result.stderr).not.toContain('Only explicit');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:refund-application-evidence-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:refund-application-evidence-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'review', 'unused-bin', 'audit:refund-application-evidence-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:refund-application-evidence-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid refund application evidence Browser admission $args', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe(''); expect(result.stderr).toContain(error);
+  });
   it('admits the exact Supplier refund application review in-app mode without external browser settings', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:supplier-refund-application-review-browser'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
