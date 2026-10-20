@@ -2,6 +2,7 @@ import { ref, watch } from 'vue';
 import { onShow,onHide,onUnload,onShareAppMessage } from '@dcloudio/uni-app';
 import { http } from '@/utils/request';
 import { useAuthStore } from '@/stores/auth';
+import { bargainShareTarget } from '../../../common/bargainInvitation';
 import { cloneProductDetailDesign,isProductDetailDesignValue } from '../../../common/productDetailDesign';
 /** Old activity pages consume only media geometry/dots and footer choices. */
 export function useActivityDetailDesign(readPublic=true){
@@ -25,7 +26,7 @@ export function useActivityDetailDesign(readPublic=true){
 export function useActivityDetailShare(read:()=>{title:string;path:string;image:string}|null,active:()=>boolean){
   const auth=useAuthStore();onShareAppMessage(()=>{
     const data=active()?read():null;
-    if(!data||!/^\/pages\/activity\/(?:seckillDetail|detail|bargainDetail|presaleDetail|newcomerDetail)\?(?:id|bargain_id)=[1-9]\d*$/u.test(data.path))return{title:'商城',path:'/pages/index/index',imageUrl:''};
+    if(!data||!bargainShareTarget(data.path)&&!/^\/pages\/activity\/(?:seckillDetail|detail|bargainDetail|presaleDetail|newcomerDetail)\?(?:id|bargain_id)=[1-9]\d*$/u.test(data.path))return{title:'商城',path:'/pages/index/index',imageUrl:''};
     return{title:data.title,path:`${data.path}${auth.isLoggedIn&&auth.uid>0?`&spid=${auth.uid}`:''}`,imageUrl:data.image};
   });
 }

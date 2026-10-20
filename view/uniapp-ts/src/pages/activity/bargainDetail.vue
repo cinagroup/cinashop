@@ -1,7 +1,7 @@
 <template>
   <ThemePage>
   <view class="bargain-detail">
-    <view class="heading">{{ mine ? '我的砍价' : '砍价详情' }}</view>
+    <view class="heading">{{ mine ? '我的砍价' : helpMode ? '朋友的砍价邀请' : '砍价详情' }}</view>
     <view v-if="loading" class="notice">正在加载砍价…</view>
     <view v-if="error" class="error">{{ error }}</view>
     <button v-if="!prepared" size="mini" :disabled="loading || locked" @tap="load()">{{ mine ? '刷新我的砍价' : '刷新活动与资格' }}</button>
@@ -20,6 +20,21 @@
         <button size="mini" :disabled="loading || locked || page <= 1" @tap="load(page - 1)">上一页</button>
         <text>第 {{ page }} 页</text>
         <button size="mini" :disabled="loading || locked || !!error || records.length < 20 || page >= 10000" @tap="load(page + 1)">下一页</button>
+      </view>
+    </view>
+    <view v-else-if="helpMode && friend" class="product">
+      <ProductMedia :images="friend.image ? [friend.image] : []" video="" :picture-config="activityDesign.pictureConfig" :dots="activityDesign.swiperDot" :active="activityVisible"/>
+      <view class="info-section">
+        <view class="owner"><image v-if="friend.owner.avatar" :src="friend.owner.avatar" mode="aspectFill"/><text>{{ friend.owner.nickname || '朋友' }}的砍价</text></view>
+        <view class="heading">{{ friend.title }}</view>
+        <view class="notice">记录 #{{ friend.participant_id }} · {{ stateText(friend.participation.state) }}</view>
+        <view class="price">当前价 ¥{{ friend.participation.current_price }}</view>
+        <view class="notice">底价 ¥{{ friend.participation.minimum_price }} · 已砍 ¥{{ friend.participation.cut_price }} · 还需砍 ¥{{ friend.participation.remaining_cut }}</view>
+        <view class="progress"><view :style="{ width: friend.participation.progress_percent + '%' }"/></view>
+        <view class="notice">进度 {{ friend.participation.progress_percent }}% · 已有 {{ friend.help_count }} 人帮砍</view>
+        <view class="notice">{{ friendStateText(friend.help_state) }}</view>
+        <button :disabled="!canHelpFriend" :loading="buying" @tap="helpFriend">帮好友砍一刀</button>
+        <button :disabled="loading || locked" @tap="goOwn">{{ friend.is_owner ? '查看本人砍价记录' : '我也要参与' }}</button>
       </view>
     </view>
     <view v-else-if="detail" class="product">
@@ -52,7 +67,7 @@
         <view v-if="safeDescription" class="activity-description"><view class="heading">活动描述</view><rich-text :nodes="safeDescription" /></view>
       </view>
     </view>
-    <view v-if="!mine" class="action-bar"><ActivityDetailMenu v-if="detail" :menu="activityDesign.menuList" :product-id="detail.product_id" :path="`/pages/activity/bargainDetail?bargain_id=${detail.bargain_id}`" :title="detail.title" :image="selectedSku?.image || detail.image" :active="activityVisible"/><button class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '购买所选砍价规格' }}</button></view>
+    <view v-if="!mine" class="action-bar"><ActivityDetailMenu v-if="detail || friend" :menu="activityDesign.menuList" :product-id="(friend || detail)!.product_id" :path="sharePath" :title="(friend || detail)!.title" :image="friend?.image || selectedSku?.image || detail?.image || ''" :active="activityVisible"/><button v-if="!helpMode" class="buy-btn" :disabled="!canBuy" :loading="buying || navigating" @tap="purchase">{{ prepared ? '继续结算' : '购买所选砍价规格' }}</button></view>
     <DiySuspendedNavigation />
   </view>
   </ThemePage>
@@ -68,12 +83,14 @@ import { useBargainPurchase } from '@/composables/useBargainPurchase';
 import { computed } from 'vue';
 import { sanitizeArticleRichText } from '@/utils/articleRichText';
 const { mine, records, page, loggedIn, detail, selected, quantity, selectedSku, loading, buying, navigating, error, prepared,
-  open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase, startBargain, helpSelf } = useBargainPurchase();
-useActivityDetailShare(()=>detail.value?{title:detail.value.title,path:`/pages/activity/bargainDetail?bargain_id=${detail.value.bargain_id}`,image:selectedSku.value?.image||detail.value.image}:null,()=>activityVisible.value&&!mine.value);
+  open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase, startBargain, helpSelf,
+  helpMode, friend, sharePath, canHelpFriend, helpFriend, goOwn } = useBargainPurchase();
+useActivityDetailShare(()=>{const source=friend.value||detail.value;return source?{title:source.title,path:sharePath.value,image:friend.value?.image||selectedSku.value?.image||source.image}:null;},()=>activityVisible.value&&!mine.value);
 const safeDescription=computed(()=>sanitizeArticleRichText(detail.value?.content?.description ?? ''));
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 function statusText(status: number) { return ({ 1: '砍价中', 2: '已关闭', 3: '待复核资格', 4: '已使用' } as Record<number, string>)[status] || '未知'; }
 function stateText(state: string) { return ({ cutting: '砍价中', ready: '可购买', closed: '已关闭', used: '已使用' } as Record<string, string>)[state] || '未知'; }
+function friendStateText(state: string) { return ({ available: '朋友正在邀请你帮砍，点击下方按钮参与。', owner: '这是你发起的砍价，可返回本人记录继续操作。', already_helped: '你已帮这条记录砍过价。', limit_reached: '你在本活动的帮砍次数已用完。', people_full: '这条记录的帮砍人数已满。', ready: '已砍至底价，发起人可以查看购买资格。', closed: '这条砍价记录已关闭。', used: '这条砍价记录已使用。', future: '活动尚未开始。', ended: '活动已结束。', sold_out: '活动商品暂时售罄。' } as Record<string, string>)[state] || '请刷新活动与资格。'; }
 function setQuantity(event: unknown) {
   const payload = event as { detail?: { value?: unknown }; target?: { value?: unknown } };
   const value = payload.detail?.value ?? payload.target?.value, raw = typeof value === 'string' ? value : '';
@@ -86,6 +103,7 @@ function setQuantity(event: unknown) {
 .heading { font-size: 32rpx; font-weight: 600; overflow-wrap: anywhere; margin: 20rpx 0; }
 .product, .record { margin-top: 24rpx; background: white; border-radius: 16rpx; overflow: hidden; }
 .record, .info-section { padding: 24rpx; }
+.owner { display:flex;align-items:center;gap:16rpx;font-size:28rpx; }.owner image { width:64rpx;height:64rpx;border-radius:50%; }
 .goods-img { width: 100%; height: 440rpx; background: #f5f5f5; }
 .gallery {height:440rpx;}.activity-description {overflow-wrap:anywhere;overflow-x:auto;margin-top:24rpx;}
 .notice { margin: 18rpx 0; font-size: 25rpx; color: #666; line-height: 1.6; }

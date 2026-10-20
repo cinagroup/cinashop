@@ -1,7 +1,8 @@
+import { bargainShareTarget } from '../../../common/bargainInvitation';
 export const SHARE_TYPES = [-1, 0, 1, 2, 3, 4, 6, 7, 90, 91] as const;
 export type LegacyShareType = typeof SHARE_TYPES[number];
 export interface LegacyShareCode { routineUrl: string; wechatUrl: string; site_name: string; nickname: string }
-export interface ShareScene { type: LegacyShareType; id: number; spid: number; path: string; h5_origin?: string; namespace?: 'member'|'order'; code?: string; viewer_scope?: 'owner'|'customer'|'staff'|'delivery'; order_id?: string; time?: string; status?: string }
+export interface ShareScene { type: LegacyShareType; id: number; spid: number; path: string; bargain_user_id?: number; h5_origin?: string; namespace?: 'member'|'order'; code?: string; viewer_scope?: 'owner'|'customer'|'staff'|'delivery'; order_id?: string; time?: string; status?: string }
 export interface SpreadPosterData { spread: { pic: string }[]; avatar: string; nickname: string; site_name: string }
 function object(v: unknown): Record<string, unknown> { if (!v || typeof v !== 'object' || Array.isArray(v)) throw Error('分享资料格式无效'); return v as Record<string, unknown>; }
 function text(v: unknown, max = 255): string { if (typeof v !== 'string' || v.length > max || /[\u0000-\u001f\u007f]/u.test(v)) throw Error('分享资料文字无效'); return v; }
@@ -90,8 +91,15 @@ export function parseShareScene(value: unknown): ShareScene {
   }
   const paths: Record<number, string> = { '-1': '/pages/index/index', 0: '/pages/goods/detail', 1: '/pages/activity/seckillDetail', 2: '/pages/activity/bargainDetail', 3: '/pages/activity/detail', 4: '/pages/activity/integralDetail', 6: '/pages/activity/presaleDetail', 7: '/pages/activity/newcomerDetail' };
   if (route.pathname !== paths[scene.type]) throw Error('分享目的地与类型不一致');
-  for (const key of query.keys()) if (!['id', 'bargain_id', 'spid', 'time', 'status'].includes(key) || query.getAll(key).length !== 1) throw Error('分享目的地参数无效');
-  const idKey = scene.type === 2 ? 'bargain_id' : 'id';
+  const allowed = scene.type === 2 ? ['id', 'bargain_id', 'spid', 'bargainUserId', 'help'] : ['id', 'spid', 'time', 'status'];
+  for (const key of query.keys()) if (!allowed.includes(key) || query.getAll(key).length !== 1) throw Error('分享目的地参数无效');
+  const idKey = scene.type === 2 && query.has('bargain_id') ? 'bargain_id' : 'id';
+  if (scene.type === 2 && query.has('id') && query.has('bargain_id')) throw Error('分享目标编号不一致');
+  if (row.bargain_user_id !== undefined) {
+    if (scene.type !== 2 || idKey !== 'id') throw Error('砍价邀请目标无效');
+    scene.bargain_user_id = integer(row.bargain_user_id, 1);
+    if (query.get('bargainUserId') !== String(scene.bargain_user_id) || query.get('help') !== '1') throw Error('砍价邀请目标不一致');
+  } else if (query.has('bargainUserId') || query.has('help')) throw Error('砍价邀请目标缺失');
   if (scene.type !== -1 && query.get(idKey) !== String(scene.id) || query.has('spid') && query.get('spid') !== String(scene.spid) || scene.type === -1 && (query.has('id') || query.has('bargain_id'))) throw Error('分享目标编号不一致');
   for (const field of ['time', 'status'] as const) if (row[field] !== undefined) {
     scene[field] = text(row[field], 40);
@@ -101,12 +109,18 @@ export function parseShareScene(value: unknown): ShareScene {
 }
 /** Referral is consumed by the app-owned intent; existing detail-page visits keep their own contracts. */
 export function shareDestination(scene: ShareScene): string {
-  const route = shareUri(scene.path); route.searchParams.delete('spid');
+  const route = shareUri(scene.path);
+  // Historical PHP invitations used spid as the owner; canonical links use an
+  // exact participant and consume spid only as referral attribution.
+  if (!(scene.type === 2 && route.searchParams.has('bargain_id'))) route.searchParams.delete('spid');
   return `${route.pathname}${route.search}`;
 }
-export function activityShareDescriptor(path: string): { type: LegacyShareType; id: number } | null {
+export function activityShareDescriptor(path: string): { type: LegacyShareType; id: number; bargainUserId?: number } | null {
+  const invitation = bargainShareTarget(path);
+  if (invitation) return { type: 2, ...invitation };
   const routes: Record<string, LegacyShareType> = { '/pages/activity/seckillDetail': 1, '/pages/activity/bargainDetail': 2, '/pages/activity/detail': 3, '/pages/activity/integralDetail': 4, '/pages/activity/presaleDetail': 6, '/pages/activity/newcomerDetail': 7 };
   try { const url = shareUri(path), type = routes[url.pathname], key = type === 2 ? 'bargain_id' : 'id';
+    if (type === 2 && (url.searchParams.size !== 1 || url.hash)) return null;
     if (type === undefined || url.origin !== 'https://share-route.invalid' || url.searchParams.getAll(key).length !== 1 || !/^[1-9]\d*$/u.test(url.searchParams.get(key) ?? '')) return null;
     return { type, id: integer(Number(url.searchParams.get(key)), 1) }; } catch { return null; }
 }

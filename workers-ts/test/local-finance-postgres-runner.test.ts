@@ -292,6 +292,38 @@ describe('local PostgreSQL runner command boundary', () => {
       expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
     });
 
+  it('admits bargain friend-help in-app acceptance without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:bargain-friend-help-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:bargain-friend-help-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:bargain-friend-help-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'review', 'unused-bin', 'audit:bargain-friend-help-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:bargain-friend-help-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid bargain friend-help Browser admission $args before filesystem setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it('admits only the exact bargain friend-help native file before binary validation', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/bargain-friend-help-native.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('allowlist');
+  });
+  it.each(['test/bargain-friend-help-native.test.ts.extra', 'test/bargain-friend-help-native.other.ts'])(
+    'rejects malformed bargain friend-help native spelling %s before filesystem setup', path => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+    });
+
   it.each(['test/bargain-admin-sku.test.ts', 'test/bargain-admin-sku-postgres.test.ts',
     'test/bargain-cart-binding-concurrency-postgres.test.ts'])(
     'admits reviewed mature bargain fixture %s through exact maintenance admission', path => {

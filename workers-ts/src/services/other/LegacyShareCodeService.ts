@@ -10,6 +10,7 @@ import { OfficialAccountQrcodeService } from '@/services/wechat/OfficialAccountQ
 import { WechatMiniProgramCodeService } from '@/services/wechat/WechatMiniProgramCodeService';
 import { readLegacyPrivateScanTarget, assertLegacyPrivateScanViewer, type LegacyPrivateScanTarget } from './LegacyPrivateScanTarget';
 import { readLegacyShareProvider } from './LegacyShareProviderRead';
+import { readBargainInvitationTarget } from '@/services/activity/BargainHelpViewService';
 import { LEGACY_SHARE_TYPES, LEGACY_SHARE_TTL, LEGACY_SHARE_IMAGE_TTL, LEGACY_SHARE_IMAGE_LIMIT,
   legacyShareHmac, legacyShareEqual, legacyShareToken, validLegacyShareToken, legacyShareWebsiteQr,
   legacyShareDataImage, legacyShareImage, legacyShareOfficialScene, parseLegacyShareOfficialScene,
@@ -24,6 +25,7 @@ export function assertLegacyShareActor(actor: LegacyShareActor): void {
 interface Descriptor {
   type: LegacyShareType; id: number; uid: number; origin: string; browser: boolean; official: boolean; permanent: boolean;
   miniApp: string; officialApp: string; time?: string; status?: string; privateTarget?: LegacyPrivateScanTarget;
+  bargainUserId?: number; bargainOwnerUid?: number;
 }
 interface Document {
   version: 1; state: 'pending' | 'ready'; token: string; descriptor: Descriptor;
@@ -42,12 +44,16 @@ export function parseLegacyShareInput(typeValue: string, idValue: string, query:
   if (!/^(?:-1|0|1|2|3|4|6|7|90|91)$/.test(typeValue) || !/^(?:0|[1-9]\d{0,9})$/.test(idValue)) throw new ValidateException('分享码参数错误');
   const type = Number(typeValue) as LegacyShareType, id = Number(idValue);
   if (!validId(id, type === -1 || privateType(type))) throw new ValidateException('分享对象ID错误');
-  const allowed = type === 1 ? ['time', 'status'] : type === 91 ? ['order_id'] : [];
+  const allowed = type === 1 ? ['time', 'status'] : type === 2 ? ['bargain_user_id'] : type === 91 ? ['order_id'] : [];
   for (const key of query.keys()) if (!allowed.includes(key) || query.getAll(key).length !== 1) throw new ValidateException('分享码查询参数错误');
   const time = query.get('time') ?? '', status = query.get('status') ?? '', orderNo = query.get('order_id') ?? '';
   if (time && (!/^[1-9]\d{0,9}$/.test(time) || !validId(Number(time))) || status && !/^[012]$/.test(status)) throw new ValidateException('秒杀分享条件错误');
   if (type === 91 && (!orderNo || orderNo === '0' || orderNo.length > 32 || !/^[A-Za-z0-9_-]+$/.test(orderNo))) throw new ValidateException('订单号错误');
-  return { type, id, time: time || undefined, status: status || undefined, orderNo: orderNo || undefined };
+  const bargainUser = query.get('bargain_user_id');
+  if (bargainUser !== null && (!/^[1-9]\d{0,9}$/.test(bargainUser) || !validId(Number(bargainUser))))
+    throw new ValidateException('砍价邀请记录错误');
+  return { type, id, time: time || undefined, status: status || undefined, orderNo: orderNo || undefined,
+    bargainUserId: bargainUser === null ? undefined : Number(bargainUser) };
 }
 
 /** Generates both inherited image channels and a durable opaque landing record.
@@ -59,10 +65,13 @@ export class LegacyShareCodeService {
     assertLegacyShareActor(actor);
   }
   private async snapshot(type: LegacyShareType, id: number, uid: number,
-    query: { time?: string; status?: string; orderNo?: string }, officialBrowser: boolean, actor?: LegacyShareActor, permanentMini = false): Promise<Snapshot> {
+    query: { time?: string; status?: string; orderNo?: string; bargainUserId?: number }, officialBrowser: boolean, actor?: LegacyShareActor, permanentMini = false): Promise<Snapshot> {
     if (!LEGACY_SHARE_TYPES.includes(type) || !validId(uid, true)) throw new ValidateException('分享对象错误');
     if (actor) this.assertActor(actor);
     if ((privateType(type) || type === -1) && !uid) throw new AuthException('请登录后读取本人码');
+    if (query.bargainUserId !== undefined && (type !== 2 || !validId(query.bargainUserId)))
+      throw new ValidateException('砍价邀请记录错误');
+    if (query.bargainUserId !== undefined && !uid) throw new AuthException('请登录后分享砍价邀请');
     const result = await withTx(this.container, async tx => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       await tx.execute(sql`SET LOCAL statement_timeout='5s'`); await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
@@ -106,6 +115,11 @@ export class LegacyShareCodeService {
             WHERE t.id=${Number(query.time)} AND t.status=1 AND t.id::text=ANY(string_to_array(a.time_id,',')) LIMIT 1`);
           if (!slot) throw new NotFoundException('秒杀分享时段不存在');
         }
+        if (type === 2 && query.bargainUserId !== undefined) {
+          const invitation = await readBargainInvitationTarget(tx, id, query.bargainUserId);
+          descriptor.bargainUserId = invitation.participantId;
+          descriptor.bargainOwnerUid = invitation.ownerUid;
+        }
       }
       return { descriptor, siteName: integralDetailText(config.get('site_name') ?? '',128), nickname, title: integralDetailText(title,128) };
     });
@@ -140,7 +154,7 @@ export class LegacyShareCodeService {
   private landingUrl(token: string, origin: string) { const url = new URL('/',origin); url.hash = `/pages/share/landing?q=${token}`; return url.href; }
   private async fresh(document: Document): Promise<Snapshot> {
     const d = document.descriptor;
-    const current = await this.snapshot(d.type, d.id, d.uid, { time:d.time, status:d.status,
+    const current = await this.snapshot(d.type, d.id, d.uid, { time:d.time, status:d.status, bargainUserId:d.bargainUserId,
       orderNo:d.privateTarget?.kind==='order'?d.privateTarget.orderNo:undefined }, d.browser, undefined, d.type === -1 && d.permanent && !d.official);
     if (JSON.stringify(current.descriptor) !== JSON.stringify(d)) throw new NotFoundException('分享对象或配置已变化，请重新生成');
     return current;
@@ -268,8 +282,11 @@ export class LegacyShareCodeService {
     }
     const pages: Partial<Record<LegacyShareType,string>> = {'-1':'/pages/index/index',0:'/pages/goods/detail',1:'/pages/activity/seckillDetail',
       2:'/pages/activity/bargainDetail',3:'/pages/activity/detail',4:'/pages/activity/integralDetail',6:'/pages/activity/presaleDetail',7:'/pages/activity/newcomerDetail'};
-    const query = new URLSearchParams({...(d.type===-1?{}:d.type===2?{bargain_id:String(d.id)}:{id:String(d.id)}),...(d.uid?{spid:String(d.uid)}:{}),...(d.time?{time:d.time}:{}),...(d.status?{status:d.status}:{})});
-    return {type:d.type,id:d.id,spid:d.uid,h5_origin:d.origin,...(d.time?{time:d.time}:{}),...(d.status?{status:d.status}:{}),path:pages[d.type]+(query.size?'?'+query:'')};
+    const query = new URLSearchParams({...(d.type===-1?{}:{id:String(d.id)}),
+      ...(d.bargainUserId?{bargainUserId:String(d.bargainUserId),help:'1'}:{}),
+      ...(d.uid?{spid:String(d.uid)}:{}),...(d.time?{time:d.time}:{}),...(d.status?{status:d.status}:{})});
+    return {type:d.type,id:d.id,spid:d.uid,h5_origin:d.origin,...(d.bargainUserId?{bargain_user_id:d.bargainUserId}:{}),
+      ...(d.time?{time:d.time}:{}),...(d.status?{status:d.status}:{}),path:pages[d.type]+(query.size?'?'+query:'')};
   }
   async image(token: string, channel: string, query: URLSearchParams): Promise<Response> {
     verifyLegacyShareImageQuery(token,channel,query,this.env.APP_KEY);

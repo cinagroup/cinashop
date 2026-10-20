@@ -61,7 +61,7 @@ describe('complete legacy share-code target, image, cache and provider contracts
       expect(Object.keys(reply).sort()).toEqual(['nickname','routineUrl','site_name','wechatUrl']);
       expect(reply).toMatchObject({site_name:'本机商店',nickname:'',routineUrl:''});
       const resolved=await service.scene(token(reply.wechatUrl),actor(0));
-      expect(resolved).toMatchObject({type,id:type===6?71:70,spid:0,h5_origin:env.PUBLIC_H5_ORIGIN,path:`/pages/${path}?${type===2?'bargain_id':'id'}=${type===6?71:70}`});
+      expect(resolved).toMatchObject({type,id:type===6?71:70,spid:0,h5_origin:env.PUBLIC_H5_ORIGIN,path:`/pages/${path}?id=${type===6?71:70}`});
       const response=await service.image(token(reply.wechatUrl),'wechat',imageQuery(reply.wechatUrl));
       expect(response.headers.get('Content-Type')).toBe('image/gif'); expect(response.headers.get('Cache-Control')).toBe('private, no-store');
       expect(new TextDecoder().decode(new Uint8Array(await response.arrayBuffer()).slice(0,6))).toBe('GIF87a');

@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
 const {runtime,tick,deferred}=require('./uni-store-runtime.cjs');
-function pure(name){const exports={};new Function('exports',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/utils',name+'.ts'),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText)(exports);return exports;}
+function pure(name){function load(file){const exports={};new Function('require','exports',ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText)(id=>{assert.ok(id.startsWith('.'));return load(path.resolve(path.dirname(file),id+'.ts'));},exports);return exports;}return load(path.join(__dirname,'../src/utils',name+'.ts'));}
 const protocol=pure('legacyShare'),{ShareReferralIntent}=pure('shareReferral'),token='a'.repeat(24),image=`/api/share/code/image/${token}/routine?expires=1800000000&signature=${'s'.repeat(32)}`;
 const dto={routineUrl:image,wechatUrl:image.replace('/routine?','/wechat?'),site_name:'测试商城',nickname:'当前会员'};
 const poster={spread:[{pic:'/template-one.png'},{pic:'/template-two.png'}],avatar:'/avatar.png',nickname:dto.nickname,site_name:dto.site_name};
@@ -70,7 +70,7 @@ test('signed image queries remain intact and mini base64 images decode into owne
 });
 test('activity share descriptor distinguishes actual bargain query and six published detail pages',()=>{
   for(const [type,page,key]of [[1,'seckillDetail','id'],[2,'bargainDetail','bargain_id'],[3,'detail','id'],[4,'integralDetail','id'],[6,'presaleDetail','id'],[7,'newcomerDetail','id']])assert.deepEqual(protocol.activityShareDescriptor(`/pages/activity/${page}?${key}=7`),{type,id:7});
-  assert.equal(protocol.activityShareDescriptor('/pages/activity/bargainDetail?id=7'),null);
+  assert.deepEqual(protocol.activityShareDescriptor('/pages/activity/bargainDetail?id=7'),{type:2,id:7});
 });
 test('actual poster failure, hide and actor replacement release every late native file once and disable old canvas save',async()=>{
   for(const mode of ['failure','hide','replace']){
