@@ -815,7 +815,7 @@ export class StoreCartService {
         throw new ValidateException('购物车金额超出安全范围');
       }
       if (cart.type === 0 && cart.activityId === 0 && sku && cart.cartNum > 0) promotionLines.push({
-        key: cart.id, productId: product.id, skuUnique: sku.unique, quantity: cart.cartNum,
+        key: cart.id, productId: product.id, skuUnique: sku.unique.trimEnd(), quantity: cart.cartNum,
         rawUnitPriceCents: rawCents, memberUnitPriceCents: unitCents,
       });
       if (!Number.isSafeInteger(lineCents) || lineCents < 0) throw new ValidateException('购物车金额超出安全范围');
@@ -907,8 +907,10 @@ export class StoreCartService {
         : Promise.resolve([]),
     ]);
     const productById = new Map(products.map((product) => [product.id, product]));
+    // PG char(8) pads the trusted SKU read, while retained cart keys may be
+    // unpadded. Use the same identity as the authoritative promotion quote.
     const skuByProductUnique = new Map(
-      skus.map((sku) => [`${sku.productId}:${sku.unique}`, sku] as const),
+      skus.map((sku) => [`${sku.productId}:${sku.unique.trimEnd()}`, sku] as const),
     );
     const pricing = await this.cartPricing(uid);
     const quantities = new Map<number, number>();
@@ -924,7 +926,7 @@ export class StoreCartService {
       catch (error) { if (!(error instanceof ValidateException)) throw error; limitValid = false; }
       const productValid = limitValid && product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
       if (!options.includeInvalid && !productValid) continue;
-      const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique}`);
+      const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique.trimEnd()}`);
       const rawPrice = String(sku?.price ?? product.price);
       const rawPriceCents = decimalToCents(rawPrice);
       const quoted = calculateMemberUnitPriceCents({
@@ -937,7 +939,7 @@ export class StoreCartService {
       });
       const price = quoted.unitPriceCents / 100;
       if (productValid && sku && cart.status === 1 && cart.cartNum > 0) promotionLines.push({
-        key: cart.id, productId: product.id, skuUnique: sku.unique, quantity: cart.cartNum,
+        key: cart.id, productId: product.id, skuUnique: sku.unique.trimEnd(), quantity: cart.cartNum,
         rawUnitPriceCents: rawPriceCents, memberUnitPriceCents: quoted.unitPriceCents,
       });
       const stock = sku?.stock ?? product.stock;

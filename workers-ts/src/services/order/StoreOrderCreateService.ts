@@ -1646,7 +1646,7 @@ export class StoreOrderCreateService {
     const promotionInput = {
       uid, firstOrderEligible: preliminaryFirstOrderEligible,
       lines: orderItems.map(item => ({ key: item.cart.id, productId: item.product.id,
-        skuUnique: item.sku.unique, quantity: item.cart.cartNum,
+        skuUnique: item.sku.unique.trimEnd(), quantity: item.cart.cartNum,
         rawUnitPriceCents: item.rawUnitPriceCents, memberUnitPriceCents: item.unitPriceCents })),
     };
     const promotionQuote: OrderPromotionQuote | null = type === 0
@@ -1692,7 +1692,7 @@ export class StoreOrderCreateService {
         allocateLegacyDiscountCents(couponPriceCents, couponEligible), couponEligible);
       return { uid, firstOrderEligible, shippingType, pricePromotions: giftPricePromotions,
         lines: orderItems.map((item, index) => ({ key: item.cart.id, productId: item.product.id,
-          skuUnique: item.sku.unique, quantity: item.cart.cartNum,
+          skuUnique: item.sku.unique.trimEnd(), quantity: item.cart.cartNum,
           postPromotionGrossCents: gross[index], couponDiscountCents: apportioned[index] })) };
     };
     const giftInput = giftInputFor(preliminaryFirstOrderEligible);
@@ -2888,6 +2888,10 @@ export class StoreOrderCreateService {
               writeEnd: sku.writeEnd,
             })
           : { writeStart: sku.writeStart, writeEnd: sku.writeEnd };
+        // New ordinary roots freeze one DB-selected, unpadded identity in the
+        // row and snapshot. Preserve raw source/CAS and activity SKU contracts;
+        // the immutable origin validator still requires exact equality.
+        const persistedSkuUnique = type === 0 ? sku.unique.trimEnd() : cart.productAttrUnique;
         const cartInfoJson = JSON.stringify({
           ...(item.presale ? { presale: item.presale } : {}),
           ...(type === 2 ? { bargainParticipation: {
@@ -2945,7 +2949,7 @@ export class StoreOrderCreateService {
           },
           sku: {
             id: sku.id,
-            unique: sku.unique,
+            unique: type === 0 ? persistedSkuUnique : sku.unique,
             suk: sku.suk,
             price: (unitPriceCents / 100).toFixed(2),
             write_times: Math.max(sku.writeTimes, 1),
@@ -2989,7 +2993,7 @@ export class StoreOrderCreateService {
           relationId: product.relationId,
           productId: cart.productId,
           productType: cart.productType,
-          skuUnique: cart.productAttrUnique,
+          skuUnique: persistedSkuUnique,
           cartNum: cart.cartNum,
           surplusNum: cart.cartNum,
           splitSurplusNum: cart.cartNum,
