@@ -76,7 +76,10 @@ export async function repurchaseCustomerOrder(container: Container, env: Env, ui
     const products = await tx.select().from(storeProduct).where(inArray(storeProduct.id, productIds)).orderBy(asc(storeProduct.id)).for('share');
     const productQuantities = new Map<number, number>(), skuQuantities = new Map<number, number>();
     for (const item of selections) {
-      const product = products.find(row => row.id === item.productId), matching = skus.filter(row => row.productId === item.productId && row.unique === item.unique);
+      const product = products.find(row => row.id === item.productId);
+      // PG char(8) returns right-padding. Compare the DB-selected identity to
+      // the exact historical key already validated above.
+      const matching = skus.filter(row => row.productId === item.productId && row.unique.trimEnd() === item.unique);
       if (!product || product.isShow !== 1 || product.isDel !== 0 || product.isVerify !== 1 || matching.length !== 1) {
         throw new ValidateException('原订单商品或规格已下架、未审核或失效，请重新选择');
       }

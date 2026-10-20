@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
 import { createApp } from '@/app';
 import { createContainerFromDb, type Container } from '@/lib/di';
-import { storeCart, storeOrderCartInfo, storeProductAttrValue } from '@/models/schema';
+import { storeCart, storeOrderCartInfo, storeProduct, storeProductAttrValue } from '@/models/schema';
 import { customerOrderRepurchaseFixture } from '../helpers/customerOrderRepurchase';
 
 const wiring = vi.hoisted(() => ({ container: undefined as Container | undefined }));
@@ -22,8 +22,15 @@ async function bytes(req: IncomingMessage, max = 65536) {
   return Buffer.concat(chunks);
 }
 
-it.each(['pc', 'mobile'] as const)('actual %s ordinary repurchase uses current prices and isolates acknowledged direct-buy rows', async kind => {
-  const f = await customerOrderRepurchaseFixture(), app = createApp();
+const shortSkuAcceptance = process.env.TEST_REPURCHASE_SHORT_SKU_BROWSER === '1';
+it.each(['pc', 'mobile'] as const)(`actual %s ${shortSkuAcceptance ? 'short-SKU' : 'ordinary'} repurchase uses current prices and isolates acknowledged direct-buy rows`, async kind => {
+  const shortSku = shortSkuAcceptance;
+  const ownedIdentity = 'short_again_' + randomUUID().replaceAll('-', '').slice(0, 16);
+  const f = await customerOrderRepurchaseFixture('received', shortSku ? {
+    skuUnique: 'short7', requirePurchaseOrigin: true, sourceIdentity: { key: ownedIdentity, orderId: ownedIdentity },
+  } : undefined), app = createApp();
+  let skuIdentity: Row | undefined;
+  let sourceReceiptsVerified = false;
   const root = resolve(import.meta.dirname, '../../../view', kind === 'pc' ? 'pc-ts/dist' : 'uniapp-ts/dist/build/h5');
   const control = '/__order_repurchase/' + randomUUID(), origin = 'http://127.0.0.1:40751';
   const sourcePath = kind === 'pc' ? '/order/' + f.ids.publicOrderId : '/#/pages/order/detail?orderId=' + f.ids.publicOrderId;
@@ -36,12 +43,27 @@ it.each(['pc', 'mobile'] as const)('actual %s ordinary repurchase uses current p
     chain = new Promise<void>(yes => { release = yes; }); await previous; try { return await work(); } finally { release(); } }
   const result = () => ({ kind, source_order: f.ids.publicOrderId, source_row_id: f.ids.sourceOrder,
     traces, evidence, acknowledgements, required_stages: stages, finished,
+    ...(shortSku ? { short_sku: { ...skuIdentity, source_line_unique: f.carts[0]!.skuUnique, source_snapshot_unique: JSON.parse(f.carts[0]!.cartInfo!).sku.unique, source_receipts_verified: sourceReceiptsVerified }, source_admission: 'actual checkout and supplier allocation; payment/received state explicitly synthetic' } : {}),
     provider_calls: 0, r2_reads: f.r2Reads.length, r2_puts: f.r2Writes.length, r2_deletes: f.r2Deletes.length, fixture_thumbnail_reads: thumbnailReads });
   function send(res: ServerResponse, body: string | Buffer, status = 200, type = 'text/html; charset=utf-8') {
     if (!res.destroyed) { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'private, no-store' }); res.end(body); }
   }
   try {
     expect((await stat(resolve(root, 'index.html'))).isFile()).toBe(true);
+    if (shortSku) {
+      [skuIdentity] = await f.db.execute(sql`SELECT "unique" AS raw_unique,octet_length("unique") AS bytes FROM public.store_product_attr_value WHERE id=1`);
+      expect(skuIdentity).toMatchObject({ raw_unique: 'short7  ', bytes: 8 });
+      expect(f.carts[0]!.skuUnique).toBe('short7'); expect(JSON.parse(f.carts[0]!.cartInfo!).sku.unique).toBe('short7');
+      const rootId = f.source.pid > 0 ? f.source.pid : f.source.id;
+      const [charged] = await f.db.execute(sql`SELECT lines FROM public.store_order_purchase_origin WHERE order_id=${rootId}`);
+      const [physical] = await f.db.execute(sql`SELECT lines FROM public.store_order_purchase_physical_origin WHERE order_id=${rootId}`);
+      for (const receipt of [charged, physical]) expect(receipt?.lines).toEqual(expect.arrayContaining([
+        expect.objectContaining({ productId: 70, skuId: 1, skuUnique: 'short7', quantity: 2 }),
+      ]));
+      sourceReceiptsVerified = true;
+      await f.db.update(storeProduct).set({ price: '17.00' }).where(eq(storeProduct.id, 70));
+      expect(Object.keys(await f.snapshot())).toHaveLength(283); expect(await f.sequences()).toHaveLength(229);
+    }
     // Registered checkout/allocation and synthetic paid admission are inherited.
     // Completion is display-fixture maintenance, not a receipt/reward acceptance.
     await f.db.update(storeProductAttrValue).set({ price: '18.88' }).where(eq(storeProductAttrValue.productId, 70));
@@ -120,7 +142,7 @@ it.each(['pc', 'mobile'] as const)('actual %s ordinary repurchase uses current p
           expect(traces.filter(row => row.exact_direct_buy_selection).length).toBeGreaterThanOrEqual(1);
           expect(traces.some(row => row.path === '/api/order/confirm' && row.actual_current_price_quote)).toBe(true);
           expect(traces.filter(row => row.path === '/api/order/again' && row.injected_http === 503)).toHaveLength(1);
-          finished = true; await writeFile('/tmp/cinashop-customer-order-repurchase-browser-' + kind + '-result.json',
+          finished = true; await writeFile('/tmp/cinashop-' + (shortSku ? 'repurchase-short-sku' : 'customer-order-repurchase') + '-browser-' + kind + '-result.json',
             JSON.stringify({ ...result(), table_count: Object.keys(await f.snapshot()).length, sequence_count: (await f.sequences()).length }, null, 2) + '\n');
         } else {
           expect(stages[evidence.length]).toBe(name); expect(data.page_scroll_width).toBeLessThanOrEqual(data.page_width + 1);
@@ -151,7 +173,7 @@ it.each(['pc', 'mobile'] as const)('actual %s ordinary repurchase uses current p
     }
     const enter = kind === 'pc' ? `sessionStorage.setItem('pc_token',${JSON.stringify(f.tokens.buyer)});sessionStorage.setItem('pc_uid','11');`
       : `localStorage.setItem('uni_token',JSON.stringify({type:'string',data:${JSON.stringify(f.tokens.buyer)}}));localStorage.setItem('uni_uid',JSON.stringify({type:'number',data:11}));`;
-    function shell() { return `<!doctype html><html lang="zh"><meta charset="utf-8"><title>${kind}订单再次购买验收</title><style>body{font:14px sans-serif;margin:12px}button{margin:4px}pre{max-height:60px;overflow:auto;white-space:pre-wrap}iframe{display:block;width:${kind === 'pc' ? 1200 : 390}px;height:844px;border:1px solid #ccc}</style><h1>${kind} 实际再次购买验收</h1><button id="enter">进入实际订单</button>${stages.map(name => `<button data-stage="${name}">${name}</button>`).join('')}<button data-stage="response-failure">模拟准备响应丢失</button><button data-stage="detail-failure">模拟原订单读取失败</button><button data-stage="finish">完成验收</button><pre id="result"></pre><iframe title="实际生产页面"></iframe><script>const frame=document.querySelector('iframe');document.getElementById('enter').onclick=()=>{${enter}frame.src=${JSON.stringify(sourcePath)};};for(const button of document.querySelectorAll('[data-stage]'))button.onclick=async()=>{const stage=button.dataset.stage,doc=frame.contentDocument;const data={text:doc.body.textContent,href:frame.contentWindow.location.href,repurchase_buttons:[...doc.querySelectorAll('.repurchase-button')].map(node=>({disabled:!!node.disabled||(node.hasAttribute('disabled')&&node.getAttribute('disabled')!=='false'),text:node.textContent.trim()})),page_width:doc.documentElement.clientWidth,page_scroll_width:doc.documentElement.scrollWidth};const response=await fetch('${control}/'+stage,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const value=await response.json();document.getElementById('result').textContent=JSON.stringify({kind:value.kind,checked:value.evidence.map(row=>row.stage),finished:value.finished});if(stage==='response-failure')frame.src=${JSON.stringify(sourcePath)};};</script></html>`; }
+    function shell() { return `<!doctype html><html lang="zh"><meta charset="utf-8"><title>${kind}订单再次购买验收</title><style>body{font:14px sans-serif;margin:12px}button{margin:4px}pre{max-height:60px;overflow:auto;white-space:pre-wrap}iframe{display:block;width:${kind === 'pc' ? 1200 : 390}px;height:844px;border:1px solid #ccc}</style><h1>${kind} ${shortSku ? '短 SKU ' : ''}实际再次购买验收</h1><p>本机合成会话与收货状态；真实下单来源、再次购买和结算 API。</p><button id="enter">进入实际订单</button>${stages.map(name => `<button data-stage="${name}">${name}</button>`).join('')}<button data-stage="response-failure">模拟准备响应丢失</button><button data-stage="detail-failure">模拟原订单读取失败</button><button data-stage="finish">完成验收</button><pre id="result"></pre><iframe title="实际生产页面"></iframe><script>const frame=document.querySelector('iframe');document.getElementById('enter').onclick=()=>{${enter}frame.src=${JSON.stringify(sourcePath)};};for(const button of document.querySelectorAll('[data-stage]'))button.onclick=async()=>{const stage=button.dataset.stage,doc=frame.contentDocument;const data={text:doc.body.textContent,href:frame.contentWindow.location.href,repurchase_buttons:[...doc.querySelectorAll('.repurchase-button')].map(node=>({disabled:!!node.disabled||(node.hasAttribute('disabled')&&node.getAttribute('disabled')!=='false'),text:node.textContent.trim()})),page_width:doc.documentElement.clientWidth,page_scroll_width:doc.documentElement.scrollWidth};const response=await fetch('${control}/'+stage,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const value=await response.json();document.getElementById('result').textContent=JSON.stringify({kind:value.kind,checked:value.evidence.map(row=>row.stage),finished:value.finished});if(stage==='response-failure')frame.src=${JSON.stringify(sourcePath)};};</script></html>`; }
     const server = createServer((req, res) => { void (async () => {
       if (req.socket.remoteAddress !== '127.0.0.1' || req.headers.host !== new URL(origin).host) return send(res, 'Owned loopback only', 403);
       const url = new URL(req.url ?? '/', origin), path = url.pathname;

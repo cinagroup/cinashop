@@ -1,24 +1,44 @@
 import { eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '@/lib/di';
 import type { Env } from '@/env';
-import { storeCart, storeOrder, storeOrderCartInfo, storeProduct, user } from '@/models/schema';
+import { storeCart, storeOrder, storeOrderCartInfo, storeProduct, storeProductAttrValue, user } from '@/models/schema';
 import { createToken, md5 } from '@/utils/jwt';
 import { refundRuntimeFixture } from './refundRuntimeFixture';
 import { refundEvidenceR2, refundEvidenceSequences, refundEvidenceSnapshot } from './refundApplicationEvidence';
+import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
 
 /** Actual registered checkout; optional paid/allocation plus received state are
  * explicitly synthetic admission. Reorder and reads use owned maintenance SQL,
  * never production grants or a claim of payment/provider acceptance. */
-export async function customerOrderRepurchaseFixture(state: 'received' | 'unpaid' = 'received') {
+export interface CustomerOrderRepurchaseOptions {
+  /** Set the selected catalogue/cart identity before actual immutable capture. */
+  skuUnique?: string;
+  sourceIdentity?: { key: string; orderId: string };
+  /** Capture both protected receipts through the actual checkout author. */
+  requirePurchaseOrigin?: true;
+}
+export async function customerOrderRepurchaseFixture(state: 'received' | 'unpaid' = 'received',
+  options: CustomerOrderRepurchaseOptions = {}) {
   const f = await refundRuntimeFixture();
   try {
     await f.db.update(storeProduct).set({ isVerify: 1 }).where(eq(storeProduct.id, 71));
-    const source = state === 'received'
-      ? await f.withRuntime(writer => writer.createPaid({ key: 'repurchase-source', orderId: 'repurchase_source' }))
-      : await f.withRuntime(async writer => {
-        const created = await writer.checkout({ key: 'repurchase-source', orderId: 'repurchase_source' });
-        const [row] = await f.db.select().from(storeOrder).where(eq(storeOrder.orderId, created.orderId)); return row;
-      });
+    if (options.skuUnique !== undefined) {
+      if (!options.skuUnique || options.skuUnique.length > 8 || /[\s\x00-\x1f\x7f]/.test(options.skuUnique))
+        throw Error('Owned repurchase source requires a canonical SKU key');
+      await f.db.update(storeProductAttrValue).set({ unique: options.skuUnique }).where(eq(storeProductAttrValue.id, 1));
+      await f.db.update(storeCart).set({ productAttrUnique: options.skuUnique }).where(eq(storeCart.id, 1));
+    }
+    const sourceIdentity = options.sourceIdentity ?? { key: 'repurchase-source', orderId: 'repurchase_source' };
+    const source = await f.withRuntime(async writer => {
+      if (options.requirePurchaseOrigin) await StoreOrderCreateService.createWithRuntime(writer.container,
+        { CONFIG_KV: f.env.CONFIG_KV, requirePurchaseOrigin: true, nextOrderId: async () => sourceIdentity.orderId },
+        { uid: 11, key: sourceIdentity.key, cartIds: [1, 2], addressId: 11, userIp: '127.0.0.1', useIntegral: true });
+      // The mature writer replays the same source key. Received admission keeps
+      // its existing explicitly synthetic payment/allocation after capture.
+      if (state === 'received') return writer.createPaid(sourceIdentity);
+      const created = await writer.checkout(sourceIdentity);
+      const [row] = await f.db.select().from(storeOrder).where(eq(storeOrder.orderId, created.orderId)); return row;
+    });
     if (state === 'received') await f.db.update(storeOrder).set({ status: 2 }).where(eq(storeOrder.id, source.id));
     const [current] = await f.db.select().from(storeOrder).where(eq(storeOrder.id, source.id));
     const carts = await f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, source.id)).orderBy(storeOrderCartInfo.id);
