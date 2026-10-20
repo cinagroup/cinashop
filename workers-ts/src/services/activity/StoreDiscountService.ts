@@ -8,6 +8,7 @@ import {
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container } from "@/lib/di";
 import { ValidateException } from "@/utils/errors";
+import { assertProductPurchaseBatch } from '@/services/order/ProductPurchaseAdmission';
 
 type DiscountProduct = typeof storeDiscountsProducts.$inferSelect;
 type Product = typeof storeProduct.$inferSelect;
@@ -374,6 +375,7 @@ export class StoreDiscountService {
         selections,
         uniqueKind: "package",
       });
+      assertProductPurchaseBatch(resolved.items.map(item => ({ product: item.product, quantity: 1 })));
       await tx
         .update(storeCart)
         .set({ isDel: 1 })

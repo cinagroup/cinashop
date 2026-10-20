@@ -5,6 +5,7 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import { resolveLegacyActivitySkuPair } from "./ActivityOrderSkuService";
 import { assertSeckillSchedule, loadSeckillSchedule } from "./SeckillScheduleService";
 import { activityCartQuoteGuard } from "./ActivityCartQuoteGuard";
+import { assertProductCartQuantity } from '@/services/order/ProductPurchaseAdmission';
 
 /** Quantity is not a reservation. Lock only the cart to serialize with order claim;
  * dependency reads intentionally take no row locks (create locks activity before cart).
@@ -39,6 +40,7 @@ export async function setSeckillCartQuantity(container: Container, uid: number, 
     if (!product || product.isShow !== 1 || product.isDel !== 0 || product.isVerify !== 1) {
       throw new ValidateException("商品已下架或未审核通过");
     }
+    await assertProductCartQuantity(tx, product, quantity, { uid, type: 1, isNew: cart.isNew, excludeCartId: cart.id });
     const { activitySku, baseSku } = await resolveLegacyActivitySkuPair(tx, {
       activityId: activity.id, productId: product.id, type: 1, unique: cart.productAttrUnique,
     });

@@ -30,7 +30,7 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
   /** 取用户购物车 (未删除/未购买) */
   async getUserCart(
     uid: number,
-    scope?: { isNew: 0 | 1; ids?: number[] },
+    scope?: { isNew?: 0 | 1; ids?: number[] },
   ): Promise<(typeof storeCart.$inferSelect)[]> {
     return this.db
       .select()
@@ -38,9 +38,10 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
       .where(
         and(
           eq(storeCart.uid, uid),
+          eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''), eq(storeCart.storeId, 0),
           eq(storeCart.isDel, 0),
           eq(storeCart.isPay, 0),
-          scope ? eq(storeCart.isNew, scope.isNew) : undefined,
+          scope?.isNew === undefined ? undefined : eq(storeCart.isNew, scope.isNew),
           scope?.ids ? inArray(storeCart.id, scope.ids) : undefined,
         ),
       )
@@ -65,9 +66,8 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
     activityId = 0,
     bargainUserId = 0,
   ): Promise<(typeof storeCart.$inferSelect) | null> {
-    // Reusable seckill and bargain carts belong to the plain user scope.
+    // Reusable online carts belong to the plain user scope.
     // Keep lookup aligned with the compare-and-update guard in StoreCartService.
-    const userActivityCart = type === 1 || type === 2;
     const rows = await this.db
       .select()
       .from(storeCart)
@@ -79,9 +79,9 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
           eq(storeCart.type, type),
           eq(storeCart.activityId, activityId),
           eq(storeCart.bargainUserId, bargainUserId),
-          userActivityCart ? eq(storeCart.staffId, 0) : undefined,
-          userActivityCart ? eq(storeCart.touristUid, "") : undefined,
-          userActivityCart ? eq(storeCart.storeId, 0) : undefined,
+          eq(storeCart.staffId, 0),
+          eq(storeCart.touristUid, ""),
+          eq(storeCart.storeId, 0),
           eq(storeCart.isNew, 0),
           eq(storeCart.status, 1),
           eq(storeCart.isDel, 0),

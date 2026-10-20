@@ -9,6 +9,7 @@ import { assertPresalePurchaseLimit, presalePurchaseLimits } from '@/services/ac
 import { assertCheckoutMembershipSnapshot } from './CheckoutMembershipSnapshot';
 import { protectCheckoutPricingSources } from './CheckoutPricingSources';
 import { readMembershipPricingPolicy } from '@/services/user/MembershipPricingPolicy';
+import { assertProductPurchaseQuantity } from './ProductPurchaseAdmission';
 
 const MAX_SOURCE_ROWS = 100, MAX_SNAPSHOT_BYTES = 32768;
 const invalid = () => new ValidateException('原订单商品快照无法核对，请重新选择商品');
@@ -84,15 +85,7 @@ export async function repurchaseCustomerOrder(container: Container, env: Env, ui
       if (productQuantity > product.stock || skuQuantity > sku.stock) throw new ValidateException('再次购买商品库存不足，请重新选择数量');
       productQuantities.set(product.id, productQuantity); skuQuantities.set(sku.id, skuQuantity);
       if (product.isPresaleProduct !== 0) assertPresalePurchaseLimit(presalePurchaseLimits(product), productQuantity);
-      else if (product.isLimit !== 0) {
-        if (product.isLimit !== 1 || ![1, 2].includes(product.limitType) || !Number.isSafeInteger(product.limitNum) || product.limitNum < 1) {
-          throw new ValidateException('商品限购配置无效');
-        }
-        // Retained-root history explicitly remains incomplete for purchase
-        // authorization; never reinterpret missing provenance as zero purchases.
-        if (product.limitType === 2) throw new ValidateException('累计限购历史尚无法完整核验，请重新选择商品');
-        if (productQuantity > product.limitNum) throw new ValidateException(`该商品单次购买不能超过${product.limitNum}件`);
-      }
+      else assertProductPurchaseQuantity(product, productQuantity);
       if (![0, 1].includes(product.isVipProduct)) throw new ValidateException('商品付费会员资格配置无效');
     }
     const memberOnly = products.some(product => product.isVipProduct === 1);

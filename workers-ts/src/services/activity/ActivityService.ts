@@ -37,6 +37,7 @@ import {
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 import { recordPurchaseOriginEvidence } from '@/services/order/PurchaseOriginEvidence';
 import { assertIntegralOnceLimit, assertIntegralTotalLimit, lockIntegralPurchaseScope, readIntegralPurchasedQuantity } from './IntegralPurchaseAdmission';
+import { assertProductPurchaseQuantity, productPurchaseQuoteGuard } from '@/services/order/ProductPurchaseAdmission';
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { renderPublishedArticleMediaReferences } from '@/services/content/ArticleContentPolicy';
@@ -653,6 +654,7 @@ export class ActivityService {
         throw new ValidateException("关联商品已下架");
       }
       if (baseProduct.stock < num) throw new ValidateException("关联商品库存不足");
+      assertProductPurchaseQuantity(baseProduct, num);
     }
     if (modernSku && (!baseSku || baseSku.stock < num || item.quota < num)) {
       throw new ValidateException("关联商品规格库存或兑换次数不足");
@@ -834,6 +836,7 @@ export class ActivityService {
               eq(storeProduct.id, baseProduct.id),
               eq(storeProduct.isShow, 1),
               eq(storeProduct.isDel, 0),
+              productPurchaseQuoteGuard(baseProduct),
               sql`stock >= ${num}`,
             ),
           )

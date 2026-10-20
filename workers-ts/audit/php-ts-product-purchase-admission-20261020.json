@@ -1,0 +1,2374 @@
+{
+  "kind": "incremental-php-to-typescript-migration-evidence",
+  "created_utc": "2026-10-20T01:24:38.268053+00:00",
+  "base_sha": "4cecfd3a9588f2e33143e63d4a809857330e789e",
+  "branch": "codex/product-purchase-admission",
+  "overall_goal": "active",
+  "status": "validated",
+  "contract": {
+    "per_purchase": "Enabled positive type1 caps aggregate selected rows by base product across SKUs; disabled residues ignored; invalid enabled rules rejected.",
+    "cumulative": "Type2 consistently rejects incomplete history. No lifetime quota completion or history.incomplete change.",
+    "authors": "Common checkout plus independent integral exchange, package preparation and separately aggregated physical gifts; config fingerprint and inventory UPDATE compare rules.",
+    "cart": "Reusable basket actor/product/type scope; add includes current quantities, set replaces own row, paid/deleted/inactive/direct/store/foreign rows excluded. Cart is not a policy reservation.",
+    "legacy": "Confirmation reads only selected IDs, preserves internal mixed-isNew/max200; public buy/compute max100."
+  },
+  "accepted": [
+    {
+      "label": "types-unit-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T01:21:10.942487+00:00",
+      "seconds": 148.67,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "unique_tests": 0
+    },
+    {
+      "label": "types-runtime-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T01:15:51.977042+00:00",
+      "seconds": 80.61,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "unique_tests": 0
+    },
+    {
+      "label": "unit-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/product-purchase-admission.test.ts",
+        "test/cart-price-display.test.ts",
+        "test/v2-cart-compatibility-migration.test.ts",
+        "test/discount-package-migration.test.ts",
+        "test/first-order-discount.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T01:11:19.005585+00:00",
+      "seconds": 25.35,
+      "log_sha256": "17a8e0580539c9a9f62c5512c520337838268bf85fc140596c41d8346d67b98c",
+      "changed_during_run": [],
+      "unique_tests": 436
+    },
+    {
+      "label": "native-focused-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/product-purchase-admission-postgres.test.ts",
+        "test/cart-computation-http.test.ts",
+        "test/modern-cart-membership-price.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T01:17:12.649634+00:00",
+      "seconds": 71.26,
+      "log_sha256": "f030e3521f4c8409b1f4ee47c1289f349226aed90bc3c0a4d3b1a70f87bf23e4",
+      "changed_during_run": [],
+      "unique_tests": 94
+    },
+    {
+      "label": "authors-v1",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/product-purchase-authors-postgres.test.ts",
+        "test/assisted-purchase-flow-postgres.test.ts",
+        "test/customer-cashier-ordinary-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T00:52:48.023112+00:00",
+      "seconds": 1110.76,
+      "log_sha256": "704eead0d2d1c9125269455c1f21d2ee26941458f5b91fbcb146b19502ae7eed",
+      "changed_during_run": [
+        "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "workers-ts/src/dao/order/OrderDaos.ts",
+        "workers-ts/src/services/order/StoreCartService.ts",
+        "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+        "workers-ts/test/product-purchase-admission-postgres.test.ts"
+      ],
+      "unique_tests": 120
+    },
+    {
+      "label": "browser-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:product-purchase-admission-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T01:18:23.967364+00:00",
+      "seconds": 166.91,
+      "log_sha256": "34a23f4e485d2358b1e45be6e79aade3bdf196d5efd54dd259fbc248900fad6c",
+      "changed_during_run": [],
+      "unique_tests": 1
+    }
+  ],
+  "pending": [],
+  "unique_tests": 651,
+  "new_tests": 80,
+  "executable_sources": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "c5e977968799852d0ab06fc201c96c21d7c937ed6e0eb61055716b89a66dd996"
+    },
+    {
+      "path": "workers-ts/src/dao/order/OrderDaos.ts",
+      "sha256": "eed8b5f7e9f76711fa69ae98115add34468657a8cb898f82b7da728052926fef"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "d5fa2301ff6aaecd6cdb734237691915b30fdf9c75632ac04ec91425e7dceaf2"
+    },
+    {
+      "path": "workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+      "sha256": "47eed30be309b0a3505b52bd43fee3299b53676ab0e5ab7994e273ab47a1250c"
+    },
+    {
+      "path": "workers-ts/src/services/activity/SeckillCartQuantityService.ts",
+      "sha256": "57bb9b85086aeceac49ee369e59e69779d5194646f283463650fd82fdd7f839f"
+    },
+    {
+      "path": "workers-ts/src/services/activity/StoreDiscountService.ts",
+      "sha256": "3d5a8fb2fec90c0847fd0067bc650ba5fc353730d130008a377b303b59fc42c3"
+    },
+    {
+      "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+      "sha256": "63251807dffbd6ea676adc70d126a4480b8a052c62a490d88448cb1e6c7a31be"
+    },
+    {
+      "path": "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts",
+      "sha256": "de579d7f5e7953141c1d5f96bdb7a4864ef1bcbb14b72e93af8afd63300576fb"
+    },
+    {
+      "path": "workers-ts/src/services/order/ProductPurchaseAdmission.ts",
+      "sha256": "4b4bce2a5bdc6170f9cf9c48896043ef3cd3677f284b9f311d290b6a594ef6c3"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "0e122923010a8b5601ec282bc3561ad56dd17d4ddde019ebfad7660a9c6ed2d3"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "1cde81186e58827e3e00720fc57807906fb1af402ff4df619bd325ccaf7d1144"
+    },
+    {
+      "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+      "sha256": "c5596bb2fcdab5c38655e3a8174b8f9a4ae3c70793df502cfaa691fb1a0de3df"
+    },
+    {
+      "path": "workers-ts/test/helpers/productPurchaseAdmissionFixture.ts",
+      "sha256": "8d9d2b3ff15254367f746f1407cd8e235e3c31c687a1126ace02c6ede87ee14f"
+    },
+    {
+      "path": "workers-ts/test/helpers/productPurchaseAuthorsFixture.ts",
+      "sha256": "dfe862a07b10cb3bf327cf1f3cc200b20cb8b99e0c0217af4132e07099d2917f"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "289e32e7e2c2897adbcdaeee6d89b6046159fd6a86eaea854204d3805eba71ca"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-admission.test.ts",
+      "sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47"
+    },
+    {
+      "path": "workers-ts/test/product-purchase-authors-postgres.test.ts",
+      "sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95"
+    },
+    {
+      "path": "workers-ts/vitest.product-purchase-admission-browser.config.ts",
+      "sha256": "43badab7b4d10a466b8be4cf103ea3baea60b5fbf850155ac2c19584c490cce2"
+    }
+  ],
+  "review": {
+    "path": "/tmp/cinashop-product-purchase-admission-source-review-v5.json",
+    "sha256": "71c6ae5d7fdc2778d5f409441b3a8dd4e47394d7a87eeb215026d76139aee767",
+    "method": "Read-only source/test/document/log/hash/screenshot review plus pg_ctl status on exact six stopped owned clusters. No reviewer heavy tests/TSC/build/PG start, no process environment/credential access; no repo edits in this final review.",
+    "conclusion": "No remaining concrete final-order bypass or newly introduced deadlock was identified in the reviewed bounded single-purchase implementation. Final complete groups substantiate651 unique cases with80 new; both Worker type projects exit0. Lifetime cumulative coverage and overall migration remain incomplete. Audit JSON is being finalized by root and is not yet the final publication artifact."
+  },
+  "history_gap_research": {
+    "version": "ordinary-product-limit2-next-gap-review-v1",
+    "generated_at_utc": "2026-10-20T00:40:27.293112+00:00",
+    "head": "4cecfd3a9588f2e33143e63d4a809857330e789e",
+    "method": {
+      "read_only_repository": true,
+      "heavy_tests_run": false,
+      "runtime_reproduction_run": false,
+      "git_mutation": false,
+      "external_web_research": false,
+      "limits": "Static source and existing test/audit cross-check. Existing test assertions are evidence of intended coverage, not freshly executed tests. This is not an exhaustive independent security review or proof that every author has been inventoried."
+    },
+    "conclusion": {
+      "next_implementable_increment": "统一基础商品限购配置与 product_id 汇总权威，贯通购物车增改读、compute、quote、create、代客/收银和独立积分直兑；交付 limit1 的真实正向购买与写边界规则稳定性，同时关闭 limit2 静默绕过。",
+      "completion_boundary": "本增量可以完成普通商品单次限购的明确入口范围；统一 limit2 拒绝只是补漏，不能计为累计限购迁移完成。",
+      "next_cumulative_milestone": "先完成可信 cohort/history coverage、所有根订单作者的数量登记和赠品/退款明确合同，再实现可正向授权、取消/完成退款后再购的并发额度闭环。不能把 PurchaseQuotaHistory.incomplete 改成 false。"
+    },
+    "source_findings": [
+      {
+        "id": "ordinary-entry-bypass",
+        "severity": "correctness-gap",
+        "fact": "普通 StoreCartService/CartComputationService/StoreOrderCreateService 没有读取 storeProduct.isLimit/limitType/limitNum 的通用检查。现有 limitNum/isLimit 查询属于套餐或活动自身配置。CustomerOrderRepurchase 与 PresalePurchaseLimits 则明确验证并拒绝 cumulative。",
+        "implication": "普通新购和再次购买/预售当前不是同一限购合同；仅修改再次购买的拒绝会遗漏正常入口。",
+        "runtime_status": "Source-confirmed; no new runtime bypass test run."
+      },
+      {
+        "id": "php-counter",
+        "fact": "PHP checkLimit 对 exact product_id 汇总：requested + (new=false 时现存 status=1,is_del=0 cart_num) + 所有留存订单行 cart_num - 所有退款行 refund_num；购买 SUM 仅排除 paid=0,is_del=1 的订单ID。无 paid-only、pid、old_cart_id、is_gift 或 order type 过滤。SKU 不独立计限购。",
+        "implication": "基础商品 id 的所有 SKU 应合并；不能以活动ID或 supplier/platform product pid 盲目替代，也不能把普通 limit2 等同积分活动 retained-root total。"
+      },
+      {
+        "id": "php-pending-release",
+        "fact": "StoreOrderRefundServices 在保存退款申请时即写 refund_num（388/394），撤销时减回（549）。checkLimit 直接减该列。",
+        "implication": "照搬 raw refund_num 会把 pending 当已退数量提前释放。TS 应仅按受保护 completed quantity receipt 释放；拒绝、撤销、provider不确定/失败均不能先释放。"
+      },
+      {
+        "id": "php-parent-child",
+        "fact": "StoreOrderSplitServices 给 child 复制 cart_num 并设置 old_cart_id；原行更新 split_status/split_surplus_num而非从该历史 SUM 消失，checkLimit 未按 root 或 old_cart_id 去重。",
+        "implication": "具备父子留存的订单族可被 raw SUM 重复计数；TS 应原始购买单元只记一次，履约/退款派生单仅作 lineage。"
+      },
+      {
+        "id": "php-scope",
+        "fact": "PHP checkProductStock 在活动 switch 前调用基础商品 checkLimit；积分 checkoutProductStock 全仓仅从该 switch type4 分支调用。满送 createGiveProductCart 也调用 checkProductStock(new=true,type0)，但会捕获错误并跳过赠品。",
+        "implication": "TS 独立 ActivityService.exchange 必须单独接入基础限制；若采用满送严格原子失败，明确这是既有 TS 合同与 PHP skip 行为的差异。"
+      },
+      {
+        "id": "history-not-authority",
+        "fact": "PurchaseQuotaHistory 的所有结果均 incomplete:true，包括空历史、完整匹配的 retained roots；原因 preactivation_history_unproven。仅 RR/SERIALIZABLE，最多200roots/4000 buyer cart evidence probes，现存 origin 集必须与现存 root 集一致。无额度预留/释放。",
+        "implication": "缺失/删除/导入历史不可当零；现有有限投影适合核验，不宜每次累计购买全历史扫描或假定可用于 READ COMMITTED writer。"
+      },
+      {
+        "id": "gift-proof-gap",
+        "fact": "创建器在物理赠品前捕获 PurchaseOrigin；OrderPromotionGiftService 明示 gift 不进入 purchase-origin quota。History 要求 root.totalNum == origin.totalNum；PaymentLedger 又要求根行数精确等于 origin 行数，均未接 gift-aware physical reconciliation。取消 gift SQL 已另行核验 intent+physical extras，但该证明未接入 History/PaymentLedger。",
+        "implication": "赠品订单会成为当前历史投影不支持的情况。不能简单过滤未知 extras 或删掉精确相等检查。PHP raw SUM 包含 gift，因此“赠品永不计基础累计额度”尚非已证明的 PHP 等价，需明确政策和可验证投影。"
+      },
+      {
+        "id": "refund-completion-coverage",
+        "fact": "默认公共/Admin 普通退款仍为 v1；FromPublicEntry 仅严格 full-gift 选 v2。受权供应商/门店/客服操作可显式使用物化 creator，cashier 另有零现金数量退回 capability。默认 v1 完成不自动具备受保护 materialized quantity receipt。",
+        "implication": "不能将任意退款状态6/退款金额或 live refund_num 当可释放单位；需使实际获准的完成作者（含 callback/recovery）产生同一代际、同一退款id唯一数量事件。"
+      },
+      {
+        "id": "capture-coverage-gap",
+        "fact": "Origin SQL 只保护被调用的 INSERT，不是所有根订单 INSERT 的自动完整登记器；公开 create、两种收银共用作者和现代独立直兑捕获，但 legacy直兑/任意旧根未获证明。账户创建至少 LoginService 两处、WechatAuthService、OutUserService 各有真实 INSERT，无与 quota 激活绑定的出生证明。",
+        "implication": "coverage 不能从 addTime、当前无订单、任务COMPLETED或迁移时间戳推断。需可信完整出生 cohort/不复用uid证明或受审计封存的历史基线，以及运行期/导入作者覆盖。"
+      }
+    ],
+    "immediate_increment_acceptance": [
+      "Config helper: isLimit=0不限购；isLimit=1时limitType仅1/2且正整数cap，非法配置不可绕过；不要把积分num=-1/0合同套在普通limitNum上。",
+      "按真实 base product_id 汇总同一选择中的不同SKU、重复行、套餐多行；单次限购正向允许quantity<=cap，超限无部分cart/order/stock/points/coupon/gift副作用。",
+      "普通 add 合并有效同范围现存cart数量；set 用其余行+目标新数量，排除旧数量避免重复；直接购买使用本次精确选择，不把他人/其他staff/tourist/已支付已认领记录混入。",
+      "read/compute/quote 给出一致可解释的不可选/失败；实际 create 独立重验，不能相信列表或旧quote已验。配置禁用/启用/类型变化/额度变化应在锁后重读并绑定确认 fingerprint/CAS。",
+      "跨SKU并发加购与同一商品配置修改必须验证最终数量不越界。普通 addResolved 目前通常不在完整事务内，不应只在外部read后加helper。",
+      "覆盖现有公共、legacy PC/V2按商品改量、代客增改/收银、套餐、所有经过PHP基础检查的活动，以及独立积分直兑；各作者写入前采用实际base product配置，已有活动自身限制同时保留。",
+      "明确自动赠品是独立配置检查还是纳入同产品汇总，记录PHP检查后跳过与TS严格原子性差异；不要凭 origin 不含gift宣布PHP同等。",
+      "limit2 统一显式 history_unproven 拒绝只是关闭现有绕过；审计、checkbox和最终报告不得标累计闭环完成。"
+    ],
+    "full_quota_contract": {
+      "units": "按 buyer identity + exact base product_id 计原始商品件数，不按订单数、SKU数、金额或次卡writeoff entitlement数。",
+      "proposed_occupancy_formula": "在明确的 gift policy 与可信 coverage 下：activeUnpaidPurchased + paidOriginalPurchased - provenCompletedRefundUnits。cancelledUnpaid不占用；pendingRefund不减。购物车仅作提交前估算，不能与其已创建订单双计。",
+      "authors": [
+        "公开普通/预售/活动/套餐共用创建器",
+        "独立现代/legacy积分直兑（legacy不可被默认豁免覆盖）",
+        "后台代客真实买家与两种真实收银创建器",
+        "游客uid0有独立身份域，不能把所有游客合并为一个买家；其转实名/合并政策须明确",
+        "数据导入/历史迁移/修复或直接SQL作者必须被覆盖栅栏约束或阻断该cohort授权",
+        "履约分配/供应商拆单/退款物化是派生作者，只传播lineage、不再次消费原始quota"
+      ],
+      "lifecycle": [
+        "新根创建与quota占用同一事务；幂等重放不二次占用",
+        "未支付取消/超时关闭在最终受保护取消事务释放一次；客户/后台/代客/游客等关闭入口共用事实",
+        "支付不新增原始单位；paid隐藏/软删除不可释放；真实历史硬删除应由协议阻止或仍保留完整账本",
+        "退款申请保留占用；拒绝/撤销不做额外可用增量；完成后按可信物理数量释放一次",
+        "balance/provider同步成功/callback/recovery/manual/cashier零额退回共享同一退款代际和唯一完成事件",
+        "原单/履约子单/退款selected与remaining子单形成完整无重复分区；退款已完成来源删改/重放不得重复释放"
+      ],
+      "coverage": "优先为可证明新生且无uid复用的原生账户建立受保护出生/激活凭据和全作者写栅栏，或为历史账户生成可审计的不可变封存基线；不能仅取当前root最早时间/最大id/迁移任务完成标志。未覆盖账户仍诚实拒绝但不可记作已迁完。",
+      "concurrency": "所有消费/取消释放/完成退款释放采用统一buyer-product顺序锁，并在等待后读最新余额；与现有 root/user/sku/product锁的顺序必须全作者一致。选择READ COMMITTED最新语句或SERIALIZABLE+受控重试，不能直接将现有RR快照reader塞到等待后write并假定最新。多product按稳定顺序；provider网络阶段不持DB事务锁。",
+      "boundedness": "终身数量可能超过int32，累计账本用bigint或有证明的上限，不从现有最多200root投影静默截断授权。配置可从不限改限购，所以登记必须覆盖限购启用之前的该商品购买，或明确不兼容的激活政策。"
+    },
+    "recommended_order": [
+      {
+        "step": 1,
+        "deliverable": "本批基础配置/数量聚合helper + limit1真实全入口正向 + limit2补漏，锁后配置验证/quote fingerprint。",
+        "counts_as": "基础商品单次能力与入口一致性，不是累计额度。"
+      },
+      {
+        "step": 2,
+        "deliverable": "确定产品/买家/赠品/游客合同并安装可信coverage与全作者根购买事件栅栏，覆盖新生账户或封存历史基线。",
+        "counts_as": "可证明完整的输入域；必须存在未来可正向购买的cohort，不是永远拒绝。"
+      },
+      {
+        "step": 3,
+        "deliverable": "gift-aware原始单位投影、父子lineage去重、取消与真实退款完成的唯一数量释放事件；迁移/接入所有实际作者和provider恢复路径。",
+        "counts_as": "可计算真实占用，pending不释放。"
+      },
+      {
+        "step": 4,
+        "deliverable": "统一并发额度admission（占用/取消/完成退款释放同事务、顺序锁、幂等），从受保护余额正向允许limit2商品，并贯通cart/quote/create。",
+        "counts_as": "最小可用累计闭环必须证明：额度内买得成、并发不超卖额度、取消/实际完成退款后买得回。"
+      },
+      {
+        "step": 5,
+        "deliverable": "真实PG+浏览器验证新生cohort/封存历史、同商品多SKU、全作者、赠品、拆分退款、退款pending/拒绝/完成/重放、隐藏paid/导入不明历史、配置竞态；保持未覆盖范围公开。",
+        "counts_as": "按实际完成范围更新审计与checkbox。"
+      }
+    ],
+    "suggested_existing_test_bases": [
+      "workers-ts/test/customer-order-repurchase-native.test.ts",
+      "workers-ts/test/cart-computation-http.test.ts",
+      "workers-ts/test/checkout-confirmation-postgres.test.ts",
+      "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+      "workers-ts/test/presale-checkout-postgres.test.ts",
+      "workers-ts/test/integral-purchase-origin-postgres.test.ts",
+      "workers-ts/test/purchase-quota-history.test.ts",
+      "workers-ts/test/purchase-quota-payment-ledger.test.ts",
+      "workers-ts/test/purchase-quota-payment-ledger-postgres.test.ts",
+      "workers-ts/test/purchase-quota-refund-receipt-postgres.test.ts",
+      "workers-ts/test/refund-atomic-materialization.test.ts"
+    ],
+    "source_manifest": [
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreCartServices.php",
+        "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+        "line_anchors": [
+          191,
+          230,
+          722,
+          1069,
+          1095,
+          1097,
+          1104
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderRefundServices.php",
+        "sha256": "e41e7d10c1aa904d0eade95c034dcb64d177b5b607b59cd38d48ddab148c8f89",
+        "line_anchors": [
+          370,
+          388,
+          394,
+          530,
+          549
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/order/StoreOrderSplitServices.php",
+        "sha256": "9f9cb5201ec0b71543d61e6cd8699d12231938cde72d33869778a1e540b46594",
+        "line_anchors": [
+          295,
+          304,
+          327,
+          337,
+          352
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/dao/BaseDao.php",
+        "sha256": "43fd77897402aed4ccf5f3504251df696ccc8ab4a1decdc6c1054ecb208ea603",
+        "line_anchors": [
+          304,
+          383,
+          399
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/model/order/StoreOrderCartInfo.php",
+        "sha256": "904d5547cc75c6ec7de40528c436d2f22b42d5ea2a9ae34c587e90c521750e3e",
+        "line_anchors": [
+          81,
+          157
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/activity/promotions/StorePromotionsServices.php",
+        "sha256": "dee73f896e988c75f9c79517c9f4c84c4a877885c84d2cbec0b89e2ad9cd99d5",
+        "line_anchors": [
+          1934,
+          1950
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/activity/integral/StoreIntegralServices.php",
+        "sha256": "56b8511f17bdd41778a5bd0705490956d67a8df993c1da0b474c706b5b13bdef",
+        "line_anchors": [
+          388,
+          404
+        ]
+      },
+      {
+        "scope": "php",
+        "path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "line_anchors": [
+          799
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreCartService.ts",
+        "sha256": "fb2c5d464c09deb3e15d37ea06a5b18d6c11919b879ac06721cc90efe7c07288",
+        "line_anchors": [
+          208,
+          229,
+          431,
+          513,
+          832,
+          979,
+          1033,
+          1107,
+          1279,
+          1362,
+          1407
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/CartComputationService.ts",
+        "sha256": "6d4e1d5cc0e04d3c6b7d962c7730cba5634d074a940cd2a9cbee79d5ed2879f0",
+        "line_anchors": [
+          77
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "0cc9231117bf76753eb5566e425d181c509bb54ea473bbf21b36112da4a3bfd3",
+        "line_anchors": [
+          918,
+          944,
+          980,
+          1816,
+          1842,
+          1981,
+          2672,
+          3071,
+          3073
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/ActivityService.ts",
+        "sha256": "b010569f12473ba9d2674d7ed25e51b1ea50a3d1d2224e67b69c0c574104b450",
+        "line_anchors": [
+          703,
+          741,
+          900
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+        "sha256": "6be9c53e1418f79c077799b5df03675cd532bbd3365a54ccede19bbf51d34e5b",
+        "line_anchors": [
+          86,
+          93
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/PresalePurchaseLimits.ts",
+        "sha256": "fbfd2079356184fcd2a0b3fb30628132a3a793fd05a0073cdb2c2cd1dc1fda26",
+        "line_anchors": [
+          10,
+          19
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/PurchaseQuotaHistory.ts",
+        "sha256": "c110a010d4e26cc9dc0162952cd0f636fd8dd76f001d677e21718488f33a6ed0",
+        "line_anchors": [
+          29,
+          53,
+          70,
+          92,
+          114,
+          118,
+          132
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/PurchaseQuotaPaymentLedger.ts",
+        "sha256": "b40df5d65e29060fbfe244f2f7099c373784480daf27fa7fb5287463e4bb3daa",
+        "line_anchors": [
+          72,
+          77,
+          79,
+          97,
+          337,
+          341
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/PurchaseOriginEvidence.ts",
+        "sha256": "952eb3742e5ae844e1bcbfe0d02afae8ee9bbc45b09f3844070c77a1facc08f4",
+        "line_anchors": [
+          21,
+          62,
+          68
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/purchaseOriginEvidence.ts",
+        "sha256": "51a1ed3d837cc311c20c7e5b90db039cb23ffbdaac642cc523a451fc7fa62fae",
+        "line_anchors": [
+          97
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/purchaseOriginEvidenceInstallation.ts",
+        "sha256": "ba06b10290d9a9a209a3b34be072de80b39fa0af09a0531b98d097a8b68d9873",
+        "line_anchors": [
+          74
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/migrations/purchaseCancellationGiftEvidence.ts",
+        "sha256": "8808d130c8b5df51259f28e3db8d206de21c997118b9b799609df50fe90a2a5f",
+        "line_anchors": [
+          1,
+          103,
+          128
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+        "sha256": "b4babfea04cd582f0d1643c4fceb96fa676c92504196021b7e9d1759be566f56",
+        "line_anchors": [
+          242,
+          292
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/StoreOrderRefundService.ts",
+        "sha256": "87484933d3ec30922d8c1ac235a01104756709f751752e8960059bbeeb6fa3ce",
+        "line_anchors": [
+          595,
+          742,
+          835,
+          912,
+          1373,
+          1384,
+          1395
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/RefundOrderMaterialization.ts",
+        "sha256": "add357dfed742b71eeae1c3186b5662cb2145d2a469273976a786d689c09a5bb",
+        "line_anchors": [
+          158,
+          166
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/order/OrderSupplierAllocationService.ts",
+        "sha256": "e3c03ab0c0852357edf3ea704ac098b0663a6528bb6ca98b8498d7c092c63ad9",
+        "line_anchors": [
+          307,
+          354
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/supplier/SupplierFulfillmentService.ts",
+        "sha256": "79258adad2c3217aa1efaf93b23a2cb00dfd06d789e1e238e90c4a90ef111232",
+        "line_anchors": [
+          1051,
+          1103,
+          1146
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/customer-work/CustomerWorkOrdinaryCashierService.ts",
+        "sha256": "eeaed9c505624fe8e803adac27e418ab02b3539d9b4d965ad9d9537dbfd60bb9",
+        "line_anchors": [
+          122,
+          147,
+          167
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/customer-work/CustomerWorkCashierService.ts",
+        "sha256": "a1af0ce996da2bf6e0b27985a2af47377ae9e038993e2df7e6be3a3fe2129613",
+        "line_anchors": [
+          126
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/user/LoginService.ts",
+        "sha256": "601d88eff53ea35a014ba448d615f06682418d260e60a26dba2e3a6ec87d22ae",
+        "line_anchors": [
+          192,
+          264
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/wechat/WechatAuthService.ts",
+        "sha256": "ea15420f84b57afc6aad88a68172c6420964ad32c0e6545ed22adeee7da6cfa0",
+        "line_anchors": [
+          1389
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/src/services/out/OutUserService.ts",
+        "sha256": "fab02a38dc3c33341715759f59866975173da484d666c88a00ff2458e99cfa9a",
+        "line_anchors": [
+          762
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/purchase-quota-history.test.ts",
+        "sha256": "aca3793f990b85030b1c5f260e929e12053a0ea4e9464155aac0b68974c958c9",
+        "line_anchors": [
+          33,
+          45,
+          60
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/purchase-quota-payment-ledger.test.ts",
+        "sha256": "25236a18efa0238c6128228f85fcb6ba37e7a8bb4307c3cd2c6d87de6a5eef09",
+        "line_anchors": [
+          68,
+          120
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/purchase-quota-payment-ledger-postgres.test.ts",
+        "sha256": "22797c062f86353b61442bec1aeaf528f2f1d738e774a42d13e6b8f63e617435",
+        "line_anchors": [
+          46,
+          193,
+          207
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/test/customer-order-repurchase-native.test.ts",
+        "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49",
+        "line_anchors": [
+          128,
+          133
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/docs/php-ts-customer-order-repurchase-20261019.md",
+        "sha256": "78a4b6633f8c60e411093553c7002911882b984518b24743c0cab12d69f7fa2c",
+        "line_anchors": [
+          17
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/docs/php-ts-integral-purchase-origin-20261019.md",
+        "sha256": "fdbd7110a96df6957330a6e5083e70e938709af403dda30d6a7fbd47869bb75b",
+        "line_anchors": [
+          13,
+          15
+        ]
+      },
+      {
+        "scope": "ts",
+        "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/php-ts-integral-purchase-limits-20261020.json",
+        "sha256": "e1f768030ee1f51a24c2b47405810114f6cbaab24e878baf78bb126b037d2da5",
+        "line_anchors": [
+          777
+        ]
+      }
+    ]
+  },
+  "h5_existing_build": {
+    "files": 344,
+    "sha256": "1766112f8e320247453a2c0726a0d939bf8cdb6687221ac8cb137b2260fc762e",
+    "source_commit": "4cecfd3a9588f2e33143e63d4a809857330e789e",
+    "reused": true,
+    "front_source_changed": false,
+    "no_PC_Admin_Supplier_browser_claim": true
+  },
+  "checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "lines": 88,
+      "checked": 50,
+      "lines_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac",
+      "unchanged": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "lines": 404,
+      "checked": 249,
+      "lines_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd",
+      "unchanged": true
+    }
+  ],
+  "retained_scope_limits": [
+    "Lifetime limit2 remains refused/incomplete; no complete preactivation/deleted/imported history, all-gift quantity projection or all-refund debit/release claim.",
+    "Cart rules are not reserved across Admin edits; final quote recalculation and stock CAS are authoritative. Some cashier drafts can retain excessive quantities but their quote/create share final checks.",
+    "Package duplicate product entries are forbidden; new tests use a legal fixed two-product package. Gift multi-campaign tests use disjoint charged-product roots, respecting first-match selection.",
+    "Gift refund fixture explicitly seeds a local balance-paid header then runs actual outbox/protected gift receipt and atomic materialization/finalizer. It is not provider or production privilege acceptance.",
+    "H5 is reused from the prior built bundle; no new PC/Admin/Supplier/device or deployment claim."
+  ],
+  "excluded_rounds": [
+    {
+      "label": "types-unit-final",
+      "accepted_tests": 0,
+      "reason": "Compiler read the old Browser fixture before its exposed-env correction; only three missing config/setConfig fields, final full project rerun."
+    },
+    {
+      "label": "browser-v1",
+      "accepted_tests": 0,
+      "reason": "Fixture config/setConfig are not exposed; failed before READY or browser interaction; wiring corrected without business changes."
+    },
+    {
+      "label": "native-focused-final",
+      "accepted_tests": 0,
+      "reason": "One added test matcher omitted the exact correct cap rejection message; 1 failed/93 passed aggregate excluded and all3 rerun."
+    },
+    {
+      "label": "types-final",
+      "accepted_tests": 0,
+      "reason": "npm executable absent; compiler never launched; both full projects rerun via installed Node."
+    },
+    {
+      "label": "native-v1",
+      "accepted_tests": 0,
+      "reason": "Terminated 143 before terminal result; exact stopped disposable cluster removed."
+    },
+    {
+      "label": "native-v2",
+      "accepted_tests": 0,
+      "reason": "Runner 10-minute total budget SIGTERM143/outer1; no complete Vitest summary; source drift also present."
+    },
+    {
+      "label": "native-final",
+      "accepted_tests": 0,
+      "reason": "Unstarted duplicate broad regression queue cancelled; no database created, replaced with focused final3."
+    },
+    {
+      "label": "unit-v1",
+      "accepted_tests": 0,
+      "reason": "Early79 pass superseded by final6-file unit run; no duplicate counting."
+    }
+  ],
+  "interrupted_cluster_cleanup": {
+    "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xw98WX",
+    "stage": "native-v1",
+    "exit": 143,
+    "accepted_tests": 0,
+    "pg_ctl_status_exit": 3,
+    "postmaster_pid_absent": true,
+    "postgres_process_absent": true,
+    "postgres_log_sha256": "8ac302335ed8a6d96343ae62e942ae44c6e48ca78c1bcb7ee133d2407ec75b57",
+    "cleanup": "stopped disposable cluster directory removed, not an SQL-zero receipt",
+    "checked_utc": "2026-10-20T00:58:27.221580+00:00",
+    "directory_removed": true
+  },
+  "automation_review": {
+    "rejected_action": "Read TEST_FINANCE_POSTGRES_URL from process environments and pass URL to psql",
+    "reason": "Credential discovery and possible password exposure",
+    "executed": false,
+    "bypassed": false,
+    "alternative": "Ordinary own PG log reads and formal validation terminal receipts",
+    "functional_blocker": false
+  },
+  "publication": {
+    "draft_base": "codex/integral-purchase-limits",
+    "merge": false,
+    "deploy": false,
+    "github_sha_ci": "Subsequent external receipt; no assertion of all-green CI in this evidence."
+  },
+  "browser": {
+    "stages": [
+      "checkout-two",
+      "quote-invalid",
+      "checkout-one",
+      "cumulative-blocked"
+    ],
+    "evidence": [
+      {
+        "stage": "checkout-two",
+        "text": "\n    确认订单配送方式快递配送门店自提本地地址甲 00000000000本地省测试甲市测试甲区隔离样本一号本地地址乙 00000000000本地省测试乙市测试乙区隔离样本二号新增或管理地址结算商品基础商品限购样本默认 × 2¥20.00使用积分抵扣（额度由系统计算）当前订单优惠券不使用优惠券刷新优惠券当前订单暂无适用优惠券，可能受首单优惠或适用范围限制。费用明细商品金额¥20.00会员优惠-¥0.00商品小计¥20.00首单优惠-¥0.00优惠券-¥0.00积分抵扣（0积分）-¥0.00运费¥0.00运费优惠-¥0.00应付金额¥20.00订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。合计 ¥20.00提交订单首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__product_h5#/pages/order/confirm?mode=buy&cartId=3&from=sku",
+        "submit_disabled": false,
+        "page_width": 375,
+        "page_scroll_width": 375,
+        "persisted_rules": {
+          "isLimit": 1,
+          "limitType": 1,
+          "limitNum": 2
+        }
+      },
+      {
+        "stage": "quote-invalid",
+        "text": "\n    确认订单配送方式快递配送门店自提本地地址甲 00000000000本地省测试甲市测试甲区隔离样本一号本地地址乙 00000000000本地省测试乙市测试乙区隔离样本二号新增或管理地址结算商品基础商品限购样本默认 × 2待报价使用积分抵扣（额度由系统计算）当前订单优惠券不使用优惠券刷新优惠券该商品单次购买不能超过1件重试加载优惠券费用明细该商品单次购买不能超过1件重新获取报价订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。待报价提交订单首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__product_h5#/pages/order/confirm?mode=buy&cartId=3&from=sku",
+        "submit_disabled": true,
+        "page_width": 375,
+        "page_scroll_width": 375,
+        "persisted_rules": {
+          "isLimit": 1,
+          "limitType": 1,
+          "limitNum": 1
+        }
+      },
+      {
+        "stage": "checkout-one",
+        "text": "\n    确认订单配送方式快递配送门店自提本地地址甲 00000000000本地省测试甲市测试甲区隔离样本一号本地地址乙 00000000000本地省测试乙市测试乙区隔离样本二号新增或管理地址结算商品基础商品限购样本默认 × 1¥10.00使用积分抵扣（额度由系统计算）当前订单优惠券不使用优惠券刷新优惠券当前订单暂无适用优惠券，可能受首单优惠或适用范围限制。费用明细商品金额¥10.00会员优惠-¥0.00商品小计¥10.00首单优惠-¥0.00优惠券-¥0.00积分抵扣（0积分）-¥0.00运费¥0.00运费优惠-¥0.00应付金额¥10.00订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。合计 ¥10.00提交订单首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__product_h5#/pages/order/confirm?mode=buy&cartId=4&from=sku",
+        "submit_disabled": false,
+        "page_width": 375,
+        "page_scroll_width": 375,
+        "persisted_rules": {
+          "isLimit": 1,
+          "limitType": 1,
+          "limitNum": 1
+        }
+      },
+      {
+        "stage": "cumulative-blocked",
+        "text": "\n    确认订单配送方式快递配送门店自提本地地址甲 00000000000本地省测试甲市测试甲区隔离样本一号本地地址乙 00000000000本地省测试乙市测试乙区隔离样本二号新增或管理地址结算商品基础商品限购样本默认 × 1待报价使用积分抵扣（额度由系统计算）当前订单优惠券不使用优惠券刷新优惠券累计限购历史尚无法完整核验，请重新选择商品重试加载优惠券费用明细累计限购历史尚无法完整核验，请重新选择商品重新获取报价订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。待报价提交订单首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__product_h5#/pages/order/confirm?mode=buy&cartId=4&from=sku",
+        "submit_disabled": true,
+        "page_width": 375,
+        "page_scroll_width": 375,
+        "persisted_rules": {
+          "isLimit": 1,
+          "limitType": 2,
+          "limitNum": 2
+        }
+      }
+    ],
+    "ruleEdits": [
+      {
+        "source": "labelled fixture rule edit, not Admin HTTP acceptance",
+        "isLimit": 1,
+        "limitType": 1,
+        "limitNum": 1
+      },
+      {
+        "source": "labelled fixture rule edit, not Admin HTTP acceptance",
+        "isLimit": 1,
+        "limitType": 2,
+        "limitNum": 2
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "http": 200,
+        "business_status": null,
+        "message": null,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_discounts/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/config/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/activity/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/add",
+        "http": 200,
+        "business_status": 200,
+        "message": "加入购物车成功"
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/address/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coupons/order/0",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/order/confirm",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "priced": {
+          "priceGroup": {
+            "pay_price": "20.00",
+            "total_price": "20.00"
+          },
+          "lines": [
+            {
+              "productId": 170,
+              "cartNum": 2
+            }
+          ]
+        },
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/order/computed/ed6ffb0a516945499235cc975d35c41b",
+        "http": 200,
+        "business_status": 400,
+        "message": "该商品单次购买不能超过1件",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coupons/order/0",
+        "http": 200,
+        "business_status": 400,
+        "message": "该商品单次购买不能超过1件",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_discounts/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_discounts/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/config/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/activity/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_discounts/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/config/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/activity/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/reply/list/170",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/add",
+        "http": 200,
+        "business_status": 200,
+        "message": "加入购物车成功"
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/address/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store/list",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coupons/order/0",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/order/confirm",
+        "http": 200,
+        "business_status": 200,
+        "message": "ok",
+        "priced": {
+          "priceGroup": {
+            "pay_price": "10.00",
+            "total_price": "10.00"
+          },
+          "lines": [
+            {
+              "productId": 170,
+              "cartNum": 1
+            }
+          ]
+        },
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/order/computed/ca1fb7a0fe534e1b891cbe8e6a9dccac",
+        "http": 200,
+        "business_status": 400,
+        "message": "累计限购历史尚无法完整核验，请重新选择商品",
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coupons/order/0",
+        "http": 200,
+        "business_status": 400,
+        "message": "累计限购历史尚无法完整核验，请重新选择商品",
+        "all_public_tables_sequences_unchanged": true
+      }
+    ],
+    "finished": true,
+    "provider_calls": 0,
+    "payment_attempts": 0,
+    "historical_coverage_complete": false,
+    "production_grants_verified": false,
+    "login_and_chrome": "synthetic local session/navigation; business APIs actual App/JWT/maintenance SQL",
+    "stock_and_points_unchanged": true,
+    "public_table_count": 282,
+    "sequence_count": 229
+  },
+  "authors_actual_inputs": {
+    "stage": "authors-v1",
+    "queued_outer_recorder_is_not_actual_test_start": true,
+    "review_before_postgres_launch": true,
+    "review_utc": "2026-10-20T00:59:17.097207+00:00",
+    "postgres_launch_utc": "2026-10-20T01:00:20.126+00:00",
+    "review_sha256": "5a0da475af89816924a388d29058e976ceca948365bf385301e783b966b3014a",
+    "current_matches_review_files": 17,
+    "files": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "c5e977968799852d0ab06fc201c96c21d7c937ed6e0eb61055716b89a66dd996"
+      },
+      {
+        "path": "workers-ts/src/dao/order/OrderDaos.ts",
+        "sha256": "eed8b5f7e9f76711fa69ae98115add34468657a8cb898f82b7da728052926fef"
+      },
+      {
+        "path": "workers-ts/src/services/activity/ActivityService.ts",
+        "sha256": "d5fa2301ff6aaecd6cdb734237691915b30fdf9c75632ac04ec91425e7dceaf2"
+      },
+      {
+        "path": "workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+        "sha256": "47eed30be309b0a3505b52bd43fee3299b53676ab0e5ab7994e273ab47a1250c"
+      },
+      {
+        "path": "workers-ts/src/services/activity/SeckillCartQuantityService.ts",
+        "sha256": "57bb9b85086aeceac49ee369e59e69779d5194646f283463650fd82fdd7f839f"
+      },
+      {
+        "path": "workers-ts/src/services/activity/StoreDiscountService.ts",
+        "sha256": "3d5a8fb2fec90c0847fd0067bc650ba5fc353730d130008a377b303b59fc42c3"
+      },
+      {
+        "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+        "sha256": "63251807dffbd6ea676adc70d126a4480b8a052c62a490d88448cb1e6c7a31be"
+      },
+      {
+        "path": "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts",
+        "sha256": "de579d7f5e7953141c1d5f96bdb7a4864ef1bcbb14b72e93af8afd63300576fb"
+      },
+      {
+        "path": "workers-ts/src/services/order/ProductPurchaseAdmission.ts",
+        "sha256": "4b4bce2a5bdc6170f9cf9c48896043ef3cd3677f284b9f311d290b6a594ef6c3"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreCartService.ts",
+        "sha256": "0e122923010a8b5601ec282bc3561ad56dd17d4ddde019ebfad7660a9c6ed2d3"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "1cde81186e58827e3e00720fc57807906fb1af402ff4df619bd325ccaf7d1144"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAdmissionFixture.ts",
+        "sha256": "8d9d2b3ff15254367f746f1407cd8e235e3c31c687a1126ace02c6ede87ee14f"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAuthorsFixture.ts",
+        "sha256": "dfe862a07b10cb3bf327cf1f3cc200b20cb8b99e0c0217af4132e07099d2917f"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "289e32e7e2c2897adbcdaeee6d89b6046159fd6a86eaea854204d3805eba71ca"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission.test.ts",
+        "sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-authors-postgres.test.ts",
+        "sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95"
+      },
+      {
+        "path": "workers-ts/vitest.product-purchase-admission-browser.config.ts",
+        "sha256": "43badab7b4d10a466b8be4cf103ea3baea60b5fbf850155ac2c19584c490cce2"
+      }
+    ],
+    "status": "Actual 120 tests passed; relevant pre-launch frozen files still match after termination",
+    "excluded_unimported_browser_host": "Only Browser trace projection changed after launch; host is not imported by any authors file. Remaining18 source records match pre-launch review.",
+    "terminal_exit_code": 0,
+    "unique_tests": 120,
+    "terminal_log_sha256": "704eead0d2d1c9125269455c1f21d2ee26941458f5b91fbcb146b19502ae7eed",
+    "excluded_unimported_test": "Followup admission case20 matcher changed after authors completed; this separate test file is not imported by authors4. Remaining17 relevant frozen source records still match."
+  },
+  "browser_qa": {
+    "checked_utc": "2026-10-20T01:22:11.416382+00:00",
+    "status": "passed",
+    "browser": "Cua Codex In-app Browser id2, background",
+    "external_extension_connected": false,
+    "port": 40751,
+    "h5_frame": {
+      "width": 390,
+      "height": 900
+    },
+    "page_identity": "outer 基础商品限购验收; actual H5 goods/detail and order/confirm routes bound in stage evidence",
+    "checks": {
+      "not_blank": true,
+      "no_framework_overlay": true,
+      "meaningful_interaction": true,
+      "no_relevant_console_error": true,
+      "four_stages": true,
+      "submit_disabled_on_rejection": true
+    },
+    "requests": {
+      "GET": 32,
+      "POST": 6,
+      "total": 38,
+      "readonly_table_sequence_proofs": 32,
+      "expected_analytics_requests": 4
+    },
+    "tables": 282,
+    "sequences": 229,
+    "business_posts": "2 cart preparations + 2 successful confirmation quotes + 2 rejected computed quotes; no create/pay",
+    "screenshots": [
+      {
+        "stage": "checkout-two",
+        "path": "/tmp/cinashop-product-limits-checkout-two.png",
+        "sha256": "56c3704cf2e758846843098ab8f54a272541aa1adf1cb7a9b98fd233951bda17"
+      },
+      {
+        "stage": "quote-invalid",
+        "path": "/tmp/cinashop-product-limits-quote-invalid.png",
+        "sha256": "635d4557d154068a491158381db8f66e44a5687403f1ef95f22916d9f284fc83"
+      },
+      {
+        "stage": "checkout-one",
+        "path": "/tmp/cinashop-product-limits-checkout-one.png",
+        "sha256": "97417b807c54b361efe791a72028bc4bce2dc3d2a54d61a8e09808e7cf4bc068"
+      },
+      {
+        "stage": "cumulative-blocked",
+        "path": "/tmp/cinashop-product-limits-cumulative-blocked.png",
+        "sha256": "8cce2d9851b112bfe496d5ec5c6685df6f1b2bc33c22c3c9b38374684d0078eb"
+      }
+    ],
+    "console": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T01:19:00.000Z",
+        "url": "http://127.0.0.1:40751/assets/index-D-ee6nOv.js"
+      }
+    ],
+    "tabs": "Only own temporary tab7 created and closed. Existing tabs1/2 untouched.",
+    "fixture_boundary": "synthetic local session/navigation; business APIs actual App/JWT/maintenance SQL",
+    "known_scope": "H5 only, fixed frame; no physical device/PC/Admin/Supplier rendering or production-grant/provider claim"
+  },
+  "cleanup": {
+    "checked_utc": "2026-10-20T01:21:22.370418+00:00",
+    "clusters": [
+      {
+        "log": "/tmp/cinashop-product-limits-authors-v1.log",
+        "log_sha256": "704eead0d2d1c9125269455c1f21d2ee26941458f5b91fbcb146b19502ae7eed",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-VpRdi4",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:11:18.761 UTC [88616] LOG:  database system is shut down"
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-browser-v1.log",
+        "log_sha256": "34563df1b6b686545efe2474946729d31e911e6a19d2813ea620eaa37e060fc1",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-va7C94",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:13:24.263 UTC [109162] LOG:  database system is shut down"
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-browser-v2.log",
+        "log_sha256": "34a23f4e485d2358b1e45be6e79aade3bdf196d5efd54dd259fbc248900fad6c",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-BQdFe4",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:21:10.845 UTC [117463] LOG:  database system is shut down"
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-native-focused-final-v2.log",
+        "log_sha256": "f030e3521f4c8409b1f4ee47c1289f349226aed90bc3c0a4d3b1a70f87bf23e4",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-mWtWlG",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:18:23.837 UTC [115202] LOG:  database system is shut down"
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-native-focused-final.log",
+        "log_sha256": "43159f46235afebfba15c403d38e853cfd882b1229bdbfbaaba0cf2fab9328ef",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LM9kXU",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:12:55.602 UTC [106954] LOG:  database system is shut down"
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-native-v1.log",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xw98WX",
+        "directory_removed": true,
+        "sql_zero_claim": false
+      },
+      {
+        "log": "/tmp/cinashop-product-limits-native-v2.log",
+        "log_sha256": "ca16834e0dee1622ee6636bec8110d63046d4986a8f81a617cbfbee6658c4a37",
+        "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-HptkVF",
+        "fixtures_remaining": 0,
+        "runner_stopped_marker": true,
+        "pg_ctl_status_exit": 3,
+        "postmaster_pid_absent": true,
+        "postgres_process_absent": true,
+        "last_shutdown": "2026-10-20 01:00:18.237 UTC [73523] LOG:  database system is shut down"
+      }
+    ],
+    "interrupted_cluster": {
+      "cluster": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xw98WX",
+      "stage": "native-v1",
+      "exit": 143,
+      "accepted_tests": 0,
+      "pg_ctl_status_exit": 3,
+      "postmaster_pid_absent": true,
+      "postgres_process_absent": true,
+      "postgres_log_sha256": "8ac302335ed8a6d96343ae62e942ae44c6e48ca78c1bcb7ee133d2407ec75b57",
+      "cleanup": "stopped disposable cluster directory removed, not an SQL-zero receipt",
+      "checked_utc": "2026-10-20T00:58:27.221580+00:00",
+      "directory_removed": true
+    },
+    "scope": "Exact task-owned disposable clusters only; directory removal is distinct from SQL fixture cleanup markers; no credentials or server restart used."
+  },
+  "planned_case_expansion_receipt": {
+    "created_utc": "2026-10-20T01:06:09.649Z",
+    "kind": "read-only static expanded test scope count, not execution proof",
+    "method": "TypeScript AST parsed without importing or executing test modules. Each array length expanded; literal authors.flatMap expands 2*2; assisted entry explicitly selects flow phase. Assertions and loops inside individual tests do not add test cases. Counts include native runIf/skipIf registrations only when TEST_FINANCE_POSTGRES_URL is set by the owned local runner.",
+    "repository_edited": false,
+    "heavy_commands_run": false,
+    "new_cases": {
+      "pure": 39,
+      "native_admission": 21,
+      "native_authors": 12,
+      "runner_delta": 7,
+      "browser": 1,
+      "total": 80,
+      "non_browser": 79,
+      "runner_delta_explanation": "2 exact native filenames +1 accepted browser alias +4 rejected browser invocation forms. Current357 = baseline350 +7."
+    },
+    "planned_groups": [
+      {
+        "label": "native-focused-final3",
+        "files": [
+          {
+            "path": "test/product-purchase-admission-postgres.test.ts",
+            "expanded_cases": 21
+          },
+          {
+            "path": "test/cart-computation-http.test.ts",
+            "expanded_cases": 49
+          },
+          {
+            "path": "test/modern-cart-membership-price.test.ts",
+            "expanded_cases": 24
+          }
+        ],
+        "expanded_cases": 94,
+        "status": "static planned count only; terminal acceptance pending"
+      },
+      {
+        "label": "authors-v1",
+        "files": [
+          {
+            "path": "test/product-purchase-authors-postgres.test.ts",
+            "expanded_cases": 12
+          },
+          {
+            "path": "test/assisted-purchase-flow-postgres.test.ts",
+            "expanded_cases": 49
+          },
+          {
+            "path": "test/customer-cashier-ordinary-postgres.test.ts",
+            "expanded_cases": 29
+          },
+          {
+            "path": "test/seckill-concurrency-postgres.test.ts",
+            "expanded_cases": 30
+          }
+        ],
+        "expanded_cases": 120,
+        "status": "static planned count only; terminal acceptance pending"
+      },
+      {
+        "label": "unit-final6",
+        "files": [
+          {
+            "path": "test/product-purchase-admission.test.ts",
+            "expanded_cases": 39
+          },
+          {
+            "path": "test/cart-price-display.test.ts",
+            "expanded_cases": 22
+          },
+          {
+            "path": "test/v2-cart-compatibility-migration.test.ts",
+            "expanded_cases": 5
+          },
+          {
+            "path": "test/discount-package-migration.test.ts",
+            "expanded_cases": 8
+          },
+          {
+            "path": "test/first-order-discount.test.ts",
+            "expanded_cases": 5
+          },
+          {
+            "path": "test/local-finance-postgres-runner.test.ts",
+            "expanded_cases": 357
+          }
+        ],
+        "expanded_cases": 436,
+        "status": "static planned count only; terminal acceptance pending"
+      },
+      {
+        "label": "browser",
+        "files": [
+          {
+            "path": "test/browser/product-purchase-admission.acceptance.ts",
+            "expanded_cases": 1
+          }
+        ],
+        "expanded_cases": 1,
+        "status": "static planned count only; terminal acceptance pending"
+      }
+    ],
+    "planned_unique_total": 651,
+    "planned_non_browser_total": 650,
+    "files": [
+      {
+        "path": "workers-ts/test/product-purchase-admission.test.ts",
+        "sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47",
+        "expanded_cases": 39,
+        "registration_sites_in_entry_file": 12
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+        "sha256": "60f5b60ce450538be5e051d1d5828fa939e632eb83d3628a8a91ba8c77e02c21",
+        "expanded_cases": 21,
+        "registration_sites_in_entry_file": 17
+      },
+      {
+        "path": "workers-ts/test/product-purchase-authors-postgres.test.ts",
+        "sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95",
+        "expanded_cases": 12,
+        "registration_sites_in_entry_file": 12
+      },
+      {
+        "path": "workers-ts/test/cart-computation-http.test.ts",
+        "sha256": "700925a1e91e65a5cbab9c435b7273fecc70f17b1ac8d35a72c1837aba3b31e6",
+        "expanded_cases": 49,
+        "registration_sites_in_entry_file": 25
+      },
+      {
+        "path": "workers-ts/test/modern-cart-membership-price.test.ts",
+        "sha256": "7c9d29c52a3d01909f50166cd8c4f0d11a4abac355a0c3bfe5fbda60c51a0b40",
+        "expanded_cases": 24,
+        "registration_sites_in_entry_file": 14
+      },
+      {
+        "path": "workers-ts/test/assisted-purchase-flow-postgres.test.ts",
+        "sha256": "98020f82416b2765f704c8bce80bcf35bf1ff8dcb0a5aac665d3c7d79421b1b7",
+        "expanded_cases": 49,
+        "registration_sites_in_entry_file": 0,
+        "registration_source": "workers-ts/test/assisted-purchase-runtime-cases.ts",
+        "registration_source_sha256": "6cd59c984ed8f7dbb132fd72049b03119c94b0a9e030771ca5882e67ec3d52e1",
+        "phase": "flow",
+        "note": "Entry registers flow only; all shared phases together have93 (form40,flow49,race4)."
+      },
+      {
+        "path": "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+        "sha256": "b00f04f5b6cc9f3d4d5418764e3f7ba8ad86bf6adb02e33aa65a8f0a98e17922",
+        "expanded_cases": 29,
+        "registration_sites_in_entry_file": 29
+      },
+      {
+        "path": "workers-ts/test/seckill-concurrency-postgres.test.ts",
+        "sha256": "d26a73a70e78fe000c1c791bf45ea2bc48a78093447e86712fad6c5219d867fd",
+        "expanded_cases": 30,
+        "registration_sites_in_entry_file": 25
+      },
+      {
+        "path": "workers-ts/test/order-full-gift-quote.test.ts",
+        "sha256": "3d181bc3b279ff1c5a09b6c53d4eaea6f85c814f2cfe4e56380f891c61307262",
+        "expanded_cases": 5,
+        "registration_sites_in_entry_file": 5
+      },
+      {
+        "path": "workers-ts/test/order-full-gift-checkout.test.ts",
+        "sha256": "f7de7b93cbcf382ff34c4f126d9a70c0a20df3e853c5c94abe1c02515eb79840",
+        "expanded_cases": 6,
+        "registration_sites_in_entry_file": 6
+      },
+      {
+        "path": "workers-ts/test/customer-order-repurchase-native.test.ts",
+        "sha256": "892418846de87cabe9f34ada18b670b72041e2a1a45ee5f6e28d22001934df49",
+        "expanded_cases": 52,
+        "registration_sites_in_entry_file": 26
+      },
+      {
+        "path": "workers-ts/test/integral-purchase-limits-postgres.test.ts",
+        "sha256": "7555fe52caad4547ce31b319e82c4aba9057eac1998fe0406a89c84f1451cbff",
+        "expanded_cases": 24,
+        "registration_sites_in_entry_file": 12
+      },
+      {
+        "path": "workers-ts/test/cart-price-display.test.ts",
+        "sha256": "75cef85a4427791f716672595343b88f18cc8841e6f1042362bbfad7beca32e3",
+        "expanded_cases": 22,
+        "registration_sites_in_entry_file": 8
+      },
+      {
+        "path": "workers-ts/test/v2-cart-compatibility-migration.test.ts",
+        "sha256": "7eb51b329ab3fd2bf695868634abfd38c9a07ba05c4f84702eb9f1dd82dcbc04",
+        "expanded_cases": 5,
+        "registration_sites_in_entry_file": 5
+      },
+      {
+        "path": "workers-ts/test/discount-package-migration.test.ts",
+        "sha256": "e8b715102ad6f99636786150ac6ad820fe6270f26f293749628ea6981f7b76ae",
+        "expanded_cases": 8,
+        "registration_sites_in_entry_file": 8
+      },
+      {
+        "path": "workers-ts/test/first-order-discount.test.ts",
+        "sha256": "f737b8174c0fda37200bb172c98445952dd267c9b4bd2e47e1c614b87f1309de",
+        "expanded_cases": 5,
+        "registration_sites_in_entry_file": 5
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "289e32e7e2c2897adbcdaeee6d89b6046159fd6a86eaea854204d3805eba71ca",
+        "expanded_cases": 357,
+        "registration_sites_in_entry_file": 101
+      },
+      {
+        "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+        "sha256": "760f317d85c0891482b096714b6d975f86ab061d2031a2d91d702089bd25afe2",
+        "expanded_cases": 1,
+        "registration_sites_in_entry_file": 1
+      }
+    ],
+    "raw_count_detail": {
+      "path": "/tmp/cinashop-product-limits-static-case-counts-raw.json",
+      "sha256": "3083601dcb3981d2c605c3ccde7bac103dbde96c0e28e023a39c134203223ccc"
+    },
+    "observed_receipts": [
+      {
+        "receipt": "/tmp/cinashop-product-limits-native-v2-result.json",
+        "sha256": "40f2964c5f4dc1b90d43b95420de2ec7ef835ac24c12427c1a3bbac004e90a64",
+        "exit_code": 1,
+        "changed_during_run": [
+          "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "workers-ts/src/dao/order/OrderDaos.ts",
+          "workers-ts/src/services/order/StoreCartService.ts",
+          "workers-ts/test/product-purchase-admission-postgres.test.ts"
+        ]
+      },
+      {
+        "receipt": "/tmp/cinashop-product-limits-unit-v1-result.json",
+        "sha256": "6b1db0758c60cf1b58dd274b133caa530090c203eea2386e44c8eacc5e0959cd",
+        "exit_code": 0,
+        "changed_during_run": []
+      }
+    ],
+    "execution_boundaries": {
+      "native_v1": {
+        "accepted_passed_tests": 0,
+        "note": "Interrupted143; root-authored offline cleanup receipt confirms pg_ctl status3, absent postmaster PID/process and removed disposable directory; this is not SQL database/role zero evidence.",
+        "cleanup_receipt": "/tmp/cinashop-product-limits-interrupted-cleanup.json",
+        "cleanup_receipt_sha256": "ab85d4ebc2454f48e39b061f4158f2fa3e1a5ef2fe8439090323a4f435668d4a",
+        "independent_offline_recheck_in_this_count_task": false
+      },
+      "native_v2": {
+        "accepted_passed_tests": 0,
+        "outer_exit": 1,
+        "inner_failure_status": 143,
+        "terminal_log": "/tmp/cinashop-product-limits-native-v2.log",
+        "terminal_log_sha256": "ca16834e0dee1622ee6636bec8110d63046d4986a8f81a617cbfbee6658c4a37",
+        "has_complete_vitest_summary": false,
+        "cleanup_markers_observed": [
+          "FINANCE_LOCAL_FIXTURES remaining=0",
+          "FINANCE_LOCAL_STOPPED /home/cina/cinagroup/cinashop/.cache/finance-postgres-HptkVF"
+        ],
+        "source_changed_during_run": true,
+        "note": "Current same7 sources expand181; parent reports old19 admission source loaded for this interrupted attempt, so even the planned179 legacy run count is not a passed count."
+      },
+      "unit_v1": {
+        "terminal_complete": true,
+        "files_passed": 5,
+        "tests_passed": 79,
+        "note": "Historical completed narrower5-file group; those cases are contained in final436 and must not be added again."
+      },
+      "cancelled_native_final7": {
+        "not_started": true,
+        "database_created": false,
+        "evidence": "/tmp/cinashop-product-limits-queue-narrow.json"
+      },
+      "authors_v1": {
+        "status": "pending; RUN header has no final summary as of count task; no passes accepted by this receipt"
+      },
+      "native_focused_final3": {
+        "status": "pending"
+      },
+      "final_types": {
+        "status": "pending"
+      },
+      "final_unit6": {
+        "status": "pending"
+      },
+      "browser": {
+        "status": "pending"
+      }
+    },
+    "acceptance_requirements": [
+      "Require actual terminal exit0 and complete Vitest file/test totals for each accepted group.",
+      "Bind recorded effective execution inputs to current frozen source hashes. A recorder queued before serial-lock acquisition can record obsolete bytes; changed_during_run requires explicit launch-bound equivalence evidence.",
+      "Avoid double counting retries, narrower historical unit79, interrupted native runs and unstarted cancelled group.",
+      "Native stopped/remaining0 are cleanup evidence only, not test-pass evidence.",
+      "Native-v1 directory removal is separately labelled offline cleanup; never describe it as SQL cleanup0.",
+      "Ordinary cumulative-limit coverage remains incomplete; refusing it is not a completion claim."
+    ]
+  },
+  "input_binding_notes": {
+    "authors-v1": "Outer recorder started while queued. Pre-launch source-review timestamp precedes actual owned PG launch;17 relevant source records match before/after. Separate admission test and Browser host were not imported by this run. See effective input receipt.",
+    "unit-final": "436 actual selected tests and implementation unchanged; later edits only the separate Browser host and unrelated admission-postgres matcher, subsequently covered by final native/Browser/types.",
+    "other_final_runs": "Complete final commands return0 with changed_during_run empty; source19 match current freeze."
+  },
+  "independent_final_review": {
+    "version": "product-purchase-admission-source-review-v5",
+    "generated_at_utc": "2026-10-20T01:25:02.745019+00:00",
+    "status": "reviewed_scoped_sources_and_final_tests_and_two_types_passed; repository_audit_publication_bookkeeping_in_progress",
+    "method": "Read-only source/test/document/log/hash/screenshot review plus pg_ctl status on exact six stopped owned clusters. No reviewer heavy tests/TSC/build/PG start, no process environment/credential access; no repo edits in this final review.",
+    "previous_review": {
+      "path": "/tmp/cinashop-product-purchase-admission-source-review-v4.json",
+      "sha256": "30fbb8a35d6088d4b1178e0c451a9f1edfdfb7e4e06a67f63667196c93b40379"
+    },
+    "conclusion": "No remaining concrete final-order bypass or newly introduced deadlock was identified in the reviewed bounded single-purchase implementation. Final complete groups substantiate651 unique cases with80 new; both Worker type projects exit0. Lifetime cumulative coverage and overall migration remain incomplete. Audit JSON is being finalized by root and is not yet the final publication artifact.",
+    "actionable_findings": [],
+    "execution_manifest": {
+      "path": "/tmp/cinashop-product-limits-executable-final.json",
+      "sha256": "17338c276c674486071e1b0b0c603fad6925aebe29d990e1d57b998f579842c0",
+      "count": 19,
+      "all_current_paths_and_bytes_match": true
+    },
+    "execution_source_files": [
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "c5e977968799852d0ab06fc201c96c21d7c937ed6e0eb61055716b89a66dd996"
+      },
+      {
+        "path": "workers-ts/src/dao/order/OrderDaos.ts",
+        "sha256": "eed8b5f7e9f76711fa69ae98115add34468657a8cb898f82b7da728052926fef"
+      },
+      {
+        "path": "workers-ts/src/services/activity/ActivityService.ts",
+        "sha256": "d5fa2301ff6aaecd6cdb734237691915b30fdf9c75632ac04ec91425e7dceaf2"
+      },
+      {
+        "path": "workers-ts/src/services/activity/OrderPromotionGiftService.ts",
+        "sha256": "47eed30be309b0a3505b52bd43fee3299b53676ab0e5ab7994e273ab47a1250c"
+      },
+      {
+        "path": "workers-ts/src/services/activity/SeckillCartQuantityService.ts",
+        "sha256": "57bb9b85086aeceac49ee369e59e69779d5194646f283463650fd82fdd7f839f"
+      },
+      {
+        "path": "workers-ts/src/services/activity/StoreDiscountService.ts",
+        "sha256": "3d5a8fb2fec90c0847fd0067bc650ba5fc353730d130008a377b303b59fc42c3"
+      },
+      {
+        "path": "workers-ts/src/services/order/CustomerOrderRepurchase.ts",
+        "sha256": "63251807dffbd6ea676adc70d126a4480b8a052c62a490d88448cb1e6c7a31be"
+      },
+      {
+        "path": "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts",
+        "sha256": "de579d7f5e7953141c1d5f96bdb7a4864ef1bcbb14b72e93af8afd63300576fb"
+      },
+      {
+        "path": "workers-ts/src/services/order/ProductPurchaseAdmission.ts",
+        "sha256": "4b4bce2a5bdc6170f9cf9c48896043ef3cd3677f284b9f311d290b6a594ef6c3"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreCartService.ts",
+        "sha256": "0e122923010a8b5601ec282bc3561ad56dd17d4ddde019ebfad7660a9c6ed2d3"
+      },
+      {
+        "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+        "sha256": "1cde81186e58827e3e00720fc57807906fb1af402ff4df619bd325ccaf7d1144"
+      },
+      {
+        "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+        "sha256": "c5596bb2fcdab5c38655e3a8174b8f9a4ae3c70793df502cfaa691fb1a0de3df"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAdmissionFixture.ts",
+        "sha256": "8d9d2b3ff15254367f746f1407cd8e235e3c31c687a1126ace02c6ede87ee14f"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAuthorsFixture.ts",
+        "sha256": "dfe862a07b10cb3bf327cf1f3cc200b20cb8b99e0c0217af4132e07099d2917f"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "289e32e7e2c2897adbcdaeee6d89b6046159fd6a86eaea854204d3805eba71ca"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+        "sha256": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission.test.ts",
+        "sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-authors-postgres.test.ts",
+        "sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95"
+      },
+      {
+        "path": "workers-ts/vitest.product-purchase-admission-browser.config.ts",
+        "sha256": "43badab7b4d10a466b8be4cf103ea3baea60b5fbf850155ac2c19584c490cce2"
+      }
+    ],
+    "since_v4_exact_deltas": [
+      {
+        "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+        "old_sha256": "9dae22bab106281826dda52f023573ae31710de97128cffecc672bfaed12cdd2",
+        "new_sha256": "c5596bb2fcdab5c38655e3a8174b8f9a4ae3c70793df502cfaa691fb1a0de3df",
+        "old_bytes_exactly_reconstruct": true,
+        "change": "Remove two nonexistent refundRuntimeFixture.config/setConfig calls and replace with explanatory comments. Underlying shared fixture already zeros discount configs and enables pickup; useIntegral defaultsfalse; actual Browser quotes20/10 prove unchanged ordinary price."
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+        "old_sha256": "60f5b60ce450538be5e051d1d5828fa939e632eb83d3628a8a91ba8c77e02c21",
+        "new_sha256": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be",
+        "old_bytes_exactly_reconstruct": true,
+        "change": "Case20 rejection regex admits actual 单次购买不能超过1件. All selected-only/pay10/400/full SQL and sequence immutability assertions unchanged."
+      }
+    ],
+    "browser_trace_and_get_scope": "Carries reviewed v3 narrowed pay_price/total_price plus productId/cartNum projection (no quoteToken). Four exact product170 GET paths for package list/reply stats/reply list/product marketing are real goods/detail reads. Socket+Host fence, serial API dispatch, exact POST whitelist, full table/sequence snapshots and ordered terminal chain remain in the accepted host.",
+    "frozen_owned_tests": [
+      {
+        "path": "workers-ts/test/product-purchase-admission.test.ts",
+        "sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47",
+        "expected_sha256": "1f47f0bc7d671ba9029e808d47c0d9a64b367eade9e5d241698c0b2ca3d78b47"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+        "sha256": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be",
+        "expected_sha256": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAdmissionFixture.ts",
+        "sha256": "8d9d2b3ff15254367f746f1407cd8e235e3c31c687a1126ace02c6ede87ee14f",
+        "expected_sha256": "8d9d2b3ff15254367f746f1407cd8e235e3c31c687a1126ace02c6ede87ee14f"
+      },
+      {
+        "path": "workers-ts/test/product-purchase-authors-postgres.test.ts",
+        "sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95",
+        "expected_sha256": "a60949a70db29fbfbf5408ac2a8dfff8358394ad13690849c203eb5d0f8f8a95"
+      },
+      {
+        "path": "workers-ts/test/helpers/productPurchaseAuthorsFixture.ts",
+        "sha256": "dfe862a07b10cb3bf327cf1f3cc200b20cb8b99e0c0217af4132e07099d2917f",
+        "expected_sha256": "dfe862a07b10cb3bf327cf1f3cc200b20cb8b99e0c0217af4132e07099d2917f"
+      }
+    ],
+    "all5_freeze_hashes_match": true,
+    "native_freeze_receipt": {
+      "path": "/tmp/cinashop-product-purchase-admission-tests-frozen-v4.json",
+      "sha256": "c80eb816c7c0e9c19da62fb4b9f17b1151ba220ce74a642bc1073be6f67f8de6"
+    },
+    "accepted_test_groups": [
+      {
+        "label": "authors-v1",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-authors-v1-result.json",
+          "sha256": "3460c022ab75697ff7725c190ca31edfc04a68a24275addd585fe0caad80243e"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-authors-v1.log",
+          "sha256": "704eead0d2d1c9125269455c1f21d2ee26941458f5b91fbcb146b19502ae7eed"
+        },
+        "exit_code": 0,
+        "files_passed": 4,
+        "tests_passed": 120,
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/product-purchase-authors-postgres.test.ts",
+          "test/assisted-purchase-flow-postgres.test.ts",
+          "test/customer-cashier-ordinary-postgres.test.ts",
+          "test/seckill-concurrency-postgres.test.ts"
+        ],
+        "changed_during_run": [
+          "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "workers-ts/src/dao/order/OrderDaos.ts",
+          "workers-ts/src/services/order/StoreCartService.ts",
+          "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+          "workers-ts/test/product-purchase-admission-postgres.test.ts"
+        ],
+        "current_execution_manifest_differences": [
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "current": "c5e977968799852d0ab06fc201c96c21d7c937ed6e0eb61055716b89a66dd996",
+            "recorded": "0cf735da8d6170b3d380cf9701c6ce22607df5a98d0a6201043307f6ec1b5aef"
+          },
+          {
+            "path": "workers-ts/src/dao/order/OrderDaos.ts",
+            "current": "eed8b5f7e9f76711fa69ae98115add34468657a8cb898f82b7da728052926fef",
+            "recorded": "b184e50a0bc965f5cd267e0448b1a2a1be8dff865d1df19b7bccfe04e71b4249"
+          },
+          {
+            "path": "workers-ts/src/services/order/LegacyOrderCompatibilityService.ts",
+            "current": "de579d7f5e7953141c1d5f96bdb7a4864ef1bcbb14b72e93af8afd63300576fb",
+            "recorded": null
+          },
+          {
+            "path": "workers-ts/src/services/order/StoreCartService.ts",
+            "current": "0e122923010a8b5601ec282bc3561ad56dd17d4ddde019ebfad7660a9c6ed2d3",
+            "recorded": "4c9e18c2c01e1e32f52dc20a6c00b85161ab100308cc4381875d14b7210f1a33"
+          },
+          {
+            "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+            "current": "c5596bb2fcdab5c38655e3a8174b8f9a4ae3c70793df502cfaa691fb1a0de3df",
+            "recorded": "53887b3dcdcb24676f7f391cc777ad42c49e999f37dea48142cc8bbf6af8aa81"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "current": "289e32e7e2c2897adbcdaeee6d89b6046159fd6a86eaea854204d3805eba71ca",
+            "recorded": null
+          },
+          {
+            "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+            "current": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be",
+            "recorded": "991d772c2637ea3ee518f94a054b95c6287f771f1c9b8196d30dffe83de23833"
+          }
+        ],
+        "effective_execution_inputs": {
+          "path": "/tmp/cinashop-product-limits-authors-effective-inputs.json",
+          "sha256": "f1be9e1418af7eb67d33d67b8691c5e365b802cac19e3200dcf3ade3a7ef0504",
+          "prelaunch_review": {
+            "path": "/tmp/cinashop-product-purchase-admission-source-review-v2.json",
+            "sha256": "5a0da475af89816924a388d29058e976ceca948365bf385301e783b966b3014a"
+          },
+          "relevant17_records_equal_prelaunch_and_current": true,
+          "excluded_files": [
+            "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+            "workers-ts/test/product-purchase-admission-postgres.test.ts"
+          ],
+          "explanation": "Outer recorder began before serial-lock admission and captured old bytes. Independent v2 review preceded actual Vitest start01:00:20. All17 retained execution-manifest files match both launch review and final tree. Browser host and admission-native test are not imported by the four authors suites; only those later test-only files are excluded. Mature entry/runtime-cases source hashes are additionally bound by static count receipt; no executed production change is waived."
+        }
+      },
+      {
+        "label": "unit-final",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-unit-final-result.json",
+          "sha256": "1e238c5f85b443ecd1ab449bce04835c871a90d282bc9e61deca66c98c952728"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-unit-final.log",
+          "sha256": "17a8e0580539c9a9f62c5512c520337838268bf85fc140596c41d8346d67b98c"
+        },
+        "exit_code": 0,
+        "files_passed": 6,
+        "tests_passed": 436,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/product-purchase-admission.test.ts",
+          "test/cart-price-display.test.ts",
+          "test/v2-cart-compatibility-migration.test.ts",
+          "test/discount-package-migration.test.ts",
+          "test/first-order-discount.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "--maxWorkers=1"
+        ],
+        "changed_during_run": [],
+        "current_execution_manifest_differences": [
+          {
+            "path": "workers-ts/test/browser/product-purchase-admission.acceptance.ts",
+            "current": "c5596bb2fcdab5c38655e3a8174b8f9a4ae3c70793df502cfaa691fb1a0de3df",
+            "recorded": "911cc1e661a5df21e43973c2db53b8a9396116f7dfbfa20576b71f1006076778"
+          },
+          {
+            "path": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+            "current": "5bcc460c826d29429a692ecc7537ac1e01ce2c1040e4bd24094b885f0c6c05be",
+            "recorded": "60f5b60ce450538be5e051d1d5828fa939e632eb83d3628a8a91ba8c77e02c21"
+          }
+        ],
+        "effective_execution_inputs": {
+          "explanation": "Completed unit6 source manifest is unchanged during execution. Later deltas are only unimported Browser host and admission-native case20 regex; all production, helper, pure/unit and runner inputs remain identical. Exclude these2 unused blanket-manifest members without claiming unchanged19."
+        }
+      },
+      {
+        "label": "native-focused-final-v2",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-native-focused-final-v2-result.json",
+          "sha256": "b8238e161e0017e634a6aad131eedd30aa2a59b2f2a1dc0a0a8b8d4e54404cdf"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-native-focused-final-v2.log",
+          "sha256": "f030e3521f4c8409b1f4ee47c1289f349226aed90bc3c0a4d3b1a70f87bf23e4"
+        },
+        "exit_code": 0,
+        "files_passed": 3,
+        "tests_passed": 94,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/product-purchase-admission-postgres.test.ts",
+          "test/cart-computation-http.test.ts",
+          "test/modern-cart-membership-price.test.ts"
+        ],
+        "changed_during_run": [],
+        "current_execution_manifest_differences": []
+      },
+      {
+        "label": "browser-v2",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-browser-v2-result.json",
+          "sha256": "e14f012750310b4532dc05f2364124d635ea523442d3de2de48da2acf1f30956"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-browser-v2.log",
+          "sha256": "34a23f4e485d2358b1e45be6e79aade3bdf196d5efd54dd259fbc248900fad6c"
+        },
+        "exit_code": 0,
+        "files_passed": 1,
+        "tests_passed": 1,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:product-purchase-admission-browser"
+        ],
+        "changed_during_run": [],
+        "current_execution_manifest_differences": []
+      }
+    ],
+    "accepted_unique_counts": {
+      "non_browser_files": 13,
+      "non_browser_tests": 650,
+      "browser_files": 1,
+      "browser_tests": 1,
+      "all_files": 14,
+      "all_tests": 651,
+      "new_cases": {
+        "pure": 39,
+        "native_admission": 21,
+        "native_authors": 12,
+        "runner_delta": 7,
+        "browser": 1
+      },
+      "new_total": 80,
+      "retries_and_failed_group_partial_passes_added": 0
+    },
+    "accepted_worker_types": [
+      {
+        "label": "types-runtime-final",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-types-runtime-final-result.json",
+          "sha256": "ad2e21c9f3ae3b119b673c34a2c2133e4c5400e0a77aa349a4db84cd2f087525"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-types-runtime-final.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "exit_code": 0,
+        "files_passed": null,
+        "tests_passed": null,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "-p",
+          "tsconfig.runtime-test.json",
+          "--noEmit"
+        ],
+        "changed_during_run": [],
+        "current_execution_manifest_differences": []
+      },
+      {
+        "label": "types-unit-final-v2",
+        "receipt": {
+          "path": "/tmp/cinashop-product-limits-types-unit-final-v2-result.json",
+          "sha256": "96f3b05e76a6a214e21dd35c731fcb1a10892bceea046697f6d7f4b0faeafc12"
+        },
+        "log": {
+          "path": "/tmp/cinashop-product-limits-types-unit-final-v2.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "exit_code": 0,
+        "files_passed": null,
+        "tests_passed": null,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "changed_during_run": [],
+        "current_execution_manifest_differences": []
+      }
+    ],
+    "browser_qa": {
+      "result": {
+        "path": "/tmp/cinashop-product-limits-browser-result.json",
+        "sha256": "952d615156d4722a49661920faa1f740ac4337ebb17bced1f510ea104143ba29"
+      },
+      "overview": {
+        "path": "/tmp/cinashop-product-limits-browser-qa.json",
+        "sha256": "a07448ce76c52002b7e3b0eafa06d04788a68d2877d6c0a0a0b1b8cff4517da2"
+      },
+      "console": {
+        "path": "/tmp/cinashop-product-limits-console.json",
+        "sha256": "ec0d54f74c93380fe66a49006c288b5a11d06a6817c27fad07fc7d0ed1de43bb"
+      },
+      "stages": [
+        "checkout-two",
+        "quote-invalid",
+        "checkout-one",
+        "cumulative-blocked"
+      ],
+      "actual_get": 32,
+      "actual_post": 6,
+      "readonly_proofs": {
+        "GET": 28,
+        "quote_POST": 4,
+        "total": 32
+      },
+      "analytics_GET": 4,
+      "actual_cart_add_POST": 2,
+      "public_tables": 282,
+      "public_sequences": 229,
+      "old_price_cleared_and_submit_disabled": [
+        true,
+        true
+      ],
+      "actual_quote_prices": [
+        "20.00",
+        "10.00"
+      ],
+      "actual_errors": [
+        "单次购买不能超过1件",
+        "累计限购历史尚无法完整核验"
+      ],
+      "orders0": "enforced by accepted host terminal actual SQL assertion",
+      "stock_and_points_unchanged": true,
+      "R2_read_write_delete0": "enforced by every accepted API host assertion",
+      "provider_calls": 0,
+      "payment_attempts": 0,
+      "quoteToken_not_in_result": true,
+      "console_errors": 0,
+      "known_deprecation_warnings": 1,
+      "all4_screenshot_bytes_match_and_reviewed": true,
+      "screenshots": [
+        {
+          "stage": "checkout-two",
+          "path": "/tmp/cinashop-product-limits-checkout-two.png",
+          "sha256": "56c3704cf2e758846843098ab8f54a272541aa1adf1cb7a9b98fd233951bda17"
+        },
+        {
+          "stage": "quote-invalid",
+          "path": "/tmp/cinashop-product-limits-quote-invalid.png",
+          "sha256": "635d4557d154068a491158381db8f66e44a5687403f1ef95f22916d9f284fc83"
+        },
+        {
+          "stage": "checkout-one",
+          "path": "/tmp/cinashop-product-limits-checkout-one.png",
+          "sha256": "97417b807c54b361efe791a72028bc4bce2dc3d2a54d61a8e09808e7cf4bc068"
+        },
+        {
+          "stage": "cumulative-blocked",
+          "path": "/tmp/cinashop-product-limits-cumulative-blocked.png",
+          "sha256": "8cce2d9851b112bfe496d5ec5c6685df6f1b2bc33c22c3c9b38374684d0078eb"
+        }
+      ],
+      "tabs": "Only own temporary tab7 created and closed. Existing tabs1/2 untouched.",
+      "fixture_boundary": "synthetic local session/navigation; business APIs actual App/JWT/maintenance SQL",
+      "external_extension_connected": false,
+      "scope": "Actual H5 only; no order creation/payment/deployment/provider or production-grants claim."
+    },
+    "h5_build": {
+      "manifest": "/tmp/cinashop-product-limits-h5-build.json",
+      "sha256": "1766112f8e320247453a2c0726a0d939bf8cdb6687221ac8cb137b2260fc762e",
+      "files": 344,
+      "all_bytes_and_set_match": true,
+      "source_base_commit": "4cecfd3a9588f2e33143e63d4a809857330e789e",
+      "front_source_changes": []
+    },
+    "checkboxes": [
+      {
+        "path": "MIGRATION_AUDIT.md",
+        "total": 88,
+        "checked": 50,
+        "equal_to_HEAD": true,
+        "join_lf_without_terminal_lf_sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4",
+        "join_lf_with_terminal_lf_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+      },
+      {
+        "path": "MIGRATION_CHECKLIST.md",
+        "total": 404,
+        "checked": 249,
+        "equal_to_HEAD": true,
+        "join_lf_without_terminal_lf_sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2",
+        "join_lf_with_terminal_lf_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+      }
+    ],
+    "independent_source_bindings": {
+      "path": "/tmp/cinashop-product-limits-final-bindings-independent-v1.json",
+      "sha256": "769c91496245cc924be642852a39ceb12a267618a51b345d30b5ef2b3c5a9273"
+    },
+    "independent_pg_cleanup": {
+      "path": "/tmp/cinashop-product-limits-cleanup-independent-v1.json",
+      "sha256": "4e4dcc7a03e47b4ca247b5e02b8537635fe5b8b51fb8e3a3ab061c960b8eeb0f"
+    },
+    "pg_cleanup_summary": {
+      "normal6_sql_fixture_remaining0_marker_and_status3_pidabsent_processabsent_shutdown_log": true,
+      "interrupted1_directory_absent": true,
+      "interrupted_prior_stop_proof": "Root earlier offline status3/PID/process proof and preserved log hash; directory now absent, cannot rerun status on removed data.",
+      "interrupted_sql_cleanup0_claim": false
+    },
+    "excluded_attempts": [
+      {
+        "label": "native-v1",
+        "accepted_tests": 0,
+        "reason": "Interrupted143 without complete terminal; own directory removed after stop proof, not SQL0."
+      },
+      {
+        "label": "native-v2",
+        "accepted_tests": 0,
+        "reason": "Total10-minute SIGTERM143/outer1; no complete Vitest summary and source drift."
+      },
+      {
+        "label": "native-focused-final-v1",
+        "accepted_tests": 0,
+        "reason": "Failed aggregate1failed/93passed; case20 regex corrected then all94 reran. Partial93 explicitly excluded."
+      },
+      {
+        "label": "browser-v1",
+        "accepted_tests": 0,
+        "reason": "Before-ready fixture exposure errorconfig/setConfig; corrected only host then complete Browser1 passed."
+      },
+      {
+        "label": "unit-v1",
+        "accepted_tests": 0,
+        "reason": "Historical79 superseded and included in unit436; no double count."
+      },
+      {
+        "label": "cancelled-native-final7",
+        "accepted_tests": 0,
+        "reason": "Never started/no DB; replaced by focused3."
+      },
+      {
+        "label": "types-unit-final-v1",
+        "accepted_validation": false,
+        "reason": "exit2 on nonexistent fixture fields; finalv2 complete exit0/changed[] supersedes."
+      }
+    ],
+    "retained_scope_limits": [
+      "Lifetime limit2 remains refused/incomplete; no complete preactivation/deleted/imported history, all-gift quantity projection or all-refund debit/release claim.",
+      "Cart rules are not reserved across Admin edits; final quote recalculation and stock CAS are authoritative. Some cashier drafts can retain excessive quantities but their quote/create share final checks.",
+      "Package duplicate product entries are forbidden; new tests use a legal fixed two-product package. Gift multi-campaign tests use disjoint charged-product roots, respecting first-match selection.",
+      "Gift refund fixture explicitly seeds a local balance-paid header then runs actual outbox/protected gift receipt and atomic materialization/finalizer. It is not provider or production privilege acceptance.",
+      "H5 is reused from the prior built bundle; no new PC/Admin/Supplier/device or deployment claim.",
+      "Final evidence does not include the aborted broad7 mature giftquote5/giftcheckout6/repurchase52/integral24 suites as separate passed files. Author-specialized genuine gift/package/integral coverage is the actual12 inside authors120."
+    ],
+    "documents_reviewed": [
+      {
+        "path": "workers-ts/docs/php-ts-product-purchase-admission-20261020.md",
+        "sha256": "daa7c7786b6962127856a151d4855c320ff3338bfb7abcfd07668208446d0800"
+      },
+      {
+        "path": "MIGRATION_AUDIT.md",
+        "sha256": "5be470f8a183bacfc2b2d1cf04723ae78fc97642b7c26581bdbf0339d08154d3"
+      },
+      {
+        "path": "MIGRATION_CHECKLIST.md",
+        "sha256": "1ec7bf6fe78bc19b44ec4a287e1cc8272079fedca0d20e60a44cdb68133528e4"
+      }
+    ],
+    "bookkeeping_boundary": "Root has updated docs/root sections to actual651/80, readonly32/analytics4 and six normal plus one interrupted cleanup. Final audit JSON with this review/QA/effective inputs remains under assembly; its pending snapshot is not a final state or a source/test failure. Subsequent documentation-only changes need current hash capture, not heavy reruns."
+  },
+  "browser_no_confirmation_requests": "Cua background IAB only, existing fixed localhost origin; no extra user confirmation asked and no global security/approval settings changed."
+}

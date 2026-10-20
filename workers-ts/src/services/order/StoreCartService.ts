@@ -12,6 +12,8 @@ import { isBargainParticipationReady } from "@/services/activity/BargainParticip
 import { cartBargainParticipation, findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
 import { assertIntegralOnceLimit, assertIntegralTotalLimit, integralPurchaseLimit, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
+import { assertProductCartQuantity, assertProductPurchaseBatch, assertProductPurchaseQuantity,
+  lockProductCartScope, readReusableProductQuantity } from './ProductPurchaseAdmission';
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
 import { ValidateException, NotFoundException } from "@/utils/errors";
@@ -71,7 +73,8 @@ interface CartAddParams {
 /** Explicit scopes let migrated clients isolate checkout rows without changing
  * the unscoped legacy endpoint used by other clients during migration. */
 export type CartReadScope = { mode: "cart" } | { mode: "buy"; ids: number[] }
-  | { mode: "compute"; ids: number[]; hypotheticalPaidMember?: boolean };
+  | { mode: "compute"; ids: number[]; hypotheticalPaidMember?: boolean }
+  | { mode: "checkout"; ids: number[] };
 
 async function lockCartUser(tx: DbClient, uid: number): Promise<void> {
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_ADVISORY_LOCK_NAMESPACE}, ${uid})`);
@@ -206,6 +209,14 @@ export class StoreCartService {
    *   3. 已存在同 SKU → 合并数量; 否则新建
    */
   async add(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
+    if ((params.type ?? 0) !== 2 && params.bargainUserId !== undefined)
+      throw new ValidateException('非砍价购物车不能选择砍价记录');
+    if ((params.type ?? 0) === 0 && (params.isNew ?? 0) === 0) {
+      return withTx(this.container, async tx => {
+        await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0 });
+        return new StoreCartService(createContainerFromDb(tx), this.env).addResolved(params);
+      });
+    }
     if ((params.type ?? 0) === 6) {
       if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
       return addPresaleCart(this.container, params);
@@ -237,8 +248,8 @@ export class StoreCartService {
 
     if (isNew !== 0 && isNew !== 1) throw new ValidateException("购物车类型无效");
 
-    if (!Number.isSafeInteger(cartNum) || cartNum <= 0) {
-      throw new ValidateException("购买数量必须是大于 0 的整数");
+    if (!Number.isSafeInteger(cartNum) || cartNum <= 0 || cartNum > 32767) {
+      throw new ValidateException("购买数量必须为1至32767的整数");
     }
     if (type === 5) {
       throw new ValidateException("套餐商品必须一次提交完整的套餐选择");
@@ -388,6 +399,7 @@ export class StoreCartService {
     if (!product.isShow || product.isDel) {
       throw new ValidateException("商品已下架");
     }
+    await assertProductCartQuantity(this.container.db, product, cartNum, { uid, type, isNew });
 
     // 2. 校验 SKU
     const sku = await this.container.storeProductAttrValueDao.getByUnique(unique, 0, productId);
@@ -438,6 +450,7 @@ export class StoreCartService {
     );
     if (existing) {
       const newNum = existing.cartNum + cartNum;
+      if (newNum > 32767) throw new ValidateException('商品购买数量不能超过32767件');
       if (type === 7 && newNum > 1) throw new ValidateException("新人专享商品限购一件");
       assertLegacyActivityQuantity(newNum);
       if (integralContext) {
@@ -457,7 +470,13 @@ export class StoreCartService {
           eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
         )).returning({ id: storeCart.id });
         if (!updated.length) throw new ValidateException("砍价购物车已变化或被占用，请刷新后重试");
-      } else await this.container.storeCartDao.update(existing.id, { cartNum: newNum });
+      } else {
+        const updated = await this.container.db.update(storeCart).set({ cartNum: newNum }).where(and(
+          activityCartQuoteGuard(existing), eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
+          eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1),
+        )).returning({ id: storeCart.id });
+        if (!updated.length) throw new ValidateException('购物车已变化或被占用，请刷新后重试');
+      }
       return { id: existing.id, cartNum: newNum };
     }
 
@@ -512,12 +531,12 @@ export class StoreCartService {
    */
   async list(uid: number, scope?: CartReadScope): Promise<unknown[]> {
     if (scope && scope.mode !== "cart" && (
-      !scope.ids.length || scope.ids.length > 100 ||
+      !scope.ids.length || scope.ids.length > (scope.mode === "checkout" ? 200 : 100) ||
       new Set(scope.ids).size !== scope.ids.length ||
       scope.ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
     )) throw new ValidateException("请选择有效的立即购买商品");
     const carts = await this.container.storeCartDao.getUserCart(uid, scope
-      ? { isNew: scope.mode === "buy" ? 1 : 0, ids: scope.mode !== "cart" ? scope.ids : undefined }
+      ? { isNew: scope.mode === "checkout" ? undefined : scope.mode === "buy" ? 1 : 0, ids: scope.mode !== "cart" ? scope.ids : undefined }
       : undefined);
     if (scope && scope.mode !== "cart" && (
       carts.length !== scope.ids.length || carts.some((cart) => cart.status !== 1 || cart.cartNum <= 0)
@@ -532,6 +551,12 @@ export class StoreCartService {
       if (p) products.set(pid, p);
     }
 
+    const selectedProductQuantities = new Map<string, number>();
+    for (const cart of carts) {
+      if (cart.status !== 1 || !Number.isSafeInteger(cart.cartNum) || cart.cartNum < 1 || cart.cartNum > 32767) continue;
+      const key = `${cart.productId}:${cart.type}`;
+      selectedProductQuantities.set(key, (selectedProductQuantities.get(key) ?? 0) + cart.cartNum);
+    }
     const result = [];
     const promotionLines: OrderPromotionInputLine[] = [];
     let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
@@ -540,9 +565,16 @@ export class StoreCartService {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
         | undefined;
-      if (!product || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
+      if (!product || cart.status !== 1 || !Number.isSafeInteger(cart.cartNum) || cart.cartNum < 1 || cart.cartNum > 32767
+        || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
         (cart.type === 7 && !newcomerBaseProductIsEligible(product)) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
+        result.push({ ...cart, isValid: false, productInfo: null });
+        continue;
+      }
+      try { assertProductPurchaseQuantity(product, selectedProductQuantities.get(`${cart.productId}:${cart.type}`)!); }
+      catch (error) {
+        if (!(error instanceof ValidateException) || scope && scope.mode !== "cart") throw error;
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
@@ -837,7 +869,7 @@ export class StoreCartService {
       .select()
       .from(storeCart)
       .where(and(
-        eq(storeCart.uid, uid),
+        eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         eq(storeCart.type, 0),
         eq(storeCart.activityId, 0),
         eq(storeCart.storeId, 0),
@@ -879,13 +911,18 @@ export class StoreCartService {
       skus.map((sku) => [`${sku.productId}:${sku.unique}`, sku] as const),
     );
     const pricing = await this.cartPricing(uid);
+    const quantities = new Map<number, number>();
+    for (const cart of carts) if (cart.status === 1) quantities.set(cart.productId, (quantities.get(cart.productId) ?? 0) + cart.cartNum);
 
     const result: Record<string, unknown>[] = [];
     const promotionLines: OrderPromotionInputLine[] = [];
     for (const cart of carts) {
       const product = productById.get(cart.productId);
       if (!product) continue;
-      const productValid = product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
+      let limitValid = true;
+      try { assertProductPurchaseQuantity(product, quantities.get(cart.productId) ?? cart.cartNum); }
+      catch (error) { if (!(error instanceof ValidateException)) throw error; limitValid = false; }
+      const productValid = limitValid && product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
       if (!options.includeInvalid && !productValid) continue;
       const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique}`);
       const rawPrice = String(sku?.price ?? product.price);
@@ -1044,6 +1081,8 @@ export class StoreCartService {
       throw new NotFoundException("用户不存在");
     }
     return withTx(this.container, async (tx) => {
+      await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0,
+        staffId: params.adminId, touristUid: params.uid === 0 ? params.touristUid : '' });
       await tx.execute(sql`
         SELECT pg_advisory_xact_lock(
           hashtextextended(${`cinashop:assisted-cart:${params.adminId}:${params.uid}:${params.touristUid}`}, 0::bigint)
@@ -1072,6 +1111,9 @@ export class StoreCartService {
         .for("update");
       const existing = existingRows[0];
       const nextNum = (existing?.cartNum ?? 0) + params.cartNum;
+      if (params.isNew === 1) assertProductPurchaseQuantity(product, nextNum);
+      else await assertProductCartQuantity(tx, product, params.cartNum, { uid: params.uid, type: 0, isNew: 0,
+        staffId: params.adminId, touristUid: params.uid === 0 ? params.touristUid : '' });
       if (nextNum > sku.stock || nextNum > product.stock || nextNum > 32767) {
         throw new ValidateException("加入购物车数量超过库存");
       }
@@ -1117,8 +1159,16 @@ export class StoreCartService {
       !Number.isSafeInteger(params.cartNum) || params.cartNum <= 0 || params.cartNum > 32767
     ) throw new ValidateException("购物车参数错误");
     await withTx(this.container, async (tx) => {
+      const [hint] = await tx.select({ productId: storeCart.productId }).from(storeCart).where(and(
+        eq(storeCart.id, params.id), eq(storeCart.uid, params.uid), eq(storeCart.staffId, params.adminId),
+        eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ''), eq(storeCart.type, 0),
+        eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1)));
+      if (!hint) throw new NotFoundException('购物车项不存在');
+      await lockProductCartScope(tx, { uid: params.uid, productId: hint.productId, type: 0,
+        staffId: params.adminId, touristUid: params.uid === 0 ? params.touristUid : '' });
       const rows = await tx.select().from(storeCart).where(and(
         eq(storeCart.id, params.id),
+        eq(storeCart.productId, hint.productId),
         eq(storeCart.uid, params.uid),
         eq(storeCart.staffId, params.adminId),
         eq(storeCart.touristUid, params.uid === 0 ? params.touristUid : ""),
@@ -1130,6 +1180,9 @@ export class StoreCartService {
       const cart = rows[0];
       if (!cart) throw new NotFoundException("购物车项不存在");
       const { product, sku } = await normalProductAndSku(tx, cart.productId, cart.productAttrUnique);
+      await assertProductCartQuantity(tx, product, params.cartNum, { uid: params.uid, type: 0,
+        isNew: cart.isNew, excludeCartId: cart.id, staffId: params.adminId,
+        touristUid: params.uid === 0 ? params.touristUid : '' });
       if (params.cartNum > sku.stock || params.cartNum > product.stock) {
         throw new ValidateException("修改数量超过库存");
       }
@@ -1209,13 +1262,14 @@ export class StoreCartService {
       throw new ValidateException("参数错误");
     }
     return withTx(this.container, async (tx) => {
+      await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0 });
       await lockCartUser(tx, params.uid);
       const sourceRows = await tx
         .select()
         .from(storeCart)
         .where(and(
           eq(storeCart.id, params.id),
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
           eq(storeCart.productId, params.productId),
           eq(storeCart.type, 0),
           eq(storeCart.activityId, 0),
@@ -1229,14 +1283,14 @@ export class StoreCartService {
         .for("update");
       const source = sourceRows[0];
       if (!source) throw new NotFoundException("购物车项不存在");
-      const { sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
+      const { product, sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
       if (sku.stock <= 0) throw new ValidateException("选择的规格库存不足");
 
       const targetRows = await tx
         .select()
         .from(storeCart)
         .where(and(
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
           eq(storeCart.productId, params.productId),
           eq(storeCart.productAttrUnique, sku.unique),
           eq(storeCart.type, 0),
@@ -1253,16 +1307,19 @@ export class StoreCartService {
       const now = Math.floor(Date.now() / 1000);
       if (target && target.id !== source.id) {
         const cartNum = Math.min(target.cartNum + params.cartNum, sku.stock, 32767);
+        const others = await readReusableProductQuantity(tx, { uid: params.uid, productId: params.productId, type: 0, excludeCartId: source.id });
+        assertProductPurchaseQuantity(product, others - target.cartNum + cartNum);
         await tx.update(storeCart).set({ cartNum, addTime: now }).where(and(
           eq(storeCart.id, target.id),
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
         await tx.update(storeCart).set({ isDel: 1 }).where(and(
           eq(storeCart.id, source.id),
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
         return { id: target.id, cartNum };
       }
+      await assertProductCartQuantity(tx, product, params.cartNum, { uid: params.uid, type: 0, isNew: 0, excludeCartId: source.id });
       if (params.cartNum > sku.stock) {
         throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
       }
@@ -1291,13 +1348,14 @@ export class StoreCartService {
       throw new ValidateException("参数错误");
     }
     return withTx(this.container, async (tx) => {
+      await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0 });
       await lockCartUser(tx, params.uid);
       const { product, sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
       const rows = await tx
         .select()
         .from(storeCart)
         .where(and(
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
           eq(storeCart.productId, params.productId),
           eq(storeCart.productAttrUnique, sku.unique),
           eq(storeCart.type, 0),
@@ -1326,16 +1384,17 @@ export class StoreCartService {
       if (desired <= 0 && existing) {
         await tx.update(storeCart).set({ isDel: 1 }).where(and(
           eq(storeCart.id, existing.id),
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
         return { id: existing.id, cartNum: 0, deleted: true };
       }
+      await assertProductCartQuantity(tx, product, desired, { uid: params.uid, type: 0, isNew: 0, excludeCartId: existing?.id });
       if (desired > sku.stock) throw new ValidateException(`该商品库存不足${desired}`);
       const now = Math.floor(Date.now() / 1000);
       if (existing) {
         await tx.update(storeCart).set({ cartNum: desired, addTime: now }).where(and(
           eq(storeCart.id, existing.id),
-          eq(storeCart.uid, params.uid),
+          eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
         return { id: existing.id, cartNum: desired, deleted: false };
       }
@@ -1367,12 +1426,13 @@ export class StoreCartService {
       throw new ValidateException("参数错误!");
     }
     await withTx(this.container, async (tx) => {
+      await lockProductCartScope(tx, { uid: uid, productId: productId, type: 0 });
       await lockCartUser(tx, uid);
       const rows = await tx
         .select()
         .from(storeCart)
         .where(and(
-          eq(storeCart.uid, uid),
+          eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
           eq(storeCart.productId, productId),
           eq(storeCart.type, 0),
           eq(storeCart.activityId, 0),
@@ -1387,14 +1447,15 @@ export class StoreCartService {
         .for("update");
       const cart = rows[0];
       if (!cart) throw new NotFoundException("购物车项不存在");
-      const { sku } = await normalProductAndSku(tx, productId, cart.productAttrUnique);
+      const { product, sku } = await normalProductAndSku(tx, productId, cart.productAttrUnique);
+      await assertProductCartQuantity(tx, product, cartNum, { uid, type: 0, isNew: 0, excludeCartId: cart.id });
       if (cartNum > sku.stock) throw new ValidateException(`库存不足${cartNum}`);
       await tx.update(storeCart).set({
         cartNum,
         addTime: Math.floor(Date.now() / 1000),
       }).where(and(
         eq(storeCart.id, cart.id),
-        eq(storeCart.uid, uid),
+        eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         eq(storeCart.isPay, 0),
         eq(storeCart.isDel, 0),
         eq(storeCart.isNew, 0),
@@ -1409,7 +1470,8 @@ export class StoreCartService {
       throw new ValidateException("数量必须为 1 至 32767 的整数");
     }
     const cart = await this.container.storeCartDao.get(id);
-    if (!cart || cart.uid !== uid || cart.isDel) {
+    if (!cart || cart.uid !== uid || cart.isDel !== 0 || cart.isPay !== 0 || cart.status !== 1
+      || cart.staffId !== 0 || cart.touristUid !== '' || cart.storeId !== 0) {
       throw new NotFoundException("购物车项不存在");
     }
     if (cart.type === 1) return setSeckillCartQuantity(this.container, uid, id, cartNum);
@@ -1417,28 +1479,26 @@ export class StoreCartService {
     if ([5, 7].includes(cart.type) && cartNum !== 1) {
       throw new ValidateException(cart.type === 5 ? "套餐商品每项限购一件" : "新人专享商品限购一件");
     }
-    // 校验库存
-    const sku = await this.container.storeProductAttrValueDao.getByUnique(
-      cart.productAttrUnique,
-      0,
-      cart.productId,
-    );
-    if (!sku || sku.productId !== cart.productId) {
-      throw new ValidateException("商品规格已失效");
-    }
-    if (cart.type === 4) {
-      const context = await this.resolveIntegralSku({
-        uid,
-        productId: cart.productId,
-        activityId: cart.activityId,
-        unique: sku.unique,
-        quantity: cartNum,
-      });
-      await this.assertIntegralQuantity(uid, context, cartNum);
-    } else if (cartNum > sku.stock) {
-      throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
-    }
-    await this.container.storeCartDao.update(id, { cartNum });
+    await withTx(this.container, async tx => {
+      await lockProductCartScope(tx, { uid, productId: cart.productId, type: cart.type });
+      const [current] = await tx.select().from(storeCart).where(and(eq(storeCart.id, id),
+        activityCartQuoteGuard(cart), eq(storeCart.uid, uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
+        eq(storeCart.storeId, 0), eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.status, 1))).for('update');
+      if (!current) throw new ValidateException('购物车已变化或被占用，请刷新后重试');
+      const scoped = createContainerFromDb(tx), service = new StoreCartService(scoped, this.env);
+      const product = await scoped.storeProductDao.getById(current.productId);
+      const sku = await scoped.storeProductAttrValueDao.getByUnique(current.productAttrUnique, 0, current.productId);
+      if (!product || !sku || sku.productId !== current.productId || product.isShow !== 1 || product.isDel !== 0)
+        throw new ValidateException('商品或规格已失效');
+      await assertProductCartQuantity(tx, product, cartNum, { uid, type: current.type,
+        isNew: current.isNew, excludeCartId: current.id });
+      if (current.type === 4) {
+        const context = await service.resolveIntegralSku({ uid, productId: current.productId,
+          activityId: current.activityId, unique: sku.unique, quantity: cartNum });
+        await service.assertIntegralQuantity(uid, context, cartNum);
+      } else if (cartNum > sku.stock) throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
+      await tx.update(storeCart).set({ cartNum }).where(eq(storeCart.id, current.id));
+    });
   }
 
   /** 删除 (软删除, 对应 PHP delCart) */
@@ -1476,10 +1536,11 @@ export class StoreCartService {
     const carts = await this.container.storeCartDao.getByIds(cartIds);
     if (carts.length !== cartIds.length) throw new NotFoundException("购物车商品不存在");
     let totalCents = 0;
+    const limitLines: Array<{ product: typeof storeProduct.$inferSelect; quantity: number }> = [];
     for (const cart of carts) {
       if (
         cart.uid !== uid || cart.isPay !== 0 || cart.isDel !== 0 ||
-        cart.status !== 1 || cart.cartNum <= 0
+        cart.status !== 1 || cart.cartNum <= 0 || cart.staffId !== 0 || cart.touristUid !== '' || cart.storeId !== 0
       ) {
         throw new ValidateException("购物车商品已失效或已下单");
       }
@@ -1503,12 +1564,14 @@ export class StoreCartService {
       if (!product || !product.isShow || product.isDel || !sku || sku.productId !== product.id) {
         throw new ValidateException("购物车商品或规格已失效");
       }
+      limitLines.push({ product, quantity: cart.cartNum });
       const lineCents = decimalToCents(sku.price) * cart.cartNum;
       if (!Number.isSafeInteger(lineCents) || !Number.isSafeInteger(totalCents + lineCents)) {
         throw new ValidateException("结算金额超出安全范围");
       }
       totalCents += lineCents;
     }
+    assertProductPurchaseBatch(limitLines);
     return quoteFirstOrderDiscount(this.container, runtime, uid, totalCents);
   }
 

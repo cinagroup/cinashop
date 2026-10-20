@@ -48,6 +48,7 @@ import { createContainerFromDb, withTx, type Container, type DbClient } from "@/
 import { readPermanentlyDeletedBaseInventory } from './PermanentlyDeletedBaseInventory';
 import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
 import { assertIntegralOnceLimit, assertIntegralTotalLimit, lockIntegralPurchaseScope, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
+import { assertProductPurchaseBatch, productPurchaseLimits, productPurchaseQuoteGuard } from './ProductPurchaseAdmission';
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException, HttpApiException } from "@/utils/errors";
 import {
@@ -1557,6 +1558,7 @@ export class StoreOrderCreateService {
         activityGiveIntegral,
       });
     }
+    assertProductPurchaseBatch(orderItems.map(item => ({ product: item.product, quantity: item.cart.cartNum })));
     const requiresSupplierAllocation = supplierIds.size > 1;
     const supplierId = requiresSupplierAllocation
       ? 0
@@ -1841,6 +1843,7 @@ export class StoreOrderCreateService {
         isNew: item.cart.isNew, productId: item.product.id, productType: item.product.productType,
         ownerType: item.product.type, relationId: item.product.relationId, activityId: item.cart.activityId,
         isSupportRefund: item.product.isSupportRefund,
+        purchaseLimits: productPurchaseLimits(item.product),
         ...(item.presale ? { presale: item.presale } : {}),
         integralRules: item.integralActivity ? { onceNum: item.integralActivity.onceNum, num: item.integralActivity.num,
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
@@ -2818,6 +2821,7 @@ export class StoreOrderCreateService {
             sales: sql`sales + ${cart.cartNum}`,
           })
           .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
+            productPurchaseQuoteGuard(product),
             // The assisted form row is pinned above. Also pin the product's
             // choice of that row at its inventory UPDATE, so an editor cannot
             // swap form IDs between the pre-transaction quote and this commit.

@@ -5,6 +5,8 @@ import { storeCouponIssue, storeCouponIssueUser, storeCouponUser, storeOrder,
   storeProductAttrValue, storeProductRelation, storePromotions,
   storePromotionsAuxiliary, user, userBill } from '@/models/schema';
 import { HttpApiException, ValidateException } from '@/utils/errors';
+import { assertProductPurchaseBatch, assertProductPurchaseQuantity, productPurchaseLimits,
+  productPurchaseQuoteGuard, type ProductLimitConfig } from '@/services/order/ProductPurchaseAdmission';
 import { ORDER_PROMOTION_GIFT_VERSION, readOrderPromotionGiftIntent,
   type OrderPromotionGiftIntent, type PromotionGiftCampaign,
   type PromotionGiftCoupon, type PromotionGiftLabel, type PromotionGiftProduct } from './OrderPromotionGiftSnapshot';
@@ -110,6 +112,7 @@ function giftProductSnapshot(row: Auxiliary, product: Product | undefined, sku: 
       && !String(product.deliveryType).split(',').includes(String(shippingType)))) {
     throw invalid('满送赠品库存不足，或商品、规格、履约归属、配送方式不可用');
   }
+  assertProductPurchaseQuantity(product, quantity);
   return { aux_id: row.id, product_id: product.id, sku_id: sku.id, unique,
     quantity, cart_id: '' };
 }
@@ -257,6 +260,11 @@ export async function quoteOrderPromotionGifts(container: Container,
     || giftQuantity + input.lines.reduce((sum, line) => sum + line.quantity, 0) > 2_147_483_647 || giftRows > 100
     || campaigns.some(campaign => campaign.products.some(product => product.quantity > 32767)))
     throw invalid('满送赠品数量超过订单上限');
+  // Automatic gifts are checked as their own promised set, separately from
+  // the customer's charged selections. They are never silently omitted.
+  assertProductPurchaseBatch(campaigns.flatMap(campaign => campaign.products.map(gift => ({
+    product: giftProducts.find(product => product.id === gift.product_id)!, quantity: gift.quantity,
+  }))));
   const bound = campaigns.flatMap(campaign => [campaign.id, campaign.tier_id]);
   const material = { input: { ...input, now: undefined }, roots: chosenRoots.map(root => ({ ...root, status: undefined })),
     tiers: allTiers.filter(tier => bound.includes(tier.id)),
@@ -265,6 +273,7 @@ export async function quoteOrderPromotionGifts(container: Container,
     products: [...products, ...parents, ...giftProducts].map(row => ({ id: row.id, pid: row.pid, type: row.type,
       relationId: row.relationId, productType: row.productType, isShow: row.isShow, isDel: row.isDel,
       isVerify: row.isVerify, isPresaleProduct: row.isPresaleProduct, deliveryType: row.deliveryType })),
+    giftPurchaseLimits: giftProducts.map(row => ({ id: row.id, limits: productPurchaseLimits(row) })),
     coupons: coupons.map(row => ({ ...row, remainCount: undefined })), intent };
   return { intent, materialsFingerprint: await hash(material),
     auxiliaryIds: ordered(campaigns.flatMap(campaign => [...campaign.coupons, ...campaign.products].map(item => item.aux_id))),
@@ -301,6 +310,15 @@ export async function reserveOrderPromotionGifts(tx: DbClient, input: {
   if (!validInt(input.orderId) || !validInt(input.uid) || !validInt(input.now)) throw invalid('满送预留参数无效');
   const coupons = intent.promotions.flatMap(campaign => campaign.coupons.map(coupon => ({ campaign, coupon })));
   const products = intent.promotions.flatMap(campaign => campaign.products.map(product => ({ campaign, product })));
+  const giftQuantities = new Map<number, number>(), giftRules = new Map<number, ProductLimitConfig>();
+  for (const { product } of products) giftQuantities.set(product.product_id,
+    (giftQuantities.get(product.product_id) ?? 0) + product.quantity);
+  for (const [id, quantity] of [...giftQuantities].sort((a, b) => a[0] - b[0])) {
+    const [rules] = await tx.select({ isLimit: storeProduct.isLimit, limitType: storeProduct.limitType,
+      limitNum: storeProduct.limitNum }).from(storeProduct).where(eq(storeProduct.id, id));
+    if (!rules) throw invalid('满送赠品已失效，请重新确认订单');
+    assertProductPurchaseQuantity(rules, quantity); giftRules.set(id, rules);
+  }
   for (const { campaign, coupon } of coupons) {
     const updated = await tx.update(storePromotionsAuxiliary)
       .set({ surplusNum: sql`${storePromotionsAuxiliary.surplusNum} - 1` })
@@ -344,6 +362,7 @@ export async function reserveOrderPromotionGifts(tx: DbClient, input: {
       .set({ stock: sql`${storeProduct.stock} - ${gift.quantity}`,
         sales: sql`${storeProduct.sales} + ${gift.quantity}` })
       .where(and(eq(storeProduct.id, gift.product_id), eq(storeProduct.productType, 0),
+        productPurchaseQuoteGuard(giftRules.get(gift.product_id)!),
         eq(storeProduct.isPresaleProduct, 0), eq(storeProduct.isShow, 1), eq(storeProduct.isVerify, 1),
         eq(storeProduct.isDel, 0), sql`${storeProduct.stock} >= ${gift.quantity}`))
       .returning({ id: storeProduct.id, type: storeProduct.type,

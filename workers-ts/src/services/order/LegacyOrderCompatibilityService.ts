@@ -214,7 +214,7 @@ export class LegacyOrderCompatibilityService {
 
   private async checkoutRows(uid: number, cartIds: number[]) {
     const selected = new Set(cartIds);
-    const rows = (await new StoreCartService(this.container, this.env).list(uid))
+    const rows = (await new StoreCartService(this.container, this.env).list(uid, { mode: "checkout", ids: cartIds }))
       .map((item) => record(item))
       .filter((item) => selected.has(Number(item.id)))
       .map(legacyCartRow);
