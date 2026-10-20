@@ -18,6 +18,7 @@ import { preparePresalePurchase } from '@/services/activity/PresalePurchaseSnaps
 import { assertProductCheckoutShippingType } from './ManualVirtualDeliveryPolicy';
 import { assertBargainShippingMethod } from '@/services/activity/BargainShippingPolicy';
 import type { CartComputationInput } from './CartComputationInput';
+import { assertIntegralOnceLimit, assertIntegralTotalLimit, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
 
 type Coupon = typeof storeCouponUser.$inferSelect;
 type Issue = typeof storeCouponIssue.$inferSelect;
@@ -136,6 +137,11 @@ export class CartComputationService {
     const [activity] = await container.db.select().from(table).where(eq(table.id, cart.activityId)).limit(1);
     if (!activity || activity.productId !== cart.productId) throw new ValidateException('活动关联已失效');
     if (type === 2 && input.shippingType !== undefined) assertBargainShippingMethod(activity, cart.productType, input.shippingType);
+    if (type === 4) {
+      assertIntegralOnceLimit('onceNum' in activity ? activity.onceNum : undefined, cart.cartNum);
+      assertIntegralTotalLimit('num' in activity ? activity.num : undefined, cart.cartNum,
+        await readIntegralPurchasedQuantity(container.db, uid, cart.activityId));
+    }
     if ('onceNum' in activity && activity.onceNum > 0 && cart.cartNum > activity.onceNum) throw new ValidateException('商品数量超过活动单次限购');
     if ([1,3].includes(type)) {
       if (!('num' in activity) || activity.num <= 0 || !('onceNum' in activity) || activity.onceNum <= 0) throw new ValidateException('活动限购配置无效');

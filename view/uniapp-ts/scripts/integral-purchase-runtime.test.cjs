@@ -38,6 +38,75 @@ const adds = r => r.calls.filter(call => call.url === '/api/cart/add');
 const reads = r => r.calls.filter(call => call.url.includes('/store_integral/detail/'));
 const contract = r => r.load(path.resolve(__dirname, '../../common/integralPurchase.ts'));
 
+test('explicit PHP -1 caps permit the actual detail cart flow while exact SKU stock still bounds quantity', async () => {
+  const r = setup({ detail: () => { const d = catalogue(); d.storeInfo.onceNum = -1; d.storeInfo.num = -1; return { data: d }; } });
+  try { await start(r); const p = r.checkout, c = contract(r);
+    assert.equal(p.detail.value.storeInfo.onceNum, -1); assert.equal(p.detail.value.storeInfo.num, -1);
+    assert.equal(c.integralMaxQuantity(p.detail.value, p.selected.value), 9);
+    p.setQuantity('10'); assert.equal(p.canBuy.value, false); await p.purchase(); assert.equal(adds(r).length, 0);
+    p.setQuantity('9'); assert.equal(p.canBuy.value, true); assert.deepEqual(p.totals.value, { integral: '1080', cash: '0.90' });
+    await p.purchase(); assert.deepEqual(adds(r).map(call => call.data), [{ productId: 8, activityId: 70, unique: 'inte0001', cartNum: 9, type: 4, new: 1 }]);
+    assert.deepEqual(r.navigations, ['/pages/order/confirm?mode=buy&cartId=91&type=4']);
+  } finally { r.stop(); }
+});
+
+test('finite once and total caps bound an actual selection without inventing a customer remaining-count projection', async () => {
+  for (const [onceNum, num, maximum] of [[2, -1, 2], [-1, 2, 2], [4, 3, 3]]) {
+    const r = setup({ detail: () => { const d = catalogue(); Object.assign(d.storeInfo, { onceNum, num }); return { data: d }; } });
+    try { await start(r); const p = r.checkout;
+      assert.equal(contract(r).integralMaxQuantity(p.detail.value, p.selected.value), maximum);
+      p.setQuantity(String(maximum + 1)); assert.equal(p.canBuy.value, false); await p.purchase(); assert.equal(adds(r).length, 0);
+      p.setQuantity(String(maximum)); assert.equal(p.canBuy.value, true); await p.purchase();
+      assert.equal(adds(r)[0].data.cartNum, maximum);
+    } finally { r.stop(); }
+  }
+});
+
+test('unlimited activity caps retain the cart quantity ceiling of 32767 even when the SKU has more stock', async () => {
+  const r = setup({ detail: () => { const d = catalogue(); Object.assign(d.storeInfo, { onceNum: -1, num: -1 });
+    d.skus[0].stock = 40000; d.productValue[d.skus[0].suk].stock = 40000; return { data: d }; } });
+  try { await start(r); const p = r.checkout;
+    assert.equal(contract(r).integralMaxQuantity(p.detail.value, p.selected.value), 32767);
+    p.setQuantity('32768'); assert.equal(p.canBuy.value, false); await p.purchase(); assert.equal(adds(r).length, 0);
+    p.setQuantity('32767'); assert.equal(p.canBuy.value, true);
+    assert.equal(contract(r).integralCartInput(p.detail.value, p.selected.value, 32767).cartNum, 32767);
+    assert.throws(() => contract(r).integralCartInput(p.detail.value, p.selected.value, 32768));
+  } finally { r.stop(); }
+});
+
+test('zero in either cap keeps the detail and mall readable while forbidding selection and cart writes even with old purchasable SKU flags', async () => {
+  for (const mall of [false, true]) for (const [onceNum, num] of [[0, -1], [-1, 0], [0, 0]]) {
+    const r = setup({ mall, detail: () => { const d = catalogue(); Object.assign(d.storeInfo, { onceNum, num }); return { data: d }; } });
+    try { if (mall) { await r.start(); await r.checkout.exchange(r.checkout.list.value[0]); } else await start(r);
+      const p = r.checkout, detail = mall ? p.pendingDetail.value : p.detail.value;
+      assert.equal(detail.storeInfo.storeName, '积分商品70'); assert.equal(detail.skus[0].purchasable, true);
+      assert.equal(contract(r).integralMaxQuantity(detail, 'inte0001'), 0); assert.equal(p.selected.value, '');
+      p.choose('inte0001'); p.setQuantity('1'); assert.equal(p.selected.value, ''); assert.equal(p.canBuy.value, false);
+      await (mall ? p.confirmExchange() : p.purchase()); assert.equal(adds(r).length, 0); assert.deepEqual(r.navigations, []);
+    } finally { r.stop(); }
+  }
+});
+
+test('malformed signed activity caps fail closed in the real detail API adapter rather than turning into unlimited purchases', async () => {
+  for (const field of ['onceNum', 'num']) for (const value of [-2, 1.5, '-1', null, undefined, 2147483648]) {
+    const r = setup({ detail: () => { const d = catalogue(); d.storeInfo[field] = value; return { data: d }; } });
+    try { await start(r); const p = r.checkout;
+      assert.equal(p.detail.value, null, `${field}=${String(value)}`); assert.ok(p.error.value); assert.equal(p.canBuy.value, false);
+      await p.purchase(); assert.equal(adds(r).length, 0); assert.deepEqual(r.navigations, []);
+    } finally { r.stop(); }
+  }
+});
+
+test('shared displayed cap labels distinguish -1 unlimited, zero blocked and a finite once or total limit', () => {
+  const r = setup(); try { const c = contract(r);
+    assert.equal(c.integralLimitText(-1, 'once'), '每单不限件数'); assert.equal(c.integralLimitText(-1, 'total'), '每人累计不限件数');
+    assert.equal(c.integralLimitText(0, 'once'), '每单上限为0，暂不可兑换'); assert.equal(c.integralLimitText(0, 'total'), '每人累计上限为0，暂不可兑换');
+    assert.equal(c.integralLimitText(3, 'once'), '每单限兑 3 件'); assert.equal(c.integralLimitText(3, 'total'), '每人累计限兑 3 件');
+    for (const value of [-2, 0.5, '-1', null, 2147483648]) assert.throws(() => c.integralLimitText(value, 'once'));
+    assert.equal(adds(r).length, 0);
+  } finally { r.stop(); }
+});
+
 test('actual detail consumes full safe metadata and submits activity SKU through cart to unified confirmation only', async () => {
   const r = setup(); try {
     await start(r); const p = r.checkout;

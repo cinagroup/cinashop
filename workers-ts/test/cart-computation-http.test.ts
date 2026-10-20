@@ -6,6 +6,7 @@ import type { Env } from '../src/env';
 import { CartComputationService } from '../src/services/order/CartComputationService';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
 import { StoreCartService } from '../src/services/order/StoreCartService';
+import { ValidateException } from '../src/utils/errors';
 import type { Container } from '../src/lib/di';
 import { cartComputationFixture } from './helpers/cartComputationFixture';
 import { storeActivity,storeCart,storeCouponIssue,storeCouponIssueUser,storeCouponProduct,storeCouponUser,storeOrder,
@@ -46,6 +47,14 @@ describe('registered cart/compute with actual customer JWT, SQL and read-only pr
     await f.db.insert(storeCouponIssue).values({id,couponTitle:`预算券${id}`,category:1,couponType:0,type:1,couponPrice:'3.00',
       useMinPrice:'0.00',receiveType:1,receiveLimit:1,remainCount:50,totalCount:50,day:7,status:1,...overrides});
   }
+  async function integralSelection(onceNum=-1,num=-1){
+    // An explicitly configured positive consumer, not the PHP batch default.
+    await f.db.insert(storeIntegral).values({id:10,productId:70,stock:8,quota:8,onceNum,num,status:1,isShow:1,isDel:0,freight:1});
+    await f.db.insert(storeProductAttrValue).values({id:2,productId:10,type:4,unique:'int00001',suk:'红色,大号',stock:8,quota:8,price:'5.00',integral:10});
+    await f.db.update(storeCart).set({type:4,activityId:10});
+  }
+  const integralQuote=()=>new StoreOrderCreateService(f.container,f.env).quoteOrder({uid:11,cartIds:[1],type:4,addressId:11,shippingType:1});
+  const integralState=async()=>({...await f.snapshot(),activity:await f.db.select().from(storeIntegral)});
   it('preserves old numeric projection and quotes SVIP only as an assumption without business/KV/token/provider writes',async()=>{
     const before=await f.snapshot(),result=await request();expect(result.body.status,result.body.msg).toBe(200);
     expect(result.body.data).toMatchObject({promotions:[],coupon:[],svip_status:false,svip_price:19.98,
@@ -186,12 +195,48 @@ describe('registered cart/compute with actual customer JWT, SQL and read-only pr
     await f.db.update(storeSeckill).set({quota:8});await f.db.update(storeSeckillTime).set({status:0});expect((await request()).body.status).not.toBe(200);
   });
   it('prices a qualified integral activity cash component while refusing insufficient real redemption points',async()=>{
-    await f.db.insert(storeIntegral).values({id:10,productId:70,stock:8,quota:8,onceNum:2,status:1,isShow:1,isDel:0});
+    await f.db.insert(storeIntegral).values({id:10,productId:70,stock:8,quota:8,onceNum:2,num:-1,status:1,isShow:1,isDel:0});
     await f.db.insert(storeProductAttrValue).values({id:2,productId:10,type:4,unique:'int00001',suk:'红色,大号',stock:8,quota:8,price:'5.00',integral:60});
     await f.db.update(storeCart).set({type:4,activityId:10});await f.db.update(user).set({integral:100}).where(eq(user.uid,11));
     expect((await request()).body.status).not.toBe(200);
     await f.db.update(user).set({integral:120}).where(eq(user.uid,11));const result=await request();expect(result.body.status,result.body.msg).toBe(200);
     expect(result.body.data).toMatchObject({deduction:{type:4,pay_price:10,coupon_price:0,first_order_price:0},budget:{requiredIntegral:120}});
+  });
+  it('budgets and quotes explicitly unlimited integral caps without reserving points, stock or an order',async()=>{
+    await integralSelection();
+    await f.db.insert(storeOrder).values({uid:11,orderId:'unlimited-retained-budget',unique:'unlimited-retained-budget',type:4,activityId:10,paid:1,totalNum:2147483647});
+    const before=await integralState(),result=await request();expect(result.body.status,result.body.msg).toBe(200);
+    expect(result.body.data).toMatchObject({deduction:{type:4,pay_price:10},budget:{requiredIntegral:20}});
+    expect(await integralQuote()).toMatchObject({requiredIntegralPoints:20,payCents:1000});
+    expect(await integralState()).toEqual(before);expect(f.writes).toEqual([]);
+  });
+  it.each(['once','total'] as const)('refuses a zero integral %s cap in both the registered budget and checkout quote without writes',async cap=>{
+    await integralSelection(cap==='once'?0:-1,cap==='total'?0:-1);
+    const before=await integralState(),result=await request();expect(result.body.status).not.toBe(200);expect(result.body.data).toBeNull();
+    await expect(integralQuote()).rejects.toBeInstanceOf(ValidateException);
+    expect(await integralState()).toEqual(before);expect(f.writes).toEqual([]);
+  });
+  it('uses retained PHP integral roots in budget and quote: hidden paid and active unpaid count, children and foreign scopes do not',async()=>{
+    await integralSelection(-1,5);
+    // Labelled imported headers exercise activity count rules. These are not
+    // payment, immutable origin, allocation or complete-history certificates.
+    const rows=[
+      {id:2001,paid:1,isDel:1,isSystemDel:1,totalNum:2},
+      {id:2002,pid:-1,paid:0,isDel:0,isSystemDel:1,totalNum:1},
+      {id:2003,pid:2001,paid:1,totalNum:99},
+      {id:2004,paid:0,isDel:1,totalNum:99},
+      {id:2005,uid:22,paid:1,totalNum:99},
+      {id:2006,activityId:11,paid:1,totalNum:99},
+      {id:2007,type:0,paid:1,totalNum:99},
+    ];
+    await f.db.insert(storeOrder).values(rows.map(row=>({uid:11,type:4,activityId:10,orderId:`retained_budget_${row.id}`,unique:`retained_budget_${row.id}`,...row})));
+    let before=await integralState(),result=await request();expect(result.body.status,result.body.msg).toBe(200);
+    expect(await integralQuote()).toMatchObject({requiredIntegralPoints:20,payCents:1000});
+    expect(await integralState()).toEqual(before);expect(f.writes).toEqual([]);
+    await f.db.update(storeIntegral).set({num:4}).where(eq(storeIntegral.id,10));
+    before=await integralState();result=await request();expect(result.body.status).not.toBe(200);expect(result.body.data).toBeNull();
+    await expect(integralQuote()).rejects.toBeInstanceOf(ValidateException);
+    expect(await integralState()).toEqual(before);expect(f.writes).toEqual([]);
   });
   it('does not release private results after real account password version changes during a request',async()=>{
     const real=f.container.userDao.findForAuth.bind(f.container.userDao);let calls=0;

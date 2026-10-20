@@ -51,6 +51,10 @@ export async function integralPurchaseOriginFixture() {
       for (const sku of input.products[0].skus) sku.price = '0.00';
       const created = await f.serviceFor().create(input, integralBatchActor);
       const integralId = created.products[0].integral_id;
+      // PHP batch creation intentionally leaves both caps at zero. This
+      // positive consumer fixture explicitly configures unlimited purchases;
+      // it does not alter the clone writer or backfill persisted old batches.
+      await f.db.update(storeIntegral).set({ onceNum: -1, num: -1 }).where(eq(storeIntegral.id, integralId));
       const values = await f.db.select().from(storeProductAttrValue);
       const activitySku = values.find(row => row.type === 4 && row.productId === integralId && row.suk === '蓝');
       const baseSku = values.find(row => row.type === 0 && row.productId === 70 && row.unique === 'blue0070');
@@ -61,7 +65,8 @@ export async function integralPurchaseOriginFixture() {
       await virtualSource(1);
       const [item] = await f.db.insert(storeIntegral).values({ productId: 70, productType: 1,
         storeName: 'owned pre-modern integral catalogue', price: '0.00', integral: 7,
-        stock: 20, quota: 0, postage: '0.00', status: 1, isShow: 1, isDel: 0 }).returning();
+        stock: 20, quota: 0, postage: '0.00', onceNum: -1, num: -1,
+        status: 1, isShow: 1, isDel: 0 }).returning();
       return { integralId: item.id, unique: 'blue0070' };
     }
     const activityFor = (db: DbClient = f.db) => new ActivityService(createContainerFromDb(db), f.env);

@@ -169,7 +169,7 @@ describe('authoritative checkout line financial snapshots in real SQL', () => {
   });
 
   it.each(['0.00', '3.00'])('stores activity cost and redemption points even at cash price %s', async price => {
-    await f.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: 'Points sample', stock: 8, quota: 8, status: 1, isShow: 1, isDel: 0, freight: 1 });
+    await f.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: 'Points sample', stock: 8, quota: 8, onceNum: -1, num: -1, status: 1, isShow: 1, isDel: 0, freight: 1 });
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 9, type: 4, unique: 'act00009', suk: '红色,大号',
       stock: 8, quota: 8, price, cost: '1.25', settlePrice: '2.50', integral: 20 });
     await f.db.update(storeProductAttrValue).set({ cost: '9.00' }).where(eq(storeProductAttrValue.id, 1));

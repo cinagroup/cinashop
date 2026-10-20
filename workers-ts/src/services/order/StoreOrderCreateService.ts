@@ -47,6 +47,7 @@ import {
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import { readPermanentlyDeletedBaseInventory } from './PermanentlyDeletedBaseInventory';
 import { lockOrderCompensationInventory } from "@/services/order/OrderCompensationInventoryLocks";
+import { assertIntegralOnceLimit, assertIntegralTotalLimit, lockIntegralPurchaseScope, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
 import type { Env } from "@/env";
 import { ValidateException, NotFoundException, HttpApiException } from "@/utils/errors";
 import {
@@ -1447,9 +1448,9 @@ export class StoreOrderCreateService {
           4,
         );
         if (!activitySku) throw new ValidateException("积分商品规格已失效");
-        if (integralActivity.onceNum > 0 && cart.cartNum > integralActivity.onceNum) {
-          throw new ValidateException(`每个订单限购 ${integralActivity.onceNum} 件`);
-        }
+        assertIntegralOnceLimit(integralActivity.onceNum, cart.cartNum);
+        assertIntegralTotalLimit(integralActivity.num, cart.cartNum,
+          await readIntegralPurchasedQuantity(c.db, uid, integralActivity.id));
         const available = Math.min(
           integralActivity.stock,
           integralActivity.quota,
@@ -2000,6 +2001,7 @@ export class StoreOrderCreateService {
         .limit(1);
       if (concurrentExistingRows[0]) await assertExistingScope(concurrentExistingRows[0],tx);
       if (concurrentExistingRows[0]) return concurrentExistingRows[0];
+      if (type === 4) await lockIntegralPurchaseScope(tx, uid, integralActivityId);
       if(cashier)await authorizeCashierSecondCardCreation(tx,runtime.cashierSecondCardCreation!);
       if(ordinary)await authorizeCashierOrdinaryCreation(tx,runtime.cashierOrdinaryCreation!);
 
@@ -2567,11 +2569,6 @@ export class StoreOrderCreateService {
         if (!item?.integralActivity || !item.activitySku || !integralActivityId) {
           throw new ValidateException("积分商品规格信息无效");
         }
-        await tx.execute(sql`
-          SELECT pg_advisory_xact_lock(
-            hashtextextended(${`cinashop:integral-order:${uid}:${integralActivityId}`}, 0::bigint)
-          )
-        `);
         const lockedUsers = await tx
           .select({ integral: userTable.integral })
           .from(userTable)
@@ -2582,26 +2579,14 @@ export class StoreOrderCreateService {
         if (lockedUsers[0].integral < requiredIntegral) {
           throw new ValidateException(`积分不足, 需要 ${requiredIntegral} 积分`);
         }
-        if (item.integralActivity.num > 0) {
-          const purchaseRows = await tx
-            .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
-            .from(storeOrder)
-            .where(
-              and(
-                eq(storeOrder.uid, uid),
-                eq(storeOrder.type, 4),
-                eq(storeOrder.activityId, integralActivityId),
-                inArray(storeOrder.pid, [0, -1]),
-                or(
-                  eq(storeOrder.paid, 1),
-                  and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
-                ),
-              ),
-            );
-          if ((purchaseRows[0]?.total ?? 0) + totalNum > item.integralActivity.num) {
-            throw new ValidateException(`每人累计限购 ${item.integralActivity.num} 件`);
-          }
+        const [currentActivity] = await tx.select().from(storeIntegral)
+          .where(eq(storeIntegral.id, integralActivityId)).for('update');
+        if (!currentActivity || currentActivity.onceNum !== item.integralActivity.onceNum || currentActivity.num !== item.integralActivity.num) {
+          if (confirmation) throw new OrderQuoteReconfirmRequired(key);
+          throw new ValidateException('积分商品购买上限已变化，请重新确认');
         }
+        assertIntegralOnceLimit(currentActivity.onceNum, totalNum);
+        assertIntegralTotalLimit(currentActivity.num, totalNum, await readIntegralPurchasedQuantity(tx, uid, integralActivityId));
         const activityUpdated = await tx
           .update(storeIntegral)
           .set({

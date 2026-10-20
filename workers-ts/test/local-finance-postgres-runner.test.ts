@@ -73,6 +73,39 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits only the exact integral purchase-limits native file in schema-maintenance mode', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/integral-purchase-limits-postgres.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('allowlist');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/integral-purchase-limits-postgres.test.ts.extra', 'test/integral-purchase-limits-postgres.other.ts'])
+    ('rejects a malformed integral purchase-limits native spelling %s before native binary validation', path => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+    });
+  it('admits integral purchase limits in-app acceptance without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:integral-purchase-limits-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:integral-purchase-limits-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:integral-purchase-limits-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'review', 'unused-bin', 'audit:integral-purchase-limits-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:integral-purchase-limits-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid integral purchase limits Browser admission $args before filesystem setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
+
   it('admits the exact integral purchase-origin native file in schema-maintenance mode', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/integral-purchase-origin-postgres.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

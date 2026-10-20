@@ -21,6 +21,7 @@ import { withTx } from "@/lib/di";
 import { lockDiseCatalogForMutation, normalizeDiseTemplateName, themeDeadlines,DISE_TEMPLATE_TRIM_CHARACTERS } from "@/services/content/ThemeReadService";
 import { isCityCredentialKey, isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolver';
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
+import { integralPurchaseLimit } from '@/services/activity/IntegralPurchaseAdmission';
 import {
   platformMetadataOwner,
   ProductMetadataService,
@@ -1857,6 +1858,7 @@ export async function adminActivitySave(c: C) {
     quota?: number;
     stock?: number;
     num?: number;
+    onceNum?: number;
     // 秒杀
     timeId?: string;
     // 拼团
@@ -1893,6 +1895,9 @@ export async function adminActivitySave(c: C) {
   }
   if (body.type === "integral" && body.status !== undefined && body.status !== 0 && body.status !== 1) {
     return jsonFail(c, "积分商品状态须为0或1");
+  }
+  if (body.type === 'integral' && [body.num, body.onceNum].some(value => value !== undefined && !integralPurchaseLimit(value))) {
+    return jsonFail(c, '购买上限须为-1或0至2147483647的整数，-1不限、0不可购买');
   }
 
   return withTx(container, async tx => {
@@ -1945,13 +1950,14 @@ export async function adminActivitySave(c: C) {
       if (body.id !== undefined) {
         const patch = { ...updateCommon,
           ...(body.integral === undefined ? {} : { integral: body.integral }),
+          ...(body.onceNum === undefined ? {} : { onceNum: body.onceNum }),
           ...(body.status === undefined ? {} : { isShow: body.status }),
           ...(body.num === undefined ? {} : { num: body.num }) };
         if (Object.keys(patch).length) await tx.update(schema.storeIntegral).set(patch).where(eq(schema.storeIntegral.id, body.id));
         return jsonOk(c, { id: body.id }, "更新成功");
       }
       const row = await tx.insert(schema.storeIntegral).values({ ...createCommon, isShow: body.status ?? 1, integral: body.integral ?? 100,
-        num: body.num ?? 1, sales: 0, addTime: now }).returning({ id: schema.storeIntegral.id });
+        num: body.num ?? 1, onceNum: body.onceNum ?? 0, sales: 0, addTime: now }).returning({ id: schema.storeIntegral.id });
       return jsonOk(c, { id: row[0].id }, "创建成功");
     }
     return jsonFail(c, "未知活动类型");

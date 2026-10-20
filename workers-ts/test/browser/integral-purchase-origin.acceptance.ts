@@ -47,7 +47,7 @@ it.each(['pc', 'mobile'] as const)('actual %s paid direct integral order retains
     await f.db.insert(storeProduct).values({ id: 170, productType: 2, storeName: '积分原购样本',
       stock: 12, price: '0.00', isVerify: 1, isShow: 1, freight: 1, image: '/api/qa/image.svg' });
     await f.db.insert(storeIntegral).values({ id: 170, productId: 170, productType: 2, storeName: '积分原购样本',
-      image: '/api/qa/image.svg', price: '0.00', integral: 10, stock: 12, quota: 12, status: 1, isShow: 1 });
+      image: '/api/qa/image.svg', price: '0.00', integral: 10, stock: 12, quota: 12, num: -1, onceNum: -1, status: 1, isShow: 1 });
     await f.db.insert(storeProductAttrValue).values([
       { id: 170, productId: 170, productType: 2, unique: 'ints0170', suk: '默认', stock: 12, price: '0.00', cost: '2.00' },
       { id: 171, productId: 170, productType: 2, type: 4, unique: 'inta0170', suk: '默认', stock: 12,

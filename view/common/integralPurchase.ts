@@ -109,7 +109,7 @@ export function parseIntegralDetail(value: unknown, expectedId: number): Integra
     storeInfo: { id: expectedId, productId: integer(info.productId, 1), storeName: text(info.storeName, 256), unitName: text(info.unitName, 16),
       image: integralImage(info.image), images: array(info.images, 1000).map(integralImage).filter(Boolean),
       description: integralDescription(text(info.description, 2 * 1024 * 1024, true, false)), productType: integer(info.productType, 0, 4), sales: integer(info.sales),
-      onceNum: integer(info.onceNum), num: integer(info.num), systemFormId: integer(info.systemFormId), deliveryType: strings(info.deliveryType, 10),
+      onceNum: integer(info.onceNum, -1), num: integer(info.num, -1), systemFormId: integer(info.systemFormId), deliveryType: strings(info.deliveryType, 10),
       price: money(info.price), otPrice: money(info.otPrice), integral: integer(info.integral),
       storeLabel: array(info.storeLabel, 100).map(value => { const label = object(value); return { id: integer(label.id, 1), labelName: text(label.labelName, 255), styleType: integer(label.styleType), color: text(label.color, 64), bgColor: text(label.bgColor, 64), borderColor: text(label.borderColor, 64), icon: integralImage(label.icon) }; }),
       ensure: array(info.ensure, 100).map(value => { const ensure = object(value); return { id: integer(ensure.id, 1), name: text(ensure.name), image: integralImage(ensure.image), desc: text(ensure.desc, 10000, true) }; }),
@@ -122,7 +122,14 @@ export function parseIntegralDetail(value: unknown, expectedId: number): Integra
 }
 export function integralMaxQuantity(detail: IntegralDetail, unique: string): number {
   const sku = detail.skus.find(sku => sku.unique === unique);
-  return sku?.purchasable ? Math.max(0, Math.min(sku.stock, 32767, detail.storeInfo.onceNum || 32767)) : 0;
+  return sku?.purchasable ? Math.max(0, Math.min(sku.stock, 32767,
+    detail.storeInfo.onceNum === -1 ? 32767 : detail.storeInfo.onceNum,
+    detail.storeInfo.num === -1 ? 32767 : detail.storeInfo.num)) : 0;
+}
+export function integralLimitText(limit: number, scope: 'once' | 'total'): string {
+  integer(limit, -1);
+  const label = scope === 'once' ? '每单' : '每人累计';
+  return limit === -1 ? `${label}不限件数` : limit === 0 ? `${label}上限为0，暂不可兑换` : `${label}限兑 ${limit} 件`;
 }
 export function integralSkuPriceLabel(sku: IntegralSku): string {
   if (sku.issues.some(issue => issue === 'sku_money_invalid' || issue === 'sku_integral_invalid')) return '规格报价异常，暂不可兑换';

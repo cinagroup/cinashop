@@ -342,7 +342,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('account deletion
   it.each(['ordinary first', 'points first'])('%s: ordinary and points orders sharing a SKU finish without deadlock or partial writes', async first => {
     await fixture.db.update(storeProduct).set({ freight: 1, tempId: 0 });
     await fixture.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: 'points sample',
-      stock: 8, quota: 8, status: 1, isShow: 1, isDel: 0, freight: 1 });
+      stock: 8, quota: 8, onceNum: -1, num: -1, status: 1, isShow: 1, isDel: 0, freight: 1 });
     await fixture.db.insert(storeProductAttrValue).values({ id: 2, productId: 9, type: 4,
       unique: 'point001', suk: '红色,大号', stock: 8, quota: 8, price: '2.00', integral: 30 });
     await fixture.db.insert(storeCart).values({ id: 2, uid: 11, productId: 70,

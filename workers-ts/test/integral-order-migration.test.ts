@@ -100,7 +100,6 @@ describe("integral order migration", () => {
     expect(exchange).toContain("tx.insert(storeOrderStatus)");
     expect(exchange).toContain('.for("update")');
     expect(exchange).toContain("idempotencyKey");
-    expect(exchange.match(/COALESCE\(SUM/g)).toHaveLength(2);
     expect(exchange).toContain("积分加现金或运费商品请走统一购物车下单流程");
     expect(exchange).toContain("该积分商品请走统一购物车下单流程");
     expect(exchange).toContain("enqueueOrderPaidEvent(tx as unknown as DbClient, order, now)");
@@ -148,7 +147,7 @@ describe("integral order migration", () => {
     const purchaseContract = readFileSync("../view/common/integralPurchase.ts", "utf8");
     expect(cart).toContain("resolveIntegralSku");
     expect(cart).toContain("积分商品与关联商品不匹配");
-    expect(create).toContain("cinashop:integral-order:");
+    expect(create).toContain("lockIntegralPurchaseScope(tx, uid, integralActivityId)");
     expect(create).toContain("payIntegral: requiredIntegral");
     expect(create).toContain("积分商品不能使用优惠券");
     expect(create).toContain("积分商品不能叠加普通订单积分抵扣");

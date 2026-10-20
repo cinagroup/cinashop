@@ -35,7 +35,7 @@ describe("PC full quote through real controller/service/SQL", { timeout: 30_000 
   it("returns required redemption points from activity SKU/quantity on confirm and computed without writes", async () => {
     const redemption = await createPcCheckoutQuoteFixture([storeIntegral]);
     try {
-      await redemption.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: "points sample", stock: 8, quota: 8, status: 1, isShow: 1, isDel: 0, freight: 1 });
+      await redemption.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: "points sample", stock: 8, quota: 8, onceNum: -1, num: -1, status: 1, isShow: 1, isDel: 0, freight: 1 });
       await redemption.db.insert(storeProductAttrValue).values({ id: 2, productId: 9, type: 4, unique: "point001", suk: "红色,大号", stock: 8, quota: 8, price: "2.00", integral: 30 });
       await redemption.db.update(storeCart).set({ type: 4, activityId: 9 }).where(eq(storeCart.id, 1));
       const before = await redemption.snapshot();

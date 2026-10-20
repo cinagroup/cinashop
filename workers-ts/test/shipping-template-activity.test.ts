@@ -10,7 +10,7 @@ describe('activity checkout consumes authoritative shipping template rules',()=>
   f=await createBargainSelectionFixture([storeCombination,storeIntegral,storePink,storeDiscounts,storeDiscountsProducts,storeOrderCartInfo,storeOrderStatus,printDocument]);
   await f.db.update(storeBargain).set({freight:3,tempId:10,deliveryType:'1'});
   await f.db.insert(storeCombination).values({id:50,productId:70,freight:3,tempId:10,stock:8,quota:8,onceNum:5,num:10});
-  await f.db.insert(storeIntegral).values({id:60,productId:70,freight:3,tempId:10,stock:8,quota:8});
+  await f.db.insert(storeIntegral).values({id:60,productId:70,freight:3,tempId:10,stock:8,quota:8,onceNum:-1,num:-1});
   await f.db.insert(storeProduct).values({id:71,storeName:'套餐第二件',stock:8,isShow:1,freight:3,tempId:10});
   await f.db.insert(storeDiscounts).values({id:90,freeShipping:1});
   await f.db.insert(storeDiscountsProducts).values([{id:100,discountId:90,productId:70,tempId:10},{id:101,discountId:90,productId:71,tempId:10}]);

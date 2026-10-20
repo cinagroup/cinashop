@@ -44,6 +44,29 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('integral detail 
     await f.db.update(storeProduct).set({ stock: 2 }).where(eq(storeProduct.id, 70));
     await app(async peer => expect((await f.serviceFor(peer.db).read(9)).skus.map(row => row.stock)).toEqual([2, 2]));
   });
+  it('preserves explicit PHP -1 purchase limits in the public detail without losing available SKU identity', async () => {
+    await f.db.update(storeIntegral).set({ onceNum: -1, num: -1 }).where(eq(storeIntegral.id, 9));
+    await app(async peer => {
+      const before = await f.snapshot(), result = await f.serviceFor(peer.db).read(9);
+      expect(result.storeInfo).toMatchObject({ onceNum: -1, num: -1 });
+      expect(result.skus.map(row => [row.unique, row.stock, row.purchasable])).toEqual([['red00009', 8, true], ['blue0009', 6, true]]);
+      expect(result.saleStock).toBe(1); expect(result.issues).not.toContain('purchase_limit_invalid');
+      expect(await f.snapshot()).toEqual(before);
+    });
+  });
+  it('keeps zero and invalid historical caps readable but disables every SKU with an explicit purchase-limit diagnosis', async () => {
+    await app(async peer => {
+      for (const patch of [{ onceNum: 0, num: -1 }, { onceNum: -1, num: 0 }, { onceNum: -2, num: -1 }, { onceNum: -1, num: -2 }]) {
+        await f.db.update(storeIntegral).set(patch).where(eq(storeIntegral.id, 9));
+        const before = await f.snapshot(), result = await f.serviceFor(peer.db).read(9);
+        const issue = Object.values(patch).includes(-2) ? 'purchase_limit_invalid' : 'purchase_limit_zero';
+        expect(result.storeInfo).toMatchObject({ id: 9, storeName: '积分商品' });
+        expect(result.saleStock).toBe(0); expect(result.skus).toHaveLength(2);
+        expect(result.skus.every(row => !row.purchasable && row.stock === 0 && row.issues.includes(issue))).toBe(true);
+        expect(await f.snapshot()).toEqual(before);
+      }
+    });
+  });
   it('keeps a legitimate published sold-out activity readable and included in the shared catalogue policy', async () => {
     await f.db.update(storeIntegral).set({ quota: 0 }).where(eq(storeIntegral.id, 9));
     await app(async peer => {

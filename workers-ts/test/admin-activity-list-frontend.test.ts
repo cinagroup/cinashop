@@ -281,6 +281,63 @@ it('preserves editing and status updates, and returns to the previous page after
   } finally { fixture.close(); }
 });
 
+it('blocks integral editor reentry during deferred save and refresh, then opens the refreshed signed caps', async () => {
+  // Isolate the two callback windows: a broken save guard must not invalidate
+  // that callback and prevent this same case from exercising refresh reentry.
+  for (const boundary of ['save', 'refresh']) {
+    const lateSave = deferred(), lateRefresh = deferred();
+    const initial = { ...row(7), onceNum: 0, num: 0 };
+    const refreshed = { ...initial, onceNum: -1, num: -1 };
+    let integralReads = 0;
+    const fixture = await mount(['activity.view', 'activity.manage'], config => {
+      if (config.url === '/activity/save') return boundary === 'save' ? lateSave.promise : { id: 7 };
+      if (config.url === '/activity/integral') {
+        if (++integralReads === 1) return { list: [initial], count: 1, page: 1, limit: 20 };
+        return boundary === 'refresh' ? lateRefresh.promise : { list: [refreshed], count: 1, page: 1, limit: 20 };
+      }
+      return undefined;
+    });
+    let saving: Promise<unknown> | undefined;
+    try {
+      fixture.view.activeTab.value = 'integral'; await flush();
+      const oldRow = fixture.view.list.value[0];
+      expect(oldRow).toMatchObject({ id: 7, onceNum: 0, num: 0 });
+      fixture.view.openForm(oldRow);
+      fixture.view.form.onceNum = -1; fixture.view.form.num = -1;
+      saving = fixture.view.save(); await flush();
+      expect(JSON.parse(fixture.calls.find(call => call.url === '/activity/save').data))
+        .toMatchObject({ type: 'integral', id: 7, onceNum: -1, num: -1 });
+      if (boundary === 'save') {
+        expect(fixture.view.saving.value).toBe(true);
+        fixture.view.openForm(oldRow);
+        expect.soft(fixture.view.saving.value, 'a pending save still owns the editor after an old-row callback').toBe(true);
+        expect.soft({ onceNum: fixture.view.form.onceNum, num: fixture.view.form.num }, 'a pending save cannot restore old zero caps')
+          .toEqual({ onceNum: -1, num: -1 });
+        lateSave.resolve({ id: 7 }); await saving; await flush();
+      } else {
+        await saving;
+        expect(fixture.view.loading.value).toBe(true); expect(fixture.view.list.value).toEqual([]);
+        expect(fixture.view.formVisible.value).toBe(false);
+        fixture.view.openForm(oldRow);
+        expect.soft(fixture.view.formVisible.value, 'a refresh in flight cannot reopen an old row').toBe(false);
+        expect.soft({ onceNum: fixture.view.form.onceNum, num: fixture.view.form.num }, 'refresh reentry cannot restore old zero caps')
+          .toEqual({ onceNum: -1, num: -1 });
+        lateRefresh.resolve({ list: [refreshed], count: 1, page: 1, limit: 20 }); await flush();
+        expect(fixture.view.loading.value).toBe(false);
+        const current = fixture.view.list.value[0]; expect(current).toMatchObject(refreshed);
+        fixture.view.openForm(current);
+        expect(fixture.view.formVisible.value).toBe(true);
+        expect({ onceNum: fixture.view.form.onceNum, num: fixture.view.form.num }).toEqual({ onceNum: -1, num: -1 });
+      }
+      expect(fixture.calls.filter(call => call.url === '/activity/save')).toHaveLength(1);
+    } finally {
+      lateSave.resolve({ id: 7 }); lateRefresh.resolve({ list: [refreshed], count: 1, page: 1, limit: 20 });
+      if (saving) await saving;
+      fixture.close();
+    }
+  }
+});
+
 it('does not allow a pending response to restore data after unmount', async () => {
   const late = deferred();
   const fixture = await mount(undefined, config => config.params?.page === 2 ? late.promise : undefined);

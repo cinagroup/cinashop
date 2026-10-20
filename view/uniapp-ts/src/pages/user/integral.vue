@@ -46,7 +46,7 @@
         <view class="sheet-scroll">
           <IntegralSkuSelection v-if="pendingDetail" :detail="pendingDetail" :selected="selected" :quantity="quantity"
             :disabled="locked || detailLoading || needsRefresh" @choose="choose" @quantity="setQuantity" @step="stepQuantity" />
-          <view v-if="pendingDetail" class="sheet-notice">每单限兑 {{ pendingDetail.storeInfo.onceNum || '未设置' }} 件；累计限兑 {{ pendingDetail.storeInfo.num || '未设置' }} 件。库存、限购及最终积分与现金在结算时复核。</view>
+          <view v-if="pendingDetail" class="sheet-notice">{{ integralLimitText(pendingDetail.storeInfo.onceNum, 'once') }}；{{ integralLimitText(pendingDetail.storeInfo.num, 'total') }}。库存、限购及最终积分与现金在结算时复核。</view>
           <view v-if="pendingDetail?.storeInfo.systemFormId" class="sheet-notice">订单确认页需要填写商品补充信息。</view>
         </view>
         <view class="sku-actions">
@@ -69,7 +69,7 @@ import { apiIntegralList, type IntegralListItem } from "@/api/activity";
 import IntegralSkuSelection from '@/components/IntegralSkuSelection.vue';
 import { useIntegralPurchase } from '@/composables/useIntegralPurchase';
 import { useAuthStore } from '@/stores/auth';
-import { integralImage, integralDetailUrl } from '../../../../common/integralPurchase';
+import { integralImage, integralDetailUrl, integralLimitText } from '../../../../common/integralPurchase';
 const auth = useAuthStore(), purchase = useIntegralPurchase('dialog');
 const { active: skuVisible, detail: pendingDetail, selected, quantity, locked, loading: detailLoading,
   buying: submitting, navigating, error: purchaseError, prepared, needsRefresh, canBuy, choose, setQuantity, stepQuantity,

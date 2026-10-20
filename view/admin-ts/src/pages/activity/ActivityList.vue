@@ -4,7 +4,7 @@
       <h2>营销活动</h2>
       <div v-if="activeTab !== 'discounts' && canView" class="head-actions">
         <el-tag type="success">{{ loading ? '加载中' : listError ? '加载失败' : `共 ${count} 个活动` }}</el-tag>
-        <el-button v-if="canManage" type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
+        <el-button v-if="canManage" :disabled="saving" type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
         <el-button v-if="activeTab === 'integral' && canIntegralBatch" type="primary" plain size="small" @click="router.push('/activity/integral-batch')">批量添加积分商品</el-button>
       </div>
     </div>
@@ -87,7 +87,7 @@
           >
             明细
           </el-button>
-          <el-button v-if="canManage" link type="primary" @click="openForm(row)">编辑</el-button>
+          <el-button v-if="canManage" :disabled="loading || saving" link type="primary" @click="openForm(row)">编辑</el-button>
           <el-button v-if="canManage" link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
             {{ row.status === 1 ? "停用" : "启用" }}
           </el-button>
@@ -102,7 +102,7 @@
     <p v-if="count > MAX_PAGE * PAGE_SIZE" class="time-hint">可浏览前 {{ MAX_PAGE * PAGE_SIZE }} 项，请使用名称或状态筛选缩小范围。</p>
 
     <!-- 活动创建/编辑弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))" top="5vh" :style="{ maxHeight: '90vh', overflowY: 'auto' }">
+    <el-dialog v-model="formVisible" destroy-on-close :title="form.id ? '编辑活动' : '新增活动'" width="min(560px, calc(100vw - 24px))" top="5vh" :style="{ maxHeight: '90vh', overflowY: 'auto' }">
       <div v-if="formError" ref="formErrorElement">
         <el-alert :title="formError" type="error" :closable="false" show-icon class="form-error" />
       </div>
@@ -196,6 +196,11 @@
         <el-form-item label="积分" v-if="formType === 'integral'">
           <el-input-number v-model="form.integral" :min="0" />
         </el-form-item>
+        <template v-if="formType === 'integral'">
+          <el-form-item label="每单购买上限"><el-input-number v-model="form.onceNum" :min="-1" :max="2147483647" :precision="0" aria-label="每单购买上限" /></el-form-item>
+          <el-form-item label="累计购买上限"><el-input-number v-model="form.num" :min="-1" :max="2147483647" :precision="0" aria-label="累计购买上限" /></el-form-item>
+          <p class="time-hint">-1 表示不限，0 表示不可购买。批量新建商品的两项上限均为0，设置后才可兑换。</p>
+        </template>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" />
         </el-form-item>
@@ -378,6 +383,7 @@ const form = reactive({
   stock: 100,
   quota: 100,
   num: 2,
+  onceNum: 1,
   people: 2,
   minPrice: "",
   integral: 100,
@@ -506,7 +512,7 @@ async function toggleStatus(row: ActivityItem) {
 }
 
 function openForm(row?: ActivityItem) {
-  if (!canManage.value || activeTab.value === 'discounts') return;
+  if (!canManage.value || activeTab.value === 'discounts' || saving.value || row && loading.value) return;
   saving.value = false;
   Object.assign(shipping, shippingForm()); shippingProductId.value = 0; originalShipping.value = null;
   Object.assign(content,contentForm()); contentReady.value = !row; originalContent = null;
@@ -534,6 +540,7 @@ function openForm(row?: ActivityItem) {
     form.stock = row.stock ?? 0;
     form.quota = row.quota ?? row.stock ?? 0;
     form.num = (row as any).num ?? 2;
+    form.onceNum = (row as any).onceNum ?? 0;
     form.people = (row as any).people ?? 2;
     form.minPrice = (row as any).minPrice ?? "";
     form.integral = (row as any).integral ?? 100;
@@ -549,6 +556,7 @@ function openForm(row?: ActivityItem) {
     form.stock = 100;
     form.quota = 100;
     form.num = 2;
+    form.onceNum = 1;
     form.people = 2;
     form.minPrice = "";
     form.integral = 100;
@@ -594,6 +602,8 @@ async function save() {
   if (!canManage.value) return;
   if (!form.storeName) return ElMessage.error("请输入活动名称");
   if (!form.price) return ElMessage.error("请输入活动价");
+  if (formType.value === 'integral' && [form.onceNum, form.num].some(value => !Number.isSafeInteger(value) || value < -1 || value > 2147483647))
+    return ElMessage.error('购买上限须为-1或0至2147483647的整数');
   saving.value = true;
   formError.value = "";
   const session = sessionKey.value, formRequest = skuRequest, savedType = formType.value;
@@ -612,6 +622,7 @@ async function save() {
       stock: form.stock,
       quota: form.quota,
       num: form.num,
+      ...(formType.value === 'integral' ? { onceNum: form.onceNum } : {}),
       people: form.people,
       minPrice: form.minPrice,
       integral: form.integral,

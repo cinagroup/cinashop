@@ -40,7 +40,7 @@ describe('checkout membership evidence and supplier consumers',()=>{
   it('does not label an activity price reduction as a member benefit',async()=>{
     await f.setConfig({member_func_status:'1',member_card_status:'1',svip_price_status:'1'});
     await f.db.update(user).set({level:1,levelStatus:1}).where(eq(user.uid,11));
-    await f.db.insert(storeIntegral).values({id:9,productId:70,storeName:'Local activity',stock:8,quota:8,status:1,isShow:1,freight:1});
+    await f.db.insert(storeIntegral).values({id:9,productId:70,storeName:'Local activity',stock:8,quota:8,onceNum:-1,num:-1,status:1,isShow:1,freight:1});
     await f.db.insert(storeProductAttrValue).values({id:2,productId:9,type:4,unique:'act00009',suk:'红色,大号',stock:8,quota:8,price:'3.00',integral:20});
     await f.db.update(storeCart).set({type:4,activityId:9}).where(eq(storeCart.id,1));
     const priced=await quote({type:4});expect(priced).toMatchObject({memberDiscountCents:0,levelDiscountCents:0,paidMemberDiscountCents:0});

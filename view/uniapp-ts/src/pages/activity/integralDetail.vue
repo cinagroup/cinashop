@@ -20,7 +20,7 @@
       </view>
       <view class="section card">
         <view class="heading">兑换规则</view>
-        <view class="notice">{{ detail.storeInfo.onceNum > 0 ? `每个订单限兑 ${detail.storeInfo.onceNum} 件` : '未设置每单限兑数量' }}；{{ detail.storeInfo.num > 0 ? `每人累计限兑 ${detail.storeInfo.num} 件` : '未设置累计限兑数量' }}。</view>
+        <view class="notice">{{ integralLimitText(detail.storeInfo.onceNum, 'once') }}；{{ integralLimitText(detail.storeInfo.num, 'total') }}。</view>
         <view class="notice">可兑库存取活动及商品各层剩余量。选择规格不会预留库存；累计限兑资格、所需积分、现金及配送费在加购和结算时重新校验。</view>
         <view v-if="detail.storeInfo.systemFormId" class="notice">此商品需要补充信息，请在订单确认页填写后提交。</view>
         <view v-if="detail.storeInfo.productType === 4" class="notice">此商品需要门店自提，提货信息在订单确认页选择。</view>
@@ -62,6 +62,7 @@ import { useIntegralPurchase } from '@/composables/useIntegralPurchase';
 import { useIntegralCollection } from '@/composables/useIntegralCollection';
 import { useIntegralReferral } from '@/composables/useIntegralReferral';
 import { integralShareUrl, shareIntegralInApp } from '@/utils/integralShare';
+import { integralLimitText } from '../../../../common/integralPurchase';
 const purchaseFlow = useIntegralPurchase();
 const { activityId, referral, detail, visible, selected, selectedSku, quantity, totals, loading, buying, navigating, locked, canBuy, error,
   prepared, needsRefresh, sharePath, choose, setQuantity, stepQuantity, load, purchase } = purchaseFlow;

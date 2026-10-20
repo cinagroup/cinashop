@@ -36,6 +36,7 @@ import {
 } from "@/services/order/OrderSystemFormService";
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 import { recordPurchaseOriginEvidence } from '@/services/order/PurchaseOriginEvidence';
+import { assertIntegralOnceLimit, assertIntegralTotalLimit, lockIntegralPurchaseScope, readIntegralPurchasedQuantity } from './IntegralPurchaseAdmission';
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
 import { PublicCatalogService } from "@/services/product/PublicCatalogService";
 import { renderPublishedArticleMediaReferences } from '@/services/content/ArticleContentPolicy';
@@ -567,9 +568,7 @@ export class ActivityService {
       throw new ValidateException("积分商品已下架");
     }
     if (item.stock < num) throw new ValidateException("库存不足");
-    if (item.onceNum > 0 && num > item.onceNum) {
-      throw new ValidateException(`每个订单限购 ${item.onceNum} 件`);
-    }
+    assertIntegralOnceLimit(item.onceNum, num);
     // The direct endpoint cannot complete a third-party cash payment. Never
     // mark a cash/postage-bearing order paid and give the goods away.
     if (Number(item.postage) !== 0) {
@@ -588,20 +587,9 @@ export class ActivityService {
       eq(storeProductAttrValue.type, 4),
     ];
 
-    const [user, purchaseRows, initialAttrRows, baseProductRows, catalogueRows] = await Promise.all([
+    const [user, purchased, initialAttrRows, baseProductRows, catalogueRows] = await Promise.all([
       c.userDao.findForAuth(uid),
-      c.db
-        .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
-        .from(storeOrder)
-        .where(
-          and(
-            eq(storeOrder.uid, uid),
-            eq(storeOrder.type, 4),
-            eq(storeOrder.activityId, integralId),
-            eq(storeOrder.isDel, 0),
-            eq(storeOrder.isSystemDel, 0),
-          ),
-        ),
+      readIntegralPurchasedQuantity(c.db, uid, integralId),
       c.db
         .select()
         .from(storeProductAttrValue)
@@ -638,10 +626,7 @@ export class ActivityService {
         .where(and(...fallbackConditions))
         .limit(2);
     }
-    const purchased = purchaseRows[0]?.total ?? 0;
-    if (item.num > 0 && purchased + num > item.num) {
-      throw new ValidateException(`每人累计限购 ${item.num} 件`);
-    }
+    assertIntegralTotalLimit(item.num, num, purchased);
     if (!skuUnique && attrRows.length > 1) {
       throw new ValidateException("请选择积分商品规格");
     }
@@ -687,6 +672,7 @@ export class ActivityService {
 
     // 事务: 扣积分 + 建统一积分订单 + 减活动/SKU/商品库存 + 快照/状态/流水
     const finalOrderId = await this.runInTx(c.db, async (tx) => {
+      await lockIntegralPurchaseScope(tx as unknown as DbClient, uid, integralId);
       const preparedSystemForm = await loadOrderSystemFormSubmission(
         tx,
         item.systemFormId,
@@ -711,18 +697,21 @@ export class ActivityService {
         return existingRows[0].orderId;
       }
 
+      const [currentItem] = await tx.select().from(storeIntegral)
+        .where(eq(storeIntegral.id, integralId)).for('update');
+      const rules = ['productId', 'productType', 'type', 'relationId', 'postage', 'num', 'onceNum', 'systemFormId'] as const;
+      if (!currentItem || rules.some(key => currentItem[key] !== item[key])
+        || currentItem.status !== 1 || currentItem.isShow !== 1 || currentItem.isDel !== 0) {
+        throw new ValidateException('积分商品信息已变更，请重新兑换');
+      }
+      assertIntegralOnceLimit(currentItem.onceNum, num);
       if (modernSku) {
         // Freeze the quoted rules and both SKU identities before writing. A
         // stock-only change can still succeed; an Admin price/owner/spec edit
         // must never turn an earlier points-only quote into a free purchase.
-        const [currentItem] = await tx.select().from(storeIntegral)
-          .where(eq(storeIntegral.id, integralId)).for('update');
         const [currentProduct] = await tx.select().from(storeProduct)
           .where(eq(storeProduct.id, item.productId)).for('update');
-        const rules = ['productId', 'productType', 'type', 'relationId', 'postage', 'num', 'onceNum', 'systemFormId'] as const;
-        if (!currentItem || rules.some(key => currentItem[key] !== item[key])
-          || currentItem.status !== 1 || currentItem.isShow !== 1 || currentItem.isDel !== 0
-          || !currentProduct || currentProduct.isShow !== 1 || currentProduct.isDel !== 0
+        if (!currentProduct || currentProduct.isShow !== 1 || currentProduct.isDel !== 0
           || currentProduct.isVerify !== 1 || currentProduct.type !== item.type
           || currentProduct.relationId !== item.relationId || currentProduct.productType !== item.productType
           || currentProduct.isSupportRefund !== baseProduct!.isSupportRefund) {
@@ -739,21 +728,7 @@ export class ActivityService {
         }
       }
 
-      const currentPurchaseRows = await tx
-        .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
-        .from(storeOrder)
-        .where(
-          and(
-            eq(storeOrder.uid, uid),
-            eq(storeOrder.type, 4),
-            eq(storeOrder.activityId, integralId),
-            eq(storeOrder.isDel, 0),
-            eq(storeOrder.isSystemDel, 0),
-          ),
-        );
-      if (item.num > 0 && (currentPurchaseRows[0]?.total ?? 0) + num > item.num) {
-        throw new ValidateException(`每人累计限购 ${item.num} 件`);
-      }
+      assertIntegralTotalLimit(currentItem.num, num, await readIntegralPurchasedQuantity(tx as unknown as DbClient, uid, integralId));
 
       const updated = await tx
         .update(userTable)

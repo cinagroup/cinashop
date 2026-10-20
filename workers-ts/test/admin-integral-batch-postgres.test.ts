@@ -96,12 +96,19 @@ native('bulk-created integral graphs through real type-4 consumers', () => {
       bills: await f.db.select().from(userBill) };
   }
 
+  async function configurePurchaseCaps(integralId: number) {
+    // Batch defaults stay PHP zero. Positive checkout/refund fixtures make
+    // their intended unlimited purchase policy explicit after real cloning.
+    await f.db.update(storeIntegral).set({ onceNum: -1, num: -1 }).where(eq(storeIntegral.id, integralId));
+  }
+
   async function createIntegralOrder(show = 1, productType?: 1 | 2, enableBeforeCheckout = false) {
     if (productType) await setVirtualSource(productType);
     const input = await f.input([70]); input.is_show = show;
     if (productType) input.products[0].skus.find(row => row.base_unique === 'base0070')!.price = '0.00';
     const created = await f.serviceFor().create(input, integralBatchActor);
     const integralId = created.products[0].integral_id;
+    await configurePurchaseCaps(integralId);
     const sku = (await f.db.select().from(storeProductAttrValue)).find(row => row.productId === integralId && row.type === 4 && row.suk === '蓝')!;
     expect(sku).toBeDefined();
     if (enableBeforeCheckout) {
@@ -220,6 +227,7 @@ native('bulk-created integral graphs through real type-4 consumers', () => {
     for (const selected of input.products[0].skus) selected.price = '0.00';
     const created = await f.serviceFor().create(input, integralBatchActor);
     const integralId = created.products[0].integral_id;
+    await configurePurchaseCaps(integralId);
     const high = (await f.db.select().from(storeProductAttrValue)).find(row => row.type === 4 && row.productId === integralId && row.suk === '蓝')!;
     const before = await f.snapshot(), cartsBefore = await f.db.select().from(storeCart), activity = new ActivityService(f.container, f.env);
     expect(before.integrals.find(row => row.id === integralId)).toMatchObject({ integral: 5, price: '0.00', productType });
@@ -273,6 +281,7 @@ native('bulk-created integral graphs through real type-4 consumers', () => {
     const input = await f.input([70]);
     input.products[0].skus.find(row => row.base_unique === 'base0070')!.price = '0.00';
     const created = await f.serviceFor().create(input, integralBatchActor), integralId = created.products[0].integral_id;
+    await configurePurchaseCaps(integralId);
     const high = (await f.db.select().from(storeProductAttrValue)).find(row => row.type === 4 && row.productId === integralId && row.suk === '蓝')!;
     expect((await f.snapshot()).integrals.find(row => row.id === integralId)).toMatchObject({ price: '0.00', integral: 5 });
     expect(high).toMatchObject({ price: '4.25', integral: 10 });
@@ -286,6 +295,7 @@ native('bulk-created integral graphs through real type-4 consumers', () => {
     const input = await f.input([70]);
     for (const sku of input.products[0].skus) sku.price = '0.00';
     const created = await f.serviceFor().create(input, integralBatchActor), integralId = created.products[0].integral_id;
+    await configurePurchaseCaps(integralId);
     const values = await f.db.select().from(storeProductAttrValue);
     const high = values.find(row => row.type === 4 && row.productId === integralId && row.suk === '蓝')!;
     const low = values.find(row => row.type === 4 && row.productId === integralId && row.suk === '红')!;
@@ -325,6 +335,7 @@ native('bulk-created integral graphs through real type-4 consumers', () => {
     const submitted = await f.input([70]);
     for (const sku of submitted.products[0].skus) sku.price = '0.00';
     const created = await f.serviceFor().create(submitted, integralBatchActor), integralId = created.products[0].integral_id;
+    await configurePurchaseCaps(integralId);
     const high = (await f.db.select().from(storeProductAttrValue)).find(row => row.type === 4 && row.productId === integralId && row.suk === '蓝')!;
     const predicate = and(eq(storeProductAttrValue.productId, integralId), eq(storeProductAttrValue.type, 4));
     if (state === 'all-retired') await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(predicate);

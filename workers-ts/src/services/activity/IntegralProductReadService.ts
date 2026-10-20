@@ -9,6 +9,7 @@ import { integralDescriptionAssetReferences, integralDescriptionHtml } from './I
 import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
 import { readProductDetailDesignSnapshot,publicProductDetailDesign } from '@/services/content/ProductDetailDesignReadService';
 import { ValidateException } from '@/utils/errors';
+import { integralPurchaseLimit } from './IntegralPurchaseAdmission';
 import { INTEGRAL_DETAIL_LIMITS, INTEGRAL_DETAIL_CONFIG_KEYS, IntegralProductUnavailableException, integralDetailId, integralDetailInteger,
   integralDetailMoney, integralDetailText, integralDetailJson, integralDetailIds, integralDetailSpecs, integralDetailColor, integralPublicH5Origin,
   projectIntegralDetailSkus, type IntegralDetail } from './IntegralProductDetailData';
@@ -75,7 +76,8 @@ export async function readIntegralProductSnapshot(tx: DbClient, value: unknown):
     .where(and(eq(storeIntegral.id, id), integralPublicCandidateSql('store_integral', 'store_product'))).limit(1);
   if (!publicIdentity) throw new IntegralProductUnavailableException(['public_identity_invalid']);
   const issues: string[] = [], blocked: string[] = [];
-  if (!integralDetailInteger(activity.onceNum) || !integralDetailInteger(activity.num)) blocked.push('purchase_limit_invalid');
+  if (!integralPurchaseLimit(activity.onceNum) || !integralPurchaseLimit(activity.num)) blocked.push('purchase_limit_invalid');
+  else if (activity.onceNum === 0 || activity.num === 0) blocked.push('purchase_limit_zero');
   if (!integralDetailInteger(activity.systemFormId)) blocked.push('form_reference_invalid');
   if (activity.systemFormId > 0) {
     const [form] = await tx.select({ id: systemForm.id }).from(systemForm).where(and(eq(systemForm.id, activity.systemFormId), eq(systemForm.status, 1), eq(systemForm.isDel, 0))).limit(1);
@@ -163,7 +165,8 @@ export async function readIntegralProductSnapshot(tx: DbClient, value: unknown):
   const rootPrice = integralDetailMoney(activity.price), rootOtPrice = integralDetailMoney(product.otPrice);
   if (rootPrice === null || rootOtPrice === null || !integralDetailInteger(activity.integral)) issues.push('summary_price_invalid');
   return { storeInfo: { id, productId: product.id, storeName: integralDetailText(activity.storeName, 256), unitName: integralDetailText(activity.unitName, 16),
-    image, images: safeImages, description, productType: product.productType, sales: safeInt(activity.sales), onceNum: safeInt(activity.onceNum), num: safeInt(activity.num), systemFormId: safeInt(activity.systemFormId),
+    image, images: safeImages, description, productType: product.productType, sales: safeInt(activity.sales),
+    onceNum: integralPurchaseLimit(activity.onceNum) ? activity.onceNum : 0, num: integralPurchaseLimit(activity.num) ? activity.num : 0, systemFormId: safeInt(activity.systemFormId),
     deliveryType: activity.deliveryType.split(',').filter(part => part === '1' || part === '2'), price: rootPrice ?? '0.00', otPrice: rootOtPrice ?? '0.00', integral: safeInt(activity.integral),
     storeLabel, ensure, specs: Array.isArray(showService) && !showService.includes(3) ? integralDetailSpecs(activity.specs, issues) : [], brandName: integralDetailText(brand?.name ?? '', 100) },
     productAttr, productValue, skus, saleStock: skus.some(row => row.purchasable) ? 1 : 0, issues: [...new Set(issues)],

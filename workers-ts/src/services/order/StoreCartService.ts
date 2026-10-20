@@ -11,6 +11,7 @@ import { addPresaleCart, setPresaleCartQuantity, presaleCartIsCurrent } from "@/
 import { isBargainParticipationReady } from "@/services/activity/BargainParticipationState";
 import { cartBargainParticipation, findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { activityCartQuoteGuard } from "@/services/activity/ActivityCartQuoteGuard";
+import { assertIntegralOnceLimit, assertIntegralTotalLimit, integralPurchaseLimit, readIntegralPurchasedQuantity } from '@/services/activity/IntegralPurchaseAdmission';
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
 import { ValidateException, NotFoundException } from "@/utils/errors";
@@ -731,7 +732,8 @@ export class StoreCartService {
         );
         if (
           !activity || !activitySku || activity.productId !== product.id ||
-          activity.status !== 1 || activity.isShow !== 1 || activity.isDel !== 0
+          activity.status !== 1 || activity.isShow !== 1 || activity.isDel !== 0 ||
+          !integralPurchaseLimit(activity.onceNum) || !integralPurchaseLimit(activity.num) || activity.onceNum === 0 || activity.num === 0
         ) {
           result.push({ ...cart, isValid: false, productInfo: null });
           continue;
@@ -1562,9 +1564,7 @@ export class StoreCartService {
     quantity: number,
   ): Promise<void> {
     const { activity, activitySku, baseSku, product } = context;
-    if (activity.onceNum > 0 && quantity > activity.onceNum) {
-      throw new ValidateException(`每个订单限购 ${activity.onceNum} 件`);
-    }
+    assertIntegralOnceLimit(activity.onceNum, quantity);
     const available = Math.min(
       activity.stock,
       activity.quota,
@@ -1575,25 +1575,6 @@ export class StoreCartService {
     );
     if (available < quantity) throw new ValidateException(`积分商品库存不足, 当前可兑 ${Math.max(available, 0)} 件`);
 
-    if (activity.num > 0) {
-      const rows = await this.container.db
-        .select({ total: sql<number>`COALESCE(SUM(${storeOrder.totalNum}), 0)::int` })
-        .from(storeOrder)
-        .where(
-          and(
-            eq(storeOrder.uid, uid),
-            eq(storeOrder.type, 4),
-            eq(storeOrder.activityId, activity.id),
-            inArray(storeOrder.pid, [0, -1]),
-            or(
-              eq(storeOrder.paid, 1),
-              and(eq(storeOrder.paid, 0), eq(storeOrder.isDel, 0)),
-            ),
-          ),
-        );
-      if ((rows[0]?.total ?? 0) + quantity > activity.num) {
-        throw new ValidateException(`每人累计限购 ${activity.num} 件`);
-      }
-    }
+    assertIntegralTotalLimit(activity.num, quantity, await readIntegralPurchasedQuantity(this.container.db, uid, activity.id));
   }
 }

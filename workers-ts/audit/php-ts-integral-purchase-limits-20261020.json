@@ -1,0 +1,1031 @@
+{
+  "kind": "incremental-php-to-typescript-migration-evidence",
+  "created_utc": "2026-10-20T00:32:54.472638+00:00",
+  "base_sha": "268bd68583ab2433cd037bc1568f5054af0c43f2",
+  "branch": "codex/integral-purchase-limits",
+  "overall_goal": "active",
+  "contract": {
+    "limits": "Only -1 unlimited; 0 denies positive quantity; finite nonnegative integer caps. No automatic zero backfill. Batch-created PHP-compatible 0/0 rows require explicit operator configuration.",
+    "count": "SUM(total_num) for same uid/type4/activityId; pid IN (0,-1); paid=1 OR (paid=0 AND is_del=0). Hidden paid/refunded roots count; children excluded. Unpaid cancellation releases activity units; paid refunds do not.",
+    "admission": "Cart/budget/quote preflight plus both order authors share early buyer/activity advisory transaction lock and fresh READ COMMITTED count/current-rule checks. Existing modern SKU/origin guards retained.",
+    "ui": "Admin accepts signed limits with operator hints, prevents save/refresh reentry, and destroys closed dialog children. H5 preserves -1, labels zero unavailable and limits quantities."
+  },
+  "php_sources": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/activity/integral/StoreIntegralServices.php",
+      "sha256": "56b8511f17bdd41778a5bd0705490956d67a8df993c1da0b474c706b5b13bdef"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/dao/order/StoreOrderDao.php",
+      "sha256": "b9a69a31b55ff6b10e6bf0c3a80762f089d6daaaf3cef4a79bdfa0aee3213503"
+    }
+  ],
+  "accepted": [
+    {
+      "label": "native-v2",
+      "unique_tests": 176,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/integral-purchase-limits-postgres.test.ts",
+        "test/integral-purchase-origin-postgres.test.ts",
+        "test/admin-integral-batch-postgres.test.ts",
+        "test/checkout-line-finance.test.ts",
+        "test/checkout-member-evidence.test.ts",
+        "test/pc-checkout-quote-postgres.test.ts",
+        "test/account-cancellation-order-admission-postgres.test.ts",
+        "test/supplier-offline-payment-native.test.ts",
+        "test/cart-computation-http.test.ts",
+        "test/integral-product-detail-postgres.test.ts"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "8957861f40dbc804da3bfae131c196f72041504294dd1b1520440c478dea505f"
+    },
+    {
+      "label": "worker-unit",
+      "unique_tests": 360,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/integral-purchase-admission.test.ts",
+        "test/integral-order-migration.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "dccd98da588e27f8122dd289c6d9ac41575d9742d2138e01827f37a200aadb5d"
+    },
+    {
+      "label": "h5-runtime",
+      "unique_tests": 30,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/integral-purchase-runtime.test.cjs"
+      ],
+      "cwd": "view/uniapp-ts",
+      "exit_code": 0,
+      "log_sha256": "7084d348a9d21d3e23371cffb3885117e0cb20c264d1cd3b72d18beee0b5b7c2"
+    },
+    {
+      "label": "shipping-v2",
+      "unique_tests": 12,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/shipping-template-activity.test.ts"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "236db6614b7b7529e7addbe3a2317fe25b4d3fe7016d5963ee2fd5a580799cdb"
+    },
+    {
+      "label": "admin-runtime-v3",
+      "unique_tests": 10,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-activity-list-frontend.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "f57c0a8adb654f6045306b3818258174af0765357efc5bc6b9bb8060f68ff683"
+    },
+    {
+      "label": "browser-v4",
+      "unique_tests": 1,
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:integral-purchase-limits-browser"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "9d5d5cff307010bd86d1dd098e6dcbea9b35846e360c503ce853989ee936bc18"
+    }
+  ],
+  "unique_tests": 589,
+  "new_tests": 51,
+  "new_tests_breakdown": {
+    "native": 24,
+    "budget_quote": 4,
+    "reader": 2,
+    "pure_admission": 5,
+    "runner": 8,
+    "h5_runtime": 6,
+    "admin_reentry": 1,
+    "browser": 1
+  },
+  "full_worker_types": {
+    "projects": [
+      "tsconfig.json",
+      "tsconfig.runtime-test.json"
+    ],
+    "exit_code": 0,
+    "log_sha256": "2aac06c3b751eda5cf10047a9d5b892dcb244c9320b40c1ec31bf4aec98dc072",
+    "runner_rerun_tests": 350,
+    "rerun_counted_again": false
+  },
+  "front_validation": [
+    {
+      "label": "admin-runtime-v3",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/admin-activity-list-frontend.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "workers-ts",
+      "exit_code": 0,
+      "log_sha256": "f57c0a8adb654f6045306b3818258174af0765357efc5bc6b9bb8060f68ff683"
+    },
+    {
+      "label": "admin-types-v3",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "-b"
+      ],
+      "cwd": "view/admin-ts",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "admin-build-v3",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "cwd": "view/admin-ts",
+      "exit_code": 0,
+      "log_sha256": "81d4954f930af8b865709606d55d4d12a932f5b8260fc7972252d79f113b1d1a"
+    },
+    {
+      "label": "h5-types",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vue-tsc/bin/vue-tsc.js",
+        "--noEmit"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "h5-build",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/h5-ssr-guard.cjs",
+        "build"
+      ],
+      "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+      "exit_code": 0,
+      "log_sha256": "69ada1fa446b75c3fb4b8fd16ebf9943405b56e5a9132ee5d1137ace5554ad0f"
+    }
+  ],
+  "browser": {
+    "stages": [
+      "admin-unlimited",
+      "h5-unlimited",
+      "admin-zero",
+      "h5-zero",
+      "admin-finite",
+      "h5-finite",
+      "checkout"
+    ],
+    "evidence": [
+      {
+        "stage": "admin-unlimited",
+        "text": "\n    营销活动营销活动本机积分限购验收 营销活动共 1 个活动＋ 新增活动秒杀拼团砍价积分商城优惠套餐活动名称活动状态全部状态查询重置ID活动名称价格积分库存销量状态操作170积分限购样本 ¥0.00 / 0.0010120启用编辑停用删除Total 1 1 编辑活动商品ID活动名称图片URL活动价原价库存积分每单购买上限累计购买上限-1 表示不限，0 表示不可购买。批量新建商品的两项上限均为0，设置后才可兑换。排序启用取消保存\n  \n\n管理待办刷新待办当前权限范围 · 共 0 项暂无可访问的业务待办00:26:30 更新 · 每 30 秒检查兜底通知未连接退出登录启用停用",
+        "href": "http://127.0.0.1:40751/activity?tab=integral",
+        "inputs": {
+          "活动名称": "",
+          "活动状态": "",
+          "每单购买上限": "-1",
+          "累计购买上限": "-1"
+        },
+        "buy_disabled": null,
+        "page_width": 1200,
+        "page_scroll_width": 1200
+      },
+      {
+        "stage": "h5-unlimited",
+        "text": "\n    积分商品详情首页积分商城购物车重新读取积分商品当前使用默认活动详情布局积分限购样本10积分 + ¥0.00已兑换 0 件 · 选择规格后兑换部分历史资料或规格暂不可用，可兑换规格仍可选择；请以最新结算复核结果为准。兑换规则每单不限件数；每人累计不限件数。可兑库存取活动及商品各层剩余量。选择规格不会预留库存；累计限兑资格、所需积分、现金及配送费在加购和结算时重新校验。选择兑换规格默认 · 10积分 + ¥0.00可兑库存 12 件 · 本次最多 12 件兑换数量−＋本次数量小计 10 积分 + ¥0.00分享积分商品复制商品链接生成分享海报收藏关联商品首页分享客服二维码10积分 + ¥0.00去结算首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__integral_h5#/pages/activity/integralDetail?id=170",
+        "inputs": {},
+        "buy_disabled": false,
+        "page_width": 375,
+        "page_scroll_width": 375
+      },
+      {
+        "stage": "admin-zero",
+        "text": "\n    营销活动营销活动本机积分限购验收 营销活动共 1 个活动＋ 新增活动秒杀拼团砍价积分商城优惠套餐活动名称活动状态全部状态查询重置ID活动名称价格积分库存销量状态操作170积分限购样本 ¥0.00 / 0.0010120启用编辑停用删除Total 1 1 编辑活动商品ID活动名称图片URL活动价原价库存积分每单购买上限累计购买上限-1 表示不限，0 表示不可购买。批量新建商品的两项上限均为0，设置后才可兑换。排序启用取消保存\n  \n\n管理待办刷新待办当前权限范围 · 共 0 项暂无可访问的业务待办00:26:55 更新 · 每 30 秒检查兜底通知未连接退出登录启用停用",
+        "href": "http://127.0.0.1:40751/activity?tab=integral",
+        "inputs": {
+          "活动名称": "",
+          "活动状态": "",
+          "每单购买上限": "0",
+          "累计购买上限": "-1"
+        },
+        "buy_disabled": null,
+        "page_width": 1200,
+        "page_scroll_width": 1200
+      },
+      {
+        "stage": "h5-zero",
+        "text": "\n    积分商品详情首页积分商城购物车重新读取积分商品当前使用默认活动详情布局积分限购样本已兑换 0 件 · 当前暂无可兑换规格部分历史资料或规格暂不可用，可兑换规格仍可选择；请以最新结算复核结果为准。兑换规则每单上限为0，暂不可兑换；每人累计不限件数。可兑库存取活动及商品各层剩余量。选择规格不会预留库存；累计限兑资格、所需积分、现金及配送费在加购和结算时重新校验。选择兑换规格默认 · 10积分 + ¥0.00 · 暂不可兑换兑换数量−＋请选择可兑换规格和上限内的整数数量分享积分商品复制商品链接生成分享海报收藏关联商品首页分享客服二维码去结算首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__integral_h5#/pages/activity/integralDetail?id=170",
+        "inputs": {},
+        "buy_disabled": true,
+        "page_width": 375,
+        "page_scroll_width": 375
+      },
+      {
+        "stage": "admin-finite",
+        "text": "\n    营销活动营销活动本机积分限购验收 营销活动共 1 个活动＋ 新增活动秒杀拼团砍价积分商城优惠套餐活动名称活动状态全部状态查询重置ID活动名称价格积分库存销量状态操作170积分限购样本 ¥0.00 / 0.0010120启用编辑停用删除Total 1 1 编辑活动商品ID活动名称图片URL活动价原价库存积分每单购买上限累计购买上限-1 表示不限，0 表示不可购买。批量新建商品的两项上限均为0，设置后才可兑换。排序启用取消保存\n  \n\n管理待办刷新待办当前权限范围 · 共 0 项暂无可访问的业务待办00:27:10 更新 · 每 30 秒检查兜底通知未连接退出登录启用停用",
+        "href": "http://127.0.0.1:40751/activity?tab=integral",
+        "inputs": {
+          "活动名称": "",
+          "活动状态": "",
+          "每单购买上限": "1",
+          "累计购买上限": "1"
+        },
+        "buy_disabled": null,
+        "page_width": 1200,
+        "page_scroll_width": 1200
+      },
+      {
+        "stage": "h5-finite",
+        "text": "\n    积分商品详情首页积分商城购物车重新读取积分商品当前使用默认活动详情布局积分限购样本10积分 + ¥0.00已兑换 0 件 · 选择规格后兑换部分历史资料或规格暂不可用，可兑换规格仍可选择；请以最新结算复核结果为准。兑换规则每单限兑 1 件；每人累计限兑 1 件。可兑库存取活动及商品各层剩余量。选择规格不会预留库存；累计限兑资格、所需积分、现金及配送费在加购和结算时重新校验。选择兑换规格默认 · 10积分 + ¥0.00可兑库存 12 件 · 本次最多 1 件兑换数量−＋本次数量小计 10 积分 + ¥0.00分享积分商品复制商品链接生成分享海报收藏关联商品首页分享客服二维码10积分 + ¥0.00去结算首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__integral_h5#/pages/activity/integralDetail?id=170",
+        "inputs": {},
+        "buy_disabled": false,
+        "page_width": 375,
+        "page_scroll_width": 375
+      },
+      {
+        "stage": "checkout",
+        "text": "\n    确认订单配送方式无需物流配送门店自提结算商品积分限购样本默认 × 1¥0.00费用明细商品金额¥0.00会员优惠-¥0.00商品小计¥0.00首单优惠-¥0.00优惠券-¥0.00积分抵扣（0积分）-¥0.00兑换所需积分10 积分运费¥0.00运费优惠-¥0.00应付金额¥0.00订单备注（选填） .提交仅创建订单。请在订单详情确认金额后选择支付方式。10积分 + ¥0.00提交订单首页分类逛逛购物车我的\n  \n\n",
+        "href": "http://127.0.0.1:40751/__integral_h5#/pages/order/confirm?mode=buy&cartId=3&type=4",
+        "inputs": {},
+        "buy_disabled": null,
+        "page_width": 375,
+        "page_scroll_width": 375
+      }
+    ],
+    "saves": [
+      {
+        "requested": {
+          "onceNum": -1,
+          "num": -1
+        },
+        "persisted": {
+          "onceNum": -1,
+          "num": -1
+        }
+      },
+      {
+        "requested": {
+          "onceNum": 0,
+          "num": -1
+        },
+        "persisted": {
+          "onceNum": 0,
+          "num": -1
+        }
+      },
+      {
+        "requested": {
+          "onceNum": 1,
+          "num": 1
+        },
+        "persisted": {
+          "onceNum": 1,
+          "num": 1
+        }
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "http": 200,
+        "business_status": null,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/save",
+        "http": 200,
+        "business_status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_integral/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/save",
+        "http": 200,
+        "business_status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_integral/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/adminapi/activity/save",
+        "http": 200,
+        "business_status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/adminapi/activity/integral",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store_integral/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/product/detail/170",
+        "http": 200,
+        "business_status": 200,
+        "expected_analytics_tables": [
+          "store_product_log",
+          "store_visit"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/cart/add",
+        "http": 200,
+        "business_status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/address/list",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/store/list",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/order/confirm",
+        "http": 200,
+        "business_status": 200,
+        "all_public_tables_sequences_unchanged": true
+      }
+    ],
+    "finished": true,
+    "stock_and_points_unchanged": true,
+    "provider_calls": 0,
+    "payment_attempts": 0,
+    "login_and_chrome": "synthetic local navigation; all business APIs real App/JWT/maintenance SQL",
+    "historical_coverage_complete": false,
+    "production_grants_verified": false,
+    "public_table_count": 282,
+    "sequence_count": 229
+  },
+  "browser_console": {
+    "error_count": 0,
+    "warning_count": 3,
+    "known_warning": "vue-router esm-bundler import deprecation",
+    "receipt_sha256": "d650478a1f655f7efc866a6a1487463ad720ee92467eac10b1cbe684543db08e"
+  },
+  "browser_artifacts": {
+    "receipt_sha256": "5c73a2ccf4a2e95cbc621ca450df19fa676e88054f4b4894eb6efbb7ac1f2b75",
+    "artifacts": [
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-admin-finite-dom.txt",
+        "sha256": "8296de4339f5c79194bc2f66adb82f842e5e3860f070889e2df4c02cc59837fb",
+        "bytes": 4430
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-admin-unlimited-dom.txt",
+        "sha256": "08f52df6c20cf4f51a9c61fed3254ea3ec573ab8a67ee6272add180ff81f9722",
+        "bytes": 4369
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-admin-zero-dom.txt",
+        "sha256": "3baeb52ad8b0e5f52bcdd337a5d3929f41c88312c053075bb2db258e70e549e2",
+        "bytes": 4401
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-admin.jpg",
+        "sha256": "d4f771b53d32c713b551af824ef6c4d0fe3bc0863e60be3556c48c2551500856",
+        "bytes": 72835
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-checkout-dom.txt",
+        "sha256": "b7dab9fc1a5e750aa382863782f308b16c7bcc7adede97c04d11661152003779",
+        "bytes": 1392
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-checkout.jpg",
+        "sha256": "589be7f9009754b2a9df652d51457bab532d6ed47858d2a5387a17a0d2a72326",
+        "bytes": 65946
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-console.json",
+        "sha256": "d650478a1f655f7efc866a6a1487463ad720ee92467eac10b1cbe684543db08e",
+        "bytes": 809
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-finished-dom.txt",
+        "sha256": "98f800932769b401c054f952e8f11b89dfa93f3ea02cf07747c2f96993bc3d34",
+        "bytes": 1391
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-h5-finite-dom.txt",
+        "sha256": "d424712d70960f4d678eaa24982458027db8868b257ae32a564f1d6a0ad93e44",
+        "bytes": 1705
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-h5-finite.jpg",
+        "sha256": "5d17acf622a89594c25acbc3e58572560142be2d71ea3b7b8467bd87930dc8ac",
+        "bytes": 76710
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-h5-unlimited-dom.txt",
+        "sha256": "9761207e7132850137e036f98456217abe80edfefa810a4293f8e5d792ef5316",
+        "bytes": 1648
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-h5-zero-dom.txt",
+        "sha256": "62b90069fe61e2ee80fbeee868276eab3d93c3544a1fce922ad570d2efadbd39",
+        "bytes": 1622
+      },
+      {
+        "path": "/tmp/cinashop-integral-limits-accepted-identity.json",
+        "sha256": "1817b95b9ba352c66d661091bc18a93725ea596b489015d0660541e49e4d1ad4",
+        "bytes": 402
+      }
+    ]
+  },
+  "build_files": {
+    "admin": 274,
+    "h5": 344,
+    "unchanged_during_final_browser": 618,
+    "h5_unchanged_since_original_build": 344,
+    "manifest_sha256": "1ed66b4b308dc679a238e733897f7afc833f9f8af9c8d52152d89e74cc65e20c"
+  },
+  "excluded": [
+    {
+      "label": "native-v1",
+      "accepted_tests": 0,
+      "reason": "Exact maintenance allowlist rejected requested suite before PG/runtime startup.",
+      "log_sha256": "d1cdc707adf27caec5b53db28096bd1862e60be98c3945abd12a6de93aa005e2"
+    },
+    {
+      "label": "browser-v1",
+      "accepted_tests": 0,
+      "reason": "Actual rendered reopening showed stale cap input; incomplete run, zero accepted.",
+      "log_sha256": "dbb152cc3351ea86cb38ae81f1f8c4eb99087cc1f55b54e212bb7f1a4131ead5"
+    },
+    {
+      "label": "browser-v3",
+      "accepted_tests": 0,
+      "reason": "Six rendered stages reached; real cart insert failed because shared fixture explicit carts1/2 had not advanced cart sequence. Zero accepted. Final harness advances only owned sequence before browser requests.",
+      "log_sha256": "42c1641484ee6a056f5656e2d7a629dc13b2c2d2b79b9dce7f01775785876d84"
+    },
+    {
+      "label": "browser-v2",
+      "accepted_tests": 0,
+      "reason": "Persisted fields were correct; repeated edit retained old input display. Incomplete run, zero accepted. Final dialog destroys children on close; final Browser reopens without reload.",
+      "log_sha256": "24c19ee81850b0c131525c310e7562bc9683b1213369751c3781e6a7ed9ada96"
+    },
+    {
+      "label": "shipping-regression",
+      "accepted_tests": 0,
+      "failed_tests": 12,
+      "reason": "Existing NOLOGIN protocol fixture cannot initialize with ordinary NOCREATEROLE identity; rerun exact shipping suite in owned schema-maintenance passed12.",
+      "log_sha256": "99896b523e81902845b309f77701227b7a6a7d18e4b5c1a57ad998411b10eeec"
+    }
+  ],
+  "admin_red": {
+    "accepted_tests": 0,
+    "summary": "Original9 passed, new script reentry regression failed before guard; final10 passed. This script case does not model ElementPlus internal input state; final Browser v4 supplies rendered repeat-edit coverage."
+  },
+  "checkbox_baseline": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "total": 88,
+      "checked": 50,
+      "sha256": "78c73a33815b34ad4c5791f0c2a595c02c26da8bfa118432e91485a22e0ecfb4"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "total": 404,
+      "checked": 249,
+      "sha256": "6e7061807323851ba82c97f4dd151adc1e16332b96d7c895ab3a5a9ad9992eb2"
+    }
+  ],
+  "execution_sources": [
+    {
+      "path": "view/admin-ts/src/pages/activity/ActivityList.vue",
+      "sha256": "93b305e18fc7fbe3322ecc246bd1a081a6768ba9efab7693fae87e9a6b78aad6"
+    },
+    {
+      "path": "view/admin-ts/src/pages/activity/IntegralBatch.vue",
+      "sha256": "d78b2361f022c41c0d4c08fe412ffb2dac231d98975d1c9651613c34c3f9cbe4"
+    },
+    {
+      "path": "view/common/integralPurchase.ts",
+      "sha256": "fbd0d5cb1fbdc4bacc8fb3d650ecf9de4cc402266f4844543225ae0649f09e5d"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/integral-purchase-runtime.test.cjs",
+      "sha256": "8751364f789120183962ba96760af320a23721720e6218898b14bf198a1229df"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/integralDetail.vue",
+      "sha256": "b8b1601d07d5c301ccbf58c115bed39ce2e79530b3e88057c200369a4f877df0"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/integral.vue",
+      "sha256": "b21fcdd0b43aae08456c2186e6fd3f9aeb9ab28981c244f9f579398afc2060cb"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "b10fc3b5aefcdf7cb282c94e253c2ef78a940ede1107228703a65368ac04da49"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "sha256": "b1502c1762b54a1dc9893abc2c68688383f7c864f49328a67358e04b5621e4e7"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityService.ts",
+      "sha256": "b010569f12473ba9d2674d7ed25e51b1ea50a3d1d2224e67b69c0c574104b450"
+    },
+    {
+      "path": "workers-ts/src/services/activity/IntegralProductReadService.ts",
+      "sha256": "a1bbd56ff9ab19b360a2cc8675e50ccd1f2fb5967154df7721b9582ff3d80772"
+    },
+    {
+      "path": "workers-ts/src/services/activity/IntegralPurchaseAdmission.ts",
+      "sha256": "3e5d7fdce2a0a55a0369ed9a11b1c9554c136593fa83e7c77457f9c894d25e7a"
+    },
+    {
+      "path": "workers-ts/src/services/order/CartComputationService.ts",
+      "sha256": "6d4e1d5cc0e04d3c6b7d962c7730cba5634d074a940cd2a9cbee79d5ed2879f0"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "fb2c5d464c09deb3e15d37ea06a5b18d6c11919b879ac06721cc90efe7c07288"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "0cc9231117bf76753eb5566e425d181c509bb54ea473bbf21b36112da4a3bfd3"
+    },
+    {
+      "path": "workers-ts/test/account-cancellation-order-admission-postgres.test.ts",
+      "sha256": "c919bdb60ef5f472badc1662b7367a6a6968e6bc6c99096990d8f4016ffd4e2d"
+    },
+    {
+      "path": "workers-ts/test/admin-activity-list-frontend.test.ts",
+      "sha256": "b7372ca47ab60780bc648af73055cc2a7c9a35249bdefe4442027dea2994ebc2"
+    },
+    {
+      "path": "workers-ts/test/admin-integral-batch-postgres.test.ts",
+      "sha256": "2f7c30db05c27a40b469410802eae9e94e32f4416be2d9501935e858ab1e0710"
+    },
+    {
+      "path": "workers-ts/test/browser/integral-purchase-limits.acceptance.ts",
+      "sha256": "9372c453047777bef0baa85a027050e3c5bc70073fe05c4d2046028e0aedff80"
+    },
+    {
+      "path": "workers-ts/test/browser/integral-purchase-origin.acceptance.ts",
+      "sha256": "24f3d80ff9138a04a795f1c898b2a284a38c84e32e747070ba0ea1ddd708563b"
+    },
+    {
+      "path": "workers-ts/test/cart-computation-http.test.ts",
+      "sha256": "700925a1e91e65a5cbab9c435b7273fecc70f17b1ac8d35a72c1837aba3b31e6"
+    },
+    {
+      "path": "workers-ts/test/checkout-line-finance.test.ts",
+      "sha256": "214f1eca2ceaf111633f646fab080238c397b1d39b922019282b022a77f64fd2"
+    },
+    {
+      "path": "workers-ts/test/checkout-member-evidence.test.ts",
+      "sha256": "83a1243f2330a8f91e645770d05444ec6213f0beea36a5dddaa161c9cc30e60b"
+    },
+    {
+      "path": "workers-ts/test/helpers/integralPurchaseLimitsFixture.ts",
+      "sha256": "e6008385e2471010ffb7561f5b479cac8e33f016da787c846b6562b8792aa99f"
+    },
+    {
+      "path": "workers-ts/test/helpers/integralPurchaseOriginFixture.ts",
+      "sha256": "4e804c292aa4df5f2773e2dd7cd70fc86dcbdd7ad9cb88c5560a1c8ede5d2d0e"
+    },
+    {
+      "path": "workers-ts/test/integral-order-migration.test.ts",
+      "sha256": "388ad928367a09b09d0da15a6a805d243a000b78a420786a3dc4dca745c2345c"
+    },
+    {
+      "path": "workers-ts/test/integral-product-detail-postgres.test.ts",
+      "sha256": "955a8c281fbe46b9c5cd9b59af3ae868db820c7a62ad1f07efdd8f8eb5c9b731"
+    },
+    {
+      "path": "workers-ts/test/integral-purchase-admission.test.ts",
+      "sha256": "aad9ec9b00f02162b11db6a3e4cda1e3fa20a41d657abf3fda8c4ca699aea2fd"
+    },
+    {
+      "path": "workers-ts/test/integral-purchase-limits-postgres.test.ts",
+      "sha256": "7555fe52caad4547ce31b319e82c4aba9057eac1998fe0406a89c84f1451cbff"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "7c2d58de38544509aea3e875c9205014e12657eb3d95e2ac7ff7572a9fa657b6"
+    },
+    {
+      "path": "workers-ts/test/pc-checkout-quote-postgres.test.ts",
+      "sha256": "62326968e8375c8258bb521080d2a2e0c6b6f6ecd001c3904912bee5eec4f93d"
+    },
+    {
+      "path": "workers-ts/test/shipping-template-activity.test.ts",
+      "sha256": "661bdfacbfabba8d5c2b54573d2c302c7b1cc2bb6ff5532a896d61b8731e3598"
+    },
+    {
+      "path": "workers-ts/test/supplier-offline-payment-native.test.ts",
+      "sha256": "d91b8803c62b9312b0a53fe898f944562855d4aa6ad48ac755ccd1736aadc7b0"
+    },
+    {
+      "path": "workers-ts/vitest.integral-purchase-limits-browser.config.ts",
+      "sha256": "1e7d2657103a718546ad17abc07e7ca7869e0ac321d6f00a3f54ce9bb84e90c2"
+    }
+  ],
+  "scope_limits": [
+    "This retained PHP activity count does not certify ordinary lifetime product limit2 or imported historical original-unit coverage.",
+    "Existing user-row locking already serialized part of creation; shared pair admission is protocol convergence, not proof that every cancellation/refund stock path is deadlock-free.",
+    "Owned maintenance fixtures do not certify production grants/deployment, provider settlement or real devices.",
+    "External browser extension not present in connected inventory; final rendered verification used background Codex IAB and fixed loopback 40751. No global approval/security setting changes.",
+    "Base PR125 CI was11 successful; new commit must be assessed by its own GitHub checks. No merge or deploy."
+  ],
+  "evidence_notes": [
+    "Native176 includes new24 plus mature/regression cases; do not add those again.",
+    "Worker runner350 reruns and repeated Admin/build/type runs counted once.",
+    "GET ordinary product detail legitimately records two analytics tables; harness awaits actual waitUntil and permits only those changes. Other reads and quote POSTs verify all282tables/229sequences unchanged.",
+    "Native runner differs afterward only by two exact maintenance allowlist entries; native selected command and runtime/test source inputs unchanged.",
+    "Final code/test changes after initial Worker types triggered full final-types-v2 rerun."
+  ],
+  "independent_review": {
+    "reviewer": "/root/integral_limits_checks",
+    "receipt_sha256": "0e37f94865dc8a2cf04aff379eb2035b9e469c1d9789f017759696d76fc5a61c",
+    "reviewed_core_canonical_json_sha256": "d16ac71ad8fd1a17ef73eb6e6e17131d88b81a4963fa0822ccec5a6405f48195",
+    "unique_tests": 589,
+    "new_tests": 51,
+    "execution_sources": 33,
+    "build_files": 618,
+    "frozen_tests": 17,
+    "open_actual_anomalies": [],
+    "owned_pg_cleanup": {
+      "receipt_sha256": "d8a619a2cc69677ea261274c76166a02374021b4085e19fab1433e4d782f9b83",
+      "clusters": [
+        {
+          "label": "native-v2",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-1CsoDr",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-1CsoDr/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 35563,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-1CsoDr",
+            "schemaMaintenance": true,
+            "tests": [
+              "test/integral-purchase-limits-postgres.test.ts",
+              "test/integral-purchase-origin-postgres.test.ts",
+              "test/admin-integral-batch-postgres.test.ts",
+              "test/checkout-line-finance.test.ts",
+              "test/checkout-member-evidence.test.ts",
+              "test/pc-checkout-quote-postgres.test.ts",
+              "test/account-cancellation-order-admission-postgres.test.ts",
+              "test/supplier-offline-payment-native.test.ts",
+              "test/cart-computation-http.test.ts",
+              "test/integral-product-detail-postgres.test.ts"
+            ]
+          },
+          "run_log_sha256": "8957861f40dbc804da3bfae131c196f72041504294dd1b1520440c478dea505f",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "b1bedda1d250c492f8b6919e3ee761f27bfec17eae997f4003b82e568f7dadcd",
+          "postgres_log_transitions": [
+            "2026-10-19 23:58:54.167 UTC [17545] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:05:50.048 UTC [17545] LOG:  received fast shutdown request",
+            "2026-10-20 00:05:50.100 UTC [17545] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "shipping-regression",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-0T6v58",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-0T6v58/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 35635,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-0T6v58",
+            "schemaMaintenance": false,
+            "tests": [
+              "test/shipping-template-activity.test.ts"
+            ]
+          },
+          "run_log_sha256": "99896b523e81902845b309f77701227b7a6a7d18e4b5c1a57ad998411b10eeec",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "55f0948d24a2f6b7da1cbfa278eb0a36292fde872d4861354d92f8cfb48d3bf9",
+          "postgres_log_transitions": [
+            "2026-10-20 00:06:42.933 UTC [31829] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:06:58.827 UTC [31829] LOG:  received fast shutdown request",
+            "2026-10-20 00:06:58.876 UTC [31829] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "shipping-v2",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LPMtBk",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LPMtBk/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 41581,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LPMtBk",
+            "schemaMaintenance": true,
+            "tests": [
+              "test/shipping-template-activity.test.ts"
+            ]
+          },
+          "run_log_sha256": "236db6614b7b7529e7addbe3a2317fe25b4d3fe7016d5963ee2fd5a580799cdb",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "c60fcf3caa31898b20d4f94a3e1deb87a7dd4224338ccf5e24136ec22097a1e1",
+          "postgres_log_transitions": [
+            "2026-10-20 00:07:20.819 UTC [32277] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:07:43.345 UTC [32277] LOG:  received fast shutdown request",
+            "2026-10-20 00:07:43.406 UTC [32277] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "browser-v1",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fMsc45",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fMsc45/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 45327,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fMsc45",
+            "schemaMaintenance": true,
+            "tests": [
+              "audit:integral-purchase-limits-browser"
+            ]
+          },
+          "run_log_sha256": "dbb152cc3351ea86cb38ae81f1f8c4eb99087cc1f55b54e212bb7f1a4131ead5",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "51d4dd845003a6808edb7fd198b6e26719f7763a2f33c277e382b255f0277c18",
+          "postgres_log_transitions": [
+            "2026-10-20 00:13:03.908 UTC [42422] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:14:22.176 UTC [42422] LOG:  received fast shutdown request",
+            "2026-10-20 00:14:22.269 UTC [42422] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "browser-v2",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7UHVNN",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7UHVNN/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 42453,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7UHVNN",
+            "schemaMaintenance": true,
+            "tests": [
+              "audit:integral-purchase-limits-browser"
+            ]
+          },
+          "run_log_sha256": "24c19ee81850b0c131525c310e7562bc9683b1213369751c3781e6a7ed9ada96",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "e8bebd1ffc2e8b92a797577e8d291f6e7f6ea90303f6891eb29df5a1c79a8d79",
+          "postgres_log_transitions": [
+            "2026-10-20 00:18:21.218 UTC [49353] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:21:51.779 UTC [49353] LOG:  received fast shutdown request",
+            "2026-10-20 00:21:51.851 UTC [49353] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "browser-v3",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xgrjiu",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xgrjiu/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 46349,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Xgrjiu",
+            "schemaMaintenance": true,
+            "tests": [
+              "audit:integral-purchase-limits-browser"
+            ]
+          },
+          "run_log_sha256": "42c1641484ee6a056f5656e2d7a629dc13b2c2d2b79b9dce7f01775785876d84",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "d62f09e219188fcc534da7cef2d114b2b8a66eb7c60ef1a93f118a19ad751a15",
+          "postgres_log_transitions": [
+            "2026-10-20 00:23:25.537 UTC [53245] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:25:05.410 UTC [53245] LOG:  received fast shutdown request",
+            "2026-10-20 00:25:05.465 UTC [53245] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        },
+        {
+          "label": "browser-v4",
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fr91Z5",
+          "task_data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fr91Z5/data",
+          "task_identity": {
+            "version": "postgres (PostgreSQL) 16.14",
+            "host": "127.0.0.1",
+            "port": 45057,
+            "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fr91Z5",
+            "schemaMaintenance": true,
+            "tests": [
+              "audit:integral-purchase-limits-browser"
+            ]
+          },
+          "run_log_sha256": "9d5d5cff307010bd86d1dd098e6dcbea9b35846e360c503ce853989ee936bc18",
+          "runner_empty_fixture_databases_and_roles": true,
+          "runner_stopped_marker": true,
+          "pg_ctl_status_exit": 3,
+          "pg_ctl_stdout": "pg_ctl: no server running",
+          "pg_ctl_stderr": "",
+          "postmaster_pid_exists": false,
+          "processes_with_exact_data_argument": [],
+          "postgres_log_sha256": "96f53e779ac9062916da692b8a41b048b87b7daf2da18c23f8378068f66bc413",
+          "postgres_log_transitions": [
+            "2026-10-20 00:25:46.951 UTC [53862] LOG:  database system is ready to accept connections",
+            "2026-10-20 00:28:16.258 UTC [53862] LOG:  received fast shutdown request",
+            "2026-10-20 00:28:16.319 UTC [53862] LOG:  database system is shut down"
+          ],
+          "last_transition_is_shutdown": true
+        }
+      ],
+      "scope": "Only seven exact owned clusters; SQL cleanup markers mean fixture databases/roles empty except owned base/bootstrap identities. Independent offline status3, absent pid/process and final shutdown, without restarting or mutating servers."
+    },
+    "complete_worker_script": {
+      "sha256": "30eedf1db2e487f34df5e7ec26ff87704e9c7e0c94cfb015f7871aa332fcfb2c",
+      "text": "set -eu\nnode_bin=/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node\n\"$node_bin\" node_modules/typescript/bin/tsc --noEmit --project tsconfig.json\n\"$node_bin\" node_modules/typescript/bin/tsc --noEmit --project tsconfig.runtime-test.json\n\"$node_bin\" node_modules/vitest/vitest.mjs run test/local-finance-postgres-runner.test.ts --maxWorkers=1\n"
+    },
+    "publication_checks": "Source, staged and commit scans and exact GitHub SHA checks are subsequent external receipts; no merge/deploy."
+  }
+}

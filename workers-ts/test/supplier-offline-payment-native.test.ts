@@ -115,7 +115,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier actual 
   it('confirms a genuinely admitted PC integral activity and debits required points once while preserving external cash', async () => {
     await f.db.update(user).set({ integral: 100 }).where(eq(user.uid, 11));
     await f.db.insert(storeIntegral).values({ id: 9, productId: 70, storeName: 'Owned Supplier point activity', stock: 8, quota: 8,
-      status: 1, isShow: 1, isDel: 0, freight: 1 });
+      onceNum: -1, num: -1, status: 1, isShow: 1, isDel: 0, freight: 1 });
     await f.db.insert(storeProductAttrValue).values({ id: 3, productId: 9, type: 4, unique: 'point001', suk: '红色,大号', stock: 8, quota: 8, price: '2.00', integral: 30 });
     await f.db.insert(storeCart).values({ id: 3, uid: 11, productId: 70, productAttrUnique: 'qared001', cartNum: 1, type: 4, activityId: 9, isNew: 1, status: 1 });
     let activityOrderId = 0;
