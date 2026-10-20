@@ -1,7 +1,7 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { apiBargainSelection, apiBargainFriendView, apiMyBargains, apiBargainStart, apiBargainHelp } from '@/api/bargain';
+import { apiBargainSelection, apiBargainFriendView, apiMyBargains, apiBargainStart, apiBargainHelp, apiBargainCancel } from '@/api/bargain';
 import { apiCartAdd } from '@/api/order';
 import { RequestError } from '@/utils/request';
 import { bargainPage, bargainOpen, bargainCartInput, bargainCheckoutQuery,
@@ -14,6 +14,7 @@ export function useBargainPurchase() {
   const detail = shallowRef<BargainSelection | null>(null), records = shallowRef<MyBargain[]>([]), page = ref(1);
   const selected = ref(''), quantity = ref<number | string>(1), loading = ref(false), buying = ref(false), navigating = ref(false);
   const error = ref(''), prepared = ref<{ id: number; participantId: number } | null>(null), clock = ref(Date.now());
+  const pendingCancel = shallowRef<Pick<MyBargain, 'id' | 'activityId' | 'title'> | null>(null);
   let generation = 0, navigationRevision = 0, pageRevision = 0, disposed = false, timer: ReturnType<typeof setInterval> | undefined;
   type Intent = { id: number; participantId: number; unique: string; quantity: number; owner: number };
   let loginSelection: Intent | null = null;
@@ -22,7 +23,7 @@ export function useBargainPurchase() {
   const open = computed(() => !!detail.value && bargainOpen(detail.value, clock.value));
   const sharePath = computed(() => !mine.value && (friend.value || detail.value)
     ? bargainInvitationPath(activityId.value, friend.value?.participant_id || detail.value?.participation?.id || 0) : '');
-  const locked = computed(() => buying.value || navigating.value || prepared.value !== null);
+  const locked = computed(() => buying.value || navigating.value || prepared.value !== null || pendingCancel.value !== null);
   const canBuy = computed(() => visible.value && !mine.value && !helpMode.value && loggedIn.value && !loading.value && !buying.value && !navigating.value &&
     (prepared.value !== null || !!detail.value?.can_select && open.value && !!selectedSku.value &&
       typeof quantity.value === 'number' && Number.isSafeInteger(quantity.value) && quantity.value > 0 && quantity.value <= selectedSku.value.max_quantity));
@@ -32,7 +33,7 @@ export function useBargainPurchase() {
     && !!friend.value?.can_help && bargainFriendOpen(friend.value, clock.value));
   function reset() {
     generation++; navigationRevision++; navigating.value = false; loading.value = false;
-    detail.value = null; friend.value = null; records.value = []; selected.value = ''; quantity.value = 1; prepared.value = null;
+    detail.value = null; friend.value = null; records.value = []; selected.value = ''; quantity.value = 1; prepared.value = null; pendingCancel.value = null;
     // A pending mutation keeps its gate until its own finally, including across hide/show.
   }
   function choose(key: string) {
@@ -97,6 +98,32 @@ export function useBargainPurchase() {
     if (!visible.value || !mine.value || loading.value || locked.value || !loggedIn.value) return;
     const row = records.value.find(r => r.id === id); if (!row) return;
     navigate(`/pages/activity/bargainDetail?id=${row.activityId}&bargainUserId=${row.id}`, () => { error.value = '详情页面打开失败，请重试'; });
+  }
+  function requestCancel(id: number) {
+    if (disposed || !visible.value || !mine.value || !loggedIn.value || loading.value || locked.value) return;
+    const row = records.value.find(item => item.id === id && item.status === 1);
+    if (!row) return;
+    pendingCancel.value = { id: row.id, activityId: row.activityId, title: row.title }; error.value = '';
+  }
+  function keepParticipation() { if (!buying.value) pendingCancel.value = null; }
+  async function confirmCancel() {
+    const target = pendingCancel.value;
+    if (!target || disposed || !visible.value || !mine.value || !loggedIn.value || loading.value || buying.value || navigating.value || prepared.value) return;
+    if (!records.value.some(row => row.id === target.id && row.activityId === target.activityId && row.status === 1)) {
+      pendingCancel.value = null; error.value = '参与状态已变化，请刷新记录'; return;
+    }
+    const current = generation;
+    buying.value = true; error.value = '';
+    try {
+      await apiBargainCancel(target.id, target.activityId);
+      if (current !== generation || !visible.value || disposed) return;
+      pendingCancel.value = null; buying.value = false; await load(page.value);
+    } catch (e) {
+      if (current === generation && visible.value && !disposed) {
+        pendingCancel.value = null; records.value = [];
+        error.value = `${e instanceof Error ? e.message : '取消结果未知'}；请刷新记录确认结果，不会自动重试`;
+      }
+    } finally { buying.value = false; }
   }
   function goCheckout() {
     if (!prepared.value) return;
@@ -214,5 +241,6 @@ export function useBargainPurchase() {
   return { activityId, participantId, mine, records, page, loggedIn, visible, detail, selected, quantity, loading, buying, navigating, error,
     prepared, selectedSku, open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase,
     helpMode, friend, sharePath, canHelpFriend, helpFriend, goOwn,
+    pendingCancel, requestCancel, keepParticipation, confirmCancel,
     startBargain: () => mutate('start'), helpSelf: () => mutate('help') };
 }

@@ -4,7 +4,7 @@
 import request, { getData } from "@/utils/request";
 import { parseSeckillIndex, parseSeckillList, parseSeckillSelection } from "../../../common/seckillPurchase";
 import { parseCombinationList, parseCombinationSelection } from '../../../common/combinationPurchase';
-import { bargainPage, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
+import { bargainPage, bargainCancellationInput, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
 import { captureAuthSession, getUid, isCurrentAuthSession } from '@/utils/auth';
 import { parseBargainFriendView } from '../../../common/bargainInvitation';
 
@@ -128,8 +128,11 @@ export async function apiMyBargains(page = 1) {
 }
 
 /** 取消砍价 (POST /api/bargain/user/cancel) */
-export function apiBargainCancel(id: number): Promise<void> {
-  return getData(request.post<void>("/bargain/user/cancel", { id }));
+export async function apiBargainCancel(id: number, activityId: number): Promise<void> {
+  const session = captureAuthSession();
+  if (!session.token || !getUid()) throw new Error('请先登录查看自己的砍价记录');
+  await getData(request.post<void>("/bargain/user/cancel", bargainCancellationInput(id, activityId)));
+  if (!isCurrentAuthSession(session)) throw new Error('登录状态已变化，请重新操作');
 }
 
 /** 拼团详情 (GET /api/combination/pink/:id) */

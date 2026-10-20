@@ -62,6 +62,93 @@ export function registerBargainPurchaseTests(getContext) {
   }
   const choose = f => { f.view.choose('actblu40'); f.view.quantity.value = 2; };
   const checkout = id => ({ mode: 'buy', cartId: '91', type: '2', bargainUserId: String(id) });
+  function cancellationMount({ rows = () => [mine(80, 1), mine(90, 1), mine(91, 3), mine(92, 4)],
+    post = () => ({ status: 200, data: null }) } = {}) {
+    getContext().authUtils.setAuth('cancel-owner', 11);
+    return mount({ list: true, entry: '/bargain?my=1',
+      read: async config => ({ status: 200, data: config.url === '/bargain/user/list' ? await rows(config) : [] }), post });
+  }
+  it('PC cancellation confirmation stays inline and only selects a current cutting record', async () => {
+    const f = await cancellationMount(); try {
+      f.view.requestCancel(91); f.view.requestCancel(92); f.view.requestCancel(999); assert.equal(f.view.pendingCancel.value, null);
+      f.view.requestCancel(80); assert.deepEqual({ ...f.view.pendingCancel.value }, { id: 80, activityId: 40, title: '本人砍价' });
+      const reads = f.reads.length; f.view.requestCancel(90); await f.view.loadMy(2); await f.view.mutate(f.view.myList.value[1], 'help');
+      assert.equal(f.reads.length, reads); assert.equal(f.calls.length, 0); assert.equal(f.view.pendingCancel.value.id, 80);
+      f.view.keepParticipation(); await f.view.confirmCancel(); assert.equal(f.view.pendingCancel.value, null); assert.equal(f.calls.length, 0);
+    } finally { f.close(); }
+  });
+  it('PC cancel submits exact record and activity and refreshes the original page', async () => {
+    let cancelled = false;
+    const f = await cancellationMount({ rows: () => cancelled ? [mine(90, 1)] : [mine(80, 1), mine(90, 1)],
+      post: () => { cancelled = true; return { status: 200, data: null }; } });
+    try {
+      await f.view.loadMy(2); f.view.requestCancel(80); await f.view.confirmCancel();
+      assert.deepEqual(f.calls, [{ url: '/bargain/user/cancel', body: { id: 80, bargainId: 40 } }]);
+      assert.deepEqual(f.reads.at(-1).params, { page: 2, limit: 20 }); assert.deepEqual(f.view.myList.value.map(x => x.id), [90]);
+      assert.equal(f.view.pendingCancel.value, null); await f.view.confirmCancel(); assert.equal(f.calls.length, 1);
+    } finally { f.close(); }
+  });
+  it('PC cancellation confirmation expires on close, account, route and unmount', async () => {
+    for (const boundary of ['close', 'account', 'route', 'unmount']) {
+      const f = await cancellationMount(); let closed = false;
+      try {
+        f.view.requestCancel(80);
+        if (boundary === 'close') f.view.closeMy();
+        else if (boundary === 'account') getContext().authUtils.setAuth('other', 22);
+        else if (boundary === 'route') await f.router.push('/bargain?my=0');
+        else { f.close(); closed = true; }
+        await flush(); await f.view.confirmCancel(); assert.equal(f.calls.length, 0); assert.equal(f.view.pendingCancel.value, null);
+      } finally { if (!closed) f.close(); }
+    }
+  });
+  it('PC cancellation in flight ignores duplicate controls and late responses across identity or navigation', async () => {
+    for (const boundary of ['none', 'close', 'account', 'route', 'unmount']) {
+      const waiting = gate(), started = gate(), f = await cancellationMount({ post: () => { started.release(); return waiting.promise; } }); let closed = false;
+      try {
+        f.view.requestCancel(80); const work = f.view.confirmCancel(); await started.promise;
+        await f.view.confirmCancel(); f.view.keepParticipation(); f.view.requestCancel(90); await f.view.loadMy(2);
+        assert.equal(f.calls.length, 1); assert.equal(f.view.pendingCancel.value.id, 80);
+        if (boundary === 'close') f.view.closeMy();
+        else if (boundary === 'account') getContext().authUtils.setAuth('other', 22);
+        else if (boundary === 'route') await f.router.push('/bargain?my=0');
+        else if (boundary === 'unmount') { f.close(); closed = true; }
+        await flush(); const reads = f.reads.length;
+        waiting.release({ status: 200, data: null }); await work; await flush();
+        assert.equal(f.reads.length, reads + (boundary === 'none' ? 1 : 0)); assert.equal(f.calls.length, 1);
+        assert.equal(f.view.pendingCancel.value, null);
+      } finally { waiting.release({ status: 200, data: null }); if (!closed) f.close(); }
+    }
+  });
+  it('PC lost cancellation response clears private records and recovers by read without repeating the write', async () => {
+    let committed = false;
+    const f = await cancellationMount({ rows: () => committed ? [mine(90, 1)] : [mine(80, 1), mine(90, 1)],
+      post: () => { committed = true; throw Error('Synthetic lost response'); } });
+    try {
+      f.view.requestCancel(80); await f.view.confirmCancel(); assert.equal(f.view.myList.value.length, 0);
+      assert.equal(f.view.pendingCancel.value, null); assert.match(f.view.myError.value, /请刷新记录确认结果/);
+      f.view.requestCancel(80); await f.view.confirmCancel(); assert.equal(f.calls.length, 1);
+      await f.view.loadMy(); assert.deepEqual(f.view.myList.value.map(x => x.id), [90]); assert.equal(f.calls.length, 1);
+    } finally { f.close(); }
+  });
+  it('PC failed cancel or post-write reload never replays and preserves current page', async () => {
+    for (const rejection of [true, false]) {
+      let changed = false, readFailure = false;
+      const f = await cancellationMount({ rows: () => { if (readFailure) throw Error('read failed'); return [mine(80, changed ? 3 : 1)]; },
+        post: () => { changed = true; readFailure = !rejection; return rejection ? { status: 400, msg: '状态错误' } : { status: 200, data: null }; } });
+      try {
+        await f.view.loadMy(2); f.view.requestCancel(80); await f.view.confirmCancel();
+        assert.equal(f.view.myList.value.length, 0); assert.equal(f.view.pendingCancel.value, null);
+        assert.equal(f.view.myPage.value, 2); assert.ok(f.view.myError.value);
+        readFailure = false; await f.view.loadMy(2); f.view.requestCancel(80); await f.view.confirmCancel(); assert.equal(f.calls.length, 1);
+      } finally { f.close(); }
+    }
+  });
+  it('PC cancel API validates paired numeric identities and active authentication before I/O', async () => {
+    const { server, authUtils, api, response } = getContext(), model = await server.ssrLoadModule('/src/api/activity.ts'); let calls = 0;
+    api.defaults.adapter = async config => { calls++; return response(config, { status: 200, data: null }); };
+    for (const args of [[0, 40], [80, 0], [80, '40'], [80, 2147483648], [NaN, 40]]) await assert.rejects(model.apiBargainCancel(...args));
+    assert.equal(calls, 0); authUtils.clearAuth(); await assert.rejects(model.apiBargainCancel(80, 40)); assert.equal(calls, 0);
+  });
   it('PC friend invitation uses exact help-only reads and real Axios help without purchase authority', async () => {
     let helped = false;
     const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1',

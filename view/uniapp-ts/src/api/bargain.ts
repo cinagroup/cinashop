@@ -1,6 +1,6 @@
 import { http } from '@/utils/request';
 import { useAuthStore } from '@/stores/auth';
-import { bargainPage, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
+import { bargainPage, bargainCancellationInput, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
 import { parseBargainFriendView } from '../../../common/bargainInvitation';
 
 export async function apiBargainCatalogPage(page = 1) {
@@ -33,3 +33,9 @@ export async function apiBargainFriendView(id: number, participantId = 0, ownerU
 }
 export const apiBargainStart = (id: number) => http.post<{ id: number }>('/bargain/start', { bargain_id: id });
 export const apiBargainHelp = (id: number) => http.post<unknown>('/bargain/help', { bargain_user_id: id });
+export async function apiBargainCancel(id: number, activityId: number) {
+  const auth = useAuthStore(), version = auth.sessionVersion;
+  if (!auth.isLoggedIn || !auth.uid) throw new Error('请先登录查看自己的砍价记录');
+  await http.post<void>('/bargain/user/cancel', bargainCancellationInput(id, activityId));
+  if (version !== auth.sessionVersion) throw new Error('登录状态已变化，请重新操作');
+}

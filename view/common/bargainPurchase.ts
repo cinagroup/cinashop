@@ -29,6 +29,10 @@ function date(value: unknown): string | null {
 function key(value: unknown): string { const raw = text(value); return raw && raw.length <= 8 && !/[\s\u0000-\u001f\u007f]/u.test(raw) ? raw : invalid(); }
 export function bargainId(value: unknown): number { return typeof value === 'string' && /^[1-9]\d{0,9}$/.test(value) ? int(Number(value), 1) : invalid(); }
 export function bargainPage(value: number): number { return int(value, 1, 10_000); }
+/** Cancel one known participation; the activity identity is an additional server check. */
+export function bargainCancellationInput(id: number, activityId: number) {
+  return { id: int(id, 1), bargainId: int(activityId, 1) };
+}
 export function parseBargainList(value: unknown): BargainItem[] {
   const seen = new Set<number>();
   return array(value, 20).map(value => {

@@ -14,6 +14,12 @@
         <view v-if="row.amountsValid" class="notice">当前 ¥{{ row.current }} · 底价 ¥{{ row.minimum }} · 已砍 ¥{{ row.cut }} · {{ row.progress }}%</view>
         <view v-else class="error">金额异常，暂不可购买，请刷新确认</view>
         <button :disabled="loading || locked" @tap="chooseRecord(row.id)">查看这条砍价记录</button>
+        <button v-if="row.status === 1 && pendingCancel?.id !== row.id" :disabled="loading || locked" @tap="requestCancel(row.id)">取消此参与</button>
+        <view v-if="pendingCancel?.id === row.id" class="cancel-confirm" role="group" aria-label="确认取消砍价参与">
+          <view>确认取消参与 #{{ pendingCancel.id }}「{{ pendingCancel.title }}」？取消后不能继续使用这条记录。</view>
+          <button :disabled="buying" :loading="buying" @tap="confirmCancel">确认取消此参与</button>
+          <button :disabled="buying" @tap="keepParticipation">保留参与</button>
+        </view>
       </view>
       <view v-if="loggedIn && !loading && !error && !records.length" class="notice">当前页暂无砍价记录</view>
       <view v-if="loggedIn" class="pagination">
@@ -84,7 +90,8 @@ import { computed } from 'vue';
 import { sanitizeArticleRichText } from '@/utils/articleRichText';
 const { mine, records, page, loggedIn, detail, selected, quantity, selectedSku, loading, buying, navigating, error, prepared,
   open, locked, canBuy, canStart, canHelp, choose, load, login, goMine, chooseRecord, purchase, startBargain, helpSelf,
-  helpMode, friend, sharePath, canHelpFriend, helpFriend, goOwn } = useBargainPurchase();
+  helpMode, friend, sharePath, canHelpFriend, helpFriend, goOwn,
+  pendingCancel, requestCancel, keepParticipation, confirmCancel } = useBargainPurchase();
 useActivityDetailShare(()=>{const source=friend.value||detail.value;return source?{title:source.title,path:sharePath.value,image:friend.value?.image||selectedSku.value?.image||source.image}:null;},()=>activityVisible.value&&!mine.value);
 const safeDescription=computed(()=>sanitizeArticleRichText(detail.value?.content?.description ?? ''));
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
@@ -116,6 +123,7 @@ function setQuantity(event: unknown) {
 .quantity-row { display: flex; gap: 20rpx; align-items: center; font-size: 28rpx; margin-top: 24rpx; }
 .quantity-row input { width: 140rpx; padding: 12rpx; border: 1rpx solid #aaa; }
 .pagination { display: flex; align-items: center; gap: 16rpx; padding: 20rpx 0; font-size: 24rpx; }
+.cancel-confirm { margin-top: 20rpx; padding: 20rpx; background: #fff6f1; border-radius: 12rpx; font-size: 28rpx; overflow-wrap: anywhere; }
 .action-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)); background: white; box-shadow: 0 -2rpx 10rpx #0001; }
 .buy-btn { background: var(--view-theme, #e93323); color: white; font-size: 30rpx; }
 .buy-btn[disabled] { background: #eee; color: #777; }

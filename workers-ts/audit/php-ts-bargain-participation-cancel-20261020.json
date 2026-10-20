@@ -1,0 +1,647 @@
+{
+  "date": "2026-10-20",
+  "base": "0563298a11c7491a6dc3d79840f32155ededbe7a",
+  "scope": "H5/PC exact participation cancellation matching PHP status=1, with inline confirmation and read-only recovery",
+  "php_sources": [
+    "view/uniapp/pages/activity/bargain/index.vue:43-46,128-145",
+    "app/services/activity/bargain/StoreBargainUserServices.php:185-192"
+  ],
+  "sources": [
+    {
+      "path": "view/common/bargainPurchase.ts",
+      "sha256": "a578e62196a260df87433ecd5aef268535233d262e50352a7d57e21c3b8e2286"
+    },
+    {
+      "path": "view/pc-ts/src/api/activity.ts",
+      "sha256": "6d6c531728e1b63749e1af2c307314618a8acfe31a8316c0f9f062ba4d81c007"
+    },
+    {
+      "path": "view/pc-ts/src/pages/activity/Bargain.vue",
+      "sha256": "4ffc2dcc463514224fae0198029e34b232ba127a975c21733ed6b1e45fda6710"
+    },
+    {
+      "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+      "sha256": "d1d3d6c76c5185e1e86d3919f48ce6e5f888a0be68f7b27fd7f5383387124f99"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "5822d5a4986583eca765a8a07a7c62f931ac431688fcde52740e55149539f530"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/bargain-cancel-runtime.test.cjs",
+      "sha256": "50a7690cc150222fa14942446731a1a7a4878d76c0bdb2752e4aae9ea30a5dcc"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/bargain.ts",
+      "sha256": "ae6a0160a8aca3abbe586bc89c9cede59de960d08593d12c885f5556d7535426"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useBargainPurchase.ts",
+      "sha256": "603fd5eaca0e27df1f8ee5a6df4c0a4315e930f51ed736b6b3943e1f5467f972"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/activity/bargainDetail.vue",
+      "sha256": "85f7876baeeb050adc20e29f2b4d8e5a6b7d8874f4b89030f18a3738c6d9c350"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "35809a73aa7dbce9f0357cce444a3b64c0f908c9427a78381c3f7abe2f7e38ad"
+    },
+    {
+      "path": "workers-ts/test/browser/bargain-participation-cancel.acceptance.ts",
+      "sha256": "80081b5c056de0be0e52d7af4ca7c1d03cf1892dd2a80efc19a61af28eab0d8b"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "a924e3cd331600d74648be72e56ab06481db6502c987e3051d8dc86ad10672b3"
+    },
+    {
+      "path": "workers-ts/vitest.bargain-participation-cancel-browser.config.ts",
+      "sha256": "ac9ea97c310a10712b1e3c59413fa4470fe401c142382304b4c25feb67633004"
+    }
+  ],
+  "accepted_tests": {
+    "pc": 375,
+    "h5": 50,
+    "runner": 434,
+    "native_postgres": 11,
+    "browser": 1,
+    "unique_total": 871,
+    "new": 22,
+    "skipped": 0
+  },
+  "gates": {
+    "pc-build-final": {
+      "label": "pc-build-final",
+      "cwd": "view/pc-ts",
+      "command": [
+        "python3",
+        "/tmp/cinashop-bargain-cancel-pc-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:46:21.062862+00:00",
+      "seconds": 19.51,
+      "log": "/tmp/cinashop-bargain-cancel-pc-build-final.log",
+      "log_sha256": "713a246cbd800e3fb4eff9cad1f810f9962f1e9cc513e3a10121d6c99a11f6a6",
+      "changed_during_run": []
+    },
+    "uni-tests": {
+      "label": "uni-tests",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/bargain-cancel-runtime.test.cjs",
+        "scripts/bargain-runtime.test.cjs",
+        "scripts/bargain-friend-runtime.test.cjs"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:42:19.921335+00:00",
+      "seconds": 10.9,
+      "log": "/tmp/cinashop-bargain-cancel-uni-tests.log",
+      "log_sha256": "be21651cd6d57e3d406e1ae0b9d9650a77c8a686c6e9bf6099acd8904ffc86ab",
+      "changed_during_run": []
+    },
+    "uni-build-final": {
+      "label": "uni-build-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:46:40.635928+00:00",
+      "seconds": 39.04,
+      "log": "/tmp/cinashop-bargain-cancel-uni-build-final.log",
+      "log_sha256": "703a0d81f65574ef247d2109acd3dc56fdd6d3f778e08b1430206ee4bdf63e95",
+      "changed_during_run": []
+    },
+    "runner-final": {
+      "label": "runner-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:49:53.406929+00:00",
+      "seconds": 20.62,
+      "log": "/tmp/cinashop-bargain-cancel-runner-final.log",
+      "log_sha256": "d102901b54215caa02f6e480756f1e12d43fd195a70c4d00647384098ebbea64",
+      "changed_during_run": []
+    },
+    "native-final": {
+      "label": "native-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/bargain-participation-concurrency-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:43:56.218764+00:00",
+      "seconds": 23.49,
+      "log": "/tmp/cinashop-bargain-cancel-native-final.log",
+      "log_sha256": "bc33551de5cd9d773083046c80131797b17e67bfd4cf6b406a7d2195e981c691",
+      "changed_during_run": []
+    },
+    "browser-final": {
+      "label": "browser-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:bargain-participation-cancel-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:50:29.173214+00:00",
+      "seconds": 132.15,
+      "log": "/tmp/cinashop-bargain-cancel-browser-final.log",
+      "log_sha256": "213d0ca89fa05df89701921fd61a6e115348d9bf3e734c875b89df96d9735bb3",
+      "changed_during_run": []
+    },
+    "worker-types-final": {
+      "label": "worker-types-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:52:57.542835+00:00",
+      "seconds": 147.95,
+      "log": "/tmp/cinashop-bargain-cancel-worker-types-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": []
+    }
+  },
+  "build_steps": {
+    "pc": [
+      "node --test test/auth-session.test.mjs test/product-image.test.mjs test/test-product-media.test.mjs",
+      "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+      "node node_modules/vite/bin/vite.js build"
+    ],
+    "h5": [
+      "node node_modules/vue-tsc/bin/vue-tsc.js --noEmit",
+      "node scripts/h5-ssr-guard.cjs build"
+    ]
+  },
+  "browser": {
+    "evidence": [
+      {
+        "stage": "h5-list",
+        "href": "http://127.0.0.1:40751/__cancel_h5#/pages/activity/bargainDetail?mine=1",
+        "text": "\n    砍价详情我的砍价刷新我的砍价砍价取消样本记录 #104 · 已使用当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #103 · 可购买当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #102 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与砍价取消样本记录 #101 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与上一页第 1 页下一页首页分类逛逛购物车我的\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 1
+          },
+          {
+            "id": 101,
+            "cancel_count": 1
+          }
+        ],
+        "confirm_count": 0,
+        "width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "h5-confirm",
+        "href": "http://127.0.0.1:40751/__cancel_h5#/pages/activity/bargainDetail?mine=1",
+        "text": "\n    砍价详情我的砍价刷新我的砍价砍价取消样本记录 #104 · 已使用当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #103 · 可购买当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #102 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与砍价取消样本记录 #101 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录确认取消参与 #101「砍价取消样本」？取消后不能继续使用这条记录。确认取消此参与保留参与上一页第 1 页下一页首页分类逛逛购物车我的\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 1
+          },
+          {
+            "id": 101,
+            "cancel_count": 0
+          }
+        ],
+        "confirm_count": 1,
+        "width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "h5-kept",
+        "href": "http://127.0.0.1:40751/__cancel_h5#/pages/activity/bargainDetail?mine=1",
+        "text": "\n    砍价详情我的砍价刷新我的砍价砍价取消样本记录 #104 · 已使用当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #103 · 可购买当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #102 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与砍价取消样本记录 #101 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与上一页第 1 页下一页首页分类逛逛购物车我的\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 1
+          },
+          {
+            "id": 101,
+            "cancel_count": 1
+          }
+        ],
+        "confirm_count": 0,
+        "width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "h5-cancelled",
+        "href": "http://127.0.0.1:40751/__cancel_h5#/pages/activity/bargainDetail?mine=1",
+        "text": "\n    砍价详情我的砍价刷新我的砍价砍价取消样本记录 #104 · 已使用当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #103 · 可购买当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #102 · 砍价中当前 ¥8.00 · 底价 ¥2.00 · 已砍 ¥2.00 · 25%查看这条砍价记录取消此参与上一页第 1 页下一页首页分类逛逛购物车我的\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 1
+          }
+        ],
+        "confirm_count": 0,
+        "width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "pc-list",
+        "href": "http://127.0.0.1:40751/bargain?my=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出砍价专区我的砍价刷新商品列表砍价取消样本起价 ¥10.00 · 可砍至 ¥2.00查看活动与参与上一页第 1 页下一页我的砍价刷新本人记录当前价按参与起价减去已砍金额展示；结算价以详情及服务端最终报价为准。砍价取消样本 · 参与 #104已用于订单当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%查看此参与资格砍价取消样本 · 参与 #103已完成砍价，可查看购买资格当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%选择此参与并选规购买砍价取消样本 · 参与 #102砍价中或活动不可购买当前价 ¥8.00 / 底价 ¥2.00 · 已砍 ¥2.0025%查看此参与资格帮砍一次取消此参与上一页记录第 1 页下一页记录© 2026 本地取消验收\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 1
+          }
+        ],
+        "confirm_count": 0,
+        "width": 1100,
+        "scroll_width": 1100
+      },
+      {
+        "stage": "pc-confirm",
+        "href": "http://127.0.0.1:40751/bargain?my=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出砍价专区我的砍价刷新商品列表砍价取消样本起价 ¥10.00 · 可砍至 ¥2.00查看活动与参与上一页第 1 页下一页我的砍价刷新本人记录当前价按参与起价减去已砍金额展示；结算价以详情及服务端最终报价为准。砍价取消样本 · 参与 #104已用于订单当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%砍价取消样本 · 参与 #103已完成砍价，可查看购买资格当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%砍价取消样本 · 参与 #102砍价中或活动不可购买当前价 ¥8.00 / 底价 ¥2.00 · 已砍 ¥2.0025%帮砍一次确认取消参与 #102「砍价取消样本」？取消后不能继续使用这条记录。确认取消此参与保留参与上一页记录第 1 页下一页记录© 2026 本地取消验收\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          },
+          {
+            "id": 102,
+            "cancel_count": 0
+          }
+        ],
+        "confirm_count": 1,
+        "width": 1100,
+        "scroll_width": 1100
+      },
+      {
+        "stage": "pc-unknown",
+        "href": "http://127.0.0.1:40751/bargain?my=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出砍价专区我的砍价刷新商品列表砍价取消样本起价 ¥10.00 · 可砍至 ¥2.00查看活动与参与上一页第 1 页下一页我的砍价Request failed with status code 503；请刷新记录确认结果，不会自动重试刷新本人记录当前价按参与起价减去已砍金额展示；结算价以详情及服务端最终报价为准。上一页记录第 1 页下一页记录© 2026 本地取消验收\n  \n\n",
+        "records": [],
+        "confirm_count": 0,
+        "width": 1100,
+        "scroll_width": 1100
+      },
+      {
+        "stage": "pc-recovered",
+        "href": "http://127.0.0.1:40751/bargain?my=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出砍价专区我的砍价刷新商品列表砍价取消样本起价 ¥10.00 · 可砍至 ¥2.00查看活动与参与上一页第 1 页下一页我的砍价刷新本人记录当前价按参与起价减去已砍金额展示；结算价以详情及服务端最终报价为准。砍价取消样本 · 参与 #104已用于订单当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%查看此参与资格砍价取消样本 · 参与 #103已完成砍价，可查看购买资格当前价 ¥2.00 / 底价 ¥2.00 · 已砍 ¥8.00100%选择此参与并选规购买上一页记录第 1 页下一页记录© 2026 本地取消验收\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          }
+        ],
+        "confirm_count": 0,
+        "width": 1100,
+        "scroll_width": 1100
+      },
+      {
+        "stage": "h5-final",
+        "href": "http://127.0.0.1:40751/__cancel_h5#/pages/activity/bargainDetail?mine=1",
+        "text": "\n    砍价详情我的砍价刷新我的砍价砍价取消样本记录 #104 · 已使用当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录砍价取消样本记录 #103 · 可购买当前 ¥2.00 · 底价 ¥2.00 · 已砍 ¥8.00 · 100%查看这条砍价记录上一页第 1 页下一页首页分类逛逛购物车我的\n  \n\n",
+        "records": [
+          {
+            "id": 104,
+            "cancel_count": 0
+          },
+          {
+            "id": 103,
+            "cancel_count": 0
+          }
+        ],
+        "confirm_count": 0,
+        "width": 390,
+        "scroll_width": 390
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/product_detail",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/user/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/bargain/user/cancel",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "input": {
+          "id": 101,
+          "bargainId": 1
+        },
+        "exact_soft_delete_only": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/user/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/user/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "query": "?scope=cart",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "query": "?scope=cart",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/bargain/user/cancel",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 503,
+        "input": {
+          "id": 102,
+          "bargainId": 1
+        },
+        "exact_soft_delete_only": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/user/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/color_change/color_change",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/v2/diy/product_detail",
+        "query": "",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/user/list",
+        "query": "?page=1&limit=20",
+        "upstream_status": 200,
+        "browser_status": 200,
+        "all_tables_unchanged": true,
+        "all_sequences_unchanged": true
+      }
+    ],
+    "public_tables": 283,
+    "sequences": 229,
+    "provider_calls": 0,
+    "order_changes": 0,
+    "help_history_preserved": true,
+    "authority": "actual createApp/JWT on owned maintenance SQL; seeded history and synthetic sessions/navigation; no production LOGIN claim",
+    "url": "http://127.0.0.1:40751/__bargain_cancel/795c2d87-1086-4a6a-bc8c-03634a0626f9",
+    "title": "砍价参与取消验收",
+    "dialog": null,
+    "console": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T09:51:08.696Z",
+        "url": "http://127.0.0.1:40751/assets/index-CvKNOG_p.js"
+      },
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T09:52:26.622Z",
+        "url": "http://127.0.0.1:40751/assets/index-CvKNOG_p.js"
+      }
+    ],
+    "started": "2026-10-20T09:51:01.294Z",
+    "background": true,
+    "extra_confirmation_requests": 0,
+    "frame_widths": [
+      390,
+      1100
+    ],
+    "readonly_requests": 14,
+    "exact_cancellations": 2,
+    "console_note": "Two H5 framework vue-router deprecated-import warnings; no console errors",
+    "extra_approval_requests": 0,
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-bargain-cancel-h5-confirm.jpg",
+        "sha256": "c9f477f472174206a1ac9948d47ba98435a67c3a13c19b4c6477ca1471171e75"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-cancel-pc-unknown.jpg",
+        "sha256": "f0ed34bd357cf9f80919917e96a23be1232037cde0e0fb38fbba1cdc405eac45"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-cancel-pc-recovered.jpg",
+        "sha256": "0ff065e9c12607eb1c4c3133571e1aeca32be4da4800b0981bbd4af00b483a5f"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-cancel-h5-final.jpg",
+        "sha256": "5dc6cb3e86072f3187c3f89f89186377994b47fed57d77d05215fad6f4e5f628"
+      }
+    ]
+  },
+  "cleanup": [
+    {
+      "log": "/tmp/cinashop-bargain-cancel-browser-final.log",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-fyvvVh",
+      "pg_version": 16,
+      "status_code": 3,
+      "stopped": true
+    },
+    {
+      "log": "/tmp/cinashop-bargain-cancel-native-final.log",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Ezzdok",
+      "pg_version": 16,
+      "status_code": 3,
+      "stopped": true
+    }
+  ],
+  "excluded_candidates": [
+    {
+      "label": "pc-tests",
+      "reason": "366 tests repeated in final 375-test PC build; not counted twice"
+    }
+  ],
+  "preserved": {
+    "production_source_files": 2521,
+    "production_base_verified": "0563298a11c7491a6dc3d79840f32155ededbe7a",
+    "built_files": 448,
+    "backend_business_logic": "unchanged",
+    "get_script": "restored PHP-compatible behavior preserved",
+    "documents": {
+      "MIGRATION_AUDIT.md": {
+        "old_body_sha256": "7fafe57a0d756c65d464d0c9bd27709b5f0512e1945c8f8173d62ebd83618e2a",
+        "preserved_marker_lines": 88,
+        "old_body_preserved": true,
+        "sha256": "57f107cbd827ef6eefc99fbeae49c7c07a7f7d091b0e42eb8b28d91360c65689"
+      },
+      "MIGRATION_CHECKLIST.md": {
+        "old_body_sha256": "8c9abffb008ee8447195422f7670e2dc5da2c0d0958ee29befc41af4c1a1ab50",
+        "preserved_marker_lines": 405,
+        "old_body_preserved": true,
+        "sha256": "ad88db3c98d65d36cf6d6dbb8ba11200868b5b52fb80c0f6cd03bae70e6a9c17"
+      }
+    }
+  },
+  "limits": [
+    "Owned maintenance SQL, seeded participation history and synthetic sessions/navigation chrome; not production LOGIN/grant evidence",
+    "No payment/provider actions; no order changes",
+    "Browser inventory exposes IAB, but not a connected external Chrome extension",
+    "Whole PHP migration remains active; this is a local candidate for a draft PR"
+  ]
+}
