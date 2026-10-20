@@ -5,6 +5,7 @@ import { PRODUCT_SKU_IDENTITY_LOCK_KEY, PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } fr
 import { ValidateException } from "@/utils/errors";
 import { readBargainContent } from './BargainContentService';
 import { bargainShippingFields, readBargainShippingTemplates } from './BargainAdminShippingService';
+import { canonicalBargainBaseSkuUnique } from './BargainBaseSkuIdentity';
 
 type Sku = typeof storeProductAttrValue.$inferSelect;
 export interface BargainSkuInput {
@@ -23,7 +24,11 @@ export function parseBargainSku(value: unknown): BargainSkuInput | undefined {
   if (value === undefined) return undefined;
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new ValidateException("请选择砍价规格");
   const input = value as Record<string, unknown>;
-  const result: BargainSkuInput = { baseUnique: unique(input.baseUnique) };
+  // Client base keys must already be canonical; expected activity keys keep
+  // their independent, existing eight-character validator below.
+  if (typeof input.baseUnique !== 'string' || canonicalBargainBaseSkuUnique(input.baseUnique) !== input.baseUnique)
+    throw new ValidateException("砍价规格标识无效");
+  const result: BargainSkuInput = { baseUnique: input.baseUnique };
   if (input.expected === null) result.expected = null;
   else if (input.expected !== undefined) {
     if (!input.expected || typeof input.expected !== "object" || Array.isArray(input.expected)) throw new ValidateException("砍价规格原值无效");
@@ -60,11 +65,14 @@ export async function readBargainSkuOptions(container: Container, product: strin
       content = await readBargainContent(tx,activityId,row);
       shipping = bargainShippingFields(row);
     }
-    const options = await tx.select(projection).from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, productId),
+    const rawOptions = await tx.select(projection).from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, productId),
       eq(storeProductAttrValue.type, 0), eq(storeProductAttrValue.isRetired, 0))).orderBy(asc(storeProductAttrValue.id)).limit(501);
     const current = activityId ? await tx.select(projection).from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, activityId),
       eq(storeProductAttrValue.type, 2))).orderBy(asc(storeProductAttrValue.id)).limit(501) : [];
-    if (options.length > 500 || current.length > 500) throw new ValidateException("规格超过500项，请先整理");
+    if (rawOptions.length > 500 || current.length > 500) throw new ValidateException("规格超过500项，请先整理");
+    // Invalid source keys retain their invalid value and cannot pass save input;
+    // only legitimate database right-padding is projected canonically.
+    const options = rawOptions.map(row => ({ ...row, unique: canonicalBargainBaseSkuUnique(row.unique) ?? row.unique }));
     return { productId, activityId, options, current, content,
       shipping: { current: shipping, productType: source.productType, templates: await readBargainShippingTemplates(tx, source) } };
   });
@@ -95,6 +103,7 @@ export async function saveBargainSku(tx: DbClient, activityId: number, productId
   }
   if (sources.length !== 1) throw new ValidateException("原商品规格不存在、已退役或标识重复");
   const base = sources[0], existing = current[0];
+  if (canonicalBargainBaseSkuUnique(base.unique) !== input.baseUnique) throw new ValidateException("原商品规格标识无效");
   const matches = await tx.select({ id: storeProductAttrValue.id }).from(storeProductAttrValue).where(and(
     eq(storeProductAttrValue.productId, productId), eq(storeProductAttrValue.type, 0),
     eq(storeProductAttrValue.suk, base.suk), eq(storeProductAttrValue.isRetired, 0))).limit(2);

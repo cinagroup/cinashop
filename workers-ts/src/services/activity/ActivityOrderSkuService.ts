@@ -28,6 +28,22 @@ export async function assertCurrentSeckillBaseSkuIdentity(
     throw new ValidateException('秒杀基础规格标识、组合不唯一或与活动规格冲突，请重新确认');
 }
 
+/** Type2 keeps the selected raw database identity, including legal padding. */
+export async function assertCurrentBargainBaseSkuIdentity(
+  db: DbClient,
+  base: Pick<LegacyActivitySkuPair['baseSku'], 'id' | 'productId' | 'unique' | 'suk'>,
+  activityUnique: string,
+): Promise<void> {
+  const rows = await db.select({ id: storeProductAttrValue.id, unique: storeProductAttrValue.unique,
+    suk: storeProductAttrValue.suk }).from(storeProductAttrValue)
+    .where(and(eq(storeProductAttrValue.productId, base.productId), eq(storeProductAttrValue.type, 0),
+      eq(storeProductAttrValue.isRetired, 0), or(eq(storeProductAttrValue.unique, base.unique),
+        eq(storeProductAttrValue.suk, base.suk), eq(storeProductAttrValue.unique, activityUnique))))
+    .orderBy(asc(storeProductAttrValue.id)).limit(2);
+  if (rows.length !== 1 || rows[0].id !== base.id || rows[0].unique !== base.unique || rows[0].suk !== base.suk)
+    throw new ValidateException('砍价基础规格标识、组合不唯一或与活动规格冲突，请重新确认');
+}
+
 /**
  * Resolve the PHP activity-SKU identity to the Worker-owned base-SKU identity.
  *
@@ -128,5 +144,6 @@ export async function resolveLegacyActivitySkuPair(
   }
 
   if (params.type === 1) await assertCurrentSeckillBaseSkuIdentity(db, baseRows[0], activitySku.unique);
+  if (params.type === 2) await assertCurrentBargainBaseSkuIdentity(db, baseRows[0], activitySku.unique);
   return { activitySku, baseSku: baseRows[0] };
 }

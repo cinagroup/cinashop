@@ -111,7 +111,7 @@ import {
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { readCheckoutPricingSources, protectCheckoutPricingSources } from './CheckoutPricingSources';
 import { readCheckoutPickupPolicy, lockCheckoutPickupStore } from './CheckoutPickupPolicy';
-import { assertCurrentSeckillBaseSkuIdentity, resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
+import { assertCurrentBargainBaseSkuIdentity, assertCurrentSeckillBaseSkuIdentity, resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
 import { validSeckillStoredSkuAlias } from '@/services/activity/SeckillBaseSkuIdentity';
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
@@ -2825,6 +2825,12 @@ export class StoreOrderCreateService {
           // identity set used at quote time before acquiring the product lock.
           if (!activitySku) throw new ValidateException('秒杀规格信息无效');
           await assertCurrentSeckillBaseSkuIdentity(tx, sku, activitySku.unique);
+        }
+        if (type === 2) {
+          // A committed alias inserted during this raw SKU wait must not turn
+          // the quoted first row into authority. Keep the original raw key.
+          if (!activitySku) throw new ValidateException('砍价规格信息无效');
+          await assertCurrentBargainBaseSkuIdentity(tx, sku, activitySku.unique);
         }
         if (type === 6 || type === 7) {
           // The guarded SKU write may have waited. Re-read the active identity

@@ -1,0 +1,724 @@
+{
+  "kind": "php-ts-bargain-short-base-sku",
+  "created_utc": "2026-10-20T08:03:39.189406+00:00",
+  "base_sha": "3802d94e10de639658b20ab2a51297726870ac4b",
+  "branch": "codex/bargain-short-sku",
+  "overall_goal": {
+    "work_remaining": true,
+    "complete": false
+  },
+  "status": "Local increment verified; authorized GitHub draft publication and own-SHA CI recorded separately",
+  "contract": {
+    "problem": "PG character(8) padding blocked valid short ordinary base keys in actual Admin bargain options/save and public selection.",
+    "base_ingress": "Only the selected database type0 identity loses ASCII right padding. Canonical client base input is one to eight characters without whitespace/control; no generic client/history trim repair.",
+    "activity_identity": "Independent existing eight-character activity key allocator, selected source ownership, dimensions, stock/quota, CAS and namespace rules retained.",
+    "raw_compatibility": "Legitimate raw padded type2 cart/order line/JSON and charged/physical purchase-origin identity stay aligned. Historical rows are not rewritten.",
+    "current_identity": "Type2 resolver requires exact one active product/type0 row through raw base key, SUK and selected activity key; exact original id/raw unique/SUK retained.",
+    "after_real_wait": "Type2 author repeats the same identity check after the actual guarded base-SKU UPDATE and before product stock UPDATE. Late duplicate unique/SUK rolls back order, cart claim, participation and both receipts; independently committed duplicate and order-id gap remain.",
+    "pricing": "Frozen participation original minus cut, bounded by frozen minimum, supplies purchase price; product17, base18.88 and activitySKU777 are not substituted. Old real participation remains2 after actual Admin20/min5; new real two-helper participation reaches5.",
+    "replay_and_cancel": "Strict independent nonowner LOGIN creates dual receipts and replays without public SQL/sequence/KV mutation; actual maintenance-backed App cancellation restores original stock/quota and exact used4 to ready3 once.",
+    "unchanged": "592 protected SQL/model/DAO/installer/profile files, original type1 and type6/7 blocks, restored get_script, root checkbox lines and old root document tails."
+  },
+  "accepted": {
+    "unique_tests": 709,
+    "new_tests": 44,
+    "unit": 416,
+    "native_gate_tests": 292,
+    "browser": 1,
+    "skipped": 0,
+    "complete_worker_type_projects": 2,
+    "formal_commands": 8
+  },
+  "counts_by_gate": {
+    "native-final-v2": 32,
+    "browser-final": 1,
+    "unit-final-v2": 416,
+    "admin-catalog-final-v2": 57,
+    "participation-compensation-final": 102,
+    "shared-activity-final": 101
+  },
+  "test_count_evidence": {
+    "path": "/tmp/cinashop-bargain-short-sku-test-counts.json",
+    "sha256": "ea6e24ab8edf17ad4d53c9c6e4b7cb6e59e7475f7c32a51a2c1d35311acb47b8"
+  },
+  "serial_validation": [
+    {
+      "label": "native-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/bargain-short-sku-native.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:44:05.533193+00:00",
+      "seconds": 351.84,
+      "log": "/tmp/cinashop-bargain-short-sku-native-final-v2.log",
+      "log_sha256": "4e33fd93105c85cd78b539be7c6016af1f0001b9124e67a944a0fec9820c6621",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-final-v2-result.json",
+        "sha256": "2080769c7aceca782a788d5c690bcf0842f8e0eb688f617deaffab27f5ae0998"
+      },
+      "accepted_tests": 32,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [],
+      "applicable_source_scope": "All twelve recorded sources match final freeze."
+    },
+    {
+      "label": "browser-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "../.cache/php-ts-tools/pg16/bin",
+        "audit:bargain-short-sku-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:10:34.261016+00:00",
+      "seconds": 528.09,
+      "log": "/tmp/cinashop-bargain-short-sku-browser-final.log",
+      "log_sha256": "84c57c1e9d0eb4c0547bce23b19fc1a2ffa0d991db9a5c99dc0ed57490c6ad12",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-browser-final-result.json",
+        "sha256": "4787138cc7a46b21cc7a2404417b6598e288644a850e9a856dacd1e1a3823a66"
+      },
+      "accepted_tests": 1,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "d3760ca802e22aaca46810d2ed62eab4b62355108d78a963435ecd036be3cd79"
+        },
+        {
+          "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+          "sha256": "63a5e4fbd36f30b50e244854030e9ab66e06e614aadcf57c89ddd68b7e31ba8b"
+        },
+        {
+          "path": "workers-ts/test/helpers/bargainShortSku.ts",
+          "sha256": "0d7e9a8461a87302e7bc84885100d51e8850ff9d657893c27cadb93a4559bfb7"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "9c41f895ea3a601065ac3b161ac9637dd461f88412586b57a2a0e5fde1177019"
+        }
+      ],
+      "applicable_source_scope": "Browser runtime inputs unchanged: final host inferred Buffer type emits identical JavaScript; changed thin native snapshot helper is not imported. Later runner delta only exact mature-suite admission and its unit test."
+    },
+    {
+      "label": "unit-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/local-finance-postgres-runner.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:29:47.286365+00:00",
+      "seconds": 20.97,
+      "log": "/tmp/cinashop-bargain-short-sku-unit-final-v2.log",
+      "log_sha256": "803618c90ef3f15e1c456fd4bf040ce03461d6692161a0a3c8599de6be3803a5",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-unit-final-v2-result.json",
+        "sha256": "3fd282149886ded1297a0ae8ba13e84e229137175bdca7d71ca306a5c7ecf6ca"
+      },
+      "accepted_tests": 416,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [
+        {
+          "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+          "sha256": "63a5e4fbd36f30b50e244854030e9ab66e06e614aadcf57c89ddd68b7e31ba8b"
+        },
+        {
+          "path": "workers-ts/test/helpers/bargainShortSku.ts",
+          "sha256": "0d7e9a8461a87302e7bc84885100d51e8850ff9d657893c27cadb93a4559bfb7"
+        }
+      ],
+      "applicable_source_scope": "Only non-imported Browser host and thin native helper differ from final freeze; actual selected test inputs unchanged."
+    },
+    {
+      "label": "admin-catalog-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/bargain-admin-sku.test.ts",
+        "test/bargain-selection-catalog.test.ts",
+        "test/bargain-admin-sku-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:23:30.048225+00:00",
+      "seconds": 74.81,
+      "log": "/tmp/cinashop-bargain-short-sku-admin-catalog-final-v2.log",
+      "log_sha256": "f058932262372b64bde56c05ddf2dceefca1809de77d50b9eceb316a69855064",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-admin-catalog-final-v2-result.json",
+        "sha256": "3e98ab4747491bfd5ddaceba17452354e18e9f83e07e7cd989cfa7272ba789ba"
+      },
+      "accepted_tests": 57,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [
+        {
+          "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+          "sha256": "63a5e4fbd36f30b50e244854030e9ab66e06e614aadcf57c89ddd68b7e31ba8b"
+        },
+        {
+          "path": "workers-ts/test/helpers/bargainShortSku.ts",
+          "sha256": "0d7e9a8461a87302e7bc84885100d51e8850ff9d657893c27cadb93a4559bfb7"
+        }
+      ],
+      "applicable_source_scope": "Only non-imported Browser host and thin native helper differ from final freeze; actual selected test inputs unchanged."
+    },
+    {
+      "label": "participation-compensation-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/bargain-order-participation.test.ts",
+        "test/bargain-order-concurrency-postgres.test.ts",
+        "test/bargain-inventory-compensation.test.ts",
+        "test/bargain-cart-binding-concurrency-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:25:04.561438+00:00",
+      "seconds": 124.06,
+      "log": "/tmp/cinashop-bargain-short-sku-participation-compensation-final.log",
+      "log_sha256": "159543161b0c6c8ad4e9f5f454dd06b7a501986ef0ac9e6171bdf97264c008d7",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-participation-compensation-final-result.json",
+        "sha256": "3145e2ff1a770e834700d93ad2c4d8560fb0bff6f9764a9d161fd323039581ea"
+      },
+      "accepted_tests": 102,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [
+        {
+          "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+          "sha256": "63a5e4fbd36f30b50e244854030e9ab66e06e614aadcf57c89ddd68b7e31ba8b"
+        },
+        {
+          "path": "workers-ts/test/helpers/bargainShortSku.ts",
+          "sha256": "0d7e9a8461a87302e7bc84885100d51e8850ff9d657893c27cadb93a4559bfb7"
+        }
+      ],
+      "applicable_source_scope": "Only non-imported Browser host and thin native helper differ from final freeze; actual selected test inputs unchanged."
+    },
+    {
+      "label": "shared-activity-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/seckill-sku-identity-fence-postgres.test.ts",
+        "test/presale-checkout-postgres.test.ts",
+        "test/newcomer-purchase-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:27:18.136106+00:00",
+      "seconds": 128.76,
+      "log": "/tmp/cinashop-bargain-short-sku-shared-activity-final.log",
+      "log_sha256": "ab32a450e266d0dfebd1c8121c16a0a28915824e5b0800af0b9a6d05e4641d0b",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-shared-activity-final-result.json",
+        "sha256": "d93feb2e03c6b49bc68d79e75c16572721e9654751e884c9968307bf391fb400"
+      },
+      "accepted_tests": 101,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [
+        {
+          "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+          "sha256": "63a5e4fbd36f30b50e244854030e9ab66e06e614aadcf57c89ddd68b7e31ba8b"
+        },
+        {
+          "path": "workers-ts/test/helpers/bargainShortSku.ts",
+          "sha256": "0d7e9a8461a87302e7bc84885100d51e8850ff9d657893c27cadb93a4559bfb7"
+        }
+      ],
+      "applicable_source_scope": "Only non-imported Browser host and thin native helper differ from final freeze; actual selected test inputs unchanged."
+    },
+    {
+      "label": "types-unit-final-v3",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:55:41.013537+00:00",
+      "seconds": 152.85,
+      "log": "/tmp/cinashop-bargain-short-sku-types-unit-final-v3.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-types-unit-final-v3-result.json",
+        "sha256": "f9fa4e3463b00e032066fd072d29d7b2d28e7d1805a90f4cd204c8fe4458f130"
+      },
+      "accepted_tests": 0,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [],
+      "applicable_source_scope": "All twelve recorded sources match final freeze."
+    },
+    {
+      "label": "types-runtime-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T07:58:22.369978+00:00",
+      "seconds": 83.38,
+      "log": "/tmp/cinashop-bargain-short-sku-types-runtime-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-types-runtime-final-result.json",
+        "sha256": "3c7641bee5a8d7c02903908d35f3f9dbe2e1331722376b6620f08b9bb83ba987"
+      },
+      "accepted_tests": 0,
+      "recorded_sources": 12,
+      "different_from_final_freeze": [],
+      "applicable_source_scope": "All twelve recorded sources match final freeze."
+    }
+  ],
+  "excluded_rounds": [
+    {
+      "label": "native-before-fix",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Mixed initial round: selector/catalog business reds, but save used illegal people1. That save setup failure is not proof of a short-key business defect. All zero accepted.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-before-fix-result.json",
+        "sha256": "8f42073e47b18ce4f14ffe6cf2e5fbe0dbb2c0c291f1ecc39fdbfcda0407a773"
+      },
+      "log_sha256": "9af6ca88b88f25b524a17f28c2bfee10f03155618e3393cfbe4457486c68fbc1"
+    },
+    {
+      "label": "native-before-fix-v2",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Corrected people2, three genuine Admin source/save/catalog business reds while original eight production pins remained unchanged.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-before-fix-v2-result.json",
+        "sha256": "59a68426a9102836571316df36b419d46a86694679062e442641614d2e67df67"
+      },
+      "log_sha256": "0f25118cbaa29d2ea32eadb9d40fabc9a9f5f910d383f45769500677330d3104"
+    },
+    {
+      "label": "native-ingress-candidate",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Early duplicate three-pass ingress candidate superseded by complete32 final.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-ingress-candidate-result.json",
+        "sha256": "c2ee763666f92c09c9662fe16b077f4d6ded387e6c20249534ba1a28c4d3c513"
+      },
+      "log_sha256": "510fbeacc24baff3b19a18e49595a1f8e09cfd0a19f63469ad1b57cadb86d659"
+    },
+    {
+      "label": "native-fullchain-candidate",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "24 partial passes plus8 failures excluded entirely: five true current/late identity defects, three already-rejected400 participant cases had an over-specific message assertion. Late two each committed order and both purchase receipts before fix.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-fullchain-candidate-result.json",
+        "sha256": "ace4e58a46cf5f0e887689cb17fa791013c5514e718ac7cc8e05cbf6dba3ff92"
+      },
+      "log_sha256": "e324558154e1f0fbd03096b99de62ae90798eaf1c46df6360891d0c70c983a06"
+    },
+    {
+      "label": "unit-final",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Earlier413-pass unit run superseded by final416 including three exact mature-suite admission cases.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-unit-final-result.json",
+        "sha256": "5ab689136b08470aff12dc85e8724c4bf77b6a981075f179bc80107a1d1ef340"
+      },
+      "log_sha256": "759af48a2a3b594d1736d55396263f2db3e298784b40f026b555bc1ebe68b196"
+    },
+    {
+      "label": "admin-catalog-regression",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Explicit schema admission rejected before filesystem/cluster setup; zero tests accepted.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-admin-catalog-regression-result.json",
+        "sha256": "716d3851910fc26542e8efd2193883f937259f83bb0f95b8011f34d18beb560f"
+      },
+      "log_sha256": "c428a20f2f1a3c77a2ba55e23456ff8e0b0b2afb3e72a534943c8c553020a2e4"
+    },
+    {
+      "label": "native-final",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Earlier32-pass complete run superseded by final32 after a weak undefined-equality thin snapshot assertion was repaired through actual row unwrapping and required id1 presence. Zero accepted to avoid duplicate counting.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-native-final-result.json",
+        "sha256": "5cd7651e9a8a78a0eb4b9476c21c83d1c36444a36cce63af11d129c3c67b4be5"
+      },
+      "log_sha256": "e6ae01c66098de6afdb87bfa528f499a0324e2609252032d46917977c8a46014"
+    },
+    {
+      "label": "types-unit-final-v2",
+      "exit_code": 2,
+      "accepted_tests": 0,
+      "reason": "A type-only attempt still encountered generated node:buffer module typing conflict; zero accepted, replaced by actual bytes-return inference and complete types-unit-final-v3.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-types-unit-final-v2-result.json",
+        "sha256": "63896f69a42e5f861dc8541466f02555a3a10ce6ca62299befffd03279eb82bb"
+      },
+      "log_sha256": "92063582075c253b879e9f3db90b1d1f7e9bf74e6d2b09129c7d7a87eb76ac45"
+    },
+    {
+      "label": "types-unit-final",
+      "exit_code": 2,
+      "accepted_tests": 0,
+      "reason": "Full main compiler found three test annotation errors, no runtime failure acceptance; The initial annotation attempt did not fix the snapshot shape or generated Buffer module typing. Both intermediate compiler attempts were excluded; the true row unwrap and actual bytes-return inference are checked by complete final-v3.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-types-unit-final-result.json",
+        "sha256": "586209d53868e140414102a0d6df084f5dd917f659b05ce4d8e900bca56cc78f"
+      },
+      "log_sha256": "44997da73245c95828ae9da1d4248aeebdc4ecb844a25b5f88d2ea42723786fa"
+    },
+    {
+      "label": "admin-catalog-final",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Ordinary owned mode lacked the CREATEROLE required by the existing restricted-pricing fixture; all57 setup failures, zero business acceptance. No production/profile/installer permission repair.",
+      "receipt": {
+        "path": "/tmp/cinashop-bargain-short-sku-admin-catalog-final-result.json",
+        "sha256": "f77700faa13456590046c1af8845f05f647056022b997a3078ce116454660812"
+      },
+      "log_sha256": "62c5fa4fc57c0cce29225d407d9c6115f5f4f38e3a983e479b65c9b520930f58"
+    }
+  ],
+  "executable_sources": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "326ba72bec77335dae9e02597466cc6e0fb91464e723f16cd4340977593e5ef6"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityOrderSkuService.ts",
+      "sha256": "68b7121d6a54cc26b27ff24d5fc0846891bd05c61c002dbf8c4bc6bf479cad39"
+    },
+    {
+      "path": "workers-ts/src/services/activity/BargainAdminSkuService.ts",
+      "sha256": "2287dc35ebe984416203f05f28bc09c071f33b8cdaeae0562f1914a3cd6181cc"
+    },
+    {
+      "path": "workers-ts/src/services/activity/BargainBaseSkuIdentity.ts",
+      "sha256": "bad0eed7ddc795846961778cea7be2a7697465ccde64988b836826f166c791f1"
+    },
+    {
+      "path": "workers-ts/src/services/activity/BargainSkuCatalogService.ts",
+      "sha256": "0feaace8f8722ba0824ef8fe02ce78f664ccfe329484390cc71968370e6d012f"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "f16728a8b79cd2c1752721220d9d348f4f460ccf85098caefa829c4b472e32d3"
+    },
+    {
+      "path": "workers-ts/test/bargain-short-sku-native.test.ts",
+      "sha256": "11872324a919ae46b42a700867d02e40e6660669e395202d726c6c57849b06c9"
+    },
+    {
+      "path": "workers-ts/test/browser/bargain-short-sku.acceptance.ts",
+      "sha256": "b8cc4a41303a7ded265fd229a0a13fd76e99d5600db8e49f3f6e02152bc7a4c1"
+    },
+    {
+      "path": "workers-ts/test/helpers/bargainShortSku.ts",
+      "sha256": "1a81021a479880a3ee204f17b4d8e5192d079040bf2b2ee489a159539ef079a3"
+    },
+    {
+      "path": "workers-ts/test/helpers/bargainShortSkuRuntime.ts",
+      "sha256": "706b36e51df2f28318061088f24020abd14668a70563c8f20fa6ff3517bca028"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "9c8d3d34d42e6d1a6320ea53834e8c1d129cadf853a120b64c4772043fc0db57"
+    },
+    {
+      "path": "workers-ts/vitest.bargain-short-sku-browser.config.ts",
+      "sha256": "05f5169fe109deb1d0a11b7448e331590b167b49e5733a685f8f2861f7d24725"
+    }
+  ],
+  "source_freeze": {
+    "path": "/tmp/cinashop-bargain-short-sku-source-freeze-v5.json",
+    "sha256": "44c9e70c51f100f04853e4d8153f68016f04ba7c1150f8f959ca2d2134a7754d"
+  },
+  "prior_source_freezes": [
+    {
+      "path": "/tmp/cinashop-bargain-short-sku-source-freeze-v1.json",
+      "sha256": "5c4aa22d3d45b5c8a455174deebd4f5bc3d33719cd7b534d890f9a7ccdc450ba"
+    },
+    {
+      "path": "/tmp/cinashop-bargain-short-sku-source-freeze-v2.json",
+      "sha256": "46637bdbf6cc5b27582888eaa78bde30845ff52ead24934e7e1cfdf7f1eb53cd"
+    },
+    {
+      "path": "/tmp/cinashop-bargain-short-sku-source-freeze-v3.json",
+      "sha256": "e30faeffd883ef66076fe7b7dc4a4e7f3c30f607e9159db5f0aea46ae7c3e9c1"
+    },
+    {
+      "path": "/tmp/cinashop-bargain-short-sku-source-freeze-v4.json",
+      "sha256": "d02333f3e751f3ef81d0149d9059352fe549c9c5326125c5a3b93d6fedcc8f7f"
+    }
+  ],
+  "browser_host_runtime_equivalence": {
+    "path": "/tmp/cinashop-bargain-short-sku-host-runtime-equivalence-v5.json",
+    "sha256": "82b56c66c97529518466c8099a5166e672a72b0b6091dd0701e6f63f46e37ec4"
+  },
+  "source_applicability_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-source-review-v5.json",
+    "sha256": "bde8781ae718834072ded5491e5d9c5610e75de0a4c669a6d0147c246e5430ff"
+  },
+  "prior_source_applicability_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-source-review-v3.json",
+    "sha256": "513d9badddc7ea4dadd3b6367dcd84034116cd84770b163a6ac9f463d4a7e4ed"
+  },
+  "production_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-source-review-v2.json",
+    "sha256": "829db887da17f003fd6aceb23f5278e526606b1107209224b6ebfea12c3fd9ce"
+  },
+  "shared_unchanged_blocks": {
+    "path": "/tmp/cinashop-bargain-short-sku-shared-block-pins.json",
+    "sha256": "de493981b01c81e1162f3bb16a4bacf6466d9e81d8c1eaf535a7e7acd9cd03c6"
+  },
+  "gate_terminal_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-gate-terminal-review-v2.json",
+    "sha256": "5d16fb265aab924c94686b56094bb9e6bab43ab7c2308fb965ac6bea05f9ad64"
+  },
+  "native_terminal_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-native-terminal-review-v2.json",
+    "sha256": "d0e5c0d031a02f2731e8204cba702e7b6de684cc661b83c08d0d335c4215b625"
+  },
+  "prior_native_terminal_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-native-terminal-review.json",
+    "sha256": "a2282a5137785bf398f7563da080a574d65d39f7d145367dbce15642b2899042"
+  },
+  "browser_review": {
+    "path": "/tmp/cinashop-bargain-short-sku-browser-review-v1.json",
+    "sha256": "4d37830aeb67a753b3b5fd0e64cdef3996657ba16e5705498317a2b1eb386d65"
+  },
+  "browser": {
+    "flow": "Actual Admin select/save/reload10 -> actual PC start101 -> actual H5 self-help -> disclosed helper22 actual JWT API -> PC/H5 selected SKU and separate cart3/4 quotes2 -> sustained503 clears prices/disables submission -> actual UI retry2 -> actual Admin save/reload20/min5 -> original two carts still2.",
+    "provider": "Codex IAB2",
+    "background": true,
+    "authorization_confirmation_popups": 0,
+    "global_security_or_confirmation_settings_changed": false,
+    "friend_ui_verified": false,
+    "friend_help_bridge": "actual createApp/JWT helper22 API, not friend UI",
+    "stages": [
+      "admin-selected10",
+      "admin-saved10",
+      "admin-reloaded10",
+      "pc-unjoined",
+      "pc-started",
+      "h5-self-cut",
+      "helper-api-ready",
+      "pc-ready2",
+      "pc-checkout2",
+      "pc-cleared",
+      "pc-recovered2",
+      "h5-ready2",
+      "h5-checkout2",
+      "h5-cleared",
+      "h5-recovered2",
+      "admin-saved20",
+      "admin-reloaded20",
+      "pc-still2",
+      "h5-still2"
+    ],
+    "actual_business_requests": 61,
+    "methods": {
+      "GET": 38,
+      "POST": 23
+    },
+    "whole_public_readonly_proofs": 54,
+    "public_tables": 283,
+    "sequences": 229,
+    "bounded_writes": {
+      "admin_saves": 2,
+      "cart_adds": 2,
+      "start": 1,
+      "help": 2,
+      "of_help_disclosed_api_bridge": 1
+    },
+    "upstream_quote_requests": 8,
+    "outward503": 2,
+    "order_creations": 0,
+    "payment_attempts": 0,
+    "provider_calls": 0,
+    "r2_calls": 0,
+    "admin_sessions": {
+      "opened": 10,
+      "closed": 10
+    },
+    "console": {
+      "errors": 0,
+      "warnings": 3,
+      "warning_kind": "Existing vue-router direct esm-bundler import deprecation"
+    },
+    "frame_document_width_pairs": [
+      [
+        375,
+        375
+      ],
+      [
+        1185,
+        1185
+      ],
+      [
+        1200,
+        1200
+      ]
+    ],
+    "screenshot_boundary": "Five actual images; H5 failed quote/disabled submission and final2/enabled submission visible. PC bottom payable outside screenshot, supported by recorded stage DOM. Existing default activity-detail-layout notice is not a framework overlay.",
+    "builds": "Existing real Admin274+PC103+H5344 bundles, exact721-file set/bytes unchanged. No fresh frontend build/type claim.",
+    "result": {
+      "path": "/tmp/cinashop-bargain-short-sku-browser-result.json",
+      "sha256": "3eae48ba5837249dfaa30e6cdd105c51dcba95d534f7a217bbe4e15e3cad94a8"
+    },
+    "final_dom": {
+      "path": "/tmp/cinashop-bargain-short-sku-browser-final-dom.json",
+      "sha256": "69a833016192a2de2c41ed48f8656cb91a6ee139ec0ccbe16f3d9d53169864f6"
+    },
+    "console_receipt": {
+      "path": "/tmp/cinashop-bargain-short-sku-browser-console.json",
+      "sha256": "ef0c19dd23657c0b3722599517b6318f70f6379dc0a30a37f9f450619f00ac63"
+    },
+    "browser_inventory": {
+      "path": "/tmp/cinashop-bargain-short-sku-browser-inventory.json",
+      "sha256": "34e07fa6483a53c696ba4f34f25a89a1a3bd7c0e315ff6a6ffcef70e9347e84c"
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-bargain-short-sku-admin10.jpg",
+        "sha256": "a382b0ed8f080ee88ff169848a358aaa0c90f8b637f85d3386a018185a6b5520"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-short-sku-admin20.jpg",
+        "sha256": "b69f4ae24dd03006b81cc6bc48a78c2c86fb318fc5ba9930d314fcd397672bb4"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-short-sku-h5-failure.jpg",
+        "sha256": "80101041a545b73dd0d164b1a2c782c6c00623a51757816074ad778f0a5ca19e"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-short-sku-h5-final2.jpg",
+        "sha256": "a91609c5ed6c3b1a74174536437b164af7438915fb4878612d6a423f3f3943a5"
+      },
+      {
+        "path": "/tmp/cinashop-bargain-short-sku-pc2.jpg",
+        "sha256": "f4f242efd539733460f398e0e032c8075f1aaf3f4f649e82375f15996ec3b354"
+      }
+    ]
+  },
+  "fixture_authority": {
+    "initial_three": "Narrow mounted Hono fixture: actual signed Admin auth for two cases, synthetic public principal for catalogue; not full runAll185 certification.",
+    "full_new_native": "Other29 new cases use registered runAll185 owned PG16, raw283 public tables/229 sequences. Actual signed Admin/buyer/helper JWT App requests use injected maintenance SQL. Strict create/replay use separately verified nonowner nonsuperuser LOGIN.",
+    "predeclared_author_scope": "Only store_bargain and store_bargain_user SELECT/UPDATE added to the owned author before business work and verified against fixed app plan; no INSERT/DELETE/TRUNCATE, no production profile change. Start/help/cancel are maintenance App requests.",
+    "mature_maintenance": "Three exact reviewed old files added to existing maintenance and one-worker admission lists because fixture setup creates restricted NOLOGIN pricing roles; no wildcard, error-driven GRANT, SQL or protected installer change.",
+    "not_proven": [
+      "Production HYPERDRIVE_ADMIN connection",
+      "Redis login",
+      "Production deployment grants",
+      "PHP/MySQL runtime",
+      "External Chrome extension installation/connection",
+      "Real device acceptance",
+      "Global serialization of arbitrary owner writes after the identity check"
+    ]
+  },
+  "final_state": {
+    "path": "/tmp/cinashop-bargain-short-sku-final-state.json",
+    "sha256": "4849a6b36694181f52c1d4b183407267753aa8a4417b55c8621dbf4b49076730"
+  },
+  "protected_sources": {
+    "files": 592,
+    "all_match_baseline": true
+  },
+  "checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "rows": 88,
+      "complete": 50,
+      "ordered_lines_unchanged": true,
+      "ordered_checkbox_lines_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "rows": 404,
+      "complete": 249,
+      "ordered_lines_unchanged": true,
+      "ordered_checkbox_lines_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  ],
+  "cleanup": {
+    "path": "/tmp/cinashop-bargain-short-sku-cleanup-final.json",
+    "sha256": "7263804ea6465a760ceb941634f72aaa4aeccd2cde9bbc64f1b651530aa2a204"
+  },
+  "secret_scan": {
+    "tool": "gitleaks8.29.0",
+    "executable_sources": 12,
+    "source_findings": 0,
+    "source_report": {
+      "path": "/tmp/cinashop-bargain-short-sku-secret-source-v5.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "staged_and_commit_scans": "Zero findings required by separate publication receipts"
+  },
+  "php_read_only_plan": {
+    "path": "/tmp/cinashop-seckill-short-sku-next-bargain-plan-v1.json",
+    "sha256": "172362c4a3cc637274754e04e00df7f908b8d4c43da4d2dbd38a39f707e486fe"
+  },
+  "fullchain_source_plan": {
+    "path": "/tmp/cinashop-bargain-short-sku-fullchain-plan-v1.json",
+    "sha256": "8e8821c726fa3c487808bec04eaed8f8e183c65ed6ebd8f40be8f57d541fe942"
+  },
+  "next_friend_ui_plan": {
+    "path": "/tmp/cinashop-bargain-short-sku-friend-ui-gap-plan-v1.json",
+    "sha256": "ca4aafc4fb0142624dfdeddfa9c5e9e39bdc8cf116a5fbca39c30e25b8597433"
+  },
+  "open_work": [
+    "Actual friend invitation/help UI and mismatched H5 share route",
+    "Trustworthy cumulative/lifetime purchase history",
+    "Unified stock reservation",
+    "Other activity/virtual combinations",
+    "Production deployment and external browser/device validation"
+  ],
+  "publication": {
+    "authorized": "GitHub push and draft PR",
+    "base": "codex/seckill-short-sku / PR133",
+    "merge": false,
+    "deploy": false,
+    "own_sha_all_green_claim": false
+  }
+}

@@ -5,6 +5,7 @@ import { findBargainParticipation } from "./BargainParticipationSelection";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal } from "@/services/order/OrderBrokerageService";
 import { readBargainContent, renderBargainContent } from './BargainContentService';
+import { canonicalBargainBaseSkuUnique } from './BargainBaseSkuIdentity';
 
 const MAX_SKUS = 500;
 function id(value: unknown, label: string): number {
@@ -81,7 +82,7 @@ export class BargainSkuCatalogService {
     const fields = { unique: storeProductAttrValue.unique, suk: storeProductAttrValue.suk,
       stock: storeProductAttrValue.stock, quota: storeProductAttrValue.quota,
       image: storeProductAttrValue.image };
-    const [activityRows, baseRows, participation] = await Promise.all([
+    const [activityRows, rawBaseRows, participation] = await Promise.all([
       this.container.db.select(fields).from(storeProductAttrValue)
         .where(and(eq(storeProductAttrValue.productId, bargainId), eq(storeProductAttrValue.type, 2), eq(storeProductAttrValue.isRetired, 0)))
         .orderBy(asc(storeProductAttrValue.id)).limit(MAX_SKUS + 1),
@@ -90,6 +91,7 @@ export class BargainSkuCatalogService {
         .orderBy(asc(storeProductAttrValue.id)).limit(MAX_SKUS + 1),
       this.participation(uid, bargainId, participationId, entry.price),
     ]);
+    const baseRows = rawBaseRows.map(row => ({ ...row, unique: canonicalBargainBaseSkuUnique(row.unique) ?? '' }));
     for (const rows of [activityRows, baseRows]) {
       if (rows.length > MAX_SKUS) throw new ValidateException("砍价规格超过500项，请先整理规格配置");
       const uniques = new Set<string>(), labels = new Set<string>();
