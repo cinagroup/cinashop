@@ -140,6 +140,7 @@ import { cashierOrdinaryCreationFacts, assertCashierOrdinaryParams, authorizeCas
 import { lockOrdinaryCashierRequest } from '@/services/customer-work/CustomerOrdinaryCashierLedger';
 import { loadOrdinaryCashierFormSubmission } from '@/services/customer-work/CustomerOrdinaryCashierForm';
 import { repurchaseCustomerOrder } from './CustomerOrderRepurchase';
+import { canonicalNewcomerBaseSkuUnique } from '@/services/activity/NewcomerSkuIdentity';
 
 /** 下单入参 */
 export interface CreateOrderParams {
@@ -1243,6 +1244,8 @@ export class StoreOrderCreateService {
         activitySku = pair.activitySku;
       }
       if (!sku) throw new NotFoundException(`商品规格不存在`);
+      if (type === 7 && !canonicalNewcomerBaseSkuUnique(sku.unique))
+        throw new ValidateException("新人专享基础规格标识无效，请重新选择商品");
       if (sku.productId !== product.id) {
         throw new ValidateException("商品规格与商品不匹配");
       }
@@ -2814,7 +2817,7 @@ export class StoreOrderCreateService {
           throw new ValidateException(shippingSnapshot ? "配送商品规格已变化或库存不足，请刷新后重试" : type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
         }
 
-        if (type === 6) {
+        if (type === 6 || type === 7) {
           // The guarded SKU write may have waited. Re-read the active identity
           // set before taking the product lock; a newly committed duplicate
           // must not let the quoted first row become purchase authority.
@@ -2823,7 +2826,7 @@ export class StoreOrderCreateService {
               eq(storeProductAttrValue.unique, cart.productAttrUnique), eq(storeProductAttrValue.isRetired, 0)))
             .orderBy(asc(storeProductAttrValue.id)).limit(2);
           if (currentSkus.length !== 1 || currentSkus[0].id !== sku.id) {
-            throw new ValidateException("预售基础规格身份已变化，请重新确认");
+            throw new ValidateException(type === 6 ? "预售基础规格身份已变化，请重新确认" : "新人专享基础规格身份已变化，请重新确认");
           }
         }
 
@@ -2901,10 +2904,11 @@ export class StoreOrderCreateService {
               writeEnd: sku.writeEnd,
             })
           : { writeStart: sku.writeStart, writeEnd: sku.writeEnd };
-        // New ordinary/presale roots freeze one selected base-SKU identity in
+        // New ordinary/presale/newcomer roots freeze one selected base-SKU identity in
         // the row and snapshot. Preserve raw source/CAS and other activity contracts;
         // the immutable origin validator still requires exact equality.
-        const persistedSkuUnique = type === 0 || type === 6 ? sku.unique.trimEnd() : cart.productAttrUnique;
+        const persistedSkuUnique = type === 7 ? canonicalNewcomerBaseSkuUnique(sku.unique)!
+          : type === 0 || type === 6 ? sku.unique.trimEnd() : cart.productAttrUnique;
         const cartInfoJson = JSON.stringify({
           ...(item.presale ? { presale: item.presale } : {}),
           ...(type === 2 ? { bargainParticipation: {
@@ -2962,7 +2966,7 @@ export class StoreOrderCreateService {
           },
           sku: {
             id: sku.id,
-            unique: type === 0 || type === 6 ? persistedSkuUnique : sku.unique,
+            unique: type === 0 || type === 6 || type === 7 ? persistedSkuUnique : sku.unique,
             suk: sku.suk,
             price: (unitPriceCents / 100).toFixed(2),
             write_times: Math.max(sku.writeTimes, 1),

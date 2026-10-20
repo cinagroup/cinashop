@@ -25,6 +25,7 @@ import {
 } from "@/services/product/ProductSkuIdentity";
 import { normalizeConfigScalar } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
+import { canonicalNewcomerBaseSkuUnique } from "./NewcomerSkuIdentity";
 
 export const REGISTER_CONFIG_KEYS = [
   "store_user_mobile",
@@ -328,6 +329,34 @@ function cloneActivitySku(
   };
 }
 
+type BaseSku = typeof storeProductAttrValue.$inferSelect;
+
+function adminBaseSkuUnique(value: string): string {
+  const unique = canonicalNewcomerBaseSkuUnique(value);
+  if (!unique) throw new ValidateException("新人专享基础规格标识无效或重复，请重新选择商品");
+  return unique;
+}
+
+function indexBaseSkus(rows: BaseSku[]) {
+  const byUnique = new Map<string, BaseSku[]>();
+  const bySuk = new Map<string, BaseSku[]>();
+  for (const row of rows) {
+    const unique = adminBaseSkuUnique(row.unique);
+    byUnique.set(unique, [...(byUnique.get(unique) ?? []), row]);
+    bySuk.set(row.suk, [...(bySuk.get(row.suk) ?? []), row]);
+  }
+  return { byUnique, bySuk };
+}
+
+function selectedBaseSku(index: ReturnType<typeof indexBaseSkus>, suk: string): BaseSku | undefined {
+  const matches = index.bySuk.get(suk) ?? [];
+  if (matches.length > 1) throw new ValidateException("新人专享基础规格名称重复，请重新选择商品");
+  const base = matches[0];
+  if (base && index.byUnique.get(adminBaseSkuUnique(base.unique))?.length !== 1)
+    throw new ValidateException("新人专享基础规格标识无效或重复，请重新选择商品");
+  return base;
+}
+
 export class AdminNewcomerService {
   constructor(
     private readonly container: Container,
@@ -385,19 +414,20 @@ export class AdminNewcomerService {
         .orderBy(asc(storeProductAttrValue.id)),
     ]);
     return newcomers.map(({ newcomer, product }) => {
-      const baseBySuk = new Map(
-        baseSkus.filter((sku) => sku.productId === newcomer.productId).map((sku) => [sku.suk, sku]),
-      );
+      const baseIndex = indexBaseSkus(baseSkus.filter((sku) => sku.productId === newcomer.productId));
       const attr = activitySkus
         .filter((sku) => sku.productId === newcomer.id)
-        .map((sku) => ({
-          unique: baseBySuk.get(sku.suk)?.unique ?? "",
-          activity_unique: sku.unique,
-          suk: sku.suk || "默认",
-          price: String(sku.price),
-          ot_price: String(sku.otPrice),
-          stock: baseBySuk.get(sku.suk)?.stock ?? 0,
-        }))
+        .map((sku) => {
+          const base = selectedBaseSku(baseIndex, sku.suk);
+          return {
+            unique: base ? adminBaseSkuUnique(base.unique) : "",
+            activity_unique: sku.unique,
+            suk: sku.suk || "默认",
+            price: String(sku.price),
+            ot_price: String(sku.otPrice),
+            stock: base?.stock ?? 0,
+          };
+        })
         .filter((sku) => sku.unique);
       return {
         id: newcomer.id,
@@ -513,22 +543,29 @@ export class AdminNewcomerService {
           .orderBy(asc(storeProductAttrValue.id))
       : [];
     return {
-      list: products.map((product) => ({
-        id: product.id,
-        store_name: product.storeName,
-        image: product.image,
-        price: product.price,
-        ot_price: product.otPrice,
-        stock: product.stock,
-        spec_type: product.specType,
-        attr: skus.filter((sku) => sku.productId === product.id).map((sku) => ({
-          unique: sku.unique,
-          suk: sku.suk || "默认",
-          price: sku.price,
-          ot_price: sku.otPrice,
-          stock: sku.stock,
-        })),
-      })),
+      list: products.map((product) => {
+        const rows = skus.filter((sku) => sku.productId === product.id);
+        const index = indexBaseSkus(rows);
+        return {
+          id: product.id,
+          store_name: product.storeName,
+          image: product.image,
+          price: product.price,
+          ot_price: product.otPrice,
+          stock: product.stock,
+          spec_type: product.specType,
+          attr: rows.map((sku) => {
+            const base = selectedBaseSku(index, sku.suk)!;
+            return {
+              unique: adminBaseSkuUnique(base.unique),
+              suk: sku.suk || "默认",
+              price: sku.price,
+              ot_price: sku.otPrice,
+              stock: sku.stock,
+            };
+          }),
+        };
+      }),
       count: totals[0]?.count ?? 0,
     };
   }
@@ -662,9 +699,10 @@ export class AdminNewcomerService {
     const baseSukCountsByProduct = new Map<number, Map<string, number>>();
     for (const sku of baseSkus) {
       const byUnique = baseCandidatesByProduct.get(sku.productId) ?? new Map();
-      const matches = byUnique.get(sku.unique) ?? [];
+      const unique = adminBaseSkuUnique(sku.unique);
+      const matches = byUnique.get(unique) ?? [];
       matches.push(sku);
-      byUnique.set(sku.unique, matches);
+      byUnique.set(unique, matches);
       baseCandidatesByProduct.set(sku.productId, byUnique);
       const bySuk = baseSukCountsByProduct.get(sku.productId) ?? new Map<string, number>();
       bySuk.set(sku.suk, (bySuk.get(sku.suk) ?? 0) + 1);

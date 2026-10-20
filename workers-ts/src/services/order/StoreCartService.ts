@@ -294,7 +294,7 @@ export class StoreCartService {
       });
       product = resolved.product;
       productId = resolved.product.id;
-      unique = resolved.baseSku.unique;
+      unique = resolved.baseUnique;
     } else if ([1, 2, 3].includes(type)) {
       if (!Number.isSafeInteger(activityId) || activityId <= 0) {
         throw new ValidateException("缺少活动商品信息");

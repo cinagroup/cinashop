@@ -196,6 +196,38 @@ describe('local PostgreSQL runner command boundary', () => {
       expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
     });
 
+  it('admits newcomer short-SKU in-app acceptance without external browser settings', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:newcomer-short-sku-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:newcomer-short-sku-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:newcomer-short-sku-browser', 'test/price.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'review', 'unused-bin', 'audit:newcomer-short-sku-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:newcomer-short-sku-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid newcomer short-SKU Browser admission $args before filesystem setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it('admits only the exact newcomer short-SKU native file before binary validation', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/newcomer-short-sku-native.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('allowlist');
+  });
+  it.each(['test/newcomer-short-sku-native.test.ts.extra', 'test/newcomer-short-sku-native.other.ts'])(
+    'rejects malformed newcomer short-SKU native spelling %s before filesystem setup', path => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', path],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+    });
+
   it('admits physical purchase origin in-app acceptance without external browser settings', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:purchase-physical-origin-browser'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,

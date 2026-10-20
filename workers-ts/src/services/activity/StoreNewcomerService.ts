@@ -34,6 +34,7 @@ import { projectOwnedCoupon } from "@/services/activity/UserCouponWalletService"
 import {readActivityDetailDesign,renderActivityDetailDesign,readDetailVideo} from '@/services/product/ProductDetailDesignData';
 import {publicProductPictures,renderProductPictures} from '@/services/activity/ProductAssetPolicy';
 import {themeDeadlines} from '@/services/content/ThemeReadService';
+import { canonicalNewcomerBaseSkuUnique } from './NewcomerSkuIdentity';
 
 const CONFIG_KEYS = [
   "newcomer_status",
@@ -660,6 +661,8 @@ export class StoreNewcomerService {
       .limit(2);
     if (matchingBaseSkus.length !== 1) throw new ValidateException("新人专享规格没有唯一对应的普通商品规格");
     const baseSku = matchingBaseSkus[0];
+    const baseUnique = canonicalNewcomerBaseSkuUnique(baseSku.unique);
+    if (!baseUnique) throw new ValidateException("新人专享基础规格标识无效，请联系商家");
     const matchingBaseUniques = await this.container.db
       .select({ id: storeProductAttrValue.id })
       .from(storeProductAttrValue)
@@ -676,7 +679,7 @@ export class StoreNewcomerService {
     if (baseSku.stock < params.quantity || product.stock < params.quantity) {
       throw new ValidateException("该商品库存不足");
     }
-    return { newcomer, product, activitySku, baseSku };
+    return { newcomer, product, activitySku, baseSku, baseUnique };
   }
 
   async list(uid: number, pageInput?: string, limitInput?: string) {
