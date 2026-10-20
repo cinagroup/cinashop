@@ -19,6 +19,8 @@ export interface CommunityPost {
   content: string;
   image: string;
   sliderImage: string[] | null;
+  topic?: Array<{ id: number; name: string }>;
+  product?: Array<{ id: number; store_name: string; image: string; price: string }>;
   likeNum: number;
   commentNum: number;
   playNum: number;
@@ -31,6 +33,23 @@ export interface CommunityTopic {
   id: number;
   name: string;
   isRecommend: number;
+}
+
+export interface CommunityProduct {
+  product_id: number;
+  store_name: string;
+  image: string;
+  price: string;
+}
+
+export type CommunityProductSource = "pay" | "collect" | "visit";
+export async function apiCommunityProducts(type: CommunityProductSource, keyword = "", page = 1): Promise<CommunityProduct[]> {
+  if (communityPreviewMode) return [];
+  const rows = await http.get<CommunityProduct[]>("/community/product_list", { type, keyword, page, limit: 10 });
+  if (!Array.isArray(rows) || rows.length > 10 || rows.some(row => !row || !Number.isSafeInteger(row.product_id)
+    || row.product_id <= 0 || typeof row.store_name !== "string" || typeof row.image !== "string"
+    || typeof row.price !== "string" || !/^\d+(?:\.\d{1,2})?$/.test(row.price))) throw Error("商品列表格式错误");
+  return rows;
 }
 
 export interface CommunityComment {

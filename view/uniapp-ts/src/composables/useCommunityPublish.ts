@@ -5,6 +5,7 @@ import { apiCommunitySave } from "@/api/community";
 import { apiCommunityVideo, type UploadedCommunityVideo } from "@/api/communityVideo";
 import { apiCommunityImage, type UploadedCommunityImage } from "@/api/communityImage";
 import { RequestError } from "@/utils/request";
+import { useCommunityRelations } from "./useCommunityRelations";
 
 export function useCommunityPublish() {
   const auth = useAuthStore();
@@ -15,9 +16,10 @@ export function useCommunityPublish() {
   const publishedId = ref(0), videoWanted = ref(false);
   let generation = 0, visible = true, disposed = false;
   const locked = computed(() => busy.value || choosing.value || unknown.value || publishedId.value > 0);
+  const relations = useCommunityRelations(locked);
   const identity = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   const clear = () => { title.value = ""; content.value = ""; video.value = null; videoWanted.value = false; images.value = []; cover.value = null; imageFailed.value = false; error.value = ""; unknown.value = false; publishedId.value = 0; };
-  function reset() { if (busy.value || choosing.value) return false; generation++; clear(); return true; }
+  function reset() { if (busy.value || choosing.value) return false; generation++; clear(); relations.clear(); return true; }
   function removeVideo() { if (!locked.value) { video.value = null; videoWanted.value = false; cover.value = null; imageFailed.value = false; error.value = ""; } }
   function removeImage(index: number) { if (!locked.value && Number.isInteger(index)) images.value.splice(index, 1); }
   function clearImages() { if (!locked.value) { images.value = []; imageFailed.value = false; error.value = ""; } }
@@ -87,6 +89,7 @@ export function useCommunityPublish() {
   }
   async function publish(topicId?: number): Promise<number | null> {
     if (!visible || disposed || locked.value || !auth.isLoggedIn) return null;
+    if (relations.loading.value || relations.pendingTopic.value) { error.value = "请先完成话题和商品选择"; return null; }
     if (imageFailed.value) { error.value = "请重新上传图片，或明确移除图片后发布"; return null; }
     if (videoWanted.value && !video.value) { error.value = "请完成视频上传，或取消视频后发布文字"; return null; }
     if (!content.value.trim()) { error.value = "内容不能为空"; return null; }
@@ -98,7 +101,8 @@ export function useCommunityPublish() {
         content_type: video.value ? 2 : 1, video_url: video.value?.url,
         ...(images.value.length ? { image: images.value[0].url, slider_image: images.value.map(item => item.url) } : {}),
         ...(video.value && cover.value ? { image: cover.value.url } : {}),
-        topic_id: topicId ? [topicId] : undefined });
+        topic_id: relations.selectedTopics.value.length ? relations.selectedTopics.value.map(item => item.id) : topicId ? [topicId] : undefined,
+        ...(relations.selectedProducts.value.length ? { product_id: relations.selectedProducts.value.map(item => item.product_id) } : {}) });
       if (!current()) return null;
       if (!Number.isSafeInteger(result?.id) || result.id <= 0) throw Error("发布回执无效");
       publishedId.value = result.id; return result.id;
@@ -122,7 +126,7 @@ export function useCommunityPublish() {
   onShow(() => { if (!disposed) visible = true; });
   onUnload(() => { leave(); disposed = true; });
   watch(identity, () => { generation++; clear(); choosing.value = false; }, { flush: "sync" });
-  return { title, content, video, images, cover, imageFailed, busy, choosing, unknown, error, publishedId, videoWanted,
+  return { title, content, video, images, cover, imageFailed, busy, choosing, unknown, error, publishedId, videoWanted, relations,
     locked, reset, removeVideo, chooseVideo, chooseImages: () => selectImages(false), chooseCover: () => selectImages(true),
     removeImage, clearImages, removeCover, publish };
 }

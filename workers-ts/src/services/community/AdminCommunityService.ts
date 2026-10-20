@@ -1161,7 +1161,7 @@ export class AdminCommunityService {
           inArray(communityTopic.id, topicIds),
           eq(communityTopic.isDel, 0),
           ...(requirePublicReferences ? [eq(communityTopic.status, 1)] : []),
-        )).for("update");
+        )).orderBy(communityTopic.id).for("update");
       if (rows.length !== topicIds.length) {
         throw new ValidateException(requirePublicReferences
           ? "部分社区话题不存在或已停用"
@@ -1174,7 +1174,7 @@ export class AdminCommunityService {
           inArray(storeProduct.id, productIds),
           eq(storeProduct.isDel, 0),
           ...(requirePublicReferences ? [eq(storeProduct.isShow, 1), eq(storeProduct.isVerify, 1)] : []),
-        ));
+        )).orderBy(storeProduct.id).for("share");
       if (rows.length !== productIds.length) {
         throw new ValidateException(requirePublicReferences
           ? "部分商品不存在、未审核或已下架"

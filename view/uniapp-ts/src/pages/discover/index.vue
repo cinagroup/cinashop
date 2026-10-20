@@ -61,6 +61,7 @@
     <!-- 发布弹窗 -->
     <view v-if="showPublish" class="mask" @tap="closePublish">
       <view class="sheet publish-sheet" @tap.stop>
+        <template v-if="!relationPanel">
         <view class="sheet-title">发布帖子</view>
         <input v-model="publishTitle" :disabled="publishLocked" :maxlength="255" class="sheet-input" type="text" placeholder="标题 (选填)" />
         <textarea
@@ -94,10 +95,47 @@
             <button v-if="publishCover || imageUploadFailed" :disabled="publishLocked" @tap="removeCover">移除视频封面</button>
           </template>
         </view>
+        <view class="selected-relations">
+          <button :disabled="publishLocked" @tap="relations.openTopics">选择话题（{{ selectedTopics.length }}/5）</button>
+          <button v-for="topic in selectedTopics" :key="topic.id" :disabled="publishLocked" @tap="relations.removeTopic(topic.id)">移除话题：{{ topic.name }}</button>
+          <button :disabled="publishLocked" @tap="relations.openProducts">添加商品（{{ selectedProducts.length }}/5）</button>
+          <button v-for="product in selectedProducts" :key="product.product_id" :disabled="publishLocked" @tap="relations.removeProduct(product.product_id)">移除商品：{{ product.store_name }}</button>
+        </view>
         <view v-if="publishError" class="publish-error" role="status">{{ publishError }}</view>
         <button class="sheet-btn" :disabled="publishLocked" @tap="publish">{{ publishBusy ? '处理中…' : '发布' }}</button>
         <button v-if="publishUnknown" :disabled="publishBusy" @tap="endUnknownPublish">结束本次发布并刷新帖子</button>
         <button v-else :disabled="publishBusy || publishChoosing" @tap="closePublish">稍后发布</button>
+        </template>
+        <view v-else class="relation-panel">
+          <view class="sheet-title">{{ relationPanel === 'topics' ? '参与话题' : '添加商品' }}</view>
+          <view v-if="relationPanel === 'products'" class="source-tabs">
+            <button v-for="tab in productSources" :key="tab.key" :class="{ chosen: productSource === tab.key }" @tap="relations.changeSource(tab.key)">{{ tab.label }}</button>
+          </view>
+          <input v-model="relationKeyword" class="sheet-input" :maxlength="100" :placeholder="relationPanel === 'topics' ? '搜索话题' : '搜索商品'" @confirm="relationPanel === 'products' && relations.loadProducts(true)" />
+          <button v-if="relationPanel === 'products'" @tap="relations.loadProducts(true)">搜索商品</button>
+          <view v-if="relationLoading" class="upload-hint">加载中…</view>
+          <view v-if="relationError" class="publish-error" role="status">{{ relationError }}</view>
+          <button v-if="relationError && relationPanel === 'topics'" @tap="relations.loadTopics">重试话题</button>
+          <button v-if="pendingTopic" @tap="relations.discardPendingTopic">不参与原话题</button>
+          <template v-if="relationPanel === 'topics'">
+            <button v-for="topic in relationTopics" :key="topic.id" :disabled="relationLoading"
+              :class="{ chosen: selectedTopics.some(item => item.id === topic.id) }" @tap="relations.toggleTopic(topic)">
+              {{ selectedTopics.some(item => item.id === topic.id) ? '已选 · ' : '' }}{{ topic.name }}
+            </button>
+            <view v-if="!relationLoading && !relationTopics.length" class="upload-hint">暂无匹配话题</view>
+          </template>
+          <template v-else>
+            <button v-for="product in relationProducts" :key="product.product_id" class="related-product" :disabled="relationLoading"
+              :class="{ chosen: selectedProducts.some(item => item.product_id === product.product_id) }" @tap="relations.toggleProduct(product)">
+              <image v-if="communityVideoSource(product.image)" :src="communityVideoSource(product.image)" mode="aspectFill" />
+              <view>{{ selectedProducts.some(item => item.product_id === product.product_id) ? '已选 · ' : '' }}{{ product.store_name }}<text>¥{{ product.price }}</text></view>
+            </button>
+            <view v-if="!relationLoading && !relationProducts.length" class="upload-hint">暂无匹配商品</view>
+            <button v-if="relationError" :disabled="relationLoading" @tap="relations.loadProducts(relationProducts.length === 0)">重试商品</button>
+            <button v-else-if="relationHasMore" :disabled="relationLoading" @tap="relations.loadProducts()">加载更多商品</button>
+          </template>
+          <button @tap="relations.close">完成选择</button>
+        </view>
       </view>
     </view>
 
@@ -107,6 +145,16 @@
         <scroll-view scroll-y class="detail-scroll">
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
+          <view v-if="detail.topic?.length" class="selected-relations">
+            <button v-for="topic in detail.topic" :key="topic.id" @tap="openTopic(topic.id)"># {{ topic.name }}</button>
+          </view>
+          <view v-if="detail.product?.length" class="detail-products">
+            <text class="upload-hint">相关商品 · 当前价格</text>
+            <button v-for="product in detail.product" :key="product.id" class="related-product" @tap="openRelatedProduct(product.id)">
+              <image v-if="communityVideoSource(product.image)" :src="communityVideoSource(product.image)" mode="aspectFill" />
+              <view>{{ product.store_name }}<text>¥{{ product.price }}</text></view>
+            </button>
+          </view>
           <view v-if="detail.contentType === 1 && detailImages.length" class="detail-gallery">
             <image v-for="(source, index) in detailImages" :key="source" :src="source" mode="widthFix"
               @tap="previewImage(index)" @error="imageLoadFailed = true" />
@@ -184,6 +232,10 @@ const liked = ref(false);
 const commentText = ref("");
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
+const relations = publisher.relations;
+const { panel: relationPanel, availableTopics: relationTopics, products: relationProducts, selectedTopics, selectedProducts,
+  keyword: relationKeyword, source: productSource, loading: relationLoading, error: relationError, hasMore: relationHasMore, pendingTopic } = relations;
+const productSources = [{ key: "pay" as const, label: "已购" }, { key: "collect" as const, label: "收藏" }, { key: "visit" as const, label: "浏览" }];
 const { title: publishTitle, content: publishContent, video: publishVideo, busy: publishBusy,
   choosing: publishChoosing, locked: publishLocked, unknown: publishUnknown, error: publishError,
   images: publishImages, cover: publishCover, imageFailed: imageUploadFailed,
@@ -197,7 +249,6 @@ function previewImage(index: number) {
 }
 const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
 const topics = ref<CommunityTopic[]>([]);
-const publishTopicId = ref<number | null>(null);
 let detailGeneration = 0;
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Ccircle cx='36' cy='36' r='36' fill='%23eceff3'/%3E%3Ccircle cx='36' cy='28' r='12' fill='%23c8cdd5'/%3E%3Cpath d='M13 66c3-14 11-22 23-22s20 8 23 22' fill='%23c8cdd5'/%3E%3C/svg%3E";
@@ -250,6 +301,11 @@ function openPeople() {
 function openTopic(id: number) {
   uni.navigateTo({ url: `/pages/discover/discoverTopic/index?id=${id}` });
 }
+function openRelatedProduct(id: number) {
+  if (Number.isSafeInteger(id) && id > 0 && detail.value?.product?.some(product => product.id === id)) {
+    uni.navigateTo({ url: `/pages/goods/detail?id=${id}` });
+  }
+}
 
 function openSearch() {
   uni.navigateTo({ url: "/pages/discover/discoverSearch/index" });
@@ -260,17 +316,17 @@ function openVideo() {
 }
 
 function closePublish() {
-  if (!publishBusy.value && !publishChoosing.value) showPublish.value = false;
+  if (!publishBusy.value && !publishChoosing.value) { relations.close(); showPublish.value = false; }
 }
 function endUnknownPublish() {
   if (publisher.reset()) { showPublish.value = false; void load(); }
 }
 async function publish() {
   const owner = authStore.sessionVersion;
-  const id = await publisher.publish(publishTopicId.value ?? undefined);
+  const id = await publisher.publish();
   if (!id) return;
   uni.showToast({ title: "已提交，请以审核结果为准", icon: "none" });
-  publisher.reset(); showPublish.value = false; publishTopicId.value = null;
+  publisher.reset(); showPublish.value = false;
   const revision = detailGeneration;
   await load();
   if (revision !== detailGeneration || owner !== authStore.sessionVersion) return;
@@ -316,8 +372,8 @@ onLoad((query) => {
   if (query?.publish === "1") {
     const topicId = Number(query.topic_id ?? 0);
     if (Number.isSafeInteger(topicId) && topicId > 0 && requireLogin()) {
-      publishTopicId.value = topicId;
       showPublish.value = true;
+      void relations.seedTopic(topicId);
     }
   }
 });
@@ -370,6 +426,16 @@ watch(() => authStore.sessionVersion, () => { closeDetail(); showPublish.value =
 .photo-cover-label { display: block; color: var(--primary-color, #e64340); font-size: 22rpx; }
 .video-cover { width: 100%; height: 160rpx; }
 .detail-gallery image { display: block; width: 100%; margin: 12rpx 0; }
+.selected-relations { display: flex; flex-direction: column; gap: 10rpx; margin: 20rpx 0; }
+.selected-relations button { width: 100%; white-space: normal; overflow-wrap: anywhere; font-size: 24rpx; }
+.source-tabs { display: flex; gap: 10rpx; }
+.source-tabs button { flex: 1; font-size: 26rpx; }
+.relation-panel button { white-space: normal; overflow-wrap: anywhere; margin-bottom: 10rpx; }
+.relation-panel .chosen { color: #a32920; background: #fff0eb; }
+.related-product { display: flex; align-items: center; gap: 16rpx; padding: 12rpx; width: 100%; text-align: left; font-size: 26rpx; line-height: 1.6; }
+.related-product image { flex: 0 0 90rpx; width: 90rpx; height: 90rpx; }
+.related-product view { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.related-product text { display: block; color: #a32920; }
 
 .discover {
   padding: 20rpx;

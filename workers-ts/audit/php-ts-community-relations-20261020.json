@@ -1,0 +1,570 @@
+{
+  "date": "2026-10-20",
+  "base_commit": "3a833629f916afd5fa7aa25cbf5a29fefa64af6b",
+  "branch": "codex/community-publish-relations",
+  "scope": "H5 community topic and product association selection, active public projection and transaction-locked publication",
+  "source_php": {
+    "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverCreate/index.vue",
+    "sha256": "a22a1ae9e5faaa756428cccbf9fb9ea8bf266ab7e5f8a6d8c9c7aea743b87292"
+  },
+  "tests": {
+    "unique_passed": 531,
+    "new_cases": 20,
+    "counting": "488 unit + 35 H5 + 11 native + 1 browser minus 4 repeated relation route cases; the 4 assertion rechecks are also duplicates"
+  },
+  "checks": [
+    {
+      "label": "unit-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/community-relations-publish.test.ts",
+        "test/community-image-publish.test.ts",
+        "test/community-video-publish.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/community-migration.test.ts",
+        "test/community-admin-migration.test.ts",
+        "test/community-social-migration.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:16:49.826023+00:00",
+      "seconds": 49.31,
+      "log": "/tmp/cinashop-community-relations-unit-final.log",
+      "log_sha256": "53fcfb7c163a2d5d61ef693f7feca108c7e93a02e2343b5e0a2d649a37c410f8",
+      "changed_during_run": [],
+      "passed": 488
+    },
+    {
+      "label": "h5-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/community-relations-runtime.test.cjs",
+        "scripts/community-publish-runtime.test.cjs",
+        "scripts/community-images-runtime.test.cjs",
+        "scripts/community-deep-links-runtime.test.cjs"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:17:53.523975+00:00",
+      "seconds": 3.23,
+      "log": "/tmp/cinashop-community-relations-h5-final.log",
+      "log_sha256": "c40dd8f0927fce4eafd3397ac8a0dbc732286de211ab014abcadc63c38621f1f",
+      "changed_during_run": [],
+      "passed": 35
+    },
+    {
+      "label": "native-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-relations-publish.test.ts",
+        "test/community-relations-postgres.test.ts",
+        "test/community-image-postgres.test.ts",
+        "test/community-video-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:18:17.533857+00:00",
+      "seconds": 23.1,
+      "log": "/tmp/cinashop-community-relations-native-final.log",
+      "log_sha256": "6e8cb0f7aeba3d7d9f6bbf129d3887ee45d0d15867ee15415b501a49dbb79c04",
+      "changed_during_run": [],
+      "passed": 11
+    },
+    {
+      "label": "browser-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-relations-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:22:59.358808+00:00",
+      "seconds": 156.22,
+      "log": "/tmp/cinashop-community-relations-browser-final.log",
+      "log_sha256": "37da65a1a5f256c4a85b16cbee111c6d10109f30d52f8dc1d2c8f2d0a1524ac6",
+      "changed_during_run": [],
+      "passed": 1
+    },
+    {
+      "label": "types-complete",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-image-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:25:55.659987+00:00",
+      "seconds": 229.21,
+      "log": "/tmp/cinashop-community-relations-types-complete.log",
+      "log_sha256": "72eff42b4346e0a7302f6f76dc62e6322eaebfc1f2331d33761af6416d0347a8",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "build-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:19:04.321596+00:00",
+      "seconds": 36.15,
+      "log": "/tmp/cinashop-community-relations-build-final.log",
+      "log_sha256": "703a0d81f65574ef247d2109acd3dc56fdd6d3f778e08b1430206ee4bdf63e95",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "assertions-complete",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/community-relations-publish.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:29:54.638474+00:00",
+      "seconds": 17.2,
+      "log": "/tmp/cinashop-community-relations-assertions-complete.log",
+      "log_sha256": "ff55c915adfffe30ededf54cf351dc0b1774171eb025e98df95a3c0859cdef12",
+      "changed_during_run": [],
+      "passed": 4
+    }
+  ],
+  "failed_candidates": [
+    {
+      "label": "types-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-image-types.py"
+      ],
+      "exit_code": 2,
+      "started_utc": "2026-10-20T12:20:01.605766+00:00",
+      "seconds": 142.35,
+      "log": "/tmp/cinashop-community-relations-types-final.log",
+      "log_sha256": "e4e19fefad19f88d9a4a13382086ec0f4b3809e10f09a555e1ba60e4e0b0c5fb",
+      "changed_during_run": [],
+      "reason": "New test assertions required non-null TypeScript annotations; no production behavior change. Repaired before complete type check and targeted assertion recheck."
+    }
+  ],
+  "browser": {
+    "evidence": [
+      {
+        "stage": "entry",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "topics",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧参与话题搜索话题生活话题14生活话题13生活话题12生活话题11已选 · 生活话题10已选 · 本地视频完成选择首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "pay",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧添加商品已购收藏浏览搜索商品搜索商品已选 · 已购好物111¥19.90已购好物110¥19.90已购好物109¥19.90已购好物108¥19.90已购好物107¥19.90已购好物106¥19.90已购好物105¥19.90已购好物104¥19.90已购好物103¥19.90已购好物102¥19.90加载更多商品完成选择首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "more",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧添加商品已购收藏浏览搜索商品搜索商品已选 · 已购好物111¥19.90已购好物110¥19.90已购好物109¥19.90已购好物108¥19.90已购好物107¥19.90已购好物106¥19.90已购好物105¥19.90已购好物104¥19.90已购好物103¥19.90已购好物102¥19.90已选 · 已购好物101¥19.90完成选择首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "search",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧添加商品已购收藏浏览搜索商品搜索商品已选 · 收藏茶杯¥29.00完成选择首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "visit",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧添加商品已购收藏浏览搜索商品搜索商品已选 · 浏览餐盘¥39.00完成选择首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "selected",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：话题和商品关联照片 0/9 · 每张最大 10 MiB，第一张为封面添加照片MP4 视频，最大 50 MiB选择视频选择话题（2/5）移除话题：本地视频移除话题：生活话题10添加商品（3/5）移除商品：已购好物111移除商品：收藏茶杯移除商品：浏览餐盘发布稍后发布首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": false
+      },
+      {
+        "stage": "published",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 生活话题14 # 生活话题13 # 生活话题12 # 生活话题11 # 生活话题10 # 本地视频还没有帖子, 快来发布第一条吧分享后台验收：话题和商品关联# 本地视频# 生活话题10相关商品 · 当前价格已购好物111¥19.90收藏茶杯¥29.00浏览餐盘¥39.00 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "topic",
+        "href": "http://127.0.0.1:40751/#/pages/discover/discoverTopic/index?id=9",
+        "text": "\n    话题列表话题# 本地视频去发布最热最新这个话题还没有内容首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 375,
+        "scrollWidth": 375,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "finished",
+        "href": "http://127.0.0.1:40751/#/pages/discover/discoverTopic/index?id=9",
+        "text": "\n    话题列表话题# 本地视频去发布最热最新这个话题还没有内容首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 375,
+        "scrollWidth": 375,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/product_list",
+        "query": "?type=pay&keyword=&page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/product_list",
+        "query": "?type=pay&keyword=&page=2&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/product_list",
+        "query": "?type=collect&keyword=&page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/product_list",
+        "query": "?type=collect&keyword=%E8%8C%B6%E6%9D%AF&page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/product_list",
+        "query": "?type=visit&keyword=&page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/community_save",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "content": "后台验收：话题和商品关联",
+          "content_type": 1,
+          "topic_id": [
+            9,
+            10
+          ],
+          "product_id": [
+            111,
+            201,
+            301
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/detail/1",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/comment/list",
+        "query": "?community_id=1",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "query": "?page=1&limit=20&topic_id=9&order=2",
+        "status": 200,
+        "browserStatus": 200
+      }
+    ],
+    "posts": [
+      {
+        "id": 1,
+        "contentType": 1,
+        "isVerify": 0,
+        "videoUrl": "",
+        "image": "",
+        "sliderImage": "[]"
+      }
+    ],
+    "relations": [
+      {
+        "type": "community_topic",
+        "post": 1,
+        "id": 9
+      },
+      {
+        "type": "community_topic",
+        "post": 1,
+        "id": 10
+      },
+      {
+        "type": "community_product",
+        "post": 1,
+        "id": 111
+      },
+      {
+        "type": "community_product",
+        "post": 1,
+        "id": 201
+      },
+      {
+        "type": "community_product",
+        "post": 1,
+        "id": 301
+      }
+    ],
+    "providerCalls": 0,
+    "authority": "Actual createApp/JWT and owned native PG16 ORM schema; seeded source histories and navigation chrome are synthetic"
+  },
+  "browser_console": [
+    {
+      "level": "warn",
+      "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+      "timestamp": "2026-10-20T12:23:28.482Z",
+      "url": "http://127.0.0.1:40751/assets/index-CJUWHlsM.js"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/tmp/cinashop-community-relations-detail.png",
+      "sha256": "129071569b04d059364b88844b4332b739a55a3f7f8a862ea335afffd012dcfd"
+    },
+    {
+      "path": "/tmp/cinashop-community-relations-topic.png",
+      "sha256": "f14d9456ca4d1666c742a50769d14a87149a81d943a6df30846cf4a6b8cac0a5"
+    }
+  ],
+  "cleanup": [
+    {
+      "label": "native-final",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vommvK",
+      "status_exit": 3,
+      "version": 16
+    },
+    {
+      "label": "browser-final",
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-M3XM5F",
+      "status_exit": 3,
+      "version": 16
+    }
+  ],
+  "acceptance_confirmation_requests": 0,
+  "global_permission_settings_changed": false,
+  "browser_connection": {
+    "verified": "Codex In-app Browser 2, background tab 39, closed after acceptance",
+    "external_chrome": "not present in connected browser inventory; installation state not inferred"
+  },
+  "migration_audit_original_body_preserved": true,
+  "validated_code": [
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "4a24b30f55c2c903146809fe2c5e25df55a486f8eab4bb6854398515533af1ab"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-relations-runtime.test.cjs",
+      "sha256": "752544cf557d09ab6611ce60773c94f8f770eda93ea45e71becf8467d9676cfc"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/community.ts",
+      "sha256": "2da6663176b5096be5f7a7e16462f08146ebcf1046abed34561ec79b21ac7aa5"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityPublish.ts",
+      "sha256": "1037c0c77958f7402d04e31bcd3098aa10d18b3ccc02d1772df34b3cfbea14de"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityRelations.ts",
+      "sha256": "7b8573fc8ef860a0cce040c633d46f021448bf2194e7b708a514c30aade81f1c"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "30e76633141eb2dbb1df0439327ee8d6c2cf6fe8b7f5c7d6271428d5507db453"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "5585b83457807826385ca66cf240eaf3b0949d6dfd0bb01ef259fb8487b0634d"
+    },
+    {
+      "path": "workers-ts/src/services/community/AdminCommunityService.ts",
+      "sha256": "cd9cfa62d5b5fdaeee0e80859d85aa107b3bddd4ccbd6e82993434555c8b115e"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityService.ts",
+      "sha256": "9edadc641b29f1be62f92260f00f2dec1914ff2a9e5cd6cdf9aee6b561a02518"
+    },
+    {
+      "path": "workers-ts/test/browser/community-relations.acceptance.ts",
+      "sha256": "55275fc6e351928a920ae392cbfc30f30611b802eb3f114675c2dafb2702207f"
+    },
+    {
+      "path": "workers-ts/test/community-relations-postgres.test.ts",
+      "sha256": "fb2681913bd3b31ddb66c6e099438b2a800c877a18925653408fa7b42d283303"
+    },
+    {
+      "path": "workers-ts/test/community-relations-publish.test.ts",
+      "sha256": "6af3da471b85dd972b36914fa4d310255fabf1d9e76ada76e10b74180f7a5b62"
+    },
+    {
+      "path": "workers-ts/test/helpers/communityRelationsFixture.ts",
+      "sha256": "d84922ef4063226fbdf3fe3c2392ca96d1ceb1bb1b3c4c26301d3e707a82665f"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "1819b871ab69813c5d28eb687ddb80ea53020ee9e86abab639bbcb005cc4ee34"
+    },
+    {
+      "path": "workers-ts/vitest.community-relations-browser.config.ts",
+      "sha256": "7f018277945b12f0be4dd15b6a9b450c39433572b1c4b2863df00a2a7c340a2e"
+    }
+  ],
+  "limits": [
+    "Owned synthetic users and source histories, native PG16 ORM schema and actual application/JWT; navigation chrome is synthetic.",
+    "Product detail destination tested through the actual SFC runtime; Browser covers association display and topic navigation, not purchase or production deployment.",
+    "Existing get_script behavior and text/media publication contracts retained. Overall PHP to TypeScript migration remains active."
+  ]
+}

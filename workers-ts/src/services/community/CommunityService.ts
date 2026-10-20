@@ -538,7 +538,8 @@ export class CommunityService {
     const limit = Math.min(MAX_PAGE_SIZE, positiveInteger(query.limit, 10, MAX_PAGE_SIZE));
     const type = typeof query.type === "string" && query.type.trim() ? query.type.trim() : "pay";
     if (!new Set(["pay", "visit", "collect"]).has(type)) throw new ValidateException("商品来源类型错误");
-    const conditions: SQL[] = [eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0)];
+    if ((page - 1) * limit > 10_000) throw new ValidateException("商品分页超出范围");
+    const conditions: SQL[] = [eq(storeProduct.isShow, 1), eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1)];
     const keyword = typeof query.keyword === "string" ? query.keyword.trim().slice(0, 100) : "";
     if (keyword) {
       const pattern = `%${keyword}%`;
@@ -670,7 +671,7 @@ export class CommunityService {
       topicIds.length
         ? this.container.db.select({ id: communityTopic.id, name: communityTopic.name })
           .from(communityTopic)
-          .where(and(inArray(communityTopic.id, topicIds), eq(communityTopic.isDel, 0)))
+          .where(and(inArray(communityTopic.id, topicIds), eq(communityTopic.isDel, 0), eq(communityTopic.status, 1)))
         : Promise.resolve([]),
       productIds.length
         ? this.container.db.select({
@@ -681,6 +682,8 @@ export class CommunityService {
         }).from(storeProduct).where(and(
           inArray(storeProduct.id, productIds),
           eq(storeProduct.isDel, 0),
+          eq(storeProduct.isShow, 1),
+          eq(storeProduct.isVerify, 1),
         ))
         : Promise.resolve([]),
     ]);
