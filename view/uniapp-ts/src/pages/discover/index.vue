@@ -1,16 +1,18 @@
 <template>
   <ThemePage>
   <view class="discover">
-    <view class="top-bar">
+    <view v-if="!authorMode" class="top-bar">
       <text class="top-title">逛逛</text>
       <view class="top-actions">
         <text class="people-btn" @tap="openSearch">搜索</text>
         <text class="people-btn" @tap="openVideo">视频</text>
         <text class="people-btn" @tap="openPeople">好友与关注</text>
+        <text class="people-btn" @tap="openAuthor(authStore.uid)">我的主页</text>
         <text class="publish-btn" @tap="openPublish">＋ 发布</text>
       </view>
     </view>
 
+    <template v-if="!authorMode">
     <scroll-view v-if="topics.length" scroll-x class="topic-strip" :show-scrollbar="false">
       <view class="topic-row">
         <text v-for="topic in topics" :key="topic.id" class="topic-chip" @tap="openTopic(topic.id)">
@@ -57,12 +59,76 @@
       </view>
     </view>
     <view v-else class="empty">还没有帖子, 快来发布第一条吧</view>
+    </template>
+    <view v-else class="author-page">
+      <view class="author-heading">
+        <text class="top-title">{{ authorProfile?.author || '作者主页' }}</text>
+        <button @tap="author.refresh" :disabled="authorBusy || authorLoading">刷新主页</button>
+      </view>
+      <view v-if="authorError" class="publish-error" role="status">{{ authorError }}</view>
+      <button v-if="!authStore.isLoggedIn" @tap="requireLogin">登录</button>
+      <view v-if="authorProfile" class="author-profile">
+        <image v-if="communityVideoSource(authorProfile.author_image)" class="follow-avatar" :src="communityVideoSource(authorProfile.author_image)" mode="aspectFill" />
+        <text>ID：{{ authorProfile.relation_id }}</text>
+        <text v-if="authorProfile.level_name">{{ authorProfile.level_name }}</text>
+        <text v-if="authorProfile.vip_status">付费会员</text>
+        <view class="author-description">{{ authorProfile.desc || '还没有填写简介' }}</view>
+        <view class="author-stats">
+          <text @tap="openSocial('follow')">关注 {{ authorProfile.follow_num }}</text>
+          <text @tap="openSocial('friend')">好友 {{ authorProfile.friend_count }}</text>
+          <text @tap="openSocial('fans')">粉丝 {{ authorProfile.fans_num }}</text>
+          <text>获赞 {{ authorProfile.like_num }}</text>
+        </view>
+        <template v-if="authorIsSelf">
+          <button :disabled="authorBusy || authorUnknown" @tap="author.beginDescription">编辑简介</button>
+          <view v-if="editingDescription" class="description-editor">
+            <textarea v-model="authorDescription" :maxlength="50" :disabled="authorBusy" placeholder="个人简介，最多50个字符" />
+            <button :disabled="authorBusy" @tap="author.saveDescription">保存简介</button>
+            <button :disabled="authorBusy" @tap="editingDescription = false">取消修改简介</button>
+          </view>
+          <button @tap="openPublish">发布新帖</button>
+          <view class="source-tabs">
+            <button :class="{ chosen: authorTab === 'works' }" :disabled="authorBusy" @tap="author.changeTab('works')">作品</button>
+            <button :class="{ chosen: authorTab === 'liked' }" :disabled="authorBusy" @tap="author.changeTab('liked')">赞过</button>
+          </view>
+        </template>
+        <template v-else>
+          <button :disabled="authorBusy || authorUnknown" @tap="author.toggleFollow">{{ unfollowPending ? '确认取消关注' : authorProfile.is_follow ? '已关注' : '关注作者' }}</button>
+          <button v-if="unfollowPending" :disabled="authorBusy" @tap="unfollowPending = false">保留关注</button>
+        </template>
+        <input v-model="authorKeyword" :maxlength="100" class="sheet-input" placeholder="搜索作品" @confirm="author.refresh" />
+        <button :disabled="authorBusy" @tap="author.refresh">搜索作品</button>
+      </view>
+      <view v-if="authorLoading" class="upload-hint">加载中…</view>
+      <view v-for="post in authorPosts" :key="post.id" class="post-card author-post">
+        <view @tap="openDetail(post)">
+          <view class="post-title">{{ post.title || '分享' }}</view>
+          <view class="post-content">{{ post.content }}</view>
+          <text class="post-status">{{ moderationText(post) }}</text>
+          <view v-if="author.owns(post) && post.refusal" class="publish-error">{{ post.refusal }}</view>
+          <image v-if="communityVideoSource(post.image)" class="post-image" :src="communityVideoSource(post.image)" mode="aspectFill" />
+        </view>
+        <view v-if="author.owns(post)" class="author-controls">
+          <button :disabled="authorBusy || authorUnknown" @tap="editPost(post.id)">编辑帖子 {{ post.id }}</button>
+          <button v-if="deletePostId !== post.id" :disabled="authorBusy || authorUnknown" @tap="author.requestDelete(post)">删除帖子 {{ post.id }}</button>
+          <template v-else>
+            <text>删除《{{ post.title || '分享' }}》后将不再展示。</text>
+            <button :disabled="authorBusy" @tap="author.confirmDelete">确认删除帖子 {{ post.id }}</button>
+            <button :disabled="authorBusy" @tap="author.cancelDelete">保留帖子</button>
+          </template>
+        </view>
+      </view>
+      <view v-if="!authorLoading && authorProfile && !authorPosts.length" class="empty">暂无内容</view>
+      <button v-if="authorHasMore" :disabled="authorLoading || authorBusy" @tap="author.loadMore">加载更多作品</button>
+    </view>
 
     <!-- 发布弹窗 -->
     <view v-if="showPublish" class="mask" @tap="closePublish">
       <view class="sheet publish-sheet" @tap.stop>
         <template v-if="!relationPanel">
-        <view class="sheet-title">发布帖子</view>
+        <view class="sheet-title">{{ publishEditRequested ? '编辑帖子' : '发布帖子' }}</view>
+        <view v-if="publishLoadingEdit" class="upload-hint">正在加载原帖…</view>
+        <button v-if="publishEditRequested && !publishEditId && !publishLoadingEdit" @tap="publisher.loadForEdit(publishEditRequested)">重新加载原帖</button>
         <input v-model="publishTitle" :disabled="publishLocked" :maxlength="255" class="sheet-input" type="text" placeholder="标题 (选填)" />
         <textarea
           v-model="publishContent" :disabled="publishLocked"
@@ -102,8 +168,9 @@
           <button v-for="product in selectedProducts" :key="product.product_id" :disabled="publishLocked" @tap="relations.removeProduct(product.product_id)">移除商品：{{ product.store_name }}</button>
         </view>
         <view v-if="publishError" class="publish-error" role="status">{{ publishError }}</view>
-        <button class="sheet-btn" :disabled="publishLocked" @tap="publish">{{ publishBusy ? '处理中…' : '发布' }}</button>
-        <button v-if="publishUnknown" :disabled="publishBusy" @tap="endUnknownPublish">结束本次发布并刷新帖子</button>
+        <button class="sheet-btn" :disabled="publishLocked || !!publishEditRequested && !publishEditId" @tap="publish">{{ publishBusy ? '处理中…' : publishEditRequested ? '提交修改' : '发布' }}</button>
+        <button v-if="publishEditRequested" :disabled="publishLocked" @tap="cancelEdit">取消编辑</button>
+        <button v-if="publishUnknown" :disabled="publishBusy" @tap="endUnknownPublish">{{ publishEditRequested ? '结束本次编辑并刷新作品' : '结束本次发布并刷新帖子' }}</button>
         <button v-else :disabled="publishBusy || publishChoosing" @tap="closePublish">稍后发布</button>
         </template>
         <view v-else class="relation-panel">
@@ -143,8 +210,13 @@
     <view v-if="detail" class="mask" @tap="closeDetail">
       <view class="detail-sheet" @tap.stop>
         <scroll-view scroll-y class="detail-scroll">
+          <button @tap="closeDetail">{{ authorMode ? "返回作品" : "关闭详情" }}</button>
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
+          <view class="post-status">{{ moderationText(detail) }}</view>
+          <view v-if="detail.is_self && detail.refusal" class="publish-error">{{ detail.refusal }}</view>
+          <button v-if="detail.type === 2" @tap="openAuthor(detail.relationId)">查看作者主页</button>
+          <button v-if="detail.is_self === 1 && detail.type === 2 && detail.relationId === authStore.uid" @tap="editPost(detail.id)">编辑这篇帖子</button>
           <view v-if="detail.topic?.length" class="selected-relations">
             <button v-for="topic in detail.topic" :key="topic.id" @tap="openTopic(topic.id)"># {{ topic.name }}</button>
           </view>
@@ -207,6 +279,7 @@
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref, watch } from "vue";
 import { useCommunityPublish } from "@/composables/useCommunityPublish";
+import { useCommunityAuthor } from "@/composables/useCommunityAuthor";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import {
@@ -225,6 +298,11 @@ import {
 import { useAuthStore } from "@/stores/auth";
 
 const authStore = useAuthStore();
+const authorMode = ref(false);
+const author = useCommunityAuthor();
+const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: authorKeyword,
+  description: authorDescription, editingDescription, loading: authorLoading, busy: authorBusy, error: authorError,
+  unknown: authorUnknown, hasMore: authorHasMore, isSelf: authorIsSelf, deleteId: deletePostId, unfollow: unfollowPending } = author;
 const posts = ref<CommunityPost[]>([]);
 const detail = ref<CommunityPost | null>(null);
 const comments = ref<CommunityComment[]>([]);
@@ -232,6 +310,7 @@ const liked = ref(false);
 const commentText = ref("");
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
+const { editId: publishEditId, editRequested: publishEditRequested, loadingEdit: publishLoadingEdit } = publisher;
 const relations = publisher.relations;
 const { panel: relationPanel, availableTopics: relationTopics, products: relationProducts, selectedTopics, selectedProducts,
   keyword: relationKeyword, source: productSource, loading: relationLoading, error: relationError, hasMore: relationHasMore, pendingTopic } = relations;
@@ -261,6 +340,7 @@ function formatTime(ts: number): string {
 }
 
 async function load() {
+  if (authorMode.value) { if (!authorLoading.value) await author.refresh(); return; }
   try {
     posts.value = await apiCommunityList();
   } catch {
@@ -290,8 +370,28 @@ function requireLogin(): boolean {
 
 function openPublish() {
   if (!requireLogin()) return;
+  if (publishEditRequested.value && !publisher.reset()) return;
   showPublish.value = true;
 }
+function openAuthor(id: number) {
+  if (!requireLogin() || !Number.isSafeInteger(id) || id < 0) return;
+  uni.navigateTo({ url: `/pages/discover/workspace?author_id=${id}` });
+}
+function openSocial(tab: string) {
+  if (authorIsSelf.value && ["friend", "follow", "fans"].includes(tab)) uni.navigateTo({ url: `/pages/discover/people?tab=${tab}` });
+}
+function moderationText(post: CommunityPost) {
+  if (post.is_verify === -2 || post.status === 0) return "已下架，仅自己可见";
+  if (post.is_verify === -1) return "审核未通过，仅自己可见";
+  if (post.is_verify === 0) return "正在审核，仅自己可见";
+  return "已公开";
+}
+async function editPost(id: number) {
+  if (!requireLogin() || publishLocked.value) return;
+  closeDetail(); showPublish.value = true;
+  await publisher.loadForEdit(id);
+}
+function cancelEdit() { if (publisher.reset()) showPublish.value = false; }
 
 function openPeople() {
   if (!requireLogin()) return;
@@ -316,7 +416,7 @@ function openVideo() {
 }
 
 function closePublish() {
-  if (!publishBusy.value && !publishChoosing.value) { relations.close(); showPublish.value = false; }
+  if (!publishBusy.value && !publishChoosing.value && !publishLoadingEdit.value) { relations.close(); showPublish.value = false; }
 }
 function endUnknownPublish() {
   if (publisher.reset()) { showPublish.value = false; void load(); }
@@ -362,6 +462,11 @@ function closeDetail() {
 }
 
 onLoad((query) => {
+  if (query?.author_id !== undefined) {
+    authorMode.value = true;
+    const raw = String(query.author_id);
+    void author.initialize(raw === "self" ? "self" : /^(0|[1-9]\d{0,9})$/.test(raw) ? Number(raw) : NaN);
+  }
   const id = Number(query?.id ?? 0);
   if (Number.isSafeInteger(id) && id > 0) {
     const requestGeneration = ++detailGeneration;
@@ -371,9 +476,14 @@ onLoad((query) => {
   }
   if (query?.publish === "1") {
     const topicId = Number(query.topic_id ?? 0);
-    if (Number.isSafeInteger(topicId) && topicId > 0 && requireLogin()) {
+    if (query.edit_id !== undefined && !/^[1-9]\d{0,9}$/.test(String(query.edit_id))) {
+      uni.showToast({ title: "原帖链接无效", icon: "none" }); return;
+    }
+    const editId = Number(query.edit_id ?? 0);
+    if (editId > 0 && Number.isSafeInteger(editId)) { void editPost(editId); }
+    else if (requireLogin()) {
       showPublish.value = true;
-      void relations.seedTopic(topicId);
+      if (Number.isSafeInteger(topicId) && topicId > 0) void relations.seedTopic(topicId);
     }
   }
 });
@@ -436,6 +546,20 @@ watch(() => authStore.sessionVersion, () => { closeDetail(); showPublish.value =
 .related-product image { flex: 0 0 90rpx; width: 90rpx; height: 90rpx; }
 .related-product view { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .related-product text { display: block; color: #a32920; }
+.author-heading, .author-stats { display: flex; gap: 20rpx; align-items: center; flex-wrap: wrap; }
+.author-heading { justify-content: space-between; }
+.author-heading button { margin: 0; font-size: 24rpx; }
+.author-profile { background: #fff; padding: 24rpx; border-radius: 16rpx; margin: 20rpx 0; }
+.author-profile > text { margin: 0 12rpx; font-size: 24rpx; }
+.author-description { margin: 20rpx 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.author-stats { margin: 24rpx 0; font-size: 26rpx; }
+.author-profile button, .author-controls button { font-size: 24rpx; margin-top: 12rpx; }
+.description-editor textarea { width: 100%; box-sizing: border-box; background: #f7f7f7; padding: 20rpx; }
+.author-post { margin: 20rpx 0; }
+.post-status { display: block; margin: 14rpx 0; color: #666; font-size: 24rpx; }
+.author-controls { margin-top: 20rpx; }
+.author-controls text { display: block; overflow-wrap: anywhere; }
+.top-actions { flex-wrap: wrap; justify-content: flex-end; }
 
 .discover {
   padding: 20rpx;

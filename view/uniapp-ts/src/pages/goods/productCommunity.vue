@@ -22,7 +22,7 @@ async function load(target=1){if(!visible||disposed||!productId||!Number.isSafeI
   loading.value=true;error.value='';try{const result=await apiProductCommunity(productId,target,10);if(same()){list.value=result.list;count.value=result.count;page.value=target;}}
   catch{if(same())error.value='商品晒单读取失败，当前内容可能已过期，请重新读取';}finally{if(same())loading.value=false;}
 }
-function open(post:DetailCommunity){if(!visible||disposed||!list.value.includes(post))return;const epoch=generation,owner={version:auth.sessionVersion,token:auth.token,uid:auth.uid};uni.navigateTo({url:post.contentType===2?`/pages/discover/discoverVideo/index?id=${post.id}`:`/pages/discover/index?id=${post.id}`,fail:()=>{if(visible&&!disposed&&epoch===generation&&owner.version===auth.sessionVersion&&owner.token===auth.token&&owner.uid===auth.uid)error.value='晒单页面未打开，请重试';}});}
+function open(post:DetailCommunity){if(!visible||disposed||!list.value.includes(post))return;const epoch=generation,owner={version:auth.sessionVersion,token:auth.token,uid:auth.uid};uni.navigateTo({url:post.contentType===2?`/pages/discover/discoverVideo/index?id=${post.id}`:`/pages/discover/workspace?id=${post.id}`,fail:()=>{if(visible&&!disposed&&epoch===generation&&owner.version===auth.sessionVersion&&owner.token===auth.token&&owner.uid===auth.uid)error.value='晒单页面未打开，请重试';}});}
 function routeId(value:unknown){clear();try{productId=productDetailId(value);}catch{productId=0;error.value='商品晒单链接无效';}}
 function hashRoute():boolean{
   // #ifdef H5

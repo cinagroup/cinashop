@@ -1,8 +1,9 @@
 import { communityTopic, storeProduct, storeProductLog, userRelation } from "@/models/schema";
 import { communityVideoFixture } from "./communityVideoFixture";
+import type { PgTable } from "drizzle-orm/pg-core";
 
-export async function communityRelationsFixture() {
-  const f = await communityVideoFixture();
+export async function communityRelationsFixture(extraTables: PgTable[] = []) {
+  const f = await communityVideoFixture(extraTables);
   await f.db.insert(communityTopic).values([10, 11, 12, 13, 14].map(id => ({ id, name: `生活话题${id}`, status: 1 })));
   await f.db.insert(storeProduct).values([
     ...Array.from({ length: 11 }, (_, i) => ({ id: 101 + i, storeName: `已购好物${101 + i}`, price: "19.90", isShow: 1, isVerify: 1, keyword: "家居" })),

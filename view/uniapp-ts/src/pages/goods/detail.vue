@@ -505,7 +505,7 @@ function previewReply(urls:string[],current:string){if(visible.value&&urls.inclu
 function goProduct(id:number){if(recommendations.value.some(row=>row.id===id))navigate(`/pages/goods/detail?id=${id}`);}
 function goRank(){if(display.value.rank>0&&display.value.rankType>0)navigate(`/pages/columnGoods/rank/index?type=${display.value.rankType}`);}
 function goCommunity(){if(detail.value)navigate(`/pages/goods/productCommunity?productId=${detail.value.id}`);}
-function goCommunityDetail(id:number,type:number){if(display.value.community.some(row=>row.id===id))navigate(type===2?`/pages/discover/discoverVideo/index?id=${id}`:`/pages/discover/index?id=${id}`);}
+function goCommunityDetail(id:number,type:number){if(display.value.community.some(row=>row.id===id))navigate(type===2?`/pages/discover/discoverVideo/index?id=${id}`:`/pages/discover/workspace?id=${id}`);}
 function openNav(id:number){if(!design.value.navList.includes(id))return;if(id===0)return switchPage('/pages/index/index');if(id===2)return goCart();if(id===4)return switchPage('/pages/user/index');navigate(id===1?'/pages/goods/search':'/pages/user/collect');}
 function footerAction(id:number){if(!design.value.menuList.includes(id))return;if(id===0)return switchPage('/pages/index/index');if(id===1)return openShare();if(id===2)return navigate(`/pages/user/kefu?productId=${detail.value?.id}`);if(id===3){void toggleCollection();return;}if(id===4)goCart();}
 function switchPage(url:string){if(!visible.value||disposed||navigating.value)return;const current=currentView();try{uni.switchTab({url,fail:()=>{if(current())uni.showToast({title:'页面未打开，请重试',icon:'none'});}});}catch{if(current())uni.showToast({title:'页面未打开，请重试',icon:'none'});}}

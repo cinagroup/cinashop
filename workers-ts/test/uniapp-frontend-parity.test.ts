@@ -44,6 +44,11 @@ function historicalCashierManifest(manifest: string): string {
   }
   return manifest;
 }
+const workspaceRecord = '    {\n      "path": "pages/discover/workspace",\n      "style": { "navigationBarTitleText": "社区管理" }\n    },\n';
+function historicalCommunityManifest(manifest: string): string {
+  expect(manifest.split(workspaceRecord)).toHaveLength(2);
+  return manifest.replace(workspaceRecord, "");
+}
 const memberCodeRoute = "/pages/users/user_member_code/index";
 const currentDirectRoutes = [...currentParity.directRegisteredLegacyRoutes, memberCodeRoute];
 const pages = JSON.parse(readFileSync("../view/uniapp-ts/src/pages.json", "utf8")) as {
@@ -76,7 +81,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(132);
+    expect(manifestRoutes).toHaveLength(133);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
@@ -92,7 +97,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
       if (query) expect(resolveRegisteredPageRoute(record.path)).toBe('');
     }
     expect(currentParity.counting.target.manifestHashNormalization).toBe("LF");
-    const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
+    const manifest = historicalCommunityManifest(readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n"));
     const ordinaryRecord = '    {\n      "path": "pages/customer-work/ordinaryCashier",\n      "style": { "navigationBarTitleText": "普通商品现金收银" }\n    },\n';
     expect(manifest.split(ordinaryRecord)).toHaveLength(2);
     const checkoutManifest = historicalCashierManifest(manifest).replace(ordinaryRecord, "");
@@ -143,7 +148,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   });
 
   it("aligns the current ordinary cashier ledger with the complete manifest without replacing the historical checkout ledger", () => {
-    const manifest = readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n");
+    const manifest = historicalCommunityManifest(readFileSync("../view/uniapp-ts/src/pages.json", "utf8").replace(/\r\n/g, "\n"));
     const mappedRoutes = Object.keys(LEGACY_ROUTE_RULES);
     const gapRoutes = mergedParity.gaps.flatMap((gap) => gap.legacyRoutes);
     const accounted = [...mergedParity.directRegisteredLegacyRoutes, ...mappedRoutes, ...gapRoutes];
@@ -156,7 +161,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(130);
     expect(ordinaryParity.counting.target.manifestSha256).toBe(createHash("sha256")
       .update(historicalCashierManifest(manifest)).digest("hex").toUpperCase());
-    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length);
+    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length - 1);
     expect(mergedParity.counting.target.manifestHashNormalization).toBe("LF");
     expect(mergedParity.counting.target.manifestSha256)
       .toBe(createHash("sha256").update(manifest).digest("hex").toUpperCase());

@@ -1,7 +1,7 @@
 import { computed, ref, watch, type Ref } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
-import { apiCommunityProducts, apiCommunityTopics, type CommunityProduct, type CommunityProductSource, type CommunityTopic } from "@/api/community";
+import { apiCommunityProducts, apiCommunityTopics, type CommunityPost, type CommunityProduct, type CommunityProductSource, type CommunityTopic } from "@/api/community";
 
 export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
   const auth = useAuthStore(), panel = ref<"" | "topics" | "products">("");
@@ -17,6 +17,19 @@ export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
   function clear() {
     close(); topics.value = []; selectedTopics.value = []; selectedProducts.value = [];
     keyword.value = ""; source.value = "pay"; pendingTopic.value = 0; page = 0; hasMore.value = false;
+  }
+  function restore(post: CommunityPost) {
+    const ids = (value: number[] | undefined) => {
+      if (value === undefined) return [];
+      if (!Array.isArray(value) || value.length > 100 || value.some(id => !Number.isSafeInteger(id) || id <= 0)) throw Error("原关联格式错误");
+      return [...new Set(value)];
+    };
+    const restoredTopics = ids(post.topic_id).map(id => ({ id, name: post.topic?.find(row => row.id === id)?.name ?? `不可用话题 #${id}`, isRecommend: 0 }));
+    const restoredProducts = ids(post.product_id).map(id => {
+      const row = post.product?.find(item => item.id === id);
+      return { product_id: id, store_name: row?.store_name ?? `不可用商品 #${id}`, image: row?.image ?? "", price: row?.price ?? "" };
+    });
+    clear(); selectedTopics.value = restoredTopics; selectedProducts.value = restoredProducts;
   }
   async function loadTopics() {
     if (!editable()) return;
@@ -92,6 +105,6 @@ export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
   onHide(leave); onUnload(() => { leave(); disposed = true; }); onShow(() => { if (!disposed) visible = true; });
   watch(identity, clear, { flush: "sync" });
   return { panel, topics, availableTopics, products, selectedTopics, selectedProducts, keyword, source, loading, error, hasMore,
-    pendingTopic, clear, close, openTopics, loadTopics, seedTopic, discardPendingTopic, toggleTopic, removeTopic,
+    pendingTopic, clear, restore, close, openTopics, loadTopics, seedTopic, discardPendingTopic, toggleTopic, removeTopic,
     openProducts, changeSource, loadProducts, toggleProduct, removeProduct };
 }

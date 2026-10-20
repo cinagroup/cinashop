@@ -18,7 +18,7 @@
     <view v-if="users.length" class="people-list">
       <view v-for="item in users" :key="`${activeTab}-${item.relation_id}`" class="person-card">
         <image class="avatar" :src="item.author_image || fallbackAvatar" mode="aspectFill" />
-        <view class="person-main">
+        <view class="person-main" @tap="openAuthor(item.relation_id)">
           <view class="person-name">{{ item.author || "社区用户" }}</view>
           <view class="person-stats">
             内容 {{ item.community_num }} · 粉丝 {{ item.fans_num }}
@@ -109,6 +109,9 @@ function changeTab(tab: SocialTab) {
   if (activeTab.value === tab) return;
   activeTab.value = tab;
   void load(true);
+}
+function openAuthor(id: number) {
+  if (Number.isSafeInteger(id) && id >= 0) uni.navigateTo({ url: `/pages/discover/workspace?author_id=${id}` });
 }
 
 function followLabel(item: CommunitySocialUser): string {

@@ -164,6 +164,10 @@
       }
     },
     {
+      "path": "pages/discover/workspace",
+      "style": { "navigationBarTitleText": "社区管理" }
+    },
+    {
       "path": "pages/discover/people",
       "style": {
         "navigationBarTitleText": "社区关系"

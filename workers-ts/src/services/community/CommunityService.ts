@@ -50,6 +50,7 @@ export interface CommunityPostQuery {
   keyword?: unknown;
   is_follow?: unknown;
   relation_id?: unknown;
+  author_type?: unknown;
   content_type?: unknown;
   start_id?: unknown;
   ids?: unknown;
@@ -136,11 +137,23 @@ export class CommunityService {
     const conditions: SQL[] = [eq(communityTable.isDel, 0)];
     const relationId = optionalPositiveInteger(query.relation_id);
     if (relationId) conditions.push(eq(communityTable.relationId, relationId));
+    if (query.author_type !== undefined) {
+      const authorType = Number(query.author_type), authorId = Number(query.relation_id);
+      if (![0, 1, 2].includes(authorType) || !Number.isSafeInteger(authorId) || authorId < 0) {
+        throw new ValidateException("作者参数错误");
+      }
+      conditions.push(eq(communityTable.type, authorType), eq(communityTable.relationId, authorId));
+    }
     if (!relationId || relationId !== uid) {
       conditions.push(
         eq(communityTable.status, 1),
         eq(communityTable.isVerify, 1),
       );
+    } else {
+      conditions.push(or(
+        eq(communityTable.type, 2),
+        and(eq(communityTable.status, 1), eq(communityTable.isVerify, 1)),
+      )!);
     }
     const contentType = optionalPositiveInteger(query.content_type);
     if (contentType !== undefined) {

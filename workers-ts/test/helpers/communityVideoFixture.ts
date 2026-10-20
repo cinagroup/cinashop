@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { readFile } from "node:fs/promises";
 import { vi } from "vitest";
+import type { PgTable } from "drizzle-orm/pg-core";
 import { financePostgres } from "./financePostgres";
 import { createContainerFromDb } from "@/lib/di";
 import type { Env } from "@/env";
@@ -9,9 +10,9 @@ import { user, systemAttachment, systemAttachmentCategory, systemConfig, communi
 import { createToken, md5 } from "@/utils/jwt";
 import { advanceRateWindows, type RateLimitPolicy, type RateWindow } from "@/services/out/OutRateLimitPolicy";
 
-export async function communityVideoFixture() {
+export async function communityVideoFixture(extraTables: PgTable[] = []) {
   const f = await financePostgres([user, systemAttachment, systemAttachmentCategory, systemConfig, community,
-    communityUser, communityTopic, communityRelevance, communityComment, userRelation, storeProduct, storeProductLog]);
+    communityUser, communityTopic, communityRelevance, communityComment, userRelation, storeProduct, storeProductLog, ...extraTables]);
   const objects = new Map<string, { bytes: Uint8Array; type: string }>();
   const counts = new Map<string, number>(), cache = new Map<string, string>();
   const rateStates = new Map<string, Record<string, RateWindow>>();

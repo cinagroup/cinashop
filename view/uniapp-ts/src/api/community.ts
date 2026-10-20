@@ -19,6 +19,13 @@ export interface CommunityPost {
   content: string;
   image: string;
   sliderImage: string[] | null;
+  is_self?: 0 | 1;
+  is_verify?: number;
+  refusal?: string;
+  image_reference?: string;
+  video_reference?: string;
+  slider_image_references?: string[];
+  product_id?: number[];
   topic?: Array<{ id: number; name: string }>;
   product?: Array<{ id: number; store_name: string; image: string; price: string }>;
   likeNum: number;
@@ -67,6 +74,7 @@ export interface CommunityListFilters {
   content_type?: 2;
   start_id?: number;
   relation_id?: number;
+  author_type?: number;
   order?: 1 | 2;
 }
 
@@ -230,7 +238,7 @@ export function apiCommunityLike(
 }
 
 /** 发布帖子 (POST /api/community_save) */
-export function apiCommunitySave(params: {
+export type CommunityPostInput = {
   title?: string;
   content: string;
   content_type?: number;
@@ -239,7 +247,8 @@ export function apiCommunitySave(params: {
   slider_image?: string[];
   topic_id?: number[];
   product_id?: number[];
-}): Promise<{ id: number }> {
+};
+export function apiCommunitySave(params: CommunityPostInput): Promise<{ id: number }> {
   if (communityPreviewMode) {
     const id = Math.max(...previewPosts.map((item) => item.id)) + 1;
     previewPosts.unshift({
@@ -263,6 +272,16 @@ export function apiCommunitySave(params: {
     return Promise.resolve({ id });
   }
   return http.post<{ id: number }>("/community_save", params);
+}
+
+export function apiCommunityUpdate(id: number, params: CommunityPostInput): Promise<{ id: number }> {
+  return http.post<{ id: number }>(`/community/community_update/${id}`, params);
+}
+
+export async function apiCommunityLikedPosts(page = 1, keyword = ""): Promise<CommunityPost[]> {
+  const result = await http.get<{ list: CommunityPost[]; count: number }>("/community/like_list", { page, limit: 10, keyword });
+  if (!result || !Array.isArray(result.list)) throw Error("赞过列表格式错误");
+  return result.list;
 }
 
 /** 删除帖子 (DELETE /api/community_delete/:id) */

@@ -1,3 +1,4 @@
+import { resolveCommunityPageRoute } from "../../../common/communityRoute";
 import { resolveCustomerWorkPageRoute } from '../../../common/customerWorkRoute';
 import { divisionStaffInviteReturnPath, parseDivisionStaffInviteRoute } from '../../../common/divisionStaff';
 export type LegacyRouteCoverage = "candidate_covered" | "partial_replacement";
@@ -61,6 +62,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/index/index",
   "/pages/goods/cate",
   "/pages/discover/index",
+  "/pages/discover/workspace",
   "/pages/discover/people",
   "/pages/discover/discoverTopic/index",
   "/pages/discover/discoverSearch/index",
@@ -295,9 +297,9 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/goods/order_after_details/index": { target: "/pages/order/refundDetail", coverage: "partial_replacement" },
   "/pages/goods/goodsDiscover/index": { target: "/pages/discover/index", coverage: "partial_replacement" },
 
-  "/pages/discover/discoverUser/index": { target: "/pages/discover/people", coverage: "partial_replacement" },
-  "/pages/discover/discoverCreate/index": { target: "/pages/discover/index", coverage: "partial_replacement" },
-  "/pages/discover/discoverDetails/index": { target: "/pages/discover/index", coverage: "partial_replacement" },
+  "/pages/discover/discoverUser/index": { target: "/pages/discover/workspace", coverage: "partial_replacement" },
+  "/pages/discover/discoverCreate/index": { target: "/pages/discover/workspace", coverage: "partial_replacement" },
+  "/pages/discover/discoverDetails/index": { target: "/pages/discover/workspace", coverage: "partial_replacement" },
   "/pages/discover/discoverFollow/index": { target: "/pages/discover/people", coverage: "partial_replacement" },
 } as const;
 
@@ -359,6 +361,8 @@ function resolveLegacyActivityDetail(query: string): string {
 }
 
 export function resolveRegisteredPageRoute(path: string, query = ""): string {
+  const community = resolveCommunityPageRoute(path, query);
+  if (community !== null) return community;
   const work = resolveCustomerWorkPageRoute(path, query);
   if (work !== null) return work;
   if (path === '/pages/users/user_spread_user/index' && query) {

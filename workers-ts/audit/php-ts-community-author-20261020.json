@@ -1,0 +1,551 @@
+{
+  "date": "2026-10-20",
+  "recorded_utc": "2026-10-20T13:09:49.593174+00:00",
+  "base_commit": "d46b4a5e1366086ee1c41065812aaf306a0340ef",
+  "branch": "codex/community-author-workspace",
+  "scope": "H5 author profile/works/likes, canonical gallery and video edits, exact deletion and typed owner preview",
+  "source_php": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverUser/index.vue",
+      "sha256": "758a5e3bcde1b2add42a5c9e602cdb6b9e11fab5acf631644d3e6af9e7db76cb"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverCreate/index.vue",
+      "sha256": "a22a1ae9e5faaa756428cccbf9fb9ea8bf266ab7e5f8a6d8c9c7aea743b87292"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverDetails/index.vue",
+      "sha256": "395b940b19a291e88fef64d7025cfbf27ff70c08206984af9bffbc592bc666c7"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/api/community.js",
+      "sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372"
+    }
+  ],
+  "tests": {
+    "unique_passed": 599,
+    "new_cases": 25,
+    "counting": "518 unit + 71 H5 + 15 native + 1 browser minus 6 repeated author API/route cases; 46 earlier H5 candidates excluded",
+    "new_case_breakdown": {
+      "author_api_and_routes": 6,
+      "h5_author": 11,
+      "native_race": 2,
+      "runner_admission": 5,
+      "browser": 1
+    }
+  },
+  "checks": [
+    {
+      "label": "unit-candidate",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/community-author-workspace.test.ts",
+        "test/community-relations-publish.test.ts",
+        "test/community-image-publish.test.ts",
+        "test/community-video-publish.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/community-migration.test.ts",
+        "test/community-admin-migration.test.ts",
+        "test/community-social-migration.test.ts",
+        "test/uniapp-frontend-parity.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:50:52.899317+00:00",
+      "seconds": 56.54,
+      "log": "/tmp/cinashop-community-author-unit-candidate.log",
+      "log_sha256": "16dd6c95bdf43a452cbb7337bc911e2228d0f6762837764038a2d7158177309b",
+      "changed_during_run": [],
+      "source_changes_after_check": [
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "tested_sha256": "9713ce1f559cdba5b5930e8cb116ed8442edd23ab3d8bf1c65936e1a4fcf7de2",
+          "current_sha256": "12abbea56774a2a6d165a128b1e4e1a808c63d74b824a3949c0649aaa31398d7"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/index.vue",
+          "tested_sha256": "9a6154fd35fb8dbf694abf21c79c4e5d7736f242da952dea2630509cc31aad61",
+          "current_sha256": "1c99e8c9b81813121642a05ccacbfdffcb042814b15eff4a85826aea184941f2"
+        }
+      ],
+      "passed": 518
+    },
+    {
+      "label": "h5-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/community-author-runtime.test.cjs",
+        "scripts/community-relations-runtime.test.cjs",
+        "scripts/community-publish-runtime.test.cjs",
+        "scripts/community-images-runtime.test.cjs",
+        "scripts/community-deep-links-runtime.test.cjs",
+        "scripts/product-detail-design-runtime.test.cjs"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:55:39.254272+00:00",
+      "seconds": 15.48,
+      "log": "/tmp/cinashop-community-author-h5-final.log",
+      "log_sha256": "f9a0db01c538ff0830df5b194d9b0f0ec5ffd241dbd93785cba67bb5753b0c60",
+      "changed_during_run": [],
+      "source_changes_after_check": [
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "tested_sha256": "9713ce1f559cdba5b5930e8cb116ed8442edd23ab3d8bf1c65936e1a4fcf7de2",
+          "current_sha256": "12abbea56774a2a6d165a128b1e4e1a808c63d74b824a3949c0649aaa31398d7"
+        }
+      ],
+      "passed": 71
+    },
+    {
+      "label": "native-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-author-workspace.test.ts",
+        "test/community-author-postgres.test.ts",
+        "test/community-relations-postgres.test.ts",
+        "test/community-image-postgres.test.ts",
+        "test/community-video-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:56:04.609660+00:00",
+      "seconds": 30.95,
+      "log": "/tmp/cinashop-community-author-native-final.log",
+      "log_sha256": "a31134cbebe5e4ecf4b56d9be41b0872f64579363a338caab843eebfe89a9934",
+      "changed_during_run": [],
+      "source_changes_after_check": [
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "tested_sha256": "9713ce1f559cdba5b5930e8cb116ed8442edd23ab3d8bf1c65936e1a4fcf7de2",
+          "current_sha256": "12abbea56774a2a6d165a128b1e4e1a808c63d74b824a3949c0649aaa31398d7"
+        }
+      ],
+      "passed": 15
+    },
+    {
+      "label": "browser-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-author-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:59:22.238965+00:00",
+      "seconds": 312.85,
+      "log": "/tmp/cinashop-community-author-browser-final.log",
+      "log_sha256": "2ce9deb3418a22950a40934bb47b301cebca8806b8051cf2c4700e743f59c868",
+      "changed_during_run": [],
+      "source_changes_after_check": [],
+      "passed": 1
+    },
+    {
+      "label": "build-verified",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T12:58:08.512603+00:00",
+      "seconds": 36.61,
+      "log": "/tmp/cinashop-community-author-build-verified.log",
+      "log_sha256": "703a0d81f65574ef247d2109acd3dc56fdd6d3f778e08b1430206ee4bdf63e95",
+      "changed_during_run": [],
+      "source_changes_after_check": []
+    },
+    {
+      "label": "types-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-image-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T13:05:02.750299+00:00",
+      "seconds": 230.15,
+      "log": "/tmp/cinashop-community-author-types-final.log",
+      "log_sha256": "72eff42b4346e0a7302f6f76dc62e6322eaebfc1f2331d33761af6416d0347a8",
+      "changed_during_run": [],
+      "source_changes_after_check": []
+    }
+  ],
+  "failed_candidates": [
+    {
+      "label": "build-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 2,
+      "started_utc": "2026-10-20T12:57:08.634516+00:00",
+      "seconds": 16.66,
+      "log": "/tmp/cinashop-community-author-build-final.log",
+      "log_sha256": "227756c7b96b7c09e24d74b46ebecf113d171954128aec102edadc25befe31a7",
+      "changed_during_run": [],
+      "reason": "CommunityPostInput interface was not assignable to request-layer Record<string, unknown>; equivalent object type alias fixes both save/update call sites."
+    }
+  ],
+  "post_check_changes": "The added detail-close button was covered by final H5 tests/build/browser. Changing CommunityPostInput interface to an object type alias has no runtime effect and was verified by the complete H5 type check/build. Backend/native sources stayed unchanged.",
+  "manifest": {
+    "current_registered_pages": 133,
+    "previous_registered_pages": 132,
+    "historical_ledgers_unchanged": true,
+    "legacy_coverage": "partial_replacement"
+  },
+  "browser": {
+    "mode": "background",
+    "browser_id": "2",
+    "tab_id": "40",
+    "additional_acceptance_confirmation_requests": 0,
+    "global_approval_settings_changed": false,
+    "external_chrome_extension_connected": false,
+    "extension_installation_status": "Not inferred from absence of a connection",
+    "stages": [
+      "entry",
+      "author",
+      "liked",
+      "description",
+      "gallery",
+      "uncertain",
+      "recovered",
+      "kept",
+      "deleted",
+      "other",
+      "followed",
+      "finished"
+    ],
+    "actual_requests": 41,
+    "get_requests": 36,
+    "writes": [
+      {
+        "method": "POST",
+        "path": "/api/community/update_desc",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "desc": "分享喜欢的日常"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/community/community_update/1",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "title": "图集修订",
+          "content": "已修改图文",
+          "content_type": 1,
+          "video_url": "",
+          "image": "/api/assets/1",
+          "slider_image": [
+            "/api/assets/1"
+          ],
+          "topic_id": [],
+          "product_id": []
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/community/community_update/2",
+        "query": "",
+        "status": 200,
+        "browserStatus": 503,
+        "input": {
+          "title": "视频修订",
+          "content": "已补充视频说明",
+          "content_type": 2,
+          "video_url": "/api/assets/2",
+          "image": "/api/assets/1",
+          "topic_id": [
+            10
+          ],
+          "slider_image": [],
+          "product_id": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/community_delete/3",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {}
+      },
+      {
+        "method": "POST",
+        "path": "/api/community/set_interest/11",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "status": 1
+        }
+      }
+    ],
+    "injected_response": "Video edit committed with actual HTTP 200, test outer transport returned 503 once; production UI remained locked and refreshed without replay",
+    "session_switch": "Reloaded the synthetic harness before loading the other account; assigning the same iframe address does not reload the app session. Real login/logout UI was not tested.",
+    "interaction_note": "After full-page screenshots the locator auto-scroll mispositioned one recovery click; observed fresh pixels and clicked the visible button. No direct business API calls from browser automation.",
+    "widths": [
+      {
+        "stage": "entry",
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      {
+        "stage": "author",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "liked",
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      {
+        "stage": "description",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "gallery",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "uncertain",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "recovered",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "kept",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "deleted",
+        "client_width": 375,
+        "scroll_width": 375
+      },
+      {
+        "stage": "other",
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      {
+        "stage": "followed",
+        "client_width": 390,
+        "scroll_width": 390
+      },
+      {
+        "stage": "finished",
+        "client_width": 390,
+        "scroll_width": 390
+      }
+    ],
+    "horizontal_overflow": false,
+    "console": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T13:00:04.629Z",
+        "url": "http://127.0.0.1:40751/assets/index-CcFkPw8E.js"
+      },
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T13:04:10.175Z",
+        "url": "http://127.0.0.1:40751/assets/index-CcFkPw8E.js"
+      }
+    ],
+    "console_artifact": {
+      "path": "/tmp/cinashop-community-author-browser-console.json",
+      "sha256": "5d1933e393c2766d9c2fc27b8624f48d8bbb2698b8138c985a60ce5294fb1a5c"
+    },
+    "evidence_artifact": {
+      "path": "/tmp/cinashop-community-author-browser-evidence.json",
+      "sha256": "8e0c10499918110356693e466a3f3d7ab364d0ac9b76788130e0852b7a1f2c76"
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-community-author-gallery.png",
+        "sha256": "bfc14f0dab95942ed765eb3ec7173eacc5a7d00494dc9325795408f0b8ab64bb"
+      },
+      {
+        "path": "/tmp/cinashop-community-author-unknown.png",
+        "sha256": "a2ae00cf5e1c29b73607d7471ae8c5a18694756b6b585d11a57a623174fd1ce0"
+      },
+      {
+        "path": "/tmp/cinashop-community-author-own.png",
+        "sha256": "cf9816df4aa717c70016514c23c2454a33852ab16704973cdd1917d3b916201c"
+      },
+      {
+        "path": "/tmp/cinashop-community-author-other.png",
+        "sha256": "859dff2b22b236045f223ff2972abd2f751bd61451e37e188bc0018c9a847dc3"
+      }
+    ],
+    "temporary_tab_closed": true,
+    "external_provider_calls": 0
+  },
+  "cleanup": [
+    {
+      "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-od3tKQ",
+      "status_exit": 3,
+      "output": "pg_ctl: no server running",
+      "data_preserved": true
+    },
+    {
+      "taskRoot": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-FD45oI",
+      "status_exit": 3,
+      "output": "pg_ctl: no server running",
+      "data_preserved": true
+    }
+  ],
+  "authority": "Actual H5 build, createApp, JWT, ORM and owned native PostgreSQL 16; synthetic accounts, source histories, in-memory R2 and navigation chrome",
+  "boundaries": [
+    "No production deployment, merge, production storage, real login UI, native camera, mini-program or native app claim",
+    "No full PHP-to-TypeScript migration completion claim",
+    "Restored /api/get_script behavior and previous audit/checklist bodies preserved",
+    "GET traces are request counts, not a claim that every GET is database-pure"
+  ],
+  "source_files": [
+    {
+      "path": "view/common/communityRoute.ts",
+      "sha256": "d0ad8fc18cbd95d8cbb0d999ecaaa082fe710c96fe7af9b0a465b280c1463748"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "8b9afca39f2d68ed147d12a88e7ba125b0bc387a553776aad3605165e46a857f"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-author-runtime.test.cjs",
+      "sha256": "07e792bcc4b7e1590f01180d6cae2f637f561c807ae2612a611ccd143de956a1"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/community.ts",
+      "sha256": "12abbea56774a2a6d165a128b1e4e1a808c63d74b824a3949c0649aaa31398d7"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityAuthor.ts",
+      "sha256": "41ee1e39348183cc8ce214d3f8ff441a43b185c85603295ce76bdf89a21ec924"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityPublish.ts",
+      "sha256": "1b6cc8d44570c816e0db445a24a4e657039d8f4c809173dec4473d5a5982571d"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityRelations.ts",
+      "sha256": "c53e522521b7a27781718fbe6fd57e6921f2835656ef382b7678838f2a98ea79"
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "a9e6853ee78487d9cc3b156f25c4cdf496c9a58e1111f0a24af9213bd0b23a69"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "0a9bab7f4bcdbbce4dd6f4c7377c0ceea607075dffe223116ff44b1ec382d198"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "1c99e8c9b81813121642a05ccacbfdffcb042814b15eff4a85826aea184941f2"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/people.vue",
+      "sha256": "106318541136a5c409768b9d9c4f02febc57b91aad0b33a08c6b469d102af397"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/workspace.vue",
+      "sha256": "ed06d4e738f07013ba20accd55097eae855df9b515b04067cfe5b9a5005c4aa9"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/detail.vue",
+      "sha256": "30a46bd620480b96436ec9e80e30ec7128dbf96346d8a2e3cd4a2e72dc15a733"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/productCommunity.vue",
+      "sha256": "07a6726dafecbb67bab2ffa8383d5d67044bdc2eac96478390957e62c6681a18"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "66f8d659d254145b6a195f1384a9fe2477def0c023079fc31a6f0d9bb0b9ffbd"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityService.ts",
+      "sha256": "b9031a9f03289a6b08accf026311a03971a58898a7ed1a7cfac281ba4f8bff4f"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+      "sha256": "5ac4e0a791eafe8db97152b58ff450e985fe6239c4c460c5093b369d53d2a3ab"
+    },
+    {
+      "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "sha256": "122b306048308a602449fb4debef754979c58bc42ef08ac5c2e3ba3b06739710"
+    },
+    {
+      "path": "workers-ts/test/browser/community-author.acceptance.ts",
+      "sha256": "b33d89e39d2bb399a4b03b30daacbe8c7eb79514e18fced5b3d45f58f7e0d6f0"
+    },
+    {
+      "path": "workers-ts/test/community-author-postgres.test.ts",
+      "sha256": "5cb9779c4a49963ce3e744b0d3f7e446c30d848ca27c1260b4f8c718e8a22012"
+    },
+    {
+      "path": "workers-ts/test/community-author-workspace.test.ts",
+      "sha256": "c09b3a53d9fc6d2bf625f41ed5b34719e36ab4319e03dfc6eef5be74eceb3004"
+    },
+    {
+      "path": "workers-ts/test/helpers/communityAuthorFixture.ts",
+      "sha256": "68c5b01d5bafd2db57de2aa4dd6c19443d9eeed16a3bd1f7cded02c51254379b"
+    },
+    {
+      "path": "workers-ts/test/helpers/communityRelationsFixture.ts",
+      "sha256": "21c3ba4f8cd3dbaeb222d01d12d2328ff239af63fa248ba7332c58d8b7a2e6d6"
+    },
+    {
+      "path": "workers-ts/test/helpers/communityVideoFixture.ts",
+      "sha256": "94932f7d061d67ec300303d1702324b449f1332643f31c8cdf8d7001db68dd89"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "2d74225235453436008ac35ec1af5b50ecfc330b595e538b3cb61604a484d6ec"
+    },
+    {
+      "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "sha256": "5bb43f16d4d2b0047a331e1df366b9ef41b780a0dad3798e40a0d4e32bad8658"
+    },
+    {
+      "path": "workers-ts/vitest.community-author-browser.config.ts",
+      "sha256": "00c21fd5e771f851f7ee1fa89d4980e4b447b5e52f1deb9ec87a6c0acffbb84a"
+    }
+  ]
+}

@@ -119,7 +119,7 @@ export class CommunitySocialService {
       friend_count: await this.friendCount(authorUid),
       level_name: levelName,
       vip_status: vipStatus,
-      is_self: authorUid === viewerUid ? 1 : 0,
+      is_self: profile.type === 2 && authorUid === viewerUid ? 1 : 0,
     };
   }
 
