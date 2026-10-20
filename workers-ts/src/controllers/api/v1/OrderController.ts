@@ -138,7 +138,8 @@ export async function cartAdd(c: C) {
             : body.newcomerId
               ? { type: 7, id: Number(body.newcomerId) }
               : null;
-    const unique = String(body.unique ?? body.uniqueId ?? "").trim();
+    const requestedUnique = String(body.unique ?? body.uniqueId ?? "");
+    const unique = requestedUnique.trim();
     const activityType = Number(body.type ?? legacyActivity?.type ?? 0);
     const activityId = Number(body.activityId ?? body.activity_id ?? legacyActivity?.id ?? 0);
     if (bargainSelection.bargainId && (activityType !== 2 || activityId !== bargainSelection.bargainId)) {
@@ -155,6 +156,7 @@ export async function cartAdd(c: C) {
       uid,
       productId: Number(body.productId),
       unique,
+      requestedUnique,
       cartNum: Number(body.cartNum ?? 1),
       type: activityType,
       isNew: Number(rawIsNew),

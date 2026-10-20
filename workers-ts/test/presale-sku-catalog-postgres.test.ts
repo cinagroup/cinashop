@@ -238,11 +238,13 @@ describe("presale selection view with real disposable SQL", () => {
     await f.db.update(storeProductAttrValue).set({ isRetired: 1 }).where(eq(storeProductAttrValue.productId, 70));
     expect((await read()).skus).toEqual([]);
   });
-  it("rejects duplicate/padded base identities and bad stock, amount or time configuration", async () => {
+  it("rejects duplicate/invalid base identities and bad stock, amount or time configuration", async () => {
     await f.db.update(storeProductAttrValue).set({ unique: "pres0001" }).where(eq(storeProductAttrValue.id, 2));
     await expect(read()).rejects.toThrow("标识");
-    await f.db.update(storeProductAttrValue).set({ unique: "short" }).where(eq(storeProductAttrValue.id, 2));
-    await expect(read()).rejects.toThrow("标识");
+    for (const unique of ['', ' bad', 'pre\t', 'pres\n']) {
+      await f.db.update(storeProductAttrValue).set({ unique }).where(eq(storeProductAttrValue.id, 2));
+      await expect(read()).rejects.toThrow("标识");
+    }
     await f.db.update(storeProductAttrValue).set({ unique: "pres0002" }).where(eq(storeProductAttrValue.id, 2));
     await f.db.update(storeProductAttrValue).set({ stock: -1 }).where(eq(storeProductAttrValue.id, 2));
     await expect(read()).rejects.toThrow("库存");

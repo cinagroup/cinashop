@@ -81,12 +81,14 @@ export class PresaleSkuCatalogService {
     if (rows.length > MAX_SKUS) throw new ValidateException("预售规格超过500项，请先整理规格配置");
     const seen = new Set<string>();
     const skus = rows.map(row => {
-      if (!row.unique || row.unique.length > 8 || /[\s\u0000-\u001f\u007f]/u.test(row.unique) || seen.has(row.unique)) {
+      // Only PostgreSQL char(8) space padding is representation, not identity.
+      const unique = row.unique.replace(/ +$/, '');
+      if (!unique || unique.length > 8 || /[\s\u0000-\u001f\u007f]/u.test(unique) || seen.has(unique)) {
         throw new ValidateException("预售规格标识不唯一或无效");
       }
-      seen.add(row.unique);
+      seen.add(unique);
       const available = Math.min(productStock, integer(row.stock));
-      return { unique: row.unique, base_unique: row.unique, suk: row.suk,
+      return { unique, base_unique: unique, suk: row.suk,
         catalog_price: money(row.price), ot_price: money(row.otPrice), stock: available,
         // A selection bound, not a user allowance/reservation. Unimplemented
         // cumulative accounting must not advertise a purchasable quantity.

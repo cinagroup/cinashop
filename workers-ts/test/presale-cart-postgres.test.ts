@@ -35,7 +35,7 @@ describe("presale cart selection on isolated SQL (not checkout/payment admission
       { id: 2, productId: 70, type: 6, unique: "wrong006", suk: "错误活动规格", stock: 99, price: "0.01" },
       { id: 3, productId: 71, type: 0, unique: "other001", suk: "其它商品", stock: 99 },
       { id: 4, productId: 70, type: 0, unique: "retired1", suk: "退役", stock: 99, isRetired: 1 },
-      { id: 5, productId: 70, type: 0, unique: "short", suk: "非规范填充标识", stock: 99 },
+      { id: 5, productId: 70, type: 0, unique: "short", suk: "短规格", stock: 99 },
     ]);
   });
   const state = async () => ({ carts: await f.db.select().from(storeCart), products: await f.db.select().from(storeProduct),
@@ -72,7 +72,7 @@ describe("presale cart selection on isolated SQL (not checkout/payment admission
     expect(spy).not.toHaveBeenCalled();
   });
   it("rejects unavailable base SKUs and checks both product and SKU stock", async () => {
-    for (const unique of ["wrong006", "other001", "retired1", "missing1", "short"]) {
+    for (const unique of ["wrong006", "other001", "retired1", "missing1"]) {
       await expect(service.add({ ...params, unique })).rejects.toThrow("规格已失效");
     }
     await expect(service.add({ ...params, cartNum: 8 })).rejects.toThrow("库存不足");

@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { storeCart, storeProduct, storeProductAttrValue, user } from "@/models/schema";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -32,11 +32,12 @@ async function boundTransaction(tx: DbClient): Promise<void> {
  * cart so it never locks or merges an existing checkout row after the catalogue locks.
  */
 async function lockedSelection(tx: DbClient, uid: number, productId: number, unique: string, quantity: number) {
-  const [sku] = await tx.select().from(storeProductAttrValue).where(and(
+  const skus = await tx.select().from(storeProductAttrValue).where(and(
     eq(storeProductAttrValue.productId, productId), eq(storeProductAttrValue.type, 0),
     eq(storeProductAttrValue.unique, unique), eq(storeProductAttrValue.isRetired, 0),
-  )).limit(1).for("share");
-  if (!sku || sku.unique !== unique) throw new ValidateException("商品规格已失效");
+  )).orderBy(asc(storeProductAttrValue.id)).limit(2).for("share");
+  const sku = skus[0];
+  if (skus.length !== 1 || !sku || sku.unique.replace(/ +$/, '') !== unique) throw new ValidateException("商品规格已失效");
   const [product] = await tx.select().from(storeProduct).where(eq(storeProduct.id, productId)).limit(1).for("share");
   if (!product || product.isShow !== 1 || product.isDel !== 0 || product.isVerify !== 1 || product.isPresaleProduct !== 1) {
     throw new ValidateException("预售商品已失效，请重新选择");

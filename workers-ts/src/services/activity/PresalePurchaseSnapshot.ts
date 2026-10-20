@@ -26,6 +26,7 @@ export interface PresalePurchaseSnapshot {
 
 export function preparePresalePurchase(cart: Cart, product: Product, sku: Sku, account: Account | null,
   now = new Date()): PresalePurchaseSnapshot {
+  const unique = sku.unique.replace(/ +$/, '');
   if (!account || account.uid !== cart.uid || account.uid <= 0 || account.status !== 1 || account.isDel !== 0) {
     throw new ValidateException('用户状态已变化，请重新登录');
   }
@@ -35,8 +36,8 @@ export function preparePresalePurchase(cart: Cart, product: Product, sku: Sku, a
     throw new ValidateException('预售商品请重新选择立即购买');
   }
   if (product.isShow !== 1 || product.isDel !== 0 || product.isVerify !== 1 ||
-    sku.productId !== product.id || sku.type !== 0 || sku.isRetired !== 0 || sku.unique !== cart.productAttrUnique ||
-    !sku.unique || sku.unique.length > 8 || /[\s\x00-\x1f\x7f]/.test(sku.unique)) {
+    sku.productId !== product.id || sku.type !== 0 || sku.isRetired !== 0 || unique !== cart.productAttrUnique ||
+    !unique || unique.length > 8 || /[\s\x00-\x1f\x7f]/.test(unique)) {
     throw new ValidateException('预售商品或规格已失效');
   }
   const schedule = presaleSchedule(product, now);

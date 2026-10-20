@@ -66,6 +66,8 @@ interface CartAddParams {
   activityId?: number;
   /** Exact owned participation ID; omitted only for a sole live record. */
   bargainUserId?: number;
+  /** Exact HTTP selection before legacy trimming; presale validates this input. */
+  requestedUnique?: string;
   /** Internal keyed newcomer admission; never accepted from the legacy route. */
   newcomerEligibilityFromDb?: boolean;
 }
@@ -219,7 +221,7 @@ export class StoreCartService {
     }
     if ((params.type ?? 0) === 6) {
       if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
-      return addPresaleCart(this.container, params);
+      return addPresaleCart(this.container, { ...params, unique: params.requestedUnique ?? params.unique });
     }
     if ((params.type ?? 0) !== 2) {
       if (params.bargainUserId !== undefined) throw new ValidateException("非砍价购物车不能选择砍价记录");
@@ -394,7 +396,7 @@ export class StoreCartService {
     if (type === 0 && product.isPresaleProduct !== 0) {
       // The unlocked routing read is only a hint. The presale path re-reads the
       // base SKU/product under its own locks and never trusts client type=6.
-      return addPresaleCart(this.container, params);
+      return addPresaleCart(this.container, { ...params, unique: params.requestedUnique ?? params.unique });
     }
     if (!product.isShow || product.isDel) {
       throw new ValidateException("商品已下架");
@@ -578,9 +580,9 @@ export class StoreCartService {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
-      // A corrupt ordinary SKU must remain an invalid cart row rather than
-      // enter the promotion quote and reject unrelated cart projection.
-      const baseSkus = cart.type === 7 || (cart.type === 0 && cart.activityId === 0)
+      // Ambiguous base identities remain invalid rows. A presale selection
+      // additionally keeps its stored key exact; only DB char padding is removed.
+      const baseSkus = cart.type === 6 || cart.type === 7 || (cart.type === 0 && cart.activityId === 0)
         ? await this.container.db.select().from(storeProductAttrValue).where(and(
             eq(storeProductAttrValue.productId, cart.productId),
             eq(storeProductAttrValue.type, 0),
@@ -588,7 +590,9 @@ export class StoreCartService {
             eq(storeProductAttrValue.isRetired, 0),
           )).limit(2)
         : null;
-      if (baseSkus && (baseSkus.length > 1 || (cart.type === 7 && baseSkus.length !== 1))) {
+      if (baseSkus && (baseSkus.length > 1 || ([6, 7].includes(cart.type) && baseSkus.length !== 1)
+        || (cart.type === 6 && (baseSkus[0]?.unique.replace(/ +$/, '') !== cart.productAttrUnique
+          || !cart.productAttrUnique || cart.productAttrUnique.length > 8 || /[\s\x00-\x1f\x7f]/.test(cart.productAttrUnique))))) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
