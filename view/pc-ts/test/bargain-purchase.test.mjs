@@ -29,6 +29,18 @@ export function bargainFixture(config = { url: '/bargain/detail/40', params: {} 
     skus: ['red', 'blu'].map((color, i) => ({ unique: `act${color}${activity}`, base_unique: i ? 'qablue01' : 'qared001', suk: i ? '蓝色' : '红色', stock: i ? 2 : 6,
       max_quantity: i ? 2 : 6, catalog_price: anonymous ? null : floor, image: '' })) };
 }
+const friendFixture = (changes = {}) => ({
+  help_only: true, type: 2, bargain_id: 40, participant_id: 80, product_id: 70, title: '朋友邀请商品', image: '',
+  owner: { nickname: '发起人', avatar: '' }, is_owner: false,
+  participation: { id: 80, status: 1, state: 'cutting', original_price: '10.00', minimum_price: '2.00',
+    cut_price: '4.00', current_price: '6.00', remaining_cut: '4.00', progress_percent: 50 },
+  start_time: new Date(Date.now() - 60000).toISOString(), stop_time: new Date(Date.now() + 600000).toISOString(),
+  date_window: 'active', people: 2, help_count: 1, already_helped: false, remaining_helper_uses: 3,
+  in_stock: true, can_help: true, help_state: 'available', ...changes,
+});
+const friendReady = () => friendFixture({ can_help: false, help_state: 'ready', help_count: 2, already_helped: true,
+  participation: { id: 80, status: 3, state: 'ready', original_price: '10.00', minimum_price: '2.00',
+    cut_price: '8.00', current_price: '2.00', remaining_cut: '0.00', progress_percent: 100 } });
 export function registerBargainPurchaseTests(getContext) {
   async function mount({ entry = '/bargain/40?bargainUserId=80', read, post = () => ({ status: 200, data: { id: 91, cartNum: 2 } }), list = false } = {}) {
     const { server, api, location, response, authUtils } = getContext(), calls = [], reads = [];
@@ -50,6 +62,129 @@ export function registerBargainPurchaseTests(getContext) {
   }
   const choose = f => { f.view.choose('actblu40'); f.view.quantity.value = 2; };
   const checkout = id => ({ mode: 'buy', cartId: '91', type: '2', bargainUserId: String(id) });
+  it('PC friend invitation uses exact help-only reads and real Axios help without purchase authority', async () => {
+    let helped = false;
+    const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1',
+      read: () => ({ status: 200, data: helped ? friendReady() : friendFixture() }),
+      post: () => { helped = true; return { status: 200, data: { price: '4.00' } }; } });
+    try {
+      assert.deepEqual(f.reads[0], { url: '/bargain/detail/40', params: { view: 'help', bargain_user_id: 80 } });
+      assert.equal(f.view.detail.value, null); assert.equal(f.view.canBuy.value, false);
+      assert.equal(f.view.invitationPath.value, '/bargain/40?bargainUserId=80&help=1');
+      assert.equal(f.view.invitationUrl.value, 'https://shop.example.test/bargain/40?bargainUserId=80&help=1');
+      await f.view.start(); await f.view.buy(); await f.view.helpSelf(); assert.equal(f.calls.length, 0);
+      await f.view.helpFriend(); assert.deepEqual(f.calls, [{ url: '/bargain/help', body: { bargain_user_id: 80 } }]);
+      assert.equal(f.view.friend.value.participation.current_price, '2.00'); assert.equal(f.view.canHelpFriend.value, false);
+      await f.view.helpFriend(); assert.equal(f.calls.length, 1);
+    } finally { f.close(); }
+  });
+  it('PC friend guest login retains exact invitation and never implicitly helps', async () => {
+    const { authUtils } = getContext(); authUtils.clearAuth();
+    const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1', read: () => ({ status: 200, data: friendFixture() }) });
+    try {
+      assert.equal(f.reads.length, 0); assert.equal(f.view.friend.value, null);
+      await f.view.helpFriend(); await f.view.login();
+      const redirect = f.router.currentRoute.value.query.redirect;
+      assert.equal(redirect, '/bargain/40?bargainUserId=80&help=1');
+      authUtils.setAuth('friend-login', 22); await f.router.push(redirect); await flush();
+      assert.equal(f.view.friend.value.participant_id, 80); assert.equal(f.calls.length, 0);
+    } finally { f.close(); }
+  });
+  it('PC friend rejects ambiguous, missing and purchase parameters before I/O', async () => {
+    for (const query of ['help=1', 'help=0&bargainUserId=80', 'help=1&help=1&bargainUserId=80',
+      'help=1&bargainUserId=80&bargainUserId=90', 'help=1&bargainUserId=80&sku=actblu40',
+      'help=1&bargainUserId=80&quantity=2', 'help=1&bargainUserId=2147483648']) {
+      const f = await mount({ entry: '/bargain/40?' + query });
+      try { assert.equal(f.reads.length, 0, query); assert.equal(f.calls.length, 0); assert.equal(f.view.friend.value, null); assert.ok(f.view.error.value); }
+      finally { f.close(); }
+    }
+  });
+  it('PC help API rejects invalid identities and mismatched or purchase-shaped data', async () => {
+    const { server, api, response } = getContext(), model = await server.ssrLoadModule('/src/api/activity.ts'); let reads = 0;
+    api.defaults.adapter = async config => { reads++; return response(config, { status: 200, data: friendFixture() }); };
+    for (const ids of [[0, 80], [40, 0], [40, 1.5], ['40', 80], [40, 2147483648]]) await assert.rejects(model.apiBargainFriendView(...ids));
+    assert.equal(reads, 0);
+    for (const data of [friendFixture({ participant_id: 90 }), friendFixture({ bargain_id: 41 }), bargainFixture()]) {
+      api.defaults.adapter = async config => response(config, { status: 200, data });
+      await assert.rejects(model.apiBargainFriendView(40, 80));
+    }
+  });
+  it('PC closed, owner, helped, exhausted, full and ended invitations cannot dispatch help', async () => {
+    for (const change of [
+      { is_owner: true, help_state: 'owner' }, { already_helped: true, help_state: 'already_helped' },
+      { remaining_helper_uses: 0, help_state: 'limit_reached' }, { help_count: 2, help_state: 'people_full' },
+      { in_stock: false, help_state: 'sold_out' }, { date_window: 'future', help_state: 'future' },
+      { date_window: 'ended', help_state: 'ended' },
+      { participation: { ...friendFixture().participation, status: 2, state: 'closed' }, help_state: 'closed' },
+    ]) {
+      const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1', read: () => ({ status: 200, data: friendFixture({ can_help: false, ...change }) }) });
+      try { assert.ok(f.view.friend.value); assert.equal(f.view.canHelpFriend.value, false); await f.view.helpFriend(); assert.equal(f.calls.length, 0); }
+      finally { f.close(); }
+    }
+  });
+  for (const mutation of ['identity', 'route', 'query', 'unmount']) it(`PC late help response cannot restore old invitation after ${mutation}`, async () => {
+    const waiting = gate(), started = gate(); let closed = false;
+    const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1',
+      read: config => ({ status: 200, data: friendFixture({ participant_id: config.params.bargain_user_id,
+        participation: { ...friendFixture().participation, id: config.params.bargain_user_id } }) }),
+      post: () => { started.release(); return waiting.promise; } });
+    try {
+      const helping = f.view.helpFriend(); await started.promise; await f.view.helpFriend(); assert.equal(f.calls.length, 1);
+      if (mutation === 'identity') getContext().authUtils.setAuth('replacement-friend', 22);
+      if (mutation === 'route') await f.router.push('/elsewhere');
+      if (mutation === 'query') await f.router.push('/bargain/40?bargainUserId=90&help=1');
+      if (mutation === 'unmount') { f.close(); closed = true; }
+      await flush(); const reads = f.reads.length;
+      waiting.release({ status: 200, data: { price: '4.00' } }); await helping; await flush();
+      assert.equal(f.reads.length, reads); assert.equal(f.calls.length, 1);
+      if (mutation === 'query') assert.equal(f.view.friend.value.participant_id, 90);
+    } finally { waiting.release({ status: 200, data: {} }); if (!closed) f.close(); }
+  });
+  it('PC unknown help outcome clears controls until an explicit refresh reads the committed result', async () => {
+    let helped = false;
+    const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1',
+      read: () => ({ status: 200, data: helped ? friendReady() : friendFixture() }),
+      post: () => { helped = true; throw new Error('connection lost'); } });
+    try {
+      await f.view.helpFriend(); assert.equal(f.view.friend.value, null); assert.equal(f.view.invitationPath.value, '');
+      assert.match(f.view.error.value, /请刷新确认/); await f.view.helpFriend(); assert.equal(f.calls.length, 1);
+      await f.view.load(); assert.equal(f.view.friend.value.participation.current_price, '2.00'); assert.equal(f.calls.length, 1);
+    } finally { f.close(); }
+  });
+  it('PC cached eligibility is rechecked against the wall clock before help dispatch', async () => {
+    const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1', read: () => ({ status: 200, data: friendFixture() }) });
+    const original = Date.now;
+    try { assert.equal(f.view.canHelpFriend.value, true); Date.now = () => original() + 3600000;
+      await f.view.helpFriend(); assert.equal(f.calls.length, 0); assert.equal(f.view.friend.value, null); }
+    finally { Date.now = original; f.close(); }
+  });
+  it('PC self help pins the loaded record, checks ownership and cannot be repeated after success', async () => {
+    const owner = () => friendFixture({ is_owner: true, can_help: false, help_state: 'owner', already_helped: false, help_count: 0 });
+    const f = await mount({ entry: '/bargain/40',
+      read: config => { const row = bargainFixture(config); row.can_select = false;
+        row.participation = { ...row.participation, ...friendFixture().participation, catalog_price: '6.00', activity_price_changed: false };
+        row.skus.forEach(s => { s.catalog_price = '6.00'; });
+        return { status: 200, data: config.params.view === 'help' ? owner() : row }; },
+      post: () => ({ status: 200, data: { price: '4.00' } }) });
+    try {
+      assert.equal(f.view.canHelpSelf.value, true); await f.view.helpSelf();
+      assert.equal(f.router.currentRoute.value.query.bargainUserId, '80');
+      assert.deepEqual(f.reads[1].params, { view: 'help', bargain_user_id: 80 });
+      assert.deepEqual(f.calls, [{ url: '/bargain/help', body: { bargain_user_id: 80 } }]);
+      assert.equal(f.view.canHelpSelf.value, false); await f.view.load(); await f.view.helpSelf(); assert.equal(f.calls.length, 1);
+    } finally { f.close(); }
+  });
+  it('PC go-own preserves an owner record but drops a friend record without starting anything', async () => {
+    for (const owner of [true, false]) {
+      const f = await mount({ entry: '/bargain/40?bargainUserId=80&help=1',
+        read: config => ({ status: 200, data: config.params.view === 'help'
+          ? friendFixture({ is_owner: owner, can_help: !owner, help_state: owner ? 'owner' : 'available' }) : bargainFixture(config) }) });
+      try { await f.view.goOwn(); await flush();
+        assert.deepEqual({ ...f.router.currentRoute.value.query }, owner ? { bargainUserId: '80' } : {});
+        assert.equal(f.view.helpMode.value, false); assert.equal(f.calls.length, 0);
+      } finally { f.close(); }
+    }
+  });
   for (const id of [80, 90]) it(`bargain participation ${id} is bound through actual Axios and checkout navigation`, async () => {
     const f = await mount({ entry: `/bargain/40?bargainUserId=${id}` }); try {
       assert.deepEqual(f.reads[0], { url: '/bargain/detail/40', params: { view: 'skus', bargain_user_id: id } });

@@ -6,6 +6,7 @@ import { parseSeckillIndex, parseSeckillList, parseSeckillSelection } from "../.
 import { parseCombinationList, parseCombinationSelection } from '../../../common/combinationPurchase';
 import { bargainPage, parseBargainList, parseBargainSelection, parseMyBargains } from '../../../common/bargainPurchase';
 import { captureAuthSession, getUid, isCurrentAuthSession } from '@/utils/auth';
+import { parseBargainFriendView } from '../../../common/bargainInvitation';
 
 export interface DiscountPackageSku {
   id: number;
@@ -88,6 +89,18 @@ export async function apiBargainSelection(id: number, participantId = 0) {
   const result = await getData(request.get(`/bargain/detail/${id}`, { params: { view: 'skus', ...(participantId ? { bargain_user_id: participantId } : {}) } }));
   if (!isCurrentAuthSession(session)) throw new Error('登录状态已变化，请重新操作');
   return parseBargainSelection(result, id, participantId, !!session.token);
+}
+
+export async function apiBargainFriendView(id: number, participantId: number) {
+  const session = captureAuthSession();
+  if (!session.token || !getUid()) throw new Error('请登录后查看砍价邀请');
+  if ([id, participantId].some(value => !Number.isSafeInteger(value) || value < 1 || value > 2147483647))
+    throw new Error('砍价邀请标识无效');
+  const result = await getData(request.get(`/bargain/detail/${id}`, {
+    params: { view: 'help', bargain_user_id: participantId },
+  }));
+  if (!isCurrentAuthSession(session)) throw new Error('登录状态已变化，请重新操作');
+  return parseBargainFriendView(result, id, participantId);
 }
 
 /** 砍价详情 (GET /api/bargain/detail/:id) */

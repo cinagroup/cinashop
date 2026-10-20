@@ -1,0 +1,657 @@
+{
+  "date": "2026-10-20",
+  "base": "8a567f4ebfa941b6c7e6797c2bc06d05cc1e15b0",
+  "scope": "PC self help and exact-record friend invitations using the existing PHP-compatible Worker services",
+  "php_source": "view/uniapp/pages/activity/goods_bargain_details/index.vue (PHP checkout); no legacy PHP PC source claimed",
+  "sources": [
+    {
+      "path": "view/pc-ts/src/api/activity.ts",
+      "sha256": "27f47b22e44ac6c29c7ad0a99a17304a1f96ca1e98e45357176b0d060b6d57f0"
+    },
+    {
+      "path": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+      "sha256": "558a0c4355068d5193d8ee066c526ad029681a72c90b179c985da2740f46dd8d"
+    },
+    {
+      "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+      "sha256": "cf8cbb6476f3fd4d2c38e7b2bd58ab009a3cfb527aa5287f5d78971446d4a28c"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "0c4fe1f01735bb2481b513cacf8c9addedabdf90ed6cc688b6b26a652b6cf373"
+    },
+    {
+      "path": "workers-ts/test/browser/pc-bargain-invitations.acceptance.ts",
+      "sha256": "7439f55eb137e8f253a9329d2f06d56d3245080d0e5c6b71b01e7e617e071bb6"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "13296fc6f5bf86c1fdbeebcb73f6b76e1454f6b4c913a5813df6615a4e1cf0a5"
+    },
+    {
+      "path": "workers-ts/vitest.pc-bargain-invitations-browser.config.ts",
+      "sha256": "3b1fdf10639264277fe87c8c1e4c8a3a8095c21ff6e47f37cc428f3fd796da88"
+    }
+  ],
+  "accepted_tests": {
+    "pc": 368,
+    "runner": 429,
+    "browser": 1,
+    "unique_total": 798,
+    "new": 19,
+    "skipped": 0
+  },
+  "gates": {
+    "pc-build-final": {
+      "label": "pc-build-final",
+      "cwd": "view/pc-ts",
+      "command": [
+        "python3",
+        "/tmp/cinashop-pc-bargain-invitations-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:20:52.342996+00:00",
+      "seconds": 22.78,
+      "log": "/tmp/cinashop-pc-bargain-invitations-pc-build-final.log",
+      "log_sha256": "febefe09c3ffde5f2964b3ced668afcda081f60d58d153dcf8a1b978b3413396",
+      "source_files": [
+        {
+          "path": "view/pc-ts/src/api/activity.ts",
+          "sha256": "27f47b22e44ac6c29c7ad0a99a17304a1f96ca1e98e45357176b0d060b6d57f0"
+        },
+        {
+          "path": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+          "sha256": "558a0c4355068d5193d8ee066c526ad029681a72c90b179c985da2740f46dd8d"
+        },
+        {
+          "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+          "sha256": "cf8cbb6476f3fd4d2c38e7b2bd58ab009a3cfb527aa5287f5d78971446d4a28c"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "0c4fe1f01735bb2481b513cacf8c9addedabdf90ed6cc688b6b26a652b6cf373"
+        },
+        {
+          "path": "workers-ts/test/browser/pc-bargain-invitations.acceptance.ts",
+          "sha256": "b5cdd44d9666ea0134b4dae93cb3268f922d5c93cb24dd87879dd46f315c3656"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "13296fc6f5bf86c1fdbeebcb73f6b76e1454f6b4c913a5813df6615a4e1cf0a5"
+        },
+        {
+          "path": "workers-ts/vitest.pc-bargain-invitations-browser.config.ts",
+          "sha256": "3b1fdf10639264277fe87c8c1e4c8a3a8095c21ff6e47f37cc428f3fd796da88"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "runner-final": {
+      "label": "runner-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:21:38.120019+00:00",
+      "seconds": 20.1,
+      "log": "/tmp/cinashop-pc-bargain-invitations-runner-final.log",
+      "log_sha256": "4c2e6c3aed74b3655146df03f5e49b6b2bb13e1a86c9947920648a14de3c92ec",
+      "source_files": [
+        {
+          "path": "view/pc-ts/src/api/activity.ts",
+          "sha256": "27f47b22e44ac6c29c7ad0a99a17304a1f96ca1e98e45357176b0d060b6d57f0"
+        },
+        {
+          "path": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+          "sha256": "558a0c4355068d5193d8ee066c526ad029681a72c90b179c985da2740f46dd8d"
+        },
+        {
+          "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+          "sha256": "cf8cbb6476f3fd4d2c38e7b2bd58ab009a3cfb527aa5287f5d78971446d4a28c"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "0c4fe1f01735bb2481b513cacf8c9addedabdf90ed6cc688b6b26a652b6cf373"
+        },
+        {
+          "path": "workers-ts/test/browser/pc-bargain-invitations.acceptance.ts",
+          "sha256": "b5cdd44d9666ea0134b4dae93cb3268f922d5c93cb24dd87879dd46f315c3656"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "13296fc6f5bf86c1fdbeebcb73f6b76e1454f6b4c913a5813df6615a4e1cf0a5"
+        },
+        {
+          "path": "workers-ts/vitest.pc-bargain-invitations-browser.config.ts",
+          "sha256": "3b1fdf10639264277fe87c8c1e4c8a3a8095c21ff6e47f37cc428f3fd796da88"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "browser-final-v3": {
+      "label": "browser-final-v3",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:pc-bargain-invitations-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:25:32.991940+00:00",
+      "seconds": 192.71,
+      "log": "/tmp/cinashop-pc-bargain-invitations-browser-final-v3.log",
+      "log_sha256": "e7b8b26405f69ff9f2393c32872bd3f0dc39259c282a0924cc654ba013a152ad",
+      "source_files": [
+        {
+          "path": "view/pc-ts/src/api/activity.ts",
+          "sha256": "27f47b22e44ac6c29c7ad0a99a17304a1f96ca1e98e45357176b0d060b6d57f0"
+        },
+        {
+          "path": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+          "sha256": "558a0c4355068d5193d8ee066c526ad029681a72c90b179c985da2740f46dd8d"
+        },
+        {
+          "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+          "sha256": "cf8cbb6476f3fd4d2c38e7b2bd58ab009a3cfb527aa5287f5d78971446d4a28c"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "0c4fe1f01735bb2481b513cacf8c9addedabdf90ed6cc688b6b26a652b6cf373"
+        },
+        {
+          "path": "workers-ts/test/browser/pc-bargain-invitations.acceptance.ts",
+          "sha256": "7439f55eb137e8f253a9329d2f06d56d3245080d0e5c6b71b01e7e617e071bb6"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "13296fc6f5bf86c1fdbeebcb73f6b76e1454f6b4c913a5813df6615a4e1cf0a5"
+        },
+        {
+          "path": "workers-ts/vitest.pc-bargain-invitations-browser.config.ts",
+          "sha256": "3b1fdf10639264277fe87c8c1e4c8a3a8095c21ff6e47f37cc428f3fd796da88"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "worker-types-final": {
+      "label": "worker-types-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T09:29:07.045640+00:00",
+      "seconds": 149.67,
+      "log": "/tmp/cinashop-pc-bargain-invitations-worker-types-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_files": [
+        {
+          "path": "view/pc-ts/src/api/activity.ts",
+          "sha256": "27f47b22e44ac6c29c7ad0a99a17304a1f96ca1e98e45357176b0d060b6d57f0"
+        },
+        {
+          "path": "view/pc-ts/src/pages/activity/BargainDetail.vue",
+          "sha256": "558a0c4355068d5193d8ee066c526ad029681a72c90b179c985da2740f46dd8d"
+        },
+        {
+          "path": "view/pc-ts/test/bargain-purchase.test.mjs",
+          "sha256": "cf8cbb6476f3fd4d2c38e7b2bd58ab009a3cfb527aa5287f5d78971446d4a28c"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "0c4fe1f01735bb2481b513cacf8c9addedabdf90ed6cc688b6b26a652b6cf373"
+        },
+        {
+          "path": "workers-ts/test/browser/pc-bargain-invitations.acceptance.ts",
+          "sha256": "7439f55eb137e8f253a9329d2f06d56d3245080d0e5c6b71b01e7e617e071bb6"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "13296fc6f5bf86c1fdbeebcb73f6b76e1454f6b4c913a5813df6615a4e1cf0a5"
+        },
+        {
+          "path": "workers-ts/vitest.pc-bargain-invitations-browser.config.ts",
+          "sha256": "3b1fdf10639264277fe87c8c1e4c8a3a8095c21ff6e47f37cc428f3fd796da88"
+        }
+      ],
+      "changed_during_run": []
+    }
+  },
+  "build_steps": [
+    "node --test test/auth-session.test.mjs test/product-image.test.mjs test/test-product-media.test.mjs",
+    "node node_modules/vue-tsc/bin/vue-tsc.js -b",
+    "node node_modules/vite/bin/vite.js build"
+  ],
+  "browser": {
+    "evidence": [
+      {
+        "stage": "owner-unjoined",
+        "href": "http://127.0.0.1:40751/bargain/1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录砍价商品与参与资格刷新规格与资格PC 朋友帮砍样本商品单位：件活动进行中活动起价 ¥10.00 · 活动底价 ¥2.00北京时间：2026/10/20 16:26:04 至 2026/10/20 18:26:04当前没有可识别的有效参与，请发起或从“我的砍价”选择记录。发起砍价选择活动规格短规格 · 最多 5 件购买数量目录不预留库存或参与资格。选择将绑定本条参与；库存、金额、活动及资格由服务端在结算时重新校验。用本条参与购买活动描述Owned bargain source© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": null,
+        "invitation": null,
+        "purchase_count": 1,
+        "sku_count": 1,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "owner-started",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录砍价商品与参与资格刷新规格与资格PC 朋友帮砍样本商品单位：件活动进行中活动起价 ¥10.00 · 活动底价 ¥2.00北京时间：2026/10/20 16:26:04 至 2026/10/20 18:26:04参与记录 #101砍价中 · 已砍 ¥0.00 · 还需砍 ¥8.000%参与当前价 ¥10.00 · 参与底价 ¥2.00结算参考单价 ¥10.00帮自己砍一刀选择活动规格短规格 · 最多 5 件购买数量目录不预留库存或参与资格。选择将绑定本条参与；库存、金额、活动及资格由服务端在结算时重新校验。用本条参与购买邀请好友帮砍复制此链接发送给好友查看邀请页活动描述Owned bargain source© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": false,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 1,
+        "sku_count": 1,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "owner-cut",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录砍价商品与参与资格刷新规格与资格PC 朋友帮砍样本商品单位：件活动进行中活动起价 ¥10.00 · 活动底价 ¥2.00北京时间：2026/10/20 16:26:04 至 2026/10/20 18:26:04参与记录 #101砍价中 · 已砍 ¥1.75 · 还需砍 ¥6.2521%参与当前价 ¥8.25 · 参与底价 ¥2.00结算参考单价 ¥8.25帮自己砍一刀你已帮这条记录砍过价，可以邀请好友继续帮忙。选择活动规格短规格 · 最多 5 件购买数量目录不预留库存或参与资格。选择将绑定本条参与；库存、金额、活动及资格由服务端在结算时重新校验。用本条参与购买邀请好友帮砍复制此链接发送给好友查看邀请页活动描述Owned bargain source© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": true,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 1,
+        "sku_count": 1,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "guest-invite",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 登录返回砍价列表 · 选择我的砍价记录朋友的砍价邀请请登录后查看砍价邀请刷新邀请与资格登录查看砍价邀请© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": null,
+        "invitation": null,
+        "purchase_count": 0,
+        "sku_count": 0,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "friend-eligible",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录朋友的砍价邀请刷新邀请与资格本地报价测试的砍价PC 朋友帮砍样本参与记录 #101 · 砍价中当前价 ¥8.25底价 ¥2.00 · 已砍 ¥1.75 · 还需砍 ¥6.2521%已有 1 人帮砍 · 好友正在邀请你帮砍帮好友砍一刀我也要参与邀请好友帮砍复制此链接发送给好友查看邀请页© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": false,
+        "self_disabled": null,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 0,
+        "sku_count": 0,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "friend-cleared",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录朋友的砍价邀请Request failed with status code 503刷新邀请与资格© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": null,
+        "invitation": null,
+        "purchase_count": 0,
+        "sku_count": 0,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "friend-recovered",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录朋友的砍价邀请刷新邀请与资格本地报价测试的砍价PC 朋友帮砍样本参与记录 #101 · 砍价中当前价 ¥8.25底价 ¥2.00 · 已砍 ¥1.75 · 还需砍 ¥6.2521%已有 1 人帮砍 · 好友正在邀请你帮砍帮好友砍一刀我也要参与邀请好友帮砍复制此链接发送给好友查看邀请页© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": false,
+        "self_disabled": null,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 0,
+        "sku_count": 0,
+        "width": 1085,
+        "scroll_width": 1085
+      },
+      {
+        "stage": "friend-ready",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录朋友的砍价邀请刷新邀请与资格本地报价测试的砍价PC 朋友帮砍样本参与记录 #101 · 已完成砍价当前价 ¥2.00底价 ¥2.00 · 已砍 ¥8.00 · 还需砍 ¥0.00100%已有 2 人帮砍 · 已砍至底价，发起人可查看购买资格帮好友砍一刀我也要参与邀请好友帮砍复制此链接发送给好友查看邀请页© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": true,
+        "self_disabled": null,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 0,
+        "sku_count": 0,
+        "width": 415,
+        "scroll_width": 415
+      },
+      {
+        "stage": "owner-ready",
+        "href": "http://127.0.0.1:40751/bargain/1?bargainUserId=101",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录砍价商品与参与资格刷新规格与资格PC 朋友帮砍样本商品单位：件活动进行中活动起价 ¥10.00 · 活动底价 ¥2.00北京时间：2026/10/20 16:26:04 至 2026/10/20 18:26:04参与记录 #101已完成砍价 · 已砍 ¥8.00 · 还需砍 ¥0.00100%参与当前价 ¥2.00 · 参与底价 ¥2.00结算参考单价 ¥2.00选择活动规格短规格 · 最多 5 件购买数量目录不预留库存或参与资格。选择将绑定本条参与；库存、金额、活动及资格由服务端在结算时重新校验。用本条参与购买邀请好友帮砍复制此链接发送给好友查看邀请页活动描述Owned bargain source© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": null,
+        "invitation": "http://127.0.0.1:40751/bargain/1?bargainUserId=101&help=1",
+        "purchase_count": 1,
+        "sku_count": 1,
+        "width": 415,
+        "scroll_width": 415
+      },
+      {
+        "stage": "friend-own",
+        "href": "http://127.0.0.1:40751/bargain/1",
+        "text": "\n    首页全部分类全部商品秒杀砍价拼团预售社区客服搜索 购物车 个人中心退出返回砍价列表 · 选择我的砍价记录砍价商品与参与资格刷新规格与资格PC 朋友帮砍样本商品单位：件活动进行中活动起价 ¥10.00 · 活动底价 ¥2.00北京时间：2026/10/20 16:26:04 至 2026/10/20 18:26:04当前没有可识别的有效参与，请发起或从“我的砍价”选择记录。发起砍价选择活动规格短规格 · 最多 5 件购买数量目录不预留库存或参与资格。选择将绑定本条参与；库存、金额、活动及资格由服务端在结算时重新校验。用本条参与购买活动描述Owned bargain source© 2026 本地 PC 砍价验收\n  \n\n",
+        "help_disabled": null,
+        "self_disabled": null,
+        "invitation": null,
+        "purchase_count": 1,
+        "sku_count": 1,
+        "width": 415,
+        "scroll_width": 415
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=skus",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/bargain/start",
+        "query": "",
+        "status": 200,
+        "allowed_tables": [
+          "store_bargain_user"
+        ],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=skus&bargain_user_id=101",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 200,
+        "participant_id": 101,
+        "state": "owner",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/bargain/help",
+        "query": "",
+        "status": 200,
+        "allowed_tables": [
+          "store_bargain_user",
+          "store_bargain_user_help"
+        ],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=skus&bargain_user_id=101",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 200,
+        "participant_id": 101,
+        "state": "available",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 503,
+        "participant_id": 101,
+        "state": "available",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 200,
+        "participant_id": 101,
+        "state": "available",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/bargain/help",
+        "query": "",
+        "status": 200,
+        "allowed_tables": [
+          "store_bargain_user",
+          "store_bargain_user_help"
+        ],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 200,
+        "participant_id": 101,
+        "state": "ready",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=skus&bargain_user_id=101",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=help&bargain_user_id=101",
+        "status": 200,
+        "participant_id": 101,
+        "state": "ready",
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/count",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/cart/list",
+        "query": "?scope=cart",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/bargain/detail/1",
+        "query": "?view=skus",
+        "status": 200,
+        "allowed_tables": [],
+        "all_other_public_tables_sequences_unchanged": true
+      }
+    ],
+    "activityId": 1,
+    "participantId": 101,
+    "provider_calls": 0,
+    "order_creations": 0,
+    "authority": "actual createApp/JWT + owned maintenance SQL; synthetic session/navigation chrome; no production LOGIN claim",
+    "host": "http://127.0.0.1:40751",
+    "frame_widths": [
+      1100,
+      430
+    ],
+    "document_client_widths": [
+      1085,
+      415
+    ],
+    "public_tables": 283,
+    "sequences": 229,
+    "readonly_requests": 19,
+    "bounded_mutations": 3,
+    "current_run_console": [],
+    "previous_candidate_console_errors": [
+      {
+        "level": "error",
+        "message": "TypeError: Failed to fetch\n    at button.onclick (http://127.0.0.1:40751/__pc_bargain/2d239b1f-e3db-4ff1-8891-a52b678ffa2b:13:22)",
+        "timestamp": "2026-10-20T09:23:33.029Z",
+        "url": "http://127.0.0.1:40751/__pc_bargain/2d239b1f-e3db-4ff1-8891-a52b678ffa2b"
+      },
+      {
+        "level": "error",
+        "message": "TypeError: Failed to fetch\n    at button.onclick (http://127.0.0.1:40751/__pc_bargain/46b4b17c-f2ae-4b78-8be3-586198461041:13:22)",
+        "timestamp": "2026-10-20T09:24:56.462Z",
+        "url": "http://127.0.0.1:40751/__pc_bargain/46b4b17c-f2ae-4b78-8be3-586198461041"
+      }
+    ],
+    "extra_confirmation_requests": 0,
+    "background": true,
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-pc-bargain-invitations-ready-desktop.jpg",
+        "sha256": "56df3f28089e3864b45bbdb529cb740a61c01e7dac78ff9fda1091dc75047827"
+      },
+      {
+        "path": "/tmp/cinashop-pc-bargain-invitations-ready-narrow.jpg",
+        "sha256": "6f9ae5eca16e32fe7ef3e90ac8c8ab44752dc26efa02921a482bc6fff59ebe68"
+      }
+    ]
+  },
+  "excluded_candidates": [
+    {
+      "label": "pc-build",
+      "reason": "npm path absent; no build executed; replaced by explicit package-equivalent commands"
+    },
+    {
+      "label": "pc-tests",
+      "reason": "subset repeated in complete build; not counted twice"
+    },
+    {
+      "label": "browser-final",
+      "reason": "fixture omitted actual PC cart/list read; no acceptance claimed"
+    },
+    {
+      "label": "browser-final-v2",
+      "reason": "fixture omitted shared site metadata; no acceptance claimed"
+    }
+  ],
+  "preserved": {
+    "production_source_files": 2123,
+    "built_files": 103,
+    "get_script": "preserved",
+    "backend_business_logic": "unchanged",
+    "schema_grants": "unchanged"
+  },
+  "cleanup": [
+    {
+      "label": "browser-final",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-DUVNor",
+      "pg_version": 16,
+      "status_code": 3,
+      "stopped": true
+    },
+    {
+      "label": "browser-final-v2",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-X38Tsx",
+      "pg_version": 16,
+      "status_code": 3,
+      "stopped": true
+    },
+    {
+      "label": "browser-final-v3",
+      "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-nfDbE5",
+      "pg_version": 16,
+      "status_code": 3,
+      "stopped": true
+    }
+  ],
+  "limits": [
+    "Owned maintenance SQL and synthetic sessions/navigation chrome; not a production LOGIN grant check",
+    "No order/payment/provider action",
+    "External Chrome extension not connected in browser inventory",
+    "Whole PHP migration remains active"
+  ]
+}
