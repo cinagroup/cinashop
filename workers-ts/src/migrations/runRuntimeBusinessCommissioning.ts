@@ -18,7 +18,7 @@ import { inspectCouponTemplateCatalog } from './couponTemplateCatalog';
 import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
 import { inspectShippingTemplateCreateReplay } from './runShippingTemplateCreateReplay';
 import { SHIPPING_CREATE_REPLAY_INSTALLATION_SQL } from './shippingTemplateCreateReplayInstallation';
-import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence, lockRuntimePurchaseEvidenceForGrants } from './runtimePurchaseEvidence';
+import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence, inspectRuntimePurchasePhysicalEvidence, lockRuntimePurchaseEvidenceForGrants } from './runtimePurchaseEvidence';
 import { inspectSignDayConfigRuntimeCatalog } from './signDayConfigRuntimeCatalog';
 import { installRuntimeSignDayGroupLockBoundaryInTransaction } from './runtimeSignDayGroupLockBoundary';
 import { inspectAgentLevelRuntimeCatalog } from './agentLevelRuntimeCatalog';
@@ -26,7 +26,7 @@ import { installRuntimeAgentLevelCatalogBoundaryInTransaction } from './runtimeA
 
 type Query=Pick<DbClient,'execute'>;
 export interface RuntimeCommissionTarget {database:string;maintenance:string;app:string;admin:string;pricingOwner:string}
-export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v5-agent-levels';
+export const RUNTIME_COMMISSION_OPERATION='isolated-business-runtime-v6-physical-origin';
 export const RUNTIME_SHIPPING_OPERATION='shipping-replay-schema-0154-v1';
 function validate(target:RuntimeCommissionTarget){
   Object.values(target).forEach(pricingIdentifier);
@@ -87,6 +87,7 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
   const operation=await inspectAdminRefundOperation(tx),creation=await inspectAdminRefundCreation(tx);
   const shippingReplay=await inspectShippingTemplateCreateReplay(tx);
   const purchaseEvidence=await inspectRuntimePurchaseEvidence(tx,target.maintenance);
+  const physicalEvidence=await inspectRuntimePurchasePhysicalEvidence(tx,target.maintenance);
   const seckillTimeReferenceLock=await inspectSeckillTimeReferenceLock(tx);
   const couponTemplates=await inspectCouponTemplateCatalog(tx,target.maintenance);
   const giftReceipts=await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target);
@@ -100,7 +101,7 @@ async function inspect(tx:Query,target:RuntimeCommissionTarget){
     pricingReady:pricingCatalogReady(pricing) && pricing.ownerOid===owner?.oid,
     offlineReady:offline.state==='v1-gift-index',
     refundProtocolsReady:(invoice?.state==='v2' && refund?.state==='v1' || invoice?.state==='v3' && refund?.state==='v2') && operation.complete && creation.complete,
-    shippingReplay,purchaseEvidence,couponTemplateCatalogReady:couponTemplates.ready,promotionGiftCatalogReady:giftReceipts.ready,promotionGiftCancellationReady:giftCancellation.ready,signDayConfigCatalogReady:signDayConfig.ready,agentLevelCatalogReady:agentLevels.ready,seckillTimeReferenceLockReady:seckillTimeReferenceLockCatalogReady(seckillTimeReferenceLock),
+    shippingReplay,purchaseEvidence,physicalEvidence,couponTemplateCatalogReady:couponTemplates.ready,promotionGiftCatalogReady:giftReceipts.ready,promotionGiftCancellationReady:giftCancellation.ready,signDayConfigCatalogReady:signDayConfig.ready,agentLevelCatalogReady:agentLevels.ready,seckillTimeReferenceLockReady:seckillTimeReferenceLockCatalogReady(seckillTimeReferenceLock),
     ownedSequences:sequences.map(r=>({name:String(r.name),table:String(r.table)})) satisfies RuntimeOwnedSequence[]};
 }
 /** Separately authorized schema prerequisite only: exact existing external
@@ -131,6 +132,9 @@ export async function installRuntimeBusinessInTransaction(tx:Query,target:Runtim
   const [gate]=await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731625,2) AS locked`);
   if(gate?.locked!==true)throw Error('Runtime commissioning is busy');
   await lockRuntimePurchaseEvidenceForGrants(tx,target.maintenance);
+  if(!(await inspectRuntimePurchasePhysicalEvidence(tx,target.maintenance)).ready)throw Error('Physical purchase evidence must be installed before current runtime commissioning');
+  await tx.execute(sql.raw('LOCK TABLE ONLY public.store_order_purchase_physical_origin IN ACCESS EXCLUSIVE MODE NOWAIT'));
+  if(!(await inspectRuntimePurchasePhysicalEvidence(tx,target.maintenance)).ready)throw Error('Physical purchase evidence changed while locking');
   // Pin the exact new entities across review and grants. A maintenance DDL
   // transaction may have acquired its lock before this transaction arrived.
   if(!(await inspectCouponTemplateCatalog(tx,target.maintenance)).ready)throw Error('Coupon template commissioning exact catalog required');
@@ -144,7 +148,7 @@ export async function installRuntimeBusinessInTransaction(tx:Query,target:Runtim
   if(!(await inspectSignDayConfigRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Sign-day commissioning exact catalog required');
   const state=await inspect(tx,target);
   if(state.roles.length!==2 || state.roles.some(r=>r.restricted!==true || r.empty!==true || r.no_definer!==true || r.no_default_grants!==true)
-    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete || !state.purchaseEvidence.ready || !state.seckillTimeReferenceLockReady || !state.couponTemplateCatalogReady || !state.promotionGiftCatalogReady || !state.promotionGiftCancellationReady || !state.signDayConfigCatalogReady || !state.agentLevelCatalogReady)
+    || !state.tablesReady || !state.sequencesReady || !state.pricingReady || !state.offlineReady || !state.refundProtocolsReady || !state.shippingReplay.complete || !state.purchaseEvidence.ready || !state.physicalEvidence.ready || !state.seckillTimeReferenceLockReady || !state.couponTemplateCatalogReady || !state.promotionGiftCatalogReady || !state.promotionGiftCancellationReady || !state.signDayConfigCatalogReady || !state.agentLevelCatalogReady)
     throw Error('Runtime commissioning preflight refused; inspect existing authority and protocol');
   await installRuntimeAdminBoundaryInTransaction(tx,target.app,target.maintenance);
   await installRuntimeLockOnlyBoundaryInTransaction(tx,target.app,target.admin,target.maintenance,'agent-levels');

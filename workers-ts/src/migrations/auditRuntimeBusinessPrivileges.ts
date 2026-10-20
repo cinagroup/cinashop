@@ -8,7 +8,7 @@ import { pricingIdentifier, pricingCatalogReady } from './checkoutPricingLockCat
 import { inspectCheckoutPricingLock } from './checkoutPricingLock';
 import { reviewedOfflinePricingOid } from './reviewedOfflinePricingCapability';
 import { reviewedRuntimePricingCapabilities } from './reviewedRuntimePricingCapabilities';
-import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence } from './runtimePurchaseEvidence';
+import { inspectRuntimePurchaseEvidence, inspectRuntimePurchaseGiftEvidence, inspectRuntimePurchasePhysicalEvidence } from './runtimePurchaseEvidence';
 import { inspectSeckillTimeReferenceLock } from './seckillTimeReferenceLock';
 import { seckillTimeReferenceLockCatalogReady } from './seckillTimeReferenceLockCatalog';
 import { inspectRuntimeSeckillScheduleLockBoundary, type SeckillScheduleRuntimeNames } from './runtimeSeckillScheduleLockBoundary';
@@ -205,38 +205,39 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     onStage?.('staff');
     if(!(await inspectRuntimeAdminBoundary(tx,names.app,names.maintenance)).ready)failures.push('staff_boundary');
     onStage?.('locks');
-    if(!(await inspectRuntimeLockOnlyBoundary(tx,names.app,names.admin,names.maintenance,version==='current'?'agent-levels':version==='pre-agent-levels' || version==='pre-sign-day'?'promotion-gifts':'legacy')).ready)failures.push('lock_only_boundary');
+    if(!(await inspectRuntimeLockOnlyBoundary(tx,names.app,names.admin,names.maintenance,(version==='current' || version==='pre-physical-origin')?'agent-levels':version==='pre-agent-levels' || version==='pre-sign-day'?'promotion-gifts':'legacy')).ready)failures.push('lock_only_boundary');
     onStage?.('schedule_locks');
     const scheduleBoundary=await inspectRuntimeSeckillScheduleLockBoundary(tx,names);
     if(version!=='legacy-seckill-schedule'? !scheduleBoundary.ready : !scheduleBoundary.absent || !scheduleBoundary.tablesSafe)
       failures.push('seckill_schedule_lock_boundary');
-    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts' || version==='pre-coupon-templates') && !(await inspectSeckillParentRuntimeSequence(tx,names.maintenance)).ready)
+    if(((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts' || version==='pre-coupon-templates') && !(await inspectSeckillParentRuntimeSequence(tx,names.maintenance)).ready)
       failures.push('seckill_parent_serial_sequence');
-    if(version==='current' || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts') {
+    if((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels' || version==='pre-sign-day' || version==='pre-full-gifts') {
       onStage?.('coupon_templates');
       if(!(await inspectCouponTemplateCatalog(tx,names.maintenance)).ready)failures.push('coupon_template_catalog');
     }
-    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectOrderPromotionGiftReceiptCatalog(tx,names.maintenance,names)).ready)
+    if(((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectOrderPromotionGiftReceiptCatalog(tx,names.maintenance,names)).ready)
       failures.push('promotion_gift_receipt_catalog');
-    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectPromotionManagementRuntimeSequences(tx,names.maintenance)).ready)
+    if(((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectPromotionManagementRuntimeSequences(tx,names.maintenance)).ready)
       failures.push('promotion_management_serial_sequences');
-    if((version==='current' || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectRuntimePurchaseGiftEvidence(tx,names.maintenance)).ready)
+    if(((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels' || version==='pre-sign-day') && !(await inspectRuntimePurchaseGiftEvidence(tx,names.maintenance)).ready)
       failures.push('promotion_gift_cancellation_protocol');
-    if(version==='current' || version==='pre-agent-levels') {
+    if((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels') {
       onStage?.('sign_day_config');
       if(!(await inspectSignDayConfigRuntimeCatalog(tx,names.maintenance,names)).ready)failures.push('sign_day_config_catalog');
     }
     const signDayGroupBoundary=await inspectRuntimeSignDayGroupLockBoundary(tx,names);
-    if(version==='current' || version==='pre-agent-levels'? !signDayGroupBoundary.ready : !signDayGroupBoundary.absent || !signDayGroupBoundary.tablesSafe)
+    if((version==='current' || version==='pre-physical-origin') || version==='pre-agent-levels'? !signDayGroupBoundary.ready : !signDayGroupBoundary.absent || !signDayGroupBoundary.tablesSafe)
       failures.push('sign_day_group_lock_boundary');
     onStage?.('agent_levels');
     const agentBoundary=await inspectRuntimeAgentLevelCatalogBoundary(tx,names);
-    if(version==='current' ? !agentBoundary.ready : !agentBoundary.absent || !agentBoundary.tablesSafe)
+    if((version==='current' || version==='pre-physical-origin') ? !agentBoundary.ready : !agentBoundary.absent || !agentBoundary.tablesSafe)
       failures.push('agent_level_catalog_boundary');
-    if(version==='current' && !(await inspectAgentLevelRuntimeCatalog(tx,names.maintenance,names)).ready)
+    if((version==='current' || version==='pre-physical-origin') && !(await inspectAgentLevelRuntimeCatalog(tx,names.maintenance,names)).ready)
       failures.push('agent_level_catalog');
     onStage?.('purchase_evidence');
     if(!(await inspectRuntimePurchaseEvidence(tx,names.maintenance)).ready)failures.push('purchase_evidence_protocols');
+    if(version==='current' && !(await inspectRuntimePurchasePhysicalEvidence(tx,names.maintenance)).ready)failures.push('purchase_physical_origin_protocol');
     // Bind the complete canonical set before maintenance callers cap diagnostics.
     const unique=[...new Set(failures)].sort();
     return {ready:unique.length===0,readOnly:true as const,completeServiceCoverageVerified:false as const,kind,

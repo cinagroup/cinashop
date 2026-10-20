@@ -674,10 +674,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('authority receip
             expect(report, JSON.stringify(report)).toMatchObject({ ready: true, failures: [], tableCount, readOnly: true });
           }
         };
-        await audit(282);
+        await audit(283);
         const before = await catalog();
         const baseTables = before.filter(row => row.kind === 'relation').map(row => row.name).sort();
-        expect(baseTables).toHaveLength(282);
+        expect(baseTables).toHaveLength(283);
         const rows = async (db: Pick<DbClient, 'execute'> = whole.db) => {
           for (const table of baseTables) expect(table).toMatch(/^[a-z_][a-z_0-9]*$/);
           const statement = baseTables.map(table => `SELECT '${table}' AS name,

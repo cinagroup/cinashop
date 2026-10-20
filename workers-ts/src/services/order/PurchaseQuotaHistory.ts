@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ValidateException } from '@/utils/errors';
 import { readPurchaseOriginEvidence, verifyPurchaseOriginEvidence, type PurchaseOriginEvidence } from './PurchaseOriginEvidence';
+import { readPurchasePhysicalOriginEvidence, verifyPurchasePhysicalOriginEvidence, type PurchasePhysicalOriginEvidence } from './PurchasePhysicalOriginEvidence';
 import { readPurchaseCancellationEvidence, type PurchaseCancellationEvidence } from './PurchaseCancellationEvidence';
 import { readPurchaseQuotaPaymentLedger, verifyPurchaseQuotaRootOrigin,
   type PurchaseQuotaPaymentLedger } from './PurchaseQuotaPaymentLedger';
@@ -14,6 +15,7 @@ export interface PurchaseQuotaRoot {
 export interface PurchaseQuotaHistoryEntry {
   root: PurchaseQuotaRoot;
   origin: PurchaseOriginEvidence;
+  physical?: PurchasePhysicalOriginEvidence | null;
   cancellation: PurchaseCancellationEvidence | null;
   payment: PurchaseQuotaPaymentLedger | null;
 }
@@ -67,9 +69,11 @@ export function projectPurchaseQuotaHistory(entries: readonly PurchaseQuotaHisto
     if (roots.has(root.id) || root.uid !== buyerId || ![-1, 0].includes(root.pid)) return invalid();
     roots.add(root.id);
     const origin = verifyPurchaseOriginEvidence(entry.origin, { orderId: root.id, buyerId });
-    if (root.type !== origin.orderType || root.totalNum !== origin.totalNum) return invalid();
+    const physical = entry.physical ? verifyPurchasePhysicalOriginEvidence(entry.physical, origin) : null;
+    const quantities = physical ?? origin;
+    if (root.type !== origin.orderType || root.totalNum !== quantities.totalNum) return invalid();
     const original = new Map<number, number>();
-    for (const line of origin.lines) original.set(line.productId, (original.get(line.productId) ?? 0) + line.quantity);
+    for (const line of quantities.lines) original.set(line.productId, (original.get(line.productId) ?? 0) + line.quantity);
     if (root.paid === 0 && root.pid === 0 && root.status === 0 && root.isDel === 0 && !cancellation && !payment) {
       for (const [productId, count] of original) add(productId, 'activeUnpaid', count);
     } else if (root.paid === 0 && root.pid === 0 && root.status === -2 && root.isDel === 1 && cancellation && !payment) {
@@ -97,14 +101,14 @@ export function projectPurchaseQuotaHistory(entries: readonly PurchaseQuotaHisto
 async function readUnpaidRootLines(tx: Query, orderId: number) {
   return tx.execute(sql`WITH candidates AS MATERIALIZED (
     SELECT id, oid, uid, product_id AS "productId", cart_id AS "cartId", old_cart_id AS "oldCartId",
-      sku_unique AS "skuUnique", cart_num AS "cartNum", cart_info
+      sku_unique AS "skuUnique", is_gift AS "isGift", cart_num AS "cartNum", cart_info
     FROM store_order_cart_info WHERE oid=${orderId} ORDER BY id LIMIT 201
   ), parsed AS MATERIALIZED (
     SELECT *, CASE WHEN octet_length(cart_info)<=65536 AND SUM(octet_length(cart_info)::bigint) OVER ()<=8388608
       THEN cart_info::jsonb ELSE NULL END AS info FROM candidates
-  ) SELECT id, oid, uid, "productId", "cartId", "oldCartId", "skuUnique", "cartNum",
+  ) SELECT id, oid, uid, "productId", "cartId", "oldCartId", "skuUnique", "cartNum", "isGift",
     jsonb_build_object('valid', jsonb_typeof(info)='object', 'version', info->'financial_version',
-      'id', info->'id', 'cartNum', info->'cart_num', 'skuId', info#>'{sku,id}') AS snapshot FROM parsed`);
+      'id', info->'id', 'cartNum', info->'cart_num', 'skuId', info#>'{sku,id}', 'gift', info->'promotion_gift') AS snapshot FROM parsed`);
 }
 
 /** Caller-owned REPEATABLE READ or SERIALIZABLE transaction only. No locks,
@@ -137,6 +141,8 @@ export async function readPurchaseQuotaHistory(tx: Query, buyerId: number): Prom
     const expected = { orderId: root.id, buyerId };
     const origin = await readPurchaseOriginEvidence(tx, expected);
     if (!origin) return incomplete(buyerId, 'missing_origin_or_order');
+    const physical = await readPurchasePhysicalOriginEvidence(tx, origin);
+    if (physical) evidenceRows++;
     const cancellation = await readPurchaseCancellationEvidence(tx, expected);
     let payment: PurchaseQuotaPaymentLedger | null = null;
     if (root.paid === 1) {
@@ -146,13 +152,13 @@ export async function readPurchaseQuotaHistory(tx: Query, buyerId: number): Prom
     else if (root.paid === 0) {
       const lines = await readUnpaidRootLines(tx, root.id);
       verifyPurchaseQuotaRootOrigin({ orders: [root], carts: lines }, origin,
-        { paymentOrderId: root.id, buyerId }, 0);
+        { paymentOrderId: root.id, buyerId }, 0, physical);
       const [child] = await tx.execute(sql`SELECT id FROM store_order WHERE pid=${root.id} LIMIT 1`);
       if (child) return incomplete(buyerId, 'unsupported_root_state');
     }
     if (cancellation) evidenceRows++;
     if (evidenceRows > 10000) return incomplete(buyerId, 'too_many_evidence_rows');
-    entries.push({ root, origin, cancellation, payment });
+    entries.push({ root, origin, physical, cancellation, payment });
   }
   return projectPurchaseQuotaHistory(entries, buyerId);
 }

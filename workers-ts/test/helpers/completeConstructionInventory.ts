@@ -1,4 +1,4 @@
-/** Fixed complete registration inventory of all 291 registered ORM tables.
+/** Fixed complete registration inventory of all 292 registered ORM tables.
  * Complete external and embedded paths intentionally have their own
  * exact published sets; unknown/missing relations must never pass by count. */
 export type CompleteConstructionPath = 'external' | 'embedded' | 'orm';
@@ -133,6 +133,7 @@ export const COMPLETE_ORM_TABLE_NAMES = [
   "store_order_promotions",
   "store_order_purchase_cancellation",
   "store_order_purchase_origin",
+  "store_order_purchase_physical_origin",
   "store_order_refund",
   "store_order_refund_payment",
   "store_order_refund_split",
@@ -296,12 +297,13 @@ export const COMPLETE_ORM_TABLE_NAMES = [
   "work_welcome_relation",
 ] as const;
 
-/** Four previously registered ORM tables beyond the former 0169 / 281-table baseline. */
+/** Five reviewed registered ORM tables beyond the former 0169 / 281-table baseline. */
 export const ORM_TABLES_AFTER_0169 = [
   'customer_city_delivery_attempt',
   'customer_city_delivery_binding',
   'customer_city_delivery_job',
   'store_order_promotion_gift_coupon_reward',
+  'store_order_purchase_physical_origin',
 ] as const;
 const cityTables = new Set<string>(ORM_TABLES_AFTER_0169.slice(0, 3));
 /** Registered models are bare until the explicit owner maintenance candidate is
@@ -315,7 +317,7 @@ export const MANUAL_RED_NOTE_ORM_TABLE_NAMES = [
 export const ERP_ORM_TABLE_NAMES = ['erp_auth_state','erp_connection','erp_credential','erp_operation'] as const;
 const erpTables = new Set<string>(ERP_ORM_TABLE_NAMES);
 const manualRedTables = new Set<string>(MANUAL_RED_NOTE_ORM_TABLE_NAMES);
-export const COMPLETE_CONSTRUCTION_COUNTS = { external: 286, embedded: 282, orm: 291 } as const;
+export const COMPLETE_CONSTRUCTION_COUNTS = { external: 287, embedded: 283, orm: 292 } as const;
 export function completeConstructionTableNames(path: CompleteConstructionPath): string[] {
   const names: string[] = path === 'embedded'
     ? COMPLETE_ORM_TABLE_NAMES.filter(name => !cityTables.has(name) && !manualRedTables.has(name) && !erpTables.has(name))

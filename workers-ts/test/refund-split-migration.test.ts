@@ -245,7 +245,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
         const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0178_product_save_effects.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
-        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 184},(_,i)=>String(i).padStart(4,'0')),errors:[]});
+        expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 185},(_,i)=>String(i).padStart(4,'0')),errors:[]});
       }else{
         const api=await import('drizzle-kit/api'),snapshot=api.generateDrizzleJson(allModels);assertRegisteredModelCohort(snapshot);await whole.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
         await expect(runRefundOrderSplitSchema(whole.db,true)).rejects.toThrow();

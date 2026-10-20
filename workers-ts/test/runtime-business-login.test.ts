@@ -326,7 +326,7 @@ describe('business profiles with two independent real LOGINs (isolated native ac
     await emptyProfiles(async(app,admin)=>{
       const before=await identities();
       for(const peer of [app,admin]){
-        expect(await inspectRuntimePurchaseEvidence(peer.db,'finance_test')).toMatchObject({origin:'v1',cancellation:'gift-v1',ready:true});
+        expect(await inspectRuntimePurchaseEvidence(peer.db,'finance_test')).toMatchObject({origin:'v1',cancellation:'physical-v1',ready:true});
         expect((await inspectRuntimePurchaseEvidence(peer.db,peer.role)).ready).toBe(false);
         expect(await peer.exec('SELECT current_user=session_user AND current_user=\''+peer.role+'\' AS same')).toEqual([{same:true}]);
         await expect(peer.db.transaction(tx=>lockRuntimePurchaseEvidenceForGrants(tx,'finance_test'))).rejects.toThrow('requires review');

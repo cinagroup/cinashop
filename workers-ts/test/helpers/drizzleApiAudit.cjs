@@ -67,7 +67,7 @@ async function main() {
   const manualNames=MANUAL_RED_NOTE_ORM_TABLE_NAMES.map(name=>"public."+name);
   const erpNames=ERP_ORM_TABLE_NAMES.map(name=>"public."+name);
   const currentNames=Object.keys(previous.tables).sort();
-  assert.equal(currentNames.length,291);
+  assert.equal(currentNames.length,292);
   assert.deepEqual(currentNames.filter(name=>manualNames.includes(name)),manualNames);
   assert.deepEqual(currentNames.filter(name=>erpNames.includes(name)),erpNames);
   assert.deepEqual(currentNames.filter(name=>!manualNames.includes(name)&&!erpNames.includes(name)),

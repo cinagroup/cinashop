@@ -89,6 +89,7 @@ export * from "./coupon_templates";
 export * from "./invoice_allocation";
 export * from "./order_refund_split";
 export * from "./purchase_origin_evidence";
+export * from "./purchase_physical_origin_evidence";
 export * from "./purchase_cancellation_evidence";
 // Registered structural models; raw ORM construction still needs explicit
 // empty-ledger protection completion via the offline maintenance installer.

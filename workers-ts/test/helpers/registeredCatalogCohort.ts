@@ -14,6 +14,19 @@ import { inspectInvoiceManualRedNote } from '../../src/migrations/invoiceManualR
 // additions. Never generate expected table names from the live ORM under test.
 const legacyNames: readonly string[] = ["admin_refund_creation","admin_refund_operation","admin_user_write_replay","agent_level","agent_level_task","agent_level_task_record","agreement","article_category","article_content","cache","capital_flow","category","city_area","city_delivery_callback_event","city_delivery_callback_outbox","city_delivery_callback_watermark","city_delivery_reconciliation_case","community","community_comment","community_relevance","community_topic","community_user","data_migration_checkpoint","data_migration_run","delivery_service","division_apply","express_company","kefu_visitor_session","live_anchor","live_goods","live_room","live_room_goods","luck_lottery","luck_lottery_entitlement","luck_lottery_record","luck_prize","member_card","member_card_batch","member_right","member_ship","merchant_shipment_callback_event","merchant_shipment_callback_outbox","merchant_shipment_callback_watermark","notification_template","offline_order_admission","offline_order_balance","offline_order_callback_binding","offline_order_external_payment","offline_order_payment_dispatch","offline_order_payment_selection","offline_order_query_evidence","order_notification_delivery","order_notification_delivery_action","order_print_job","order_print_job_action","order_waybill_job","order_waybill_job_action","other_order","other_order_status","out_account","out_api_audit","out_coupon_write_replay","out_interface","out_product_write_replay","out_user_write_replay","page_category","page_link","payment_callback_event","payment_callback_outbox","payment_reconciliation_action","payment_reconciliation_case","print_document","promoter_apply","qrcode","queue_auxiliary","queue_list","shipping_template_create_replay","shipping_templates","shipping_templates_free","shipping_templates_no_delivery","shipping_templates_region","sms_record","store_activity","store_activity_relation","store_bargain","store_bargain_user","store_bargain_user_help","store_branch_product","store_branch_product_attr_value","store_brand","store_cart","store_combination","store_config","store_coupon_issue","store_coupon_issue_user","store_coupon_product","store_coupon_template","store_coupon_template_issue","store_coupon_user","store_delivery_order","store_discounts","store_discounts_products","store_extract","store_finance_flow","store_integral","store_integral_order","store_integral_order_status","store_newcomer","store_order","store_order_cart_info","store_order_economize","store_order_fulfillment_branch","store_order_invoice","store_order_invoice_allocation","store_order_invoice_evidence","store_order_outbox","store_order_product_coupon_reward","store_order_promotions","store_order_purchase_cancellation","store_order_purchase_origin","store_order_refund","store_order_refund_payment","store_order_refund_split","store_order_status","store_order_writeoff","store_pink","store_product","store_product_attr","store_product_attr_result","store_product_attr_value","store_product_cate","store_product_category","store_product_category_brand","store_product_coupon","store_product_description","store_product_ensure","store_product_label","store_product_label_auxiliary","store_product_log","store_product_relation","store_product_reply","store_product_reply_comment","store_product_rule","store_product_sku_retirement_log","store_product_specs","store_product_stock_record","store_product_unit","store_product_virtual","store_product_words","store_promotions","store_promotions_auxiliary","store_seckill","store_seckill_time","store_service","store_service_feedback","store_service_log","store_service_record","store_service_speechcraft","store_service_transfer","store_user","store_visit","supplier_extract","supplier_flowing_water","supplier_ticket_print","supplier_transactions","system_admin","system_article","system_attachment","system_attachment_category","system_city","system_config","system_config_tab","system_dise","system_file","system_form","system_form_data","system_group","system_group_data","system_log","system_menus","system_message","system_notice","system_notice_admin","system_notification","system_queue_dead_letter","system_role","system_sign_reward","system_storage","system_store","system_store_staff","system_supplier","system_timer","system_user_apply","system_user_level","system_virtual_inventory_export","user","user_address","user_bill","user_brokerage","user_brokerage_frozen","user_card","user_enter","user_extract","user_friends","user_group","user_invoice","user_label","user_label_relation","user_level","user_message","user_money","user_notice","user_notice_see","user_recharge","user_relation","user_search","user_sign","user_spread","user_visit","video","video_comment","wechat_callback_event","wechat_callback_outbox","wechat_callback_watermark","wechat_card","wechat_key","wechat_media","wechat_message","wechat_news_category","wechat_qrcode","wechat_qrcode_cate","wechat_qrcode_record","wechat_reply","wechat_user","work_callback_event","work_callback_outbox","work_callback_watermark","work_channel_code","work_channel_cycle","work_channel_limit","work_client","work_client_current","work_client_follow","work_client_follow_current","work_client_follow_projection_fence","work_client_follow_tag_current","work_client_follow_tags","work_client_projection_fence","work_contact_action_audit","work_contact_action_outbox","work_department","work_department_current","work_department_leader_current","work_department_projection_fence","work_external_tag_current","work_external_tag_group_current","work_external_tag_projection_fence","work_group_chat","work_group_chat_auth","work_group_chat_current","work_group_chat_member","work_group_chat_member_current","work_group_chat_projection_fence","work_group_chat_statistic","work_group_msg_relation","work_group_msg_send_result","work_group_msg_task","work_group_template","work_label","work_media","work_member","work_member_current","work_member_identity_alias","work_member_other","work_member_other_current","work_member_relation","work_member_relation_current","work_moment","work_moment_send_result","work_welcome","work_welcome_relation"];
 const additions = {
+  "store_order_purchase_physical_origin": {
+  "file": "0184_purchase_physical_origin_evidence.sql",
+  "sourceSha256": "ee9e83e670985533ec35c5230e5aee8173db1a0a420c948009e28f24d173af6c",
+  "columns": [
+    "order_id",
+    "buyer_id",
+    "version",
+    "order_type",
+    "total_num",
+    "lines",
+    "recorded_at"
+  ]
+},
   "store_order_promotion_gift_coupon_reward": {
     "file": "0170_order_promotion_gift_receipt.sql",
     "sourceSha256": "db9c4c75894a51993bacd4f4c4289481379ea4a8e569c92c1e02df1578e8f7d7",
@@ -321,7 +334,7 @@ export function reviewedExplicitDeclarationTables(scope:'historical'|'current-or
 }
 const ormNames = [...legacyNames,...REVIEWED_TABLE_ADDITIONS].sort();
 const externalNames = [...ormNames,...Object.keys(externalAdditions)].sort();
-const embeddedNames = [...legacyNames,'store_order_promotion_gift_coupon_reward'].sort();
+const embeddedNames = [...legacyNames,'store_order_promotion_gift_coupon_reward','store_order_purchase_physical_origin'].sort();
 const root=resolve(import.meta.dirname,'../..');
 const digest=(value:string)=>createHash('sha256').update(value).digest('hex');
 export function assertHistoricalCatalogBasis() {
@@ -355,7 +368,7 @@ export function registeredTableNames(path:'external'|'embedded'|'orm',scope:Regi
   assert.equal(path,'orm','Only actual ORM construction may include the bare manual red-note realm');
   assertManualRedNoteSourceBasis(); assertErpSourceBasis();
   const current=[...historical,...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES].sort();
-  assert.deepEqual(current,completeConstructionTableNames('orm'),'Current ORM must be the independent historical 285 plus exactly the two reviewed manual and four ERP bare tables');
+  assert.deepEqual(current,completeConstructionTableNames('orm'),'Current ORM must be the independent historical 286 plus exactly the two reviewed manual and four ERP bare tables');
   return current;
 }
 export function assertRegisteredModelCohort(snapshot:{tables:Record<string,{columns?:Record<string,unknown>}>}) {
@@ -373,15 +386,18 @@ export async function assertRegisteredDatabaseCohort(db:Pick<DbClient,'execute'>
   assertCashierAuditManualRedNoteCatalog(manual.rows,scope==='current-bare-orm'?'orm':path==='orm'?'embedded':path);
 }
 export function assertExternalMigrationCohort(files:string[]) {
-  assert.equal(files.length,181);
-  assert.equal(digest(JSON.stringify(files)),"c05f257ea765a374894d35542df54a709cdea7935529178f2f139d8562e0cb07");
+  assert.equal(files.length,182);
+  assert.equal(digest(JSON.stringify(files)),"65a24b56d6a6bb81538d593cf104b7cf404d953ce26105433de3ae0f14ede67a");
+  const beforePhysical=files.filter(file=>file!==additions.store_order_purchase_physical_origin.file);
+  assert.equal(beforePhysical.length,181);
+  assert.equal(digest(JSON.stringify(beforePhysical)),"c05f257ea765a374894d35542df54a709cdea7935529178f2f139d8562e0cb07");
   // These two registered CHECK successors add no table. Preserve every older
   // directory cohort rather than accepting an arbitrary pair of new files.
   const saveFile='0178_product_save_effects.sql';
   const saveSource=readFileSync(resolve(root,'migrations',saveFile),'utf8').replace(/\r\n?/g,'\n');
   assert.equal(digest(saveSource),'0fcf472e56130811dfdd7812aa718cd4e131cbc010e21d792f9c9e8b442f4319');
   assert.deepEqual([...parseCreateTables(saveSource,'postgres').keys()],[]);
-  const throughRecycleFiles=files.filter(file=>file!==saveFile);
+  const throughRecycleFiles=beforePhysical.filter(file=>file!==saveFile);
   assert.equal(throughRecycleFiles.length,180);
   assert.equal(digest(JSON.stringify(throughRecycleFiles)),"d88e6466bdf25f409a941b00fce53be2472f725abfad2a31ec0c67a86ac85f65");
   const recycleFile='0177_product_recycle_effects.sql';
@@ -411,11 +427,11 @@ export function assertExternalMigrationCohort(files:string[]) {
   assert.deepEqual(files.filter(file=>!file.startsWith('0006a')&&!/^\d{4}_/.test(file)),[]);
   for(const file of ['0166_recharge_quota_group_seed.sql','0167_seckill_time_reference_lock.sql',
     '0170_order_promotion_gift_receipt.sql','0171_purchase_cancellation_gift_evidence.sql','0173_customer_city_delivery.sql',
-    externalAdditions.cashier_second_card_abandon_v1.file,stockFile,autoShelfFile,recycleFile,saveFile])
+    externalAdditions.cashier_second_card_abandon_v1.file,stockFile,autoShelfFile,recycleFile,saveFile,additions.store_order_purchase_physical_origin.file])
     assert.equal(files.filter(value=>value===file).length,1);
 }
 // Explicit fixture composition mirrors the approved full nine-path audit.
-// Embedded runAll remains 282 tables; it never implicitly installs city tables.
+// Embedded runAll now has 283 tables; it never implicitly installs city tables.
 export async function composeExplicitCityCatalog(db:DbClient,path:'external'|'embedded') {
   await assertRegisteredDatabaseCohort(db,path);
   const before=await db.execute(sql`SELECT 'relation' AS kind,oid::text,relfilenode::text,relowner::text,relacl::text AS acl

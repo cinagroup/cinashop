@@ -18,7 +18,7 @@ export type IntegralAuthor = 'direct' | 'create';
 export type IntegralIntent = { author: IntegralAuthor; key: string; quantity: number; cartId?: number };
 const stateTables = ['user', 'store_cart', 'store_order', 'store_order_cart_info', 'store_order_status',
   'store_order_outbox', 'user_bill', 'store_order_refund', 'store_order_refund_payment',
-  'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin',
+  'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_physical_origin',
   'store_order_purchase_cancellation'] as const;
 
 export async function integralPurchaseLimitsFixture() {

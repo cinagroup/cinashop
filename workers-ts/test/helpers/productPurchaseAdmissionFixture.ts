@@ -75,6 +75,7 @@ export async function productPurchaseAdmissionFixture() {
       statuses: await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id),
       outbox: await f.db.select().from(storeOrderOutbox).orderBy(storeOrderOutbox.id),
       coupons: await f.db.select().from(storeCouponUser).orderBy(storeCouponUser.id),
+      physicalOrigins: Array.from(await f.db.execute(sql`SELECT * FROM public.store_order_purchase_physical_origin ORDER BY order_id`)),
       origins: Array.from(await f.db.execute(sql`SELECT * FROM public.store_order_purchase_origin ORDER BY order_id`)),
     });
     return { ...f, cart, limits, insertCart, compute, quote, confirm, create, state };

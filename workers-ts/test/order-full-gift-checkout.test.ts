@@ -66,7 +66,7 @@ describe('admin-created full gifts through confirmation and the real order lifec
       expect(cancellationSource.sourcesReady).toBe(true);
       await runPurchaseCancellationEvidenceSchema(f.db);
       await runPurchaseCancellationGiftEvidence(f.db);
-      expect((await inspectPurchaseCancellationGiftEvidence(f.db)).state).toBe('gift-v1');
+      expect((await inspectPurchaseCancellationGiftEvidence(f.db)).state).toBe('physical-v1');
     }
     await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
     await f.db.update(storeProduct).set({ deliveryType: '1', price: '10.00', freight: 1, tempId: 0 });

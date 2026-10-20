@@ -130,6 +130,7 @@ import { assertCheckoutCouponTemplate } from './CheckoutCouponTemplateAuthority'
 import { allocateCheckoutLineUnits, fitCheckoutLineCapacities } from './CheckoutLineAllocation';
 import { verifyUnpaidCancellationLines } from './UnpaidOrderCancellationEvidence';
 import { recordPurchaseOriginEvidence } from './PurchaseOriginEvidence';
+import { recordPurchasePhysicalOriginEvidence } from './PurchasePhysicalOriginEvidence';
 import { loadCashierFormSubmission, captureCashierFormConsumption } from '@/services/customer-work/CustomerCashierFormImages';
 import { lockCashierOperationRequest, assertCashierNotAbandoned } from '@/services/customer-work/CustomerCashierAbandon';
 import { cashierSecondCardCreationFacts, authorizeCashierSecondCardCreation, captureCashierSecondCardCreation,
@@ -3072,7 +3073,8 @@ export class StoreOrderCreateService {
       // New root only: preview and both idempotent-return paths have already exited.
       // Capture after resource claims, before final qualification/time guards. Any
       // missing schema/authority or later rejection must roll back this same transaction.
-      if (runtime.requirePurchaseOrigin) await recordPurchaseOriginEvidence(tx, { orderId: order.id, buyerId: uid });
+      const purchaseOrigin = runtime.requirePurchaseOrigin
+        ? await recordPurchaseOriginEvidence(tx, { orderId: order.id, buyerId: uid }) : null;
 
       if (giftQuote) {
         await reserveOrderPromotionGifts(tx, { quote: giftQuote,
@@ -3089,6 +3091,8 @@ export class StoreOrderCreateService {
         order.totalNum = totalNum;
         order.cartId = physicalCartIds;
       }
+
+      if (purchaseOrigin) await recordPurchasePhysicalOriginEvidence(tx, purchaseOrigin);
 
       // Persist the PHP "下单后打印" intent after every physical gift row and
       // the final order quantity are present. This remains in the same commit.

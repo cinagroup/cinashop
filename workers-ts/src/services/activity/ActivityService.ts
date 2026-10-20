@@ -36,6 +36,7 @@ import {
 } from "@/services/order/OrderSystemFormService";
 import { enqueueOrderPaidEvent } from "@/services/order/OrderOutboxService";
 import { recordPurchaseOriginEvidence } from '@/services/order/PurchaseOriginEvidence';
+import { recordPurchasePhysicalOriginEvidence } from '@/services/order/PurchasePhysicalOriginEvidence';
 import { assertIntegralOnceLimit, assertIntegralTotalLimit, lockIntegralPurchaseScope, readIntegralPurchasedQuantity } from './IntegralPurchaseAdmission';
 import { assertProductPurchaseQuantity, productPurchaseQuoteGuard } from '@/services/order/ProductPurchaseAdmission';
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
@@ -900,7 +901,8 @@ export class ActivityService {
         // No store_cart ownership is inferred from this selector. SQL captures
         // the new root and its real immutable line before payment or delivery;
         // existing/replayed and legacy orders are never backfilled here.
-        await recordPurchaseOriginEvidence(tx as unknown as DbClient, { orderId: order.id, buyerId: uid });
+        const origin = await recordPurchaseOriginEvidence(tx as unknown as DbClient, { orderId: order.id, buyerId: uid });
+        await recordPurchasePhysicalOriginEvidence(tx as unknown as DbClient, origin);
         const [paidOrder] = await tx.update(storeOrder).set({ paid: 1 })
           .where(and(eq(storeOrder.id, order.id), eq(storeOrder.uid, uid), eq(storeOrder.paid, 0),
             eq(storeOrder.cartId, cartSnapshot.id)))

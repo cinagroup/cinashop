@@ -40,7 +40,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Customer repurch
   }
   async function read(path: string, init: RequestInit = {}) {
     const before = await f.snapshot(), sequences = await f.sequences();
-    expect(Object.keys(before)).toHaveLength(282); expect(sequences).toHaveLength(229);
+    expect(Object.keys(before)).toHaveLength(283); expect(sequences).toHaveLength(229);
     const response = await request(path, { ...init, headers: { ...bearer(f.tokens.buyer), 'content-type': 'application/json', ...init.headers } });
     const body = await response.json<Envelope>(); expect(response.status).toBeLessThan(500); expect(body.status, body.msg).toBe(200);
     expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(sequences); return body.data;

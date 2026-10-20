@@ -242,7 +242,8 @@ export async function quoteOrderPromotionGifts(container: Container,
   }
   // Refund selectors and legacy cart readers require numeric identities. Assign
   // high IDs inside this order, checking the actual purchased IDs for collision;
-  // these are never StoreCart records and never enter purchase-origin quota.
+  // these are never StoreCart records. Charged origin excludes them; the final
+  // protected physical origin includes them for historical product quantities.
   const cartIds = new Set(input.lines.map(line => String(line.key)));
   let giftCartId = 2_147_483_647;
   for (const product of campaigns.flatMap(campaign => campaign.products)) {

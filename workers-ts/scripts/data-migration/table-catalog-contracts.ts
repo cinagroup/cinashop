@@ -1,8 +1,8 @@
 import { compareCatalogs, type Catalog } from "./postgres-catalog-audit";
 
-export const TABLE_CATALOG_BASE_COUNT = 285;
+export const TABLE_CATALOG_BASE_COUNT = 286;
 // All audit paths explicitly compose the one reviewed abandonment ledger.
-export const TABLE_CATALOG_COUNT = 286;
+export const TABLE_CATALOG_COUNT = 287;
 export const TABLE_CATALOG_FIELDS = [
   "forceRowSecurity", "key", "kind", "name", "partition", "partitionKey", "persistence", "rowSecurity",
 ] as const;
@@ -12,7 +12,7 @@ export function assertAllTablesAligned(reference: Catalog, candidate: Catalog): 
   for (const catalog of [reference, candidate]) {
     if (catalog.tables.length !== TABLE_CATALOG_COUNT
       || new Set(catalog.tables.map(row => row.key)).size !== TABLE_CATALOG_COUNT) {
-      throw new Error("Complete table cohort changed: expected 286 unique identities");
+      throw new Error("Complete table cohort changed: expected 287 unique identities");
     }
     for (const row of catalog.tables) {
       // Reject a reader that silently drops a field on BOTH sides, as well as

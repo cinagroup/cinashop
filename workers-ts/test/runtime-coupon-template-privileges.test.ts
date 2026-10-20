@@ -46,7 +46,7 @@ native('coupon template isolated PG16 catalog and exact real LOGIN authority', (
   async function rows(excludeTemplates = false) {
     const tables = await f.exec(`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r'
       ${excludeTemplates ? "AND relname NOT IN ('store_coupon_template','store_coupon_template_issue')" : ''} ORDER BY relname`);
-    expect(tables).toHaveLength(excludeTemplates ? 280 : 282);
+    expect(tables).toHaveLength(excludeTemplates ? 281 : 283);
     return f.exec(tables.map(({ name }) => {
       expect(name).toMatch(/^[a-z_][a-z_0-9]*$/);
       return `SELECT '${name}' AS name,coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) AS rows FROM public."${name}" t`;

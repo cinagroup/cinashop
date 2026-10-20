@@ -2,7 +2,9 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { PURCHASE_ORIGIN_STATE_SQL } from './purchaseOriginEvidenceCatalog';
-import { PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchaseCancellationGiftEvidenceCatalog';
+import { PURCHASE_PHYSICAL_CANCELLATION_STATE_SQL as PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchasePhysicalCancellationEvidenceCatalog';
+import { PURCHASE_PHYSICAL_ORIGIN_STATE_SQL } from './purchasePhysicalOriginEvidenceCatalog';
+import { PURCHASE_PHYSICAL_ORIGIN_SOURCE_SQL } from './purchasePhysicalOriginEvidenceInstallation';
 import { PURCHASE_CANCELLATION_SOURCE_SQL } from './purchaseCancellationEvidenceInstallation';
 
 type Query = Pick<DbClient, 'execute'>;
@@ -24,7 +26,7 @@ function underOwner(source: string, maintenance: string, comparisons: number) {
 export async function inspectRuntimePurchaseEvidence(tx: Query, maintenance: string) {
   pricingIdentifier(maintenance);
   const [row] = await tx.execute(sql`WITH origin AS (${underOwner(PURCHASE_ORIGIN_STATE_SQL, maintenance, 1)}),
-    cancellation AS (${underOwner(PURCHASE_CANCELLATION_GIFT_STATE_SQL, maintenance, 3)}),
+    cancellation AS (${underOwner(PURCHASE_CANCELLATION_GIFT_STATE_SQL, maintenance, 5)}),
     sources AS (${underOwner(PURCHASE_CANCELLATION_SOURCE_SQL, maintenance, 3)})
     SELECT origin.state AS origin, cancellation.state AS cancellation, sources.ready AS sources,
       current_setting('server_version_num')::integer/10000=16
@@ -32,7 +34,7 @@ export async function inspectRuntimePurchaseEvidence(tx: Query, maintenance: str
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS environment
     FROM origin CROSS JOIN cancellation CROSS JOIN sources`);
   return { origin: row?.origin, cancellation: row?.cancellation, sourcesReady: row?.sources === true,
-    ready: row?.origin === 'v1' && (row?.cancellation === 'v1' || row?.cancellation === 'gift-v1')
+    ready: row?.origin === 'v1' && (row?.cancellation === 'v1' || row?.cancellation === 'gift-v1' || row?.cancellation === 'physical-v1')
       && row?.sources === true && row?.environment === true };
 }
 
@@ -43,8 +45,8 @@ export async function inspectRuntimePurchaseGiftEvidence(tx: Query, maintenance:
   const [row] = await tx.execute(sql`SELECT state, current_setting('server_version_num')::integer/10000=16
     AND current_setting('session_replication_role')='origin'
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS environment
-    FROM (${underOwner(PURCHASE_CANCELLATION_GIFT_STATE_SQL, maintenance, 3)}) gift`);
-  return { state: row?.state, ready: row?.state === 'gift-v1' && row?.environment === true };
+    FROM (${underOwner(PURCHASE_CANCELLATION_GIFT_STATE_SQL, maintenance, 5)}) gift`);
+  return { state: row?.state, ready: (row?.state === 'gift-v1' || row?.state === 'physical-v1') && row?.environment === true };
 }
 
 /** Fixed maintenance prerequisite, not an installer or repair path. Hold the
@@ -69,4 +71,12 @@ export async function lockRuntimePurchaseEvidenceForGrants(tx: Query, maintenanc
   await tx.execute(sql`LOCK TABLE ONLY public.store_order_purchase_cancellation IN ACCESS EXCLUSIVE MODE NOWAIT`);
   if (!(await inspectRuntimePurchaseEvidence(tx, maintenance)).ready)
     throw Error('Purchase evidence protocol changed during grant locking');
+}
+
+export async function inspectRuntimePurchasePhysicalEvidence(tx:Query,maintenance:string){
+  pricingIdentifier(maintenance);
+  const [physical]=await tx.execute(underOwner(PURCHASE_PHYSICAL_ORIGIN_STATE_SQL,maintenance,1));
+  const [cancellation]=await tx.execute(underOwner(PURCHASE_CANCELLATION_GIFT_STATE_SQL,maintenance,5));
+  const [sources]=await tx.execute(underOwner(PURCHASE_PHYSICAL_ORIGIN_SOURCE_SQL,maintenance,2));
+  return {state:physical?.state,cancellation:cancellation?.state,sourcesReady:sources?.ready===true,ready:physical?.state==='v1' && cancellation?.state==='physical-v1' && sources?.ready===true};
 }

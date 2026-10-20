@@ -7,7 +7,7 @@ export const CASHIER_ORDINARY_SOURCE_READ_TABLES = [
  'user','user_address','user_level','user_relation','user_label','user_label_relation','user_group','category','user_bill','user_brokerage',
  'store_service','store_product','store_product_attr_value','store_product_relation','store_product_coupon',
  'store_cart','store_order','store_order_cart_info','store_order_status','store_order_outbox','store_order_economize','store_order_promotions',
- 'store_order_purchase_origin','store_order_product_coupon_reward','store_order_promotion_gift_coupon_reward',
+ 'store_order_purchase_origin','store_order_purchase_physical_origin','store_order_product_coupon_reward','store_order_promotion_gift_coupon_reward',
  'store_coupon_issue','store_coupon_user','store_coupon_product','store_coupon_issue_user','store_product_category','store_product_label','store_brand','store_promotions','store_promotions_auxiliary',
  'store_discounts','store_discounts_products','system_config','member_right','system_user_level','agent_level','agent_level_task','agent_level_task_record',
  'shipping_templates','shipping_templates_region','shipping_templates_free','shipping_templates_no_delivery','city_area','system_store',
@@ -15,7 +15,7 @@ export const CASHIER_ORDINARY_SOURCE_READ_TABLES = [
 ] as const;
 export const CASHIER_ORDINARY_SOURCE_INSERT_TABLES = [
  'store_cart','store_order','store_order_cart_info','store_order_status','store_order_outbox','store_order_economize','store_order_promotions',
- 'store_order_purchase_origin','store_order_product_coupon_reward','store_order_promotion_gift_coupon_reward','store_coupon_user','store_coupon_issue_user',
+ 'store_order_purchase_origin','store_order_purchase_physical_origin','store_order_product_coupon_reward','store_order_promotion_gift_coupon_reward','store_coupon_user','store_coupon_issue_user',
  'user_bill','user_brokerage','user_level','user_label_relation','agent_level_task_record','system_form_data',
 ] as const;
 const fullUpdates = ['store_cart','store_order','store_order_cart_info','store_order_outbox','store_product','store_product_attr_value','user','user_level','store_coupon_user'] as const;

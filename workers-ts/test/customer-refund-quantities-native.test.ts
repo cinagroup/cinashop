@@ -73,7 +73,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Customer explici
       expect(rights).toEqual({ independent: true, authenticates: true, user_updates: false, refund_updates: false, attachment_inserts: false, creates: false });
       async function get(path: string, token: string) {
         const before = await f.snapshot(), sequences = await f.sequences(), writes = f.r2Writes.length, deletes = f.r2Deletes.length;
-        expect(Object.keys(before)).toHaveLength(282); expect(sequences).toHaveLength(229);
+        expect(Object.keys(before)).toHaveLength(283); expect(sequences).toHaveLength(229);
         const response = await request(path, { headers: bearer(token) }, peer.container), body = await response.json<Envelope>();
         expect(body.status, body.msg).toBe(200); expect(response.headers.get('Cache-Control')).toContain('no-store');
         expect(await f.snapshot()).toEqual(before); expect(await f.sequences()).toEqual(sequences);

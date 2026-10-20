@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { createDbFromConnectionString } from '@/lib/di';
 import { inspectRuntimeBusinessCommissioning, runRuntimeBusinessCommissioning, runRuntimeShippingPrerequisite,
   RUNTIME_COMMISSION_OPERATION, RUNTIME_SHIPPING_OPERATION } from '@/migrations/runRuntimeBusinessCommissioning';
+import { runPurchasePhysicalOriginRuntimeUpgrade, PURCHASE_PHYSICAL_ORIGIN_RUNTIME_UPGRADE } from '@/migrations/runPurchasePhysicalOriginRuntimeUpgrade';
 import { auditRuntimeBusinessPrivileges } from '@/migrations/auditRuntimeBusinessPrivileges';
 import type { RuntimeBusinessCommissionBindings } from './runtime-business-commission-bindings';
 import { exerciseRuntimeBusiness, RUNTIME_PROBE_OPERATION } from './RuntimeBusinessProbe';
@@ -20,12 +21,12 @@ export default {
     const expected=Uint8Array.from(env.AUDIT_TOKEN_SHA256.match(/../g)!,b=>parseInt(b,16));
     if(!timingSafeEqual(actual,expected))return Response.json({error:'forbidden'},{status:403,headers});
     const url=new URL(request.url);
-    if(!['/status','/verify','/apply','/shipping-schema','/exercise'].includes(url.pathname) || url.search)return Response.json({error:'not found'},{status:404,headers});
-    const method=['/apply','/shipping-schema','/exercise'].includes(url.pathname)?'POST':'GET';
+    if(!['/status','/verify','/apply','/shipping-schema','/exercise','/purchase-physical-origin-upgrade'].includes(url.pathname) || url.search)return Response.json({error:'not found'},{status:404,headers});
+    const method=['/apply','/shipping-schema','/exercise','/purchase-physical-origin-upgrade'].includes(url.pathname)?'POST':'GET';
     if(request.method!==method)return Response.json({error:'method not allowed'},{status:405,headers:{...headers,Allow:method}});
     if(method==='POST'){
       if(request.headers.get('X-Migration-Operation')!==(url.pathname==='/shipping-schema'?RUNTIME_SHIPPING_OPERATION:
-        url.pathname==='/exercise'?RUNTIME_PROBE_OPERATION:RUNTIME_COMMISSION_OPERATION))
+        url.pathname==='/exercise'?RUNTIME_PROBE_OPERATION:url.pathname==='/purchase-physical-origin-upgrade'?PURCHASE_PHYSICAL_ORIGIN_RUNTIME_UPGRADE:RUNTIME_COMMISSION_OPERATION))
         return Response.json({error:'explicit operation required'},{status:400,headers});
       if(request.body){const reader=request.body.getReader();try{for(;;){const item=await reader.read();if(item.done)break;
         if(item.value.byteLength)return Response.json({error:'empty body required'},{status:400,headers});}}
@@ -55,9 +56,10 @@ export default {
           :Response.json({operation:RUNTIME_COMMISSION_OPERATION,ready:results.every(r=>'ready' in r&&r.ready),profiles:results},{headers});
       }
       db=createDbFromConnectionString(env.HYPERDRIVE_MAINTENANCE.connectionString,1,{searchPath:'public,pg_temp',applicationName:'cinashop_runtime_commission'});
-      stage=url.pathname==='/status'?'preflight':url.pathname==='/shipping-schema'?'shipping_schema':'commission';
+      stage=url.pathname==='/status'?'preflight':url.pathname==='/shipping-schema'?'shipping_schema':url.pathname==='/purchase-physical-origin-upgrade'?'purchase_physical_origin_upgrade':'commission';
       const result=url.pathname==='/status'?await inspectRuntimeBusinessCommissioning(db,target)
-        :url.pathname==='/shipping-schema'?await runRuntimeShippingPrerequisite(db,target):await runRuntimeBusinessCommissioning(db,target);
+        :url.pathname==='/shipping-schema'?await runRuntimeShippingPrerequisite(db,target)
+        :url.pathname==='/purchase-physical-origin-upgrade'?await runPurchasePhysicalOriginRuntimeUpgrade(db,target):await runRuntimeBusinessCommissioning(db,target);
       await db.$client.end({timeout:1});db=undefined;
       return Response.json(result,{headers});
     }catch(error){

@@ -75,10 +75,10 @@ afterEach(() => {
 });
 
 describe("MySQL to PostgreSQL schema audit", () => {
-  it('binds the exact 181-file root migration cohort and refuses renamed, reordered, omitted or addon files',()=>{
+  it('binds the exact 182-file root migration cohort and refuses renamed, reordered, omitted or addon files',()=>{
     const files=readdirSync(resolve(import.meta.dirname,'../migrations')).filter(name=>name.endsWith('.sql')).sort();
     expect(()=>assertExternalMigrationCohort(files)).not.toThrow();
-    expect(files.at(-1)).toBe('0178_product_save_effects.sql');
+    expect(files.at(-1)).toBe('0184_purchase_physical_origin_evidence.sql');
     for(const invalid of [
       files.filter(name=>name!=='0177_product_recycle_effects.sql'),
       files.map(name=>name==='0178_product_save_effects.sql'?'0178_unregistered.sql':name),
@@ -90,7 +90,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
   it('rejects unknown, omitted or aliased registered tables and changed reviewed additions',async()=>{
     const api=await import('drizzle-kit/api'),models=await import('../src/models/schema');
     const snapshot=api.generateDrizzleJson(models);assertRegisteredModelCohort(snapshot);
-    expect(Object.keys(snapshot.tables)).toHaveLength(291);
+    expect(Object.keys(snapshot.tables)).toHaveLength(292);
     for(const mutate of [
       (value:typeof snapshot)=>{delete value.tables['public.customer_city_delivery_attempt'];},
       (value:typeof snapshot)=>{delete value.tables['public.erp_connection'];},
@@ -243,7 +243,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
 
     expect(report.sourceTableCount).toBe(201);
-    expect(report.targetTableCount).toBe(286);
+    expect(report.targetTableCount).toBe(287);
     expect([...parseCreateTables(externalTargetSql,"postgres").keys()].sort()).toEqual(registeredTableNames("external"));
     expect(report.sharedTableCount).toBe(201);
     expect(report.sourceColumnCompleteTableCount).toBe(201);
@@ -300,6 +300,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
       "store_order_promotion_gift_coupon_reward",
       "store_order_purchase_cancellation",
       "store_order_purchase_origin",
+      "store_order_purchase_physical_origin",
       "store_order_refund_payment",
       "store_order_refund_split",
       "store_product_sku_retirement_log",
@@ -364,11 +365,11 @@ describe("MySQL to PostgreSQL schema audit", () => {
     ].join("\n");
     const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
     expect(historicalDefinitionDrift).toEqual({
-      externalTableCount: 286,
+      externalTableCount: 287,
       // Eighteen independently installed ledgers are declared; abandonment is
       // also the single explicit external addition, leaving seventeen TS-only tables.
-      // It is distinct from the 282 tables actually installed by runAll.
-      workerTableCount: 300,
+      // It is distinct from the 283 tables actually installed by runAll.
+      workerTableCount: 301,
       externalOnlyTables: [
         'customer_city_delivery_attempt',
         'customer_city_delivery_binding',
@@ -379,10 +380,10 @@ describe("MySQL to PostgreSQL schema audit", () => {
     });
     const ordinaryDefinitionDrift = comparePostgresDefinitions(externalTargetSql, ordinaryDeclarations);
     expect(ordinaryDefinitionDrift).toEqual({
-      externalTableCount: 286,
+      externalTableCount: 287,
       // Four fixed ordinary owner-maintenance declarations are additional to
       // the historical declaration view; ORM and bootstrap cohorts stay separate.
-      workerTableCount: 304,
+      workerTableCount: 305,
       externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables: reviewedExplicitDeclarationTables('current-ordinary'),
       columnDrift: [],
@@ -391,10 +392,10 @@ describe("MySQL to PostgreSQL schema audit", () => {
       'cashier_ordinary_cart_v1','cashier_ordinary_draft_v1','cashier_ordinary_operation_v1','cashier_ordinary_origin_v1',
     ]);
     expect(productDefinitionDrift).toEqual({
-      externalTableCount: 286,
+      externalTableCount: 287,
       // Exactly five independently installed product addons follow the frozen
       // ordinary declaration scope. They do not join any construction cohort.
-      workerTableCount: 309,
+      workerTableCount: 310,
       externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables: reviewedExplicitDeclarationTables('current-product'),
       columnDrift: [],
@@ -405,7 +406,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
     const orderDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!cashAddonSources.includes(name)&&!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const orderDefinitionDrift = comparePostgresDefinitions(externalTargetSql, orderDeclarations);
-    expect(orderDefinitionDrift).toEqual({ externalTableCount:286, workerTableCount:311,
+    expect(orderDefinitionDrift).toEqual({ externalTableCount:287, workerTableCount:312,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-order'), columnDrift:[] });
     const orderOnly=orderDefinitionDrift.workerOnlyTables.filter(table=>!productDefinitionDrift.workerOnlyTables.includes(table));
@@ -414,7 +415,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
       expect(registeredTableNames(path).filter(table=>orderOnly.includes(table))).toEqual([]);
     const cashDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const cashDefinitionDrift = comparePostgresDefinitions(externalTargetSql, cashDeclarations);
-    expect(cashDefinitionDrift).toEqual({externalTableCount:286,workerTableCount:314,
+    expect(cashDefinitionDrift).toEqual({externalTableCount:287,workerTableCount:315,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-cash'),columnDrift:[]});
     const cashOnly=cashDefinitionDrift.workerOnlyTables.filter(table=>!orderDefinitionDrift.workerOnlyTables.includes(table));
@@ -423,14 +424,14 @@ describe("MySQL to PostgreSQL schema audit", () => {
       expect(registeredTableNames(path).filter(table=>cashOnly.includes(table))).toEqual([]);
     const proactiveDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const proactiveDefinitionDrift = comparePostgresDefinitions(externalTargetSql, proactiveDeclarations);
-    expect(proactiveDefinitionDrift).toEqual({externalTableCount:286,workerTableCount:318,
+    expect(proactiveDefinitionDrift).toEqual({externalTableCount:287,workerTableCount:319,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-proactive'),columnDrift:[]});
     const proactiveOnly=proactiveDefinitionDrift.workerOnlyTables.filter(table=>!cashDefinitionDrift.workerOnlyTables.includes(table));
     expect(proactiveOnly).toEqual(['supplier_proactive_refund_decision_v1','supplier_proactive_refund_operation_v1','supplier_refund_money_completion_v1','supplier_refund_money_payment_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>proactiveOnly.includes(table))).toEqual([]);
-    expect(definitionDrift).toEqual({externalTableCount:286,workerTableCount:319,
+    expect(definitionDrift).toEqual({externalTableCount:287,workerTableCount:320,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-extract'),columnDrift:[]});
     const extractOnly=definitionDrift.workerOnlyTables.filter(table=>!proactiveDefinitionDrift.workerOnlyTables.includes(table));

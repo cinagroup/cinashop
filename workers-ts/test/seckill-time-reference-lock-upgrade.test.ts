@@ -144,7 +144,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds the current external 181-file and embedded 184-step catalogs with explicit city and abandonment composition and identical five-category schema and exact independent capability', async () => {
+  it('builds the current external 182-file and embedded 185-step catalogs with explicit city and abandonment composition and identical five-category schema and exact independent capability', async () => {
     const external = await checkoutPricingMigrationDatabase();
     const embedded = await checkoutPricingMigrationDatabase();
     try {
@@ -155,7 +155,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 184 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 185 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await catalog(embedded)).toEqual(await catalog(external));
       for (const f of [external, embedded]) {

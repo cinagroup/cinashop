@@ -25,12 +25,14 @@ export async function installPromotionGiftRuntimeUpgradeInTransaction(tx:Pick<Db
   if(!(await inspectRuntimePurchaseGiftEvidence(tx,target.maintenance)).ready)throw Error('Promotion gift cancellation protocol required');
   await tx.execute(sql.raw('LOCK TABLE ONLY public.user_bill, ONLY public.store_order_promotion_gift_coupon_reward IN SHARE ROW EXCLUSIVE MODE'));
   if(!(await inspectOrderPromotionGiftReceiptCatalog(tx,target.maintenance,target)).ready)throw Error('Promotion gift exact catalog required');
-  const inspect=async(version:'pre-full-gifts'|'pre-sign-day'|'pre-agent-levels'|'current')=>({
+  const inspect=async(version:'pre-full-gifts'|'pre-sign-day'|'pre-agent-levels'|'pre-physical-origin'|'current')=>({
     app:await inspectRuntimeBusinessProfileInTransaction(tx,'app',target,version),
     admin:await inspectRuntimeBusinessProfileInTransaction(tx,'admin',target,version),
   });
   const current=await inspect('current');
   if(current.app.ready && current.admin.ready)return {operation:PROMOTION_GIFT_RUNTIME_UPGRADE,applied:false as const,profileStage:'current' as const};
+  const physicalPrevious=await inspect('pre-physical-origin');
+  if(physicalPrevious.app.ready && physicalPrevious.admin.ready)return {operation:PROMOTION_GIFT_RUNTIME_UPGRADE,applied:false as const,profileStage:'pre-physical-origin' as const};
   const signDay=await inspect('pre-agent-levels');
   if(signDay.app.ready && signDay.admin.ready)return {operation:PROMOTION_GIFT_RUNTIME_UPGRADE,applied:false as const,profileStage:'pre-agent-levels' as const};
   const installed=await inspect('pre-sign-day');

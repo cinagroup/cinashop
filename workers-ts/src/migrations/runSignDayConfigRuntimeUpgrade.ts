@@ -41,7 +41,7 @@ export async function installSignDayConfigRuntimeUpgradeInTransaction(
   await tx.execute(sql.raw('LOCK TABLE ONLY public.system_group, ONLY public.system_group_data IN SHARE ROW EXCLUSIVE MODE'));
   // A DDL owner may have acquired its lock before this transaction arrived.
   if (!(await inspectSignDayConfigRuntimeCatalog(tx, target.maintenance,target)).ready) throw Error('Sign-day runtime exact catalog required');
-  const inspect = async (version: 'pre-sign-day' | 'pre-agent-levels' | 'current') => ({
+  const inspect = async (version: 'pre-sign-day' | 'pre-agent-levels' | 'pre-physical-origin' | 'current') => ({
     app: await inspectRuntimeBusinessProfileInTransaction(tx, 'app', target, version),
     admin: await inspectRuntimeBusinessProfileInTransaction(tx, 'admin', target, version),
   });
@@ -51,6 +51,8 @@ export async function installSignDayConfigRuntimeUpgradeInTransaction(
   const installed = await inspect('pre-agent-levels');
   if (installed.app.ready && installed.admin.ready)
     return { operation: SIGN_DAY_CONFIG_RUNTIME_UPGRADE, applied: false as const, profileStage: 'pre-agent-levels' as const };
+  const physicalPrevious=await inspect('pre-physical-origin');
+  if(physicalPrevious.app.ready && physicalPrevious.admin.ready)return {operation:SIGN_DAY_CONFIG_RUNTIME_UPGRADE,applied:false as const,profileStage:'pre-physical-origin' as const};
   const previous = await inspect('pre-sign-day');
   if (!previous.app.ready || !previous.admin.ready) throw Error('Sign-day runtime exact pre-sign-day profile required');
   await installRuntimeSignDayGroupLockBoundaryInTransaction(tx,target);

@@ -45,7 +45,7 @@ export async function customerCashierSecondCardFixture(extraTables:PgTable[]=[])
       throw Error('Actual cashier abandonment customer LOGIN is not commissioned');}
     const reset=async(price='7.00')=>{
       await f.exec('TRUNCATE public.cashier_second_card_abandon_v1,public.cashier_second_card_cart_v1,public.cashier_second_card_origin_v1,public.cashier_second_card_payment_v1,public.customer_writeoff_operation_request');
-      await f.exec('ALTER TABLE public.store_order_purchase_origin DISABLE TRIGGER USER;TRUNCATE public.store_order_purchase_origin;ALTER TABLE public.store_order_purchase_origin ENABLE TRIGGER USER');
+      await f.exec('ALTER TABLE public.store_order_purchase_physical_origin DISABLE TRIGGER USER;TRUNCATE public.store_order_purchase_physical_origin;ALTER TABLE public.store_order_purchase_physical_origin ENABLE TRIGGER USER;ALTER TABLE public.store_order_purchase_origin DISABLE TRIGGER USER;TRUNCATE public.store_order_purchase_origin;ALTER TABLE public.store_order_purchase_origin ENABLE TRIGGER USER');
       await f.reset();await f.maintenanceDb.delete(storeCart);await f.maintenanceDb.delete(storeOrderCartInfo);await f.maintenanceDb.delete(storeOrder);
       await f.maintenanceDb.delete(storeOrderStatus);await f.maintenanceDb.delete(storeOrderPromotions);await f.maintenanceDb.delete(paymentReconciliationCase);
       await f.maintenanceDb.update(storeProduct).set({productType:4,isVip:0,stock:10,sales:0,freight:1,postage:'0.00',giveIntegral:'0.00',isSupportRefund:1})

@@ -234,7 +234,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('paid purchase qu
   it('fails closed when the restricted reader loses origin or cancellation receipt SELECT', async () => {
     await f.withRuntime(async r => {
       await paid(r);
-      for (const table of ['store_order_purchase_origin', 'store_order_purchase_cancellation']) {
+      for (const table of ['store_order_purchase_origin', 'store_order_purchase_physical_origin', 'store_order_purchase_cancellation']) {
         await f.exec(`REVOKE SELECT ON public.${table} FROM "${r.role}"`);
         try {
           await expect(history(r)).rejects.toMatchObject({ cause: { code: '42501' } });

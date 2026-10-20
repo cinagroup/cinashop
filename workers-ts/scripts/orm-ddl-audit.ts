@@ -38,6 +38,7 @@ import { runCouponTemplateCatalog } from '../src/migrations/runCouponTemplateCat
 import { runSupplierRefundLookupIndexes } from '../src/migrations/runSupplierRefundLookupIndexes';
 import { inspectPurchaseOriginEvidence, runPurchaseOriginEvidenceSchema, completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
 import { inspectPurchaseCancellationEvidence, runPurchaseCancellationEvidenceSchema, completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
+import { inspectPurchasePhysicalOriginEvidence, runPurchasePhysicalOriginEvidenceSchema, completePurchasePhysicalOriginEvidenceOrm } from '../src/migrations/runPurchasePhysicalOriginEvidence';
 import { withPresaleOutboxContract } from './data-migration/presale-outbox-contract';
 import { withPinkSuccessOutboxContract } from './data-migration/pink-success-outbox-contract';
 import { withProductEffectsOutboxContract } from './data-migration/product-effects-outbox-contract';
@@ -110,6 +111,7 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const supplierRefundLookupVerification: Record<string, unknown> = {};
   const purchaseOriginVerification: Record<string, unknown> = {};
   const purchaseCancellationVerification: Record<string, unknown> = {};
+  const purchasePhysicalOriginVerification: Record<string, unknown> = {};
   const cleanupRecoveries: Array<{ database: string; timeoutRecovered: boolean; retried: boolean }> = [];
   try {
     const [identity] = await control`SELECT current_database() AS database, current_user AS role, current_setting('server_version_num') AS version`;
@@ -369,8 +371,8 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
           throw Error(`Purchase origin repeat or no-backfill verification differs on ${path}`);
         purchaseOriginVerification[path] = { initial: initialOrigin.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
         const initialCancellation = await inspectPurchaseCancellationEvidence(shippingDb);
-        const registeredGiftCancellation = path === 'external' || path === 'embedded';
-        const expectedCancellation = registeredGiftCancellation ? 'gift-v1' : 'orm-pending';
+        const registeredPhysicalOrigin = path === 'external' || path === 'embedded';
+        const expectedCancellation = registeredPhysicalOrigin ? 'physical-v1' : 'orm-pending';
         if (initialCancellation.state !== expectedCancellation || !initialCancellation.sourcesReady)
           throw Error(`Purchase cancellation registration differs on ${path}; no automatic repair`);
         const beforeCancellation = await client.unsafe(originIdentityQuery);
@@ -379,11 +381,66 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
         if (JSON.stringify(installedCancellation.filter(row => beforeCancellation.some(old => old.kind === row.kind && old.oid === row.oid))) !== JSON.stringify(beforeCancellation))
           throw Error(`Purchase cancellation completion replaced an existing object on ${path}`);
         await runPurchaseCancellationEvidenceSchema(shippingDb); await runPurchaseCancellationEvidenceSchema(shippingDb);
-        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== (registeredGiftCancellation ? 'gift-v1' : 'v1')
+        if ((await inspectPurchaseCancellationEvidence(shippingDb)).state !== (registeredPhysicalOrigin ? 'physical-v1' : 'v1')
           || JSON.stringify(installedCancellation) !== JSON.stringify(await client.unsafe(originIdentityQuery))
           || (await client.unsafe('SELECT 1 FROM public.store_order_purchase_cancellation LIMIT 1')).length)
           throw Error(`Purchase cancellation repeat or no-backfill verification differs on ${path}`);
         purchaseCancellationVerification[path] = { initial: initialCancellation.state, complete: true, completionPreserved: true, repeatPreserved: true, noBackfill: true };
+        // Registered 0184 paths must already be protected. Bare ORM paths have
+        // structural tables only and may advance solely through explicit empty
+        // completion, after the independently checked charged/cancellation v1.
+        const initialPhysicalOrigin = await inspectPurchasePhysicalOriginEvidence(shippingDb);
+        if (initialPhysicalOrigin.state !== (registeredPhysicalOrigin ? 'v1' : 'orm-pending')
+          || !initialPhysicalOrigin.sourcesReady)
+          throw Error(`Physical purchase origin registration differs on ${path}; no automatic repair`);
+        const beforePhysicalOrigin = await client.unsafe(cityIdentityQuery);
+        let implicitPhysicalCompletionRefused = false;
+        if (initialPhysicalOrigin.state === 'orm-pending') {
+          try { await runPurchasePhysicalOriginEvidenceSchema(shippingDb); }
+          catch (error) {
+            let cause: unknown = error;
+            for (let depth = 0; depth < 8 && cause && typeof cause === 'object'; depth++) {
+              if (cause instanceof postgres.PostgresError && cause.code === 'P0001'
+                && cause.message === 'Physical origin catalog/source drift or unprotected ORM requires review') {
+                implicitPhysicalCompletionRefused = true;
+                break;
+              }
+              if (!('cause' in cause) || cause.cause === cause) break;
+              cause = cause.cause;
+            }
+            if (!implicitPhysicalCompletionRefused) throw error;
+          }
+          if (!implicitPhysicalCompletionRefused
+            || JSON.stringify(beforePhysicalOrigin) !== JSON.stringify(await client.unsafe(cityIdentityQuery))
+            || (await inspectPurchasePhysicalOriginEvidence(shippingDb)).state !== 'orm-pending')
+            throw Error(`Physical purchase origin implicitly completed ORM on ${path}`);
+          await completePurchasePhysicalOriginEvidenceOrm(shippingDb);
+        }
+        const installedPhysicalOrigin = await client.unsafe(cityIdentityQuery);
+        if (JSON.stringify(installedPhysicalOrigin.filter(row => beforePhysicalOrigin.some(old => old.kind === row.kind && old.oid === row.oid)))
+          !== JSON.stringify(beforePhysicalOrigin))
+          throw Error(`Physical purchase origin completion replaced an existing object on ${path}`);
+        for (let repeat = 0; repeat < 2; repeat++) {
+          await runPurchasePhysicalOriginEvidenceSchema(shippingDb);
+          await runPurchaseOriginEvidenceSchema(shippingDb);
+          await runPurchaseCancellationEvidenceSchema(shippingDb);
+        }
+        const repeatedPhysicalOrigin = await inspectPurchasePhysicalOriginEvidence(shippingDb);
+        const repeatedPhysicalCancellation = await inspectPurchaseCancellationEvidence(shippingDb);
+        if (repeatedPhysicalOrigin.state !== 'v1' || !repeatedPhysicalOrigin.sourcesReady
+          || repeatedPhysicalCancellation.state !== 'physical-v1' || !repeatedPhysicalCancellation.sourcesReady
+          || (await inspectPurchaseOriginEvidence(shippingDb)).state !== 'v1'
+          || JSON.stringify(installedPhysicalOrigin) !== JSON.stringify(await client.unsafe(cityIdentityQuery))
+          || (await client.unsafe(`SELECT 1 FROM public.store_order_purchase_physical_origin
+            UNION ALL SELECT 1 FROM public.store_order_purchase_origin
+            UNION ALL SELECT 1 FROM public.store_order_purchase_cancellation LIMIT 1`)).length)
+          throw Error(`Physical purchase origin protection/repeat/no-backfill verification differs on ${path}`);
+        purchasePhysicalOriginVerification[path] = { initial: initialPhysicalOrigin.state,
+          registered0184: registeredPhysicalOrigin, explicitEmptyOrmCompletion: !registeredPhysicalOrigin,
+          implicitCompletionRefused: implicitPhysicalCompletionRefused, complete: true,
+          exactFunctionsTriggersConstraints: true, cancellation: repeatedPhysicalCancellation.state,
+          completionPreserved: true, repeatPreserved: true, oldProtocolsRepeatPreserved: true,
+          noRuntimeGrants: true, noBackfill: true };
         const supplierLookupIdentityQuery = `SELECT c.oid::text,c.relfilenode::text,c.relname,c.relowner::text,c.relacl::text,
           pg_get_indexdef(c.oid) AS definition FROM pg_class c WHERE c.relnamespace='public'::regnamespace
           AND c.relname IN ('sfw_link_id_idx','stx_link_id_idx') ORDER BY c.relname`;
@@ -681,6 +738,7 @@ if (!registeredOfflineGift) {
     requiredIndexKeys.push('supplier_flowing_water.sfw_link_id_idx', 'supplier_transactions.stx_link_id_idx');
     requiredIndexKeys.push('store_order_purchase_origin.store_order_purchase_origin_pkey', 'store_order_purchase_origin.sopo_buyer_history');
     requiredIndexKeys.push('store_order_purchase_cancellation.store_order_purchase_cancellation_pkey', 'store_order_purchase_cancellation.sopc_buyer_history');
+    requiredIndexKeys.push('store_order_purchase_physical_origin.store_order_purchase_physical_origin_pkey', 'store_order_purchase_physical_origin.soppo_buyer_history');
     requiredIndexKeys.push('store_order.so_assisted_actor_list');
     const defaultManifest = JSON.parse(await readFile(resolve(root, "audit/orm-column-default-reconciliation.json"), "utf8"));
     const missingConstraintManifest = JSON.parse(await readFile(resolve(root, "audit/orm-missing-constraint-reconciliation.json"), "utf8"));
@@ -771,6 +829,7 @@ if (!registeredOfflineGift) {
       supplierRefundLookupVerification,
       purchaseOriginVerification,
       purchaseCancellationVerification,
+      purchasePhysicalOriginVerification,
       fullConstraintCatalogContract: { mode: "all nine paths: exact complete constraint catalog including names, types, expressions, validation and inheritance", count: catalogs.external.constraints.length },
       checkStateUpgradeVerification: { ...checkStateUpgradeVerification, freshCatalogMatched: true },
       fullSequenceCatalogContract: { mode: `all nine paths: exact ${catalogs.external.sequences.length} named sequences, type, options and ownership; no omissions or aliases waived`, count: catalogs.external.sequences.length },

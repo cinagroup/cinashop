@@ -51,7 +51,7 @@ describe('independent source-pinned bare ERP ORM realm', () => {
     expect(reviewed.erp.tables.map(row => row.name)).toEqual([...ERP_ORM_TABLE_NAMES]);
     expect(catalogKinds.map(kind => reviewed.erp[kind].length)).toEqual([4, 79, 4, 4, 0]);
     expect(reviewed.sources).toEqual(ERP_AUDIT_SOURCE_PINS);
-    expect(assertCashierAbandonHistoricalBasis(reviewed.nonErp.tables.map(row => row.name), path).historical).toHaveLength(285);
+    expect(assertCashierAbandonHistoricalBasis(reviewed.nonErp.tables.map(row => row.name), path).historical).toHaveLength(286);
     expect(() => assertCashierAbandonHistoricalBasis(raw.tables.map(row => row.name), path)).toThrow();
     for (const kind of catalogKinds) expect([...reviewed.nonErp[kind], ...reviewed.erp[kind]].sort((a, b) => a.key.localeCompare(b.key)))
       .toEqual([...raw[kind]].sort((a, b) => a.key.localeCompare(b.key)));
@@ -119,7 +119,7 @@ describe('independent source-pinned bare ERP ORM realm', () => {
     expect(io.query).toHaveBeenCalledTimes(5);
     const projected = await context.projectTableNames(raw.tables.map(row => row.name), 'orm');
     expect(io.query).toHaveBeenCalledTimes(10);
-    expect(assertCashierAbandonHistoricalBasis(projected, 'orm').historical).toHaveLength(285);
+    expect(assertCashierAbandonHistoricalBasis(projected, 'orm').historical).toHaveLength(286);
     await expect(context.projectTableNames(raw.tables.map(row => row.name).slice(1), 'orm')).rejects.toThrow('between table-name');
     await expect(context.projectTableNames(raw.tables.map(row => row.name), 'orm_checks')).rejects.toThrow('another construction path');
     const drifted = structuredClone(raw); drifted.indexes[0].valid = false; io.replace(drifted);
@@ -131,7 +131,7 @@ describe('independent source-pinned bare ERP ORM realm', () => {
     const installed = structuredClone(raw); installed.tables.push(table('cashier_second_card_abandon_v1'));
     installed.tables.sort((a, b) => a.name.localeCompare(b.name)); io.replace(installed);
     const projected = await context.projectTableNames(installed.tables.map(row => row.name), 'orm');
-    expect(projected).toHaveLength(288); expect(projected).toContain('cashier_second_card_abandon_v1');
+    expect(projected).toHaveLength(289); expect(projected).toContain('cashier_second_card_abandon_v1');
     expect(context.review(installed, 'orm').erp).toEqual(context.review(raw, 'orm').erp);
   });
   it('rejects an arbitrary filtering object before any cashier database operation', async () => {

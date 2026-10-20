@@ -4,6 +4,7 @@ import { AGENT_LEVEL_CATALOG_FENCE, AGENT_LEVEL_ROW_GUARD } from '../../src/migr
 /** Disposable reconstruction only. Production forwards never revoke grants. */
 export async function removeAgentLevelFixtureGrants(exec:(statement:string)=>Promise<unknown>,target:{app:string;admin:string}) {
   for(const name of [target.app,target.admin])if(!/^[a-z_][a-z_0-9]*$/.test(name))throw Error('Fixture role identity required');
+  await exec(`REVOKE SELECT,INSERT ON public.store_order_purchase_physical_origin FROM "${target.app}"`);
   await exec(`REVOKE INSERT ON public.agent_level FROM "${target.admin}";
     REVOKE UPDATE(name,image,color,one_brokerage,two_brokerage,grade,status,is_del) ON public.agent_level FROM "${target.admin}";
     REVOKE USAGE ON SEQUENCE public.agent_level_id_seq FROM "${target.admin}"`);

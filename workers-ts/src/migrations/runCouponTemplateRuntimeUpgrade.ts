@@ -25,12 +25,14 @@ export async function installCouponTemplateRuntimeUpgradeInTransaction(
   await tx.execute(sql.raw('LOCK TABLE ONLY public.store_coupon_template, ONLY public.store_coupon_template_issue IN SHARE ROW EXCLUSIVE MODE'));
   // Inspect again after the locks; a concurrent DDL owner may have won first.
   if (!(await inspectCouponTemplateCatalog(tx, target.maintenance)).ready) throw Error('Coupon template runtime exact catalog required');
-  const inspect = async (version: 'pre-coupon-templates' | 'pre-full-gifts' | 'pre-sign-day' | 'pre-agent-levels' | 'current') => ({
+  const inspect = async (version: 'pre-coupon-templates' | 'pre-full-gifts' | 'pre-sign-day' | 'pre-agent-levels' | 'pre-physical-origin' | 'current') => ({
     app: await inspectRuntimeBusinessProfileInTransaction(tx, 'app', target, version),
     admin: await inspectRuntimeBusinessProfileInTransaction(tx, 'admin', target, version),
   });
   const current = await inspect('current');
   if (current.app.ready && current.admin.ready) return { operation: COUPON_TEMPLATE_RUNTIME_UPGRADE, applied: false as const, profileStage: 'current' as const };
+  const physicalPrevious=await inspect('pre-physical-origin');
+  if(physicalPrevious.app.ready && physicalPrevious.admin.ready)return {operation:COUPON_TEMPLATE_RUNTIME_UPGRADE,applied:false as const,profileStage:'pre-physical-origin' as const};
   const signDay = await inspect('pre-agent-levels');
   if (signDay.app.ready && signDay.admin.ready) return { operation: COUPON_TEMPLATE_RUNTIME_UPGRADE, applied: false as const, profileStage: 'pre-agent-levels' as const };
   const gift = await inspect('pre-sign-day');

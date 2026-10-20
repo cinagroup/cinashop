@@ -25,7 +25,7 @@ export async function installSeckillScheduleRuntimeUpgradeInTransaction(tx:Query
     app:await inspectRuntimeBusinessProfileInTransaction(tx,'app',target,version),
     admin:await inspectRuntimeBusinessProfileInTransaction(tx,'admin',target,version),
   });
-  for(const stage of ['current','pre-agent-levels','pre-sign-day','pre-full-gifts','pre-coupon-templates'] as const) {
+  for(const stage of ['current','pre-physical-origin','pre-agent-levels','pre-sign-day','pre-full-gifts','pre-coupon-templates'] as const) {
     const installed=await inspect(stage);
     if(installed.app.ready && installed.admin.ready)
       return {operation:SECKILL_SCHEDULE_RUNTIME_UPGRADE,applied:false as const,columnGrantsApplied:false as const,profileStage:stage};

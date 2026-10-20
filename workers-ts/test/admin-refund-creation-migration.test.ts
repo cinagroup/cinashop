@@ -56,7 +56,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
       });
     } else if (path==='embedded') {
       expect(await new MigrationService(createContainerFromDb(f.db)).runAll()).toEqual({
-        executed:Array.from({length: 184},(_,i)=>String(i).padStart(4,'0')),errors:[],
+        executed:Array.from({length: 185},(_,i)=>String(i).padStart(4,'0')),errors:[],
       });
     } else {
       const api=await import('drizzle-kit/api');
@@ -64,7 +64,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('guarded Admin re
       await f.exec((await api.generateMigration(api.generateDrizzleJson({}),snapshot)).join('\n'));
     }
     expect(await f.db.execute(sql`SELECT COUNT(*)::int AS count FROM pg_class
-      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?282:path==='external'?286:291}]);
+      WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')`)).toMatchObject([{count:path==='embedded'?283:path==='external'?287:292}]);
     await assertRegisteredDatabaseCohort(f.db,path);
     expect(await inspectAdminRefundCreation(f.db)).toMatchObject({present:true,complete:true});
     expect(await shape()).toMatchObject({safe:true,shape:ADMIN_REFUND_CREATION_EXPECTED_SHAPE});

@@ -82,6 +82,8 @@ import { SUPPLIER_REFUND_LOOKUP_INDEX_SQL } from '@/migrations/supplierRefundLoo
 import { runSupplierRefundLookupIndexes } from '@/migrations/runSupplierRefundLookupIndexes';
 import { PURCHASE_ORIGIN_INSTALLATION_SQL } from '@/migrations/purchaseOriginEvidenceInstallation';
 import { runPurchaseOriginEvidenceSchema } from '@/migrations/runPurchaseOriginEvidence';
+import { runPurchasePhysicalOriginEvidenceSchema } from '@/migrations/runPurchasePhysicalOriginEvidence';
+import { PURCHASE_PHYSICAL_ORIGIN_INSTALLATION_SQL } from '@/migrations/purchasePhysicalOriginEvidenceInstallation';
 import { PURCHASE_CANCELLATION_INSTALLATION_SQL } from '@/migrations/purchaseCancellationEvidenceInstallation';
 import { runPurchaseCancellationEvidenceSchema } from '@/migrations/runPurchaseCancellationEvidence';
 import { ASSISTED_ORDER_LIST_INDEX_SQL } from '@/migrations/assistedOrderListIndex';
@@ -113,6 +115,8 @@ import { runProductAutoShelf } from '@/migrations/runProductAutoShelf';
 
 export class MigrationService {
   constructor(private readonly container: Container) {}
+
+  purchasePhysicalOriginEvidenceSqlForVerification(): string { return this.migration_0184(); }
 
   productRecycleEffectsSqlForVerification(): string { return this.migration_0182(); }
   productSaveEffectsSqlForVerification(): string { return this.migration_0183(); }
@@ -616,10 +620,16 @@ export class MigrationService {
       this.migration_0181(),
       this.migration_0182(),
       this.migration_0183(),
+      this.migration_0184(),
     ];
 
     for (let i = 0; i < migrations.length; i++) {
       try {
+        if (i === 184) {
+          await runPurchasePhysicalOriginEvidenceSchema(this.container.db);
+          executed.push('0184');
+          continue;
+        }
         if (i === 183) {
           await runProductSaveEffects(this.container.db);
           executed.push('0183');
@@ -8918,6 +8928,7 @@ $work_member_resolved_rename_fence$;
 
   private migration_0182(): string { return PRODUCT_RECYCLE_EFFECTS_SQL; }
   private migration_0183(): string { return PRODUCT_SAVE_EFFECTS_SQL; }
+  private migration_0184(): string { return PURCHASE_PHYSICAL_ORIGIN_INSTALLATION_SQL; }
 
   private migration_0181(): string {
     return PRODUCT_AUTO_SHELF_SQL;

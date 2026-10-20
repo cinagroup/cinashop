@@ -108,9 +108,21 @@ describe("standalone sequence transaction execution boundary", () => {
     const currentCheck=snapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck;
     expect(currentCheck).toEqual(check(saveEvents));
     const currentStatements=await api.generateMigration(api.generateDrizzleJson({}),snapshot);
+    // Keep every independently pinned pre-physical-origin checkpoint intact.
+    // This one reviewed bare table adds two statements to actual current DDL.
+    const physicalKey='public.store_order_purchase_physical_origin';
+    expect(snapshot.tables[physicalKey]).toBeDefined();
+    const prePhysicalSnapshot=structuredClone(snapshot);delete prePhysicalSnapshot.tables[physicalKey];
+    const prePhysicalStatements=await api.generateMigration(api.generateDrizzleJson({}),prePhysicalSnapshot);
+    const exactPhysicalAddition=await api.generateMigration(prePhysicalSnapshot,snapshot);
+    const physicalOnly=api.generateDrizzleJson({storeOrderPurchasePhysicalOrigin:models.storeOrderPurchasePhysicalOrigin});
+    expect(exactPhysicalAddition).toEqual(await api.generateMigration(api.generateDrizzleJson({}),physicalOnly));
+    expect(exactPhysicalAddition).toHaveLength(2);
+    expect(exactPhysicalAddition.filter(statement=>statement.startsWith('CREATE TABLE "store_order_purchase_physical_origin" ('))).toHaveLength(1);
+    expect(exactPhysicalAddition.filter(statement=>statement==='CREATE INDEX "soppo_buyer_history" ON "store_order_purchase_physical_origin" USING btree ("buyer_id","order_id");')).toHaveLength(1);
     // Preserve the independently frozen twelve-event checkpoints. The reviewed
     // recycle/save successors change this CHECK only, after the auto-shelf DDL.
-    const autoShelfSnapshot=structuredClone(snapshot);
+    const autoShelfSnapshot=structuredClone(prePhysicalSnapshot);
     autoShelfSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=check(stockEvents);
     const autoShelfStatements=await api.generateMigration(api.generateDrizzleJson({}),autoShelfSnapshot);
     const previousCurrentSnapshot=structuredClone(autoShelfSnapshot);
@@ -124,7 +136,7 @@ describe("standalone sequence transaction execution boundary", () => {
     const historicalSnapshot=structuredClone(previousCurrentSnapshot);
     for(const name of [...MANUAL_RED_NOTE_ORM_TABLE_NAMES,...ERP_ORM_TABLE_NAMES])
       delete historicalSnapshot.tables['public.'+name];
-    expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
+    expect(Object.keys(historicalSnapshot.tables).sort()).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name).filter(name=>name!==physicalKey));
     // Main also expands this one CHECK without adding a table or statement.
     // Bind both exact values before projecting the separately reviewed old DDL.
     historicalSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=
@@ -143,10 +155,10 @@ describe("standalone sequence transaction execution boundary", () => {
     recycleSnapshot.tables['public.store_order_outbox'].checkConstraints.soob_event_type_ck=check(recycleEvents);
     const recycleStatements=await api.generateMigration(api.generateDrizzleJson({}),recycleSnapshot);
     const exactRecycleUpgrade=await api.generateMigration(autoShelfSnapshot,recycleSnapshot);
-    const exactSaveUpgrade=await api.generateMigration(recycleSnapshot,snapshot);
+    const exactSaveUpgrade=await api.generateMigration(recycleSnapshot,prePhysicalSnapshot);
     const statementDigest=(statements:string[])=>createHash('sha256').update(JSON.stringify([...statements].sort()),'utf8').digest('hex');
     // Keep the independent historical285/1191 and manual287/1197 pins intact.
-    // The current291 model adds exactly the four reviewed ERP table statements
+    // The pre-physical291 model adds exactly the four reviewed ERP table statements
     // and the separately pinned stock CHECK replacement changes no table count.
     expect(statementDigest(historicalStatements))
       .toBe('446204483beeaac88d9f77ea90d5bd294a885fb24668e05b4ae6cf37c00ff400');
@@ -178,10 +190,12 @@ describe("standalone sequence transaction execution boundary", () => {
     expect(exactRecycleUpgrade).toEqual(exactStockUpgrade.map(statement=>statement.replace(checkValue(stockEvents),checkValue(recycleEvents))));
     expect(exactSaveUpgrade).toEqual(exactStockUpgrade.map(statement=>statement.replace(checkValue(stockEvents),checkValue(saveEvents))));
     expect([...recycleStatements].sort()).toEqual(autoShelfStatements.map(statement=>statement.replace(checkValue(stockEvents),checkValue(recycleEvents))).sort());
-    expect([...currentStatements].sort()).toEqual(recycleStatements.map(statement=>statement.replace(checkValue(recycleEvents),checkValue(saveEvents))).sort());
-    expect(currentStatements).toHaveLength(1203);
+    expect([...prePhysicalStatements].sort()).toEqual(recycleStatements.map(statement=>statement.replace(checkValue(recycleEvents),checkValue(saveEvents))).sort());
+    expect(prePhysicalStatements).toHaveLength(1203);
+    expect([...currentStatements].sort()).toEqual([...prePhysicalStatements,...exactPhysicalAddition].sort());
+    expect(currentStatements).toHaveLength(1205);
     // The independently pinned previous sequence has no owning-column ALTER.
-    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length+exactAutoShelfAddition.length);
+    expect(fullPath.initialStatements).toBe(1190+exactManualAddition.length+exactErpAddition.length+exactAutoShelfAddition.length+exactPhysicalAddition.length);
     expect(fullPath.generatedProposalStatements).toBe(2);
     const activeSeckillPredicate = 'WHERE "store_product_attr_value"."type" = 1 AND "store_product_attr_value"."is_retired" = 0;';
     expect(fullPath.seckillSkuIdentityIndexStatements).toEqual([

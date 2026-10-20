@@ -42,12 +42,15 @@ function isOrmPath(path: string) {
  * the two independently reviewed bare ORM tables may be additional objects. */
 export function assertCashierAbandonHistoricalBasis(names: readonly string[], path: string) {
   const orm = isOrmPath(path), mature = completeConstructionTableNames('orm').filter(name => !manualTables.has(name) && !erpTables.has(name));
-  assert.equal(mature.length, 285, 'Independent historical table inventory changed');
+  const prior=mature.filter(name=>name!=='store_order_purchase_physical_origin');
+  assert.equal(prior.length,285,'Frozen pre-physical-origin table inventory changed');
+  assert.equal(mature.length,286,'Reviewed physical-origin table inventory changed');
+  assert.deepEqual(mature,[...prior,'store_order_purchase_physical_origin'].sort());
   assert.equal(new Set(names).size, names.length, 'Duplicate complete table identity');
   const extras = names.filter(name => manualTables.has(name));
   assert.deepEqual(extras, orm ? [...MANUAL_RED_NOTE_ORM_TABLE_NAMES] : [], 'Only the exact two bare manual ORM tables are reviewed');
   const historical = names.filter(name => !manualTables.has(name));
-  assert.equal(historical.length, path === 'external' ? 286 : 285, 'Historical complete table basis changed');
+  assert.equal(historical.length, path === 'external' ? 287 : 286, 'Historical complete table basis changed');
   assert.deepEqual(historical, path === 'external' ? [...mature, CASHIER_ABANDON_TABLE].sort() : mature,
     'Complete historical table names changed');
   return { historical, manualTables: extras, actualTables: names.length };

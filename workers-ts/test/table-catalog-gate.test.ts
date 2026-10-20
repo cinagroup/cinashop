@@ -14,7 +14,7 @@ const table = (key: string): CatalogRow => ({
   forceRowSecurity: false, partition: false, partitionKey: null,
 });
 const synthetic: Catalog = {
-  tables: Array.from({ length: 286 }, (_, i) => table(`comparator_only_${i}`)),
+  tables: Array.from({ length: 287 }, (_, i) => table(`comparator_only_${i}`)),
   columns: [], constraints: [], indexes: [], sequences: [],
 };
 const withRow = (row: CatalogRow): Catalog => ({ ...synthetic, tables: [row, ...synthetic.tables.slice(1)] });
@@ -31,7 +31,7 @@ describe("DB-009F complete table catalog hard gate", () => {
   });
 
   it("refuses empty/contracted/expanded/duplicate cohorts, including identical defects on both sides", () => {
-    expect(TABLE_CATALOG_COUNT).toBe(286);
+    expect(TABLE_CATALOG_COUNT).toBe(287);
     for (const rows of [[], synthetic.tables.slice(1), [...synthetic.tables, table("extra")],
       [synthetic.tables[1], ...synthetic.tables.slice(1)]]) {
       const changed = { ...synthetic, tables: rows };
@@ -77,7 +77,7 @@ describe("DB-009F complete table catalog hard gate", () => {
         query: async statement => (await db.query<CatalogRow>(statement)).rows,
       });
       expect(report).toEqual({
-        fixtureTables: 286,
+        fixtureTables: 287,
         engineDriftRefusals: ["rls-enabled", "rls-forced", "persistence", "kind", "partition-key", "partition-member", "renamed", "missing", "extra"],
         bothComparisonDirectionsRefused: true, tableOnlyChangesInvisibleToOtherCategories: 6,
         allFiveCategoriesRestoredAfterEachRollback: true, temporaryShadowIgnored: true,
@@ -88,22 +88,22 @@ describe("DB-009F complete table catalog hard gate", () => {
     } finally { await db.close(); }
   }, 60_000);
 
-  it("retains the fixed historical 285-table cohort and binds exactly two manual and four ERP bare ORM tables", async () => {
+  it("retains the fixed historical 286-table cohort and binds exactly two manual and four ERP bare ORM tables", async () => {
     const { generateDrizzleJson } = await import('drizzle-kit/api');
     const models = await import('../src/models/schema');
     const snapshot = generateDrizzleJson(models) as { tables: Record<string, {columns?:Record<string,unknown>}> };
     const keys = Object.keys(snapshot.tables).sort();
     const additions = ['public.customer_city_delivery_attempt', 'public.customer_city_delivery_binding',
-      'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward'];
+      'public.customer_city_delivery_job', 'public.store_order_promotion_gift_coupon_reward', 'public.store_order_purchase_physical_origin'];
     assertRegisteredModelCohort(snapshot);
     const manual = MANUAL_RED_NOTE_ORM_TABLE_NAMES.map(name=>'public.'+name);
     const erp=ERP_ORM_TABLE_NAMES.map(name=>'public.'+name);
-    expect(keys).toHaveLength(291); expect(new Set(keys).size).toBe(291);
+    expect(keys).toHaveLength(292); expect(new Set(keys).size).toBe(292);
     expect(keys.filter(key=>erp.includes(key))).toEqual(erp);
     expect(keys.filter(key=>manual.includes(key))).toEqual(manual);
     const historical=keys.filter(key=>!manual.includes(key)&&!erp.includes(key));
     expect(historical).toEqual(registeredTableNames('orm','historical').map(name=>'public.'+name));
-    expect(historical).toHaveLength(285);
+    expect(historical).toHaveLength(286);
     expect(keys.filter(key => additions.includes(key))).toEqual(additions);
     expect(historical.filter(key => !additions.includes(key))).toHaveLength(281);
     expect(TABLE_CATALOG_BASE_COUNT).toBe(historical.length);

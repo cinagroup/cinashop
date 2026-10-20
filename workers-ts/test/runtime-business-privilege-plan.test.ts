@@ -9,7 +9,7 @@ import { RUNTIME_COMMISSION_OPERATION } from '../src/migrations/runRuntimeBusine
 describe('explicitly reviewed business privilege inventory', () => {
   it('enables only the separately authenticated fixed commissioning executor', () => {
     expect(RUNTIME_BUSINESS_PRIVILEGES_COMMISSIONING_READY).toBe(true);
-    expect(RUNTIME_COMMISSION_OPERATION).toBe('isolated-business-runtime-v5-agent-levels');
+    expect(RUNTIME_COMMISSION_OPERATION).toBe('isolated-business-runtime-v6-physical-origin');
   });
   it.each(['app','admin'] as const)('%s references only actual named tables and columns', kind => {
     const tables=new Map<string,readonly string[]>();
@@ -78,13 +78,13 @@ describe('explicitly reviewed business privilege inventory', () => {
     expect({...currentAdmin,tables,updateColumns:updates}).toEqual(priorAdmin);
   });
   it('keeps templates Admin-only and issued provenance immutable in every historical profile',()=>{
-    for(const stage of ['legacy-seckill-schedule','seckill-schedule','pre-coupon-templates','pre-full-gifts','pre-sign-day','pre-agent-levels','current'] as const) {
+    for(const stage of ['legacy-seckill-schedule','seckill-schedule','pre-coupon-templates','pre-full-gifts','pre-sign-day','pre-agent-levels','pre-physical-origin','current'] as const) {
       const app=runtimeBusinessPrivilegePlanAtStage('app',stage),admin=runtimeBusinessPrivilegePlanAtStage('admin',stage);
       for(const table of ['store_coupon_template','store_coupon_template_issue']) {
         expect(app.tables[table]).toBeUndefined();expect(app.updateColumns[table]).toBeUndefined();
-        expect(admin.tables[table]).toEqual(['current','pre-agent-levels','pre-sign-day','pre-full-gifts'].includes(stage)?['SELECT','INSERT']:undefined);
+        expect(admin.tables[table]).toEqual(['current','pre-physical-origin','pre-agent-levels','pre-sign-day','pre-full-gifts'].includes(stage)?['SELECT','INSERT']:undefined);
       }
-      expect(admin.updateColumns.store_coupon_template).toEqual(['current','pre-agent-levels','pre-sign-day','pre-full-gifts'].includes(stage)?['status','is_del']:undefined);
+      expect(admin.updateColumns.store_coupon_template).toEqual(['current','pre-physical-origin','pre-agent-levels','pre-sign-day','pre-full-gifts'].includes(stage)?['status','is_del']:undefined);
       expect(admin.updateColumns.store_coupon_template_issue).toBeUndefined();
     }
   });
@@ -110,7 +110,7 @@ describe('explicitly reviewed business privilege inventory', () => {
   });
   it('allows only the application identity to capture purchase evidence, never to rewrite it', () => {
     const app=runtimeBusinessPrivilegePlan('app'),admin=runtimeBusinessPrivilegePlan('admin');
-    for(const table of ['store_order_purchase_origin','store_order_purchase_cancellation']) {
+    for(const table of ['store_order_purchase_origin','store_order_purchase_cancellation','store_order_purchase_physical_origin']) {
       expect(app.tables[table]).toEqual(['SELECT','INSERT']);
       expect(app.updateColumns[table]).toBeUndefined();
       expect(admin.tables[table]).toBeUndefined();
@@ -131,7 +131,7 @@ describe('explicitly reviewed business privilege inventory', () => {
     const tables={...current.tables,system_group:['SELECT'],system_group_data:['SELECT']},columns={...current.updateColumns};
     delete columns.system_group;delete columns.system_group_data;
     expect({...current,tables,updateColumns:columns}).toEqual(previous);
-    expect(runtimeBusinessPrivilegePlan('app')).toEqual(runtimeBusinessPrivilegePlanAtStage('app','pre-sign-day'));
+    expect(runtimeBusinessPrivilegePlanAtStage('app','pre-physical-origin')).toEqual(runtimeBusinessPrivilegePlanAtStage('app','pre-sign-day'));
     for(const kind of ['app','admin'] as const) {
       const plan=runtimeBusinessPrivilegePlanAtStage(kind,'pre-sign-day');
       expect(plan.tables.store_order_promotion_gift_coupon_reward).toEqual(kind==='app'?['SELECT','INSERT']:['SELECT']);
@@ -142,6 +142,13 @@ describe('explicitly reviewed business privilege inventory', () => {
       expect(runtimeBusinessPrivilegePlan('app').updateColumns[table]).toBeUndefined();
     }
   });
+  it('adds only physical origin SELECT/INSERT to the fixed app profile',()=>{
+    const previous=runtimeBusinessPrivilegePlanAtStage('app','pre-physical-origin'),current=runtimeBusinessPrivilegePlan('app');
+    expect(previous.tables.store_order_purchase_physical_origin).toBeUndefined();
+    const tables={...current.tables};delete tables.store_order_purchase_physical_origin;
+    expect({...current,tables}).toEqual(previous);
+    expect(runtimeBusinessPrivilegePlan('admin')).toEqual(runtimeBusinessPrivilegePlanAtStage('admin','pre-physical-origin'));
+  });
   it('freezes the entire sign-day profile and adds only Admin distributor INSERT and eight semantic UPDATE columns',()=>{
     const prior=runtimeBusinessPrivilegePlanAtStage('admin','pre-agent-levels'),current=runtimeBusinessPrivilegePlan('admin');
     expect(prior.tables.agent_level).toEqual(['SELECT']);expect(prior.updateColumns.agent_level).toEqual(['id']);
@@ -149,7 +156,7 @@ describe('explicitly reviewed business privilege inventory', () => {
     expect(current.updateColumns.agent_level).toEqual(['id','name','image','color','one_brokerage','two_brokerage','grade','status','is_del']);
     expect({...current,tables:{...current.tables,agent_level:prior.tables.agent_level},
       updateColumns:{...current.updateColumns,agent_level:prior.updateColumns.agent_level}}).toEqual(prior);
-    expect(runtimeBusinessPrivilegePlan('app')).toEqual(runtimeBusinessPrivilegePlanAtStage('app','pre-agent-levels'));
+    expect(runtimeBusinessPrivilegePlanAtStage('app','pre-physical-origin')).toEqual(runtimeBusinessPrivilegePlanAtStage('app','pre-agent-levels'));
     expect(runtimeBusinessPrivilegePlan('app').updateColumns.agent_level).toEqual(['id']);
   });
 });

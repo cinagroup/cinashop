@@ -164,6 +164,11 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('ordinary type0 multi SK
   try{expect((await cashierOrdinaryReadiness(f.db)).ready).toBe(false);}finally{await f.exec(`GRANT USAGE ON SEQUENCE ${sequence.name} TO "${f.role}"`);}
   await f.exec(`REVOKE INSERT ON public.store_order_cart_info FROM "${f.role}"`);
   try{expect((await cashierOrdinaryReadiness(f.db)).ready).toBe(false);}finally{await f.exec(`GRANT INSERT ON public.store_order_cart_info TO "${f.role}"`);}
+  for(const privilege of ['SELECT','INSERT']){
+   await f.exec(`REVOKE ${privilege} ON public.store_order_purchase_physical_origin FROM "${f.role}"`);
+   try{expect((await cashierOrdinaryReadiness(f.db)).ready).toBe(false);}
+   finally{await f.exec(`GRANT ${privilege} ON public.store_order_purchase_physical_origin TO "${f.role}"`);}
+  }
   expect((await cashierOrdinaryReadiness(f.db)).ready).toBe(true);
   const[taxonomy]=await f.db.execute<{mutable:boolean}>(sql`SELECT has_any_column_privilege(current_user,'public.user_label','UPDATE') OR has_any_column_privilege(current_user,'public.store_product_category','UPDATE') OR has_any_column_privilege(current_user,'public.system_user_level','UPDATE') AS mutable`);expect(taxonomy.mutable).toBe(false);
   for(const kind of ['product','user']){

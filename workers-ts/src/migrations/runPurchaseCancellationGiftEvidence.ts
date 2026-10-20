@@ -1,6 +1,8 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
-import { PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchaseCancellationGiftEvidenceCatalog';
+import { PURCHASE_PHYSICAL_CANCELLATION_STATE_SQL as PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchasePhysicalCancellationEvidenceCatalog';
+import { PURCHASE_PHYSICAL_ORIGIN_STATE_SQL } from './purchasePhysicalOriginEvidenceCatalog';
+import { PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL } from './purchasePhysicalOriginEvidenceInstallation';
 import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL }
   from './purchaseCancellationGiftEvidenceInstallation';
 import { PURCHASE_CANCELLATION_SETUP_SQL, PURCHASE_CANCELLATION_SOURCE_SQL }
@@ -27,6 +29,12 @@ export async function inspectPurchaseCancellationGiftEvidence(db: Root) {
 /** Explicit 0177 only, caller uses an independent maintenance connection. */
 export async function runPurchaseCancellationGiftEvidence(db: Root): Promise<void> {
   root(db);
-  await db.transaction(tx => tx.execute(sql.raw(PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL)),
+  await db.transaction(async tx => {
+    await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
+    const [state] = await tx.execute(sql.raw(PURCHASE_CANCELLATION_GIFT_STATE_SQL));
+    if (state?.state!=='physical-v1') await tx.execute(sql.raw(PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL));
+    const [physical] = await tx.execute(sql.raw(PURCHASE_PHYSICAL_ORIGIN_STATE_SQL));
+    if (physical?.state==='v1') await tx.execute(sql.raw(PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL));
+  },
     { isolationLevel: 'read committed', accessMode: 'read write' });
 }

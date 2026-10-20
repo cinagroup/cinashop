@@ -2,7 +2,7 @@ import { afterEach,beforeEach,describe,expect,it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
 import { removeAgentLevelFixtureGrants } from './helpers/runtimeHistoricalProfile';
-import { auditRuntimeBusinessPrivileges,inspectRuntimeBusinessProfileInTransaction } from '../src/migrations/auditRuntimeBusinessPrivileges';
+import { inspectRuntimeBusinessProfileInTransaction } from '../src/migrations/auditRuntimeBusinessPrivileges';
 import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBusinessCommissioning';
 import { inspectAgentLevelRuntimeCatalog } from '../src/migrations/agentLevelRuntimeCatalog';
 import { AGENT_LEVEL_CATALOG_FENCE,AGENT_LEVEL_ROW_GUARD,inspectRuntimeAgentLevelCatalogBoundary } from '../src/migrations/runtimeAgentLevelCatalogBoundary';
@@ -38,7 +38,7 @@ native('complete PG16 distributor catalog commissioning and exact forward',()=>{
       await run(app,admin,target);
     }));
   }
-  const profile=(peer:Peer,kind:'app'|'admin',target:Target,version:'pre-agent-levels'|'current')=>
+  const profile=(peer:Peer,kind:'app'|'admin',target:Target,version:'pre-agent-levels'|'pre-physical-origin'|'current')=>
     peer.db.transaction(tx=>inspectRuntimeBusinessProfileInTransaction(tx,kind,target,version));
   const catalog=()=>f.exec(`SELECT 'relation' AS kind,c.oid::text AS key,c.relname AS name,c.relowner::text AS owner,c.relacl::text AS acl,
       c.relkind::text||':'||c.relpersistence::text||':'||c.relrowsecurity::text||':'||c.relforcerowsecurity::text AS definition
@@ -61,7 +61,7 @@ native('complete PG16 distributor catalog commissioning and exact forward',()=>{
     ORDER BY kind,key`);
   async function rows() {
     const tables=await f.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname");
-    expect(tables).toHaveLength(282);
+    expect(tables).toHaveLength(283);
     return f.exec(tables.map(({name})=>{
       expect(name).toMatch(/^[a-z_][a-z_0-9]*$/);
       return `SELECT '${name}' AS name,coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) AS rows FROM public."${name}" t`;
@@ -69,18 +69,18 @@ native('complete PG16 distributor catalog commissioning and exact forward',()=>{
   }
   const forwards=[runSeckillScheduleRuntimeUpgrade,runSeckillParentRuntimeUpgrade,
     runCouponTemplateRuntimeUpgrade,runPromotionGiftRuntimeUpgrade,runSignDayConfigRuntimeUpgrade];
-  it('changes only two invoker routines/four triggers, one old guard body and the exact Admin ACL delta, preserving all 282 tables and historical forwards',async()=>{
+  it('changes only two invoker routines/four triggers, one old guard body and the exact Admin ACL delta, preserving all 283 tables and historical forwards',async()=>{
     await roles(async(app,admin,target)=>{
       await f.exec("INSERT INTO agent_level_task_record(uid,level_id,task_id,status) VALUES(41,1,51,0),(41,1,51,0)");
       expect(await inspectAgentLevelRuntimeCatalog(f.db,target.maintenance,target)).toMatchObject({ready:true});
-      expect(await profile(app,'app',target,'pre-agent-levels')).toMatchObject({ready:true,tableCount:282});
-      expect(await profile(admin,'admin',target,'pre-agent-levels')).toMatchObject({ready:true,tableCount:282});
+      expect(await profile(app,'app',target,'pre-agent-levels')).toMatchObject({ready:true,tableCount:283});
+      expect(await profile(admin,'admin',target,'pre-agent-levels')).toMatchObject({ready:true,tableCount:283});
       for(const forward of forwards) {
         const before=await catalog();expect(await forward(f.db,target)).toMatchObject({applied:false,profileStage:'pre-agent-levels'});
         expect(await catalog()).toEqual(before);
       }
       const before=await catalog(),data=await rows();
-      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:true,profileStage:'current'});
+      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:true,profileStage:'pre-physical-origin'});
       const after=await catalog(),added=after.filter(row=>!before.some(old=>old.kind===row.kind && old.key===row.key));
       expect(added).toHaveLength(6);
       expect(added.filter(row=>row.kind==='function').map(row=>row.name).sort()).toEqual([AGENT_LEVEL_CATALOG_FENCE,AGENT_LEVEL_ROW_GUARD].sort());
@@ -91,10 +91,10 @@ native('complete PG16 distributor catalog commissioning and exact forward',()=>{
       expect(after.filter(row=>!added.includes(row) && !changed.some(old=>old.kind===row.kind && old.key===row.key)))
         .toEqual(before.filter(row=>!changed.includes(row)));
       expect(await rows()).toEqual(data);
-      for(const kind of ['app','admin'] as const)expect(await auditRuntimeBusinessPrivileges(kind==='app'?app.db:admin.db,kind,target))
-        .toMatchObject({ready:true,failures:[],tableCount:282});
-      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:false,profileStage:'current'});
-      for(const forward of forwards)expect(await forward(f.db,target)).toMatchObject({applied:false,profileStage:'current'});
+      for(const kind of ['app','admin'] as const)expect(await profile(kind==='app'?app:admin,kind,target,'pre-physical-origin'))
+        .toMatchObject({ready:true,failures:[],tableCount:283});
+      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:false,profileStage:'pre-physical-origin'});
+      for(const forward of forwards)expect(await forward(f.db,target)).toMatchObject({applied:false,profileStage:'pre-physical-origin'});
       expect(await catalog()).toEqual(after);expect(await rows()).toEqual(data);
     });
   },60_000);
@@ -140,7 +140,7 @@ native('complete PG16 distributor catalog commissioning and exact forward',()=>{
       }finally{release();await holder;}
       expect(await catalog()).toEqual(before);expect(await rows()).toEqual(data);
       expect(await profile(app,'app',target,'pre-agent-levels')).toMatchObject({ready:true});
-      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:true,profileStage:'current'});
+      expect(await runAgentLevelRuntimeUpgrade(f.db,target)).toMatchObject({applied:true,profileStage:'pre-physical-origin'});
     });
   },60_000);
   it.each([

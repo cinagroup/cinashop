@@ -12,6 +12,7 @@ import { enqueueOrderPaidEvent, OrderOutboxService } from '../../src/services/or
 import { runOrderPromotionGiftReceipt } from '../../src/migrations/runOrderPromotionGiftReceipt';
 import { runPurchaseCancellationEvidenceSchema } from '../../src/migrations/runPurchaseCancellationEvidence';
 import { runPurchaseCancellationGiftEvidence } from '../../src/migrations/runPurchaseCancellationGiftEvidence';
+import { runPurchasePhysicalOriginEvidenceSchema } from '../../src/migrations/runPurchasePhysicalOriginEvidence';
 import { REFUND_ORDER_SPLIT_SQL } from '../../src/migrations/refundOrderSplit';
 import { agentLevel, luckLottery, orderWaybillJob, printDocument, storeCart,
   storeCouponIssue, storeCouponIssueUser, storeCouponProduct, storeCouponUser,
@@ -31,7 +32,7 @@ const commonTables = [printDocument, storeOrderStatus, storeOrderOutbox,
   storeCouponIssue, storeCouponIssueUser, storeCouponProduct, storeCouponUser, systemUserLevel];
 const commonState = ['user', 'store_cart', 'store_product', 'store_product_attr_value',
   'store_order', 'store_order_cart_info', 'store_order_status', 'store_order_outbox', 'user_bill',
-  'store_coupon_issue', 'store_coupon_user', 'store_order_purchase_origin'] as const;
+  'store_coupon_issue', 'store_coupon_user', 'store_order_purchase_origin', 'store_order_purchase_physical_origin'] as const;
 
 function authorHarness(f: QuoteFixture, type: number, extraState: readonly string[]) {
   let orderNumber = 0;
@@ -124,6 +125,7 @@ export async function productPurchaseGiftFixture() {
     await runOrderPromotionGiftReceipt(f.db);
     await runPurchaseCancellationEvidenceSchema(f.db);
     await runPurchaseCancellationGiftEvidence(f.db);
+    await runPurchasePhysicalOriginEvidenceSchema(f.db);
     await prepareBase(f);
     await f.db.insert(storeProduct).values({ id: 71, storeName: '基础限购实物赠品', stock: 20,
       image: '/gift.png', isShow: 1, isVerify: 1, deliveryType: '1' });

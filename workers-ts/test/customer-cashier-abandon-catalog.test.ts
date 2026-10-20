@@ -57,7 +57,7 @@ describe('complete historical cashier audit with the separately registered bare 
   const manual = [...MANUAL_RED_NOTE_ORM_TABLE_NAMES];
   const current=completeConstructionTableNames('orm');
   const erp=[...ERP_ORM_TABLE_NAMES];
-  // The legacy cashier comparison remains the reviewed 285+manual2 scope.
+  // The legacy cashier comparison remains the reviewed 286+manual2 scope.
   // Independently commissioned ERP tables are explicit current-only objects.
   const full=current.filter(name=>!erp.some(table=>table===name));
   const mature=full.filter(name=>!manual.some(table=>table===name));
@@ -69,15 +69,15 @@ describe('complete historical cashier audit with the separately registered bare 
       {kind:'function',name:'protect_invoice_manual_red_note',present:false},
     ];
   }
-  it('keeps current291 explicit and refuses to waive ERP objects in the historical cashier audit',()=>{
-    expect(current).toHaveLength(291); expect(full).toHaveLength(287); expect(mature).toHaveLength(285);
+  it('keeps current292 explicit and refuses to waive ERP objects in the historical cashier audit',()=>{
+    expect(current).toHaveLength(292); expect(full).toHaveLength(288); expect(mature).toHaveLength(286);
     expect(current.filter(name=>erp.some(table=>table===name))).toEqual(erp);
     expect(current).toEqual([...mature,...manual,...erp].sort());
     expect(()=>assertCashierAbandonHistoricalBasis(current,'orm')).toThrow();
   });
   it.each(['orm','orm_upgrade','orm_default_upgrade','orm_constraints','orm_fk_names','orm_checks','orm_sequences'] as const)
-    ('requires the same complete fixed 285-table basis plus both manual tables on %s',path=>{
-      expect(assertCashierAbandonHistoricalBasis(full,path)).toEqual({historical:mature,manualTables:manual,actualTables:287});
+    ('requires the same complete fixed 286-table basis plus both manual tables on %s',path=>{
+      expect(assertCashierAbandonHistoricalBasis(full,path)).toEqual({historical:mature,manualTables:manual,actualTables:288});
       expect(()=>assertCashierAuditManualRedNoteCatalog(catalogRows(),path)).not.toThrow();
     });
   it.each(['embedded','external'] as const)('keeps manual maintenance objects absent from %s',path=>{

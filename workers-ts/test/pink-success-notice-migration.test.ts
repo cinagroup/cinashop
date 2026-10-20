@@ -268,7 +268,7 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 181 and embedded 184 paths with identical 286-table catalogs and preserves the product-save successor when the old installer refuses it', async () => {
+  it('builds fresh external 182 and embedded 185 paths with identical 286-table catalogs and preserves the product-save successor when the old installer refuses it', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
@@ -278,7 +278,7 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
       expect(result.errors).toEqual([]);
-      expect(result.executed).toEqual(Array.from({ length: 184 }, (_, index) => String(index).padStart(4, '0')));
+      expect(result.executed).toEqual(Array.from({ length: 185 }, (_, index) => String(index).padStart(4, '0')));
       await composeExplicitCityCatalog(external.db,'external');await composeExplicitCityCatalog(embedded.db,'embedded');
       expect(await fullCatalog(embedded)).toEqual(await fullCatalog(external));
       for (const f of [external, embedded]) {

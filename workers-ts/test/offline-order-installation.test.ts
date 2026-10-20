@@ -221,7 +221,7 @@ describe('offline controlled PG16 installation', () => {
       } else {
         await whole.exec('SET client_min_messages=warning');
         const result = await new MigrationService(createContainerFromDb(whole.db)).runAll();
-        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(184);
+        expect(result.errors).toEqual([]); expect(result.executed).toHaveLength(185);
         expect(result.executed.at(-1)).toBe('0183');
       }
       await assertRegisteredDatabaseCohort(whole.db,path as 'external'|'embedded');

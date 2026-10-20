@@ -25,7 +25,7 @@ import type {OrdinaryCashierDraft,OrdinaryCashierIntent} from '../../src/service
  * source tables are complete ORM columns, never synthetic paid/origin rows.
  * Only fixture-owned maintenance installs new realms and reviewed grants. */
 export async function customerCashierOrdinaryFixture(){
- const needed=new Set<string>(CASHIER_ORDINARY_SOURCE_READ_TABLES.filter(t=>t!=='store_order_purchase_origin'));
+ const needed=new Set<string>(CASHIER_ORDINARY_SOURCE_READ_TABLES.filter(t=>!['store_order_purchase_origin','store_order_purchase_physical_origin'].includes(t)));
  const models=Object.fromEntries(Object.entries(schema).filter(([,value])=>is(value,PgTable)&&needed.has(getTableConfig(value).name)));
  const found=new Set(Object.values(models).map(t=>getTableConfig(t as PgTable).name));
  for(const name of needed)if(!found.has(name))throw Error('Ordinary required actual ORM source absent: '+name);

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
-import { PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchaseCancellationGiftEvidenceCatalog';
+import { PURCHASE_PHYSICAL_CANCELLATION_STATE_SQL as PURCHASE_CANCELLATION_GIFT_STATE_SQL } from './purchasePhysicalCancellationEvidenceCatalog';
+import { PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL } from './purchasePhysicalOriginEvidenceInstallation';
 import { PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL } from './purchaseCancellationGiftEvidenceInstallation';
 import { PURCHASE_CANCELLATION_SETUP_SQL, PURCHASE_CANCELLATION_SOURCE_SQL, PURCHASE_CANCELLATION_INSTALLATION_SQL, PURCHASE_CANCELLATION_ORM_INSTALLATION_SQL } from './purchaseCancellationEvidenceInstallation';
 
@@ -17,7 +18,7 @@ async function inspect(tx: Query) {
   if (environment?.safe!==true) throw Error('Purchase cancellation inspection requires reviewed PG16 READ COMMITTED');
   const [row] = await tx.execute(sql.raw(`SELECT s.state,p.ready FROM (${PURCHASE_CANCELLATION_GIFT_STATE_SQL}) s CROSS JOIN (${PURCHASE_CANCELLATION_SOURCE_SQL}) p`));
   const state = row?.state;
-  if (state!=='fresh' && state!=='v1' && state!=='gift-v1'
+  if (state!=='fresh' && state!=='v1' && state!=='gift-v1' && state!=='physical-v1'
     && state!=='orm-pending' && state!=='drift') throw Error('Purchase cancellation catalog unavailable');
   return { state,sourcesReady:row.ready===true };
 }
@@ -64,7 +65,7 @@ export async function inspectPurchaseCancellationEvidence(db: Root, role?: strin
     if (role===undefined) return state;
     const runtimeSafe = await authority(tx,role);
     return { ...state,runtimeSafe,runtimeReady:runtimeSafe && state.sourcesReady
-      && (state.state==='v1' || state.state==='gift-v1')
+      && ['v1','gift-v1','physical-v1'].includes(state.state)
       && await prerequisites(tx,role) && await runtimeReady(tx,role) };
   },{ isolationLevel:'read committed',accessMode:'read only' });
 }
@@ -73,7 +74,7 @@ export async function runPurchaseCancellationEvidenceSchema(db: Root): Promise<v
   await db.transaction(async tx => {
     await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
     const state = await inspect(tx);
-    await tx.execute(sql.raw(state.state==='gift-v1'
+    await tx.execute(sql.raw(state.state==='physical-v1' ? PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL : state.state==='gift-v1'
       ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_INSTALLATION_SQL));
   },{ isolationLevel:'read committed',accessMode:'read write' });
 }
@@ -83,7 +84,7 @@ export async function completePurchaseCancellationEvidenceOrm(db: Root): Promise
   await db.transaction(async tx => {
     await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
     const state = await inspect(tx);
-    await tx.execute(sql.raw(state.state==='gift-v1'
+    await tx.execute(sql.raw(state.state==='physical-v1' ? PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL : state.state==='gift-v1'
       ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_ORM_INSTALLATION_SQL));
   },{ isolationLevel:'read committed',accessMode:'read write' });
 }
@@ -94,14 +95,14 @@ export async function runPurchaseCancellationEvidence(db: Root, role: string) {
   return db.transaction(async tx => {
     await tx.execute(sql.raw(PURCHASE_CANCELLATION_SETUP_SQL));
     const initial = await inspect(tx);
-    if (!initial.sourcesReady || !['fresh','v1','gift-v1'].includes(initial.state)
+    if (!initial.sourcesReady || !['fresh','v1','gift-v1','physical-v1'].includes(initial.state)
       || !await authority(tx,role) || !await prerequisites(tx,role))
       throw Error('Purchase cancellation runtime authority or source prerequisites are unsafe or missing');
-    await tx.execute(sql.raw(initial.state==='gift-v1'
+    await tx.execute(sql.raw(initial.state==='physical-v1' ? PURCHASE_PHYSICAL_CANCELLATION_INSTALLATION_SQL : initial.state==='gift-v1'
       ? PURCHASE_CANCELLATION_GIFT_INSTALLATION_SQL : PURCHASE_CANCELLATION_INSTALLATION_SQL));
     await tx.execute(sql.raw(`GRANT SELECT,INSERT ON public.store_order_purchase_cancellation TO "${role}"`));
     const final = await inspect(tx);
-    if (!['v1','gift-v1'].includes(final.state) || !final.sourcesReady || !await authority(tx,role)
+    if (!['v1','gift-v1','physical-v1'].includes(final.state) || !final.sourcesReady || !await authority(tx,role)
       || !await prerequisites(tx,role) || !await runtimeReady(tx,role)) throw Error('Purchase cancellation runtime verification failed');
     return { ...final,runtimeSafe:true,runtimeReady:true };
   },{ isolationLevel:'read committed',accessMode:'read write' });

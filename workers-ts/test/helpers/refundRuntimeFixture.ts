@@ -9,6 +9,7 @@ import { MigrationService } from '../../src/services/MigrationService';
 import { runInvoiceEvidence } from '../../src/migrations/runInvoiceEvidence';
 import { runRefundOrderSplit } from '../../src/migrations/runRefundOrderSplit';
 import { runPurchaseOriginEvidence } from '../../src/migrations/runPurchaseOriginEvidence';
+import { runPurchasePhysicalOriginEvidence } from '../../src/migrations/runPurchasePhysicalOriginEvidence';
 import { runPurchaseCancellationEvidence } from '../../src/migrations/runPurchaseCancellationEvidence';
 import { runtimeBusinessPrivilegePlan } from '../../src/migrations/runtimeBusinessPrivilegePlan';
 import { StoreOrderCreateService } from '../../src/services/order/StoreOrderCreateService';
@@ -45,6 +46,7 @@ export const runtimeTablePrivileges: Record<string, readonly string[]> = {
   store_order_refund_payment: ['SELECT'],
   // These are commissioned by the actual reviewed maintenance protocols.
   store_order_purchase_origin: ['SELECT', 'INSERT'],
+  store_order_purchase_physical_origin: ['SELECT', 'INSERT'],
   store_order_purchase_cancellation: ['SELECT', 'INSERT'],
   store_order_invoice_evidence: ['SELECT'], store_order_invoice_allocation: ['SELECT', 'INSERT'],
   store_order_refund_split: ['SELECT', 'INSERT'], store_order_fulfillment_branch: ['SELECT', 'INSERT'],
@@ -52,7 +54,7 @@ export const runtimeTablePrivileges: Record<string, readonly string[]> = {
 export const runtimeRowLockTables = ['user_address', 'city_area', 'system_user_level', 'agent_level',
   'system_supplier', 'user_invoice', 'supplier_transactions', 'order_waybill_job', 'store_promotions'] as const;
 const protectedTables = new Set(['store_order_invoice_evidence', 'store_order_invoice_allocation',
-  'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_cancellation']);
+  'store_order_refund_split', 'store_order_fulfillment_branch', 'store_order_purchase_origin', 'store_order_purchase_physical_origin', 'store_order_purchase_cancellation']);
 export const runtimeSequenceTables = ['store_order', 'store_order_cart_info', 'store_order_refund',
   'store_order_invoice', 'store_order_status', 'store_order_outbox', 'user_bill', 'user_brokerage',
   'supplier_flowing_water', 'supplier_transactions', 'payment_reconciliation_case', 'agent_level_task_record'] as const;
@@ -70,11 +72,11 @@ export async function refundRuntimeFixture() {
     expect(paidAgentPlan.tables.agent_level_task_record).toEqual(['SELECT', 'INSERT']);
     await whole.exec('SET client_min_messages=warning');
     expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({
-      executed: Array.from({ length: 184 }, (_, i) => String(i).padStart(4, '0')), errors: [],
+      executed: Array.from({ length: 185 }, (_, i) => String(i).padStart(4, '0')), errors: [],
     });
     const [catalog] = await whole.db.execute(sql`SELECT count(*)::integer AS tables FROM pg_class
       WHERE relnamespace='public'::regnamespace AND relkind='r'`);
-    expect(catalog.tables).toBe(282);
+    expect(catalog.tables).toBe(283);
     // The fresh migration seeds integral at id=1; the existing quote fixture
     // owns ids 1/2. Relocate that one synthetic default, retaining its content.
     const moved = await whole.db.update(memberRight).set({ id: 3 })
@@ -94,7 +96,7 @@ export async function refundRuntimeFixture() {
     await f.db.update(storeProductAttrValue).set({ settlePrice: '2.50', cost: '2.00', brokerage: '0.30' })
       .where(eq(storeProductAttrValue.id, 1));
     await f.db.insert(storeProduct).values({ id: 71, type: 2, relationId: 7, storeName: 'Local runtime remainder',
-      price: '30.00', stock: 8, isShow: 1, freight: 1 });
+      price: '30.00', stock: 8, isShow: 1, isVerify: 1, freight: 1 });
     await f.db.insert(storeProductAttrValue).values({ id: 2, productId: 71, unique: 'runtim71',
       suk: 'Standard', price: '30.00', settlePrice: '20.00', stock: 8 });
     await f.db.insert(storeCart).values({ id: 2, uid: 11, productId: 71, productAttrUnique: 'runtim71', cartNum: 1, status: 1, isNew: 1 });
@@ -113,6 +115,7 @@ export async function refundRuntimeFixture() {
         expect((await runInvoiceEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
         expect((await runRefundOrderSplit(whole.db, peer.role)).runtimeReady).toBe(true);
         expect((await runPurchaseOriginEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
+        expect((await runPurchasePhysicalOriginEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
         expect((await runPurchaseCancellationEvidence(whole.db, peer.role)).runtimeReady).toBe(true);
         return callback(operations(peer));
       });

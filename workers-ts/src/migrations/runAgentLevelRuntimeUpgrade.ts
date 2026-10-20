@@ -40,12 +40,14 @@ export async function installAgentLevelRuntimeUpgradeInTransaction(
   await tx.execute(sql`SELECT pg_advisory_xact_lock(731624,0)`);
   await tx.execute(sql.raw('LOCK TABLE ONLY public.agent_level, ONLY public.agent_level_task, ONLY public.agent_level_task_record IN ACCESS EXCLUSIVE MODE NOWAIT'));
   if(!(await inspectAgentLevelRuntimeCatalog(tx,target.maintenance,target)).ready)throw Error('Distributor runtime exact catalog required');
-  const inspect=async(version:'pre-agent-levels'|'current')=>({
+  const inspect=async(version:'pre-agent-levels'|'pre-physical-origin'|'current')=>({
     app:await inspectRuntimeBusinessProfileInTransaction(tx,'app',target,version),
     admin:await inspectRuntimeBusinessProfileInTransaction(tx,'admin',target,version),
   });
   const current=await inspect('current');
   if(current.app.ready && current.admin.ready)return {operation:AGENT_LEVEL_RUNTIME_UPGRADE,applied:false as const,profileStage:'current' as const};
+  const physicalPrevious=await inspect('pre-physical-origin');
+  if(physicalPrevious.app.ready && physicalPrevious.admin.ready)return {operation:AGENT_LEVEL_RUNTIME_UPGRADE,applied:false as const,profileStage:'pre-physical-origin' as const};
   const previous=await inspect('pre-agent-levels');
   if(!previous.app.ready || !previous.admin.ready)throw Error('Distributor runtime exact pre-agent-levels profile required');
   await upgradeAgentLevelLockBoundaryInTransaction(tx,target.app,target.admin,target.maintenance);
@@ -54,9 +56,9 @@ export async function installAgentLevelRuntimeUpgradeInTransaction(
   await tx.execute(sql.raw(`GRANT INSERT ON TABLE public.agent_level TO ${admin}`));
   await tx.execute(sql.raw(`GRANT UPDATE(id,name,image,color,one_brokerage,two_brokerage,grade,status,is_del) ON TABLE public.agent_level TO ${admin}`));
   await tx.execute(sql.raw(`GRANT USAGE ON SEQUENCE public.agent_level_id_seq TO ${admin}`));
-  const after=await inspect('current');
+  const after=await inspect('pre-physical-origin');
   if(!after.app.ready || !after.admin.ready)throw Error('Distributor runtime final profile verification failed');
-  return {operation:AGENT_LEVEL_RUNTIME_UPGRADE,applied:true as const,profileStage:'current' as const};
+  return {operation:AGENT_LEVEL_RUNTIME_UPGRADE,applied:true as const,profileStage:'pre-physical-origin' as const};
 }
 export async function runAgentLevelRuntimeUpgrade(db:DbClient,target:SeckillScheduleRuntimeTarget) {
   if(!Object.hasOwn(db,'$client') || !db.$client)throw Error('Distributor runtime upgrade requires a root maintenance connection');

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
 import { runPurchaseOriginEvidenceSchema } from '../../src/migrations/runPurchaseOriginEvidence';
+import { runPurchasePhysicalOriginEvidenceSchema } from '../../src/migrations/runPurchasePhysicalOriginEvidence';
 import { ownsFinanceFixtureEndpoint, validateFinanceFixtureUrl } from './financePostgres';
 import { ownsSequenceRunnerEndpoint } from './kefuSequenceRunnerDatabase';
 
@@ -27,4 +28,5 @@ export async function purchaseOriginCheckoutFixture(fixture: { db: DbClient }) {
     await fixture.db.execute(sql`CREATE INDEX fixture_origin_line_oid ON public.store_order_cart_info(oid)`);
   }
   await runPurchaseOriginEvidenceSchema(fixture.db);
+  await runPurchasePhysicalOriginEvidenceSchema(fixture.db);
 }
