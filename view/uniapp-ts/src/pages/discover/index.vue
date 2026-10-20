@@ -47,6 +47,7 @@
           :src="post.image || (post.sliderImage && post.sliderImage[0]) || placeholder"
           mode="aspectFill"
         />
+        <text v-if="post.contentType === 2" class="upload-hint">▶ 视频 · 点击查看</text>
         <view class="post-meta">
           <text class="meta-item">❤ {{ post.likeNum }}</text>
           <text class="meta-item">💬 {{ post.commentNum }}</text>
@@ -58,17 +59,30 @@
     <view v-else class="empty">还没有帖子, 快来发布第一条吧</view>
 
     <!-- 发布弹窗 -->
-    <view v-if="showPublish" class="mask" @tap="showPublish = false">
-      <view class="sheet" @tap.stop>
+    <view v-if="showPublish" class="mask" @tap="closePublish">
+      <view class="sheet publish-sheet" @tap.stop>
         <view class="sheet-title">发布帖子</view>
-        <input v-model="publishForm.title" class="sheet-input" type="text" placeholder="标题 (选填)" />
+        <input v-model="publishTitle" :disabled="publishLocked" :maxlength="255" class="sheet-input" type="text" placeholder="标题 (选填)" />
         <textarea
-          v-model="publishForm.content"
+          v-model="publishContent" :disabled="publishLocked"
           class="sheet-textarea"
           placeholder="分享你的内容..."
           :maxlength="500"
         />
-        <view class="sheet-btn" @tap="publish">发布</view>
+        <view class="video-upload">
+          <text class="upload-hint">MP4 视频，最大 50 MiB</text>
+          <button v-if="!publishVideo" :disabled="publishLocked" @tap="chooseVideo">{{ publishBusy ? '上传中…' : publishChoosing ? '选择中…' : '选择视频' }}</button>
+          <button v-if="videoWanted && !publishVideo && !publishBusy" :disabled="publishLocked" @tap="removeVideo">取消视频，改发文字</button>
+          <template v-if="publishVideo">
+            <video class="community-video" :src="communityVideoSource(publishVideo.src)" controls :autoplay="false" />
+            <text class="upload-hint">已上传：{{ publishVideo.name }}</text>
+            <button :disabled="publishLocked" @tap="removeVideo">移除视频</button>
+          </template>
+        </view>
+        <view v-if="publishError" class="publish-error" role="status">{{ publishError }}</view>
+        <button class="sheet-btn" :disabled="publishLocked" @tap="publish">{{ publishBusy ? '处理中…' : '发布' }}</button>
+        <button v-if="publishUnknown" :disabled="publishBusy" @tap="endUnknownPublish">结束本次发布并刷新帖子</button>
+        <button v-else :disabled="publishBusy || publishChoosing" @tap="closePublish">稍后发布</button>
       </view>
     </view>
 
@@ -78,6 +92,11 @@
         <scroll-view scroll-y class="detail-scroll">
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
+          <video v-if="detail.contentType === 2 && communityVideoSource(detail.videoUrl || detail.video_url)"
+            class="community-video" :src="communityVideoSource(detail.videoUrl || detail.video_url)" controls :autoplay="false"
+            @error="videoFailed = true" />
+          <view v-if="videoFailed" class="publish-error">视频暂时无法播放，可重新加载。</view>
+          <button v-if="videoFailed" @tap="reloadVideo">重新加载视频</button>
           <view class="detail-meta">
             <text class="like-btn" :class="{ liked: liked }" @tap="like">
               ❤ {{ detail.likeNum }}
@@ -116,14 +135,15 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
-import { ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { ref, watch } from "vue";
+import { useCommunityPublish } from "@/composables/useCommunityPublish";
+import { communityVideoSource } from "@/utils/communityMedia";
+import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import {
   apiCommunityList,
   apiCommunityDetail,
   apiCommunityTopics,
   apiCommunityLike,
-  apiCommunitySave,
   apiCommentList,
   apiCommentSave,
   apiCommunityFollowHighlights,
@@ -141,7 +161,11 @@ const comments = ref<CommunityComment[]>([]);
 const liked = ref(false);
 const commentText = ref("");
 const showPublish = ref(false);
-const publishForm = ref({ title: "", content: "" });
+const publisher = useCommunityPublish();
+const { title: publishTitle, content: publishContent, video: publishVideo, busy: publishBusy,
+  choosing: publishChoosing, locked: publishLocked, unknown: publishUnknown, error: publishError,
+  videoWanted, chooseVideo, removeVideo } = publisher;
+const videoFailed = ref(false);
 const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
 const topics = ref<CommunityTopic[]>([]);
 const publishTopicId = ref<number | null>(null);
@@ -206,30 +230,37 @@ function openVideo() {
   uni.navigateTo({ url: "/pages/discover/discoverVideo/index" });
 }
 
+function closePublish() {
+  if (!publishBusy.value && !publishChoosing.value) showPublish.value = false;
+}
+function endUnknownPublish() {
+  if (publisher.reset()) { showPublish.value = false; void load(); }
+}
 async function publish() {
-  if (!publishForm.value.content.trim()) {
-    return uni.showToast({ title: "内容不能为空", icon: "none" });
-  }
-  try {
-    await apiCommunitySave({
-      title: publishForm.value.title.trim() || undefined,
-      content: publishForm.value.content.trim(),
-      content_type: 1,
-      topic_id: publishTopicId.value ? [publishTopicId.value] : undefined,
-    });
-    uni.showToast({ title: "发布成功", icon: "success" });
-    showPublish.value = false;
-    publishForm.value = { title: "", content: "" };
-    publishTopicId.value = null;
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "发布失败", icon: "none" });
-  }
+  const owner = authStore.sessionVersion;
+  const id = await publisher.publish(publishTopicId.value ?? undefined);
+  if (!id) return;
+  uni.showToast({ title: "已提交，请以审核结果为准", icon: "none" });
+  publisher.reset(); showPublish.value = false; publishTopicId.value = null;
+  const revision = detailGeneration;
+  await load();
+  if (revision !== detailGeneration || owner !== authStore.sessionVersion) return;
+  try { const post = await apiCommunityDetail(id);
+    if (revision === detailGeneration && owner === authStore.sessionVersion) await openDetail(post);
+  } catch { /* The post may still be under review. */ }
+}
+async function reloadVideo() {
+  const id = detail.value?.id, revision = detailGeneration;
+  if (!id) return;
+  try { const post = await apiCommunityDetail(id);
+    if (revision === detailGeneration && detail.value?.id === id) { detail.value = post; videoFailed.value = false; }
+  } catch { uni.showToast({ title: "视频暂时无法加载", icon: "none" }); }
 }
 
 async function openDetail(post: CommunityPost) {
   const requestGeneration = ++detailGeneration;
   detail.value = post;
+  videoFailed.value = false;
   liked.value = false;
   try {
     const result = await apiCommentList(post.id);
@@ -290,9 +321,18 @@ async function sendComment() {
 }
 
 onShow(load);
+onHide(closeDetail);
+onUnload(closeDetail);
+watch(() => authStore.sessionVersion, () => { closeDetail(); showPublish.value = false; }, { flush: 'sync' });
 </script>
 
 <style scoped>
+.publish-sheet { max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
+.video-upload { display: flex; flex-direction: column; gap: 12rpx; margin: 20rpx 0; }
+.upload-hint { color: #666; font-size: 24rpx; overflow-wrap: anywhere; }
+.community-video { display: block; width: 100%; height: 340rpx; margin: 12rpx 0; }
+.publish-error { color: #a32920; font-size: 26rpx; margin: 16rpx 0; }
+
 .discover {
   padding: 20rpx;
 }
@@ -448,6 +488,7 @@ onShow(load);
 .mask {
   position: fixed;
   inset: 0;
+  bottom: var(--window-bottom, 0px);
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: flex-end;

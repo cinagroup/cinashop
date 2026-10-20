@@ -216,6 +216,7 @@ export function apiCommunitySave(params: {
   content: string;
   content_type?: number;
   image?: string;
+  video_url?: string;
   slider_image?: string[];
   topic_id?: number[];
   product_id?: number[];
@@ -227,6 +228,7 @@ export function apiCommunitySave(params: {
       type: 2,
       relationId: 999,
       contentType: params.content_type ?? 1,
+      videoUrl: params.video_url ?? "",
       title: params.title ?? "分享",
       content: params.content,
       image: params.image ?? "",

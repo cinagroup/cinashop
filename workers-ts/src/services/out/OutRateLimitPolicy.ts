@@ -35,7 +35,9 @@ export function advanceRateWindows(
     throw new Error("invalid rate limit policies");
   }
   if (!Number.isFinite(now) || now < 0) throw new Error("invalid rate limit time");
-  if (!Number.isSafeInteger(windowSeconds) || windowSeconds < 1 || windowSeconds > 3600) {
+  // Customer and Kefu media use the PHP daily upload budget; API/IP callers
+  // retain their existing shorter windows.
+  if (!Number.isSafeInteger(windowSeconds) || windowSeconds < 1 || windowSeconds > 86400) {
     throw new Error("invalid rate limit window");
   }
   const normalized = policies.map((policy) => {

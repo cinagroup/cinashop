@@ -1,0 +1,665 @@
+{
+  "date": "2026-10-20",
+  "base_commit": "1d603000fe80c86f08e1c38b01de80fa58819917",
+  "branch": "codex/community-video-publish",
+  "scope": "H5 customer MP4 upload, owned private media, moderated publishing, signed playback, shared daily image/video rate policy",
+  "tests": {
+    "unique_passed": 716,
+    "new_test_cases": 29,
+    "counting": "551 unit + 106 native application + 43 native image transactions + 19 H5 + 2 workerd + 1 Browser, minus six repeated community-video cases. Four targeted native image follow-ups are repetitions, not additional cases.",
+    "native_followup": "The 106-case full native SQL regression preceded the daily-window policy fix. All four affected native image upload authors were then rerun with the actual policy. Unselected cases in that explicit four-case follow-up are not claimed as new passes."
+  },
+  "checks": [
+    {
+      "label": "types-complete",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-video-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:50:44.058768+00:00",
+      "seconds": 223.33,
+      "log": "/tmp/cinashop-community-video-types-complete.log",
+      "log_sha256": "58c18991955ccf7e2b03349b0b67824f25d658128da0577725559588941684db",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "unit-complete",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/community-video-publish.test.ts",
+        "test/customer-upload-rate-policy.test.ts",
+        "test/out-api-migration.test.ts",
+        "test/community-migration.test.ts",
+        "test/community-admin-migration.test.ts",
+        "test/community-social-migration.test.ts",
+        "test/attachment-upload-category-contract.test.ts",
+        "test/customer-refund-return.test.ts",
+        "test/supplier-refund-evidence.test.ts",
+        "test/route-parity-audit.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:54:51.699870+00:00",
+      "seconds": 54.08,
+      "log": "/tmp/cinashop-community-video-unit-complete.log",
+      "log_sha256": "c439b487adf4450ee45be539391aa46859c3f95fd5de78caac669bf43ebf5b9b",
+      "changed_during_run": [],
+      "passed": 551
+    },
+    {
+      "label": "workerd-rate-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.worker.config.ts",
+        "test/runtime/community-upload-rate.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:55:45.851170+00:00",
+      "seconds": 21.82,
+      "log": "/tmp/cinashop-community-video-workerd-rate-final.log",
+      "log_sha256": "0bedf886eb6f8e8ca71029b439a1380bec582cd50c82975f0c9a9bd33d87893a",
+      "changed_during_run": [],
+      "passed": 2
+    },
+    {
+      "label": "h5-runtime-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/community-publish-runtime.test.cjs",
+        "scripts/community-deep-links-runtime.test.cjs"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:56:07.730235+00:00",
+      "seconds": 2.17,
+      "log": "/tmp/cinashop-community-video-h5-runtime-final.log",
+      "log_sha256": "dd622496a982fb76f0f8ccb7f27a82cbc65eeb9703bb8dd9b16c8b1a68dda4b3",
+      "changed_during_run": [],
+      "passed": 19
+    },
+    {
+      "label": "native-app-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-video-publish.test.ts",
+        "test/community-video-postgres.test.ts",
+        "test/customer-refund-request-images-native.test.ts",
+        "test/customer-refund-quantities-native.test.ts",
+        "test/refund-application-evidence-native.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:36:31.478654+00:00",
+      "seconds": 394.18,
+      "log": "/tmp/cinashop-community-video-native-app-final.log",
+      "log_sha256": "3201cc0ec39c7a43f73bb9c8c6b16ef7c079d74ff209bd4d11b904c6b21c2cf9",
+      "changed_during_run": [],
+      "passed": 106
+    },
+    {
+      "label": "native-images-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/attachment-upload-category-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:43:23.141104+00:00",
+      "seconds": 10.2,
+      "log": "/tmp/cinashop-community-video-native-images-final.log",
+      "log_sha256": "e550da9dc39fa3521c12faec0b9664eb029133ebe37e0e38a5323c9de35b0cf2",
+      "changed_during_run": [],
+      "passed": 43
+    },
+    {
+      "label": "native-image-rate-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--case",
+        "joins actual registered checkout and multipart application author to Customer SELECT-only detail and signed original bytes",
+        "--case",
+        "requests 1 of an actual checkout quantity 2, keeps the other line and finances unchanged, and reads the same uploaded original as both actors",
+        "--case",
+        "preserves known empty SQL NULL, old empty text and [] return images while malformed or oversized return evidence cannot erase the original image or selected quantity",
+        "--case",
+        "connects real registered checkout, Customer multipart upload and apply, and Supplier SELECT-only detail plus signed PNG without provider calls",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/customer-refund-request-images-native.test.ts",
+        "test/customer-refund-quantities-native.test.ts",
+        "test/refund-application-evidence-native.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:56:09.969018+00:00",
+      "seconds": 77.75,
+      "log": "/tmp/cinashop-community-video-native-image-rate-final.log",
+      "log_sha256": "2e1b42ff171d6a4de2f076da3119d1464a78fa2d06c07bf17a7dbe57b3df8595",
+      "changed_during_run": [],
+      "passed": 4
+    },
+    {
+      "label": "uni-build-complete",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T10:57:47.370972+00:00",
+      "seconds": 44.03,
+      "log": "/tmp/cinashop-community-video-uni-build-complete.log",
+      "log_sha256": "703a0d81f65574ef247d2109acd3dc56fdd6d3f778e08b1430206ee4bdf63e95",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "browser-complete-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-video-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:29:32.449935+00:00",
+      "seconds": 308.77,
+      "log": "/tmp/cinashop-community-video-browser-complete-final.log",
+      "log_sha256": "976e93125438eb4433d0a66ea9fc46bfe1224dca9265e7ea48ace8fcab8e675e",
+      "changed_during_run": [],
+      "passed": 1
+    }
+  ],
+  "browser": {
+    "evidence": [
+      {
+        "stage": "entry",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "uploaded",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：真实上传后播放MP4 视频，最大 50 MiB00:0000:02Danmu00:02Volume00:00 / 00:02已上传：community-video.mp4移除视频发布稍后发布首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0,
+            "error": null
+          }
+        ],
+        "publishDisabled": false
+      },
+      {
+        "stage": "published",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧本地合成短片后台验收：真实上传后播放00:0000:02Danmu00:02Volume00:00 / 00:02 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0,
+            "error": null
+          }
+        ],
+        "publishDisabled": true
+      },
+      {
+        "stage": "played",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧本地合成短片后台验收：真实上传后播放00:0200:02DanmuVolume00:00 / 00:02 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 2,
+            "error": null
+          }
+        ],
+        "publishDisabled": true
+      },
+      {
+        "stage": "unknown",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 回执丢失时不得重复发布MP4 视频，最大 50 MiB选择视频发布结果未确认，帖子可能已提交审核。请先查看帖子，勿重复发布。发布结束本次发布并刷新帖子首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "finished",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "publishDisabled": true
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/video",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/1",
+        "status": 206,
+        "browserStatus": 206,
+        "bytes": 3142,
+        "contentRange": "bytes 0-3141/3142"
+      },
+      {
+        "method": "POST",
+        "path": "/api/community_save",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "title": "本地合成短片",
+          "content": "后台验收：真实上传后播放",
+          "content_type": 2,
+          "video_url": "/api/assets/1"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/detail/1",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/comment/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/1",
+        "status": 206,
+        "browserStatus": 206,
+        "bytes": 3142,
+        "contentRange": "bytes 0-3141/3142"
+      },
+      {
+        "method": "POST",
+        "path": "/api/community_save",
+        "status": 200,
+        "browserStatus": 503,
+        "input": {
+          "content": "回执丢失时不得重复发布",
+          "content_type": 1
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      }
+    ],
+    "posts": [
+      {
+        "id": 1,
+        "contentType": 2,
+        "isVerify": 0,
+        "videoUrl": "/api/assets/1"
+      },
+      {
+        "id": 2,
+        "contentType": 1,
+        "isVerify": 0,
+        "videoUrl": ""
+      }
+    ],
+    "attachments": [
+      {
+        "id": 1,
+        "owner": 11,
+        "fileType": 2
+      }
+    ],
+    "providerCalls": 0,
+    "authority": "Actual createApp/JWT and owned native PG16 ORM schema; R2 byte storage and navigation chrome are synthetic"
+  },
+  "browser_health": {
+    "url": "http://127.0.0.1:40751/__community_video/201caa94-125c-43a0-8e31-61622b4fef65",
+    "title": "社区视频后台验收",
+    "logs": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T11:30:09.806Z",
+        "url": "http://127.0.0.1:40751/assets/index-Bx9b_N1f.js"
+      }
+    ],
+    "snapshot": "- heading \"实际 H5 视频发布\" [level=1]\n- button \"打开社区\"\n- button \"entry\"\n- button \"uploaded\"\n- button \"published\"\n- button \"played\"\n- button \"unknown\"\n- button \"finished\"\n- button \"lose-reply\"\n- generic: \"{\\\"checked\\\":[\\\"entry\\\",\\\"uploaded\\\",\\\"published\\\",\\\"played\\\",\\\"unknown\\\"],\\\"finished\\\":false}\"\n- iframe [active]:\n  - generic: 逛逛\n  - generic: 逛逛\n  - generic: 搜索\n  - generic: 视频\n  - generic: 好友与关注\n  - generic: ＋ 发布\n  - generic: \"# 本地视频\"\n  - generic: 还没有帖子, 快来发布第一条吧\n  - generic: 首页\n  - generic: 分类\n  - generic: 逛逛\n  - generic: 购物车\n  - generic: 我的"
+  },
+  "screenshots": [
+    {
+      "path": "/tmp/cinashop-community-video-played-complete.png",
+      "sha256": "4bf26f4c61c211332b03292adbda6d37f935865bac058217780b95fe2db45e79"
+    },
+    {
+      "path": "/tmp/cinashop-community-video-unknown-complete.png",
+      "sha256": "ba5530c91d8edc4e01b44d6a61f9bfc7f3a0addd4d0bc8685d7e759a87249ccd"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "94a26350f52dc80d87f526e48aec7b9ddaae03415e324f50816902b8d3197e00"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-publish-runtime.test.cjs",
+      "sha256": "3bd9d0a8423546edb250c4af28c3de905139b8bb35dd6101e4d0df9a18f187a2"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/community.ts",
+      "sha256": "6e9048c09648b89271752b74a48c93b5717abf9b9082682a3dbcd084a1ab2845"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/communityVideo.ts",
+      "sha256": "7edc070d5b0717c2469d1da6f016a08925d9d9480d4840124dc5c3ee340eb417"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityPublish.ts",
+      "sha256": "4376c71aac6d569c74c914eb74826a834072b4ab9390a4b81d3ebac28c0d5540"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "ed3b4999f4022247a8f1f82e45f7b0b8f6679a977094bb2f15aef2c1d98f1fcd"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "4ddb9c23c8858faece810d30b9f99c6dc7f17b9d1a4b2a9f19cfc79b7c77f34d"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+      "sha256": "88fada1e4f30bd467043ba2fe24ffba409a5b54d2b16ea2a4279b5a93e4c8068"
+    },
+    {
+      "path": "workers-ts/src/controllers/system/AttachmentController.ts",
+      "sha256": "d7dfe2c5e26e9432da61c66673e8fe1dd7f5e984abd4fdcaa867ab5aa3afb92f"
+    },
+    {
+      "path": "workers-ts/src/middleware/customer-media-upload.ts",
+      "sha256": "a41f602b3a6b19702eb94c64b363cb37df910053d2d578b06a411dc26fcd807d"
+    },
+    {
+      "path": "workers-ts/src/routes/v1/index.ts",
+      "sha256": "d15ab16f0e39619b9150112b12523fc63991f2446a6d4f6d8004d53696b3372b"
+    },
+    {
+      "path": "workers-ts/src/services/community/AdminCommunityService.ts",
+      "sha256": "dce01aa164aa46098591cbac37b24d1362e2b0c8fc45dd11d18e772252914e6f"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityService.ts",
+      "sha256": "047be78c3a6c53fb2b365af47dcb8caffdbb7b6df3faa9b7d807323069f5bf3e"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityVideoMedia.ts",
+      "sha256": "05d446c22fff5381b60912168af4ffd52d9a1a4ee12780e75307f7a508ea0858"
+    },
+    {
+      "path": "workers-ts/src/services/out/OutRateLimitPolicy.ts",
+      "sha256": "7c20717c461d55029f1e9691838b75d4ea40e61a2e139cc67ccef4d540b43427"
+    },
+    {
+      "path": "workers-ts/src/services/system/AttachmentService.ts",
+      "sha256": "242ba0d529c6edcd6e753d452c30ddef116937f26441303a1c3f41617efd681e"
+    },
+    {
+      "path": "workers-ts/src/services/system/CustomerVideoPolicy.ts",
+      "sha256": "c42abd833e1bc0389e39e87dfb7b4d36e5fc21fbfaccefa615a63291137de066"
+    },
+    {
+      "path": "workers-ts/test/browser/community-video.acceptance.ts",
+      "sha256": "ef52f798be9babe3a218ae285ef6b6fd8fef1812e488e493612ce8bf06f6305b"
+    },
+    {
+      "path": "workers-ts/test/community-video-postgres.test.ts",
+      "sha256": "4e011fe8d0f2b9a9f1d08914bf50e912c37cfe5268f6a4dc3c963edd22a6b63a"
+    },
+    {
+      "path": "workers-ts/test/community-video-publish.test.ts",
+      "sha256": "ea999c0d36525dab0db568243449a586590ba6341230f04118742ccd3ec8f95a"
+    },
+    {
+      "path": "workers-ts/test/customer-upload-rate-policy.test.ts",
+      "sha256": "5b1eab5fd5fd8766854213067103ee3104f3d15e280a8176585f43dcbbf35f9d"
+    },
+    {
+      "path": "workers-ts/test/fixtures/community-video.mp4",
+      "sha256": "edb075849287810a0fd6434d3f0a6972feb7531ae0d1a005dc4edc28174c7de6"
+    },
+    {
+      "path": "workers-ts/test/helpers/communityVideoFixture.ts",
+      "sha256": "c5d8796091383c48aec192d85c065163936663631285ee4a63bb2f8240d1557f"
+    },
+    {
+      "path": "workers-ts/test/helpers/customerRefundReturnFixture.ts",
+      "sha256": "d4484576358b237db3018640d658f7e500bf0c717fba21e74ddd473d1ab736e5"
+    },
+    {
+      "path": "workers-ts/test/helpers/refundApplicationEvidence.ts",
+      "sha256": "d64153db655cd689218fc09b43eef2034fa9348244e0d93e0e32742efef97528"
+    },
+    {
+      "path": "workers-ts/test/helpers/userUploadRateFixture.ts",
+      "sha256": "1e7b990ca68477b88e0eab2cd2434c2075153cc705054ed6ada677632b00fa7f"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "4a200fe8f3e46d5af15e9cbd5ce26ea583eaebc0c7aad6f4399110de94cdc3c5"
+    },
+    {
+      "path": "workers-ts/test/runtime/community-upload-rate.test.ts",
+      "sha256": "c9b15e681cb445a81e91a1816b320edaa970f17ef4d8b43ed04bf7e2f16b4e4c"
+    },
+    {
+      "path": "workers-ts/vitest.community-video-browser.config.ts",
+      "sha256": "68ecdd17f6fe59f1b852f2626e8791e4842efa3cc5ac801e3fdebd2ba86a0094"
+    }
+  ],
+  "doc_preservation": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "existing_body_preserved": true,
+      "checkbox_lines_preserved": 88
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "existing_body_preserved": true,
+      "checkbox_lines_preserved": 404
+    }
+  ],
+  "postgres_cleanup": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-34erWF",
+      "log": "/tmp/cinashop-community-video-browser-complete-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-iBlEqY",
+      "log": "/tmp/cinashop-community-video-browser-complete.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-anp3di",
+      "log": "/tmp/cinashop-community-video-browser-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-JqhysX",
+      "log": "/tmp/cinashop-community-video-browser.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-3EsFVH",
+      "log": "/tmp/cinashop-community-video-native-app-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-hi88Z8",
+      "log": "/tmp/cinashop-community-video-native-image-rate-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-v1adQL",
+      "log": "/tmp/cinashop-community-video-native-images-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ZsEg9T",
+      "log": "/tmp/cinashop-community-video-native.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    }
+  ],
+  "fixture": {
+    "path": "workers-ts/test/fixtures/community-video.mp4",
+    "bytes": 3142,
+    "sha256": "edb075849287810a0fd6434d3f0a6972feb7531ae0d1a005dc4edc28174c7de6",
+    "origin": "locally generated two-second silent H.264 color pattern; no personal media"
+  },
+  "compatibility": [
+    "GET /api/get_script remains restored; retirement decisions unchanged",
+    "filename multipart field selects a single file; default file",
+    "new videos use owned canonical references; unchanged external historical video URLs are retained only on edits",
+    "MP4 only, 50 MiB; image/video attempts share a fixed 24-hour 100-attempt budget, unlike PHP success-only sliding TTL"
+  ],
+  "limitations": [
+    "Native PG16 uses isolated test/maintenance SQL and synthetic JWTs; this is not production runtime-role commissioning",
+    "R2 and API test DO transport are in-memory; real DO persistence/concurrency is separately tested in local workerd",
+    "50 MiB is admission-boundary tested; actual browser media is 3142 bytes, not a capacity/stress test",
+    "No production deployment, real Cloudflare R2/provider, native camera, Mini Program or codec-matrix acceptance",
+    "A lost community-save reply is not automatically replayed; no durable cross-refresh idempotency claim"
+  ],
+  "candidate_failures_excluded": [
+    "Initial R2 fixture range-header handling mismatch",
+    "Initial Browser round exposed tabbar covering the recovery control; fixed and reverified",
+    "One native batch rejected by the runner because schema-maintenance and ordinary suites were mixed; split into existing scopes",
+    "Initial workerd negative RPC test surfaced an unhandled-rejection diagnostic; invalid-window bounds are now Node policy tests, real DO positive persistence/concurrency suite passes",
+    "Initial newly added test type errors corrected; both full Worker type projects pass",
+    "One final Browser attempt exceeded the harness deadline while the file-chooser tool response was delayed; no pass is claimed for that attempt"
+  ],
+  "acceptance_confirmation_requests": 0,
+  "global_permission_changes": false,
+  "overall_migration_complete": false
+}

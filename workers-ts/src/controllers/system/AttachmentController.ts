@@ -1,3 +1,4 @@
+import { boundedCustomerVideo, enforceUserUploadRateLimit } from "@/middleware/customer-media-upload";
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import {
@@ -259,7 +260,15 @@ export async function asset(c: C) {
   }
 }
 
-export const userUploadImage = (c: C) => upload(c, "user");
+export async function userUploadImage(c: C) {
+  await enforceUserUploadRateLimit(c);
+  return upload(c, "user");
+}
+
+export async function userUploadVideo(c: C) {
+  await enforceUserUploadRateLimit(c);
+  return jsonOk(c, await service(c).uploadUserVideo(c.get("uid")!, await boundedCustomerVideo(c)), "视频上传成功!");
+}
 export const adminUploadImage = (c: C) => upload(c, "admin");
 export const supplierUploadImage = (c: C) => upload(c, "supplier");
 

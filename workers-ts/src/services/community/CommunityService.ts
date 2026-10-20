@@ -1,3 +1,4 @@
+import { communityVideoSources } from "./CommunityVideoMedia";
 /**
  * 社区 Service
  *
@@ -105,7 +106,7 @@ function parseStoredStrings(value: string | null): string[] {
 }
 
 export class CommunityService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   /** 公开话题列表 (community/topic) */
   async topics() {
@@ -696,6 +697,7 @@ export class CommunityService {
         item.products.push(relation.rightId);
       }
     }
+    const videoSources = await communityVideoSources(this.container.db, this.appKey, rows);
     return rows.map((row) => {
       const owner = row.type === 2
         ? userMap.get(row.relationId) ?? profileMap.get(`2:${row.relationId}`)
@@ -713,7 +715,9 @@ export class CommunityService {
         ...row,
         relation_id: row.relationId,
         content_type: row.contentType,
-        video_url: row.videoUrl,
+        video_reference: row.videoUrl,
+        videoUrl: videoSources.get(row.id) ?? row.videoUrl,
+        video_url: videoSources.get(row.id) ?? row.videoUrl,
         sliderImage,
         slider_image: sliderImage,
         topicId: related.topics,

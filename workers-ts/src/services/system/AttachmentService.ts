@@ -6,6 +6,7 @@ import {
   systemAttachmentCategory,
   systemStorage,
 } from "@/models/schema";
+import { assertActiveMediaUser, validateCustomerVideo } from "./CustomerVideoPolicy";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { isCashierFormAttachmentKey } from './CashierFormAttachmentScope';
@@ -500,7 +501,12 @@ export class AttachmentService {
   ) {}
 
   async uploadImage(scope: AttachmentScope, file: File, pidValue: unknown) {
-    return this.storeImage(scope, file, pidValue);
+    return this.storeMedia(scope, file, pidValue);
+  }
+
+  async uploadUserVideo(uid: number, file: File) {
+    const scope = userAttachmentScope(uid);
+    return this.storeMedia(scope, file, 0, tx => assertActiveMediaUser(tx, uid), true);
   }
 
   /** Separate from the ordinary material-library scope: no generic list,
@@ -509,22 +515,29 @@ export class AttachmentService {
     authorizeMetadata: (tx: DbClient) => Promise<void>) {
     assertAssistedFormAttachmentScope(scope);
     if (typeof authorizeMetadata !== 'function') throw new ValidateException('缺少代客表单图片提交校验');
-    return this.storeImage(scope, file, 0, authorizeMetadata);
+    return this.storeMedia(scope, file, 0, authorizeMetadata);
   }
 
-  private async storeImage(scope: AttachmentScope | AssistedFormAttachmentScope, file: File, pidValue: unknown,
-    authorizeMetadata?: (tx: DbClient) => Promise<void>) {
-    if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择图片文件");
-    if (file.size > MAX_IMAGE_BYTES) throw new ValidateException("图片不能超过10 MiB");
-    const detected = detectImageType(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
-    if (!detected) throw new ValidateException("只支持 JPEG、PNG、WebP 或 GIF 图片");
-    const declaredMime = normalizeDeclaredMime(file.type);
-    if (declaredMime && declaredMime !== detected.mime) {
-      throw new ValidateException("图片内容与声明类型不一致");
+  private async storeMedia(scope: AttachmentScope | AssistedFormAttachmentScope, file: File, pidValue: unknown,
+    authorizeMetadata?: (tx: DbClient) => Promise<void>, video = false) {
+    let detected: { mime: string; extension: string };
+    const fileType = video ? 2 : 1;
+    const mediaName = video ? "视频" : "图片";
+    if (video) {
+      await validateCustomerVideo(file);
+      detected = { mime: "video/mp4", extension: "mp4" };
+    } else {
+      if (!(file instanceof File) || file.size <= 0) throw new ValidateException("请选择图片文件");
+      if (file.size > MAX_IMAGE_BYTES) throw new ValidateException("图片不能超过10 MiB");
+      const image = detectImageType(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
+      if (!image) throw new ValidateException("只支持 JPEG、PNG、WebP 或 GIF 图片");
+      const declaredMime = normalizeDeclaredMime(file.type);
+      if (declaredMime && declaredMime !== image.mime) throw new ValidateException("图片内容与声明类型不一致");
+      detected = image;
     }
     const pid = nonNegativeId(pidValue, "分类ID");
     if (scope.moduleType === 5 && pid !== 0) throw new ValidateException('代客表单图片不使用素材分类');
-    if (pid > 0 && scope.moduleType !== 5) await this.assertCategory(scope, pid, 1);
+    if (pid > 0 && scope.moduleType !== 5) await this.assertCategory(scope, pid, fileType);
 
     const now = new Date();
     const owner = scope.relationId > 0 ? scope.relationId : 1;
@@ -573,7 +586,7 @@ export class AttachmentService {
         durationMs: Date.now() - r2StartedAt,
         errorCode: "size_mismatch",
       });
-      throw new ValidateException("图片上传不完整，请重试");
+      throw new ValidateException(`${mediaName}上传不完整，请重试`);
     }
 
     let id: number;
@@ -590,7 +603,7 @@ export class AttachmentService {
                 eq(systemAttachmentCategory.id, pid),
                 eq(systemAttachmentCategory.type, scope.type),
                 eq(systemAttachmentCategory.relationId, scope.relationId),
-                eq(systemAttachmentCategory.fileType, 1),
+                eq(systemAttachmentCategory.fileType, fileType),
               )).limit(1).for("share");
             if (!categories.length) throw new NotFoundException("附件分类不存在");
           }
@@ -598,7 +611,7 @@ export class AttachmentService {
         metadataWriteStarted = true;
         const metadata = {
           type: scope.type,
-          fileType: 1,
+          fileType,
           relationId: scope.relationId,
           name: key,
           attDir: "",
@@ -628,7 +641,7 @@ export class AttachmentService {
           const returnedId = inserted[0]?.attId;
           if (inserted.length !== 1 || typeof returnedId !== 'number' || !Number.isSafeInteger(returnedId)
             || returnedId <= 0 || !matchesMetadata(inserted[0], metadata)) {
-            throw new ValidateException("图片记录未完整保存，请重试");
+            throw new ValidateException(`${mediaName}记录未完整保存，请重试`);
           }
           attachmentId = returnedId;
         }
@@ -642,7 +655,7 @@ export class AttachmentService {
           if (updated.length !== 1 || updated[0]?.attId !== attachmentId || !matchesMetadata(updated[0], {
             ...metadata, attDir: canonical, sattDir: canonical,
           })) {
-            throw new ValidateException("图片记录未完整保存，请重试");
+            throw new ValidateException(`${mediaName}记录未完整保存，请重试`);
           }
         }
         metadataCallbackCompleted = true;

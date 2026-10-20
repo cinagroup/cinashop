@@ -1,3 +1,4 @@
+import { userUploadRateFixture } from "./userUploadRateFixture";
 import { eq, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { createContainerFromDb } from '@/lib/di';
@@ -100,7 +101,7 @@ export async function refundApplicationEvidenceWriterFixture() {
     const source = await f.withRuntime(writer => writer.createPaid({ key: 'evidence-checkout', orderId: 'evidence_checkout' }));
     // Generated deployment bindings fix NODE_ENV to production. This isolated
     // fixture deliberately uses test mode; assert only that test-only binding.
-    const env: Env = { ...f.env, APP_KEY: key, NODE_ENV: 'test' as Env['NODE_ENV'], ASSETS_BUCKET: r2.bucket };
+    const env: Env = { ...f.env, TOKEN_BUCKET: userUploadRateFixture(), APP_KEY: key, NODE_ENV: 'test' as Env['NODE_ENV'], ASSETS_BUCKET: r2.bucket };
     const tokens = { buyer: (await createToken(11, 'api', md5(password), key)).token,
       viewer: (await createToken(990, 'supplier', md5(password), key)).token };
     const withBuyer = async <T>(work: (peer: { db: DbClient; container: ReturnType<typeof createContainerFromDb>; exec: typeof f.exec; sqlBoundary: 'maintenance' }) => Promise<T>) =>

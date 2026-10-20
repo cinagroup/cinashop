@@ -925,6 +925,7 @@ v1Routes.post("/user/apply/supplier/code", authMiddleware({ force: true }), Supp
 v1Routes.post("/user/apply/supplier/:id", authMiddleware({ force: true }), SupplierApplicationController.submit);
 v1Routes.post("/user/apply/activate/:id", authMiddleware({ force: true }), SupplierApplicationController.activate);
 v1Routes.post("/upload/image", authMiddleware({ force: true }), AttachmentController.userUploadImage);
+v1Routes.post("/upload/video", authMiddleware({ force: true }), AttachmentController.userUploadVideo);
 v1Routes.post("/assets/upload/image", authMiddleware({ force: true }), AttachmentController.userUploadImage);
 v1Routes.get("/commission", authMiddleware({ force: true }), UserFinanceController.commission);
 v1Routes.get("/integral/list", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.integralList);

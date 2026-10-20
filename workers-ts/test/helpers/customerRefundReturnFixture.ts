@@ -1,3 +1,4 @@
+import { userUploadRateFixture } from "./userUploadRateFixture";
 import { customerRefundReadFixture } from './customerRefundReadFixture';
 import { systemAttachment, expressCompany } from '../../src/models/schema';
 import { refundExpress } from '../../src/controllers/api/v1/PayController';
@@ -9,7 +10,7 @@ import type { PgTable } from 'drizzle-orm/pg-core';
 export async function customerRefundReturnFixture(extraTables: PgTable[] = []) {
   const fixture = await customerRefundReadFixture([systemAttachment, expressCompany, ...extraTables]);
   const objects = new Map<string, { bytes: ArrayBuffer; mime: string }>();
-  Object.assign(fixture.env, { APP_KEY: 'synthetic-local-refund-return-key-not-production', ASSETS_BUCKET: {
+  Object.assign(fixture.env, { TOKEN_BUCKET: userUploadRateFixture(), APP_KEY: 'synthetic-local-refund-return-key-not-production', ASSETS_BUCKET: {
     async put(key: string, stream: ReadableStream<Uint8Array>, options: R2PutOptions) {
       const bytes = await new Response(stream).arrayBuffer();
       objects.set(key, { bytes, mime: (options.httpMetadata as R2HTTPMetadata)?.contentType ?? 'application/octet-stream' });

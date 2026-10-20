@@ -95,14 +95,14 @@ export async function communityConfig(c: C) {
 
 /** GET /api/community/topic — 可用话题 */
 export async function communityTopic(c: C) {
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   return jsonOk(c, await svc.topics());
 }
 
 /** GET /api/community/list — 帖子列表 */
 export async function communityList(c: C) {
   const q = c.req.query();
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     return jsonOk(c, await svc.list(q, 10, c.get("uid") || undefined));
   } catch (e) {
@@ -114,7 +114,7 @@ export async function communityList(c: C) {
 /** GET /api/community/detail/:id — 帖子详情 */
 export async function communityDetail(c: C) {
   const id = Number(c.req.param("id") ?? "0");
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     return jsonOk(c, await svc.detail(id, c.get("uid") || undefined));
   } catch (e) {
@@ -130,7 +130,7 @@ export async function communityLike(c: C) {
   const id = Number(c.req.param("id") ?? "0");
   const body = await readJsonObject(c, 4 * 1024);
   const status = body.status === 0 ? 0 : 1;
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   const result = await svc.like(uid, id, status);
   return jsonOk(c, result, status === 1 ? "点赞成功" : "取消点赞");
 }
@@ -140,7 +140,7 @@ export async function communitySave(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const body = await readJsonObject(c);
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     const contentType = Number(body.content_type ?? 1);
     return jsonOk(
@@ -173,7 +173,7 @@ export async function communityUpdate(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).update(
+      await new CommunityService(c.get("container"), c.env.APP_KEY).update(
         uid,
         id,
         body,
@@ -192,7 +192,7 @@ export async function communityCommentList(c: C) {
   const communityId = Number(c.req.query("community_id") ?? "0");
   if (!communityId) return jsonFail(c, "参数错误");
   const q = c.req.query();
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     return jsonOk(
       c,
@@ -217,7 +217,7 @@ export async function communityCommentSave(c: C) {
   const body = await readJsonObject(c, 8 * 1024);
   const communityId = Number(body.community_id ?? 0);
   if (!Number.isSafeInteger(communityId) || communityId <= 0) return jsonFail(c, "参数错误");
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     const values = await config(c).getMany([
       "community_comment_status",
@@ -249,7 +249,7 @@ export async function communityDelete(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const id = Number(c.req.param("id") ?? "0");
-  const svc = new CommunityService(c.get("container"));
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
     await svc.del(uid, id);
     return jsonOk(c, null, "删除成功");
@@ -264,7 +264,7 @@ export async function communityProductList(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).userProductList(
+      await new CommunityService(c.get("container"), c.env.APP_KEY).userProductList(
         c.get("uid") || undefined,
         c.req.query(),
       ),
@@ -280,7 +280,7 @@ export async function communityTopicCount(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).topicCount(Number(c.req.param("id") ?? "0")),
+      await new CommunityService(c.get("container"), c.env.APP_KEY).topicCount(Number(c.req.param("id") ?? "0")),
     );
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
@@ -293,7 +293,7 @@ export async function communityLikeList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   try {
-    return jsonOk(c, await new CommunityService(c.get("container")).likedPosts(uid, c.req.query()));
+    return jsonOk(c, await new CommunityService(c.get("container"), c.env.APP_KEY).likedPosts(uid, c.req.query()));
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -305,7 +305,7 @@ export async function communityElegantList(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).elegantPosts(
+      await new CommunityService(c.get("container"), c.env.APP_KEY).elegantPosts(
         c.get("uid") || undefined,
         Number(c.req.query("product_id") ?? "0"),
         c.req.query(),
@@ -324,7 +324,7 @@ export async function communityShare(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).share(Number(c.req.param("id") ?? "0")),
+      await new CommunityService(c.get("container"), c.env.APP_KEY).share(Number(c.req.param("id") ?? "0")),
       "分享成功",
     );
   } catch (e) {
@@ -342,7 +342,7 @@ export async function communityCommentLike(c: C) {
   try {
     return jsonOk(
       c,
-      await new CommunityService(c.get("container")).likeComment(
+      await new CommunityService(c.get("container"), c.env.APP_KEY).likeComment(
         uid,
         Number(c.req.param("id") ?? "0"),
         status,
@@ -360,7 +360,7 @@ export async function communityCommentDelete(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   try {
-    await new CommunityService(c.get("container")).deleteComment(
+    await new CommunityService(c.get("container"), c.env.APP_KEY).deleteComment(
       uid,
       Number(c.req.param("id") ?? "0"),
     );
