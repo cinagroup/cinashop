@@ -18,6 +18,7 @@ import { installShippingTemplateLifecycleCandidate } from './helpers/shippingTem
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
 import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
+import { completePurchasePhysicalOriginEvidenceOrm } from '../src/migrations/runPurchasePhysicalOriginEvidence';
 
 // The full ORM and installed shipping lifecycle trigger matter here: the
 // selected-table checkout fixture alone cannot reveal the Admin/checkout lock
@@ -43,6 +44,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill Admin an
         await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
         await completePurchaseOriginEvidenceOrm(owned.db);
         await completePurchaseCancellationEvidenceOrm(owned.db);
+        await completePurchasePhysicalOriginEvidenceOrm(owned.db);
         await installShippingTemplateLifecycleCandidate(owned.db);
         return owned;
       } catch (error) { await owned.close(); throw error; }

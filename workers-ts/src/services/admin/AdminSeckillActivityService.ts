@@ -6,6 +6,7 @@ import { acquireSeckillTimeReferenceLock } from '@/migrations/seckillTimeReferen
 import { publicSeckillTimePictures, renderSeckillTimePictures } from '@/services/activity/SeckillTimeAssetPolicy';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { seckillSlotIds } from '@/services/activity/SeckillScheduleService';
+import { canonicalSeckillBaseSkuUnique, validSeckillBaseSkuIdentities } from '@/services/activity/SeckillBaseSkuIdentity';
 import { PRODUCT_SKU_IDENTITY_LOCK_KEY, PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from '@/services/product/ProductSkuIdentity';
 import { lockShippingTemplateBindings } from '@/services/product/ShippingTemplateLifecycleService';
 import { NotFoundException, ValidateException } from '@/utils/errors';
@@ -13,7 +14,7 @@ import { activityFlag, activityHash, activityId, activityInteger, activityListQu
   parseActivityInput, SECKILL_ACTIVITY_MAX_PRODUCTS, SECKILL_ACTIVITY_MAX_SKUS, SECKILL_ACTIVITY_MAX_TOTAL_SKUS,
   type ActivityInput, type ActivityProductInput, type SeckillActivityOperation } from './AdminSeckillActivityInput';
 import { activityCandidateFilters, activityCategories, activityGraph, activityLabels, activityProductMetadata, activityRevision, activitySlots, parentColumns, parentIssues, parentSummary,
-  skuIssues, slotView, sourceOwnerIssues, type ChildRow, type ParentRow, type SkuRow, type SourceRow } from './AdminSeckillActivityData';
+  baseSkuIssues, skuIssues, slotView, sourceOwnerIssues, type ChildRow, type ParentRow, type SkuRow, type SourceRow } from './AdminSeckillActivityData';
 
 const LOCK_NAMESPACE = 731_646;
 const sourcePredicate = and(eq(storeProduct.isDel, 0), eq(storeProduct.isVerify, 1), eq(storeProduct.isVipProduct, 0), eq(storeProduct.isPresaleProduct, 0));
@@ -127,8 +128,8 @@ export class AdminSeckillActivityService {
       const metadata = await activityProductMetadata(tx, [source]);
       return { product_id: id, child_id: null, store_name: source.storeName, image: pictures[0], status: 1 as const, stock: source.stock,
         ...metadata.get(id), valid: !issues.length, issues, skus: rows.map((row, index) => {
-          const skuErrors = skuIssues({ ...row, quota: 0, quotaShow: 0 }, row, rows);
-          return { id: null, base_sku_id: row.id, base_unique: row.unique, unique: '', suk: row.suk, price: row.price, cost: row.cost, ot_price: row.otPrice,
+          const skuErrors = baseSkuIssues(row, rows);
+          return { id: null, base_sku_id: row.id, base_unique: canonicalSeckillBaseSkuUnique(row.unique) ?? '', unique: '', suk: row.suk, price: row.price, cost: row.cost, ot_price: row.otPrice,
             image: pictures[index + 1],
             quota: 0, quota_show: 0, consumed: 0, quota_total: 0, remaining: 0, stock: row.stock, base_stock: row.stock,
             enabled: false, retired: false, valid: !skuErrors.length, issues: skuErrors };
@@ -155,14 +156,17 @@ export class AdminSeckillActivityService {
       const products = await Promise.all(graph.children.map(async (child, index) => {
         const source = sources.find(row => row.id === child.productId), issues = await sourceOwnerIssues(tx, source);
         const rows = graph.skus.filter(row => row.productId === child.id), active = rows.filter(row => row.isRetired === 0);
+        const productBases = bases.filter(base => base.productId === child.productId), validBases = validSeckillBaseSkuIdentities(productBases);
         if (child.status !== 0 && child.status !== 1) issues.push('子商品状态无效');
         if (child.num !== parent.num || child.onceNum !== parent.onceNum) issues.push('父子限购不一致');
         if (!active.length && child.isDel === 0) issues.push('子商品没有参与规格');
         const skus = rows.map(row => {
           const matches = bases.filter(base => base.productId === child.productId && base.suk === row.suk), base = matches.length === 1 ? matches[0] : undefined;
           const errors = skuIssues(row, base, row.isRetired ? [row] : active);
+          if (!validBases || !base ||
+            productBases.some(other => canonicalSeckillBaseSkuUnique(other.unique) === row.unique && other.suk !== row.suk)) errors.push('基础规格标识无效、重复或与活动规格冲突');
           if (errors.length && !row.isRetired) issues.push(`规格${row.id}配置无效`);
-          return { id: row.id, base_unique: base?.unique ?? '', unique: row.unique, suk: row.suk, price: row.price, cost: row.cost, ot_price: row.otPrice,
+          return { id: row.id, base_unique: canonicalSeckillBaseSkuUnique(base?.unique) ?? '', unique: row.unique, suk: row.suk, price: row.price, cost: row.cost, ot_price: row.otPrice,
             image: skuPictures[graph.skus.findIndex(sku => sku.id === row.id)],
             quota: row.quota, quota_show: row.quotaShow, consumed: row.quotaShow - row.quota, quota_total: row.quotaShow, remaining: row.quota,
             stock: row.stock, base_stock: base?.stock ?? 0, enabled: row.isRetired === 0 && child.isDel === 0,
@@ -255,7 +259,8 @@ export class AdminSeckillActivityService {
       const active = graph.skus.filter(row => row.productId === child.id && row.isRetired === 0);
       assertChildAccounts(child, graph.skus.filter(row => row.productId === child.id));
       const bases = await failFast(() => tx.select().from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, child.productId), eq(storeProductAttrValue.type, 0), eq(storeProductAttrValue.isRetired, 0))).orderBy(asc(storeProductAttrValue.id)).limit(501).for('share', { noWait: true }));
-      if (!active.length || bases.length > 500 || new Set(bases.map(row => row.unique)).size !== bases.length || new Set(bases.map(row => row.suk)).size !== bases.length ||
+      if (!active.length || bases.length > 500 || !validSeckillBaseSkuIdentities(bases) ||
+        active.some(row => bases.some(base => canonicalSeckillBaseSkuUnique(base.unique) === row.unique && base.suk !== row.suk)) ||
         active.some(row => skuIssues(row, bases.find(base => base.suk === row.suk), active).length)) throw new ValidateException(`子商品${child.id}规格无效，请先编辑修复`);
       if (active.reduce((sum, row) => sum + row.quota, 0) > source!.stock ||
         active.some(row => row.quota > activityInteger(bases.find(base => base.suk === row.suk)!.stock, '基础规格库存')))
@@ -285,13 +290,14 @@ export class AdminSeckillActivityService {
     if ((await failFast(() => sourceOwnerIssues(tx, source, true))).length) throw new ValidateException('基础商品或供应商不符合秒杀条件');
     const bases = await failFast(() => tx.select().from(storeProductAttrValue).where(and(eq(storeProductAttrValue.productId, item.productId), eq(storeProductAttrValue.type, 0), eq(storeProductAttrValue.isRetired, 0)))
       .orderBy(asc(storeProductAttrValue.id)).limit(501).for('share', { noWait: true }));
-    if (bases.length > 500 || new Set(bases.map(row => row.unique)).size !== bases.length || new Set(bases.map(row => row.suk)).size !== bases.length) throw new ValidateException('基础商品规格超过容量或标识重复');
+    if (bases.length > 500 || !validSeckillBaseSkuIdentities(bases)) throw new ValidateException('基础商品规格超过容量、标识无效或重复');
     const chosen = enabled.map(sku => {
-      const base = bases.find(row => row.unique === sku.baseUnique), old = sku.id === null ? undefined : current.find(row => row.id === sku.id);
-      if (!base || base.suk !== base.suk.trim() || base.unique !== base.unique.trim() || !base.unique || /[\u0000-\u0020\u007f]/u.test(base.unique)) throw new ValidateException('基础商品规格已变化或标识无效');
+      // Keep the selected raw row intact: stock/price CAS guards use DB values.
+      const base = bases.find(row => canonicalSeckillBaseSkuUnique(row.unique) === sku.baseUnique), old = sku.id === null ? undefined : current.find(row => row.id === sku.id);
+      if (!base) throw new ValidateException('基础商品规格已变化或标识无效');
       if (old && (old.isRetired !== 0 || old.suk !== base.suk)) throw new ValidateException('旧规格不能改变组合或隐式恢复退役身份');
       if (old && (!old.unique || old.unique !== old.unique.trim() || old.unique.length > 8 || /[\u0000-\u0020\u007f]/u.test(old.unique) ||
-        bases.some(other => other.unique === old.unique && other.suk !== old.suk))) throw new ValidateException('旧活动规格标识损坏或与基础规格冲突');
+        bases.some(other => canonicalSeckillBaseSkuUnique(other.unique) === old.unique && other.suk !== old.suk))) throw new ValidateException('旧活动规格标识损坏或与基础规格冲突');
       if (!old && current.some(row => row.suk === base.suk)) throw new ValidateException('相同组合已有历史活动身份，请保留原规格');
       const values = old ? quota(old, sku.total!) : { quotaShow: sku.total!, quota: sku.total!, stock: sku.total! };
       if (values.quota > activityInteger(base.stock, '基础规格库存')) throw new ValidateException('剩余额度不能超过当前基础规格库存');

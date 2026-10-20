@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, or } from "drizzle-orm";
 import type { DbClient } from "@/lib/di";
 import { storeProductAttrValue } from "@/models/schema";
 import { ValidateException } from "@/utils/errors";
@@ -8,6 +8,24 @@ export type LegacyActivitySkuType = 1 | 2 | 3 | 4;
 export interface LegacyActivitySkuPair {
   activitySku: typeof storeProductAttrValue.$inferSelect;
   baseSku: typeof storeProductAttrValue.$inferSelect;
+}
+
+/** Verify the selected raw base row through both aliases. An activity-key
+ * request must not skip base-key uniqueness, and a base-key request must not
+ * skip SUK uniqueness or a collision with the selected activity key. */
+export async function assertCurrentSeckillBaseSkuIdentity(
+  db: DbClient,
+  base: Pick<LegacyActivitySkuPair['baseSku'], 'id' | 'productId' | 'unique' | 'suk'>,
+  activityUnique: string,
+): Promise<void> {
+  const rows = await db.select({ id: storeProductAttrValue.id, unique: storeProductAttrValue.unique,
+    suk: storeProductAttrValue.suk }).from(storeProductAttrValue)
+    .where(and(eq(storeProductAttrValue.productId, base.productId), eq(storeProductAttrValue.type, 0),
+      eq(storeProductAttrValue.isRetired, 0), or(eq(storeProductAttrValue.unique, base.unique),
+        eq(storeProductAttrValue.suk, base.suk), eq(storeProductAttrValue.unique, activityUnique))))
+    .orderBy(asc(storeProductAttrValue.id)).limit(2);
+  if (rows.length !== 1 || rows[0].id !== base.id || rows[0].unique !== base.unique || rows[0].suk !== base.suk)
+    throw new ValidateException('秒杀基础规格标识、组合不唯一或与活动规格冲突，请重新确认');
 }
 
 /**
@@ -109,5 +127,6 @@ export async function resolveLegacyActivitySkuPair(
     throw new ValidateException(baseRows.length ? "基础商品规格不唯一" : "基础商品规格不存在或已失效");
   }
 
+  if (params.type === 1) await assertCurrentSeckillBaseSkuIdentity(db, baseRows[0], activitySku.unique);
   return { activitySku, baseSku: baseRows[0] };
 }

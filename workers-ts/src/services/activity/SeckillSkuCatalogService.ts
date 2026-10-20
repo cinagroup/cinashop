@@ -7,6 +7,7 @@ import { readSeckillScheduleSlots, seckillDateEnd, seckillScheduleView } from ".
 import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { readActivityDetailDesign, renderActivityDetailDesign } from '@/services/product/ProductDetailDesignData';
 import { publicProductPictures, renderProductPictures } from './ProductAssetPolicy';
+import { canonicalSeckillBaseSkuUnique } from './SeckillBaseSkuIdentity';
 
 const MAX_SKUS = 500;
 
@@ -91,7 +92,7 @@ export class SeckillSkuCatalogService {
       stock: storeProductAttrValue.stock, quota: storeProductAttrValue.quota,
       price: storeProductAttrValue.price, otPrice: storeProductAttrValue.otPrice, image: storeProductAttrValue.image };
     // Two indexed, bounded queries, not one resolver call per SKU. +1 detects overflow.
-    const [activityRows, baseRows, schedule] = await Promise.all([
+    const [activityRows, rawBaseRows, schedule] = await Promise.all([
       this.container.db.select(fields).from(storeProductAttrValue)
         .where(and(eq(storeProductAttrValue.productId, id), eq(storeProductAttrValue.type, 1), eq(storeProductAttrValue.isRetired, 0)))
         .orderBy(asc(storeProductAttrValue.id)).limit(MAX_SKUS + 1),
@@ -101,6 +102,9 @@ export class SeckillSkuCatalogService {
       readSeckillScheduleSlots(this.container.db, { id: entry.id, activityId: entry.parentId, productId: entry.productId,
         status: 1, isShow: 1, isDel: 0, timeId: entry.timeId, startTime: entry.startTime, stopTime: entry.stopTime }, entry.parent),
     ]);
+    // Only selected base DB rows may lose PostgreSQL's ASCII right padding.
+    // Activity keys and incoming client strings retain their separate rules.
+    const baseRows = rawBaseRows.map(row => ({ ...row, unique: canonicalSeckillBaseSkuUnique(row.unique) ?? '' }));
     for (const rows of [activityRows, baseRows]) {
       if (rows.length > MAX_SKUS) throw new ValidateException("秒杀规格超过500项，请先整理规格配置");
       const uniques = new Set<string>(), labels = new Set<string>();

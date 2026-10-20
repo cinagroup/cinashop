@@ -111,7 +111,8 @@ import {
 import { enqueueAutomaticReceiptPrintJobs } from "@/services/printing/ReceiptPrintJobService";
 import { readCheckoutPricingSources, protectCheckoutPricingSources } from './CheckoutPricingSources';
 import { readCheckoutPickupPolicy, lockCheckoutPickupStore } from './CheckoutPickupPolicy';
-import { resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
+import { assertCurrentSeckillBaseSkuIdentity, resolveLegacyActivitySkuPair } from "@/services/activity/ActivityOrderSkuService";
+import { validSeckillStoredSkuAlias } from '@/services/activity/SeckillBaseSkuIdentity';
 import { assertSeckillSchedule, loadSeckillSchedule } from "@/services/activity/SeckillScheduleService";
 import { seckillProductQuoteGuard, seckillRuleQuoteGuard, seckillSkuQuoteGuard } from "@/services/activity/SeckillPurchaseSnapshot";
 import { activityRuleQuoteGuard } from "@/services/activity/ActivityRuleQuoteGuard";
@@ -1217,6 +1218,8 @@ export class StoreOrderCreateService {
         throw new ValidateException('预售商品不能通过普通或其它活动订单购买，请重新选择');
       }
       let itemSystemFormId = product.systemFormId;
+      if (type === 1 && !validSeckillStoredSkuAlias(cart.productAttrUnique))
+        throw new ValidateException('秒杀购物车规格标识无效，请重新选择商品');
       let activitySku: typeof storeProductAttrValue.$inferSelect | null = null;
       const selectedBaseSkus = type === 6 || type === 7
         ? await c.db.select().from(storeProductAttrValue).where(and(
@@ -2817,6 +2820,12 @@ export class StoreOrderCreateService {
           throw new ValidateException(shippingSnapshot ? "配送商品规格已变化或库存不足，请刷新后重试" : type === 1 ? "秒杀基础规格已变化或库存不足，请刷新后重试" : `商品「${product.storeName}」库存不足`);
         }
 
+        if (type === 1) {
+          // The raw SKU write may have waited. Recheck the same selected base
+          // identity set used at quote time before acquiring the product lock.
+          if (!activitySku) throw new ValidateException('秒杀规格信息无效');
+          await assertCurrentSeckillBaseSkuIdentity(tx, sku, activitySku.unique);
+        }
         if (type === 6 || type === 7) {
           // The guarded SKU write may have waited. Re-read the active identity
           // set before taking the product lock; a newly committed duplicate

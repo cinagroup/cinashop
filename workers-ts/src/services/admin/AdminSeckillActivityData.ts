@@ -3,6 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { storeActivity, storeProduct, storeProductAttrValue, storeProductCategory, storeProductLabel, storeProductRelation, storeSeckill, storeSeckillTime, systemSupplier } from '@/models/schema';
 import { publicSeckillTimePictures } from '@/services/activity/SeckillTimeAssetPolicy';
 import { seckillSlotIds, seckillSlotMinutes } from '@/services/activity/SeckillScheduleService';
+import { canonicalSeckillBaseSkuUnique } from '@/services/activity/SeckillBaseSkuIdentity';
 import { ValidateException } from '@/utils/errors';
 import { activityDateText, activityHash, activityMoney, SECKILL_ACTIVITY_MAX_PICKER_OPTIONS, SECKILL_ACTIVITY_MAX_PRODUCTS, SECKILL_ACTIVITY_MAX_TOTAL_SKUS } from './AdminSeckillActivityInput';
 
@@ -151,6 +152,16 @@ export function skuIssues(row: SkuRow, base: SkuRow | undefined, activeRows: Sku
   if (row.suk !== row.suk.trim() || activeRows.filter(sku => sku.suk === row.suk).length !== 1 || activeRows.filter(sku => sku.unique === row.unique).length !== 1) issues.push('活动规格组合或标识重复');
   if ([row.stock, row.quota, row.quotaShow, row.sales].some(value => !Number.isSafeInteger(value) || value < 0) || row.quotaShow < row.quota || row.stock < row.quota) issues.push('活动规格额度账目无效');
   try { activityMoney(row.price); } catch { issues.push('活动规格价格无效'); }
+  return issues;
+}
+/** Source options describe base rows, not independently allocated activity keys. */
+export function baseSkuIssues(row: SkuRow, activeRows: SkuRow[]) {
+  const issues: string[] = [], unique = canonicalSeckillBaseSkuUnique(row.unique);
+  if (unique === null) issues.push('基础规格标识无效');
+  if (row.suk !== row.suk.trim() || activeRows.filter(sku => sku.suk === row.suk).length !== 1 ||
+    activeRows.filter(sku => canonicalSeckillBaseSkuUnique(sku.unique) === unique).length !== 1) issues.push('基础规格组合或标识重复');
+  if ([row.stock, row.sales].some(value => !Number.isSafeInteger(value) || value < 0)) issues.push('基础规格库存账目无效');
+  try { activityMoney(row.price); } catch { issues.push('基础规格价格无效'); }
   return issues;
 }
 export async function parentSummary(tx: DbClient, row: ParentRow) {

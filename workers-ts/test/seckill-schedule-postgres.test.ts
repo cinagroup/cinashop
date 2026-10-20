@@ -8,6 +8,7 @@ import * as schedulePolicy from "../src/services/activity/SeckillScheduleService
 import { finalizeStoreOrderRefund } from "../src/services/order/StoreOrderRefundService";
 import { withTx } from "../src/lib/di";
 import { reserveRefundQuantities } from "../src/services/order/RefundQuantityReservation";
+import { NotFoundException } from "../src/utils/errors";
 import { storeActivity, storeSeckillTime, storeSeckill, storeProduct, storeProductAttrValue, systemStore,
   storeCart, storeOrder, storeOrderCartInfo, storeOrderStatus, printDocument, storeOrderRefund, storeOrderRefundPayment,
   storeOrderInvoice, userBrokerage, user, userBill } from "../src/models/schema";
@@ -229,7 +230,12 @@ describe("seckill schedule admission on disposable SQL", () => {
   it("rejects quantity editing after real order creation and preserves its inventory and snapshots", async () => {
     await create();
     const before = await snapshot();
-    await expect(new StoreCartService(f.container).setNum(11, 1, 3)).rejects.toThrow("已下单");
+    expect(before.carts.find(cart => cart.id === 1)).toMatchObject({ uid: 11, isPay: 1, isDel: 0, status: 1 });
+    expect(await f.container.storeCartDao.get(1)).toEqual(before.carts.find(cart => cart.id === 1));
+    expect((await f.container.storeCartDao.getUserCart(11)).map(cart => cart.id)).not.toContain(1);
+    const refusal = await new StoreCartService(f.container).setNum(11, 1, 3).catch((error: unknown) => error);
+    expect(refusal).toBeInstanceOf(NotFoundException);
+    expect(refusal).toMatchObject({ code: 404, message: "购物车项不存在" });
     expect(await snapshot()).toEqual(before);
   });
   it("invalidates in-flight order pricing after a successful quantity edit", async () => {

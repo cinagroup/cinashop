@@ -1,0 +1,653 @@
+{
+  "kind": "php-ts-seckill-short-sku",
+  "created_utc": "2026-10-20T06:39:46.007135+00:00",
+  "base_sha": "f2e0eedac659648ea1327464c3f1aaefd0bf051d",
+  "branch": "codex/seckill-short-sku",
+  "overall_goal": {
+    "status": "active",
+    "complete": false
+  },
+  "status": "Local candidate verified; authorized draft publication and own-SHA CI recorded separately",
+  "problem": "PG character(8) source padding blocked actual Admin seckill selection/save and public SKU catalogue",
+  "contract": {
+    "base_identity": "Canonical selected database type0 key removes only ASCII right padding; one to eight valid characters, reject whitespace/control/empty/overlength and ambiguity",
+    "activity_identity": "Independent existing exact8 activity allocator and namespace/SUK checks preserved",
+    "producer": "Actual Admin source/options/detail/save/enable use the same canonical base identity; original raw selected row retained for writes/CAS",
+    "catalogue": "Read-only public view=skus accepts legitimate short base, retains exact1/SUK1 and activity-key namespace checks",
+    "current_identity": "Shared resolver and post-base-write type1 author require exact one current base row with original id/raw unique/raw SUK, including activity-key cross-namespace check",
+    "legacy": "Raw padded type1 cart/order row/JSON/charged and physical receipts remain aligned; no historical rewrite or activity-key coercion",
+    "damaged_cart": "Non-padding stored whitespace rejected as a business error before order issuance; existing strict SQL remains active",
+    "cancel": "Actual App cancellation restores original inventory and quota once; strict create/replay independently authenticated LOGIN",
+    "unchanged": "592 protected SQL/model/DAO/installer/profile sources, type6/7 postSKU blocks, root checkbox lines, restored get_script and retirement decision"
+  },
+  "accepted": {
+    "unique_tests": 756,
+    "new_tests": 40,
+    "unit": 470,
+    "native": 285,
+    "browser": 1,
+    "skipped": 0,
+    "complete_worker_type_projects": 2,
+    "formal_commands": 8
+  },
+  "counts_by_gate": {
+    "native-final": 31,
+    "unit-final": 470,
+    "catalog-admin-regression": 85,
+    "concurrency-final": 164,
+    "compensation-regression": 5,
+    "browser-final-v2": 1,
+    "types-unit-published": 0,
+    "types-runtime": 0
+  },
+  "executable_sources": [
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "cda42d9901527f42677c53cef64f9d2609d774db6390b9d807a0c610e51fbb39"
+    },
+    {
+      "path": "workers-ts/src/services/activity/ActivityOrderSkuService.ts",
+      "sha256": "8f2726506108d4dc28712ceb9e647661212f1004df4ff5e556c582864ec837dd"
+    },
+    {
+      "path": "workers-ts/src/services/activity/SeckillBaseSkuIdentity.ts",
+      "sha256": "0744a06ad01b40d01b8fecac379643330b0489c74939dba07603e3b7a415bb21"
+    },
+    {
+      "path": "workers-ts/src/services/activity/SeckillSkuCatalogService.ts",
+      "sha256": "aea42a3aaff82c85805ab2b0644b0f547a3a4c009cdfab39a4c3839e759ab2e8"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSeckillActivityData.ts",
+      "sha256": "aa551e42b379a2a90dfd9847f6293576033a6bc765e9c1c7dc632b6bca18220e"
+    },
+    {
+      "path": "workers-ts/src/services/admin/AdminSeckillActivityService.ts",
+      "sha256": "d0b7798f967f7fac2132050bcec573d7d537ac016df8ed0319e23b14237c7a8c"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "9843e6a170e455eba0512995bf7ab56dd5eec5ccb56dc49a5a595ff75b1ea2f5"
+    },
+    {
+      "path": "workers-ts/test/browser/seckill-short-sku.acceptance.ts",
+      "sha256": "7ae571ddb6ece9cd6e2d6c85ee0dffa991c5b368545f05a83a2942c98ed240ec"
+    },
+    {
+      "path": "workers-ts/test/helpers/seckillShortSku.ts",
+      "sha256": "f244b77c2dee878558d59b8a3f41d2465844f83025ddd2da1ab9e3a850e43029"
+    },
+    {
+      "path": "workers-ts/test/helpers/seckillShortSkuRuntime.ts",
+      "sha256": "f6b3d867ce52df4488b1a6ef5f4c1f5f7a04340f80bb9a00384bc143e56bd210"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "5d0e2e668e76ada48ea1e4ede0a0dbcb30927e24aa1c912c4a782a3e8df5ca23"
+    },
+    {
+      "path": "workers-ts/test/seckill-schedule-postgres.test.ts",
+      "sha256": "264d34d28ce72848e96171ba6c6fb477e2bfd220c9d157fc34210a75e3dd5b42"
+    },
+    {
+      "path": "workers-ts/test/seckill-shared-rule-concurrency-postgres.test.ts",
+      "sha256": "60c2719738cdede33094a92b0dac702b4f2d2b4866ab292843abc322e4544ade"
+    },
+    {
+      "path": "workers-ts/test/seckill-short-sku-native.test.ts",
+      "sha256": "4c72392bb4afb870200b7f7c3212de42f55de045ed5bcae9cc53c59520e1fe12"
+    },
+    {
+      "path": "workers-ts/vitest.seckill-short-sku-browser.config.ts",
+      "sha256": "1f5818224b0e5fc40f671ba356804a81284cb1e9947ebf2dbb4213372f055822"
+    }
+  ],
+  "source_freeze": {
+    "path": "/tmp/cinashop-seckill-short-sku-source-freeze-v4.json",
+    "sha256": "0a2f19d55cd96bf93da61d6ef4da5a14a50a01736921b6b75b927632f3a8ae8a"
+  },
+  "prior13_source_freeze": {
+    "path": "/tmp/cinashop-seckill-short-sku-source-freeze-v2.json",
+    "sha256": "909402be48724ccce8a57a4ee9221b7b89cb97030eea29f192925aeac22adb0b"
+  },
+  "serial_validation": [
+    {
+      "label": "native-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/seckill-short-sku-native.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:05:19.692320+00:00",
+      "seconds": 308.12,
+      "log": "/tmp/cinashop-seckill-short-sku-native-final.log",
+      "log_sha256": "1836e33e137427936cabc7773a1ad3166643203bb919e62220ec196d851445bb",
+      "changed_during_run": [],
+      "recorded_source_count": 13,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 31,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-final-result.json",
+        "sha256": "62546afe9725c1d2c7240ce2f67d8b7008d42e1cd74aef71561d0903862ddff6"
+      }
+    },
+    {
+      "label": "unit-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/admin-seckill-activities-frontend.test.ts",
+        "test/seckill-schedule.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:10:35.571291+00:00",
+      "seconds": 23.22,
+      "log": "/tmp/cinashop-seckill-short-sku-unit-final.log",
+      "log_sha256": "997931130665b36ecacdc4880eb5a4324c34c72166a8b0dbc8e82331226da6b2",
+      "changed_during_run": [],
+      "recorded_source_count": 13,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 470,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-unit-final-result.json",
+        "sha256": "4188105225cdafad35809e97edf5b1e5aeeaa69a2625120287f6b6ee0cec68ae"
+      }
+    },
+    {
+      "label": "catalog-admin-regression",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/admin-seckill-activity.test.ts",
+        "test/admin-seckill-activity-postgres.test.ts",
+        "test/seckill-sku-catalog-postgres.test.ts",
+        "test/pc-seckill-purchase.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:10:58.839450+00:00",
+      "seconds": 61.07,
+      "log": "/tmp/cinashop-seckill-short-sku-catalog-admin-regression.log",
+      "log_sha256": "2618bd082e974423b0c9cb384ccde346d469a4ceaaf905841a9758164d1430bc",
+      "changed_during_run": [],
+      "recorded_source_count": 13,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 85,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-catalog-admin-regression-result.json",
+        "sha256": "aaa9cfa6ca0366bf1837a647b1e18cb2c47e7159952acea4a931b7853482dcf5"
+      }
+    },
+    {
+      "label": "concurrency-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/seckill-schedule-postgres.test.ts",
+        "test/seckill-sku-identity-fence-postgres.test.ts",
+        "test/seckill-concurrency-postgres.test.ts",
+        "test/seckill-shared-rule-concurrency-postgres.test.ts",
+        "test/seckill-runtime-login.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:20:34.489006+00:00",
+      "seconds": 230.13,
+      "log": "/tmp/cinashop-seckill-short-sku-concurrency-final.log",
+      "log_sha256": "71edad3f463a45639a2dd15926d85e21dbf8829e8b4786a6b8bc0affa4bfbced",
+      "changed_during_run": [],
+      "recorded_source_count": 15,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 164,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-concurrency-final-result.json",
+        "sha256": "51818910e95e1106403b3ce25ac021a52a2f5178f86ce0617433e69684c34236"
+      }
+    },
+    {
+      "label": "compensation-regression",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "--verbose-tests",
+        "../.cache/php-ts-tools/pg16/bin",
+        "test/seckill-cross-activity-compensation-postgres.test.ts",
+        "test/seckill-compensation-refund-postgres.test.ts",
+        "test/seckill-compensation-ordinary-order-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:16:23.526215+00:00",
+      "seconds": 18.56,
+      "log": "/tmp/cinashop-seckill-short-sku-compensation-regression.log",
+      "log_sha256": "3d0e692343c447d2e8aeeafb35605db4f2e7152f65f1c6da24fd6980029b40a2",
+      "changed_during_run": [],
+      "recorded_source_count": 13,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 5,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-compensation-regression-result.json",
+        "sha256": "47e8cb28b9462689c712dd22e023f714f8560f6da9a83b7b608a092be9589825"
+      }
+    },
+    {
+      "label": "types-unit-published",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:35:46.735132+00:00",
+      "seconds": 152.88,
+      "log": "/tmp/cinashop-seckill-short-sku-types-unit-published.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "recorded_source_count": 15,
+      "source_scope": "Exact final15",
+      "accepted_tests": 0,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-types-unit-published-result.json",
+        "sha256": "73a7df6eed273b3f46a0682fe98b7029d577509a550462ebf6959bedfc4c29b1"
+      }
+    },
+    {
+      "label": "types-runtime",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--max-old-space-size=8192",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.runtime-test.json",
+        "--noEmit"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:19:11.580983+00:00",
+      "seconds": 82.81,
+      "log": "/tmp/cinashop-seckill-short-sku-types-runtime.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed_during_run": [],
+      "recorded_source_count": 13,
+      "source_scope": "Recorded13 or15 as counted; applicable inputs unchanged. Two old regular tests later adapted only before concurrency-final. Browser host error-text assertion later changed and is not loaded by these test/runtime projects.",
+      "accepted_tests": 0,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-types-runtime-result.json",
+        "sha256": "3efad302b2d5f8129400a9c988f137bd9cb81751f0915787dc8b8a7c299a2dea"
+      }
+    },
+    {
+      "label": "browser-final-v2",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "../.cache/php-ts-tools/pg16/bin",
+        "audit:seckill-short-sku-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T06:30:26.713222+00:00",
+      "seconds": 297.23,
+      "log": "/tmp/cinashop-seckill-short-sku-browser-final-v2.log",
+      "log_sha256": "d3e8e447275eceb3acf38a593315eefa3ab0841b7fdb5b6f732b88292be9d161",
+      "changed_during_run": [],
+      "recorded_source_count": 15,
+      "source_scope": "Exact final15",
+      "accepted_tests": 1,
+      "formal_receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-browser-final-v2-result.json",
+        "sha256": "284c908a72773fd144db32d40541ecf8a277550aad56770954867257bc746e36"
+      }
+    }
+  ],
+  "test_count_evidence": {
+    "path": "/tmp/cinashop-seckill-short-sku-test-counts.json",
+    "sha256": "f01617ddd813ad6b37a276d2d477d6518ae6443f8d50e1b9d728bf826cc4a5c4"
+  },
+  "excluded_rounds": [
+    {
+      "label": "native-before-fix",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Three original Admin source/save/catalog business reds; seven original production hashes separately pinned. The early recorder did not capture final 13/15 inputs.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-before-fix-result.json",
+        "sha256": "c36d53d8ab17bd850db5213b107a2df26ef433d0951e18366ce79ef7a9653405"
+      },
+      "log_sha256": "102de0c68ba2416614adee8df5c4bfe1e9ec6c446ee122598f7c6118dcfc1270"
+    },
+    {
+      "label": "native-first-green",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Early 3-case duplicate green; all superseded by final31.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-first-green-result.json",
+        "sha256": "e32ce49b2c842c696c9a07a22849bf0c52b4c99d5cb291d08e6033fbb14aa822"
+      },
+      "log_sha256": "2318add694131a95002aeacb30ecec3b2b53bb6afc53a9929583f33f7e35d1db"
+    },
+    {
+      "label": "native-fullchain-candidate",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Early6-case duplicate green; superseded by final31.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-fullchain-candidate-result.json",
+        "sha256": "21fdbde8e1ccad06fb916404eda94572c300f12885957613ea64482e5d716f04"
+      },
+      "log_sha256": "bdf218c1b4c0a5e3fbaf574c568a67027bab8cc257b3cfbd6e531bea62063d81"
+    },
+    {
+      "label": "native-base-wait-before-fix",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Two real three-PID base write waits admitted late duplicate unique/SUK; order and both origin receipts committed before fix.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-base-wait-before-fix-result.json",
+        "sha256": "e0fa4b76825a416294c28598a2216f636d30b245d765c63b85c24235077168e1"
+      },
+      "log_sha256": "dffc491a9884710f32ca9a56fff08099b4e6d0f964b3fcbdcb5f2a3896d3e9ed"
+    },
+    {
+      "label": "native-current-identity-before-fix",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Three actual current-identity business reds: duplicate unique/SUK and cross-namespace base collision were admitted before fix.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-current-identity-before-fix-result.json",
+        "sha256": "af2d320b2c952128be2dc8783a3d09f8f8e2e80ed92d0f13f1f7473981a459ce"
+      },
+      "log_sha256": "7aa23b07aef523fdfe37c0faa56a15611c04df5afd3cb10f0f86ba3d2ca542a2"
+    },
+    {
+      "label": "native-expanded-candidate",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "28 passes and one failure, entire run excluded. Stored tab alias fell into generic trimming then strict SQL refusal; no order/receipt bypass is claimed.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-expanded-candidate-result.json",
+        "sha256": "841f41660055ce8246f9779a31c1ed1358a3dacba79bfb496264ccfdbfbd6180"
+      },
+      "log_sha256": "2701228febab2e0c154459eeb1a86f5dfc70a10cd398e47860a0f1e473a2a9b5"
+    },
+    {
+      "label": "native-stale-base-before-fix",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "Two genuine PG LOGIN stale-object failures: old raw unique or SUK on same id wrongly accepted; no business writes.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-native-stale-base-before-fix-result.json",
+        "sha256": "07481a56c977d8db9e810ccf3ae4d133540b395957753867acacb36171fcdb63"
+      },
+      "log_sha256": "018d7e9a8d8354466b03c9258bb0b01c7162c9a8d0dc76ade2c83d1ba6325b07"
+    },
+    {
+      "label": "concurrency-regression",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "5 failures159 partial passes excluded: four fullORM setups missed explicit physical completion; one obsolete paid-cart error expectation. Production protected installer and cart refusal unchanged.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-concurrency-regression-result.json",
+        "sha256": "4fa7590995fb244824c72120c82a5476aaef94b976d57b58091fe2cb33fcfcfd"
+      },
+      "log_sha256": "7c6a3a07375041cbced0756463d8cbe62c21823fc1d2f7ce02d0b785b60c8dbf"
+    },
+    {
+      "label": "type-unit-candidate",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Earlier nonfinal TypeScript candidate excluded.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-type-unit-candidate-result.json",
+        "sha256": "d64c3870466a6e0949811b712ea13fac30ce93580fec1afb21abc3836b5aff8f"
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "browser-final",
+      "exit_code": 1,
+      "accepted_tests": 0,
+      "reason": "First Browser run fails only over-specific custom error text: existing PC Axios generic503 already clears all amount nodes and disables submit. Zero accepted; final-v2 reruns entire UI flow.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-browser-final-result.json",
+        "sha256": "23a652775ca71a39b2080906b48bb589a325c906003c47478f7d0c8bfcafb964"
+      },
+      "log_sha256": "a90d04262b8fa45811b636b17345bc21486e4d9d2ad92f09e6976816d1927a63"
+    },
+    {
+      "label": "types-unit-final",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "Prior compiler passed140.37s before later Browser assertion-only edit; superseded by types-unit-published.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-types-unit-final-result.json",
+        "sha256": "37826707dbd661185f972d5f50191730cb00d05be282c896785dd2ebc32c1bc7"
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "types-unit",
+      "exit_code": 0,
+      "accepted_tests": 0,
+      "reason": "149.38s successful compiler overlaps two regular-test edits omitted by its original13-source recorder; excluded and replaced by types-unit-final.",
+      "receipt": {
+        "path": "/tmp/cinashop-seckill-short-sku-types-unit-result.json",
+        "sha256": "f86dcb954d7f1d27a9465f313ddb4c42ca7bb873279b90f5591725f8fce5b68f"
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "browser_qa": {
+    "path": "/tmp/cinashop-seckill-short-sku-browser-qa.json",
+    "sha256": "a0d3f1e99d064026411c7325b16240c7ff8564500e7da9ba3f1ea8c454088d02"
+  },
+  "browser_independent_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-browser-review-v1.json",
+    "sha256": "b84dde853097a645a0d63af87b724d0e6a56abb233dfa3dba630f9c72deead0e"
+  },
+  "browser": {
+    "flow": "Actual Admin select/save/reload8 -> actual PC and H5 detail explicit SKU/add/checkout -> persistent503 clears amounts and disables submit -> production retry8 -> actual Admin save/reload9 -> original PC/H5 checkout9",
+    "provider": "Codex IAB2",
+    "background": true,
+    "authorization_confirmation_popups": 0,
+    "global_security_or_confirmation_settings_changed": false,
+    "stages": [
+      "admin-selected8",
+      "admin-saved8",
+      "admin-reloaded8",
+      "pc-detail8",
+      "pc-checkout8",
+      "pc-cleared",
+      "pc-recovered8",
+      "h5-detail8",
+      "h5-checkout8",
+      "h5-cleared",
+      "h5-recovered8",
+      "admin-saved9",
+      "admin-reloaded9",
+      "pc-checkout9",
+      "h5-checkout9"
+    ],
+    "public_tables": 283,
+    "sequences": 229,
+    "actual_business_requests": 57,
+    "read_only_requests_with_whole_database_proof": 53,
+    "quote_requests": 8,
+    "admin_saves": 2,
+    "cart_adds": 2,
+    "order_creations": 0,
+    "payment_attempts": 0,
+    "provider_calls": 0,
+    "r2_calls": 0,
+    "actual_frontend_builds": "Existing Admin274+PC103+H5344 real bundles; all721 bytes and exact file set unchanged; no fresh frontend build/type claim",
+    "result": {
+      "path": "/tmp/cinashop-seckill-short-sku-browser-result.json",
+      "sha256": "ac08738885e098bd4e3f89d6250182afb22d56715557de7e7e380349d5fad560"
+    },
+    "console": {
+      "path": "/tmp/cinashop-seckill-short-sku-browser-console.json",
+      "sha256": "8375a60759b97a10455b65fd993e34c437fad2267e9019842ff6518196d8b493"
+    },
+    "console_summary": {
+      "errors": 0,
+      "warnings": 3
+    },
+    "inventory": {
+      "path": "/tmp/cinashop-seckill-short-sku-browser-inventory-latest.json",
+      "sha256": "5e7c34ea6607e0a180107ebbf21b470a73378854ab3c5a9da1652c916bf2122e"
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-admin9.jpg",
+        "sha256": "6286da1158e3fc4591a26f3972eee11468aa145b23eea529f83e3ae0447ddb17"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-h5-checkout8.jpg",
+        "sha256": "489fb6fb617787e2eff48f4211b878a52a5fb5f902db0c4983a92ba252aa2ee6"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-h5-cleared.jpg",
+        "sha256": "bd4b686373b639b825cb041774efce41f70194930f93a3b21754c2525e9597fe"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-h5-repriced9.jpg",
+        "sha256": "2090fbb3b69c1194726856cb8535da2d1c8fc38ec5727b8fccb39f606aa2a06e"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-pc-checkout8.jpg",
+        "sha256": "a92811edb30a54b3ff94e92f282f91f45527fe08a6f794a54f63924f070447b3"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-pc-cleared.jpg",
+        "sha256": "6a4fd27c8f65366249dbd815fa14304d4f49fb81c1ce40bef4e088e82e635ff7"
+      },
+      {
+        "path": "/tmp/cinashop-seckill-short-sku-pc-repriced9.jpg",
+        "sha256": "26132ac1ddf72de8cadd4918c7a4311065dbf836fc4523d7c4cabeab235d8e4f"
+      }
+    ],
+    "authority": "actual createApp/JWT, injected owned maintenance SQL; synthetic local session/navigation chrome; no LOGIN claim for Browser"
+  },
+  "fixture_authority": {
+    "native": "Full runAll185 owned PG16, raw283 public tables/229 sequences; genuine separate nonsuperuser/nonowner LOGIN for strict author/replay",
+    "browser": "Actual createApp and signed Admin/buyer JWT with injected owned maintenance SQL; no Browser LOGIN certification",
+    "predeclared_test_permissions": "Three exact seckill tables added to fixed owned fixture app plan before execution; no error-driven privilege repair, no production profile change",
+    "cancel": "Actual App cancellation in maintenance-backed fixture, no production LOGIN cancellation grant claim",
+    "not_proven": [
+      "Production HYPERDRIVE_ADMIN connection",
+      "Redis login",
+      "Production deployment roles/grants",
+      "PHP/MySQL runtime",
+      "External Chrome/Edge extension installation or connection",
+      "Real device execution",
+      "Global serialization of arbitrary owner inserts after identity check"
+    ]
+  },
+  "source_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-source-review-v4.json",
+    "sha256": "184fd29b7c9c9ca68ab4f20cf16cdb793b0d33d2f719c04845370eacca3c9415"
+  },
+  "native_terminal_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-native-terminal-review.json",
+    "sha256": "aa7d3baaaaddaaeb993dafe2f6e06684c48e27ee8e2315a0c293d2594a793574"
+  },
+  "regression_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-gate-review-v2.json",
+    "sha256": "1b5a8b9cb3fe5bb29a10d380647f1562c375811945ec26f9446b5156c6ed93eb"
+  },
+  "initial_concurrency_failure_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-concurrency-failure-review-v1.json",
+    "sha256": "3a19c02c597c78ab24a33d3bdc15440169a60a0b94e071cc630fc4a7af6ca798"
+  },
+  "final_state": {
+    "path": "/tmp/cinashop-seckill-short-sku-final-state.json",
+    "sha256": "af7658fe798d7089ae68a87aea4b65f7867d6f7d079b79c52a4211e6d296deba"
+  },
+  "protected_sources": {
+    "files": 592,
+    "all_match_baseline": true,
+    "base_sha": "f2e0eedac659648ea1327464c3f1aaefd0bf051d"
+  },
+  "checkboxes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "rows": 88,
+      "complete": 50,
+      "ordered_lines_unchanged": true,
+      "ordered_checkbox_lines_sha256": "5ca35a4151c4d412e33d5e1553c7f5c6998b3f0430c48c9e879d294d9f7e42ac"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "rows": 404,
+      "complete": 249,
+      "ordered_lines_unchanged": true,
+      "ordered_checkbox_lines_sha256": "dfe054108e57544555dbd872e9da2c09ea82c088c023f257f3f6d8a28f5e08fd"
+    }
+  ],
+  "cleanup": {
+    "path": "/tmp/cinashop-seckill-short-sku-cleanup-final.json",
+    "sha256": "a32f3e961a3b8aec120fa0fc42e4c63b4d15880e7eac00f367fb3fd636dbd680"
+  },
+  "secret_scan": {
+    "tool": "gitleaks8.29.0",
+    "tool_sha256": "70134412aa75e86a0840ecb214cb020b41adc8519f331968cdc881d7922eca5b",
+    "executable_files": 15,
+    "source_report": {
+      "path": "/tmp/cinashop-seckill-short-sku-secret-source.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "source_findings": 0,
+    "staged_commit_scans": "Separate final staging/commit publication receipts require zero findings"
+  },
+  "php_contract_source_plan": {
+    "path": "/tmp/cinashop-newcomer-short-sku-next-seckill-plan-v1.json",
+    "sha256": "0097a9899aee0663f5e14600fd6f7bd973d411d92861fd349279354c1fa361c5"
+  },
+  "next_read_only_plan": {
+    "path": "/tmp/cinashop-seckill-short-sku-next-bargain-plan-v1.json",
+    "sha256": "172362c4a3cc637274754e04e00df7f908b8d4c43da4d2dbd38a39f707e486fe"
+  },
+  "open_work": [
+    "Trustworthy cumulative history and lifetime purchase limits",
+    "Unified stock reservation",
+    "Other activity types including next bargain candidate",
+    "Virtual and combination products",
+    "Remote deployment/browser acceptance"
+  ],
+  "base_ci_snapshot": {
+    "path": "/tmp/cinashop-seckill-short-sku-base-ci-latest.json",
+    "sha256": "8b34b390eafd151a24ee038d2017c5859c46b2360166c4180769e04b5d603372"
+  },
+  "publication": {
+    "authorized": "GitHub push and draft PR",
+    "base": "codex/newcomer-short-sku / PR132",
+    "merge": false,
+    "deploy": false,
+    "own_sha_all_green_claim": false
+  },
+  "final_terminal_review": {
+    "path": "/tmp/cinashop-seckill-short-sku-final-terminal-review.json",
+    "sha256": "1dccd770b34df00bca2b8db509a730d4f2650c59dc5c132137ec79a74055059d"
+  }
+}
