@@ -44,7 +44,7 @@
         <image
           v-if="post.image || (post.sliderImage && post.sliderImage.length)"
           class="post-image"
-          :src="post.image || (post.sliderImage && post.sliderImage[0]) || placeholder"
+          :src="communityVideoSource(post.image || post.sliderImage?.[0]) || placeholder"
           mode="aspectFill"
         />
         <text v-if="post.contentType === 2" class="upload-hint">▶ 视频 · 点击查看</text>
@@ -69,14 +69,29 @@
           placeholder="分享你的内容..."
           :maxlength="500"
         />
+        <view v-if="!videoWanted" class="photo-upload">
+          <text class="upload-hint">照片 {{ publishImages.length }}/9 · 每张最大 10 MiB，第一张为封面</text>
+          <view class="photo-grid">
+            <view v-for="(photo, index) in publishImages" :key="photo.url" class="photo-item">
+              <image :src="communityVideoSource(photo.src)" mode="aspectFill" />
+              <text v-if="index === 0" class="photo-cover-label">封面</text>
+              <button :disabled="publishLocked" @tap="removeImage(index)">移除照片 {{ index + 1 }}</button>
+            </view>
+          </view>
+          <button v-if="publishImages.length < 9" :disabled="publishLocked" @tap="chooseImages">添加照片</button>
+          <button v-if="publishImages.length || imageUploadFailed" :disabled="publishLocked" @tap="clearImages">移除全部照片</button>
+        </view>
         <view class="video-upload">
           <text class="upload-hint">MP4 视频，最大 50 MiB</text>
-          <button v-if="!publishVideo" :disabled="publishLocked" @tap="chooseVideo">{{ publishBusy ? '上传中…' : publishChoosing ? '选择中…' : '选择视频' }}</button>
+          <button v-if="!publishVideo && !publishImages.length" :disabled="publishLocked || imageUploadFailed" @tap="chooseVideo">{{ publishBusy ? '上传中…' : publishChoosing ? '选择中…' : '选择视频' }}</button>
           <button v-if="videoWanted && !publishVideo && !publishBusy" :disabled="publishLocked" @tap="removeVideo">取消视频，改发文字</button>
           <template v-if="publishVideo">
             <video class="community-video" :src="communityVideoSource(publishVideo.src)" controls :autoplay="false" />
             <text class="upload-hint">已上传：{{ publishVideo.name }}</text>
             <button :disabled="publishLocked" @tap="removeVideo">移除视频</button>
+            <image v-if="publishCover" class="video-cover" :src="communityVideoSource(publishCover.src)" mode="aspectFit" />
+            <button :disabled="publishLocked" @tap="chooseCover">{{ publishCover ? '更换视频封面' : '添加视频封面' }}</button>
+            <button v-if="publishCover || imageUploadFailed" :disabled="publishLocked" @tap="removeCover">移除视频封面</button>
           </template>
         </view>
         <view v-if="publishError" class="publish-error" role="status">{{ publishError }}</view>
@@ -92,8 +107,15 @@
         <scroll-view scroll-y class="detail-scroll">
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
+          <view v-if="detail.contentType === 1 && detailImages.length" class="detail-gallery">
+            <image v-for="(source, index) in detailImages" :key="source" :src="source" mode="widthFix"
+              @tap="previewImage(index)" @error="imageLoadFailed = true" />
+          </view>
+          <view v-if="imageLoadFailed" class="publish-error">图片暂时无法显示，可重新加载。</view>
+          <button v-if="imageLoadFailed" @tap="reloadVideo">重新加载图片</button>
           <video v-if="detail.contentType === 2 && communityVideoSource(detail.videoUrl || detail.video_url)"
-            class="community-video" :src="communityVideoSource(detail.videoUrl || detail.video_url)" controls :autoplay="false"
+            class="community-video" :src="communityVideoSource(detail.videoUrl || detail.video_url)"
+            :poster="communityVideoSource(detail.image)" controls :autoplay="false"
             @error="videoFailed = true" />
           <view v-if="videoFailed" class="publish-error">视频暂时无法播放，可重新加载。</view>
           <button v-if="videoFailed" @tap="reloadVideo">重新加载视频</button>
@@ -135,7 +157,7 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useCommunityPublish } from "@/composables/useCommunityPublish";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
@@ -164,8 +186,15 @@ const showPublish = ref(false);
 const publisher = useCommunityPublish();
 const { title: publishTitle, content: publishContent, video: publishVideo, busy: publishBusy,
   choosing: publishChoosing, locked: publishLocked, unknown: publishUnknown, error: publishError,
-  videoWanted, chooseVideo, removeVideo } = publisher;
+  images: publishImages, cover: publishCover, imageFailed: imageUploadFailed,
+  chooseImages, chooseCover, removeImage, clearImages, removeCover, videoWanted, chooseVideo, removeVideo } = publisher;
 const videoFailed = ref(false);
+const imageLoadFailed = ref(false);
+const detailImages = computed(() => (detail.value?.sliderImage?.length
+  ? detail.value.sliderImage : detail.value?.image ? [detail.value.image] : []).map(communityVideoSource).filter(Boolean));
+function previewImage(index: number) {
+  if (detailImages.value[index]) uni.previewImage({ current: index, urls: detailImages.value });
+}
 const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
 const topics = ref<CommunityTopic[]>([]);
 const publishTopicId = ref<number | null>(null);
@@ -253,7 +282,7 @@ async function reloadVideo() {
   const id = detail.value?.id, revision = detailGeneration;
   if (!id) return;
   try { const post = await apiCommunityDetail(id);
-    if (revision === detailGeneration && detail.value?.id === id) { detail.value = post; videoFailed.value = false; }
+    if (revision === detailGeneration && detail.value?.id === id) { detail.value = post; videoFailed.value = false; imageLoadFailed.value = false; }
   } catch { uni.showToast({ title: "视频暂时无法加载", icon: "none" }); }
 }
 
@@ -261,6 +290,7 @@ async function openDetail(post: CommunityPost) {
   const requestGeneration = ++detailGeneration;
   detail.value = post;
   videoFailed.value = false;
+  imageLoadFailed.value = false;
   liked.value = false;
   try {
     const result = await apiCommentList(post.id);
@@ -332,6 +362,14 @@ watch(() => authStore.sessionVersion, () => { closeDetail(); showPublish.value =
 .upload-hint { color: #666; font-size: 24rpx; overflow-wrap: anywhere; }
 .community-video { display: block; width: 100%; height: 340rpx; margin: 12rpx 0; }
 .publish-error { color: #a32920; font-size: 26rpx; margin: 16rpx 0; }
+.photo-upload { margin: 20rpx 0; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12rpx; margin: 12rpx 0; }
+.photo-item { min-width: 0; }
+.photo-item image { width: 100%; height: 150rpx; }
+.photo-item button { padding: 0; font-size: 22rpx; }
+.photo-cover-label { display: block; color: var(--primary-color, #e64340); font-size: 22rpx; }
+.video-cover { width: 100%; height: 160rpx; }
+.detail-gallery image { display: block; width: 100%; margin: 12rpx 0; }
 
 .discover {
   padding: 20rpx;

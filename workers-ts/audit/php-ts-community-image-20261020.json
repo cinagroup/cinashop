@@ -1,0 +1,729 @@
+{
+  "date": "2026-10-20",
+  "base_commit": "728ec20e35378260046f9826f055d111762411f7",
+  "branch": "codex/community-image-publish",
+  "scope": "H5 gallery publishing and video covers with canonical private-image ownership and signed reads",
+  "source_php": {
+    "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverCreate/index.vue",
+    "sha256": "a22a1ae9e5faaa756428cccbf9fb9ea8bf266ab7e5f8a6d8c9c7aea743b87292"
+  },
+  "tests": {
+    "unique_passed": 512,
+    "new_cases": 20,
+    "counting": "479 unit + 27 H5 + 15 native + 1 browser, minus 10 image/video cases repeated on native PG16"
+  },
+  "checks": [
+    {
+      "label": "unit-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=1",
+        "test/community-image-publish.test.ts",
+        "test/community-video-publish.test.ts",
+        "test/local-finance-postgres-runner.test.ts",
+        "test/community-migration.test.ts",
+        "test/community-admin-migration.test.ts",
+        "test/community-social-migration.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:47:35.456186+00:00",
+      "seconds": 44.38,
+      "log": "/tmp/cinashop-community-image-unit-final.log",
+      "log_sha256": "693a7f2ae46f77393b6487be4969c6a482041b48f7a1d71bd96c95a934cfb460",
+      "changed_during_run": [],
+      "passed": 479
+    },
+    {
+      "label": "h5-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "scripts/community-publish-runtime.test.cjs",
+        "scripts/community-images-runtime.test.cjs",
+        "scripts/community-deep-links-runtime.test.cjs"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:48:58.610999+00:00",
+      "seconds": 2.79,
+      "log": "/tmp/cinashop-community-image-h5-final.log",
+      "log_sha256": "80a3afa7a36520746340fb2fb2bf4b000039de519d7148923ec2eb76aee2bc38",
+      "changed_during_run": [],
+      "passed": 27
+    },
+    {
+      "label": "native-final",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-image-publish.test.ts",
+        "test/community-image-postgres.test.ts",
+        "test/community-video-publish.test.ts",
+        "test/community-video-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:49:18.997747+00:00",
+      "seconds": 26.19,
+      "log": "/tmp/cinashop-community-image-native-final.log",
+      "log_sha256": "67fd8347037e8f61dffa0b8251f772463b51442cee4a16c3112092b8b84fcaad",
+      "changed_during_run": [],
+      "passed": 15
+    },
+    {
+      "label": "build-final",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-bargain-cancel-uni-build.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:50:09.208814+00:00",
+      "seconds": 36.81,
+      "log": "/tmp/cinashop-community-image-build-final.log",
+      "log_sha256": "703a0d81f65574ef247d2109acd3dc56fdd6d3f778e08b1430206ee4bdf63e95",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "types-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-image-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:51:04.377365+00:00",
+      "seconds": 226.77,
+      "log": "/tmp/cinashop-community-image-types-final.log",
+      "log_sha256": "72eff42b4346e0a7302f6f76dc62e6322eaebfc1f2331d33761af6416d0347a8",
+      "changed_during_run": [],
+      "passed": null
+    },
+    {
+      "label": "browser-complete",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-image-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-20T11:57:33.222134+00:00",
+      "seconds": 215.41,
+      "log": "/tmp/cinashop-community-image-browser-complete.log",
+      "log_sha256": "e88a9ebc39da26cc29f44271f7eaabf37829ca78ea4ec79e6cdf80e84c0a0a02",
+      "changed_during_run": [],
+      "passed": 1
+    }
+  ],
+  "browser": {
+    "evidence": [
+      {
+        "stage": "entry",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "uploaded",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：图集顺序与首图封面照片 3/9 · 每张最大 10 MiB，第一张为封面封面移除照片 1移除照片 2移除照片 3添加照片移除全部照片MP4 视频，最大 50 MiB发布稍后发布首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [
+          {
+            "width": 160,
+            "height": 90
+          },
+          {
+            "width": 160,
+            "height": 90
+          },
+          {
+            "width": 160,
+            "height": 90
+          }
+        ],
+        "publishDisabled": false
+      },
+      {
+        "stage": "removed",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：图集顺序与首图封面照片 2/9 · 每张最大 10 MiB，第一张为封面封面移除照片 1移除照片 2添加照片移除全部照片MP4 视频，最大 50 MiB发布稍后发布首页分类逛逛购物车我的\n  \n\n",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [
+          {
+            "width": 160,
+            "height": 90
+          },
+          {
+            "width": 160,
+            "height": 90
+          }
+        ],
+        "publishDisabled": false
+      },
+      {
+        "stage": "gallery",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧三张照片移除首图后台验收：图集顺序与首图封面 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [
+          {
+            "width": 160,
+            "height": 90
+          },
+          {
+            "width": 160,
+            "height": 90
+          }
+        ],
+        "publishDisabled": true
+      },
+      {
+        "stage": "video",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：视频封面MP4 视频，最大 50 MiB00:0000:02Danmu00:02Volume00:00 / 00:02已上传：community-video.mp4移除视频添加视频封面发布稍后发布首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0,
+            "poster": "http://127.0.0.1:40751/",
+            "error": null
+          }
+        ],
+        "images": [],
+        "publishDisabled": false
+      },
+      {
+        "stage": "cover",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧发布帖子标题 (选填)分享你的内容... 后台验收：视频封面MP4 视频，最大 50 MiB00:0000:02Danmu00:02Volume00:00 / 00:02已上传：community-video.mp4移除视频更换视频封面移除视频封面发布稍后发布首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0,
+            "poster": "http://127.0.0.1:40751/",
+            "error": null
+          }
+        ],
+        "images": [
+          {
+            "width": 160,
+            "height": 90
+          }
+        ],
+        "publishDisabled": false
+      },
+      {
+        "stage": "published",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧视频封面测试后台验收：视频封面00:0000:02Danmu00:02Volume00:00 / 00:02 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0,
+            "poster": "http://127.0.0.1:40751/api/assets/5?expires=1792498539&signature=8zEiKXFesvOH1nG6sbB1XSJecSjGynXTjypw_yQ4Tg8",
+            "error": null
+          }
+        ],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "played",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧视频封面测试后台验收：视频封面00:0000:02DanmuVolume00:00 / 00:02 ❤ 0💬 0👁 0评论 (0)暂无评论说点什么...发送首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [
+          {
+            "width": 160,
+            "duration": 2,
+            "time": 0.413618,
+            "poster": "http://127.0.0.1:40751/api/assets/5?expires=1792498539&signature=8zEiKXFesvOH1nG6sbB1XSJecSjGynXTjypw_yQ4Tg8",
+            "error": null
+          }
+        ],
+        "images": [],
+        "publishDisabled": true
+      },
+      {
+        "stage": "finished",
+        "href": "http://127.0.0.1:40751/#/pages/discover/index",
+        "text": "\n    逛逛逛逛搜索视频好友与关注＋ 发布 # 本地视频还没有帖子, 快来发布第一条吧首页分类逛逛购物车我的\n  \n\n已提交，请以审核结果为准",
+        "width": 390,
+        "scrollWidth": 390,
+        "videos": [],
+        "images": [],
+        "publishDisabled": true
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "path": "/api/get_script",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/image",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/image",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/image",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/1",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 429,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/2",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/3",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "POST",
+        "path": "/api/community_save",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "title": "三张照片移除首图",
+          "content": "后台验收：图集顺序与首图封面",
+          "content_type": 1,
+          "image": "/api/assets/2",
+          "slider_image": [
+            "/api/assets/2",
+            "/api/assets/3"
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/detail/1",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/comment/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/2",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/3",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/2",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/3",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/video",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/4",
+        "status": 206,
+        "browserStatus": 206,
+        "bytes": 3142,
+        "contentRange": "bytes 0-3141/3142"
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload/image",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/5",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "POST",
+        "path": "/api/community_save",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "title": "视频封面测试",
+          "content": "后台验收：视频封面",
+          "content_type": 2,
+          "video_url": "/api/assets/4",
+          "image": "/api/assets/5"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/follow",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/topic",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/detail/2",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/community/comment/list",
+        "status": 200,
+        "browserStatus": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/5",
+        "status": 200,
+        "browserStatus": 200,
+        "bytes": 310,
+        "contentRange": null
+      },
+      {
+        "method": "GET",
+        "path": "/api/assets/4",
+        "status": 206,
+        "browserStatus": 206,
+        "bytes": 3142,
+        "contentRange": "bytes 0-3141/3142"
+      }
+    ],
+    "posts": [
+      {
+        "id": 1,
+        "contentType": 1,
+        "isVerify": 0,
+        "videoUrl": "",
+        "image": "/api/assets/2",
+        "sliderImage": "[\"/api/assets/2\",\"/api/assets/3\"]"
+      },
+      {
+        "id": 2,
+        "contentType": 2,
+        "isVerify": 0,
+        "videoUrl": "/api/assets/4",
+        "image": "/api/assets/5",
+        "sliderImage": "[]"
+      }
+    ],
+    "attachments": [
+      {
+        "id": 1,
+        "owner": 11,
+        "fileType": 1
+      },
+      {
+        "id": 2,
+        "owner": 11,
+        "fileType": 1
+      },
+      {
+        "id": 3,
+        "owner": 11,
+        "fileType": 1
+      },
+      {
+        "id": 4,
+        "owner": 11,
+        "fileType": 2
+      },
+      {
+        "id": 5,
+        "owner": 11,
+        "fileType": 1
+      }
+    ],
+    "providerCalls": 0,
+    "authority": "Actual createApp/JWT and owned native PG16 ORM schema; R2 byte storage and navigation chrome are synthetic"
+  },
+  "browser_health": {
+    "url": "http://127.0.0.1:40751/__community_image/fdc736d3-91fc-43e8-a1b3-0d17d8973427",
+    "title": "社区图集后台验收",
+    "logs": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-20T11:58:14.572Z",
+        "url": "http://127.0.0.1:40751/assets/index-CK3eeNTj.js"
+      }
+    ],
+    "snapshot": "- heading \"实际 H5 图集和视频封面\" [level=1]\n- button \"打开社区\"\n- button \"entry\"\n- button \"uploaded\"\n- button \"removed\"\n- button \"gallery\"\n- button \"video\"\n- button \"cover\"\n- button \"published\"\n- button \"played\"\n- button \"finished\"\n- generic: \"{\\\"checked\\\":[\\\"entry\\\",\\\"uploaded\\\",\\\"removed\\\",\\\"gallery\\\",\\\"video\\\",\\\"cover\\\",\\\"published\\\",\\\"played\\\"],\\\"finished\\\":false}\"\n- iframe [active]:\n  - generic: 逛逛\n  - generic: 逛逛\n  - generic: 搜索\n  - generic: 视频\n  - generic: 好友与关注\n  - generic: ＋ 发布\n  - generic: \"# 本地视频\"\n  - generic: 还没有帖子, 快来发布第一条吧\n  - generic: 首页\n  - generic: 分类\n  - generic: 逛逛\n  - generic: 购物车\n  - generic: 我的"
+  },
+  "screenshots": [
+    {
+      "path": "/tmp/cinashop-community-image-gallery.png",
+      "sha256": "2deadaeef783a83600662186f1ee2d658c08ee4efdb3e571e909d25e094dd306"
+    },
+    {
+      "path": "/tmp/cinashop-community-image-cover.png",
+      "sha256": "2ad9665f663b870d1efbddb046d17a4c98d5add89cedfebf8760485da1d069b0"
+    },
+    {
+      "path": "/tmp/cinashop-community-image-preview.png",
+      "sha256": "1e791c7b645f3404aff87628ec67aca5ececaaef5fd5eb152477cb85ff128945"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "1b4ac94d7a68444e299e917e0cd8ae50abd2937e84729485a6515277a0a8ef9c"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-images-runtime.test.cjs",
+      "sha256": "301ce0cfaa930e592e3dfd2cc019e150b604a9338061cbd9af274210f15c5885"
+    },
+    {
+      "path": "view/uniapp-ts/src/api/communityImage.ts",
+      "sha256": "56d4ce6404d4d47e9bed245b1a6adb4decbb7d707726d7cdddf450d419ba28d9"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityPublish.ts",
+      "sha256": "5a35bd141ac9fdf562f079bd39e63e9993021f530ab9d20db06adff18d685381"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "94d73d0f72e7d735a6534e7ab2a1fa8657a5f03ffac377b7b67fe3814b0a8f07"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "8b5c21aae503d63f2a88d1aea3fca3a509c975525a192ce6dd1d4f65bbeff37b"
+    },
+    {
+      "path": "workers-ts/src/services/community/AdminCommunityService.ts",
+      "sha256": "d6172b79c16afba4426e8e98064acd808a800819817ca707390392df28fabac6"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityImageMedia.ts",
+      "sha256": "a77769d77acd06e684f28f49568efb506d3ec615959abc409717c62675075fc7"
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityService.ts",
+      "sha256": "24f833dd542ac8c28909186b73337bbf7099c6d8ad3f673bd5eaa6ca60826864"
+    },
+    {
+      "path": "workers-ts/test/browser/community-image.acceptance.ts",
+      "sha256": "48271611010a9b1bfc2add99fec991b2581ce86a196df548164ee9ba1761a020"
+    },
+    {
+      "path": "workers-ts/test/community-image-postgres.test.ts",
+      "sha256": "53db9ccb8605a239037e59ad58aab7b4deda49c60f27f4ddb1aa36668e3eb550"
+    },
+    {
+      "path": "workers-ts/test/community-image-publish.test.ts",
+      "sha256": "acfcaaa13614890e01562216603916a0dec78466d2cd22ec7eee6ce1839d0f88"
+    },
+    {
+      "path": "workers-ts/test/fixtures/community-blue.png",
+      "sha256": "b9203769fdf4cfc531530c89d28e64645ebc727c25e2e2a245b6e42252ec2a05"
+    },
+    {
+      "path": "workers-ts/test/fixtures/community-gold.png",
+      "sha256": "75768154eba80d667b8158fcee043313279de751ea13afa8e6d57a71de705ba4"
+    },
+    {
+      "path": "workers-ts/test/fixtures/community-teal.png",
+      "sha256": "2a679d9c5049364dcd6384b28717eb8375fcf64185305fba16d4dbd7d5f8e162"
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "6d3214d837a4040938c2492de2023f570e3eff6d57b9bca75129873631fad80f"
+    },
+    {
+      "path": "workers-ts/vitest.community-image-browser.config.ts",
+      "sha256": "77044d235f2e065fb56df4b89e67aa993aed226fd5d46581879d5415f756777c"
+    }
+  ],
+  "postgres_cleanup": [
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-EDGKi5",
+      "log": "/tmp/cinashop-community-image-browser-complete.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-5X2Agh",
+      "log": "/tmp/cinashop-community-image-browser-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    },
+    {
+      "root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-pmdRDl",
+      "log": "/tmp/cinashop-community-image-native-final.log",
+      "major_version": 16,
+      "pg_ctl_exit": 3,
+      "stopped": true
+    }
+  ],
+  "doc_preservation": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "checkbox_lines_preserved": 88
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "checkbox_lines_preserved": 405
+    }
+  ],
+  "compatibility": [
+    "Existing remote image URL behavior is preserved; canonical private images require current owner and file/scope checks",
+    "H5 selects up to nine photos; the pre-existing API twenty-item limit is unchanged",
+    "Existing text-only and coverless video API behavior is retained",
+    "Restored GET /api/get_script is preserved"
+  ],
+  "limitations": [
+    "Local synthetic JWT/accounts, isolated PG16 and in-memory R2 bytes; no production deployment or Cloudflare R2 acceptance",
+    "No real-device camera, Mini Program or large-image capacity acceptance",
+    "Removing draft photos does not delete stored objects or introduce garbage collection",
+    "Community editing, product selection and other remaining PHP page differences are not claimed complete"
+  ],
+  "excluded_failed_candidates": [
+    "First browser run stopped after a full-page screenshot changed scroll position and an old coordinate hit the entry control; excluded and entire flow rerun",
+    "Initial frontend assertion omitted existing undefined request fields; corrected expected shape and full 27 rerun passed",
+    "Initial HTTP image fixture omitted required Content-Length; corrected fixture and full six-file 479 rerun passed; nonexistent initial legacy test path selectors are excluded"
+  ],
+  "acceptance_confirmation_requests": 0,
+  "global_permission_changes": false,
+  "overall_migration_complete": false
+}

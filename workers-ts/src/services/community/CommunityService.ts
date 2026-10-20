@@ -1,4 +1,5 @@
 import { communityVideoSources } from "./CommunityVideoMedia";
+import { communityImageSources } from "./CommunityImageMedia";
 /**
  * 社区 Service
  *
@@ -698,6 +699,7 @@ export class CommunityService {
       }
     }
     const videoSources = await communityVideoSources(this.container.db, this.appKey, rows);
+    const imageSources = await communityImageSources(this.container.db, this.appKey, rows);
     return rows.map((row) => {
       const owner = row.type === 2
         ? userMap.get(row.relationId) ?? profileMap.get(`2:${row.relationId}`)
@@ -708,11 +710,14 @@ export class CommunityService {
       };
       const topic = related.topics.map((id) => topicMap.get(id)).filter(Boolean);
       const product = related.products.map((id) => productMap.get(id)).filter(Boolean);
-      const sliderImage = parseStoredStrings(row.sliderImage);
+      const sliderImage = imageSources.get(row.id)?.sliderImage ?? parseStoredStrings(row.sliderImage);
       const isLike = likedIds.has(row.id) ? 1 : 0;
       const isFollow = row.type === 2 && followed.has(row.relationId) ? 1 : 0;
       return {
         ...row,
+        image_reference: row.image,
+        slider_image_references: parseStoredStrings(row.sliderImage),
+        image: imageSources.get(row.id)?.image ?? row.image,
         relation_id: row.relationId,
         content_type: row.contentType,
         video_reference: row.videoUrl,

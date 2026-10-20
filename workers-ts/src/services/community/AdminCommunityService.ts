@@ -1,4 +1,5 @@
 import { assertCommunityVideo } from "./CommunityVideoMedia";
+import { assertCommunityImages } from "./CommunityImageMedia";
 import {
   and,
   desc,
@@ -594,6 +595,7 @@ export class AdminCommunityService {
       if (normalized.contentType === 2) {
         await assertCommunityVideo(tx, uid, normalized.videoUrl, existing?.videoUrl);
       }
+      await assertCommunityImages(tx, uid, [normalized.image, ...normalized.sliderImage]);
       await this.validateReferences(tx, normalized.topicIds, normalized.productIds, true);
       const now = Math.floor(Date.now() / 1000);
       const values = {
