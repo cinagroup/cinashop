@@ -403,3 +403,95 @@ export function apiCommunityBrowse(id: number): Promise<null> {
   }
   return http.put<null>(`/community/browse/${id}`, {});
 }
+
+export interface CommunityThreadComment extends CommunityComment {
+  type: number;
+  replyId: number;
+  commentReplyId: number;
+  isReply: 0 | 1;
+  isShow: 0 | 1;
+  isVerify: 1;
+  likeNum: number;
+  isLike: 0 | 1;
+  author: string;
+  author_image: string;
+  comment_author: string;
+  comment_author_type: number | null;
+  comment_author_uid: number | null;
+  reply_count: number;
+}
+export interface CommunityCommentPage { list: CommunityThreadComment[]; count: number; post_comment_num: number }
+export interface CommunityCommentConfig { community_status: 0 | 1; community_comment_status: 0 | 1; community_comment_add: 0 | 1 }
+const commentInteger = (value: unknown, min = 0): value is number => Number.isSafeInteger(value) && Number(value) >= min && Number(value) <= 2147483647;
+const commentFlag = (value: unknown): value is 0 | 1 => value === 0 || value === 1;
+const previewThreadRows = new Map<number, CommunityThreadComment>();
+function previewThread(communityId: number) {
+  for (const row of previewComments) if (!previewThreadRows.has(row.id)) previewThreadRows.set(row.id, {
+    ...row, type: 2, replyId: 0, commentReplyId: 0, isReply: 1, isShow: 1, isVerify: 1, likeNum: 0, isLike: 0,
+    author: `用户 #${row.uid}`, author_image: '', comment_author: '', comment_author_type: null, comment_author_uid: null, reply_count: 0,
+  });
+  const active = [...previewThreadRows.values()].filter(row => row.communityId === communityId && row.isDel === 0);
+  for (const row of active) if (row.isReply === 1) row.reply_count = active.filter(child => child.isReply === 0 && child.replyId === row.id).length;
+  return active;
+}
+export async function apiCommunityCommentConfig(): Promise<CommunityCommentConfig> {
+  const data = communityPreviewMode ? { community_status: 1, community_comment_status: 1, community_comment_add: 1 }
+    : await http.get<CommunityCommentConfig>('/community/config');
+  if (!data || !commentFlag(data.community_status) || !commentFlag(data.community_comment_status) || !commentFlag(data.community_comment_add)) throw Error('评论开关格式错误，请刷新');
+  return data as CommunityCommentConfig;
+}
+export async function apiCommunityCommentPage(communityId: number, page = 1, replyId = 0): Promise<CommunityCommentPage> {
+  if (!commentInteger(communityId, 1) || !commentInteger(page, 1) || !commentInteger(replyId)) throw Error('评论分页参数错误');
+  let data: CommunityCommentPage;
+  if (communityPreviewMode) {
+    const all = previewThread(communityId), rows = all.filter(row => replyId ? row.isReply === 0 && row.replyId === replyId : row.isReply === 1)
+      .sort((a, b) => replyId ? a.addTime - b.addTime || a.id - b.id : b.addTime - a.addTime || b.id - a.id);
+    data = { list: previewPage(rows, page, 10), count: rows.length, post_comment_num: all.length };
+  } else data = await http.get<CommunityCommentPage>('/community/comment/list', { community_id: communityId, page, limit: 10, reply_id: replyId });
+  if (!data || !Array.isArray(data.list) || data.list.length > 10 || !commentInteger(data.count) || !commentInteger(data.post_comment_num)) throw Error('评论列表格式错误，请重试');
+  for (const row of data.list) {
+    if (!row || !commentInteger(row.id, 1) || row.communityId !== communityId || !commentInteger(row.uid)
+      || ![0, 1, 2, 3].includes(row.type) || typeof row.content !== 'string' || row.isDel !== 0
+      || row.isVerify !== 1 || !commentFlag(row.isShow) || !commentFlag(row.isReply) || !commentFlag(row.isLike)
+      || !commentInteger(row.likeNum) || !commentInteger(row.addTime) || !commentInteger(row.reply_count)
+      || !commentInteger(row.commentReplyId) || !commentInteger(row.replyId)
+      || (replyId ? row.isReply !== 0 || row.replyId !== replyId : row.isReply !== 1 || row.replyId !== 0)
+      || typeof row.author !== 'string' || typeof row.author_image !== 'string' || typeof row.comment_author !== 'string'
+      || row.comment_author_type != null && ![0, 1, 2, 3].includes(row.comment_author_type)
+      || row.comment_author_uid != null && !commentInteger(row.comment_author_uid)) throw Error('评论列表格式错误，请重试');
+  }
+  return data;
+}
+export async function apiCommunityCommentCreate(communityId: number, content: string, target = 0): Promise<{ id: number; is_verify: 0 | 1; post_comment_num: number }> {
+  if (communityPreviewMode) {
+    const all = previewThread(communityId), parent = all.find(row => row.id === target);
+    if (target && !parent) throw Error('回复目标不存在');
+    const { id } = await apiCommentSave(communityId, content);
+    previewThread(communityId);
+    const row = previewThreadRows.get(id)!;
+    if (parent) {
+      row.isReply = 0; row.replyId = parent.isReply ? parent.id : parent.replyId;
+      row.commentReplyId = parent.isReply ? 0 : parent.id;
+      row.comment_author = parent.author; row.comment_author_type = parent.type; row.comment_author_uid = parent.uid;
+      const root = previewThreadRows.get(row.replyId); if (root) root.reply_count++;
+    }
+    return { id, is_verify: 1, post_comment_num: all.length + 1 };
+  }
+  return http.post('/community/comment/save', { community_id: communityId, content, comment_reply_id: target });
+}
+export async function apiCommunityCommentLike(id: number, status: 0 | 1): Promise<{ likeNum: number; status: 0 | 1 }> {
+  if (communityPreviewMode) {
+    const row = previewThreadRows.get(id); if (!row) throw Error('评论不存在');
+    row.likeNum = Math.max(0, row.likeNum + status - row.isLike); row.isLike = status;
+    return { likeNum: row.likeNum, status };
+  }
+  return http.post(`/community/comment_like/${id}`, { status });
+}
+export async function apiCommunityCommentDelete(id: number): Promise<null> {
+  if (communityPreviewMode) {
+    const row = previewThreadRows.get(id); if (!row) throw Error('评论不存在');
+    for (const value of previewThreadRows.values()) if (value.id === id || value.replyId === id) value.isDel = 1;
+    return null;
+  }
+  return http.delete(`/community/comment_delete/${id}`);
+}

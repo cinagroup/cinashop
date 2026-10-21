@@ -24,6 +24,7 @@ import {
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { isPublicCommunityPost } from "./CommunityPostAccess";
 
 const COMMUNITY_TOPIC = "community_topic";
 const COMMUNITY_PRODUCT = "community_product";
@@ -686,7 +687,7 @@ export class AdminCommunityService {
     await this.deletePostRecord(id, uid);
   }
 
-  /** Insert a user top-level comment under the same post lock as moderation. */
+  /** Insert a top-level comment or exact reply under the moderation post lock. */
   async addUserComment(
     uidValue: unknown,
     communityIdValue: unknown,
@@ -694,7 +695,7 @@ export class AdminCommunityService {
     ip = "",
     replyCommentIdValue: unknown = 0,
     isVerifyValue: unknown = 1,
-  ): Promise<{ id: number }> {
+  ): Promise<{ id: number; is_verify: 0 | 1; post_comment_num: number }> {
     const uid = integer(uidValue, "用户", { min: 1 });
     const communityId = integer(communityIdValue, "社区内容", { min: 1 });
     const content = boundedString(contentValue, "评论内容", 1000, true);
@@ -702,7 +703,7 @@ export class AdminCommunityService {
     const isVerify = integer(isVerifyValue, "审核状态", { min: 0, max: 1 });
     return withTx(this.container, async (tx) => {
       const post = await this.lockPost(tx, communityId);
-      if (!post || post.status !== 1 || post.isVerify !== 1) {
+      if (!post || !isPublicCommunityPost(post)) {
         throw new NotFoundException("社区内容不存在或不可评论");
       }
       let replyId = 0;
@@ -723,15 +724,19 @@ export class AdminCommunityService {
           .for("update"))[0];
         if (!target) throw new NotFoundException("评论不存在或已删除");
         isReply = 0;
-        if (target.isReply === 1) {
+        if (target.isReply === 1 && target.replyId === 0) {
           replyId = target.id;
           replyUid = target.uid;
-        } else {
+        } else if (target.isReply === 0) {
           const parent = (await tx.select().from(communityComment)
             .where(and(
               eq(communityComment.id, target.replyId),
               eq(communityComment.communityId, communityId),
               eq(communityComment.isDel, 0),
+              eq(communityComment.isShow, 1),
+              eq(communityComment.isVerify, 1),
+              eq(communityComment.isReply, 1),
+              eq(communityComment.replyId, 0),
             ))
             .limit(1)
             .for("update"))[0];
@@ -740,6 +745,8 @@ export class AdminCommunityService {
           replyUid = parent.uid;
           commentReplyId = target.id;
           commentReplyUid = target.uid;
+        } else {
+          throw new NotFoundException("上级评论不存在或不可回复");
         }
       }
       const inserted = await tx.insert(communityComment).values({
@@ -759,7 +766,10 @@ export class AdminCommunityService {
         addTime: Math.floor(Date.now() / 1000),
       }).returning({ id: communityComment.id });
       await this.syncCommentCounts(tx, communityId, replyId > 0 ? [replyId] : []);
-      return { id: inserted[0]?.id ?? 0 };
+      const updatedPost = (await tx.select({ commentNum: community.commentNum }).from(community)
+        .where(eq(community.id, communityId)).limit(1))[0];
+      return { id: inserted[0]?.id ?? 0, is_verify: isVerify as 0 | 1,
+        post_comment_num: updatedPost?.commentNum ?? 0 };
     });
   }
 

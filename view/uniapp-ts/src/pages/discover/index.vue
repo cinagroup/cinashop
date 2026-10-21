@@ -207,9 +207,10 @@
     </view>
 
     <!-- 详情 + 评论弹窗 -->
-    <view v-if="detail" class="mask" @tap="closeDetail">
+    <view v-show="detail" class="mask" @tap="closeDetail">
       <view class="detail-sheet" @tap.stop>
         <scroll-view scroll-y class="detail-scroll">
+          <template v-if="detail">
           <button @tap="closeDetail">{{ authorMode ? "返回作品" : "关闭详情" }}</button>
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
@@ -246,28 +247,9 @@
             <text class="detail-meta-item">💬 {{ detail.commentNum }}</text>
             <text class="detail-meta-item">👁 {{ detail.playNum }}</text>
           </view>
-          <view class="comment-section">
-            <view class="comment-title">评论 ({{ comments.length }})</view>
-            <view v-if="comments.length" class="comment-list">
-              <view v-for="c in comments" :key="c.id" class="comment-item">
-                <text class="comment-content">{{ c.content }}</text>
-                <text class="comment-time">{{ formatTime(c.addTime) }}</text>
-              </view>
-            </view>
-            <view v-else class="comment-empty">暂无评论</view>
-          </view>
+          </template>
+          <CommunityComments :post-id="detail?.id ?? 0" :total="detail?.commentNum ?? 0" :writable="detail?.status === 1 && detail?.is_verify === 1" @count="updateCommentCount" />
         </scroll-view>
-        <view class="comment-bar">
-          <input
-            v-model="commentText"
-            class="comment-input"
-            type="text"
-            placeholder="说点什么..."
-            confirm-type="send"
-            @confirm="sendComment"
-          />
-          <text class="send-btn" @tap="sendComment">发送</text>
-        </view>
       </view>
     </view>
   </view>
@@ -277,6 +259,7 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import CommunityComments from '@/components/community/CommunityComments.vue';
 import { computed, ref, watch } from "vue";
 import { useCommunityPublish } from "@/composables/useCommunityPublish";
 import { useCommunityAuthor } from "@/composables/useCommunityAuthor";
@@ -287,12 +270,9 @@ import {
   apiCommunityDetail,
   apiCommunityTopics,
   apiCommunityLike,
-  apiCommentList,
-  apiCommentSave,
   apiCommunityFollowHighlights,
   communityPreviewMode,
   type CommunityPost,
-  type CommunityComment,
   type CommunityTopic,
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
@@ -305,9 +285,7 @@ const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: aut
   unknown: authorUnknown, hasMore: authorHasMore, isSelf: authorIsSelf, deleteId: deletePostId, unfollow: unfollowPending } = author;
 const posts = ref<CommunityPost[]>([]);
 const detail = ref<CommunityPost | null>(null);
-const comments = ref<CommunityComment[]>([]);
 const liked = ref(false);
-const commentText = ref("");
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
 const { editId: publishEditId, editRequested: publishEditRequested, loadingEdit: publishLoadingEdit } = publisher;
@@ -443,17 +421,12 @@ async function reloadVideo() {
 }
 
 async function openDetail(post: CommunityPost) {
-  const requestGeneration = ++detailGeneration;
+  ++detailGeneration;
   detail.value = post;
   videoFailed.value = false;
   imageLoadFailed.value = false;
   liked.value = false;
-  try {
-    const result = await apiCommentList(post.id);
-    if (requestGeneration === detailGeneration) comments.value = result;
-  } catch {
-    if (requestGeneration === detailGeneration) comments.value = [];
-  }
+
 }
 
 function closeDetail() {
@@ -500,20 +473,10 @@ async function like() {
   }
 }
 
-async function sendComment() {
-  if (!requireLogin() || !detail.value) return;
-  const text = commentText.value.trim();
-  if (!text) return uni.showToast({ title: "请输入评论内容", icon: "none" });
-  try {
-    await apiCommentSave(detail.value.id, text);
-    uni.showToast({ title: "评论成功", icon: "success" });
-    commentText.value = "";
-    comments.value = await apiCommentList(detail.value.id);
-    if (detail.value) detail.value.commentNum = comments.value.length;
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "评论失败", icon: "none" });
-  }
+function updateCommentCount(value: { postId: number; count: number }) {
+  if (detail.value?.id !== value.postId) return;
+  detail.value.commentNum = value.count;
+  for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === value.postId) post.commentNum = value.count;
 }
 
 onShow(load);

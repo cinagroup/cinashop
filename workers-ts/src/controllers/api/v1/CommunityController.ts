@@ -201,7 +201,7 @@ export async function communityCommentList(c: C) {
         Number(q.page ?? 1),
         Number(q.limit ?? 10),
         c.get("uid") || undefined,
-        Number(q.reply_id ?? 0),
+        q.reply_id ?? 0,
       ),
     );
   } catch (e) {

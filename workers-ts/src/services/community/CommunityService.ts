@@ -28,10 +28,12 @@ import {
   user,
   userRelation,
 } from "@/models/schema";
-import { withTx, type Container } from "@/lib/di";
+import { withTx, type Container, type DbClient } from "@/lib/di";
+import { SystemConfigDao } from "@/dao/system/SystemConfigDao";
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import { CommunitySocialService } from "@/services/community/CommunitySocialService";
 import { AdminCommunityService } from "@/services/community/AdminCommunityService";
+import { canReadCommunityPost, isPublicCommunityPost } from "./CommunityPostAccess";
 
 // Shared with AdminCommunityService so client writes and moderation lifecycle
 // changes serialize on the same logical profile/topic keys.
@@ -217,8 +219,8 @@ export class CommunityService {
       .from(communityTable)
       .where(and(eq(communityTable.id, id), eq(communityTable.isDel, 0)))
       .limit(1))[0];
-    const isPublic = item?.status === 1 && item.isVerify === 1;
-    if (!item || (!isPublic && (item.type !== 2 || item.relationId !== uid))) {
+    const isPublic = isPublicCommunityPost(item);
+    if (!item || !canReadCommunityPost(item, uid)) {
       throw new NotFoundException("帖子不存在");
     }
     // 作者可以预览待审/下架内容，但预览不应计入公开曝光；recordBrowse
@@ -346,42 +348,81 @@ export class CommunityService {
     page = 1,
     limit = 10,
     uid?: number,
-    replyId = 0,
+    replyIdValue: unknown = 0,
   ) {
     if (!Number.isSafeInteger(communityId) || communityId <= 0) {
       throw new ValidateException("参数错误");
     }
+    if ((typeof replyIdValue !== "number" && typeof replyIdValue !== "string")
+      || (typeof replyIdValue === "string" && !/^\d+$/.test(replyIdValue))
+      || !Number.isSafeInteger(Number(replyIdValue))
+      || Number(replyIdValue) < 0 || Number(replyIdValue) > 2_147_483_647) {
+      throw new ValidateException("回复评论参数错误");
+    }
+    const replyId = Number(replyIdValue);
     const safePage = positiveInteger(page, 1);
     const safeLimit = Math.min(MAX_PAGE_SIZE, positiveInteger(limit, 10, MAX_PAGE_SIZE));
-    const conditions: SQL[] = [
-      eq(communityComment.communityId, communityId),
-      eq(communityComment.isDel, 0),
-      eq(communityComment.isShow, 1),
-      eq(communityComment.isVerify, 1),
-    ];
-    if (replyId > 0) conditions.push(
-      eq(communityComment.replyId, replyId),
-      eq(communityComment.isReply, 0),
-    );
-    else conditions.push(eq(communityComment.isReply, 1));
-    const where = and(...conditions);
-    const [rows, counts] = await Promise.all([
-      this.container.db.select().from(communityComment).where(where)
-        .orderBy(
-          ...(replyId > 0
-            ? [asc(communityComment.addTime), asc(communityComment.id)]
-            : [desc(communityComment.addTime), desc(communityComment.id)]),
-        )
-        .limit(safeLimit)
-        .offset((safePage - 1) * safeLimit),
-      this.container.db.select({ count: sql<number>`COUNT(*)::int` })
-        .from(communityComment)
-        .where(where),
-    ]);
-    return {
-      list: await this.formatComments(rows, uid),
-      count: counts[0]?.count ?? 0,
-    };
+    return withTx(this.container, async (tx) => {
+      // Moderation and all comment writes take this same key first. Keep the
+      // parent/root checks, page and both totals in that bounded snapshot.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(
+        ${COMMUNITY_LIFECYCLE_LOCK_NAMESPACE}, hashtext(${`post:${communityId}`})
+      )`);
+      const post = (await tx.select().from(communityTable)
+        .where(eq(communityTable.id, communityId)).limit(1))[0];
+      if (!post || !canReadCommunityPost(post, uid)) throw new NotFoundException("帖子不存在");
+      const visible = and(
+        eq(communityComment.isDel, 0), eq(communityComment.isVerify, 1),
+        or(eq(communityComment.isShow, 1),
+          ...(uid && Number.isSafeInteger(uid) && uid > 0
+            ? [and(eq(communityComment.type, 2), eq(communityComment.uid, uid))] : [])),
+      )!;
+      if (replyId > 0) {
+        const root = (await tx.select({ id: communityComment.id }).from(communityComment)
+          .where(and(eq(communityComment.id, replyId),
+            eq(communityComment.communityId, communityId), eq(communityComment.isReply, 1),
+            eq(communityComment.replyId, 0), visible)).limit(1))[0];
+        if (!root) throw new NotFoundException("上级评论不存在或不可查看");
+      }
+      const conditions: SQL[] = [
+        eq(communityComment.communityId, communityId),
+        visible,
+      ];
+      if (replyId > 0) conditions.push(
+        eq(communityComment.replyId, replyId),
+        eq(communityComment.isReply, 0),
+      );
+      else conditions.push(eq(communityComment.isReply, 1), eq(communityComment.replyId, 0));
+      const where = and(...conditions);
+      const [rows, counts] = await Promise.all([
+        tx.select().from(communityComment).where(where)
+          .orderBy(
+            ...(replyId > 0
+              ? [asc(communityComment.addTime), asc(communityComment.id)]
+              : [desc(communityComment.addTime), desc(communityComment.id)]),
+          )
+          .limit(safeLimit)
+          .offset((safePage - 1) * safeLimit),
+        tx.select({ count: sql<number>`COUNT(*)::int` })
+          .from(communityComment)
+          .where(where),
+      ]);
+      const rootIds = rows.filter(row => row.isReply === 1).map(row => row.id);
+      const childCounts = rootIds.length
+        ? await tx.select({ rootId: communityComment.replyId, count: sql<number>`COUNT(*)::int` })
+          .from(communityComment).where(and(
+            eq(communityComment.communityId, communityId), eq(communityComment.isReply, 0),
+            inArray(communityComment.replyId, rootIds), visible,
+          )).groupBy(communityComment.replyId)
+        : [];
+      const replyCounts = new Map(childCounts.map(row => [row.rootId, row.count]));
+      return {
+        list: (await this.formatComments(rows, uid, tx as unknown as DbClient))
+          .map(row => ({ ...row, reply_count: replyCounts.get(row.id) ?? 0 })),
+        count: counts[0]?.count ?? 0,
+        post_comment_num: post.commentNum,
+      };
+    });
   }
 
   /** 发表评论 (community/comment/save) */
@@ -394,7 +435,7 @@ export class CommunityService {
       ip?: string;
       isVerify?: 0 | 1;
     },
-  ): Promise<{ id: number }> {
+  ): Promise<{ id: number; is_verify: 0 | 1; post_comment_num: number }> {
     return new AdminCommunityService(this.container).addUserComment(
       uid,
       params.communityId,
@@ -424,14 +465,24 @@ export class CommunityService {
     }
     const desiredStatus: 0 | 1 = status === 0 ? 0 : 1;
     return withTx(this.container, async (tx) => {
+      const initial = (await tx.select({ communityId: communityComment.communityId })
+        .from(communityComment).where(eq(communityComment.id, id)).limit(1))[0];
+      if (!initial) throw new NotFoundException("评论不存在或不可点赞");
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(
+        ${COMMUNITY_LIFECYCLE_LOCK_NAMESPACE}, hashtext(${`post:${initial.communityId}`})
+      )`);
+      const post = (await tx.select().from(communityTable)
+        .where(eq(communityTable.id, initial.communityId)).limit(1).for("update"))[0];
+      if (!isPublicCommunityPost(post)) throw new NotFoundException("帖子不存在或不可点赞");
       await tx.execute(sql`SELECT pg_advisory_xact_lock(
         ${COMMUNITY_LIFECYCLE_LOCK_NAMESPACE},
         hashtext(${`community-comment-like:${uid}:${id}`})
       )`);
-      const comment = (await tx.select({ id: communityComment.id, likeNum: communityComment.likeNum })
+      const comment = (await tx.select()
         .from(communityComment)
         .where(and(
           eq(communityComment.id, id),
+          eq(communityComment.communityId, initial.communityId),
           eq(communityComment.isDel, 0),
           eq(communityComment.isShow, 1),
           eq(communityComment.isVerify, 1),
@@ -439,6 +490,17 @@ export class CommunityService {
         .limit(1)
         .for("update"))[0];
       if (!comment) throw new NotFoundException("评论不存在或不可点赞");
+      if (comment.isReply === 0) {
+        const root = (await tx.select({ id: communityComment.id }).from(communityComment)
+          .where(and(eq(communityComment.id, comment.replyId),
+            eq(communityComment.communityId, initial.communityId),
+            eq(communityComment.isReply, 1), eq(communityComment.replyId, 0),
+            eq(communityComment.isDel, 0), eq(communityComment.isShow, 1),
+            eq(communityComment.isVerify, 1))).limit(1).for("update"))[0];
+        if (!root) throw new NotFoundException("上级评论不存在或不可点赞");
+      } else if (comment.isReply !== 1 || comment.replyId !== 0) {
+        throw new NotFoundException("评论不存在或不可点赞");
+      }
       const existing = await tx.select({ id: communityRelevance.id }).from(communityRelevance)
         .where(and(
           eq(communityRelevance.leftId, uid),
@@ -765,22 +827,45 @@ export class CommunityService {
     });
   }
 
-  private async formatComments(rows: Array<typeof communityComment.$inferSelect>, uid?: number) {
+  private async formatComments(
+    rows: Array<typeof communityComment.$inferSelect>, uid?: number, db: DbClient = this.container.db,
+  ) {
     if (!rows.length) return [];
-    const userIds = [...new Set(rows.filter((row) => row.type === 2).flatMap((row) => [
-      row.uid,
-      row.commentReplyUid,
-    ]).filter((id) => id > 0))];
+    const targetIds = [...new Set(rows.map(row => row.commentReplyId || row.replyId).filter(id => id > 0))];
+    const targets = targetIds.length
+      ? await db.select({ id: communityComment.id, communityId: communityComment.communityId,
+        type: communityComment.type, uid: communityComment.uid,
+        nickname: communityComment.nickname, avatar: communityComment.avatar })
+        .from(communityComment).where(inArray(communityComment.id, targetIds))
+      : [];
+    const targetMap = new Map(targets.map(row => [row.id, row]));
+    const userIds = [...new Set([...rows, ...targets].filter(row => row.type === 2)
+      .map(row => row.uid).filter(id => id > 0))];
     const users = userIds.length
-      ? await this.container.db.select({ uid: user.uid, nickname: user.nickname, avatar: user.avatar })
+      ? await db.select({ uid: user.uid, nickname: user.nickname, avatar: user.avatar })
         .from(user)
         .where(inArray(user.uid, userIds))
       : [];
     const userMap = new Map(users.map((row) => [row.uid, row]));
-    const liked = await this.relevanceIds(uid, rows.map((row) => row.id), COMMUNITY_COMMENT_LIKE);
+    const config: Record<string, string> = [...rows, ...targets].some(row => row.type === 0)
+      ? await new SystemConfigDao(db).getValues(["site_name", "wap_login_logo"])
+      : {};
+    const platformName = config.site_name || "CinaShop";
+    const platformImage = config.wap_login_logo || "";
+    const projectAuthor = (row: { type: number; uid: number; nickname: string; avatar: string }) => {
+      const account = row.type === 2 ? userMap.get(row.uid) : undefined;
+      return {
+        name: row.type === 0 ? platformName : row.type === 2
+          ? account?.nickname || `用户 #${row.uid}` : row.nickname || `${row.type === 1 ? "门店" : "作者"} #${row.uid}`,
+        image: row.type === 0 ? platformImage : row.type === 2 ? account?.avatar || "" : row.avatar,
+      };
+    };
+    const liked = await this.relevanceIds(uid, rows.map((row) => row.id), COMMUNITY_COMMENT_LIKE, db);
     return rows.map((row) => {
-      const author = row.type === 2 ? userMap.get(row.uid) : undefined;
-      const replyAuthor = row.commentReplyUid > 0 ? userMap.get(row.commentReplyUid) : undefined;
+      const author = projectAuthor(row);
+      const candidate = targetMap.get(row.commentReplyId || row.replyId);
+      const target = candidate?.communityId === row.communityId ? candidate : undefined;
+      const replyAuthor = target ? projectAuthor(target) : undefined;
       const isLike = liked.has(row.id) ? 1 : 0;
       return {
         ...row,
@@ -798,17 +883,21 @@ export class CommunityService {
         add_time: row.addTime,
         isLike,
         is_like: isLike,
-        author: author?.nickname ?? (row.type === 0 ? "平台" : row.type === 3 ? row.nickname : `用户 #${row.uid}`),
-        author_image: author?.avatar ?? (row.type === 3 ? row.avatar : ""),
-        comment_author: replyAuthor?.nickname ?? "",
-        comment_author_image: replyAuthor?.avatar ?? "",
+        author: author.name,
+        author_image: author.image,
+        comment_author: replyAuthor?.name ?? "",
+        comment_author_image: replyAuthor?.image ?? "",
+        comment_author_type: target?.type ?? null,
+        comment_author_uid: target?.uid ?? null,
       };
     });
   }
 
-  private async relevanceIds(uid: number | undefined, ids: number[], type: string): Promise<Set<number>> {
+  private async relevanceIds(
+    uid: number | undefined, ids: number[], type: string, db: DbClient = this.container.db,
+  ): Promise<Set<number>> {
     if (!uid || !ids.length) return new Set<number>();
-    const rows = await this.container.db
+    const rows = await db
       .select({ rightId: communityRelevance.rightId })
       .from(communityRelevance)
       .where(

@@ -52,6 +52,7 @@
           <view class="video-title">{{ feed.activeVideo.value.title || '社区视频' }}</view>
           <view class="video-description">{{ feed.activeVideo.value.content }}</view>
           <view class="post-meta">❤ {{ feed.activeVideo.value.likeNum }} · 💬 {{ feed.activeVideo.value.commentNum }} · 👁 {{ feed.activeVideo.value.playNum }}</view>
+          <button class="video-comments" @tap="openVideoComments">查看视频评论</button>
         </view>
       </view>
 
@@ -76,20 +77,18 @@
       <view v-else-if="feed.finished.value && feed.posts.value.length > 0" class="end-text">没有更多了</view>
     </template>
 
-    <view v-if="detail" class="detail-mask" @tap="closeDetail">
+    <view v-show="detail" class="detail-mask" @tap="closeDetail">
       <view class="detail-sheet" @tap.stop>
         <scroll-view scroll-y class="detail-scroll">
           <view v-if="detailLoading" class="state-box">加载帖子中...</view>
           <view v-else-if="detailError" class="state-box">{{ detailError }}</view>
-          <template v-else>
+          <template v-else-if="detail">
             <view class="video-title">{{ detail.title || '分享' }}</view>
             <view class="video-description">{{ detail.content }}</view>
             <image v-if="detail.image" class="post-image" :src="detail.image" mode="widthFix" />
             <view class="post-meta">❤ {{ detail.likeNum }} · 💬 {{ detail.commentNum }} · 👁 {{ detail.playNum }}</view>
-            <view class="comment-heading">评论</view>
-            <view v-for="comment in comments" :key="comment.id" class="comment-row">{{ comment.content }}</view>
-            <view v-if="!comments.length" class="comment-row">暂无评论</view>
           </template>
+          <CommunityComments :post-id="detailLoading || detailError ? 0 : detail?.id ?? 0" :total="detail?.commentNum ?? 0" :writable="detail?.status === 1 && detail?.is_verify === 1" @count="updateCommentCount" />
         </scroll-view>
         <text class="detail-close" @tap="closeDetail">关闭</text>
       </view>
@@ -110,8 +109,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { apiCommentList, apiCommunityDetail, apiCommunitySave, communityPreviewMode, type CommunityComment, type CommunityPost } from "@/api/community";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
+import CommunityComments from "@/components/community/CommunityComments.vue";
+import { apiCommunityDetail, apiCommunitySave, communityPreviewMode, type CommunityPost } from "@/api/community";
 import { useCommunityDeepLink, type CommunityDeepLinkMode, type CommunityRouteQuery } from "@/composables/useCommunityDeepLink";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { useAuthStore } from "@/stores/auth";
@@ -121,10 +122,10 @@ const feed = useCommunityDeepLink(props.mode, props.videoRoute);
 const auth = useAuthStore();
 const emptyText = computed(() => props.mode === "topic" ? "这个话题还没有内容" : props.mode === "search" ? "没有找到相关笔记" : "还没有视频");
 const detail = ref<CommunityPost | null>(null);
-const comments = ref<CommunityComment[]>([]);
 const detailLoading = ref(false);
 const detailError = ref("");
-let detailGeneration = 0;
+let detailGeneration = 0, pageVisible = true, pageDisposed = false;
+const detailOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 const publishOpen = ref(false);
 const publishTitle = ref("");
 const publishContent = ref("");
@@ -144,22 +145,35 @@ async function openPost(post: CommunityPost) {
     uni.navigateTo({ url: `${props.videoRoute || '/pages/discover/discoverVideo/index'}?id=${post.id}` });
     return;
   }
-  const requestGeneration = ++detailGeneration;
+  const requestGeneration = ++detailGeneration, owner = detailOwner();
   detail.value = post;
   detailLoading.value = true;
   detailError.value = "";
-  comments.value = [];
   try {
-    const [current, currentComments] = await Promise.all([apiCommunityDetail(post.id), apiCommentList(post.id)]);
-    if (requestGeneration === detailGeneration) { detail.value = current; comments.value = currentComments; }
+    const current = await apiCommunityDetail(post.id);
+    if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detail.value = current;
   } catch (cause) {
-    if (requestGeneration === detailGeneration) detailError.value = cause instanceof Error ? cause.message : "帖子加载失败";
+    if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detailError.value = cause instanceof Error ? cause.message : "帖子加载失败";
   } finally {
-    if (requestGeneration === detailGeneration) detailLoading.value = false;
+    if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detailLoading.value = false;
   }
 }
 
-function closeDetail() { detailGeneration++; detail.value = null; comments.value = []; }
+function closeDetail() { detailGeneration++; detail.value = null; detailLoading.value = false; detailError.value = ''; }
+function openVideoComments() {
+  if (!pageVisible || pageDisposed || !feed.activeVideo.value) return;
+  ++detailGeneration; detailLoading.value = false; detailError.value = ''; detail.value = feed.activeVideo.value;
+}
+function updateCommentCount(value: { postId: number; count: number }) {
+  if (detail.value?.id !== value.postId) return;
+  detail.value.commentNum = value.count;
+  for (const post of feed.posts.value) if (post.id === value.postId) post.commentNum = value.count;
+}
+watch(() => feed.activeVideo.value?.id, () => { if (props.mode === 'video') closeDetail(); });
+watch(detailOwner, closeDetail, { flush: 'sync' });
+onHide(() => { pageVisible = false; closeDetail(); });
+onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
+onShow(() => { if (!pageDisposed) pageVisible = true; });
 
 function openPublish() {
   if (!feed.selectedTopicId.value || feed.routeError.value) return;
@@ -199,7 +213,7 @@ async function submitPublish() {
 function retryRoute() { void feed.initialize(props.query); }
 
 onMounted(() => void feed.initialize(props.query));
-onBeforeUnmount(() => { closeDetail(); publishOpen.value = false; feed.dispose(); });
+onBeforeUnmount(() => { pageDisposed = true; closeDetail(); publishOpen.value = false; feed.dispose(); });
 defineExpose({ loadMore: feed.loadMore });
 </script>
 

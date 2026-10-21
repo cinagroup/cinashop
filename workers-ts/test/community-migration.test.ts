@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { Container } from "../src/lib/di";
 import { CommunityService } from "../src/services/community/CommunityService";
+import { canReadCommunityPost, isPublicCommunityPost } from "../src/services/community/CommunityPostAccess";
 import { normalizeClientCommunityPostInput } from "../src/services/community/AdminCommunityService";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
 
@@ -25,9 +26,21 @@ function selectRows(rows: unknown[]) {
 describe("community legacy moderation fields", () => {
   it("keeps public moderation gates while allowing only an owning user to preview", () => {
     const source = readFileSync("src/services/community/CommunityService.ts", "utf8");
-    expect(source).toContain("const isPublic = item?.status === 1 && item.isVerify === 1");
-    expect(source).toContain("!isPublic && (item.type !== 2 || item.relationId !== uid)");
-    expect(source).toContain("item.type !== 2 || item.relationId !== uid");
+    const post = { type: 2, relationId: 11, status: 1, isVerify: 1, isDel: 0 };
+    expect(isPublicCommunityPost(post)).toBe(true);
+    expect(canReadCommunityPost(post)).toBe(true);
+    for (const values of [{ status: 0 }, { isVerify: 0 }, { isVerify: -1 }]) {
+      const own = { ...post, ...values };
+      expect(isPublicCommunityPost(own)).toBe(false);
+      expect(canReadCommunityPost(own, 11)).toBe(true);
+      expect(canReadCommunityPost(own, 22)).toBe(false);
+      expect(canReadCommunityPost(own)).toBe(false);
+      for (const type of [0, 1, 3]) expect(canReadCommunityPost({ ...own, type }, 11)).toBe(false);
+    }
+    expect(canReadCommunityPost({ ...post, isDel: 1 }, 11)).toBe(false);
+    expect(canReadCommunityPost(undefined, 11)).toBe(false);
+    expect(source).toContain("const isPublic = isPublicCommunityPost(item)");
+    expect(source).toContain("!canReadCommunityPost(item, uid)");
     expect(source).toContain("eq(communityTable.isDel, 0)");
     expect(source).toMatch(/const playNum = isPublic[\s\S]+recordBrowse\(id, uid\)[\s\S]+: item\.playNum/);
   });
