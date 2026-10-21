@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { reverseRouteSourceIncrement, type RouteSourceIncrement } from "./helpers/routeSourceIncrement";
+import { reverseRouteSourceIncrement, reverseRouteSourceFollowup, type RouteSourceIncrement, type RouteSourceFollowup } from "./helpers/routeSourceIncrement";
 import { loadStatisticsScript, type StatisticsScriptElement } from "../../view/common/statisticsScript";
 
 interface RouteDecision {
@@ -34,6 +34,7 @@ const restoration=JSON.parse(read("workers-ts/audit/statistics-script-restoratio
 const stateIncrement=JSON.parse(read("workers-ts/audit/community-state-root-source-increment-20261021.json")) as RouteSourceIncrement & {
   route_file:string; statistics_restoration:{file:string;sha256:string};
 };
+const availabilityFollowup=JSON.parse(read("workers-ts/audit/community-availability-root-source-followup-20261021.json")) as RouteSourceFollowup;
 function source(file:string){
   const raw=read(file),text=file.endsWith(".vue")?/<script\b[^>]*>([\s\S]*?)<\/script>/.exec(raw)?.[1]:raw;
   if(text===undefined)throw Error("Statistics entry script missing: "+file);
@@ -98,7 +99,7 @@ describe("restored PHP statistics script contract and retained retirement histor
     expect(stateIncrement.inserted_source).toBe('v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);');
     for(const proof of restoration.current_sources){
       const current=read(proof.file);
-      const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(current,stateIncrement):current;
+      const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(reverseRouteSourceFollowup(current,availabilityFollowup),stateIncrement):current;
       expect(digest(original),proof.file).toBe(proof.sha256);
     }
   });
@@ -110,7 +111,7 @@ describe("restored PHP statistics script contract and retained retirement histor
     const proof=restoration.current_sources.find(row=>row.file===file)!;
     const changed=read(file).replace(before,after);
     expect(changed).not.toBe(read(file));
-    if(file===stateIncrement.route_file)expect(()=>reverseRouteSourceIncrement(changed,stateIncrement)).toThrow();
+    if(file===stateIncrement.route_file)expect(()=>reverseRouteSourceIncrement(reverseRouteSourceFollowup(changed,availabilityFollowup),stateIncrement)).toThrow();
     else expect(digest(changed)).not.toBe(proof.sha256);
   });
 

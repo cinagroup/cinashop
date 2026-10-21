@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { reverseRouteSourceIncrement } from "./helpers/routeSourceIncrement";
+import { reverseRouteSourceIncrement, reverseRouteSourceFollowup, type RouteSourceFollowup } from "./helpers/routeSourceIncrement";
 import { buildAdminFrontendApiAuditReport, normalizeAdminAuditSource } from "../scripts/admin-frontend-api-audit";
 
 interface ApiAuditReport {
@@ -69,9 +69,15 @@ const stateSourceIncrement = JSON.parse(readFileSync(
     historical_video_proof: { file: string; sha256: string };
     statistics_restoration: { file: string; sha256: string };
   };
+const availabilityFollowup = JSON.parse(readFileSync(
+  join(workerRoot, "audit", "community-availability-root-source-followup-20261021.json"), "utf8")) as RouteSourceFollowup & {
+    route_file: string; shifted_route_records: number; previous_current_report_sha256: string;
+    current_report_file: string; current_report_sha256: string; semantic_admin_changes: number;
+    prior_state_proof: { file: string; sha256: string };
+  };
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 
-function applyReportSourceIncrement(before: ApiAuditReport, proof: typeof rootSourceRefresh): ApiAuditReport {
+function applyReportSourceIncrement(before: ApiAuditReport, proof: Pick<typeof rootSourceRefresh, "route_file" | "before_sha256" | "after_sha256" | "inserted_line" | "shifted_route_records">): ApiAuditReport {
   const expected = structuredClone(before);
   const rootProof = expected.backend.rootRouteSources!.find(row => row.file === proof.route_file)!;
   expect(rootProof.sha256).toBe(proof.before_sha256);
@@ -138,7 +144,8 @@ describe("Admin frontend API registration audit", () => {
     expect(stateSourceIncrement.semantic_admin_changes).toBe(0);
     expect(stateSourceIncrement.before_sha256).toBe(rootSourceRefresh.after_sha256);
     const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", rootSourceRefresh.route_file), "utf8"));
-    const videoSource = reverseRouteSourceIncrement(routeSource, stateSourceIncrement);
+    const stateSource = reverseRouteSourceFollowup(routeSource, availabilityFollowup);
+    const videoSource = reverseRouteSourceIncrement(stateSource, stateSourceIncrement);
     reverseRouteSourceIncrement(videoSource, rootSourceRefresh);
     expect(stateSourceIncrement.historical_video_proof).toEqual({
       file: "workers-ts/audit/admin-api-root-source-refresh-20261021.json",
@@ -157,10 +164,23 @@ describe("Admin frontend API registration audit", () => {
     const videoReport = applyReportSourceIncrement(merged, rootSourceRefresh);
     expect(sha256(JSON.stringify(videoReport, null, 2) + "\n")).toBe(rootSourceRefresh.current_report_sha256);
     expect(stateSourceIncrement.previous_current_report_sha256).toBe(rootSourceRefresh.current_report_sha256);
-    expect(current).toEqual(applyReportSourceIncrement(videoReport, stateSourceIncrement));
+    const stateReport = applyReportSourceIncrement(videoReport, stateSourceIncrement);
+    expect(sha256(JSON.stringify(stateReport, null, 2) + "\n")).toBe(stateSourceIncrement.current_report_sha256);
+    expect(availabilityFollowup.prior_state_proof).toEqual({
+      file: "workers-ts/audit/community-state-root-source-increment-20261021.json",
+      sha256: "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73",
+    });
+    expect(sha256(readFileSync(join(workerRoot, "..", availabilityFollowup.prior_state_proof.file))))
+      .toBe(availabilityFollowup.prior_state_proof.sha256);
+    expect(availabilityFollowup.previous_current_report_sha256).toBe(stateSourceIncrement.current_report_sha256);
+    expect(availabilityFollowup.semantic_admin_changes).toBe(0);
+    expect(availabilityFollowup.route_file).toBe(stateSourceIncrement.route_file);
+    expect(current).toEqual(applyReportSourceIncrement(stateReport, {
+      ...availabilityFollowup, inserted_line: availabilityFollowup.edits[0].after_line,
+    }));
     expect(stateSourceIncrement.current_report_file).toBe("workers-ts/audit/admin-frontend-api-contracts.json");
     expect(sha256(readFileSync(join(workerRoot, "..", stateSourceIncrement.current_report_file))))
-      .toBe(stateSourceIncrement.current_report_sha256);
+      .toBe(availabilityFollowup.current_report_sha256);
   });
 
   it.each([
@@ -172,14 +192,14 @@ describe("Admin frontend API registration audit", () => {
     ["changed statistics registration", (source: string) => source.replace("'/get_script'", "'/get_script_changed'")],
   ])("rejects %s instead of absorbing source drift into the dated proof", (_name, mutate) => {
     const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
-    const changed = mutate(routeSource);
-    expect(changed).not.toBe(routeSource);
+    const changed = mutate(reverseRouteSourceFollowup(routeSource, availabilityFollowup));
+    expect(changed).not.toBe(reverseRouteSourceFollowup(routeSource, availabilityFollowup));
     expect(() => reverseRouteSourceIncrement(changed, stateSourceIncrement)).toThrow();
   });
 
   it("checks the predecessor hash as well as the current hash and exact insertion", () => {
     const source = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
-    expect(() => reverseRouteSourceIncrement(source, { ...stateSourceIncrement, before_sha256: "0".repeat(64) })).toThrow(/predecessor/);
+    expect(() => reverseRouteSourceIncrement(reverseRouteSourceFollowup(source, availabilityFollowup), { ...stateSourceIncrement, before_sha256: "0".repeat(64) })).toThrow(/predecessor/);
   });
 
   it("expands the moderation mode type alias into both registered form routes", () => {

@@ -1,14 +1,15 @@
+import { useCommunityAvailability, isCommunityRejected } from '@/utils/communityAvailability';
 import { computed, ref, watch } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
 import { apiCommunitySave, apiCommunityUpdate, apiCommunityState, type CommunityPostInput } from "@/api/community";
 import { apiCommunityVideo, type UploadedCommunityVideo } from "@/api/communityVideo";
 import { apiCommunityImage, type UploadedCommunityImage } from "@/api/communityImage";
-import { RequestError } from "@/utils/request";
 import { useCommunityRelations } from "./useCommunityRelations";
 import { communityVideoSource } from "@/utils/communityMedia";
 
 export function useCommunityPublish() {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore();
   const title = ref(""), content = ref(""), video = ref<UploadedCommunityVideo | null>(null);
   const images = ref<UploadedCommunityImage[]>([]), cover = ref<UploadedCommunityImage | null>(null);
@@ -17,7 +18,7 @@ export function useCommunityPublish() {
   const publishedId = ref(0), videoWanted = ref(false);
   const editId = ref(0), editRequested = ref(0), loadingEdit = ref(false);
   let generation = 0, operation = 0, visible = true, disposed = false;
-  const locked = computed(() => busy.value || choosing.value || loadingEdit.value || unknown.value || publishedId.value > 0);
+  const locked = computed(() => !availability.allowed.value || busy.value || choosing.value || loadingEdit.value || unknown.value || publishedId.value > 0);
   const relations = useCommunityRelations(locked);
   const identity = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   const clear = () => { title.value = ""; content.value = ""; video.value = null; videoWanted.value = false; images.value = []; cover.value = null; imageFailed.value = false; error.value = ""; unknown.value = false; publishedId.value = 0; editId.value = 0; editRequested.value = 0; };
@@ -25,7 +26,7 @@ export function useCommunityPublish() {
   const validReference = (value: string) => !!communityVideoSource(value)
     && (!value.startsWith("/api/assets/") || /^\/api\/assets\/[1-9]\d*$/.test(value));
   async function loadForEdit(id: number) {
-    if (!visible || disposed || locked.value || !auth.isLoggedIn || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) return false;
+    if (!availability.allowed.value || !visible || disposed || locked.value || !auth.isLoggedIn || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) return false;
     reset(); editRequested.value = id; const revision = ++generation, flight = ++operation, owner = identity(); loadingEdit.value = true;
     const current = () => visible && !disposed && revision === generation && owner === identity();
     try {
@@ -54,7 +55,7 @@ export function useCommunityPublish() {
   function clearImages() { if (!locked.value) { images.value = []; imageFailed.value = false; error.value = ""; } }
   function removeCover() { if (!locked.value) { cover.value = null; imageFailed.value = false; error.value = ""; } }
   function selectImages(forCover: boolean) {
-    if (!visible || disposed || locked.value || !auth.isLoggedIn
+    if (!availability.allowed.value || !visible || disposed || locked.value || !auth.isLoggedIn
       || (forCover ? !video.value : videoWanted.value || images.value.length >= 9)) return;
     const count = forCover ? 1 : 9 - images.value.length, revision = ++generation, flight = ++operation, owner = identity();
     const current = () => !disposed && visible && revision === generation && owner === identity();
@@ -96,7 +97,7 @@ export function useCommunityPublish() {
     });
   }
   function chooseVideo() {
-    if (!visible || disposed || locked.value || !auth.isLoggedIn || images.value.length || imageFailed.value) return;
+    if (!availability.allowed.value || !visible || disposed || locked.value || !auth.isLoggedIn || images.value.length || imageFailed.value) return;
     const revision = ++generation, flight = ++operation, owner = identity();
     const current = () => !disposed && visible && revision === generation && owner === identity();
     let terminal = false;
@@ -123,7 +124,7 @@ export function useCommunityPublish() {
     });
   }
   async function publish(topicId?: number): Promise<number | null> {
-    if (!visible || disposed || locked.value || !auth.isLoggedIn) return null;
+    if (!availability.allowed.value || !visible || disposed || locked.value || !auth.isLoggedIn) return null;
     if (editRequested.value && !editId.value) { error.value = "请先重新加载原帖，或取消编辑"; return null; }
     if (relations.loading.value || relations.pendingTopic.value) { error.value = "请先完成话题和商品选择"; return null; }
     if ([...images.value, ...(cover.value ? [cover.value] : []), ...(video.value ? [video.value] : [])]
@@ -152,16 +153,21 @@ export function useCommunityPublish() {
       if (!Number.isSafeInteger(result?.id) || result.id <= 0 || result.id > 2147483647 || (editing > 0 && result.id !== editing)) throw Error("发布回执无效");
       publishedId.value = result.id; return result.id;
     } catch (cause) {
-      if (current()) {
+      if (flight === operation && owner === identity()) {
         // HTTP/server/transport failures may occur after commit. Do not replay a non-idempotent save.
-        const rejected = cause instanceof RequestError && cause.status !== undefined
-          && cause.status >= 400 && cause.status < 500 && (cause.httpStatus === undefined || cause.httpStatus < 500);
+        const rejected = isCommunityRejected(cause);
         unknown.value = !rejected;
-        error.value = rejected ? cause.message : "发布结果未确认，帖子可能已提交审核。请先查看帖子，勿重复发布。";
+        error.value = rejected ? (cause as Error).message : "发布结果未确认，帖子可能已提交审核。请先查看帖子，勿重复发布。";
       }
       return null;
     } finally { if (flight === operation && owner === identity()) busy.value = false; }
   }
+  watch(availability.closed, closed => {
+    if (!closed) return;
+    const unresolved = unknown.value || busy.value;
+    generation++; clear(); unknown.value = unresolved; choosing.value = false; loadingEdit.value = false; relations.clear();
+    error.value = availability.message.value;
+  }, { flush: 'sync' });
   function leave() {
     visible = false; generation++;
     if (busy.value) { unknown.value = true; error.value = "操作结果未确认，请先查看帖子，勿重复发布。"; }
@@ -171,7 +177,7 @@ export function useCommunityPublish() {
   onShow(() => { if (!disposed) visible = true; });
   onUnload(() => { leave(); disposed = true; });
   watch(identity, () => { generation++; operation++; clear(); choosing.value = false; busy.value = false; loadingEdit.value = false; }, { flush: "sync" });
-  return { title, content, video, images, cover, imageFailed, busy, choosing, unknown, error, publishedId, videoWanted, relations, editId, editRequested, loadingEdit, loadForEdit,
+  return { availability, title, content, video, images, cover, imageFailed, busy, choosing, unknown, error, publishedId, videoWanted, relations, editId, editRequested, loadingEdit, loadForEdit,
     locked, reset, removeVideo, chooseVideo, chooseImages: () => selectImages(false), chooseCover: () => selectImages(true),
     removeImage, clearImages, removeCover, publish };
 }

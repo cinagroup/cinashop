@@ -96,7 +96,9 @@ function workspaceParsingBound(text = client("pages/discover/index.vue")): boole
   if (!namedValueImport(source, "@/utils/communityEntry", "parseCommunityWorkspaceEntry")) return false;
   const load = calls(source, "onLoad")[0]?.arguments[0]; if (!load) return false;
   const decode = calls(load, "communityPageQuery")[0], validate = calls(load, "parseCommunityWorkspaceEntry")[0];
-  const later = ["communityInbound", "referrals.captureInbound", "openDetail", "author.initialize", "editPost", "relations.seedTopic"];
+  const publisher = declaration(source, "initializePublisher");
+  if (!publisher || !["editPost", "relations.seedTopic"].every(name => calls(publisher, name).length === 1)) return false;
+  const later = ["communityInbound", "referrals.captureInbound", "openDetail", "author.initialize", "initializePublisher"];
   return Boolean(decode && validate && decode.pos < validate.pos && later.every(name => {
     const bound = calls(load, name); return bound.length === 1 && bound[0].pos > validate.pos;
   }));
@@ -163,6 +165,9 @@ describe("complete shared community publishing and registered legacy entries", (
     const original = client("pages/discover/index.vue"); expect(workspaceParsingBound(original)).toBe(true);
     expect(workspaceParsingBound(original.replace("import { parseCommunityWorkspaceEntry,", "import type { parseCommunityWorkspaceEntry,"))).toBe(false);
     expect(workspaceParsingBound(original.replace("entry = parseCommunityWorkspaceEntry(query);", "entry = { kind: 'feed' };"))).toBe(false);
+    expect(workspaceParsingBound(original.replace("void initializePublisher(entry)", "void disconnectedPublisher(entry)"))).toBe(false);
+    expect(workspaceParsingBound(original.replace("await editPost(entry.editId)", "await disconnectedEdit(entry.editId)"))).toBe(false);
+    expect(workspaceParsingBound(original.replace("await relations.seedTopic(entry.topicId)", "await disconnectedSeed(entry.topicId)"))).toBe(false);
   });
   it("connects the destination's real media, topic, product and submit controls to its value-imported shared publisher", () => {
     const original = client("pages/discover/index.vue"); expect(workspacePublisherBound(original)).toBe(true);

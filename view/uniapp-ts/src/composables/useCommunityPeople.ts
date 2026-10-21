@@ -1,7 +1,7 @@
+import { useCommunityAvailability, isCommunityRejected } from '@/utils/communityAvailability';
 import { computed, ref, watch } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
-import { RequestError } from "@/utils/request";
 import { parseCommunityPeopleTab, type CommunityPeopleTab } from "../../../common/communityRoute";
 import { apiCommunityFollowList, apiCommunityFriendList, apiCommunityRecommendations,
   apiCommunitySetInterest, type CommunitySocialUser } from "@/api/community";
@@ -13,6 +13,7 @@ export const communityPeopleTabs: ReadonlyArray<{ key: CommunityPeopleTab; label
 ];
 
 export function useCommunityPeople() {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore(), activeTab = ref<CommunityPeopleTab>("friend");
   const users = ref<CommunitySocialUser[]>([]), page = ref(0), loading = ref(false), finished = ref(false);
   const error = ref(""), message = ref(""), unknown = ref(false), confirmUid = ref<number | null>(null);
@@ -25,7 +26,7 @@ export function useCommunityPeople() {
   const isLoggedIn = computed(() => auth.isLoggedIn && Number.isSafeInteger(auth.uid) && auth.uid > 0);
   const emptyText = computed(() => ({ friend: "还没有好友", follow: "还没有关注任何人",
     fans: "还没有粉丝", recommend: "暂时没有推荐作者" })[activeTab.value]);
-  const current = (revision: number, owner: string) => !disposed && visible && revision === generation && owner === identity();
+  const current = (revision: number, owner: string) => !disposed && visible && !availability.closed.value && revision === generation && owner === identity();
   function cancelUnfollow() { confirmation = undefined; confirmUid.value = null; }
   function clearView() {
     generation++; users.value = []; page.value = 0; loading.value = false; finished.value = false; cancelUnfollow();
@@ -53,7 +54,7 @@ export function useCommunityPeople() {
     return apiCommunityFollowList(tab, next, PAGE_SIZE);
   }
   async function readPage(next: number) {
-    if (!visible || disposed || !routeValid || loading.value || busy.value) return;
+    if (!availability.allowed.value || !visible || disposed || !routeValid || loading.value || busy.value) return;
     if (!isLoggedIn.value) { error.value = "请先登录后查看好友与关注"; return; }
     const revision = generation, owner = identity(), requestedTab = activeTab.value;
     loading.value = true; error.value = "";
@@ -72,7 +73,7 @@ export function useCommunityPeople() {
     } finally { if (current(revision, owner)) loading.value = false; }
   }
   async function refresh() {
-    if (!visible || disposed || !routeValid || busy.value) return;
+    if (!availability.allowed.value || !visible || disposed || !routeValid || busy.value) return;
     clearView(); await readPage(1);
   }
   async function loadMore() {
@@ -104,7 +105,7 @@ export function useCommunityPeople() {
     return person.is_follow === 1 ? person.is_fans === 1 ? "互相关注" : "已关注"
       : person.is_fans === 1 ? "回关" : "关注";
   }
-  function canWrite() { return visible && !disposed && isLoggedIn.value && !loading.value && !busy.value && !unknown.value; }
+  function canWrite() { return availability.allowed.value && visible && !disposed && isLoggedIn.value && !loading.value && !busy.value && !unknown.value; }
   async function write(person: CommunitySocialUser, desired: 0 | 1) {
     const row = currentPerson(person);
     if (!canWrite() || !row || isSelf(row) || row.is_follow === desired) return;
@@ -125,12 +126,11 @@ export function useCommunityPeople() {
       await refresh();
     } catch (cause) {
       if (owner !== identity() || disposed) return;
-      const rejected = cause instanceof RequestError && cause.status !== undefined && cause.status >= 400
-        && cause.status < 500 && (cause.httpStatus === undefined || cause.httpStatus < 500);
-      if (!current(revision, owner) || !rejected) {
+      const rejected = isCommunityRejected(cause);
+      if (!rejected) {
         unknown.value = true; clearView();
         error.value = "";
-      } else error.value = cause.message;
+      } else { unknown.value = false; if (current(revision, owner)) error.value = (cause as Error).message; }
     } finally {
       if (pending.value?.nonce === nonce) pending.value = null;
     }
@@ -156,6 +156,7 @@ export function useCommunityPeople() {
     if (!visible || disposed) return;
     uni.navigateTo({ url: isLoggedIn.value ? `/pages/discover/workspace?author_id=${auth.uid}` : "/pages/auth/login" });
   }
+  watch(availability.closed, closed => { if (closed) { if (busy.value) unknown.value = true; clearView(); message.value = ''; error.value = availability.message.value; } }, { flush: 'sync' });
   function leave() {
     visible = false; if (busy.value) unknown.value = true;
     clearView(); message.value = ""; error.value = "";
@@ -170,7 +171,7 @@ export function useCommunityPeople() {
     clearView(); unknown.value = false; message.value = "";
     error.value = "登录状态已变化，请刷新列表";
   }, { flush: "sync" });
-  return { tabs: communityPeopleTabs, activeTab, users, page, loading, finished, error, message, unknown, confirmUid,
+  return { availability, validRoute: () => routeValid && initialized && visible && !disposed, tabs: communityPeopleTabs, activeTab, users, page, loading, finished, error, message, unknown, confirmUid,
     busyUid, busy, isLoggedIn, emptyText, initialize, refresh, loadMore, retry, changeTab, isSelf, followLabel,
     toggleFollow, confirmUnfollow, cancelUnfollow, openAuthor, openSelf };
 }

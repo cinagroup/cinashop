@@ -1,7 +1,7 @@
+import { useCommunityAvailability, isCommunityRejected } from '@/utils/communityAvailability';
 import { computed, onScopeDispose, reactive, ref, shallowRef, watch, type ShallowRef } from 'vue';
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { RequestError } from '@/utils/request';
 import { apiCommunityCommentConfig, apiCommunityCommentPage, apiCommunityCommentCreate,
   apiCommunityCommentLike, apiCommunityCommentDelete, type CommunityThreadComment, type CommunityCommentConfig } from '@/api/community';
 
@@ -18,6 +18,7 @@ type Pager = ReturnType<typeof makePage>;
 type Replies = Pager & { expanded: boolean };
 
 export function useCommunityComments() {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore(), postId = ref(0), publicPost = ref(false);
   const identity = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   let registry = registries.get(auth);
@@ -33,12 +34,12 @@ export function useCommunityComments() {
   const ownFences = () => shared.owner === identity() ? shared.fences.value : new Map<number, Fence>();
   const busy = computed(() => [...ownFences().values()].some(row => row.inflight));
   const unknown = computed(() => ownFences().get(postId.value)?.state === 'unknown');
-  const enabled = computed(() => config.value?.community_status === 1 && config.value.community_comment_status === 1);
+  const enabled = computed(() => availability.allowed.value && config.value?.community_status === 1 && config.value.community_comment_status === 1);
   const loading = computed(() => configLoading.value || roots.loading || [...replies.values()].some(row => row.loading));
   const loggedIn = computed(() => auth.isLoggedIn && integer(auth.uid, 1));
   const canInteract = computed(() => visible && !disposed && postId.value > 0 && enabled.value && loggedIn.value && !busy.value && !unknown.value && !loading.value);
   const canAdd = computed(() => canInteract.value && publicPost.value && config.value?.community_comment_add === 1);
-  const current = (revision: number, owner: string, id: number) => !disposed && visible && revision === generation && owner === identity() && postId.value === id;
+  const current = (revision: number, owner: string, id: number) => !disposed && visible && !availability.closed.value && revision === generation && owner === identity() && postId.value === id;
   function fence(id: number, value: Fence | null) {
     if (shared.owner !== identity()) return;
     const next = new Map(shared.fences.value); if (value) next.set(id, value); else next.delete(id); shared.fences.value = next;
@@ -85,7 +86,7 @@ export function useCommunityComments() {
     } finally { if (current(revision, owner, id) && pager.epoch === epoch) pager.loading = false; }
   }
   async function refresh(manual = true) {
-    if (!visible || disposed || !integer(postId.value, 1) || busy.value || unknown.value && !manual) return false;
+    if (!availability.allowed.value || !visible || disposed || !integer(postId.value, 1) || busy.value || unknown.value && !manual) return false;
     clearView(); const revision = generation, owner = identity(), id = postId.value;
     configLoading.value = true;
     try {
@@ -152,9 +153,8 @@ export function useCommunityComments() {
       if (reread) await refresh(false);
     } catch (cause) {
       if (owner !== identity() || shared.owner !== owner) return;
-      const rejected = cause instanceof RequestError && cause.status !== undefined && cause.status >= 400 && cause.status < 500
-        && (cause.httpStatus === undefined || cause.httpStatus < 500);
-      if (current(revision, owner, id) && rejected) { fence(id, null); error.value = cause.message; }
+      const rejected = isCommunityRejected(cause);
+      if (rejected) { if (ownFences().get(id)?.nonce === nonce) fence(id, null); if (current(revision, owner, id)) error.value = (cause as Error).message; }
       else unresolved();
     }
   }
@@ -203,6 +203,7 @@ export function useCommunityComments() {
     if (type === 0 && uid === 0 || type === 2 && integer(uid, 1)) uni.navigateTo({ url: `/pages/discover/workspace?author_id=${uid}` });
   }
   function login() { if (visible && !disposed) uni.navigateTo({ url: '/pages/auth/login' }); }
+  watch(availability.closed, closed => { if (closed) { uncertainPending(); clearView(); message.value = ''; } }, { flush: 'sync' });
   function leave() { uncertainPending(); visible = false; clearView(); message.value = ''; }
   function dispose() { leave(); disposed = true; }
   onHide(leave); onUnload(dispose); onScopeDispose(dispose);
@@ -211,7 +212,7 @@ export function useCommunityComments() {
     shared.owner = identity(); shared.fences.value = new Map(); clearView(); message.value = '';
     error.value = '登录状态已变化，请刷新评论';
   }, { flush: 'sync' });
-  return { postId, roots, replies, config, configLoading, enabled, loading, busy, unknown, canInteract, canAdd, loggedIn,
+  return { availability, postId, roots, replies, config, configLoading, enabled, loading, busy, unknown, canInteract, canAdd, loggedIn,
     publicPost, error, message, text, target, deleteId, countUpdate, setContext, refresh, loadMore, toggleReplies, moreReplies,
     replyTo, cancelReply, submit, toggleLike, own, shown, requestDelete, cancelDelete, confirmDelete, openAuthor, login, dispose };
 }

@@ -1,6 +1,9 @@
 <template>
   <ThemePage>
     <view class="people-page">
+      <view v-if="availability.closed.value && error" class="community-route-error" role="alert">{{ error }}</view>
+      <CommunityAvailability :closed="availability.closed.value" :checking="availability.checking.value" :message="availability.message.value" @retry="recoverCommunity" />
+      <view v-show="availability.allowed.value">
       <view class="people-toolbar">
         <text class="people-heading">好友与关注</text>
         <button :disabled="busy" @tap="openSelf">我的主页</button>
@@ -46,20 +49,30 @@
       <button v-else-if="users.length && !finished && !error" class="load-more"
         :disabled="busy || unknown" @tap="loadMore">加载更多作者</button>
       <view v-else-if="finished && users.length" class="finished">没有更多了</view>
+      </view>
     </view>
     <DiySuspendedNavigation />
   </ThemePage>
 </template>
 
 <script setup lang="ts">
+import CommunityAvailability from '@/components/community/CommunityAvailability.vue';
+import { useCommunityAvailability } from '@/utils/communityAvailability';
 import ThemePage from '@/components/ThemePage.vue';
 import { onLoad, onReachBottom } from '@dcloudio/uni-app';
+import { communityPreviewMode } from '@/api/community';
 import { useCommunityPeople } from '@/composables/useCommunityPeople';
 
+const availability = useCommunityAvailability();
 const { tabs, activeTab, users, loading, finished, error, message, unknown, confirmUid, busyUid, busy,
   isLoggedIn, emptyText, initialize, refresh, loadMore, retry, changeTab, isSelf, followLabel,
-  toggleFollow, confirmUnfollow, cancelUnfollow, openAuthor, openSelf } = useCommunityPeople();
+  toggleFollow, confirmUnfollow, cancelUnfollow, openAuthor, openSelf, validRoute } = useCommunityPeople();
 const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' rx='48' fill='%23eceff3'/%3E%3Ccircle cx='48' cy='37' r='17' fill='%23c8cdd5'/%3E%3Cpath d='M18 88c3-19 15-29 30-29s27 10 30 29' fill='%23c8cdd5'/%3E%3C/svg%3E";
+async function recoverCommunity() {
+  if (!validRoute()) return;
+  const owner = availability.owner();
+  if (await availability.refresh(communityPreviewMode) && owner === availability.owner() && validRoute()) await refresh();
+}
 onLoad(query => initialize(query ?? {}));
 onReachBottom(() => void loadMore());
 </script>

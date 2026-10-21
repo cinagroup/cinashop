@@ -20,6 +20,7 @@ import { CommunityService } from "@/services/community/CommunityService";
 import { CommunitySocialService } from "@/services/community/CommunitySocialService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { parseConfigInteger } from "@/utils/config";
+import { isCommunityOpen } from "@/middleware/community-open";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -81,13 +82,13 @@ async function moderationFlag(c: C, contentType: number): Promise<0 | 1> {
 
 /** GET /api/community/config — feature flags consumed by PHP clients. */
 export async function communityConfig(c: C) {
-  const values = await config(c).getMany([
-    "community_status",
-    "community_comment_status",
-    "community_comment_add",
+  c.header("Cache-Control", "no-store");
+  const [open, values] = await Promise.all([
+    isCommunityOpen(c.get("container")),
+    config(c).getMany(["community_comment_status", "community_comment_add"]),
   ]);
   return jsonOk(c, {
-    community_status: flag(values.community_status),
+    community_status: open ? 1 : 0,
     community_comment_status: flag(values.community_comment_status),
     community_comment_add: flag(values.community_comment_add),
   });

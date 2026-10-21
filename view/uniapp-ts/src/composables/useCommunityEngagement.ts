@@ -1,7 +1,7 @@
+import { useCommunityAvailability, isCommunityRejected } from '@/utils/communityAvailability';
 import { computed, onScopeDispose, ref, shallowRef, watch, type ShallowRef } from 'vue';
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
-import { RequestError } from '@/utils/request';
 import { apiCommunityLike, apiCommunityState, apiCommunityTrackShare, checkedCommunityPost,
   communityPreviewMode, type CommunityPost } from '@/api/community';
 import { communitySharePath, communityShareUrl, communityTimelineQuery } from '@/utils/communityShare';
@@ -16,9 +16,7 @@ const stores = new WeakMap<Auth, Registry>();
 const actor = (auth: Auth) => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 const boundedCount = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0 && Number(value) <= 2147483647;
 const publicPost = (post: CommunityPost) => post.status === 1 && (post.is_verify === 1 || communityPreviewMode && post.is_verify === undefined);
-const certain = (reason: unknown) => reason instanceof RequestError && reason.status !== undefined
-  && ((reason.status >= 400 && reason.status < 500) || [410000, 410001, 410002].includes(reason.status))
-  && !(reason.httpStatus && reason.httpStatus >= 500);
+const certain = isCommunityRejected;
 const text = (reason: unknown) => reason instanceof Error ? reason.message : '操作失败，请重试';
 
 /** Minimal same-auth-store counters and unresolved nonces; never retains post content, drafts or credentials. */
@@ -27,6 +25,7 @@ export function useCommunityEngagement(options: {
   liked?: (id: number, status: 0 | 1) => void;
   find?: (id?: number) => CommunityPost | null;
 } = {}) {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore();
   let shared = stores.get(auth);
   if (!shared) {
@@ -78,14 +77,14 @@ export function useCommunityEngagement(options: {
   function login() { if (auth.isLoggedIn || communityPreviewMode) return true; uni.navigateTo({ url: '/pages/auth/login' }); return false; }
   function reserve(post: CommunityPost, kind: Fence['kind'], phase: Fence['phase']) {
     try { checkedCommunityPost(post, post.id); } catch (reason) { tell(post.id, text(reason), true); return null; }
-    if (disposed || !visible || kind === 'like' && !login() || !publicPost(post) || busy.value || unknown(post.id) || reconciling.value) return null;
+    if (!availability.allowed.value || disposed || !visible || kind === 'like' && !login() || !publicPost(post) || busy.value || unknown(post.id) || reconciling.value) return null;
     if (registry.fences.value.size >= 64) { tell(post.id, '尚有操作结果需要核对，请先刷新对应帖子', true); return null; }
     const op = { id: post.id, owner: actor(auth), generation, shareGeneration, value: { nonce: nextTicket(), kind, phase } as Fence };
     fence(post.id, op.value); tell(post.id, ''); tell(post.id, '', true); return op;
   }
   type Operation = NonNullable<ReturnType<typeof reserve>>;
   const owns = (op: Operation) => actor(auth) === op.owner && registry.owner === op.owner && registry.fences.value.get(op.id)?.nonce === op.value.nonce;
-  const current = (op: Operation) => owns(op) && !disposed && visible && generation === op.generation
+  const current = (op: Operation) => owns(op) && !disposed && visible && !availability.closed.value && generation === op.generation
     && (op.value.kind !== 'share' || shareGeneration === op.shareGeneration);
   function settle(op: Operation, reason?: unknown) {
     if (!owns(op)) return;
@@ -110,7 +109,7 @@ export function useCommunityEngagement(options: {
     } catch (reason) { settle(op, reason); }
   }
   async function reconcile(id: number) {
-    if (disposed || !visible || busy.value || reconciling.value) return;
+    if (!availability.allowed.value || disposed || !visible || busy.value || reconciling.value) return;
     const owner = actor(auth), revision = generation, prior = registry.fences.value.get(id), ticket = nextTicket();
     reconciling.value = id; tell(id, '', true);
     try {
@@ -126,7 +125,7 @@ export function useCommunityEngagement(options: {
     finally { if (owner === actor(auth) && revision === generation) reconciling.value = 0; }
   }
   async function openShare(raw: CommunityPost) {
-    if (disposed || !visible) return;
+    if (!availability.allowed.value || disposed || !visible) return;
     const post = view(raw); if (!publicPost(post)) return;
     closeShare(); const revision = shareGeneration, owner = actor(auth), epoch = generation, ticket = nextTicket();
     sharePost.value = post; shareLoading.value = true;
@@ -221,11 +220,17 @@ export function useCommunityEngagement(options: {
     const data = materials(post); void recordShare(op, '朋友圈分享材料已提供，分享意图已记录');
     return { title: data.title, query: data.query, imageUrl: data.imageUrl };
   }
+  watch(availability.closed, closed => {
+    if (!closed) return;
+    generation++; closeShare(); reconciling.value = 0; notices.value = {}; errors.value = {};
+    registry.patches.value = new Map();
+    for (const [id, op] of registry.fences.value) if (op.phase === 'server') fence(id, { ...op, phase: 'unknown' });
+  }, { flush: 'sync' });
   function hide() {
     visible = false; generation++; closeShare(); reconciling.value = 0; notices.value = {}; errors.value = {};
   }
   function dispose() { if (disposed) return; hide(); disposed = true; stopOwner(); stopPatch(); }
   onHide(hide); onShow(() => { if (!disposed) visible = true; }); onUnload(dispose); onScopeDispose(dispose);
-  return { busy, unknown, notices, errors, reconciling, view, nextTicket, adopt, toggleLike, reconcile,
+  return { availability, busy, unknown, notices, errors, reconciling, view, nextTicket, adopt, toggleLike, reconcile,
     sharePost, shareLoading, shareReady, openShare, closeShare, copyShare, appShare, miniMessage, miniTimeline, dispose };
 }

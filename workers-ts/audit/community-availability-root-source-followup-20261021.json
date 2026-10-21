@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "date": "2026-10-21",
+  "base_commit": "bed958b4dba59de5f58204e6bcf1784b4694c86f",
+  "route_file": "workers-ts/src/routes/v1/index.ts",
+  "before_sha256": "29c43240b53df6f0a0e554d69cfd38bbfc9722d7798a935c24ab76f68912f64e",
+  "after_sha256": "5f2c02715f4ab7b9aa97eddeef3e704f48ebfe0e7c581c0937188744e5ec0ff0",
+  "edits": [
+    {
+      "kind": "import",
+      "before_source": "",
+      "after_source": "import { communityOpenMiddleware } from \"@/middleware/community-open\";\n",
+      "after_line": 147
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/topic",
+      "before_source": "v1Routes.get(\"/community/topic\", authMiddleware({ force: false }), CommunityController.communityTopic);",
+      "after_source": "v1Routes.get(\"/community/topic\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityTopic);",
+      "before_line": 969,
+      "after_line": 970
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/list",
+      "before_source": "v1Routes.get(\"/community/list\", authMiddleware({ force: false }), CommunityController.communityList);",
+      "after_source": "v1Routes.get(\"/community/list\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityList);",
+      "before_line": 970,
+      "after_line": 971
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/detail/:id",
+      "before_source": "v1Routes.get(\"/community/detail/:id\", authMiddleware({ force: false }), CommunityController.communityDetail);",
+      "after_source": "v1Routes.get(\"/community/detail/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityDetail);",
+      "before_line": 971,
+      "after_line": 972
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/state/:id",
+      "before_source": "v1Routes.get(\"/community/state/:id\", authMiddleware({ force: false }), CommunityController.communityState);",
+      "after_source": "v1Routes.get(\"/community/state/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityState);",
+      "before_line": 972,
+      "after_line": 973
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/product_list",
+      "before_source": "v1Routes.get(\"/community/product_list\", authMiddleware({ force: false }), CommunityController.communityProductList);",
+      "after_source": "v1Routes.get(\"/community/product_list\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityProductList);",
+      "before_line": 973,
+      "after_line": 974
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/topic_count/:id",
+      "before_source": "v1Routes.get(\"/community/topic_count/:id\", authMiddleware({ force: false }), CommunityController.communityTopicCount);",
+      "after_source": "v1Routes.get(\"/community/topic_count/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityTopicCount);",
+      "before_line": 974,
+      "after_line": 975
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/like/:id",
+      "before_source": "v1Routes.post(\"/community/like/:id\", authMiddleware({ force: true }), CommunityController.communityLike);",
+      "after_source": "v1Routes.post(\"/community/like/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLike);",
+      "before_line": 975,
+      "after_line": 976
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community_save",
+      "before_source": "v1Routes.post(\"/community_save\", authMiddleware({ force: true }), CommunityController.communitySave);",
+      "after_source": "v1Routes.post(\"/community_save\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communitySave);",
+      "before_line": 976,
+      "after_line": 977
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/comment/list",
+      "before_source": "v1Routes.get(\"/community/comment/list\", authMiddleware({ force: false }), CommunityController.communityCommentList);",
+      "after_source": "v1Routes.get(\"/community/comment/list\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityCommentList);",
+      "before_line": 977,
+      "after_line": 978
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/comment/save",
+      "before_source": "v1Routes.post(\"/community/comment/save\", authMiddleware({ force: true }), CommunityController.communityCommentSave);",
+      "after_source": "v1Routes.post(\"/community/comment/save\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentSave);",
+      "before_line": 978,
+      "after_line": 979
+    },
+    {
+      "kind": "binding",
+      "method": "DELETE",
+      "path": "/api/community_delete/:id",
+      "before_source": "v1Routes.delete(\"/community_delete/:id\", authMiddleware({ force: true }), CommunityController.communityDelete);",
+      "after_source": "v1Routes.delete(\"/community_delete/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityDelete);",
+      "before_line": 979,
+      "after_line": 980
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/community_like/:id",
+      "before_source": "v1Routes.post(\"/community/community_like/:id\", authMiddleware({ force: true }), CommunityController.communityLike);",
+      "after_source": "v1Routes.post(\"/community/community_like/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLike);",
+      "before_line": 981,
+      "after_line": 982
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/community_save",
+      "before_source": "v1Routes.post(\"/community/community_save\", authMiddleware({ force: true }), CommunityController.communitySave);",
+      "after_source": "v1Routes.post(\"/community/community_save\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communitySave);",
+      "before_line": 982,
+      "after_line": 983
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/community_update/:id",
+      "before_source": "v1Routes.post(\"/community/community_update/:id\", authMiddleware({ force: true }), CommunityController.communityUpdate);",
+      "after_source": "v1Routes.post(\"/community/community_update/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityUpdate);",
+      "before_line": 983,
+      "after_line": 984
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/like_list",
+      "before_source": "v1Routes.get(\"/community/like_list\", authMiddleware({ force: true }), CommunityController.communityLikeList);",
+      "after_source": "v1Routes.get(\"/community/like_list\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLikeList);",
+      "before_line": 984,
+      "after_line": 985
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/elegant_list",
+      "before_source": "v1Routes.get(\"/community/elegant_list\", authMiddleware({ force: true }), CommunityController.communityElegantList);",
+      "after_source": "v1Routes.get(\"/community/elegant_list\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityElegantList);",
+      "before_line": 985,
+      "after_line": 986
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/share/:id",
+      "before_source": "v1Routes.get(\"/community/share/:id\", authMiddleware({ force: true }), CommunityController.communityShare);",
+      "after_source": "v1Routes.get(\"/community/share/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityShare);",
+      "before_line": 986,
+      "after_line": 987
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/comment_like/:id",
+      "before_source": "v1Routes.post(\"/community/comment_like/:id\", authMiddleware({ force: true }), CommunityController.communityCommentLike);",
+      "after_source": "v1Routes.post(\"/community/comment_like/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentLike);",
+      "before_line": 987,
+      "after_line": 988
+    },
+    {
+      "kind": "binding",
+      "method": "DELETE",
+      "path": "/api/community/comment_delete/:id",
+      "before_source": "v1Routes.delete(\"/community/comment_delete/:id\", authMiddleware({ force: true }), CommunityController.communityCommentDelete);",
+      "after_source": "v1Routes.delete(\"/community/comment_delete/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentDelete);",
+      "before_line": 988,
+      "after_line": 989
+    },
+    {
+      "kind": "binding",
+      "method": "DELETE",
+      "path": "/api/community/community_delete/:id",
+      "before_source": "v1Routes.delete(\"/community/community_delete/:id\", authMiddleware({ force: true }), CommunityController.communityDelete);",
+      "after_source": "v1Routes.delete(\"/community/community_delete/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityDelete);",
+      "before_line": 989,
+      "after_line": 990
+    },
+    {
+      "kind": "binding",
+      "method": "PUT",
+      "path": "/api/community/browse/:id",
+      "before_source": "v1Routes.put(\"/community/browse/:id\", authMiddleware({ force: false }), CommunityController.communityBrowse);",
+      "after_source": "v1Routes.put(\"/community/browse/:id\", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityBrowse);",
+      "before_line": 990,
+      "after_line": 991
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/user_info/:authorUid",
+      "before_source": "v1Routes.get(\n  \"/community/user_info/:authorUid\",\n  authMiddleware({ force: true }),\n  CommunityController.communityUserInfo,\n);",
+      "after_source": "v1Routes.get(\n  \"/community/user_info/:authorUid\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityUserInfo,\n);",
+      "before_line": 991,
+      "after_line": 992
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/update_desc",
+      "before_source": "v1Routes.post(\n  \"/community/update_desc\",\n  authMiddleware({ force: true }),\n  CommunityController.communityUpdateDesc,\n);",
+      "after_source": "v1Routes.post(\n  \"/community/update_desc\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityUpdateDesc,\n);",
+      "before_line": 996,
+      "after_line": 997
+    },
+    {
+      "kind": "binding",
+      "method": "POST",
+      "path": "/api/community/set_interest/:authorUid",
+      "before_source": "v1Routes.post(\n  \"/community/set_interest/:authorUid\",\n  authMiddleware({ force: true }),\n  CommunityController.communitySetInterest,\n);",
+      "after_source": "v1Routes.post(\n  \"/community/set_interest/:authorUid\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communitySetInterest,\n);",
+      "before_line": 1001,
+      "after_line": 1002
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/follow_list/:type",
+      "before_source": "v1Routes.get(\n  \"/community/follow_list/:type\",\n  authMiddleware({ force: true }),\n  CommunityController.communityFollowList,\n);",
+      "after_source": "v1Routes.get(\n  \"/community/follow_list/:type\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityFollowList,\n);",
+      "before_line": 1006,
+      "after_line": 1007
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/user_friend",
+      "before_source": "v1Routes.get(\n  \"/community/user_friend\",\n  authMiddleware({ force: true }),\n  CommunityController.communityUserFriend,\n);",
+      "after_source": "v1Routes.get(\n  \"/community/user_friend\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityUserFriend,\n);",
+      "before_line": 1011,
+      "after_line": 1012
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/recommend_list",
+      "before_source": "v1Routes.get(\n  \"/community/recommend_list\",\n  authMiddleware({ force: true }),\n  CommunityController.communityRecommendList,\n);",
+      "after_source": "v1Routes.get(\n  \"/community/recommend_list\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityRecommendList,\n);",
+      "before_line": 1016,
+      "after_line": 1017
+    },
+    {
+      "kind": "binding",
+      "method": "GET",
+      "path": "/api/community/follow",
+      "before_source": "v1Routes.get(\n  \"/community/follow\",\n  authMiddleware({ force: true }),\n  CommunityController.communityFollow,\n);",
+      "after_source": "v1Routes.get(\n  \"/community/follow\",\n  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),\n  CommunityController.communityFollow,\n);",
+      "before_line": 1021,
+      "after_line": 1022
+    }
+  ],
+  "prior_state_proof": {
+    "file": "workers-ts/audit/community-state-root-source-increment-20261021.json",
+    "sha256": "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73"
+  },
+  "previous_current_report_sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb",
+  "current_report_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+  "current_report_sha256": "6251fdc0c5f0dbc588166d453ed74109465fe61fc8a975f62e128a4aa40545f8",
+  "shifted_route_records": 716,
+  "semantic_admin_changes": 0,
+  "reason": "Add Station then Community admission before unchanged auth on exactly 28 existing community business bindings, excluding public config. Reverse these exact registered calls and the single real import before validating the prior state/video/statistics history. No generic middleware filtering."
+}

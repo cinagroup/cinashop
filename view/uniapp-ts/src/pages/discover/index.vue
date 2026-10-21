@@ -1,6 +1,9 @@
 <template>
   <ThemePage>
   <view class="discover">
+    <view v-if="availability.closed.value && routeError" class="community-route-error" role="alert">{{ routeError }}</view>
+    <CommunityAvailability :closed="availability.closed.value" :checking="availability.checking.value" :message="availability.message.value" @retry="recoverCommunity" />
+    <view v-show="availability.allowed.value">
     <view v-if="!authorMode" class="top-bar">
       <text class="top-title">逛逛</text>
       <view class="top-actions">
@@ -264,6 +267,7 @@
         </scroll-view>
       </view>
     </view>
+    </view>
   </view>
   <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
@@ -271,6 +275,8 @@
 </template>
 
 <script setup lang="ts">
+import CommunityAvailability from '@/components/community/CommunityAvailability.vue';
+import { useCommunityAvailability } from '@/utils/communityAvailability';
 import ThemePage from '@/components/ThemePage.vue';
 import CommunityComments from '@/components/community/CommunityComments.vue';
 import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
@@ -294,6 +300,7 @@ import { useAuthStore } from "@/stores/auth";
 
 import { parseCommunityWorkspaceEntry, type CommunityWorkspaceEntry } from "@/utils/communityEntry";
 
+const availability = useCommunityAvailability();
 const authStore = useAuthStore();
 const authorMode = ref(false), routeError = ref('');
 const engagement = useCommunityEngagement({
@@ -313,7 +320,8 @@ const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: aut
   unknown: authorUnknown, hasMore: authorHasMore, isSelf: authorIsSelf, deleteId: deletePostId, unfollow: unfollowPending } = author;
 const detail = ref<CommunityPost | null>(null), detailOpen = ref(false), detailLoading = ref(false), detailError = ref('');
 const detailRequested = ref(0);
-let pageVisible = true, pageDisposed = false;
+let pageVisible = true, pageDisposed = false, resumeDetail = 0;
+let entryState: CommunityWorkspaceEntry | undefined;
 const pageOwner = () => `${authStore.uid}:${authStore.token}:${authStore.sessionVersion}`;
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
@@ -345,19 +353,20 @@ function formatTime(ts: number): string {
 }
 
 async function load() {
-  if (!pageVisible || pageDisposed || routeError.value) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed || routeError.value) return;
   if (authorMode.value) { if (!authorLoading.value) await author.refresh(); return; }
   await home.load();
 }
 
 function requireLogin(): boolean {
+  if (availability.closed.value) return false;
   if (authStore.isLoggedIn || communityPreviewMode) return true;
   uni.navigateTo({ url: "/pages/auth/login" });
   return false;
 }
 
 function openPublish() {
-  if (!pageVisible || pageDisposed || routeError.value || !requireLogin()) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed || routeError.value || !requireLogin()) return;
   if (publishEditRequested.value && !publisher.reset()) return;
   showPublish.value = true;
 }
@@ -432,8 +441,9 @@ async function reloadVideo() {
 
 async function openDetail(post: CommunityPost | number) {
   const id = typeof post === 'number' ? post : post.id;
-  if (!pageVisible || pageDisposed || !Number.isSafeInteger(id) || id < 1 || id > 2147483647) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed || !Number.isSafeInteger(id) || id < 1 || id > 2147483647) return;
   if (detailOpen.value && detailRequested.value === id && !detailError.value) return;
+  resumeDetail = 0;
   const revision = ++detailGeneration, owner = pageOwner(), ticket = engagement.nextTicket();
   detailRequested.value = id; detailOpen.value = true; detail.value = null;
   detailLoading.value = true; detailError.value = ''; videoFailed.value = false; imageLoadFailed.value = false;
@@ -450,28 +460,44 @@ function closeDetail() {
   engagement.closeShare();
 }
 
+async function initializePublisher(entry: Extract<CommunityWorkspaceEntry, { kind: 'publish' }>) {
+  if (availability.closed.value) return;
+  const owner = pageOwner(), revision = detailGeneration;
+  const current = () => pageVisible && !pageDisposed && !routeError.value && owner === pageOwner() && revision === detailGeneration;
+  // A fresh guest has no prior availability observation. Validate the route
+  // first, then check the public config before choosing a login destination.
+  if (!authStore.isLoggedIn && !communityPreviewMode) {
+    if (!await availability.refresh() || !current()) return;
+  }
+  if (!current() || availability.closed.value) return;
+  if (entry.editId) await editPost(entry.editId);
+  else if (requireLogin()) {
+    showPublish.value = true;
+    if (entry.topicId) await relations.seedTopic(entry.topicId);
+  }
+}
+
 onLoad((input) => {
   let query: Record<string, string | undefined>, entry: CommunityWorkspaceEntry;
   try {
     query = communityPageQuery(input ?? {});
-    entry = parseCommunityWorkspaceEntry(query);
+    entry = parseCommunityWorkspaceEntry(query); entryState = entry;
     const incoming = communityInbound('/pages/discover/workspace', query);
     referrals.captureInbound({ path: 'pages/discover/workspace', query });
     if (incoming && (query.post_id !== undefined || query.post_type !== undefined) && incoming.contentType === 2) {
       uni.redirectTo({ url: communitySharePath(incoming.id, 2, incoming.spid) }); return;
     }
-    if (incoming) void openDetail(incoming.id);
+    if (incoming) {
+      if (availability.closed.value) resumeDetail = incoming.id;
+      else void openDetail(incoming.id);
+    }
   } catch (reason) { routeError.value = reason instanceof Error ? reason.message : '社区地址无效'; return; }
   if (entry.kind === "author") {
     authorMode.value = true;
     void author.initialize(entry.authorId);
   }
   if (entry.kind === "publish") {
-    if (entry.editId) void editPost(entry.editId);
-    else if (requireLogin()) {
-      showPublish.value = true;
-      if (entry.topicId) void relations.seedTopic(entry.topicId);
-    }
+    void initializePublisher(entry);
   }
 });
 
@@ -481,10 +507,38 @@ function updateCommentCount(value: { postId: number; count: number }) {
   for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === value.postId) post.commentNum = value.count;
 }
 
+watch(availability.closed, closed => {
+  if (!closed) return;
+  resumeDetail = detailRequested.value || detail.value?.id || resumeDetail;
+  closeDetail(); showPublish.value = false;
+}, { flush: 'sync' });
+async function recoverCommunity() {
+  if (!pageVisible || pageDisposed || routeError.value) return;
+  const owner = pageOwner(), started = detailGeneration;
+  const current = () => !availability.closed.value && owner === pageOwner() && started === detailGeneration && pageVisible && !pageDisposed;
+  if (!await availability.refresh(communityPreviewMode) || !current()) return;
+  await load();
+  if (!current()) return;
+  if (resumeDetail) {
+    const id = resumeDetail, revision = ++detailGeneration, ticket = engagement.nextTicket();
+    try { const post = await apiCommunityState(id);
+      if (!availability.closed.value && owner === pageOwner() && revision === detailGeneration && pageVisible && !pageDisposed) {
+        detail.value = engagement.adopt([post], ticket)[0]; detailRequested.value = id; detailOpen.value = true; resumeDetail = 0;
+      }
+    } catch (reason) {
+      if (!availability.closed.value && owner === pageOwner() && revision === detailGeneration && pageVisible && !pageDisposed)
+        detailError.value = reason instanceof Error ? reason.message : '帖子状态加载失败';
+    }
+  } else if (entryState?.kind === 'publish') {
+    if (entryState.editId) await editPost(entryState.editId);
+    else { openPublish(); if (entryState.topicId) await relations.seedTopic(entryState.topicId); }
+  }
+}
+
 onShow(() => { if (!pageDisposed) { pageVisible = true; home.show(); void load(); } });
 onHide(() => { pageVisible = false; closeDetail(); });
 onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
-watch(pageOwner, () => { closeDetail(); showPublish.value = false; }, { flush: 'sync' });
+watch(pageOwner, () => { resumeDetail = 0; closeDetail(); showPublish.value = false; }, { flush: 'sync' });
 // #ifdef MP-WEIXIN
 onShareAppMessage(engagement.miniMessage);
 onShareTimeline(engagement.miniTimeline);

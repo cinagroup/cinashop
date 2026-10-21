@@ -1,5 +1,8 @@
 <template>
   <view class="community-deep-link">
+    <view v-if="availability.closed.value && feed.routeError.value" class="community-route-error" role="alert">{{ feed.routeError.value }}</view>
+    <CommunityAvailability :closed="availability.closed.value" :checking="availability.checking.value" :message="availability.message.value" @retry="recoverCommunity" />
+    <view v-show="availability.allowed.value">
     <view v-if="mode === 'topic'" class="heading">
       <view>
         <text class="eyebrow">话题</text>
@@ -103,23 +106,27 @@
       </view>
     </view>
 
+    </view>
   </view>
   <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
 </template>
 
 <script setup lang="ts">
+import CommunityAvailability from '@/components/community/CommunityAvailability.vue';
+import { useCommunityAvailability } from '@/utils/communityAvailability';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import CommunityComments from "@/components/community/CommunityComments.vue";
 import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
 import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
 import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
-import { apiCommunityVisit, communityPreviewMode, type CommunityPost } from "@/api/community";
+import { apiCommunityState, apiCommunityVisit, communityPreviewMode, type CommunityPost } from "@/api/community";
 import { useCommunityDeepLink, type CommunityDeepLinkMode, type CommunityRouteQuery } from "@/composables/useCommunityDeepLink";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { useAuthStore } from "@/stores/auth";
 
+const availability = useCommunityAvailability();
 const props = defineProps<{ mode: CommunityDeepLinkMode; query: CommunityRouteQuery; videoRoute?: string }>();
 const engagement = useCommunityEngagement({
   update(id, patch) {
@@ -134,7 +141,7 @@ const emptyText = computed(() => props.mode === "topic" ? "这个话题还没有
 const detail = ref<CommunityPost | null>(null);
 const detailLoading = ref(false);
 const detailError = ref("");
-let detailGeneration = 0, pageVisible = true, pageDisposed = false;
+let detailGeneration = 0, pageVisible = true, pageDisposed = false, resumeDetail = 0;
 const detailOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 
 function postContentType(post: CommunityPost): number {
@@ -151,7 +158,8 @@ async function openPost(post: CommunityPost) {
     uni.navigateTo({ url: `${props.videoRoute || '/pages/discover/discoverVideo/index'}?id=${post.id}` });
     return;
   }
-  if (!pageVisible || pageDisposed) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed) return;
+  resumeDetail = 0;
   const requestGeneration = ++detailGeneration, owner = detailOwner(), ticket = engagement.nextTicket();
   detail.value = post;
   detailLoading.value = true;
@@ -168,7 +176,8 @@ async function openPost(post: CommunityPost) {
 
 function closeDetail() { detailGeneration++; detail.value = null; detailLoading.value = false; detailError.value = ''; engagement.closeShare(); }
 function openVideoComments() {
-  if (!pageVisible || pageDisposed || !feed.activeVideo.value) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed || !feed.activeVideo.value) return;
+  resumeDetail = 0;
   ++detailGeneration; detailLoading.value = false; detailError.value = ''; detail.value = feed.activeVideo.value;
 }
 function updateCommentCount(value: { postId: number; count: number }) {
@@ -177,16 +186,37 @@ function updateCommentCount(value: { postId: number; count: number }) {
   for (const post of feed.posts.value) if (post.id === value.postId) post.commentNum = value.count;
 }
 watch(() => feed.activeVideo.value?.id, () => { if (props.mode === 'video') closeDetail(); });
-watch(detailOwner, closeDetail, { flush: 'sync' });
+watch(detailOwner, () => { resumeDetail = 0; closeDetail(); }, { flush: 'sync' });
 onHide(() => { pageVisible = false; closeDetail(); });
 onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
 onShow(() => { if (!pageDisposed) pageVisible = true; });
 
 function openPublish() {
   const topicId = feed.selectedTopicId.value;
-  if (!pageVisible || pageDisposed || props.mode !== "topic" || !topicId || feed.routeError.value || !feed.initialized.value) return;
+  if (!availability.allowed.value || !pageVisible || pageDisposed || props.mode !== "topic" || !topicId || feed.routeError.value || !feed.initialized.value) return;
   if (!auth.isLoggedIn && !communityPreviewMode) { uni.navigateTo({ url: "/pages/auth/login" }); return; }
   uni.navigateTo({ url: `/pages/discover/workspace?publish=1&topic_id=${topicId}` });
+}
+
+watch(availability.closed, closed => {
+  if (closed) { resumeDetail = detail.value?.id || resumeDetail; closeDetail(); }
+}, { flush: 'sync' });
+async function recoverCommunity() {
+  if (!pageVisible || pageDisposed || !feed.routeValid.value) return;
+  const owner = detailOwner();
+  if (!await availability.refresh(communityPreviewMode) || owner !== detailOwner() || !pageVisible || pageDisposed) return;
+  await feed.recover();
+  if (resumeDetail && !availability.closed.value && owner === detailOwner() && pageVisible && !pageDisposed) {
+    const id = resumeDetail, revision = ++detailGeneration, ticket = engagement.nextTicket();
+    try { const post = await apiCommunityState(id);
+      if (!availability.closed.value && owner === detailOwner() && revision === detailGeneration && pageVisible && !pageDisposed) {
+        detail.value = engagement.adopt([post], ticket)[0]; resumeDetail = 0;
+      }
+    } catch (reason) {
+      if (!availability.closed.value && owner === detailOwner() && revision === detailGeneration && pageVisible && !pageDisposed)
+        detailError.value = reason instanceof Error ? reason.message : '帖子状态加载失败';
+    }
+  }
 }
 
 function retryRoute() { void feed.initialize(props.query); }

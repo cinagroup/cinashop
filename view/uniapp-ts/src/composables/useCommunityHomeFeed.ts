@@ -1,3 +1,4 @@
+import { useCommunityAvailability } from '@/utils/communityAvailability';
 import { onScopeDispose, ref, watch } from 'vue';
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { apiCommunityFollowHighlights, apiCommunityList, apiCommunityTopics, communityPreviewMode,
@@ -7,12 +8,13 @@ import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
 
 /** Main-list generations include catch/finally and the personalized highlight strip. */
 export function useCommunityHomeFeed(engagement = useCommunityEngagement(), enabled: () => boolean = () => true) {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore(), posts = ref<CommunityPost[]>([]), topics = ref<CommunityTopic[]>([]);
   const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]), loading = ref(false), error = ref('');
   let visible = true, disposed = false, generation = 0;
   const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   async function load() {
-    if (disposed || !visible || !enabled()) return;
+    if (disposed || !visible || !enabled() || !availability.allowed.value) return;
     const actor = owner(), revision = ++generation, ticket = engagement.nextTicket(); loading.value = true; error.value = '';
     const current = () => !disposed && visible && enabled() && actor === owner() && revision === generation;
     const results = await Promise.allSettled([apiCommunityList(), apiCommunityTopics(),
@@ -28,10 +30,11 @@ export function useCommunityHomeFeed(engagement = useCommunityEngagement(), enab
     loading.value = false;
   }
   function clear() { generation++; posts.value = []; topics.value = []; highlights.value = []; error.value = ''; loading.value = false; }
+  watch(availability.closed, closed => { if (closed) clear(); }, { flush: 'sync' });
   const stopOwner = watch(owner, () => { clear(); if (!disposed && visible && enabled()) void load(); }, { flush: 'sync' });
   function hide() { visible = false; clear(); }
   function show() { if (!disposed) visible = true; }
   function dispose() { if (disposed) return; hide(); disposed = true; stopOwner(); }
   onHide(hide); onShow(show); onUnload(dispose); onScopeDispose(dispose);
-  return { posts, topics, highlights, loading, error, load, show, hide, dispose };
+  return { availability, posts, topics, highlights, loading, error, load, show, hide, dispose };
 }

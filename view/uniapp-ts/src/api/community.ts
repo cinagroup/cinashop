@@ -1,7 +1,7 @@
 /**
  * 社区 API (逛逛/帖子)
  */
-import { http } from "@/utils/request";
+import { communityHttp as http } from "@/utils/communityAvailability";
 
 export const communityPreviewMode = typeof window !== "undefined"
   && ["127.0.0.1", "localhost"].includes(window.location.hostname)

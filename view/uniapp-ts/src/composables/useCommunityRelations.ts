@@ -1,9 +1,11 @@
+import { useCommunityAvailability } from '@/utils/communityAvailability';
 import { computed, ref, watch, type Ref } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
 import { apiCommunityProducts, apiCommunityTopics, type CommunityPost, type CommunityProduct, type CommunityProductSource, type CommunityTopic } from "@/api/community";
 
 export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
+  const availability = useCommunityAvailability();
   const auth = useAuthStore(), panel = ref<"" | "topics" | "products">("");
   const topics = ref<CommunityTopic[]>([]), products = ref<CommunityProduct[]>([]);
   const selectedTopics = ref<CommunityTopic[]>([]), selectedProducts = ref<CommunityProduct[]>([]);
@@ -102,6 +104,7 @@ export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
     else error.value = "最多选择5件商品";
   }
   function removeProduct(id: number) { if (editable()) selectedProducts.value = selectedProducts.value.filter(item => item.product_id !== id); }
+  watch(availability.closed, closed => { if (closed) clear(); }, { flush: 'sync' });
   function leave() { visible = false; close(); }
   onHide(leave); onUnload(() => { leave(); disposed = true; }); onShow(() => { if (!disposed) visible = true; });
   watch(identity, clear, { flush: "sync" });

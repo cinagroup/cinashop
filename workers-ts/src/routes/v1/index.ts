@@ -144,6 +144,7 @@ import { adminRuntimeAuthMiddleware } from "@/middleware/admin-runtime-auth";
 import { managerRuntimeAuthMiddleware } from "@/middleware/manager-runtime-auth";
 import { operationsAuthMiddleware } from "@/middleware/operations-auth";
 import { stationOpenMiddleware } from "@/middleware/station-open";
+import { communityOpenMiddleware } from "@/middleware/community-open";
 import type { AppVariables, Env } from "@/env";
 
 export const v1Routes = new Hono<{
@@ -966,61 +967,61 @@ v1Routes.get("/user/level/expList", authMiddleware({ force: true }), UserLevelCo
 
 // ─── 社区 (补全) ───────────────────────────────────────────────
 v1Routes.get("/community/config", CommunityController.communityConfig);
-v1Routes.get("/community/topic", authMiddleware({ force: false }), CommunityController.communityTopic);
-v1Routes.get("/community/list", authMiddleware({ force: false }), CommunityController.communityList);
-v1Routes.get("/community/detail/:id", authMiddleware({ force: false }), CommunityController.communityDetail);
-v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);
-v1Routes.get("/community/product_list", authMiddleware({ force: false }), CommunityController.communityProductList);
-v1Routes.get("/community/topic_count/:id", authMiddleware({ force: false }), CommunityController.communityTopicCount);
-v1Routes.post("/community/like/:id", authMiddleware({ force: true }), CommunityController.communityLike);
-v1Routes.post("/community_save", authMiddleware({ force: true }), CommunityController.communitySave);
-v1Routes.get("/community/comment/list", authMiddleware({ force: false }), CommunityController.communityCommentList);
-v1Routes.post("/community/comment/save", authMiddleware({ force: true }), CommunityController.communityCommentSave);
-v1Routes.delete("/community_delete/:id", authMiddleware({ force: true }), CommunityController.communityDelete);
+v1Routes.get("/community/topic", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityTopic);
+v1Routes.get("/community/list", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityList);
+v1Routes.get("/community/detail/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityDetail);
+v1Routes.get("/community/state/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityState);
+v1Routes.get("/community/product_list", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityProductList);
+v1Routes.get("/community/topic_count/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityTopicCount);
+v1Routes.post("/community/like/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLike);
+v1Routes.post("/community_save", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communitySave);
+v1Routes.get("/community/comment/list", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityCommentList);
+v1Routes.post("/community/comment/save", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentSave);
+v1Routes.delete("/community_delete/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityDelete);
 // PHP 路由保留 community 组内动作名；新前端仍可继续使用上面的短别名。
-v1Routes.post("/community/community_like/:id", authMiddleware({ force: true }), CommunityController.communityLike);
-v1Routes.post("/community/community_save", authMiddleware({ force: true }), CommunityController.communitySave);
-v1Routes.post("/community/community_update/:id", authMiddleware({ force: true }), CommunityController.communityUpdate);
-v1Routes.get("/community/like_list", authMiddleware({ force: true }), CommunityController.communityLikeList);
-v1Routes.get("/community/elegant_list", authMiddleware({ force: true }), CommunityController.communityElegantList);
-v1Routes.get("/community/share/:id", authMiddleware({ force: true }), CommunityController.communityShare);
-v1Routes.post("/community/comment_like/:id", authMiddleware({ force: true }), CommunityController.communityCommentLike);
-v1Routes.delete("/community/comment_delete/:id", authMiddleware({ force: true }), CommunityController.communityCommentDelete);
-v1Routes.delete("/community/community_delete/:id", authMiddleware({ force: true }), CommunityController.communityDelete);
-v1Routes.put("/community/browse/:id", authMiddleware({ force: false }), CommunityController.communityBrowse);
+v1Routes.post("/community/community_like/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLike);
+v1Routes.post("/community/community_save", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communitySave);
+v1Routes.post("/community/community_update/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityUpdate);
+v1Routes.get("/community/like_list", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityLikeList);
+v1Routes.get("/community/elegant_list", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityElegantList);
+v1Routes.get("/community/share/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityShare);
+v1Routes.post("/community/comment_like/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentLike);
+v1Routes.delete("/community/comment_delete/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityCommentDelete);
+v1Routes.delete("/community/community_delete/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }), CommunityController.communityDelete);
+v1Routes.put("/community/browse/:id", stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: false }), CommunityController.communityBrowse);
 v1Routes.get(
   "/community/user_info/:authorUid",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityUserInfo,
 );
 v1Routes.post(
   "/community/update_desc",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityUpdateDesc,
 );
 v1Routes.post(
   "/community/set_interest/:authorUid",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communitySetInterest,
 );
 v1Routes.get(
   "/community/follow_list/:type",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityFollowList,
 );
 v1Routes.get(
   "/community/user_friend",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityUserFriend,
 );
 v1Routes.get(
   "/community/recommend_list",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityRecommendList,
 );
 v1Routes.get(
   "/community/follow",
-  authMiddleware({ force: true }),
+  stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware({ force: true }),
   CommunityController.communityFollow,
 );
 
