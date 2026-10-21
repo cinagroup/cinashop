@@ -237,6 +237,7 @@ export interface LevelInfo {
   icon?: string;
   image?: string;
   isForever?: number;
+  color?: string;
 }
 
 export class UserLevelService {
@@ -291,6 +292,7 @@ export class UserLevelService {
       icon: r.icon,
       image: r.image,
       isForever: r.isForever,
+      color: r.color,
     }));
   }
 
@@ -300,20 +302,35 @@ export class UserLevelService {
     currentExp: number;
     nextLevel: LevelInfo | null;
     nextExpNeed: number;
+    level_info: { id: number; name: string; grade: number; icon: string; vip: true; vip_id: number; vip_name: string; vip_icon: string } | [];
+    level_list: { id: number; name: string; grade: number; color: string; icon: string; image: string; discount: number; money: string; exp_num: number; next_exp_num: number; is_forever: number }[];
   }> {
     const user = await this.container.userDao.findForAuth(uid);
-    if (!user) return { level: null, currentExp: 0, nextLevel: null, nextExpNeed: 0 };
+    if (!user) return { level: null, currentExp: 0, nextLevel: null, nextExpNeed: 0, level_info: [], level_list: [] };
 
     const current = user.level ? await this.getLevel(user.level) : null;
     const all = await this.gradeList();
     const idx = all.findIndex((l) => l.id === user.level);
     const next = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
+    // Add the actual DIY member-badge consumer's PHP names without changing the
+    // four existing camelCase fields or materializing PHP user/task side effects.
+    const config = await this.container.db.select({ value: systemConfig.value }).from(systemConfig)
+      .where(and(eq(systemConfig.menuName, "member_func_status"), eq(systemConfig.isStore, 0)))
+      .orderBy(asc(systemConfig.sort), asc(systemConfig.id)).limit(1);
+    const present = configFlag(config[0]?.value ?? undefined) && current !== null;
+    const currentDefinition = current ? all.find(level => level.id === current.id) : undefined;
 
     return {
       level: current,
       currentExp: Number(user.exp) || 0,
       nextLevel: next,
       nextExpNeed: next ? Math.max(0, (next.expNum ?? 0) - (Number(user.exp) || 0)) : 0,
+      level_info: present && current ? { id: current.id, name: current.name, grade: current.grade,
+        icon: currentDefinition?.icon ?? "", vip: true, vip_id: current.id, vip_name: current.name, vip_icon: currentDefinition?.icon ?? "" } : [],
+      level_list: present ? all.map((level, index) => ({ id: level.id, name: level.name, grade: level.grade,
+        color: level.color ?? "", icon: level.icon ?? "", image: level.image ?? "", discount: level.discount,
+        money: level.money ?? "0.00", exp_num: level.expNum ?? 0,
+        next_exp_num: all[index + 1]?.expNum ?? level.expNum ?? 0, is_forever: level.isForever ?? 0 })) : [],
     };
   }
 

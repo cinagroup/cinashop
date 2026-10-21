@@ -177,10 +177,10 @@ describe("DIY-home frontend migration", () => {
   });
 
   it("registers reachable home, micro-page, and suspended-navigation consumers", () => {
-    expect(homepage).toContain("loadDiyPage(0");
+    expect(homepage).toContain("useDiyPageHost(() => 0, () => diyCommunityVisible.value)");
     expect(homepage).toContain("<DiyHomeRenderer");
     expect(homepage).toContain("<DiySuspendedNavigation");
-    expect(microPage).toContain("loadDiyPage(pageId.value");
+    expect(microPage).toContain("useDiyPageHost(() => pageId.value, () => diyCommunityVisible.value)");
     expect(microPage).toContain("micro-page");
     expect(pages).toContain('"path": "pages/diy/detail"');
     expect(suspended).toContain("loadDiySuspendedConfig()");

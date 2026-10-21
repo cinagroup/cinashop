@@ -18,7 +18,7 @@ function plainIo(value) {
 
 // Real Vue reactivity, Pinia stores, request layer, API adapters and the selected composable.
 // Only native lifecycle/I/O is replaced. Platform preprocessing is covered by the three builds, not this loader.
-function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true } = {}) {
+function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {} } = {}) {
   const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], cache = new Map();
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
@@ -61,7 +61,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
   if (authenticated && !auth.isLoggedIn) auth.setLogin('synthetic-local-token', 11);
   const scope = vue.effectScope();
   const checkout = scope.run(() => component
-    ? load(path.join(root, 'src', component)).default.setup(props, { expose() {} })
+    ? load(path.join(root, 'src', component)).default.setup(props, { expose() {}, emit })
     : load(path.join(root, 'src/composables', feature + '.ts'))[feature]());
   return { checkout, auth, storage, calls, navigations, toasts, modals, hooks, load, uni,
     async start(query = { mode: 'buy', cartId: '1' }) { await hooks.onLoad?.(query); hooks.onShow?.(); await tick(); },

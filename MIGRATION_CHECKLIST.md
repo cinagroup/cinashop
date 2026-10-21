@@ -2851,3 +2851,10 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 ### 迁移清单生成时的历史快照（保留审计）
 
 本段保留的是清单生成时的历史数字与判断，已由上方2026-09-04基线取代。旧记录中的“等待源MySQL恢复/复制/对账”不再是活动门禁；Work域改为以真实租户provider权威快照初始化，商城域改为新系统运营数据创建与现存异常裁决。PHP安装SQL继续只作为201张共享表结构及接口语义参考，不作为本部署的历史业务数据源。
+
+
+## 2026-10-21 DIY页面状态与四类真实数据组件
+
+本批继续API-007，完成首页／微页面schema版本与缓存／owner／生命周期保护，以及userInfor、newVip、signIn、ranking的真实数据、配置与受管导航；补最小会员grade颜色别名，保留原camelCase和定价投影。最终Worker838、原生45、UniApp工具链1634／完整13步与后台Browser18阶段通过；新增110例，失败候选不计通过，未把重复环境执行相加。Browser35表／34序列逐GET零变、显式业务写0；四次fixture配置精确收据独立记录，独立video_list仍保留原播放合同。
+
+详情见[本批说明](workers-ts/docs/php-ts-diy-state-20261021.md)及[机器记录](workers-ts/audit/php-ts-diy-state-20261021.json)。保留已恢复get_script和三处loader，未改DDL／ACL／路由／锁文件；API-007父项、DATA-008、FE-003J／K继续开放，不合并、不部署。schema关闭门禁为模块内、只清已知pageSlots，不冒称跨整页重载的持久关闭记录。下一commerce切片只有只读提案，尚未实现或验收。

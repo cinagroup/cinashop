@@ -88,10 +88,10 @@
         </view>
       </view>
 
-      <view v-else-if="block.name === 'articleList' && articles.length" class="diy-section">
+      <view v-else-if="block.name === 'articleList' && articles[index]?.length" class="diy-section">
         <view class="diy-section-title">{{ componentText(block, 'nameConfig', '品牌资讯') }}</view>
         <view
-          v-for="article in articles"
+          v-for="article in articles[index]"
           :key="article.id"
           class="diy-article"
           @tap="open(`/pages/article/detail?id=${article.id}`)"
@@ -104,86 +104,7 @@
         </view>
       </view>
 
-      <view v-else-if="block.name === 'ranking' && hasRanks" class="diy-section">
-        <view class="diy-rank-heading">
-          <text class="diy-section-title">{{ componentText(block, 'titleTxtConfig', '商品排行榜') }}</text>
-          <text class="diy-rank-more" @tap="open('/pages/columnGoods/rank/index')">查看全部 ›</text>
-        </view>
-        <view v-for="group in rankGroups" :key="group.key" v-show="group.items.length" class="diy-rank-group">
-          <text class="diy-rank-label">{{ group.label }}</text>
-          <scroll-view scroll-x class="diy-horizontal-scroll">
-            <view
-              v-for="(product, productIndex) in group.items"
-              :key="product.id"
-              class="diy-rank-product"
-              @tap="goProduct(product.id)"
-            >
-              <text class="diy-rank-number">{{ productIndex + 1 }}</text>
-              <image class="diy-rank-image" :src="safeImage(product.image)" mode="aspectFill" />
-              <text class="diy-rank-name">{{ product.store_name }}</text>
-              <text class="diy-price">¥{{ product.price }}</text>
-            </view>
-          </scroll-view>
-        </view>
-      </view>
-
-      <view
-        v-else-if="block.name === 'newVip' && hasNewcomer"
-        class="diy-section diy-newcomer"
-        @tap="open('/pages/activity/new_customer/index')"
-      >
-        <view class="diy-section-title">新人专享福利</view>
-        <text v-if="newcomerPoints > 0" class="diy-newcomer-points">注册即得 {{ newcomerPoints }} 积分</text>
-        <scroll-view v-if="newcomer.newcomer_products.length" scroll-x class="diy-horizontal-scroll">
-          <view
-            v-for="product in newcomer.newcomer_products"
-            :key="product.id"
-            class="diy-rank-product"
-            @tap.stop="goNewcomerProduct(product.id)"
-          >
-            <image class="diy-rank-image" :src="safeImage(product.image)" mode="aspectFill" />
-            <text class="diy-rank-name">{{ product.store_name }}</text>
-            <text class="diy-price">¥{{ product.price }}</text>
-          </view>
-        </scroll-view>
-        <text v-if="newcomer.newcomer_coupon.length" class="diy-newcomer-coupon">
-          另有 {{ newcomer.newcomer_coupon.length }} 张新人优惠券
-        </text>
-      </view>
-
-      <view v-else-if="block.name === 'signIn' && sign" class="diy-section diy-sign" @tap="open('/pages/user/sign')">
-        <view>
-          <text class="diy-section-title">每日签到</text>
-          <text class="diy-sign-copy">签到可得 {{ sign.sign_give_point }} 积分</text>
-        </view>
-        <view class="diy-sign-days">
-          <text
-            v-for="day in sign.signList[0] ?? []"
-            :key="day.day"
-            class="diy-sign-day"
-            :class="{ signed: day.is_sign, today: day.sign_day }"
-          >{{ day.day }}</text>
-        </view>
-      </view>
-
-      <view v-else-if="block.name === 'userInfor'" class="diy-user-card" @tap="open('/pages/user/index')">
-        <template v-if="userInfo">
-          <image class="diy-avatar" :src="safeImage(userInfo.avatar)" mode="aspectFill" />
-          <view class="diy-user-copy">
-            <text class="diy-user-name">{{ userInfo.nickname || 'CinaShop 用户' }}</text>
-            <text class="diy-user-meta">{{ userInfo.vip_name || '普通会员' }} · {{ userInfo.integral }} 积分</text>
-          </view>
-          <view class="diy-user-counts">
-            <text>{{ userInfo.coupon_num }} 券</text>
-            <text>{{ userInfo.collectCount }} 收藏</text>
-          </view>
-        </template>
-        <template v-else>
-          <view class="diy-avatar diy-avatar-placeholder">人</view>
-          <text class="diy-user-name">登录查看会员权益</text>
-          <text class="diy-more">去登录 ›</text>
-        </template>
-      </view>
+      <DiyStateWidget v-else-if="isStateWidget(block)" :block="block" :active="pageActive" @closed="emit('closed', $event)" />
 
       <DiyCommunityWidget v-else-if="block.name === 'community'" :block="block" :active="pageActive" />
 
@@ -219,18 +140,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import {
-  apiDiyNewcomerList,
-  apiDiyProductRank,
-  apiDiySign,
-  apiDiyUserInfo,
-  type DiyComponent,
-  type DiyNewcomerData,
-  type DiyProductRanks,
-  type DiySignData,
-  type DiyUserInfo,
-} from "@/api/diy";
+import { computed, onScopeDispose, ref, watch } from "vue";
+import type { DiyComponent } from '@/api/diy';
+import { useAuthStore } from '@/stores/auth';
+import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
+import DiyStateWidget from './DiyStateWidget.vue';
 import { apiArticleList, type ArticleListItem } from "@/api/article";
 import { apiGoodsList } from "@/api/product";
 import type { GoodsItem } from "@/types/product";
@@ -271,20 +185,16 @@ function showProductSales(block: DiyComponent) {
   const choices = asDiyRecord(block.checkboxInfo)?.type;
   return block.checkboxInfo === undefined || Array.isArray(choices) && choices.includes(3);
 }
+const emit = defineEmits<{ closed: [message: string] }>();
+function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }
+const auth = useAuthStore();
 const theme = useThemeStore();
 function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
 
 const productLists = ref<Record<number, GoodsItem[]>>({});
-const articles = ref<ArticleListItem[]>([]);
-const ranks = ref<DiyProductRanks>({ sales: [], star: [], collect: [] });
-const newcomer = ref<DiyNewcomerData>({
-  newcomer_products: [],
-  newcomer_integral: [],
-  newcomer_coupon: [],
-});
-const sign = ref<DiySignData | null>(null);
-const userInfo = ref<DiyUserInfo | null>(null);
-let hydration = 0;
+const articles = ref<Record<number, ArticleListItem[]>>({});
+let hydration = 0, disposed = false;
+const hydrationOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
 const COMMERCE_WIDGET_NAMES = new Set([
   "bargain",
@@ -389,10 +299,6 @@ function goProduct(id: number): void {
   if (Number.isSafeInteger(id) && id > 0) open(`/pages/goods/detail?id=${id}`);
 }
 
-function goNewcomerProduct(id: number): void {
-  if (Number.isSafeInteger(id) && id > 0) open(`/pages/activity/newcomerDetail?id=${id}`);
-}
-
 function sanitizedRichText(block: DiyComponent): string {
   const value = diyNestedValue(block, "richText");
   return typeof value === "string"
@@ -457,56 +363,29 @@ async function loadProducts(block: DiyComponent): Promise<GoodsItem[]> {
 }
 
 async function hydrate(): Promise<void> {
-  const generation = ++hydration;
-  const names = new Set(props.components.map((item) => item.name));
-  const nextProductLists: Record<number, GoodsItem[]> = {};
-  await Promise.all([
-    ...props.components.map(async (block, index) => {
-      if (block.name !== "goodList") return;
-      try {
-        nextProductLists[index] = await loadProducts(block);
-      } catch {
-        nextProductLists[index] = [];
+  const generation = ++hydration, actor = hydrationOwner(), schema = JSON.stringify(props.components);
+  productLists.value = {}; articles.value = {};
+  const current = () => !disposed && props.pageActive && generation === hydration && actor === hydrationOwner() && schema === JSON.stringify(props.components);
+  if (!current()) return;
+  const nextProducts: Record<number, GoodsItem[]> = {}, nextArticles: Record<number, ArticleListItem[]> = {};
+  await Promise.all(props.components.map(async (block, index) => {
+    try {
+      if (block.name === 'goodList') nextProducts[index] = await loadProducts(block);
+      else if (block.name === 'articleList') {
+        const category = Math.max(0, Number(asDiyRecord(block.selectConfig)?.activeValue) || 0);
+        const limit = boundedLimit(diyNumber(block, 'numConfig', 6), 6, 20);
+        nextArticles[index] = await apiArticleList(category, { page: 1, limit });
       }
-    }),
-    names.has("articleList")
-      ? (async () => {
-        const block = props.components.find((item) => item.name === "articleList");
-        const category = Math.max(0, Number(asDiyRecord(block?.selectConfig)?.activeValue) || 0);
-        const limit = boundedLimit(block ? diyNumber(block, "numConfig", 6) : 6, 6, 20);
-        articles.value = await apiArticleList(category, { page: 1, limit }).catch(() => []);
-      })()
-      : Promise.resolve(),
-    names.has("ranking")
-      ? apiDiyProductRank(3).then((value) => { ranks.value = value; }).catch(() => undefined)
-      : Promise.resolve(),
-    names.has("newVip")
-      ? apiDiyNewcomerList(1, 10).then((value) => { newcomer.value = value; }).catch(() => undefined)
-      : Promise.resolve(),
-    names.has("signIn")
-      ? apiDiySign().then((value) => { sign.value = value; }).catch(() => undefined)
-      : Promise.resolve(),
-    names.has("userInfor")
-      ? apiDiyUserInfo().then((value) => { userInfo.value = Array.isArray(value) ? null : value; }).catch(() => undefined)
-      : Promise.resolve(),
-  ]);
-  if (generation === hydration) productLists.value = nextProductLists;
+    } catch { if (block.name === 'goodList') nextProducts[index] = []; else if (block.name === 'articleList') nextArticles[index] = []; }
+  }));
+  if (current()) { productLists.value = nextProducts; articles.value = nextArticles; }
 }
-
-const hasRanks = computed(() => ranks.value.sales.length + ranks.value.star.length + ranks.value.collect.length > 0);
-const rankGroups = computed(() => [
-  { key: "sales", label: "热销榜", items: ranks.value.sales },
-  { key: "star", label: "好评榜", items: ranks.value.star },
-  { key: "collect", label: "收藏榜", items: ranks.value.collect },
-]);
-const newcomerPoints = computed(() => Number(newcomer.value.newcomer_integral) || 0);
-const hasNewcomer = computed(() => (
-  newcomerPoints.value > 0
-  || newcomer.value.newcomer_products.length > 0
-  || newcomer.value.newcomer_coupon.length > 0
-));
-
-watch(() => props.components, () => { void hydrate(); }, { immediate: true });
+const stopHydration = watch([() => JSON.stringify(props.components), hydrationOwner, () => props.pageActive], () => {
+  hydration++; productLists.value = {}; articles.value = {};
+  const generation = hydration;
+  if (!disposed && props.pageActive) void Promise.resolve().then(() => { if (!disposed && generation === hydration && props.pageActive) void hydrate(); });
+}, { immediate: true, flush: 'sync' });
+onScopeDispose(() => { disposed = true; hydration++; stopHydration(); productLists.value = {}; articles.value = {}; });
 </script>
 
 <style scoped>

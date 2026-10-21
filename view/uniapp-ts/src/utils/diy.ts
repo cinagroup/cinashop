@@ -7,6 +7,7 @@ import {
   type DiyPage,
 } from "@/api/diy";
 import { resolveRegisteredPageRoute, TAB_ROUTES } from "@/config/navigation";
+import { RequestError } from "@/utils/request";
 
 const DIY_CACHE_PREFIX = "cinashop_diy_page_v1_";
 const MAX_COMPONENTS = 200;
@@ -16,7 +17,27 @@ interface DiyCacheEntry {
   version: string | null;
   cachedAt: number;
   data: DiyPage | null;
+  versionVerified: boolean;
 }
+
+export interface DiyPageSnapshot extends DiyCacheEntry {
+  source: "network" | "cache" | "offline";
+}
+
+export class DiyPageLoadError extends Error {
+  constructor(message: string, readonly kind: "invalid" | "closed" | "superseded" | "unstable") {
+    super(message); this.name = "DiyPageLoadError";
+  }
+}
+
+interface PageSlot {
+  generation: number;
+  pending?: Promise<DiyPageSnapshot>;
+  consumers?: Set<() => boolean>;
+  completed?: { snapshot: DiyPageSnapshot } | { error: unknown };
+}
+const pageSlots = new Map<number, PageSlot>();
+let stationEpoch = 0, stationClosed = false, stationMessage = "站点暂未开放，请稍后重试";
 
 export function asDiyRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -78,6 +99,7 @@ export function normalizeDiyComponents(value: unknown): DiyComponent[] {
 export function normalizeDiyPage(value: unknown): DiyPage | null {
   const page = asDiyRecord(value);
   if (!page || Array.isArray(value)) return null;
+  if (!Array.isArray(page.value) || ![0, 1, "0", "1", false, true, "true", "false"].includes(page.is_show as never)) return null;
   const title = typeof page.title === "string" ? page.title.trim().slice(0, 100) : "";
   return {
     title: title || "CinaShop",
@@ -106,44 +128,129 @@ function readCache(id: number): DiyCacheEntry | null {
     if (!raw) return null;
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const entry = asDiyRecord(parsed);
-    if (!entry || !("version" in entry) || !("data" in entry)) return null;
+    if (!entry || !("version" in entry) || !("data" in entry)
+      || entry.version !== null && typeof entry.version !== "string") return null;
     const data = entry.data === null ? null : normalizeDiyPage(entry.data);
+    if (entry.data !== null && !data) return null;
     return {
-      version: typeof entry.version === "string" ? entry.version : null,
+      version: entry.version as string | null,
       cachedAt: Number(entry.cachedAt) || 0,
       data,
+      versionVerified: entry.versionVerified === true && typeof entry.version === "string",
     };
   } catch {
     return null;
   }
 }
 
-function writeCache(id: number, version: string | null, data: DiyPage | null): void {
+function writeCache(id: number, entry: DiyCacheEntry): void {
   try {
-    const entry: DiyCacheEntry = { version, cachedAt: Date.now(), data };
     uni.setStorageSync(cacheKey(id), JSON.stringify(entry));
   } catch {
     // Storage quota or private mode must not make the homepage unavailable.
   }
 }
 
-/**
- * Revalidate the small version endpoint before reusing a page payload. On a
- * transient network error a previously validated cached page remains usable.
- */
-export async function loadDiyPage(id = 0, force = false): Promise<DiyPage | null> {
-  const safeId = Number.isSafeInteger(id) && id >= 0 ? id : 0;
-  const cached = readCache(safeId);
-  try {
-    const { version } = await apiDiyVersion(safeId);
-    if (!force && cached && cached.version === version) return cached.data;
-    const data = normalizeDiyPage(await apiDiyPage(safeId));
-    writeCache(safeId, version, data);
-    return data;
-  } catch (error) {
-    if (cached) return cached.data;
-    throw error;
+/** Only public authored schemas enter this cache; personalized widget reads never do. */
+export function closeDiyStation(message = "站点暂未开放，请稍后重试"): void {
+  stationClosed = true; stationEpoch++;
+  stationMessage = message.slice(0, 400) || "站点暂未开放，请稍后重试";
+  for (const [id, slot] of pageSlots) {
+    slot.generation++; slot.pending = undefined; slot.consumers = undefined;
+    slot.completed = { error: new DiyPageLoadError(stationMessage, "closed") };
+    try { uni.removeStorageSync(cacheKey(id)); } catch { /* Known closure also blocks unread cache keys. */ }
   }
+}
+
+function versionOf(value: unknown): string | null {
+  const row = asDiyRecord(value);
+  if (!row || !("version" in row) || row.version !== null && typeof row.version !== "string") {
+    throw new DiyPageLoadError("页面版本响应无效，请重试", "invalid");
+  }
+  return row.version as string | null;
+}
+const cloneSnapshot = (snapshot: DiyPageSnapshot): DiyPageSnapshot => JSON.parse(JSON.stringify(snapshot));
+const closedError = () => new DiyPageLoadError(stationMessage, "closed");
+function transient(error: unknown): boolean {
+  return error instanceof RequestError && (error.httpStatus !== undefined && error.httpStatus >= 500
+    || error.status === undefined && (error.httpStatus === undefined || error.httpStatus === 0));
+}
+
+/** Versions are opaque equality tokens. Two bounded before/after checks associate
+ * a changed payload; they do not claim an atomic server/database snapshot. */
+export async function loadDiyPage(id = 0, force = false, consumer: () => boolean = () => true): Promise<DiyPageSnapshot> {
+  if (!Number.isSafeInteger(id) || id < 0 || id > 2147483647) throw new DiyPageLoadError("页面编号无效", "invalid");
+  const superseded = () => new DiyPageLoadError("页面请求已替换", "superseded");
+  if (!consumer()) throw superseded();
+  const safeId = id;
+  if (stationClosed && !force) throw closedError();
+  let slot = pageSlots.get(safeId);
+  if (!slot) { slot = { generation: 0 }; pageSlots.set(safeId, slot); }
+  const forConsumer = async (work: Promise<DiyPageSnapshot>) => {
+    const snapshot = await work;
+    if (!consumer()) throw superseded();
+    return cloneSnapshot(snapshot);
+  };
+  if (!force && slot.pending) { slot.consumers?.add(consumer); return forConsumer(slot.pending); }
+  const state = slot, generation = ++state.generation, epoch = stationEpoch, cached = stationClosed ? null : readCache(safeId);
+  const consumers = new Set([consumer]); state.consumers = consumers;
+  const alive = () => [...consumers].some(reader => reader());
+  state.completed = undefined;
+  const current = () => state.generation === generation && epoch === stationEpoch;
+  let pending!: Promise<DiyPageSnapshot>;
+  async function latest(): Promise<DiyPageSnapshot> {
+    if (!alive()) throw superseded();
+    if (epoch !== stationEpoch) throw stationClosed ? closedError() : new DiyPageLoadError("页面请求已替换", "superseded");
+    if (state.pending && state.pending !== pending) return state.pending;
+    if (state.completed) {
+      if ("error" in state.completed) throw state.completed.error;
+      return state.completed.snapshot;
+    }
+    throw new DiyPageLoadError("页面请求已替换", "superseded");
+  }
+  function complete(snapshot: DiyPageSnapshot): DiyPageSnapshot {
+    state.completed = { snapshot: cloneSnapshot(snapshot) };
+    return snapshot;
+  }
+  pending = (async (): Promise<DiyPageSnapshot> => {
+    try {
+      let version = versionOf(await apiDiyVersion(safeId));
+      if (!current()) return latest();
+      if (!alive()) throw superseded();
+      if (!force && !stationClosed && cached?.versionVerified && version !== null && cached.version === version) {
+        return complete({ ...cached, source: "cache" });
+      }
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (!alive()) throw superseded();
+        const raw = await apiDiyPage(safeId);
+        if (!current()) return latest();
+        if (!alive()) throw superseded();
+        const data = normalizeDiyPage(raw);
+        if (data === null && !(Array.isArray(raw) && raw.length === 0)) throw new DiyPageLoadError("页面配置响应无效，请重试", "invalid");
+        const after = versionOf(await apiDiyVersion(safeId));
+        if (!current()) return latest();
+        if (!alive()) throw superseded();
+        if (after === version) {
+          const entry: DiyCacheEntry = { version: after, data, cachedAt: Date.now(), versionVerified: after !== null };
+          writeCache(safeId, entry);
+          stationClosed = false;
+          return complete({ ...entry, source: "network" });
+        }
+        version = after;
+      }
+      throw new DiyPageLoadError("页面配置正在更新，请重新加载", "unstable");
+    } catch (error) {
+      if (!current()) return latest();
+      if (!alive()) throw superseded();
+      if (error instanceof RequestError && error.status === 410010 && (error.httpStatus === undefined || error.httpStatus < 500)) {
+        closeDiyStation(error.message); throw closedError();
+      }
+      if (!stationClosed && cached && transient(error)) return complete({ ...cached, source: "offline" });
+      state.completed = { error }; throw error;
+    }
+  })().finally(() => { if (state.pending === pending) { state.pending = undefined; state.consumers = undefined; } });
+  state.pending = pending;
+  return forConsumer(pending);
 }
 
 export function safeDiyColor(value: unknown, fallback = ""): string {

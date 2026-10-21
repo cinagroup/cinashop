@@ -360,7 +360,8 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it("routes all server-managed homepage links through the shared resolver", () => {
     expect(diy).toContain('import { resolveRegisteredPageRoute, TAB_ROUTES } from "@/config/navigation"');
     expect(diy).toContain("return resolveRegisteredPageRoute(path, query)");
-    expect(home).toContain('loadDiyPage, openDiyLink } from "@/utils/diy"');
+    expect(home).toContain('openDiyLink } from "@/utils/diy"');
+    expect(home).toContain('useDiyPageHost(() => 0, () => diyCommunityVisible.value)');
     expect(home.match(/openDiyLink\(/g)).toHaveLength(2);
     expect(home).not.toContain("uni.navigateTo({ url: link })");
     expect(home).not.toContain("uni.navigateTo({ url: banner.link })");

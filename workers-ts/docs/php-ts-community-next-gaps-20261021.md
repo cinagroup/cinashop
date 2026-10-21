@@ -80,3 +80,10 @@ PHP `view/uniapp/pages/discover/discoverDetails/index.vue:127` 及 `components/d
 另一个独立缺口在 `pages/discover/people.vue:87`：加载中切换标签会先改变标签，再因 `loading` 提前返回，旧请求可写入新标签；该页也缺账号和页面生命周期隔离。PHP `discoverFollow/index.vue:82` 规定旧 `type=0/1/2` 分别进入关注／好友／粉丝，当前 TS 页面只读取 `tab`，旧链接未转换该参数。后续需同时补齐旧路由语义、分页重试、关注状态和会话边界。
 
 上述缺口尚未实现或验收，作为后续迁移依据保留。当前轮优先修复已推送代码的 CI 基线，保持已恢复 `/api/get_script` 的 PHP 兼容行为。
+
+
+## 2026-10-21 DIY页面与状态组件完成后的后续
+
+首页／微页面schema装载、四类userInfor／newVip／signIn／ranking数据和配置／导航已完成并通过本批本机与后台浏览器门禁，见[本批说明](php-ts-diy-state-20261021.md)。历史正文保持，API-007父项继续开放。
+
+下一独立完整切片拟覆盖八类commerce模块的实际PHP配置／样式／材料／规范目标，所有者／可见性／迟到读取与领券未知结果，并保留成熟SKU／quote／cart操作权威。PHP旧领券发送couponId，当前TS只接id，应精确补旧字段兼容并拒绝冲突，不重放未知结果。48份PHP／TS实际来源、10项缺口与完整验证矩阵已只读整理在本批机器记录的next_slice，尚未实现／构建／验收；原有nonce／owner／账务锁／access及get_script兼容保持，不据此关闭DATA-008或真机／发布门禁。

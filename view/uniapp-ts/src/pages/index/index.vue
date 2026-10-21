@@ -23,13 +23,20 @@
       </view>
     </view>
 
-    <view v-if="diyLoading && !diyPage" class="diy-state">正在加载首页…</view>
+    <view v-if="(diyLoading || diyPhase === 'idle') && !diyPage" class="diy-state">正在加载首页…</view>
+    <view v-else-if="diyError" class="diy-state diy-error">
+      <text>{{ diyError }}</text>
+      <button size="mini" @tap="loadDiy(true)">重新加载首页</button>
+    </view>
     <view v-else-if="diyPage" class="diy-home" :style="diyStyle">
-      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyCommunityVisible" />
+      <view v-if="diyLoading" class="diy-notice">正在核对页面配置…</view>
+      <view v-else-if="diyOffline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="loadDiy(true)">重新核实</button></view>
+      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyPageActive" @closed="diyHost.close" />
       <view v-else class="diy-state">首页暂未开放</view>
     </view>
 
     <view v-else class="fallback-home">
+    <view v-if="diyOffline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="loadDiy(true)">重新核实</button></view>
     <!-- Logo -->
     <view class="logo-wrap">
       <image src="/static/logo.png" class="logo-img" mode="aspectFit" />
@@ -102,36 +109,41 @@
     <view v-if="!goods.length && !loading" class="empty">暂无商品</view>
     </view>
 
-    <DiySuspendedNavigation />
+    <DiySuspendedNavigation v-if="diyCommunityVisible && !diyLoading && !diyError" />
   </view>
   </ThemePage>
 </template>
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
-import { computed, onBeforeUnmount, ref, onMounted } from "vue";
+import { computed, onBeforeUnmount, ref, onMounted, watch } from "vue";
 import { onShow, onHide, onUnload, onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
 import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
-import type { DiyPage } from "@/api/diy";
 import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
-import { diyPageStyle, isDiyEnabled, loadDiyPage, openDiyLink } from "@/utils/diy";
+import { diyPageStyle, isDiyEnabled, openDiyLink } from "@/utils/diy";
+import { useDiyPageHost } from "@/composables/useDiyPageHost";
+import { useAuthStore } from "@/stores/auth";
 import { apiShareConfig, type ShareConfig } from "@/api/public";
 
 const diyCommunityVisible = ref(false);
 let diyCommunityDisposed = false;
-onShow(() => { if (!diyCommunityDisposed) diyCommunityVisible.value = true; });
-onHide(() => { diyCommunityVisible.value = false; });
-onUnload(() => { diyCommunityDisposed = true; diyCommunityVisible.value = false; });
+onShow(() => { if (!diyCommunityDisposed) { diyCommunityVisible.value = true; void load(); } });
+onHide(() => { diyCommunityVisible.value = false; goodsGeneration++; loading.value = false; closeOpenAdv(); });
+onUnload(() => { diyCommunityDisposed = true; diyCommunityVisible.value = false; goodsGeneration++; diyHost.dispose(); });
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
-const diyLoading = ref(true);
-const diyPage = ref<DiyPage | null>(null);
+const diyHost = useDiyPageHost(() => 0, () => diyCommunityVisible.value);
+const { page: diyPage, loading: diyLoading, error: diyError, phase: diyPhase, offline: diyOffline, available: diyPageActive } = diyHost;
+const loadDiy = (force = false) => diyHost.reload(force);
 const diyStyle = computed(() => diyPageStyle(diyPage.value));
+const auth = useAuthStore();
+const goodsOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
+let goodsGeneration = 0;
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const showOpenAdv = ref(false);
 const openAdv = ref<OpenAdvConfig>({
@@ -154,37 +166,31 @@ const banners = [
 ];
 
 async function load() {
+  if (!diyCommunityVisible.value || diyCommunityDisposed) return;
+  const generation = ++goodsGeneration, owner = goodsOwner();
+  const current = () => diyCommunityVisible.value && !diyCommunityDisposed && generation === goodsGeneration && owner === goodsOwner();
   loading.value = true;
   try {
     const [g, c] = await Promise.all([
       apiGoodsList({ page: 1, limit: 8 }),
       apiCategory(),
     ]);
+    if (!current()) return;
     goods.value = g.list;
     categories.value = c.slice(0, 8);
   } catch (e) {
-    console.error("首页加载失败", e);
+    if (current()) console.error("首页加载失败", e);
   } finally {
-    loading.value = false;
+    if (current()) loading.value = false;
   }
 }
 
-async function loadDiy(force = false) {
-  diyLoading.value = true;
-  try {
-    diyPage.value = await loadDiyPage(0, force);
-    if (diyPage.value?.title) uni.setNavigationBarTitle({ title: diyPage.value.title });
-  } catch (error) {
-    console.error("DIY 首页加载失败", error);
-    diyPage.value = null;
-  } finally {
-    diyLoading.value = false;
-  }
-}
+watch(goodsOwner, () => { goodsGeneration++; goods.value = []; loading.value = false; if (diyCommunityVisible.value) void load(); }, { flush: "sync" });
 
 async function loadOpenAdv() {
   try {
     const config = await apiOpenAdv();
+    if (!diyCommunityVisible.value || diyCommunityDisposed) return;
     if (config.status !== 1) return;
     if (config.type === "pic" && !config.value.some((item) => item.status === 1 && item.img)) return;
     if (config.type === "video" && !config.video_link) return;
@@ -273,14 +279,9 @@ function goDetail(id: number) {
   uni.navigateTo({ url: `/pages/goods/detail?id=${id}` });
 }
 
-onPullDownRefresh(async () => {
-  await Promise.all([load(), loadDiy(true)]);
-  uni.stopPullDownRefresh();
-});
+onPullDownRefresh(() => { void diyHost.refresh(load); });
 
 onMounted(() => {
-  void load();
-  void loadDiy();
   void loadOpenAdv();
   void loadShareConfig();
 });
@@ -308,6 +309,9 @@ onBeforeUnmount(closeOpenAdv);
   color: #999;
   text-align: center;
 }
+.diy-error { display: flex; flex-direction: column; align-items: center; gap: 24rpx; }
+.diy-notice { padding: 16rpx 24rpx; font-size: 24rpx; color: #666; background: #fff7e8; }
+.diy-notice button { display: inline-block; margin-left: 12rpx; }
 
 .open-adv-mask {
   position: fixed;

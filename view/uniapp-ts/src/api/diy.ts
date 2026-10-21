@@ -76,7 +76,7 @@ export interface DiyUserInfo {
   level: number;
   integral: number;
   now_money: string | number;
-  exp: number;
+  exp: number | string;
   is_money_level: number;
   bar_code: string;
   coupon_num: number;
