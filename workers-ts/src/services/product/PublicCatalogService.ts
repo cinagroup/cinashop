@@ -44,6 +44,8 @@ import { publicProductPictures,renderProductPictures } from '@/services/activity
 import { resolveProductLabelIcons } from './ProductLabelAssetPolicy';
 import { isOperationalGroupName, operationalGroupPublicPictures, renderOperationalGroupPictures } from '@/services/content/OperationalGroupDataAssetPolicy';
 import { presaleProductVisibility, readPresaleCatalogAccount, validatePresaleCatalogUid, withPresaleCatalogSnapshot } from '@/services/activity/PresaleCatalogSnapshot';
+import { decoratePublicProductActivities } from './PublicProductActivityData';
+import { publicProductLabelIds, readPublicProductLabelMap } from './PublicProductLabelData';
 
 const MAX_LIMIT = 100;
 const GROUP_KEYS = [
@@ -648,33 +650,23 @@ export class PublicCatalogService {
   async decorateProducts(list: Record<string, unknown>[], presaleNow?: number): Promise<Record<string, unknown>[]> {
     if (!list.length) return list;
     const brandIds = [...new Set(list.map((item) => int(item.brand_id)).filter(Boolean))];
-    const labelIds = [...new Set(list.flatMap((item) => csvIds(item.store_label_id)))];
-    const [brands, labels] = await Promise.all([
+    const labelIds = [...new Set(list.flatMap((item) => publicProductLabelIds(item.store_label_id)))];
+    const [brands, labelMap] = await Promise.all([
       brandIds.length ? this.container.db.select({ id: storeBrand.id, name: storeBrand.brandName })
         .from(storeBrand).where(and(inArray(storeBrand.id, brandIds), eq(storeBrand.isDel, 0), eq(storeBrand.isShow, 1))) : [],
-      labelIds.length ? this.container.db.select({
-        id: storeProductLabel.id, label_name: storeProductLabel.labelName,
-        style_type: storeProductLabel.styleType, color: storeProductLabel.color,
-        bg_color: storeProductLabel.bgColor, border_color: storeProductLabel.borderColor,
-        icon: storeProductLabel.icon,
-        type: storeProductLabel.type, relationId: storeProductLabel.relationId,
-      }).from(storeProductLabel).where(and(
-        inArray(storeProductLabel.id, labelIds), eq(storeProductLabel.status, 1), eq(storeProductLabel.isShow, 1),
-      )) : [],
+      readPublicProductLabelMap(this.container.db, this.env.APP_KEY, labelIds),
     ]);
     const brandMap = new Map(brands.map((item) => [item.id, item.name]));
-    const icons = await resolveProductLabelIcons(this.container.db, this.env.APP_KEY, labels);
-    const labelMap = new Map(labels.map(({ type: _type, relationId: _owner, ...label }, index) => [label.id, { ...label, icon: icons[index] }]));
-    return list.map((item) => ({
+    return decoratePublicProductActivities(this.container.db, list.map((item) => ({
       ...item,
       brand_name: brandMap.get(int(item.brand_id)) ?? "",
-      store_label: csvIds(item.store_label_id).flatMap((id) => labelMap.get(id) ?? []),
+      store_label: publicProductLabelIds(item.store_label_id).flatMap((id) => labelMap.get(id) ?? []),
       presale_pay_status: legacyPresalePayStatus(
         item.is_presale_product,
         item.presale_start_time,
         item.presale_end_time,
         presaleNow,
       ),
-    }));
+    })));
   }
 }

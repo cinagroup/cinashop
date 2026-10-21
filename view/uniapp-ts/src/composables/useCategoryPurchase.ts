@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef, watch, type Ref } from 'vue';
+import { computed, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useCartStore } from '@/stores/cart';
 import { apiGoodsDetail } from '@/api/product';
@@ -9,7 +9,8 @@ import { prepareProductCart, type PreparedProductCart } from '../../../common/pr
 import { skuDisplayPrice } from '../../../common/skuMembershipPrice';
 
 /** Ordinary type-0 purchase. Catalogue/SKU prices are display only; checkout owns the quote. */
-export function useCategoryPurchase(visible: Ref<boolean>) {
+export function useCategoryPurchase(pageVisible: Ref<boolean>) {
+  const alive = ref(true), visible = computed(() => alive.value && pageVisible.value);
   const auth = useAuthStore(), cart = useCartStore();
   const detail = shallowRef<GoodsDetail | null>(null), selected = ref(''), quantity = ref<number | string>(1);
   const opened = ref(false), loading = ref(false), buying = ref(false), navigating = ref(false), needsRefresh = ref(false), error = ref('');
@@ -64,7 +65,9 @@ export function useCategoryPurchase(visible: Ref<boolean>) {
     if (product.is_presale_product || product.cart_button === 0) { goDetail(product); return; }
     if (!auth.isLoggedIn) { navigate('/pages/auth/login'); return; }
     reset(); productId = product.id; mode.value = requestedMode; opened.value = true;
+    const current = owner();
     await read(product.id);
+    if (!current()) return;
     if (quickSingle && opened.value && detail.value?.id === product.id && detail.value.skus.length === 1 && maximum.value > 0) await purchase();
   }
   function choose(unique: string) {
@@ -146,7 +149,8 @@ export function useCategoryPurchase(visible: Ref<boolean>) {
     catch (e) { if (current()) error.value = e instanceof Error ? e.message : '购物车读取失败'; }
   }
   watch(visible, value => { reset(); if (value) restore(); }, { flush: 'sync' });
-  watch(() => auth.sessionVersion, () => { reset(); void Promise.resolve().then(restore); }, { flush: 'sync' });
+  watch(() => `${auth.uid}:${auth.token}:${auth.sessionVersion}`, () => { reset(); const version = generation; void Promise.resolve().then(() => { if (version === generation) restore(); }); }, { flush: 'sync' });
+  onScopeDispose(() => { alive.value = false; reset(); });
   return { detail, selected, sku, quantity, maximum, locked, price, opened, loading, buying, navigating, needsRefresh, error, prepared, cartOpen, mode,
     recovery, recoveryInvalid, open, goDetail, choose, setQuantity, step, purchase, continueCheckout, reread, close, quantityInCart, changeCard, changeCart, clearCart, checkoutCart };
 }

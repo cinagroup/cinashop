@@ -411,11 +411,26 @@ export async function couponTodayV2(c: C) {
 export async function couponReceive(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { id?: number };
-  if (!body.id) return jsonFail(c, "参数错误");
+  const body: unknown = await c.req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) return jsonFail(c, "参数错误");
+  const input = body as Record<string, unknown>;
+  const hasId = Object.prototype.hasOwnProperty.call(input, "id");
+  const hasCouponId = Object.prototype.hasOwnProperty.call(input, "couponId");
+  // PHP UniApp posts couponId; the migrated clients already post id. Validate
+  // both independently so an invalid/conflicting alias cannot select a coupon.
+  const parseId = (value: unknown): number | undefined => {
+    const parsed = typeof value === "number" ? value
+      : typeof value === "string" && /^[1-9]\d*$/.test(value) ? Number(value) : Number.NaN;
+    return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= 2_147_483_647 ? parsed : undefined;
+  };
+  const id = hasId ? parseId(input.id) : undefined;
+  const couponId = hasCouponId ? parseId(input.couponId) : undefined;
+  if ((!hasId && !hasCouponId) || (hasId && id === undefined) || (hasCouponId && couponId === undefined)
+    || (hasId && hasCouponId && id !== couponId)) return jsonFail(c, "参数错误");
+  const issueId = id ?? couponId!;
   const svc = new ActivityService(c.get("container"));
   try {
-    return jsonOk(c, await svc.receiveCoupon(uid, body.id), "领取成功");
+    return jsonOk(c, await svc.receiveCoupon(uid, issueId), "领取成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

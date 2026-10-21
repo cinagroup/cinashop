@@ -24,6 +24,7 @@ import { readOrdinaryProductSnapshot } from './OrdinaryProductReadData';
 import { validatePublicCategoryFilters } from './PublicCategoryPolicy';
 import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { decoratePublicProductActivities } from './PublicProductActivityData';
 import { detailDisplayPrice,readProductDetailExtras,renderProductDetailExtras,readDetailVideo } from './ProductDetailDesignData';
 import { parseSystemFormDefinition } from "@/services/system/SystemMetadataService";
 
@@ -315,12 +316,12 @@ export class StoreProductService {
     const { V2PromotionCompatibilityService } = await import("@/services/activity/V2PromotionCompatibilityService");
     const decorated = await new V2PromotionCompatibilityService(this.container, this.env)
       .decorateCatalogProducts(list);
-    return decorated.map((item) => ({
+    return decoratePublicProductActivities(this.container.db, decorated.map((item) => ({
       ...item,
       promotions: item.promotions && typeof item.promotions === "object"
         && !Array.isArray(item.promotions) && Object.keys(item.promotions).length === 0
         ? [] : item.promotions,
-    }));
+    })));
   }
 
   /**

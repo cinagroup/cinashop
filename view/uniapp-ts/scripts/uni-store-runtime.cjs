@@ -17,8 +17,9 @@ function plainIo(value) {
 }
 
 // Real Vue reactivity, Pinia stores, request layer, API adapters and the selected composable.
-// Only native lifecycle/I/O is replaced. Platform preprocessing is covered by the three builds, not this loader.
-function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {} } = {}) {
+// Only native lifecycle/I/O is replaced. An explicit platform selects source
+// guards for adapter tests; the three real builds still verify Uni compilation.
+function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {}, platform } = {}) {
   const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], cache = new Map();
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
@@ -40,6 +41,19 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
     assert.ok(existsSync(file), file);
     const exports = {}; cache.set(file, exports);
     let source = readFileSync(file, 'utf8');
+    if (platform) {
+      const stack = [true], names = new Set([platform, ...(platform === 'MP-WEIXIN' ? ['MP'] : [])]);
+      source = source.split('\n').filter(line => {
+        const directive = /(?:\/\/|<!--)\s*#(ifdef|ifndef|endif)\s*([^\n]*?)(?:-->)?\s*$/.exec(line);
+        if (directive) {
+          if (directive[1] === 'endif') { assert.ok(stack.length > 1); stack.pop(); }
+          else { const matched = directive[2].split('||').some(name => names.has(name.trim())); stack.push(stack.at(-1) && (directive[1] === 'ifdef' ? matched : !matched)); }
+          return false;
+        }
+        return stack.at(-1);
+      }).join('\n');
+      assert.equal(stack.length, 1, `unbalanced platform directives: ${file}`);
+    }
     if (file.endsWith('.vue')) {
       const { parse, compileScript } = require('@vue/compiler-sfc');
       source = compileScript(parse(source, { filename: file }).descriptor, { id: 'actual-page-runtime' }).content;

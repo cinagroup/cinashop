@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ActivityService } from "../src/services/activity/ActivityService";
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 describe("legacy activity-list compatibility", () => {
   it("returns the PHP seckill-index envelope using the Shanghai clock", async () => {
@@ -89,7 +90,11 @@ describe("legacy activity-list compatibility", () => {
       sales: 4,
       stock: 7,
     }]);
+    const groupBy = vi.fn().mockResolvedValue([{ id: 13, count: 2 }]);
+    const where = vi.fn().mockReturnValue({ groupBy });
+    const from = vi.fn().mockReturnValue({ where });
     const service = new ActivityService({
+      db: { select: vi.fn().mockReturnValue({ from }) },
       storeSeckillDao: { getByTimeId },
       storeCombinationDao: { list: combinationList },
       storeBargainDao: { list: bargainList },
@@ -117,6 +122,7 @@ describe("legacy activity-list compatibility", () => {
       product_id: 103,
       min_price: 5,
       ot_price: 20,
+      people: 2,
     })]);
     await expect(service.integralList(1, 6)).resolves.toEqual([expect.objectContaining({
       title: "积分商品",
@@ -129,6 +135,11 @@ describe("legacy activity-list compatibility", () => {
     expect(combinationList).toHaveBeenNthCalledWith(1, 1, 6);
     expect(combinationList).toHaveBeenNthCalledWith(2, 201, 50);
     expect(bargainList).toHaveBeenCalledWith(1, 6);
+    const peopleQuery = new PgDialect().sqlToQuery(where.mock.calls[0]![0]);
+    expect(peopleQuery.sql).toContain('"store_bargain_user_help"."bargain_id" in ($1)');
+    expect(peopleQuery.sql).toContain('"store_bargain_user_help"."type" = $2');
+    expect(peopleQuery.params).toEqual([13, 1]);
+    expect(groupBy).toHaveBeenCalledOnce();
     expect(integralList).toHaveBeenCalledWith(1, 6, {
       storeName: undefined,
       priceOrder: undefined,

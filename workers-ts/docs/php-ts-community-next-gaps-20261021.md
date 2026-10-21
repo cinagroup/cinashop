@@ -87,3 +87,10 @@ PHP `view/uniapp/pages/discover/discoverDetails/index.vue:127` 及 `components/d
 首页／微页面schema装载、四类userInfor／newVip／signIn／ranking数据和配置／导航已完成并通过本批本机与后台浏览器门禁，见[本批说明](php-ts-diy-state-20261021.md)。历史正文保持，API-007父项继续开放。
 
 下一独立完整切片拟覆盖八类commerce模块的实际PHP配置／样式／材料／规范目标，所有者／可见性／迟到读取与领券未知结果，并保留成熟SKU／quote／cart操作权威。PHP旧领券发送couponId，当前TS只接id，应精确补旧字段兼容并拒绝冲突，不重放未知结果。48份PHP／TS实际来源、10项缺口与完整验证矩阵已只读整理在本批机器记录的next_slice，尚未实现／构建／验收；原有nonce／owner／账务锁／access及get_script兼容保持，不据此关闭DATA-008或真机／发布门禁。
+
+
+## 2026-10-21 DIY商城组件完成后的后续
+
+八类commerce模块已完整实现并通过本机与后台真实浏览器门禁，前述提案现有实现见[本批说明](php-ts-diy-commerce-20261021.md)及[机器记录](../audit/php-ts-diy-commerce-20261021.json)。Worker889／native62／UniApp工具链1742／完整13步与CSS修正后五步、Browser46阶段通过；候选与重复运行不累计。实际领券仅显式两次，未知回执只读恢复不重放；成熟SKU／库存／账务／owner和get_script合同保留，生产／真机／发布及API-007父项继续开放。
+
+下一独立完整切片拟覆盖goodList、articleList、news、hotspot、follow、activeParty六类：完整布局与checkbox／标题／材料、规范目标、SKU权威、独立重试、全owner／可见性／迟到媒体及全套验证一起交付。42份PHP＋70份TS与27个锚点已只读整理，尚未实现／构建／验收。activeParty只有PHP Admin持久化与预览正证据，无PHP前台运行分支，应显式记录兼容编辑意图。swipers／swiperBg／homeComb共享轮播另按完整调用族处理；swiperBg当前真实info[0]链接被通用info[1]读取遗漏，不能只修共享高度即宣称homeComb完整。

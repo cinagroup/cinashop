@@ -8408,3 +8408,14 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 本批继续API-007，完成首页／微页面schema版本与缓存／owner／生命周期保护，以及userInfor、newVip、signIn、ranking的真实数据、配置与受管导航；补最小会员grade颜色别名，保留原camelCase和定价投影。最终Worker838、原生45、UniApp工具链1634／完整13步与后台Browser18阶段通过；新增110例，失败候选不计通过，未把重复环境执行相加。Browser35表／34序列逐GET零变、显式业务写0；四次fixture配置精确收据独立记录，独立video_list仍保留原播放合同。
 
 详情见[本批说明](workers-ts/docs/php-ts-diy-state-20261021.md)及[机器记录](workers-ts/audit/php-ts-diy-state-20261021.json)。保留已恢复get_script和三处loader，未改DDL／ACL／路由／锁文件；API-007父项、DATA-008、FE-003J／K继续开放，不合并、不部署。schema关闭门禁为模块内、只清已知pageSlots，不冒称跨整页重载的持久关闭记录。下一commerce切片只有只读提案，尚未实现或验收。
+
+
+## 2026-10-21 DIY八类商城组件完整合同
+
+本批继续API-007，完成promotionList、seckill、combination、bargain、presale、pointsMall、coupon、liveBroadcast的真实配置、材料、独立状态、规范导航、完整owner／生命周期和显式领券／SKU语义。精确兼容PHP couponId并拒绝冲突；优惠券未知回执持久保护、只读核对不重放，保留既有库存／限领事务权威。修复实际H5吸顶导航被固定页头遮挡，以及共享快捷加购迟到continuation借用新同商品弹层的问题。
+
+最终Worker889项／38文件、native PG16四文件62项、UniApp完整13步／1742工具链项及CSS修正后类型／三端构建／产物五步通过；后台真实Browser46阶段含两次精确显式领取与四份fixture配置收据，逐GET核对46表／43序列。新增独立用例165，候选和重复环境不累计。历史正文前缀及复选行、6587份基线文件保持。详见[本批说明](workers-ts/docs/php-ts-diy-commerce-20261021.md)及[机器记录](workers-ts/audit/php-ts-diy-commerce-20261021.json)。
+
+浏览器按既有授权后台执行，不再逐页请求确认；当前可用连接为IAB，未据此推断独立扩展安装状态。目的地合成拒绝仅证明注册页及规范URL，MP／App构建不替代真机；生产身份／ACL／媒体／支付和发布观察仍开放。保留get_script和三处loader，未改DDL／ACL／路由／锁文件。API-007父项、DATA-008及FE-003J／K继续开放；本批只提交推送draft，不合并、不部署。父提交7886397的Actions39586193521已11任务成功，本批精确提交CI另核实。
+
+下一完整切片为goodList、articleList、news、hotspot、follow、activeParty六类编辑／数据／关注媒体组件；42份PHP与70份TS来源仅作只读提案，尚未实现验收。activeParty为PHP Admin持久预览兼容意图；轮播另按swipers／swiperBg／homeComb完整调用族处理，不把局部共享修正算作整族完成。

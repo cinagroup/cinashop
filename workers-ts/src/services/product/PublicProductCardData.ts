@@ -5,6 +5,7 @@ import { storeBrand, storeCart, storeProduct } from '@/models/schema';
 import { integralDetailText } from '@/services/activity/IntegralProductDetailData';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { ValidateException } from '@/utils/errors';
+import { publicProductLabelIds, readPublicProductLabelMap } from './PublicProductLabelData';
 /** One batch for the current product page. Cart quantity is actor-scoped;
  * cards are descriptive, never a substitute for a selected real SKU quote. */
 export async function decoratePublicProductCards(tx: DbClient, list: Record<string, unknown>[], uid: number, env: Env) {
@@ -24,13 +25,15 @@ export async function decoratePublicProductCards(tx: DbClient, list: Record<stri
     const type = Number(row.type) === 1 ? 0 : Number(row.type), relationId = Number(row.type) === 1 ? 0 : Number(row.relation_id);
     return { image, type, relationId };
   };
-  const [main, recommended] = await Promise.all([
+  const [main, recommended, labels] = await Promise.all([
     publicProductPictures(tx, list.map(row => picture(row, row.image))),
     publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256),
+    readPublicProductLabelMap(tx, env?.APP_KEY, list.flatMap(row => publicProductLabelIds(row.store_label_id))),
   ]);
   const references = list.flatMap((_, index) => [main[index], recommended[index]]);
   const images = await renderProductPictures(env?.APP_KEY, references);
   return list.map((row,index) => ({ ...row, image: images[index * 2], recommend_image: images[index * 2 + 1],
     brand_name: byBrand.get(Number(row.brand_id)) ?? '', cart_num: quantities.get(Number(row.id)) ?? 0,
+    store_label: publicProductLabelIds(row.store_label_id).flatMap(id => labels.get(id) ?? []),
     cart_button: blocked.has(Number(row.id)) ? 0 : row.cart_button }));
 }

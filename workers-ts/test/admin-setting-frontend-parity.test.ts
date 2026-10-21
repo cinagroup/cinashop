@@ -45,6 +45,9 @@ interface ThemeAuditGates {
   classifyThemeStyleCoverage: (coverage: Record<string, boolean | number>) => ReportRoute["status"];
   hasLegacyThemePresets: (code: string) => boolean;
   hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string, customerWorkShell?: string, pagePath?: string, sources?: Readonly<Record<string, string>>) => boolean;
+  hasDiyCommerceThemeBinding: (widget: string, composable: string, config: string) => boolean;
+  hasCategoryPurchaseOwnerWatch: (code: string) => boolean;
+  hasPublishedProductCardPictures: (sources: Record<string, string>) => boolean;
 }
 let compiledThemeAuditGates: ThemeAuditGates | undefined;
 
@@ -56,10 +59,10 @@ function themeAuditGates() {
   if (compiledThemeAuditGates) return compiledThemeAuditGates;
   const code = source("scripts/admin-setting-frontend-parity-audit.ts");
   const tree = ts.createSourceFile("audit.ts", code, ts.ScriptTarget.Latest, true);
-  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "resolveRegisteredThemePageSource", "hasRegisteredThemeHost"]);
+  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "resolveRegisteredThemePageSource", "hasRegisteredThemeHost", "hasDiyCommerceThemeBinding", "hasCategoryPurchaseOwnerWatch", "hasPublishedProductCardPictures"]);
   const functions = tree.statements.filter(statement => ts.isFunctionDeclaration(statement)
     && statement.name && names.has(statement.name.text));
-  expect(functions).toHaveLength(4);
+  expect(functions).toHaveLength(7);
   const output = ts.transpileModule(functions.map(statement => statement.getText(tree)).join("\n"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const scope = { exports: {}, ts, parseThemeSfc };
@@ -153,6 +156,110 @@ describe("legacy Admin setting route parity audit", () => {
     const customerWorkShell = source('../view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue');
     const delegatedSources = { 'pages/discover/index.vue': source('../view/uniapp-ts/src/pages/discover/index.vue') };
     expect(paths.filter(path => !host(source(`../view/uniapp-ts/src/${path}.vue`), shell, deliveryShell, customerWorkShell, `${path}.vue`, delegatedSources))).toEqual([]);
+  });
+
+  const commerceThemeSources = () => ({
+    widget: source('../view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue'),
+    composable: source('../view/uniapp-ts/src/composables/useDiyCommerceWidget.ts'),
+    config: source('../view/uniapp-ts/src/utils/diyCommerceConfig.ts'),
+  });
+
+  it("follows the real extracted commerce theme through value imports, the preset computation and rendered styles", () => {
+    const gate = themeAuditGates().hasDiyCommerceThemeBinding, actual = commerceThemeSources();
+    expect(gate(actual.widget, actual.composable, actual.config)).toBe(true);
+    const aliased = actual.widget.replace('import { useDiyCommerceWidget }', 'import { useDiyCommerceWidget as consumeCommerce }')
+      .replace('const state = useDiyCommerceWidget(', 'const state = consumeCommerce(');
+    expect(aliased).not.toBe(actual.widget);
+    expect(gate(aliased, actual.composable, actual.config)).toBe(true);
+    const colorAlias = actual.config.replace('import { diyThemeColor,', 'import { diyThemeColor as commerceColor,').replace('=> diyThemeColor(', '=> commerceColor(');
+    expect(colorAlias).not.toBe(actual.config);
+    expect(gate(actual.widget, actual.composable, colorAlias)).toBe(true);
+  });
+
+  it("rejects disconnected, comment-only, type-only and unrendered commerce theme links in actual source mutants", () => {
+    const gate = themeAuditGates().hasDiyCommerceThemeBinding, actual = commerceThemeSources();
+    const mutations: Array<[keyof typeof actual, string, string]> = [
+      ['widget', 'import { useDiyCommerceWidget }', 'import type { useDiyCommerceWidget }'],
+      ['widget', 'const state = useDiyCommerceWidget(', 'const state = unrelatedCommerce('],
+      ['widget', 'const {config,cards', 'const {unrelated:config,cards'],
+      ['widget', ':style="config.wrapperStyle"', ':style="unrelated.wrapperStyle"'],
+      ['widget', ':style="config.priceStyle"', ':style="unrelated.priceStyle"'],
+      ['widget', ':style="config.buttonStyle"', ':style="unrelated.buttonStyle"'],
+      ['widget', 'const state = useDiyCommerceWidget(', '// const state = useDiyCommerceWidget('],
+      ['composable', 'import { useThemeStore }', 'import type { useThemeStore }'],
+      ['composable', 'import { normalizeDiyCommerce }', 'import type { normalizeDiyCommerce }'],
+      ['composable', 'import { computed,', 'import { type computed,'],
+      ['composable', 'theme.preset', 'unrelatedPreset'],
+      ['composable', 'normalizeDiyCommerce(block(), theme.preset)', 'normalizeDiyCommerce({}, theme.preset)'],
+      ['composable', 'return { config, cards', 'return { config: unrelated, cards'],
+      ['config', 'import { diyThemeColor, diyThemeVariables }', 'import type { diyThemeColor, diyThemeVariables }'],
+      ['config', '=> diyThemeColor(', '=> unrelatedThemeColor('],
+      ['config', 'key, index, fallback, preset);', 'key, index, fallback, unrelatedPreset);'],
+      ['config', '...diyThemeVariables(block, preset)', '...{}'],
+      ['config', 'priceStyle: { color: color(', 'priceStyle: { color: unrelatedColor('],
+      ['config', "buttonStyle: { color: '#ffffff', background: gradient(", "buttonStyle: { color: '#ffffff', background: unrelatedGradient("],
+      ['config', 'const block = record(value),', 'const diyThemeColor = unrelated; const block = record(value),'],
+    ];
+    for (const [role, before, after] of mutations) {
+      expect(actual[role].includes(before), `${role}:${before}`).toBe(true);
+      const changed = { ...actual, [role]: actual[role].replaceAll(before, after) };
+      expect(gate(changed.widget, changed.composable, changed.config), `${role}:${before}`).toBe(false);
+    }
+    expect(gate(`<template><!-- ${actual.widget} --></template>`, actual.composable, actual.config)).toBe(false);
+    expect(gate(actual.widget, `/* ${actual.composable} */`, actual.config)).toBe(false);
+    expect(gate(actual.widget, actual.composable, `/* ${actual.config} */`)).toBe(false);
+  });
+
+  it("recognizes the actual shared purchase watcher for every owner dimension and synchronous reset", () => {
+    expect(themeAuditGates().hasCategoryPurchaseOwnerWatch(source('../view/uniapp-ts/src/composables/useCategoryPurchase.ts'))).toBe(true);
+  });
+
+  it("rejects losing any purchase owner dimension or disconnecting its real value watcher and reset", () => {
+    const gate = themeAuditGates().hasCategoryPurchaseOwnerWatch, actual = source('../view/uniapp-ts/src/composables/useCategoryPurchase.ts');
+    const getter = '`${auth.uid}:${auth.token}:${auth.sessionVersion}`';
+    const mutations: Array<[string, string]> = [
+      ...['uid', 'token', 'sessionVersion'].map(key => [getter, getter.replace(`\${auth.${key}}`, '${0}')] as [string, string]),
+      ['watch(() => ' + getter, 'unrelatedWatch(() => ' + getter],
+      ['ref, shallowRef, watch,', 'ref, shallowRef, type watch,'],
+      ['import { useAuthStore }', 'import type { useAuthStore }'],
+      [getter + ', () => { reset();', getter + ', () => { unrelatedReset();'],
+      ["{ flush: 'sync' }", "{ flush: 'post' }"],
+      ['  watch(() => ' + getter, '  // watch(() => ' + getter],
+      [getter, "'constant-owner'"],
+    ];
+    for (const [before, after] of mutations) {
+      expect(actual.includes(before), before).toBe(true);
+      expect(gate(actual.replaceAll(before, after)), before).toBe(false);
+    }
+  });
+
+  it("keeps both real public product picture slots connected beside the additional label batch", () => {
+    const actual = source('src/services/product/PublicProductCardData.ts');
+    expect(themeAuditGates().hasPublishedProductCardPictures({ cards: actual })).toBe(true);
+    expect(actual).toContain('[main, recommended, labels]');
+  });
+
+  it("rejects removed, swapped, detached or owner-weakened product media slots despite valid labels", () => {
+    const gate = themeAuditGates().hasPublishedProductCardPictures, actual = source('src/services/product/PublicProductCardData.ts');
+    const mutations: Array<[string, string]> = [
+      ['[main, recommended, labels]', '[recommended, main, labels]'],
+      ['publicProductPictures(tx, list.map(row => picture(row, row.image)))', 'Promise.resolve([])'],
+      ['publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256)', 'Promise.resolve([])'],
+      ['picture(row, row.image)', 'picture(row, row.recommend_image)'],
+      ['picture(row, row.recommend_image)), 256)', 'picture(row, row.image)), 256)'],
+      ['picture(row, row.recommend_image)), 256)', 'picture(row, row.recommend_image)), 512)'],
+      ['import { publicProductPictures, renderProductPictures }', 'import type { publicProductPictures, renderProductPictures }'],
+      ['await renderProductPictures(env?.APP_KEY, references)', 'await unrelatedRender(env?.APP_KEY, references)'],
+      ['[main[index], recommended[index]]', '[recommended[index], main[index]]'],
+      ['image: images[index * 2]', 'image: images[index * 2 + 1]'],
+      ['recommend_image: images[index * 2 + 1]', 'recommend_image: images[index * 2]'],
+      ['Number(row.relation_id)', 'Number(row.type)'],
+      ['readPublicProductLabelMap(tx, env?.APP_KEY, list.flatMap(row => publicProductLabelIds(row.store_label_id)))', 'unrelatedLabelRead(tx)'],
+    ];
+    for (const [before, after] of mutations) {
+      expect(actual.includes(before), before).toBe(true);
+      expect(gate({ cards: actual.replaceAll(before, after) }), before).toBe(false);
+    }
   });
 
   it("keeps city settings missing or partial until all ten-key consumers and secret write protections exist", () => {

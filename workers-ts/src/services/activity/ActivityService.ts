@@ -9,10 +9,11 @@
  *   - StoreBargainServices (lst/detail)
  *   - StoreIntegralServices (lst/detail)
  */
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import {
   legacyCategory,
   storeActivity,
+  storeBargainUserHelp,
   storeCouponIssue,
   storeCouponIssueUser,
   storeCouponUser,
@@ -398,6 +399,13 @@ export class ActivityService {
   async bargainList(pageValue?: unknown, limitValue?: unknown) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
     const rows = await this.container.storeBargainDao.list(page, limit);
+    // PHP counts initiator self-help records, not the activity's help quota.
+    // Aggregate only this real page; no participation join or write is needed.
+    const people = rows.length ? await this.container.db.select({ id: storeBargainUserHelp.bargainId,
+      count: sql<number>`COUNT(*)::int` }).from(storeBargainUserHelp)
+      .where(and(inArray(storeBargainUserHelp.bargainId, rows.map(row => row.id)), eq(storeBargainUserHelp.type, 1)))
+      .groupBy(storeBargainUserHelp.bargainId) : [];
+    const peopleById = new Map(people.map(row => [row.id, row.count]));
     const images = await renderPublishedArticleMediaReferences(this.env?.APP_KEY,rows.map(item=>item.image));
     return rows.map((item,index) => ({
       id: item.id,
@@ -413,7 +421,7 @@ export class ActivityService {
       info: item.info,
       sales: item.sales,
       stock: item.stock,
-      people: item.people,
+      people: peopleById.get(item.id) ?? 0,
       brand_name: "",
     }));
   }

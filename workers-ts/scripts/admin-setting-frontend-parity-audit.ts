@@ -294,33 +294,80 @@ export function hasPublishedProductCardPictures(sources: Record<string, string>)
   const compact = (value: string) => value.replace(/\s+/g, '').replace(/"/g, "'");
   const imported = tree.statements.some(node => ts.isImportDeclaration(node)
     && ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === '@/services/activity/ProductAssetPolicy'
+    && !node.importClause?.isTypeOnly
     && node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)
     && ['publicProductPictures', 'renderProductPictures'].every(name => node.importClause!.namedBindings
       && ts.isNamedImports(node.importClause!.namedBindings)
-      && node.importClause!.namedBindings.elements.some(binding => binding.name.text === name && (binding.propertyName?.text ?? name) === name)));
+      && node.importClause!.namedBindings.elements.some(binding => !binding.isTypeOnly && binding.name.text === name && (binding.propertyName?.text ?? name) === name)));
   const functions = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node)
     && node.name?.text === 'decoratePublicProductCards' && !!node.body);
   if (!imported || functions.length !== 1) return false;
   const body = functions[0].body!;
   const batch = body.statements.filter(ts.isVariableStatement).flatMap(statement => [...statement.declarationList.declarations])
-    .find(declaration => compact(declaration.name.getText(tree)) === '[main,recommended]');
+    .find(declaration => ['[main,recommended]', '[main,recommended,labels]'].includes(compact(declaration.name.getText(tree))));
   if (!batch?.initializer || !ts.isAwaitExpression(batch.initializer)) return false;
+  const withLabels = compact(batch.name.getText(tree)) === '[main,recommended,labels]';
   const promise = batch.initializer.expression;
   if (!ts.isCallExpression(promise) || compact(promise.expression.getText(tree)) !== 'Promise.all'
-    || promise.arguments.length !== 1 || !ts.isArrayLiteralExpression(promise.arguments[0]) || promise.arguments[0].elements.length !== 2) return false;
+    || promise.arguments.length !== 1 || !ts.isArrayLiteralExpression(promise.arguments[0]) || promise.arguments[0].elements.length !== (withLabels ? 3 : 2)) return false;
   const expected = [
     ['tx', 'list.map(row=>picture(row,row.image))'],
     ['tx', 'list.map(row=>picture(row,row.recommend_image))', '256'],
   ];
-  if (!promise.arguments[0].elements.every((element, index) => ts.isCallExpression(element)
+  if (!promise.arguments[0].elements.slice(0, 2).every((element, index) => ts.isCallExpression(element)
     && element.expression.getText(tree) === 'publicProductPictures' && element.arguments.length === expected[index].length
     && expected[index].every((arg, position) => compact(element.arguments[position].getText(tree)) === arg))) return false;
+  if (withLabels) {
+    const labelsImported = tree.statements.some(node => ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)
+      && node.moduleSpecifier.text === './PublicProductLabelData' && node.importClause && !node.importClause.isTypeOnly
+      && node.importClause.namedBindings && ts.isNamedImports(node.importClause.namedBindings)
+      && ['publicProductLabelIds', 'readPublicProductLabelMap'].every(name => node.importClause!.namedBindings && ts.isNamedImports(node.importClause!.namedBindings)
+        && node.importClause!.namedBindings.elements.some(binding => !binding.isTypeOnly && binding.name.text === name && (binding.propertyName?.text ?? name) === name)));
+    if (!labelsImported || compact(promise.arguments[0].elements[2].getText(tree)) !== 'readPublicProductLabelMap(tx,env?.APP_KEY,list.flatMap(row=>publicProductLabelIds(row.store_label_id)))') return false;
+  }
   const printed = compact(ts.createPrinter({ removeComments: true }).printNode(ts.EmitHint.Unspecified, body, tree));
   return [
+    'constpicture=(row:Record<string,unknown>,image:unknown)=>{consttype=Number(row.type)===1?0:Number(row.type),relationId=Number(row.type)===1?0:Number(row.relation_id);return{image,type,relationId};}',
     'constreferences=list.flatMap((_,index)=>[main[index],recommended[index]])',
     'constimages=awaitrenderProductPictures(env?.APP_KEY,references)',
     'returnlist.map((row,index)=>({...row,image:images[index*2],recommend_image:images[index*2+1]',
   ].every(token => printed.includes(token));
+}
+
+/** The shared purchase facade must synchronously reset its generation when
+ * any actual auth-store owner dimension changes, not just on sessionVersion. */
+export function hasCategoryPurchaseOwnerWatch(source: string): boolean {
+  const file = ts.createSourceFile('category-purchase-owner.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  if ((file as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics.length) return false;
+  function imported(module: string, name: string) {
+    const bindings = file.statements.filter(ts.isImportDeclaration).flatMap(statement => {
+      const clause = statement.importClause;
+      if (!ts.isStringLiteral(statement.moduleSpecifier) || statement.moduleSpecifier.text !== module || !clause || clause.isTypeOnly || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) return [];
+      return clause.namedBindings.elements.filter(item => !item.isTypeOnly && (item.propertyName ?? item.name).text === name).map(item => item.name.text);
+    });
+    return bindings.length === 1 ? bindings[0] : null;
+  }
+  const watch = imported('vue', 'watch'), useAuth = imported('@/stores/auth', 'useAuthStore');
+  const fn = file.statements.filter(ts.isFunctionDeclaration).find(node => node.name?.text === 'useCategoryPurchase' && node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword));
+  if (!watch || !useAuth || !fn?.body) return false;
+  const variables = fn.body.statements.filter(ts.isVariableStatement).flatMap(statement => [...statement.declarationList.declarations]);
+  const auth = variables.find(row => ts.isIdentifier(row.name) && row.initializer && ts.isCallExpression(row.initializer) && ts.isIdentifier(row.initializer.expression) && row.initializer.expression.text === useAuth);
+  if (!auth || !ts.isIdentifier(auth.name)) return false;
+  const authName = auth.name.text;
+  if (variables.some(row => ts.isIdentifier(row.name) && [watch, useAuth].includes(row.name.text)) || fn.parameters.some(row => ts.isIdentifier(row.name) && [watch, useAuth].includes(row.name.text))) return false;
+  const reset = fn.body.statements.filter(ts.isFunctionDeclaration).find(node => node.name?.text === 'reset');
+  if (!reset?.body?.statements.some(node => ts.isExpressionStatement(node) && ts.isPostfixUnaryExpression(node.expression) && node.expression.operator === ts.SyntaxKind.PlusPlusToken && ts.isIdentifier(node.expression.operand) && node.expression.operand.text === 'generation')) return false;
+  return fn.body.statements.filter(ts.isExpressionStatement).some(statement => {
+    const node = statement.expression;
+    if (!ts.isCallExpression(node) || !ts.isIdentifier(node.expression) || node.expression.text !== watch || node.arguments.length !== 3) return false;
+    const [getter, callback, options] = node.arguments;
+    if (!ts.isArrowFunction(getter) || getter.parameters.length || !ts.isTemplateExpression(getter.body) || getter.body.head.text !== '' || getter.body.templateSpans.length !== 3) return false;
+    if (!getter.body.templateSpans.every((span, index) => ts.isPropertyAccessExpression(span.expression) && ts.isIdentifier(span.expression.expression) && span.expression.expression.text === authName && span.expression.name.text === ['uid', 'token', 'sessionVersion'][index] && span.literal.text === (index === 2 ? '' : ':'))) return false;
+    if (!ts.isArrowFunction(callback) || callback.parameters.length || !ts.isBlock(callback.body)) return false;
+    const first = callback.body.statements[0];
+    return !!first && ts.isExpressionStatement(first) && ts.isCallExpression(first.expression) && ts.isIdentifier(first.expression.expression) && first.expression.expression.text === 'reset' && first.expression.arguments.length === 0
+      && ts.isObjectLiteralExpression(options) && options.properties.some(prop => ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name) && prop.name.text === 'flush' && ts.isStringLiteral(prop.initializer) && prop.initializer.text === 'sync');
+  });
 }
 
 /** Require connected current implementations, not comments or legacy fixtures. */
@@ -423,7 +470,8 @@ export function inspectProductCategoryStyleCoverage(targetScreens: string[], sou
       && has("reads", "uni.switchTab({ url: '/pages/cart/index' })"),
     actorLifecycle: has("reads", "auth.sessionVersion", "auth.token", "auth.uid", "visible.value && !disposed.value", "life === generation", "onShow", "onHide(suspend)", "onUnload",
       "cart.cancelPending()", "watch(() => auth.sessionVersion")
-      && has("purchase", "auth.sessionVersion", "auth.token", "auth.uid", "life === generation", "watch(visible", "watch(() => auth.sessionVersion"),
+      && has("purchase", "auth.sessionVersion", "auth.token", "auth.uid", "life === generation", "watch(visible")
+      && hasCategoryPurchaseOwnerWatch(sources.purchase ?? ''),
   };
 }
 
@@ -598,6 +646,109 @@ export function hasRegisteredThemeHost(pageSource: string, merchantShellSource: 
   return hasDefaultSlot(shell);
 }
 
+/** Follow the extracted commerce theme from its value imports through the
+ * returned config ref to actual SFC style bindings. Comments, type imports
+ * and unused helpers cannot stand in for a rendered theme consumer. */
+export function hasDiyCommerceThemeBinding(widgetSource: string, composableSource: string, configSource: string): boolean {
+  const parsed = parseThemeSfc(widgetSource, { filename: 'diy-commerce-theme.vue' });
+  if (parsed.errors.length || !parsed.descriptor.scriptSetup || !parsed.descriptor.template?.ast) return false;
+  const tree = (code: string) => ts.createSourceFile('diy-commerce-theme.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const widget = tree(parsed.descriptor.scriptSetup.content), composable = tree(composableSource), config = tree(configSource);
+  if ([widget, composable, config].some(file => (file as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics.length)) return false;
+  function valueImport(file: ts.SourceFile, module: string, name: string): string | null {
+    const matches = file.statements.filter(ts.isImportDeclaration).flatMap(statement => {
+      const clause = statement.importClause;
+      if (!ts.isStringLiteral(statement.moduleSpecifier) || statement.moduleSpecifier.text !== module || !clause || clause.isTypeOnly || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) return [];
+      return clause.namedBindings.elements.filter(item => !item.isTypeOnly && (item.propertyName ?? item.name).text === name).map(item => item.name.text);
+    });
+    return matches.length === 1 ? matches[0] : null;
+  }
+  function unwrap(node: ts.Expression): ts.Expression {
+    return ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node) || ts.isSatisfiesExpression(node) || ts.isNonNullExpression(node) ? unwrap(node.expression) : node;
+  }
+  const call = (node: ts.Expression | undefined, name: string | null): ts.CallExpression | undefined => node && name && ts.isCallExpression(unwrap(node)) && ts.isIdentifier((unwrap(node) as ts.CallExpression).expression) && ((unwrap(node) as ts.CallExpression).expression as ts.Identifier).text === name ? unwrap(node) as ts.CallExpression : undefined;
+  const declarations = (statements: ts.NodeArray<ts.Statement>) => statements.filter(ts.isVariableStatement).flatMap(statement => [...statement.declarationList.declarations]);
+  const declared = (rows: ts.VariableDeclaration[], name: string) => rows.find(row => ts.isIdentifier(row.name) && row.name.text === name)?.initializer;
+  function exported(file: ts.SourceFile, name: string) {
+    return file.statements.filter(ts.isFunctionDeclaration).find(fn => fn.name?.text === name && fn.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword));
+  }
+  function property(node: ts.Expression | undefined, name: string): ts.Expression | undefined {
+    if (!node || !ts.isObjectLiteralExpression(unwrap(node))) return undefined;
+    const field = (unwrap(node) as ts.ObjectLiteralExpression).properties.find(item => item.name && (ts.isIdentifier(item.name) || ts.isStringLiteral(item.name)) && item.name.text === name);
+    return field && ts.isPropertyAssignment(field) ? field.initializer : field && ts.isShorthandPropertyAssignment(field) ? field.name : undefined;
+  }
+  function member(node: ts.Expression | undefined, owner: string, key: string): boolean {
+    return !!node && ts.isPropertyAccessExpression(unwrap(node)) && ts.isIdentifier((unwrap(node) as ts.PropertyAccessExpression).expression) && ((unwrap(node) as ts.PropertyAccessExpression).expression as ts.Identifier).text === owner && (unwrap(node) as ts.PropertyAccessExpression).name.text === key;
+  }
+  const returned = (fn: ts.FunctionDeclaration) => fn.body?.statements.find(ts.isReturnStatement)?.expression;
+  const useWidget = valueImport(widget, '@/composables/useDiyCommerceWidget', 'useDiyCommerceWidget');
+  const state = declarations(widget.statements).find(row => ts.isIdentifier(row.name) && call(row.initializer, useWidget));
+  if (!state || !ts.isIdentifier(state.name)) return false;
+  const stateName = state.name.text;
+  const binding = declarations(widget.statements).filter(row => row.initializer && ts.isIdentifier(row.initializer) && row.initializer.text === stateName && ts.isObjectBindingPattern(row.name))
+    .flatMap(row => (row.name as ts.ObjectBindingPattern).elements).find(item => ts.isIdentifier(item.name) && (item.propertyName ? ts.isIdentifier(item.propertyName) && item.propertyName.text === 'config' : item.name.text === 'config'));
+  if (!binding || !ts.isIdentifier(binding.name)) return false;
+  const configBinding = binding.name.text;
+  const useTheme = valueImport(composable, '@/stores/theme', 'useThemeStore'), normalize = valueImport(composable, '@/utils/diyCommerceConfig', 'normalizeDiyCommerce'), computed = valueImport(composable, 'vue', 'computed');
+  const consumer = exported(composable, 'useDiyCommerceWidget'), normalizer = exported(config, 'normalizeDiyCommerce');
+  if (!consumer?.body || !normalizer?.body || !normalizer.parameters[1] || !ts.isIdentifier(normalizer.parameters[1].name)) return false;
+  function shadows(node: ts.Node, names: Array<string | null>): boolean {
+    let found = false;
+    function inspect(child: ts.Node) {
+      if ((ts.isVariableDeclaration(child) || ts.isParameter(child) || ts.isFunctionDeclaration(child)) && child.name && ts.isIdentifier(child.name) && names.includes(child.name.text)) found = true;
+      ts.forEachChild(child, inspect);
+    }
+    inspect(node); return found;
+  }
+  if (shadows(consumer, [useTheme, normalize, computed])) return false;
+  const consumerDeclarations = declarations(consumer.body.statements), theme = consumerDeclarations.find(row => ts.isIdentifier(row.name) && call(row.initializer, useTheme));
+  if (!theme || !ts.isIdentifier(theme.name)) return false;
+  const returnedConfig = property(returned(consumer), 'config');
+  if (!returnedConfig || !ts.isIdentifier(returnedConfig)) return false;
+  const configComputation = call(declared(consumerDeclarations, returnedConfig.text), computed), factory = configComputation?.arguments[0];
+  if (!factory || !ts.isArrowFunction(factory) || ts.isBlock(factory.body)) return false;
+  const normalized = call(factory.body, normalize);
+  const blockParameter = consumer.parameters[0]?.name;
+  if (!normalized || normalized.arguments.length !== 2 || !blockParameter || !ts.isIdentifier(blockParameter) || !call(normalized.arguments[0], blockParameter.text) || !member(normalized.arguments[1], theme.name.text, 'preset')) return false;
+  const preset = normalizer.parameters[1].name.text, normalizerDeclarations = declarations(normalizer.body.statements), result = returned(normalizer);
+  const themeColor = valueImport(config, '@/utils/diyTheme', 'diyThemeColor'), themeVariables = valueImport(config, '@/utils/diyTheme', 'diyThemeVariables');
+  if (shadows(normalizer, [themeColor, themeVariables])) return false;
+  const color = declared(normalizerDeclarations, 'color'), gradient = declared(normalizerDeclarations, 'gradient');
+  if (!color || !ts.isArrowFunction(color) || ts.isBlock(color.body) || !gradient || !ts.isArrowFunction(gradient) || ts.isBlock(gradient.body)) return false;
+  if (color.parameters.some(parameter => ts.isIdentifier(parameter.name) && parameter.name.text === preset) || gradient.parameters.some(parameter => ts.isIdentifier(parameter.name) && parameter.name.text === 'color')) return false;
+  const colorCall = call(color.body, themeColor);
+  if (!colorCall || colorCall.arguments.length !== 5 || !ts.isIdentifier(colorCall.arguments[4]) || colorCall.arguments[4].text !== preset) return false;
+  let gradientUsesColor = false;
+  function inspectGradient(node: ts.Node) { if (ts.isCallExpression(node) && call(node, 'color')) gradientUsesColor = true; ts.forEachChild(node, inspectGradient); }
+  inspectGradient(gradient.body);
+  const wrapper = property(result, 'wrapperStyle');
+  if (!wrapper || !ts.isObjectLiteralExpression(unwrap(wrapper)) || !(unwrap(wrapper) as ts.ObjectLiteralExpression).properties.some(item => {
+    if (!ts.isSpreadAssignment(item)) return false;
+    const vars = call(item.expression, themeVariables);
+    return vars?.arguments.length === 2 && ts.isIdentifier(vars.arguments[1]) && vars.arguments[1].text === preset;
+  }) || !call(property(property(result, 'priceStyle'), 'color'), 'color') || !gradientUsesColor || !call(property(property(result, 'buttonStyle'), 'background'), 'gradient')) return false;
+  const roots = parsed.descriptor.template.ast.children.filter(node => node.type !== 3 && (node.type !== 2 || node.content.trim()));
+  if (roots.length !== 1 || roots[0].type !== 1) return false;
+  type Element = Extract<typeof roots[number], { type: 1 }>;
+  function hasStyle(node: Element, className: string, styleName: string) {
+    return node.props.some(prop => prop.type === 6 && prop.name === 'class' && prop.value?.content.split(/\s+/).includes(className)) && node.props.some(prop => {
+      if (prop.type !== 7 || prop.name !== 'bind' || prop.arg?.type !== 4 || prop.arg.content !== 'style' || prop.exp?.type !== 4) return false;
+      const expression = tree(prop.exp.content).statements;
+      return expression.length === 1 && ts.isExpressionStatement(expression[0]) && member(expression[0].expression, configBinding, styleName);
+    });
+  }
+  if (!hasStyle(roots[0], 'diy-commerce', 'wrapperStyle')) return false;
+  let priceBound = false, buttonBound = false;
+  function rendered(node: Element) {
+    if (node.props.some(prop => prop.type === 7 && prop.name === 'if' && prop.exp?.type === 4 && prop.exp.content.trim() === 'false')) return;
+    priceBound ||= hasStyle(node, 'commerce-price', 'priceStyle');
+    buttonBound ||= hasStyle(node, 'promotion-action', 'buttonStyle') || hasStyle(node, 'commerce-card-action', 'buttonStyle');
+    for (const child of node.children) if (child.type === 1) rendered(child);
+  }
+  rendered(roots[0]);
+  return priceBound && buttonBound;
+}
+
 function themeStyleCoverage(inventory: Inventory): { coverage: ThemeStyleCoverage; evidence: string[]; gaps: string[] } {
   const root = resolve(workerRoot, "..");
   const read = (file: string) => existsSync(resolve(root, file)) ? readFileSync(resolve(root, file), "utf8") : "";
@@ -642,7 +793,7 @@ function themeStyleCoverage(inventory: Inventory): { coverage: ThemeStyleCoverag
     diy: contains("view/uniapp-ts/src/utils/diyTheme.ts", "diyCustomTone", "toneConfig", "preset[role]", "safeDiyColor")
       && contains("view/uniapp-ts/src/utils/diyTheme.ts", "'--view-theme': main", "'--view-priceColor': price", "'--view-gradient': gradient", "couponMoneyColor")
       && contains("view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue", "useThemeStore", "diyThemeVariables")
-      && contains("view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue", "diyThemeColor")
+      && hasDiyCommerceThemeBinding(read("view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue"), read("view/uniapp-ts/src/composables/useDiyCommerceWidget.ts"), read("view/uniapp-ts/src/utils/diyCommerceConfig.ts"))
       && contains("view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue", "diyThemeColor"),
     commonRead: contains(reader, "THEME_TEMPLATE_NAME = 'color_change'", "theme_duplicate", "theme_identity_invalid", "theme_status_invalid", "valueBytes", "REPEATABLE READ, READ ONLY")
       && contains("workers-ts/src/services/content/V2PublicCompatibilityService.ts", "new ThemeReadService", "product_category_level", "theme_issues")

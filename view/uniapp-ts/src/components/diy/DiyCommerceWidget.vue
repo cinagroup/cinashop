@@ -1,516 +1,110 @@
 <template>
-  <view v-if="visible" class="commerce-wrap" :style="outerStyle">
-    <view v-if="block.name === 'promotionList'" class="commerce-panel" :style="panelStyle">
-      <scroll-view scroll-x class="promotion-tabs">
-        <view
-          v-for="(tab, index) in promotionTabs"
-          :key="`${index}-${tab.label}`"
-          class="promotion-tab"
-          :class="{ active: index === activePromotionIndex }"
-          :style="index === activePromotionIndex ? accentStyle : undefined"
-          @tap="selectPromotion(index)"
-        >
-          <image v-if="tab.image" class="promotion-tab-image" :src="tab.image" mode="aspectFill" />
-          <text class="promotion-tab-label">{{ tab.label }}</text>
-          <text v-if="tab.description" class="promotion-tab-description">{{ tab.description }}</text>
+  <view v-if="config.enabled && (config.kind !== 'liveBroadcast' || miniProgram)" class="diy-commerce" :data-kind="config.kind" :data-component-key="config.identity" :data-style="config.style" :data-layout="config.layout" :style="config.wrapperStyle">
+    <view class="commerce-panel" :style="config.panelStyle">
+      <view v-if="config.kind === 'promotionList'" class="promotion-nav" :class="{sticky:config.stickyTabs}">
+        <scroll-view scroll-x class="promotion-tabs">
+          <button v-for="(tab,index) in config.tabs" :key="index" class="promotion-tab" :data-tab="index" :class="{active:index===selectedTab}" :style="index===selectedTab?config.promotionActiveStyle:undefined" @tap="selectPromotion(index)">
+            <image v-if="config.style===4 && tab.image" :src="tab.image" mode="aspectFill" />
+            <text>{{tab.label}}</text><text v-if="config.style===0 && tab.description" class="promotion-description" :style="index===selectedTab?config.promotionDecorationStyle:undefined">{{tab.description}}</text>
+            <view v-if="[1,2].includes(config.style) && index===selectedTab" class="promotion-line" :style="config.promotionDecorationStyle" />
+          </button>
+        </scroll-view>
+        <view v-if="config.tabs[selectedTab]?.configuredLimit > 100" class="commerce-notice">当前分组预览最多显示100项</view>
+      </view>
+      <view v-else-if="!['coupon','liveBroadcast'].includes(config.kind || '')" class="commerce-heading" :style="config.headerStyle">
+        <view class="commerce-heading-main">
+          <text v-if="config.titleMode==='text'" class="commerce-section-title" :style="config.titleStyle">{{config.title}}</text>
+          <image v-else-if="config.titleImage" class="commerce-heading-image" :src="config.titleImage" mode="aspectFit" />
+          <view v-if="config.kind==='combination' && pink" class="commerce-pink" :style="config.tipStyle"><text :style="config.dividerStyle">|</text><image v-for="(avatar,index) in pink.avatars" :key="index" :src="avatar" /><text>{{pink.pink_count}}人拼团成功</text></view>
+          <view v-else-if="config.kind==='seckill' && selectedStop" class="commerce-countdown"><text :style="config.tipStyle">距离结束</text><text class="commerce-countdown-number" :style="config.countdownStyle">{{countdown}}</text></view>
+          <text v-else-if="config.tip" class="commerce-tip" :style="config.tipStyle">{{config.tip}}</text>
         </view>
-      </scroll-view>
-      <view v-if="promotionProducts.length" class="commerce-grid">
-        <view
-          v-for="product in promotionProducts"
-          :key="product.id"
-          class="commerce-card"
-          @tap="open(`/pages/goods/detail?id=${product.id}`)"
-        >
-          <image v-if="safeImage(product.image)" class="commerce-image" :src="safeImage(product.image)" mode="aspectFill" />
-          <view class="commerce-copy">
-            <text class="commerce-title">{{ product.store_name }}</text>
-            <view class="commerce-price-row">
-              <text class="commerce-price" :style="accentTextStyle">¥{{ product.price }}</text>
-              <text class="commerce-meta">已售 {{ product.sales ?? 0 }}</text>
+        <button class="commerce-more" :disabled="!loaded || loading || !!error" :style="config.moreStyle" @tap="more">{{config.more}} ›</button>
+      </view>
+      <view v-if="loading" class="commerce-status" role="status">正在加载商城内容…</view>
+      <view v-else-if="error" class="commerce-error" role="alert">{{error}}</view>
+      <template v-else-if="loaded">
+        <view v-if="config.kind==='promotionList'" class="promotion-products commerce-grid">
+          <view v-for="product in products" :key="product.id" class="commerce-card" :data-product-id="product.id" @tap="openProduct(product.id)">
+            <image v-if="product.image" class="commerce-image" :style="config.imageStyle" :src="product.image" mode="aspectFill" />
+            <view class="commerce-copy"><text class="commerce-title" :style="config.nameStyle">{{product.store_name}}</text>
+              <view class="promotion-labels"><view v-for="label in product.labels" :key="label.id" class="promotion-label" :style="{color:label.color,background:label.background,borderColor:label.border}"><image v-if="label.icon" :src="label.icon" />{{label.name}}</view></view>
+              <text class="commerce-price" :style="config.priceStyle">¥{{product.price}}</text><text v-if="product.offer" class="promotion-vip">{{product.offer.label}} ¥{{product.offer.price}}</text>
+              <view class="commerce-meta">已售{{product.sales}}{{product.unit_name}} · 评分{{product.star}}</view>
+              <button v-if="config.showAction" class="promotion-action" :data-cart-style="config.cartStyle" :style="config.buttonStyle" :disabled="purchase.locked.value" :aria-label="config.cartMode?'选择规格加入购物车':'查看商品'" @tap.stop="promotionAction(product.id)">{{config.cartStyle===0?'购买':config.cartStyle===1?'＋':'购物车'}}</button>
             </view>
           </view>
+          <view v-if="!products.length" class="commerce-empty">当前分组暂无商品</view>
         </view>
-      </view>
-    </view>
-
-    <view v-else-if="block.name === 'coupon' && coupons.length" class="coupon-strip">
-      <view
-        v-for="coupon in coupons"
-        :key="coupon.id"
-        class="coupon-card"
-        :style="couponStyle"
-      >
-        <view class="coupon-value">
-          <text v-if="coupon.coupon_type === 2" class="coupon-number">
-            {{ discountValue(coupon.coupon_price) }}折
-          </text>
-          <text v-else class="coupon-number">¥{{ coupon.coupon_price }}</text>
-          <text class="coupon-condition">满{{ coupon.use_min_price }}可用</text>
+        <view v-else-if="config.kind==='coupon'" class="commerce-coupons" :data-coupon-layout="config.style">
+          <scroll-view scroll-x class="coupon-scroll"><view class="coupon-items">
+            <view v-for="coupon in coupons" :key="coupon.id" class="commerce-coupon" :data-coupon-id="coupon.id" :style="config.style===4?config.couponButtonStyle:config.couponStyle">
+              <text v-if="[1,3].includes(config.style)" class="coupon-scope">{{['通用券','品类券','商品券','品牌券'][coupon.type]}}</text>
+              <view class="coupon-copy"><text class="coupon-money" :style="config.couponMoneyStyle">{{coupon.coupon_type===2?`${Number(coupon.coupon_price)/10}折`:`¥${coupon.coupon_price}`}}</text><text class="coupon-condition">{{Number(coupon.use_min_price)>0?`满${coupon.use_min_price}可用`:'无门槛券'}}</text></view>
+              <button v-if="config.style!==3" class="coupon-claim" :style="config.couponButtonStyle" :disabled="coupon.is_use!==false || !!couponState(coupon.id) || !!claiming" @tap="receive(coupon.id)">{{couponLabel(coupon)}}</button>
+            </view>
+          </view></scroll-view>
+          <view v-if="config.style===3 && coupons.length" class="coupon-station" :style="config.couponButtonStyle"><text>先领券 再购物</text><text>领券下单·享购物优惠</text><button class="coupon-centre" @tap="more">立即领取</button></view>
+          <view v-if="!coupons.length" class="commerce-empty">暂无可展示的优惠券</view>
+          <view v-if="claimNotice" class="coupon-notice" role="status">{{claimNotice}}</view>
+          <button v-if="hasCouponJournal" class="coupon-reconcile" :disabled="!!claiming" @tap="reconcile">只读核对领取结果</button>
+          <button v-if="hasCouponJournal" class="coupon-wallet" @tap="more">到优惠券中心核对</button>
         </view>
-        <view class="coupon-copy">
-          <text class="coupon-title">{{ coupon.coupon_title || couponScope(coupon.type) }}</text>
-          <text class="coupon-scope">{{ couponScope(coupon.type) }}</text>
-        </view>
-        <button
-          class="coupon-button"
-          size="mini"
-          :disabled="coupon.is_use !== false || receivingCouponId === coupon.id"
-          @tap="receiveCoupon(coupon)"
-        >
-          {{ coupon.is_use === true ? '已领取' : coupon.is_use === 2 ? '已过期' : '领取' }}
-        </button>
-      </view>
-    </view>
-
-    <view v-else-if="block.name === 'liveBroadcast' && miniProgram && liveRooms.length" class="commerce-panel" :style="panelStyle">
-      <view class="commerce-heading">
-        <text>{{ sectionTitle }}</text>
-        <text class="commerce-more" @tap="open('/pages/columnGoods/live_list/index')">查看全部 ›</text>
-      </view>
-      <view class="live-grid">
-        <view v-for="room in liveRooms" :key="room.id" class="live-card" @tap="openLive(room.room_id)">
-          <image v-if="safeImage(room.cover_img)" class="live-image" :src="safeImage(room.cover_img)" mode="aspectFill" />
-          <text class="live-status">{{ liveStatus(room.live_status) }}</text>
-          <text class="commerce-title">{{ room.name }}</text>
-          <view class="live-anchor">
-            <image v-if="safeImage(room.anchor_img)" class="live-avatar" :src="safeImage(room.anchor_img)" mode="aspectFill" />
-            <text>{{ room.anchor_name || room.show_time }}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view v-else-if="cards.length" class="commerce-panel" :style="panelStyle">
-      <view class="commerce-heading">
-        <text>{{ sectionTitle }}</text>
-        <text class="commerce-more" @tap="open(moreTarget)">{{ moreLabel }} ›</text>
-      </view>
-      <scroll-view v-if="block.name === 'seckill' && seckillTimes.length" scroll-x class="seckill-times">
-        <view
-          v-for="time in seckillTimes"
-          :key="time.id"
-          class="seckill-time"
-          :class="{ active: time.id === activeSeckillId }"
-          :style="time.id === activeSeckillId ? accentStyle : undefined"
-          @tap="loadSeckillForTime(time.id)"
-        >
-          <text>{{ time.start_time }}</text>
-          <text>{{ time.state }}</text>
-        </view>
-      </scroll-view>
-      <view class="commerce-grid">
-        <view v-for="card in cards" :key="`${card.kind}-${card.id}`" class="commerce-card" @tap="open(card.target)">
-          <view class="commerce-image-wrap">
-            <image v-if="card.image" class="commerce-image" :src="card.image" mode="aspectFill" />
-            <text v-if="card.badge" class="commerce-badge" :style="accentStyle">{{ card.badge }}</text>
-          </view>
-          <view class="commerce-copy">
-            <text class="commerce-title">{{ card.title }}</text>
-            <text v-if="card.meta" class="commerce-meta">{{ card.meta }}</text>
-            <view class="commerce-price-row">
-              <text class="commerce-price" :style="accentTextStyle">{{ card.price }}</text>
-              <text v-if="card.oldPrice" class="commerce-old-price">{{ card.oldPrice }}</text>
+        <view v-else-if="config.kind==='liveBroadcast' && miniProgram" class="commerce-live" :data-live-layout="config.style">
+          <scroll-view v-if="config.style===2" scroll-x class="live-strip"><view class="live-strip-content"><view v-for="room in rooms" :key="room.id" class="live-card" :data-room-id="room.id" :style="config.liveCardStyle" @tap="openLive(room.id)"><image class="live-cover" :style="config.imageStyle" :src="room.cover_img" mode="aspectFill" /><text class="live-status" :style="config.liveStatusStyles[room.live_status]">{{liveLabel(room.live_status)}}{{room.live_status===102?` ${room.show_time}`:''}}</text><text v-if="config.checks.includes(0)" class="live-title">{{room.name}}</text><view v-if="config.checks.includes(1)" class="live-anchor"><image v-if="room.anchor_img" :src="room.anchor_img" /><text>主播：{{room.anchor_name}}</text></view></view></view></scroll-view>
+          <view v-else v-for="(room,index) in rooms" :key="room.id" class="live-card" :class="{'live-compact':config.style===3 && index>0}" :data-room-id="room.id" :style="config.liveCardStyle" @tap="openLive(room.id)">
+            <image v-if="config.style!==3 || index===0" class="live-cover" :style="config.imageStyle" :src="room.cover_img" mode="aspectFill" />
+            <view class="live-copy"><text class="live-status" :style="config.liveStatusStyles[room.live_status]">{{liveLabel(room.live_status)}}{{room.live_status===102?` ${room.show_time}`:''}}</text><text v-if="config.checks.includes(0)" class="live-title">{{room.name}}</text>
+              <view v-if="config.style===1" class="live-goods"><view v-for="goods in room.goods" :key="goods.id" :data-live-goods-id="goods.id"><image :src="goods.cover_img" mode="aspectFill" /><text>¥{{goods.price}}</text></view></view>
+              <view v-else-if="config.checks.includes(1)" class="live-anchor"><image v-if="room.anchor_img" :src="room.anchor_img" /><text>主播：{{room.anchor_name}}</text></view>
             </view>
           </view>
+          <view v-if="!rooms.length" class="commerce-empty">暂无直播间</view>
         </view>
-      </view>
+        <template v-else>
+          <scroll-view v-if="config.kind==='seckill' && slots.length" scroll-x class="commerce-slots"><button v-for="slot in slots" :key="slot.id" class="commerce-slot" :class="{active:slot.id===selectedSlot}" :data-slot-id="slot.id" :disabled="!slot.start_time || !slot.end_time" @tap="selectSeckill(slot.id)">{{slot.start_time}} {{slot.state}}</button></scroll-view>
+          <view class="commerce-cards" :class="`commerce-layout-${config.layout}`" :data-points="config.kind==='pointsMall'">
+            <view v-for="card in cards" :key="card.id" class="commerce-card" :data-card-id="card.id" @tap="openCard(card.id)">
+              <image v-if="card.image" class="commerce-image" :src="card.image" :style="config.imageStyle" mode="aspectFill" />
+              <view class="commerce-copy">
+                <text v-if="config.kind==='combination' && config.layout>=2" class="commerce-group-badge" :style="config.labelStyle">{{card.people}}人团</text>
+                <text v-if="config.kind==='pointsMall'?config.layout!==0:config.checks.includes(0)" class="commerce-title" :style="config.nameStyle">{{card.title}}</text>
+                <view v-if="config.kind==='seckill' && config.layout===0" class="commerce-progress"><view :style="{...config.progressStyle,width:`${card.percent}%`}" /><text :style="config.priceStyle">{{card.percent}}%</text></view>
+                <view v-if="config.kind==='combination' && config.checks.includes(1) && config.layout===0" class="commerce-combination-count" :style="config.labelStyle">{{card.people}}人团 · 已拼{{card.count}}份</view>
+                <text v-if="config.kind==='bargain' && (config.layout===0?config.checks.includes(1):config.layout===3 && config.checks.includes(0))" class="commerce-bargain-count" :style="config.layout===3?config.bargainSuccessStyle:config.joinStyle">{{card.people}}人{{config.layout===3?'已砍成功':'参与'}}</text>
+                <view v-if="config.kind==='pointsMall'" class="commerce-points-price" :style="config.pointsPriceStyle"><text :style="config.pointsNumberStyle">{{card.integral}}</text><text>积分 + </text><text :style="config.pointsNumberStyle">{{card.price}}</text><text>元</text></view>
+                <text v-else-if="config.checks.includes(2)" class="commerce-price" :style="config.priceStyle">¥{{card.price}}</text>
+                <text v-if="config.kind!=='pointsMall' && config.checks.includes(3) && !(config.layout===3 && ['combination','bargain'].includes(config.kind || ''))" class="commerce-old-price" :style="config.oldPriceStyle">¥{{card.oldPrice}}</text>
+                <text v-if="config.kind==='presale'" class="commerce-presale-status">{{['预售','即将开始','预售中','已结束'][card.status]}}</text>
+                <button v-if="config.showAction && (config.layout<2 || config.kind==='seckill' && config.layout===3)" class="commerce-card-action" :style="config.buttonStyle" @tap.stop="openCard(card.id)">{{actionLabel}}</button>
+              </view>
+            </view>
+          </view>
+          <view v-if="!cards.length" class="commerce-empty">{{config.kind==='seckill' && !selectedSlot?'暂无可展示的秒杀时段':'当前暂无活动商品'}}</view>
+        </template>
+        <view v-if="config.limitNotice" class="commerce-notice">{{config.limitNotice}}</view>
+      </template>
+      <view v-if="navigationNotice" class="commerce-notice" role="status">{{navigationNotice}}</view>
+      <button class="commerce-refresh" :disabled="loading" @tap="load()">{{error?'重试当前组件':'刷新内容'}}</button>
     </view>
+    <view v-if="purchase.error.value" class="commerce-purchase-error" role="alert">{{purchase.error.value}}<button v-if="purchase.needsRefresh.value" @tap="purchase.reread">重新读取购物车</button><button v-if="purchase.needsRefresh.value" @tap="goCart">到购物车核对</button></view>
+    <view v-if="purchase.opened.value" class="commerce-sku-mask" @tap="purchase.close"><view class="commerce-sku-modal" @tap.stop><view v-if="purchase.loading.value" class="commerce-status">正在读取规格…</view><CategorySkuSelection v-else-if="purchase.detail.value" :detail="purchase.detail.value" :selected="purchase.selected.value" :quantity="purchase.quantity.value" :maximum="purchase.maximum.value" :disabled="purchase.locked.value" :mode="purchase.mode.value" @choose="purchase.choose" @quantity="purchase.setQuantity" @step="purchase.step" @confirm="purchase.purchase" @close="purchase.close" /><view v-else class="commerce-status">{{purchase.error.value || '规格尚未读取'}}<button @tap="purchase.close">关闭</button></view></view></view>
   </view>
 </template>
-
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import {
-  apiBargainList,
-  apiCombinationList,
-  apiCouponList,
-  apiCouponReceive,
-  apiIntegralList,
-  apiLiveRooms,
-  apiPresaleList,
-  apiSeckillIndex,
-  apiSeckillList,
-  type BargainListItem,
-  type CombinationListItem,
-  type CouponListItem,
-  type IntegralListItem,
-  type LiveRoomListItem,
-  type PresaleListItem,
-  type SeckillListItem,
-  type SeckillTimeItem,
-} from "@/api/activity";
-import type { DiyComponent } from "@/api/diy";
-import { apiGoodsList } from "@/api/product";
-import type { GoodsItem } from "@/types/product";
-import { useAuthStore } from "@/stores/auth";
-import {
-  asDiyRecord,
-  diyList,
-  diyNumber,
-  diyText,
-  openDiyLink,
-  safeDiyImageUrl,
-} from "@/utils/diy";
-import { useThemeStore } from '@/stores/theme';
-import { diyThemeColor, diyThemeVariables } from '@/utils/diyTheme';
-
-interface CommerceCard {
-  id: number;
-  kind: string;
-  title: string;
-  image: string;
-  price: string;
-  oldPrice: string;
-  badge: string;
-  meta: string;
-  target: string;
-}
-
-interface PromotionTab {
-  label: string;
-  description: string;
-  image: string;
-  source: Record<string, unknown>;
-}
-
-const props = defineProps<{ block: DiyComponent }>();
-const auth = useAuthStore();
-const loading = ref(false);
-const seckillTimes = ref<SeckillTimeItem[]>([]);
-const activeSeckillId = ref(0);
-const seckillItems = ref<SeckillListItem[]>([]);
-const combinationItems = ref<CombinationListItem[]>([]);
-const bargainItems = ref<BargainListItem[]>([]);
-const integralItems = ref<IntegralListItem[]>([]);
-const presaleItems = ref<PresaleListItem[]>([]);
-const coupons = ref<CouponListItem[]>([]);
-const liveRooms = ref<LiveRoomListItem[]>([]);
-const promotionProducts = ref<GoodsItem[]>([]);
-const activePromotionIndex = ref(0);
-const receivingCouponId = ref(0);
-let hydration = 0;
-let promotionHydration = 0;
-let seckillHydration = 0;
-let miniProgram = false;
-// #ifdef MP-WEIXIN
-miniProgram = true;
-// #endif
-
-function bounded(value: unknown, fallback: number, min: number, max: number): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
-}
-
-function configRecord(key: string): Record<string, unknown> | null {
-  return asDiyRecord(props.block[key]);
-}
-
-function configColor(key: string, fallback: string): string {
-  return diyThemeColor(props.block, key, 0, fallback, theme.preset);
-}
-
-function safeImage(value: unknown): string {
-  return safeDiyImageUrl(value);
-}
-
-function open(target: unknown): void {
-  openDiyLink(target);
-}
-
-const limit = computed(() => bounded(diyNumber(props.block, "numberConfig", 6), 6, 1, 20));
-const outerStyle = computed<Record<string, string>>(() => ({
-  ...diyThemeVariables(props.block, theme.preset),
-  padding: `${bounded(diyNumber(props.block, "topConfig"), 0, 0, 100) * 2}rpx ${bounded(diyNumber(props.block, "prConfig"), 0, 0, 80) * 2}rpx ${bounded(diyNumber(props.block, "bottomConfig"), 0, 0, 100) * 2}rpx`,
-  marginTop: `${bounded(diyNumber(props.block, "mbConfig"), 0, 0, 100) * 2}rpx`,
-  backgroundColor: configColor("bottomBgColor", "transparent"),
-}));
-const panelStyle = computed(() => ({
-  borderRadius: `${bounded(configRecord("fillet")?.val, 12, 0, 60) * 2}rpx`,
-}));
-const theme = useThemeStore();
-const accent = computed(() => configColor("themeColor", theme.preset.theme));
-const accentStyle = computed(() => ({ backgroundColor: accent.value, color: "#ffffff" }));
-const accentTextStyle = computed(() => ({ color: 'var(--diy-price)' }));
-const couponStyle = computed(() => ({
-  borderColor: configColor("couponBgColor", accent.value),
-  backgroundColor: configColor("moduleColor", "#ffffff"),
-}));
-
-const fallbackTitles: Record<string, string> = {
-  seckill: "限时秒杀",
-  combination: "拼团精选",
-  bargain: "全民砍价",
-  presale: "预售专区",
-  pointsMall: "积分商城",
-  liveBroadcast: "直播间",
-};
-const moreTargets: Record<string, string> = {
-  seckill: "/pages/activity/index",
-  combination: "/pages/activity/index",
-  bargain: "/pages/activity/index",
-  presale: "/pages/goods/list",
-  pointsMall: "/pages/user/integral",
-};
-const sectionTitle = computed(() => (
-  diyText(props.block, "titleTxtConfig", fallbackTitles[props.block.name] ?? "精选活动").slice(0, 30)
-));
-const moreTarget = computed(() => moreTargets[props.block.name] ?? "/pages/activity/index");
-const moreLabel = computed(() => props.block.name === "pointsMall" ? "去兑换" : "更多");
-
-function textChild(item: Record<string, unknown>, index: number, fallback: string): string {
-  const children = Array.isArray(item.chiild) ? item.chiild : [];
-  const value = asDiyRecord(children[index])?.val;
-  return typeof value === "string" || typeof value === "number"
-    ? String(value).trim().slice(0, 30)
-    : fallback;
-}
-
-const promotionTabs = computed<PromotionTab[]>(() => (
-  diyList(props.block, "tabConfig", "list").slice(0, 12).flatMap((value, index) => {
-    const item = asDiyRecord(value);
-    if (!item) return [];
-    return [{
-      label: textChild(item, 0, `分组 ${index + 1}`),
-      description: textChild(item, 1, ""),
-      image: safeImage(item.image),
-      source: item,
-    }];
-  })
-));
-
-function idList(value: unknown): number[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((entry) => {
-    const item = asDiyRecord(entry);
-    return Number(item?.id ?? item?.value ?? entry);
-  }).filter((id) => Number.isSafeInteger(id) && id > 0).slice(0, 50);
-}
-
-function nestedIds(source: Record<string, unknown>, key: string, child: string): number[] {
-  return idList(asDiyRecord(source[key])?.[child]);
-}
-
-async function loadPromotion(index: number): Promise<void> {
-  const generation = ++promotionHydration;
-  const tab = promotionTabs.value[index];
-  promotionProducts.value = [];
-  if (!tab) return;
-  const source = tab.source;
-  const rawType = Number(source.tabVal ?? 0);
-  const type = rawType === 0 ? 3 : rawType;
-  const goods = asDiyRecord(source.goodsList);
-  const ids = idList(Array.isArray(goods?.ids) ? goods.ids : goods?.list);
-  const brands = nestedIds(source, "brandConfig", "brandVal");
-  const categories = nestedIds(source, "selectConfig", "activeValue");
-  const labels = nestedIds(source, "goodsLabel", "activeValue");
-  if ((type === 1 && !ids.length) || (type === 2 && !brands.length)
-    || (type === 3 && !categories.length) || (type === 4 && !labels.length)) return;
-  const sort = Number(source.goodsSort ?? 0);
-  const tabLimit = bounded(asDiyRecord(source.numConfig)?.val, limit.value, 1, 20);
-  try {
-    const result = await apiGoodsList({
-      page: 1,
-      limit: tabLimit,
-      ...(type === 1 ? { ids: ids.join(",") } : {}),
-      ...(type === 2 ? { brand_id: brands.join(",") } : {}),
-      ...(type === 3 ? { cate_id: categories.join(",") } : {}),
-      ...(type === 4 ? { store_label_id: labels.join(",") } : {}),
-      ...(sort === 1 ? { salesOrder: "desc" as const } : {}),
-      ...(sort === 2 ? { priceOrder: "desc" as const } : {}),
-    });
-    if (generation === promotionHydration) promotionProducts.value = result.list ?? [];
-  } catch {
-    if (generation === promotionHydration) promotionProducts.value = [];
-  }
-}
-
-function selectPromotion(index: number): void {
-  if (index < 0 || index >= promotionTabs.value.length) return;
-  activePromotionIndex.value = index;
-  void loadPromotion(index);
-}
-
-async function loadSeckillForTime(id: number): Promise<void> {
-  if (!Number.isSafeInteger(id) || id <= 0) return;
-  const generation = ++seckillHydration;
-  activeSeckillId.value = id;
-  try {
-    const value = await apiSeckillList(id, { page: 1, limit: limit.value });
-    if (generation === seckillHydration) seckillItems.value = value;
-  } catch {
-    if (generation === seckillHydration) seckillItems.value = [];
-  }
-}
-
-function resetData(): void {
-  seckillTimes.value = [];
-  activeSeckillId.value = 0;
-  seckillItems.value = [];
-  combinationItems.value = [];
-  bargainItems.value = [];
-  integralItems.value = [];
-  presaleItems.value = [];
-  coupons.value = [];
-  liveRooms.value = [];
-  promotionProducts.value = [];
-}
-
-async function hydrate(): Promise<void> {
-  const generation = ++hydration;
-  resetData();
-  activePromotionIndex.value = 0;
-  loading.value = true;
-  try {
-    if (props.block.name === "promotionList") {
-      await loadPromotion(0);
-    } else if (props.block.name === "seckill") {
-      const index = await apiSeckillIndex();
-      if (generation !== hydration) return;
-      seckillTimes.value = index.seckillTime.slice(0, 12);
-      const active = index.seckillTime[index.seckillTimeIndex] ?? index.seckillTime[0];
-      if (active) await loadSeckillForTime(active.id);
-    } else if (props.block.name === "combination") {
-      combinationItems.value = await apiCombinationList({ page: 1, limit: limit.value });
-    } else if (props.block.name === "bargain") {
-      bargainItems.value = await apiBargainList({ page: 1, limit: limit.value });
-    } else if (props.block.name === "pointsMall") {
-      integralItems.value = await apiIntegralList({ page: 1, limit: limit.value });
-    } else if (props.block.name === "presale") {
-      presaleItems.value = (await apiPresaleList({ page: 1, limit: limit.value, time_type: 0 })).list ?? [];
-    } else if (props.block.name === "coupon") {
-      coupons.value = (await apiCouponList({ page: 1, limit: limit.value })).list ?? [];
-    } else if (props.block.name === "liveBroadcast" && miniProgram) {
-      liveRooms.value = await apiLiveRooms({ page: 1, limit: limit.value });
-    }
-  } catch {
-    if (generation === hydration) resetData();
-  } finally {
-    if (generation === hydration) loading.value = false;
-  }
-}
-
-function money(value: unknown): string {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(2) : "0.00";
-}
-
-const cards = computed<CommerceCard[]>(() => {
-  if (props.block.name === "seckill") return seckillItems.value.slice(0, limit.value).map((item) => ({
-    id: item.id, kind: "seckill", title: item.title.slice(0, 100), image: safeImage(item.image),
-    price: `¥${money(item.price)}`, oldPrice: `¥${money(item.ot_price)}`, badge: `${item.percent}%`,
-    meta: `剩余 ${Math.max(0, item.stock)}`, target: `/pages/activity/seckillDetail?id=${item.id}`,
-  }));
-  if (props.block.name === "combination") return combinationItems.value.slice(0, limit.value).map((item) => ({
-    id: item.id, kind: "combination", title: item.title.slice(0, 100), image: safeImage(item.image),
-    price: `¥${money(item.price)}`, oldPrice: `¥${money(item.ot_price)}`, badge: `${item.people}人团`,
-    meta: `已拼 ${Math.max(0, item.pink_count)} 份`, target: `/pages/activity/detail?id=${item.id}`,
-  }));
-  if (props.block.name === "bargain") return bargainItems.value.slice(0, limit.value).map((item) => ({
-    id: item.id, kind: "bargain", title: item.title.slice(0, 100), image: safeImage(item.image),
-    price: `砍至 ¥${money(item.min_price)}`, oldPrice: `¥${money(item.ot_price)}`, badge: "砍价",
-    meta: `${Math.max(0, item.people)} 人参与`, target: `/pages/activity/bargainDetail?id=${item.id}`,
-  }));
-  if (props.block.name === "pointsMall") return integralItems.value.slice(0, limit.value).map((item) => ({
-    id: item.id, kind: "points", title: item.title.slice(0, 100), image: safeImage(item.image),
-    price: `${Math.max(0, item.integral)}积分`, oldPrice: Number(item.price) > 0 ? `+ ¥${money(item.price)}` : "",
-    badge: "积分兑", meta: `库存 ${Math.max(0, item.stock)}`, target: `/pages/activity/integralDetail?id=${item.id}`,
-  }));
-  if (props.block.name === "presale") return presaleItems.value.slice(0, limit.value).map((item) => ({
-    id: item.id, kind: "presale", title: item.store_name.slice(0, 100), image: safeImage(item.image),
-    price: `¥${money(item.price)}`, oldPrice: `¥${money(item.ot_price)}`,
-    badge: ["预售", "即将开始", "预售中", "已结束"][item.presale_pay_status] ?? "预售",
-    meta: `已售 ${Math.max(0, item.sales)}`, target: `/pages/goods/detail?id=${item.id}`,
-  }));
-  return [];
-});
-
-const visible = computed(() => loading.value
-  || cards.value.length > 0
-  || promotionProducts.value.length > 0
-  || coupons.value.length > 0
-  || (miniProgram && liveRooms.value.length > 0));
-
-function discountValue(value: unknown): string {
-  const number = Number(value) / 10;
-  return Number.isFinite(number) ? String(number) : "0";
-}
-
-function couponScope(type: number): string {
-  return ["通用券", "品类券", "商品券", "品牌券"][type] ?? "优惠券";
-}
-
-async function receiveCoupon(coupon: CouponListItem): Promise<void> {
-  if (coupon.is_use !== false || receivingCouponId.value) return;
-  if (!auth.isLoggedIn) {
-    uni.navigateTo({ url: "/pages/auth/login" });
-    return;
-  }
-  receivingCouponId.value = coupon.id;
-  try {
-    await apiCouponReceive(coupon.id);
-    coupons.value = coupons.value.map((item) => item.id === coupon.id ? { ...item, is_use: true } : item);
-    uni.showToast({ title: "领取成功", icon: "success" });
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "领取失败", icon: "none" });
-  } finally {
-    receivingCouponId.value = 0;
-  }
-}
-
-function liveStatus(status: number): string {
-  return status === 101 ? "直播中" : status === 102 ? "即将开始" : "已结束";
-}
-
-function openLive(roomId: number): void {
-  if (!Number.isSafeInteger(roomId) || roomId <= 0 || !miniProgram) return;
-  // #ifdef MP-WEIXIN
-  uni.navigateTo({
-    url: `plugin-private://wx2b03c6e691cd7370/pages/live-player-plugin?room_id=${roomId}`,
-  });
-  // #endif
-}
-
-watch(() => props.block, () => { void hydrate(); }, { immediate: true });
+import { computed } from 'vue';
+import type { DiyComponent } from '@/api/diy';
+import { useDiyCommerceWidget } from '@/composables/useDiyCommerceWidget';
+import CategorySkuSelection from '@/components/category/CategorySkuSelection.vue';
+import { openDiyLink } from '@/utils/diy';
+const props = withDefaults(defineProps<{block:DiyComponent;active?:boolean}>(),{active:true});
+const state = useDiyCommerceWidget(()=>props.block,()=>props.active);
+const {config,cards,coupons,rooms,products,slots,selectedSlot,selectedTab,pink,loading,loaded,error,claimNotice,navigationNotice,claiming,miniProgram,countdown,selectedStop,load,selectPromotion,selectSeckill,more,openCard,openProduct,promotionAction,receive,reconcile,couponState,couponLabel,hasCouponJournal,openLive,purchase} = state;
+const actionLabel = computed(()=>({seckill:config.value.layout===3?'抢':'去抢购',combination:'去拼团',bargain:'去砍价',presale:'立即预定'} as Record<string,string>)[config.value.kind || ''] || '查看详情');
+const liveLabel = (status:number)=>status===101?'直播中':status===102?'预告':'回放';
+function goCart(){if(props.active)openDiyLink('/pages/cart/index');}
 </script>
-
 <style scoped>
-.commerce-wrap { width: 100%; box-sizing: border-box; }
-.commerce-panel { margin: 0 20rpx; padding: 24rpx; overflow: hidden; background: #fff; box-sizing: border-box; }
-.commerce-heading { display: flex; margin-bottom: 20rpx; align-items: center; justify-content: space-between; color: #222; font-size: 31rpx; font-weight: 700; }
-.commerce-more { color: #999; font-size: 22rpx; font-weight: 400; }
-.commerce-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
-.commerce-card { min-width: 0; overflow: hidden; border: 1rpx solid #eee; border-radius: 14rpx; background: #fff; }
-.commerce-image-wrap { position: relative; }
-.commerce-image { display: block; width: 100%; height: 260rpx; background: #f5f5f5; }
-.commerce-badge { position: absolute; top: 10rpx; left: 10rpx; padding: 5rpx 10rpx; border-radius: 18rpx; font-size: 18rpx; }
-.commerce-copy { padding: 14rpx; }
-.commerce-title { display: -webkit-box; min-height: 66rpx; overflow: hidden; color: #333; font-size: 25rpx; line-height: 33rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.commerce-meta { display: block; margin-top: 7rpx; overflow: hidden; color: #999; font-size: 20rpx; text-overflow: ellipsis; white-space: nowrap; }
-.commerce-price-row { display: flex; min-width: 0; margin-top: 9rpx; align-items: baseline; gap: 8rpx; }
-.commerce-price { font-size: 25rpx; font-weight: 700; }
-.commerce-old-price { overflow: hidden; color: #aaa; font-size: 18rpx; text-decoration: line-through; text-overflow: ellipsis; white-space: nowrap; }
-.promotion-tabs, .seckill-times { width: 100%; margin-bottom: 22rpx; white-space: nowrap; }
-.promotion-tab { display: inline-flex; min-width: 110rpx; max-width: 190rpx; margin-right: 12rpx; padding: 12rpx 18rpx; align-items: center; border-radius: 28rpx; color: #666; background: #f5f5f5; vertical-align: top; flex-direction: column; box-sizing: border-box; }
-.promotion-tab.active { color: #fff; }
-.promotion-tab-image { width: 42rpx; height: 42rpx; margin-bottom: 5rpx; border-radius: 50%; }
-.promotion-tab-label, .promotion-tab-description { max-width: 100%; overflow: hidden; font-size: 22rpx; text-overflow: ellipsis; white-space: nowrap; }
-.promotion-tab-description { margin-top: 2rpx; font-size: 17rpx; opacity: .8; }
-.seckill-time { display: inline-flex; min-width: 120rpx; margin-right: 12rpx; padding: 10rpx 14rpx; align-items: center; border-radius: 12rpx; color: #666; background: #f5f5f5; font-size: 20rpx; vertical-align: top; flex-direction: column; }
-.coupon-strip { display: flex; margin: 0 20rpx; gap: 14rpx; overflow-x: auto; }
-.coupon-card { display: flex; min-width: 610rpx; padding: 20rpx; align-items: center; border: 2rpx solid; border-radius: 18rpx; box-sizing: border-box; }
-.coupon-value { display: flex; width: 180rpx; align-items: center; color: var(--view-priceColor, #e93323); flex-direction: column; }
-.coupon-number { font-size: 38rpx; font-weight: 700; }
-.coupon-condition, .coupon-scope { margin-top: 4rpx; color: #888; font-size: 19rpx; }
-.coupon-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; }
-.coupon-title { overflow: hidden; color: #333; font-size: 25rpx; text-overflow: ellipsis; white-space: nowrap; }
-.coupon-button { width: 100rpx; margin: 0; padding: 0; border: 0; border-radius: 28rpx; color: #fff; background: linear-gradient(180deg, var(--diy-button), var(--diy-gradient)); font-size: 21rpx; line-height: 50rpx; }
-.coupon-button::after { border: 0; }
-.coupon-button[disabled] { color: #999; background: #eee; }
-.live-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
-.live-card { position: relative; min-width: 0; }
-.live-image { width: 100%; height: 320rpx; border-radius: 14rpx; background: #f5f5f5; }
-.live-status { position: absolute; top: 10rpx; left: 10rpx; padding: 5rpx 11rpx; border-radius: 16rpx; color: #fff; background: var(--view-theme, #e93323); font-size: 18rpx; }
-.live-anchor { display: flex; margin-top: 8rpx; align-items: center; color: #888; font-size: 20rpx; }
-.live-avatar { width: 36rpx; height: 36rpx; margin-right: 8rpx; border-radius: 50%; }
+.diy-commerce{width:100%;min-width:0;box-sizing:border-box}.commerce-panel{overflow:hidden;min-width:0}.commerce-heading{display:flex;align-items:center;justify-content:space-between;padding:24rpx;gap:10rpx;background-size:100% 100%;background-repeat:no-repeat;min-height:90rpx;box-sizing:border-box}.commerce-heading-main{display:flex;align-items:center;flex-wrap:wrap;gap:12rpx;min-width:0;flex:1}.commerce-section-title{overflow-wrap:anywhere}.commerce-heading-image{width:176rpx;height:32rpx;flex-shrink:0}.commerce-tip{font-size:24rpx}.commerce-more{margin:0;padding:0;background:transparent;white-space:nowrap;flex-shrink:0;line-height:1.5}.commerce-more::after,.promotion-tab::after{border:0}.commerce-pink,.commerce-countdown{display:flex;align-items:center;font-size:22rpx;gap:8rpx}.commerce-pink image{width:36rpx;height:36rpx;border-radius:50%;margin-right:-16rpx}.commerce-pink text:last-child{margin-left:12rpx}.commerce-countdown-number{padding:4rpx 8rpx;border-radius:4rpx;font-variant-numeric:tabular-nums}.commerce-status,.commerce-error,.commerce-empty,.commerce-notice,.coupon-notice{padding:20rpx;font-size:24rpx;line-height:1.6;white-space:normal;overflow-wrap:anywhere}.commerce-error,.commerce-purchase-error{color:#a33}.commerce-refresh{font-size:23rpx;line-height:2.2;margin:12rpx 20rpx}.commerce-cards,.commerce-grid{padding:24rpx 20rpx;box-sizing:border-box}.commerce-cards{display:grid;gap:22rpx;grid-template-columns:repeat(2,minmax(0,1fr))}.commerce-card{min-width:0;overflow:hidden;background:#fff;border-radius:12rpx;white-space:normal}.commerce-image{display:block;width:100%;height:300rpx;background:#f5f5f5;flex-shrink:0}.commerce-copy{padding:12rpx;min-width:0;position:relative}.commerce-title{display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:27rpx;line-height:38rpx;overflow-wrap:anywhere}.commerce-price{display:inline-block;font-size:32rpx;font-weight:600;margin-top:10rpx}.commerce-old-price{display:block;font-size:23rpx;text-decoration:line-through;color:#999;margin-top:8rpx}.commerce-meta,.promotion-vip{font-size:22rpx;color:#777;margin-top:10rpx;overflow-wrap:anywhere}.promotion-vip{display:block;color:#8c6622}.commerce-layout-0{display:flex;flex-direction:column}.commerce-layout-0 .commerce-card{display:flex}.commerce-layout-0 .commerce-image{width:240rpx;height:240rpx}.commerce-layout-0 .commerce-copy{flex:1}.commerce-layout-2{grid-template-columns:repeat(3,minmax(0,1fr));gap:18rpx}.commerce-layout-2 .commerce-image{height:204rpx}.commerce-layout-2 .commerce-price{font-size:25rpx}.commerce-layout-3{display:flex;overflow-x:auto;flex-wrap:nowrap}.commerce-layout-3>.commerce-card{width:224rpx;flex-shrink:0}.commerce-layout-3 .commerce-image{height:224rpx}.commerce-card-action,.promotion-action{font-size:23rpx;line-height:2;margin:12rpx 0 0;padding:0 16rpx;width:max-content;max-width:100%;border-radius:28rpx}.commerce-progress{position:relative;margin:18rpx 0;width:100%;height:20rpx;background:#eee;border-radius:12rpx}.commerce-progress>view{height:100%;border-radius:12rpx}.commerce-progress>text{font-size:20rpx;position:absolute;right:0;top:20rpx}.commerce-combination-count,.commerce-bargain-count{display:block;font-size:22rpx;margin-top:12rpx;border-radius:8rpx;overflow-wrap:anywhere}.commerce-combination-count{border:1px solid;padding:4rpx}.commerce-presale-status{display:block;font-size:22rpx;color:#777;margin-top:8rpx}.commerce-points-price{font-size:23rpx;line-height:1.8;display:flex;flex-wrap:wrap;gap:3rpx;margin-top:12rpx}.commerce-points-price>text:first-child{font-size:30rpx;font-weight:600}.commerce-cards[data-points=true].commerce-layout-0{display:flex;flex-direction:row;overflow-x:auto}.commerce-cards[data-points=true].commerce-layout-0>.commerce-card{display:block;width:224rpx;flex-shrink:0}.commerce-cards[data-points=true].commerce-layout-0 .commerce-image{width:224rpx;height:224rpx}.commerce-cards[data-points=true].commerce-layout-1{grid-template-columns:repeat(3,minmax(0,1fr))}.commerce-cards[data-points=true].commerce-layout-1 .commerce-image{height:204rpx}.commerce-cards[data-points=true].commerce-layout-2{grid-template-columns:repeat(2,minmax(0,1fr))}.commerce-cards[data-points=true].commerce-layout-2 .commerce-image{height:300rpx}.commerce-slots{white-space:nowrap;padding:12rpx;box-sizing:border-box}.commerce-slot{display:inline-block;font-size:22rpx;margin:0 10rpx 0 0;line-height:2;padding:0 14rpx}.commerce-slot.active{color:var(--diy-theme);background:#f7f7f7}.promotion-nav.sticky{position:sticky;top:var(--window-top,0px);z-index:2;background:#fff}.promotion-tabs{white-space:nowrap;padding:12rpx;box-sizing:border-box}.promotion-tab{position:relative;display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;margin:0 10rpx 0 0;background:transparent;padding:10rpx 20rpx;border-radius:30rpx;font-size:28rpx;line-height:1.6;min-width:100rpx;max-width:220rpx}.promotion-tab image{width:72rpx;height:72rpx;border-radius:50%}.promotion-description{font-size:20rpx;padding:1rpx 10rpx;border-radius:20rpx}.promotion-line{height:5rpx;width:50%;position:absolute;bottom:0;left:25%}.promotion-products{columns:2;column-gap:20rpx}.promotion-products>.commerce-card{break-inside:avoid;display:inline-block;width:100%;margin-bottom:20rpx}.promotion-products .commerce-image{height:280rpx}.promotion-labels{display:flex;gap:6rpx;flex-wrap:wrap;margin-top:10rpx}.promotion-label{font-size:20rpx;line-height:1.3;border:1px solid;padding:2rpx 5rpx;display:flex;align-items:center;border-radius:6rpx}.promotion-label image{width:20rpx;height:20rpx}.promotion-action[data-cart-style='1'],.promotion-action[data-cart-style='2']{min-width:44rpx;padding:0 12rpx}.commerce-coupons{position:relative}.coupon-scroll{width:100%}.coupon-items{display:flex;white-space:nowrap;padding:20rpx;box-sizing:border-box}.commerce-coupon{display:flex;align-items:center;flex-shrink:0;min-width:260rpx;max-width:600rpx;border-radius:12rpx;overflow:hidden;white-space:normal}.coupon-copy{display:flex;flex-direction:column;align-items:center;padding:20rpx;flex:1}.coupon-money{font-size:40rpx;font-weight:700}.coupon-condition{font-size:21rpx;color:#777;white-space:nowrap}.coupon-claim{font-size:23rpx;line-height:2.2;padding:0 18rpx;flex-shrink:0;margin:10rpx;border-radius:24rpx}.coupon-claim[disabled]{opacity:.65}.coupon-scope{font-size:22rpx;padding:8rpx}.commerce-coupons[data-coupon-layout='0'] .commerce-coupon{flex-direction:column;min-width:220rpx}.commerce-coupons[data-coupon-layout='1'] .commerce-coupon{flex-direction:column;min-width:200rpx;background:#fff!important}.commerce-coupons[data-coupon-layout='2'] .commerce-coupon{border:2rpx dashed var(--diy-theme);background:#fff!important}.commerce-coupons[data-coupon-layout='2'] .coupon-claim{writing-mode:vertical-rl;line-height:1.3;width:56rpx;white-space:normal;word-break:break-all}.commerce-coupons[data-coupon-layout='3']{display:flex;align-items:stretch}.commerce-coupons[data-coupon-layout='3'] .coupon-scroll{width:66%;flex:1;min-width:0}.commerce-coupons[data-coupon-layout='3'] .commerce-coupon{flex-direction:column;min-width:200rpx;background:#fff!important}.coupon-station{width:32%;min-width:0;padding:16rpx 8rpx;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:23rpx;gap:12rpx}.coupon-station>text:nth-child(2){font-size:18rpx}.coupon-centre{font-size:22rpx;margin:0;padding:0 12rpx;line-height:2;white-space:nowrap}.commerce-coupons[data-coupon-layout='4'] .commerce-coupon{min-width:300rpx}.coupon-reconcile,.coupon-wallet{font-size:23rpx;line-height:2.2;margin:12rpx 20rpx}.commerce-live{padding:16rpx;box-sizing:border-box}.live-card{position:relative;overflow:hidden;white-space:normal}.live-cover{display:block;width:100%;height:400rpx;object-fit:cover}.live-copy{padding:16rpx}.live-title{display:block;font-size:28rpx;line-height:1.5;overflow-wrap:anywhere}.live-status{display:inline-block;font-size:22rpx;color:#fff;padding:4rpx 10rpx;border-radius:10rpx;max-width:100%;box-sizing:border-box}.live-anchor{display:flex;align-items:center;gap:8rpx;font-size:23rpx;color:#777;margin-top:10rpx}.live-anchor image{width:40rpx;height:40rpx;border-radius:50%}.commerce-live[data-live-layout='1']>.live-card{display:flex}.commerce-live[data-live-layout='1'] .live-cover{width:50%;height:236rpx}.commerce-live[data-live-layout='1'] .live-copy{flex:1;min-width:0}.live-goods{display:flex;gap:8rpx;overflow:hidden}.live-goods>view{width:96rpx;flex-shrink:0;display:flex;flex-direction:column;font-size:20rpx}.live-goods image{width:96rpx;height:96rpx}.live-strip-content{display:flex}.live-strip-content>.live-card{width:280rpx;flex-shrink:0}.live-strip-content .live-cover{height:200rpx}.commerce-live[data-live-layout='3'] .live-cover{height:670rpx}.live-compact{padding:14rpx}.commerce-sku-mask{position:fixed;inset:0;z-index:125;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}.commerce-sku-modal{width:100%;background:#fff;max-height:80vh;overflow-y:auto;border-radius:24rpx 24rpx 0 0}.commerce-purchase-error{padding:20rpx;font-size:24rpx;overflow-wrap:anywhere}
+.diy-commerce[data-kind='promotionList'] .commerce-panel{overflow:visible}.commerce-layout-1 .commerce-image{height:324rpx}.commerce-layout-2 .commerce-image{height:212rpx}.diy-commerce[data-kind='bargain'] .commerce-layout-0 .commerce-image{width:280rpx;height:280rpx}.commerce-cards[data-points=true].commerce-layout-1 .commerce-image{height:212rpx}.commerce-cards[data-points=true].commerce-layout-2 .commerce-image{height:324rpx}.commerce-coupons[data-coupon-layout='0'] .coupon-copy,.commerce-coupons[data-coupon-layout='4'] .coupon-copy{background:rgba(255,255,255,.95);border-radius:12rpx;margin:4rpx}.commerce-group-badge{font-size:22rpx;display:block;border:1px solid;padding:2rpx 6rpx;border-radius:8rpx;max-width:100%;box-sizing:border-box}
 </style>

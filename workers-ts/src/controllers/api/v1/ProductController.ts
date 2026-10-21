@@ -47,6 +47,7 @@ export async function lst(c: C) {
     store_name: q.store_name || q.keyword,
     cate_id: q.cate_id,
     brand_id: q.brand_id,
+    store_label_id: q.store_label_id,
     priceOrder: (q.priceOrder as "" | "asc" | "desc") || "",
     salesOrder: (q.salesOrder as "" | "asc" | "desc") || "",
     news: q.news ? Number(q.news) : undefined,

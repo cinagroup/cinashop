@@ -65,6 +65,9 @@ const commerce = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue"),
   "utf8",
 );
+const commerceConfig = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyCommerceConfig.ts"), "utf8");
+const commerceLoader = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyCommerceWidget.ts"), "utf8");
+const commerceData = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyCommerceData.ts"), "utf8");
 const activityClient = readFileSync(
   resolve(root, "../view/uniapp-ts/src/api/activity.ts"),
   "utf8",
@@ -267,20 +270,20 @@ describe("DIY-home frontend migration", () => {
     ]) {
       expect(activityClient).toContain(route);
     }
-    expect(commerce).toContain("type CouponListItem");
-    expect(commerce).toContain("type LiveRoomListItem");
+    expect(commerceLoader).toContain("CommerceCoupon");
+    expect(commerceLoader).toContain("CommerceRoom");
     expect(commerce).not.toContain(" as any");
     expect(commerce).not.toContain("<component");
     expect(commerce).not.toContain("v-html");
   });
 
   it("bounds commerce configuration and fails closed on empty scoped product selections", () => {
-    expect(commerce).toContain("slice(0, 12)");
-    expect(commerce).toContain("slice(0, 50)");
-    expect(commerce).toContain("bounded(diyNumber(props.block, \"numberConfig\", 6), 6, 1, 20)");
-    expect(commerce).toContain("type === 4 && !labels.length");
-    expect(commerce).toContain("safeDiyImageUrl");
-    expect(commerce).toContain("Number.isSafeInteger(roomId)");
+    expect(commerceConfig).toContain("slice(0, 12)");
+    expect(commerceConfig).toContain("value.length > 100");
+    expect(commerceConfig).toContain("kind === 'liveBroadcast' ? 50 : 10");
+    expect(commerceConfig).toContain("selected.length && limit > 0");
+    expect(commerceData).toContain("safeDiyImageUrl");
+    expect(commerceData).toContain("commerceInteger(row.room_id, 1)");
     expect(renderer).toContain("type === 4 && !labels.length");
     expect(renderer).toContain("store_label_id: labels.join");
   });

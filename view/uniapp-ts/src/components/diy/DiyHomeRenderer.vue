@@ -116,6 +116,7 @@
       <DiyCommerceWidget
         v-else-if="isCommerceWidget(block)"
         :block="block"
+        :active="pageActive"
       />
 
       <view v-else-if="block.name === 'customerService'" class="diy-service" @tap="open('/pages/user/kefu')">

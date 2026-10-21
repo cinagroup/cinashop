@@ -17,7 +17,7 @@ function gates(): Gates {
   const source = readFileSync('scripts/admin-setting-frontend-parity-audit.ts', 'utf8');
   const tree = ts.createSourceFile('category-audit.ts', source, ts.ScriptTarget.Latest, true);
   const names = new Set(['classifyProductCategoryStyleCoverage', 'categoryAuditCode', 'hasProductCategoryStyleMatrix',
-    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'hasPublishedProductCardPictures', 'inspectProductCategoryStyleCoverage']);
+    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'hasPublishedProductCardPictures', 'hasCategoryPurchaseOwnerWatch', 'inspectProductCategoryStyleCoverage']);
   const selected = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && !!node.name && names.has(node.name.text));
   expect(selected).toHaveLength(names.size);
   const result = ts.transpileModule(selected.map(node => node.getText(tree)).join('\n'),
@@ -115,7 +115,7 @@ describe('complete legacy product-category layout source coverage', () => {
     const gate = gates(), source = currentSources(gate);
     for (const [before, after] of [
       ["from '@/services/activity/ProductAssetPolicy'", "from './UncheckedProductPictures'"],
-      ['const [main, recommended] = await Promise.all([', 'const [main, recommended] = Promise.all(['],
+      ['const [main, recommended, labels] = await Promise.all([', 'const [main, recommended, labels] = Promise.all(['],
       ['publicProductPictures(tx, list.map(row => picture(row, row.image)))', 'publicProductPictures(tx, [])'],
       ['publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)), 256)', 'publicProductPictures(tx, list.map(row => picture(row, row.recommend_image)))'],
       ['picture(row, row.recommend_image)), 256', 'picture(row, row.recommend_image)), 4096'],

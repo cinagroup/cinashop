@@ -160,7 +160,7 @@ export function apiSeckillIndex(): Promise<SeckillIndexData> {
   return http.get<SeckillIndexData>("/seckill/index");
 }
 
-export function apiSeckillList(time: string | number, params: ActivityPageParams = {}): Promise<SeckillListItem[]> {
+export function apiSeckillList(time: string | number, params: ActivityPageParams & { type?: 'index' } = {}): Promise<SeckillListItem[]> {
   return http.get<SeckillListItem[]>(`/seckill/list/${encodeURIComponent(String(time))}`, params as Record<string, unknown>);
 }
 

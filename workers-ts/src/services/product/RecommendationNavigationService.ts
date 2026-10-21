@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql, type SQLWrapper } from "drizzle-orm";
 import type { Container } from "@/lib/di";
 import { storeActivity, storeBargain, storeCombination, storeSeckill, storeSeckillTime } from "@/models/schema";
 import { evaluateSeckillSchedule, seckillSlotIds } from "@/services/activity/SeckillScheduleService";
@@ -27,7 +27,20 @@ function target(productId: number, kind: Kind, id: number | null = productId, en
  * Preserve raw `activity` for existing consumers; explicit versioned IDs are additive.
  */
 export class RecommendationNavigationService {
-  constructor(private readonly container: Pick<Container, "db">) {}
+  constructor(private readonly container: Pick<Container, "db">, private readonly options: { strictOwners?: boolean } = {}) {}
+
+  /** DIY's additive preview rejects stale/foreign historical associations.
+   * Existing recommendation callers retain their established default policy. */
+  private ownerCheck(source: { productId: SQLWrapper; type: SQLWrapper; relationId: SQLWrapper; productType: SQLWrapper }) {
+    if (!this.options.strictOwners) return undefined;
+    return sql`EXISTS (SELECT 1 FROM store_product AS navigation_product
+      WHERE navigation_product.id=${source.productId}
+        AND navigation_product.type=${source.type} AND navigation_product.relation_id=${source.relationId}
+        AND navigation_product.product_type=${source.productType}
+        AND navigation_product.is_show=1 AND navigation_product.is_del=0 AND navigation_product.is_verify=1
+        AND (navigation_product.type=0 AND navigation_product.relation_id=0
+          OR navigation_product.type IN (1,2) AND navigation_product.relation_id>0))`;
+  }
 
   async decorate(list: readonly Record<string, unknown>[], now = new Date()): Promise<Record<string, unknown>[]> {
     if (list.length > MAX_PRODUCTS || !Number.isFinite(now.getTime())) throw new ValidateException("推荐导航查询参数无效");
@@ -81,6 +94,7 @@ export class RecommendationNavigationService {
     const rows = this.bounded(await this.container.db.select({ id: storeBargain.id, productId: storeBargain.productId,
       stopTime: storeBargain.stopTime }).from(storeBargain).where(and(
       inArray(storeBargain.productId, ids), eq(storeBargain.status, 1), eq(storeBargain.isDel, 0),
+      this.ownerCheck(storeBargain),
       or(isNull(storeBargain.startTime), lte(storeBargain.startTime, now)),
       or(isNull(storeBargain.stopTime), gte(storeBargain.stopTime, now)),
     )).orderBy(desc(storeBargain.sort), desc(storeBargain.id)).limit(MAX_CANDIDATES + 1));
@@ -94,6 +108,7 @@ export class RecommendationNavigationService {
     const rows = this.bounded(await this.container.db.select({ id: storeCombination.id, productId: storeCombination.productId,
       stopTime: storeCombination.stopTime }).from(storeCombination).where(and(
       inArray(storeCombination.productId, ids), eq(storeCombination.status, 1), eq(storeCombination.isShow, 1), eq(storeCombination.isDel, 0),
+      this.ownerCheck(storeCombination),
       or(isNull(storeCombination.startTime), lte(storeCombination.startTime, now)),
       or(isNull(storeCombination.stopTime), gte(storeCombination.stopTime, now)),
     )).orderBy(desc(storeCombination.sort), desc(storeCombination.id)).limit(MAX_CANDIDATES + 1));
@@ -110,6 +125,7 @@ export class RecommendationNavigationService {
         startDay: storeActivity.startDay, endDay: storeActivity.endDay, timeId: storeActivity.timeId },
     }).from(storeSeckill).leftJoin(storeActivity, eq(storeActivity.id, storeSeckill.activityId)).where(and(
       inArray(storeSeckill.productId, ids), eq(storeSeckill.status, 1), eq(storeSeckill.isShow, 1), eq(storeSeckill.isDel, 0),
+      this.ownerCheck(storeSeckill),
       or(isNull(storeSeckill.startTime), lte(storeSeckill.startTime, now)),
       // Coarse bound only. The shared evaluator applies date-only inclusive end and parent/slot rules.
       or(isNull(storeSeckill.stopTime), gte(storeSeckill.stopTime, new Date(now.getTime() - 86_400_000))),
