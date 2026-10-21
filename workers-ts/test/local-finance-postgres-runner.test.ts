@@ -73,6 +73,19 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it("admits the exact DIY community background Browser mode without external browser configuration", () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:diy-community-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER_PACKAGE_JSON');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:diy-community-browser-extra', 'audit:diy-community-browser.other'])("rejects malformed DIY community mode %s before native launch", mode => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).not.toContain('ENOENT');
+  });
   it("admits the exact main feed background Browser mode without external browser configuration", () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:community-main-feed-browser'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
@@ -99,7 +112,7 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
     expect(result.stderr).not.toContain('ENOENT');
   });
-  it.each(['product-purchase-admission', 'product-purchase-authors', 'purchase-physical-origin', 'community-social-identities', 'community-comments', 'community-engagement', 'community-availability', 'community-main-feed'])('admits exact %s native file before binary validation', name => {
+  it.each(['product-purchase-admission', 'product-purchase-authors', 'purchase-physical-origin', 'community-social-identities', 'community-comments', 'community-engagement', 'community-availability', 'community-main-feed', 'diy-community'])('admits exact %s native file before binary validation', name => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `test/${name}-postgres.test.ts`],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
     expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');

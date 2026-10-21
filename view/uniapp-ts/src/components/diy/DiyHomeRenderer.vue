@@ -185,15 +185,7 @@
         </template>
       </view>
 
-      <view v-else-if="block.name === 'community' && videos.length" class="diy-section">
-        <view class="diy-section-title">{{ componentText(block, 'titleTxtConfig', '精选视频') }}</view>
-        <scroll-view scroll-x class="diy-horizontal-scroll">
-          <view v-for="video in videos" :key="video.id" class="diy-video-preview">
-            <image class="diy-video-poster" :src="safeImage(video.image)" mode="aspectFill" />
-            <text class="diy-rank-name">{{ video.desc }}</text>
-          </view>
-        </scroll-view>
-      </view>
+      <DiyCommunityWidget v-else-if="block.name === 'community'" :block="block" :active="pageActive" />
 
       <DiyEditorialWidget
         v-else-if="isEditorialWidget(block)"
@@ -233,13 +225,11 @@ import {
   apiDiyProductRank,
   apiDiySign,
   apiDiyUserInfo,
-  apiDiyVideoList,
   type DiyComponent,
   type DiyNewcomerData,
   type DiyProductRanks,
   type DiySignData,
   type DiyUserInfo,
-  type DiyVideoItem,
 } from "@/api/diy";
 import { apiArticleList, type ArticleListItem } from "@/api/article";
 import { apiGoodsList } from "@/api/product";
@@ -259,6 +249,7 @@ import {
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
+import DiyCommunityWidget from "./DiyCommunityWidget.vue";
 import { useThemeStore } from '@/stores/theme';
 import { diyThemeVariables } from '@/utils/diyTheme';
 
@@ -271,8 +262,10 @@ interface MenuItem {
 const props = withDefaults(defineProps<{
   components: DiyComponent[];
   microPage?: boolean;
+  pageActive?: boolean;
 }>(), {
   microPage: false,
+  pageActive: true,
 });
 function showProductSales(block: DiyComponent) {
   const choices = asDiyRecord(block.checkboxInfo)?.type;
@@ -291,7 +284,6 @@ const newcomer = ref<DiyNewcomerData>({
 });
 const sign = ref<DiySignData | null>(null);
 const userInfo = ref<DiyUserInfo | null>(null);
-const videos = ref<DiyVideoItem[]>([]);
 let hydration = 0;
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
 const COMMERCE_WIDGET_NAMES = new Set([
@@ -496,9 +488,6 @@ async function hydrate(): Promise<void> {
       : Promise.resolve(),
     names.has("userInfor")
       ? apiDiyUserInfo().then((value) => { userInfo.value = Array.isArray(value) ? null : value; }).catch(() => undefined)
-      : Promise.resolve(),
-    names.has("community")
-      ? apiDiyVideoList(1, 10).then((value) => { videos.value = value; }).catch(() => undefined)
       : Promise.resolve(),
   ]);
   if (generation === hydration) productLists.value = nextProductLists;

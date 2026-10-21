@@ -9,6 +9,7 @@
     <DiyHomeRenderer
       v-else-if="page && isDiyEnabled(page.is_show)"
       :components="page.value"
+      :page-active="diyCommunityVisible"
       micro-page
     />
     <view v-else class="diy-state">微页面暂未开放</view>
@@ -20,11 +21,17 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
-import { onLoad, onPullDownRefresh } from "@dcloudio/uni-app";
+import { onLoad, onShow, onHide, onUnload, onPullDownRefresh } from "@dcloudio/uni-app";
 import type { DiyPage } from "@/api/diy";
 import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
 import { diyPageStyle, isDiyEnabled, loadDiyPage } from "@/utils/diy";
+
+const diyCommunityVisible = ref(false);
+let diyCommunityDisposed = false;
+onShow(() => { if (!diyCommunityDisposed) diyCommunityVisible.value = true; });
+onHide(() => { diyCommunityVisible.value = false; });
+onUnload(() => { diyCommunityDisposed = true; diyCommunityVisible.value = false; });
 
 const pageId = ref(0);
 const page = ref<DiyPage | null>(null);

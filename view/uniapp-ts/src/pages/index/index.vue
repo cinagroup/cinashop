@@ -25,7 +25,7 @@
 
     <view v-if="diyLoading && !diyPage" class="diy-state">正在加载首页…</view>
     <view v-else-if="diyPage" class="diy-home" :style="diyStyle">
-      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" />
+      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyCommunityVisible" />
       <view v-else class="diy-state">首页暂未开放</view>
     </view>
 
@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, onBeforeUnmount, ref, onMounted } from "vue";
-import { onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
+import { onShow, onHide, onUnload, onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
 import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
@@ -119,6 +119,12 @@ import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
 import { diyPageStyle, isDiyEnabled, loadDiyPage, openDiyLink } from "@/utils/diy";
 import { apiShareConfig, type ShareConfig } from "@/api/public";
+
+const diyCommunityVisible = ref(false);
+let diyCommunityDisposed = false;
+onShow(() => { if (!diyCommunityDisposed) diyCommunityVisible.value = true; });
+onHide(() => { diyCommunityVisible.value = false; });
+onUnload(() => { diyCommunityDisposed = true; diyCommunityVisible.value = false; });
 
 const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
