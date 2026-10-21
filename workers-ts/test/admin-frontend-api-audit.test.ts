@@ -55,6 +55,12 @@ const current = JSON.parse(readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts.json"), "utf8")) as ApiAuditReport;
 const merged = JSON.parse(readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-merged-work-branches-20261015.json"), "utf8")) as ApiAuditReport;
+const rootSourceRefresh = JSON.parse(readFileSync(
+  join(workerRoot, "audit", "admin-api-root-source-refresh-20261021.json"), "utf8")) as {
+    route_file: string; before_sha256: string; after_sha256: string; inserted_line: number;
+    inserted_source: string; shifted_route_records: number; historical_report_file: string;
+    historical_report_sha256: string; current_report_sha256: string;
+  };
 const historicalRaw = readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json"),
   "utf8",
@@ -97,7 +103,30 @@ describe("Admin frontend API registration audit", () => {
 
   it("recomputes the same deterministic report from the current frontend and routes", () => {
     expect(buildAdminFrontendApiAuditReport()).toEqual(current);
-    expect(current).toEqual(merged);
+  });
+
+  it("retains the dated Admin inventory and records only the authenticated video root-source increment", () => {
+    expect(rootSourceRefresh.route_file).toBe("workers-ts/src/routes/v1/index.ts");
+    expect(rootSourceRefresh.inserted_source).toBe('v1Routes.post("/upload/video", authMiddleware({ force: true }), AttachmentController.userUploadVideo);');
+    const routeSource = readFileSync(join(workerRoot, "..", rootSourceRefresh.route_file), "utf8");
+    expect(routeSource.split("\n")[rootSourceRefresh.inserted_line - 1]).toBe(rootSourceRefresh.inserted_source);
+    expect(createHash("sha256").update(routeSource.replace(rootSourceRefresh.inserted_source + "\n", "")).digest("hex"))
+      .toBe(rootSourceRefresh.before_sha256);
+    expect(createHash("sha256").update(readFileSync(join(workerRoot, "..", rootSourceRefresh.historical_report_file))).digest("hex"))
+      .toBe(rootSourceRefresh.historical_report_sha256);
+    expect(rootSourceRefresh.historical_report_sha256).toBe("707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8");
+    const expected = structuredClone(merged);
+    const proof = expected.backend.rootRouteSources!.find(row => row.file === rootSourceRefresh.route_file)!;
+    expect(proof.sha256).toBe(rootSourceRefresh.before_sha256);
+    proof.sha256 = rootSourceRefresh.after_sha256;
+    let shifted = 0;
+    for (const route of expected.backend.registeredRoutes) {
+      if (route.source === rootSourceRefresh.route_file && route.line >= rootSourceRefresh.inserted_line) { route.line++; shifted++; }
+    }
+    expect(shifted).toBe(rootSourceRefresh.shifted_route_records);
+    expect(current).toEqual(expected);
+    expect(createHash("sha256").update(readFileSync(join(workerRoot, "audit", "admin-frontend-api-contracts.json"))).digest("hex"))
+      .toBe(rootSourceRefresh.current_report_sha256);
   });
 
   it("expands the moderation mode type alias into both registered form routes", () => {

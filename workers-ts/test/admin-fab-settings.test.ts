@@ -12,6 +12,7 @@ const values = () => ({ ...fabDefaults(), main_ago_image: '/legacy/main.png', bu
 describe('complete FAB input and historical numeric preservation', () => {
   it('keeps the exact opaque navigation registry equal to the real Uniapp registry', () => {
     const shared = [
+      ['communityRoute', ['resolveCommunityPageRoute']],
       ['customerWorkRoute', ['resolveCustomerWorkPageRoute']],
       ['divisionStaff', ['divisionStaffInviteReturnPath', 'parseDivisionStaffInviteRoute']],
     ] as const;
@@ -33,7 +34,7 @@ describe('complete FAB input and historical numeric preservation', () => {
         expect(realpathSync(fileURLToPath(new URL(`${specifier}.ts`, file))))
           .toBe(realpathSync(fileURLToPath(new URL(`../../view/common/${module}.ts`, import.meta.url))));
       }
-      // Remove only the two proved dependency declarations. Every route and
+      // Remove only the proved dependency declarations. Every route and
       // resolver branch must still be identical across the two real consumers.
       // Every remaining declaration, registered page, alias and resolver branch is equal.
       const body = ts.factory.updateSourceFile(parsed, parsed.statements.filter(statement => !imports.includes(statement as ts.ImportDeclaration)));

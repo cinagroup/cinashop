@@ -10,14 +10,19 @@ import { REGISTERED_PAGE_ROUTES as serverPageRoutes, resolveRegisteredPageRoute 
 const read=(file:string)=>readFileSync(file,'utf8');
 // Run only the pure inspection function: the historical CLI report writer is
 // never imported or executed, and all original dated JSON remains untouched.
-function gate(){
+function themeHostGates(){
  const source=read('scripts/admin-setting-frontend-parity-audit.ts'),tree=ts.createSourceFile('audit.ts',source,ts.ScriptTarget.Latest,true);
- const functions=tree.statements.filter((statement):statement is ts.FunctionDeclaration=>ts.isFunctionDeclaration(statement)&&statement.name?.text==='hasRegisteredThemeHost');
- expect(functions).toHaveLength(1);
- const output=ts.transpileModule(functions[0].getText(tree),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- const context={exports:{} as {hasRegisteredThemeHost?:(page:string,shell:string,deliveryShell?:string,customerWorkShell?:string)=>boolean},ts,parseThemeSfc};runInNewContext(output,context,{timeout:3000});
- return context.exports.hasRegisteredThemeHost!;
+ const names=new Set(['resolveRegisteredThemePageSource','hasRegisteredThemeHost']);
+ const functions=tree.statements.filter((statement):statement is ts.FunctionDeclaration=>ts.isFunctionDeclaration(statement)&&!!statement.name&&names.has(statement.name.text));
+ expect(functions).toHaveLength(2);
+ const output=ts.transpileModule(functions.map(statement=>statement.getText(tree)).join('\n'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const context={exports:{} as {
+  hasRegisteredThemeHost?:(page:string,shell:string,deliveryShell?:string,customerWorkShell?:string,pagePath?:string,sources?:Readonly<Record<string,string>>)=>boolean;
+  resolveRegisteredThemePageSource?:(page:string,pagePath?:string,sources?:Readonly<Record<string,string>>)=>string|null;
+ },ts,parseThemeSfc};runInNewContext(output,context,{timeout:3000});
+ return context.exports;
 }
+const gate=()=>themeHostGates().hasRegisteredThemeHost!;
 const shell=()=>read('../view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue');
 const deliveryShell=()=>read('../view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue');
 const customerWorkShell=()=>read('../view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue');
@@ -25,12 +30,15 @@ const merchant=(tag='MerchantShell',path='@/components/merchantOrders/MerchantSh
 const delivery=(tag='DeliveryShell',path='@/components/deliveryWorkbench/DeliveryShell.vue',binding='DeliveryShell')=>'<template><'+tag+'><view>Actual delivery content</view></'+tag+'></template><script setup lang="ts">import '+binding+' from '+JSON.stringify(path)+';</script>';
 const customerWork=(tag='CustomerWorkShell',path='@/components/customerWork/CustomerWorkShell.vue',binding='CustomerWorkShell')=>'<template><'+tag+'><view>Actual customer work content</view></'+tag+'></template><script setup lang="ts">import '+binding+' from '+JSON.stringify(path)+';</script>';
 const direct='<template><ThemePage><view>Real content</view></ThemePage></template><script setup>import ThemePage from "@/components/ThemePage.vue";</script>';
+const communityAlias=(script='import CommunityWorkspace from "./index.vue"; export default CommunityWorkspace;')=>`<script lang="ts">${script}</script>`;
+const communityPage='pages/discover/workspace.vue',communitySources={'pages/discover/index.vue':direct};
 describe('registered theme host actual SFC import/root/default-slot chain',()=>{
  it('covers every current registered page including merchant delivery and the ordinary cashier customer work consumer',()=>{
   const registry=JSON.parse(read('../view/uniapp-ts/src/pages.json')) as {pages:{path:string}[];subPackages?:{root:string;pages:{path:string}[]}[]};
   const paths=[...registry.pages.map(row=>row.path),...(registry.subPackages??[]).flatMap(group=>group.pages.map(row=>group.root+'/'+row.path))],check=gate();
   expect(paths.length).toBeGreaterThan(0);expect(new Set(paths).size).toBe(paths.length);
-  const missing=paths.filter(path=>!check(read('../view/uniapp-ts/src/'+path+'.vue'),shell(),deliveryShell(),customerWorkShell()));expect(missing).toEqual([]);
+  const sources={'pages/discover/index.vue':read('../view/uniapp-ts/src/pages/discover/index.vue')};
+  const missing=paths.filter(path=>!check(read('../view/uniapp-ts/src/'+path+'.vue'),shell(),deliveryShell(),customerWorkShell(),path+'.vue',sources));expect(missing).toEqual([]);
   const merchants=paths.filter(path=>path.startsWith('pages/merchant/'));expect(merchants).toHaveLength(6);
   for(const path of merchants)expect(check(read('../view/uniapp-ts/src/'+path+'.vue'),shell().replace('<slot />','<view>Detached empty wrapper</view>')),path).toBe(false);
   const deliveries=paths.filter(path=>path.startsWith('pages/delivery/'));expect(deliveries.sort()).toEqual(['pages/delivery/index','pages/delivery/orderDetail','pages/delivery/scanDetail','pages/delivery/scanning']);
@@ -45,6 +53,84 @@ describe('registered theme host actual SFC import/root/default-slot chain',()=>{
   for(const path of customers)expect(check(read('../view/uniapp-ts/src/'+path+'.vue'),shell(),deliveryShell(),customerWorkShell().replace('<slot />','<view>Detached empty wrapper</view>')),path).toBe(false);
  });
  it('keeps an actual direct ThemePage root as a host without needing a wrapper',()=>expect(gate()(direct,'')).toBe(true));
+ it('resolves the reviewed runtime page export to the supplied actual source and checks its real host',()=>{
+  const gates=themeHostGates(),actual=read('../view/uniapp-ts/src/pages/discover/index.vue'),alias=read('../view/uniapp-ts/src/pages/discover/workspace.vue'),sources={'pages/discover/index.vue':actual};
+  expect(gates.resolveRegisteredThemePageSource!(alias,communityPage,sources)).toBe(actual);
+  expect(gates.hasRegisteredThemeHost!(alias,'','','',communityPage,sources)).toBe(true);
+  expect(gate()(communityAlias('import ReviewedPage from "./index.vue"; export default ReviewedPage;'),'','','',communityPage,communitySources)).toBe(true);
+ });
+ it('requires the exact alias page path and supplied own target source',()=>{
+  const check=gate(),alias=communityAlias();
+  for(const route of ['', 'pages/discover/other.vue', '/pages/discover/workspace.vue', 'pages/discover/workspace'])expect(check(alias,'','','',route,communitySources),route).toBe(false);
+  for(const sources of [{},{'pages/discover/index.vue':''},{'pages/discover/index.vue':'   '},Object.create(communitySources) as Record<string,string>])expect(check(alias,'','','',communityPage,sources)).toBe(false);
+ });
+ it('rejects fake commented type-only named namespace and extra runtime imports',()=>{
+  const check=gate();
+  for(const script of [
+   'import CommunityWorkspace from "./fake.vue"; export default CommunityWorkspace;',
+   '// import CommunityWorkspace from "./index.vue";\nexport default CommunityWorkspace;',
+   'import type CommunityWorkspace from "./index.vue"; export default CommunityWorkspace;',
+   'import {default as CommunityWorkspace} from "./index.vue"; export default CommunityWorkspace;',
+   'import * as CommunityWorkspace from "./index.vue"; export default CommunityWorkspace;',
+   'import CommunityWorkspace,{other} from "./index.vue"; export default CommunityWorkspace;',
+   'import CommunityWorkspace from "./index.vue"; import "./side-effect"; export default CommunityWorkspace;',
+   'import CommunityWorkspace from "./index.vue" with {type:"json"}; export default CommunityWorkspace;',
+  ])expect(check(communityAlias(script),'','','',communityPage,communitySources),script).toBe(false);
+ });
+ it('rejects alternate default expressions missing exports shadowing and malformed alias scripts',()=>{
+  const check=gate();
+  for(const script of [
+   'import CommunityWorkspace from "./index.vue";',
+   'import CommunityWorkspace from "./index.vue"; export default OtherPage;',
+   'import CommunityWorkspace from "./index.vue"; export default {...CommunityWorkspace};',
+   'import CommunityWorkspace from "./index.vue"; export default defineComponent(CommunityWorkspace);',
+   'import CommunityWorkspace from "./index.vue"; export {CommunityWorkspace as default};',
+   'import CommunityWorkspace from "./index.vue"; export = CommunityWorkspace;',
+   'import CommunityWorkspace from "./index.vue"; const CommunityWorkspace={}; export default CommunityWorkspace;',
+   'import CommunityWorkspace from "./index.vue"; CommunityWorkspace={}; export default CommunityWorkspace;',
+   'import CommunityWorkspace from "./index.vue"; export default CommunityWorkspace +;',
+  ])expect(check(communityAlias(script),'','','',communityPage,communitySources),script).toBe(false);
+ });
+ it('rejects non-thin alias SFCs script sources and unreviewed script modes',()=>{
+  const check=gate();
+  for(const source of [communityAlias()+'<style>.unrelated{color:red}</style>',communityAlias()+'<docs>unreviewed</docs>',communityAlias()+'<script setup>const value=1</script>',communityAlias().replace('lang="ts"','lang="tsx"'),communityAlias().replace('lang="ts"','src="./index.vue"'),communityAlias().replace('lang="ts"','context="module"')])expect(check(source,'','','',communityPage,communitySources),source).toBe(false);
+ });
+ it('rejects self or mutual alias cycles and malformed or unhosted delegated pages',()=>{
+  const check=gate();
+  for(const source of [communityAlias(),communityAlias('import Workspace from "./workspace.vue"; export default Workspace;'),direct.replace('</ThemePage>','</WrongHost>'),direct.replace('import ThemePage','import type ThemePage'),direct.replace('ThemePage.vue','FakeThemePage.vue'),direct.replace('</script>','const broken=;</script>'),direct+'<script>export default {broken: ;}</script>',direct+'<script src="./unprovided.ts"></script>','<template><view>No theme host</view></template><script setup>const value=1;</script>'])expect(check(communityAlias(),'','','',communityPage,{'pages/discover/index.vue':source}),source).toBe(false);
+ });
+ it('accepts matching omitted js and ts script modes for both direct and delegated pages',()=>{
+  const check=gate();
+  for(const lang of ['', 'js', 'ts']) {
+   const attribute=lang?` lang="${lang}"`:'',setup=direct.replace('<script setup>',`<script setup${attribute}>`);
+   for(const source of [setup,setup+`<script${attribute}>export default {};</script>`]) {
+    expect(check(source,''),lang).toBe(true);
+    expect(check(communityAlias(),'','','',communityPage,{'pages/discover/index.vue':source}),lang).toBe(true);
+   }
+  }
+ });
+ it('rejects mixed declared normal and setup languages for direct and delegated pages',()=>{
+  const check=gate();
+  for(const [setupLang,normalLang] of [['ts','js'],['js','ts'],['','js'],['js',''],['','ts'],['ts','']]) {
+   const setup=direct.replace('<script setup>',`<script setup${setupLang?` lang="${setupLang}"`:''}>`);
+   const source=setup+`<script${normalLang?` lang="${normalLang}"`:''}>export default {};</script>`;
+   expect(check(source,''),`${setupLang}/${normalLang}`).toBe(false);
+   expect(check(communityAlias(),'','','',communityPage,{'pages/discover/index.vue':source}),`${setupLang}/${normalLang}`).toBe(false);
+  }
+ });
+ it('rejects unreviewed script languages in direct delegated and shell sources',()=>{
+  const check=gate();
+  for(const lang of ['coffee','tsx','jsx']) {
+   const setup=direct.replace('<script setup>',`<script setup lang="${lang}">`);
+   expect(check(setup,''),lang).toBe(false);
+   expect(check(communityAlias(),'','','',communityPage,{'pages/discover/index.vue':setup}),lang).toBe(false);
+   expect(check(merchant(),shell().replace('<script setup lang="ts">',`<script setup lang="${lang}">`)),lang).toBe(false);
+  }
+ });
+ it('applies the same normal and setup mode consistency rule inside reviewed shells',()=>{
+  const detached=shell()+'<script lang="js">export default {};</script>';
+  expect(gate()(merchant(),detached)).toBe(false);
+ });
  it('rejects the correct component name imported from a different file',()=>expect(gate()(merchant('MerchantShell','@/components/FakeMerchantShell.vue'),shell())).toBe(false));
  it('rejects a matching import string that exists only in a comment',()=>expect(gate()(merchant().replace('import MerchantShell','// import MerchantShell'),shell())).toBe(false));
  it('rejects type-only imports with no runtime component binding',()=>expect(gate()(merchant().replace('import MerchantShell','import type MerchantShell'),shell())).toBe(false));

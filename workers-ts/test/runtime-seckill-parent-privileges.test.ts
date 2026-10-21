@@ -9,6 +9,7 @@ import { installSeckillParentRuntimeUpgradeInTransaction, runSeckillParentRuntim
 import { inspectSeckillParentRuntimeSequence } from '../src/migrations/seckillParentRuntimeCatalog';
 import { SECKILL_SCHEDULE_LOCK_BOUNDARY as boundary } from '../src/migrations/runtimeSeckillScheduleLockBoundary';
 import { removePromotionGiftFixtureGrants } from './helpers/runtimeHistoricalProfile';
+import { registeredTableNames } from './helpers/registeredCatalogCohort';
 
 type Peer=SequenceRunnerPeer & {role:string};
 type Target={database:string;maintenance:string;app:string;admin:string};
@@ -55,7 +56,10 @@ native('fixed Admin parent forward after app schedule authority (real LOGIN)',()
         AND a.attnum>0 AND NOT a.attisdropped ORDER BY kind,oid`);
   async function allRows() {
     const tables=await f.exec("SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname");
-    expect(tables).toHaveLength(280);
+    // This fixture drops exactly these two template tables, while retaining
+    // every other registered relation, including physical-origin evidence.
+    const dropped = new Set(['store_coupon_template', 'store_coupon_template_issue']);
+    expect(tables.map(row=>row.name)).toEqual(registeredTableNames('embedded').filter(name=>!dropped.has(name)));
     for(const row of tables)expect(String(row.name)).toMatch(/^[a-z_][a-z_0-9]*$/);
     return f.exec(tables.map(row=>`SELECT '${row.name}' AS name,coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) AS rows FROM public."${row.name}" t`).join(' UNION ALL ')+' ORDER BY name');
   }

@@ -13,6 +13,7 @@ import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBus
 import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
+import { registeredTableNames } from './helpers/registeredCatalogCohort';
 
 type Fixture = Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
 const receipt = (operation: string, state: 'committed' | 'not_applied' = 'committed', result: object | null = { id: 22, created: false }) => ({
@@ -121,7 +122,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff rec
 });
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff receipt extension of complete commissioned runtime profiles', () => {
-  it('preserves all 283 tables, rows and privileges, with independent app/Admin LOGINs and drift rejection', async () => {
+  it('preserves the exact registered table cohort plus the Admin receipt, rows and privileges, with independent app/Admin LOGINs and drift rejection', async () => {
     const whole = await refundRuntimeFixture();
     try {
       if (!whole.withRuntimeRole) throw Error('Actual independent runtime LOGINs required');
@@ -133,7 +134,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff rec
         await whole.db.insert(adminAuthorityOperation).values([receipt('admin-save'), receipt('role-delete', 'not_applied', null)]);
         const rows = async (db: Pick<DbClient, 'execute'> = whole.db) => {
           const tables = Array.from(await db.execute(sql`SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`));
-          expect(tables).toHaveLength(283);
+          expect(tables.map(row => row.relname)).toEqual([...registeredTableNames('embedded'), 'admin_authority_operation'].sort());
           return Array.from(await db.execute(sql.raw(tables.map(row => {
             const table = String(row.relname); expect(table).toMatch(/^[a-z_][a-z_0-9]*$/);
             return `SELECT '${table}' AS name,coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) AS rows FROM public."${table}" t`;
@@ -146,7 +147,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy staff rec
         expect(unchanged(installed)).toEqual(unchanged(before)); expect(installed).toHaveLength(before.length); expect(await rows()).toEqual(beforeRows);
         for (const [kind, peer] of [['app', app], ['admin', admin]] as const) {
           const report = await auditRuntimeBusinessPrivileges(peer.db, kind, target);
-          expect(report, JSON.stringify(report)).toMatchObject({ ready: true, failures: [], tableCount: 283, readOnly: true });
+          expect(report, JSON.stringify(report)).toMatchObject({ ready: true, failures: [], tableCount: registeredTableNames('embedded').length + 1, readOnly: true });
         }
         await admin.db.transaction(tx => assertAdminLegacyAdminOperationReady(tx));
         await expect(app.exec('SELECT * FROM public.admin_authority_operation')).rejects.toMatchObject({ code: '42501' });

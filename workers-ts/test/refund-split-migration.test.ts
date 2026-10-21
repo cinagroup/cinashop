@@ -242,7 +242,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('refund split con
     const whole=await sequenceRunnerDatabase();
     try {
       if(path==='external') {
-        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0178_product_save_effects.sql');
+        const files=readdirSync('migrations').filter(n=>/^\d+.*\.sql$/.test(n)).sort();assertExternalMigrationCohort(files);expect(files.at(-1)).toBe('0184_purchase_physical_origin_evidence.sql');
         for(const file of files) await whole.db.transaction(tx=>tx.execute(sql.raw(readFileSync(`migrations/${file}`,'utf8'))));
       }else if(path==='embedded') {
         expect(await new MigrationService(createContainerFromDb(whole.db)).runAll()).toEqual({executed:Array.from({length: 185},(_,i)=>String(i).padStart(4,'0')),errors:[]});

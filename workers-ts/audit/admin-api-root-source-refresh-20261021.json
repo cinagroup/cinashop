@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-21",
+  "base_commit": "715b0395d01ff83df096d9fc981d2a342c9102c7",
+  "previous_route_commit": "1d603000",
+  "route_file": "workers-ts/src/routes/v1/index.ts",
+  "before_sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+  "after_sha256": "d15ab16f0e39619b9150112b12523fc63991f2446a6d4f6d8004d53696b3372b",
+  "inserted_line": 928,
+  "inserted_source": "v1Routes.post(\"/upload/video\", authMiddleware({ force: true }), AttachmentController.userUploadVideo);",
+  "shifted_route_records": 716,
+  "historical_report_file": "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json",
+  "historical_report_sha256": "707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8",
+  "previous_current_report_sha256": "707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8",
+  "current_report_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+  "current_report_sha256": "c4855ac32b59d648f621ded872e6f4457984a62cbad4ef7e60055a6c0b00701e",
+  "semantic_admin_changes": 0,
+  "reason": "Community upload/video route was restored at 728ec20e. Retain the dated Admin inventory and refresh only the entire root-route source hash and actual shifted v1 registration line numbers; no Admin handler/call/availability change."
+}

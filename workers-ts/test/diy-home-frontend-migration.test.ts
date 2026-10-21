@@ -15,7 +15,7 @@ const navigationExports: Record<string, unknown> = {}, fabExports: Record<string
 const compile = (source: string) => transpileModule(source, { compilerOptions: {
   module: ModuleKind.CommonJS, target: ScriptTarget.ES2022,
 } }).outputText;
-const commonSources = new Set(['customerWorkRoute', 'customerWorkWriteoff', 'customerWorkIntent', 'userCenterDesign', 'divisionStaff', 'checkoutQuote']);
+const commonSources = new Set(['communityRoute', 'customerWorkRoute', 'customerWorkWriteoff', 'customerWorkIntent', 'userCenterDesign', 'divisionStaff', 'checkoutQuote']);
 const commonExports = new Map<string, Record<string, unknown>>();
 function actualCommonModule(name: string): Record<string, unknown> {
   if (!commonSources.has(name)) throw Error(`Unexpected navigation pure dependency: ${name}`);
@@ -32,7 +32,7 @@ function actualCommonModule(name: string): Record<string, unknown> {
   return exports;
 }
 runInNewContext(compile(navigation), { exports: navigationExports, URL, require: (name: string) => {
-  if (!['../../../common/customerWorkRoute', '../../../common/divisionStaff'].includes(name)) throw Error(`Unexpected navigation pure dependency: ${name}`);
+  if (!['../../../common/communityRoute', '../../../common/customerWorkRoute', '../../../common/divisionStaff'].includes(name)) throw Error(`Unexpected navigation pure dependency: ${name}`);
   return actualCommonModule(name.split('/').at(-1)!);
 } });
 runInNewContext(compile(fabSource), { exports: fabExports, URL, require: (name: string) => {

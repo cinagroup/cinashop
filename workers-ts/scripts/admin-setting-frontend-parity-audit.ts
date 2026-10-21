@@ -503,15 +503,68 @@ export function hasLegacyThemePresets(source: string): boolean {
   });
 }
 
+/** Resolve the one reviewed script-only page alias to its actual SFC source.
+ * Unknown paths, module indirection and missing/cyclic targets fail closed. */
+export function resolveRegisteredThemePageSource(
+  pageSource: string,
+  pagePath = "",
+  delegatedPageSources: Readonly<Record<string, string>> = {},
+): string | null {
+  function parsePage(source: string, filename: string) {
+    const parsed = parseThemeSfc(source, { filename });
+    if (parsed.errors.length) return null;
+    const { script, scriptSetup } = parsed.descriptor;
+    // Vue compares the declared modes themselves: even omitted lang and
+    // explicit lang="js" cannot be mixed across normal/setup blocks.
+    if (script && scriptSetup && script.lang !== scriptSetup.lang) return null;
+    for (const block of [script, scriptSetup]) {
+      if (!block) continue;
+      if (block.src || block.lang !== undefined && !['js', 'ts'].includes(block.lang)) return null;
+      const syntax = ts.createSourceFile('theme-page-script.ts', block.content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+      if ((syntax as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics.length) return null;
+    }
+    return parsed;
+  }
+  const parsed = parsePage(pageSource, 'theme-page.vue');
+  if (!parsed) return null;
+  if (parsed.descriptor.template) return pageSource;
+  const script = parsed.descriptor.script;
+  if (pagePath !== 'pages/discover/workspace.vue' || !script || script.src
+    || parsed.descriptor.scriptSetup || parsed.descriptor.styles.length || parsed.descriptor.customBlocks.length
+    || Object.keys(script.attrs).some(key => key !== 'lang')
+    || script.lang !== undefined && !['ts', 'js'].includes(script.lang)) return null;
+  const tree = ts.createSourceFile('theme-page-alias.ts', script.content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  if ((tree as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics.length
+    || tree.statements.length !== 2) return null;
+  const [binding, exported] = tree.statements;
+  if (!ts.isImportDeclaration(binding) || !ts.isStringLiteral(binding.moduleSpecifier)
+    || binding.moduleSpecifier.text !== './index.vue' || binding.attributes
+    || !binding.importClause?.name || binding.importClause.isTypeOnly || binding.importClause.namedBindings
+    || !ts.isExportAssignment(exported) || exported.isExportEquals || !ts.isIdentifier(exported.expression)
+    || exported.expression.text !== binding.importClause.name.text) return null;
+  const target = 'pages/discover/index.vue';
+  if (!Object.prototype.hasOwnProperty.call(delegatedPageSources, target)) return null;
+  const targetSource = delegatedPageSources[target];
+  if (typeof targetSource !== 'string' || !targetSource.trim()) return null;
+  const delegated = parsePage(targetSource, target);
+  // The fixed target must be a real rendered page, never another thin alias.
+  return delegated?.descriptor.template ? targetSource : null;
+}
+
 /** Only actual compiled SFC imports and a complete root host qualify. The
  * reviewed MerchantShell, DeliveryShell or CustomerWorkShell must enclose its real default slot in
  * the fixed ThemePage component; comments, lookalike names and detached hosts
  * cannot establish this connection. No general wrapper-name allowlist. */
-export function hasRegisteredThemeHost(pageSource: string, merchantShellSource: string, deliveryShellSource = "", customerWorkShellSource = ""): boolean {
+export function hasRegisteredThemeHost(pageSource: string, merchantShellSource: string, deliveryShellSource = "", customerWorkShellSource = "", pagePath = "", delegatedPageSources: Readonly<Record<string, string>> = {}): boolean {
+  const renderedSource = resolveRegisteredThemePageSource(pageSource, pagePath, delegatedPageSources);
+  if (renderedSource === null) return false;
   function host(source: string, modulePath: string) {
-    const parsed = parseThemeSfc(source, { filename: 'theme-host.vue' });
+    const reviewed = resolveRegisteredThemePageSource(source);
+    if (reviewed === null) return null;
+    const parsed = parseThemeSfc(reviewed, { filename: 'theme-host.vue' });
     if (parsed.errors.length || !parsed.descriptor.scriptSetup || !parsed.descriptor.template?.ast) return null;
     const script = ts.createSourceFile('theme-host.ts', parsed.descriptor.scriptSetup.content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    if ((script as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics.length) return null;
     const imports = script.statements.filter(ts.isImportDeclaration).filter(statement =>
       ts.isStringLiteral(statement.moduleSpecifier) && statement.moduleSpecifier.text === modulePath
       && statement.importClause?.name && !statement.importClause.isTypeOnly);
@@ -526,10 +579,10 @@ export function hasRegisteredThemeHost(pageSource: string, merchantShellSource: 
     if (root.props.some(prop => prop.type === 7 && ['if', 'else', 'else-if', 'for'].includes(prop.name))) return null;
     return root;
   }
-  if (host(pageSource, '@/components/ThemePage.vue')) return true;
-  const wrapper = host(pageSource, '@/components/merchantOrders/MerchantShell.vue') ? merchantShellSource
-    : host(pageSource, '@/components/deliveryWorkbench/DeliveryShell.vue') ? deliveryShellSource
-    : host(pageSource, '@/components/customerWork/CustomerWorkShell.vue') ? customerWorkShellSource : '';
+  if (host(renderedSource, '@/components/ThemePage.vue')) return true;
+  const wrapper = host(renderedSource, '@/components/merchantOrders/MerchantShell.vue') ? merchantShellSource
+    : host(renderedSource, '@/components/deliveryWorkbench/DeliveryShell.vue') ? deliveryShellSource
+    : host(renderedSource, '@/components/customerWork/CustomerWorkShell.vue') ? customerWorkShellSource : '';
   const shell = wrapper ? host(wrapper, '@/components/ThemePage.vue') : null;
   if (!shell) return false;
   function hasDefaultSlot(node: NonNullable<typeof shell>['children'][number]): boolean {
@@ -562,7 +615,8 @@ function themeStyleCoverage(inventory: Inventory): { coverage: ThemeStyleCoverag
   const merchantShell = read('view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue');
   const deliveryShell = read('view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue');
   const customerWorkShell = read('view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue');
-  const themedPaths = paths.filter(path => hasRegisteredThemeHost(read(`view/uniapp-ts/src/${path}.vue`), merchantShell, deliveryShell, customerWorkShell));
+  const delegatedPageSources = { 'pages/discover/index.vue': read('view/uniapp-ts/src/pages/discover/index.vue') };
+  const themedPaths = paths.filter(path => hasRegisteredThemeHost(read(`view/uniapp-ts/src/${path}.vue`), merchantShell, deliveryShell, customerWorkShell, `${path}.vue`, delegatedPageSources));
   const routesRegistered = [["get", ""], ["get", "/request/:requestId"], ["post", ""]].every(([method, suffix]) =>
     contains("workers-ts/src/routes/adminapi.ts", `adminapiRoutes.${method}("/setting/theme-style${suffix}"`)
     && contains("workers-ts/src/routes/v1/index.ts", `v1Routes.${method}("/admin/setting/theme-style${suffix}"`));

@@ -40,7 +40,7 @@ for (const kind of ['coupon', 'package', 'bargain', 'seckill', 'combination', 'i
       } else if (kind === 'package') {
         await f.db.insert(storeDiscounts).values({ id: 40, type: 0, isSupportRefund: 1, freeShipping: 1 });
         await f.db.insert(storeDiscountsProducts).values([{ id: 101, discountId: 40, productId: 70 }, { id: 102, discountId: 40, productId: 71 }]);
-        await f.db.insert(storeProduct).values({ id: 71, storeName: '第二套餐商品', stock: 8, price: '10.00', isShow: 1, freight: 1 });
+        await f.db.insert(storeProduct).values({ id: 71, storeName: '第二套餐商品', stock: 8, price: '10.00', isShow: 1, isVerify: 1, freight: 1 });
         await f.db.insert(storeProductAttrValue).values([
           { id: 2, productId: 71, type: 0, unique: 'base0071', suk: '标准', stock: 8, price: '10.00' },
           { id: 3, productId: 101, type: 5, unique: 'pack0101', suk: '红色,大号', stock: 8, price: '8.00' },

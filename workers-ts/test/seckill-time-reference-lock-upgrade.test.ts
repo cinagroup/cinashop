@@ -148,7 +148,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('seckill capabili
     const external = await checkoutPricingMigrationDatabase();
     const embedded = await checkoutPricingMigrationDatabase();
     try {
-      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0178_product_save_effects.sql');
+      const list = files(); assertExternalMigrationCohort(list); expect(list.at(-1)).toBe('0184_purchase_physical_origin_evidence.sql');
       await applyExternal(external, list);
       // The second root connection can expire while the first full catalog is
       // built. Bind explicit owner settings to this actual maintenance session.

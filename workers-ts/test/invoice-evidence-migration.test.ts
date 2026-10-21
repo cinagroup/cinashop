@@ -127,7 +127,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('invoice evidence
       } else {
         const report=await new MigrationService(createContainerFromDb(whole.db)).runAll();
         expect(report.errors).toEqual([]); expect(report.executed).toHaveLength(185);
-        expect(report.executed.at(-1)).toBe('0183');
+        expect(report.executed.at(-1)).toBe('0184');
         expect(report.executed).toEqual(Array.from({length:185},(_,i)=>String(i).padStart(4,'0')));
       }
       expect(await whole.exec("SELECT count(*)::int AS count FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','p')")).toEqual([{count:COMPLETE_CONSTRUCTION_COUNTS[path]}]);

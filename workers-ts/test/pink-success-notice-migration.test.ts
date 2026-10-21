@@ -268,12 +268,12 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
     } finally { await f.close(); }
   }, 120_000);
 
-  it('builds fresh external 182 and embedded 185 paths with identical 286-table catalogs and preserves the product-save successor when the old installer refuses it', async () => {
+  it('builds fresh external 182 and embedded 185 paths with identical exact composed catalogs and preserves the product-save successor when the old installer refuses it', async () => {
     const external = await checkoutPricingMigrationDatabase();
     let embedded: FullFixture | undefined;
     try {
       embedded = await checkoutPricingMigrationDatabase();
-      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0178_product_save_effects.sql');
+      const files = migrationFiles(); assertExternalMigrationCohort(files); expect(files.at(-1)).toBe('0184_purchase_physical_origin_evidence.sql');
       await externalMigrations(external, files);
       await bindOwners(embedded);
       const result = await new MigrationService(createContainerFromDb(embedded.db)).runAll();
@@ -286,7 +286,8 @@ describe.runIf(native)('pink notice complete PG16 schema paths', () => {
         expect(Object.keys(rows)).toEqual(registeredTableNames('external'));
         expect(check).toHaveLength(1); expect(check[0]).toMatchObject({ convalidated: true, definition: PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION });
         for (const table of ['user', 'store_order', 'store_combination', 'store_pink', 'store_order_outbox']) expect(rows[table]).toEqual([]);
-        // Current full construction includes external 0178 / embedded 0183.
+        // Full construction retains the product-save CHECK successor from
+        // external 0178 / embedded 0183, followed by physical-origin 0184.
         // The old forward-only installer must refuse this successor, never
         // narrow its event whitelist or repair it back to the older catalog.
         const refused=await outcome(runPinkSuccessNotice(f.db));

@@ -44,7 +44,7 @@ describe("newcomer catalog migration", () => {
       "/newcomer/info",
       "/newcomer/gift",
     ]) expect(routes).toContain(route);
-    expect(cart).toContain("resolved.baseSku.unique");
+    expect(cart).toContain("unique = resolved.baseUnique");
     expect(cart).toContain("新人专享商品限购一件");
     expect(order).toContain("newcomerActivitySkuId");
     expect(order).toContain("isNewcomer: 1");

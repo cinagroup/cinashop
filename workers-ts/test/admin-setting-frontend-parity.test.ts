@@ -38,10 +38,10 @@ function source(file: string): string {
 function themeAuditGates() {
   const code = source("scripts/admin-setting-frontend-parity-audit.ts");
   const tree = ts.createSourceFile("audit.ts", code, ts.ScriptTarget.Latest, true);
-  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "hasRegisteredThemeHost"]);
+  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "resolveRegisteredThemePageSource", "hasRegisteredThemeHost"]);
   const functions = tree.statements.filter(statement => ts.isFunctionDeclaration(statement)
     && statement.name && names.has(statement.name.text));
-  expect(functions).toHaveLength(3);
+  expect(functions).toHaveLength(4);
   const output = ts.transpileModule(functions.map(statement => statement.getText(tree)).join("\n"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const scope = { exports: {}, ts, parseThemeSfc };
@@ -49,7 +49,7 @@ function themeAuditGates() {
   return scope.exports as {
     classifyThemeStyleCoverage: (coverage: Record<string, boolean | number>) => ReportRoute["status"];
     hasLegacyThemePresets: (code: string) => boolean;
-    hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string, customerWorkShell?: string) => boolean;
+    hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string, customerWorkShell?: string, pagePath?: string, sources?: Readonly<Record<string, string>>) => boolean;
   };
 }
 
@@ -62,7 +62,8 @@ function expectCurrentThemeHostIncrement(generated: string, historical: string) 
   const paths = [...registry.pages.map(row => row.path), ...(registry.subPackages ?? []).flatMap(group => group.pages.map(row => `${group.root}/${row.path}`))];
   expect(new Set(paths).size).toBe(paths.length);
   const host = themeAuditGates().hasRegisteredThemeHost, shell = source('../view/uniapp-ts/src/components/merchantOrders/MerchantShell.vue'), deliveryShell = source('../view/uniapp-ts/src/components/deliveryWorkbench/DeliveryShell.vue'), customerWorkShell = source('../view/uniapp-ts/src/components/customerWork/CustomerWorkShell.vue');
-  expect(paths.filter(path => !host(source(`../view/uniapp-ts/src/${path}.vue`), shell, deliveryShell, customerWorkShell))).toEqual([]);
+  const delegatedSources = { 'pages/discover/index.vue': source('../view/uniapp-ts/src/pages/discover/index.vue') };
+  expect(paths.filter(path => !host(source(`../view/uniapp-ts/src/${path}.vue`), shell, deliveryShell, customerWorkShell, `${path}.vue`, delegatedSources))).toEqual([]);
   expected.themeStyleContract.coverage.registeredPages = paths.length;
   expected.themeStyleContract.coverage.themedPages = paths.length;
   expected.methodology.productionAccess = expected.methodology.productionAccess.replace(/all \d+ registered Uniapp page hosts/, `all ${paths.length} registered Uniapp page hosts`);

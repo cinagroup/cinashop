@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../../src/lib/di';
 import { runPurchaseOriginEvidenceSchema } from '../../src/migrations/runPurchaseOriginEvidence';
-import { runPurchasePhysicalOriginEvidenceSchema } from '../../src/migrations/runPurchasePhysicalOriginEvidence';
+import { completePurchasePhysicalOriginEvidenceOrm, runPurchasePhysicalOriginEvidenceSchema } from '../../src/migrations/runPurchasePhysicalOriginEvidence';
 import { ownsFinanceFixtureEndpoint, validateFinanceFixtureUrl } from './financePostgres';
 import { ownsSequenceRunnerEndpoint } from './kefuSequenceRunnerDatabase';
 
@@ -28,5 +28,9 @@ export async function purchaseOriginCheckoutFixture(fixture: { db: DbClient }) {
     await fixture.db.execute(sql`CREATE INDEX fixture_origin_line_oid ON public.store_order_cart_info(oid)`);
   }
   await runPurchaseOriginEvidenceSchema(fixture.db);
-  await runPurchasePhysicalOriginEvidenceSchema(fixture.db);
+  // Complete ORM factories create the exact empty evidence table before this
+  // explicit fixture commissioning. The strict standalone installer correctly
+  // refuses that unprotected state; use the reviewed empty-ORM completion path.
+  if (narrow) await runPurchasePhysicalOriginEvidenceSchema(fixture.db);
+  else await completePurchasePhysicalOriginEvidenceOrm(fixture.db);
 }

@@ -16,6 +16,7 @@ import { runRuntimeBusinessCommissioning } from '../src/migrations/runRuntimeBus
 import { auditRuntimeBusinessPrivileges } from '../src/migrations/auditRuntimeBusinessPrivileges';
 import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
+import { registeredTableNames } from './helpers/registeredCatalogCohort';
 
 type Fixture = Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
 type ReceiptResult = (typeof adminAuthorityOperation.$inferInsert)['result'];
@@ -84,7 +85,7 @@ async function receiptRows(db:DbClient) {
 }
 async function wholeRows(db:Pick<DbClient,'execute'>) {
   const tables=Array.from(await db.execute(sql`SELECT relname FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`));
-  expect(tables).toHaveLength(283);
+  expect(tables.map(row => row.relname)).toEqual([...registeredTableNames('embedded'), 'admin_authority_operation'].sort());
   const queries=tables.map(row => {
     const name=String(row.relname);expect(name).toMatch(/^[a-z_][a-z_0-9]*$/);
     return `SELECT '${name}' AS name,coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) AS rows FROM public."${name}" t`;
@@ -228,7 +229,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy role v3 r
 });
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy role v3 of complete commissioned runtime profiles',() => {
-  it('atomically changes two CHECKs plus only Admin role DELETE, preserves all 283 table rows and other ACLs, and refuses grant repair',async() => {
+  it('atomically changes two CHECKs plus only Admin role DELETE, preserves the exact registered cohort plus receipt rows and other ACLs, and refuses grant repair',async() => {
     const whole=await refundRuntimeFixture();
     try {
       if(!whole.withRuntimeRole)throw Error('Actual independently authenticated App/Admin LOGINs required');
@@ -273,7 +274,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('legacy role v3 o
         expect(added).toEqual([{name:'system_role',grantor:roleOids.maintenance,grantee:roleOids.admin,privilege:'DELETE',delegate:false}]);
         for(const [kind,peer] of [['app',app],['admin',admin]] as const) {
           const report=await auditRuntimeBusinessPrivileges(peer.db,kind,target);
-          expect(report,JSON.stringify(report)).toMatchObject({ready:true,failures:[],tableCount:283,readOnly:true});
+          expect(report,JSON.stringify(report)).toMatchObject({ready:true,failures:[],tableCount:registeredTableNames('embedded').length+1,readOnly:true});
         }
         await admin.db.transaction(tx => assertAdminLegacyRoleOperationReady(tx));
         await expect(app.exec('SELECT * FROM public.admin_authority_operation')).rejects.toMatchObject({code:'42501'});

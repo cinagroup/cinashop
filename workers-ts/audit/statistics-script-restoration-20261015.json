@@ -187,7 +187,7 @@
     {
       "role": "worker_route",
       "file": "workers-ts/src/routes/v1/index.ts",
-      "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+      "sha256": "d15ab16f0e39619b9150112b12523fc63991f2446a6d4f6d8004d53696b3372b",
       "evidence_lines": [
         197
       ]
@@ -302,6 +302,29 @@
       },
       "diagnostic_audit": "workers-ts/audit/ci-source-fingerprint-refresh-20261017.json",
       "original_validation_retained": "The original validation object above records the October15 restoration run; current refresh validation is in the diagnostic audit."
+    },
+    {
+      "date": "2026-10-21",
+      "base_commit": "715b0395d01ff83df096d9fc981d2a342c9102c7",
+      "reason": "728ec20e added the authenticated community /upload/video route. Exact whole-file comparison proves this is the only source addition since the prior pinned route; get_script at line197, its handler and loaders remain unchanged.",
+      "previous_worker_route_proof": {
+        "role": "worker_route",
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "bdf04a23edbb281f7ea95ead110cf6dbacbc97412eded59e976d04db4242d054",
+        "evidence_lines": [
+          197
+        ]
+      },
+      "current_worker_route_proof": {
+        "role": "worker_route",
+        "file": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "d15ab16f0e39619b9150112b12523fc63991f2446a6d4f6d8004d53696b3372b",
+        "evidence_lines": [
+          197
+        ]
+      },
+      "diagnostic_audit": "workers-ts/audit/admin-api-root-source-refresh-20261021.json",
+      "original_validation_retained": "The original restoration validation and all previous followups remain intact."
     }
   ]
 }

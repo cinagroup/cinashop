@@ -13,6 +13,15 @@ function adminHarness(overrides={},storage=new Map()){let actor={id:11,identity:
  const ports={read:async signal=>{signals.push(signal);return snapshot();},write:async input=>{writes.push(structuredClone(vue.toRaw(input)));return {operation:'update',id:9,request_id:input.request_id,payload_hash:await api.themeFingerprint(input)};},receipt:async()=>{throw Error('not found');},confirm:async()=>{},storage:memory,uuid:()=>uuid,...overrides};const c=new Controller(()=>actor,ports);return {c,api,writes,storage,signals,ports,setActor:value=>{actor={...actor,...value};}};}
 const fault=(status,code,pending,changes={})=>({isAxiosError:true,response:{status,data:{status,msg:'确定拒绝',data:{code,operation:'update',request_id:pending.input.request_id,payload_hash:pending.fingerprint,...changes}}}});
 function renderComponent(file,load,props,piniaInstance){const component=load(file).default,descriptor=sfc.parse(fs.readFileSync(file,'utf8')).descriptor,bindings=sfc.compileScript(descriptor,{id:'theme-render'}).bindings;component.render=new Function('Vue',require('@vue/compiler-dom').compile(descriptor.template.content,{mode:'function',prefixIdentifiers:true,bindingMetadata:bindings,isCustomElement:tag=>native.includes(tag)}).code)(vue);const app=vue.createSSRApp(component,props);if(piniaInstance)app.use(piniaInstance);return require('@vue/server-renderer').renderToString(app);}
+// Execute the pure current-source checks without importing the dated CLI writer.
+function themeHostGates(){
+ const source=fs.readFileSync(path.join(root,'../workers-ts/scripts/admin-setting-frontend-parity-audit.ts'),'utf8');
+ const tree=ts.createSourceFile('theme-audit.ts',source,ts.ScriptTarget.Latest,true),names=new Set(['resolveRegisteredThemePageSource','hasRegisteredThemeHost']);
+ const functions=tree.statements.filter(statement=>ts.isFunctionDeclaration(statement)&&names.has(statement.name?.text));
+ assert.equal(functions.length,2);
+ const output=ts.transpileModule(functions.map(statement=>statement.getText(tree)).join('\n'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const exports={};new Function('exports','ts','parseThemeSfc',output)(exports,ts,sfc.parse);return exports;
+}
 
 test('six exact legacy presets expose all six distinct semantic roles',()=>{const p=loader().load(path.join(root,'common/theme.ts'));assert.equal(p.THEME_PRESETS.length,6);assert.deepEqual(p.THEME_PRESETS.map(x=>x.name),['天空蓝','生鲜绿','热情红','魅力粉','活力橙','高端金']);const expected=[['#1DB0FC','#FD502F','#22CAFD','#5ACBFF'],['#42CA4D','#FF7600','#FE960F','#4DEA4D'],['#e93323','#e93323','#FE960F','#FF7931'],['#FF448F','#FF448F','#282828','#FF67AD'],['#FE5C2D','#FE5C2D','#FDB000','#FF9451'],['#E0A558','#DA8C18','#1A1A1A','#FFCD8C']];for(const [i,row]of p.THEME_PRESETS.entries()){assert.deepEqual([row.theme,row.priceColor,row.bntColor,row.gradient],expected[i]);assert.equal(Object.keys(p.themeVariables(row.status)).length,6);assert.match(row.minorColor,/0\.5/);assert.match(row.minorColorT,/0\.1/);}assert.equal(p.themePreset(0).status,3);});
 test('actual six Admin preview templates render the six shopping scenes and token styles',async()=>{const r=loader();for(let status=1;status<=6;status++){const html=await renderComponent(path.join(adminRoot,'pages/setting/ThemePreview.vue'),r.load,{status});for(const label of ['商城首页','品质生活商品','加入购物车','立即购买','订单结算','会员中心'])assert.ok(html.includes(label));assert.ok(html.includes('--view-priceColor:'));assert.ok(html.includes('--view-bntColor:'));} });
@@ -28,20 +37,47 @@ test('all current registered pages use an explicit real crossplatform ThemePage 
  assert.equal(new Set(pages).size,pages.length);
  const incoming=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/product-detail-design-original-manifest-20261002.json'),'utf8')).pages.map(page=>page.path);
  assert.equal(incoming.length,96);for(const page of [...incoming,'pages/goods/productCommunity'])assert.ok(pages.includes(page),page);
- // Reuse the independently reviewed pure import/root/default-slot inspection,
- // without importing its historical CLI or running any dated audit writer.
- const source=fs.readFileSync(path.join(root,'../workers-ts/scripts/admin-setting-frontend-parity-audit.ts'),'utf8');
- const tree=ts.createSourceFile('theme-audit.ts',source,ts.ScriptTarget.Latest,true);
- const functions=tree.statements.filter(statement=>ts.isFunctionDeclaration(statement)&&statement.name?.text==='hasRegisteredThemeHost');
- assert.equal(functions.length,1);
- const output=ts.transpileModule(functions[0].getText(tree),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- const exports={};new Function('exports','ts','parseThemeSfc',output)(exports,ts,sfc.parse);
+ const gates=themeHostGates();
  const merchant=fs.readFileSync(path.join(uniRoot,'components/merchantOrders/MerchantShell.vue'),'utf8');
  const delivery=fs.readFileSync(path.join(uniRoot,'components/deliveryWorkbench/DeliveryShell.vue'),'utf8');
  const customer=fs.readFileSync(path.join(uniRoot,'components/customerWork/CustomerWorkShell.vue'),'utf8');
- for(const page of pages){const file=path.join(uniRoot,page+'.vue'),text=fs.readFileSync(file,'utf8'),parsed=sfc.parse(text,{filename:file});assert.deepEqual(parsed.errors,[],page);const compiled=sfc.compileTemplate({source:parsed.descriptor.template.content,filename:file,id:'all-current-theme-hosts'});assert.deepEqual(compiled.errors,[],page);assert.ok(exports.hasRegisteredThemeHost(text,merchant,delivery,customer),page);}
- for(const [prefix,shell]of [['pages/merchant/',merchant],['pages/delivery/',delivery],['pages/customer-work/',customer]])for(const page of pages.filter(value=>value.startsWith(prefix))){const detached=shell.replace('<slot />','<view>Detached empty wrapper</view>');assert.notEqual(detached,shell);assert.equal(exports.hasRegisteredThemeHost(fs.readFileSync(path.join(uniRoot,page+'.vue'),'utf8'),prefix==='pages/merchant/'?detached:merchant,prefix==='pages/delivery/'?detached:delivery,prefix==='pages/customer-work/'?detached:customer),false,page);}
+ const delegatedSources={'pages/discover/index.vue':fs.readFileSync(path.join(uniRoot,'pages/discover/index.vue'),'utf8')};
+ for(const page of pages){const file=path.join(uniRoot,page+'.vue'),text=fs.readFileSync(file,'utf8'),rendered=gates.resolveRegisteredThemePageSource(text,page+'.vue',delegatedSources);assert.notEqual(rendered,null,page);const parsed=sfc.parse(rendered,{filename:file});assert.deepEqual(parsed.errors,[],page);assert.ok(parsed.descriptor.template,page);const compiled=sfc.compileTemplate({source:parsed.descriptor.template.content,filename:file,id:'all-current-theme-hosts'});assert.deepEqual(compiled.errors,[],page);assert.ok(gates.hasRegisteredThemeHost(text,merchant,delivery,customer,page+'.vue',delegatedSources),page);}
+ for(const [prefix,shell]of [['pages/merchant/',merchant],['pages/delivery/',delivery],['pages/customer-work/',customer]])for(const page of pages.filter(value=>value.startsWith(prefix))){const detached=shell.replace('<slot />','<view>Detached empty wrapper</view>');assert.notEqual(detached,shell);assert.equal(gates.hasRegisteredThemeHost(fs.readFileSync(path.join(uniRoot,page+'.vue'),'utf8'),prefix==='pages/merchant/'?detached:merchant,prefix==='pages/delivery/'?detached:delivery,prefix==='pages/customer-work/'?detached:customer,page+'.vue',delegatedSources),false,page);}
  const r=publicHarness(()=>pub(1));try{await r.store.refresh();const appPinia=pinia.getActivePinia();const html=await renderComponent(path.join(uniRoot,'components/ThemePage.vue'),r.load,{},appPinia);assert.match(html,/--view-theme:\s*#1DB0FC/);assert.match(html,/--view-priceColor:\s*#FD502F/);}finally{r.stop();}});
+test('reviewed script-only page aliases compile the actual delegated template and require its real ThemePage host',()=>{
+ const gates=themeHostGates(),page='pages/discover/workspace.vue',alias=fs.readFileSync(path.join(uniRoot,page),'utf8'),target=fs.readFileSync(path.join(uniRoot,'pages/discover/index.vue'),'utf8'),sources={'pages/discover/index.vue':target};
+ assert.equal(gates.resolveRegisteredThemePageSource(alias,page,sources),target);
+ const descriptor=sfc.parse(gates.resolveRegisteredThemePageSource(alias,page,sources),{filename:page}).descriptor;
+ assert.deepEqual(sfc.compileTemplate({source:descriptor.template.content,filename:page,id:'delegated-community-theme-host'}).errors,[]);
+ assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,sources),true);
+ assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{}),false);
+ assert.equal(gates.hasRegisteredThemeHost(alias,'','','','pages/discover/unknown.vue',sources),false);
+ assert.equal(gates.hasRegisteredThemeHost(alias.replace('import CommunityWorkspace','import type CommunityWorkspace'),'','','',page,sources),false);
+ assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{'pages/discover/index.vue':target.replace('@/components/ThemePage.vue','@/components/FakeThemePage.vue')}),false);
+ assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{'pages/discover/index.vue':alias}),false);
+});
+test('theme source inspection follows Vue declared script language compatibility for direct and delegated pages',()=>{
+ const gates=themeHostGates(),page='pages/discover/workspace.vue',alias='<script lang="ts">import Page from "./index.vue";export default Page;</script>';
+ const source=(setupLang,normalLang)=>`<template><ThemePage><view>Content</view></ThemePage></template><script setup${setupLang?` lang="${setupLang}"`:''}>import ThemePage from "@/components/ThemePage.vue";</script><script${normalLang?` lang="${normalLang}"`:''}>export default {};</script>`;
+ for(const lang of ['', 'js', 'ts']){
+  const pageSource=source(lang,lang),descriptor=sfc.parse(pageSource).descriptor;
+  assert.ok(sfc.compileScript(descriptor,{id:'matching-theme-script-modes'}).content);
+  assert.equal(gates.hasRegisteredThemeHost(pageSource,''),true);
+  assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{'pages/discover/index.vue':pageSource}),true);
+ }
+ for(const [setupLang,normalLang]of [['ts','js'],['js','ts'],['','js'],['js',''],['','ts'],['ts','']]){
+  const pageSource=source(setupLang,normalLang);
+  assert.throws(()=>sfc.compileScript(sfc.parse(pageSource).descriptor,{id:'mixed-theme-script-modes'}),/same language type/);
+  assert.equal(gates.hasRegisteredThemeHost(pageSource,''),false);
+  assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{'pages/discover/index.vue':pageSource}),false);
+ }
+ for(const lang of ['coffee','tsx','jsx']){
+  const pageSource=source(lang,lang);
+  assert.equal(gates.hasRegisteredThemeHost(pageSource,''),false);
+  assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{'pages/discover/index.vue':pageSource}),false);
+ }
+});
 test('DIY follow mode ignores authored brand colour but keeps authored content and module backgrounds',()=>{const r=publicHarness(()=>pub(2));try{const f=r.load(path.join(uniRoot,'utils/diyTheme.ts')),p=r.load(path.join(root,'common/theme.ts')).themePreset(2),block={name:'goodList',toneConfig:{tabVal:0},goodsPriceColor:{color:[{item:'#123456'}]},bottomBgColor:{color:[{item:'#abcdef'}]}};assert.equal(f.diyThemeColor(block,'goodsPriceColor',0,'red',p),'#FF7600');assert.equal(f.diyThemeColor(block,'bottomBgColor',0,'white',p),'#abcdef');assert.equal(f.diyThemeVariables(block,p)['--view-priceColor'],'#FF7600');}finally{r.stop();}});
 test('DIY custom commerce editorial sign and footer roles remain authored after global palette changes',()=>{const r=publicHarness(()=>pub(2));try{const f=r.load(path.join(uniRoot,'utils/diyTheme.ts')),themes=r.load(path.join(root,'common/theme.ts')),colour=value=>({color:[{item:value},{item:'#778899'}]});for(const status of [1,6]){const p=themes.themePreset(status);for(const [name,key]of [['coupon','couponMoneyColor'],['combination','pinkPriceColor'],['seckill','seckillPriceColor'],['bargain','bargainPriceColor'],['presale','presalePriceColor']]){const block={name,toneConfig:{tabVal:1},[key]:colour('#123456')};assert.equal(f.diyThemeVariables(block,p)['--view-priceColor'],'#123456');}for(const [name,key]of [['signIn','labelBgColor'],['ranking','classColor'],['pageFoot','activeColor']])assert.equal(f.diyThemeVariables({name,toneConfig:{tabVal:1},[key]:colour('#abcdef')},p)['--view-theme'],'#abcdef');assert.equal(f.diyThemeColor({name:'news',toneConfig:{tabVal:1},titleBgColor:colour('#112233')},'titleBgColor',1,'red',p),'#778899');assert.equal(f.diyThemeColor({name:'follow',themeColor:colour('#abcdef')},'themeColor',0,'red',p),'#abcdef');}}finally{r.stop();}});
 test('price primary secondary selected and gradient CSS roles change while financial and error colours remain semantic',()=>{const read=p=>fs.readFileSync(path.join(uniRoot,p),'utf8');const goods=read('pages/goods/detail.vue');assert.match(goods,/\.add-btn\s*\{[^}]*var\(--view-bntColor/s);assert.match(goods,/\.buy-btn\s*\{[^}]*var\(--view-theme/s);assert.match(read('components/IntegralSkuSelection.vue'),/selection-total[^}]*var\(--view-priceColor/s);assert.match(read('pages/user/sign.vue'),/linear-gradient\(135deg, var\(--view-theme[^\n]+var\(--view-gradient/);assert.match(read('pages/user/finance.vue'),/\.item-right\.income\s*\{\s*color: #e93323/s);assert.match(read('components/ActivityPurchase.vue'),/\.error \{ color: #b72a1d/);assert.match(read('pages/order/detail.vue'),/#b54708/);});
