@@ -160,12 +160,17 @@
     {
       "path": "pages/discover/index",
       "style": {
-        "navigationBarTitleText": "逛逛"
+        "navigationBarTitleText": "逛逛",
+        "enablePullDownRefresh": true
       }
     },
     {
+      "path": "pages/discoverIndex/index",
+      "style": { "navigationBarTitleText": "社区" }
+    },
+    {
       "path": "pages/discover/workspace",
-      "style": { "navigationBarTitleText": "社区管理" }
+      "style": { "navigationBarTitleText": "社区管理", "enablePullDownRefresh": true }
     },
     {
       "path": "pages/discover/discoverDetails/index",

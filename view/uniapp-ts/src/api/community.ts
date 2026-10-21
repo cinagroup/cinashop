@@ -37,6 +37,10 @@ export interface CommunityPost {
   site_url?: string;
   status: number;
   addTime: number;
+  star?: number;
+  author?: string;
+  author_image?: string;
+  is_follow?: 0 | 1;
 }
 
 export interface CommunityTopic {
@@ -72,6 +76,7 @@ export interface CommunityComment {
 }
 
 export interface CommunityListFilters {
+  is_follow?: 0 | 1;
   topic_id?: number;
   keyword?: string;
   content_type?: 2;
@@ -85,14 +90,15 @@ export interface CommunityListFilters {
 export function apiCommunityList(page = 1, limit = 10, filters: CommunityListFilters = {}): Promise<CommunityPost[]> {
   if (communityPreviewMode) {
     let rows = previewPosts.filter((item) =>
-      (!filters.topic_id || item.topic_id?.includes(filters.topic_id))
+      (!filters.is_follow || item.is_follow === 1)
+      && (!filters.topic_id || item.topic_id?.includes(filters.topic_id))
       && (!filters.keyword || `${item.title} ${item.content}`.toLowerCase().includes(filters.keyword.toLowerCase()))
       && (!filters.content_type || item.contentType === filters.content_type)
       && (!filters.start_id || item.id <= filters.start_id)
       && (!filters.relation_id || item.relationId === filters.relation_id));
     rows = [...rows].sort((a, b) => filters.order === 1
       ? b.addTime - a.addTime || b.id - a.id
-      : b.likeNum - a.likeNum || b.addTime - a.addTime || b.id - a.id);
+      : (b.star ?? 0) - (a.star ?? 0) || b.addTime - a.addTime || b.id - a.id);
     return Promise.resolve(previewPage(rows, page, limit));
   }
   return http.get<CommunityPost[]>("/community/list", { page, limit, ...filters });
@@ -122,6 +128,19 @@ export interface CommunitySocialUser {
   is_follow: 0 | 1;
   is_fans: 0 | 1;
   is_new?: 0 | 1;
+  community?: CommunityRecommendationPost[];
+}
+
+export interface CommunityRecommendationPost {
+  id: number;
+  type: number;
+  relation_id: number;
+  content_type: 1 | 2;
+  title: string;
+  image: string;
+}
+export interface CommunityRecommendation extends CommunitySocialUser {
+  community: CommunityRecommendationPost[];
 }
 
 export interface CommunityProfile extends CommunitySocialUser {
@@ -414,11 +433,13 @@ export function apiCommunityFriendList(page = 1, limit = 20): Promise<CommunityS
   return http.get<CommunitySocialUser[]>("/community/user_friend", { page, limit });
 }
 
-export function apiCommunityRecommendations(page = 1, limit = 20): Promise<CommunitySocialUser[]> {
+export function apiCommunityRecommendations(page = 1, limit = 20): Promise<CommunityRecommendation[]> {
   if (communityPreviewMode) {
-    return Promise.resolve(previewPage(previewPeople.filter((item) => item.is_follow === 0), page, limit));
+    return Promise.resolve(previewPage(previewPeople.filter((item) => item.is_follow === 0), page, limit).map(item => ({ ...item,
+      community: previewPosts.filter(post => post.type === item.type && post.relationId === item.relation_id).slice(0, 3)
+        .map(post => ({ id: post.id, type: post.type, relation_id: post.relationId, content_type: post.contentType as 1 | 2, title: post.title, image: post.image })) })));
   }
-  return http.get<CommunitySocialUser[]>("/community/recommend_list", { page, limit });
+  return http.get<CommunityRecommendation[]>("/community/recommend_list", { page, limit });
 }
 
 export function apiCommunityFollowHighlights(): Promise<Array<Pick<

@@ -9,6 +9,7 @@ import {
 } from "@/models/schema";
 import { createContainerFromDb, withTx, type Container, type DbClient } from "@/lib/di";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { communityImageSources } from "./CommunityImageMedia";
 
 const COMMUNITY_SOCIAL_LOCK_NAMESPACE = 17_348;
 const COMMUNITY_INTEREST = "community_interest";
@@ -70,7 +71,7 @@ async function executeRows<T>(tx: DbClient, query: SQL): Promise<T[]> {
 // Social routes accept a numeric platform/user ID, not a typed content author.
 // Apply this before pagination so unrelated or unavailable authors cannot take
 // a page slot that would otherwise hide a valid account on a later page.
-function socialAuthorExists(id: SQL): SQL {
+export function socialAuthorExists(id: SQL): SQL {
   return sql`(
     (${id} = 0 AND EXISTS (
       SELECT 1 FROM community_user platform_profile
@@ -85,7 +86,7 @@ function socialAuthorExists(id: SQL): SQL {
 }
 
 export class CommunitySocialService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   async profile(authorUidInput: unknown, viewerUid: number): Promise<CommunitySocialUser & {
     friend_count: number;
@@ -292,7 +293,34 @@ export class CommunitySocialService {
       ORDER BY candidate.fans_num DESC, candidate.id DESC
       LIMIT ${paging.limit} OFFSET ${paging.offset}
     `));
-    return this.projectRelations(uid, rows.map((row) => row.relation_id));
+    const people = await this.projectRelations(uid, rows.map((row) => row.relation_id));
+    if (!people.length) return [];
+    // PHP exposes public post teasers under `community`. Keep the existing
+    // profile DTO, but bound each typed author to three rows in one SQL read.
+    const authors = sql.join(people.map((person, index) =>
+      sql`(${person.relation_id}::int, ${person.type}::int, ${index}::int)`), sql`, `);
+    const previews = await executeRows<{
+      id: number; type: number; relationId: number; contentType: number; title: string; image: string;
+    }>(this.container.db, sql`
+      SELECT post.id, post.type, post.relation_id AS "relationId",
+        post.content_type AS "contentType", post.title, post.image
+      FROM (VALUES ${authors}) AS wanted(relation_id, author_type, ordinal)
+      CROSS JOIN LATERAL (
+        SELECT p.* FROM community p
+        WHERE p.type = wanted.author_type AND p.relation_id = wanted.relation_id
+          AND p.status = 1 AND p.is_verify = 1 AND p.is_del = 0
+          AND p.content_type IN (1, 2)
+        ORDER BY p.star DESC, p.add_time DESC, p.id DESC LIMIT 3
+      ) post
+      ORDER BY wanted.ordinal, post.star DESC, post.add_time DESC, post.id DESC
+    `);
+    const images = await communityImageSources(this.container.db, this.appKey,
+      previews.map(post => ({ ...post, sliderImage: null })));
+    return people.map(person => ({ ...person, community: previews
+      .filter(post => post.type === person.type && post.relationId === person.relation_id)
+      .map(post => ({ id: post.id, type: post.type, relation_id: post.relationId,
+        content_type: post.contentType as 1 | 2, title: post.title,
+        image: images.get(post.id)?.image ?? (post.image.startsWith("/api/assets/") ? "" : post.image) })) }));
   }
 
   async followHighlights(uid: number) {

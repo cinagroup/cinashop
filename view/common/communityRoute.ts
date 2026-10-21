@@ -11,7 +11,7 @@ export function parseCommunityPeopleTab(query: Readonly<Record<string, unknown>>
   return "friend";
 }
 
-export type CommunityWorkspaceEntry = { kind: "feed" } | { kind: "author"; authorId: number | "self" }
+export type CommunityWorkspaceEntry = { kind: "feed"; tab?: "featured" } | { kind: "author"; authorId: number | "self" }
   | { kind: "publish"; editId: number; topicId: number };
 function entryQuery(input: Readonly<Record<string, unknown>>): Record<string, string | undefined> {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw Error("社区地址参数无效");
@@ -26,10 +26,11 @@ function entryId(value: string, zero = false): number {
 export function parseCommunityWorkspaceEntry(input: Readonly<Record<string, unknown>>): CommunityWorkspaceEntry {
   const q = entryQuery(input), publishing = q.publish !== undefined, author = q.author_id !== undefined;
   const post = [q.id, q.post_id, q.post_type].some(value => value !== undefined);
+  if (q.feed !== undefined && (q.feed !== "featured" || publishing || author || post || q.topic_id !== undefined || q.edit_id !== undefined)) throw Error("社区列表参数冲突或无效");
   if (publishing && q.publish !== "1" || publishing && author || post && (publishing || author)
     || !publishing && (q.edit_id !== undefined || q.topic_id !== undefined)) throw Error("社区地址参数冲突或无效");
   if (author) return { kind: "author", authorId: q.author_id === "self" ? "self" : entryId(q.author_id!, true) };
-  if (!publishing) return { kind: "feed" };
+  if (!publishing) return q.feed === "featured" ? { kind: "feed", tab: "featured" } : { kind: "feed" };
   const editId = q.edit_id === undefined ? 0 : entryId(q.edit_id);
   const topicId = q.topic_id === undefined ? 0 : entryId(q.topic_id);
   // PHP gives an existing post priority over the incoming topic, retaining its own associations.

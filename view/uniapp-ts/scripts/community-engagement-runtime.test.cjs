@@ -143,8 +143,8 @@ test('community referral intent is consumed once by its first coherent account a
 });
 test('main feed clears rendered personal state at account boundary and rejects the old rejection catch',async()=>{
   const pending=deferred();let old=false;
-  const r=runtime({feature:'useCommunityHomeFeed',send:call=>call.url.includes('/follow')?{data:[{relation_id:old?22:11,author:'本人旧关注'}]}:call.url.endsWith('/topic')?{data:[]}:old?pending.promise:{data:[post()]}});
-  try{await r.checkout.load();assert.equal(r.checkout.highlights.value[0].relation_id,11);old=true;const first=r.checkout.load();await tick();r.auth.setLogin('new-owner',22);assert.deepEqual(r.checkout.highlights.value,[]);assert.deepEqual(r.checkout.posts.value,[]);
+  const r=runtime({feature:'useCommunityHomeFeed',send:call=>call.url.includes('/follow')?{data:[{relation_id:old?22:11,author:'本人旧关注',author_image:'',is_new:1}]}:call.url.endsWith('/topic')||call.url.endsWith('/recommend_list')?{data:[]}:old?pending.promise:{data:[post()]}});
+  try{await r.checkout.changeTab('following');assert.equal(r.checkout.highlights.value[0].relation_id,11);old=true;const first=r.checkout.load();await tick();r.auth.setLogin('new-owner',22);assert.deepEqual(r.checkout.highlights.value,[]);assert.deepEqual(r.checkout.posts.value,[]);
     pending.resolve({httpStatus:503,status:503,msg:'old failure'});await first;await tick();assert.notEqual(r.checkout.highlights.value[0]?.relation_id,11);assert.deepEqual(r.checkout.posts.value,[]);
   }finally{pending.resolve({data:[]});r.stop();}
 });

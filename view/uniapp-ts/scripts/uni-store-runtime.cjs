@@ -23,7 +23,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
     navigateTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); }, redirectTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); },
-    showToast: opts => toasts.push(opts), switchTab: opts => navigations.push(opts.url),
+    stopPullDownRefresh() {}, showToast: opts => toasts.push(opts), switchTab: opts => navigations.push(opts.url),
     showModal: modal === undefined ? undefined : opts => { modals.push(opts); if (typeof modal === 'function') modal(opts);
       else opts.success?.({ confirm: modal, cancel: !modal }); },
     request: call => { calls.push(structuredClone(plainIo({ url: call.url, data: call.data }))); Promise.resolve().then(() => send(call)).then(result => {
@@ -31,7 +31,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
       else call.success({ statusCode: result?.httpStatus ?? 200, header: result?.headers ?? {}, data: { status: result?.status ?? 200, msg: result?.msg ?? 'ok', data: result?.data } });
     }).catch(error => call.fail({ errMsg: error.message })); },
   };
-  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload', 'onShareAppMessage', 'onShareTimeline', 'onReachBottom'].map(name => [name, fn => {
+  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload', 'onShareAppMessage', 'onShareTimeline', 'onReachBottom', 'onPullDownRefresh'].map(name => [name, fn => {
     const previous=hooks[name];hooks[name]=previous ? (...args)=>{previous(...args);return fn(...args);} : fn;
   }]));
   function load(file) {

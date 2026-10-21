@@ -175,9 +175,9 @@ describe("complete shared community publishing and registered legacy entries", (
     expect(workspacePublisherBound(original.replace('@tap="publish"', '@tap="openPublish"'))).toBe(false);
     expect(workspacePublisherBound(original.replace("await publisher.publish()", "await disconnectedPublisher()"))).toBe(false);
   });
-  it("keeps all 137 actual page registrations and both runtime route allowlists synchronized", () => {
+  it("keeps all 138 actual page registrations and both runtime route allowlists synchronized", () => {
     const pages = JSON.parse(client("pages.json")).pages.map((row: { path: string }) => "/" + row.path);
-    expect(pages).toHaveLength(137); expect(new Set(pages).size).toBe(137);
+    expect(pages).toHaveLength(138); expect(new Set(pages).size).toBe(138);
     expect([...clientPages].sort()).toEqual(pages.slice().sort()); expect([...serverPages].sort()).toEqual(pages.slice().sort());
     for (const name of legacy) expect(pages).toContain(legacyPath(name));
     expect(pages).toContain("/pages/discover/discoverDetails/index"); expect(pages).toContain("/pages/discover/workspace");

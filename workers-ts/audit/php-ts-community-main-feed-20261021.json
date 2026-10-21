@@ -1,0 +1,4525 @@
+{
+  "schema": "draft-community-main-feed-audit-v1",
+  "status": "accepted local validation at frozen source; publication follows as an external immutable-patch receipt",
+  "recorded_utc": "2026-10-21T08:15:18.371560+00:00",
+  "base_commit": "29010385346add0f1b497957fe10fe142ef406fe",
+  "branch": "codex/community-main-feed",
+  "not_a_final_commit_or_release": true,
+  "authority": {
+    "base_source_evidence": {
+      "path": "/tmp/cinashop-community-main-feed-base-source.json",
+      "sha256": "abce5d5807391bacef4ad8fbb22595d59061da8372fcd954104508294c4d3775",
+      "bytes": 18534
+    },
+    "php_repository": "/home/cina/cinagroup/cinashop-php",
+    "php_git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "php_sources": [
+      {
+        "path": "view/uniapp/pages/discoverIndex/index.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discoverIndex/index.vue",
+        "worktree_sha256": "b84a5d43d98df76e80d167fcb84a040253332566c618063fdce86264ddb73057",
+        "bytes": 26985,
+        "lines": 896,
+        "initial_recorded_worktree_sha256": "b84a5d43d98df76e80d167fcb84a040253332566c618063fdce86264ddb73057",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "b84a5d43d98df76e80d167fcb84a040253332566c618063fdce86264ddb73057",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "b84a5d43d98df76e80d167fcb84a040253332566c618063fdce86264ddb73057",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/api/community.js",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/api/community.js",
+        "worktree_sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372",
+        "bytes": 2710,
+        "lines": 116,
+        "initial_recorded_worktree_sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/pages.json",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages.json",
+        "worktree_sha256": "b3f0d0db6f6e7e1e2c039695712797fbbb0b1146acc85d304c24bb344e185eb7",
+        "bytes": 41222,
+        "lines": 1879,
+        "initial_recorded_worktree_sha256": "b3f0d0db6f6e7e1e2c039695712797fbbb0b1146acc85d304c24bb344e185eb7",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "875a8a9c6187f528898b824ad41d3af82b43314bd6dae942b4d44b84041db3dc",
+        "worktree_equals_git_blob": false,
+        "prior_independent_git_sha256": "875a8a9c6187f528898b824ad41d3af82b43314bd6dae942b4d44b84041db3dc",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/components/discoverVideo/index.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/components/discoverVideo/index.vue",
+        "worktree_sha256": "9c77568200cc8c09b20373ac6ba4ed90e3ae8627775441cf8453e00c774a92d8",
+        "bytes": 21721,
+        "lines": 704,
+        "initial_recorded_worktree_sha256": "9c77568200cc8c09b20373ac6ba4ed90e3ae8627775441cf8453e00c774a92d8",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "9c77568200cc8c09b20373ac6ba4ed90e3ae8627775441cf8453e00c774a92d8",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "9c77568200cc8c09b20373ac6ba4ed90e3ae8627775441cf8453e00c774a92d8",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/components/discoverWaterfall/WaterfallsFlow.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/components/discoverWaterfall/WaterfallsFlow.vue",
+        "worktree_sha256": "148fd8daccafd281b1bd91763b5a00cce517bf26b088a2c33ba12aa62897c0a3",
+        "bytes": 6779,
+        "lines": 224,
+        "initial_recorded_worktree_sha256": "148fd8daccafd281b1bd91763b5a00cce517bf26b088a2c33ba12aa62897c0a3",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "148fd8daccafd281b1bd91763b5a00cce517bf26b088a2c33ba12aa62897c0a3",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "148fd8daccafd281b1bd91763b5a00cce517bf26b088a2c33ba12aa62897c0a3",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/pages/discover/discoverVideo/index.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverVideo/index.vue",
+        "worktree_sha256": "b450ea709ce4f4163cd83a1fbeb18f9feea6696f34a25bef3e58f3aeb6004b94",
+        "bytes": 3228,
+        "lines": 145,
+        "initial_recorded_worktree_sha256": "b450ea709ce4f4163cd83a1fbeb18f9feea6696f34a25bef3e58f3aeb6004b94",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "b450ea709ce4f4163cd83a1fbeb18f9feea6696f34a25bef3e58f3aeb6004b94",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "b450ea709ce4f4163cd83a1fbeb18f9feea6696f34a25bef3e58f3aeb6004b94",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/pages/discover/discoverVideo/app.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/discover/discoverVideo/app.vue",
+        "worktree_sha256": "34140d4667a5bbeea619f01925ea3179db8c0ed77761abdef4835a6bbc01f686",
+        "bytes": 569,
+        "lines": 34,
+        "initial_recorded_worktree_sha256": "34140d4667a5bbeea619f01925ea3179db8c0ed77761abdef4835a6bbc01f686",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "34140d4667a5bbeea619f01925ea3179db8c0ed77761abdef4835a6bbc01f686",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "34140d4667a5bbeea619f01925ea3179db8c0ed77761abdef4835a6bbc01f686",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/controller/api/v1/community/Community.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/controller/api/v1/community/Community.php",
+        "worktree_sha256": "47ab070a151ca3ef3bec025aed08130dcef1d68c1ec8a601343f939e7ea5f7b6",
+        "bytes": 11320,
+        "lines": 351,
+        "initial_recorded_worktree_sha256": "47ab070a151ca3ef3bec025aed08130dcef1d68c1ec8a601343f939e7ea5f7b6",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "47ab070a151ca3ef3bec025aed08130dcef1d68c1ec8a601343f939e7ea5f7b6",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "47ab070a151ca3ef3bec025aed08130dcef1d68c1ec8a601343f939e7ea5f7b6",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/services/community/CommunityServices.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/services/community/CommunityServices.php",
+        "worktree_sha256": "0d8dbf1e265848e876cdfd740b99c76f5e7804ad7dba6b351129c19f5d2deeaa",
+        "bytes": 29404,
+        "lines": 741,
+        "initial_recorded_worktree_sha256": "0d8dbf1e265848e876cdfd740b99c76f5e7804ad7dba6b351129c19f5d2deeaa",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "0d8dbf1e265848e876cdfd740b99c76f5e7804ad7dba6b351129c19f5d2deeaa",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "0d8dbf1e265848e876cdfd740b99c76f5e7804ad7dba6b351129c19f5d2deeaa",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/dao/community/CommunityDao.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/dao/community/CommunityDao.php",
+        "worktree_sha256": "8cc29e9c8d1f351bfa409a2b14fbad30bd7fb61b0a4614a738ae72e40e2a2283",
+        "bytes": 6054,
+        "lines": 139,
+        "initial_recorded_worktree_sha256": "8cc29e9c8d1f351bfa409a2b14fbad30bd7fb61b0a4614a738ae72e40e2a2283",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "8cc29e9c8d1f351bfa409a2b14fbad30bd7fb61b0a4614a738ae72e40e2a2283",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "8cc29e9c8d1f351bfa409a2b14fbad30bd7fb61b0a4614a738ae72e40e2a2283",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/services/BaseServices.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/services/BaseServices.php",
+        "worktree_sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+        "bytes": 14915,
+        "lines": 420,
+        "initial_recorded_worktree_sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "c56396bf827787d5ab8d80bfa70687697582abfe3b3cd1c6ce43867b7b80b7e9",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/services/community/CommunityUserServices.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/services/community/CommunityUserServices.php",
+        "worktree_sha256": "7e8da3b89eb7bf3eac48f367bdb9b2cc3bda94937057af2c5682240ee554d22c",
+        "bytes": 16572,
+        "lines": 401,
+        "initial_recorded_worktree_sha256": "7e8da3b89eb7bf3eac48f367bdb9b2cc3bda94937057af2c5682240ee554d22c",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "7e8da3b89eb7bf3eac48f367bdb9b2cc3bda94937057af2c5682240ee554d22c",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "7e8da3b89eb7bf3eac48f367bdb9b2cc3bda94937057af2c5682240ee554d22c",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/model/community/CommunityUser.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/model/community/CommunityUser.php",
+        "worktree_sha256": "65dc1152b991630c06ab3a71629e140b5a18234007b73edfd9af2fe5ea7a444a",
+        "bytes": 3252,
+        "lines": 133,
+        "initial_recorded_worktree_sha256": "65dc1152b991630c06ab3a71629e140b5a18234007b73edfd9af2fe5ea7a444a",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "65dc1152b991630c06ab3a71629e140b5a18234007b73edfd9af2fe5ea7a444a",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "65dc1152b991630c06ab3a71629e140b5a18234007b73edfd9af2fe5ea7a444a",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/uniapp/pages/index/components/community.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/index/components/community.vue",
+        "worktree_sha256": "b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671",
+        "bytes": 16568,
+        "lines": 491,
+        "initial_recorded_worktree_sha256": "b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "view/admin/src/components/mobilePage/home_community.vue",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobilePage/home_community.vue",
+        "worktree_sha256": "748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc",
+        "bytes": 17530,
+        "lines": 715,
+        "initial_recorded_worktree_sha256": "748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc",
+        "prior_git_ref": "HEAD"
+      },
+      {
+        "path": "app/services/product/product/StoreProductServices.php",
+        "absolute_path": "/home/cina/cinagroup/cinashop-php/app/services/product/product/StoreProductServices.php",
+        "worktree_sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "bytes": 136399,
+        "lines": 2834,
+        "initial_recorded_worktree_sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "unchanged_since_initial_capture": true,
+        "git_commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+        "git_blob_sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "worktree_equals_git_blob": true,
+        "prior_independent_git_sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+        "prior_git_ref": "HEAD"
+      }
+    ],
+    "php_source_count": 16,
+    "php_worktree_equal_git_count": 15,
+    "php_worktree_vs_git_explanation": "Actual working sources are primary observations; PHP pages.json differs from its pinned independent Git blob and is explicitly recorded, not claimed byte-identical to HEAD. No PHP file changed by this task.",
+    "php_executed": false,
+    "opaque_helpers_executed": false,
+    "php_runtime_side_effects_not_copied": true,
+    "read_only_next_proposal": {
+      "path": "/tmp/cinashop-diy-community-widget-next.json",
+      "sha256": "59952ec13ae5e4d06f4dc44b613d8a390fd63afd1d967a497bad85c69defa774",
+      "bytes": 33226
+    }
+  },
+  "implemented_contracts": [
+    {
+      "area": "feed",
+      "behavior": "Three tabs following/discover/featured, discover default; inline topic filter; page10, atomic complete-row validation before page advance, raw-length terminal, exact page retry, refresh resets topic and page; frontend last page1001 full-page explicit end and no1002."
+    },
+    {
+      "area": "following",
+      "behavior": "Current viewer graph; protected helpers omitted for guests. Canonical public platform0/type0 or positive UID/type2 active account predicates before SQL pagination, platform follow DTO corrected; default discover visibility unchanged. Disabled materialized community profile remains readable per prior TS policy."
+    },
+    {
+      "area": "recommendation",
+      "behavior": "Existing profile DTO plus required community array up to3 exact six-field teasers per typed canonical author, public verified undeleted content1|2, bounded lateral query ordered star/time/id, real Controller APP_KEY and owned media signing; cross-owner private references empty. Full details fetched on actual preview activation."
+    },
+    {
+      "area": "explicit_follow",
+      "behavior": "Desired state1 only; same-store/same-owner unknown fence survives tabs and instance replacement, no replay; explicit exact user_info read restores; reload generation/tab binds all UI receipts."
+    },
+    {
+      "area": "featured",
+      "behavior": "Mixed actual image/video active viewer; explicit activation once visits detail. Touch source only, program current/append/recovery/state do not visit. User next waits page success under owner/generation/selection guard; non-first-page restored post independently visible without mutating reloaded page membership/counters."
+    },
+    {
+      "area": "shared_interactions",
+      "behavior": "Existing comments/engagement/share controllers and unknown fences retained; visibility/owner/unload/closure clear projections and suppress late reads; 503+410010 not certain; global login codes unchanged."
+    },
+    {
+      "area": "routes",
+      "behavior": "Local App workspace?feed=featured strictly conflicts with post/author/publish modes; no remote WebView or credential URL. Raw old main registered as pure local switchTab bridge discarding credentials; managed resolver preserves canonical main mapping; actual pull refresh enabled on main/workspace."
+    }
+  ],
+  "explicit_php_differences_and_boundaries": [
+    "Per-author maximum3 teaser limit and frontend1001-page boundary are bounded TS implementation choices, not an assertion of PHP unlimited-range parity.",
+    "PHP main has no latest/hot switch; discover/featured share mixed default-star data, no video-only filter.",
+    "Keep stronger typed author/read contracts, pure reads without hasUser profile creation, owned media and precise state/deliberate-visit split; do not copy PHP App token URL, untyped relation collisions, old request finally races or append repeated visits.",
+    "Following active positive UID account does not require enabled community_user profile; recommendation does. Public discover is not narrowed to following identities.",
+    "Actual H5 canonical App route does not prove native device execution, provider capability, production login/ACL/schema/index/history or remote KV/R2. J/K and full API007 remain open.",
+    "DIY wrong-domain/per-block configuration remains an independent next slice; selected-topic editor field and missing inline PHP handlers are not presumed existing behavior; no product aggregation master gate inferred."
+  ],
+  "effective_worker": {
+    "status": "completed composite whole-file evidence, not a single full24 current-input success run",
+    "files": 24,
+    "cases": 763,
+    "parts": [
+      {
+        "files": 22,
+        "cases": 734,
+        "run": "unit-candidate1",
+        "whole_file_results": [
+          {
+            "path": "workers-ts/test/admin-fab-settings.test.ts",
+            "cases": 13,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+            "cases": 16,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/admin-setting-frontend-parity.test.ts",
+            "cases": 22,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-admin-migration.test.ts",
+            "cases": 8,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-author-workspace.test.ts",
+            "cases": 6,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-availability-frontend.test.ts",
+            "cases": 7,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-availability-migration.test.ts",
+            "cases": 14,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-comments-migration.test.ts",
+            "cases": 3,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-engagement-migration.test.ts",
+            "cases": 4,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-image-publish.test.ts",
+            "cases": 4,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-migration.test.ts",
+            "cases": 10,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-people-route.test.ts",
+            "cases": 5,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+            "cases": 19,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-relations-publish.test.ts",
+            "cases": 4,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-social-migration.test.ts",
+            "cases": 8,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/community-video-publish.test.ts",
+            "cases": 6,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/division-staff-navigation.test.ts",
+            "cases": 4,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+            "cases": 10,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "cases": 491,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/public-statistics-script-http.test.ts",
+            "cases": 4,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/statistics-script-frontend.test.ts",
+            "cases": 22,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          },
+          {
+            "path": "workers-ts/test/theme-host-chain.test.ts",
+            "cases": 54,
+            "source_run": "unit-candidate1",
+            "case_identity": "file plus assertion ordinal; no truncation-prone display-name deduplication"
+          }
+        ]
+      },
+      {
+        "files": 1,
+        "cases": 19,
+        "run": "binding-final1",
+        "path": "workers-ts/test/uniapp-frontend-parity.test.ts"
+      },
+      {
+        "files": 1,
+        "cases": 10,
+        "run": "binding-final2",
+        "path": "workers-ts/test/community-main-feed-frontend.test.ts"
+      }
+    ],
+    "deduplication": "file plus assertion ordinal; discard all assertions in failed files from first run and replace entire files; final1 newAST10 replaced by current-source final2 newAST10, not added",
+    "excluded_partial_worker_cases": 25,
+    "initial_run_total": 763,
+    "initial_run_passed": 759,
+    "initial_run_failed": 4,
+    "initial_failed_files": 2,
+    "final_new_ast_current_home_source_sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a",
+    "evidence": [
+      {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-unit-candidate1-result.json",
+          "sha256": "f2dca5662ad7277b4942ec12e5fe5ab94a3fcd12694f17507dc695a0fa3089db",
+          "bytes": 4748
+        },
+        "label": "unit-candidate1",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-community-main-feed-unit.py"
+        ],
+        "cwd": "workers-ts",
+        "started_utc": "2026-10-21T07:44:33.146953+00:00",
+        "seconds": 116.64,
+        "exit_code": 1,
+        "log": {
+          "path": "/tmp/cinashop-community-main-feed-unit-candidate1.log",
+          "sha256": "62d43fbcfea9536817db037b12294549ccb5a82e1c370368113f1f2e4875fa3e",
+          "bytes": 170703
+        },
+        "changed_during_run": [],
+        "source_snapshot": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "view/uniapp-ts/package.json",
+            "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+            "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+            "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+            "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+          },
+          {
+            "path": "view/uniapp-ts/src/api/community.ts",
+            "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+          },
+          {
+            "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+            "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+            "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+            "sha256": "dfe72467df278b7b2508a7b9a51460129e3e612df98fcd6814afae53b42f1c3c"
+          },
+          {
+            "path": "view/uniapp-ts/src/config/navigation.ts",
+            "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages.json",
+            "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discover/index.vue",
+            "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+            "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+            "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunityService.ts",
+            "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+            "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+          },
+          {
+            "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+            "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+          },
+          {
+            "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+            "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+            "sha256": "9dea7b03f166e48bd836d0c9fdd3d6aaec0efb5f9dfc6c5e6327761f6b53e717"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+            "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+          },
+          {
+            "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+            "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48"
+          },
+          {
+            "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+            "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+          },
+          {
+            "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+            "sha256": "a335173925d0cb3317cdd90580f86bb0ad9b43dce52c9e085f4f083eee07b29b"
+          },
+          {
+            "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+            "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-binding-final1-result.json",
+          "sha256": "3f0f735e6f4cf3eb0d4196a11e02a050d9a052e6baad1e3ef1f60c905c44e3d6",
+          "bytes": 5030
+        },
+        "label": "binding-final1",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/community-main-feed-frontend.test.ts",
+          "test/uniapp-frontend-parity.test.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile.json=/tmp/cinashop-community-main-feed-binding-final1-vitest.json"
+        ],
+        "cwd": "workers-ts",
+        "started_utc": "2026-10-21T07:50:00.412755+00:00",
+        "seconds": 2.98,
+        "exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-community-main-feed-binding-final1.log",
+          "sha256": "bc4db139d9d760c0ed17c2f1c093d6ed8ab2078f408313ca4244767ed10ca414",
+          "bytes": 6191
+        },
+        "changed_during_run": [],
+        "source_snapshot": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "view/uniapp-ts/package.json",
+            "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+            "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+            "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+            "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+          },
+          {
+            "path": "view/uniapp-ts/src/api/community.ts",
+            "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+          },
+          {
+            "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+            "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+            "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+            "sha256": "dfe72467df278b7b2508a7b9a51460129e3e612df98fcd6814afae53b42f1c3c"
+          },
+          {
+            "path": "view/uniapp-ts/src/config/navigation.ts",
+            "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages.json",
+            "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discover/index.vue",
+            "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+            "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+            "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunityService.ts",
+            "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+            "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+          },
+          {
+            "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+            "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+          },
+          {
+            "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+            "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+            "sha256": "8a59b7af87360fce8f3b5f2d56ac88abf53a08c5122145168c2d1ea8469fa252"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+            "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+          },
+          {
+            "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+            "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48"
+          },
+          {
+            "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+            "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+          },
+          {
+            "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+            "sha256": "b49ad9ffdd3a257152a56d7b1216e67dabd2e51e741d9e013b9808d818bfcd6c"
+          },
+          {
+            "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+            "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c"
+          }
+        ]
+      },
+      {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-binding-final2-result.json",
+          "sha256": "85b0f23c2d1015c9e52ece10e4f08f104b76e694e137d0736d3a457ef67f8206",
+          "bytes": 4986
+        },
+        "label": "binding-final2",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.ts",
+          "test/community-main-feed-frontend.test.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile.json=/tmp/cinashop-community-main-feed-binding-final2-vitest.json"
+        ],
+        "cwd": "workers-ts",
+        "started_utc": "2026-10-21T07:56:14.228698+00:00",
+        "seconds": 2.3,
+        "exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-community-main-feed-binding-final2.log",
+          "sha256": "c556b75809e7a5924b09d50a237f680e55b7a495085db24dba128ef067c7aae0",
+          "bytes": 2413
+        },
+        "changed_during_run": [],
+        "source_snapshot": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "view/uniapp-ts/package.json",
+            "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+            "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+            "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+            "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+          },
+          {
+            "path": "view/uniapp-ts/src/api/community.ts",
+            "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+          },
+          {
+            "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+            "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+            "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+            "sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a"
+          },
+          {
+            "path": "view/uniapp-ts/src/config/navigation.ts",
+            "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages.json",
+            "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discover/index.vue",
+            "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+            "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+            "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunityService.ts",
+            "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+            "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+          },
+          {
+            "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+            "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+          },
+          {
+            "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+            "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+            "sha256": "8a59b7af87360fce8f3b5f2d56ac88abf53a08c5122145168c2d1ea8469fa252"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+            "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+          },
+          {
+            "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+            "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48"
+          },
+          {
+            "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+            "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+          },
+          {
+            "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+            "sha256": "b49ad9ffdd3a257152a56d7b1216e67dabd2e51e741d9e013b9808d818bfcd6c"
+          },
+          {
+            "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+            "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c"
+          }
+        ]
+      }
+    ],
+    "vitest_reports": [
+      {
+        "path": "/tmp/cinashop-community-main-feed-unit-candidate1-vitest.json",
+        "sha256": "c04665965c5c9f2d3f2f4d3dfced9f13f092dcbf51eff7bcfa868eba0f623cc3",
+        "bytes": 316740
+      },
+      {
+        "path": "/tmp/cinashop-community-main-feed-binding-final1-vitest.json",
+        "sha256": "ff622838e376460df476d34d73f0d28c8c0e2a6b8ef2b840bd94214e3489cb24",
+        "bytes": 12680
+      },
+      {
+        "path": "/tmp/cinashop-community-main-feed-binding-final2-vitest.json",
+        "sha256": "655afa3436b9d41bf55c2eb9f0539ef94ee5800260a3578b141698f8cac2487b",
+        "bytes": 4815
+      }
+    ]
+  },
+  "native": {
+    "status": "passed final9 file regression",
+    "files": 9,
+    "cases": 189,
+    "new_main_feed_cases": 17,
+    "existing_cases": 172,
+    "not_estimate191": true,
+    "earlier_two_file29_superseded_not_added": true,
+    "pg_version": "16.14",
+    "scope": "Real createApp/JWT owned native PostgreSQL fixture; exact public state/typed spectator/media/sequence receipts, not production ACL",
+    "evidence": {
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-backend-native-final1-result.json",
+        "sha256": "7a672924a972ebba1d64d93f5ac6c7c6db97b825ad430e8893a80d6ea322f7cb",
+        "bytes": 2116
+      },
+      "label": "backend-native-final1",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-main-feed-postgres.test.ts",
+        "test/community-availability-postgres.test.ts",
+        "test/community-author-postgres.test.ts",
+        "test/community-relations-postgres.test.ts",
+        "test/community-image-postgres.test.ts",
+        "test/community-video-postgres.test.ts",
+        "test/community-engagement-postgres.test.ts",
+        "test/community-comments-postgres.test.ts",
+        "test/community-social-identities-postgres.test.ts"
+      ],
+      "cwd": "workers-ts",
+      "started_utc": "2026-10-21T07:47:02.338257+00:00",
+      "seconds": 85.16,
+      "exit_code": 0,
+      "log": {
+        "path": "/tmp/cinashop-community-main-feed-backend-native-final1.log",
+        "sha256": "23d7d6f59081464ac9359d75ed75d147366cc7f465ce1516706caee21ec90513",
+        "bytes": 1173
+      },
+      "changed_during_run": [],
+      "source_snapshot": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+          "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunityService.ts",
+          "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+        },
+        {
+          "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+        },
+        {
+          "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+          "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+        }
+      ]
+    },
+    "earlier_subset": {
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-backend-native1-result.json",
+        "sha256": "bd8cb25df38ba7595bf7eac74c455b292e0b20666354e61d2a0762c7bac6ce58",
+        "bytes": 1769
+      },
+      "label": "backend-native1",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-main-feed-postgres.test.ts",
+        "test/community-social-identities-postgres.test.ts"
+      ],
+      "cwd": "workers-ts",
+      "started_utc": "2026-10-21T07:23:07.595452+00:00",
+      "seconds": 29.63,
+      "exit_code": 0,
+      "log": {
+        "path": "/tmp/cinashop-community-main-feed-backend-native1.log",
+        "sha256": "860a9dd74588463cc7305d736fb6adca45c1a4cd61f2ebd8574638a87f67675c",
+        "bytes": 870
+      },
+      "changed_during_run": [],
+      "source_snapshot": [
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "ca4ba1d0d678d263f8658b61c64aea008d72f7bf35832ecbd41e0b11b0c27b1c"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+          "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunityService.ts",
+          "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+        },
+        {
+          "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+        },
+        {
+          "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+          "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "afd6566ed0878d28e484cc71ba722a4521fd8b8eb32029a4e1b49675978d9817"
+        }
+      ]
+    },
+    "fixture_remaining": 0,
+    "runner_stop_log_present": true,
+    "independent_final_pg_ctl_verification": {
+      "status": "all stopped",
+      "evidence": {
+        "path": "/tmp/cinashop-community-main-feed-postgres-cleanup.json",
+        "bytes": 633,
+        "sha256": "2fc4b7ff85a668c1f7cff340a75f389f9285d45f5771782323a02c57034c2f13"
+      }
+    }
+  },
+  "runtime": {
+    "status": "passed at current HomeFeed via complete1532 toolchain; earlier independent212 retained as diagnostic repeat",
+    "files": 11,
+    "cases": 212,
+    "new_cases": 31,
+    "existing_cases": 181,
+    "new_test_deadline_seconds": 30,
+    "evidence": {
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-h5-node-candidate2-result.json",
+        "sha256": "9e7cd53cc0cacc254d86ce7b7c5dd5a4dc36c8b4825086e73a38f5a0f8e50dbc",
+        "bytes": 2580
+      },
+      "label": "h5-node-candidate2",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-main-feed-runtimes.py"
+      ],
+      "cwd": "view/uniapp-ts",
+      "started_utc": "2026-10-21T07:43:15.865541+00:00",
+      "seconds": 77.2,
+      "exit_code": 0,
+      "log": {
+        "path": "/tmp/cinashop-community-main-feed-h5-node-candidate2.log",
+        "sha256": "2eff1905a819cd19d2610f2519c955beffd37c5579e65d8c7f96bab32d1f4c70",
+        "bytes": 27301
+      },
+      "changed_during_run": [],
+      "source_snapshot": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+          "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+          "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+          "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+        },
+        {
+          "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+          "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+          "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+          "sha256": "dfe72467df278b7b2508a7b9a51460129e3e612df98fcd6814afae53b42f1c3c"
+        },
+        {
+          "path": "view/uniapp-ts/src/config/navigation.ts",
+          "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages.json",
+          "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/index.vue",
+          "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+          "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+        }
+      ]
+    },
+    "validated_home_feed_sha256": "dfe72467df278b7b2508a7b9a51460129e3e612df98fcd6814afae53b42f1c3c",
+    "current_home_feed_sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a",
+    "current_input_identical": false,
+    "source_change": "Earlier standalone212 validated the pre-type-expression HomeFeed. Current equivalent explicit0/1 predicate is validated by the full toolchain, which contains all212 unique runtime titles; do not add the repeated212 twice.",
+    "fulltoolchain_current_source_coverage": {
+      "status": "passed",
+      "cases": 212,
+      "included_in": 1532,
+      "title_inclusion": {
+        "path": "/tmp/cinashop-community-main-feed-runtime-final-inclusion.json",
+        "bytes": 21618,
+        "sha256": "7950c9a5c74b4c3552437719dd5d4f602d13bd1aee3c89185981eda299118150"
+      },
+      "current_home_feed_sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a",
+      "source_changed_during_full_run": false
+    }
+  },
+  "types": {
+    "worker_complete_configs": {
+      "status": "passed",
+      "configs": [
+        "tsconfig.json",
+        "tsconfig.runtime-test.json",
+        "independent vitest.community-main-feed-browser.config.ts strict command"
+      ],
+      "evidence": {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-backend-types-final1-result.json",
+          "sha256": "fdc1e605afc8aa2ce778c78dc09bf44c9c9be6d02d49e0030e2da09aae33f9fe",
+          "bytes": 2832
+        },
+        "label": "backend-types-final1",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-community-main-feed-types.py"
+        ],
+        "cwd": "workers-ts",
+        "started_utc": "2026-10-21T07:50:03.483956+00:00",
+        "seconds": 304.96,
+        "exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-community-main-feed-backend-types-final1.log",
+          "sha256": "b1a18d6da98af68035cca6ef9606e536eac2fe77cac2b546751ce8f28e6546f4",
+          "bytes": 387
+        },
+        "changed_during_run": [],
+        "source_snapshot": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+            "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+          },
+          {
+            "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+            "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunityService.ts",
+            "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+          },
+          {
+            "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+            "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+          },
+          {
+            "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+            "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+          },
+          {
+            "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+            "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+            "sha256": "8a59b7af87360fce8f3b5f2d56ac88abf53a08c5122145168c2d1ea8469fa252"
+          },
+          {
+            "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+            "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+          },
+          {
+            "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+            "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48"
+          },
+          {
+            "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+            "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff"
+          },
+          {
+            "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+            "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+          },
+          {
+            "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+            "sha256": "b49ad9ffdd3a257152a56d7b1216e67dabd2e51e741d9e013b9808d818bfcd6c"
+          },
+          {
+            "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+            "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c"
+          }
+        ]
+      }
+    },
+    "h5_final1": {
+      "status": "failed excluded candidate",
+      "reason": "Optional is_new cannot be passed to Array<number>.includes; H5 typecheck exit2, subsequent steps not executed",
+      "later_steps_executed": false,
+      "evidence": {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-h5-full-final1-result.json",
+          "sha256": "f0317cff7843c84ace480bb047a47fe7030952355689c322315495ec34cd942d",
+          "bytes": 2569
+        },
+        "label": "h5-full-final1",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-community-people-full-h5.py"
+        ],
+        "cwd": "view/uniapp-ts",
+        "started_utc": "2026-10-21T07:55:08.520992+00:00",
+        "seconds": 20.94,
+        "exit_code": 2,
+        "log": {
+          "path": "/tmp/cinashop-community-main-feed-h5-full-final1.log",
+          "sha256": "66da086965bc4748b489221cdf587a93edf040eafe1b21fded90aa8521ac6f8e",
+          "bytes": 308
+        },
+        "changed_during_run": [],
+        "source_snapshot": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "view/uniapp-ts/package.json",
+            "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+            "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+            "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+            "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+          },
+          {
+            "path": "view/uniapp-ts/src/api/community.ts",
+            "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+          },
+          {
+            "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+            "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+            "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+            "sha256": "dfe72467df278b7b2508a7b9a51460129e3e612df98fcd6814afae53b42f1c3c"
+          },
+          {
+            "path": "view/uniapp-ts/src/config/navigation.ts",
+            "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages.json",
+            "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discover/index.vue",
+            "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+            "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+          }
+        ]
+      }
+    },
+    "h5_final2_typecheck": {
+      "status": "passed",
+      "complete_contract": {
+        "metadata": {
+          "path": "/tmp/cinashop-community-main-feed-h5-full-final2-result.json",
+          "bytes": 2569,
+          "sha256": "664894eaa94cba98972947000902a10b99faa556d23a903d8040e7a77132382b"
+        },
+        "label": "h5-full-final2",
+        "cwd": "view/uniapp-ts",
+        "command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-community-people-full-h5.py"
+        ],
+        "exit_code": 0,
+        "started_utc": "2026-10-21T07:56:16.605280+00:00",
+        "seconds": 704.1,
+        "log": "/tmp/cinashop-community-main-feed-h5-full-final2.log",
+        "log_sha256": "7c98ee1d09fddbbb155040681912fb9711306492750a37f319922a2b24722332",
+        "source_files": [
+          {
+            "path": "view/common/communityRoute.ts",
+            "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+          },
+          {
+            "path": "view/uniapp-ts/package.json",
+            "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+            "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+            "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+          },
+          {
+            "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+            "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+          },
+          {
+            "path": "view/uniapp-ts/src/api/community.ts",
+            "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+          },
+          {
+            "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+            "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+            "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+          },
+          {
+            "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+            "sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a"
+          },
+          {
+            "path": "view/uniapp-ts/src/config/navigation.ts",
+            "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages.json",
+            "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discover/index.vue",
+            "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+          },
+          {
+            "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+            "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+          }
+        ],
+        "changed_during_run": []
+      }
+    }
+  },
+  "failed_candidates": [
+    {
+      "label": "h5-node-candidate1",
+      "status": "interrupted, excluded",
+      "exit_code": 130,
+      "reason": "Two real failures exposed an extra close-parenthesis in new production recommendation validation. New follow-race fixture awaited a deferred after absent follow dispatch. Do not count partial passes. Initial command also used several stale nonexistent runtime filenames; use actual eleven-script inventory for final run.",
+      "observed_partial_summary": {
+        "tests": 106,
+        "pass": 99,
+        "fail": 2,
+        "cancelled": 5
+      },
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-h5-node-candidate1-interrupted.json",
+        "sha256": "5060d72422c28afea2a501ae9720d0bff0c0a75d12437194c1e2f64a5fc571a3",
+        "bytes": 859
+      },
+      "log": {
+        "path": "/tmp/cinashop-community-main-feed-h5-node-candidate1.log",
+        "sha256": "902dd07ca11c0e4befe7639226c620957474b4241476965895f88f3d205a170f",
+        "bytes": 15862
+      },
+      "partial_passes_counted": false,
+      "pid_absence_evidence": {
+        "508757": "absent",
+        "508773": "absent",
+        "508921": "absent"
+      }
+    },
+    {
+      "label": "unit-candidate1",
+      "status": "four failed cases excluded by whole-file replacement; its22 complete files retained in effective count",
+      "reasons": [
+        "ts.VariableDeclaration mistaken for ts.isVariableDeclaration",
+        "termination picked guest early return instead of successful receipt block",
+        "registered raw old main confused with existing managed mapping",
+        "current138 minus obsolete constant confused with immutable132 denominator"
+      ],
+      "whole_failed_file_partial_passes_counted": false
+    },
+    {
+      "label": "h5-full-final1",
+      "status": "typecheck exit2, excluded from complete H5 contract passes",
+      "subsequent_steps_executed": false
+    }
+  ],
+  "page_manifest": {
+    "current_pages": 138,
+    "added_raw_main": "/pages/discoverIndex/index",
+    "historical_merged_pages": 132,
+    "current_manifest_sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be",
+    "pre_main_feed_manifest_sha256": "8c64c53d6178e22dfa84741a632fa2828452a16982549ad10dad559c645fe989",
+    "proof": "Unique exact inverse of new raw record plus two pull refresh additions, bound current/predecessor whole SHA; then original community/cashier inverse chain and historical132/hash assertions retained",
+    "dated_artifacts_rewritten": false
+  },
+  "protected_baseline": {
+    "reference": {
+      "path": "/tmp/cinashop-community-main-feed-protected-baseline.json",
+      "sha256": "9e4c3fa2b004293142719b989dcba2ab27f3374d47d65d6e07f5a3d66e658af2",
+      "bytes": 641566
+    },
+    "protected_source_files": 1517,
+    "final_current_unchanged_check": "all1517 current hashes exactly equal baseline",
+    "historical_documents": [
+      {
+        "path": "MIGRATION_AUDIT.md",
+        "baseline_sha256": "63d68a2e7fe593a8d1d9bcca59bfdd6e0928eb97c4bb147c74c2a2ea5f6d9b04",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "53d169cc3e37283de41650ac71ee55d16c5844ac65a59581c553cb309468f02b",
+        "checkbox_count": 88,
+        "checkbox_lines_equal": true
+      },
+      {
+        "path": "MIGRATION_CHECKLIST.md",
+        "baseline_sha256": "34b3cd88179dc6d90e7ec84d2261e96ad7cc0cc28be3047679e24a1d2d306221",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "cca521e664049ec6a2c154f0838b5e42ab8e29a019c4517f192e556d92266831",
+        "checkbox_count": 404,
+        "checkbox_lines_equal": true
+      },
+      {
+        "path": "workers-ts/docs/php-ts-community-next-gaps-20261021.md",
+        "baseline_sha256": "cd9e671c0df5af16015a3fab1e0f3eaba68278cbcd219d153abeadfde822ec6d",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "ecfce9f1938266d5485b1a46327f1c1ceba348faa9332db91bcf705cefbc7f72",
+        "checkbox_count": 0,
+        "checkbox_lines_equal": true
+      }
+    ],
+    "checkbox_expected": {
+      "MIGRATION_AUDIT.md": 88,
+      "MIGRATION_CHECKLIST.md": 404
+    },
+    "original_bodies_final_suffix_preservation": true,
+    "future_document_or_audit_files_excluded_from_current_source_snapshot": true
+  },
+  "current_changed_sources": [
+    {
+      "path": "view/common/communityRoute.ts",
+      "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860",
+      "bytes": 4576,
+      "lines": 66,
+      "base_blob_sha256": "ffffa5af297bcc22fcf0556848b7d42d4ab025b3ad7e4d6877585d91e73fad69",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0",
+      "bytes": 6511,
+      "lines": 75,
+      "base_blob_sha256": "78d5ee6ab9cb5250bb682ba3ce1d71e1d7bb513ea46cbbd88f6602bfdcb17ef3",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+      "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b",
+      "bytes": 25767,
+      "lines": 223,
+      "base_blob_sha256": "6b07c3cfbc2d85def1f0ccffed6324850befb0efbb5a789cd6cfdb4f337d2e77",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+      "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b",
+      "bytes": 21303,
+      "lines": 148,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+      "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca",
+      "bytes": 5022,
+      "lines": 72,
+      "base_blob_sha256": "a4d0aeb90223fe5fcf28f1b6dbbb4d2de4e4777201d1c0178be7364f092927f6",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/api/community.ts",
+      "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365",
+      "bytes": 23296,
+      "lines": 559,
+      "base_blob_sha256": "daebbc66baa711bf14883405fb204519bcd84e6e961d3926b59e54909454aa7a",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+      "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984",
+      "bytes": 6078,
+      "lines": 72,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+      "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7",
+      "bytes": 6185,
+      "lines": 90,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+      "sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a",
+      "bytes": 12601,
+      "lines": 164,
+      "base_blob_sha256": "9ac173d1b90cf7febaf1a7c8dc7dcb43a3c0fa5c09dc9ef03425973954a40d80",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/config/navigation.ts",
+      "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20",
+      "bytes": 22827,
+      "lines": 393,
+      "base_blob_sha256": "79207b863dedaaae703fea285035bc9e0ccdd2d56b710fd676410add87c2d16d",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be",
+      "bytes": 19203,
+      "lines": 843,
+      "base_blob_sha256": "8c64c53d6178e22dfa84741a632fa2828452a16982549ad10dad559c645fe989",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51",
+      "bytes": 49603,
+      "lines": 991,
+      "base_blob_sha256": "3af28aee7ac82aee14e1d84d830cd52f77ee1a5892b32bf0efa4bf3a3a810488",
+      "new_file": false
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+      "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98",
+      "bytes": 1285,
+      "lines": 30,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58",
+      "bytes": 96043,
+      "lines": 1354,
+      "base_blob_sha256": "4cdeb64b028ee0ebf6370616dabb37004212f0a5c739d6cd277b5f782e0182a7",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+      "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b",
+      "bytes": 16071,
+      "lines": 464,
+      "base_blob_sha256": "e4d4f04e9e1444baed6f15383b6eefa0c9c54c6ae5adbe1b787b4d2974a15a9c",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunityService.ts",
+      "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57",
+      "bytes": 38132,
+      "lines": 936,
+      "base_blob_sha256": "81011e0249184a37f5904f46fef1a9d4f4ccb4314049a7d49cb1f57c2c1ccf94",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+      "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec",
+      "bytes": 23923,
+      "lines": 571,
+      "base_blob_sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d",
+      "bytes": 22852,
+      "lines": 394,
+      "base_blob_sha256": "48cc195604c696260efe21812ed160c17ee783f620a3e2cd961bf0aa16fbea10",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+      "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5",
+      "bytes": 24745,
+      "lines": 185,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+      "sha256": "8a59b7af87360fce8f3b5f2d56ac88abf53a08c5122145168c2d1ea8469fa252",
+      "bytes": 18481,
+      "lines": 199,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+      "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3",
+      "bytes": 16892,
+      "lines": 198,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+      "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48",
+      "bytes": 22875,
+      "lines": 261,
+      "base_blob_sha256": "10daaa23209c159dc95ed01d4262417f62d7e6baee92446b8b107447f1574d0e",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+      "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff",
+      "bytes": 2205,
+      "lines": 25,
+      "base_blob_sha256": null,
+      "new_file": true
+    },
+    {
+      "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+      "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95",
+      "bytes": 135344,
+      "lines": 1340,
+      "base_blob_sha256": "cbdbb215e5995b9bb449d8c8e58be7485c0bb3c627c53066683ab456db971f41",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "sha256": "b49ad9ffdd3a257152a56d7b1216e67dabd2e51e741d9e013b9808d818bfcd6c",
+      "bytes": 25791,
+      "lines": 397,
+      "base_blob_sha256": "433297bb73fb231d3197433f37927d4920ace80ed26b2172dd47e8bbf77b8b0a",
+      "new_file": false
+    },
+    {
+      "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+      "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c",
+      "bytes": 541,
+      "lines": 8,
+      "base_blob_sha256": null,
+      "new_file": true
+    }
+  ],
+  "current_changed_source_count": 26,
+  "source_snapshot_reference": {
+    "path": "/tmp/cinashop-community-main-feed-frontend-source.json",
+    "sha256": "3200faa9544d95ca70be3cb3b346fd3cf33fd40b9b36e7535b02d0dd63d208f1",
+    "bytes": 9272
+  },
+  "source_snapshot_includes_future_docs": false,
+  "resources_and_user_preferences": {
+    "shared_heavy_validation_serial": true,
+    "vitest_max_workers": 1,
+    "native_deadline_minutes": 10,
+    "browser_background": true,
+    "additional_browser_confirmations": false,
+    "browser_fixture8min_test9min_not_raised": true
+  },
+  "final_gate_policy": "Overall migration remains active. No merge/deploy; new head CI is checked after publication. Native and browser deadlines and validation locks unchanged.",
+  "full_uniapp": {
+    "status": "passed",
+    "steps": [
+      "typecheck",
+      "test:toolchain",
+      "test:admzip",
+      "test:express-qs",
+      "test:jest-jsdom-once",
+      "test:d3-advisories",
+      "build:h5",
+      "build:mp-weixin",
+      "build:app",
+      "test:build-artifacts",
+      "test:automator-qr",
+      "test:runtime-i18n",
+      "common-security"
+    ],
+    "toolchain": {
+      "tests": 1532,
+      "passed": 1532,
+      "failed": 0,
+      "skipped": 0,
+      "community_runtime_included": 212
+    },
+    "clean_builds": [
+      "h5",
+      "mp-weixin",
+      "app"
+    ],
+    "build_manifest_before": {
+      "path": "/tmp/cinashop-community-main-feed-build-before.json",
+      "bytes": 64095,
+      "sha256": "77a33bd7e62b4cead8c272a685ae93185a2eef0d1f55a8142521003b2a8afc4e"
+    },
+    "build_manifest_after": {
+      "path": "/tmp/cinashop-community-main-feed-build-after.json",
+      "bytes": 62966,
+      "sha256": "1cc37d4768157d94bda854ea424302db45d9f108e4cab2e1a41703d6fc08d672"
+    },
+    "h5_files": 366,
+    "h5_byte_identical_across_browser": true,
+    "compiled_bridge_and_pull_refresh": [
+      {
+        "path": "dist/build/mp-weixin/pages/discoverIndex/index.wxml",
+        "sha256": "4d5f177be438b8400e3f8d4c2725aa3c127aebc374ffebf70d418c4fa2e9d895",
+        "bytes": 200
+      },
+      {
+        "path": "dist/build/mp-weixin/pages/discoverIndex/index.js",
+        "sha256": "0bafa4644d8b1c74f6fef0df57e9bf7c5840759e186a532c6b53f68ab1b3b012",
+        "bytes": 820
+      },
+      {
+        "path": "dist/build/mp-weixin/pages/discoverIndex/index.json",
+        "sha256": "a681d835c21dceb319530f44ce95362eb19295a1441f2927afe597146ac09831",
+        "bytes": 115
+      },
+      {
+        "path": "dist/build/mp-weixin/pages/discover/index.json",
+        "sha256": "1011108ab7c057cbf1daf63c447d51c17edfb19e3926cf7e1a859685d199f372",
+        "bytes": 551
+      },
+      {
+        "path": "dist/build/mp-weixin/pages/discover/workspace.json",
+        "sha256": "9a34b3fcd0ee46d6550a17110ebc05011290b7bbf69b0a746c0b06e54f2da6dd",
+        "bytes": 557
+      }
+    ],
+    "app_bundle": {
+      "path": "dist/build/app/app-service.js",
+      "sha256": "c4aec8583bcd7964286b14adf003e975f75ad77fe39754371b53dbf02602b5a7",
+      "bytes": 2086875,
+      "raw_main_route_present": true
+    },
+    "evidence": {
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-h5-full-final2-result.json",
+        "bytes": 2569,
+        "sha256": "664894eaa94cba98972947000902a10b99faa556d23a903d8040e7a77132382b"
+      },
+      "label": "h5-full-final2",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-people-full-h5.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T07:56:16.605280+00:00",
+      "seconds": 704.1,
+      "log": "/tmp/cinashop-community-main-feed-h5-full-final2.log",
+      "log_sha256": "7c98ee1d09fddbbb155040681912fb9711306492750a37f319922a2b24722332",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+          "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+          "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+          "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+        },
+        {
+          "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+          "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+          "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+          "sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a"
+        },
+        {
+          "path": "view/uniapp-ts/src/config/navigation.ts",
+          "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages.json",
+          "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/index.vue",
+          "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+          "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+        }
+      ],
+      "changed_during_run": []
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "evidence": {
+      "path": "/tmp/cinashop-community-main-feed-browser-evidence.json",
+      "bytes": 182184,
+      "sha256": "d9da450808900fb626bcf634c47aeb607f392502850bf245a6ae83b4085b3c05"
+    },
+    "run": {
+      "metadata": {
+        "path": "/tmp/cinashop-community-main-feed-browser-candidate1-result.json",
+        "bytes": 4818,
+        "sha256": "22ec450ea69e3199a9e52e9bf00d2bcfa3d77be57c821e905b4ef09c9fa687bf"
+      },
+      "label": "browser-candidate1",
+      "cwd": "workers-ts",
+      "command": [
+        "node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-main-feed-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T08:08:46.009227+00:00",
+      "seconds": 263.69,
+      "log": "/tmp/cinashop-community-main-feed-browser-candidate1.log",
+      "log_sha256": "33b8c86dd54c24370ed8b2e178273e064dae27779d0708f4d49591aa35b1b3b5",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "13f7d48b610ad6acb4a42b781f2c3c1dd3ea49d8059a6b6c15a1e54158b77860"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "6b1ab07563e1cebed715a77a18185a3a1471d478aa2887d35cc9dc8632a3b4b0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-engagement-runtime.test.cjs",
+          "sha256": "d61fb92dc865b85d2b30216a19af6299b9937bd57bb78588fd0f046a34eb3b2b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+          "sha256": "4bb3cdefec61488e00151954052f7f40795ba8ab7c5ca27e72164945f422b68b"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/uni-store-runtime.cjs",
+          "sha256": "8cf47d79ba8bd4ddb5d1228855eb58ef4b1defc038ac77479df765819984c5ca"
+        },
+        {
+          "path": "view/uniapp-ts/src/api/community.ts",
+          "sha256": "c30b7b9ca09d445e482bf95c9699a6b693a6e59f2c6cd080ed9e638a5b85a365"
+        },
+        {
+          "path": "view/uniapp-ts/src/components/community/CommunityFeaturedViewer.vue",
+          "sha256": "3d8153483f2c5cd6462e48f2cb486ee738b900daa85a70278d798cdf75d28984"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityFeatured.ts",
+          "sha256": "f3d737fcbe0624cbb51bdc4cfefdde2bdf9f7b5e813b7fb0509ff8f4984e67e7"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityHomeFeed.ts",
+          "sha256": "f4a7510f65474e4fb75a3a98cf841cb1571cc79a404e5a40b5d5560da0a1700a"
+        },
+        {
+          "path": "view/uniapp-ts/src/config/navigation.ts",
+          "sha256": "97f8f03540bdddb87cd080253a5dcb05e85f6f7871fbd193e736fd90850dbb20"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages.json",
+          "sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/index.vue",
+          "sha256": "5ea5a28960157ffe9d22ccc112bfc7af2914c297eb9f06ce022b8ebb6e0b0f51"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discoverIndex/index.vue",
+          "sha256": "6e51781febd0509c684744733a0cb60c0b07165fc6b117b7c9366d8a346f0e98"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "e2f66af805f7e1418e5f08142e9a5e1d343f2a5ed9d916bb60a49a764131ba58"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/CommunityController.ts",
+          "sha256": "08e04cd6894f6f8399adf39416ca18146ed3f6ed6f58e68b4b61445f7ecc433b"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunityService.ts",
+          "sha256": "a0fe93d471504ca3d6061a6a7569dd2be4a5128c3497cbaa020ab2c863a32e57"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "4f611dcdb6b83db77a3fed59520e28a2dd9fe92eed65d93e16ee00396e4c76ec"
+        },
+        {
+          "path": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "sha256": "56a1e9e3115c6ec25d79e59a4d915d1d5aca748f444d20a3918deed747fe1d1d"
+        },
+        {
+          "path": "workers-ts/test/browser/community-main-feed.acceptance.ts",
+          "sha256": "24dde049383627ac079618530a5a4f0c432d0f055768a40d441da33bbf4fbeb5"
+        },
+        {
+          "path": "workers-ts/test/community-main-feed-frontend.test.ts",
+          "sha256": "8a59b7af87360fce8f3b5f2d56ac88abf53a08c5122145168c2d1ea8469fa252"
+        },
+        {
+          "path": "workers-ts/test/community-main-feed-postgres.test.ts",
+          "sha256": "075e28d60bc22ec1dabf8ed6bcd61424b1cacf18ad803b220c1e4d2804f2e2d3"
+        },
+        {
+          "path": "workers-ts/test/community-publish-entry-migration.test.ts",
+          "sha256": "41841addcdc5a4bf9bbc65cf586d1446e3817e07efebba39d3341da31195bf48"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityMainFeedBrowserFixture.ts",
+          "sha256": "e4ad2d9b64caf3c8fcd4fb6a66c603cba7fef6bc485486f7adbf5b3a421093ff"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "c4d258a09f1275d5d3487f4fa73543c68712162cabf6328307ae3eb3eace1a95"
+        },
+        {
+          "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+          "sha256": "b49ad9ffdd3a257152a56d7b1216e67dabd2e51e741d9e013b9808d818bfcd6c"
+        },
+        {
+          "path": "workers-ts/vitest.community-main-feed-browser.config.ts",
+          "sha256": "50a9b3a6dfd2129b61b16841d516ac1e506bb02530d3f624ef2ca1ad63aa105c"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "stages": [
+      {
+        "stage": "discoverPage1",
+        "api_requests_so_far": 4,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "page2Error",
+        "api_requests_so_far": 5,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "discoverPage2",
+        "api_requests_so_far": 6,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 20,
+        "featured_id": 0
+      },
+      {
+        "stage": "discoverPage3",
+        "api_requests_so_far": 7,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 21,
+        "featured_id": 0
+      },
+      {
+        "stage": "topicPage1",
+        "api_requests_so_far": 9,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "topicPage2",
+        "api_requests_so_far": 10,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 11,
+        "featured_id": 0
+      },
+      {
+        "stage": "refreshed",
+        "api_requests_so_far": 13,
+        "writes": 0,
+        "visits": 0,
+        "database_sha256": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "unknownLike",
+        "api_requests_so_far": 14,
+        "writes": 1,
+        "visits": 0,
+        "database_sha256": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "followingEmpty",
+        "api_requests_so_far": 18,
+        "writes": 1,
+        "visits": 0,
+        "database_sha256": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "recommendedPreview",
+        "api_requests_so_far": 21,
+        "writes": 1,
+        "visits": 1,
+        "database_sha256": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "unknownFollow",
+        "api_requests_so_far": 22,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "discoverUnknown",
+        "api_requests_so_far": 25,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "communityClosed",
+        "api_requests_so_far": 26,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "7bbf9d0dea98c123441d025d3037e74477b856b2d08f4a12ad79c04c302db681",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "communityReopened",
+        "api_requests_so_far": 30,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "likeReconciled",
+        "api_requests_so_far": 31,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "followingUnknown",
+        "api_requests_so_far": 35,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "followReconciled",
+        "api_requests_so_far": 40,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "followingPage2",
+        "api_requests_so_far": 41,
+        "writes": 2,
+        "visits": 1,
+        "database_sha256": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 19,
+        "featured_id": 0
+      },
+      {
+        "stage": "featuredFirst",
+        "api_requests_so_far": 45,
+        "writes": 2,
+        "visits": 2,
+        "database_sha256": "c12b24ddd7cd9d073c913627e30d783d5592eb19976c4fda233a8be9d0827e77",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 3
+      },
+      {
+        "stage": "featuredVideo",
+        "api_requests_so_far": 48,
+        "writes": 2,
+        "visits": 3,
+        "database_sha256": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 2
+      },
+      {
+        "stage": "featuredPage2",
+        "api_requests_so_far": 58,
+        "writes": 2,
+        "visits": 11,
+        "database_sha256": "d91f93d72ff9ffebd244e3494e9aaa3bc6f1146208abb74e47f585f6778488bc",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 14
+      },
+      {
+        "stage": "featuredPage3",
+        "api_requests_so_far": 69,
+        "writes": 2,
+        "visits": 21,
+        "database_sha256": "77ae7fa49e242458d11fa1d4728a471db6931fb84695ac14340b171ef8e4abb3",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 24
+      },
+      {
+        "stage": "featuredLast",
+        "api_requests_so_far": 70,
+        "writes": 2,
+        "visits": 22,
+        "database_sha256": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 25
+      },
+      {
+        "stage": "featuredClosed",
+        "api_requests_so_far": 71,
+        "writes": 2,
+        "visits": 22,
+        "database_sha256": "ba90a4e197561a8642d2a3e4e80ef85767441ded34945edf9f977a3332f3d690",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "featuredRecovered",
+        "api_requests_so_far": 76,
+        "writes": 2,
+        "visits": 22,
+        "database_sha256": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 25
+      },
+      {
+        "stage": "rawMain",
+        "api_requests_so_far": 80,
+        "writes": 2,
+        "visits": 22,
+        "database_sha256": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "appCanonical",
+        "api_requests_so_far": 84,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 3
+      },
+      {
+        "stage": "appReadonly",
+        "api_requests_so_far": 86,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 3
+      },
+      {
+        "stage": "guestFollowing",
+        "api_requests_so_far": 90,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "invalidFeatured",
+        "api_requests_so_far": 90,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 0,
+        "featured_id": 0
+      },
+      {
+        "stage": "account22",
+        "api_requests_so_far": 93,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      },
+      {
+        "stage": "finished",
+        "api_requests_so_far": 93,
+        "writes": 2,
+        "visits": 23,
+        "database_sha256": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+        "width": 375,
+        "scrollWidth": 375,
+        "posts": 10,
+        "featured_id": 0
+      }
+    ],
+    "api_requests": 93,
+    "ordinary_read_requests": 68,
+    "write_requests": 2,
+    "detail_requests": 23,
+    "browse_receipts": 23,
+    "configuration_changes": 4,
+    "tables": 14,
+    "sequences": 14,
+    "storage": {
+      "initial": {
+        "objects": "e8efa5abe4cc53409cf3e9fc4716d6272a3a7a1df7dabefbbb48e4bebf788573",
+        "puts": 2,
+        "deletes": 0
+      },
+      "final": {
+        "objects": "e8efa5abe4cc53409cf3e9fc4716d6272a3a7a1df7dabefbbb48e4bebf788573",
+        "puts": 2,
+        "deletes": 0
+      }
+    },
+    "providerCalls": 0,
+    "max_content_width": 375,
+    "min_content_width": 375,
+    "injected_read_failures": 1,
+    "browser503": 3,
+    "requests": [
+      {
+        "path": "/api/get_script",
+        "query": "",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571073&signature=KKdrtcczIJW63mmVI4PNtTVoNOymjTQSgbBE-lZ03CM",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=2&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 503,
+        "injected_read_failure": true,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=2&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=3&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0&topic_id=9",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571140&signature=gPWGflnzTNzgbmQlRZVzWD4i087kTEWSgYaHpXpK_60",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=2&limit=10&is_follow=0&topic_id=9",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571143&signature=z42O-c9Xp2yS5_KhGG1_Yh55BYr1CAPTm6PiOImzjdU",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/like/3",
+        "query": "",
+        "method": "POST",
+        "viewer": 11,
+        "write": true,
+        "detail": false,
+        "status": 200,
+        "browser_status": 503,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "like",
+          "id": 3,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "34accdc5683a374287596a1d37dca1bd7685e460e0e119051f18cfa25bbe1d17",
+          "after": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=1",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "after": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "after": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/follow",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "after": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/recommend_list",
+        "query": "?page=1&limit=20",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "after": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/7",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 7,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "fcc137097a57571f390c154a0d85dc0d437a43d428f7af35afc1332b89b921b3",
+          "after": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/config",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "after": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/comment/list",
+        "query": "?community_id=7&page=1&limit=10&reply_id=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "after": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/set_interest/22",
+        "query": "",
+        "method": "POST",
+        "viewer": 11,
+        "write": true,
+        "detail": false,
+        "status": 200,
+        "browser_status": 503,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "follow",
+          "id": 22,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "475c612e6d4c3ee95bdb003d27c22c96cd346d62137fc08b46d38e640323be15",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571173&signature=k06FrMin_0KmvePrBDVUcfoSA96HQlaMJTzcEUucslo",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/state/3",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 410010,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "7bbf9d0dea98c123441d025d3037e74477b856b2d08f4a12ad79c04c302db681",
+          "after": "7bbf9d0dea98c123441d025d3037e74477b856b2d08f4a12ad79c04c302db681",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/config",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571177&signature=7wrkJJvh-ACSCqXBPhun6G1-Kd-4Goe1ojRK_0zb4z4",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/state/3",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=1",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/follow",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/recommend_list",
+        "query": "?page=1&limit=20",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/user_info/22",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=1",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/follow",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/recommend_list",
+        "query": "?page=1&limit=20",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=2&limit=10&is_follow=1",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571189&signature=114caY9npBem_Jfy97kg5_RFfnhLXrkxEDr996bxXdM",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/3",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 3,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "a2e8e46f9cd16b11592d62a4c1aca4f08c9a08b14ccc8dcfcc15557690feed19",
+          "after": "c12b24ddd7cd9d073c913627e30d783d5592eb19976c4fda233a8be9d0827e77",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/2",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 2,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "c12b24ddd7cd9d073c913627e30d783d5592eb19976c4fda233a8be9d0827e77",
+          "after": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571190&signature=NX9_WiDHyNtO4qeaI1VteuFfHgfF_7R3mTU6setPrto",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "after": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/2",
+        "query": "?expires=1792571190&signature=HqBJYwUDbgkqbFbAQpTTB6XYJBdtsY67-hSCxGsu7Cc",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 206,
+        "browser_status": 206,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "after": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/7",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 7,
+          "sequence_delta": 0
+        },
+        "snapshot": {
+          "before": "555c3b7061b032766bc60864f730f8bc64269e934a3288b7595a66f46d8e0353",
+          "after": "6feca005cfc373a5e1a880e8c50e9f314712166274257245075410871d787839",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571189&signature=114caY9npBem_Jfy97kg5_RFfnhLXrkxEDr996bxXdM",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "6feca005cfc373a5e1a880e8c50e9f314712166274257245075410871d787839",
+          "after": "6feca005cfc373a5e1a880e8c50e9f314712166274257245075410871d787839",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/8",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 8,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "6feca005cfc373a5e1a880e8c50e9f314712166274257245075410871d787839",
+          "after": "91d2c7f818ba74ace865e13f846a38d4b95708d22ba79e207d8e24f97eb4527a",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/9",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 9,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "91d2c7f818ba74ace865e13f846a38d4b95708d22ba79e207d8e24f97eb4527a",
+          "after": "b13bc5bf4d1fa4d99f6cae118536f2eb7e95a0cfaf54c48bfa07542204dcd614",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/10",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 10,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "b13bc5bf4d1fa4d99f6cae118536f2eb7e95a0cfaf54c48bfa07542204dcd614",
+          "after": "249dccc8052bdffc9470b5720b134c32872a77f9205756e2a8ca6d3f30ad606f",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/11",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 11,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "249dccc8052bdffc9470b5720b134c32872a77f9205756e2a8ca6d3f30ad606f",
+          "after": "a9c24a667ad7f0af802257e9f3a1bbf81bdcde944dfb1eeb9a29c24bd9052822",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/12",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 12,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "a9c24a667ad7f0af802257e9f3a1bbf81bdcde944dfb1eeb9a29c24bd9052822",
+          "after": "8feb8565483aba26ddedff395608a7276381ae348a847d439ae590ffded0836f",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/13",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 13,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "8feb8565483aba26ddedff395608a7276381ae348a847d439ae590ffded0836f",
+          "after": "3dcd184929e412b22fd0c2546baa481e950bc6c4bae5e239ed8117c5742991eb",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/14",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 14,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "3dcd184929e412b22fd0c2546baa481e950bc6c4bae5e239ed8117c5742991eb",
+          "after": "d91f93d72ff9ffebd244e3494e9aaa3bc6f1146208abb74e47f585f6778488bc",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=2&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "d91f93d72ff9ffebd244e3494e9aaa3bc6f1146208abb74e47f585f6778488bc",
+          "after": "d91f93d72ff9ffebd244e3494e9aaa3bc6f1146208abb74e47f585f6778488bc",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/15",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 15,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "d91f93d72ff9ffebd244e3494e9aaa3bc6f1146208abb74e47f585f6778488bc",
+          "after": "17bd42f31113a63fdac5c5629fb9084e64900cd1c40780ccc798446604dab0f9",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/16",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 16,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "17bd42f31113a63fdac5c5629fb9084e64900cd1c40780ccc798446604dab0f9",
+          "after": "c6845764e90a7b67fc250936c646379f48c6708a5ca3da9b86c43501b59f338c",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/17",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 17,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "c6845764e90a7b67fc250936c646379f48c6708a5ca3da9b86c43501b59f338c",
+          "after": "dceaff9af7ad5ceef222ec10935b051ec7cc3c114762342e74c3b2f4def3e805",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/18",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 18,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "dceaff9af7ad5ceef222ec10935b051ec7cc3c114762342e74c3b2f4def3e805",
+          "after": "046110122d55fbf2aa306b38cfd8dc15229e452f05eab573d01c59f1ba0a8aac",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/19",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 19,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "046110122d55fbf2aa306b38cfd8dc15229e452f05eab573d01c59f1ba0a8aac",
+          "after": "74451aa3cf060005565dfd1a21f1e03b65bcec99ff293a45f6cb2d2104efc087",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/20",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 20,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "74451aa3cf060005565dfd1a21f1e03b65bcec99ff293a45f6cb2d2104efc087",
+          "after": "1063bc92f6486615a395e02cb324ce2ca87481e4a718e02f5e609b8f6cfff3b6",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/21",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 21,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "1063bc92f6486615a395e02cb324ce2ca87481e4a718e02f5e609b8f6cfff3b6",
+          "after": "c1f9fcee684a0bd7cba8fbeac4fdea541a0fd3eb2af92520675e55def4788111",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/22",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 22,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "c1f9fcee684a0bd7cba8fbeac4fdea541a0fd3eb2af92520675e55def4788111",
+          "after": "44621007ca9a55d0e493e65fcc1f0719484263791cbed5f151b127760cdb96c8",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/23",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 23,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "44621007ca9a55d0e493e65fcc1f0719484263791cbed5f151b127760cdb96c8",
+          "after": "c42f5fe1146ba218d4276023fd17d85bfb547b69db18f38f40bc00ca5d25ce0c",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/24",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 24,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "c42f5fe1146ba218d4276023fd17d85bfb547b69db18f38f40bc00ca5d25ce0c",
+          "after": "77ae7fa49e242458d11fa1d4728a471db6931fb84695ac14340b171ef8e4abb3",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=3&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "77ae7fa49e242458d11fa1d4728a471db6931fb84695ac14340b171ef8e4abb3",
+          "after": "77ae7fa49e242458d11fa1d4728a471db6931fb84695ac14340b171ef8e4abb3",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/25",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 25,
+          "sequence_delta": 1
+        },
+        "snapshot": {
+          "before": "77ae7fa49e242458d11fa1d4728a471db6931fb84695ac14340b171ef8e4abb3",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/state/25",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 410010,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "ba90a4e197561a8642d2a3e4e80ef85767441ded34945edf9f977a3332f3d690",
+          "after": "ba90a4e197561a8642d2a3e4e80ef85767441ded34945edf9f977a3332f3d690",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/config",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571240&signature=nPltCO-fd-86GCz8a1dzHG0L5Lwaxkx94KwXC_izuvg",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/state/25",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/get_script",
+        "query": "",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571251&signature=NtaMUK0Z4z2gFIMuzxcRktXQLOcjirTu0Ng7DonAtgQ",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571254&signature=9jt-BuxkVS7n24nHGzQBM1qcqx252Jdlg-L3MNnydFk",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/detail/3",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": true,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "receipt": {
+          "kind": "browse",
+          "id": 3,
+          "sequence_delta": 0
+        },
+        "snapshot": {
+          "before": "2a4e1ea3e1bd2789ece47b97efefa5a78f1d778dd401f4d5d835e989f3ebd156",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": false,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/state/3",
+        "query": "",
+        "method": "GET",
+        "viewer": 11,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571258&signature=us-Q3XwH01bsFvCOrrIcEe1X2433IiE3ibTaoOLC7pE",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571259&signature=EL0yll406s9B82bHPCLObAW20WQe5cq5vXD4DyX8oKE",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&is_follow=0",
+        "method": "GET",
+        "viewer": 22,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/community/topic",
+        "query": "",
+        "method": "GET",
+        "viewer": 22,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      },
+      {
+        "path": "/api/assets/1",
+        "query": "?expires=1792571283&signature=xUMlwikp_pLGYqMQkW5CSLDd9G2fii6BniREVH2Uhns",
+        "method": "GET",
+        "viewer": 0,
+        "write": false,
+        "detail": false,
+        "status": 200,
+        "browser_status": 200,
+        "injected_read_failure": false,
+        "snapshot": {
+          "before": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "after": "b2277a73b1bf02d669b401124b3d3633bcf246c08b7d0ce3453d7b6f893b4320",
+          "unchanged": true,
+          "tables": 14,
+          "sequences": 14
+        }
+      }
+    ],
+    "config_receipts": [
+      {
+        "before": "1",
+        "after": "0",
+        "stale_cache": "1",
+        "sequence_delta": 0
+      },
+      {
+        "before": "0",
+        "after": "1",
+        "stale_cache": "0",
+        "sequence_delta": 0
+      },
+      {
+        "before": "1",
+        "after": "0",
+        "stale_cache": "1",
+        "sequence_delta": 0
+      },
+      {
+        "before": "0",
+        "after": "1",
+        "stale_cache": "0",
+        "sequence_delta": 0
+      }
+    ],
+    "console": {
+      "errors": 0,
+      "warnings": 6,
+      "classification": "all existing vue-router deprecated import warnings",
+      "evidence": {
+        "path": "/tmp/cinashop-community-main-feed-browser-console.json",
+        "bytes": 1616,
+        "sha256": "b30767151bda6346a8583ea2c5e6fb94ccbf717c1b3d899746dc7c3b78688d7a"
+      }
+    },
+    "video_playback": {
+      "evidence": {
+        "path": "/tmp/cinashop-community-main-feed-video-playback.json",
+        "bytes": 197,
+        "sha256": "246252eb38d9b741a0682545db8a70b72dffa5bfe2c51f8a20a33c39a19cdcd1"
+      },
+      "readyState": 4,
+      "width": 160,
+      "time": 0.188506,
+      "paused": false,
+      "actual_control_clicked": true
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-community-main-feed-browser-closed.jpg",
+        "bytes": 81794,
+        "sha256": "76bed7a93205c154c3ff41db92997ba94e8d819c986487689ac9d6c55169b6ae"
+      },
+      {
+        "path": "/tmp/cinashop-community-main-feed-browser-featured-video.jpg",
+        "bytes": 106679,
+        "sha256": "789199474f440ad73286e221d7f276527d555cce4277533f3eb0fc60a8b80c00"
+      },
+      {
+        "path": "/tmp/cinashop-community-main-feed-browser-recovered.jpg",
+        "bytes": 105284,
+        "sha256": "7f396fbfcb81cf8c2869aef8f81dcb767d471d5af0856b461f4c72008e8f37c8"
+      },
+      {
+        "path": "/tmp/cinashop-community-main-feed-browser-final.jpg",
+        "bytes": 107557,
+        "sha256": "72699c48a7a56dbfb038caca20b85880db04568eca09d903b6cb0e05f8f7bd1b"
+      }
+    ],
+    "automation_adjustments": [
+      "Scrolling the visible load-more control triggered the actual root onReachBottom before the control click, so the locator disappeared. Read the resulting DOM and checkpointed the exact10/20/21 results; no second read/write was fabricated.",
+      "Retargeted a duplicated hidden featured title to the visible feed title and matched the actual invalid-parameter alert text. The same browser server candidate completed32 checkpoints; these locator errors are not failed Vitest candidates."
+    ],
+    "additional_user_confirmations": 0,
+    "browser_hidden": true,
+    "agent_tabs_closed": true,
+    "browser_failed_candidates": [],
+    "limitations": "No real login, production role/schema/index/remote KV/R2/provider or MP/App device claim; App entry exercised as a local H5 canonical route."
+  },
+  "accounting": {
+    "focused_unique_passed": 1165,
+    "worker": 763,
+    "native": 189,
+    "community_runtime": 212,
+    "browser": 1,
+    "new_cases": 63,
+    "new_case_breakdown": {
+      "worker_AST": 10,
+      "runner_admission_and_invalid_inputs": 4,
+      "native": 17,
+      "runtime": 31,
+      "browser": 1
+    },
+    "full_toolchain": 1532,
+    "runtime_overlap": "212 already included in1532; repeated standalone212, candidate-native29, and replaced Worker partial files not added again",
+    "final_failed": 0,
+    "final_skipped": 0
+  },
+  "postgres_cleanup": {
+    "instances": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-D7wPpn/data",
+        "exit_code": 3,
+        "output": "pg_ctl: no server running\n",
+        "observed_utc": "2026-10-21T07:58:05.678082+00:00"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-TxD5Ge/data",
+        "exit_code": 3,
+        "output": "pg_ctl: no server running\n",
+        "observed_utc": "2026-10-21T07:58:05.679998+00:00"
+      },
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-HT0xJM/data",
+        "exit_code": 3,
+        "output": "pg_ctl: no server running\n",
+        "observed_utc": "2026-10-21T08:13:34.694694+00:00"
+      }
+    ],
+    "all_stopped": true,
+    "remaining_fixtures": 0,
+    "evidence": {
+      "path": "/tmp/cinashop-community-main-feed-postgres-cleanup.json",
+      "bytes": 633,
+      "sha256": "2fc4b7ff85a668c1f7cff340a75f389f9285d45f5771782323a02c57034c2f13"
+    }
+  },
+  "environment": {
+    "local": {
+      "node": "24.19.0",
+      "npm": "11.7.0",
+      "postgres": "16.14",
+      "gitleaks": "8.29.0"
+    },
+    "ci_pins": {
+      "node": "24.14.1",
+      "npm": "11.11.0"
+    },
+    "difference": "Local successful validation does not establish the different pinned CI runtime result. New SHA CI is checked only after push.",
+    "dependencies": "No dependency or lock changes. Inherited raw audit82 entries remain a previous-batch baseline; current explicit frontend security contract passed, not a claim that every raw dependency advisory is cleared."
+  },
+  "ci": {
+    "new_head": "not yet created at audit freeze; read back after push and record in /tmp/cinashop-community-main-feed-publishing.json",
+    "parent_head_290103": {
+      "sha": "29010385346add0f1b497957fe10fe142ef406fe",
+      "observed_utc": "2026-10-21T07:56:00Z",
+      "jobs": [
+        {
+          "name": "Repository secret scan",
+          "id": 119090944727,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "UniApp build",
+          "id": 119090945223,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "id": 119090945263,
+          "run_id": 39560692214,
+          "status": "in_progress",
+          "conclusion": null,
+          "current_step": "Run Worker unit tests"
+        },
+        {
+          "name": "workerd runtime tests",
+          "id": 119090945288,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "PC build",
+          "id": 119090945292,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Kefu build",
+          "id": 119090945306,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admin build",
+          "id": 119090945320,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "id": 119090945362,
+          "run_id": 39560692214,
+          "status": "in_progress",
+          "conclusion": null,
+          "current_step": "Run Worker unit tests"
+        },
+        {
+          "name": "Supplier build",
+          "id": 119090945532,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "id": 119090945556,
+          "run_id": 39560692214,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "older_head_bed958": {
+      "sha": "bed958b4dba59de5f58204e6bcf1784b4694c86f",
+      "observed_utc": "2026-10-21T07:56:00Z",
+      "jobs": [
+        {
+          "name": "workerd runtime tests",
+          "id": 119073922549,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Kefu build",
+          "id": 119073922692,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "PC build",
+          "id": 119073922705,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Admin build",
+          "id": 119073922720,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Worker type, unit, schema and route execution (shard 1/2)",
+          "id": 119073922751,
+          "run_id": 39555411497,
+          "status": "in_progress",
+          "conclusion": null,
+          "current_step": "Run Worker unit tests"
+        },
+        {
+          "name": "Isolated PostgreSQL 16 migration catalog execution",
+          "id": 119073922786,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "UniApp build",
+          "id": 119073922806,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Worker type, unit, schema and route execution (shard 2/2)",
+          "id": 119073922812,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Repository secret scan",
+          "id": 119073922831,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Supplier build",
+          "id": 119073922856,
+          "run_id": 39555411497,
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "older_results_reused_for_new_head": false
+  },
+  "publication_receipt": {
+    "path": "/tmp/cinashop-community-main-feed-publishing.json",
+    "status": "to be recorded after exact staging, pinned secret scan, commit and push",
+    "merged": false,
+    "deployed": false
+  },
+  "protected_final": {
+    "file_count": 1517,
+    "all_baseline_hashes_match": true,
+    "history": [
+      {
+        "path": "MIGRATION_AUDIT.md",
+        "baseline_sha256": "63d68a2e7fe593a8d1d9bcca59bfdd6e0928eb97c4bb147c74c2a2ea5f6d9b04",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "53d169cc3e37283de41650ac71ee55d16c5844ac65a59581c553cb309468f02b",
+        "checkbox_count": 88,
+        "checkbox_lines_equal": true
+      },
+      {
+        "path": "MIGRATION_CHECKLIST.md",
+        "baseline_sha256": "34b3cd88179dc6d90e7ec84d2261e96ad7cc0cc28be3047679e24a1d2d306221",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "cca521e664049ec6a2c154f0838b5e42ab8e29a019c4517f192e556d92266831",
+        "checkbox_count": 404,
+        "checkbox_lines_equal": true
+      },
+      {
+        "path": "workers-ts/docs/php-ts-community-next-gaps-20261021.md",
+        "baseline_sha256": "cd9e671c0df5af16015a3fab1e0f3eaba68278cbcd219d153abeadfde822ec6d",
+        "original_body_suffix_preserved": true,
+        "original_body_sha256": "ecfce9f1938266d5485b1a46327f1c1ceba348faa9332db91bcf705cefbc7f72",
+        "checkbox_count": 0,
+        "checkbox_lines_equal": true
+      }
+    ],
+    "restored_script_contract": [
+      {
+        "path": "view/uniapp-ts/src/App.vue",
+        "sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc"
+      },
+      {
+        "path": "view/admin-ts/src/main.ts",
+        "sha256": "13515153132a474e870953e9fdc0cf39de55726ee8531a7b873e979a75f04fc5"
+      },
+      {
+        "path": "view/supplier-ts/src/main.ts",
+        "sha256": "bd3a9bfcc7aa53fd0188c439560296f95b74c073dc7669700cb621690cd1bff7"
+      },
+      {
+        "path": "view/common/statisticsScript.ts",
+        "sha256": "3466756db8695673ebe869d7e6f4af99cc6c9b359f58817d6e55f26d86e37c90"
+      },
+      {
+        "path": "workers-ts/src/routes/v1/index.ts",
+        "sha256": "5f2c02715f4ab7b9aa97eddeef3e704f48ebfe0e7c581c0937188744e5ec0ff0"
+      }
+    ],
+    "v1_route_source_unchanged": true,
+    "new_route_source_increment_required": false,
+    "sql_schema_dependency_locks_changed": false
+  }
+}

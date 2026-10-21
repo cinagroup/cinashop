@@ -49,7 +49,23 @@ const communityDetailRecord = '    {\n      "path": "pages/discover/discoverDeta
 const communityEntryRecords = [
   ['discoverUser', '社区作者'], ['discoverFollow', '社区关系'], ['discoverCreate', '社区发布'],
 ].map(([page, title]) => `    {\n      "path": "pages/discover/${page}/index",\n      "style": { "navigationBarTitleText": "${title}" }\n    },\n`);
+// Exact main-feed follow-up inverse; the dated snapshots below remain byte-for-byte intact.
+function historicalMainFeedManifest(manifest: string): string {
+  expect(createHash("sha256").update(manifest).digest("hex")).toBe("affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be");
+  const edits = [
+    ['    {\n      "path": "pages/discoverIndex/index",\n      "style": { "navigationBarTitleText": "社区" }\n    },\n', ''],
+    ['      "path": "pages/discover/index",\n      "style": {\n        "navigationBarTitleText": "逛逛",\n        "enablePullDownRefresh": true\n      }', '      "path": "pages/discover/index",\n      "style": {\n        "navigationBarTitleText": "逛逛"\n      }'],
+    ['      "path": "pages/discover/workspace",\n      "style": { "navigationBarTitleText": "社区管理", "enablePullDownRefresh": true }', '      "path": "pages/discover/workspace",\n      "style": { "navigationBarTitleText": "社区管理" }'],
+  ];
+  for (const [after, before] of edits) {
+    expect(manifest.split(after)).toHaveLength(2);
+    manifest = manifest.replace(after, before);
+  }
+  expect(createHash("sha256").update(manifest).digest("hex")).toBe("8c64c53d6178e22dfa84741a632fa2828452a16982549ad10dad559c645fe989");
+  return manifest;
+}
 function historicalCommunityManifest(manifest: string): string {
+  manifest = historicalMainFeedManifest(manifest);
   for (const record of [workspaceRecord, communityDetailRecord, ...communityEntryRecords]) {
     expect(manifest.split(record)).toHaveLength(2);
     manifest = manifest.replace(record, '');
@@ -88,7 +104,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(137);
+    expect(manifestRoutes).toHaveLength(138);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
@@ -168,7 +184,9 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(130);
     expect(ordinaryParity.counting.target.manifestSha256).toBe(createHash("sha256")
       .update(historicalCashierManifest(manifest)).digest("hex").toUpperCase());
-    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length - 5);
+    // `manifest` has already passed the exact main-feed and five community inverses.
+    expect(JSON.parse(manifest).pages).toHaveLength(132);
+    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(JSON.parse(manifest).pages.length);
     expect(mergedParity.counting.target.manifestHashNormalization).toBe("LF");
     expect(mergedParity.counting.target.manifestSha256)
       .toBe(createHash("sha256").update(manifest).digest("hex").toUpperCase());

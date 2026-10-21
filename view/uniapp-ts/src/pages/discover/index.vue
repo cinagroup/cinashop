@@ -16,21 +16,37 @@
     </view>
 
     <template v-if="!authorMode">
-    <scroll-view v-if="topics.length" scroll-x class="topic-strip" :show-scrollbar="false">
+    <view class="community-feed-tabs">
+      <button v-for="item in home.tabs" :key="item.key" :data-feed-tab="item.key" :class="{ selected: home.tab.value === item.key }"
+        @tap="changeFeedTab(item.key)">{{ item.label }}</button>
+      <button class="feed-refresh" :disabled="home.loading.value" @tap="refreshFeed">刷新列表</button>
+    </view>
+    <view v-if="home.followUnknown.value" class="feed-follow-unknown" role="alert">关注结果未确认，请刷新关注状态核对，请勿重复提交。
+      <button class="feed-follow-reconcile" :disabled="home.followBusy.value" @tap="home.reconcileFollow">刷新关注状态</button>
+    </view>
+    <view v-if="home.followMessage.value" role="status">{{ home.followMessage.value }}</view>
+    <view v-if="home.tab.value === 'following' && !home.loggedIn.value" class="feed-guest">登录后可查看关注用户的发布
+      <button class="feed-login" @tap="requireLogin">登录查看关注</button>
+    </view>
+    <view v-if="home.topicsError.value && home.tab.value === 'discover'" class="publish-error">{{ home.topicsError.value }}
+      <button @tap="home.loadTopics">重试话题</button>
+    </view>
+    <scroll-view v-if="home.tab.value === 'discover'" scroll-x class="topic-strip" :show-scrollbar="false">
       <view class="topic-row">
-        <text v-for="topic in topics" :key="topic.id" class="topic-chip" @tap="openTopic(topic.id)">
+        <text class="topic-chip" :class="{ selected: home.selectedTopicId.value === null }" @tap="home.selectTopic(null)">全部</text>
+        <text v-for="topic in topics" :key="topic.id" class="topic-chip" :class="{ selected: home.selectedTopicId.value === topic.id }" @tap="home.selectTopic(topic.id)">
           # {{ topic.name }}
         </text>
       </view>
     </scroll-view>
 
-    <scroll-view v-if="highlights.length" scroll-x class="follow-strip" :show-scrollbar="false">
+    <scroll-view v-if="home.tab.value === 'following' && highlights.length" scroll-x class="follow-strip" :show-scrollbar="false">
       <view class="follow-row">
         <view
           v-for="item in highlights"
           :key="item.relation_id"
           class="follow-person"
-          @tap="openPeople"
+          @tap="openAuthor(item.relation_id)"
         >
           <view class="avatar-wrap">
             <image class="follow-avatar" :src="item.author_image || fallbackAvatar" mode="aspectFill" />
@@ -38,13 +54,16 @@
           </view>
           <text class="follow-name">{{ item.author || "社区用户" }}</text>
         </view>
+        <button class="feed-all-follow" @tap="openSocialList">全部关注</button>
       </view>
     </scroll-view>
 
     <view v-if="home.error.value || routeError" class="publish-error" role="alert">{{ routeError || home.error.value }}</view>
-    <button v-if="home.error.value" :disabled="home.loading.value" @tap="load">重试帖子列表</button>
+    <button v-if="home.error.value" :disabled="home.loading.value" @tap="home.loadMore">重试帖子列表</button>
+    <CommunityFeaturedViewer v-show="home.tab.value === 'featured'" :posts="home.tab.value === 'featured' ? posts : []"
+      :viewer="featured" :engagement="engagement" :can-more="home.canMore.value" />
     <!-- 帖子列表 -->
-    <view v-if="posts.length" class="feed">
+    <view v-if="posts.length && home.tab.value !== 'featured'" class="feed">
       <view v-for="post in posts" :key="post.id" class="post-card" @tap="openDetail(post)">
         <view class="post-title">{{ post.title || "分享" }}</view>
         <view class="post-content">{{ post.content }}</view>
@@ -66,7 +85,30 @@
           @like="engagement.toggleLike(post)" @share="engagement.openShare(post)" @refresh="engagement.reconcile(post.id)" />
       </view>
     </view>
-    <view v-else class="empty">还没有帖子, 快来发布第一条吧</view>
+    <view v-if="!posts.length && !home.loading.value && !home.error.value" class="empty">{{ home.tab.value === 'following' ? home.loggedIn.value ? '暂无关注内容' : '登录后查看关注内容' : '暂无内容' }}</view>
+    <view v-if="home.loading.value" class="feed-loading" role="status">加载中…</view>
+    <button v-else-if="home.canMore.value && !home.error.value" class="feed-load-more" @tap="home.loadMore">加载更多帖子</button>
+    <view v-if="home.finished.value && posts.length" class="feed-end">{{ home.capped.value ? '已达1001页浏览范围，请刷新或筛选查看其他内容' : '没有更多了' }}</view>
+    <view v-if="home.tab.value === 'following' && home.loggedIn.value" class="feed-recommendations">
+      <view class="sheet-title">为你推荐</view>
+      <view v-if="home.followingLoading.value">正在加载推荐作者…</view>
+      <view v-if="home.followingError.value" class="publish-error">{{ home.followingError.value }}
+        <button class="feed-following-retry" @tap="home.loadFollowing">重试关注摘要与推荐</button>
+      </view>
+      <view v-for="person in home.recommendations.value" :key="person.type + ':' + person.relation_id" class="feed-recommend-author" :data-author-id="person.relation_id">
+        <view @tap="openAuthor(person.relation_id)">
+          <image v-if="communityVideoSource(person.author_image)" class="follow-avatar" :src="communityVideoSource(person.author_image)" mode="aspectFill" />
+          <text>{{ person.author }}</text><text> · 内容 {{ person.community_num }} · 粉丝 {{ person.fans_num }}</text>
+        </view>
+        <button class="feed-recommend-follow" :disabled="home.followBusy.value || home.followUnknown.value || person.is_follow === 1" @tap="home.follow(person)">{{ person.is_follow ? '已关注' : '关注作者' }}</button>
+        <scroll-view scroll-x class="feed-recommend-previews">
+          <button v-for="preview in person.community" :key="preview.id" class="feed-recommend-preview" :data-post-id="preview.id" @tap="openRecommendation(preview)">
+            <image v-if="communityVideoSource(preview.image)" :src="communityVideoSource(preview.image)" mode="aspectFill" />
+            <text>{{ preview.content_type === 2 ? '视频 · ' : '' }}{{ preview.title || '分享' }}</text>
+          </button>
+        </scroll-view>
+      </view>
+    </view>
     </template>
     <view v-else class="author-page">
       <view class="author-heading">
@@ -276,25 +318,28 @@
 
 <script setup lang="ts">
 import CommunityAvailability from '@/components/community/CommunityAvailability.vue';
+import CommunityFeaturedViewer from '@/components/community/CommunityFeaturedViewer.vue';
+import { useCommunityFeatured } from '@/composables/useCommunityFeatured';
 import { useCommunityAvailability } from '@/utils/communityAvailability';
 import ThemePage from '@/components/ThemePage.vue';
 import CommunityComments from '@/components/community/CommunityComments.vue';
 import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
 import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
 import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
-import { useCommunityHomeFeed } from '@/composables/useCommunityHomeFeed';
+import { useCommunityHomeFeed, type CommunityFeedTab } from '@/composables/useCommunityHomeFeed';
 import { useShareReferral } from '@/composables/useShareReferral';
 import { communityPageQuery, communityInbound, communitySharePath } from '@/utils/communityShare';
 import { computed, ref, watch } from "vue";
 import { useCommunityPublish } from "@/composables/useCommunityPublish";
 import { useCommunityAuthor } from "@/composables/useCommunityAuthor";
 import { communityVideoSource } from "@/utils/communityMedia";
-import { onLoad, onShow, onHide, onUnload, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
+import { onLoad, onShow, onHide, onUnload, onShareAppMessage, onShareTimeline, onReachBottom, onPullDownRefresh } from "@dcloudio/uni-app";
 import {
   apiCommunityVisit,
   apiCommunityState,
   communityPreviewMode,
   type CommunityPost,
+  type CommunityRecommendationPost,
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
 
@@ -307,12 +352,15 @@ const engagement = useCommunityEngagement({
   update(id, patch) {
     for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === id) Object.assign(post, patch);
     if (detail.value?.id === id) Object.assign(detail.value, patch);
+    if (featured.active.value?.id === id) Object.assign(featured.active.value, patch);
   },
   liked() { if (authorMode.value && authorProfile.value && !authorBusy.value) void author.refresh(); },
-  find(id) { return id === undefined ? detail.value : [detail.value, ...posts.value, ...authorPosts.value].find(post => post?.id === id) ?? null; },
+  find(id) { return id === undefined ? detail.value ?? featured.active.value : [detail.value, featured.active.value, ...posts.value, ...authorPosts.value].find(post => post?.id === id) ?? null; },
 });
 const home = useCommunityHomeFeed(engagement, () => !authorMode.value && !routeError.value);
 const { posts, topics, highlights } = home;
+const featured = useCommunityFeatured(posts, () => !authorMode.value && !routeError.value && home.tab.value === 'featured', engagement, home.loadMore);
+watch(home.epoch, () => featured.invalidate(), { flush: 'sync' });
 const referrals = useShareReferral();
 const author = useCommunityAuthor(engagement);
 const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: authorKeyword,
@@ -322,6 +370,7 @@ const detail = ref<CommunityPost | null>(null), detailOpen = ref(false), detailL
 const detailRequested = ref(0);
 let pageVisible = true, pageDisposed = false, resumeDetail = 0;
 let entryState: CommunityWorkspaceEntry | undefined;
+let initialFeatured = false;
 const pageOwner = () => `${authStore.uid}:${authStore.token}:${authStore.sessionVersion}`;
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
@@ -355,7 +404,26 @@ function formatTime(ts: number): string {
 async function load() {
   if (!availability.allowed.value || !pageVisible || pageDisposed || routeError.value) return;
   if (authorMode.value) { if (!authorLoading.value) await author.refresh(); return; }
-  await home.load();
+  if (!home.loading.value) await home.load();
+}
+async function changeFeedTab(tab: CommunityFeedTab) {
+  if (authorMode.value || routeError.value || !availability.allowed.value || !pageVisible || pageDisposed || tab === home.tab.value) return;
+  // #ifdef APP-PLUS
+  if (tab === 'featured' && typeof plus !== 'undefined') { uni.navigateTo({ url: '/pages/discover/workspace?feed=featured' }); return; }
+  // #endif
+  const actor = pageOwner(); closeDetail(); featured.invalidate(true);
+  const change = home.changeTab(tab), expectedEpoch = home.epoch.value; await change;
+  if (expectedEpoch === home.epoch.value && actor === pageOwner() && pageVisible && !pageDisposed && availability.allowed.value && home.tab.value === tab && tab === 'featured' && posts.value.length) await featured.activate(0);
+}
+async function refreshFeed() {
+  if (authorMode.value || routeError.value || !availability.allowed.value || !pageVisible || pageDisposed) return;
+  closeDetail(); featured.invalidate(true); await home.refresh();
+}
+function openSocialList() { if (requireLogin()) uni.navigateTo({ url: '/pages/discover/people?tab=follow' }); }
+function openRecommendation(post: CommunityRecommendationPost) {
+  if (!availability.allowed.value || !pageVisible || pageDisposed || !Number.isSafeInteger(post.id) || post.id <= 0) return;
+  if (post.content_type === 2) uni.navigateTo({ url: communitySharePath(post.id, 2, 0) });
+  else void openDetail(post.id);
 }
 
 function requireLogin(): boolean {
@@ -492,6 +560,7 @@ onLoad((input) => {
       else void openDetail(incoming.id);
     }
   } catch (reason) { routeError.value = reason instanceof Error ? reason.message : '社区地址无效'; return; }
+  if (entry.kind === 'feed' && entry.tab === 'featured') { home.tab.value = 'featured'; initialFeatured = true; }
   if (entry.kind === "author") {
     authorMode.value = true;
     void author.initialize(entry.authorId);
@@ -519,6 +588,8 @@ async function recoverCommunity() {
   if (!await availability.refresh(communityPreviewMode) || !current()) return;
   await load();
   if (!current()) return;
+  if (home.tab.value === 'featured' && featured.requestedId.value) await featured.refreshState();
+  if (!current()) return;
   if (resumeDetail) {
     const id = resumeDetail, revision = ++detailGeneration, ticket = engagement.nextTicket();
     try { const post = await apiCommunityState(id);
@@ -535,7 +606,19 @@ async function recoverCommunity() {
   }
 }
 
-onShow(() => { if (!pageDisposed) { pageVisible = true; home.show(); void load(); } });
+onShow(() => {
+  if (pageDisposed) return;
+  pageVisible = true; home.show();
+  const actor = pageOwner();
+  const loading = load(), expectedEpoch = home.epoch.value;
+  void loading.then(async () => {
+    if (expectedEpoch !== home.epoch.value || actor !== pageOwner() || !pageVisible || pageDisposed || !availability.allowed.value || home.tab.value !== 'featured') return;
+    if (initialFeatured) { initialFeatured = false; if (posts.value.length) await featured.activate(0); }
+    else if (featured.requestedId.value) await featured.refreshState();
+  });
+});
+onReachBottom(() => { if (!authorMode.value && !routeError.value) void home.loadMore(); });
+onPullDownRefresh(() => { void refreshFeed().finally(() => uni.stopPullDownRefresh()); });
 onHide(() => { pageVisible = false; closeDetail(); });
 onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
 watch(pageOwner, () => { resumeDetail = 0; closeDetail(); showPublish.value = false; }, { flush: 'sync' });
@@ -546,6 +629,17 @@ onShareTimeline(engagement.miniTimeline);
 </script>
 
 <style scoped>
+.community-feed-tabs { display: flex; flex-wrap: wrap; gap: 10rpx; margin: 18rpx 0; }
+.community-feed-tabs button { margin: 0; font-size: 26rpx; }
+.community-feed-tabs .selected, .topic-chip.selected { color: var(--view-theme, #e93323); background: #fff0eb; }
+.feed-follow-unknown, .feed-guest, .feed-end, .feed-loading { font-size: 26rpx; padding: 20rpx 0; overflow-wrap: anywhere; }
+.feed-follow-unknown { color: #a32920; }
+.feed-recommend-author { margin: 20rpx 0; padding: 24rpx; background: #fff; border-radius: 16rpx; font-size: 26rpx; }
+.feed-recommend-previews { white-space: nowrap; width: 100%; }
+.feed-recommend-preview { display: inline-flex; flex-direction: column; width: 200rpx; margin-right: 16rpx; font-size: 23rpx; }
+.feed-recommend-preview image { width: 170rpx; height: 170rpx; }
+.feed-recommend-preview text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .publish-sheet { max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
 .video-upload { display: flex; flex-direction: column; gap: 12rpx; margin: 20rpx 0; }
 .upload-hint { color: #666; font-size: 24rpx; overflow-wrap: anywhere; }

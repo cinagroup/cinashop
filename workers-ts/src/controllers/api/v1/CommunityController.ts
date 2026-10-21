@@ -64,7 +64,7 @@ async function readJsonObject(c: C, maxBytes = MAX_COMMUNITY_BODY_BYTES): Promis
 }
 
 function social(c: C) {
-  return new CommunitySocialService(c.get("container"));
+  return new CommunitySocialService(c.get("container"), c.env.APP_KEY);
 }
 
 function config(c: C) {

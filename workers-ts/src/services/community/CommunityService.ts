@@ -31,7 +31,7 @@ import {
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import { SystemConfigDao } from "@/dao/system/SystemConfigDao";
 import { ValidateException, NotFoundException } from "@/utils/errors";
-import { CommunitySocialService } from "@/services/community/CommunitySocialService";
+import { CommunitySocialService, socialAuthorExists } from "@/services/community/CommunitySocialService";
 import { AdminCommunityService } from "@/services/community/AdminCommunityService";
 import { canReadCommunityPost, isPublicCommunityPost } from "./CommunityPostAccess";
 
@@ -191,6 +191,10 @@ export class CommunityService {
       && String(query.is_follow) !== "0";
     if (wantsFollow) {
       if (!uid) return [];
+      conditions.push(eq(communityTable.status, 1), eq(communityTable.isVerify, 1),
+        or(and(eq(communityTable.type, 0), eq(communityTable.relationId, 0)),
+          and(eq(communityTable.type, 2), sql`${communityTable.relationId} > 0`))!,
+        socialAuthorExists(sql`${communityTable.relationId}`));
       conditions.push(sql`EXISTS (
         SELECT 1 FROM community_relevance cr
         WHERE cr.left_id = ${uid}
@@ -716,6 +720,8 @@ export class CommunityService {
     if (!rows.length) return [];
     const postIds = rows.map((row) => row.id);
     const userIds = [...new Set(rows.filter((row) => row.type === 2).map((row) => row.relationId))];
+    const followAuthorIds = [...new Set(rows.filter(row => row.type === 0 && row.relationId === 0
+      || row.type === 2 && row.relationId > 0).map(row => row.relationId))];
     const [users, profiles, relations, likedIds, followedIds] = await Promise.all([
       userIds.length
         ? db.select({ uid: user.uid, nickname: user.nickname, avatar: user.avatar })
@@ -743,12 +749,13 @@ export class CommunityService {
         inArray(communityRelevance.type, [COMMUNITY_TOPIC, COMMUNITY_PRODUCT]),
       )),
       this.relevanceIds(uid, postIds, COMMUNITY_LIKE, db),
-      uid && userIds.length
+      uid && followAuthorIds.length
         ? db.select({ rightId: communityRelevance.rightId }).from(communityRelevance)
           .where(and(
             eq(communityRelevance.leftId, uid),
             eq(communityRelevance.type, COMMUNITY_INTEREST),
-            inArray(communityRelevance.rightId, userIds),
+            inArray(communityRelevance.rightId, followAuthorIds),
+            socialAuthorExists(sql`${communityRelevance.rightId}`),
           ))
         : Promise.resolve([]),
     ]);
@@ -805,7 +812,8 @@ export class CommunityService {
       const product = related.products.map((id) => productMap.get(id)).filter(Boolean);
       const sliderImage = imageSources.get(row.id)?.sliderImage ?? parseStoredStrings(row.sliderImage);
       const isLike = likedIds.has(row.id) ? 1 : 0;
-      const isFollow = row.type === 2 && followed.has(row.relationId) ? 1 : 0;
+      const isFollow = (row.type === 0 && row.relationId === 0 || row.type === 2 && row.relationId > 0)
+        && followed.has(row.relationId) ? 1 : 0;
       return {
         ...row,
         image_reference: row.image,
