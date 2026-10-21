@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { reverseRouteSourceIncrement, type RouteSourceIncrement } from "./helpers/routeSourceIncrement";
 import { loadStatisticsScript, type StatisticsScriptElement } from "../../view/common/statisticsScript";
 
 interface RouteDecision {
@@ -30,6 +31,9 @@ const authority=JSON.parse(read("workers-ts/audit/legacy-route-authority.json"))
 };
 const decisions=JSON.parse(read("workers-ts/audit/legacy-route-decisions.json")) as {decisions:RouteDecision[]};
 const restoration=JSON.parse(read("workers-ts/audit/statistics-script-restoration-20261015.json")) as RestorationProof;
+const stateIncrement=JSON.parse(read("workers-ts/audit/community-state-root-source-increment-20261021.json")) as RouteSourceIncrement & {
+  route_file:string; statistics_restoration:{file:string;sha256:string};
+};
 function source(file:string){
   const raw=read(file),text=file.endsWith(".vue")?/<script\b[^>]*>([\s\S]*?)<\/script>/.exec(raw)?.[1]:raw;
   if(text===undefined)throw Error("Statistics entry script missing: "+file);
@@ -87,7 +91,27 @@ describe("restored PHP statistics script contract and retained retirement histor
       ["supplier_entry","view/supplier-ts/src/main.ts"],
       ["uniapp_h5_entry","view/uniapp-ts/src/App.vue"],
     ]);
-    for(const proof of restoration.current_sources)expect(digest(readFileSync(resolve(root,proof.file))),proof.file).toBe(proof.sha256);
+    expect(stateIncrement.statistics_restoration).toEqual({file:"workers-ts/audit/statistics-script-restoration-20261015.json",
+      sha256:"68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1"});
+    expect(digest(readFileSync(resolve(root,stateIncrement.statistics_restoration.file)))).toBe(stateIncrement.statistics_restoration.sha256);
+    expect(stateIncrement.route_file).toBe("workers-ts/src/routes/v1/index.ts");
+    expect(stateIncrement.inserted_source).toBe('v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);');
+    for(const proof of restoration.current_sources){
+      const current=read(proof.file);
+      const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(current,stateIncrement):current;
+      expect(digest(original),proof.file).toBe(proof.sha256);
+    }
+  });
+
+  it.each([
+    ["route", "workers-ts/src/routes/v1/index.ts", "PublicController.getScript", "PublicController.getScriptChanged"],
+    ["handler", "workers-ts/src/controllers/api/v1/PublicController.ts", "c.body(script)", "c.body('')"],
+  ])("rejects a statistics %s mutation even when the state route exists",(_role,file,before,after)=>{
+    const proof=restoration.current_sources.find(row=>row.file===file)!;
+    const changed=read(file).replace(before,after);
+    expect(changed).not.toBe(read(file));
+    if(file===stateIncrement.route_file)expect(()=>reverseRouteSourceIncrement(changed,stateIncrement)).toThrow();
+    else expect(digest(changed)).not.toBe(proof.sha256);
   });
 
   it("registers the real public handler and returns the configured script through the raw body",()=>{

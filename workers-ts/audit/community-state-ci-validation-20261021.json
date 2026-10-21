@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "date": "2026-10-21",
+  "base_commit": "1f60b33590ec45724161d85839eeb6f8e775d275",
+  "scope": "CI audit lineage and test startup only; no production/frontend/dependency/workflow changes",
+  "parent_failure": {
+    "pr": 144,
+    "commit": "7d3c06f3369f8c4475370038fd3438ca360318fc",
+    "run_id": 39544987435,
+    "job_id": 119041018256,
+    "artifact_id": 12323823819,
+    "artifact_zip_sha256": "6244b438087f6a568914c7bd62e1ba011e64fc557f11617e64ff6afe4ab39af0",
+    "failed_assertions": 5,
+    "source_fingerprint_assertions": 4,
+    "setting_test_timeout_ms": 5000,
+    "setting_duration_ms": 5148.966,
+    "evidence": {
+      "path": "/tmp/cinashop-pr144-worker-shard2/diagnosis.json",
+      "bytes": 11908,
+      "sha256": "13687e501b07bab2d32a4d440ae39376d1a89282b3c771f0d9ae78a0079891f4"
+    }
+  },
+  "historical_bytes_retained": {
+    "workers-ts/audit/admin-api-root-source-refresh-20261021.json": "f9d8a11715cb1a07bcf9aa14b806527788be6d197978807639320a3d10127cc7",
+    "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json": "707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8",
+    "workers-ts/audit/statistics-script-restoration-20261015.json": "68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1"
+  },
+  "generator": {
+    "real_execution": true,
+    "expected_comparison": "Exact byte match with independently constructed 717-field increment",
+    "changed_fields": 717,
+    "registration_line_increments": 716,
+    "admin_semantic_changes": 0,
+    "counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "report": {
+      "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 634409,
+      "sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb"
+    },
+    "diff": {
+      "path": "/tmp/cinashop-community-state-ci-admin-report-diff.json",
+      "bytes": 77820,
+      "sha256": "4525480aece4b57a0c01fc7aa2e7f1f2c36fd6f5ca440371cfae510e40603770"
+    }
+  },
+  "tests": {
+    "files": 4,
+    "passed": 70,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "new_cases": 9,
+    "setting_local_duration_ms": 2931.1572469999996,
+    "setting_default_timeout_ms": 5000,
+    "timeout_raised": false,
+    "real_cli_modes": 8,
+    "all_registered_page_hosts": 137,
+    "result": {
+      "path": "/tmp/cinashop-community-state-ci-unit-final1-vitest.json",
+      "bytes": 28475,
+      "sha256": "60fa0b5c47c3e00b05c4dde400bacf227528d2281517629996b90ea8855f9eae"
+    }
+  },
+  "checks": {
+    "generator-final1": {
+      "label": "generator-final1",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--import",
+        "tsx",
+        "scripts/admin-frontend-api-audit.ts",
+        "--strict"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T06:19:23.123617+00:00",
+      "seconds": 2.8,
+      "log": "/tmp/cinashop-community-state-ci-generator-final1.log",
+      "log_sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb",
+      "source_files": [
+        {
+          "path": "workers-ts/audit/community-state-root-source-increment-20261021.json",
+          "sha256": "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73"
+        },
+        {
+          "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+          "sha256": "3ff44d0c8d215a162fef8ece987a0ad52bfbf6490597efc3280f90e0d9be70db"
+        },
+        {
+          "path": "workers-ts/test/admin-setting-frontend-parity.test.ts",
+          "sha256": "cae49925accc56c6e569887a1890c4b595c9a9f90ca68608ea5ec92486c6f135"
+        },
+        {
+          "path": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+          "sha256": "a85d5c8b13fbcfddb84ab4f56f8f9f038bbf887bc164c83c86ef55bca947aa5e"
+        },
+        {
+          "path": "workers-ts/test/helpers/routeSourceIncrement.ts",
+          "sha256": "c19f11b267695cc3c6ab48eeff75e18079282eb871473943b0fdc0cd14e8a6db"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "unit-final1": {
+      "label": "unit-final1",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "test/admin-frontend-api-audit.test.ts",
+        "test/dynamic-statistics-script-retirement.test.ts",
+        "test/admin-setting-frontend-parity.test.ts",
+        "test/statistics-script-frontend.test.ts",
+        "--maxWorkers=1",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=/tmp/cinashop-community-state-ci-unit-final1-vitest.json"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T06:19:42.036009+00:00",
+      "seconds": 19.0,
+      "log": "/tmp/cinashop-community-state-ci-unit-final1.log",
+      "log_sha256": "9d0c7df43ef93926aaef7f5cfbed592e45551fd0ef9e8520c377b6a5c43cab43",
+      "source_files": [
+        {
+          "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+          "sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb"
+        },
+        {
+          "path": "workers-ts/audit/community-state-root-source-increment-20261021.json",
+          "sha256": "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73"
+        },
+        {
+          "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+          "sha256": "3ff44d0c8d215a162fef8ece987a0ad52bfbf6490597efc3280f90e0d9be70db"
+        },
+        {
+          "path": "workers-ts/test/admin-setting-frontend-parity.test.ts",
+          "sha256": "cae49925accc56c6e569887a1890c4b595c9a9f90ca68608ea5ec92486c6f135"
+        },
+        {
+          "path": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+          "sha256": "a85d5c8b13fbcfddb84ab4f56f8f9f038bbf887bc164c83c86ef55bca947aa5e"
+        },
+        {
+          "path": "workers-ts/test/helpers/routeSourceIncrement.ts",
+          "sha256": "c19f11b267695cc3c6ab48eeff75e18079282eb871473943b0fdc0cd14e8a6db"
+        }
+      ],
+      "changed_during_run": []
+    },
+    "types-final1": {
+      "label": "types-final1",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-state-ci-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T06:20:29.091005+00:00",
+      "seconds": 288.67,
+      "log": "/tmp/cinashop-community-state-ci-types-final1.log",
+      "log_sha256": "72eff42b4346e0a7302f6f76dc62e6322eaebfc1f2331d33761af6416d0347a8",
+      "source_files": [
+        {
+          "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+          "sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb"
+        },
+        {
+          "path": "workers-ts/audit/community-state-root-source-increment-20261021.json",
+          "sha256": "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73"
+        },
+        {
+          "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+          "sha256": "3ff44d0c8d215a162fef8ece987a0ad52bfbf6490597efc3280f90e0d9be70db"
+        },
+        {
+          "path": "workers-ts/test/admin-setting-frontend-parity.test.ts",
+          "sha256": "cae49925accc56c6e569887a1890c4b595c9a9f90ca68608ea5ec92486c6f135"
+        },
+        {
+          "path": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+          "sha256": "a85d5c8b13fbcfddb84ab4f56f8f9f038bbf887bc164c83c86ef55bca947aa5e"
+        },
+        {
+          "path": "workers-ts/test/helpers/routeSourceIncrement.ts",
+          "sha256": "c19f11b267695cc3c6ab48eeff75e18079282eb871473943b0fdc0cd14e8a6db"
+        }
+      ],
+      "changed_during_run": []
+    }
+  },
+  "local_node": "24.19.0",
+  "ci_node": "24.14.1",
+  "ci_npm": "11.11.0",
+  "protected_inputs_unchanged": [
+    "workers-ts/src",
+    "view",
+    ".github/workflows/workers-runtime-linux.yml",
+    "workers-ts/package.json",
+    "workers-ts/package-lock.json"
+  ],
+  "browser": {
+    "new_run_claimed": false,
+    "accepted_prior_commit": "1f60b33590ec45724161d85839eeb6f8e775d275",
+    "prior_pr": 145,
+    "prior_stages": 26,
+    "evidence_file": "workers-ts/audit/php-ts-community-publish-entry-20261021.json",
+    "reason": "No rendered frontend or production source changed in this CI-only patch; retain the prior real background browser acceptance without another confirmation request."
+  },
+  "ci_current_patch": "Pending a new GitHub commit/run after publication; parent run failure and local success are distinct."
+}

@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
+import { reverseRouteSourceIncrement } from "./helpers/routeSourceIncrement";
 import { buildAdminFrontendApiAuditReport, normalizeAdminAuditSource } from "../scripts/admin-frontend-api-audit";
 
 interface ApiAuditReport {
@@ -59,8 +60,30 @@ const rootSourceRefresh = JSON.parse(readFileSync(
   join(workerRoot, "audit", "admin-api-root-source-refresh-20261021.json"), "utf8")) as {
     route_file: string; before_sha256: string; after_sha256: string; inserted_line: number;
     inserted_source: string; shifted_route_records: number; historical_report_file: string;
-    historical_report_sha256: string; current_report_sha256: string;
+    historical_report_sha256: string; current_report_file: string; current_report_sha256: string;
   };
+const stateSourceIncrement = JSON.parse(readFileSync(
+  join(workerRoot, "audit", "community-state-root-source-increment-20261021.json"), "utf8")) as typeof rootSourceRefresh & {
+    previous_current_report_sha256: string;
+    semantic_admin_changes: number;
+    historical_video_proof: { file: string; sha256: string };
+    statistics_restoration: { file: string; sha256: string };
+  };
+const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
+
+function applyReportSourceIncrement(before: ApiAuditReport, proof: typeof rootSourceRefresh): ApiAuditReport {
+  const expected = structuredClone(before);
+  const rootProof = expected.backend.rootRouteSources!.find(row => row.file === proof.route_file)!;
+  expect(rootProof.sha256).toBe(proof.before_sha256);
+  rootProof.sha256 = proof.after_sha256;
+  let shifted = 0;
+  for (const route of expected.backend.registeredRoutes) {
+    if (route.source === proof.route_file && route.line >= proof.inserted_line) { route.line++; shifted++; }
+  }
+  expect(shifted).toBe(proof.shifted_route_records);
+  return expected;
+}
+
 const historicalRaw = readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json"),
   "utf8",
@@ -105,28 +128,58 @@ describe("Admin frontend API registration audit", () => {
     expect(buildAdminFrontendApiAuditReport()).toEqual(current);
   });
 
-  it("retains the dated Admin inventory and records only the authenticated video root-source increment", () => {
+  it("retains the dated video inventory and applies only the later community state source increment", () => {
     expect(rootSourceRefresh.route_file).toBe("workers-ts/src/routes/v1/index.ts");
     expect(rootSourceRefresh.inserted_source).toBe('v1Routes.post("/upload/video", authMiddleware({ force: true }), AttachmentController.userUploadVideo);');
-    const routeSource = readFileSync(join(workerRoot, "..", rootSourceRefresh.route_file), "utf8");
-    expect(routeSource.split("\n")[rootSourceRefresh.inserted_line - 1]).toBe(rootSourceRefresh.inserted_source);
-    expect(createHash("sha256").update(routeSource.replace(rootSourceRefresh.inserted_source + "\n", "")).digest("hex"))
-      .toBe(rootSourceRefresh.before_sha256);
-    expect(createHash("sha256").update(readFileSync(join(workerRoot, "..", rootSourceRefresh.historical_report_file))).digest("hex"))
+    expect(stateSourceIncrement.route_file).toBe(rootSourceRefresh.route_file);
+    expect(stateSourceIncrement.inserted_source).toBe('v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);');
+    expect(stateSourceIncrement.inserted_line).toBe(972);
+    expect(stateSourceIncrement.shifted_route_records).toBe(716);
+    expect(stateSourceIncrement.semantic_admin_changes).toBe(0);
+    expect(stateSourceIncrement.before_sha256).toBe(rootSourceRefresh.after_sha256);
+    const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", rootSourceRefresh.route_file), "utf8"));
+    const videoSource = reverseRouteSourceIncrement(routeSource, stateSourceIncrement);
+    reverseRouteSourceIncrement(videoSource, rootSourceRefresh);
+    expect(stateSourceIncrement.historical_video_proof).toEqual({
+      file: "workers-ts/audit/admin-api-root-source-refresh-20261021.json",
+      sha256: "f9d8a11715cb1a07bcf9aa14b806527788be6d197978807639320a3d10127cc7",
+    });
+    expect(stateSourceIncrement.statistics_restoration).toEqual({
+      file: "workers-ts/audit/statistics-script-restoration-20261015.json",
+      sha256: "68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1",
+    });
+    for (const proof of [stateSourceIncrement.historical_video_proof, stateSourceIncrement.statistics_restoration]) {
+      expect(sha256(readFileSync(join(workerRoot, "..", proof.file)))).toBe(proof.sha256);
+    }
+    expect(sha256(readFileSync(join(workerRoot, "..", rootSourceRefresh.historical_report_file))))
       .toBe(rootSourceRefresh.historical_report_sha256);
     expect(rootSourceRefresh.historical_report_sha256).toBe("707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8");
-    const expected = structuredClone(merged);
-    const proof = expected.backend.rootRouteSources!.find(row => row.file === rootSourceRefresh.route_file)!;
-    expect(proof.sha256).toBe(rootSourceRefresh.before_sha256);
-    proof.sha256 = rootSourceRefresh.after_sha256;
-    let shifted = 0;
-    for (const route of expected.backend.registeredRoutes) {
-      if (route.source === rootSourceRefresh.route_file && route.line >= rootSourceRefresh.inserted_line) { route.line++; shifted++; }
-    }
-    expect(shifted).toBe(rootSourceRefresh.shifted_route_records);
-    expect(current).toEqual(expected);
-    expect(createHash("sha256").update(readFileSync(join(workerRoot, "audit", "admin-frontend-api-contracts.json"))).digest("hex"))
-      .toBe(rootSourceRefresh.current_report_sha256);
+    const videoReport = applyReportSourceIncrement(merged, rootSourceRefresh);
+    expect(sha256(JSON.stringify(videoReport, null, 2) + "\n")).toBe(rootSourceRefresh.current_report_sha256);
+    expect(stateSourceIncrement.previous_current_report_sha256).toBe(rootSourceRefresh.current_report_sha256);
+    expect(current).toEqual(applyReportSourceIncrement(videoReport, stateSourceIncrement));
+    expect(stateSourceIncrement.current_report_file).toBe("workers-ts/audit/admin-frontend-api-contracts.json");
+    expect(sha256(readFileSync(join(workerRoot, "..", stateSourceIncrement.current_report_file))))
+      .toBe(stateSourceIncrement.current_report_sha256);
+  });
+
+  it.each([
+    ["duplicate state registration", (source: string) => source + stateSourceIncrement.inserted_source + "\n"],
+    ["changed state authentication", (source: string) => source.replace(stateSourceIncrement.inserted_source,
+      stateSourceIncrement.inserted_source.replace("force: false", "force: true"))],
+    ["changed state handler", (source: string) => source.replace("CommunityController.communityState);", "CommunityController.communityDetail);")],
+    ["extra source line", (source: string) => source + "// unrelated source change\n"],
+    ["changed statistics registration", (source: string) => source.replace("'/get_script'", "'/get_script_changed'")],
+  ])("rejects %s instead of absorbing source drift into the dated proof", (_name, mutate) => {
+    const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
+    const changed = mutate(routeSource);
+    expect(changed).not.toBe(routeSource);
+    expect(() => reverseRouteSourceIncrement(changed, stateSourceIncrement)).toThrow();
+  });
+
+  it("checks the predecessor hash as well as the current hash and exact insertion", () => {
+    const source = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
+    expect(() => reverseRouteSourceIncrement(source, { ...stateSourceIncrement, before_sha256: "0".repeat(64) })).toThrow(/predecessor/);
   });
 
   it("expands the moderation mode type alias into both registered form routes", () => {

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "date": "2026-10-21",
+  "base_commit": "1f60b33590ec45724161d85839eeb6f8e775d275",
+  "route_change_commit": "7d3c06f3369f8c4475370038fd3438ca360318fc",
+  "route_file": "workers-ts/src/routes/v1/index.ts",
+  "before_sha256": "d15ab16f0e39619b9150112b12523fc63991f2446a6d4f6d8004d53696b3372b",
+  "after_sha256": "29c43240b53df6f0a0e554d69cfd38bbfc9722d7798a935c24ab76f68912f64e",
+  "inserted_line": 972,
+  "inserted_source": "v1Routes.get(\"/community/state/:id\", authMiddleware({ force: false }), CommunityController.communityState);",
+  "shifted_route_records": 716,
+  "previous_current_report_sha256": "c4855ac32b59d648f621ded872e6f4457984a62cbad4ef7e60055a6c0b00701e",
+  "current_report_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+  "current_report_sha256": "3787b878f50dfef2f0207001f25f22dfe2355c1e4ac83301778ab3f563dae1bb",
+  "semantic_admin_changes": 0,
+  "historical_video_proof": {
+    "file": "workers-ts/audit/admin-api-root-source-refresh-20261021.json",
+    "sha256": "f9d8a11715cb1a07bcf9aa14b806527788be6d197978807639320a3d10127cc7"
+  },
+  "statistics_restoration": {
+    "file": "workers-ts/audit/statistics-script-restoration-20261015.json",
+    "sha256": "68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1"
+  },
+  "reason": "The community state route adds one exact optional-auth registration. Preserve the dated video and statistics restoration proofs, reverse only this source addition, and shift the 716 later v1 Admin registration line numbers without changing any Admin contract or restored statistics behavior."
+}
