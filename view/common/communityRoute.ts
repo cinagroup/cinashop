@@ -1,3 +1,4 @@
+import { communityInbound, communityQuery, communitySharePath } from './communityShare';
 export type CommunityPeopleTab = "friend" | "follow" | "fans" | "recommend";
 
 /** A legacy numeric type selects a list; it never selects another actor. */
@@ -12,6 +13,10 @@ export function parseCommunityPeopleTab(query: Readonly<Record<string, unknown>>
 
 /** Keep author identities distinct from post identities in legacy links. */
 export function resolveCommunityPageRoute(path: string, query: string): string | null {
+  if (path === '/pages/discover/discoverDetails/index') {
+    try { const post = communityInbound(path, communityQuery(query)); return post ? communitySharePath(post.id, post.contentType, post.spid) : ''; }
+    catch { return ''; }
+  }
   const author = path === "/pages/discover/discoverUser/index";
   const people = path === "/pages/discover/discoverFollow/index";
   if (!author && !people && path !== "/pages/discover/discoverCreate/index") return null;

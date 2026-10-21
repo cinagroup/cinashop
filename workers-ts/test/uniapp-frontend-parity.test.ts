@@ -45,9 +45,13 @@ function historicalCashierManifest(manifest: string): string {
   return manifest;
 }
 const workspaceRecord = '    {\n      "path": "pages/discover/workspace",\n      "style": { "navigationBarTitleText": "社区管理" }\n    },\n';
+const communityDetailRecord = '    {\n      "path": "pages/discover/discoverDetails/index",\n      "style": { "navigationBarTitleText": "社区帖子" }\n    },\n';
 function historicalCommunityManifest(manifest: string): string {
-  expect(manifest.split(workspaceRecord)).toHaveLength(2);
-  return manifest.replace(workspaceRecord, "");
+  for (const record of [workspaceRecord, communityDetailRecord]) {
+    expect(manifest.split(record)).toHaveLength(2);
+    manifest = manifest.replace(record, '');
+  }
+  return manifest;
 }
 const memberCodeRoute = "/pages/users/user_member_code/index";
 const currentDirectRoutes = [...currentParity.directRegisteredLegacyRoutes, memberCodeRoute];
@@ -81,7 +85,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(133);
+    expect(manifestRoutes).toHaveLength(134);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
@@ -161,7 +165,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect(ordinaryParity.counting.target.logicalManifestRouteRecords).toBe(130);
     expect(ordinaryParity.counting.target.manifestSha256).toBe(createHash("sha256")
       .update(historicalCashierManifest(manifest)).digest("hex").toUpperCase());
-    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length - 1);
+    expect(mergedParity.counting.target.logicalManifestRouteRecords).toBe(pages.pages.length - 2);
     expect(mergedParity.counting.target.manifestHashNormalization).toBe("LF");
     expect(mergedParity.counting.target.manifestSha256)
       .toBe(createHash("sha256").update(manifest).digest("hex").toUpperCase());

@@ -52,6 +52,9 @@
           <view class="video-title">{{ feed.activeVideo.value.title || '社区视频' }}</view>
           <view class="video-description">{{ feed.activeVideo.value.content }}</view>
           <view class="post-meta">❤ {{ feed.activeVideo.value.likeNum }} · 💬 {{ feed.activeVideo.value.commentNum }} · 👁 {{ feed.activeVideo.value.playNum }}</view>
+          <CommunityPostActions :post="engagement.view(feed.activeVideo.value)" :busy="engagement.busy.value" :unknown="engagement.unknown(feed.activeVideo.value.id)"
+            :refreshing="engagement.reconciling.value === feed.activeVideo.value.id" :notice="engagement.notices.value[feed.activeVideo.value.id]" :error="engagement.errors.value[feed.activeVideo.value.id]"
+            @like="engagement.toggleLike(feed.activeVideo.value)" @share="engagement.openShare(feed.activeVideo.value)" @refresh="engagement.reconcile(feed.activeVideo.value.id)" />
           <button class="video-comments" @tap="openVideoComments">查看视频评论</button>
         </view>
       </view>
@@ -66,6 +69,9 @@
           <view class="post-content">{{ post.content }}</view>
           <image v-if="post.image" class="post-image" :src="post.image" mode="aspectFill" />
           <view class="post-meta">❤ {{ post.likeNum }} · 💬 {{ post.commentNum }} · 👁 {{ post.playNum }}</view>
+          <CommunityPostActions :post="engagement.view(post)" :busy="engagement.busy.value" :unknown="engagement.unknown(post.id)"
+            :refreshing="engagement.reconciling.value === post.id" :notice="engagement.notices.value[post.id]" :error="engagement.errors.value[post.id]"
+            @like="engagement.toggleLike(post)" @share="engagement.openShare(post)" @refresh="engagement.reconcile(post.id)" />
         </view>
       </view>
       <view v-else-if="feed.initialized.value && !feed.loading.value" class="state-box">{{ emptyText }}</view>
@@ -87,6 +93,9 @@
             <view class="video-description">{{ detail.content }}</view>
             <image v-if="detail.image" class="post-image" :src="detail.image" mode="widthFix" />
             <view class="post-meta">❤ {{ detail.likeNum }} · 💬 {{ detail.commentNum }} · 👁 {{ detail.playNum }}</view>
+            <CommunityPostActions :post="engagement.view(detail)" :busy="engagement.busy.value" :unknown="engagement.unknown(detail.id)"
+            :refreshing="engagement.reconciling.value === detail.id" :notice="engagement.notices.value[detail.id]" :error="engagement.errors.value[detail.id]"
+            @like="engagement.toggleLike(detail)" @share="engagement.openShare(detail)" @refresh="engagement.reconcile(detail.id)" />
           </template>
           <CommunityComments :post-id="detailLoading || detailError ? 0 : detail?.id ?? 0" :total="detail?.commentNum ?? 0" :writable="detail?.status === 1 && detail?.is_verify === 1" @count="updateCommentCount" />
         </scroll-view>
@@ -105,6 +114,7 @@
       </view>
     </view>
   </view>
+  <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
 </template>
 
@@ -112,13 +122,23 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import CommunityComments from "@/components/community/CommunityComments.vue";
-import { apiCommunityDetail, apiCommunitySave, communityPreviewMode, type CommunityPost } from "@/api/community";
+import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
+import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
+import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
+import { apiCommunityVisit, apiCommunitySave, communityPreviewMode, type CommunityPost } from "@/api/community";
 import { useCommunityDeepLink, type CommunityDeepLinkMode, type CommunityRouteQuery } from "@/composables/useCommunityDeepLink";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps<{ mode: CommunityDeepLinkMode; query: CommunityRouteQuery; videoRoute?: string }>();
-const feed = useCommunityDeepLink(props.mode, props.videoRoute);
+const engagement = useCommunityEngagement({
+  update(id, patch) {
+    for (const post of feed.posts.value) if (post.id === id) Object.assign(post, patch);
+    if (detail.value?.id === id) Object.assign(detail.value, patch);
+  },
+  find(id) { return id === undefined ? detail.value ?? feed.activeVideo.value : [detail.value, ...feed.posts.value].find(post => post?.id === id) ?? null; },
+});
+const feed = useCommunityDeepLink(props.mode, props.videoRoute, engagement);
 const auth = useAuthStore();
 const emptyText = computed(() => props.mode === "topic" ? "这个话题还没有内容" : props.mode === "search" ? "没有找到相关笔记" : "还没有视频");
 const detail = ref<CommunityPost | null>(null);
@@ -145,13 +165,14 @@ async function openPost(post: CommunityPost) {
     uni.navigateTo({ url: `${props.videoRoute || '/pages/discover/discoverVideo/index'}?id=${post.id}` });
     return;
   }
-  const requestGeneration = ++detailGeneration, owner = detailOwner();
+  if (!pageVisible || pageDisposed) return;
+  const requestGeneration = ++detailGeneration, owner = detailOwner(), ticket = engagement.nextTicket();
   detail.value = post;
   detailLoading.value = true;
   detailError.value = "";
   try {
-    const current = await apiCommunityDetail(post.id);
-    if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detail.value = current;
+    const current = await apiCommunityVisit(post.id);
+    if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detail.value = engagement.adopt([current], ticket)[0];
   } catch (cause) {
     if (pageVisible && !pageDisposed && owner === detailOwner() && requestGeneration === detailGeneration) detailError.value = cause instanceof Error ? cause.message : "帖子加载失败";
   } finally {
@@ -159,7 +180,7 @@ async function openPost(post: CommunityPost) {
   }
 }
 
-function closeDetail() { detailGeneration++; detail.value = null; detailLoading.value = false; detailError.value = ''; }
+function closeDetail() { detailGeneration++; detail.value = null; detailLoading.value = false; detailError.value = ''; engagement.closeShare(); }
 function openVideoComments() {
   if (!pageVisible || pageDisposed || !feed.activeVideo.value) return;
   ++detailGeneration; detailLoading.value = false; detailError.value = ''; detail.value = feed.activeVideo.value;
@@ -214,7 +235,7 @@ function retryRoute() { void feed.initialize(props.query); }
 
 onMounted(() => void feed.initialize(props.query));
 onBeforeUnmount(() => { pageDisposed = true; closeDetail(); publishOpen.value = false; feed.dispose(); });
-defineExpose({ loadMore: feed.loadMore });
+defineExpose({ loadMore: feed.loadMore, shareMessage: engagement.miniMessage, shareTimeline: engagement.miniTimeline });
 </script>
 
 <style scoped>

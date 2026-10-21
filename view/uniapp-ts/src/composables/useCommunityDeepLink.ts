@@ -1,6 +1,7 @@
-import { computed, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
 import {
-  apiCommunityDetail,
+  apiCommunityVisit,
+  apiCommunityState,
   apiCommunityList,
   apiCommunityTopics,
   type CommunityListFilters,
@@ -8,6 +9,9 @@ import {
   type CommunityTopic,
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
+import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
+import type { useCommunityEngagement } from '@/composables/useCommunityEngagement';
+import { communityEmbeddedVideo, communityPageQuery } from '@/utils/communityShare';
 
 export type CommunityDeepLinkMode = "topic" | "search" | "video";
 export type CommunityRouteQuery = Record<string, string | undefined>;
@@ -18,40 +22,11 @@ const VIDEO_PAGE_SIZE = 10;
 function positiveId(value: string | undefined): number | null {
   if (!value || !/^[1-9]\d*$/.test(value)) return null;
   const id = Number(value);
-  return Number.isSafeInteger(id) ? id : null;
+  return Number.isSafeInteger(id) && id <= 2147483647 ? id : null;
 }
 
 /** Old APP-PLUS links wrapped an H5 page in web-view. Extract state only; never load its host or token. */
-export function parseLegacyAppVideoUrl(raw: string): CommunityRouteQuery | null {
-  if (!raw || raw.length > 2048) return null;
-  let value = raw;
-  try {
-    if (!value.includes("/pages/discover/discoverVideo/index")) value = decodeURIComponent(value);
-  } catch { return null; }
-  if (/^https?:\/\//i.test(value)) value = value.replace(/^https?:\/\/[^/]+/i, "");
-  if (!value.startsWith("/")) return null;
-  const hashless = value.split("#", 1)[0];
-  const separator = hashless.indexOf("?");
-  if (separator < 0 || hashless.slice(0, separator) !== "/pages/discover/discoverVideo/index") return null;
-  const fields = new Map<string, string>();
-  try {
-    for (const part of hashless.slice(separator + 1).split("&")) {
-      const at = part.indexOf("=");
-      const key = decodeURIComponent((at < 0 ? part : part.slice(0, at)).replace(/\+/g, " "));
-      const item = decodeURIComponent((at < 0 ? "" : part.slice(at + 1)).replace(/\+/g, " "));
-      if (["id", "relation_id", "content_type"].includes(key)) {
-        if (fields.has(key)) return null;
-        fields.set(key, item);
-      }
-    }
-  } catch { return null; }
-  const id = fields.get("id");
-  const relation = fields.get("relation_id");
-  const contentType = fields.get("content_type");
-  if ((id && !positiveId(id)) || (relation && !positiveId(relation))
-    || (contentType !== undefined && !["0", "2"].includes(contentType))) return null;
-  return { id, relation_id: relation, content_type: contentType };
-}
+export function parseLegacyAppVideoUrl(raw: string): CommunityRouteQuery | null { return communityEmbeddedVideo(raw); }
 
 function message(error: unknown): string {
   return error instanceof Error && error.message ? error.message : "内容加载失败，请重试";
@@ -69,6 +44,7 @@ function postRelationId(post: CommunityPost): number {
 export function useCommunityDeepLink(
   mode: CommunityDeepLinkMode = "topic",
   videoRoute = "/pages/discover/discoverVideo/index",
+  engagement?: ReturnType<typeof useCommunityEngagement>,
 ) {
   const auth = useAuthStore();
   const posts = ref<CommunityPost[]>([]);
@@ -86,12 +62,14 @@ export function useCommunityDeepLink(
   const error = ref("");
   const routeError = ref("");
   const initialized = ref(false);
-  const page = ref(1);
+  const page = ref(1), videoReady = ref(false);
+  let firstVisitAttempted = false;
   let generation = 0;
-  let disposed = false;
+  let disposed = false, visible = true;
+  const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   let routeQuery: CommunityRouteQuery = {};
 
-  const activeVideo = computed(() => posts.value[0] ?? null);
+  const activeVideo = computed(() => mode === 'video' && !videoReady.value ? null : posts.value[0] ?? null);
   const pageSize = mode === "video" ? VIDEO_PAGE_SIZE : PAGE_SIZE;
 
   function filters(): CommunityListFilters {
@@ -108,36 +86,52 @@ export function useCommunityDeepLink(
   }
 
   async function loadMore() {
-    if (disposed || !initialized.value || routeError.value || loading.value || finished.value) return;
+    if (disposed || !visible || !initialized.value || routeError.value || loading.value || finished.value) return;
     const requestGeneration = generation;
     const requestedPage = page.value;
-    const owner = `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
+    const requestOwner = owner(), ticket = engagement?.nextTicket();
     loading.value = true;
     error.value = "";
     try {
       const rows = await apiCommunityList(requestedPage, pageSize, filters());
-      if (disposed || requestGeneration !== generation || owner !== `${auth.uid}:${auth.token}:${auth.sessionVersion}`) return;
+      if (disposed || !visible || requestGeneration !== generation || requestOwner !== owner()) return;
       if (!Array.isArray(rows)) throw new Error("内容响应格式错误");
+      const currentRows = engagement ? engagement.adopt(rows, ticket!) : rows;
       const known = new Set(posts.value.map((post) => post.id));
-      posts.value.push(...rows.filter((post) => Number.isSafeInteger(post.id) && post.id > 0 && !known.has(post.id)));
-      finished.value = rows.length < pageSize;
+      posts.value.push(...currentRows.filter((post) => Number.isSafeInteger(post.id) && post.id > 0 && !known.has(post.id)));
+      finished.value = rows.length < pageSize || requestedPage >= 2147483647;
       if (!finished.value) page.value = requestedPage + 1;
+      if (mode === 'video' && !anchorId.value && posts.value[0] && !firstVisitAttempted) {
+        firstVisitAttempted = true;
+        const id = posts.value[0].id, visitTicket = engagement?.nextTicket(), visited = await apiCommunityVisit(id);
+        if (disposed || !visible || requestGeneration !== generation || requestOwner !== owner()) return;
+        if ((!mixedVideo.value && postContentType(visited) !== 2) || (relationId.value && postRelationId(visited) !== relationId.value)) throw Error('视频已变化，请重新打开');
+        posts.value[0] = engagement ? engagement.adopt([visited], visitTicket!)[0] : visited;
+        videoReady.value = true;
+      }
     } catch (cause) {
-      if (!disposed && requestGeneration === generation) error.value = message(cause);
+      if (!disposed && visible && requestGeneration === generation && requestOwner === owner()) {
+        if (mode === 'video' && firstVisitAttempted && !videoReady.value) routeError.value = '视频访问结果未确认，请重新打开；不会自动重试访问';
+        else error.value = message(cause);
+      }
     } finally {
-      if (!disposed && requestGeneration === generation) loading.value = false;
+      if (!disposed && visible && requestGeneration === generation && requestOwner === owner()) loading.value = false;
     }
   }
 
   async function initialize(query: CommunityRouteQuery = {}) {
-    if (disposed) return;
+    if (disposed || !visible) return;
+    try { query = communityPageQuery(query); }
+    catch (reason) { generation++; posts.value = []; routeError.value = message(reason); initialized.value = false; loading.value = false; return; }
     routeQuery = { ...query };
+    const requestOwner = owner();
     const embedded = mode === "video" && query.url ? parseLegacyAppVideoUrl(query.url) : null;
     const effectiveQuery = mode === "video" && query.url
       ? embedded && {
         id: embedded.id ?? query.id,
         relation_id: embedded.relation_id ?? query.relation_id,
         content_type: embedded.content_type ?? query.content_type,
+        spid: embedded.spid ?? query.spid,
       }
       : query;
     const requestGeneration = ++generation;
@@ -156,15 +150,19 @@ export function useCommunityDeepLink(
     error.value = "";
     routeError.value = "";
     initialized.value = false;
-    page.value = 1;
+    page.value = 1; videoReady.value = false; firstVisitAttempted = false;
 
     if (!effectiveQuery || (embedded?.id && query.id && query.id !== embedded.id)
       || (embedded?.relation_id && query.relation_id && query.relation_id !== embedded.relation_id)
-      || (embedded?.content_type && query.content_type && query.content_type !== embedded.content_type)) {
+      || (embedded?.content_type && query.content_type && query.content_type !== embedded.content_type)
+      || (embedded?.spid && query.spid && query.spid !== embedded.spid)) {
       routeError.value = "旧版视频链接无法安全打开";
       return;
     }
 
+    if (effectiveQuery.id !== undefined && effectiveQuery.topic_id !== undefined && mode !== 'video') {
+      routeError.value = '话题参数重复'; return;
+    }
     if (mode === "topic") {
       const id = positiveId(effectiveQuery.id ?? effectiveQuery.topic_id);
       if (!id) routeError.value = "话题地址无效";
@@ -179,12 +177,13 @@ export function useCommunityDeepLink(
       keyword.value = String(effectiveQuery.keyword ?? effectiveQuery.searchVal ?? "").trim().slice(0, 100);
       keywordInput.value = keyword.value;
     } else {
-      if (effectiveQuery.id) {
+      if (effectiveQuery.content_type !== undefined && !['0', '2'].includes(effectiveQuery.content_type)) { routeError.value = '视频类型无效'; return; }
+      if (effectiveQuery.id !== undefined) {
         const id = positiveId(effectiveQuery.id);
         if (!id) routeError.value = "视频地址无效";
         else anchorId.value = id;
       }
-      if (effectiveQuery.relation_id) {
+      if (effectiveQuery.relation_id !== undefined) {
         const id = positiveId(effectiveQuery.relation_id);
         if (!id) routeError.value = "作者地址无效";
         else relationId.value = id;
@@ -195,7 +194,7 @@ export function useCommunityDeepLink(
     try {
       if (mode === "topic" || mode === "search") {
         const available = await apiCommunityTopics();
-        if (disposed || requestGeneration !== generation) return;
+        if (disposed || !visible || requestGeneration !== generation || requestOwner !== owner()) return;
         if (!Array.isArray(available)) throw new Error("话题响应格式错误");
         topics.value = available;
         if (selectedTopicId.value) {
@@ -205,19 +204,22 @@ export function useCommunityDeepLink(
         }
       }
       if (mode === "video" && anchorId.value) {
-        const selected = await apiCommunityDetail(anchorId.value);
-        if (disposed || requestGeneration !== generation) return;
+        const selected = await apiCommunityState(anchorId.value);
+        if (disposed || !visible || requestGeneration !== generation || requestOwner !== owner()) return;
         if ((!mixedVideo.value && postContentType(selected) !== 2)
           || (relationId.value && postRelationId(selected) !== relationId.value)) {
           routeError.value = "视频与分享地址不匹配";
           return;
         }
-        posts.value = [selected];
+        const ticket = engagement?.nextTicket(), visited = await apiCommunityVisit(selected.id);
+        if (disposed || !visible || requestGeneration !== generation || requestOwner !== owner()) return;
+        if ((!mixedVideo.value && postContentType(visited) !== 2) || (relationId.value && postRelationId(visited) !== relationId.value)) throw Error('视频已变化，请重新打开');
+        posts.value = engagement ? engagement.adopt([visited], ticket!) : [visited]; videoReady.value = true;
       }
       initialized.value = true;
       await loadMore();
     } catch (cause) {
-      if (!disposed && requestGeneration === generation) routeError.value = message(cause);
+      if (!disposed && visible && requestGeneration === generation && requestOwner === owner()) routeError.value = message(cause);
     }
   }
 
@@ -250,22 +252,27 @@ export function useCommunityDeepLink(
   }
 
   function selectVideo(post: CommunityPost) {
-    if (mode !== "video" || post.id === activeVideo.value?.id) return;
+    if (disposed || !visible || mode !== "video" || post.id === activeVideo.value?.id || !posts.value.some(row => row.id === post.id)) return;
     routeTo({ id: String(post.id), relation_id: relationId.value ? String(relationId.value) : undefined,
       content_type: mixedVideo.value ? "0" : undefined });
   }
 
   const stopOwnerWatch = watch(() => [auth.uid, auth.token, auth.sessionVersion], () => {
-    if (!disposed && generation) void initialize(routeQuery);
-  });
+    if (disposed) return;
+    generation++; posts.value = []; topics.value = []; loading.value = false; initialized.value = false;
+    if (visible) void initialize(routeQuery);
+  }, { flush: 'sync' });
 
+  function hide() { visible = false; generation++; posts.value = []; topics.value = []; loading.value = false; initialized.value = false; videoReady.value = false; }
   function dispose() {
-    disposed = true;
+    hide(); disposed = true;
     generation++;
     posts.value = [];
     stopOwnerWatch();
   }
 
+  onHide(hide); onUnload(dispose); onScopeDispose(dispose);
+  onShow(() => { if (!disposed && !visible) { visible = true; if (generation) void initialize(routeQuery); } });
   return { posts, topics, selectedTopicId, topicName, keywordInput, keyword, order, activeVideo, mixedVideo,
     loading, finished, error, routeError, initialized, initialize, loadMore, changeOrder,
     submitSearch, selectTopic, selectVideo, dispose };

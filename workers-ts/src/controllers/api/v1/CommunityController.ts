@@ -113,10 +113,30 @@ export async function communityList(c: C) {
 
 /** GET /api/community/detail/:id — 帖子详情 */
 export async function communityDetail(c: C) {
+  c.header("Cache-Control", "no-store");
   const id = Number(c.req.param("id") ?? "0");
   const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
   try {
-    return jsonOk(c, await svc.detail(id, c.get("uid") || undefined));
+    const [post, siteUrl] = await Promise.all([
+      svc.detail(id, c.get("uid") || undefined), config(c).get("site_url"),
+    ]);
+    return jsonOk(c, { ...post, site_url: siteUrl });
+  } catch (e) {
+    if (e instanceof ValidateException) return jsonFail(c, e.message);
+    throw e;
+  }
+}
+
+/** GET /api/community/state/:id — exact detail metadata without a visit. */
+export async function communityState(c: C) {
+  c.header("Cache-Control", "no-store");
+  const id = Number(c.req.param("id") ?? "0");
+  const svc = new CommunityService(c.get("container"), c.env.APP_KEY);
+  try {
+    const [post, siteUrl] = await Promise.all([
+      svc.state(id, c.get("uid") || undefined), config(c).get("site_url"),
+    ]);
+    return jsonOk(c, { ...post, site_url: siteUrl });
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;
@@ -319,6 +339,7 @@ export async function communityElegantList(c: C) {
 
 /** GET /api/community/share/:id */
 export async function communityShare(c: C) {
+  c.header("Cache-Control", "no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   try {

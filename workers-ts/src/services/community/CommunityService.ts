@@ -213,16 +213,8 @@ export class CommunityService {
 
   /** 帖子详情 (community/detail/:id) */
   async detail(id: number, uid?: number) {
-    if (!Number.isSafeInteger(id) || id <= 0) throw new ValidateException("参数错误");
-    const item = (await this.container.db
-      .select()
-      .from(communityTable)
-      .where(and(eq(communityTable.id, id), eq(communityTable.isDel, 0)))
-      .limit(1))[0];
+    const item = await this.readablePost(id, uid);
     const isPublic = isPublicCommunityPost(item);
-    if (!item || !canReadCommunityPost(item, uid)) {
-      throw new NotFoundException("帖子不存在");
-    }
     // 作者可以预览待审/下架内容，但预览不应计入公开曝光；recordBrowse
     // 本身也只接受公开帖子，因此仅在公开详情路径上调用。
     const playNum = isPublic
@@ -230,6 +222,27 @@ export class CommunityService {
       : item.playNum;
     const [formatted] = await this.formatPosts([{ ...item, playNum }], uid);
     return formatted;
+  }
+
+  /** Read the exact current post without recording a visit. The shared row
+   * lock keeps post counters and viewer relations together while like/share/
+   * browse/moderation writes wait; it changes no business row or sequence. */
+  async state(id: number, uid?: number) {
+    return withTx(this.container, async (tx) => {
+      const db = tx as unknown as DbClient;
+      const item = await this.readablePost(id, uid, db, true);
+      const [formatted] = await this.formatPosts([item], uid, db);
+      return formatted;
+    });
+  }
+
+  private async readablePost(id: number, uid?: number, db: DbClient = this.container.db, lock = false) {
+    if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw new ValidateException("参数错误");
+    const query = db.select().from(communityTable)
+      .where(and(eq(communityTable.id, id), eq(communityTable.isDel, 0))).limit(1);
+    const item = (await (lock ? query.for("share") : query))[0];
+    if (!item || !canReadCommunityPost(item, uid)) throw new NotFoundException("帖子不存在");
+    return item;
   }
 
   /** 发布帖子 (community_save) */
@@ -697,17 +710,19 @@ export class CommunityService {
     return { list: await this.formatPosts(rows, uid), count: counts[0]?.count ?? 0 };
   }
 
-  private async formatPosts(rows: Array<typeof communityTable.$inferSelect>, uid?: number) {
+  private async formatPosts(
+    rows: Array<typeof communityTable.$inferSelect>, uid?: number, db: DbClient = this.container.db,
+  ) {
     if (!rows.length) return [];
     const postIds = rows.map((row) => row.id);
     const userIds = [...new Set(rows.filter((row) => row.type === 2).map((row) => row.relationId))];
     const [users, profiles, relations, likedIds, followedIds] = await Promise.all([
       userIds.length
-        ? this.container.db.select({ uid: user.uid, nickname: user.nickname, avatar: user.avatar })
+        ? db.select({ uid: user.uid, nickname: user.nickname, avatar: user.avatar })
           .from(user)
           .where(inArray(user.uid, userIds))
         : Promise.resolve([]),
-      this.container.db.select({
+      db.select({
         type: communityUser.type,
         relationId: communityUser.relationId,
         nickname: communityUser.nickname,
@@ -719,7 +734,7 @@ export class CommunityService {
           eq(communityUser.relationId, row.relationId),
         )))!,
       )),
-      this.container.db.select({
+      db.select({
         leftId: communityRelevance.leftId,
         rightId: communityRelevance.rightId,
         type: communityRelevance.type,
@@ -727,9 +742,9 @@ export class CommunityService {
         inArray(communityRelevance.leftId, postIds),
         inArray(communityRelevance.type, [COMMUNITY_TOPIC, COMMUNITY_PRODUCT]),
       )),
-      this.relevanceIds(uid, postIds, COMMUNITY_LIKE),
+      this.relevanceIds(uid, postIds, COMMUNITY_LIKE, db),
       uid && userIds.length
-        ? this.container.db.select({ rightId: communityRelevance.rightId }).from(communityRelevance)
+        ? db.select({ rightId: communityRelevance.rightId }).from(communityRelevance)
           .where(and(
             eq(communityRelevance.leftId, uid),
             eq(communityRelevance.type, COMMUNITY_INTEREST),
@@ -744,12 +759,12 @@ export class CommunityService {
     const productIds = [...new Set(relations.filter((row) => row.type === COMMUNITY_PRODUCT).map((row) => row.rightId))];
     const [topics, products] = await Promise.all([
       topicIds.length
-        ? this.container.db.select({ id: communityTopic.id, name: communityTopic.name })
+        ? db.select({ id: communityTopic.id, name: communityTopic.name })
           .from(communityTopic)
           .where(and(inArray(communityTopic.id, topicIds), eq(communityTopic.isDel, 0), eq(communityTopic.status, 1)))
         : Promise.resolve([]),
       productIds.length
-        ? this.container.db.select({
+        ? db.select({
           id: storeProduct.id,
           store_name: storeProduct.storeName,
           image: storeProduct.image,
@@ -776,8 +791,8 @@ export class CommunityService {
         item.products.push(relation.rightId);
       }
     }
-    const videoSources = await communityVideoSources(this.container.db, this.appKey, rows);
-    const imageSources = await communityImageSources(this.container.db, this.appKey, rows);
+    const videoSources = await communityVideoSources(db, this.appKey, rows);
+    const imageSources = await communityImageSources(db, this.appKey, rows);
     return rows.map((row) => {
       const owner = row.type === 2
         ? userMap.get(row.relationId) ?? profileMap.get(`2:${row.relationId}`)

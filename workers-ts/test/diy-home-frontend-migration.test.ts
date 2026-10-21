@@ -15,7 +15,7 @@ const navigationExports: Record<string, unknown> = {}, fabExports: Record<string
 const compile = (source: string) => transpileModule(source, { compilerOptions: {
   module: ModuleKind.CommonJS, target: ScriptTarget.ES2022,
 } }).outputText;
-const commonSources = new Set(['communityRoute', 'customerWorkRoute', 'customerWorkWriteoff', 'customerWorkIntent', 'userCenterDesign', 'divisionStaff', 'checkoutQuote']);
+const commonSources = new Set(['communityRoute', 'communityShare', 'customerWorkRoute', 'customerWorkWriteoff', 'customerWorkIntent', 'userCenterDesign', 'divisionStaff', 'checkoutQuote']);
 const commonExports = new Map<string, Record<string, unknown>>();
 function actualCommonModule(name: string): Record<string, unknown> {
   if (!commonSources.has(name)) throw Error(`Unexpected navigation pure dependency: ${name}`);

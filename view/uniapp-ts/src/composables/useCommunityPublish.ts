@@ -1,7 +1,7 @@
 import { computed, ref, watch } from "vue";
 import { onHide, onShow, onUnload } from "@dcloudio/uni-app";
 import { useAuthStore } from "@/stores/auth";
-import { apiCommunitySave, apiCommunityUpdate, apiCommunityDetail, type CommunityPostInput } from "@/api/community";
+import { apiCommunitySave, apiCommunityUpdate, apiCommunityState, type CommunityPostInput } from "@/api/community";
 import { apiCommunityVideo, type UploadedCommunityVideo } from "@/api/communityVideo";
 import { apiCommunityImage, type UploadedCommunityImage } from "@/api/communityImage";
 import { RequestError } from "@/utils/request";
@@ -29,7 +29,7 @@ export function useCommunityPublish() {
     reset(); editRequested.value = id; const revision = ++generation, owner = identity(); loadingEdit.value = true;
     const current = () => visible && !disposed && revision === generation && owner === identity();
     try {
-      const post = await apiCommunityDetail(id);
+      const post = await apiCommunityState(id);
       if (!current()) return false;
       if (!post || post.id !== id || post.type !== 2 || post.relationId !== auth.uid || post.is_self !== 1) throw Error("只能编辑自己的帖子");
       if (![1,2].includes(post.contentType) || typeof post.title !== "string" || typeof post.content !== "string") throw Error("原帖格式错误");

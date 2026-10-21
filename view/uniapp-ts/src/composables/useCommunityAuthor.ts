@@ -4,8 +4,9 @@ import { useAuthStore } from "@/stores/auth";
 import { RequestError } from "@/utils/request";
 import { apiCommunityProfile, apiCommunityList, apiCommunityLikedPosts, apiCommunityDelete,
   apiCommunityUpdateDescription, apiCommunitySetInterest, type CommunityPost, type CommunityProfile } from "@/api/community";
+import type { useCommunityEngagement } from '@/composables/useCommunityEngagement';
 
-export function useCommunityAuthor() {
+export function useCommunityAuthor(engagement?: ReturnType<typeof useCommunityEngagement>) {
   const auth = useAuthStore(), authorId = ref<number | null>(null), profile = ref<CommunityProfile | null>(null);
   const posts = ref<CommunityPost[]>([]), tab = ref<"works" | "liked">("works"), keyword = ref("");
   const description = ref(""), editingDescription = ref(false), loading = ref(false), busy = ref(false);
@@ -36,7 +37,7 @@ export function useCommunityAuthor() {
     if (selfRoute && auth.isLoggedIn) authorId.value = auth.uid;
     clear(); error.value = ""; term = keyword.value.trim().slice(0, 100); page = 0;
     if (!auth.isLoggedIn) { error.value = "请先登录后查看作者主页"; return; }
-    const revision = generation, owner = identity(), id = authorId.value;
+    const revision = generation, owner = identity(), id = authorId.value, ticket = engagement?.nextTicket();
     loading.value = true;
     try {
       const person = await apiCommunityProfile(id);
@@ -46,7 +47,8 @@ export function useCommunityAuthor() {
       if (!(person.type === 2 && person.is_self === 1 && id === auth.uid)) tab.value = "works";
       const rows = await readPage(1, person);
       if (!current(revision, owner)) return;
-      profile.value = person; posts.value = rows; page = 1; hasMore.value = rows.length === 10; unknown.value = false;
+      profile.value = person; posts.value = engagement ? engagement.adopt(rows, ticket!) : rows;
+      page = 1; hasMore.value = rows.length === 10; unknown.value = false;
     } catch (cause) { if (current(revision, owner)) error.value = cause instanceof Error ? cause.message : "作者主页加载失败"; }
     finally { if (revision === generation) loading.value = false; }
   }
@@ -57,14 +59,15 @@ export function useCommunityAuthor() {
     authorId.value = Number(id); await refresh();
   }
   async function loadMore() {
-    if (!visible || disposed || loading.value || busy.value || !hasMore.value || !profile.value || page >= 1000) return;
-    const revision = generation, owner = identity(), person = profile.value, next = page + 1;
+    if (!visible || disposed || loading.value || busy.value || !hasMore.value || !profile.value || page >= 2147483647) return;
+    const revision = generation, owner = identity(), person = profile.value, next = page + 1, ticket = engagement?.nextTicket();
     loading.value = true; error.value = "";
     try {
-      const rows = await readPage(next, person); if (!current(revision, owner)) return;
+      const raw = await readPage(next, person); if (!current(revision, owner)) return;
+      const rows = engagement ? engagement.adopt(raw, ticket!) : raw;
       const ids = new Set(posts.value.map(row => row.id));
       for (const row of rows) if (!ids.has(row.id)) { posts.value.push(row); ids.add(row.id); }
-      page = next; hasMore.value = rows.length === 10 && next < 1000;
+      page = next; hasMore.value = rows.length === 10 && next < 2147483647;
     } catch (cause) { if (current(revision, owner)) error.value = cause instanceof Error ? cause.message : "加载失败"; }
     finally { if (revision === generation) loading.value = false; }
   }

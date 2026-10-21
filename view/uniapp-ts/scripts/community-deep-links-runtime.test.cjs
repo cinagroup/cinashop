@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, '..');
 const topic = { id: 1, name: '生活灵感', isRecommend: 1 };
 const post = (id, extra = {}) => ({ id, type: 2, relationId: 101, contentType: 1,
   title: `周末分享 ${id}`, content: '周末在花市散步', image: '', sliderImage: null,
-  likeNum: id, commentNum: 1, playNum: 3, isLike: 0, status: 1, addTime: 1786710800,
+  likeNum: id, commentNum: 1, playNum: 3, isLike: 0, status: 1, is_verify: 1, addTime: 1786710800,
   topic_id: [1], ...extra });
 const video = post(9003, { contentType: 2, title: '周末花市短片', videoUrl: 'https://media.example.test/9003.mp4' });
 
@@ -68,14 +68,14 @@ test('search consumes keyword/topic query, updates address on search and retries
 });
 
 test('video deep link pins exact post and applies type/start/author filters to later pages', async () => {
-  const { r, feed, stop } = setup('video', call => call.url.endsWith('/detail/9003')
+  const { r, feed, stop } = setup('video', call => /\/(?:detail|state)\/9003$/.test(call.url)
     ? { data: video } : { data: [video, post(9002, { contentType: 2 })] });
   try {
     await feed.initialize({ id: '9003', relation_id: '101' });
     assert.equal(feed.activeVideo.value.id, 9003);
     assert.deepEqual(feed.posts.value.map(item => item.id), [9003, 9002]);
-    assert.deepEqual(r.calls.map(call => call.url), ['/api/community/detail/9003', '/api/community/list']);
-    assert.deepEqual(r.calls[1].data, { page: 1, limit: 10, content_type: 2, start_id: 9003, relation_id: 101 });
+    assert.deepEqual(r.calls.map(call => call.url), ['/api/community/state/9003', '/api/community/detail/9003', '/api/community/list']);
+    assert.deepEqual(r.calls[2].data, { page: 1, limit: 10, content_type: 2, start_id: 9003, relation_id: 101 });
     feed.selectVideo(post(9002, { contentType: 2 }));
     assert.equal(r.navigations.at(-1), '/pages/discover/discoverVideo/index?id=9002&relation_id=101');
   } finally { stop(); }
@@ -93,12 +93,12 @@ test('video deep link refuses an image post or mismatched author and preserves o
       assert.equal(r.calls.length, 1);
     } finally { stop(); }
   }
-  const { r, feed, stop } = setup('video', call => call.url.endsWith('/detail/9003')
+  const { r, feed, stop } = setup('video', call => /\/(?:detail|state)\/9003$/.test(call.url)
     ? { data: post(9003) } : { data: [post(9003)] });
   try {
     await feed.initialize({ id: '9003', content_type: '0' });
     assert.equal(feed.routeError.value, '');
-    assert.equal(r.calls[1].data.content_type, undefined);
+    assert.equal(r.calls[2].data.content_type, undefined);
     assert.equal(feed.activeVideo.value.id, 9003);
   } finally { stop(); }
 });
@@ -126,12 +126,12 @@ test('late page response cannot repaint changed route or logged-in identity', as
 
 test('old App web-view URL yields only validated video state, never an external web-view or token', async () => {
   const outer = 'https://untrusted.example.test/pages/discover/discoverVideo/index?content_type=2&token=SECRET&id=9003&relation_id=101';
-  const { r, feed, stop } = setup('video', call => call.url.endsWith('/detail/9003')
-    ? { data: video } : { data: [video] }, '/pages/discover/discoverVideo/app');
+  const { r, feed, stop } = setup('video', call => /\/(?:detail|state)\/9003$/.test(call.url)
+    ? { data: video } : { data: [video, post(9002, { contentType: 2 })] }, '/pages/discover/discoverVideo/app');
   try {
     await feed.initialize({ url: encodeURIComponent(outer) });
     assert.equal(feed.activeVideo.value.id, 9003);
-    assert.deepEqual(r.calls.map(call => call.url), ['/api/community/detail/9003', '/api/community/list']);
+    assert.deepEqual(r.calls.map(call => call.url), ['/api/community/state/9003', '/api/community/detail/9003', '/api/community/list']);
     assert.ok(!JSON.stringify(r.calls).includes('SECRET'));
     feed.selectVideo(post(9002, { contentType: 2 }));
     assert.equal(r.navigations.at(-1), '/pages/discover/discoverVideo/app?id=9002&relation_id=101');
@@ -144,16 +144,16 @@ test('old App web-view URL yields only validated video state, never an external 
 
 test('old App unencoded outer ampersands and generic mixed-feed URL retain only safe state', async () => {
   const split = 'https://old.example.test/pages/discover/discoverVideo/index?content_type=2';
-  const { r, feed, stop } = setup('video', call => call.url.endsWith('/detail/9003')
-    ? { data: video } : { data: [video] }, '/pages/discover/discoverVideo/app');
+  const { r, feed, stop } = setup('video', call => /\/(?:detail|state)\/9003$/.test(call.url)
+    ? { data: video } : { data: [video, post(9002, { contentType: 2 })] }, '/pages/discover/discoverVideo/app');
   try {
     await feed.initialize({ url: split, token: 'SECRET', id: '9003', relation_id: '101' });
     assert.equal(feed.activeVideo.value.id, 9003);
-    assert.deepEqual(r.calls[1].data, { page: 1, limit: 10, content_type: 2, start_id: 9003, relation_id: 101 });
+    assert.deepEqual(r.calls[2].data, { page: 1, limit: 10, content_type: 2, start_id: 9003, relation_id: 101 });
     assert.ok(!JSON.stringify(r.calls).includes('SECRET'));
     await feed.initialize({ url: split.replace('content_type=2', 'content_type=0'), token: 'SECRET' });
     assert.equal(feed.routeError.value, '');
-    assert.equal(r.calls.at(-1).data.content_type, undefined);
+    assert.equal(r.calls.filter(call => call.url.endsWith('/community/list')).at(-1).data.content_type, undefined);
   } finally { stop(); }
 });
 

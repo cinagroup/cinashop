@@ -88,10 +88,16 @@ test('malformed and wrong-origin upload receipts cannot enter a gallery', async 
   }
 });
 test('actual detail page resolves gallery URLs and opens native preview at the selected image', async () => {
-  const r = runtime({ component: 'pages/discover/index.vue', send: () => ({ data: [] }) });
+  const post = { id: 1, type: 2, relationId: 11, contentType: 1, title: '双图图集', content: '详情回读图集',
+    image: '/api/assets/71?signature=a', sliderImage: ['/api/assets/71?signature=a', '/api/assets/72?signature=b'],
+    likeNum: 0, isLike: 0, commentNum: 0, playNum: 1, shareNum: 0, status: 1, is_verify: 1, addTime: 100 };
+  const r = runtime({ component: 'pages/discover/index.vue',
+    send: call => ({ data: call.url === '/api/community/detail/1' ? post : [] }) });
   const previews = []; r.uni.previewImage = value => previews.push(value);
   try {
     await r.start({}); await r.checkout.openDetail({ id: 1, contentType: 1, image: '/api/assets/71?signature=a', sliderImage: ['/api/assets/71?signature=a', '/api/assets/72?signature=b'] });
+    assert.equal(r.checkout.detailError.value, '');
+    assert.equal(r.calls.filter(call => call.url === '/api/community/detail/1').length, 1);
     r.checkout.previewImage(1); assert.deepEqual(previews, [{ current: 1, urls: ['/api/assets/71?signature=a', '/api/assets/72?signature=b'] }]);
     r.hooks.onHide(); r.checkout.previewImage(0); assert.equal(previews.length, 1);
   } finally { r.stop(); }

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const profile = (id = 11, extra = {}) => ({ type: 2, relation_id: id, is_self: id === 11 ? 1 : 0,
   desc: '原简介', author: `作者${id}`, is_follow: 0, ...extra });
-const post = (id = 31, extra = {}) => ({ id, type: 2, relationId: 11, is_self: 1, title: '原帖', content: '原内容',
+const post = (id = 31, extra = {}) => ({ id, type: 2, relationId: 11, is_self: 1, likeNum: 0, commentNum: 0, playNum: 0, shareNum: 0, isLike: 0, status: 1, is_verify: 1, title: '原帖', content: '原内容',
   contentType: 1, image: '/api/assets/71?signature=preview', image_reference: '/api/assets/71',
   sliderImage: ['/api/assets/71?signature=preview'], slider_image_references: ['/api/assets/71'],
   topic_id: [9], product_id: [111], topic: [{ id: 9, name: '生活' }],
@@ -78,7 +78,7 @@ test('profile editing bounds text, follow cancellation is inline, and foreign de
   } finally { r.stop(); }
 });
 test('edit hydrates canonical gallery and associations, then sends explicit empty arrays to remove all associations', async () => {
-  const r = runtime({ feature: 'useCommunityPublish', send: call => ({ data: call.url.includes('/detail/') ? post() : { id: 31 } }) });
+  const r = runtime({ feature: 'useCommunityPublish', send: call => ({ data: /\/(?:detail|state)\//.test(call.url) ? post() : { id: 31 } }) });
   try {
     await r.start(); const p = r.checkout; assert.equal(await p.loadForEdit(31), true);
     assert.equal(p.images.value[0].url, '/api/assets/71'); assert.match(p.images.value[0].src, /signature/);
@@ -93,7 +93,7 @@ test('edit hydrates canonical gallery and associations, then sends explicit empt
 test('video edits preserve canonical clip and cover; removing the video explicitly clears both', async () => {
   const clip = post(31, { contentType: 2, videoUrl: '/api/assets/72?signature=preview', video_reference: '/api/assets/72',
     sliderImage: [], slider_image_references: [] });
-  const r = runtime({ feature: 'useCommunityPublish', send: call => ({ data: call.url.includes('/detail/') ? clip : { id: 31 } }) });
+  const r = runtime({ feature: 'useCommunityPublish', send: call => ({ data: /\/(?:detail|state)\//.test(call.url) ? clip : { id: 31 } }) });
   try {
     await r.start(); const p = r.checkout; await p.loadForEdit(31); await p.publish();
     assert.equal(r.calls.at(-1).data.video_url, '/api/assets/72'); assert.equal(r.calls.at(-1).data.image, '/api/assets/71');
@@ -126,7 +126,7 @@ test('foreign, missing and stale edit receipts cannot silently create a new post
   } finally { r.stop(); }
 });
 test('unknown edit blocks automatic replay and cannot use the create endpoint', async () => {
-  const r = runtime({ feature: 'useCommunityPublish', send: call => call.url.includes('/detail/')
+  const r = runtime({ feature: 'useCommunityPublish', send: call => /\/(?:detail|state)\//.test(call.url)
     ? { data: post() } : { httpStatus: 503, status: 503 } });
   try {
     await r.start(); const p = r.checkout; await p.loadForEdit(31); await p.publish(); await p.publish();
@@ -136,7 +136,7 @@ test('unknown edit blocks automatic replay and cannot use the create endpoint', 
 });
 test('actual page opens the author view, edits an exact own post and refreshes author works after saving', async () => {
   const r = runtime({ component: 'pages/discover/workspace.vue', send: call => ({ data: call.url.includes('/user_info/') ? profile()
-    : call.url.includes('/detail/') ? post() : call.url.includes('/community_update/') ? { id: 31 }
+    : /\/(?:detail|state)\//.test(call.url) ? post() : call.url.includes('/community_update/') ? { id: 31 }
       : call.url.endsWith('/community/list') ? [post()] : [] }) });
   try {
     await r.start({ author_id: '11' }); assert.equal(r.checkout.authorMode.value, true);

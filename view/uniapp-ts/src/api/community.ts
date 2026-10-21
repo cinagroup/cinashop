@@ -32,6 +32,9 @@ export interface CommunityPost {
   commentNum: number;
   playNum: number;
   isLike: number;
+  shareNum?: number;
+  share_num?: number;
+  site_url?: string;
   status: number;
   addTime: number;
 }
@@ -230,11 +233,49 @@ export function apiCommunityLike(
   if (communityPreviewMode) {
     const post = previewPosts.find((item) => item.id === id);
     if (!post) return Promise.reject(new Error("帖子不存在"));
+    if (post.isLike !== status) post.likeNum = Math.max(0, post.likeNum + (status === 1 ? 1 : -1));
     post.isLike = status;
-    post.likeNum = Math.max(0, post.likeNum + (status === 1 ? 1 : -1));
     return Promise.resolve({ likeNum: post.likeNum, status });
   }
   return http.post<{ likeNum: number; status: 0 | 1 }>(`/community/like/${id}`, { status });
+}
+
+const postId = (value: number) => Number.isSafeInteger(value) && value > 0 && value <= 2147483647;
+/** Validate a whole exact-post receipt before projecting any fields into the current page. */
+export function checkedCommunityPost(value: unknown, id: number): CommunityPost {
+  const row = value as CommunityPost;
+  if (!row || !postId(id) || row.id !== id || !Number.isSafeInteger(row.type) || row.type < 0
+    || !Number.isSafeInteger(row.relationId) || row.relationId < 0 || row.relationId > 2147483647
+    || ![1, 2].includes(row.contentType) || ![0, 1].includes(row.isLike) || ![0, 1].includes(row.status)
+    || [row.likeNum, row.commentNum, row.playNum, row.shareNum ?? row.share_num ?? 0].some(n => !Number.isSafeInteger(n) || n < 0 || n > 2147483647)
+    || [row.title, row.content, row.image].some(text => typeof text !== 'string')
+    || row.is_verify !== undefined && ![-2, -1, 0, 1].includes(row.is_verify)
+    || row.site_url !== undefined && typeof row.site_url !== 'string') throw Error('帖子响应格式错误');
+  return row;
+}
+/** A deliberate detail visit; the server records one public visit. Never use this for reconciliation. */
+export async function apiCommunityVisit(id: number): Promise<CommunityPost> {
+  if (!postId(id)) throw Error('帖子地址无效');
+  const row = await apiCommunityDetail(id);
+  if (communityPreviewMode) row.is_verify = 1;
+  return checkedCommunityPost(row, id);
+}
+/** Exact read-only state, including viewer flags; it does not add an exposure. */
+export async function apiCommunityState(id: number): Promise<CommunityPost> {
+  if (!postId(id)) throw Error('帖子地址无效');
+  const row = communityPreviewMode ? await apiCommunityDetail(id) : await http.get<CommunityPost>(`/community/state/${id}`);
+  if (communityPreviewMode) row.is_verify = 1;
+  return checkedCommunityPost(row, id);
+}
+/** PHP-compatible GET that records one explicit share intent. Never preload or retry it automatically. */
+export async function apiCommunityTrackShare(id: number): Promise<{ shareNum: number }> {
+  if (!postId(id)) throw Error('帖子地址无效');
+  if (communityPreviewMode) {
+    const post = previewPosts.find(row => row.id === id);
+    if (!post) throw Error('帖子不存在');
+    post.shareNum = (post.shareNum ?? 0) + 1; return { shareNum: post.shareNum };
+  }
+  return http.get<{ shareNum: number }>(`/community/share/${id}`, {}, { headers: { 'Cache-Control': 'no-cache' } });
 }
 
 /** 发布帖子 (POST /api/community_save) */

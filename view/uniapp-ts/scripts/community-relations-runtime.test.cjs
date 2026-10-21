@@ -98,7 +98,7 @@ test('publishing is blocked during selection loading, and unknown publish outcom
   } finally { r.stop(); }
 });
 test('actual page publishes selected IDs, displays associations and navigates only displayed products', async () => {
-  const post = { id: 31, contentType: 1, content: '关联分享', topic: [topics[0]],
+  const post = { id: 31, type: 2, relationId: 11, contentType: 1, title: '关联分享', image: '', likeNum: 0, commentNum: 0, playNum: 0, shareNum: 0, isLike: 0, status: 1, is_verify: 1, content: '关联分享', topic: [topics[0]],
     product: [{ id: 1, store_name: '商品1', image: '', price: '9.90' }] };
   const r = runtime({ component: 'pages/discover/index.vue', send: call => ({ data:
     call.url.endsWith('/topic') ? topics : call.url.endsWith('/product_list') ? [product(1)]

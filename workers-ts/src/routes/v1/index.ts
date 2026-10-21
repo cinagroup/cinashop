@@ -969,6 +969,7 @@ v1Routes.get("/community/config", CommunityController.communityConfig);
 v1Routes.get("/community/topic", authMiddleware({ force: false }), CommunityController.communityTopic);
 v1Routes.get("/community/list", authMiddleware({ force: false }), CommunityController.communityList);
 v1Routes.get("/community/detail/:id", authMiddleware({ force: false }), CommunityController.communityDetail);
+v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);
 v1Routes.get("/community/product_list", authMiddleware({ force: false }), CommunityController.communityProductList);
 v1Routes.get("/community/topic_count/:id", authMiddleware({ force: false }), CommunityController.communityTopicCount);
 v1Routes.post("/community/like/:id", authMiddleware({ force: true }), CommunityController.communityLike);

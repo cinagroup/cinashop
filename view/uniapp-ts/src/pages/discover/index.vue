@@ -38,6 +38,8 @@
       </view>
     </scroll-view>
 
+    <view v-if="home.error.value || routeError" class="publish-error" role="alert">{{ routeError || home.error.value }}</view>
+    <button v-if="home.error.value" :disabled="home.loading.value" @tap="load">重试帖子列表</button>
     <!-- 帖子列表 -->
     <view v-if="posts.length" class="feed">
       <view v-for="post in posts" :key="post.id" class="post-card" @tap="openDetail(post)">
@@ -56,6 +58,9 @@
           <text class="meta-item">👁 {{ post.playNum }}</text>
           <text class="meta-item time">{{ formatTime(post.addTime) }}</text>
         </view>
+        <CommunityPostActions :post="engagement.view(post)" :busy="engagement.busy.value" :unknown="engagement.unknown(post.id)"
+          :refreshing="engagement.reconciling.value === post.id" :notice="engagement.notices.value[post.id]" :error="engagement.errors.value[post.id]"
+          @like="engagement.toggleLike(post)" @share="engagement.openShare(post)" @refresh="engagement.reconcile(post.id)" />
       </view>
     </view>
     <view v-else class="empty">还没有帖子, 快来发布第一条吧</view>
@@ -108,6 +113,9 @@
           <view v-if="author.owns(post) && post.refusal" class="publish-error">{{ post.refusal }}</view>
           <image v-if="communityVideoSource(post.image)" class="post-image" :src="communityVideoSource(post.image)" mode="aspectFill" />
         </view>
+        <CommunityPostActions :post="engagement.view(post)" :busy="engagement.busy.value" :unknown="engagement.unknown(post.id)"
+          :refreshing="engagement.reconciling.value === post.id" :notice="engagement.notices.value[post.id]" :error="engagement.errors.value[post.id]"
+          @like="engagement.toggleLike(post)" @share="engagement.openShare(post)" @refresh="engagement.reconcile(post.id)" />
         <view v-if="author.owns(post)" class="author-controls">
           <button :disabled="authorBusy || authorUnknown" @tap="editPost(post.id)">编辑帖子 {{ post.id }}</button>
           <button v-if="deletePostId !== post.id" :disabled="authorBusy || authorUnknown" @tap="author.requestDelete(post)">删除帖子 {{ post.id }}</button>
@@ -207,11 +215,14 @@
     </view>
 
     <!-- 详情 + 评论弹窗 -->
-    <view v-show="detail" class="mask" @tap="closeDetail">
+    <view v-show="detailOpen" class="mask" @tap="closeDetail">
       <view class="detail-sheet" @tap.stop>
         <scroll-view scroll-y class="detail-scroll">
-          <template v-if="detail">
           <button @tap="closeDetail">{{ authorMode ? "返回作品" : "关闭详情" }}</button>
+          <view v-if="detailLoading" class="upload-hint">正在打开帖子…</view>
+          <view v-if="detailError" class="publish-error" role="alert">{{ detailError }}</view>
+          <button v-if="detailError" @tap="openDetail(detailRequested)">重新打开帖子</button>
+          <template v-if="detail && !detailLoading && !detailError">
           <view class="detail-title">{{ detail.title || "分享" }}</view>
           <view class="detail-content">{{ detail.content }}</view>
           <view class="post-status">{{ moderationText(detail) }}</view>
@@ -241,18 +252,20 @@
           <view v-if="videoFailed" class="publish-error">视频暂时无法播放，可重新加载。</view>
           <button v-if="videoFailed" @tap="reloadVideo">重新加载视频</button>
           <view class="detail-meta">
-            <text class="like-btn" :class="{ liked: liked }" @tap="like">
-              ❤ {{ detail.likeNum }}
-            </text>
+            <text>❤ {{ detail.likeNum }}</text>
             <text class="detail-meta-item">💬 {{ detail.commentNum }}</text>
             <text class="detail-meta-item">👁 {{ detail.playNum }}</text>
           </view>
+          <CommunityPostActions :post="engagement.view(detail)" :busy="engagement.busy.value" :unknown="engagement.unknown(detail.id)"
+            :refreshing="engagement.reconciling.value === detail.id" :notice="engagement.notices.value[detail.id]" :error="engagement.errors.value[detail.id]"
+            @like="engagement.toggleLike(detail)" @share="engagement.openShare(detail)" @refresh="engagement.reconcile(detail.id)" />
           </template>
-          <CommunityComments :post-id="detail?.id ?? 0" :total="detail?.commentNum ?? 0" :writable="detail?.status === 1 && detail?.is_verify === 1" @count="updateCommentCount" />
+          <CommunityComments :post-id="detailLoading || detailError ? 0 : detail?.id ?? 0" :total="detail?.commentNum ?? 0" :writable="detail?.status === 1 && detail?.is_verify === 1" @count="updateCommentCount" />
         </scroll-view>
       </view>
     </view>
   </view>
+  <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
   </ThemePage>
 </template>
@@ -260,32 +273,46 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import CommunityComments from '@/components/community/CommunityComments.vue';
+import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
+import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
+import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
+import { useCommunityHomeFeed } from '@/composables/useCommunityHomeFeed';
+import { useShareReferral } from '@/composables/useShareReferral';
+import { communityPageQuery, communityInbound, communitySharePath } from '@/utils/communityShare';
 import { computed, ref, watch } from "vue";
 import { useCommunityPublish } from "@/composables/useCommunityPublish";
 import { useCommunityAuthor } from "@/composables/useCommunityAuthor";
 import { communityVideoSource } from "@/utils/communityMedia";
-import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
+import { onLoad, onShow, onHide, onUnload, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import {
-  apiCommunityList,
-  apiCommunityDetail,
-  apiCommunityTopics,
-  apiCommunityLike,
-  apiCommunityFollowHighlights,
+  apiCommunityVisit,
+  apiCommunityState,
   communityPreviewMode,
   type CommunityPost,
-  type CommunityTopic,
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
 
 const authStore = useAuthStore();
 const authorMode = ref(false);
-const author = useCommunityAuthor();
+const engagement = useCommunityEngagement({
+  update(id, patch) {
+    for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === id) Object.assign(post, patch);
+    if (detail.value?.id === id) Object.assign(detail.value, patch);
+  },
+  liked() { if (authorMode.value && authorProfile.value && !authorBusy.value) void author.refresh(); },
+  find(id) { return id === undefined ? detail.value : [detail.value, ...posts.value, ...authorPosts.value].find(post => post?.id === id) ?? null; },
+});
+const home = useCommunityHomeFeed(engagement, () => !authorMode.value);
+const { posts, topics, highlights } = home;
+const referrals = useShareReferral();
+const author = useCommunityAuthor(engagement);
 const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: authorKeyword,
   description: authorDescription, editingDescription, loading: authorLoading, busy: authorBusy, error: authorError,
   unknown: authorUnknown, hasMore: authorHasMore, isSelf: authorIsSelf, deleteId: deletePostId, unfollow: unfollowPending } = author;
-const posts = ref<CommunityPost[]>([]);
-const detail = ref<CommunityPost | null>(null);
-const liked = ref(false);
+const detail = ref<CommunityPost | null>(null), detailOpen = ref(false), detailLoading = ref(false), detailError = ref('');
+const detailRequested = ref(0), routeError = ref('');
+let pageVisible = true, pageDisposed = false;
+const pageOwner = () => `${authStore.uid}:${authStore.token}:${authStore.sessionVersion}`;
 const showPublish = ref(false);
 const publisher = useCommunityPublish();
 const { editId: publishEditId, editRequested: publishEditRequested, loadingEdit: publishLoadingEdit } = publisher;
@@ -304,8 +331,6 @@ const detailImages = computed(() => (detail.value?.sliderImage?.length
 function previewImage(index: number) {
   if (detailImages.value[index]) uni.previewImage({ current: index, urls: detailImages.value });
 }
-const highlights = ref<Awaited<ReturnType<typeof apiCommunityFollowHighlights>>>([]);
-const topics = ref<CommunityTopic[]>([]);
 let detailGeneration = 0;
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect fill='%23eee' width='100%25' height='100%25'/%3E%3C/svg%3E";
 const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Ccircle cx='36' cy='36' r='36' fill='%23eceff3'/%3E%3Ccircle cx='36' cy='28' r='12' fill='%23c8cdd5'/%3E%3Cpath d='M13 66c3-14 11-22 23-22s20 8 23 22' fill='%23c8cdd5'/%3E%3C/svg%3E";
@@ -318,26 +343,9 @@ function formatTime(ts: number): string {
 }
 
 async function load() {
+  if (!pageVisible || pageDisposed) return;
   if (authorMode.value) { if (!authorLoading.value) await author.refresh(); return; }
-  try {
-    posts.value = await apiCommunityList();
-  } catch {
-    posts.value = [];
-  }
-  if (authStore.isLoggedIn || communityPreviewMode) {
-    try {
-      highlights.value = await apiCommunityFollowHighlights();
-    } catch {
-      highlights.value = [];
-    }
-  } else {
-    highlights.value = [];
-  }
-  try {
-    topics.value = await apiCommunityTopics();
-  } catch {
-    topics.value = [];
-  }
+  await home.load();
 }
 
 function requireLogin(): boolean {
@@ -408,44 +416,53 @@ async function publish() {
   const revision = detailGeneration;
   await load();
   if (revision !== detailGeneration || owner !== authStore.sessionVersion) return;
-  try { const post = await apiCommunityDetail(id);
-    if (revision === detailGeneration && owner === authStore.sessionVersion) await openDetail(post);
-  } catch { /* The post may still be under review. */ }
+  await openDetail(id);
 }
 async function reloadVideo() {
-  const id = detail.value?.id, revision = detailGeneration;
-  if (!id) return;
-  try { const post = await apiCommunityDetail(id);
-    if (revision === detailGeneration && detail.value?.id === id) { detail.value = post; videoFailed.value = false; imageLoadFailed.value = false; }
-  } catch { uni.showToast({ title: "视频暂时无法加载", icon: "none" }); }
+  const id = detail.value?.id, revision = detailGeneration, owner = pageOwner(), ticket = engagement.nextTicket();
+  if (!id || !pageVisible || pageDisposed) return;
+  try { const post = await apiCommunityState(id);
+    if (pageVisible && !pageDisposed && owner === pageOwner() && revision === detailGeneration && detail.value?.id === id) {
+      detail.value = engagement.adopt([post], ticket)[0]; videoFailed.value = false; imageLoadFailed.value = false;
+    }
+  } catch { if (pageVisible && !pageDisposed && owner === pageOwner() && revision === detailGeneration) detailError.value = '媒体暂时无法加载，请重试'; }
 }
 
-async function openDetail(post: CommunityPost) {
-  ++detailGeneration;
-  detail.value = post;
-  videoFailed.value = false;
-  imageLoadFailed.value = false;
-  liked.value = false;
-
+async function openDetail(post: CommunityPost | number) {
+  const id = typeof post === 'number' ? post : post.id;
+  if (!pageVisible || pageDisposed || !Number.isSafeInteger(id) || id < 1 || id > 2147483647) return;
+  if (detailOpen.value && detailRequested.value === id && !detailError.value) return;
+  const revision = ++detailGeneration, owner = pageOwner(), ticket = engagement.nextTicket();
+  detailRequested.value = id; detailOpen.value = true; detail.value = null;
+  detailLoading.value = true; detailError.value = ''; videoFailed.value = false; imageLoadFailed.value = false;
+  engagement.closeShare();
+  const current = () => pageVisible && !pageDisposed && owner === pageOwner() && revision === detailGeneration;
+  try { const fresh = await apiCommunityVisit(id); if (current()) detail.value = engagement.adopt([fresh], ticket)[0]; }
+  catch (reason) { if (current()) detailError.value = reason instanceof Error ? reason.message : '帖子无法打开'; }
+  finally { if (current()) detailLoading.value = false; }
 }
 
 function closeDetail() {
   detailGeneration++;
-  detail.value = null;
+  detail.value = null; detailOpen.value = false; detailLoading.value = false; detailError.value = ''; detailRequested.value = 0;
+  engagement.closeShare();
 }
 
-onLoad((query) => {
+onLoad((input) => {
+  let query: Record<string, string | undefined>;
+  try {
+    query = communityPageQuery(input ?? {});
+    const incoming = communityInbound('/pages/discover/workspace', query);
+    referrals.captureInbound({ path: 'pages/discover/workspace', query });
+    if (incoming && (query.post_id !== undefined || query.post_type !== undefined) && incoming.contentType === 2) {
+      uni.redirectTo({ url: communitySharePath(incoming.id, 2, incoming.spid) }); return;
+    }
+    if (incoming) void openDetail(incoming.id);
+  } catch (reason) { routeError.value = reason instanceof Error ? reason.message : '社区地址无效'; return; }
   if (query?.author_id !== undefined) {
     authorMode.value = true;
     const raw = String(query.author_id);
     void author.initialize(raw === "self" ? "self" : /^(0|[1-9]\d{0,9})$/.test(raw) ? Number(raw) : NaN);
-  }
-  const id = Number(query?.id ?? 0);
-  if (Number.isSafeInteger(id) && id > 0) {
-    const requestGeneration = ++detailGeneration;
-    void apiCommunityDetail(id).then((post) => {
-      if (requestGeneration === detailGeneration) void openDetail(post);
-    }).catch(() => uni.showToast({ title: "帖子不存在或无法访问", icon: "none" }));
   }
   if (query?.publish === "1") {
     const topicId = Number(query.topic_id ?? 0);
@@ -461,28 +478,20 @@ onLoad((query) => {
   }
 });
 
-async function like() {
-  if (!requireLogin() || !detail.value) return;
-  try {
-    const res = await apiCommunityLike(detail.value.id);
-    detail.value.likeNum = res.likeNum;
-    liked.value = true;
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "点赞失败", icon: "none" });
-  }
-}
-
 function updateCommentCount(value: { postId: number; count: number }) {
   if (detail.value?.id !== value.postId) return;
   detail.value.commentNum = value.count;
   for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === value.postId) post.commentNum = value.count;
 }
 
-onShow(load);
-onHide(closeDetail);
-onUnload(closeDetail);
-watch(() => authStore.sessionVersion, () => { closeDetail(); showPublish.value = false; }, { flush: 'sync' });
+onShow(() => { if (!pageDisposed) { pageVisible = true; home.show(); void load(); } });
+onHide(() => { pageVisible = false; closeDetail(); });
+onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
+watch(pageOwner, () => { closeDetail(); showPublish.value = false; }, { flush: 'sync' });
+// #ifdef MP-WEIXIN
+onShareAppMessage(engagement.miniMessage);
+onShareTimeline(engagement.miniTimeline);
+// #endif
 </script>
 
 <style scoped>
