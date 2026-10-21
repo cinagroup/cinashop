@@ -292,8 +292,10 @@ import {
 } from "@/api/community";
 import { useAuthStore } from "@/stores/auth";
 
+import { parseCommunityWorkspaceEntry, type CommunityWorkspaceEntry } from "@/utils/communityEntry";
+
 const authStore = useAuthStore();
-const authorMode = ref(false);
+const authorMode = ref(false), routeError = ref('');
 const engagement = useCommunityEngagement({
   update(id, patch) {
     for (const list of [posts.value, authorPosts.value]) for (const post of list) if (post.id === id) Object.assign(post, patch);
@@ -302,7 +304,7 @@ const engagement = useCommunityEngagement({
   liked() { if (authorMode.value && authorProfile.value && !authorBusy.value) void author.refresh(); },
   find(id) { return id === undefined ? detail.value : [detail.value, ...posts.value, ...authorPosts.value].find(post => post?.id === id) ?? null; },
 });
-const home = useCommunityHomeFeed(engagement, () => !authorMode.value);
+const home = useCommunityHomeFeed(engagement, () => !authorMode.value && !routeError.value);
 const { posts, topics, highlights } = home;
 const referrals = useShareReferral();
 const author = useCommunityAuthor(engagement);
@@ -310,7 +312,7 @@ const { profile: authorProfile, posts: authorPosts, tab: authorTab, keyword: aut
   description: authorDescription, editingDescription, loading: authorLoading, busy: authorBusy, error: authorError,
   unknown: authorUnknown, hasMore: authorHasMore, isSelf: authorIsSelf, deleteId: deletePostId, unfollow: unfollowPending } = author;
 const detail = ref<CommunityPost | null>(null), detailOpen = ref(false), detailLoading = ref(false), detailError = ref('');
-const detailRequested = ref(0), routeError = ref('');
+const detailRequested = ref(0);
 let pageVisible = true, pageDisposed = false;
 const pageOwner = () => `${authStore.uid}:${authStore.token}:${authStore.sessionVersion}`;
 const showPublish = ref(false);
@@ -343,7 +345,7 @@ function formatTime(ts: number): string {
 }
 
 async function load() {
-  if (!pageVisible || pageDisposed) return;
+  if (!pageVisible || pageDisposed || routeError.value) return;
   if (authorMode.value) { if (!authorLoading.value) await author.refresh(); return; }
   await home.load();
 }
@@ -355,7 +357,7 @@ function requireLogin(): boolean {
 }
 
 function openPublish() {
-  if (!requireLogin()) return;
+  if (!pageVisible || pageDisposed || routeError.value || !requireLogin()) return;
   if (publishEditRequested.value && !publisher.reset()) return;
   showPublish.value = true;
 }
@@ -408,14 +410,14 @@ function endUnknownPublish() {
   if (publisher.reset()) { showPublish.value = false; void load(); }
 }
 async function publish() {
-  const owner = authStore.sessionVersion;
+  const owner = pageOwner(), revision = detailGeneration;
+  const current = () => pageVisible && !pageDisposed && owner === pageOwner() && revision === detailGeneration;
   const id = await publisher.publish();
-  if (!id) return;
+  if (!id || !current()) return;
   uni.showToast({ title: "已提交，请以审核结果为准", icon: "none" });
   publisher.reset(); showPublish.value = false;
-  const revision = detailGeneration;
   await load();
-  if (revision !== detailGeneration || owner !== authStore.sessionVersion) return;
+  if (!current()) return;
   await openDetail(id);
 }
 async function reloadVideo() {
@@ -449,9 +451,10 @@ function closeDetail() {
 }
 
 onLoad((input) => {
-  let query: Record<string, string | undefined>;
+  let query: Record<string, string | undefined>, entry: CommunityWorkspaceEntry;
   try {
     query = communityPageQuery(input ?? {});
+    entry = parseCommunityWorkspaceEntry(query);
     const incoming = communityInbound('/pages/discover/workspace', query);
     referrals.captureInbound({ path: 'pages/discover/workspace', query });
     if (incoming && (query.post_id !== undefined || query.post_type !== undefined) && incoming.contentType === 2) {
@@ -459,21 +462,15 @@ onLoad((input) => {
     }
     if (incoming) void openDetail(incoming.id);
   } catch (reason) { routeError.value = reason instanceof Error ? reason.message : '社区地址无效'; return; }
-  if (query?.author_id !== undefined) {
+  if (entry.kind === "author") {
     authorMode.value = true;
-    const raw = String(query.author_id);
-    void author.initialize(raw === "self" ? "self" : /^(0|[1-9]\d{0,9})$/.test(raw) ? Number(raw) : NaN);
+    void author.initialize(entry.authorId);
   }
-  if (query?.publish === "1") {
-    const topicId = Number(query.topic_id ?? 0);
-    if (query.edit_id !== undefined && !/^[1-9]\d{0,9}$/.test(String(query.edit_id))) {
-      uni.showToast({ title: "原帖链接无效", icon: "none" }); return;
-    }
-    const editId = Number(query.edit_id ?? 0);
-    if (editId > 0 && Number.isSafeInteger(editId)) { void editPost(editId); }
+  if (entry.kind === "publish") {
+    if (entry.editId) void editPost(entry.editId);
     else if (requireLogin()) {
       showPublish.value = true;
-      if (Number.isSafeInteger(topicId) && topicId > 0) void relations.seedTopic(topicId);
+      if (entry.topicId) void relations.seedTopic(entry.topicId);
     }
   }
 });

@@ -57,7 +57,7 @@ export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
   }
   async function openTopics() { if (editable()) { panel.value = "topics"; keyword.value = ""; await loadTopics(); } }
   async function seedTopic(id: number) {
-    if (!editable() || !Number.isSafeInteger(id) || id <= 0) return;
+    if (!editable() || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) return;
     pendingTopic.value = id; await openTopics();
   }
   function discardPendingTopic() { if (editable()) { pendingTopic.value = 0; error.value = ""; } }
@@ -83,7 +83,8 @@ export function useCommunityRelations(locked: Ref<boolean> = ref(false)) {
       for (const row of rows) {
         if (!known.has(row.product_id)) { products.value.push(row); known.add(row.product_id); }
       }
-      page = next; hasMore.value = rows.length === 10 && next < 1000;
+      // The backend accepts offsets up to10,000; fixed ten-row pages end at1001.
+      page = next; hasMore.value = rows.length === 10 && next < 1001;
     } catch (cause) {
       if (revision === generation && owner === identity()) error.value = cause instanceof Error ? cause.message : "商品加载失败";
     } finally { if (revision === generation) loading.value = false; }

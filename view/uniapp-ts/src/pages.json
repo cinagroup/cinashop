@@ -172,6 +172,18 @@
       "style": { "navigationBarTitleText": "社区帖子" }
     },
     {
+      "path": "pages/discover/discoverUser/index",
+      "style": { "navigationBarTitleText": "社区作者" }
+    },
+    {
+      "path": "pages/discover/discoverFollow/index",
+      "style": { "navigationBarTitleText": "社区关系" }
+    },
+    {
+      "path": "pages/discover/discoverCreate/index",
+      "style": { "navigationBarTitleText": "社区发布" }
+    },
+    {
       "path": "pages/discover/people",
       "style": {
         "navigationBarTitleText": "社区关系"

@@ -102,17 +102,7 @@
         <text class="detail-close" @tap="closeDetail">关闭</text>
       </view>
     </view>
-    <view v-if="publishOpen" class="detail-mask" @tap="closePublish">
-      <view class="publish-sheet" @tap.stop>
-        <view class="video-title">发布到 # {{ feed.topicName.value }}</view>
-        <input v-model="publishTitle" class="publish-input" type="text" maxlength="255" placeholder="标题（选填）" />
-        <textarea v-model="publishContent" class="publish-textarea" maxlength="500" placeholder="分享你的内容..." />
-        <view class="publish-actions">
-          <text @tap="closePublish">取消</text>
-          <button class="publish-submit" :loading="publishing" :disabled="publishing" @tap="submitPublish">发布</button>
-        </view>
-      </view>
-    </view>
+
   </view>
   <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
@@ -125,7 +115,7 @@ import CommunityComments from "@/components/community/CommunityComments.vue";
 import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
 import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
 import { useCommunityEngagement } from '@/composables/useCommunityEngagement';
-import { apiCommunityVisit, apiCommunitySave, communityPreviewMode, type CommunityPost } from "@/api/community";
+import { apiCommunityVisit, communityPreviewMode, type CommunityPost } from "@/api/community";
 import { useCommunityDeepLink, type CommunityDeepLinkMode, type CommunityRouteQuery } from "@/composables/useCommunityDeepLink";
 import { communityVideoSource } from "@/utils/communityMedia";
 import { useAuthStore } from "@/stores/auth";
@@ -146,10 +136,6 @@ const detailLoading = ref(false);
 const detailError = ref("");
 let detailGeneration = 0, pageVisible = true, pageDisposed = false;
 const detailOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
-const publishOpen = ref(false);
-const publishTitle = ref("");
-const publishContent = ref("");
-const publishing = ref(false);
 
 function postContentType(post: CommunityPost): number {
   return Number(post.contentType ?? (post as CommunityPost & { content_type?: number }).content_type);
@@ -197,44 +183,16 @@ onUnload(() => { pageVisible = false; pageDisposed = true; closeDetail(); });
 onShow(() => { if (!pageDisposed) pageVisible = true; });
 
 function openPublish() {
-  if (!feed.selectedTopicId.value || feed.routeError.value) return;
-  if (!auth.isLoggedIn && !communityPreviewMode) {
-    uni.navigateTo({ url: "/pages/auth/login" });
-    return;
-  }
-  publishOpen.value = true;
-}
-
-function closePublish() { if (!publishing.value) publishOpen.value = false; }
-
-async function submitPublish() {
-  if (publishing.value || !publishOpen.value || !feed.selectedTopicId.value) return;
-  const content = publishContent.value.trim();
-  if (!content) { uni.showToast({ title: "内容不能为空", icon: "none" }); return; }
-  publishing.value = true;
-  try {
-    await apiCommunitySave({
-      title: publishTitle.value.trim() || undefined,
-      content,
-      content_type: 1,
-      topic_id: [feed.selectedTopicId.value],
-    });
-    publishOpen.value = false;
-    publishTitle.value = "";
-    publishContent.value = "";
-    uni.showToast({ title: "发布成功", icon: "success" });
-    await feed.initialize(props.query);
-  } catch (cause) {
-    uni.showToast({ title: cause instanceof Error ? cause.message : "发布失败", icon: "none" });
-  } finally {
-    publishing.value = false;
-  }
+  const topicId = feed.selectedTopicId.value;
+  if (!pageVisible || pageDisposed || props.mode !== "topic" || !topicId || feed.routeError.value || !feed.initialized.value) return;
+  if (!auth.isLoggedIn && !communityPreviewMode) { uni.navigateTo({ url: "/pages/auth/login" }); return; }
+  uni.navigateTo({ url: `/pages/discover/workspace?publish=1&topic_id=${topicId}` });
 }
 
 function retryRoute() { void feed.initialize(props.query); }
 
 onMounted(() => void feed.initialize(props.query));
-onBeforeUnmount(() => { pageDisposed = true; closeDetail(); publishOpen.value = false; feed.dispose(); });
+onBeforeUnmount(() => { pageDisposed = true; closeDetail(); feed.dispose(); });
 defineExpose({ loadMore: feed.loadMore, shareMessage: engagement.miniMessage, shareTimeline: engagement.miniTimeline });
 </script>
 
@@ -276,9 +234,4 @@ defineExpose({ loadMore: feed.loadMore, shareMessage: engagement.miniMessage, sh
 .detail-close { padding: 24rpx; color: var(--view-theme, #e93323); text-align: center; border-top: 1rpx solid #eee; font-size: 27rpx; }
 .comment-heading { margin-top: 28rpx; padding-top: 18rpx; border-top: 1rpx solid #eee; font-size: 26rpx; font-weight: 600; }
 .comment-row { padding: 14rpx 0; color: #555; font-size: 24rpx; }
-.publish-sheet { width: 100%; padding: 32rpx; box-sizing: border-box; border-radius: 24rpx 24rpx 0 0; background: #fff; }
-.publish-input, .publish-textarea { width: 100%; margin-top: 18rpx; padding: 18rpx; box-sizing: border-box; border-radius: 12rpx; background: #f6f6f6; font-size: 26rpx; }
-.publish-textarea { height: 220rpx; }
-.publish-actions { display: flex; justify-content: flex-end; align-items: center; gap: 24rpx; margin-top: 20rpx; color: #666; font-size: 26rpx; }
-.publish-submit { margin: 0; padding: 0 36rpx; color: #fff; background: var(--view-theme, #e93323); border-radius: 36rpx; font-size: 26rpx; }
 </style>

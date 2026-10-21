@@ -16,7 +16,7 @@ export function useCommunityPublish() {
   const busy = ref(false), choosing = ref(false), unknown = ref(false), error = ref("");
   const publishedId = ref(0), videoWanted = ref(false);
   const editId = ref(0), editRequested = ref(0), loadingEdit = ref(false);
-  let generation = 0, visible = true, disposed = false;
+  let generation = 0, operation = 0, visible = true, disposed = false;
   const locked = computed(() => busy.value || choosing.value || loadingEdit.value || unknown.value || publishedId.value > 0);
   const relations = useCommunityRelations(locked);
   const identity = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
@@ -25,8 +25,8 @@ export function useCommunityPublish() {
   const validReference = (value: string) => !!communityVideoSource(value)
     && (!value.startsWith("/api/assets/") || /^\/api\/assets\/[1-9]\d*$/.test(value));
   async function loadForEdit(id: number) {
-    if (!visible || disposed || locked.value || !auth.isLoggedIn || !Number.isSafeInteger(id) || id <= 0) return false;
-    reset(); editRequested.value = id; const revision = ++generation, owner = identity(); loadingEdit.value = true;
+    if (!visible || disposed || locked.value || !auth.isLoggedIn || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) return false;
+    reset(); editRequested.value = id; const revision = ++generation, flight = ++operation, owner = identity(); loadingEdit.value = true;
     const current = () => visible && !disposed && revision === generation && owner === identity();
     try {
       const post = await apiCommunityState(id);
@@ -47,7 +47,7 @@ export function useCommunityPublish() {
       }
       editId.value = id; return true;
     } catch (cause) { if (current()) { clear(); editRequested.value = id; relations.clear(); error.value = cause instanceof Error ? cause.message : "原帖加载失败"; } return false; }
-    finally { loadingEdit.value = false; }
+    finally { if (flight === operation && owner === identity()) loadingEdit.value = false; }
   }
   function removeVideo() { if (!locked.value) { video.value = null; videoWanted.value = false; cover.value = null; imageFailed.value = false; error.value = ""; } }
   function removeImage(index: number) { if (!locked.value && Number.isInteger(index)) images.value.splice(index, 1); }
@@ -56,11 +56,13 @@ export function useCommunityPublish() {
   function selectImages(forCover: boolean) {
     if (!visible || disposed || locked.value || !auth.isLoggedIn
       || (forCover ? !video.value : videoWanted.value || images.value.length >= 9)) return;
-    const count = forCover ? 1 : 9 - images.value.length, revision = ++generation, owner = identity();
+    const count = forCover ? 1 : 9 - images.value.length, revision = ++generation, flight = ++operation, owner = identity();
     const current = () => !disposed && visible && revision === generation && owner === identity();
+    let terminal = false;
     choosing.value = true; error.value = "";
     uni.chooseImage({ count, sourceType: ["album", "camera"], sizeType: ["compressed"],
       async success(result) {
+        if (terminal) return; terminal = true;
         if (!current()) return;
         choosing.value = false;
         const files = result.tempFiles, paths = result.tempFilePaths;
@@ -83,9 +85,10 @@ export function useCommunityPublish() {
           imageFailed.value = false;
         } catch (cause) {
           if (current()) { imageFailed.value = true; error.value = cause instanceof Error ? cause.message : "图片上传失败"; }
-        } finally { busy.value = false; }
+        } finally { if (flight === operation && owner === identity()) busy.value = false; }
       },
       fail(result) {
+        if (terminal) return; terminal = true;
         if (!current()) return;
         choosing.value = false;
         if (!result.errMsg?.includes("cancel")) error.value = "无法读取图片，请重新选择";
@@ -94,11 +97,13 @@ export function useCommunityPublish() {
   }
   function chooseVideo() {
     if (!visible || disposed || locked.value || !auth.isLoggedIn || images.value.length || imageFailed.value) return;
-    const revision = ++generation, owner = identity();
+    const revision = ++generation, flight = ++operation, owner = identity();
     const current = () => !disposed && visible && revision === generation && owner === identity();
+    let terminal = false;
     choosing.value = true; error.value = "";
     uni.chooseVideo({ sourceType: ["album", "camera"], compressed: true,
       async success(result) {
+        if (terminal) return; terminal = true;
         if (!current()) return;
         choosing.value = false; videoWanted.value = true;
         if (!Number.isFinite(result.size) || result.size <= 0 || result.size > 50 * 1024 * 1024 || !result.tempFilePath) {
@@ -107,9 +112,10 @@ export function useCommunityPublish() {
         busy.value = true; video.value = null;
         try { const value = await apiCommunityVideo(result.tempFilePath); if (current()) video.value = value; }
         catch (cause) { if (current()) error.value = cause instanceof Error ? cause.message : "视频上传失败"; }
-        finally { busy.value = false; }
+        finally { if (flight === operation && owner === identity()) busy.value = false; }
       },
       fail(result) {
+        if (terminal) return; terminal = true;
         if (!current()) return;
         choosing.value = false;
         if (!result.errMsg?.includes("cancel")) error.value = "无法读取视频，请重新选择";
@@ -125,9 +131,10 @@ export function useCommunityPublish() {
     if (imageFailed.value) { error.value = "请重新上传图片，或明确移除图片后发布"; return null; }
     if (videoWanted.value && !video.value) { error.value = "请完成视频上传，或取消视频后发布文字"; return null; }
     if (!content.value.trim()) { error.value = "内容不能为空"; return null; }
-    const revision = ++generation, owner = identity();
+    const revision = ++generation, flight = ++operation, owner = identity();
     const current = () => !disposed && visible && revision === generation && owner === identity();
     busy.value = true; error.value = "";
+    const editing = editId.value;
     try {
       const input: CommunityPostInput = { title: title.value.trim() || undefined, content: content.value.trim(),
         content_type: video.value ? 2 : 1, video_url: video.value?.url,
@@ -135,14 +142,14 @@ export function useCommunityPublish() {
         ...(video.value && cover.value ? { image: cover.value.url } : {}),
         topic_id: relations.selectedTopics.value.length ? relations.selectedTopics.value.map(item => item.id) : topicId ? [topicId] : undefined,
         ...(relations.selectedProducts.value.length ? { product_id: relations.selectedProducts.value.map(item => item.product_id) } : {}) };
-      if (editId.value) {
+      if (editing) {
         input.title = title.value.trim(); input.image = video.value ? cover.value?.url ?? "" : images.value[0]?.url ?? "";
         input.video_url = video.value?.url ?? ""; input.slider_image = images.value.map(item => item.url);
         input.topic_id = relations.selectedTopics.value.map(item => item.id); input.product_id = relations.selectedProducts.value.map(item => item.product_id);
       }
-      const result = await (editId.value ? apiCommunityUpdate(editId.value, input) : apiCommunitySave(input));
+      const result = await (editing ? apiCommunityUpdate(editing, input) : apiCommunitySave(input));
       if (!current()) return null;
-      if (!Number.isSafeInteger(result?.id) || result.id <= 0) throw Error("发布回执无效");
+      if (!Number.isSafeInteger(result?.id) || result.id <= 0 || result.id > 2147483647 || (editing > 0 && result.id !== editing)) throw Error("发布回执无效");
       publishedId.value = result.id; return result.id;
     } catch (cause) {
       if (current()) {
@@ -153,7 +160,7 @@ export function useCommunityPublish() {
         error.value = rejected ? cause.message : "发布结果未确认，帖子可能已提交审核。请先查看帖子，勿重复发布。";
       }
       return null;
-    } finally { busy.value = false; }
+    } finally { if (flight === operation && owner === identity()) busy.value = false; }
   }
   function leave() {
     visible = false; generation++;
@@ -163,7 +170,7 @@ export function useCommunityPublish() {
   onHide(leave);
   onShow(() => { if (!disposed) visible = true; });
   onUnload(() => { leave(); disposed = true; });
-  watch(identity, () => { generation++; clear(); choosing.value = false; }, { flush: "sync" });
+  watch(identity, () => { generation++; operation++; clear(); choosing.value = false; busy.value = false; loadingEdit.value = false; }, { flush: "sync" });
   return { title, content, video, images, cover, imageFailed, busy, choosing, unknown, error, publishedId, videoWanted, relations, editId, editRequested, loadingEdit, loadForEdit,
     locked, reset, removeVideo, chooseVideo, chooseImages: () => selectImages(false), chooseCover: () => selectImages(true),
     removeImage, clearImages, removeCover, publish };
