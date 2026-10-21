@@ -1,171 +1,77 @@
 <template>
   <ThemePage>
-  <view class="people-page">
-    <scroll-view scroll-x class="tabs" :show-scrollbar="false">
-      <view class="tabs-row">
-        <view
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="tab"
-          :class="{ active: activeTab === tab.key }"
-          @tap="changeTab(tab.key)"
-        >
-          {{ tab.label }}
-        </view>
+    <view class="people-page">
+      <view class="people-toolbar">
+        <text class="people-heading">好友与关注</text>
+        <button :disabled="busy" @tap="openSelf">我的主页</button>
+        <button :disabled="loading || busy" @tap="refresh">刷新列表</button>
       </view>
-    </scroll-view>
-
-    <view v-if="users.length" class="people-list">
-      <view v-for="item in users" :key="`${activeTab}-${item.relation_id}`" class="person-card">
-        <image class="avatar" :src="item.author_image || fallbackAvatar" mode="aspectFill" />
-        <view class="person-main" @tap="openAuthor(item.relation_id)">
-          <view class="person-name">{{ item.author || "社区用户" }}</view>
-          <view class="person-stats">
-            内容 {{ item.community_num }} · 粉丝 {{ item.fans_num }}
+      <scroll-view scroll-x class="tabs" :show-scrollbar="false">
+        <view class="tabs-row">
+          <button v-for="tab in tabs" :key="tab.key" class="tab" :class="{ active: activeTab === tab.key }"
+            :disabled="busy || unknown" @tap="changeTab(tab.key)">{{ tab.label }}</button>
+        </view>
+      </scroll-view>
+      <view v-if="unknown" class="people-warning" role="alert">操作结果未确认，请刷新列表核实，请勿重复提交。</view>
+      <view v-if="message" class="people-message" role="status">{{ message }}</view>
+      <view v-if="error" class="people-error" role="alert">
+        <text>{{ error }}</text>
+        <button v-if="isLoggedIn" :disabled="loading || busy" @tap="retry">重试加载</button>
+        <button v-else @tap="openSelf">去登录</button>
+      </view>
+      <view v-if="users.length" class="people-list">
+        <view v-for="item in users" :key="`${item.type}-${item.relation_id}`" class="person-entry">
+          <view class="person-card">
+            <image class="avatar" :src="item.author_image || fallbackAvatar" mode="aspectFill" @tap="openAuthor(item)" />
+            <view class="person-main" @tap="openAuthor(item)">
+              <view class="person-name">{{ item.author || '社区用户' }}</view>
+              <view class="person-stats">内容 {{ item.community_num }} · 粉丝 {{ item.fans_num }}</view>
+            </view>
+            <text v-if="isSelf(item)" class="self-label">你自己</text>
+            <button v-else class="follow-button" :class="{ following: item.is_follow === 1 }"
+              :loading="busyUid === item.relation_id" :disabled="loading || busy || unknown"
+              @tap="toggleFollow(item)">{{ followLabel(item) }}</button>
+          </view>
+          <view v-if="confirmUid === item.relation_id" class="unfollow-confirm" role="alert">
+            <text>确认不再关注 {{ item.author || '该用户' }}？</text>
+            <view class="unfollow-actions">
+              <button @tap="cancelUnfollow">保留关注</button>
+              <button :disabled="loading || busy || unknown" @tap="confirmUnfollow">确认取消关注</button>
+            </view>
           </view>
         </view>
-        <button
-          class="follow-button"
-          :class="{ following: item.is_follow === 1 }"
-          :loading="busyUid === item.relation_id"
-          @tap="toggleFollow(item)"
-        >
-          {{ followLabel(item) }}
-        </button>
       </view>
+      <view v-else-if="!loading && !error && !unknown" class="empty">{{ emptyText }}</view>
+      <view v-if="loading" class="loading" role="status">加载中...</view>
+      <button v-else-if="users.length && !finished && !error" class="load-more"
+        :disabled="busy || unknown" @tap="loadMore">加载更多作者</button>
+      <view v-else-if="finished && users.length" class="finished">没有更多了</view>
     </view>
-    <view v-else-if="!loading" class="empty">{{ emptyText }}</view>
-    <view v-if="loading" class="loading">加载中...</view>
-    <view v-else-if="finished && users.length" class="finished">没有更多了</view>
-  </view>
-  <DiySuspendedNavigation />
+    <DiySuspendedNavigation />
   </ThemePage>
 </template>
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
-import { computed, ref } from "vue";
-import { onLoad, onReachBottom } from "@dcloudio/uni-app";
-import {
-  apiCommunityFollowList,
-  apiCommunityFriendList,
-  apiCommunityRecommendations,
-  apiCommunitySetInterest,
-  type CommunitySocialUser,
-} from "@/api/community";
+import { onLoad, onReachBottom } from '@dcloudio/uni-app';
+import { useCommunityPeople } from '@/composables/useCommunityPeople';
 
-type SocialTab = "friend" | "follow" | "fans" | "recommend";
-
-const tabs: Array<{ key: SocialTab; label: string }> = [
-  { key: "friend", label: "好友" },
-  { key: "follow", label: "关注" },
-  { key: "fans", label: "粉丝" },
-  { key: "recommend", label: "推荐" },
-];
-const activeTab = ref<SocialTab>("friend");
-const users = ref<CommunitySocialUser[]>([]);
-const page = ref(1);
-const limit = 20;
-const loading = ref(false);
-const finished = ref(false);
-const busyUid = ref(0);
+const { tabs, activeTab, users, loading, finished, error, message, unknown, confirmUid, busyUid, busy,
+  isLoggedIn, emptyText, initialize, refresh, loadMore, retry, changeTab, isSelf, followLabel,
+  toggleFollow, confirmUnfollow, cancelUnfollow, openAuthor, openSelf } = useCommunityPeople();
 const fallbackAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' rx='48' fill='%23eceff3'/%3E%3Ccircle cx='48' cy='37' r='17' fill='%23c8cdd5'/%3E%3Cpath d='M18 88c3-19 15-29 30-29s27 10 30 29' fill='%23c8cdd5'/%3E%3C/svg%3E";
-
-const emptyText = computed(() => ({
-  friend: "还没有好友",
-  follow: "还没有关注任何人",
-  fans: "还没有粉丝",
-  recommend: "暂时没有推荐作者",
-})[activeTab.value]);
-
-async function fetchPage(): Promise<CommunitySocialUser[]> {
-  if (activeTab.value === "friend") return apiCommunityFriendList(page.value, limit);
-  if (activeTab.value === "recommend") return apiCommunityRecommendations(page.value, limit);
-  return apiCommunityFollowList(activeTab.value, page.value, limit);
-}
-
-async function load(reset = false) {
-  if (loading.value || (!reset && finished.value)) return;
-  if (reset) {
-    page.value = 1;
-    users.value = [];
-    finished.value = false;
-  }
-  loading.value = true;
-  try {
-    const rows = await fetchPage();
-    const known = new Set(users.value.map((item) => item.relation_id));
-    users.value.push(...rows.filter((item) => !known.has(item.relation_id)));
-    finished.value = rows.length < limit;
-    if (!finished.value) page.value += 1;
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "加载失败", icon: "none" });
-  } finally {
-    loading.value = false;
-  }
-}
-
-function changeTab(tab: SocialTab) {
-  if (activeTab.value === tab) return;
-  activeTab.value = tab;
-  void load(true);
-}
-function openAuthor(id: number) {
-  if (Number.isSafeInteger(id) && id >= 0) uni.navigateTo({ url: `/pages/discover/workspace?author_id=${id}` });
-}
-
-function followLabel(item: CommunitySocialUser): string {
-  if (item.is_follow === 1 && item.is_fans === 1) return "互相关注";
-  if (item.is_follow === 1) return "已关注";
-  if (item.is_fans === 1) return "回关";
-  return "关注";
-}
-
-async function toggleFollow(item: CommunitySocialUser) {
-  if (busyUid.value) return;
-  const next: 0 | 1 = item.is_follow === 1 ? 0 : 1;
-  if (next === 0) {
-    const confirmed = await new Promise<boolean>((resolve) => {
-      uni.showModal({
-        title: "取消关注",
-        content: `确认不再关注 ${item.author || "该用户"}？`,
-        success: (result) => resolve(result.confirm),
-        fail: () => resolve(false),
-      });
-    });
-    if (!confirmed) return;
-  }
-  busyUid.value = item.relation_id;
-  try {
-    const result = await apiCommunitySetInterest(item.relation_id, next);
-    item.is_follow = result.is_follow;
-    item.is_fans = result.is_fans;
-    if (activeTab.value === "follow" && next === 0) {
-      users.value = users.value.filter((row) => row.relation_id !== item.relation_id);
-    }
-    uni.showToast({ title: next === 1 ? "关注成功" : "已取消关注", icon: "success" });
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "操作失败", icon: "none" });
-  } finally {
-    busyUid.value = 0;
-  }
-}
-
-onLoad((query) => {
-  const requested = String(query?.tab ?? "");
-  if (tabs.some((tab) => tab.key === requested)) activeTab.value = requested as SocialTab;
-  void load(true);
-});
-onReachBottom(() => void load());
+onLoad(query => initialize(query ?? {}));
+onReachBottom(() => void loadMore());
 </script>
 
 <style scoped>
+
 .people-page { min-height: 100vh; padding: 20rpx; background: #f5f6f8; box-sizing: border-box; }
-.tabs { position: sticky; top: 0; z-index: 2; margin: -20rpx -20rpx 20rpx; width: calc(100% + 40rpx); background: #fff; }
+.tabs { position: sticky; top: 0; z-index: 2; margin: 0 -20rpx 20rpx; width: calc(100% + 40rpx); background: #fff; }
 .tabs-row { display: flex; min-width: max-content; padding: 0 20rpx; }
-.tab { position: relative; padding: 28rpx 34rpx 24rpx; color: #777; font-size: 28rpx; white-space: nowrap; }
+.tab { margin: 0; border: 0; border-radius: 0; background: transparent; line-height: 1.5; position: relative; padding: 28rpx 34rpx 24rpx; color: #777; font-size: 28rpx; white-space: nowrap; }
 .tab.active { color: #222; font-weight: 700; }
-.tab.active::after { content: ""; position: absolute; left: 34rpx; right: 34rpx; bottom: 10rpx; height: 5rpx; border-radius: 3rpx; background: var(--view-theme, #e93323); }
+.tab.active::after { content: ""; position: absolute; top: auto; left: 34rpx; right: 34rpx; bottom: 10rpx; width: auto; height: 5rpx; transform: none; border-radius: 3rpx; background: var(--view-theme, #e93323); }
 .people-list { display: flex; flex-direction: column; gap: 16rpx; }
 .person-card { display: flex; align-items: center; gap: 20rpx; min-width: 0; padding: 24rpx; border-radius: 18rpx; background: #fff; box-sizing: border-box; }
 .avatar { width: 96rpx; height: 96rpx; flex: 0 0 96rpx; border-radius: 50%; background: #eef0f3; }
@@ -177,4 +83,17 @@ onReachBottom(() => void load());
 .follow-button.following { color: #777; background: #f1f2f4; }
 .empty, .loading, .finished { padding: 120rpx 20rpx; color: #999; text-align: center; font-size: 25rpx; }
 .finished { padding: 36rpx 20rpx; }
+
+.people-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; margin-bottom: 20rpx; }
+.people-heading { flex: 1; font-size: 34rpx; font-weight: 700; }
+.people-toolbar button { margin: 0; font-size: 24rpx; }
+.tab::after { border: 0; }
+.person-entry { overflow: hidden; border-radius: 18rpx; background: #fff; }
+.self-label { color: #777; font-size: 24rpx; }
+.people-error, .people-warning { margin: 20rpx 0; padding: 20rpx; border-radius: 12rpx; color: #a32920; background: #fff2ee; font-size: 26rpx; overflow-wrap: anywhere; }
+.people-message { margin: 20rpx 0; color: #35733e; font-size: 26rpx; }
+.people-error button, .load-more { font-size: 26rpx; }
+.unfollow-confirm { padding: 0 24rpx 24rpx; font-size: 26rpx; }
+.unfollow-actions { display: flex; gap: 16rpx; margin-top: 16rpx; }
+.unfollow-actions button { flex: 1; margin: 0; font-size: 24rpx; }
 </style>

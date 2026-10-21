@@ -45,14 +45,31 @@ function rejected(fixture, fragment) {
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
   assert.equal(Object.keys(baseline.entries).length, 82);
-  assert.equal(Object.keys(baseline.advisories).length, 23);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 9);
+  assert.equal(Object.keys(baseline.advisories).length, 26);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 11);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 23);
-  assert.equal(result.distinctAdvisoryUrls, 22);
+  assert.equal(result.directAdvisoryObjects, 26);
+  assert.equal(result.distinctAdvisoryUrls, 25);
+});
+
+test("all six scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
+  const builder = require("./build-vite-safety-backport.cjs");
+  const sources = baseline.entries.vite.advisorySources;
+  assert.deepEqual(sources, [1116229, 1120784, 1123525, 1242622, 1242651, 1242658]);
+  const fixes = builder.PATCHES.filter(patch => patch.advisory);
+  assert.equal(fixes.length, 6);
+  for (const id of sources) {
+    const advisory = baseline.advisories[id];
+    assert.equal(advisory.chain, "vite-toolchain");
+    assert.equal(fixes.filter(patch => advisory.url.endsWith("/" + patch.advisory)).length, 1);
+  }
+  for (const id of [1242604, 1242605]) {
+    assert.equal(baseline.resolvedAdvisories[id].package, "follow-redirects");
+    assert.equal(baseline.advisories[id], undefined);
+  }
 });
 
 test("reviewed lock fingerprint is stable across Git checkout line endings", () => {
@@ -99,7 +116,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all nine resolved advisory source IDs remain forbidden", () => {
+test("all eleven resolved advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;

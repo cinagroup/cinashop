@@ -45,6 +45,24 @@ const PATCHES = Object.freeze([
     after: 'function isFileLoadingAllowed(server, filePath) {\n  const { fs } = server.config.server;\n  if (!fs.strict) return true;\n  // Backport: reject Windows 8.3 aliases and colon aliases before allow/deny checks.\n  if (isWindows && filePath.includes("~")) return false;\n  const hasDriveLetter = isWindows && /^[A-Z]:/i.test(filePath);\n  const hasColon = (hasDriveLetter ? filePath.slice(2) : filePath).includes(":");\n  if (hasColon) return false;\n'
   },
   {
+    "advisory": "GHSA-587h-7wmj-h5pm",
+    "commit": "f13cd835d4b8e860b1d4d080ad8a490cc2463679",
+    "before": "  const fileName = file.replace(positionRE, '');\n  const match = file.match(positionRE);",
+    "after": "  const unresolvedFileName = file.replace(positionRE, '');\n  const fileName = unresolvedFileName ? path$5.resolve(unresolvedFileName) : '';\n  const match = file.match(positionRE);"
+  },
+  {
+    "advisory": "GHSA-r825-w8mm-5pxw",
+    "commit": "f6e6701bb1f16f2dd242b321374f1b6cca6eb6d4",
+    "before": "    fileName = path$5.relative('', fileName);",
+    "after": "    fileName = `./${path$5.relative('', fileName)}`;"
+  },
+  {
+    "advisory": "GHSA-698v-4r3x-3vcv",
+    "commit": "3c2f9bf2ff8fe63d056a8f9cc52d825b66ca79fc",
+    "before": "  if (_childProcess && isTerminalEditor(editor)) {",
+    "after": "  // Backport launch-editor 2.14.2: reject unsafe CMD arguments before any\n  // process execution or termination; reuse the existing error callback.\n  if (process.platform === 'win32') {\n    if (args.some((arg) => /[\\r\\n]/.test(arg))) {\n      return onErrorCallback(fileName, 'Cannot launch an editor with an argument containing a line break')\n    }\n    if (args.some((arg) => arg.includes('%'))) {\n      return onErrorCallback(fileName, 'Cannot launch an editor with an argument containing \"%\"')\n    }\n  }\n\n  if (_childProcess && isTerminalEditor(editor)) {"
+  },
+  {
     compatibility: 'Vite PR #22346 target detection',
     commit: '5ab51c0f76f0896175e02ad797c1f5fe116d02f4',
     before: 'function resolveEsbuildTranspileOptions(config, format) {',
@@ -88,7 +106,7 @@ const patchLabel = (patch) => patch.advisory || patch.compatibility;
 const META = Object.freeze({
   format: 1, source: SOURCE, esbuild: ESBUILD,
   patches: PATCHES.map(({ advisory, compatibility, commit }) => advisory ? { advisory, commit } : { compatibility, commit }),
-  launchEditorAdaptation: 'Use the existing optional-callback/overload wrapper before existsSync; preserve normal local-path behavior.',
+  launchEditorAdaptation: 'Preserve the existing callback overload and UNC guard; resolve stripped paths before probing, prefix WSL relative paths, and report unsafe Windows arguments through the callback before process execution or termination.',
   support: 'Project-maintained backport; Vite 5 is outside upstream security support.'
 });
 const CONTRACT_PATH = resolve(__dirname, '../vendor/vite-5.4.21-source.json');

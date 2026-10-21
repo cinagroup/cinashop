@@ -1,0 +1,5211 @@
+{
+  "date": "2026-10-21",
+  "recorded_utc": "2026-10-21T02:30:36.694231+00:00",
+  "base_commit": "10506fcb3a3ae39ca1aab3dcce5c95c608b3e18f",
+  "branch": "codex/community-people-lifecycle",
+  "scope": [
+    "H5 canonical friend/follow/fans/recommend lists, PHP numeric legacy routes and lifecycle isolation",
+    "Canonical social author projection before pagination and PHP community-profile friend ordering",
+    "Official dependency fixes for new UniApp/Kefu/PC CI advisory failures; strict backport and resolved-advisory gates retained",
+    "Actual registered workspace page composition and fixed Weixin video app.vue component registration; original page URLs and root lifecycle retained"
+  ],
+  "social_focused_tests": {
+    "unique": 674,
+    "new_cases": 45,
+    "worker": 126,
+    "runner": 462,
+    "native_postgres": 12,
+    "h5_runtime": 73,
+    "browser": 1,
+    "final_h5_names": [
+      "author works include an explicit author type; likes are scoped to self and search retries exact pages",
+      "old profile, pagination and account responses cannot restore private author state",
+      "delete requires a current explicit inline intent, preserves cancellation and prevents duplicate pending requests",
+      "unknown description write clears private state and requires a successful read before another write",
+      "profile editing bounds text, follow cancellation is inline, and foreign delete calls are refused",
+      "edit hydrates canonical gallery and associations, then sends explicit empty arrays to remove all associations",
+      "video edits preserve canonical clip and cover; removing the video explicitly clears both",
+      "hidden associations are retained until explicit removal and signed stored media cannot be resaved",
+      "foreign, missing and stale edit receipts cannot silently create a new post",
+      "unknown edit blocks automatic replay and cannot use the create endpoint",
+      "actual page opens the author view, edits an exact own post and refreshes author works after saving",
+      "legacy topic id resolves against live topic catalogue and filters hot/new pages",
+      "invalid or retired topic deep links fail closed before listing any posts",
+      "search consumes keyword/topic query, updates address on search and retries exact page",
+      "video deep link pins exact post and applies type/start/author filters to later pages",
+      "video deep link refuses an image post or mismatched author and preserves old H5 content_type=0",
+      "late page response cannot repaint changed route or logged-in identity",
+      "old App web-view URL yields only validated video state, never an external web-view or token",
+      "old App unencoded outer ampersands and generic mixed-feed URL retain only safe state",
+      "video player accepts historical HTTP and same-site paths but rejects unsafe schemes",
+      "actual H5 navigation preserves the three PHP list selectors without forwarding private query values",
+      "the four real APIs retain exact tab/page contracts and PHP legacy numeric selectors",
+      "failed pagination retries the same page and deduplicates within and across pages",
+      "ID-only author APIs reject unsupported typed identities before committing any list or exposing an action",
+      "pagination continues past page one thousand and respects the actual service ceiling without allocating large data",
+      "a cross-page type collision fails atomically and retries the exact page instead of silently merging author identities",
+      "action guards reject noncanonical current rows even when a caller bypasses the response decoder",
+      "tab switches replace a pending read immediately and old success or failure cannot clear the new loading state",
+      "account epochs hide unload and new route selection fence late private responses",
+      "labels distinguish following mutual follow and follow-back; own and platform author navigation use exact identities",
+      "unfollow uses cancellable inline intent and posts one explicit target/status despite duplicate clicks",
+      "expired refreshed or replaced-account inline intents cannot select a different write",
+      "unknown writes clear data and cannot replay through clicks route initialization or lifecycle until manual reread succeeds",
+      "hidden in-flight writes retain an uncertain outcome and account-switched writes never update the replacement session",
+      "server rejection preserves the view and platform ID zero still participates in the write lock",
+      "membership-changing writes reset canonical pagination before reading any next offset",
+      "malformed lists expose a recoverable error and logout suppresses every private request",
+      "the actual people page wires legacy entry loadmore inline cancellation and author navigation through real APIs",
+      "actual optional API/cache reads anonymous safe projection and keeps payload display independent of row flags",
+      "all four style main-image semantics and arc points are distinct without filtering unavailable slots",
+      "0 and 100 clamp measured height within content viewport, including H5 header/tabbar offsets",
+      "component opens, drags without accidental toggle, and touchcancel permits subsequent scroll collapse",
+      "style2 page scroll closes and half-hides; reopening restores visible control",
+      "actual link actions adapt legacy routes, use tab navigation, and open HTTP(S) with opener isolation",
+      "mini-program independent path roundtrips; H5 reports boundary while MP invokes real SDK",
+      "unsafe decoded and credential addresses cannot navigate or load images; external package dot segments are refused",
+      "webview validates URL again at entry and only one query transport decode can reveal HTTP(S)",
+      "unknown public outcome never fabricates controls and cache invalidation fences old responses",
+      "unmounted component cannot show late response and removes native/window handlers",
+      "API failure remains optional and a subsequent read can recover without caching the failure",
+      "six exact legacy presets expose all six distinct semantic roles",
+      "actual six Admin preview templates render the six shopping scenes and token styles",
+      "actual public API uses the unauthenticated theme endpoint and rejects malformed preset values",
+      "real Pinia refresh applies every preset to host styles native tabbar and confirmed cache",
+      "missing and corrupt public theme show red fallback without claiming a saved configuration",
+      "failed refresh preserves last confirmed palette and marks it stale",
+      "forced refresh and app hide fence late public replies before the next app show",
+      "cached palette is display continuity and never proof of current saved configuration",
+      "all current registered pages use an explicit real crossplatform ThemePage host",
+      "reviewed script-only page aliases compile the actual delegated template and require its real ThemePage host",
+      "theme source inspection follows Vue declared script language compatibility for direct and delegated pages",
+      "DIY follow mode ignores authored brand colour but keeps authored content and module backgrounds",
+      "DIY custom commerce editorial sign and footer roles remain authored after global palette changes",
+      "price primary secondary selected and gradient CSS roles change while financial and error colours remain semantic",
+      "actual poster canvas uses each theme price colour and fences an older image response on theme change",
+      "Admin canonical and pending records enforce preset bounds actor identity and the cross-end golden hash",
+      "Admin read-only missing and corrupt snapshots never create or permit writes",
+      "Admin successful writes and cancelled confirmation use the actual reactive controller and UUID receipt",
+      "Admin unknown writes remain frozen across reload and matching receipts are the only success recovery",
+      "Admin actual 404 authorizes only explicit identical retry while wrong receipt stays frozen",
+      "Admin matching rollback 400 and 409 preserve draft then require explicit reread and a new UUID",
+      "Admin bare errors business envelopes and foreign proof cannot release an uncertain intent",
+      "Admin actor changes permission revocation and disposed requests never publish late private state"
+    ],
+    "note": "73 focused H5 cases are verified present in the final complete toolchain run; repeated narrow/candidate cases are excluded"
+  },
+  "checks": [
+    {
+      "label": "unit-core-final",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/community-people-route.test.ts",
+        "test/community-social-migration.test.ts",
+        "test/community-author-workspace.test.ts",
+        "test/community-migration.test.ts",
+        "test/admin-fab-settings.test.ts",
+        "test/diy-home-frontend-migration.test.ts",
+        "test/theme-host-chain.test.ts",
+        "test/uniapp-frontend-parity.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T02:16:49.889857+00:00",
+      "seconds": 28.62,
+      "log": "/tmp/cinashop-community-people-unit-core-final.log",
+      "log_sha256": "a947e9ce445cdd4b298039e6029188cb0344c2573b01c480a423cabb66f690fd",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/common/dependency-security-20261021.md",
+          "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+        },
+        {
+          "path": "view/common/follow-redirects-security.test.mjs",
+          "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+        },
+        {
+          "path": "view/common/toolchain-security.test.mjs",
+          "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+        },
+        {
+          "path": "view/kefu-ts/package-lock.json",
+          "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+        },
+        {
+          "path": "view/kefu-ts/package.json",
+          "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+        },
+        {
+          "path": "view/pc-ts/package-lock.json",
+          "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+        },
+        {
+          "path": "view/pc-ts/package.json",
+          "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+        },
+        {
+          "path": "view/uniapp-ts/package-lock.json",
+          "sha256": "5daff86764092d5dc360608a88ec7a5e7b6b08144134ae73b77fa3d7b99b93d1"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+          "sha256": "2fa3d88cbe18f0674254841ca1acabf943fa8aa469e32408948ec63ef647c489"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+          "sha256": "560b4319002d6fc3614eeb333d875008b5f9d8f81e15b381ed7d7ee5a32a3a30"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.cjs",
+          "sha256": "04c660b75e41885186db717ea8bc60640b47edca89b15f4a8f8ab548664c7a20"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.d.cts",
+          "sha256": "5772f6d68ebd3bc8cf379749a363416a049d66739e5f26cd42ec64c5afcbb002"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.test.cjs",
+          "sha256": "7eaf4157be426766abe01e19c80f75d9bac28da41908066ae1eeafcf2a80b1c8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+          "sha256": "81f70faaf0453c111fc5883897ad119466dfdf44378f05a76352bb770909b4a8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+          "sha256": "2a26e6ca932c7d2c41c710911bbf87ffd378f77c75e4a47c913852cd6a41eee9"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+          "sha256": "849597f4fcb439cb52e92adb0680556ba7ac6a59d0d809fbf9d08622ad1608c0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+          "sha256": "1d54b904d734da79d993cfe533c2ced6050263845bd4d73998b50e1ebd8a745e"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-editor-security.test.cjs",
+          "sha256": "02207b50dd4171e0e5ca64b340c032996f854dea32c8e4598f20cd692f542b6f"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+          "sha256": "5b0d33ae1a00602b162cdb02704cce785003b6618b0a2c946ae1dab3ab9a54e0"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "b9f34617d1a0f9b269fb5122910d8095edae3698acdd7c593ebaaff0ab6d6fcb"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/README.md",
+          "sha256": "a23cefaebd4ff604d66003b2a98af03e431044f7ebf52fab15abb4ad7bc0dea8"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/vite-5.4.21-safety-backport.tgz",
+          "sha256": "4eb7eec8cbd8a33e2b33a9a97bad72a85e47ab16fefa9374107f15e781393a2f"
+        },
+        {
+          "path": "view/uniapp-ts/vite.config.ts",
+          "sha256": "0aecdb68127423bf964f823b66e6db0c88629eff69f4bf1c4dc35e997eca6ea6"
+        },
+        {
+          "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "sha256": "4b71b47f66dd75c1544d3786e10cd13d5d274eec4bb52d07eadc77ea9fee386b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+        },
+        {
+          "path": "workers-ts/test/browser/community-people.acceptance.ts",
+          "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+        },
+        {
+          "path": "workers-ts/test/community-people-route.test.ts",
+          "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+        },
+        {
+          "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+          "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+        },
+        {
+          "path": "workers-ts/test/community-social-migration.test.ts",
+          "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+          "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+        },
+        {
+          "path": "workers-ts/vitest.community-people-browser.config.ts",
+          "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+        }
+      ],
+      "changed_during_run": []
+    },
+    {
+      "label": "unit-runner",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "test/local-finance-postgres-runner.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T01:37:13.988491+00:00",
+      "seconds": 22.62,
+      "log": "/tmp/cinashop-community-people-unit-runner.log",
+      "log_sha256": "f048889ebaf199fdc4d169760de3ef22bb66253941f0beebb0f4c46084bf6c4e",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "710a9b639e9c51b1a5aa3d7b8105743e619f4e065b03b87bbd15746593962a04"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "f1a4029b739b8b446d66ea4f7209aa3c17608d07e28f0399e705bc72cba432e7"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+        },
+        {
+          "path": "workers-ts/test/browser/community-people.acceptance.ts",
+          "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+        },
+        {
+          "path": "workers-ts/test/community-people-route.test.ts",
+          "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+        },
+        {
+          "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+          "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+        },
+        {
+          "path": "workers-ts/test/community-social-migration.test.ts",
+          "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+          "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+        },
+        {
+          "path": "workers-ts/vitest.community-people-browser.config.ts",
+          "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+        }
+      ],
+      "changed_during_run": []
+    },
+    {
+      "label": "native-identities-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "test/community-social-identities-postgres.test.ts"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T01:36:51.682780+00:00",
+      "seconds": 12.09,
+      "log": "/tmp/cinashop-community-people-native-identities-final.log",
+      "log_sha256": "3d22d92abf33101647d644d8a72ecfc1d51124cc72f96b319f208e1791a01d44",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "710a9b639e9c51b1a5aa3d7b8105743e619f4e065b03b87bbd15746593962a04"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "f1a4029b739b8b446d66ea4f7209aa3c17608d07e28f0399e705bc72cba432e7"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+        },
+        {
+          "path": "workers-ts/test/browser/community-people.acceptance.ts",
+          "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+        },
+        {
+          "path": "workers-ts/test/community-people-route.test.ts",
+          "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+        },
+        {
+          "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+          "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+        },
+        {
+          "path": "workers-ts/test/community-social-migration.test.ts",
+          "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+          "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+        },
+        {
+          "path": "workers-ts/vitest.community-people-browser.config.ts",
+          "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+        }
+      ],
+      "changed_during_run": []
+    },
+    {
+      "label": "worker-types",
+      "cwd": "workers-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-people-types.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T01:37:41.759924+00:00",
+      "seconds": 238.18,
+      "log": "/tmp/cinashop-community-people-worker-types.log",
+      "log_sha256": "72eff42b4346e0a7302f6f76dc62e6322eaebfc1f2331d33761af6416d0347a8",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "710a9b639e9c51b1a5aa3d7b8105743e619f4e065b03b87bbd15746593962a04"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "f1a4029b739b8b446d66ea4f7209aa3c17608d07e28f0399e705bc72cba432e7"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+        },
+        {
+          "path": "workers-ts/test/browser/community-people.acceptance.ts",
+          "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+        },
+        {
+          "path": "workers-ts/test/community-people-route.test.ts",
+          "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+        },
+        {
+          "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+          "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+        },
+        {
+          "path": "workers-ts/test/community-social-migration.test.ts",
+          "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+          "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+        },
+        {
+          "path": "workers-ts/vitest.community-people-browser.config.ts",
+          "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+        }
+      ],
+      "changed_during_run": [
+        "view/uniapp-ts/package.json"
+      ]
+    },
+    {
+      "label": "h5-ci-repaired",
+      "cwd": "view/uniapp-ts",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-people-full-h5.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T02:17:27.145845+00:00",
+      "seconds": 518.62,
+      "log": "/tmp/cinashop-community-people-h5-ci-repaired.log",
+      "log_sha256": "46b2e1a51020e312c5f13f304acbe08c9568b3b4421b5501b2abf8f1f2a63d8d",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/common/dependency-security-20261021.md",
+          "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+        },
+        {
+          "path": "view/common/follow-redirects-security.test.mjs",
+          "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+        },
+        {
+          "path": "view/common/toolchain-security.test.mjs",
+          "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+        },
+        {
+          "path": "view/kefu-ts/package-lock.json",
+          "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+        },
+        {
+          "path": "view/kefu-ts/package.json",
+          "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+        },
+        {
+          "path": "view/pc-ts/package-lock.json",
+          "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+        },
+        {
+          "path": "view/pc-ts/package.json",
+          "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+        },
+        {
+          "path": "view/uniapp-ts/package-lock.json",
+          "sha256": "5daff86764092d5dc360608a88ec7a5e7b6b08144134ae73b77fa3d7b99b93d1"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+          "sha256": "2fa3d88cbe18f0674254841ca1acabf943fa8aa469e32408948ec63ef647c489"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+          "sha256": "560b4319002d6fc3614eeb333d875008b5f9d8f81e15b381ed7d7ee5a32a3a30"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.cjs",
+          "sha256": "04c660b75e41885186db717ea8bc60640b47edca89b15f4a8f8ab548664c7a20"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.d.cts",
+          "sha256": "5772f6d68ebd3bc8cf379749a363416a049d66739e5f26cd42ec64c5afcbb002"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.test.cjs",
+          "sha256": "7eaf4157be426766abe01e19c80f75d9bac28da41908066ae1eeafcf2a80b1c8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+          "sha256": "81f70faaf0453c111fc5883897ad119466dfdf44378f05a76352bb770909b4a8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+          "sha256": "2a26e6ca932c7d2c41c710911bbf87ffd378f77c75e4a47c913852cd6a41eee9"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+          "sha256": "849597f4fcb439cb52e92adb0680556ba7ac6a59d0d809fbf9d08622ad1608c0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+          "sha256": "1d54b904d734da79d993cfe533c2ced6050263845bd4d73998b50e1ebd8a745e"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-editor-security.test.cjs",
+          "sha256": "02207b50dd4171e0e5ca64b340c032996f854dea32c8e4598f20cd692f542b6f"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+          "sha256": "5b0d33ae1a00602b162cdb02704cce785003b6618b0a2c946ae1dab3ab9a54e0"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "b9f34617d1a0f9b269fb5122910d8095edae3698acdd7c593ebaaff0ab6d6fcb"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/README.md",
+          "sha256": "a23cefaebd4ff604d66003b2a98af03e431044f7ebf52fab15abb4ad7bc0dea8"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/vite-5.4.21-safety-backport.tgz",
+          "sha256": "4eb7eec8cbd8a33e2b33a9a97bad72a85e47ab16fefa9374107f15e781393a2f"
+        },
+        {
+          "path": "view/uniapp-ts/vite.config.ts",
+          "sha256": "0aecdb68127423bf964f823b66e6db0c88629eff69f4bf1c4dc35e997eca6ea6"
+        }
+      ],
+      "changed_during_run": []
+    },
+    {
+      "label": "other-fronts",
+      "cwd": ".",
+      "command": [
+        "bash",
+        "/home/cina/cinagroup/tools/validate-serial.sh",
+        "python3",
+        "/tmp/cinashop-community-people-other-fronts.py"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T01:58:30.649680+00:00",
+      "seconds": 28.61,
+      "log": "/tmp/cinashop-community-people-other-fronts.log",
+      "log_sha256": "547ce1cb930cf7da0d5735d3307e3b44a14b7cbf42149b7021c20ddfc0f1ecc5",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/common/dependency-security-20261021.md",
+          "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+        },
+        {
+          "path": "view/common/follow-redirects-security.test.mjs",
+          "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+        },
+        {
+          "path": "view/common/toolchain-security.test.mjs",
+          "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+        },
+        {
+          "path": "view/kefu-ts/package-lock.json",
+          "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+        },
+        {
+          "path": "view/kefu-ts/package.json",
+          "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+        },
+        {
+          "path": "view/pc-ts/package-lock.json",
+          "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+        },
+        {
+          "path": "view/pc-ts/package.json",
+          "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+        }
+      ],
+      "changed_during_run": []
+    },
+    {
+      "label": "browser-final",
+      "cwd": "workers-ts",
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "scripts/run-local-finance-postgres.mjs",
+        "--schema-maintenance",
+        "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+        "audit:community-people-browser"
+      ],
+      "exit_code": 0,
+      "started_utc": "2026-10-21T02:26:26.700413+00:00",
+      "seconds": 189.91,
+      "log": "/tmp/cinashop-community-people-browser-final.log",
+      "log_sha256": "79fef4ff7d871a9a2fcf75145a6217aa4bc7c4a1cf2bdb3b51ea626e0ab5fbe3",
+      "source_files": [
+        {
+          "path": "view/common/communityRoute.ts",
+          "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+        },
+        {
+          "path": "view/common/dependency-security-20261021.md",
+          "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+        },
+        {
+          "path": "view/common/follow-redirects-security.test.mjs",
+          "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+        },
+        {
+          "path": "view/common/toolchain-security.test.mjs",
+          "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+        },
+        {
+          "path": "view/kefu-ts/package-lock.json",
+          "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+        },
+        {
+          "path": "view/kefu-ts/package.json",
+          "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+        },
+        {
+          "path": "view/pc-ts/package-lock.json",
+          "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+        },
+        {
+          "path": "view/pc-ts/package.json",
+          "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+        },
+        {
+          "path": "view/uniapp-ts/package-lock.json",
+          "sha256": "5daff86764092d5dc360608a88ec7a5e7b6b08144134ae73b77fa3d7b99b93d1"
+        },
+        {
+          "path": "view/uniapp-ts/package.json",
+          "sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+          "sha256": "2fa3d88cbe18f0674254841ca1acabf943fa8aa469e32408948ec63ef647c489"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+          "sha256": "560b4319002d6fc3614eeb333d875008b5f9d8f81e15b381ed7d7ee5a32a3a30"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.cjs",
+          "sha256": "04c660b75e41885186db717ea8bc60640b47edca89b15f4a8f8ab548664c7a20"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.d.cts",
+          "sha256": "5772f6d68ebd3bc8cf379749a363416a049d66739e5f26cd42ec64c5afcbb002"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-page-alias.test.cjs",
+          "sha256": "7eaf4157be426766abe01e19c80f75d9bac28da41908066ae1eeafcf2a80b1c8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+          "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+          "sha256": "81f70faaf0453c111fc5883897ad119466dfdf44378f05a76352bb770909b4a8"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+          "sha256": "2a26e6ca932c7d2c41c710911bbf87ffd378f77c75e4a47c913852cd6a41eee9"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+          "sha256": "849597f4fcb439cb52e92adb0680556ba7ac6a59d0d809fbf9d08622ad1608c0"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+          "sha256": "1d54b904d734da79d993cfe533c2ced6050263845bd4d73998b50e1ebd8a745e"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-editor-security.test.cjs",
+          "sha256": "02207b50dd4171e0e5ca64b340c032996f854dea32c8e4598f20cd692f542b6f"
+        },
+        {
+          "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+          "sha256": "5b0d33ae1a00602b162cdb02704cce785003b6618b0a2c946ae1dab3ab9a54e0"
+        },
+        {
+          "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+          "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+        },
+        {
+          "path": "view/uniapp-ts/src/pages/discover/people.vue",
+          "sha256": "b9f34617d1a0f9b269fb5122910d8095edae3698acdd7c593ebaaff0ab6d6fcb"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/README.md",
+          "sha256": "a23cefaebd4ff604d66003b2a98af03e431044f7ebf52fab15abb4ad7bc0dea8"
+        },
+        {
+          "path": "view/uniapp-ts/vendor/vite-5.4.21-safety-backport.tgz",
+          "sha256": "4eb7eec8cbd8a33e2b33a9a97bad72a85e47ab16fefa9374107f15e781393a2f"
+        },
+        {
+          "path": "view/uniapp-ts/vite.config.ts",
+          "sha256": "0aecdb68127423bf964f823b66e6db0c88629eff69f4bf1c4dc35e997eca6ea6"
+        },
+        {
+          "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+          "sha256": "4b71b47f66dd75c1544d3786e10cd13d5d274eec4bb52d07eadc77ea9fee386b"
+        },
+        {
+          "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+          "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+        },
+        {
+          "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+          "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+        },
+        {
+          "path": "workers-ts/test/browser/community-people.acceptance.ts",
+          "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+        },
+        {
+          "path": "workers-ts/test/community-people-route.test.ts",
+          "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+        },
+        {
+          "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+          "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+        },
+        {
+          "path": "workers-ts/test/community-social-migration.test.ts",
+          "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+        },
+        {
+          "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+          "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+        },
+        {
+          "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+          "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+        },
+        {
+          "path": "workers-ts/vitest.community-people-browser.config.ts",
+          "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+        }
+      ],
+      "changed_during_run": []
+    }
+  ],
+  "full_h5_steps": [
+    {
+      "step": "typecheck 2026-10-21T02:17:27.187814+00:00",
+      "reported_test_totals": [],
+      "failed": [],
+      "skipped": []
+    },
+    {
+      "step": "test:toolchain 2026-10-21T02:17:44.691851+00:00",
+      "reported_test_totals": [
+        1384
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:admzip 2026-10-21T02:23:35.652614+00:00",
+      "reported_test_totals": [
+        6
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:express-qs 2026-10-21T02:23:36.102482+00:00",
+      "reported_test_totals": [
+        7
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:jest-jsdom-once 2026-10-21T02:23:37.243804+00:00",
+      "reported_test_totals": [
+        4
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:d3-advisories 2026-10-21T02:23:38.555500+00:00",
+      "reported_test_totals": [
+        10
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "build:h5 2026-10-21T02:24:04.495084+00:00",
+      "reported_test_totals": [],
+      "failed": [],
+      "skipped": []
+    },
+    {
+      "step": "build:mp-weixin 2026-10-21T02:24:28.857517+00:00",
+      "reported_test_totals": [],
+      "failed": [],
+      "skipped": []
+    },
+    {
+      "step": "build:app 2026-10-21T02:24:45.851209+00:00",
+      "reported_test_totals": [],
+      "failed": [],
+      "skipped": []
+    },
+    {
+      "step": "test:build-artifacts 2026-10-21T02:25:04.380628+00:00",
+      "reported_test_totals": [
+        4
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:automator-qr 2026-10-21T02:25:04.630501+00:00",
+      "reported_test_totals": [
+        5
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "test:runtime-i18n 2026-10-21T02:25:05.337022+00:00",
+      "reported_test_totals": [
+        13
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    },
+    {
+      "step": "common-security 2026-10-21T02:26:05.436318+00:00",
+      "reported_test_totals": [
+        8
+      ],
+      "failed": [
+        0
+      ],
+      "skipped": [
+        0
+      ]
+    }
+  ],
+  "compiler_verification": {
+    "format": 2,
+    "date": "2026-10-21",
+    "status": "source frozen and serial validation released to parent",
+    "sourceFiles": [
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.cjs",
+        "bytes": 7559,
+        "sha256": "04c660b75e41885186db717ea8bc60640b47edca89b15f4a8f8ab548664c7a20"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.d.cts",
+        "bytes": 211,
+        "sha256": "5772f6d68ebd3bc8cf379749a363416a049d66739e5f26cd42ec64c5afcbb002"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.test.cjs",
+        "bytes": 16684,
+        "sha256": "7eaf4157be426766abe01e19c80f75d9bac28da41908066ae1eeafcf2a80b1c8"
+      },
+      {
+        "path": "view/uniapp-ts/vite.config.ts",
+        "bytes": 1222,
+        "sha256": "0aecdb68127423bf964f823b66e6db0c88629eff69f4bf1c4dc35e997eca6ea6"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+        "bytes": 25729,
+        "sha256": "1d54b904d734da79d993cfe533c2ced6050263845bd4d73998b50e1ebd8a745e"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+        "bytes": 3492,
+        "sha256": "2fa3d88cbe18f0674254841ca1acabf943fa8aa469e32408948ec63ef647c489"
+      },
+      {
+        "path": "view/uniapp-ts/package.json",
+        "bytes": 6279,
+        "sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971"
+      },
+      {
+        "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+        "bytes": 155570,
+        "sha256": "4b71b47f66dd75c1544d3786e10cd13d5d274eec4bb52d07eadc77ea9fee386b"
+      }
+    ],
+    "implementation": {
+      "workspace": "fixed runtime default import/export alias -> complete real SFC source before Vue/DCloud compile; filename stays registered workspace page; no child wrapper",
+      "hmr": "both fixed source files moduleGraph caches invalidated before full reload; real Vite graph test, no listening",
+      "videoApp": "only fixed discoverVideo/app.vue on configured mp-weixin; official main/script/template descriptors, JSON cache, normalizeName and dynamicImport; complete-binding assertion at generateBundle",
+      "unchanged": [
+        "dependency locks and versions",
+        "community page business logic/templates",
+        "PHP compatibility URLs and page lifecycle calls",
+        "real App.vue classification",
+        "get_script behavior",
+        "historical migration ledgers",
+        "original3 artifact gates"
+      ]
+    },
+    "newCases": {
+      "toolchain": 9,
+      "buildArtifacts": 1
+    },
+    "originalFailure": {
+      "path": "/tmp/cinashop-community-people-h5-ci-complete.log",
+      "bytes": 355060,
+      "sha256": "8d6f49af6b4049e48af4504cb4b8d43545825494d4784dd5991aa0e796014967",
+      "reason": "missing registered workspace.wxml; downstream graph checks not run"
+    },
+    "runs": [
+      {
+        "file": "node-candidate1.log",
+        "exitCode": 0,
+        "tests": 29,
+        "scope": "workspace source transform before explicit HMR invalidation",
+        "bytes": 3356,
+        "sha256": "0d0505d7eae5eece84094d6783f0ca9bf9c61c12ac7aefad487193e55ee842cf"
+      },
+      {
+        "file": "node-final.log",
+        "exitCode": 1,
+        "tests": 29,
+        "scope": "28 pass/1 fail: test used nonpublic Vite5 ModuleGraph constructor",
+        "bytes": 3879,
+        "sha256": "eda3698e46b460b715cda3ecec8ca7de25e1cc3f115fc098bb6001c600ae95e8"
+      },
+      {
+        "file": "node-final2.log",
+        "exitCode": 0,
+        "tests": 29,
+        "scope": "real moduleGraph via non-listening isolated middleware server",
+        "bytes": 3356,
+        "sha256": "f2d4c43901741188dbff021087c33a4eadcf4616b051742586049a0424058629"
+      },
+      {
+        "file": "node-final3.log",
+        "exitCode": 0,
+        "tests": 29,
+        "scope": "workspace-only final narrow source",
+        "bytes": 3358,
+        "sha256": "bb24e2a9287a2d3944e7ae91db2fd5a13231d3e7c4ee9e7456eeb67bac051e3c"
+      },
+      {
+        "file": "mp-weixin-final.log",
+        "exitCode": 0,
+        "scope": "workspace-only actual MP build; video-app issue discovered by subsequent resource inspection",
+        "bytes": 582,
+        "sha256": "c89a48d32185905bad4ea659bef10bcddc39c2dc616aa3c694f6ca0a4d06a760"
+      },
+      {
+        "file": "artifacts-final.log",
+        "exitCode": 0,
+        "tests": 3,
+        "scope": "original artifact gate passed but did not detect missing video-app component registration",
+        "bytes": 388,
+        "sha256": "bd3e957853d1841566f3e01e955e3b7b95c001b671bf3df71fba0aff84d98d03"
+      },
+      {
+        "file": "node-video-candidate1.log",
+        "exitCode": 1,
+        "tests": 31,
+        "scope": "30 pass/1 fail: official parseProgram requires third options argument",
+        "bytes": 4806,
+        "sha256": "0ddcca107c73c825a59a599813fb4246a52baecefb342883ebff78ae254a5093"
+      },
+      {
+        "file": "node-video-final.log",
+        "exitCode": 0,
+        "tests": 31,
+        "scope": "initial inline component registration tests passed; actual external module integration not yet covered",
+        "bytes": 3639,
+        "sha256": "c7f61184113e4364caa32b2789dc12253f9408c644c645098f7814147798dcf0"
+      },
+      {
+        "file": "artifacts-app-before.log",
+        "exitCode": 1,
+        "tests": 4,
+        "scope": "intentional negative control: original3 pass, new app component registration test fails on old real MP artifacts",
+        "bytes": 1489,
+        "sha256": "7cb038d1c30e959e5f06ced672313f4b52dca4fd6c1ebb1595e303d68ee48e08"
+      },
+      {
+        "file": "mp-weixin-video-final.log",
+        "exitCode": 1,
+        "scope": "actual build caught main-phase component validation before external script/template modules loaded",
+        "bytes": 9658,
+        "sha256": "dfeec0e682727e5720ec225e1659917728addadd4920e7e97266a31baca4d637"
+      },
+      {
+        "file": "node-video-external-final.log",
+        "exitCode": 0,
+        "tests": 32,
+        "scope": "adds both external script/template loading orders and requires complete bindings",
+        "bytes": 3749,
+        "sha256": "53566c92e60f8bcf7c299b14ab782cdb51b76582635c10cc40a361dc867de23f"
+      },
+      {
+        "file": "mp-weixin-video-external-final.log",
+        "exitCode": 0,
+        "scope": "actual build passed before final descriptor-key Windows path normalization",
+        "bytes": 582,
+        "sha256": "c89a48d32185905bad4ea659bef10bcddc39c2dc616aa3c694f6ca0a4d06a760"
+      },
+      {
+        "file": "node-frozen-final.log",
+        "exitCode": 0,
+        "tests": 32,
+        "scope": "FINAL exact core/plugin/registration/theme source:9 new +23 theme; zero failures/skips",
+        "bytes": 3756,
+        "sha256": "78f68eb72b8092511c25b93b9c10ea6252056c15271e08f79f539458782c6019"
+      },
+      {
+        "file": "mp-weixin-frozen-final.log",
+        "exitCode": 0,
+        "scope": "FINAL actual MP build from frozen production/config source",
+        "bytes": 582,
+        "sha256": "c89a48d32185905bad4ea659bef10bcddc39c2dc616aa3c694f6ca0a4d06a760"
+      },
+      {
+        "file": "artifacts-frozen-final.log",
+        "exitCode": 0,
+        "tests": 4,
+        "scope": "FINAL strict artifacts: exact WXML tags/components paths and real createComponent resources; H5/App outputs still from earlier parent candidate",
+        "bytes": 500,
+        "sha256": "b969db8e8512ad9de5dce12c4fe80bd59a17ccc8c0c7485cafafc3a6ce4f5bea"
+      }
+    ],
+    "artifacts": [
+      {
+        "page": "pages/discover/index",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 16648,
+            "sha256": "ae6ff5dad3c303906dadbca411ad5089c459af87bc4583077e199b451dcece74"
+          },
+          "json": {
+            "bytes": 115,
+            "sha256": "245afe3e7333f5114e2d6731e6fbcdeb3fab0df02bfdb883ba1187f190948b28"
+          },
+          "wxml": {
+            "bytes": 14863,
+            "sha256": "b399f517339364aa83aa1dd8254a3e7ce6307c08cd8a7f382c97cc37d89ed070"
+          },
+          "wxss": {
+            "bytes": 7562,
+            "sha256": "045972a0e861b27a6e5b50c294f5f0b082f8545cd080401a4d023e8ee1d1e4b0"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../components/ThemePage"
+        },
+        "hooks": [
+          "onLoad",
+          "onShow",
+          "onHide",
+          "onUnload"
+        ]
+      },
+      {
+        "page": "pages/discover/workspace",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 16652,
+            "sha256": "978e197f4814276a38bee45a272a66e2b18f0fd7ee30bdced78b7b4722ce4a6e"
+          },
+          "json": {
+            "bytes": 121,
+            "sha256": "3779897b6e9929141b3b53417a8fae16bf4c862eced2966cc538ed41a50e62f8"
+          },
+          "wxml": {
+            "bytes": 14863,
+            "sha256": "d643ec9614aea81d27ed8226edd6abe06fdf2aa1436f2ea3f8a6b5d0073f8a59"
+          },
+          "wxss": {
+            "bytes": 7562,
+            "sha256": "bde9bd8dc055ec1cf7f137c382f68012e0fccba9db02ab03f1a6a5e7b953cd3e"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../components/ThemePage"
+        },
+        "hooks": [
+          "onLoad",
+          "onShow",
+          "onHide",
+          "onUnload"
+        ]
+      },
+      {
+        "page": "pages/discover/discoverTopic/index",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 518,
+            "sha256": "b23be8816b71d61587c1e134235e57406e9bd0c89250d49ab6e0e22d4db27ac2"
+          },
+          "json": {
+            "bytes": 211,
+            "sha256": "d8ccd39a3e3feb5216449f5f59d3fa9db43c4e3cfb3f310a928798a598474f79"
+          },
+          "wxml": {
+            "bytes": 190,
+            "sha256": "f8eff5047ad6fd837d88fb4d147719adfc296f7b1fa555aa82ba07240dae2852"
+          },
+          "wxss": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../../components/ThemePage",
+          "community-deep-link-feed": "../../../components/community/CommunityDeepLinkFeed"
+        },
+        "hooks": [
+          "onLoad"
+        ]
+      },
+      {
+        "page": "pages/discover/discoverSearch/index",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 519,
+            "sha256": "50c39aa3842f25d3b48e8ff8cbdba75765c0e6dc93770507068c053841a230e9"
+          },
+          "json": {
+            "bytes": 211,
+            "sha256": "c9a1b9b4773a89b5edd748315cba04acdeea60d9daed8475ed90615784915c4a"
+          },
+          "wxml": {
+            "bytes": 190,
+            "sha256": "38579c3de72c78fb8d2e8c364926461d1f9507a91000154a58070f04c073e18e"
+          },
+          "wxss": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../../components/ThemePage",
+          "community-deep-link-feed": "../../../components/community/CommunityDeepLinkFeed"
+        },
+        "hooks": [
+          "onLoad"
+        ]
+      },
+      {
+        "page": "pages/discover/discoverVideo/index",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 518,
+            "sha256": "daff788512b463c9ab8dabe25db8f5fa079347bea56273101a107d1f79d3ed0f"
+          },
+          "json": {
+            "bytes": 211,
+            "sha256": "de69a1632cd4d61d72ca3441df90c6a2873cb2c967c62978d913fc8c25902f71"
+          },
+          "wxml": {
+            "bytes": 190,
+            "sha256": "bc901f2404fb91c50f17e81e56fe3074843a37f692b8f8afbdc60a50b437932a"
+          },
+          "wxss": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../../components/ThemePage",
+          "community-deep-link-feed": "../../../components/community/CommunityDeepLinkFeed"
+        },
+        "hooks": [
+          "onLoad"
+        ]
+      },
+      {
+        "page": "pages/discover/discoverVideo/app",
+        "registered": true,
+        "resources": {
+          "js": {
+            "bytes": 566,
+            "sha256": "ddb2c35a67a85b3fb42b214d60abacbb2ef02fdb98424d1077a9884d596c9b32"
+          },
+          "json": {
+            "bytes": 211,
+            "sha256": "de69a1632cd4d61d72ca3441df90c6a2873cb2c967c62978d913fc8c25902f71"
+          },
+          "wxml": {
+            "bytes": 190,
+            "sha256": "704c33e25d4bfbdcaa82b1180db31fa27c075aefb3f85681964f7199d7c22ace"
+          },
+          "wxss": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "usingComponents": {
+          "theme-page": "../../../components/ThemePage",
+          "community-deep-link-feed": "../../../components/community/CommunityDeepLinkFeed"
+        },
+        "hooks": [
+          "onLoad"
+        ]
+      }
+    ],
+    "remaining": [
+      "parent final full UniApp CI contract including H5/App rebuild and runtime graph audit",
+      "parent final15-stage actual browser acceptance",
+      "immutable-head GitHub CI",
+      "native Weixin runtime/device behavior not executed",
+      "other MP platform normalizers not covered; patch explicitly bypasses them"
+    ],
+    "heavyValidation": "none active; no more source edits/checks by this worker",
+    "parent_final_rebuild_label": "h5-ci-repaired",
+    "freeze_snapshot_note": "The embedded remaining list records the agent freeze time; final complete rebuild and browser results are in checks and full_h5_steps below. Native device, other MP platforms and immutable-head CI are not inferred from those local checks.",
+    "new_cases_count_note": "9 toolchain cases are contained in the final complete toolchain total; the additional artifact case is one of the final four artifact tests. Narrow runs are not added again."
+  },
+  "final_generated_builds": [
+    {
+      "platform": "h5",
+      "files": 349,
+      "manifest_sha256": "8c00901f0701af40c2babfca267724fd7eb1964c4b44d1cba7e911e9d9660c86"
+    },
+    {
+      "platform": "mp-weixin",
+      "files": 898,
+      "manifest_sha256": "a3c490ca901407bdf5432dabcb9c400af7654fae0e89493c26d163b8e1662a97"
+    },
+    {
+      "platform": "app",
+      "files": 150,
+      "manifest_sha256": "ef3930510397773768411b0fbcbfae6c322f91968bbaaf0b904541437a2c8d0d"
+    }
+  ],
+  "browser_served_h5_manifest": {
+    "path": "/tmp/cinashop-community-people-browser-build.json",
+    "files": 349,
+    "sha256": "8c1b38ed38d86a8829a0ba847460648e6dae523086cb3d6e15bc770bfc029896",
+    "all_served_bytes_preserved": true
+  },
+  "dependency_verification": {
+    "schemaVersion": 1,
+    "date": "2026-10-21",
+    "scope": "frontend dependency safety increment only; social/browser files excluded",
+    "sourceFiles": [
+      {
+        "path": "view/common/toolchain-security.test.mjs",
+        "bytes": 10353,
+        "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+      },
+      {
+        "path": "view/common/follow-redirects-security.test.mjs",
+        "bytes": 3441,
+        "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+      },
+      {
+        "path": "view/common/dependency-security-20261021.md",
+        "bytes": 6785,
+        "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+      },
+      {
+        "path": "view/kefu-ts/package.json",
+        "bytes": 633,
+        "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+      },
+      {
+        "path": "view/kefu-ts/package-lock.json",
+        "bytes": 78899,
+        "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+      },
+      {
+        "path": "view/pc-ts/package.json",
+        "bytes": 973,
+        "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+      },
+      {
+        "path": "view/pc-ts/package-lock.json",
+        "bytes": 88415,
+        "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+      },
+      {
+        "path": "view/uniapp-ts/package.json",
+        "bytes": 6241,
+        "sha256": "4cd1e50333775427bde7e3d5e17bace0f2ef94d70abe660ce6994654984da4b3"
+      },
+      {
+        "path": "view/uniapp-ts/package-lock.json",
+        "bytes": 426733,
+        "sha256": "5daff86764092d5dc360608a88ec7a5e7b6b08144134ae73b77fa3d7b99b93d1"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+        "bytes": 15594,
+        "sha256": "560b4319002d6fc3614eeb333d875008b5f9d8f81e15b381ed7d7ee5a32a3a30"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+        "bytes": 45002,
+        "sha256": "81f70faaf0453c111fc5883897ad119466dfdf44378f05a76352bb770909b4a8"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+        "bytes": 10129,
+        "sha256": "2a26e6ca932c7d2c41c710911bbf87ffd378f77c75e4a47c913852cd6a41eee9"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/vite-editor-security.test.cjs",
+        "bytes": 3919,
+        "sha256": "02207b50dd4171e0e5ca64b340c032996f854dea32c8e4598f20cd692f542b6f"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+        "bytes": 6125,
+        "sha256": "5b0d33ae1a00602b162cdb02704cce785003b6618b0a2c946ae1dab3ab9a54e0"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+        "bytes": 16387,
+        "sha256": "849597f4fcb439cb52e92adb0680556ba7ac6a59d0d809fbf9d08622ad1608c0"
+      },
+      {
+        "path": "view/uniapp-ts/vendor/README.md",
+        "bytes": 16722,
+        "sha256": "a23cefaebd4ff604d66003b2a98af03e431044f7ebf52fab15abb4ad7bc0dea8"
+      },
+      {
+        "path": "view/uniapp-ts/vendor/vite-5.4.21-safety-backport.tgz",
+        "bytes": 3310353,
+        "sha256": "4eb7eec8cbd8a33e2b33a9a97bad72a85e47ab16fefa9374107f15e781393a2f"
+      }
+    ],
+    "runs": [
+      {
+        "file": "uniapp-install.log",
+        "scope": "installation",
+        "exitCode": 0,
+        "bytes": 1155,
+        "sha256": "458b6a6a200d5679a2e9958fead98f9ae49439422be0b39f0049b44ccbbcd438"
+      },
+      {
+        "file": "kefu-install.log",
+        "scope": "installation",
+        "exitCode": 0,
+        "bytes": 26,
+        "sha256": "4e875b1e6429307afb163c3ecf9d1c2fe622df50ce305a15321280e06b1214b2"
+      },
+      {
+        "file": "pc-install.log",
+        "scope": "installation",
+        "exitCode": 0,
+        "bytes": 26,
+        "sha256": "4d5b6788f35406b5cbfeb0fab503040a43b3a904091a92b7af42e5ea77cd9295"
+      },
+      {
+        "file": "uniapp-security-initial.log",
+        "scope": "setup failed before executing tests; shared lock was read-only",
+        "exitCode": 1,
+        "bytes": 133,
+        "sha256": "a59e656b2e6a4c89c4e9deef6444d7de72aa2e177f8fe75c03e18db911ae17f7"
+      },
+      {
+        "file": "uniapp-security-candidate1.log",
+        "scope": "narrow security guards; not a full CI run",
+        "exitCode": 0,
+        "tests": 27,
+        "pass": 27,
+        "fail": 0,
+        "skipped": 0,
+        "bytes": 2916,
+        "sha256": "ebad4132173303e8a657a9ef3bf05eb837fe58c053fe4010556e87a077aba69c"
+      },
+      {
+        "file": "uniapp-vite-regression.log",
+        "scope": "existing Vite/esbuild Linux regressions; native Windows not executed",
+        "exitCode": 0,
+        "tests": 35,
+        "pass": 35,
+        "fail": 0,
+        "skipped": 0,
+        "bytes": 6663,
+        "sha256": "23cb943a121fc8dab966388f520ce5f5d0a2567b9e0b7931c239fd3cb8978f70"
+      },
+      {
+        "file": "kefu-security.log",
+        "scope": "CI common toolchain security entry",
+        "exitCode": 0,
+        "tests": 15,
+        "pass": 15,
+        "fail": 0,
+        "skipped": 0,
+        "bytes": 1580,
+        "sha256": "8397ebafa6766b5b66f620bfdb90749038088f5444b0d5863c8fa95478bf5792"
+      },
+      {
+        "file": "pc-security.log",
+        "scope": "CI common toolchain security entry",
+        "exitCode": 0,
+        "tests": 10,
+        "pass": 10,
+        "fail": 0,
+        "skipped": 0,
+        "bytes": 1214,
+        "sha256": "ca337f19e652bd176bfb85fc31eab48f97243f91432a6ad6a851fba0530e6f89"
+      },
+      {
+        "file": "uniapp-live-gate.log",
+        "scope": "official registry live gate: 82 entries/26 objects/25 URLs/8 chains",
+        "exitCode": 0,
+        "bytes": 185,
+        "sha256": "46a92eea18aca93981b7c52c4799f39ee47c400ae866991434cb79f059af6217"
+      },
+      {
+        "file": "kefu-ts-audit.json",
+        "scope": "official lock-only audit: zero affected entries",
+        "exitCode": 0,
+        "bytes": 364,
+        "sha256": "53a5e2a20af455e8a5918bf88dc78d036fa8fea16399d5b79f31a81a7d494729"
+      },
+      {
+        "file": "pc-ts-audit.json",
+        "scope": "official lock-only audit: zero affected entries",
+        "exitCode": 0,
+        "bytes": 364,
+        "sha256": "549af75b36bfa7fb5864456b47d660714d9901db8eaf9501c40aac16c7287686"
+      },
+      {
+        "file": "uniapp-ts-audit.json",
+        "scope": "official lock-only audit: 82 affected entries, no follow-redirects entry",
+        "exitCode": 1,
+        "bytes": 53236,
+        "sha256": "006f8a7b30a496216d7e42b62310cdcf35c9eee8821018af4dc9fa186f27c27d"
+      }
+    ],
+    "heavyValidation": "released; no further heavy validation is launched by this worker",
+    "nodeVersion": "v24.19.0",
+    "npmVersion": "11.7.0",
+    "sourceSris": {
+      "vite644": "sha512-xGjU/SyjeNyb0E4KxXBvYz/1C+3JXuujvf2hXNOtnlcE+58o5ajd9N2/n2VhkiJvpCP2qQasnUpx5PXNeI+p1Q==",
+      "redirect1161": "sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==",
+      "derivedVite5421": "sha512-L7iUZlQFqFVDBsGsIh0Rsopt+AY+6LqEYkP4kUy20t6Gp4TjVFsqaRLWrbw1zQtjBrVnFYQQQMpRG0fBbQdGSg=="
+    },
+    "uniSemanticLockSha256": "33f137aab5dd51a78c25ce5be5c73f4920ab9a166bb0c9c964ddf87d5f953609",
+    "pending": [
+      "parent-run full UniApp CI contract including 3 target builds and graph audit",
+      "parent-run Kefu tests/build and PC build",
+      "final social/browser pass after CSS fix",
+      "immutable-head GitHub CI",
+      "native Windows editor execution"
+    ]
+  },
+  "dependency_manifest_increment": [
+    {
+      "path": "view/uniapp-ts/package.json",
+      "original_sha256": "4cd1e50333775427bde7e3d5e17bace0f2ef94d70abe660ce6994654984da4b3",
+      "final_sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971",
+      "change": "Only adds the fixed community page source-composition guard to test:toolchain; all dependency and override values unchanged"
+    }
+  ],
+  "source_proof": {
+    "changed_files": [
+      {
+        "path": "MIGRATION_AUDIT.md",
+        "sha256": "c07c3844af63e734a02c999738fc5d8b8e0cdad33a6efcad2ebdef4f00cd6a8a"
+      },
+      {
+        "path": "MIGRATION_CHECKLIST.md",
+        "sha256": "f208b683756fb8222d6aebee397e67049b932c6c803f51c1d6ef7de1a0603a88"
+      },
+      {
+        "path": "view/common/communityRoute.ts",
+        "sha256": "559fab0686f156fa2c6f51c5e2211cd4268415ce01c1f56158434d6640f8ae68"
+      },
+      {
+        "path": "view/common/dependency-security-20261021.md",
+        "sha256": "b016836af84e9a164e871840c2646b158b38ff03770d38d040d0fb559a110307"
+      },
+      {
+        "path": "view/common/follow-redirects-security.test.mjs",
+        "sha256": "42703b48bf3ab4dee5f12989b252fc1cb166321e35fa279b6ae80e2f6106dafd"
+      },
+      {
+        "path": "view/common/toolchain-security.test.mjs",
+        "sha256": "79ed41d96a53e22583a608ce90cb83697f9d9ef0440a65b5e044d16f9c987bd7"
+      },
+      {
+        "path": "view/kefu-ts/package-lock.json",
+        "sha256": "9670604fc31318fbdc221efb1674fb9191599fc434aac294149e8e0c45f66dfd"
+      },
+      {
+        "path": "view/kefu-ts/package.json",
+        "sha256": "2ad1f227192c01fce8e9d0ed4ad8d41d2c1792478ff8f10ea42fc79d06f3aa11"
+      },
+      {
+        "path": "view/pc-ts/package-lock.json",
+        "sha256": "1fb957d21d4550fdff8eb06443c21254ca9bb0f5a4a0908e6cba50832796674b"
+      },
+      {
+        "path": "view/pc-ts/package.json",
+        "sha256": "01a234d8dc9dd606fb58308f48d9b65d114c8c8c5c06238aa07c25a35a802d78"
+      },
+      {
+        "path": "view/uniapp-ts/package-lock.json",
+        "sha256": "5daff86764092d5dc360608a88ec7a5e7b6b08144134ae73b77fa3d7b99b93d1"
+      },
+      {
+        "path": "view/uniapp-ts/package.json",
+        "sha256": "258d6b3788ee206fe080603cc11e0beb350dd7ccb0b281908992c1cf18b48971"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/build-artifacts.test.cjs",
+        "sha256": "2fa3d88cbe18f0674254841ca1acabf943fa8aa469e32408948ec63ef647c489"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+        "sha256": "560b4319002d6fc3614eeb333d875008b5f9d8f81e15b381ed7d7ee5a32a3a30"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.cjs",
+        "sha256": "04c660b75e41885186db717ea8bc60640b47edca89b15f4a8f8ab548664c7a20"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.d.cts",
+        "sha256": "5772f6d68ebd3bc8cf379749a363416a049d66739e5f26cd42ec64c5afcbb002"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-page-alias.test.cjs",
+        "sha256": "7eaf4157be426766abe01e19c80f75d9bac28da41908066ae1eeafcf2a80b1c8"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-people-runtime.test.cjs",
+        "sha256": "396c40e8583389044e4d338f5d8e4166beb0b39da242e464584989c954e50a70"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+        "sha256": "81f70faaf0453c111fc5883897ad119466dfdf44378f05a76352bb770909b4a8"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+        "sha256": "2a26e6ca932c7d2c41c710911bbf87ffd378f77c75e4a47c913852cd6a41eee9"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+        "sha256": "849597f4fcb439cb52e92adb0680556ba7ac6a59d0d809fbf9d08622ad1608c0"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/theme-runtime.test.cjs",
+        "sha256": "1d54b904d734da79d993cfe533c2ced6050263845bd4d73998b50e1ebd8a745e"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/vite-editor-security.test.cjs",
+        "sha256": "02207b50dd4171e0e5ca64b340c032996f854dea32c8e4598f20cd692f542b6f"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/vite-safety-package.test.cjs",
+        "sha256": "5b0d33ae1a00602b162cdb02704cce785003b6618b0a2c946ae1dab3ab9a54e0"
+      },
+      {
+        "path": "view/uniapp-ts/src/composables/useCommunityPeople.ts",
+        "sha256": "06e75007421993f0b9b6a9a584e57e0f6a39d7fb7622f6ff67e012861b81cd79"
+      },
+      {
+        "path": "view/uniapp-ts/src/pages/discover/people.vue",
+        "sha256": "b9f34617d1a0f9b269fb5122910d8095edae3698acdd7c593ebaaff0ab6d6fcb"
+      },
+      {
+        "path": "view/uniapp-ts/vendor/README.md",
+        "sha256": "a23cefaebd4ff604d66003b2a98af03e431044f7ebf52fab15abb4ad7bc0dea8"
+      },
+      {
+        "path": "view/uniapp-ts/vendor/vite-5.4.21-safety-backport.tgz",
+        "sha256": "4eb7eec8cbd8a33e2b33a9a97bad72a85e47ab16fefa9374107f15e781393a2f"
+      },
+      {
+        "path": "view/uniapp-ts/vite.config.ts",
+        "sha256": "0aecdb68127423bf964f823b66e6db0c88629eff69f4bf1c4dc35e997eca6ea6"
+      },
+      {
+        "path": "workers-ts/docs/php-ts-community-next-gaps-20261021.md",
+        "sha256": "fa736ed9029291d063f82f495ad27101235b4bba21bede80280ca2e25897ccc2"
+      },
+      {
+        "path": "workers-ts/docs/php-ts-community-people-20261021.md",
+        "sha256": "9b03d8090e6fdb7866bdd10667e4e1a8f51cf39c0ca2f73a5abb0ae5a819a3fb"
+      },
+      {
+        "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+        "sha256": "4b71b47f66dd75c1544d3786e10cd13d5d274eec4bb52d07eadc77ea9fee386b"
+      },
+      {
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "sha256": "5889c04793d31787c0c9964ad005b863a0d5814bab61c027c6c79e237e14be61"
+      },
+      {
+        "path": "workers-ts/src/services/community/CommunitySocialService.ts",
+        "sha256": "677dacffdb9eeaca0ac582de8416155464e2b51103185ed8aa4f5f36acad25ed"
+      },
+      {
+        "path": "workers-ts/test/browser/community-people.acceptance.ts",
+        "sha256": "1eb9203e6f866b9601c8062a6a92fb663c827fc4214139b6c59b9e1510c6b35f"
+      },
+      {
+        "path": "workers-ts/test/community-people-route.test.ts",
+        "sha256": "54803ed41a382bb2f86ae637940c06e42812f1cfe80376be094d67e1bc355e5a"
+      },
+      {
+        "path": "workers-ts/test/community-social-identities-postgres.test.ts",
+        "sha256": "ec7c1a5ba8019fd19e6f963b4a50c31bb29c431635dcf27834bcc4c2bb9231b7"
+      },
+      {
+        "path": "workers-ts/test/community-social-migration.test.ts",
+        "sha256": "b4acd8ef584761775b51ff47e04d277380bc9b8910c64a7bbf1f16ea3eb184b7"
+      },
+      {
+        "path": "workers-ts/test/helpers/communityPeopleBrowserFixture.ts",
+        "sha256": "fc33b7851218f2d9d70f800f33b53dc33e08ac56e8a3b7195ca90ee34f5574ea"
+      },
+      {
+        "path": "workers-ts/test/local-finance-postgres-runner.test.ts",
+        "sha256": "b2bc8e0587c04d84a7bb5673f6a56f50c97e153f2efc5cbde3da756ef685162c"
+      },
+      {
+        "path": "workers-ts/vitest.community-people-browser.config.ts",
+        "sha256": "f5c2d3f995cfe6607c7cec3c6af4efbc1ebd03ad5c97070a639f4305ceaad0d0"
+      }
+    ],
+    "protected_file_count": 480,
+    "protected_manifest_sha256": "64d4e43e401ec4af2437a7b7e8af078f515500d23b637a163ff30110de066930",
+    "statistics_sources_preserved": [
+      "workers-ts/src/routes/v1/index.ts",
+      "view/common/statisticsScript.ts",
+      "view/uniapp-ts/src/App.vue",
+      "view/admin-ts/src/main.ts",
+      "view/supplier-ts/src/main.ts",
+      "workers-ts/audit/statistics-script-restoration-20261015.json"
+    ],
+    "production_schema_migration_sql_preserved": true,
+    "worker_types_comment_proof": {
+      "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "executable_source_unchanged": true,
+      "source_without_the_single_explanatory_comment_sha256": "383a3a2fd6634adbf52f2bbeeae8edc52e10bd3fbf61c18414238ec2fdfbc594",
+      "method": "Remove exactly the identified old/new English comment; compare all remaining bytes, with no JSDoc type annotations in either comment.",
+      "before_sha256": "8720cd049e42e56d97ad387e98af42b3a895130365950e5bdad07846d880cbab",
+      "after_sha256": "4b71b47f66dd75c1544d3786e10cd13d5d274eec4bb52d07eadc77ea9fee386b"
+    },
+    "worker_types_note": "Only view/uniapp-ts/package.json changed during Worker type checks; its dependency/test-script changes are separately checked by the final H5 CI run. The later parity-audit explanation changed one plain English comment only; all other changed Worker TS inputs match the passing type-check snapshot"
+  },
+  "browser": {
+    "evidence_path": "/tmp/cinashop-community-people-browser-evidence.json",
+    "evidence_sha256": "f0a5785ff4e039ba17d07b2b5b42a4791902f645f0d6c4cf8f245769f024bbe0",
+    "stages": [
+      {
+        "stage": "friends",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐好友作者121内容 1 · 粉丝 0关注好友作者120内容 1 · 粉丝 0关注好友作者119内容 1 · 粉丝 0关注好友作者118内容 1 · 粉丝 0关注好友作者117内容 1 · 粉丝 0关注好友作者116内容 1 · 粉丝 0关注好友作者115内容 1 · 粉丝 0关注好友作者114内容 1 · 粉丝 0关注好友作者113内容 1 · 粉丝 0关注好友作者112内容 1 · 粉丝 0关注好友作者111内容 1 · 粉丝 0关注好友作者110内容 1 · 粉丝 0关注好友作者109内容 1 · 粉丝 0关注好友作者108内容 1 · 粉丝 0关注好友作者107内容 1 · 粉丝 0关注好友作者106内容 1 · 粉丝 0关注好友作者105内容 1 · 粉丝 0关注好友作者104内容 1 · 粉丝 0关注好友作者103内容 1 · 粉丝 0关注好友作者102内容 1 · 粉丝 0关注加载更多作者首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "好友",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "好友作者121",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者120",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者119",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者118",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者117",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者116",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者115",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者114",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者113",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者112",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者111",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者110",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者109",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者108",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者107",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者106",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者105",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者104",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者103",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者102",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+        "writes": 0
+      },
+      {
+        "stage": "paginationError",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐本地验收：第二页读取回执失败，请重试重试加载好友作者121内容 1 · 粉丝 0关注好友作者120内容 1 · 粉丝 0关注好友作者119内容 1 · 粉丝 0关注好友作者118内容 1 · 粉丝 0关注好友作者117内容 1 · 粉丝 0关注好友作者116内容 1 · 粉丝 0关注好友作者115内容 1 · 粉丝 0关注好友作者114内容 1 · 粉丝 0关注好友作者113内容 1 · 粉丝 0关注好友作者112内容 1 · 粉丝 0关注好友作者111内容 1 · 粉丝 0关注好友作者110内容 1 · 粉丝 0关注好友作者109内容 1 · 粉丝 0关注好友作者108内容 1 · 粉丝 0关注好友作者107内容 1 · 粉丝 0关注好友作者106内容 1 · 粉丝 0关注好友作者105内容 1 · 粉丝 0关注好友作者104内容 1 · 粉丝 0关注好友作者103内容 1 · 粉丝 0关注好友作者102内容 1 · 粉丝 0关注首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "好友",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "好友作者121",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者120",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者119",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者118",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者117",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者116",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者115",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者114",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者113",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者112",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者111",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者110",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者109",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者108",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者107",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者106",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者105",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者104",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者103",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者102",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+        "writes": 0
+      },
+      {
+        "stage": "paginationRecovered",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐好友作者121内容 1 · 粉丝 0关注好友作者120内容 1 · 粉丝 0关注好友作者119内容 1 · 粉丝 0关注好友作者118内容 1 · 粉丝 0关注好友作者117内容 1 · 粉丝 0关注好友作者116内容 1 · 粉丝 0关注好友作者115内容 1 · 粉丝 0关注好友作者114内容 1 · 粉丝 0关注好友作者113内容 1 · 粉丝 0关注好友作者112内容 1 · 粉丝 0关注好友作者111内容 1 · 粉丝 0关注好友作者110内容 1 · 粉丝 0关注好友作者109内容 1 · 粉丝 0关注好友作者108内容 1 · 粉丝 0关注好友作者107内容 1 · 粉丝 0关注好友作者106内容 1 · 粉丝 0关注好友作者105内容 1 · 粉丝 0关注好友作者104内容 1 · 粉丝 0关注好友作者103内容 1 · 粉丝 0关注好友作者102内容 1 · 粉丝 0关注好友作者101内容 1 · 粉丝 1已关注视频作者22内容 1 · 粉丝 1互相关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "好友",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "好友作者121",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者120",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者119",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者118",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者117",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者116",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者115",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者114",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者113",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者112",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者111",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者110",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者109",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者108",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者107",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者106",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者105",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者104",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者103",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者102",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者101",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "已关注",
+            "confirming": false
+          },
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+        "writes": 0
+      },
+      {
+        "stage": "follow",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐视频作者22内容 1 · 粉丝 1互相关注确认不再关注 视频作者22？保留关注确认取消关注好友作者101内容 1 · 粉丝 1已关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "关注",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": true
+          },
+          {
+            "name": "好友作者101",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "已关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+        "writes": 0
+      },
+      {
+        "stage": "kept",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐视频作者22内容 1 · 粉丝 1互相关注好友作者101内容 1 · 粉丝 1已关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "关注",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者101",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "已关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+        "writes": 0
+      },
+      {
+        "stage": "unfollowed",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐已取消关注好友作者101内容 1 · 粉丝 1已关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "关注",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "好友作者101",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "已关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+        "writes": 1
+      },
+      {
+        "stage": "fans",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐视频作者22内容 1 · 粉丝 0回关没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "粉丝",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "回关",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+        "writes": 1
+      },
+      {
+        "stage": "mutual",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐关注成功视频作者22内容 1 · 粉丝 1互相关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "粉丝",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+        "writes": 2
+      },
+      {
+        "stage": "recommend",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐规范平台作者内容 9 · 粉丝 100关注好友作者121内容 1 · 粉丝 0关注好友作者120内容 1 · 粉丝 0关注好友作者119内容 1 · 粉丝 0关注好友作者118内容 1 · 粉丝 0关注好友作者117内容 1 · 粉丝 0关注好友作者116内容 1 · 粉丝 0关注好友作者115内容 1 · 粉丝 0关注好友作者114内容 1 · 粉丝 0关注好友作者113内容 1 · 粉丝 0关注好友作者112内容 1 · 粉丝 0关注好友作者111内容 1 · 粉丝 0关注好友作者110内容 1 · 粉丝 0关注好友作者109内容 1 · 粉丝 0关注好友作者108内容 1 · 粉丝 0关注好友作者107内容 1 · 粉丝 0关注好友作者106内容 1 · 粉丝 0关注好友作者105内容 1 · 粉丝 0关注好友作者104内容 1 · 粉丝 0关注好友作者103内容 1 · 粉丝 0关注加载更多作者首页分类逛逛购物车我的\n  \n\n",
+        "width": 360,
+        "scrollWidth": 360,
+        "activeTab": "推荐",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "规范平台作者",
+            "stats": "内容 9 · 粉丝 100",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者121",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者120",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者119",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者118",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者117",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者116",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者115",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者114",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者113",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者112",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者111",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者110",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者109",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者108",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者107",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者106",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者105",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者104",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者103",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+        "writes": 2
+      },
+      {
+        "stage": "uncertain",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐操作结果未确认，请刷新列表核实，请勿重复提交。首页分类逛逛购物车我的\n  \n\n",
+        "width": 360,
+        "scrollWidth": 360,
+        "activeTab": "推荐",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": true
+          },
+          {
+            "label": "关注",
+            "disabled": true
+          },
+          {
+            "label": "粉丝",
+            "disabled": true
+          },
+          {
+            "label": "推荐",
+            "disabled": true
+          }
+        ],
+        "cards": [],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+        "writes": 3
+      },
+      {
+        "stage": "reconciled",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐已刷新，请核对关注状态。好友作者121内容 1 · 粉丝 0关注好友作者120内容 1 · 粉丝 0关注好友作者119内容 1 · 粉丝 0关注好友作者118内容 1 · 粉丝 0关注好友作者117内容 1 · 粉丝 0关注好友作者116内容 1 · 粉丝 0关注好友作者115内容 1 · 粉丝 0关注好友作者114内容 1 · 粉丝 0关注好友作者113内容 1 · 粉丝 0关注好友作者112内容 1 · 粉丝 0关注好友作者111内容 1 · 粉丝 0关注好友作者110内容 1 · 粉丝 0关注好友作者109内容 1 · 粉丝 0关注好友作者108内容 1 · 粉丝 0关注好友作者107内容 1 · 粉丝 0关注好友作者106内容 1 · 粉丝 0关注好友作者105内容 1 · 粉丝 0关注好友作者104内容 1 · 粉丝 0关注好友作者103内容 1 · 粉丝 0关注好友作者102内容 1 · 粉丝 0关注加载更多作者首页分类逛逛购物车我的\n  \n\n",
+        "width": 360,
+        "scrollWidth": 360,
+        "activeTab": "推荐",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "好友作者121",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者120",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者119",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者118",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者117",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者116",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者115",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者114",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者113",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者112",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者111",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者110",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者109",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者108",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者107",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者106",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者105",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者104",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者103",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者102",
+            "stats": "内容 1 · 粉丝 0",
+            "follow": "关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+        "writes": 3
+      },
+      {
+        "stage": "platformRemoved",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/people?type=1",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐已取消关注视频作者22内容 1 · 粉丝 1互相关注好友作者101内容 1 · 粉丝 1已关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 360,
+        "scrollWidth": 360,
+        "activeTab": "关注",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者22",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          },
+          {
+            "name": "好友作者101",
+            "stats": "内容 1 · 粉丝 1",
+            "follow": "已关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+        "writes": 4
+      },
+      {
+        "stage": "author",
+        "href": "http://127.0.0.1:40751/?community_people_session=11-1792549632327#/pages/discover/workspace?author_id=22",
+        "text": "\n    社区管理视频作者22刷新主页ID：22规范作者简介22关注 1好友 1粉丝 1获赞 0已关注搜索作品搜索作品另一位作者的公开帖子赞过的作品已公开首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "",
+        "tabs": [],
+        "cards": [],
+        "refreshDisabled": true,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+        "writes": 4
+      },
+      {
+        "stage": "other",
+        "href": "http://127.0.0.1:40751/?community_people_session=22-1792549760912#/pages/discover/people?type=2",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐视频作者11内容 3 · 粉丝 1互相关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "粉丝",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者11",
+            "stats": "内容 3 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+        "writes": 4
+      },
+      {
+        "stage": "finished",
+        "href": "http://127.0.0.1:40751/?community_people_session=22-1792549760912#/pages/discover/people?type=2",
+        "text": "\n    社区关系好友与关注我的主页刷新列表好友关注粉丝推荐视频作者11内容 3 · 粉丝 1互相关注没有更多了首页分类逛逛购物车我的\n  \n\n",
+        "width": 375,
+        "scrollWidth": 375,
+        "activeTab": "粉丝",
+        "tabs": [
+          {
+            "label": "好友",
+            "disabled": false
+          },
+          {
+            "label": "关注",
+            "disabled": false
+          },
+          {
+            "label": "粉丝",
+            "disabled": false
+          },
+          {
+            "label": "推荐",
+            "disabled": false
+          }
+        ],
+        "cards": [
+          {
+            "name": "视频作者11",
+            "stats": "内容 3 · 粉丝 1",
+            "follow": "互相关注",
+            "confirming": false
+          }
+        ],
+        "refreshDisabled": false,
+        "theme": {
+          "className": "theme-page",
+          "style": "--view-theme: #e93323; --view-priceColor: #e93323; --view-minorColor: rgba(233, 51, 35, 0.5); --view-minorColorT: rgba(233, 51, 35, 0.1); --view-bntColor: #FE960F; --view-gradient: #FF7931;"
+        },
+        "database_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+        "writes": 4
+      }
+    ],
+    "traces": [
+      {
+        "method": "GET",
+        "viewer": 0,
+        "path": "/api/get_script",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/user_friend",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 23,
+            "type": 2,
+            "relation_id": 121,
+            "author": "好友作者121",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 22,
+            "type": 2,
+            "relation_id": 120,
+            "author": "好友作者120",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 21,
+            "type": 2,
+            "relation_id": 119,
+            "author": "好友作者119",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 20,
+            "type": 2,
+            "relation_id": 118,
+            "author": "好友作者118",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 19,
+            "type": 2,
+            "relation_id": 117,
+            "author": "好友作者117",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 18,
+            "type": 2,
+            "relation_id": 116,
+            "author": "好友作者116",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 17,
+            "type": 2,
+            "relation_id": 115,
+            "author": "好友作者115",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 16,
+            "type": 2,
+            "relation_id": 114,
+            "author": "好友作者114",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 15,
+            "type": 2,
+            "relation_id": 113,
+            "author": "好友作者113",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 14,
+            "type": 2,
+            "relation_id": 112,
+            "author": "好友作者112",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 13,
+            "type": 2,
+            "relation_id": 111,
+            "author": "好友作者111",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 12,
+            "type": 2,
+            "relation_id": 110,
+            "author": "好友作者110",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 11,
+            "type": 2,
+            "relation_id": 109,
+            "author": "好友作者109",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 10,
+            "type": 2,
+            "relation_id": 108,
+            "author": "好友作者108",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 9,
+            "type": 2,
+            "relation_id": 107,
+            "author": "好友作者107",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 8,
+            "type": 2,
+            "relation_id": 106,
+            "author": "好友作者106",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 7,
+            "type": 2,
+            "relation_id": 105,
+            "author": "好友作者105",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 6,
+            "type": 2,
+            "relation_id": 104,
+            "author": "好友作者104",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 5,
+            "type": 2,
+            "relation_id": 103,
+            "author": "好友作者103",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 4,
+            "type": 2,
+            "relation_id": 102,
+            "author": "好友作者102",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/user_friend",
+        "query": "?page=2&limit=20",
+        "status": 200,
+        "browserStatus": 503,
+        "authors": [
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          },
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/user_friend",
+        "query": "?page=2&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          },
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/follow",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          },
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "POST",
+        "viewer": 11,
+        "path": "/api/community/set_interest/22",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "status": 0
+        },
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+          "after_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "read_unchanged": false
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/follow",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "after_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/fans",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 1
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "after_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "POST",
+        "viewer": 11,
+        "path": "/api/community/set_interest/22",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "status": 1
+        },
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "4262635b0bf498490c87d9a1a4fef5dd0127bb34231802ad25fe4c31e1eca025",
+          "after_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "read_unchanged": false
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/fans",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "after_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/recommend_list",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 24,
+            "type": 0,
+            "relation_id": 0,
+            "author": "规范平台作者",
+            "status": 1,
+            "fans_num": 100,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 23,
+            "type": 2,
+            "relation_id": 121,
+            "author": "好友作者121",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 22,
+            "type": 2,
+            "relation_id": 120,
+            "author": "好友作者120",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 21,
+            "type": 2,
+            "relation_id": 119,
+            "author": "好友作者119",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 20,
+            "type": 2,
+            "relation_id": 118,
+            "author": "好友作者118",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 19,
+            "type": 2,
+            "relation_id": 117,
+            "author": "好友作者117",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 18,
+            "type": 2,
+            "relation_id": 116,
+            "author": "好友作者116",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 17,
+            "type": 2,
+            "relation_id": 115,
+            "author": "好友作者115",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 16,
+            "type": 2,
+            "relation_id": 114,
+            "author": "好友作者114",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 15,
+            "type": 2,
+            "relation_id": 113,
+            "author": "好友作者113",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 14,
+            "type": 2,
+            "relation_id": 112,
+            "author": "好友作者112",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 13,
+            "type": 2,
+            "relation_id": 111,
+            "author": "好友作者111",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 12,
+            "type": 2,
+            "relation_id": 110,
+            "author": "好友作者110",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 11,
+            "type": 2,
+            "relation_id": 109,
+            "author": "好友作者109",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 10,
+            "type": 2,
+            "relation_id": 108,
+            "author": "好友作者108",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 9,
+            "type": 2,
+            "relation_id": 107,
+            "author": "好友作者107",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 8,
+            "type": 2,
+            "relation_id": 106,
+            "author": "好友作者106",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 7,
+            "type": 2,
+            "relation_id": 105,
+            "author": "好友作者105",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 6,
+            "type": 2,
+            "relation_id": 104,
+            "author": "好友作者104",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 5,
+            "type": 2,
+            "relation_id": 103,
+            "author": "好友作者103",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "after_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "POST",
+        "viewer": 11,
+        "path": "/api/community/set_interest/0",
+        "query": "",
+        "status": 200,
+        "browserStatus": 503,
+        "input": {
+          "status": 1
+        },
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "3457e15a67daf33e497f82aa258aec9a422fdac57d8974232e9262dccce7e06a",
+          "after_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "read_unchanged": false
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/recommend_list",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 23,
+            "type": 2,
+            "relation_id": 121,
+            "author": "好友作者121",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 22,
+            "type": 2,
+            "relation_id": 120,
+            "author": "好友作者120",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 21,
+            "type": 2,
+            "relation_id": 119,
+            "author": "好友作者119",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 20,
+            "type": 2,
+            "relation_id": 118,
+            "author": "好友作者118",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 19,
+            "type": 2,
+            "relation_id": 117,
+            "author": "好友作者117",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 18,
+            "type": 2,
+            "relation_id": 116,
+            "author": "好友作者116",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 17,
+            "type": 2,
+            "relation_id": 115,
+            "author": "好友作者115",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 16,
+            "type": 2,
+            "relation_id": 114,
+            "author": "好友作者114",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 15,
+            "type": 2,
+            "relation_id": 113,
+            "author": "好友作者113",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 14,
+            "type": 2,
+            "relation_id": 112,
+            "author": "好友作者112",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 13,
+            "type": 2,
+            "relation_id": 111,
+            "author": "好友作者111",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 12,
+            "type": 2,
+            "relation_id": 110,
+            "author": "好友作者110",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 11,
+            "type": 2,
+            "relation_id": 109,
+            "author": "好友作者109",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 10,
+            "type": 2,
+            "relation_id": 108,
+            "author": "好友作者108",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 9,
+            "type": 2,
+            "relation_id": 107,
+            "author": "好友作者107",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 8,
+            "type": 2,
+            "relation_id": 106,
+            "author": "好友作者106",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 7,
+            "type": 2,
+            "relation_id": 105,
+            "author": "好友作者105",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 6,
+            "type": 2,
+            "relation_id": 104,
+            "author": "好友作者104",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 5,
+            "type": 2,
+            "relation_id": 103,
+            "author": "好友作者103",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          },
+          {
+            "id": 4,
+            "type": 2,
+            "relation_id": 102,
+            "author": "好友作者102",
+            "status": 1,
+            "fans_num": 0,
+            "is_follow": 0,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "after_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/follow",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 24,
+            "type": 0,
+            "relation_id": 0,
+            "author": "规范平台作者",
+            "status": 1,
+            "fans_num": 101,
+            "is_follow": 1,
+            "is_fans": 0
+          },
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          },
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "after_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "POST",
+        "viewer": 11,
+        "path": "/api/community/set_interest/0",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "input": {
+          "status": 0
+        },
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "ea1f7ef9fc4644ac0d0c37bb7ccbb1381aa6786c28bf63c4341a64a338d543e5",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": false
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/follow_list/follow",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 2,
+            "type": 2,
+            "relation_id": 22,
+            "author": "视频作者22",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          },
+          {
+            "id": 3,
+            "type": 2,
+            "relation_id": 101,
+            "author": "好友作者101",
+            "status": 0,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 0
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/user_info/22",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 11,
+        "path": "/api/community/list",
+        "query": "?page=1&limit=10&relation_id=22&author_type=2&keyword=&order=1",
+        "status": 200,
+        "browserStatus": 200,
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 0,
+        "path": "/api/get_script",
+        "query": "",
+        "status": 200,
+        "browserStatus": 200,
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": true
+        }
+      },
+      {
+        "method": "GET",
+        "viewer": 22,
+        "path": "/api/community/follow_list/fans",
+        "query": "?page=1&limit=20",
+        "status": 200,
+        "browserStatus": 200,
+        "authors": [
+          {
+            "id": 1,
+            "type": 2,
+            "relation_id": 11,
+            "author": "视频作者11",
+            "status": 1,
+            "fans_num": 1,
+            "is_follow": 1,
+            "is_fans": 1
+          }
+        ],
+        "snapshot": {
+          "tables": 14,
+          "sequences": 14,
+          "before_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "after_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+          "read_unchanged": true
+        }
+      }
+    ],
+    "tables": [
+      "community",
+      "community_comment",
+      "community_relevance",
+      "community_topic",
+      "community_user",
+      "store_product",
+      "store_product_log",
+      "system_attachment",
+      "system_attachment_category",
+      "system_config",
+      "system_user_level",
+      "user",
+      "user_friends",
+      "user_relation"
+    ],
+    "writes": [
+      {
+        "target": 22,
+        "status": 0
+      },
+      {
+        "target": 22,
+        "status": 1
+      },
+      {
+        "target": 0,
+        "status": 1
+      },
+      {
+        "target": 0,
+        "status": 0
+      }
+    ],
+    "provider_calls": 0,
+    "console": [
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-21T02:27:12.401Z",
+        "url": "http://127.0.0.1:40751/assets/index-wfzJ4Ii5.js"
+      },
+      {
+        "level": "warn",
+        "message": "[vue-router]: importing from 'vue-router/dist/vue-router.esm-bundler.js' is deprecated. Use 'vue-router' directly.",
+        "timestamp": "2026-10-21T02:29:20.964Z",
+        "url": "http://127.0.0.1:40751/assets/index-wfzJ4Ii5.js"
+      }
+    ],
+    "initial_sha256": "53bfac0cd4d0e236443d94900c6d2ff1b09e3fe1c9231c78e22984b2a9fbbc68",
+    "final_sha256": "aba23f0c5aa56ab224b0a7528b47e756740071988b08434d8a021d995da86c72",
+    "authority": "Actual H5/createApp/JWT and owned native PG16; synthetic social histories, memory R2, navigation chrome and two lost replies only",
+    "extra_acceptance_confirmation_requests": 0,
+    "visibility": "background",
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-community-people-browser-friends.jpg",
+        "sha256": "a9df56b679cadff27bf5e60d7fe0d9df1ac918a0d84d54810d2f76955f3c94d7",
+        "mime_type": "image/jpeg"
+      },
+      {
+        "path": "/tmp/cinashop-community-people-browser-other.jpg",
+        "sha256": "c7bc9f2acf47dc57f8748ce335b6cb315f38c5aac32e17416e18a255cee2258a",
+        "mime_type": "image/jpeg"
+      },
+      {
+        "path": "/tmp/cinashop-community-people-browser-unknown.jpg",
+        "sha256": "b037590f68c76ac129ebadea2e6f55ec0716cc00a234f2d7e9d919cedac3cdec",
+        "mime_type": "image/jpeg"
+      }
+    ]
+  },
+  "cleanup": {
+    "recorded_utc": "2026-10-21T02:29:42.684751+00:00",
+    "instances": [
+      {
+        "label": "native-identities",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-TTZYYt",
+        "fixture_remaining": 0,
+        "pg_ctl_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "log": "/tmp/cinashop-community-people-native-identities.log",
+        "log_sha256": "d305e5991fca64129e2e2a290eafbc08a028552cb9793ce7247edf782cdf0e6a",
+        "preserved_for_diagnostics": true
+      },
+      {
+        "label": "native-identities-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-hKd8DL",
+        "fixture_remaining": 0,
+        "pg_ctl_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "log": "/tmp/cinashop-community-people-native-identities-final.log",
+        "log_sha256": "3d22d92abf33101647d644d8a72ecfc1d51124cc72f96b319f208e1791a01d44",
+        "preserved_for_diagnostics": true
+      },
+      {
+        "label": "browser",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-tesnFA",
+        "fixture_remaining": 0,
+        "pg_ctl_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "log": "/tmp/cinashop-community-people-browser.log",
+        "log_sha256": "c95b1b7fb41af7dc9634c6192f09e3dc2a6e7f9044687992b6de07d34fa302d7",
+        "preserved_for_diagnostics": true
+      },
+      {
+        "label": "browser-final",
+        "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-qJpfBt",
+        "fixture_remaining": 0,
+        "pg_ctl_exit": 3,
+        "pg_ctl_output": "pg_ctl: no server running",
+        "log": "/tmp/cinashop-community-people-browser-final.log",
+        "log_sha256": "79fef4ff7d871a9a2fcf75145a6217aa4bc7c4a1cf2bdb3b51ea626e0ab5fbe3",
+        "preserved_for_diagnostics": true
+      }
+    ],
+    "owned_instances": 4,
+    "all_stopped": true,
+    "unrelated_instances_touched": false,
+    "data_or_logs_removed": false
+  },
+  "historical_document_preservation": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "before_sha256": "5e6c2b6eb26ee89f850aff7179dba969676e71de6c71021d9b24f3b0f57c386c",
+      "after_sha256": "c07c3844af63e734a02c999738fc5d8b8e0cdad33a6efcad2ebdef4f00cd6a8a",
+      "original_remainder_sha256": "f4e683a4519e1fcf8843e840a4575c34bf033dc3ceccc57001b51da7de537ae4",
+      "original_remainder_is_exact_suffix": true,
+      "checkbox_lines": 88,
+      "checkbox_lines_unchanged": true
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "before_sha256": "557bf1fed3444495c2eb22a8af217cbfbf4de1fc392266f47d13c951c398aa9f",
+      "after_sha256": "f208b683756fb8222d6aebee397e67049b932c6c803f51c1d6ef7de1a0603a88",
+      "original_remainder_sha256": "e8dcb7e9655318304d714c9b136418db27c6f3a787692493713bf1be092219cd",
+      "original_remainder_is_exact_suffix": true,
+      "checkbox_lines": 404,
+      "checkbox_lines_unchanged": true
+    }
+  ],
+  "excluded_attempts": [
+    {
+      "label": "h5-candidate",
+      "reason": "superseded duplicate 36-case draft run"
+    },
+    {
+      "label": "h5-final",
+      "reason": "73 focused cases repeated within final complete H5 run; no duplicate count"
+    },
+    {
+      "label": "unit-core",
+      "reason": "126 cases repeated after final CSS/dependency changes"
+    },
+    {
+      "label": "native-identities",
+      "reason": "11/12 passed; new legacy-scenario harness originally targeted empty coordinator public schema, corrected to the owned public fixture"
+    },
+    {
+      "label": "browser",
+      "reason": "15 stages passed on candidate; screenshot exposed inherited button pseudo-element placement, CSS corrected and complete browser rerun"
+    },
+    {
+      "label": "h5-ci-final",
+      "reason": "launcher had no npm on PATH; no test executed, fixed by using the verified npm runtime"
+    },
+    {
+      "label": "h5-ci-complete",
+      "reason": "1375 toolchain cases and all three compiler exits passed, but real artifact guard caught missing workspace.wxml; fixed the registered page source composition and reran from clean generated output directories; no duplicate count"
+    },
+    {
+      "label": "dependency-security-initial",
+      "reason": "shared validation lock was read-only in sandbox; no test executed"
+    }
+  ],
+  "boundaries": [
+    "Native Windows editor execution, native Weixin device/runtime execution, real login/device and production R2/providers are not covered",
+    "The fixed video app.vue post-plugin is explicitly Weixin-only; other MP compilers are bypassed and unverified",
+    "UniApp raw npm audit still reports 82 affected package entries; live reviewed-chain gate and six Vite byte/behavior backports pass",
+    "Original PHP source permits some untyped list projections; canonical social identity follows its UID-addressed profile/follow contract and retains existing TS active-account visibility and account fallback",
+    "General community comments/replies remain a separate unimplemented migration slice",
+    "Overall PHP-to-TypeScript migration remains active; no merge or deployment"
+  ],
+  "publishing": {
+    "draft": true,
+    "base": "codex/community-author-workspace",
+    "base_pr": "https://github.com/cinagroup/cinashop/pull/141",
+    "head": "codex/community-people-lifecycle",
+    "new_head_ci": "must be checked after pushing the immutable new commit"
+  },
+  "browser_connection_observation": {
+    "connected_browsers": [
+      {
+        "id": "1",
+        "name": "Codex MCP Apps",
+        "type": "mcpapps"
+      },
+      {
+        "id": "2",
+        "name": "Codex In-app Browser",
+        "type": "iab"
+      }
+    ],
+    "external_browser_extension_connection": "not listed; installed state unknown",
+    "acceptance_browser": "2",
+    "visibility": "background",
+    "additional_user_confirmation_requests": 0,
+    "recorded_utc": "2026-10-21T02:24:18.812537+00:00",
+    "observation_window": "Current root turn, before final browser acceptance"
+  },
+  "dependency_snapshot_resolution": "Agent dependency metadata pending list was recorded before root final checks; h5-ci-repaired, other-fronts and browser-final resolve the corresponding local checks only. Immutable-head CI and native Windows remain separate.",
+  "parent_ci_snapshot": {
+    "jobs": [
+      {
+        "id": 118984079704,
+        "name": "workerd runtime tests",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Audit production dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run Workers runtime tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          }
+        ]
+      },
+      {
+        "id": 118984079825,
+        "name": "Worker type, unit, schema and route execution (shard 1/2)",
+        "status": "in_progress",
+        "conclusion": null,
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Audit production dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Install locked Admin dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Install locked Supplier dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Install locked Kefu dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Install locked Uni dependencies for customer SFC unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run both TypeScript configurations",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Begin isolated native child diagnostic capture",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Run Worker unit tests",
+            "status": "in_progress",
+            "conclusion": null,
+            "number": 14
+          },
+          {
+            "name": "Audit native child diagnostics including incomplete failed runs",
+            "status": "pending",
+            "conclusion": null,
+            "number": 15
+          },
+          {
+            "name": "Preserve unit shard diagnostics even on failure",
+            "status": "pending",
+            "conclusion": null,
+            "number": 16
+          },
+          {
+            "name": "Verify exact executed unit shard coverage",
+            "status": "pending",
+            "conclusion": null,
+            "number": 17
+          },
+          {
+            "name": "Audit production observability contract",
+            "status": "pending",
+            "conclusion": null,
+            "number": 18
+          },
+          {
+            "name": "Audit legacy-to-PostgreSQL schema drift",
+            "status": "pending",
+            "conclusion": null,
+            "number": 19
+          },
+          {
+            "name": "Audit legacy-to-Worker route parity",
+            "status": "pending",
+            "conclusion": null,
+            "number": 20
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "pending",
+            "conclusion": null,
+            "number": 38
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "pending",
+            "conclusion": null,
+            "number": 39
+          },
+          {
+            "name": "Stop containers",
+            "status": "pending",
+            "conclusion": null,
+            "number": 40
+          }
+        ]
+      },
+      {
+        "id": 118984079896,
+        "name": "Isolated PostgreSQL 16 migration catalog execution",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Execute isolated PostgreSQL 16 ORM and migration catalog audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Verify NOT VALID generator semantics on isolated PostgreSQL 16",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Verify sequence generator semantics on isolated PostgreSQL 16",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Measure FK statistics candidates on isolated PostgreSQL 16",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Verify formal shipping indexes and measure isolated read/write costs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Preserve complete synthetic shipping plans",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          }
+        ]
+      },
+      {
+        "id": 118984079898,
+        "name": "Worker type, unit, schema and route execution (shard 2/2)",
+        "status": "in_progress",
+        "conclusion": null,
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Audit production dependencies",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 7
+          },
+          {
+            "name": "Install locked Admin dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Install locked Supplier dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Install locked Kefu dependencies for cross-package unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Install locked Uni dependencies for customer SFC unit tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run both TypeScript configurations",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 12
+          },
+          {
+            "name": "Begin isolated native child diagnostic capture",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Run Worker unit tests",
+            "status": "in_progress",
+            "conclusion": null,
+            "number": 14
+          },
+          {
+            "name": "Audit native child diagnostics including incomplete failed runs",
+            "status": "pending",
+            "conclusion": null,
+            "number": 15
+          },
+          {
+            "name": "Preserve unit shard diagnostics even on failure",
+            "status": "pending",
+            "conclusion": null,
+            "number": 16
+          },
+          {
+            "name": "Verify exact executed unit shard coverage",
+            "status": "pending",
+            "conclusion": null,
+            "number": 17
+          },
+          {
+            "name": "Audit production observability contract",
+            "status": "pending",
+            "conclusion": null,
+            "number": 18
+          },
+          {
+            "name": "Audit legacy-to-PostgreSQL schema drift",
+            "status": "pending",
+            "conclusion": null,
+            "number": 19
+          },
+          {
+            "name": "Audit legacy-to-Worker route parity",
+            "status": "pending",
+            "conclusion": null,
+            "number": 20
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "pending",
+            "conclusion": null,
+            "number": 38
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "pending",
+            "conclusion": null,
+            "number": 39
+          },
+          {
+            "name": "Stop containers",
+            "status": "pending",
+            "conclusion": null,
+            "number": 40
+          }
+        ]
+      },
+      {
+        "id": 118984079961,
+        "name": "Supplier build",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run type, test and build contract",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Verify frontend dependency security regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Audit complete Kefu and PC dependency trees",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Verify current ECharts tooltip paths",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      },
+      {
+        "id": 118984079994,
+        "name": "Kefu build",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run type, test and build contract",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Verify frontend dependency security regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Audit complete Kefu and PC dependency trees",
+            "status": "completed",
+            "conclusion": "failure",
+            "number": 8
+          },
+          {
+            "name": "Verify current ECharts tooltip paths",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 9
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 17
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      },
+      {
+        "id": 118984080013,
+        "name": "UniApp build",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run type, test and build contract",
+            "status": "completed",
+            "conclusion": "failure",
+            "number": 6
+          },
+          {
+            "name": "Verify frontend dependency security regressions",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 7
+          },
+          {
+            "name": "Audit complete Kefu and PC dependency trees",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Verify current ECharts tooltip paths",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 9
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 17
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      },
+      {
+        "id": 118984080021,
+        "name": "Admin build",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run type, test and build contract",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Verify frontend dependency security regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Audit complete Kefu and PC dependency trees",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Verify current ECharts tooltip paths",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      },
+      {
+        "id": 118984080069,
+        "name": "PC build",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Set up Node.js",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Verify pinned Node and npm",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install locked dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run type, test and build contract",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Verify frontend dependency security regressions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Audit complete Kefu and PC dependency trees",
+            "status": "completed",
+            "conclusion": "failure",
+            "number": 8
+          },
+          {
+            "name": "Verify current ECharts tooltip paths",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 9
+          },
+          {
+            "name": "Post Set up Node.js",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 17
+          },
+          {
+            "name": "Post Check out repository",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          }
+        ]
+      },
+      {
+        "id": 118984080118,
+        "name": "Repository secret scan",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 39527058341,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Check out full repository history",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Install checksum-pinned Gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Scan current and historical commits with pinned Gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Check out full repository history",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      }
+    ],
+    "recorded_utc": "2026-10-21T02:17:14.789972+00:00",
+    "commit": "10506fcb3a3ae39ca1aab3dcce5c95c608b3e18f",
+    "run_id": 39527058341
+  }
+}

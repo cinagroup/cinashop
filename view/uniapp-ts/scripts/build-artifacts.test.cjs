@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { readFileSync, statSync } = require("node:fs");
-const { resolve } = require("node:path");
+const { dirname, resolve, sep } = require("node:path");
 const test = require("node:test");
 
 function artifact(path) {
@@ -30,6 +30,30 @@ test("Weixin build preserves the registered pages and produces page resources", 
   for (const page of pages) {
     artifact(`dist/build/mp-weixin/${page}.js`);
     artifact(`dist/build/mp-weixin/${page}.wxml`);
+  }
+});
+
+test("registered community pages bind their actual template components to compiled Weixin resources", () => {
+  const root = resolve("dist/build/mp-weixin");
+  for (const [page, tags] of [
+    ["pages/discover/workspace", ["theme-page"]],
+    ["pages/discover/discoverVideo/app", ["theme-page", "community-deep-link-feed"]],
+  ]) {
+    assert.ok(pages.includes(page), page);
+    const jsonPath = resolve(root, page + ".json"), json = JSON.parse(artifact(jsonPath));
+    const template = artifact(resolve(root, page + ".wxml"));
+    for (const tag of tags) {
+      assert.match(template, new RegExp("<" + tag + "(?:\\s|>)"), page + ": " + tag);
+      const registered = json.usingComponents?.[tag];
+      assert.equal(typeof registered, "string", page + ": " + tag);
+      const component = resolve(dirname(jsonPath), registered);
+      assert.ok(component.startsWith(root + sep), page + ": " + registered);
+      assert.equal(component, resolve(root, tag === "theme-page"
+        ? "components/ThemePage" : "components/community/CommunityDeepLinkFeed"), page + ": " + tag);
+      assert.match(artifact(component + ".js"), /\.createComponent\(/, component);
+      artifact(component + ".wxml");
+      assert.equal(JSON.parse(artifact(component + ".json")).component, true, component);
+    }
   }
 });
 

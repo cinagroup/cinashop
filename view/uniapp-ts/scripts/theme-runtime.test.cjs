@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript'),vue=require('vue'),pinia=require('pinia'),sfc=require('@vue/compiler-sfc');
 const {runtime,tick,deferred}=require('./uni-store-runtime.cjs');
+const {createCommunityPageAliasPlugin}=require('./community-page-alias.cjs');
 const root=path.resolve(__dirname,'../..'),uniRoot=path.resolve(__dirname,'../src'),adminRoot=path.resolve(__dirname,'../../admin-ts/src');
 const native=['view','text','image','button','scroll-view','swiper','swiper-item','navigator','rich-text'];
 function loader({uni={},gateway={}}={}){const cache=new Map();function load(file){file=path.resolve(file);if(!path.extname(file))file+='.ts';if(cache.has(file))return cache.get(file);const exports={};cache.set(file,exports);let source=fs.readFileSync(file,'utf8');if(file.endsWith('.vue'))source=sfc.compileScript(sfc.parse(source,{filename:file}).descriptor,{id:'actual-theme-runtime'}).content;
@@ -42,13 +43,15 @@ test('all current registered pages use an explicit real crossplatform ThemePage 
  const delivery=fs.readFileSync(path.join(uniRoot,'components/deliveryWorkbench/DeliveryShell.vue'),'utf8');
  const customer=fs.readFileSync(path.join(uniRoot,'components/customerWork/CustomerWorkShell.vue'),'utf8');
  const delegatedSources={'pages/discover/index.vue':fs.readFileSync(path.join(uniRoot,'pages/discover/index.vue'),'utf8')};
- for(const page of pages){const file=path.join(uniRoot,page+'.vue'),text=fs.readFileSync(file,'utf8'),rendered=gates.resolveRegisteredThemePageSource(text,page+'.vue',delegatedSources);assert.notEqual(rendered,null,page);const parsed=sfc.parse(rendered,{filename:file});assert.deepEqual(parsed.errors,[],page);assert.ok(parsed.descriptor.template,page);const compiled=sfc.compileTemplate({source:parsed.descriptor.template.content,filename:file,id:'all-current-theme-hosts'});assert.deepEqual(compiled.errors,[],page);assert.ok(gates.hasRegisteredThemeHost(text,merchant,delivery,customer,page+'.vue',delegatedSources),page);}
+ for(const page of pages){const file=path.join(uniRoot,page+'.vue'),text=fs.readFileSync(file,'utf8'),rendered=gates.resolveRegisteredThemePageSource(text,page+'.vue',delegatedSources);assert.notEqual(rendered,null,page);const actual=createCommunityPageAliasPlugin(uniRoot).transform.call({addWatchFile(){}},text,file)?.code??text;assert.equal(actual,rendered,page);const parsed=sfc.parse(actual,{filename:file});assert.deepEqual(parsed.errors,[],page);assert.ok(parsed.descriptor.template,page);const compiled=sfc.compileTemplate({source:parsed.descriptor.template.content,filename:file,id:'all-current-theme-hosts'});assert.deepEqual(compiled.errors,[],page);assert.ok(gates.hasRegisteredThemeHost(text,merchant,delivery,customer,page+'.vue',delegatedSources),page);}
  for(const [prefix,shell]of [['pages/merchant/',merchant],['pages/delivery/',delivery],['pages/customer-work/',customer]])for(const page of pages.filter(value=>value.startsWith(prefix))){const detached=shell.replace('<slot />','<view>Detached empty wrapper</view>');assert.notEqual(detached,shell);assert.equal(gates.hasRegisteredThemeHost(fs.readFileSync(path.join(uniRoot,page+'.vue'),'utf8'),prefix==='pages/merchant/'?detached:merchant,prefix==='pages/delivery/'?detached:delivery,prefix==='pages/customer-work/'?detached:customer,page+'.vue',delegatedSources),false,page);}
  const r=publicHarness(()=>pub(1));try{await r.store.refresh();const appPinia=pinia.getActivePinia();const html=await renderComponent(path.join(uniRoot,'components/ThemePage.vue'),r.load,{},appPinia);assert.match(html,/--view-theme:\s*#1DB0FC/);assert.match(html,/--view-priceColor:\s*#FD502F/);}finally{r.stop();}});
 test('reviewed script-only page aliases compile the actual delegated template and require its real ThemePage host',()=>{
  const gates=themeHostGates(),page='pages/discover/workspace.vue',alias=fs.readFileSync(path.join(uniRoot,page),'utf8'),target=fs.readFileSync(path.join(uniRoot,'pages/discover/index.vue'),'utf8'),sources={'pages/discover/index.vue':target};
  assert.equal(gates.resolveRegisteredThemePageSource(alias,page,sources),target);
- const descriptor=sfc.parse(gates.resolveRegisteredThemePageSource(alias,page,sources),{filename:page}).descriptor;
+ const actual=createCommunityPageAliasPlugin(uniRoot).transform.call({addWatchFile(){}},alias,path.join(uniRoot,page));
+ assert.equal(actual.code,gates.resolveRegisteredThemePageSource(alias,page,sources));
+ const descriptor=sfc.parse(actual.code,{filename:page}).descriptor;
  assert.deepEqual(sfc.compileTemplate({source:descriptor.template.content,filename:page,id:'delegated-community-theme-host'}).errors,[]);
  assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,sources),true);
  assert.equal(gates.hasRegisteredThemeHost(alias,'','','',page,{}),false);

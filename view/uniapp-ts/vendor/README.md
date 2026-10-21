@@ -19,7 +19,7 @@ should replace this derived archive and retire its backport tests.
 
 - Official archive: <https://registry.npmjs.org/vite/-/vite-5.4.21.tgz>
 - Source SRI: `sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==`
-- Derived SRI: `sha512-S4r0FWY2V84PjJ/mLvZlKMJGMNdh7X2uHZFIYOARsnJaKtco/eeYywiNTO6wDjxCg9e83hFWt6oXcKQFCZnQNA==`
+- Derived SRI: `sha512-L7iUZlQFqFVDBsGsIh0Rsopt+AY+6LqEYkP4kUy20t6Gp4TjVFsqaRLWrbw1zQtjBrVnFYQQQMpRG0fBbQdGSg==`
 - `vite-5.4.21-source.json` pins all 31 source files, modes, SHA-256 content and
   canonical tar headers. The archive still contains those same 31 files.
 - Only `dist/node/chunks/dep-BK3b2jBa.js` and `package.json` change. Every other file,
@@ -166,18 +166,18 @@ constructor (the constructor itself does not download or install anything):
 ```sh
 node scripts/build-vite-safety-backport.cjs /path/to/vite-5.4.21.tgz
 npm ci
-node --test --test-concurrency=1 scripts/vite-safety-package.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/dev-server-security.test.cjs
+node --test --test-concurrency=1 scripts/vite-safety-package.test.cjs scripts/vite-editor-security.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/dev-server-security.test.cjs
 ```
 
 The constructor first checks source SRI and every file contract, then requires
 each exact old chunk fragment once. It verifies the result by reversing only the
-three security patches, two official compatibility fragments and manifest
+six security patches, two official compatibility fragments and manifest
 changes, then checking all upstream bytes and headers.
 Unsafe tar paths, links, duplicates, malformed archives, extra/missing files,
 drift and tampering are rejected. Tar output retains source order and headers
 (updating only sizes/checksums); gzip uses fixed stored DEFLATE blocks, zero time
 and OS 255 so output bytes do not depend on zlib version or host OS. This makes
-the archive larger (3,308,817 bytes) but deterministic. No extraction is needed.
+the archive larger (3,310,353 bytes) but deterministic. No extraction is needed.
 
 `vite-safety-package.test.cjs` verifies provenance, canonical bytes, tamper
 rejection, installed files, lock SRI and both esbuild chains. Independent real
@@ -186,7 +186,7 @@ aliases and intercepted editor UNC probes; esbuild tests cover build and
 loopback serve behavior. The Windows cases require actual Windows execution;
 Linux execution does not constitute Windows evidence.
 
-## Current advisory boundary
+## 2026-09-27 advisory boundary (historical)
 
 Before changing the lock, official `npm audit --json` on 2026-09-27 reported Vite
 direct advisories `GHSA-4w7w-66w2-5vf9`, `GHSA-v6wh-96g9-6wx3`, and
@@ -207,3 +207,35 @@ Verification must use archive/source proofs and runtime
 regressions alongside audit; do not suppress those advisories or describe the
 whole frontend audit as clean. Other DCloud/runtime dependency findings remain
 outside this Vite/esbuild slice and keep their own checklist gates.
+
+## 2026-10-21 launch-editor 2.14.2 safety increment
+
+The October 20 advisory metadata now includes three more vulnerabilities in the
+bundled editor. Official Vite 6.4.4 fixes them for the PC/Kefu toolchains; this
+DCloud-paired archive retains version 5.4.21 and reversibly ports the following
+published launch-editor 2.14.2 changes into its existing bundled functions:
+
+- [GHSA-587h-7wmj-h5pm](https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm),
+  [commit f13cd83](https://github.com/vitejs/launch-editor/commit/f13cd835d4b8e860b1d4d080ad8a490cc2463679):
+  resolve the filename after stripping position suffixes and before the filesystem probe; preserve an empty filename.
+- [GHSA-r825-w8mm-5pxw](https://github.com/vitejs/launch-editor/security/advisories/GHSA-r825-w8mm-5pxw),
+  [commit f6e6701](https://github.com/vitejs/launch-editor/commit/f6e6701bb1f16f2dd242b321374f1b6cca6eb6d4):
+  absolute resolution also prevents option-like local filenames; explicitly prefix WSL relative filenames with `./`.
+- [GHSA-698v-4r3x-3vcv](https://github.com/vitejs/launch-editor/security/advisories/GHSA-698v-4r3x-3vcv),
+  [commit 3c2f9bf](https://github.com/vitejs/launch-editor/commit/3c2f9bf2ff8fe63d056a8f9cc52d825b66ca79fc):
+  reject Windows arguments containing `%`, CR or LF before executing or terminating an editor.
+  The old bundle reports rejection through its existing wrapped callback instead of throwing from a new helper.
+
+The canonical archive still changes exactly two of the same 31 files; license,
+source contract, DCloud peer and earlier fixes remain. The derived SRI above is
+current. `vite-editor-security.test.cjs` exercises these real bundled functions
+with inert filesystem/process sinks on portable Windows/WSL policy fixtures;
+it does not claim to run CMD, a native Windows editor, or a network share.
+The 2026-10-21 clean install and narrow Linux regressions pass: archive/editor/
+advisory/common guards 27/27, plus existing path, Windows-policy and esbuild
+compatibility/server checks 35/35, with no failures or skips. Native Windows
+cases are not executed by the portable Linux policy checks. Full resource
+builds and immutable-head CI remain separate checks; these narrow results do
+not close TEST-004D3 or its parent. See the [dependency increment](../../common/dependency-security-20261021.md)
+for official package versions, live inventory and receipt boundaries. Earlier
+dated verification paragraphs refer to their earlier candidates.

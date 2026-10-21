@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "lockSemanticSha256": "1b9f11abdb6c1e752b63d989edc3de40860b6cd8153bad556e9f1761fe6605c7",
-  "reviewedReceipt": "2026-10-09 npm-audit-final-candidate.json; affected package entries, not independent vulnerabilities",
+  "lockSemanticSha256": "33f137aab5dd51a78c25ce5be5c73f4920ab9a166bb0c9c964ddf87d5f953609",
+  "reviewedReceipt": "2026-10-21 official npm package-lock-only receipt: 82 affected package entries; six exact Vite source backports, official follow-redirects1.16.1; runtime verification queued separately",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -173,6 +173,27 @@
       "severity": "high",
       "range": "<3.5.42",
       "chain": "vue-ssr"
+    },
+    "1242622": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+      "severity": "moderate",
+      "range": "<=6.4.3",
+      "chain": "vite-toolchain"
+    },
+    "1242651": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+      "severity": "moderate",
+      "range": "<=6.4.3",
+      "chain": "vite-toolchain"
+    },
+    "1242658": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+      "severity": "high",
+      "range": "<=6.4.3",
+      "chain": "vite-toolchain"
     }
   },
   "entries": {
@@ -1840,7 +1861,7 @@
     "vite": {
       "severity": "high",
       "isDirect": true,
-      "range": "<=6.4.2",
+      "range": "<=6.4.3",
       "nodes": [
         "node_modules/vite"
       ],
@@ -1848,7 +1869,10 @@
       "advisorySources": [
         1116229,
         1120784,
-        1123525
+        1123525,
+        1242622,
+        1242651,
+        1242658
       ],
       "effects": [
         "@dcloudio/vite-plugin-uni",
@@ -1915,6 +1939,14 @@
     "1241210": {
       "package": "proxy-addr",
       "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h"
+    },
+    "1242604": {
+      "package": "follow-redirects",
+      "url": "https://github.com/advisories/GHSA-q3jh-wrc6-jgq8"
+    },
+    "1242605": {
+      "package": "follow-redirects",
+      "url": "https://github.com/advisories/GHSA-8r9p-f939-6h3c"
     }
   }
 }

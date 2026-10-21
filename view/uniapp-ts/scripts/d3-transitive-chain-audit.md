@@ -1,5 +1,47 @@
 # TEST-004D3 dependency boundary
 
+## 2026-10-21 launch-editor and redirect increment
+
+This section supersedes the current-inventory numbers in the dated sections
+below without changing their historical receipts. Newly published official
+launch-editor advisories affect the bundled Vite editor; follow-redirects
+1.16.0 also receives two new credential-stripping advisories. The
+[dependency increment](../../common/dependency-security-20261021.md) links the
+five primary advisories, exact maintainer commits, official registry manifests
+and installed archive SRIs.
+
+PC/Kefu now use official Vite 6.4.4. PC/UniApp use official follow-redirects
+1.16.1. UniApp preserves its DCloud-paired Vite 5.4.21 identity and peer contract,
+adding three exact reversible launch-editor 2.14.2 fragments to the existing
+archive proof. The constructor continues to verify all 31 original files and
+permits only its bundled chunk and manifest to change. Six direct Vite
+version-range alerts remain, each linked by the gate regression to one exact
+security patch; this is not an upstream-supported Vite 5 release.
+
+The current official lock-only report has **82 affected package entries**
+(3 low, 17 moderate, 62 high, 0 critical), **26 direct advisory objects** and
+**25 distinct GHSA URLs** across the same eight reviewed chains. npm graph
+counts are not counts of independent vulnerabilities or application exploits.
+The gate's semantic lock SHA-256 is now
+`33f137aab5dd51a78c25ce5be5c73f4920ab9a166bb0c9c964ddf87d5f953609`.
+All older entry fingerprints remain checked. The three new Vite source IDs
+1242622/1242651/1242658 are attached to the existing Vite scope. Resolved
+follow-redirects sources 1242604/1242605 are forbidden, bringing that list to
+eleven. Unknown sources/paths/edges still fail; the gate implementation is
+unchanged. No current optional-chain condition or historical partial gate has
+been marked complete.
+
+The clean install, 27 archive/editor/D3/common tests, 35 existing Vite/esbuild
+regressions and live D3 gate pass locally with no test failures or skips. The
+live gate reports 82 entries, 26 direct objects, 25 URLs and 8 chains. The first
+sandbox attempt failed before executing tests because the shared validation
+lock was read-only; the authorized serial-wrapper retry passed. Logs and
+official metadata remain local at `/tmp/cinashop-dependency-ci105/`, including
+the failed setup candidate. Portable Windows/WSL editor fixtures do not verify
+native Windows shell/editor execution. Full resource builds, graph audits and
+immutable-head CI still require their own coordinated results. TEST-004D3 and
+the parent release/device boundaries remain open.
+
 ## 2026-10-09 merged advisory inventory and exact-head CI
 
 This section supersedes the 2026-10-07 point-in-time inventory below. It compares the six-end published baseline `main@2e1bda25` with the lock update in [PR #67](https://github.com/cinagroup/cinashop/pull/67), exact head `9e567b49`, merged afterward as `main@1578baba`. The [exact-head Linux CI](https://github.com/cinagroup/cinashop/actions/runs/37891093983) passed 11/11. The inventory covers the configured H5, Weixin and App resource builds and their installed development/compiler dependencies. It does not establish safety for native APK/IPA containers, actual Weixin/App devices and channels, manually enabled SSR, encrypted cloud compilation, or remote automator debugging. The DCloud-pinned and optional chains below still need mode-specific review, so TEST-004D3 and its parent remain open. The PR merge occurred after the six-end release and does not change that release receipt.

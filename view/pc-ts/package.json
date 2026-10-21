@@ -25,12 +25,13 @@
     "@types/qrcode": "^1.5.5",
     "@vitejs/plugin-vue": "^5.2.1",
     "typescript": "^5.7.2",
-    "vite": "^6.0.3",
+    "vite": "^6.4.4",
     "vue-tsc": "^2.1.10"
   },
   "overrides": {
     "source-map-js": "1.2.2",
     "@vue/compiler-dom": "3.5.42",
-    "@vue/shared": "3.5.42"
+    "@vue/shared": "3.5.42",
+    "follow-redirects": "1.16.1"
   }
 }

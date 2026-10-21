@@ -1,7 +1,20 @@
+export type CommunityPeopleTab = "friend" | "follow" | "fans" | "recommend";
+
+/** A legacy numeric type selects a list; it never selects another actor. */
+export function parseCommunityPeopleTab(query: Readonly<Record<string, unknown>> = {}): CommunityPeopleTab | null {
+  const tab = query.tab, type = query.type;
+  if (tab !== undefined && type !== undefined) return null;
+  if (tab !== undefined) return typeof tab === "string" && ["friend", "follow", "fans", "recommend"].includes(tab)
+    ? tab as CommunityPeopleTab : null;
+  if (type !== undefined) return type === "0" ? "follow" : type === "1" ? "friend" : type === "2" ? "fans" : null;
+  return "friend";
+}
+
 /** Keep author identities distinct from post identities in legacy links. */
 export function resolveCommunityPageRoute(path: string, query: string): string | null {
   const author = path === "/pages/discover/discoverUser/index";
-  if (!author && path !== "/pages/discover/discoverCreate/index") return null;
+  const people = path === "/pages/discover/discoverFollow/index";
+  if (!author && !people && path !== "/pages/discover/discoverCreate/index") return null;
   if (query.length > 2048) return "";
   const values = new Map<string, string>();
   try {
@@ -11,6 +24,10 @@ export function resolveCommunityPageRoute(path: string, query: string): string |
       values.set(key, decodeURIComponent(offset < 0 ? "" : part.slice(offset + 1)));
     }
   } catch { return ""; }
+  if (people) {
+    const tab = parseCommunityPeopleTab(Object.fromEntries(values));
+    return tab === null ? "" : `/pages/discover/people?tab=${tab}`;
+  }
   const id = values.get("id"), topic = values.get("topic_id");
   const valid = (value: string, zero = false) => (zero ? /^(0|[1-9]\d{0,9})$/ : /^[1-9]\d{0,9}$/).test(value)
     && Number(value) <= 2147483647;

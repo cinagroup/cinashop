@@ -504,7 +504,10 @@ export function hasLegacyThemePresets(source: string): boolean {
 }
 
 /** Resolve the one reviewed script-only page alias to its actual SFC source.
- * Unknown paths, module indirection and missing/cyclic targets fail closed. */
+ * Vite's community-page-alias pre-transform composes this same complete source
+ * at the registered page ID before DCloud compiles it; theme-runtime checks the
+ * real transform result against this gate. Unknown paths, module indirection
+ * and missing/cyclic targets fail closed. */
 export function resolveRegisteredThemePageSource(
   pageSource: string,
   pagePath = "",

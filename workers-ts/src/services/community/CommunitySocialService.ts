@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, or, sql, type SQL } from "drizzle-orm";
 import {
   community,
   communityRelevance,
@@ -65,6 +65,23 @@ function activeAccount(account: { status: number; isDel: number } | undefined): 
 async function executeRows<T>(tx: DbClient, query: SQL): Promise<T[]> {
   const result = await tx.execute(query);
   return Array.from(result as unknown as Iterable<T>);
+}
+
+// Social routes accept a numeric platform/user ID, not a typed content author.
+// Apply this before pagination so unrelated or unavailable authors cannot take
+// a page slot that would otherwise hide a valid account on a later page.
+function socialAuthorExists(id: SQL): SQL {
+  return sql`(
+    (${id} = 0 AND EXISTS (
+      SELECT 1 FROM community_user platform_profile
+      WHERE platform_profile.type = 0 AND platform_profile.relation_id = 0
+        AND platform_profile.is_del = 0
+    )) OR (${id} > 0 AND EXISTS (
+      SELECT 1 FROM "user" account
+      WHERE account.uid = ${id}
+        AND account.status = 1 AND account.is_del = 0
+    ))
+  )`;
 }
 
 export class CommunitySocialService {
@@ -206,6 +223,7 @@ export class CommunitySocialService {
           SELECT right_id::int AS relation_id
           FROM community_relevance
           WHERE left_id = ${uid} AND type = ${COMMUNITY_INTEREST}
+            AND ${socialAuthorExists(sql`right_id`)}
           GROUP BY right_id
           ORDER BY max(id) DESC
           LIMIT ${paging.limit} OFFSET ${paging.offset}
@@ -215,6 +233,7 @@ export class CommunitySocialService {
         SELECT left_id::int AS relation_id
         FROM community_relevance
         WHERE right_id = ${uid} AND type = ${COMMUNITY_INTEREST}
+          AND ${socialAuthorExists(sql`left_id`)}
         GROUP BY left_id
         ORDER BY max(id) DESC
         LIMIT ${paging.limit} OFFSET ${paging.offset}
@@ -225,35 +244,46 @@ export class CommunitySocialService {
 
   async friendList(uid: number, page: unknown, limit: unknown) {
     const paging = pagination(page, limit);
-    const relations = await this.container.db
-      .select({ id: userFriends.id, uid: userFriends.uid, friendsUid: userFriends.friendsUid })
-      .from(userFriends)
-      .where(or(eq(userFriends.uid, uid), eq(userFriends.friendsUid, uid)))
-      .orderBy(desc(userFriends.id));
-    const ids = [...new Set(relations
-      .map((row) => row.uid === uid ? row.friendsUid : row.uid)
-      .filter((value) => value > 0 && value !== uid))]
-      .slice(paging.offset, paging.offset + paging.limit);
-    return this.projectRelations(uid, ids);
+    const rows = await withTx(this.container, async (tx) => executeRows<{ relation_id: number }>(tx, sql`
+      WITH peers AS (
+        SELECT CASE WHEN uid = ${uid} THEN friends_uid ELSE uid END AS relation_id,
+          max(id) AS relation_row_id
+        FROM user_friends
+        WHERE uid = ${uid} OR friends_uid = ${uid}
+        GROUP BY 1
+      ), profiles AS (
+        SELECT DISTINCT ON (cu.relation_id) cu.relation_id, cu.id
+        FROM community_user cu
+        WHERE cu.type = 2 AND cu.relation_id > 0 AND cu.is_del = 0
+          AND cu.relation_id IN (SELECT relation_id FROM peers)
+        ORDER BY cu.relation_id, cu.id DESC
+      )
+      SELECT peer.relation_id::int AS relation_id
+      FROM peers peer LEFT JOIN profiles profile ON profile.relation_id = peer.relation_id
+      WHERE peer.relation_id > 0 AND peer.relation_id <> ${uid}
+        AND ${socialAuthorExists(sql`peer.relation_id`)}
+      ORDER BY profile.id DESC NULLS LAST, peer.relation_row_id DESC, peer.relation_id DESC
+      LIMIT ${paging.limit} OFFSET ${paging.offset}
+    `));
+    return this.projectRelations(uid, rows.map((row) => Number(row.relation_id)));
   }
 
   async recommendations(uid: number, page: unknown, limit: unknown) {
     const paging = pagination(page, limit);
     const rows = await withTx(this.container, async (tx) => executeRows<{ relation_id: number }>(tx, sql`
       WITH candidates AS (
-        SELECT DISTINCT ON (cu.relation_id) cu.relation_id, cu.fans_num, cu.id
+        SELECT DISTINCT ON (cu.relation_id)
+          cu.relation_id, cu.fans_num, cu.id, cu.status, cu.community_num
         FROM community_user cu
-        WHERE cu.status = 1 AND cu.is_del = 0 AND cu.community_num > 0
-          AND (cu.type <> 2 OR EXISTS (
-            SELECT 1 FROM "user" account
-            WHERE account.uid = cu.relation_id
-              AND account.status = 1 AND account.is_del = 0
-          ))
+        WHERE cu.is_del = 0
+          AND ((cu.type = 0 AND cu.relation_id = 0) OR (cu.type = 2 AND cu.relation_id > 0))
         ORDER BY cu.relation_id, cu.id DESC
       )
       SELECT candidate.relation_id::int AS relation_id
       FROM candidates candidate
       WHERE candidate.relation_id <> ${uid}
+        AND candidate.status = 1 AND candidate.community_num > 0
+        AND ${socialAuthorExists(sql`candidate.relation_id`)}
         AND NOT EXISTS (
           SELECT 1 FROM community_relevance cr
           WHERE cr.left_id = ${uid} AND cr.right_id = candidate.relation_id
@@ -274,6 +304,7 @@ export class CommunitySocialService {
         SELECT right_id, max(id) AS relation_row_id
         FROM community_relevance
         WHERE left_id = ${uid} AND type = ${COMMUNITY_INTEREST}
+          AND ${socialAuthorExists(sql`right_id`)}
         GROUP BY right_id
       ), latest_posts AS (
         SELECT DISTINCT ON (type, relation_id) id, type, relation_id
@@ -355,7 +386,13 @@ export class CommunitySocialService {
     const positiveIds = uniqueIds.filter((id) => id > 0);
     const [profiles, accounts, config, flags] = await Promise.all([
       this.container.db.select().from(communityUser)
-        .where(and(inArray(communityUser.relationId, uniqueIds), eq(communityUser.isDel, 0)))
+        .where(and(
+          inArray(communityUser.relationId, uniqueIds), eq(communityUser.isDel, 0),
+          or(
+            and(eq(communityUser.type, 0), eq(communityUser.relationId, 0)),
+            and(eq(communityUser.type, 2), gt(communityUser.relationId, 0)),
+          ),
+        ))
         .orderBy(desc(communityUser.id)),
       positiveIds.length
         ? this.container.db.select({
@@ -373,10 +410,7 @@ export class CommunitySocialService {
       this.socialFlags(viewerUid, uniqueIds),
     ]);
     const profileById = new Map<number, CommunityProfile>();
-    for (const profile of profiles) if (
-      !profileById.has(profile.relationId)
-      && (profile.relationId !== 0 || profile.type === 0)
-    ) {
+    for (const profile of profiles) if (!profileById.has(profile.relationId)) {
       profileById.set(profile.relationId, profile);
     }
     const accountById = new Map(accounts.map((account) => [account.uid, account]));

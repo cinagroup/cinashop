@@ -99,6 +99,22 @@ test("the actual PostCSS fixed-size caller preserves anonymous CSS parsing", () 
   assert.match(parsed.first.source.input.id, /^<input css [\w-]{6}>$/);
 });
 
+if (["cinashop-kefu-ts", "cinashop-pc"].includes(manifest.name)) {
+  test("all locked Vite copies include the official 6.4.4 editor security fixes", () => {
+    assert.equal(manifest.devDependencies.vite, "^6.4.4");
+    const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith("node_modules/vite"));
+    assert.ok(copies.length > 0);
+    for (const [path, entry] of copies) {
+      assert.equal(entry.version, "6.4.4", path);
+      assert.equal(entry.integrity, "sha512-xGjU/SyjeNyb0E4KxXBvYz/1C+3JXuujvf2hXNOtnlcE+58o5ajd9N2/n2VhkiJvpCP2qQasnUpx5PXNeI+p1Q==", path);
+    }
+    assert.equal(require("vite/package.json").version, "6.4.4");
+  });
+}
+if (["cinashop-pc", "cinashop-uniapp"].includes(manifest.name)) {
+  await import("./follow-redirects-security.test.mjs");
+}
+
 if (manifest.name === "cinashop-kefu-ts") {
   await import("./mocker-security.test.mjs");
   test("Kefu has no vulnerable Vitest or nested Vite/esbuild copies", () => {
@@ -106,7 +122,7 @@ if (manifest.name === "cinashop-kefu-ts") {
     assert.equal(lock.packages["node_modules/vitest"].version, "4.1.11");
     for (const [path, pkg] of Object.entries(lock.packages)) {
       const [major, minor, patch] = (pkg.version ?? "").split(".").map(Number);
-      if (path.endsWith("node_modules/vite")) assert.ok(major > 6 || (major === 6 && (minor > 4 || (minor === 4 && patch >= 3))), path);
+      if (path.endsWith("node_modules/vite")) assert.ok(major > 6 || (major === 6 && (minor > 4 || (minor === 4 && patch >= 4))), path);
       if (path.endsWith("node_modules/esbuild")) assert.ok(major > 0 || minor >= 25, path);
     }
   });

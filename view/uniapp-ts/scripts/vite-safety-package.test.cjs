@@ -8,7 +8,7 @@ const contract = JSON.parse(readFileSync(builder.CONTRACT_PATH, 'utf8'));
 const archive = readFileSync(builder.OUTPUT_PATH);
 const entries = builder.readArchive(archive);
 
-test('the canonical archive reverses only three security fixes, official Vite compatibility and the manifest change', () => {
+test('the canonical archive reverses only six security fixes, official Vite compatibility and the manifest change', () => {
   const proof = builder.verifyDerived(archive, contract);
   assert.equal(proof.fileCount, 31);
   assert.deepEqual(proof.changedFiles, ['package.json', builder.CHUNK]);
