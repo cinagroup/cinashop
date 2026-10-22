@@ -13,16 +13,16 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { useThemeStore } from '@/stores/theme';
-import { useDiyCombinationCategory } from '@/composables/useDiyCombinationCategory';
+import { useDiyCombinationCategory, type DiyCombinationActivity } from '@/composables/useDiyCombinationCategory';
 import { normalizeDiyList } from '@/utils/diyListConfig';
 import { safeDiyImageUrl } from '@/utils/diy';
 import DiyListProductCard from './DiyListProductCard.vue';
-const props=withDefaults(defineProps<{id:number;active?:boolean;loadMoreSignal?:number}>(),{active:true,loadMoreSignal:0});
-const state=useDiyCombinationCategory(()=>props.id,()=>props.active),theme=useThemeStore();
+const props=withDefaults(defineProps<{id:number;active?:boolean;activity?:DiyCombinationActivity;loadMoreSignal?:number}>(),{active:true,loadMoreSignal:0});
+const state=useDiyCombinationCategory(()=>props.id,()=>props.activity??props.active),theme=useThemeStore();
 const {children,child,products,columns,loading,error,notice,loaded,more,loadMore,reload,choose,open}=state;
 const cardConfig=computed(()=>normalizeDiyList({name:'goodList',styleConfig:{tabVal:1},typeConfig:{activeValue:3},classList:{classVal:[props.id]},cartConfig:{tabVal:1},checkboxInfo:{type:[0,1,2,3,4,5]}},theme.preset));
 function retry(){if(children.value.length||products.value.length)void loadMore();else void reload();}
-watch(()=>props.loadMoreSignal,()=>{if(props.active)void loadMore();});
+watch(()=>props.loadMoreSignal,()=>{if(!error.value&&(props.activity===undefined?props.active:props.activity==='ready'))void loadMore();});
 </script>
 <style scoped>
 .combination-products{padding:20rpx;min-width:0;box-sizing:border-box;}.combination-children{background:#fff;border-radius:20rpx;margin-bottom:20rpx;}.combination-child-row{display:flex;width:max-content;min-width:100%;padding:20rpx;box-sizing:border-box;gap:24rpx;}.combination-child{display:flex;flex-direction:column;align-items:center;font-size:24rpx;max-width:150rpx;flex-shrink:0;}.combination-child image{width:90rpx;height:90rpx;border-radius:50%;}.combination-child.selected{color:var(--view-theme,#e93323);font-weight:bold;}.combination-product-grid{display:flex;gap:20rpx;align-items:flex-start;}.combination-product-column{flex:1;min-width:0;display:flex;flex-direction:column;gap:20rpx;}.combination-status{padding:24rpx;text-align:center;color:#888;font-size:26rpx;}.combination-more{margin:20rpx;font-size:26rpx;}

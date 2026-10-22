@@ -15,6 +15,7 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean, o
   const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   const visible = () => !disposed && active() && id() !== null;
   const available = computed(() => visible() && phase.value === "ready" && !!page.value && isDiyEnabled(page.value.is_show));
+  const refreshing = computed(() => visible() && loading.value && !!page.value && isDiyEnabled(page.value.is_show));
   function cancelMediaTimer() {
     mediaTimerEpoch++;
     if (mediaTimer !== undefined) { clearTimeout(mediaTimer); mediaTimer = undefined; }
@@ -75,5 +76,5 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean, o
   }, { immediate: true, flush: "sync" });
   function dispose() { if (disposed) return; disposed = true; stop(); invalidate(true); }
   onScopeDispose(dispose);
-  return { page, loading, error, phase, offline, available, reload, refresh, close, dispose };
+  return { page, loading, error, phase, offline, available, refreshing, reload, refresh, close, dispose };
 }

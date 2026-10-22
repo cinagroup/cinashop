@@ -1,0 +1,684 @@
+{
+  "schema": "cinashop.php-ts.diy-homecomb-window-20261022.v1",
+  "recorded_utc": "2026-10-22T10:56:36.934920+00:00",
+  "status": "localcurrentfixandBrowser35complete; publication/exactnewheadCIrecordedafterpush; migrationgoalactive",
+  "base_commit": "dd17414a36b2c986287e09a5c53d342e651f5b8c",
+  "allowed_paths": [
+    "view/uniapp-ts/scripts/diy-carousel-content-runtime.test.cjs",
+    "view/uniapp-ts/src/components/diy/DiyCombinationCategory.vue",
+    "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+    "view/uniapp-ts/src/components/diy/DiyMediaCarousel.vue",
+    "view/uniapp-ts/src/composables/useDiyCombinationCategory.ts",
+    "view/uniapp-ts/src/composables/useDiyPageHost.ts",
+    "view/uniapp-ts/src/pages/diy/detail.vue",
+    "view/uniapp-ts/src/pages/index/index.vue",
+    "workers-ts/scripts/run-local-finance-postgres.mjs",
+    "workers-ts/test/browser/diy-carousel.acceptance.ts",
+    "workers-ts/test/diy-carousel-frontend.test.ts",
+    "workers-ts/vitest.diy-carousel-browser.config.ts",
+    "MIGRATION_AUDIT.md",
+    "MIGRATION_CHECKLIST.md",
+    "MIGRATION_SCHEMA_AUDIT.json",
+    "workers-ts/docs/php-ts-diy-homecomb-window-20261022.md",
+    "workers-ts/audit/php-ts-diy-homecomb-window-20261022.json"
+  ],
+  "protected_baseline": {
+    "tracked": 6683,
+    "baseline_path": "/tmp/cinashop-homecomb-window-baseline.json",
+    "baseline_sha256": "8af1c29c826a2174a8c7411a983c9991931a681ca24ae641209962814a44beaa",
+    "historical_checks_boxes_preserved": true,
+    "all_other_tracked_paths_unchanged": true
+  },
+  "implementation": [
+    {
+      "path": "view/uniapp-ts/scripts/diy-carousel-content-runtime.test.cjs",
+      "sha256": "7c06619f25da4d3a9eece7dce01590f60b08855c8a7a955be4bc83eba8a5cfef"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyCombinationCategory.vue",
+      "sha256": "dfb7f6d8bf325322a98f771584415d1d6c82a7377a65d374159611bfe31fe1a3"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+      "sha256": "6a659a21c37eaf9ff0161e2d86527de87f5c54d857a9825b99ff014b18fe9030"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyMediaCarousel.vue",
+      "sha256": "14dc4a03f942bb652d998a64368eaeba8ac70a0ef84b3dd8bef93a1d05cf6e5e"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDiyCombinationCategory.ts",
+      "sha256": "a8d96c4e77c2d5c95ac25eba5faf8fd199a0b5be3cdbc138b425f2bbb81de4e3"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDiyPageHost.ts",
+      "sha256": "4163d707a7fe716636c3169bb8f8e7069a0bcc1e8c5c0c2d40ee7f5c3d710635"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/diy/detail.vue",
+      "sha256": "8987d62da5665922f7a8a12b1307e22b8541b682a9c375963e76f1d8626e3a09"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/index/index.vue",
+      "sha256": "78d2d841d0688f87d490ff3162a82a8ff4b5602f4294b8ceece8077d3c3fd8df"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "217cd4b7925a7823d35ec7b567c4094578cda0bfe9cbc68c9808f8d3a12790fd"
+    },
+    {
+      "path": "workers-ts/test/browser/diy-carousel.acceptance.ts",
+      "sha256": "11e3871361715ed5ef24acae914d051f8a6c217c53a03f3eab739f604a663403"
+    },
+    {
+      "path": "workers-ts/test/diy-carousel-frontend.test.ts",
+      "sha256": "21736229e3d4a960926385120e46d0c947852a5c97f50bfe70e5cc19479e283c"
+    },
+    {
+      "path": "workers-ts/vitest.diy-carousel-browser.config.ts",
+      "sha256": "ff391616e34ce3ec9a41687e01ae9120b3604c457d81b5619e8f87d5fbc5ecf0"
+    }
+  ],
+  "scope": {
+    "HCC-R1": "H5fixedsearchheader topusesactual --window-top; actualunforcedroot/microclicks accepted. MP/App retainbasefixedruleswithoutH5offset.",
+    "HCC-R2": "H5classificationmask samewindowoffset; actualclose/reopen/hit accepted. Oldmaskclickfailure notclaimed.",
+    "HCC-R3": "Explicitready/refreshing/inactive categorylifecycle retains sameowner/id/authoredposition, revokesoldactions andreadadoption. Onresume atomicallyrefreshN completedsame-scope productpages including main/recommend/label/activityprojection, retainsvalidheights/cursor; shortprefixremovesrevokedrows; duplicate/failedbatchcannotpartiallyadopt; retryworkswithmorefalse andoldDTOactionsareunusable.",
+    "nested": "Previouslyaccepted enablednestedbody remainsmountedthroughancestor/selfrefresh butinactive. Error/closed/empty/hide/owner/config/unload stillwithdraw.",
+    "HCC-R4": "Automaticreach-bottomdoesnotretryanerror. Actualtemplate-boundexplicitretryrestoresvaliddata thennormalpaginationresumes.",
+    "no_expanded_authority": "NoattachmentTTLextension/schema-ticketpersistence/backendpermission/DDL/productionroutechange. get_scriptandAdmin/Supplier/UniApploaderspreserved."
+  },
+  "new_independent_node_cases": 18,
+  "test_count_boundary": "Original46contentcases unchanged; final64=46+18. All14DIY=677 afterR4; 35Browsercheckpoints composeone existingBrowsercase, no35testinflation. FourexistingASTcasesstrengthened, notnewcases. Historical/fullreruns/candidatesnotadded.",
+  "validation": {
+    "r3_broad": {
+      "schema": "cinashop.homecomb-window.final-validation.v1",
+      "status": "passed-homecomb-window-required-validation",
+      "seconds": 1166.411,
+      "error": null,
+      "source_drift": [],
+      "installed_drift": [],
+      "path": "/tmp/cinashop-homecomb-window-r3-validation/result.json",
+      "sha256": "ead89e6ba7a581b0b5157f9aadc74eb4f1615f499e3f3391a2b5c3446c0c9cac"
+    },
+    "final_harness_full_unit_types": {
+      "schema": "cinashop.homecomb-window.r3-final-harness-full-unit-types.v1",
+      "status": "passed-current-full-unit-types-and-shell-syntax",
+      "label": "r3-final-harness",
+      "exit_code": 0,
+      "seconds": 180.827,
+      "error": null,
+      "source_drift": [],
+      "installed_drift": [],
+      "artifact_drift": [],
+      "path": "/tmp/cinashop-homecomb-window-r3-final-harness-result.json",
+      "sha256": "18222f31d4081dedc922911de273bcebf231d8f5181e1bbe689f2ea78e2e6089"
+    },
+    "r4_current": {
+      "schema": "cinashop.homecomb-window.final-validation.v1",
+      "status": "passed-homecomb-window-required-validation",
+      "seconds": 543.574,
+      "error": null,
+      "source_drift": [],
+      "installed_drift": [],
+      "path": "/tmp/cinashop-homecomb-window-r4-validation/result.json",
+      "sha256": "2ac5bff794c24689ebc0cc8ff96b9236341d184cb32b76b5e17daf02693fdf7e"
+    },
+    "r4_steps": [
+      {
+        "mode": "front-typecheck",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/front-typecheck-result.json",
+        "sha256": "aaac5b1cd3d9e572e5ec603d8bc3a8db0894e3d9f8105228314ee9513e595bed",
+        "exit_code": 0,
+        "seconds": 22.866,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/front-typecheck.log",
+        "log_sha256": "43ee284d9ae6c454ef261ce578be3dc98229722b38a35138fabee0d361c2f5a1"
+      },
+      {
+        "mode": "carousel-all-diy-runtime",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/carousel-all-diy-runtime-result.json",
+        "sha256": "390faadad77afe0d194e1cdf36f744419f63b665a19a1e304f1bfad6861c1e26",
+        "exit_code": 0,
+        "seconds": 348.322,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/carousel-all-diy-runtime.log",
+        "log_sha256": "4d47e66aa8f59595fd99df7f5aa916b0c6c14dc6d26f24b2974b4fe4bc6bc5f9"
+      },
+      {
+        "mode": "build-h5",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/build-h5-result.json",
+        "sha256": "9fddfacd3e096b4e500c50a6584992306b535e986cf5129d6665ac796b550da1",
+        "exit_code": 0,
+        "seconds": 30.072,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/build-h5.log",
+        "log_sha256": "e73f460e369b436d784ed8e60b59d2f3d3a5c1352808e27ca8f6c2aa7f24b912"
+      },
+      {
+        "mode": "build-mp-weixin",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/build-mp-weixin-result.json",
+        "sha256": "96bea2cbb486eb950f0e987a6ae4980976dca8e39c46cbc60a607760210e60a4",
+        "exit_code": 0,
+        "seconds": 23.962,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/build-mp-weixin.log",
+        "log_sha256": "21f690b63e3b6819790e4c87066061cf1488bc99d4930929024e1405e332d0d8"
+      },
+      {
+        "mode": "build-app",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/build-app-result.json",
+        "sha256": "8b561c4e0d6be6143cd15df6ce4df5d21795ea6228ef3f9047f245d098dfa1af",
+        "exit_code": 0,
+        "seconds": 28.294,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/build-app.log",
+        "log_sha256": "a9b85b710b9dc4f92ed193fa7cce424afb814b0517c4639af68c30a55f2c9e1a"
+      },
+      {
+        "mode": "test-build-artifacts",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/test-build-artifacts-result.json",
+        "sha256": "f98efdaccedd51df9bac7edcbc6075454a45dbd44c2fbad960728fb9c402ddba",
+        "exit_code": 0,
+        "seconds": 0.909,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/test-build-artifacts.log",
+        "log_sha256": "a2e38e72846a9b9e2c2d3545245a7915fe232aca4e2bec177f379779e1bc2005"
+      },
+      {
+        "mode": "test-runtime-i18n",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/test-runtime-i18n-result.json",
+        "sha256": "8c05da6228fc7f4590ebacb124e9fcc03cfa67b88c602264cc5ea1373e6e1bdf",
+        "exit_code": 0,
+        "seconds": 81.263,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/test-runtime-i18n.log",
+        "log_sha256": "b7d6699e7e6fb625e5bf50dc1e0083f04786b9374aa70036f5db3ac4bf2e74c6"
+      },
+      {
+        "mode": "worker-carousel-ast",
+        "path": "/tmp/cinashop-homecomb-window-r4-validation/worker-carousel-ast-result.json",
+        "sha256": "33c1fb02b85317df3b2ccfd42dd38e5b018c0da1748e9638061e7856a9eb1291",
+        "exit_code": 0,
+        "seconds": 2.099,
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-homecomb-window-r4-validation/worker-carousel-ast.log",
+        "log_sha256": "3f34beafef7b08093e0bd2f2f31ccd357deb5070b2ca921528a5bf894af395a1"
+      }
+    ],
+    "r4_actual_node_counts": {
+      "tests": 677,
+      "suites": 0,
+      "pass": 677,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "retained_full_worker_types": "R3unit/runtime bothcomplete; finalharness change supersededbyrerun originalfullunitconfig (includesactualBrowser). R4changesonlySFCandCJSNodecase, neither isWorkerTSinput; 4155capturedrecordscompared:onlySFC+CJS2changed,other4153identical;WorkerTSdomainunchanged. NoclaimallsourceunchangedduringR4.",
+    "retained_worker1079": "R3full59/1079 passed. R4rerunsactual4ASTcasesconsumingchangedSFC; otherWorker/backendinputsunchanged.",
+    "native_scope": "No backend/nativecontract changes. Prior73nativeis historical; thisBrowserusesactualcreateApp/JWT/ownedPG16/50tables46sequences/currentreadpath. No claimnative73rerun.",
+    "artifact_count": 1531,
+    "installed_count": 720,
+    "source_count": 4155,
+    "css": {
+      "path": "/tmp/cinashop-homecomb-window-r4-validation/offset-artifacts.json",
+      "sha256": "2632152b775fc4215a62cdbe1cf3fbe6812d0510e828212d6025ab6ac2dd8bd7"
+    }
+  },
+  "browser": {
+    "launch": {
+      "schema": "cinashop.homecomb-window.browser-launch.v1",
+      "status": "passed-browser35-current-source",
+      "label": "final6",
+      "exit_code": 0,
+      "seconds": 1606.194,
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_unchanged": true,
+      "fixtures_cleaned": true,
+      "cluster_stopped": true,
+      "receipt_issues": [],
+      "path": "/tmp/cinashop-homecomb-window-browser-final6-result.json",
+      "sha256": "86ce17bfda1501fb88512eaf96e61f8fed2d024cf06fdc7ff9515297a397fda1"
+    },
+    "evidence": {
+      "path": "/tmp/cinashop-homecomb-window-browser-final6/cinashop-homecomb-window-browser-evidence.json",
+      "sha256": "a440023b670613e4e35b59a80abc9ade261d99046e401369a0b3e6b9369f4c32"
+    },
+    "stages": [
+      "home",
+      "rotated",
+      "legacyDestination",
+      "afterLegacy",
+      "articleDestination",
+      "afterArticle",
+      "searchDestination",
+      "afterSearch",
+      "rootFixed",
+      "rootFixedDestination",
+      "afterRootFixed",
+      "expanded",
+      "microSelected",
+      "homeSelected",
+      "categoryFailed",
+      "categoryRetry",
+      "categoryPage2",
+      "childChanged",
+      "childRenewed",
+      "owner22Home",
+      "owner22Category",
+      "microCaller",
+      "microFixed",
+      "microFixedDestination",
+      "afterMicroFixed",
+      "microSelectedFromMicro",
+      "microCategoryFromMicro",
+      "microCategoryPage2",
+      "microHome",
+      "changed",
+      "changedHome",
+      "closed",
+      "closedRetry",
+      "reopened",
+      "finished"
+    ],
+    "traces": 142,
+    "real_traces": 102,
+    "synthetic_traces": 40,
+    "configs": 4,
+    "tables": 50,
+    "sequences": 46,
+    "schema_source_count": 1898,
+    "h5_artifact_count": 369,
+    "providerCalls": 0,
+    "errors_after_iframe_onload": [],
+    "limitations": "Actual built H5 JS/CSS/createApp/JWT/owned PG16; served index adds explicitly hashed html scrollbar-width:none viewport-only CSS, raw built files unchanged; accepted carousel/catalogue GETs use real controllers and full 50-table/46-sequence snapshots. Catalogue inserts/sort setup and two initial real Admin-controller saves are separate setup; runtime two schema saves and station close/open are the only allowed configuration writes. The fixture-only Admin host proves parser/controller/transaction, not production Admin authentication or ACL. PHP Admin devise/index.vue permits only one home_comb, excludes search/tabNav and inserts it first; two imported homeComb instances intentionally stress existing TS multi-instance behavior, not a claim that the PHP editor creates this configuration. Synthetic unrelated chrome, registered article-list destination and missing-table hot-keyword destination chrome are explicitly tagged, with no article-detail/visit/like acceptance. Exact legacy homepage page=1/limit=8 recommendations use real products SQL and are distinguished from scoped category reads. Three search destinations including actual fixed-header clicks from both callers prove encoded searchVal route/input only: keyword-only products request is attempted through real API and its actual error is preserved because owned user_search is absent; search results/history persistence are unverified and search GET is not claimed read-only. Root footer is never adopted from selected body; original micro caller footer remains through all body selections. Internal HTTPS Request on HTTP loopback is a transport bridge, not TLS acceptance. No automatic poster, album, cart or provider operation is exercised. Browser childRenewed waits the actual840s root media timer and verifies unchanged version, advanced cachedAt, fresh schema and product main/recommend/label tickets, loaded actual main/label pixels and retained child752/2cards/exhausted paging; coupled Node fake-clock regressions also cover root/micro homeComb/tabNav, pending pagination, hide/owner/closure. Browser additionally proves fresh schema reads/tickets after real configuration save. H5 autoplay is accepted; IAB does not support native touch gesture injection and manual swipe is not claimed. No MP/App device, real provider, production, Windows or standalone PHP execution acceptance.",
+    "search_boundary": {
+      "route_and_input": "accepted",
+      "real_request": "attempted; actual error envelope preserved",
+      "product_results": "not verified",
+      "search_history_persistence": "not verified; existing production write, user_search absent from owned fixture"
+    },
+    "served_html_transport": [
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      },
+      {
+        "raw_sha256": "bb735929e6cc87f11dab47e8a3a40d4978e90ac39d59c6ee63d022417ad4f5af",
+        "served_sha256": "5e2ea872d6b923bfe8706f442f186b70e11c4b3ae3392e69de727985cf952bb2",
+        "raw_bytes": 885,
+        "served_bytes": 967,
+        "fixture_only_style": "<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>",
+        "app_JS_CSS_unchanged": true
+      }
+    ],
+    "operator": "HiddenIAB. Startup/finalconsoleandinline screenshots recordedbyCUA; no screenshotfilesystempath is fabricated. IABandMCPAppsadvertised, noindependentChrome/Edgeextensionconnectionclaim.",
+    "renewal_timing": {
+      "root_schema_cachedAt_delta_ms": 839618,
+      "schema_ticket_expiry_delta_seconds": 840,
+      "child_checkpoint_observation_delta_ms": 661670,
+      "interpretation": "Actualroughly840srootschemalease;selectedchildwaschosenpartwaythroughthatlease. No claim840000msexactwalltimeor840swaitafterchildselection."
+    },
+    "reopening_scope": "ActualclosedRetrybuttonintheclosedoriginalhomeverified; afteropenconfig, freshmicro2routeusesversion-verifiedvalidcache (no get_diy2 inreopenedslice). Doesnotprovesameclosedhomeinstance recoverythroughitsbutton."
+  },
+  "failed_candidates": [
+    {
+      "label": "negative",
+      "interpretation": "old CSS formalcheckpoint stoppedat rootFixed renderer-count mismatch; direct oldtop0/native44/centerhitfalse and unforcedclick failure separatelyproveheaderbug. Only8adopted.",
+      "receipt": {
+        "schema": "cinashop.homecomb-window.browser-launch.v1",
+        "status": "failed-browser-or-receipt",
+        "label": "negative",
+        "exit_code": 1,
+        "seconds": 720.692,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full34 checkpoint evidence missing"
+        ],
+        "path": "/tmp/cinashop-homecomb-window-browser-negative-result.json",
+        "sha256": "1b6fdf9c03ab5945e78ac7adb14d218330ec591011115e234b523347244b55f5"
+      }
+    },
+    {
+      "label": "final",
+      "interpretation": "homeonly adopted; autoplay sampledindex0. Boundedread-only realRAFwaitadded, server>0assertretained.",
+      "receipt": {
+        "schema": "cinashop.homecomb-window.browser-launch.v1",
+        "status": "failed-browser-or-receipt",
+        "label": "final",
+        "exit_code": 1,
+        "seconds": 534.282,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full34 checkpoint evidence missing"
+        ],
+        "path": "/tmp/cinashop-homecomb-window-browser-final-result.json",
+        "sha256": "e43f26bc1e36feb82f890e2324ad903f25c22854ab3ed7f043aa846f64df2c9f"
+      }
+    },
+    {
+      "label": "final2",
+      "interpretation": "12adopted; interactiveouter143 terminatedrunner/server. OwnedV2eElj PG safelystoppedlater; originalfixturefinallynotrun, remainingunknown. Notfullpass.",
+      "receipt": {
+        "status": "infrastructure-session-terminated-before-completion",
+        "label": "final2",
+        "exit_code": 143,
+        "fixtures_cleaned": false,
+        "cluster_stopped": true,
+        "path": "/tmp/cinashop-homecomb-window-browser-final2-result.json",
+        "sha256": "43ae8974967d26cd97c60ce19c005e08ebe4c271642e76f01f28f0445f52b585"
+      }
+    },
+    {
+      "label": "final3",
+      "interpretation": "17adopted; actualsameversion840srenewal reset752to751. Normalexit1/fullcleanup. RealHCC-R3negative.",
+      "receipt": {
+        "schema": "cinashop.homecomb-window.browser-launch.v1",
+        "status": "failed-browser-or-receipt",
+        "label": "final3",
+        "exit_code": 1,
+        "seconds": 1170.178,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full34 checkpoint evidence missing"
+        ],
+        "path": "/tmp/cinashop-homecomb-window-browser-final3-result.json",
+        "sha256": "c551b35fd1c90a8ccdb99f8c530814788ccf19d2f4493fce7bd30a37369af017"
+      }
+    },
+    {
+      "label": "final4",
+      "interpretation": "8adopted; root clickedsearch beforefixedheadercheckpoint. Stageallowlistcorrectlyrejected. Operatorfailure,normalexit1/fullcleanup, unchangedsource.",
+      "receipt": {
+        "schema": "cinashop.homecomb-window.browser-launch.v1",
+        "status": "failed-browser-or-receipt",
+        "label": "final4",
+        "exit_code": 1,
+        "seconds": 421.574,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full35 checkpoint evidence missing"
+        ],
+        "path": "/tmp/cinashop-homecomb-window-browser-final4-result.json",
+        "sha256": "e95513e4db7570dae8dbd298e731218b7b54edeb3797ff5c689a54b850892fc7"
+      }
+    },
+    {
+      "label": "final5",
+      "interpretation": "15adopted; missingmanualretryclickacknowledgement and loaded10cards madeindependentretryunverified. No840srootrenewal intrace. Explicitinvalidcheckpointabortforcesnormalfinallycleanup; notfullpass oruniqueBrowsercauseproof. ActualNode oldsource onReachBottom regression independentlyconfirmsHCC-R4.",
+      "receipt": {
+        "schema": "cinashop.homecomb-window.browser-launch.v1",
+        "status": "failed-browser-or-receipt",
+        "label": "final5",
+        "exit_code": 1,
+        "seconds": 1014.025,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full35 checkpoint evidence missing"
+        ],
+        "path": "/tmp/cinashop-homecomb-window-browser-final5-result.json",
+        "sha256": "87cb2cca03560a55c90e597ac02943e39e2f4c44497cb008c8b14341c986c1d3"
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "schema": "cinashop.homecomb-window.hcc-r3-implementation-handoff.v1",
+      "status": "passed-focused-current-atomic-product-refresh-await-broad-gates-browser35",
+      "source_drift": [],
+      "installed_drift": [],
+      "actual_full_file_cases": 63,
+      "unique_new_cases": 17,
+      "path": "/tmp/cinashop-homecomb-window-hcc-r3-handoff.json",
+      "sha256": "f2ec8abcfe0721f5ad89177c5d304c67f69d5bcfad3f83305c6a7235c9f2fc9b"
+    },
+    {
+      "schema": "cinashop.homecomb-window.category-scroll-error-fix.v1",
+      "status": "old-source-negative-confirmed-focused-and-full64-passed-await-root-independent-review-builds-browser",
+      "unique_new_cases": 1,
+      "path": "/tmp/cinashop-homecomb-window-category-scroll-error-handoff.json",
+      "sha256": "ceb4cf818ea6ee8588ef2069ea11b43f9d4c4605f30cb4eaeab8aca66f07edff"
+    },
+    {
+      "schema": "cinashop.homecomb-window.root-review.v1",
+      "status": "production-reviewed-broad-validation-running-browser-pending",
+      "path": "/tmp/cinashop-homecomb-window-root-review-before-browser.json",
+      "sha256": "133e8a4e3d4e468c46cf63f057a54198dcc1d3cd66f57d35ed7da56a80e1a303"
+    },
+    {
+      "status": "no-additional-definite-blocker-found-known-owner-fixture-correction-pending",
+      "path": "/tmp/cinashop-homecomb-window-browser35-guard-review.json",
+      "sha256": "fec49e83ae86863ddbaaf22e20a172722ad739a71452d7f86dfb0234e216a3b1"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final-harness-refinement.v1",
+      "path": "/tmp/cinashop-homecomb-window-final-harness-refinement.json",
+      "sha256": "78ffe5139e5d6dba230971fd632ca27054a6ac59cd24a288c2b70cdaeb301d7e"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final2-owned-infra-cleanup.v1",
+      "status": "terminated-browser-owned-cluster-stopped-fixture-finally-not-recovered",
+      "fixtures_cleaned": false,
+      "cluster_stopped": true,
+      "path": "/tmp/cinashop-homecomb-window-final2-infra-cleanup.json",
+      "sha256": "9ec67208f90da2a4eeced9cbfcfcef12ef9c6dce748b0d29f81439e7a89162a5"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final4-operator-order-failure.v1",
+      "path": "/tmp/cinashop-homecomb-window-final4-operator-failure.json",
+      "sha256": "bf2098eec37d87057ebd2674ea5c7d06277e6ff772d2d2aad160be3c176d0fd2"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final5-explicit-operator-abort.v1",
+      "status": 500,
+      "path": "/tmp/cinashop-homecomb-window-final5-explicit-operator-abort.json",
+      "sha256": "bc70bd5c90c756e15005382f4090eb528b49042fd5071df56bc95dcfd4b10984"
+    },
+    {
+      "schema": "cinashop.homecomb-window.current-r4-final-static-review.v1",
+      "status": "no-new-blocker-found-in-current-source-and-planned-gate-scope;await-root-R4-results-and-Browser35",
+      "path": "/tmp/cinashop-homecomb-window-current-r4-final-review.json",
+      "sha256": "9987efcdcd507a2b9c6f8f02007cd964d83bad39718dd68231c5085df9a73e57"
+    },
+    {
+      "schema": "cinashop.homecomb-window.publication-generator-static-review.v1",
+      "status": "static-code-and-failure-boundaries-consistent;no-unresolved-findings-in-reviewed-generator;Browser35-still-pending",
+      "path": "/tmp/cinashop-homecomb-window-publication-static-review.json",
+      "sha256": "d3ba7d01a9372dbbabbce84c0c214ec5fae9881d8855291e94429b36e4c03c4f"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final-browser-operator-plan.v1",
+      "path": "/tmp/cinashop-homecomb-window-final-browser-operator-plan.json",
+      "sha256": "69d327a8b406b7466ce586cc2f40392bd8bba4aa76c8a6e9b476d6454c4faf6b"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final6-operator-pre-renewal.v1",
+      "path": "/tmp/cinashop-homecomb-window-final6-pre-renewal-operator.json",
+      "sha256": "0fb56e945b3103beee487b3d1ed715770434a4f9489728332d5159b8f8a71771"
+    },
+    {
+      "schema": "cinashop.homecomb-window.final6-operator-terminal.v1",
+      "status": "all35adopted;normalrunner0andownedcleanupconfirmed",
+      "path": "/tmp/cinashop-homecomb-window-final6-operator-terminal.json",
+      "sha256": "af2424eee64f29f54f6fe849a71d05f9cf5c01b1c682f70d2fd0f0dd0ad7dba7"
+    },
+    {
+      "path": "/tmp/cinashop-homecomb-window-final6-terminal-review.json",
+      "sha256": "d200c86dbead5907fdc99bc0e778f157f187ed1ba0ac21e999d29ea641fc8da8",
+      "schema": "cinashop.homecomb-window.final6-terminal-readonly-review.v1",
+      "status": "passed-final6-terminal-source-media-database-cleanup-crosscheck"
+    },
+    {
+      "path": "/tmp/cinashop-homecomb-window-final6-pg-status-readonly.json",
+      "sha256": "1fb23ad383bb8e38edc47d187651a6b253631cfd8310446653d96fdbdb2a8f8c",
+      "schema": null,
+      "status": null
+    }
+  ],
+  "next_static_only": {
+    "schema": "cinashop.pagefoot-global-navigation.proposal-review.after-hcc-r3.v1",
+    "status": "read-only-static-proposal-still-valid-with-HCC-R3-lifecycle-product-renewal-addenda;no-implementation-or-validation",
+    "path": "/tmp/cinashop-diy-pagefoot-next-slice-review-after-hcc-r3.json",
+    "sha256": "3e71721df4bbbdab7bcc42e987a47b247af7ef2ee63d9bf6f09b5432835cc9f1"
+  },
+  "open_items": [
+    "EntirePHPtoTSgoal",
+    "API-007parent",
+    "DATA-008",
+    "FE-003J/K",
+    "FullpageFoot/globalnavigation",
+    "Productionidentity/media/provider/payment/ACL/deployobservation",
+    "MP/Appphysicaldevicesandtouchgestures",
+    "Searchresults/historypersistence (ownedfixtureuser_searchabsent)",
+    "IndependentproductTTLoutsidepage-schema-media-renewalpaths remainspreexistinggap"
+  ],
+  "merge": false,
+  "deploy": false,
+  "publication": "Draftonly; original6683baselineprotected. StageddiffGitleaks8.29.0/normalpush/newexactheadCI recordedseparatelyafterartifactfreeze.",
+  "ledger_prefixes": [
+    {
+      "path": "MIGRATION_AUDIT.md",
+      "original_bytes": 2166564,
+      "original_sha256": "9dbd55795bce47c17efcbb98fa8d600b9748f21970cc211567971ee34d0f7ef8",
+      "preservation": "Exactentireoldbytesprefix"
+    },
+    {
+      "path": "MIGRATION_CHECKLIST.md",
+      "original_bytes": 1166171,
+      "original_sha256": "96379aa1c931709c6e9e57239223e4d7bee738f6ffd129baa87871943a4a5a18",
+      "preservation": "Exactentireoldbytesprefix"
+    },
+    {
+      "path": "MIGRATION_SCHEMA_AUDIT.json",
+      "original_bytes": 122559,
+      "original_sha256": "0908dbab8b5e4d4e58427f766a139b0a8dcf9632e4c79faafb4cc900b8e13554",
+      "preservation": "Exactoldbytesbeforefinalrootclosingbrace;appendpropertywithoutreserialization"
+    }
+  ]
+}

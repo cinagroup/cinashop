@@ -3263,4 +3263,14 @@
     "productionAccessed": false,
     "productionChanged": false
   }
+,
+"diyHomeCombWindowRenewalVerification": {
+  "recorded": "2026-10-22T10:56:37.006410+00:00",
+  "summary": "H5windowoffset,categorysame-context840srenewalwithatomicproductticketrefresh,expliciterrorretry; actualBrowser35/currentDIY677; migrationparentopen",
+  "doc": "workers-ts/docs/php-ts-diy-homecomb-window-20261022.md",
+  "audit": "workers-ts/audit/php-ts-diy-homecomb-window-20261022.json",
+  "base_commit": "dd17414a36b2c986287e09a5c53d342e651f5b8c",
+  "merge": false,
+  "deploy": false
+}
 }

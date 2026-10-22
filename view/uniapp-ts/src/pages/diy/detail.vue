@@ -10,7 +10,7 @@
     <view v-else-if="page">
       <view v-if="loading" class="diy-notice">正在核对页面配置…</view>
       <view v-else-if="offline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="reload(true)">重新核实</button></view>
-      <DiyHomeRenderer v-if="isDiyEnabled(page.is_show)" :components="page.value" :page-active="diyPageActive" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" micro-page @closed="diyHost.close" />
+      <DiyHomeRenderer v-if="isDiyEnabled(page.is_show)" :components="page.value" :page-active="diyPageActive" :page-refreshing="diyPageRefreshing" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" micro-page @closed="diyHost.close" />
       <view v-else class="diy-state">微页面暂未开放</view>
     </view>
     <view v-else class="diy-state"><view v-if="offline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="reload(true)">重新核实</button></view>微页面暂未开放</view>
@@ -40,7 +40,7 @@ onUnload(() => { diyCommunityDisposed = true; diyCommunityVisible.value = false;
 const pageId = ref<number | null>(null);
 const routeError = ref("");
 const diyHost = useDiyPageHost(() => pageId.value, () => diyCommunityVisible.value);
-const { page, loading, error, phase, offline, available: diyPageActive, reload } = diyHost;
+const { page, loading, error, phase, offline, available: diyPageActive, refreshing: diyPageRefreshing, reload } = diyHost;
 const pageStyle = computed(() => diyPageStyle(page.value));
 
 onLoad((options) => {
