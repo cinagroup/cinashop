@@ -46,6 +46,8 @@ import { isOperationalGroupName, operationalGroupPublicPictures, renderOperation
 import { presaleProductVisibility, readPresaleCatalogAccount, validatePresaleCatalogUid, withPresaleCatalogSnapshot } from '@/services/activity/PresaleCatalogSnapshot';
 import { decoratePublicProductActivities } from './PublicProductActivityData';
 import { publicProductLabelIds, readPublicProductLabelMap } from './PublicProductLabelData';
+import { parseLegacyDiyJson } from '@/services/content/V2PublicCompatibilityService';
+import { renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
 
 const MAX_LIMIT = 100;
 const GROUP_KEYS = [
@@ -133,16 +135,6 @@ function csvIds(value: unknown): number[] {
 function int(value: unknown, fallback = 0): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
-}
-
-function parseJsonArray(value: string | null): unknown[] {
-  if (!value || value.length > 1_000_000) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.slice(0, 2_000) : [];
-  } catch {
-    return [];
-  }
 }
 
 function productListRow(item: typeof storeProduct.$inferSelect): Record<string, unknown> {
@@ -257,11 +249,18 @@ export class PublicCatalogService {
         .limit(1);
       return rows[0]?.value ?? "";
     };
-    const value = await selectValue(name) || await selectValue("default");
-    return (parseJsonArray(value).find((item) => {
+    const selected = await selectValue(name);
+    // PHP's raw string '0' is empty; malformed/non-array nonempty JSON is not
+    // a fallback signal. Keep navigation's own row predicates/order unchanged.
+    const value = !selected || selected === '0' ? await selectValue("default") : selected;
+    const parsed = parseLegacyDiyJson(value);
+    const footer = (Array.isArray(parsed) ? parsed.find((item) => {
       const record = plainObject(item);
-      return String(record?.name ?? "").toLowerCase() === "pagefoot";
-    }) as Record<string, unknown> | undefined) ?? {};
+      return typeof record?.name === 'string' && record.name.toLowerCase() === "pagefoot";
+    }) : undefined) as Record<string, unknown> | undefined;
+    if (!footer) return {};
+    await renderDiyEditorialMedia(this.container.db, this.env.APP_KEY, [footer]);
+    return footer;
   }
 
   async home(uid: number): Promise<Record<string, unknown>> {

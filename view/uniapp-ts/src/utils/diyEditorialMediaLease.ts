@@ -5,8 +5,13 @@ const record = (value: unknown): Record<string, unknown> => value && typeof valu
 function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[] {
   const value = record(page).value;
   if (!Array.isArray(value)) return [];
-  return value.slice(0, 200).flatMap(raw => {
+  const footers = value.filter(raw => typeof record(raw).name === 'string' && String(record(raw).name).toLowerCase() === 'pagefoot');
+  return [...value.slice(0, 200).filter(raw => !footers.includes(raw)), ...footers].flatMap(raw => {
     const block = record(raw), field = (key: string) => ({holder:record(block[key]),key:'url'});
+    if (typeof block.name === 'string' && block.name.toLowerCase() === 'pagefoot') {
+      const items = block.menuList;
+      return Array.isArray(items) ? items.flatMap(item => { const icons = record(item).imgList; return Array.isArray(icons) ? [0, 1].map(index => ({holder: icons as unknown as Record<string, unknown>, key: String(index)})) : []; }) : [];
+    }
     if (block.name === 'news') return [field('imgConfig')];
     if (block.name === 'hotspot') return [field('picStyle')];
     if (block.name === 'follow') return [field('imgConfig'), field('codeConfig')];

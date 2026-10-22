@@ -3272,5 +3272,36 @@
   "base_commit": "dd17414a36b2c986287e09a5c53d342e651f5b8c",
   "merge": false,
   "deploy": false
-}
+},
+  "diyFooterContractVerification": {
+    "recorded": "2026-10-22T17:44:05.413628+00:00",
+    "summary": "pageFoot/global navigation, five actual Page hosts, serialized native physical resume confirmation, private quantity badge, actual Admin editor; hidden Browser29/current source validated; overall migration parent remains open",
+    "doc": "workers-ts/docs/php-ts-diy-pagefoot-20261022.md",
+    "audit": "workers-ts/audit/php-ts-diy-pagefoot-20261022.json",
+    "base_commit": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+    "local_browser_checkpoints": 29,
+    "browser_tables": 73,
+    "browser_sequences": 68,
+    "new_distinct_cases": 186,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "ci_compatibility_followup": {
+      "recorded": "2026-10-22T18:34:34.200425+00:00",
+      "first_head": "91e6b8801f600010fbbcd1a162c6bdcc1c91c351",
+      "first_CI_run": 39826378280,
+      "first_CI_Uni_failures": 4,
+      "changed_CJS_tests": 3,
+      "focused_passed": 98,
+      "actual_toolchain_files": 89,
+      "full_toolchain_passed": 2258,
+      "failures": 0,
+      "skipped": 0,
+      "new_cases": 0,
+      "product_sources_dependencies_and_artifacts_unchanged": true,
+      "new_head_CI": "verify after push",
+      "merge": false,
+      "deploy": false
+    }
+  }
 }

@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref, watch } from "vue";
 import type { DiyPage } from "@/api/diy";
 import { useAuthStore } from "@/stores/auth";
-import { closeDiyStation, DiyPageLoadError, isDiyEnabled, loadDiyPage } from "@/utils/diy";
+import { closeDiyStation, diyStationClosure, DiyPageLoadError, isDiyEnabled, loadDiyPage } from "@/utils/diy";
 import { diyEditorialMediaDeadline } from '@/utils/diyEditorialMediaLease';
 
 /** A page owns adoption and native title/refresh effects. Its children own their
@@ -74,7 +74,8 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean, o
     invalidate(!previous || next[0] !== previous[0] || next[2] !== previous[2]);
     if (visible()) void reload();
   }, { immediate: true, flush: "sync" });
-  function dispose() { if (disposed) return; disposed = true; stop(); invalidate(true); }
+  const stopClosure = watch(diyStationClosure, message => { if (message && !disposed) { cancelMediaTimer(); page.value = null; loading.value = false; offline.value = false; error.value = message; phase.value = 'closed'; } }, { flush: 'sync' });
+  function dispose() { if (disposed) return; disposed = true; stop(); stopClosure(); invalidate(true); }
   onScopeDispose(dispose);
   return { page, loading, error, phase, offline, available, refreshing, reload, refresh, close, dispose };
 }

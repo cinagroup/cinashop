@@ -31,6 +31,8 @@ async function rendererHtml(r){
  const descriptor=sfc.parse(fs.readFileSync(p,'utf8'),{filename:p}).descriptor,bindings=sfc.compileScript(descriptor,{id:'actual-carousel-footer'}).bindings;
  const render=new Function('Vue',compiler.compile(descriptor.template.content,{mode:'function',prefixIdentifiers:true,bindingMetadata:bindings,isCustomElement:tag=>['view','text','image','rich-text','swiper','swiper-item','video','scroll-view'].includes(tag)}).code)(vue);
  const actual=r.load(p).default;actual.render=render;
+ const fp=path.join(__dirname,'../src/components/diy/DiyPageFooter.vue'),fd=sfc.parse(fs.readFileSync(fp,'utf8'),{filename:fp}).descriptor,fb=sfc.compileScript(fd,{id:'actual-carousel-footer-child'}).bindings;
+ r.load(fp).default.render=new Function('Vue',compiler.compile(fd.template.content,{mode:'function',prefixIdentifiers:true,bindingMetadata:fb,isCustomElement:tag=>['view','text','image'].includes(tag)}).code)(vue);
  const checkout={...r.checkout,DiyMediaCarousel:{render:()=>vue.h('div',{'data-test':'actual-header-boundary'})},DiyCombinationCategory:{render:()=>vue.h('div',{'data-test':'actual-category-boundary'})}};
  const app=vue.createSSRApp({props:actual.props,render,setup:()=>checkout},{...r.props});app.component('DiyHomeRenderer',actual);app.use(require('pinia').getActivePinia());
  return (await require('@vue/server-renderer').renderToString(app)).replace(/<!--[\s\S]*?-->/gu,'');
@@ -45,7 +47,7 @@ for(const microPage of [false,true])for(const index of [0,1,2])test(`actual Rend
   const markup=await rendererHtml(r);assert.equal(markup.includes('宿主页脚保留'),microPage);assert.equal(markup.includes('目标页脚禁止收养'),false);
   assert.equal((markup.match(/class="diy-page-foot"/gu)||[]).length,microPage?1:0);
   if(microPage)assert.ok(markup.lastIndexOf('宿主页脚保留')>markup.indexOf(index===2?'actual-category-boundary':'目标正文'));
-  assert.equal(r.checkout.hostFooters.value.length,microPage?1:0);assert.equal(r.props.components.at(-1).name,'pageFoot');
+  assert.equal(!!r.checkout.hostFooter.value,microPage);assert.equal(r.props.components.at(-1).name,'pageFoot');
  }finally{r.stop();}
 });
 

@@ -2907,3 +2907,17 @@ API-007本批完成swipers／swiperBg／homeComb及共享首页／微页调用�
 当前677项DIY回归、R3完整1079项Worker回归及R4相关4项AST补验、完整严格类型、三端构建／产物／i18n与实际后台Browser35检查点完成。失败候选、明确操作失误、143基础设施边界与真实产品负例分开留存；不累计重复测试或把检查点计成独立用例。
 
 见[说明](workers-ts/docs/php-ts-diy-homecomb-window-20261022.md)与[机器记录](workers-ts/audit/php-ts-diy-homecomb-window-20261022.json)。保留get_script兼容与原历史复选框。后台验收不逐页弹确认；只推送draft，不合并部署。完整迁移、API-007父项、DATA-008、FE-003J／K及pageFoot／全局navigation继续开放；新提交CI推送后单列核实。
+
+
+### 2026-10-22 DIY页脚与全局底部导航增量
+
+本批完成pageFoot／独立navigation／五个实际Page的原生和自定义底栏、固定／浮动与三种样式、完整双图媒体权限、私有购物车数量角标及实际Admin页脚编辑器。真实Browser发现并修复微页返回首页时原生栏重现的问题：页面恢复撤销旧物理确认，视图更新后串行同步，迟到系统回调不能确认新物理上下文。
+
+本机Worker62文件1136项广回归、双完整strict及后置完整unit补验通过；最终相关四文件120项、消费AST50项、runner36项、native PG16四文件147项、Admin17项与Uni三端构建／产物／i18n通过。新增独立用例186，失败候选及重复运行不累计。实际后台IAB完成29检查点／outer0，73表68序列；202真实GET及50明确合成chrome GET均无状态变化，2次真实业务POST和其余场景配置／初始setup分别记账，源／依赖／双构建零漂移，独占库及进程清理完成。
+
+见[说明](workers-ts/docs/php-ts-diy-pagefoot-20261022.md)与[机器审计](workers-ts/audit/php-ts-diy-pagefoot-20261022.json)。历史正文和复选框保持，保留已恢复get_script及各端loader，不改生产DDL／ACL／路由／锁文件。浏览器验收按用户要求后台进行，不逐页弹确认；当前连接为IAB，未据此宣称独立Chrome／Edge扩展已连接。API-007父项、DATA-008、FE-003J／K、整体迁移及生产／真机验收继续开放；只推送draft、不合并部署，新提交精确CI推送后单列核实。
+
+
+### 2026-10-22 pageFoot CI兼容补验
+
+PR #156首head91e6b880的UniApp CI为2254/2258、4个旧社区零请求预期失败，原红灯保留。仅三个CJS测试明确允许两条精确公开页脚读取，所有其它业务请求仍拒绝；三个完整文件98/98及实际89文件完整工具链2258/2258通过，零失败或跳过。相对Browser29终态产品源、依赖和产物不变，未重跑Browser或虚增新case，批次仍186。补提交的CI按新head另查；API-007、DATA-008、FE-003J/K、整体迁移及生产／真机父项继续开放。详见 workers-ts/docs/php-ts-diy-pagefoot-20261022.md 和对应机器审计。

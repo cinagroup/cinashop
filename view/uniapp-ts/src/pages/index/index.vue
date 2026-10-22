@@ -111,11 +111,15 @@
 
     <DiySuspendedNavigation v-if="diyCommunityVisible && !diyLoading && !diyError" />
   </view>
+  <DiyGlobalFooter :active="footerVisible" :blocked="diyPhase==='closed'" :modal="showOpenAdv" @height="footerHeight=$event" />
   </ThemePage>
 </template>
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import DiyGlobalFooter from '@/components/diy/DiyGlobalFooter.vue';
+import { useDiyFooterHost } from '@/composables/useDiyFooterHost';
+const { visible: footerVisible, height: footerHeight } = useDiyFooterHost();
 import { computed, onBeforeUnmount, ref, onMounted, watch } from "vue";
 import { onShow, onHide, onUnload, onPageScroll, onReachBottom, onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";

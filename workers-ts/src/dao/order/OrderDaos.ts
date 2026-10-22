@@ -27,6 +27,17 @@ export class StoreCartDao extends BaseDao<typeof storeCart> {
     });
   }
 
+  /** PHP getUserCartCount: actor-owned active unpaid ordinary rows. Here
+   * ordinary means is_new=0, not an added product/type/activity/staff filter. */
+  async footerCount(uid: number, numType: 0 | 1): Promise<string> {
+    const [row] = await this.db.select({ value: numType === 0
+      ? sql<string>`coalesce(sum(${storeCart.cartNum}),0)::text`
+      : sql<string>`count(*)::text` }).from(storeCart).where(and(
+        eq(storeCart.uid, uid), eq(storeCart.status, 1), eq(storeCart.isPay, 0), eq(storeCart.isNew, 0), eq(storeCart.isDel, 0),
+      ));
+    return row?.value ?? '0';
+  }
+
   /** 取用户购物车 (未删除/未购买) */
   async getUserCart(
     uid: number,

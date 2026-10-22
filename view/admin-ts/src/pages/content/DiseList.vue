@@ -92,6 +92,9 @@
             <el-descriptions-item label="is_diy">{{ form.isDiy }}</el-descriptions-item>
           </el-descriptions>
         </el-form-item>
+        <el-form-item label="底部导航">
+          <DiyFooterEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" />
+        </el-form-item>
         <el-form-item label="装修 value" required>
           <div class="field">
             <el-input
@@ -133,9 +136,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import request, { getData } from "@/utils/request";
+import { useAuthStore } from "@/stores/auth";
+import { getToken } from "@/utils/auth";
+import DiyFooterEditor, { canonicalFooterValue } from "@/components/content/DiyFooterEditor.vue";
 
 interface DiseRow {
   id: number;
@@ -173,10 +179,19 @@ interface DiseSaveResult {
   update_time: number;
 }
 
+const auth = useAuthStore();
+const editorIdentity = computed(() => `${auth.token}:${auth.userInfo?.id}:${auth.userInfo?.level}:${auth.uniqueAuth.join(',')}`);
+const sessionRevision = ref(0);
+function currentSession() { return !!auth.token && !!auth.userInfo && auth.token === getToken(); }
+const sessionReady = computed(() => { void sessionRevision.value; return currentSession(); });
+const persistedPublished = ref(false);
+let alive = true, listGeneration = 0;
+const actorStamp = () => `${editorIdentity.value}:${getToken()}:${localStorage.getItem('admin_session')}`;
 const list = ref<DiseRow[]>([]);
 const loading = ref(false);
 const submitting = ref(false);
 const formVisible = ref(false);
+const editorEpoch = ref(0);
 const form = reactive<DiseForm>({
   id: 0,
   name: "",
@@ -190,14 +205,16 @@ const form = reactive<DiseForm>({
 });
 
 async function load(): Promise<void> {
+  if (!alive || !currentSession()) return;
+  const actor = actorStamp(), generation = ++listGeneration;
   loading.value = true;
   try {
-    list.value = await getData<DiseRow[]>(request.get("/dise/list"));
+    const rows = await getData<DiseRow[]>(request.get("/dise/list"));
+    if (alive && currentSession() && actor === actorStamp() && generation === listGeneration) list.value = rows;
   } catch (error) {
-    list.value = [];
-    ElMessage.error(errorMessage(error));
+    if (alive && actor === actorStamp() && generation === listGeneration) { list.value = []; ElMessage.error(errorMessage(error)); }
   } finally {
-    loading.value = false;
+    if (alive && actor === actorStamp() && generation === listGeneration) loading.value = false;
   }
 }
 
@@ -216,6 +233,8 @@ function prettyJson(value: string): string {
 }
 
 function openForm(row?: DiseRow): void {
+  if (!currentSession() || submitting.value) return;
+  persistedPublished.value = row?.status === 1;
   if (row && isTheme(row)) { ElMessage.warning('主题请在主题风格专用设置页维护'); return; }
   if (row && isFab(row)) { ElMessage.warning('悬浮按钮请在专用设置页维护'); return; }
   if (row) {
@@ -239,6 +258,7 @@ function openForm(row?: DiseRow): void {
     form.templateName = "";
     form.isDiy = 1;
   }
+  editorEpoch.value++;
   formVisible.value = true;
 }
 
@@ -246,13 +266,15 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return JSON.stringify(parsed);
+    return canonicalFooterValue(value);
   } catch {
     return null;
   }
 }
 
 async function save(): Promise<void> {
+  if (!alive || !currentSession() || submitting.value || !formVisible.value) return;
+  const actor = actorStamp(), epoch = editorEpoch.value;
   if (form.templateName === 'suspended_window') { ElMessage.warning('悬浮按钮不能通过通用装修编辑保存，请使用专用设置页'); return; }
   const name = form.name.trim();
   if (!name) {
@@ -290,13 +312,14 @@ async function save(): Promise<void> {
   submitting.value = true;
   try {
     await getData<DiseSaveResult>(request.post("/dise/save", payload));
+    if (!alive || !currentSession() || actor !== actorStamp() || epoch !== editorEpoch.value) return;
     ElMessage.success("保存成功");
     formVisible.value = false;
     await load();
   } catch (error) {
-    ElMessage.error(errorMessage(error));
+    if (alive && actor === actorStamp() && epoch === editorEpoch.value) ElMessage.error(errorMessage(error));
   } finally {
-    submitting.value = false;
+    if (alive && actor === actorStamp() && epoch === editorEpoch.value) submitting.value = false;
   }
 }
 
@@ -333,8 +356,23 @@ function formatTime(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleString("zh-CN", { hour12: false });
 }
 
+function invalidateEditor() { listGeneration++; editorEpoch.value++; formVisible.value = false; persistedPublished.value = false; list.value = []; loading.value = submitting.value = false; }
+function storedChanged(event?: Event) {
+  if (typeof StorageEvent !== 'undefined' && event instanceof StorageEvent && event.key !== null && !['admin_token', 'admin_session'].includes(event.key)) return;
+  sessionRevision.value++; invalidateEditor(); if (currentSession()) void load();
+}
+watch(editorIdentity, () => storedChanged(), { flush: 'sync' });
 onMounted(() => {
+  window.addEventListener('storage', storedChanged);
+  window.addEventListener('admin-session-changed', storedChanged);
+  window.addEventListener('admin-auth-expired', storedChanged);
   void load();
+});
+onBeforeUnmount(() => {
+  alive = false; invalidateEditor();
+  window.removeEventListener('storage', storedChanged);
+  window.removeEventListener('admin-session-changed', storedChanged);
+  window.removeEventListener('admin-auth-expired', storedChanged);
 });
 </script>
 

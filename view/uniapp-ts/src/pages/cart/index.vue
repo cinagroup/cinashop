@@ -51,7 +51,7 @@
       <view class="estimate-note">预算不含运费、积分抵扣和支付费用，以结算重新报价为准。库存、优惠券和赠品未预留。</view>
     </view>
     <view v-if="claimError" class="estimate-note" role="alert">{{ claimError }}</view>
-    <view class="checkout-bar" v-if="cartStore.items.length && !cartStore.error && !cartStore.loading">
+    <view class="checkout-bar" :style="{bottom:footerHeight ? `${footerHeight}px` : 'var(--window-bottom,0px)',paddingBottom:footerHeight ? '20rpx' : 'calc(20rpx + env(safe-area-inset-bottom))'}" v-if="cartStore.items.length && !cartStore.error && !cartStore.loading">
       <view class="check-all" @tap="toggleAll">
         <view class="check" :class="{ checked: allChecked }">
           <text v-if="allChecked">✓</text>
@@ -65,11 +65,15 @@
       <button class="checkout-btn" :disabled="blocked || !budgetReady" @tap="goCheckout">{{ claiming ? '正在领取…' : budget.result?.coupon?.requiresClaim ? '领券并去结算' : '去结算' }}</button>
     </view>
   </view>
+  <DiyGlobalFooter :active="footerVisible" @height="footerHeight=$event" />
   </ThemePage>
 </template>
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import DiyGlobalFooter from '@/components/diy/DiyGlobalFooter.vue';
+import { useDiyFooterHost } from '@/composables/useDiyFooterHost';
+const { visible: footerVisible, height: footerHeight } = useDiyFooterHost();
 import { computed, ref, shallowRef, watch } from "vue";
 import { onShow, onHide, onUnload } from "@dcloudio/uni-app";
 import { useCartStore } from "@/stores/cart";

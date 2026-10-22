@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "date": "2026-10-22",
+  "base_commit": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+  "scope": "Current footer-only source bindings; immutable statistics restoration, route decisions and dated frontend parity artifacts remain unchanged. Exact inverse reconstructs each prior whole source. No behavior/ACL/route permission is inferred from hashes.",
+  "sources": [
+    {
+      "file": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "before_sha256": "8a04219f7391c2ddd9bea31279f9e8a1660ac2de648bb8a0fc6104ffc771f427",
+      "after_sha256": "4bfb956cf19c81aeee450acf9ea0b7703c5fac18a9b0f7f39226982798977eff",
+      "edits": [
+        {
+          "before_source": "export async function navigation(c: C) {\n  try {",
+          "after_source": "export async function navigation(c: C) {\n  c.header('Cache-Control', 'no-store');\n  try {",
+          "before_line": 229,
+          "after_line": 229
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/App.vue",
+      "before_sha256": "34d8944bd165ad6430e0fc5a71ec31fe85fa757bef2bf625c00b2f251f418ffc",
+      "after_sha256": "945764d70fed2cff9f6ab9af6ae7bf7d8ecf0b4cc13afde0690f1af9b901d3bc",
+      "edits": [
+        {
+          "before_source": "<script setup lang=\"ts\">\nimport { useThemeStore } from \"@/stores/theme\";\nimport { useShareReferral } from '@/composables/useShareReferral';\nimport { onLaunch, onShow, onHide } from \"@dcloudio/uni-app\";\n// #ifdef H5\nimport { loadStatisticsScript } from '../../common/statisticsScript';\nimport { API_BASE } from '@/utils/request';\n// #endif\n\nconst theme = useThemeStore();\nconst referrals = useShareReferral();\nonLaunch((options) => {\n  referrals.captureInbound(options);\n  theme.syncPlatform();\n  void theme.refresh();\n  // #ifdef H5\n  loadStatisticsScript(API_BASE);\n  // #endif\n  console.log(\"CinaShop App Launch\");\n});\n\nonShow((options) => {\n  referrals.captureInbound(options);\n  theme.syncPlatform();\n  void theme.refresh();\n  console.log(\"App Show\");\n});\n\nonHide(() => {\n  theme.pause();\n  console.log(\"App Hide\");\n});\n</script>",
+          "after_source": "<script setup lang=\"ts\">\nimport { useThemeStore } from \"@/stores/theme\";\nimport { useShareReferral } from '@/composables/useShareReferral';\nimport { onLaunch, onShow, onHide } from \"@dcloudio/uni-app\";\n// #ifdef H5\nimport { loadStatisticsScript } from '../../common/statisticsScript';\nimport { API_BASE } from '@/utils/request';\n// #endif\n\nimport { useDiyFooterStore } from '@/stores/diyFooter';\nconst footer = useDiyFooterStore();\nconst theme = useThemeStore();\nconst referrals = useShareReferral();\nonLaunch((options) => {\n  footer.resume();\n  referrals.captureInbound(options);\n  theme.syncPlatform();\n  void theme.refresh();\n  // #ifdef H5\n  loadStatisticsScript(API_BASE);\n  // #endif\n  console.log(\"CinaShop App Launch\");\n});\n\nonShow((options) => {\n  footer.resume();\n  referrals.captureInbound(options);\n  theme.syncPlatform();\n  void theme.refresh();\n  console.log(\"App Show\");\n});\n\nonHide(() => {\n  footer.pause();\n  theme.pause();\n  console.log(\"App Hide\");\n});\n</script>",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/pages.json",
+      "before_sha256": "affa3ecd20f33bbd15d9c5336fb362734a810f4174e05d284a5362e74ce556be",
+      "after_sha256": "2de199bfb091f67ec6473fa4d90697f8269aa1d6662b77de900893371b66aaf9",
+      "edits": [
+        {
+          "before_source": "  \"tabBar\": {\n    \"color\": \"#282828\",\n    \"selectedColor\": \"#E93323\",\n    \"backgroundColor\": \"#ffffff\",\n    \"borderStyle\": \"black\",\n    \"list\": [\n      {\n        \"pagePath\": \"pages/index/index\",\n        \"text\": \"首页\"\n      },\n      {\n        \"pagePath\": \"pages/goods/cate\",\n        \"text\": \"分类\"\n      },\n      {\n        \"pagePath\": \"pages/discover/index\",\n        \"text\": \"逛逛\"\n      },\n      {\n        \"pagePath\": \"pages/cart/index\",\n        \"text\": \"购物车\"\n      },\n      {\n        \"pagePath\": \"pages/user/index\",\n        \"text\": \"我的\"\n      }\n    ]\n  },",
+          "after_source": "  \"tabBar\": {\n    \"color\": \"#282828\",\n    \"selectedColor\": \"#E93323\",\n    \"backgroundColor\": \"#ffffff\",\n    \"borderStyle\": \"black\",\n    \"list\": [\n      {\n        \"pagePath\": \"pages/index/index\",\n        \"text\": \"首页\",\n        \"iconPath\": \"static/images/footer/1-001.png\",\n        \"selectedIconPath\": \"static/images/footer/1-002.png\"\n      },\n      {\n        \"pagePath\": \"pages/goods/cate\",\n        \"text\": \"分类\",\n        \"iconPath\": \"static/images/footer/2-001.png\",\n        \"selectedIconPath\": \"static/images/footer/2-002.png\"\n      },\n      {\n        \"pagePath\": \"pages/discover/index\",\n        \"text\": \"逛逛\",\n        \"iconPath\": \"static/images/footer/3-001.png\",\n        \"selectedIconPath\": \"static/images/footer/3-002.png\"\n      },\n      {\n        \"pagePath\": \"pages/cart/index\",\n        \"text\": \"购物车\",\n        \"iconPath\": \"static/images/footer/4-001.png\",\n        \"selectedIconPath\": \"static/images/footer/4-002.png\"\n      },\n      {\n        \"pagePath\": \"pages/user/index\",\n        \"text\": \"我的\",\n        \"iconPath\": \"static/images/footer/5-001.png\",\n        \"selectedIconPath\": \"static/images/footer/5-002.png\"\n      }\n    ]\n  },",
+          "before_line": 809,
+          "after_line": 809
+        }
+      ]
+    }
+  ],
+  "native_icon_sources": [
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/1-001.png",
+      "sha256": "2d4cba5a35b018ae34b198033ad56cdaee06fdc505b01f81418642f9ab8c8247",
+      "php_file": "cinashop-php/view/uniapp/static/images/1-001.png",
+      "php_sha256": "2d4cba5a35b018ae34b198033ad56cdaee06fdc505b01f81418642f9ab8c8247",
+      "slot": "iconPath",
+      "pagePath": "pages/index/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/1-002.png",
+      "sha256": "4c819c62f50a1feddb7297b53eee3b4d4d14bec4f482ff0cd15d5ae05f2bdd68",
+      "php_file": "cinashop-php/view/uniapp/static/images/1-002.png",
+      "php_sha256": "4c819c62f50a1feddb7297b53eee3b4d4d14bec4f482ff0cd15d5ae05f2bdd68",
+      "slot": "selectedIconPath",
+      "pagePath": "pages/index/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/2-001.png",
+      "sha256": "9c296032dfc058ff449c9a5736d324b38227004112bbccac1f4478120f4c4565",
+      "php_file": "cinashop-php/view/uniapp/static/images/2-001.png",
+      "php_sha256": "9c296032dfc058ff449c9a5736d324b38227004112bbccac1f4478120f4c4565",
+      "slot": "iconPath",
+      "pagePath": "pages/goods/cate"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/2-002.png",
+      "sha256": "753512db1dc12a3fa1908d8628aceb14956c9fc44bf26bc5fb1941da0cfd1514",
+      "php_file": "cinashop-php/view/uniapp/static/images/2-002.png",
+      "php_sha256": "753512db1dc12a3fa1908d8628aceb14956c9fc44bf26bc5fb1941da0cfd1514",
+      "slot": "selectedIconPath",
+      "pagePath": "pages/goods/cate"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/3-001.png",
+      "sha256": "5077bba12e1ea6b7baced34b25782661b701db002fa4dd02b1184e5d3f49b1ed",
+      "php_file": "cinashop-php/view/uniapp/static/images/3-001.png",
+      "php_sha256": "5077bba12e1ea6b7baced34b25782661b701db002fa4dd02b1184e5d3f49b1ed",
+      "slot": "iconPath",
+      "pagePath": "pages/discover/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/3-002.png",
+      "sha256": "ec6a50c0142f00d20bfba224f6f459432cd2d10b0281504610f625e853ff491f",
+      "php_file": "cinashop-php/view/uniapp/static/images/3-002.png",
+      "php_sha256": "ec6a50c0142f00d20bfba224f6f459432cd2d10b0281504610f625e853ff491f",
+      "slot": "selectedIconPath",
+      "pagePath": "pages/discover/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/4-001.png",
+      "sha256": "d4cf530af97919b408cc5bfc337bb9f6504a1916219566ffb6e91f262626f207",
+      "php_file": "cinashop-php/view/uniapp/static/images/4-001.png",
+      "php_sha256": "d4cf530af97919b408cc5bfc337bb9f6504a1916219566ffb6e91f262626f207",
+      "slot": "iconPath",
+      "pagePath": "pages/cart/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/4-002.png",
+      "sha256": "24e29a76a8ead3541a6a89a89f9b9922acdd9d60c343cb62ac827d7e0c722e9c",
+      "php_file": "cinashop-php/view/uniapp/static/images/4-002.png",
+      "php_sha256": "24e29a76a8ead3541a6a89a89f9b9922acdd9d60c343cb62ac827d7e0c722e9c",
+      "slot": "selectedIconPath",
+      "pagePath": "pages/cart/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/5-001.png",
+      "sha256": "e2c37fa3a39b87e7a2dd052b044c7e396f331c3b3dbd11c7b056c0ccb5308a80",
+      "php_file": "cinashop-php/view/uniapp/static/images/5-001.png",
+      "php_sha256": "e2c37fa3a39b87e7a2dd052b044c7e396f331c3b3dbd11c7b056c0ccb5308a80",
+      "slot": "iconPath",
+      "pagePath": "pages/user/index"
+    },
+    {
+      "file": "view/uniapp-ts/src/static/images/footer/5-002.png",
+      "sha256": "bbf359e5c56d40cbabff3dea4c2957259116c3cfa2c8213f83f8b3a5d92386ee",
+      "php_file": "cinashop-php/view/uniapp/static/images/5-002.png",
+      "php_sha256": "bbf359e5c56d40cbabff3dea4c2957259116c3cfa2c8213f83f8b3a5d92386ee",
+      "slot": "selectedIconPath",
+      "pagePath": "pages/user/index"
+    }
+  ],
+  "historical_statistics_restoration": {
+    "file": "workers-ts/audit/statistics-script-restoration-20261015.json",
+    "sha256": "68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1"
+  },
+  "admin_current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "344e2756cd6253db7b6ca1273d8de0e7c760a8b24b14a21c078f37a3985b7f32",
+    "previous_report_sha256": "6251fdc0c5f0dbc588166d453ed74109465fe61fc8a975f62e128a4aa40545f8",
+    "frontend_source_changes": [
+      {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_sha256": "892a20fcd26f02e52981444c746940ee1f901687e6a73b2279e2fbf9527031ba",
+        "after_sha256": "af5bc91f4cda0bc5e069b46e227c6c6b5bddeab158fa7ec07516e8b1f9fcfad2"
+      }
+    ],
+    "call_line_changes": [
+      {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 195,
+        "after_line": 212
+      },
+      {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 292,
+        "after_line": 314
+      },
+      {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 314,
+        "after_line": 337
+      }
+    ],
+    "previous_counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "backend_equal": true,
+    "reason": "Footer editor integration updates DiseList source and shifts its three existing registered call lines; routes, calls and permissions are unchanged. The new component public-preview fetch is outside this Admin-route inventory and has separate frontend/Browser proofs; no new registry authority is inferred. Static registration is not runtime acceptance."
+  }
+}

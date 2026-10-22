@@ -322,6 +322,11 @@ jobs:
         working-directory: view/${{ matrix.directory }}
         run: npm audit --audit-level=low --registry=https://registry.npmjs.org
 
+      - name: Verify actual DIY footer editor
+        if: matrix.directory == 'admin-ts'
+        working-directory: view/admin-ts
+        run: npm run test:diy-footer
+
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'
         working-directory: view/${{ matrix.directory }}

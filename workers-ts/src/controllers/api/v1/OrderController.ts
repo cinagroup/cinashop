@@ -311,12 +311,19 @@ export async function cartDel(c: C) {
 
 /** GET /api/cart/count */
 export async function cartCount(c: C) {
+  c.header('Cache-Control', 'private, no-store');
+  const parameters = new URL(c.req.url).searchParams;
+  // Keep unrelated legacy query fields (including PHP's unused store_id)
+  // ignored. Only these explicit selector domains acquire new semantics.
+  for (const key of ['scope', 'numType']) if (parameters.getAll(key).length > 1) return jsonFail(c, '购物车数量参数无效');
+  const scope = parameters.get('scope');
+  if (scope !== null && scope !== 'cart') return jsonFail(c, '购物车读取范围无效');
+  const numType = parameters.get('numType');
+  if (numType !== null && numType !== '0' && numType !== '1') return jsonFail(c, '购物车数量类型无效');
   const uid = c.get("uid");
   if (!uid) return jsonOk(c, { count: 0 });
   const svc = new StoreCartService(c.get("container"));
-  const scope = c.req.query("scope");
-  if (scope !== undefined && scope !== "cart") return jsonFail(c, "购物车读取范围无效");
-  const count = await svc.count(uid, scope === "cart");
+  const count = numType === null ? await svc.count(uid, scope === 'cart') : await svc.footerCount(uid, numType === '0' ? 0 : 1);
   return jsonOk(c, { count });
 }
 

@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
+import { createRequire } from 'node:module';
+const { parse: parseThemeSfc } = createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
@@ -17,12 +19,12 @@ function gates(): Gates {
   const source = readFileSync('scripts/admin-setting-frontend-parity-audit.ts', 'utf8');
   const tree = ts.createSourceFile('category-audit.ts', source, ts.ScriptTarget.Latest, true);
   const names = new Set(['classifyProductCategoryStyleCoverage', 'categoryAuditCode', 'hasProductCategoryStyleMatrix',
-    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'hasPublishedProductCardPictures', 'hasCategoryPurchaseOwnerWatch', 'inspectProductCategoryStyleCoverage']);
+    'productCategoryStyleSourceFiles', 'hasProductCategoryPictureDelegation', 'hasPublishedProductCardPictures', 'hasCategoryPurchaseOwnerWatch', 'hasCategorySharedFooterConnection', 'inspectProductCategoryStyleCoverage']);
   const selected = tree.statements.filter((node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && !!node.name && names.has(node.name.text));
   expect(selected).toHaveLength(names.size);
   const result = ts.transpileModule(selected.map(node => node.getText(tree)).join('\n'),
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } });
-  const sandbox = { exports: {}, ts }; runInNewContext(result.outputText, sandbox, { timeout: 1000 });
+  const sandbox = { exports: {}, ts, parseThemeSfc }; runInNewContext(result.outputText, sandbox, { timeout: 1000 });
   return sandbox.exports as Gates;
 }
 const screens = ['/setting/product-category-style'];
@@ -165,13 +167,20 @@ describe('complete legacy product-category layout source coverage', () => {
   it('preserves applied versus draft filters, bounded paging/sort, T1 scrolling and exactly the six mini-carts', () => {
     const gate = gates(), source = currentSources(gate);
     loses(gate, source, 'reads', 'scope.value = { ...draft.value }', 'scope.value = {}', 'draftFilters');
-    loses(gate, source, 'consumer', 'const hide = visible.value && modalOpen.value', 'const hide = modalOpen.value', 'draftFilters');
-    loses(gate, source, 'consumer', 'const api = hide ? uni.hideTabBar : uni.showTabBar', 'const api = uni.showTabBar', 'draftFilters');
+    // Preserve every old inline-writer negative boundary along the extracted
+    // Page -> GlobalFooter -> PageFooter -> shared serialized writer chain.
+    loses(gate, source, 'footerPage', 'props.active && app.active', 'true', 'draftFilters');
+    loses(gate, source, 'nativeFooterStore', 'const api = hide ? uni.hideTabBar : uni.showTabBar', 'const api = uni.showTabBar', 'draftFilters');
     loses(gate, source, 'consumer', 'drawer.value !== null || purchase.opened.value || purchase.cartOpen.value', 'drawer.value !== null', 'draftFilters');
-    loses(gate, source, 'consumer', '() => syncNativeTabbar(),', '() => void 0,', 'draftFilters');
-    loses(gate, source, 'consumer', 'generation === tabbarGeneration && hide === tabbarDesired', 'true', 'draftFilters');
-    loses(gate, source, 'consumer', 'owner.visible && visible.value &&', 'true &&', 'draftFilters');
-    loses(gate, source, 'consumer', "}, fail });", "}, fail: () => {} });", 'draftFilters');
+    loses(gate, source, 'footerPage', 'native.claim(id,', 'void (id,', 'draftFilters');
+    loses(gate, source, 'nativeFooterCoordinator', 'key !== `${latest?.[0] ?? null}:${latestHide}:${revision}`', 'false', 'draftFilters');
+    loses(gate, source, 'footerHost', 'visible.value = true; void footer.refresh();', 'void footer.refresh();', 'draftFilters');
+    loses(gate, source, 'nativeFooterStore', 'fail: reason => {', 'ignoredFailure: reason => {', 'draftFilters');
+    loses(gate, source, 'consumer', ':modal="modalOpen"', ':modal="false"', 'draftFilters');
+    loses(gate, source, 'footerGlobal', '<DiyPageFooter ', '<UnconnectedFooter ', 'draftFilters');
+    loses(gate, source, 'footerHost', 'ticket = native.invalidatePhysical()', 'ticket = 0', 'draftFilters');
+    loses(gate, source, 'nativeFooterCoordinator', 'issuingPhysicalEpoch === physicalEpoch', 'true', 'draftFilters');
+    loses(gate, source, 'nativeFooterCoordinator', 'if (held) return;', 'void held;', 'draftFilters');
     loses(gate, source, 'reads', 'requestedPage * 10 < result.count', 'true', 'paginationSort');
     loses(gate, source, 'consumer', '@scroll="treeScroll"', '', 'treeScrollSelection');
     loses(gate, source, 'reads', "removeStorageSync('cate_selected')", "removeStorageSync('other')", 'treeScrollSelection');

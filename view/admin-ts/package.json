@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:diy-footer": "node --test scripts/diy-footer-editor-runtime.test.cjs",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
