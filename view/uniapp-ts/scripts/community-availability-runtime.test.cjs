@@ -4,6 +4,14 @@ const path = require('node:path');
 const vue = require('vue');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const root = path.resolve(__dirname, '..');
+// The Page independently refreshes its public global footer; community validation
+// must still prevent every other request, including private cart/account I/O.
+function assertOnlyPublicFooterReads(calls) {
+  for (const call of calls) {
+    assert.ok(call.url === '/api/diy/diy_version/0' || call.url === '/api/navigation', `unexpected business I/O: ${call.url}`);
+    assert.deepEqual(call.data, {});
+  }
+}
 const post = (id = 31, extra = {}) => ({ id, type: 2, relationId: 11, is_self: 1, contentType: 1,
   title: '可见原帖', content: '旧内容', image: '', sliderImage: null, likeNum: 7, commentNum: 2,
   playNum: 8, shareNum: 9, isLike: 0, status: 1, is_verify: 1, addTime: 100,
@@ -301,7 +309,7 @@ test('invalid canonical routes remain local even when availability was already c
   const r = runtime({ component: 'pages/discover/index.vue', send: () => { throw Error('Invalid route I/O'); } });
   try {
     availability(r).close(); await r.start({ publish: '1', topic_id: '00' });
-    await r.checkout.recoverCommunity(); assert.deepEqual(r.calls, []); assert.match(r.checkout.routeError.value, /无效/);
+    await r.checkout.recoverCommunity(); assertOnlyPublicFooterReads(r.calls); assert.match(r.checkout.routeError.value, /无效/);
   } finally { r.stop(); }
 });
 
@@ -326,12 +334,12 @@ test('fresh guest publish and edit entries check config after validation before 
       await r.start({ publish: '1', ...(edit ? { edit_id: '31' } : { topic_id: '9' }) });
       assert.deepEqual(r.navigations, mode === 'open' ? ['/pages/auth/login'] : []);
       assert.equal(count(r, /\/config$/), mode === 'already-closed' ? 0 : 1);
-      assert.equal(r.calls.filter(row => !row.url.endsWith('/config')).length, 0);
+      assertOnlyPublicFooterReads(r.calls.filter(row => row.url !== '/api/community/config'));
       assert.equal(r.checkout.showPublish.value, false); assert.equal(r.auth.isLoggedIn, false);
     } finally { r.stop(); }
   }
   const invalid = runtime({ component: 'pages/discover/index.vue', authenticated: false, send: () => { throw Error('Invalid guest I/O'); } });
-  try { await invalid.start({ publish: '1', topic_id: '00' }); assert.deepEqual(invalid.calls, []); assert.deepEqual(invalid.navigations, []); }
+  try { await invalid.start({ publish: '1', topic_id: '00' }); assertOnlyPublicFooterReads(invalid.calls); assert.deepEqual(invalid.navigations, []); }
   finally { invalid.stop(); }
 });
 

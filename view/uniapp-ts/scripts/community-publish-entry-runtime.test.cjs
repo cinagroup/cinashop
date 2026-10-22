@@ -3,6 +3,14 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const entryFile = path.resolve(__dirname, '../../common/communityRoute.ts');
+// The Page independently refreshes its public global footer; community validation
+// must still prevent every other request, including private cart/account I/O.
+function assertOnlyPublicFooterReads(calls) {
+  for (const call of calls) {
+    assert.ok(call.url === '/api/diy/diy_version/0' || call.url === '/api/navigation', `unexpected business I/O: ${call.url}`);
+    assert.deepEqual(call.data, {});
+  }
+}
 const post = (id = 31, uid = 11) => ({ id, type: 2, relationId: uid, is_self: 1, contentType: 1,
   title: `原帖${uid}`, content: '原内容', status: 1, is_verify: 1, isLike: 0, likeNum: 0, commentNum: 0, playNum: 0, shareNum: 0, image: '/api/assets/71?signature=preview', image_reference: '/api/assets/71',
   sliderImage: ['/api/assets/71?signature=preview'], slider_image_references: ['/api/assets/71'],
@@ -79,7 +87,7 @@ test('canonical invalid publisher/author modes fail before referrals, feed reads
     try {
       await r.start(query); assert.match(r.checkout.routeError.value, /无效|冲突/);
       assert.equal(r.checkout.showPublish.value, false); r.checkout.openPublish(); await r.checkout.load();
-      r.auth.setLogin('next-session', 22); await tick(); assert.deepEqual(r.calls, []); assert.deepEqual(r.navigations, []);
+      r.auth.setLogin('next-session', 22); await tick(); assertOnlyPublicFooterReads(r.calls); assert.deepEqual(r.navigations, []);
     } finally { r.stop(); }
   }
 });

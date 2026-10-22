@@ -65,7 +65,7 @@ Admin既有2MB、100000节点、深度64保护不扩大。前端与结构化Admi
 
 已验证的新增独立逻辑为186＝native48＋页脚unit35＋完整runner36＋Uni页脚48＋Admin17＋manifest来源1＋Browser1。Uni页脚48包含原43及本次物理状态修复新增5项；消费AST只在已有case内补3个mutant，没有新增独立case。29个Browser检查点仅计1个Vitest用例；旧Worker1136、focused120、消费AST50、既有user43／carousel64／cart10和重复native／广回归不再累计。
 
-本地实际Node为24.19.0／npm11.11.0；这些收据没有执行全量UniApp `test:toolchain` 或本轮完整安全／在线npm审计，也没有预报GitHub结果。早期后端scoped类型检查有一次外层143中断，明确不计成功，随后独占的新候选97.802秒通过。Admin两次初始失败与Worker原失败均保留原收据，不用当前绿灯覆盖。
+本地实际Node为24.19.0／npm11.11.0；截至首次提交的这些收据没有执行全量UniApp `test:toolchain` 或本轮完整安全／在线npm审计，也没有预报GitHub结果。早期后端scoped类型检查有一次外层143中断，明确不计成功，随后独占的新候选97.802秒通过。Admin两次初始失败与Worker原失败均保留原收据，不用当前绿灯覆盖。
 
 ## Browser桥、真实setup及候选
 
@@ -116,3 +116,13 @@ candidate3暴露的是同一iframe的hash变化不会发出新onload，旧shell�
 - `/tmp/cinashop-diy-footer-browser-category-setup-correction.json`、`/tmp/cinashop-diy-footer-browser-readiness-sameurl-correction.json`：夹具修复来源、当时SHA与历史检查边界；后续真实补验和终态另列，不改写原收据。
 
 最终repo机器审计及三账本追加由root根据实际终态汇编；本文不替代实际暂存扫描、提交或线上CI结果。保留既有账本前缀及未完成父项；本批页脚闭合不等于全仓PHP→TS迁移完毕。
+
+## 首次GitHub CI失败与完整UniApp复验
+
+草稿PR #156首次提交 `91e6b8801f600010fbbcd1a162c6bdcc1c91c351` 的GitHub运行39826378280中，UniApp实际2258项为2254通过、4失败，零跳过。原始失败记录保留：三个既有社区测试把独立全局页脚的公开读取也算作社区业务I/O；失败不能改记为通过。
+
+仅修改 `community-availability-runtime.test.cjs`、`community-main-feed-runtime.test.cjs`、`community-publish-entry-runtime.test.cjs`：对每条实际请求，例外精确限制为 `/api/diy/diy_version/0` 或 `/api/navigation` 且data为空对象；fresh guest只另外排除原本预期的精确 `/api/community/config`。其它社区、referral、账号、私有购物车和未知请求仍使原断言失败；未隐藏请求、减少用例或修改生产代码。既有r.calls只记录url／data，GET身份由被冻结的实际http.get调用链证明，不能把这三个断言描述为独立记录并检查HTTP method。
+
+同一独占serial wrapper中，先执行三个完整文件98/98（40.389秒），再执行实际package脚本列出的全部89文件2258/2258（859.35秒）；使用Node24.19.0及 `--test-concurrency=1`，零失败、cancelled、skipped或todo。4480份源、226份安装输入、1851份构建产物的前后漂移均为空；相对最终Browser，仅这三个测试文件有差异，产品源、依赖和实际产物精确保留。本次没有重复Browser／构建／类型检查，也不增加独立用例，批次总数仍186。
+
+可复核记录：`/tmp/cinashop-footer-ci-first-head-failure.json`、`/tmp/cinashop-footer-ci-community-final.json`、`/tmp/cinashop-footer-ci-community-handoff.json`。全量工具链日志SHA256为 `78bc7dcb6b425943f0af3c9f800090e2e831015344dad3fb07398353bae9184b`；三个完整文件日志SHA256为 `b05d2fe7ae4b2d21fc35e4787c3b89d740926132aceb96e9b08a100c8aa9cfe7`。当前补提交的线上CI须按推送后的精确head另查，本文不预报绿灯；首次CI失败及旧父CI成功分别保留。

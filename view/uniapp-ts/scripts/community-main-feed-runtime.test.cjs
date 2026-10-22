@@ -4,6 +4,14 @@ const path = require('node:path');
 const vue = require('vue');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const root = path.resolve(__dirname, '..');
+// The Page independently refreshes its public global footer; community validation
+// must still prevent every other request, including private cart/account I/O.
+function assertOnlyPublicFooterReads(calls) {
+  for (const call of calls) {
+    assert.ok(call.url === '/api/diy/diy_version/0' || call.url === '/api/navigation', `unexpected business I/O: ${call.url}`);
+    assert.deepEqual(call.data, {});
+  }
+}
 const post = (id=1, extra={}) => ({id,type:2,relationId:22,contentType:id%2?1:2,title:`内容${id}`,content:`正文${id}`,image:'',sliderImage:null,
   likeNum:3,isLike:0,commentNum:2,playNum:5,shareNum:4,status:1,is_verify:1,addTime:100,site_url:'https://shop.example.test',...extra});
 const page = (start=1, length=10) => Array.from({length},(_,i)=>post(start+i));
@@ -131,9 +139,9 @@ test('page reach-bottom and pull refresh call real paging and reset inline filte
 test('App featured uses only a local canonical page with no remote URL, token or preliminary visit',{timeout:30_000},async()=>{
   const prior=global.plus;global.plus={};const r=main();try{await r.start({});const before=r.calls.length;await r.checkout.changeFeedTab('featured');assert.equal(r.navigations.at(-1),'/pages/discover/workspace?feed=featured');assert.equal(r.calls.length,before);assert.equal(r.checkout.home.tab.value,'discover');}finally{if(prior===undefined)delete global.plus;else global.plus=prior;r.stop();}
 });
-test('canonical featured validates before all I/O and conflicts never load config or consume referrals',{timeout:30_000},async()=>{
+test('canonical featured validates before community business I/O and conflicts never load config or consume referrals',{timeout:30_000},async()=>{
   for(const query of [{feed:'other'},{feed:'featured',id:'31'},{feed:'featured',author_id:'0'},{feed:'featured',publish:'1'},{feed:['featured']},{feed:'featured',topic_id:'9'}]){
-    const r=main();try{await r.start(query);assert.equal(r.calls.length,0);assert.match(r.checkout.routeError.value,/无效|冲突/);}finally{r.stop();}
+    const r=main();try{await r.start(query);assertOnlyPublicFooterReads(r.calls);assert.match(r.checkout.routeError.value,/无效|冲突/);}finally{r.stop();}
   }
 });
 test('registered old main drops credentials and switches the actual tab without business requests',{timeout:30_000},async()=>{

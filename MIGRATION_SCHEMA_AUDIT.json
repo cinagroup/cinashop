@@ -3285,6 +3285,23 @@
     "new_distinct_cases": 186,
     "production_schema_changed": false,
     "merge": false,
-    "deploy": false
+    "deploy": false,
+    "ci_compatibility_followup": {
+      "recorded": "2026-10-22T18:34:34.200425+00:00",
+      "first_head": "91e6b8801f600010fbbcd1a162c6bdcc1c91c351",
+      "first_CI_run": 39826378280,
+      "first_CI_Uni_failures": 4,
+      "changed_CJS_tests": 3,
+      "focused_passed": 98,
+      "actual_toolchain_files": 89,
+      "full_toolchain_passed": 2258,
+      "failures": 0,
+      "skipped": 0,
+      "new_cases": 0,
+      "product_sources_dependencies_and_artifacts_unchanged": true,
+      "new_head_CI": "verify after push",
+      "merge": false,
+      "deploy": false
+    }
   }
 }

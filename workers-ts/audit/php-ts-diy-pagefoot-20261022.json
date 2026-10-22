@@ -1314,7 +1314,8 @@
     "front792": "Original18files792:786passed/6failed, all6onlyoldcarousel test binding. Entire changedcarousel64 rerun passed; remaining exact-input previous successes retained. Not a single792-green rerun.",
     "runtime_types": "Original full runtime strict passes and exact runtime input closure unchanged. Latest full unit strict rechecked separately.",
     "cart_safearea": "Final cart template and current builds checked by frontcandidate3 strict/cart10/H5/MP/App/artifact/i18n, plus subsequent Worker consuming guards.",
-    "final_physical_resume": "Original broad1136/current native147/Admin17 scopes retained. New3front production files +5Node cases and two consumingWorkerTS paths validated by complete120Node/50AST, Uni strict/allbuilds/artifacts/i18n and new complete unit strict; Browser29 uses rebuilt current artifacts."
+    "final_physical_resume": "Original broad1136/current native147/Admin17 scopes retained. New3front production files +5Node cases and two consumingWorkerTS paths validated by complete120Node/50AST, Uni strict/allbuilds/artifacts/i18n and new complete unit strict; Browser29 uses rebuilt current artifacts.",
+    "full_Uni_toolchain_after_CI": "Actual package89files/2258 all passed after only3 CJS expectation changes. Historical792 and firstCI2254/2258 remain as recorded; product sources, installed inputs and Browser/build artifacts unchanged."
   },
   "new_independent_cases": {
     "dedicated_footer_native": 48,
@@ -2031,11 +2032,26 @@
       "path": "workers-ts/vitest.diy-footer-browser.config.ts",
       "sha256": "2d10d984f3823fb37870481838d21a14e7d90399be1018e93e871fae1fa403a2",
       "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-availability-runtime.test.cjs",
+      "sha256": "000516b03a456393426b5f33e9d5daa6f0129c6334b3710a9b84cf163d095849",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+      "sha256": "347aa273ef06c4812afe235a30bafa45be7a408c1de2fabfd7aaf17bd2f0ff22",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/community-publish-entry-runtime.test.cjs",
+      "sha256": "08d8bee67efb61ecadb11b11ceba78e9f85c7010bf5b8b020f4037ec29139bc7",
+      "change": "modified"
     }
   ],
   "doc": {
     "path": "workers-ts/docs/php-ts-diy-pagefoot-20261022.md",
-    "sha256": "0cb6341b3e30a14cde152169c3d0eaf61907011eb42857b0bb51800bfb849cb7"
+    "sha256": "fec93404354f39f580405c01c3afa333180e5e702046cce405b64124d82ebeff"
   },
   "final_independent_handoff": {
     "path": "/tmp/cinashop-diy-footer-browser-passed-handoff.json",
@@ -2062,6 +2078,9 @@
       "view/uniapp-ts/package.json",
       "view/uniapp-ts/scripts/cart-runtime.test.cjs",
       "view/uniapp-ts/scripts/category-catalog-runtime.test.cjs",
+      "view/uniapp-ts/scripts/community-availability-runtime.test.cjs",
+      "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+      "view/uniapp-ts/scripts/community-publish-entry-runtime.test.cjs",
       "view/uniapp-ts/scripts/diy-carousel-content-runtime.test.cjs",
       "view/uniapp-ts/scripts/diy-footer-runtime.test.cjs",
       "view/uniapp-ts/scripts/diy-navigation-content-runtime.test.cjs",
@@ -2124,11 +2143,16 @@
       "workers-ts/test/uniapp-frontend-parity.test.ts",
       "workers-ts/vitest.diy-footer-browser.config.ts"
     ],
-    "unchanged_baseline_files_expected": 6645,
-    "modified_baseline_files_expected": 40,
+    "unchanged_baseline_files_expected": 6642,
+    "modified_baseline_files_expected": 43,
     "new_files_expected": 32,
     "no_deleted_files": true,
-    "ledger_verification": "Markdown original byte prefixes and checkbox lines preserved. Original parsed JSON fields unchanged; one new root field appended. Exact staged preservation proof generated separately to avoid self-referential patch digest."
+    "ledger_verification": "Markdown original byte prefixes and checkbox lines preserved. Original parsed JSON fields unchanged; one new root field appended. Exact staged preservation proof generated separately to avoid self-referential patch digest.",
+    "prior_first_commit_proof": {
+      "path": "/tmp/cinashop-footer-preservation-final.json",
+      "bytes": 12988,
+      "sha256": "6cbaa9be7d0dd98757927723150d18b8dff08940fe2107827f7407b5c3da082c"
+    }
   },
   "ci": {
     "new_head": "To be verified after normal push; this committed audit does not pre-claim a run result.",
@@ -2137,7 +2161,230 @@
       "url": "https://github.com/cinagroup/cinashop/actions/runs/39768252669",
       "status": "completed",
       "conclusion": "success"
+    },
+    "first_head": {
+      "head": "91e6b8801f600010fbbcd1a162c6bdcc1c91c351",
+      "run": 39826378280,
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/39826378280",
+      "UniApp_conclusion": "failure",
+      "tests": 2258,
+      "pass": 2254,
+      "fail": 4,
+      "followup": "Only three existing CJS test expectations corrected, full2258 local passed; new-head CI verified separately."
     }
   },
-  "final_patch_scan": "Final staged diff is scanned with gitleaks8.29.0 before commit. Exact patch/tree/scan receipt is external to this patch to avoid a self-reference."
+  "final_patch_scan": "Final staged diff is scanned with gitleaks8.29.0 before commit. Exact patch/tree/scan receipt is external to this patch to avoid a self-reference.",
+  "ci_compatibility_followup": {
+    "recorded_utc": "2026-10-22T18:34:34.200425+00:00",
+    "status": "local-full-Uni-toolchain-passed-awaiting-new-head-CI",
+    "first_head_failure": {
+      "head": "91e6b8801f600010fbbcd1a162c6bdcc1c91c351",
+      "run": 39826378280,
+      "job": 119990642319,
+      "conclusion": "failure",
+      "source_log": "/tmp/cinashop-footer-ci-UniApp-failed.clean.log",
+      "log_sha256": "9a7175d13208797996728439244d8ea0df89e3f60314b52e2f47206f2ccfe295",
+      "failures": 4,
+      "reason": "Existing canonical-community tests assumed no HTTP at all; global footer independently issues exact two public reads. Tests must preserve business no-I/O checks while explicitly validating these ancillary calls.",
+      "production_change_needed": false,
+      "summary_lines": [
+        "2026-10-22T17:52:35.0108580Z > node --test scripts/postcss-selector-parser-compat.test.cjs scripts/d3-postcss-dir-glob-boundary.test.cjs scripts/agent-self-service-runtime.test.cjs scripts/assisted-cashier-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs scripts/assisted-selection-runtime.test.cjs scripts/assisted-records-runtime.test.cjs scripts/assisted-detail-runtime.test.cjs scripts/dev-server-security.test.cjs scripts/checkout-runtime.test.cjs scripts/cart-runtime.test.cjs scripts/wallet-runtime.test.cjs scripts/coupon-products-runtime.test.cjs scripts/product-sku-runtime.test.cjs scripts/product-detail-lifecycle.test.cjs scripts/order-detail-lifecycle.test.cjs scripts/order-list-lifecycle.test.cjs scripts/order-pay-result.test.cjs scripts/offline-cashier-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/member-code-runtime.test.cjs scripts/refund-apply-lifecycle.test.cjs scripts/refund-records-lifecycle.test.cjs scripts/seckill-runtime.test.cjs scripts/combination-runtime.test.cjs scripts/pink-status-runtime.test.cjs scripts/pink-cancellation-runtime.test.cjs scripts/bargain-runtime.test.cjs scripts/bargain-cancel-runtime.test.cjs scripts/bargain-friend-runtime.test.cjs scripts/visit-history-runtime.test.cjs scripts/presale-runtime.test.cjs scripts/presale-catalog-runtime.test.cjs scripts/community-deep-links-runtime.test.cjs scripts/community-publish-runtime.test.cjs scripts/community-images-runtime.test.cjs scripts/community-relations-runtime.test.cjs scripts/community-author-runtime.test.cjs scripts/community-page-alias.test.cjs scripts/community-people-runtime.test.cjs scripts/feedback-work-runtime.test.cjs scripts/newcomer-runtime.test.cjs scripts/product-rank-runtime.test.cjs scripts/governance-agreements-runtime.test.cjs scripts/vite-safety-package.test.cjs scripts/vite-editor-security.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/fab-runtime.test.cjs scripts/integral-purchase-runtime.test.cjs scripts/theme-runtime.test.cjs scripts/category-catalog-runtime.test.cjs scripts/category-recommend-image-runtime.test.cjs scripts/product-unit-runtime.test.cjs scripts/product-detail-design-runtime.test.cjs scripts/vue-ssr-safety-package.test.cjs scripts/feedback-lifecycle-runtime.test.cjs scripts/customer-work-cashier-read-runtime.test.cjs scripts/customer-work-cashier-protocol.test.cjs scripts/customer-work-cashier-runtime.test.cjs scripts/customer-work-cashier-images-protocol.test.cjs scripts/customer-work-cashier-images-runtime.test.cjs scripts/customer-ordinary-cashier-request.test.cjs scripts/customer-ordinary-cashier-protocol.test.cjs scripts/customer-ordinary-cashier-runtime.test.cjs scripts/customer-ordinary-cashier-read.test.cjs scripts/customer-ordinary-cashier-page.test.cjs scripts/community-comments-runtime.test.cjs scripts/community-engagement-runtime.test.cjs scripts/community-publish-entry-runtime.test.cjs scripts/community-availability-runtime.test.cjs scripts/community-main-feed-runtime.test.cjs scripts/diy-community-runtime.test.cjs scripts/diy-state-widgets-runtime.test.cjs scripts/diy-page-state-runtime.test.cjs scripts/diy-commerce-runtime.test.cjs scripts/diy-commerce-writes-runtime.test.cjs scripts/diy-editorial-runtime.test.cjs scripts/diy-editorial-page-media-runtime.test.cjs scripts/diy-editorial-media-cache-runtime.test.cjs scripts/diy-carousel-runtime.test.cjs scripts/diy-carousel-content-runtime.test.cjs scripts/diy-carousel-media-runtime.test.cjs scripts/diy-navigation-runtime.test.cjs scripts/diy-navigation-content-runtime.test.cjs scripts/diy-navigation-media-runtime.test.cjs scripts/diy-footer-runtime.test.cjs",
+        "2026-10-22T17:57:34.1878518Z ℹ tests 2258",
+        "2026-10-22T17:57:34.1879336Z ℹ pass 2254",
+        "2026-10-22T17:57:34.1879639Z ℹ fail 4",
+        "2026-10-22T17:57:34.1879940Z ℹ cancelled 0",
+        "2026-10-22T17:57:34.1880249Z ℹ skipped 0",
+        "2026-10-22T17:57:34.1880572Z ℹ todo 0",
+        "2026-10-22T17:57:34.1880900Z ℹ duration_ms 299137.89803"
+      ],
+      "receipt": {
+        "path": "/tmp/cinashop-footer-ci-first-head-failure.json",
+        "bytes": 4733,
+        "sha256": "f1759ad3fbfbb8a6b079f7921e611a6f1b3d96f7b3f821d5e8e8b7b283f61136"
+      },
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/39826378280"
+    },
+    "test_contract": "Four existing community-invalid/guest guard cases and the formerly unreached invalid-guest assertion now assert every observed request is exactly /api/diy/diy_version/0 or /api/navigation with data{}. Fresh guest separately permits only the already-expected exact /api/community/config. All community/referral/account/private-cart or other requests still fail. No runtime/helper request hiding, producer change, broad path ignore or skipped/reduced test.",
+    "changed_tests": [
+      {
+        "path": "view/uniapp-ts/scripts/community-availability-runtime.test.cjs",
+        "sha256": "000516b03a456393426b5f33e9d5daa6f0129c6334b3710a9b84cf163d095849"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-main-feed-runtime.test.cjs",
+        "sha256": "347aa273ef06c4812afe235a30bafa45be7a408c1de2fabfd7aaf17bd2f0ff22"
+      },
+      {
+        "path": "view/uniapp-ts/scripts/community-publish-entry-runtime.test.cjs",
+        "sha256": "08d8bee67efb61ecadb11b11ceba78e9f85c7010bf5b8b020f4037ec29139bc7"
+      }
+    ],
+    "full_validation": {
+      "path": "/tmp/cinashop-footer-ci-community-final.json",
+      "bytes": 7163564,
+      "sha256": "c28038c082a4735fcd8b35d29d4b69646ecca05b7c81f7a6628d7c2d4a205121"
+    },
+    "independent_handoff": {
+      "path": "/tmp/cinashop-footer-ci-community-handoff.json",
+      "bytes": 10459,
+      "sha256": "f2d9f44e2f990e2327aa2ddbf6d8d39b29412aec906d2e874f6bc74595587490"
+    },
+    "actual_package_script_file_count": 89,
+    "tests": 2258,
+    "new_independent_cases": 0,
+    "unchanged_batch_new_cases": 186,
+    "steps": [
+      {
+        "name": "three-complete-community-files",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=tap",
+          "scripts/community-availability-runtime.test.cjs",
+          "scripts/community-main-feed-runtime.test.cjs",
+          "scripts/community-publish-entry-runtime.test.cjs"
+        ],
+        "exit_code": 0,
+        "seconds": 40.389,
+        "counts": {
+          "tests": 98,
+          "suites": 0,
+          "pass": 98,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "log": "/tmp/cinashop-footer-ci-community-final-three-complete-community-files.log",
+        "log_sha256": "b05d2fe7ae4b2d21fc35e4787c3b89d740926132aceb96e9b08a100c8aa9cfe7"
+      },
+      {
+        "name": "complete-actual-Uni-toolchain",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=tap",
+          "scripts/postcss-selector-parser-compat.test.cjs",
+          "scripts/d3-postcss-dir-glob-boundary.test.cjs",
+          "scripts/agent-self-service-runtime.test.cjs",
+          "scripts/assisted-cashier-runtime.test.cjs",
+          "scripts/assisted-checkout-runtime.test.cjs",
+          "scripts/assisted-selection-runtime.test.cjs",
+          "scripts/assisted-records-runtime.test.cjs",
+          "scripts/assisted-detail-runtime.test.cjs",
+          "scripts/dev-server-security.test.cjs",
+          "scripts/checkout-runtime.test.cjs",
+          "scripts/cart-runtime.test.cjs",
+          "scripts/wallet-runtime.test.cjs",
+          "scripts/coupon-products-runtime.test.cjs",
+          "scripts/product-sku-runtime.test.cjs",
+          "scripts/product-detail-lifecycle.test.cjs",
+          "scripts/order-detail-lifecycle.test.cjs",
+          "scripts/order-list-lifecycle.test.cjs",
+          "scripts/order-pay-result.test.cjs",
+          "scripts/offline-cashier-runtime.test.cjs",
+          "scripts/operator-writeoff-runtime.test.cjs",
+          "scripts/member-code-runtime.test.cjs",
+          "scripts/refund-apply-lifecycle.test.cjs",
+          "scripts/refund-records-lifecycle.test.cjs",
+          "scripts/seckill-runtime.test.cjs",
+          "scripts/combination-runtime.test.cjs",
+          "scripts/pink-status-runtime.test.cjs",
+          "scripts/pink-cancellation-runtime.test.cjs",
+          "scripts/bargain-runtime.test.cjs",
+          "scripts/bargain-cancel-runtime.test.cjs",
+          "scripts/bargain-friend-runtime.test.cjs",
+          "scripts/visit-history-runtime.test.cjs",
+          "scripts/presale-runtime.test.cjs",
+          "scripts/presale-catalog-runtime.test.cjs",
+          "scripts/community-deep-links-runtime.test.cjs",
+          "scripts/community-publish-runtime.test.cjs",
+          "scripts/community-images-runtime.test.cjs",
+          "scripts/community-relations-runtime.test.cjs",
+          "scripts/community-author-runtime.test.cjs",
+          "scripts/community-page-alias.test.cjs",
+          "scripts/community-people-runtime.test.cjs",
+          "scripts/feedback-work-runtime.test.cjs",
+          "scripts/newcomer-runtime.test.cjs",
+          "scripts/product-rank-runtime.test.cjs",
+          "scripts/governance-agreements-runtime.test.cjs",
+          "scripts/vite-safety-package.test.cjs",
+          "scripts/vite-editor-security.test.cjs",
+          "scripts/vite-path-security.test.cjs",
+          "scripts/vite-windows-path-security.test.cjs",
+          "scripts/esbuild-server-security.test.cjs",
+          "scripts/vite-esbuild-compatibility.test.cjs",
+          "scripts/fab-runtime.test.cjs",
+          "scripts/integral-purchase-runtime.test.cjs",
+          "scripts/theme-runtime.test.cjs",
+          "scripts/category-catalog-runtime.test.cjs",
+          "scripts/category-recommend-image-runtime.test.cjs",
+          "scripts/product-unit-runtime.test.cjs",
+          "scripts/product-detail-design-runtime.test.cjs",
+          "scripts/vue-ssr-safety-package.test.cjs",
+          "scripts/feedback-lifecycle-runtime.test.cjs",
+          "scripts/customer-work-cashier-read-runtime.test.cjs",
+          "scripts/customer-work-cashier-protocol.test.cjs",
+          "scripts/customer-work-cashier-runtime.test.cjs",
+          "scripts/customer-work-cashier-images-protocol.test.cjs",
+          "scripts/customer-work-cashier-images-runtime.test.cjs",
+          "scripts/customer-ordinary-cashier-request.test.cjs",
+          "scripts/customer-ordinary-cashier-protocol.test.cjs",
+          "scripts/customer-ordinary-cashier-runtime.test.cjs",
+          "scripts/customer-ordinary-cashier-read.test.cjs",
+          "scripts/customer-ordinary-cashier-page.test.cjs",
+          "scripts/community-comments-runtime.test.cjs",
+          "scripts/community-engagement-runtime.test.cjs",
+          "scripts/community-publish-entry-runtime.test.cjs",
+          "scripts/community-availability-runtime.test.cjs",
+          "scripts/community-main-feed-runtime.test.cjs",
+          "scripts/diy-community-runtime.test.cjs",
+          "scripts/diy-state-widgets-runtime.test.cjs",
+          "scripts/diy-page-state-runtime.test.cjs",
+          "scripts/diy-commerce-runtime.test.cjs",
+          "scripts/diy-commerce-writes-runtime.test.cjs",
+          "scripts/diy-editorial-runtime.test.cjs",
+          "scripts/diy-editorial-page-media-runtime.test.cjs",
+          "scripts/diy-editorial-media-cache-runtime.test.cjs",
+          "scripts/diy-carousel-runtime.test.cjs",
+          "scripts/diy-carousel-content-runtime.test.cjs",
+          "scripts/diy-carousel-media-runtime.test.cjs",
+          "scripts/diy-navigation-runtime.test.cjs",
+          "scripts/diy-navigation-content-runtime.test.cjs",
+          "scripts/diy-navigation-media-runtime.test.cjs",
+          "scripts/diy-footer-runtime.test.cjs"
+        ],
+        "exit_code": 0,
+        "seconds": 859.35,
+        "counts": {
+          "tests": 2258,
+          "suites": 0,
+          "pass": 2258,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "log": "/tmp/cinashop-footer-ci-community-final-complete-actual-Uni-toolchain.log",
+        "log_sha256": "78bc7dcb6b425943f0af3c9f800090e2e831015344dad3fb07398353bae9184b"
+      }
+    ],
+    "source_drift": [],
+    "installed_drift": [],
+    "artifact_drift": [],
+    "retained_Browser": "candidate7 real hidden IAB29 remains bound to identical product sources, dependencies and artifacts. Only three CJS tests changed; no Browser/build/type rerun claimed.",
+    "producer_comparison": {
+      "prior_Browser_producer_drift_excluding_only_three_test_files": [],
+      "prior_Browser_installed_drift": [],
+      "source_count": 4480,
+      "installed_count": 226,
+      "artifact_count": 1851
+    },
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "method_evidence_boundary": "Existing r.calls captures only url/data. GET identity comes from frozen actual apiDiyVersion/http.get navigation producer calls; these three assertions do not independently record/check HTTP method."
+  }
 }
