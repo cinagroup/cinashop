@@ -6,7 +6,7 @@ import { canonicalizePublishedAttachmentReference } from './ArticleContentPolicy
 type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue | null => value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : null;
 
-/** The six editorial components expose only these authored image slots.
+/** Editorial and carousel components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
  * schema strings never acquire an attachment signature. The shared policy
  * verifies the current platform owner, raster type, object key and MIME before
@@ -16,10 +16,11 @@ function editorialMediaSlots(components: unknown[]) {
   const collect = (value: unknown, key: string) => {
     const owner = record(value);
     if (owner && typeof owner[key] === 'string') slots.push({ owner, key });
-    // The existing public renderer accepts 200 components; its largest valid
-    // field set is activeParty's four images (800 total). Fail on oversize
-    // malformed schemas rather than truncate an otherwise valid projection.
-    if (slots.length > 1000) throw new ValidateException('DIY公开素材超过完整读取容量');
+    // The UI accepts 200 components, including homeComb's ten Admin-authored
+    // slides plus logo (2200 slots). Legacy carousels can contain more than ten
+    // slides, so preserve their complete list within an explicit total budget.
+    // Reject oversize output/save rather than silently sign a partial schema.
+    if (slots.length > 2500) throw new ValidateException('DIY公开素材超过完整读取容量');
   };
   for (const value of components) {
     const component = record(value);
@@ -30,6 +31,13 @@ function editorialMediaSlots(components: unknown[]) {
     else if (component.name === 'activeParty') {
       const list = record(component.menuConfig)?.list;
       if (Array.isArray(list)) for (const item of list.slice(0, 4)) collect(item, 'img');
+    }
+    else if (component.name === 'swipers' || component.name === 'swiperBg' || component.name === 'homeComb') {
+      const list = record(component.swiperConfig)?.list;
+      if (Array.isArray(list)) for (const item of list) collect(item, 'img');
+      if (component.name === 'homeComb') collect(component.logoConfig, 'url');
+      // homeComb's blurred background is derived from the selected slide.
+      // Its tabs contain text/typed destinations only, not another image slot.
     }
     // goodList and articleList receive their real media from their independent
     // product/article APIs. Their Admin preview rows are not public authority.

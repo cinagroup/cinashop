@@ -10,7 +10,7 @@
     <view v-else-if="page">
       <view v-if="loading" class="diy-notice">正在核对页面配置…</view>
       <view v-else-if="offline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="reload(true)">重新核实</button></view>
-      <DiyHomeRenderer v-if="isDiyEnabled(page.is_show)" :components="page.value" :page-active="diyPageActive" micro-page @closed="diyHost.close" />
+      <DiyHomeRenderer v-if="isDiyEnabled(page.is_show)" :components="page.value" :page-active="diyPageActive" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" micro-page @closed="diyHost.close" />
       <view v-else class="diy-state">微页面暂未开放</view>
     </view>
     <view v-else class="diy-state"><view v-if="offline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="reload(true)">重新核实</button></view>微页面暂未开放</view>
@@ -22,13 +22,16 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
-import { onLoad, onShow, onHide, onUnload, onPullDownRefresh } from "@dcloudio/uni-app";
+import { onLoad, onShow, onHide, onUnload, onPageScroll, onReachBottom, onPullDownRefresh } from "@dcloudio/uni-app";
 import DiyHomeRenderer from "@/components/diy/DiyHomeRenderer.vue";
 import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue";
 import { diyPageStyle, isDiyEnabled } from "@/utils/diy";
 import { useDiyPageHost } from "@/composables/useDiyPageHost";
 
 const diyCommunityVisible = ref(false);
+const diyScrollTop=ref(0),diyLoadMoreSignal=ref(0);
+onPageScroll(event=>{if(diyCommunityVisible.value)diyScrollTop.value=event.scrollTop;});
+onReachBottom(()=>{if(diyCommunityVisible.value)diyLoadMoreSignal.value++;});
 let diyCommunityDisposed = false;
 onShow(() => { if (!diyCommunityDisposed) diyCommunityVisible.value = true; });
 onHide(() => { diyCommunityVisible.value = false; });

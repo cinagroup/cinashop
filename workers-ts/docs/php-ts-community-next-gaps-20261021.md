@@ -101,3 +101,10 @@ PHP `view/uniapp/pages/discover/discoverDetails/index.vue:127` 及 `components/d
 前述六类编辑／列表组件已完整处理并通过本机和实际后台浏览器门禁，见[本批说明](php-ts-diy-editorial-20261022.md)及[机器记录](../audit/php-ts-diy-editorial-20261022.json)。Worker1,054／native86／UniApp工具链1,879／完整13步与Browser21阶段通过，新增独立188例，候选与重复环境不累计。逐GET比较50表／46序列；业务SQL写0，四份fixture配置精确收据独立记录，只有显式海报GET新增一次R2缓存。必要依赖安全阻断一并修复并记录实际旧／新行为，保留get_script与三处loader。
 
 下一独立完整切片是swipers／swiperBg／homeComb和共享DiyMediaCarousel的全部真实调用族。现有TS通用链接读info[1]遗漏PHP swiperBg真实info[0]；固定高度／4000ms／dots不能代替PHP各类natural高度、指示器、间距、menu／search／tabs配置。11份新鲜PHP／TS来源与完整工作范围只有只读提案，尚未实现／构建／验收该族。当前公开媒体签名与期限扫描尚未覆盖swiperConfig.list，应在该族一并接入既有受管素材／签名／缓存续期权威。本批共同图片URL适配不视为轮播整族完成。API-007父项、DATA-008及生产身份／provider／真机／发布仍开放。
+
+
+## 2026-10-22：轮播整族后的导航候选
+
+swipers／swiperBg／homeComb与共享首页／微页调用链的本机门禁和后台Browser30阶段已完成，见[本批说明](php-ts-diy-carousel-20261022.md)与[机器记录](../audit/php-ts-diy-carousel-20261022.json)。下一完整候选headerSerch／tabNav／menus／pictureCube：当前tabNav读错持久tabListConfig.list、搜索头仅固定logo／提示、menus固定四列且slice30、pictureCube缺0..11布局及自定义doc几何。只形成21个新鲜输入SHA的静态提案，尚未实施、验收或宣称完成。
+
+后续应复用真实typed微页／分类与宿主页脚归属，同时补完整作者配置／媒体canonical／owner／lease；不能只修单一helper或沿用静默截断。pageFoot完整造型、生产身份／ACL／真机／发布仍单列开放；保留get_script及三处loader，API-007父项、DATA-008、FE-003J／K不改历史复选框。

@@ -2882,3 +2882,10 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 按用户要求继续后台浏览器验收，不反复弹出确认。已核实本地Browser包与可用IAB连接；独立Chrome／Edge扩展连接未见于当前清单。HTTP loopback桥接、固定JPEG的IMAGES夹具和目的地合成边界均明确，MP／App构建不替代真机。保留已恢复get_script与三处loader，未改DDL／ACL／路由或生产配置；API-007父项、DATA-008、FE-003J／K及生产／真机／发布继续开放，只提交推送draft、不合并部署。父提交3dfa941d的Actions39599203509已11任务成功，本批精确提交CI另核实。
 
 下一完整切片为swipers／swiperBg／homeComb与共享DiyMediaCarousel的全部配置、布局、导航、媒体和生命周期调用族；11份来源现仅为新鲜只读提案，不把共享图片helper修正算作整族完成。
+
+
+### 2026-10-22：DIY轮播与组合首页增量
+
+API-007本批完成swipers／swiperBg／homeComb及共享首页／微页调用链的配置、媒体、原地内容／分类、分页和完整owner保护；保留原宿主页脚语义。Worker1061、native53、工具链1987／12项本地门禁及后台Browser30检查点本机通过，新增143独立例。搜索只验路由／输入，MP／App未作真机验收；pageFoot完整外观与导航四族仍有后续工作。
+
+见[本批说明](workers-ts/docs/php-ts-diy-carousel-20261022.md)和[机器记录](workers-ts/audit/php-ts-diy-carousel-20261022.json)。历史复选框保持原样；API-007父项、DATA-008、FE-003J／K继续开放，不据此勾选整项完成。保留get_script兼容行为，只提交推送draft、不合并部署。

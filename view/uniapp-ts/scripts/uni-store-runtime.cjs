@@ -32,7 +32,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
       else call.success({ statusCode: result?.httpStatus ?? 200, header: result?.headers ?? {}, data: { status: result?.status ?? 200, msg: result?.msg ?? 'ok', data: result?.data } });
     }).catch(error => call.fail({ errMsg: error.message })); },
   };
-  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload', 'onShareAppMessage', 'onShareTimeline', 'onReachBottom', 'onPullDownRefresh'].map(name => [name, fn => {
+  const lifecycle = Object.fromEntries(['onLoad', 'onShow', 'onHide', 'onUnload', 'onPageScroll', 'onShareAppMessage', 'onShareTimeline', 'onReachBottom', 'onPullDownRefresh'].map(name => [name, fn => {
     const previous=hooks[name];hooks[name]=previous ? (...args)=>{previous(...args);return fn(...args);} : fn;
   }]));
   function load(file) {

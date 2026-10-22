@@ -8432,3 +8432,12 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 按用户要求继续后台浏览器验收，不反复弹出确认。已核实本地Browser包与可用IAB连接；独立Chrome／Edge扩展连接未见于当前清单。HTTP loopback桥接、固定JPEG的IMAGES夹具和目的地合成边界均明确，MP／App构建不替代真机。保留已恢复get_script与三处loader，未改DDL／ACL／路由或生产配置；API-007父项、DATA-008、FE-003J／K及生产／真机／发布继续开放，只提交推送draft、不合并部署。父提交3dfa941d的Actions39599203509已11任务成功，本批精确提交CI另核实。
 
 下一完整切片为swipers／swiperBg／homeComb与共享DiyMediaCarousel的全部配置、布局、导航、媒体和生命周期调用族；11份来源现仅为新鲜只读提案，不把共享图片helper修正算作整族完成。
+
+
+## 2026-10-22 DIY轮播与组合首页完整合同
+
+本批继续API-007，处理swipers／swiperBg／homeComb和共享Renderer、首页／微页面真实调用链；保留各自链接域、时间／自然图片／布局／指示器／作者配置，组合头原地切换微页／分类、真实树范围与十条分页／重试／瀑布流，并修复原宿主页脚归属。媒体只签完整明确槽位，2500总量超限完整拒绝；900秒票据、缓存／打开页面续期与全owner／生命周期保护成套。
+
+最终Worker1061、native53、UniApp工具链1987／12项本地门禁与后台Browser30检查点通过；新增143例，不叠加候选或重复。Browser真实50表／46序列逐GET校验轮播／分类零业务写，setup及四次配置变化单列；搜索仅验编码路由／输入，真实缺表错误保留，不宣称产品结果／历史持久化或搜索只读。详情见[说明](workers-ts/docs/php-ts-diy-carousel-20261022.md)与[机器记录](workers-ts/audit/php-ts-diy-carousel-20261022.json)。
+
+按用户授权后台浏览器验收，不逐页弹确认；正常PHP Admin单homeComb，双实例为导入压力夹具。保留get_script和三处loader，未改DDL／ACL／生产路由／锁文件；pageFoot归属修复不等于其完整造型迁移。API-007父项、DATA-008、FE-003J／K及生产／真机／发布继续开放；只提交推送draft，不合并部署，本批精确提交CI在推送后核实。在线npm审计三次网络超时仍未通过，另列开放；下一导航四族只有静态提案。

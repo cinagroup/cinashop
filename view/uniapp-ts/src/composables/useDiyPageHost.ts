@@ -6,7 +6,7 @@ import { diyEditorialMediaDeadline } from '@/utils/diyEditorialMediaLease';
 
 /** A page owns adoption and native title/refresh effects. Its children own their
  * separate optional-auth reads and never persist those responses as schema. */
-export function useDiyPageHost(id: () => number | null, active: () => boolean) {
+export function useDiyPageHost(id: () => number | null, active: () => boolean, options: { adoptTitle?: boolean } = {}) {
   const auth = useAuthStore(), page = ref<DiyPage | null>(null), loading = ref(false), error = ref("");
   const phase = ref<"idle" | "loading" | "ready" | "empty" | "closed" | "error">("idle");
   const offline = ref(false);
@@ -47,7 +47,7 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean) {
       if (!current()) return false;
       page.value = snapshot.data; offline.value = snapshot.source === "offline";
       phase.value = page.value ? "ready" : "empty";
-      if (page.value) uni.setNavigationBarTitle({ title: page.value.title });
+      if (page.value && options.adoptTitle !== false) uni.setNavigationBarTitle({ title: page.value.title });
       scheduleMediaRefresh(snapshot.data, snapshot.cachedAt, current);
       return true;
     } catch (reason) {
