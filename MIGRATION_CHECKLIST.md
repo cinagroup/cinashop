@@ -2898,3 +2898,12 @@ API-007本批完成swipers／swiperBg／homeComb及共享首页／微页调用�
 最终本机2192工具链项、59文件1079项Worker回归、双完整strict类型和73项native通过。新增独立用例270；实际后台Browser内层1项／31检查点全部完成，50表46序列／152GET／十次明确配置写分开记账。外层143原因未知，内层日志、完整证据、清理、1899源／369产物与226安装指纹已独立复核恢复；没有把外层标成exit0。验收后台进行，不逐页弹确认。
 
 详见 `workers-ts/docs/php-ts-diy-navigation-20261022.md` 与 `workers-ts/audit/php-ts-diy-navigation-20261022.json`。历史正文和复选行保留，API-007父项、DATA-008、FE-003J／K继续开放。pageFoot／全局navigation仅完成静态提案；homeComb的H5原生标题栏偏移需独立修复与完整该族Browser验收。未合并、未部署，GitHub精确新提交CI单列跟进。
+
+
+### 2026-10-22 DIY 组合首页固定头与续期增量
+
+修复H5固定搜索与分类遮罩的原生标题栏偏移；约840秒根schema同版本续期保留选中子类，按原范围原子更新已加载商品分页与媒体票据，失败可明确重试，旧请求／旧DTO资格撤销。分类错误不再被触底信号自动重试。
+
+当前677项DIY回归、R3完整1079项Worker回归及R4相关4项AST补验、完整严格类型、三端构建／产物／i18n与实际后台Browser35检查点完成。失败候选、明确操作失误、143基础设施边界与真实产品负例分开留存；不累计重复测试或把检查点计成独立用例。
+
+见[说明](workers-ts/docs/php-ts-diy-homecomb-window-20261022.md)与[机器记录](workers-ts/audit/php-ts-diy-homecomb-window-20261022.json)。保留get_script兼容与原历史复选框。后台验收不逐页弹确认；只推送draft，不合并部署。完整迁移、API-007父项、DATA-008、FE-003J／K及pageFoot／全局navigation继续开放；新提交CI推送后单列核实。

@@ -31,7 +31,7 @@
     <view v-else-if="diyPage" class="diy-home" :style="diyStyle">
       <view v-if="diyLoading" class="diy-notice">正在核对页面配置…</view>
       <view v-else-if="diyOffline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="loadDiy(true)">重新核实</button></view>
-      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyPageActive" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" @closed="diyHost.close" />
+      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyPageActive" :page-refreshing="diyPageRefreshing" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" @closed="diyHost.close" />
       <view v-else class="diy-state">首页暂未开放</view>
     </view>
 
@@ -141,7 +141,7 @@ const goods = ref<GoodsItem[]>([]);
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const diyHost = useDiyPageHost(() => 0, () => diyCommunityVisible.value);
-const { page: diyPage, loading: diyLoading, error: diyError, phase: diyPhase, offline: diyOffline, available: diyPageActive } = diyHost;
+const { page: diyPage, loading: diyLoading, error: diyError, phase: diyPhase, offline: diyOffline, available: diyPageActive, refreshing: diyPageRefreshing } = diyHost;
 const loadDiy = (force = false) => diyHost.reload(force);
 const diyStyle = computed(() => diyPageStyle(diyPage.value));
 const auth = useAuthStore();

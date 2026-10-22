@@ -72,12 +72,12 @@
       </view>
     </template>
     <template v-if="combinationSelection">
-      <DiyCombinationCategory v-if="combinationSelection.kind==='category'" :key="`${combinationSelection.host}:${combinationSelection.id}`" :id="combinationSelection.id" :active="pageActive" :load-more-signal="loadMoreSignal" />
+      <DiyCombinationCategory v-if="combinationSelection.kind==='category'" :key="`${combinationSelection.host}:${combinationSelection.id}`" :id="combinationSelection.id" :activity="categoryActivity" :load-more-signal="loadMoreSignal" />
       <template v-else>
         <view v-if="combinationLoading" class="diy-combination-status" role="status">正在读取微页面…</view>
-        <view v-else-if="combinationError" class="diy-combination-status" role="alert">{{combinationError}}<button @tap="combinationTabs.micro.reload(true)">重试微页面</button></view>
-        <DiyHomeRenderer v-else-if="combinationAvailable" :components="combinationComponents" :page-active="pageActive && combinationAvailable" :scroll-top="scrollTop" :load-more-signal="loadMoreSignal" :micro-page="false" @closed="emit('closed', $event)" />
-        <view v-else class="diy-combination-status">微页面暂未开放</view>
+        <view v-if="combinationError" class="diy-combination-status" role="alert">{{combinationError}}<button @tap="combinationTabs.micro.reload(true)">重试微页面</button></view>
+        <DiyHomeRenderer v-else-if="combinationRenderable" :components="combinationComponents" :page-active="pageActive && combinationAvailable" :page-refreshing="pageRefreshing || combinationRefreshing" :scroll-top="scrollTop" :load-more-signal="loadMoreSignal" :micro-page="false" @closed="emit('closed', $event)" />
+        <view v-else-if="!combinationLoading" class="diy-combination-status">微页面暂未开放</view>
       </template>
     </template>
     <view v-for="(block, index) in hostFooters" :key="blockKey(block, index)" class="diy-theme-block" :style="blockThemeStyle(block)">
@@ -106,6 +106,7 @@ import {
   openDiyLink,
   safeDiyColor,
   safeDiyImageUrl,
+  isDiyEnabled,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
 import DiyNavigationWidget from './DiyNavigationWidget.vue';
@@ -113,6 +114,7 @@ import { normalizeDiyNavigation } from '@/utils/diyNavigationConfig';
 import { diyAuthoredPageFingerprint } from '@/utils/diyEditorialMediaLease';
 import DiyCombinationCategory from './DiyCombinationCategory.vue';
 import { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';
+import type { DiyCombinationActivity } from '@/composables/useDiyCombinationCategory';
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 import DiyListWidget from "./DiyListWidget.vue";
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
@@ -130,18 +132,22 @@ const props = withDefaults(defineProps<{
   components: DiyComponent[];
   microPage?: boolean;
   pageActive?: boolean;
+  pageRefreshing?: boolean;
   scrollTop?: number;
   loadMoreSignal?: number;
 }>(), {
   microPage: false,
   pageActive: true,
+  pageRefreshing: false,
   scrollTop: 0,
   loadMoreSignal: 0,
 });
 const emit = defineEmits<{ closed: [message: string] }>();
 const combinationTabs=useDiyCombinationTabs(()=>props.components,()=>props.pageActive);
 const {selection:combinationSelection,components:combinationComponents}=combinationTabs;
-const {loading:combinationLoading,error:combinationError,available:combinationAvailable}=combinationTabs.micro;
+const {loading:combinationLoading,error:combinationError,available:combinationAvailable,refreshing:combinationRefreshing,page:combinationPage}=combinationTabs.micro;
+const categoryActivity=computed<DiyCombinationActivity>(()=>props.pageRefreshing?'refreshing':props.pageActive?'ready':'inactive');
+const combinationRenderable=computed(()=>(props.pageActive||props.pageRefreshing)&&!!combinationPage.value&&isDiyEnabled(combinationPage.value.is_show)&&!combinationError.value);
 const hostFooters=computed(()=>props.microPage?props.components.filter(block=>block.name==='pageFoot'):[]);
 watch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)emit('closed',combinationError.value);});
 function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }

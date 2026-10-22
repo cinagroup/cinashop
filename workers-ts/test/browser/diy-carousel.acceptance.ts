@@ -31,14 +31,14 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
   const f = await diyCarouselFixture(); wiring.container = f.container;
   const app = createApp(), repository = resolve(import.meta.dirname, '../../..');
   const origin = 'http://127.0.0.1:40771', control = '/__carousel/' + randomUUID();
-  const prefix = '/tmp/cinashop-diy-carousel-browser-', build = resolve(repository, 'view/uniapp-ts/dist/build/h5');
+  const prefix = '/tmp/cinashop-homecomb-window-browser-', build = resolve(repository, 'view/uniapp-ts/dist/build/h5');
   const keyword = '轮播搜索A&B 中文';
-  const plans = ['home', 'rotated', 'legacyDestination', 'afterLegacy', 'articleDestination', 'afterArticle', 'searchDestination', 'afterSearch', 'rootFixed', 'expanded',
-    'microSelected', 'homeSelected', 'categoryFailed', 'categoryRetry', 'categoryPage2', 'childChanged', 'owner22Home', 'owner22Category',
-    'microCaller', 'microFixed', 'microSelectedFromMicro', 'microCategoryFromMicro', 'microCategoryPage2', 'microHome',
+  const plans = ['home', 'rotated', 'legacyDestination', 'afterLegacy', 'articleDestination', 'afterArticle', 'searchDestination', 'afterSearch', 'rootFixed', 'rootFixedDestination', 'afterRootFixed', 'expanded',
+    'microSelected', 'homeSelected', 'categoryFailed', 'categoryRetry', 'categoryPage2', 'childChanged', 'childRenewed', 'owner22Home', 'owner22Category',
+    'microCaller', 'microFixed', 'microFixedDestination', 'afterMicroFixed', 'microSelectedFromMicro', 'microCategoryFromMicro', 'microCategoryPage2', 'microHome',
     'changed', 'changedHome', 'closed', 'closedRetry', 'reopened', 'finished'];
   const traces: Row[] = [], evidence: Row[] = [], configs: Row[] = [], setup: Row[] = [], staticPaths = new Set<string>();
-  const browserErrors: Row[] = []; let lastObservation: Row | undefined, failedCategory = false, changed = false, pending = 0;
+  const browserErrors: Row[] = [], servedHtml: Row[] = []; let lastObservation: Row | undefined, failedCategory = false, changed = false, pending = 0;
   let server: Server | undefined, deadline: ReturnType<typeof setTimeout> | undefined;
   let done!: () => void, fail!: (error: Error) => void;
   const completion = new Promise<void>((yes, no) => { done = yes; fail = no; }); completion.catch(() => {});
@@ -97,7 +97,7 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
       path: '0,701', cateName: `真实轮播子类${i + 1}`, isShow: 1, sort: 20 - i, pic: '/static/logo.png' })));
     for (const [i, id] of [601, 611, 602].entries()) await f.db.update(storeProduct).set({ sort: 3000 - i }).where(eq(storeProduct.id, id));
     const newIds = [...firstIds.slice(3), ...secondIds];
-    await f.db.insert(storeProduct).values(newIds.map((id, i) => ({ id, storeName: `真实轮播分页商品${id}`, image: '/static/logo.png',
+    await f.db.insert(storeProduct).values(newIds.map((id, i) => ({ id, storeName: `真实轮播分页商品${id}`, image: id === 3701 ? f.platformImage.url : '/static/logo.png', recommendImage: id === 3701 ? f.platformImage.url : '', storeLabelId: id === 3701 ? '704' : null, type: 0, relationId: 0,
       price: '6.50', otPrice: '10.00', stock: 12, unitName: '件', isVerify: 1, isDel: 0, isShow: 1, activity: '0', sort: 2000 - i })));
     await f.db.insert(storeProductRelation).values([...firstIds.map(productId => ({ productId, relationId: 751 })),
       ...secondIds.map(productId => ({ productId, relationId: 752 }))].map((row, i) => ({ ...row, id: 9500 + i, type: 1, relationPid: 701 })));
@@ -114,7 +114,7 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
     expect(catalogue.store_product_relation.filter(row => row.id < 9500)).toEqual(expected.store_product_relation);
     expect(catalogue.store_product_category.filter(row => ![751, 752].includes(row.id))).toEqual(expected.store_product_category);
     setup.push({ phase: 'catalogue-setup', before: digest(expected), after: digest(catalogue), inserted_categories: [751, 752],
-      inserted_products: newIds, first_scope: { cid: 701, sid: 751, ids: firstIds }, second_scope: { cid: 701, sid: 752, ids: secondIds },
+      inserted_products: newIds, managed_product_media: {id:3701,main_and_recommend_canonical:f.platformImage.url,label:704}, first_scope: { cid: 701, sid: 751, ids: firstIds }, second_scope: { cid: 701, sid: 752, ids: secondIds },
       inserted_relations: catalogue.store_product_relation.filter(row => row.id >= 9500), existing_product_sort_only: [601, 611, 602], sequence_delta: 0,
       table_before: Object.fromEntries(['store_product_category', 'store_product_relation', 'store_product'].map(name => [name, expected[name]])),
       table_after: Object.fromEntries(['store_product_category', 'store_product_relation', 'store_product'].map(name => [name, catalogue[name]])) });
@@ -159,7 +159,7 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
         const legacyFallback = product && !scoped && !search;
         const pairs: Array<[string, string]> = []; url.searchParams.forEach((value, key) => { pairs.push([key, value]); }); pairs.sort();
         if (legacyFallback) expect(pairs).toEqual([['limit', '8'], ['page', '1']]);
-        if (search) { expect(stage()).toBe('searchDestination'); expect(pairs).toEqual([['keyword', keyword]]); }
+        if (search) { expect(['searchDestination','rootFixedDestination','microFixedDestination']).toContain(stage()); expect(pairs).toEqual([['keyword', keyword]]); }
         if (scoped) {
           const child = Number(url.searchParams.get('sid')), page = Number(url.searchParams.get('page'));
           expect([751, 752]).toContain(child); expect([1, 2]).toContain(page);
@@ -279,10 +279,10 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
         expect(await f.snapshot()).toEqual(expected); expect(storage()).toEqual(initialStorage);
         expect(data.width).toBe(375); expect(data.scrollWidth).toBeLessThanOrEqual(375); expect(data.errors).toEqual([]);
         expect(data.text).not.toMatch(/Internal Server Error|Failed to resolve|Cannot read properties/u);
-        const destination = ['legacyDestination', 'articleDestination', 'searchDestination'].includes(name), closed = ['closed', 'closedRetry'].includes(name);
+        const destination = ['legacyDestination', 'articleDestination', 'searchDestination', 'rootFixedDestination', 'microFixedDestination'].includes(name), closed = ['closed', 'closedRetry'].includes(name);
         if (destination) {
           expect(data.widgets).toHaveLength(0);
-          if (name !== 'searchDestination') { expect(data.href).toContain('/pages/article/list'); expect(slice.some(row => row.synthetic && row.scope === 'registered article-list destination')).toBe(true); }
+          if (!['searchDestination','rootFixedDestination','microFixedDestination'].includes(name)) { expect(data.href).toContain('/pages/article/list'); expect(slice.some(row => row.synthetic && row.scope === 'registered article-list destination')).toBe(true); }
           else {
             expect(data.href).toContain('/pages/goods/search'); const routeQuery = data.href.split('?').at(-1)!;
             // Uni H5 wraps the already encoded native query in its hash router layer.
@@ -303,7 +303,7 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
           const projected = blocks[id === 0 ? 1 : 2].filter(block => id !== 0 || block.name !== 'pageFoot');
           expect(canonical(cache.entry.data.value)).toEqual(projected); // Existing default-home public projection omits pageFoot.
           expect(JSON.stringify(cache.entry)).not.toMatch(/cart_num|now_money|couponUserId/u);
-          const category = ['categoryFailed', 'categoryRetry', 'categoryPage2', 'childChanged', 'owner22Category', 'microCategoryFromMicro', 'microCategoryPage2'].includes(name);
+          const category = ['categoryFailed', 'categoryRetry', 'categoryPage2', 'childChanged', 'childRenewed', 'owner22Category', 'microCategoryFromMicro', 'microCategoryPage2'].includes(name);
           const micro = ['microSelected', 'homeSelected', 'microSelectedFromMicro', 'microHome'].includes(name);
           expect(data.widgets.map((row: Row) => row.key).sort()).toEqual(category ? ['721', '722'] : ['701', '702', '711', '712', '713', '721', '722']);
           expect(data.widgets.filter((row: Row) => row.kind === 'homeComb')).toHaveLength(2);
@@ -314,21 +314,21 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
           const header = data.widgets.find((row: Row) => row.key === '721')!;
           expect(header.selectedTab).toBe(category ? 2 : ['microSelected', 'microSelectedFromMicro'].includes(name) ? 1 : 0);
           if (micro) expect(data.text).toContain(['microSelected', 'microSelectedFromMicro'].includes(name) ? '真实选中微页内容' : '真实轮播调用族');
-          if (name === 'expanded') { expect(header.categoryOpen).toBe(true); expect(header.categoryIndices).toEqual([0, 1, 2]); expect(header.categoryBackground).toContain('rgb(55, 90, 127)'); }
+          if (name === 'expanded') { expect(header.categoryOpen).toBe(true); expect(header.categoryIndices).toEqual([0, 1, 2]); expect(header.categoryBackground).toContain('rgb(55, 90, 127)'); ratio(header.categoryTop,data.nativeWindowTop); expect(header.categoryCloseHit).toBe(true); }
           else expect(header.categoryOpen).toBe(false);
           if (name === 'rotated') expect(data.widgets.find((row: Row) => row.key === '702').index).toBeGreaterThan(0);
           if (['rootFixed', 'microFixed'].includes(name)) {
             expect(data.scrollTop).toBeGreaterThan(10); const fixed = data.widgets.find((row: Row) => row.key === '722')!;
-            expect(fixed.fixed).toBe(true); expect(fixed.searchPosition).toBe('fixed'); ratio(fixed.searchTop, 0);
+            expect(fixed.fixed).toBe(true); expect(fixed.searchPosition).toBe('fixed'); expect(data.nativeWindowTop).toBeGreaterThan(0); ratio(fixed.searchTop, data.nativeWindowTop); expect(fixed.searchHit).toBe(true);
           }
           if (category) {
             const product = data.products; expect(product).not.toBeNull(); expect(product.category).toBe('701'); expect(product.children).toEqual(['751', '752']);
-            expect(product.loading).toBe(false); expect(product.child).toBe(name === 'childChanged' ? '752' : '751');
+            expect(product.loading).toBe(false); expect(product.child).toBe(['childChanged', 'childRenewed'].includes(name) ? '752' : '751');
             if (name === 'categoryFailed') { expect(product.ids).toEqual([]); expect(product.error).toContain('本地验收：此分类读取失败'); expect(slice.filter(row => row.injected)).toHaveLength(1); }
             else {
-              expect(product.error).toBe(''); const ids = name === 'childChanged' ? secondIds : ['categoryPage2', 'microCategoryPage2'].includes(name) ? firstIds : firstIds.slice(0, 10);
+              expect(product.error).toBe(''); const ids = ['childChanged', 'childRenewed'].includes(name) ? secondIds : ['categoryPage2', 'microCategoryPage2'].includes(name) ? firstIds : firstIds.slice(0, 10);
               expect(product.ids.map(Number).sort((a: number, b: number) => a - b)).toEqual(ids.slice().sort((a, b) => a - b));
-              expect(product.more).toBe(!['categoryPage2', 'childChanged', 'microCategoryPage2'].includes(name));
+              expect(product.more).toBe(!['categoryPage2', 'childChanged', 'childRenewed', 'microCategoryPage2'].includes(name));
             }
             if (name === 'categoryRetry') {
               expect(slice.filter(row => row.scoped && !row.synthetic)).toHaveLength(1); expect(slice.some(row => row.path === '/api/category')).toBe(false);
@@ -338,6 +338,29 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
               const reads = slice.filter(row => row.scoped); expect(reads).toHaveLength(1); expect(new URLSearchParams(reads[0].query).get('page')).toBe('2');
             }
             if (name === 'childChanged') { const reads = slice.filter(row => row.scoped); expect(reads).toHaveLength(1); expect(new URLSearchParams(reads[0].query).get('sid')).toBe('752'); }
+            if (name === 'childRenewed') {
+              const previous = evidence.find(row => row.stage === 'childChanged')!;
+              const prior = previous.schemaCache.find((row: Row) => row.id === '0').entry;
+              expect(cache.entry.version).toBe(prior.version); expect(cache.entry.cachedAt - prior.cachedAt).toBeGreaterThanOrEqual(800_000);
+              expect(data.observedAt - previous.observedAt).toBeGreaterThan(0);
+              expect(slice.some(row => row.path === '/api/diy/get_diy/0' && row.status === 200 && !row.synthetic)).toBe(true);
+              expect(slice.some(row => row.path === '/api/category')).toBe(false);
+              const freshReads = slice.filter(row => row.scoped); expect(freshReads).toHaveLength(1);
+              expect(new URLSearchParams(freshReads[0].query).get('sid')).toBe('752'); expect(new URLSearchParams(freshReads[0].query).get('page')).toBe('1');
+              const priorRead = traces.slice(0,previous.traceCount).filter(row => row.scoped && new URLSearchParams(row.query).get('sid')==='752').at(-1)!;
+              const oldProduct = priorRead.material.list.find((row: Row) => row.id===3701), freshProduct = freshReads[0].material.list.find((row: Row) => row.id===3701);
+              for (const [oldUrl,newUrl] of [[oldProduct.image,freshProduct.image],[oldProduct.recommend_image,freshProduct.recommend_image],
+                [oldProduct.store_label.find((row: Row)=>row.id===704).icon,freshProduct.store_label.find((row: Row)=>row.id===704).icon]]) {
+                expect(newUrl).toMatch(/^\/api\/assets\/[1-9]\d*\?/u); expect(newUrl).not.toBe(oldUrl);
+                expect(Number(new URL(newUrl,origin).searchParams.get('expires'))).toBeGreaterThan(Math.floor(data.observedAt/1000));
+              }
+              const picture=product.images.find((row: Row)=>row.id==='3701')!; expect(picture.loaded).toBe(true);
+              expect(new URL(picture.src).pathname+new URL(picture.src).search).toBe(freshProduct.image);
+              expect(picture.labels.some((row: Row)=>row.loaded&&new URL(row.src).pathname+new URL(row.src).search===freshProduct.store_label.find((row: Row)=>row.id===704).icon)).toBe(true);
+              const ticket = (entry: Row) => entry.data.value.find((row: Row) => row.timestamp === 702).swiperConfig.list[0].img;
+              expect(ticket(cache.entry)).not.toBe(ticket(prior));
+              expect(Number(new URL(ticket(cache.entry), origin).searchParams.get('expires')) - Number(new URL(ticket(prior), origin).searchParams.get('expires'))).toBeGreaterThanOrEqual(800);
+            }
             if (name === 'owner22Category') {
               const reads = slice.filter(row => row.scoped); expect(reads.length).toBeGreaterThan(0); expect(reads.every(row => row.requestOwner === 22)).toBe(true);
               expect(reads.flatMap(row => row.material.list).find((row: Row) => row.id === 601)).toMatchObject({ id: 601, cart_num: 4 });
@@ -352,18 +375,19 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
         }
         expect(external).not.toHaveBeenCalled(); browserErrors.push(...data.errors);
         evidence.push({ stage: name, ...data, traceCount: traces.length, database: digest(expected), pending_at_checkpoint: pending });
+        await writeFile(prefix + 'progress.json', JSON.stringify({status:'running',checked:evidence.map(row=>row.stage),last:evidence.at(-1),traceCount:traces.length,configCount:configs.length})+'\n');
         if (name === 'finished') {
           expect(configs).toHaveLength(4); expect(setup.filter(row => row.phase === 'setup')).toHaveLength(2); expect(failedCategory).toBe(true);
           const afterHashes = await sources(), afterBuild = await artifacts(); expect(afterHashes).toEqual(beforeHashes); expect(afterBuild).toEqual(beforeBuild);
-          await writeFile(prefix + 'evidence.json', JSON.stringify({ status: 'passed-all-30-checkpoints', evidence, traces, configs, setup,
+          await writeFile(prefix + 'evidence.json', JSON.stringify({ status: 'passed-all-35-checkpoints', evidence, traces, configs, setup,
             environment: { node: process.version, executable: process.execPath, versions: process.versions },
             tables: f.tables, sequences: f.sequences, initial_snapshot: initial, prepared_snapshot: preparedSnapshot, final_snapshot: expected,
             initial_storage: initialStorage, final_storage: storage(), source_hashes: { before: beforeHashes, after: afterHashes },
-            h5_artifact_hashes: { before: beforeBuild, after: afterBuild }, static_paths: [...staticPaths].sort(), providerCalls: 0,
+            h5_artifact_hashes: { before: beforeBuild, after: afterBuild }, served_html_transport: servedHtml, viewport_boundary: 'Owned served index adds only html scrollbar-width:none before bootstrap; raw built HTML/JS/CSS unchanged.375 desktop IAB content, not production classic scrollbar or physical device proof.', static_paths: [...staticPaths].sort(), providerCalls: 0,
             carouselAcceptedReadSqlBusinessWrites: 0, r2BusinessWrites: 0, queueBusinessWrites: 0, browserErrors,
             search_destination_boundary: { route_and_input: 'accepted', real_request: 'attempted; actual error envelope preserved',
               product_results: 'not verified', search_history_persistence: 'not verified; existing production write, user_search absent from owned fixture' },
-            limitations: 'Actual built H5/createApp/JWT/owned PG16; accepted carousel/catalogue GETs use real controllers and full 50-table/46-sequence snapshots. Catalogue inserts/sort setup and two initial real Admin-controller saves are separate setup; runtime two schema saves and station close/open are the only allowed configuration writes. The fixture-only Admin host proves parser/controller/transaction, not production Admin authentication or ACL. PHP Admin devise/index.vue permits only one home_comb, excludes search/tabNav and inserts it first; two imported homeComb instances intentionally stress existing TS multi-instance behavior, not a claim that the PHP editor creates this configuration. Synthetic unrelated chrome, registered article-list destination and missing-table hot-keyword destination chrome are explicitly tagged, with no article-detail/visit/like acceptance. Exact legacy homepage page=1/limit=8 recommendations use real products SQL and are distinguished from scoped category reads. Search destination proves encoded searchVal route/input only: keyword-only products request is attempted through real API and its actual error is preserved because owned user_search is absent; search results/history persistence are unverified and search GET is not claimed read-only. Root footer is never adopted from selected body; original micro caller footer remains through all body selections. Internal HTTPS Request on HTTP loopback is a transport bridge, not TLS acceptance. No automatic poster, album, cart or provider operation is exercised. Long-lived lease renewal uses separate Node fake-clock proofs; Browser proves fresh schema reads/tickets after real configuration save. H5 autoplay is accepted; IAB does not support native touch gesture injection and manual swipe is not claimed. No MP/App device, real provider, production, Windows or standalone PHP execution acceptance.' }, null, 2) + '\n');
+            limitations: 'Actual built H5 JS/CSS/createApp/JWT/owned PG16; served index adds explicitly hashed html scrollbar-width:none viewport-only CSS, raw built files unchanged; accepted carousel/catalogue GETs use real controllers and full 50-table/46-sequence snapshots. Catalogue inserts/sort setup and two initial real Admin-controller saves are separate setup; runtime two schema saves and station close/open are the only allowed configuration writes. The fixture-only Admin host proves parser/controller/transaction, not production Admin authentication or ACL. PHP Admin devise/index.vue permits only one home_comb, excludes search/tabNav and inserts it first; two imported homeComb instances intentionally stress existing TS multi-instance behavior, not a claim that the PHP editor creates this configuration. Synthetic unrelated chrome, registered article-list destination and missing-table hot-keyword destination chrome are explicitly tagged, with no article-detail/visit/like acceptance. Exact legacy homepage page=1/limit=8 recommendations use real products SQL and are distinguished from scoped category reads. Three search destinations including actual fixed-header clicks from both callers prove encoded searchVal route/input only: keyword-only products request is attempted through real API and its actual error is preserved because owned user_search is absent; search results/history persistence are unverified and search GET is not claimed read-only. Root footer is never adopted from selected body; original micro caller footer remains through all body selections. Internal HTTPS Request on HTTP loopback is a transport bridge, not TLS acceptance. No automatic poster, album, cart or provider operation is exercised. Browser childRenewed waits the actual840s root media timer and verifies unchanged version, advanced cachedAt, fresh schema and product main/recommend/label tickets, loaded actual main/label pixels and retained child752/2cards/exhausted paging; coupled Node fake-clock regressions also cover root/micro homeComb/tabNav, pending pagination, hide/owner/closure. Browser additionally proves fresh schema reads/tickets after real configuration save. H5 autoplay is accepted; IAB does not support native touch gesture injection and manual swipe is not claimed. No MP/App device, real provider, production, Windows or standalone PHP execution acceptance.' }, null, 2) + '\n');
           done();
         }
         json(res, { checked: evidence.map(row => row.stage), next: stage() });
@@ -378,18 +402,23 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
       afterArticle: 'Click 实际首页11 and wait seven complete canvases before checkpoint.',
       searchDestination: 'Tap homeComb721 actual search bar. Wait encoded searchVal destination plus real keyword-only products request and input value.',
       afterSearch: 'Click 实际首页11; wait actual frame load and seven ready canvases.',
-      rootFixed: 'Scroll the actual iframe page down >10px; homeComb722 search header must become position:fixed at top0.',
-      expanded: 'Scroll back to homeComb721; click its actual expand button, then checkpoint open dropdown.',
+      rootFixed: 'Scroll the actual iframe page down >10px; homeComb722 search header must become position:fixed at the actual native titlebar bottom, with unobstructed center hit.',
+      rootFixedDestination: 'Click actual fixed722 search without force; wait real encoded search route/input and the explicit real keyword request error.',
+      afterRootFixed: 'Load actual home11 fresh; wait seven complete canvases before continuing original expansion flow.',
+      expanded: 'Scroll back to homeComb721; open actual expand, click visible close, verify mask gone, reopen then checkpoint. Close center must hit below native titlebar.',
       microSelected: 'Click dropdown item data-tab-index=1 in721. Wait real get_diy/2 plus nested title and all seven canvases; root two headers remain, child footer absent.',
       homeSelected: 'Click721 tab0. Wait version-verified cached or freshly read selected home0 content; root two headers remain and nested headers/footer are stripped.',
       categoryFailed: 'Click721 tab2. Wait real /category and first scoped products request intentionally surfaced503; checkpoint exact error.',
       categoryRetry: 'Click actual 重试当前分类 only. Wait first10 real cards and all images; no reload or other-instance action.',
       categoryPage2: 'Click actual 加载更多 OR reach the actual page bottom once; wait13 cards and no more button.',
       childChanged: 'Click actual child752; wait2 cards, first page and no more button.',
+      childRenewed: 'Keep this exact loaded child752 page open until the real840s same-version media renewal; do not navigate, reload or change child. Checkpoint only after schema cachedAt advances and new tickets load, retaining752/2cards/exhausted paging.',
       owner22Home: 'Click 实际首页22 fresh iframe; wait all seven ready canvases.',
       owner22Category: 'Click721 tab2; wait child751 first10, actual owner22/cart601=4.',
       microCaller: 'Click 实际微页面11 fresh iframe; wait all seven ready canvases, real micro-page title and original micro footer.',
       microFixed: 'Scroll actual micro page >10px and verify722 fixed search header.',
+      microFixedDestination: 'Click actual fixed722 search in micro caller without force; wait encoded route/input and real keyword request.',
+      afterMicroFixed: 'Load actual micro11 fresh; wait original footer and seven complete canvases.',
       microSelectedFromMicro: 'Return to721 and click tab1; wait selected micro2, two root headers, nested stripped content and exactly one original micro footer.',
       microCategoryFromMicro: 'Click721 tab2; wait751 first10 real cards, category response and original micro footer.',
       microCategoryPage2: 'Click actual 加载更多 OR actual page reach-bottom once; wait13 cards.',
@@ -401,11 +430,18 @@ it('actual built carousel H5 uses owned catalogue, public media, both page calle
       reopened: 'Click 开启站点, then actual page 重新加载首页. Wait all seven positive canvases/all natural images before checkpoint.',
       finished: 'Final stable checkpoint with all seven ready canvases. Test verifies all source/artifact hashes and writes full receipt.'
     };
+    async function ownedIndex() {
+      const raw = await readFile(resolve(build, 'index.html')), original = raw.toString();
+      const viewport = '<style data-owned-acceptance-viewport>html{scrollbar-width:none!important}</style>';
+      expect(original).toContain('</head>'); const augmented = original.replace('</head>', viewport + '</head>');
+      servedHtml.push({raw_sha256:hash(raw),served_sha256:hash(augmented),raw_bytes:raw.length,served_bytes:Buffer.byteLength(augmented),fixture_only_style:viewport,app_JS_CSS_unchanged:true});
+      return augmented;
+    }
     const shell = () => `<!doctype html><meta charset="utf-8"><title>DIY轮播组合后台验收</title>
 <style>body{font:13px sans-serif;margin:8px}button{margin:3px}iframe{display:block;width:375px;height:830px}pre{max-height:90px;overflow:auto;white-space:pre-wrap}</style>
 <h1>实际轮播、搜索、组合分类验收</h1><button data-route="home">实际首页11</button><button data-route="micro">实际微页面11</button><button data-route="other">实际首页22</button><button data-size>375内容区</button>
 <button data-config="schema">更新配置</button><button data-config="close">关闭站点</button><button data-config="open">开启站点</button>
-${plans.map(name => '<button data-stage="' + name + '">' + name + '</button>').join('')}<pre id="result"></pre><iframe title="实际轮播页面"></iframe>
+${plans.map(name => '<button data-stage="' + name + '">' + name + '</button>').join('')}<pre id="result"></pre><iframe title="实际轮播页面" scrolling="yes"></iframe>
 <script>
 const frame=document.querySelector('iframe'),token=${JSON.stringify(f.token)},other=${JSON.stringify(f.otherToken)},instructions=${JSON.stringify(instructions)};
 for(const key of Object.keys(localStorage))if(key.startsWith('cinashop_diy_page_v1_'))localStorage.removeItem(key);
@@ -420,21 +456,23 @@ function observe(){
 const d=frame.contentDocument,w=frame.contentWindow,all=(selector,parent=d)=>[...parent.querySelectorAll(selector)].filter(visible),one=(selector,parent=d)=>all(selector,parent)[0],css=element=>element?w.getComputedStyle(element):{},number=value=>parseFloat(value)||0;
 const image=element=>{const img=element?.querySelector('img');return{src:img?.src||'',loaded:!!img?.complete&&img.naturalWidth>0&&img.naturalHeight>0,width:img?.naturalWidth||0,height:img?.naturalHeight||0};};
 const product=one('.combination-products');
-return{loaded,href:w.location.href,width:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,scrollTop:Math.max(w.scrollY,...all('uni-page-body,uni-page-wrapper').map(element=>element.scrollTop||0)),text:text(d.body),errors:[...errors],
+return{loaded,observedAt:Date.now(),href:w.location.href,nativeWindowTop:one('.uni-page-head')?.getBoundingClientRect().height||0,width:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,scrollTop:Math.max(w.scrollY,...all('uni-page-body,uni-page-wrapper').map(element=>element.scrollTop||0)),text:text(d.body),errors:[...errors],
 renderers:all('.diy-renderer').length,legacySearchHeaders:all('.diy-search').length,footers:all('.diy-page-foot').map(text),searchValue:one('.search-input input')?.value||one('input.search-input')?.value||'',
 schemaCache:Object.keys(localStorage).filter(key=>key.startsWith('cinashop_diy_page_v1_')).sort().map(key=>{let entry=JSON.parse(localStorage.getItem(key));if(entry&&entry.type==='string')entry=JSON.parse(entry.data);else if(entry&&entry.type==='object')entry=entry.data;return{id:key.replace('cinashop_diy_page_v1_',''),entry};}),
-products:product?{category:product.dataset.category,children:all('.combination-child',product).map(element=>element.dataset.category),child:one('.combination-child.selected',product)?.dataset.category||'',ids:all('.diy-list-product',product).map(element=>element.dataset.productId),loading:!!one('.combination-status[role="status"]',product),error:text(one('.combination-status[role="alert"]',product)),more:!!one('.combination-more',product),text:text(product)}:null,
+products:product?{category:product.dataset.category,children:all('.combination-child',product).map(element=>element.dataset.category),child:one('.combination-child.selected',product)?.dataset.category||'',ids:all('.diy-list-product',product).map(element=>element.dataset.productId),images:all('.diy-list-product',product).map(element=>({id:element.dataset.productId,...image(one('.list-image',element)),labels:all('.list-label',element).map(image)})),loading:!!one('.combination-status[role="status"]',product),error:text(one('.combination-status[role="alert"]',product)),more:!!one('.combination-more',product),text:text(product)}:null,
 widgets:all('.diy-media-carousel').map(element=>{const canvas=one('.carousel-canvas',element),swiper=one('.carousel-swiper',canvas),slides=one('.uni-swiper-slides',swiper),dots=one('.carousel-dots',canvas),background=one('.carousel-background',element),header=one('.combination-search-header',element),wrapper=css(element),first=one('.carousel-slide image,.carousel-slide uni-image',canvas),corners=css(first),category=one('.combination-category',element),images=all('.carousel-slide image,.carousel-slide uni-image',canvas).map(image);
 return{key:element.dataset.componentKey,kind:element.dataset.kind,index:Number(element.dataset.index),state:canvas?.dataset.state||'',height:Number(canvas?.dataset.height),canvasWidth:canvas?.getBoundingClientRect().width||0,wrapperWidth:element.getBoundingClientRect().width,wrapperHeight:element.getBoundingClientRect().height,
 images,expectedMargin:w.rpx2px(element.dataset.kind==='swipers'?28:element.dataset.kind==='swiperBg'?(element.dataset.componentKey==='713'?55:0):(element.dataset.componentKey==='721'?10:50)),marginTop:number(wrapper.marginTop),paddingLeft:number(wrapper.paddingLeft),paddingTop:number(wrapper.paddingTop),paddingBottom:number(wrapper.paddingBottom),previous:number(css(slides).left),next:number(css(slides).right),slidePadding:number(css(one('.carousel-slide',canvas)).paddingLeft),radii:['borderTopLeftRadius','borderTopRightRadius','borderBottomRightRadius','borderBottomLeftRadius'].map(key=>number(corners[key])),stacked:all('.stacked',canvas).length,swipers:all('.carousel-swiper',canvas).length,
 indicator:dots?[...dots.classList].find(value=>value.startsWith('indicator-')):'',dotPosition:css(dots).justifyContent||'',dots:all('.carousel-dot',canvas).map(dot=>({selected:dot.classList.contains('selected'),width:number(css(dot).width),height:number(css(dot).height),color:css(dot).backgroundColor})),progress:!!one('.carousel-progress',canvas),backgroundColor:css(background).backgroundColor||'',backgroundHeight:background?.getBoundingClientRect().height||0,
 logoLoaded:image(one('.combination-logo',element)).loaded,logoSrc:image(one('.combination-logo',element)).src,backgroundLoaded:image(one('.combination-background',element)).loaded,backgroundSrc:image(one('.combination-background',element)).src,
-tabIndices:all('.combination-tab',element).map(tab=>Number(tab.dataset.tabIndex)),tabTitles:all('.combination-tab',element).map(text),tabIds:all('.combination-tab',element).map(tab=>tab.id),tabGap:number(css(one('.combination-tab',element)).marginRight),selectedTab:Number(one('.combination-tab.selected',element)?.dataset.tabIndex||0),categoryOpen:!!category,categoryIndices:all('.combination-category-item',element).map(tab=>Number(tab.dataset.tabIndex)),categoryBackground:css(category).backgroundImage||'',fixed:header?.classList.contains('fixed')||false,searchPosition:css(header).position||'',searchTop:header?.getBoundingClientRect().top||0};})};}
+tabIndices:all('.combination-tab',element).map(tab=>Number(tab.dataset.tabIndex)),tabTitles:all('.combination-tab',element).map(text),tabIds:all('.combination-tab',element).map(tab=>tab.id),tabGap:number(css(one('.combination-tab',element)).marginRight),selectedTab:Number(one('.combination-tab.selected',element)?.dataset.tabIndex||0),categoryOpen:!!category,categoryIndices:all('.combination-category-item',element).map(tab=>Number(tab.dataset.tabIndex)),categoryBackground:css(category).backgroundImage||'',categoryTop:one('.combination-category-mask',element)?.getBoundingClientRect().top||0,categoryCloseHit:(()=>{const target=one('.combination-category-heading uni-button,.combination-category-heading button',element);if(!target)return false;const r=target.getBoundingClientRect();return target.contains(d.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})(),fixed:header?.classList.contains('fixed')||false,searchPosition:css(header).position||'',searchTop:header?.getBoundingClientRect().top||0,searchHit:(()=>{const target=one('.combination-search',element);if(!target)return false;const r=target.getBoundingClientRect();return target.contains(d.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()};})};}
 for(const button of document.querySelectorAll('[data-stage]'))button.onclick=async()=>{button.disabled=true;try{
  const name=button.dataset.stage,state=await(await fetch('${control}/state')).json();
  if(!loaded||state.pending!==0)throw Error('Wait actual iframe load and every pending API response before checkpoint');
- await new Promise(done=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(done)));const data=observe();
- const destination=['legacyDestination','articleDestination','searchDestination'].includes(name),closed=['closed','closedRetry'].includes(name),category=['categoryFailed','categoryRetry','categoryPage2','childChanged','owner22Category','microCategoryFromMicro','microCategoryPage2'].includes(name);
+ await new Promise(done=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(done)));
+ if(name==='rotated'){const until=Date.now()+10000;while(Number(frame.contentDocument.querySelector('[data-component-key="702"]')?.dataset.index||0)<=0){if(Date.now()>until)throw Error('Wait actual autoplay to leave index0; no synthetic change is allowed');await new Promise(done=>frame.contentWindow.requestAnimationFrame(done));}}
+ const data=observe();
+ const destination=['legacyDestination','articleDestination','searchDestination','rootFixedDestination','microFixedDestination'].includes(name),closed=['closed','closedRetry'].includes(name),category=['categoryFailed','categoryRetry','categoryPage2','childChanged','childRenewed','owner22Category','microCategoryFromMicro','microCategoryPage2'].includes(name);
  if(!destination&&!closed&&(data.widgets.some(widget=>widget.state!=='ready'||widget.images.length!==3||widget.images.some(img=>!img.loaded)||widget.kind==='homeComb'&&(!widget.logoLoaded||!widget.backgroundLoaded))||data.widgets.length!==(category?2:7)))throw Error('Wait every positive canvas and all natural slide images; empty DOM is not loaded');
  if(category&&(!data.products||data.products.loading||name!=='categoryFailed'&&!data.products.ids.length))throw Error('Wait category/child request and its positive cards');
  const response=await fetch('${control}/'+name,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}),result=await response.json();document.querySelector('#result').textContent=JSON.stringify({...result,instruction:instructions[result.next]});
@@ -450,24 +488,24 @@ document.querySelector('#result').textContent=JSON.stringify({next:'home',instru
       if (path.startsWith(control + '/') && req.method === 'POST') return checkpoint(req, res, path.slice(control.length + 1));
       if (req.method === 'GET' && Object.hasOwn(chrome, path)) return synthetic(req, res, url, chrome[path], 'unrelated application chrome');
       if (req.method === 'GET' && ['legacyDestination', 'articleDestination'].includes(stage()) && /^\/api\/article\/(list|category|hot|banner)/u.test(path)) return synthetic(req, res, url, [], 'registered article-list destination');
-      if (req.method === 'GET' && stage() === 'searchDestination' && path === '/api/search/hot_keyword' && !f.tables.includes('store_product_words')) return synthetic(req, res, url, [], 'missing-table search destination hot-keyword chrome; search products real');
+      if (req.method === 'GET' && ['searchDestination','rootFixedDestination','microFixedDestination'].includes(stage()) && path === '/api/search/hot_keyword' && !f.tables.includes('store_product_words')) return synthetic(req, res, url, [], 'missing-table search destination hot-keyword chrome; search products real');
       if (path.startsWith('/api/')) return api(req, res, url);
       if (path === '/favicon.ico') return send(res, '', 204);
       expect(req.method).toBe('GET'); const target = resolve(build, '.' + decodeURIComponent(path));
       if (target !== build && !target.startsWith(build + sep)) return send(res, 'Owned build only', 403);
-      try { if (target !== build && (await stat(target)).isFile()) { staticPaths.add(path); return send(res, await readFile(target), 200,
+      try { if (target !== build && (await stat(target)).isFile()) { staticPaths.add(path); return send(res, extname(target)==='.html'?await ownedIndex():await readFile(target), 200,
         ({ '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' } as Row)[extname(target)] ?? 'application/octet-stream'); } } catch {}
-      return send(res, await readFile(resolve(build, 'index.html')));
+      return send(res, await ownedIndex());
     })().catch(error => { fail(error instanceof Error ? error : Error(String(error))); if (!res.headersSent) send(res, String(error), 500); else res.destroy(); }); });
     await new Promise<void>((yes, no) => { server!.once('error', no); server!.listen(40771, '127.0.0.1', yes); });
     await writeFile(prefix + 'ready.json', JSON.stringify({ url: origin + control, plans, instructions, sourceHashes: beforeHashes,
       artifactHashes: beforeBuild, setup, selectors: { instance: '[data-component-key="701|702|711|712|713|721|722"]',
         tabs: '[data-component-key="721"] .combination-tab[data-tab-index="0|1|2"]', expand: '[data-component-key="721"] .combination-expand',
-        dropdown: '[data-component-key="721"] .combination-category-item[data-tab-index="1"]', retry: '.combination-status button',
+        dropdown: '[data-component-key="721"] .combination-category-item[data-tab-index="1"]', retry: '.combination-status uni-button',
         more: '.combination-more', child752: '.combination-child[data-category="752"]', category: '.combination-products' },
-      limitations: 'Two homeComb are imported multi-instance stress beyond PHP Admin single-header editor. Controls only set initial/fresh iframe auth, viewport, real configuration and observation; app interactions use actual iframe UI. External slide replaced through two real setup Admin-controller saves, no external I/O. Search products request uses real API and preserves actual missing-user_search error; only route/input accepted, results/history persistence excluded, no search-read-only claim. Error listeners start at iframe load; operator must also inspect startup console and record known VueRouter warnings separately.' }, null, 2) + '\n');
+      limitations: 'Served HTML contains explicit hidden-native-scrollbar fixture CSS; raw built files/JS/CSS unchanged. Two homeComb are imported multi-instance stress beyond PHP Admin single-header editor. Controls only set initial/fresh iframe auth, viewport, real configuration and observation; app interactions use actual iframe UI. External slide replaced through two real setup Admin-controller saves, no external I/O. Search products request uses real API and preserves actual missing-user_search error; only route/input accepted, results/history persistence excluded, no search-read-only claim. Error listeners start at iframe load; operator must also inspect startup console and record known VueRouter warnings separately.' }, null, 2) + '\n');
     process.stdout.write('DIY_CAROUSEL_BROWSER_READY ' + origin + control + '\n');
-    deadline = setTimeout(() => fail(Error('Owned Browser absent within twelve-minute window')), 12 * 60_000);
+    deadline = setTimeout(() => fail(Error('Owned Browser acceptance incomplete within sixty-minute operator window')), 60 * 60_000);
     await completion;
   } finally {
     await writeFile(prefix + 'partial.json', JSON.stringify({ stages: evidence.map(row => row.stage), lastObservation, evidence, traces, configs, setup,
@@ -479,4 +517,4 @@ document.querySelector('#result').textContent=JSON.stringify({next:'home',instru
       provider_spy_restored: true, wiring_cleared: true, completed_stages: evidence.map(row => row.stage),
       pg_process_and_remaining_owned_relations: 'Validated by the outer native runner cleanup receipt; not inferred from fixture.close' }, null, 2) + '\n');
   }
-}, 13 * 60_000);
+}, 61 * 60_000);
