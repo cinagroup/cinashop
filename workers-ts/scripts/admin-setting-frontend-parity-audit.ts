@@ -650,6 +650,23 @@ export function hasRegisteredThemeHost(pageSource: string, merchantShellSource: 
  * returned config ref to actual SFC style bindings. Comments, type imports
  * and unused helpers cannot stand in for a rendered theme consumer. */
 export function hasDiyCommerceThemeBinding(widgetSource: string, composableSource: string, configSource: string): boolean {
+  return hasDiyExtractedThemeBinding('commerce', widgetSource, composableSource, configSource);
+}
+
+export function hasDiyEditorialThemeBinding(widgetSource: string, composableSource: string, configSource: string): boolean {
+  return hasDiyExtractedThemeBinding('editorial', widgetSource, composableSource, configSource);
+}
+
+export function hasDiyListThemeBinding(widgetSource: string, cardSource: string, composableSource: string, configSource: string): boolean {
+  return hasDiyExtractedThemeBinding('list', widgetSource, composableSource, configSource, cardSource);
+}
+
+/** Resolve the value-import/config/returned-ref chain before inspecting actual
+ * rendered style consumers, including the list's separate product card SFC. */
+export function hasDiyExtractedThemeBinding(kind: 'commerce' | 'editorial' | 'list', widgetSource: string, composableSource: string, configSource: string, cardSource = ''): boolean {
+  const spec = kind === 'commerce' ? { consumer: 'useDiyCommerceWidget', normalizer: 'normalizeDiyCommerce', config: 'diyCommerceConfig', wrapper: 'wrapperStyle' }
+    : kind === 'list' ? { consumer: 'useDiyListWidget', normalizer: 'normalizeDiyList', config: 'diyListConfig', wrapper: 'wrapperStyle' }
+    : { consumer: 'useDiyEditorialWidget', normalizer: 'normalizeDiyEditorial', config: 'diyEditorialConfig', wrapper: 'outerStyle' };
   const parsed = parseThemeSfc(widgetSource, { filename: 'diy-commerce-theme.vue' });
   if (parsed.errors.length || !parsed.descriptor.scriptSetup || !parsed.descriptor.template?.ast) return false;
   const tree = (code: string) => ts.createSourceFile('diy-commerce-theme.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -681,7 +698,7 @@ export function hasDiyCommerceThemeBinding(widgetSource: string, composableSourc
     return !!node && ts.isPropertyAccessExpression(unwrap(node)) && ts.isIdentifier((unwrap(node) as ts.PropertyAccessExpression).expression) && ((unwrap(node) as ts.PropertyAccessExpression).expression as ts.Identifier).text === owner && (unwrap(node) as ts.PropertyAccessExpression).name.text === key;
   }
   const returned = (fn: ts.FunctionDeclaration) => fn.body?.statements.find(ts.isReturnStatement)?.expression;
-  const useWidget = valueImport(widget, '@/composables/useDiyCommerceWidget', 'useDiyCommerceWidget');
+  const useWidget = valueImport(widget, '@/composables/' + spec.consumer, spec.consumer);
   const state = declarations(widget.statements).find(row => ts.isIdentifier(row.name) && call(row.initializer, useWidget));
   if (!state || !ts.isIdentifier(state.name)) return false;
   const stateName = state.name.text;
@@ -689,8 +706,8 @@ export function hasDiyCommerceThemeBinding(widgetSource: string, composableSourc
     .flatMap(row => (row.name as ts.ObjectBindingPattern).elements).find(item => ts.isIdentifier(item.name) && (item.propertyName ? ts.isIdentifier(item.propertyName) && item.propertyName.text === 'config' : item.name.text === 'config'));
   if (!binding || !ts.isIdentifier(binding.name)) return false;
   const configBinding = binding.name.text;
-  const useTheme = valueImport(composable, '@/stores/theme', 'useThemeStore'), normalize = valueImport(composable, '@/utils/diyCommerceConfig', 'normalizeDiyCommerce'), computed = valueImport(composable, 'vue', 'computed');
-  const consumer = exported(composable, 'useDiyCommerceWidget'), normalizer = exported(config, 'normalizeDiyCommerce');
+  const useTheme = valueImport(composable, '@/stores/theme', 'useThemeStore'), normalize = valueImport(composable, '@/utils/' + spec.config, spec.normalizer), computed = valueImport(composable, 'vue', 'computed');
+  const consumer = exported(composable, spec.consumer), normalizer = exported(config, spec.normalizer);
   if (!consumer?.body || !normalizer?.body || !normalizer.parameters[1] || !ts.isIdentifier(normalizer.parameters[1].name)) return false;
   function shadows(node: ts.Node, names: Array<string | null>): boolean {
     let found = false;
@@ -711,7 +728,8 @@ export function hasDiyCommerceThemeBinding(widgetSource: string, composableSourc
   const blockParameter = consumer.parameters[0]?.name;
   if (!normalized || normalized.arguments.length !== 2 || !blockParameter || !ts.isIdentifier(blockParameter) || !call(normalized.arguments[0], blockParameter.text) || !member(normalized.arguments[1], theme.name.text, 'preset')) return false;
   const preset = normalizer.parameters[1].name.text, normalizerDeclarations = declarations(normalizer.body.statements), result = returned(normalizer);
-  const themeColor = valueImport(config, '@/utils/diyTheme', 'diyThemeColor'), themeVariables = valueImport(config, '@/utils/diyTheme', 'diyThemeVariables');
+  const themeModule = kind === 'editorial' ? './diyTheme' : '@/utils/diyTheme';
+  const themeColor = valueImport(config, themeModule, 'diyThemeColor'), themeVariables = valueImport(config, themeModule, 'diyThemeVariables');
   if (shadows(normalizer, [themeColor, themeVariables])) return false;
   const color = declared(normalizerDeclarations, 'color'), gradient = declared(normalizerDeclarations, 'gradient');
   if (!color || !ts.isArrowFunction(color) || ts.isBlock(color.body) || !gradient || !ts.isArrowFunction(gradient) || ts.isBlock(gradient.body)) return false;
@@ -721,23 +739,72 @@ export function hasDiyCommerceThemeBinding(widgetSource: string, composableSourc
   let gradientUsesColor = false;
   function inspectGradient(node: ts.Node) { if (ts.isCallExpression(node) && call(node, 'color')) gradientUsesColor = true; ts.forEachChild(node, inspectGradient); }
   inspectGradient(gradient.body);
-  const wrapper = property(result, 'wrapperStyle');
+  const wrapper = property(result, spec.wrapper);
   if (!wrapper || !ts.isObjectLiteralExpression(unwrap(wrapper)) || !(unwrap(wrapper) as ts.ObjectLiteralExpression).properties.some(item => {
     if (!ts.isSpreadAssignment(item)) return false;
     const vars = call(item.expression, themeVariables);
     return vars?.arguments.length === 2 && ts.isIdentifier(vars.arguments[1]) && vars.arguments[1].text === preset;
-  }) || !call(property(property(result, 'priceStyle'), 'color'), 'color') || !gradientUsesColor || !call(property(property(result, 'buttonStyle'), 'background'), 'gradient')) return false;
+  }) || !call(property(property(result, kind === 'editorial' ? 'titleStyle' : 'priceStyle'), 'color'), 'color') || !gradientUsesColor) return false;
+  if (kind !== 'list' && !call(property(property(result, kind === 'editorial' ? 'followCardStyle' : 'buttonStyle'), 'background'), 'gradient')) return false;
+  if (kind === 'list') {
+    const actionColor = declared(normalizerDeclarations, 'actionColor');
+    if (!actionColor || !ts.isArrowFunction(actionColor) || ts.isBlock(actionColor.body)) return false;
+    const action = call(actionColor.body, themeColor);
+    if (!action || action.arguments.length !== 5 || !ts.isIdentifier(action.arguments[4]) || action.arguments[4].text !== preset) return false;
+    const background = property(property(result, 'buttonStyle'), 'background'); let actionUsed = false;
+    if (background) { const inspect = (node: ts.Node) => { if (ts.isCallExpression(node) && call(node, 'actionColor')) actionUsed = true; ts.forEachChild(node, inspect); }; inspect(background); }
+    if (!actionUsed) return false;
+  }
   const roots = parsed.descriptor.template.ast.children.filter(node => node.type !== 3 && (node.type !== 2 || node.content.trim()));
-  if (roots.length !== 1 || roots[0].type !== 1) return false;
+  if (!roots.length || roots.some(node => node.type !== 1) || kind !== 'editorial' && roots.length !== 1) return false;
   type Element = Extract<typeof roots[number], { type: 1 }>;
-  function hasStyle(node: Element, className: string, styleName: string) {
+  function hasStyle(node: Element, className: string, styleName: string, bindingName = configBinding) {
     return node.props.some(prop => prop.type === 6 && prop.name === 'class' && prop.value?.content.split(/\s+/).includes(className)) && node.props.some(prop => {
       if (prop.type !== 7 || prop.name !== 'bind' || prop.arg?.type !== 4 || prop.arg.content !== 'style' || prop.exp?.type !== 4) return false;
       const expression = tree(prop.exp.content).statements;
-      return expression.length === 1 && ts.isExpressionStatement(expression[0]) && member(expression[0].expression, configBinding, styleName);
+      return expression.length === 1 && ts.isExpressionStatement(expression[0]) && member(expression[0].expression, bindingName, styleName);
     });
   }
-  if (!hasStyle(roots[0], 'diy-commerce', 'wrapperStyle')) return false;
+  if (kind === 'editorial') {
+    const required = [['news-card', 'cardStyle'], ['news-title', 'titleStyle'], ['party-card', 'partyStyle'], ['party-title', 'partyTitleStyle'], ['follow-card', 'followCardStyle'], ['follow-button', 'followButtonStyle']];
+    const found = new Set<string>();
+    function visitEditorial(node: Element) {
+      if (node.props.some(prop => prop.type === 7 && prop.name === 'if' && prop.exp?.type === 4 && prop.exp.content.trim() === 'false')) return;
+      for (const [name, style] of required) if (hasStyle(node, name, style)) found.add(name);
+      for (const child of node.children) if (child.type === 1) visitEditorial(child);
+    }
+    const elements = roots.filter((node): node is Element => node.type === 1);
+    if (elements.filter(node => hasStyle(node, 'editorial-wrap', 'outerStyle')).length !== 3 || elements.filter(node => hasStyle(node, 'editorial-wrap', 'followWrapStyle')).length !== 1) return false;
+    for (const node of elements) visitEditorial(node);
+    return required.every(([name]) => found.has(name));
+  }
+  if (kind === 'list') {
+    if (!hasStyle(roots[0] as Element, 'diy-list-widget', 'wrapperStyle')) return false;
+    const card = parseThemeSfc(cardSource, { filename: 'diy-list-card.vue' });
+    if (card.errors.length || !card.descriptor.template?.ast || !card.descriptor.scriptSetup) return false;
+    const cardScript = tree(card.descriptor.scriptSetup.content), cardDeclarations = declarations(cardScript.statements);
+    const props = cardDeclarations.find(row => ts.isIdentifier(row.name) && call(row.initializer, 'defineProps'));
+    const propsCall = props && call(props.initializer, 'defineProps'), propsType = propsCall?.typeArguments?.[0];
+    if (!propsType || !ts.isTypeLiteralNode(propsType) || !propsType.members.some(item => ts.isPropertySignature(item) && item.name && ts.isIdentifier(item.name) && item.name.text === 'config')
+      || cardDeclarations.some(row => ts.isIdentifier(row.name) && row.name.text === 'config')) return false;
+    const cardImport = widget.statements.some(statement => ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier) && statement.moduleSpecifier.text === './DiyListProductCard.vue' && statement.importClause?.name?.text === 'DiyListProductCard' && !statement.importClause.isTypeOnly);
+    let connected = 0;
+    function cardBindings(node: Element) {
+      if (node.props.some(prop => prop.type === 7 && prop.name === 'if' && prop.exp?.type === 4 && prop.exp.content.trim() === 'false')) return;
+      if (node.tag === 'DiyListProductCard' && node.props.some(prop => prop.type === 7 && prop.name === 'bind' && prop.arg?.type === 4 && prop.arg.content === 'config' && prop.exp?.type === 4 && prop.exp.content === configBinding)) connected++;
+      for (const child of node.children) if (child.type === 1) cardBindings(child);
+    }
+    cardBindings(roots[0] as Element);
+    let price = false, action = false;
+    function styles(node: Element) {
+      if (node.props.some(prop => prop.type === 7 && prop.name === 'if' && prop.exp?.type === 4 && prop.exp.content.trim() === 'false')) return;
+      price ||= hasStyle(node, 'list-price', 'priceStyle', 'config'); action ||= hasStyle(node, 'list-action', 'buttonStyle', 'config');
+      for (const child of node.children) if (child.type === 1) styles(child);
+    }
+    for (const node of card.descriptor.template.ast.children) if (node.type === 1) styles(node as Element);
+    return cardImport && connected === 2 && price && action;
+  }
+  if (!hasStyle(roots[0] as Element, 'diy-commerce', 'wrapperStyle')) return false;
   let priceBound = false, buttonBound = false;
   function rendered(node: Element) {
     if (node.props.some(prop => prop.type === 7 && prop.name === 'if' && prop.exp?.type === 4 && prop.exp.content.trim() === 'false')) return;
@@ -745,7 +812,7 @@ export function hasDiyCommerceThemeBinding(widgetSource: string, composableSourc
     buttonBound ||= hasStyle(node, 'promotion-action', 'buttonStyle') || hasStyle(node, 'commerce-card-action', 'buttonStyle');
     for (const child of node.children) if (child.type === 1) rendered(child);
   }
-  rendered(roots[0]);
+  rendered(roots[0] as Element);
   return priceBound && buttonBound;
 }
 
@@ -794,7 +861,8 @@ function themeStyleCoverage(inventory: Inventory): { coverage: ThemeStyleCoverag
       && contains("view/uniapp-ts/src/utils/diyTheme.ts", "'--view-theme': main", "'--view-priceColor': price", "'--view-gradient': gradient", "couponMoneyColor")
       && contains("view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue", "useThemeStore", "diyThemeVariables")
       && hasDiyCommerceThemeBinding(read("view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue"), read("view/uniapp-ts/src/composables/useDiyCommerceWidget.ts"), read("view/uniapp-ts/src/utils/diyCommerceConfig.ts"))
-      && contains("view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue", "diyThemeColor"),
+      && hasDiyEditorialThemeBinding(read("view/uniapp-ts/src/components/diy/DiyEditorialWidget.vue"), read("view/uniapp-ts/src/composables/useDiyEditorialWidget.ts"), read("view/uniapp-ts/src/utils/diyEditorialConfig.ts"))
+      && hasDiyListThemeBinding(read("view/uniapp-ts/src/components/diy/DiyListWidget.vue"), read("view/uniapp-ts/src/components/diy/DiyListProductCard.vue"), read("view/uniapp-ts/src/composables/useDiyListWidget.ts"), read("view/uniapp-ts/src/utils/diyListConfig.ts")),
     commonRead: contains(reader, "THEME_TEMPLATE_NAME = 'color_change'", "theme_duplicate", "theme_identity_invalid", "theme_status_invalid", "valueBytes", "REPEATABLE READ, READ ONLY")
       && contains("workers-ts/src/services/content/V2PublicCompatibilityService.ts", "new ThemeReadService", "product_category_level", "theme_issues")
       && contains("workers-ts/src/services/admin/AdminSignDayConfigService.ts", "readThemeSnapshot"),

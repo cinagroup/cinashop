@@ -63,6 +63,34 @@ const PATCHES = Object.freeze([
     "after": "  // Backport launch-editor 2.14.2: reject unsafe CMD arguments before any\n  // process execution or termination; reuse the existing error callback.\n  if (process.platform === 'win32') {\n    if (args.some((arg) => /[\\r\\n]/.test(arg))) {\n      return onErrorCallback(fileName, 'Cannot launch an editor with an argument containing a line break')\n    }\n    if (args.some((arg) => arg.includes('%'))) {\n      return onErrorCallback(fileName, 'Cannot launch an editor with an argument containing \"%\"')\n    }\n  }\n\n  if (_childProcess && isTerminalEditor(editor)) {"
   },
   {
+    "advisory": "GHSA-9jrq-w75r-8gcw",
+    "commit": "7dafd8e56f152403a3230608fa4005273c2e9e17",
+    "fragment": "clean HTML filename before resolution",
+    "before": "function getHtmlFilename(url, server) {\n  if (url.startsWith(FS_PREFIX)) {\n    return decodeURIComponent(fsPathFromId(url));\n  } else {\n    return decodeURIComponent(\n      normalizePath$3(path$n.join(server.config.root, url.slice(1)))\n    );\n  }\n}",
+    "after": "function getHtmlFilename(url, server) {\n  const urlPath = cleanUrl(url);\n  if (urlPath.startsWith(FS_PREFIX)) {\n    return decodeURIComponent(fsPathFromId(urlPath));\n  } else {\n    return decodeURIComponent(\n      normalizePath$3(path$n.join(server.config.root, urlPath.slice(1)))\n    );\n  }\n}"
+  },
+  {
+    "advisory": "GHSA-9jrq-w75r-8gcw",
+    "commit": "7dafd8e56f152403a3230608fa4005273c2e9e17",
+    "fragment": "normalize protocol-relative HTML proxy paths",
+    "before": "const devHtmlHook = async (html, { path: htmlPath, filename, server, originalUrl }) => {\n  const { config, moduleGraph, watcher } = server;",
+    "after": "const multipleLeadingSlashesRE = /^\\/{2,}/g;\nconst devHtmlHook = async (html, { path: htmlPath, filename, server, originalUrl }) => {\n  if (htmlPath.startsWith(\"//\")) {\n    htmlPath = htmlPath.replace(multipleLeadingSlashesRE, \"/\");\n  }\n  const { config, moduleGraph, watcher } = server;"
+  },
+  {
+    "advisory": "GHSA-rq7h-c2jc-7f22",
+    "commit": "d73a4200dfd6df1e73e52df44d1dc438144580dd",
+    "fragment": "store only resolved IDs before compatibility fallback",
+    "before": "            const [url, resolvedId] = await normalizeUrl(specifier, start);\n            server?.moduleGraph.safeModulesPath.add(\n              fsPathFromUrl(stripBase(url, base))\n            );",
+    "after": "            let [url, resolvedId] = await normalizeUrl(specifier, start);\n            if (resolvedId) {\n              server?.moduleGraph.safeModulesPath.add(cleanUrl(resolvedId));\n            }\n            resolvedId = resolvedId || url;"
+  },
+  {
+    "advisory": "GHSA-rq7h-c2jc-7f22",
+    "commit": "d73a4200dfd6df1e73e52df44d1dc438144580dd",
+    "fragment": "Vite 5 unresolved SSR identity adaptation",
+    "before": "        if (!resolved || resolved.meta?.[\"vite:alias\"]?.noResolved) {\n          if (ssr) {\n            return [url, url];\n          }",
+    "after": "        if (!resolved || resolved.meta?.[\"vite:alias\"]?.noResolved) {\n          if (ssr) {\n            return [url, void 0];\n          }"
+  },
+  {
     compatibility: 'Vite PR #22346 target detection',
     commit: '5ab51c0f76f0896175e02ad797c1f5fe116d02f4',
     before: 'function resolveEsbuildTranspileOptions(config, format) {',
@@ -102,10 +130,10 @@ function resolveEsbuildTranspileOptions(config, format) {`
     after: '    format: rollupToEsbuildFormatMap[format],\n    supported: {\n      ...defaultEsbuildSupported,\n      ...(needsDestructuringSupportedWorkaround(target) ? { destructuring: true } : null),\n      ...esbuildOptions.supported\n    }'
   }
 ]);
-const patchLabel = (patch) => patch.advisory || patch.compatibility;
+const patchLabel = (patch) => (patch.advisory || patch.compatibility) + (patch.fragment ? ': ' + patch.fragment : '');
 const META = Object.freeze({
   format: 1, source: SOURCE, esbuild: ESBUILD,
-  patches: PATCHES.map(({ advisory, compatibility, commit }) => advisory ? { advisory, commit } : { compatibility, commit }),
+  patches: PATCHES.map(({ advisory, compatibility, commit, fragment }) => advisory ? { advisory, commit, ...(fragment ? { fragment } : {}) } : { compatibility, commit }),
   launchEditorAdaptation: 'Preserve the existing callback overload and UNC guard; resolve stripped paths before probing, prefix WSL relative paths, and report unsafe Windows arguments through the callback before process execution or termination.',
   support: 'Project-maintained backport; Vite 5 is outside upstream security support.'
 });

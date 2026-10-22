@@ -45,30 +45,45 @@ function rejected(fixture, fragment) {
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
   assert.equal(Object.keys(baseline.entries).length, 82);
-  assert.equal(Object.keys(baseline.advisories).length, 26);
+  assert.equal(Object.keys(baseline.advisories).length, 28);
   assert.equal(Object.keys(baseline.resolvedAdvisories).length, 11);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 26);
-  assert.equal(result.distinctAdvisoryUrls, 25);
+  assert.equal(result.directAdvisoryObjects, 28);
+  assert.equal(result.distinctAdvisoryUrls, 27);
 });
 
-test("all six scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
+test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
   const builder = require("./build-vite-safety-backport.cjs");
   const sources = baseline.entries.vite.advisorySources;
-  assert.deepEqual(sources, [1116229, 1120784, 1123525, 1242622, 1242651, 1242658]);
+  assert.deepEqual(sources, [1116229, 1120784, 1123525, 1242622, 1242651, 1242658, 1242724, 1242730]);
   const fixes = builder.PATCHES.filter(patch => patch.advisory);
-  assert.equal(fixes.length, 6);
+  assert.equal(fixes.length, 10);
+  assert.equal(new Set(fixes.map(patch => patch.advisory)).size, 8);
   for (const id of sources) {
     const advisory = baseline.advisories[id];
     assert.equal(advisory.chain, "vite-toolchain");
-    assert.equal(fixes.filter(patch => advisory.url.endsWith("/" + patch.advisory)).length, 1);
+    assert.equal(fixes.filter(patch => advisory.url.endsWith("/" + patch.advisory)).length, [1242724, 1242730].includes(id) ? 2 : 1);
   }
   for (const id of [1242604, 1242605]) {
     assert.equal(baseline.resolvedAdvisories[id].package, "follow-redirects");
     assert.equal(baseline.advisories[id], undefined);
+  }
+});
+
+test("both newly patched Vite advisory tuples remain exact and cannot disappear or broaden", () => {
+  for (const id of [1242724, 1242730]) {
+    const changed = reviewedFixture();
+    changed.vulnerabilities.vite.via.find(via => via.source === id).range = '<=6.4.2';
+    rejected(changed, 'direct advisory changed');
+    const removed = reviewedFixture();
+    removed.vulnerabilities.vite.via = removed.vulnerabilities.vite.via.filter(via => via.source !== id);
+    rejected(removed, 'direct advisory disappeared without baseline review');
+    const redirected = reviewedFixture();
+    redirected.vulnerabilities.vite.via.find(via => via.source === id).url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
+    rejected(redirected, 'direct advisory changed');
   }
 });
 

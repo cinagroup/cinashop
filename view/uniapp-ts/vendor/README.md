@@ -19,7 +19,7 @@ should replace this derived archive and retire its backport tests.
 
 - Official archive: <https://registry.npmjs.org/vite/-/vite-5.4.21.tgz>
 - Source SRI: `sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==`
-- Derived SRI: `sha512-L7iUZlQFqFVDBsGsIh0Rsopt+AY+6LqEYkP4kUy20t6Gp4TjVFsqaRLWrbw1zQtjBrVnFYQQQMpRG0fBbQdGSg==`
+- Derived SRI: `sha512-AAX6pC+pbjIgyb202dKiM7i0r1legogbqhP+DsL34/20TgCRTsxyT6huPdyb7RZRx10iuON4+G5tsSDTEdBS1Q==`
 - `vite-5.4.21-source.json` pins all 31 source files, modes, SHA-256 content and
   canonical tar headers. The archive still contains those same 31 files.
 - Only `dist/node/chunks/dep-BK3b2jBa.js` and `package.json` change. Every other file,
@@ -171,13 +171,13 @@ node --test --test-concurrency=1 scripts/vite-safety-package.test.cjs scripts/vi
 
 The constructor first checks source SRI and every file contract, then requires
 each exact old chunk fragment once. It verifies the result by reversing only the
-six security patches, two official compatibility fragments and manifest
+ten fragments for eight security advisories, two official compatibility fragments and manifest
 changes, then checking all upstream bytes and headers.
 Unsafe tar paths, links, duplicates, malformed archives, extra/missing files,
 drift and tampering are rejected. Tar output retains source order and headers
 (updating only sizes/checksums); gzip uses fixed stored DEFLATE blocks, zero time
 and OS 255 so output bytes do not depend on zlib version or host OS. This makes
-the archive larger (3,310,353 bytes) but deterministic. No extraction is needed.
+the archive larger (3,310,865 bytes) but deterministic. No extraction is needed.
 
 `vite-safety-package.test.cjs` verifies provenance, canonical bytes, tamper
 rejection, installed files, lock SRI and both esbuild chains. Independent real
@@ -239,3 +239,48 @@ builds and immutable-head CI remain separate checks; these narrow results do
 not close TEST-004D3 or its parent. See the [dependency increment](../../common/dependency-security-20261021.md)
 for official package versions, live inventory and receipt boundaries. Earlier
 dated verification paragraphs refer to their earlier candidates.
+
+## 2026-10-22 HTML and safe-module identity increment
+
+The derived archive now also ports the precise security boundaries from
+[GHSA-9jrq-w75r-8gcw](https://github.com/vitejs/vite/security/advisories/GHSA-9jrq-w75r-8gcw)
+and [GHSA-rq7h-c2jc-7f22](https://github.com/vitejs/vite/security/advisories/GHSA-rq7h-c2jc-7f22).
+The first uses the two fragments in official
+[commit 7dafd8e](https://github.com/vitejs/vite/commit/7dafd8e56f152403a3230608fa4005273c2e9e17):
+remove query/hash text before resolving an HTML filename, and normalize multiple
+leading slashes before producing inline module proxy URLs. The second follows
+[official v6 commit d73a420](https://github.com/vitejs/vite/commit/d73a4200dfd6df1e73e52df44d1dc438144580dd):
+only a nonempty resolved ID, cleaned of its query, enters the safe-module set.
+The Vite 5 adaptation retains the existing `server.moduleGraph.safeModulesPath`
+location and optional-server semantics; it does not replace that set with an
+unresolved request URL. Vite 5 originally returns `[url, url]` for unresolved
+SSR imports; the extra adaptation returns `[url, undefined]` and restores the
+old downstream ID fallback only after deciding whether the resolved ID is safe,
+matching the upstream ordering without changing normal SSR import handling.
+
+The original six security fixes and two esbuild compatibility fragments remain
+reversible. Eight distinct advisories now occupy ten security fragments: the HTML fix
+needs both canonicalization and output hardening, and the safe-ID fix needs
+the Vite 5 unresolved-SSR adaptation as well as resolved-ID storage. All 31 source
+files, headers, license and identity remain pinned, with only the same bundled
+chunk and manifest differing. Vite 5 remains outside upstream support.
+
+The newly published
+[GHSA-8g5g-mxqh-grgj](https://github.com/vitejs/vite/security/advisories/GHSA-8g5g-mxqh-grgj)
+is a regression specifically in Vite 6.4.4, whose broader preceding backport
+omitted a required query authorization fix. The narrow Vite 5 safe-ID port does
+not remove its existing unresolved-request or deny checks. The new real
+middleware cases retain denied `.env` queries, ordinary raw imports, normal and
+virtual inline modules, and unresolved SSR imports. Other frontends use the
+official 6.4.5 patch. See
+[the dependency increment](../../common/dependency-security-20261022.md).
+
+The 2026-10-22 installed final archive passed 24/24 boundary/provenance/D3
+cases, all 46 existing Vite regression cases, and the live exact D3 gate. Shared
+Vite cases also passed against each frontend's own installation. All four Web
+builds passed with official Vite 6.4.5, with Kefu retested/rebuilt after its
+independent Vitest 4.1.12 security patch. The current lock semantic SHA is
+`5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00`.
+See the increment and final security handoff for exact commands, counts, audit
+exceptions and source/installed hashes. Earlier successful dates above describe
+their own candidates and are not substituted for this increment's receipts.

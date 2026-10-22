@@ -69,40 +69,7 @@
         </view>
       </view>
 
-      <view v-else-if="block.name === 'goodList' && productLists[index]?.length" class="diy-section">
-        <view class="diy-section-title">{{ componentText(block, 'titleTxtConfig', '推荐商品') }}</view>
-        <view class="diy-product-grid">
-          <view
-            v-for="product in productLists[index]"
-            :key="product.id"
-            class="diy-product-card"
-            @tap="goProduct(product.id)"
-          >
-            <image class="diy-product-image" :src="safeImage(product.image)" mode="aspectFill" />
-            <text class="diy-product-name">{{ product.store_name }}</text>
-            <view class="diy-price-row">
-              <text class="diy-price">¥{{ product.price }}</text>
-              <text v-if="showProductSales(block)" class="diy-sales">已售 {{ product.sales ?? 0 }}{{ product.unit_name }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <view v-else-if="block.name === 'articleList' && articles[index]?.length" class="diy-section">
-        <view class="diy-section-title">{{ componentText(block, 'nameConfig', '品牌资讯') }}</view>
-        <view
-          v-for="article in articles[index]"
-          :key="article.id"
-          class="diy-article"
-          @tap="open(`/pages/article/detail?id=${article.id}`)"
-        >
-          <image v-if="article.image_input[0]" class="diy-article-image" :src="safeImage(article.image_input[0])" mode="aspectFill" />
-          <view class="diy-article-copy">
-            <text class="diy-article-title">{{ article.title }}</text>
-            <text class="diy-article-meta">{{ article.add_time }} · {{ article.visit }} 次浏览</text>
-          </view>
-        </view>
-      </view>
+      <DiyListWidget v-else-if="block.name === 'goodList' || block.name === 'articleList'" :block="block" :active="pageActive" />
 
       <DiyStateWidget v-else-if="isStateWidget(block)" :block="block" :active="pageActive" @closed="emit('closed', $event)" />
 
@@ -111,6 +78,7 @@
       <DiyEditorialWidget
         v-else-if="isEditorialWidget(block)"
         :block="block"
+        :active="pageActive"
       />
 
       <DiyCommerceWidget
@@ -141,14 +109,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onScopeDispose, ref, watch } from "vue";
+import { computed } from "vue";
 import type { DiyComponent } from '@/api/diy';
-import { useAuthStore } from '@/stores/auth';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
-import { apiArticleList, type ArticleListItem } from "@/api/article";
-import { apiGoodsList } from "@/api/product";
-import type { GoodsItem } from "@/types/product";
 import { sanitizeArticleRichText } from "@/utils/articleRichText";
 import {
   asDiyRecord,
@@ -163,6 +127,7 @@ import {
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
+import DiyListWidget from "./DiyListWidget.vue";
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
 import DiyCommunityWidget from "./DiyCommunityWidget.vue";
 import { useThemeStore } from '@/stores/theme';
@@ -182,20 +147,11 @@ const props = withDefaults(defineProps<{
   microPage: false,
   pageActive: true,
 });
-function showProductSales(block: DiyComponent) {
-  const choices = asDiyRecord(block.checkboxInfo)?.type;
-  return block.checkboxInfo === undefined || Array.isArray(choices) && choices.includes(3);
-}
 const emit = defineEmits<{ closed: [message: string] }>();
 function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }
-const auth = useAuthStore();
 const theme = useThemeStore();
 function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
 
-const productLists = ref<Record<number, GoodsItem[]>>({});
-const articles = ref<Record<number, ArticleListItem[]>>({});
-let hydration = 0, disposed = false;
-const hydrationOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
 const COMMERCE_WIDGET_NAMES = new Set([
   "bargain",
@@ -296,10 +252,6 @@ function open(value: unknown): void {
   openDiyLink(value);
 }
 
-function goProduct(id: number): void {
-  if (Number.isSafeInteger(id) && id > 0) open(`/pages/goods/detail?id=${id}`);
-}
-
 function sanitizedRichText(block: DiyComponent): string {
   const value = diyNestedValue(block, "richText");
   return typeof value === "string"
@@ -325,68 +277,6 @@ function guideStyle(block: DiyComponent): Record<string, string> {
   return { borderTopColor: safeDiyColor(asDiyRecord(colors[0])?.item, "#e5e5e5") };
 }
 
-function boundedLimit(value: number, fallback: number, cap: number): number {
-  return Number.isFinite(value) && value > 0 ? Math.min(Math.floor(value), cap) : fallback;
-}
-
-async function loadProducts(block: DiyComponent): Promise<GoodsItem[]> {
-  const type = tabValue(block, "typeConfig");
-  const ids = diyList(block, "goodsList", "ids")
-    .map(Number)
-    .filter((id) => Number.isSafeInteger(id) && id > 0)
-    .slice(0, 50);
-  const categories = diyList(block, "classList", "classVal")
-    .map(Number)
-    .filter((id) => Number.isSafeInteger(id) && id > 0)
-    .slice(0, 50);
-  const brands = diyList(block, "brandList", "brandVal")
-    .map(Number)
-    .filter((id) => Number.isSafeInteger(id) && id > 0)
-    .slice(0, 50);
-  const labels = diyList(block, "goodsLabel", "activeValue")
-    .map(Number)
-    .filter((id) => Number.isSafeInteger(id) && id > 0)
-    .slice(0, 50);
-  if ((type === 1 && !ids.length) || (type === 2 && !brands.length)
-    || (type === 3 && !categories.length) || (type === 4 && !labels.length)) return [];
-  const sort = tabValue(block, "goodsSort");
-  const result = await apiGoodsList({
-    page: 1,
-    limit: boundedLimit(diyNumber(block, "numberConfig", 8), 8, 20),
-    ...(type === 1 && ids.length ? { ids: ids.join(",") } : {}),
-    ...(type === 2 && brands.length ? { brand_id: brands.join(",") } : {}),
-    ...(type === 3 && categories.length ? { cate_id: categories.join(",") } : {}),
-    ...(type === 4 && labels.length ? { store_label_id: labels.join(",") } : {}),
-    ...(sort === 1 ? { salesOrder: "desc" as const } : {}),
-    ...(sort === 2 ? { priceOrder: "desc" as const } : {}),
-  });
-  return result.list ?? [];
-}
-
-async function hydrate(): Promise<void> {
-  const generation = ++hydration, actor = hydrationOwner(), schema = JSON.stringify(props.components);
-  productLists.value = {}; articles.value = {};
-  const current = () => !disposed && props.pageActive && generation === hydration && actor === hydrationOwner() && schema === JSON.stringify(props.components);
-  if (!current()) return;
-  const nextProducts: Record<number, GoodsItem[]> = {}, nextArticles: Record<number, ArticleListItem[]> = {};
-  await Promise.all(props.components.map(async (block, index) => {
-    try {
-      if (block.name === 'goodList') nextProducts[index] = await loadProducts(block);
-      else if (block.name === 'articleList') {
-        const category = Math.max(0, Number(asDiyRecord(block.selectConfig)?.activeValue) || 0);
-        const limit = boundedLimit(diyNumber(block, 'numConfig', 6), 6, 20);
-        nextArticles[index] = await apiArticleList(category, { page: 1, limit });
-      }
-    } catch { if (block.name === 'goodList') nextProducts[index] = []; else if (block.name === 'articleList') nextArticles[index] = []; }
-  }));
-  if (current()) { productLists.value = nextProducts; articles.value = nextArticles; }
-}
-const stopHydration = watch([() => JSON.stringify(props.components), hydrationOwner, () => props.pageActive], () => {
-  hydration++; productLists.value = {}; articles.value = {};
-  const generation = hydration;
-  if (!disposed && props.pageActive) void Promise.resolve().then(() => { if (!disposed && generation === hydration && props.pageActive) void hydrate(); });
-}, { immediate: true, flush: 'sync' });
-onScopeDispose(() => { disposed = true; hydration++; stopHydration(); productLists.value = {}; articles.value = {}; });
 </script>
 
 <style scoped>

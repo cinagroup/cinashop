@@ -20,6 +20,7 @@ import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
 import { withTx } from "@/lib/di";
 import { lockDiseCatalogForMutation, normalizeDiseTemplateName, themeDeadlines,DISE_TEMPLATE_TRIM_CHARACTERS } from "@/services/content/ThemeReadService";
 import { isCityCredentialKey, isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolver';
+import { canonicalizeDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import { integralPurchaseLimit } from '@/services/activity/IntegralPurchaseAdmission';
 import {
@@ -2159,6 +2160,7 @@ export function normalizeAdminDiseJson(raw: unknown): string {
       queue.push({ value: child, depth: current.depth + 1 });
     }
   }
+  if (Array.isArray(parsed)) canonicalizeDiyEditorialMedia(parsed);
   return JSON.stringify(parsed);
 }
 

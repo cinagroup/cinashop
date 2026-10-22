@@ -65,6 +65,11 @@ const commerce = readFileSync(
   resolve(root, "../view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue"),
   "utf8",
 );
+const editorialConfig = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyEditorialConfig.ts"), "utf8");
+const editorialLoader = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyEditorialWidget.ts"), "utf8");
+const listConfig = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyListConfig.ts"), "utf8");
+const listLoader = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyListWidget.ts"), "utf8");
+const listWidget = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyListWidget.vue"), "utf8");
 const commerceConfig = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyCommerceConfig.ts"), "utf8");
 const commerceLoader = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyCommerceWidget.ts"), "utf8");
 const commerceData = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyCommerceData.ts"), "utf8");
@@ -220,13 +225,14 @@ describe("DIY-home frontend migration", () => {
   it("renders the four editor-owned widgets without adding dynamic code paths", () => {
     for (const name of ["news", "hotspot", "follow", "activeParty"]) {
       expect(renderer).toContain(`\"${name}\"`);
-      expect(editorial).toContain(`block.name === '${name}'`);
+      expect(editorial).toContain(`config.kind==='${name}'`);
     }
-    expect(editorial).toContain("normalizeDiyLink");
-    expect(editorial).toContain("safeDiyImageUrl");
-    // Theme adaptation moved authored colour sanitization into its real helper.
-    expect(editorial).toContain("import { diyThemeColor, diyThemeVariables } from '@/utils/diyTheme'");
-    expect(editorial).toContain("return diyThemeColor(props.block, key, index, fallback, theme.preset)");
+    expect(editorial).toContain("useDiyEditorialWidget(()=>props.block,()=>props.active)");
+    expect(editorialLoader).toContain("normalizeDiyEditorial(block(), theme.preset)");
+    expect(editorialConfig).toContain("normalizeDiyLink");
+    expect(editorialConfig).toContain("safeDiyImageUrl");
+    expect(editorialConfig).toContain("import { diyThemeColor, diyThemeVariables } from './diyTheme'");
+    expect(editorialConfig).toContain("diyThemeColor(block, key, index, fallback, preset)");
     const theme = readFileSync(resolve(root, "../view/uniapp-ts/src/utils/diyTheme.ts"), "utf8");
     expect(theme).toContain("import { asDiyRecord, safeDiyColor } from '@/utils/diy'");
     expect(theme).toContain("return safeDiyColor(value,");
@@ -235,14 +241,15 @@ describe("DIY-home frontend migration", () => {
     expect(editorial).not.toContain("downloadFile");
   });
 
-  it("bounds editorial collection sizes, text, spacing, radii, and hotspot geometry", () => {
-    expect(editorial).toContain("slice(0, 10)");
-    expect(editorial).toContain("slice(0, 30)");
-    expect(editorial).toContain("slice(0, 4)");
-    expect(editorial).toContain("bounded(item.starX, 0, 0, 750)");
-    expect(editorial).toContain("bounded(item.starY, 0, 0, 2_000)");
-    expect(editorial).toContain("bounded(diyNumber(props.block, \"prConfig\"), 0, 0, 80)");
-    expect(editorial).toContain("String(titleValue).trim().slice(0, 100)");
+  it("bounds editorial collections and responsive hotspot geometry through the actual extracted normalizer", () => {
+    for (const limit of [10, 30, 4]) expect(editorialConfig).toContain(`slice(0, ${limit})`);
+    expect(editorialConfig).toContain('coordinates.some(');
+    expect(editorialConfig).toContain('left < 0 || top < 0 || left >= 750 || width <= 0 || height <= 0');
+    expect(editorialConfig).toContain('Math.min(area.width, 750 - area.left)');
+    expect(editorialConfig).toContain("key === 'prConfig' ? 80 : 100");
+    expect(editorialConfig).toContain('listRadius(block,');
+    expect(editorialConfig).toContain("listText(listRecord(children[0]).val, '', 100)");
+    expect(editorial).toContain('<DiyHotspotCanvas');
   });
 
   it("statically mounts all eight business-data widgets through typed clients", () => {
@@ -284,7 +291,10 @@ describe("DIY-home frontend migration", () => {
     expect(commerceConfig).toContain("selected.length && limit > 0");
     expect(commerceData).toContain("safeDiyImageUrl");
     expect(commerceData).toContain("commerceInteger(row.room_id, 1)");
-    expect(renderer).toContain("type === 4 && !labels.length");
-    expect(renderer).toContain("store_label_id: labels.join");
+    expect(renderer).toContain('<DiyListWidget');
+    expect(listWidget).toContain('useDiyListWidget(()=>props.block,()=>props.active)');
+    expect(listLoader).toContain('normalizeDiyList(block(), theme.preset)');
+    expect(listConfig).toContain("scope === 4 ? selectedIds(listChild(block, 'goodsLabel').activeValue)");
+    expect(listConfig).toContain("{ store_label_id: selected.join(',') }");
   });
 });

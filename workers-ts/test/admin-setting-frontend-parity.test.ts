@@ -46,6 +46,8 @@ interface ThemeAuditGates {
   hasLegacyThemePresets: (code: string) => boolean;
   hasRegisteredThemeHost: (page: string, merchantShell: string, deliveryShell?: string, customerWorkShell?: string, pagePath?: string, sources?: Readonly<Record<string, string>>) => boolean;
   hasDiyCommerceThemeBinding: (widget: string, composable: string, config: string) => boolean;
+  hasDiyEditorialThemeBinding: (widget: string, composable: string, config: string) => boolean;
+  hasDiyListThemeBinding: (widget: string, card: string, composable: string, config: string) => boolean;
   hasCategoryPurchaseOwnerWatch: (code: string) => boolean;
   hasPublishedProductCardPictures: (sources: Record<string, string>) => boolean;
 }
@@ -59,10 +61,10 @@ function themeAuditGates() {
   if (compiledThemeAuditGates) return compiledThemeAuditGates;
   const code = source("scripts/admin-setting-frontend-parity-audit.ts");
   const tree = ts.createSourceFile("audit.ts", code, ts.ScriptTarget.Latest, true);
-  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "resolveRegisteredThemePageSource", "hasRegisteredThemeHost", "hasDiyCommerceThemeBinding", "hasCategoryPurchaseOwnerWatch", "hasPublishedProductCardPictures"]);
+  const names = new Set(["classifyThemeStyleCoverage", "hasLegacyThemePresets", "resolveRegisteredThemePageSource", "hasRegisteredThemeHost", "hasDiyCommerceThemeBinding", "hasDiyExtractedThemeBinding", "hasDiyEditorialThemeBinding", "hasDiyListThemeBinding", "hasCategoryPurchaseOwnerWatch", "hasPublishedProductCardPictures"]);
   const functions = tree.statements.filter(statement => ts.isFunctionDeclaration(statement)
     && statement.name && names.has(statement.name.text));
-  expect(functions).toHaveLength(7);
+  expect(functions).toHaveLength(10);
   const output = ts.transpileModule(functions.map(statement => statement.getText(tree)).join("\n"),
     { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const scope = { exports: {}, ts, parseThemeSfc };
@@ -208,6 +210,50 @@ describe("legacy Admin setting route parity audit", () => {
     expect(gate(`<template><!-- ${actual.widget} --></template>`, actual.composable, actual.config)).toBe(false);
     expect(gate(actual.widget, `/* ${actual.composable} */`, actual.config)).toBe(false);
     expect(gate(actual.widget, actual.composable, `/* ${actual.config} */`)).toBe(false);
+  });
+
+  it("follows both extracted editorial and list themes through their real preset computation and rendered product-card styles", () => {
+    const base = '../view/uniapp-ts/src/';
+    const editorial = [source(base + 'components/diy/DiyEditorialWidget.vue'), source(base + 'composables/useDiyEditorialWidget.ts'), source(base + 'utils/diyEditorialConfig.ts')] as const;
+    const list = [source(base + 'components/diy/DiyListWidget.vue'), source(base + 'components/diy/DiyListProductCard.vue'), source(base + 'composables/useDiyListWidget.ts'), source(base + 'utils/diyListConfig.ts')] as const;
+    const gates = themeAuditGates();
+    expect(gates.hasDiyEditorialThemeBinding(...editorial)).toBe(true);
+    expect(gates.hasDiyListThemeBinding(...list)).toBe(true);
+    for (const [index, before, after] of [
+      [0, 'import { useDiyEditorialWidget }', 'import type { useDiyEditorialWidget }'],
+      [0, ':style="config.outerStyle"', ':style="unrelated.outerStyle"'],
+      [0, ':style="config.followCardStyle"', ':style="unrelated.followCardStyle"'],
+      [0, ':style="config.partyTitleStyle"', ':style="unrelated.partyTitleStyle"'],
+      [1, 'theme.preset', 'unrelatedPreset'],
+      [1, 'return { config,', 'return { config: unrelated,'],
+      [2, '=> diyThemeColor(', '=> unrelatedColor('],
+      [2, '...diyThemeVariables(block, preset)', '...{}'],
+      [2, "followCardStyle: { borderRadius: listRadius(block, 'fillet'), background: gradient(", "followCardStyle: { borderRadius: listRadius(block, 'fillet'), background: unrelatedGradient("],
+    ] as const) {
+      expect(editorial[index]).toContain(before);
+      const values = [...editorial]; values[index] = values[index]!.replaceAll(before, after);
+      expect(gates.hasDiyEditorialThemeBinding(values[0]!, values[1]!, values[2]!), before).toBe(false);
+    }
+    for (const [index, before, after] of [
+      [0, 'import DiyListProductCard from', 'import type DiyListProductCard from'],
+      [0, ':config="config"', ':config="unrelated"'],
+      [0, ':style="config.wrapperStyle"', ':style="unrelated.wrapperStyle"'],
+      [1, ':style="config.priceStyle"', ':style="unrelated.priceStyle"'],
+      [1, ':style="config.buttonStyle"', ':style="unrelated.buttonStyle"'],
+      [1, 'v-if="config.showPrice"', 'v-if="false"'],
+      [1, 'config:DiyListConfig', 'unrelated:DiyListConfig'],
+      [1, 'const props=defineProps', 'const config=unrelated;const props=defineProps'],
+      [2, 'theme.preset', 'unrelatedPreset'],
+      [2, 'return { config,', 'return { config: unrelated,'],
+      [3, '...diyThemeVariables(block, preset)', '...{}'],
+      [3, '=> diyThemeColor(actionStyle', '=> unrelatedColor(actionStyle'],
+    ] as const) {
+      expect(list[index]).toContain(before);
+      const values = [...list]; values[index] = values[index]!.replaceAll(before, after);
+      expect(gates.hasDiyListThemeBinding(values[0]!, values[1]!, values[2]!, values[3]!), before).toBe(false);
+    }
+    expect(gates.hasDiyEditorialThemeBinding(`<template><!-- ${editorial[0]} --></template>`, editorial[1], editorial[2])).toBe(false);
+    expect(gates.hasDiyListThemeBinding(list[0], `<template><!-- ${list[1]} --></template>`, list[2], list[3])).toBe(false);
   });
 
   it("recognizes the actual shared purchase watcher for every owner dimension and synchronous reset", () => {

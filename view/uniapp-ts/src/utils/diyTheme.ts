@@ -5,9 +5,9 @@ const roles: Record<string, keyof ThemePreset> = { themeColor: 'theme', priceCol
 export function diyCustomTone(block: Record<string, unknown>): boolean { return Number(asDiyRecord(block.toneConfig)?.tabVal) === 1; }
 export function diyThemeColor(block: Record<string, unknown>, key: string, index: number, fallback: string, preset: ThemePreset): string {
   const role = block.name === 'news' && key === 'bntColor' ? undefined : roles[key];
-  // Old follow uses its authored themeColor even when no tone selector is present.
-  const authoredFollow = block.name === 'follow' && !asDiyRecord(block.toneConfig);
-  if (role && !diyCustomTone(block) && !authoredFollow) return index > 0 && /(?:BgColor|BntColor)$/u.test(key) ? preset.gradient : preset[role] as string;
+  // PHP follow and activeParty expose authored colour without a tone selector.
+  const authoredWithoutTone = (block.name === 'follow' || block.name === 'activeParty') && !asDiyRecord(block.toneConfig);
+  if (role && !diyCustomTone(block) && !authoredWithoutTone) return index > 0 && /(?:BgColor|BntColor)$/u.test(key) ? preset.gradient : preset[role] as string;
   const colors = asDiyRecord(block[key])?.color, value = Array.isArray(colors) ? asDiyRecord(colors[index])?.item : undefined;
   return safeDiyColor(value, role ? index > 0 && /(?:BgColor|BntColor)$/u.test(key) ? preset.gradient : preset[role] as string : fallback);
 }

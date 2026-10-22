@@ -2,6 +2,7 @@ import { computed, onScopeDispose, ref, watch } from "vue";
 import type { DiyPage } from "@/api/diy";
 import { useAuthStore } from "@/stores/auth";
 import { closeDiyStation, DiyPageLoadError, isDiyEnabled, loadDiyPage } from "@/utils/diy";
+import { diyEditorialMediaDeadline } from '@/utils/diyEditorialMediaLease';
 
 /** A page owns adoption and native title/refresh effects. Its children own their
  * separate optional-auth reads and never persist those responses as schema. */
@@ -10,15 +11,34 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean) {
   const phase = ref<"idle" | "loading" | "ready" | "empty" | "closed" | "error">("idle");
   const offline = ref(false);
   let generation = 0, pullGeneration = 0, disposed = false;
+  let mediaTimer: ReturnType<typeof setTimeout> | undefined, mediaTimerEpoch = 0;
   const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
   const visible = () => !disposed && active() && id() !== null;
   const available = computed(() => visible() && phase.value === "ready" && !!page.value && isDiyEnabled(page.value.is_show));
+  function cancelMediaTimer() {
+    mediaTimerEpoch++;
+    if (mediaTimer !== undefined) { clearTimeout(mediaTimer); mediaTimer = undefined; }
+  }
+  function scheduleMediaRefresh(data: DiyPage | null, cachedAt: number, current: () => boolean) {
+    cancelMediaTimer();
+    if (!current()) return;
+    const deadline = diyEditorialMediaDeadline(data, cachedAt);
+    if (deadline === Infinity) return;
+    const timerEpoch = mediaTimerEpoch;
+    mediaTimer = setTimeout(() => {
+      if (timerEpoch !== mediaTimerEpoch || !current()) return;
+      mediaTimer = undefined;
+      void reload(true);
+    }, Math.max(0, deadline - Date.now()));
+  }
   function invalidate(clear = false) {
+    cancelMediaTimer();
     generation++; pullGeneration++; if (clear) page.value = null;
     loading.value = false; error.value = ""; offline.value = false; phase.value = page.value ? "ready" : "idle";
   }
   async function reload(force = false): Promise<boolean> {
     const pageId = id(); if (!visible() || pageId === null) return false;
+    cancelMediaTimer();
     const revision = ++generation, actor = owner();
     const current = () => visible() && revision === generation && pageId === id() && actor === owner();
     loading.value = true; error.value = ""; offline.value = false; phase.value = "loading";
@@ -28,6 +48,7 @@ export function useDiyPageHost(id: () => number | null, active: () => boolean) {
       page.value = snapshot.data; offline.value = snapshot.source === "offline";
       phase.value = page.value ? "ready" : "empty";
       if (page.value) uni.setNavigationBarTitle({ title: page.value.title });
+      scheduleMediaRefresh(snapshot.data, snapshot.cachedAt, current);
       return true;
     } catch (reason) {
       if (!current()) return false;

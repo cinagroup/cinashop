@@ -1,5 +1,22 @@
 # TEST-004D3 dependency boundary
 
+## 2026-10-22 HTML and filesystem identity increment
+
+Official npm metadata adds source 1242724 (GHSA-9jrq-w75r-8gcw) and 1242730
+(GHSA-rq7h-c2jc-7f22), both affecting the retained Vite 5.4.21 version range.
+Both boundaries are now reversibly patched and tied to actual middleware
+regressions; the gate still rejects unknown advisory tuples, installed paths,
+forward dependency edges and resolved-advisory reappearance. The same eight
+scoped chains remain. The semantic lock fingerprint changes only because the
+reviewed Vite archive integrity changes. Historical inventory/receipts below
+remain point-in-time records. Current validation and official source references
+are described in [the increment](../../common/dependency-security-20261022.md).
+
+The newer Vite 6.4.4-only query regression (GHSA-8g5g-mxqh-grgj) is separately
+handled by official Vite 6.4.5 in Admin, Supplier, PC and Kefu. An npm metadata
+publication delay is explicitly distinguished from upstream affected-version
+and code evidence; a clean package audit alone is not remediation evidence.
+
 ## 2026-10-21 launch-editor and redirect increment
 
 This section supersedes the current-inventory numbers in the dated sections

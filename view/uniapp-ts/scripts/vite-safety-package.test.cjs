@@ -8,7 +8,7 @@ const contract = JSON.parse(readFileSync(builder.CONTRACT_PATH, 'utf8'));
 const archive = readFileSync(builder.OUTPUT_PATH);
 const entries = builder.readArchive(archive);
 
-test('the canonical archive reverses only six security fixes, official Vite compatibility and the manifest change', () => {
+test('the canonical archive reverses only eight security fixes, official Vite compatibility and the manifest change', () => {
   const proof = builder.verifyDerived(archive, contract);
   assert.equal(proof.fileCount, 31);
   assert.deepEqual(proof.changedFiles, ['package.json', builder.CHUNK]);
@@ -61,6 +61,15 @@ test('incorrect official SRI, source drift and patch reapplication fail closed',
   }
   assert.throws(() => builder.assertContract(entries, contract), /Source file changed/);
 });
+test('new HTML and safe-ID source fragments cannot be removed behind an unchanged provenance claim', () => {
+  const fixes = builder.PATCHES.filter(patch => ['GHSA-9jrq-w75r-8gcw', 'GHSA-rq7h-c2jc-7f22'].includes(patch.advisory));
+  assert.equal(fixes.length, 4);
+  for (const patch of fixes) {
+    const removed = mutate(builder.CHUNK, entry => ({ ...entry, bytes: Buffer.from(builder.replaceOnce(entry.bytes.toString('utf8'), patch.after, patch.before, 'test removal')) }));
+    assert.throws(() => builder.verifyDerived(removed, contract), /Source drift/);
+  }
+});
+
 test('npm installs the pinned derived bytes and preserves the DCloud Vite peer', () => {
   const project = resolve(__dirname, '..');
   const manifest = JSON.parse(readFileSync(resolve(project, 'package.json'), 'utf8'));

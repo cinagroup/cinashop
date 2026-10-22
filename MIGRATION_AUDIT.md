@@ -8419,3 +8419,16 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 浏览器按既有授权后台执行，不再逐页请求确认；当前可用连接为IAB，未据此推断独立扩展安装状态。目的地合成拒绝仅证明注册页及规范URL，MP／App构建不替代真机；生产身份／ACL／媒体／支付和发布观察仍开放。保留get_script和三处loader，未改DDL／ACL／路由／锁文件。API-007父项、DATA-008及FE-003J／K继续开放；本批只提交推送draft，不合并、不部署。父提交7886397的Actions39586193521已11任务成功，本批精确提交CI另核实。
 
 下一完整切片为goodList、articleList、news、hotspot、follow、activeParty六类编辑／数据／关注媒体组件；42份PHP与70份TS来源仅作只读提案，尚未实现验收。activeParty为PHP Admin持久预览兼容意图；轮播另按swipers／swiperBg／homeComb完整调用族处理，不把局部共享修正算作整族完成。
+
+
+## 2026-10-22 DIY商品列表与编辑／关注媒体完整合同
+
+本批继续API-007，完整处理goodList、articleList、news、hotspot、follow、activeParty六类的真实配置、独立读取／重试、布局字段矩阵、规范导航、显式SKU／媒体操作与完整owner／active／生命周期。公开媒体只采用明确受管槽位，刷新签名不改schema；缓存与已打开页面均有续期保护。activeParty按PHP Admin持久预览兼容意图处理，不冒称PHP前台有该分支。
+
+最终本机门禁通过：Worker 56文件1,054项，Worker unit／runtime两份类型检查；native PG16四文件86项；UniApp完整13步含工具链1,879项、三端构建与产物／自动化二维码／i18n检查；实际H5后台Browser 21阶段。新增独立用例188，集中于三份Node运行时136、AST 8、主题AST 1、runner 3、native 26、Browser 1及依赖安全13项；同一用例的候选／重复环境运行不累计。浏览器逐GET比较50表／46序列，业务SQL写0；两个真实Admin API schema保存和两次站点fixture配置有精确变化收据，显式海报只允许新增一个R2缓存对象。构建产物与源在验收期间保持一致。
+
+详见[本批说明](workers-ts/docs/php-ts-diy-editorial-20261022.md)及[机器记录](workers-ts/audit/php-ts-diy-editorial-20261022.json)。必要CI依赖增量使用四端Vite 6.4.5、UniApp精确Vite 5回移及Kefu Vitest 4.1.12，保留旧安全与DCloud合同；原版本负复现、锁文件来源与实际安装测试另有收据。历史正文前缀、复选行及其余基线文件保持；精确文件数与SHA见机器记录。
+
+按用户要求继续后台浏览器验收，不反复弹出确认。已核实本地Browser包与可用IAB连接；独立Chrome／Edge扩展连接未见于当前清单。HTTP loopback桥接、固定JPEG的IMAGES夹具和目的地合成边界均明确，MP／App构建不替代真机。保留已恢复get_script与三处loader，未改DDL／ACL／路由或生产配置；API-007父项、DATA-008、FE-003J／K及生产／真机／发布继续开放，只提交推送draft、不合并部署。父提交3dfa941d的Actions39599203509已11任务成功，本批精确提交CI另核实。
+
+下一完整切片为swipers／swiperBg／homeComb与共享DiyMediaCarousel的全部配置、布局、导航、媒体和生命周期调用族；11份来源现仅为新鲜只读提案，不把共享图片helper修正算作整族完成。

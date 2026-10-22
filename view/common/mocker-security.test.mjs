@@ -9,12 +9,12 @@ const root = process.cwd();
 const require = createRequire(resolve(root, 'package.json'));
 const vitestRequire = createRequire(require.resolve('vitest/package.json'));
 
-test('every locked Vitest and mocker copy is on the reviewed 4.1.11 patch line', () => {
+test('every locked Vitest and mocker copy is on the reviewed 4.1.12 patch line', () => {
   const lock = JSON.parse(readFileSync(resolve(root, 'package-lock.json'), 'utf8'));
   for (const name of ['vitest', '@vitest/mocker']) {
     const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith(`node_modules/${name}`));
     assert.ok(copies.length > 0, name);
-    for (const [path, pkg] of copies) assert.equal(pkg.version, '4.1.11', path);
+    for (const [path, pkg] of copies) assert.equal(pkg.version, '4.1.12', path);
   }
 });
 

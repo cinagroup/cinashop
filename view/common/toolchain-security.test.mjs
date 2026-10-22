@@ -99,16 +99,16 @@ test("the actual PostCSS fixed-size caller preserves anonymous CSS parsing", () 
   assert.match(parsed.first.source.input.id, /^<input css [\w-]{6}>$/);
 });
 
-if (["cinashop-kefu-ts", "cinashop-pc"].includes(manifest.name)) {
-  test("all locked Vite copies include the official 6.4.4 editor security fixes", () => {
-    assert.equal(manifest.devDependencies.vite, "^6.4.4");
+if (["cinashop-kefu-ts", "cinashop-pc", "cinashop-admin-ts", "cinashop-supplier-ts"].includes(manifest.name)) {
+  test("all locked Vite copies include the official 6.4.5 HTML and file-boundary security fixes", () => {
+    assert.equal(manifest.devDependencies.vite, "^6.4.5");
     const copies = Object.entries(lock.packages).filter(([path]) => path.endsWith("node_modules/vite"));
     assert.ok(copies.length > 0);
     for (const [path, entry] of copies) {
-      assert.equal(entry.version, "6.4.4", path);
-      assert.equal(entry.integrity, "sha512-xGjU/SyjeNyb0E4KxXBvYz/1C+3JXuujvf2hXNOtnlcE+58o5ajd9N2/n2VhkiJvpCP2qQasnUpx5PXNeI+p1Q==", path);
+      assert.equal(entry.version, "6.4.5", path);
+      assert.equal(entry.integrity, "sha512-4enwjFfi4IwtEh0w+jPzpLVOFQiPHmmzPxcHXQOyEur47o6u0jE573DmGpjA+7irXoMLYRZD5ZaFUEneS3abPg==", path);
     }
-    assert.equal(require("vite/package.json").version, "6.4.4");
+    assert.equal(require("vite/package.json").version, "6.4.5");
   });
 }
 if (["cinashop-pc", "cinashop-uniapp"].includes(manifest.name)) {
@@ -117,12 +117,13 @@ if (["cinashop-pc", "cinashop-uniapp"].includes(manifest.name)) {
 
 if (manifest.name === "cinashop-kefu-ts") {
   await import("./mocker-security.test.mjs");
+  await import("./mocker-advisory-20261022.test.mjs");
   test("Kefu has no vulnerable Vitest or nested Vite/esbuild copies", () => {
-    assert.equal(manifest.devDependencies.vitest, "4.1.11");
-    assert.equal(lock.packages["node_modules/vitest"].version, "4.1.11");
+    assert.equal(manifest.devDependencies.vitest, "4.1.12");
+    assert.equal(lock.packages["node_modules/vitest"].version, "4.1.12");
     for (const [path, pkg] of Object.entries(lock.packages)) {
       const [major, minor, patch] = (pkg.version ?? "").split(".").map(Number);
-      if (path.endsWith("node_modules/vite")) assert.ok(major > 6 || (major === 6 && (minor > 4 || (minor === 4 && patch >= 4))), path);
+      if (path.endsWith("node_modules/vite")) assert.ok(major > 6 || (major === 6 && (minor > 4 || (minor === 4 && patch >= 5))), path);
       if (path.endsWith("node_modules/esbuild")) assert.ok(major > 0 || minor >= 25, path);
     }
   });
@@ -180,3 +181,6 @@ if (manifest.name === "cinashop-kefu-ts") {
     }
   });
 }
+
+// These real Vite middleware cases resolve Vite from this job's own cwd.
+await import("../uniapp-ts/scripts/vite-advisory-20261022.test.cjs");

@@ -55,6 +55,7 @@ import { parseConfigInteger } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 import { parseLegacyDiyJson } from "./V2PublicCompatibilityService";
 import { FabReadService } from "./FabReadService";
+import { renderDiyEditorialMedia } from "./DiyEditorialMediaPolicy";
 
 const MAX_PAGE = 1_000_000;
 const MAX_PAGE_SIZE = 100;
@@ -428,6 +429,7 @@ export class DiyHomeCompatibilityService {
         component.routine_contact_type = parseConfigInteger(routineContactType, 0);
       }
     }
+    await renderDiyEditorialMedia(this.container.db, this.env.APP_KEY, components);
     return { ...row, value: components };
   }
 

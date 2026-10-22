@@ -94,3 +94,10 @@ PHP `view/uniapp/pages/discover/discoverDetails/index.vue:127` 及 `components/d
 八类commerce模块已完整实现并通过本机与后台真实浏览器门禁，前述提案现有实现见[本批说明](php-ts-diy-commerce-20261021.md)及[机器记录](../audit/php-ts-diy-commerce-20261021.json)。Worker889／native62／UniApp工具链1742／完整13步与CSS修正后五步、Browser46阶段通过；候选与重复运行不累计。实际领券仅显式两次，未知回执只读恢复不重放；成熟SKU／库存／账务／owner和get_script合同保留，生产／真机／发布及API-007父项继续开放。
 
 下一独立完整切片拟覆盖goodList、articleList、news、hotspot、follow、activeParty六类：完整布局与checkbox／标题／材料、规范目标、SKU权威、独立重试、全owner／可见性／迟到媒体及全套验证一起交付。42份PHP＋70份TS与27个锚点已只读整理，尚未实现／构建／验收。activeParty只有PHP Admin持久化与预览正证据，无PHP前台运行分支，应显式记录兼容编辑意图。swipers／swiperBg／homeComb共享轮播另按完整调用族处理；swiperBg当前真实info[0]链接被通用info[1]读取遗漏，不能只修共享高度即宣称homeComb完整。
+
+
+## 2026-10-22 DIY编辑组件完成后的后续
+
+前述六类编辑／列表组件已完整处理并通过本机和实际后台浏览器门禁，见[本批说明](php-ts-diy-editorial-20261022.md)及[机器记录](../audit/php-ts-diy-editorial-20261022.json)。Worker1,054／native86／UniApp工具链1,879／完整13步与Browser21阶段通过，新增独立188例，候选与重复环境不累计。逐GET比较50表／46序列；业务SQL写0，四份fixture配置精确收据独立记录，只有显式海报GET新增一次R2缓存。必要依赖安全阻断一并修复并记录实际旧／新行为，保留get_script与三处loader。
+
+下一独立完整切片是swipers／swiperBg／homeComb和共享DiyMediaCarousel的全部真实调用族。现有TS通用链接读info[1]遗漏PHP swiperBg真实info[0]；固定高度／4000ms／dots不能代替PHP各类natural高度、指示器、间距、menu／search／tabs配置。11份新鲜PHP／TS来源与完整工作范围只有只读提案，尚未实现／构建／验收该族。当前公开媒体签名与期限扫描尚未覆盖swiperConfig.list，应在该族一并接入既有受管素材／签名／缓存续期权威。本批共同图片URL适配不视为轮播整族完成。API-007父项、DATA-008及生产身份／provider／真机／发布仍开放。

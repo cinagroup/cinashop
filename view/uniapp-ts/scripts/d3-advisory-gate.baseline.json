@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "lockSemanticSha256": "33f137aab5dd51a78c25ce5be5c73f4920ab9a166bb0c9c964ddf87d5f953609",
-  "reviewedReceipt": "2026-10-21 official npm package-lock-only receipt: 82 affected package entries; six exact Vite source backports, official follow-redirects1.16.1; runtime verification queued separately",
+  "lockSemanticSha256": "5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00",
+  "reviewedReceipt": "2026-10-22 official npm receipt: 82 affected package entries, 28 direct source objects, 27 distinct advisory URLs, 8 scoped chains; eight Vite advisories covered by ten exact reversible security fragments and two esbuild compatibility fragments. Installed Vite boundary/provenance/D3 tests 24/24 and prior Vite regressions 46/46 passed; five cwd-specific security gates passed. Independent Kefu Vitest 4.1.12 mocker regression and 30 unit cases passed, with PC/Kefu complete audits reporting zero.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -192,6 +192,20 @@
       "package": "vite",
       "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
       "severity": "high",
+      "range": "<=6.4.3",
+      "chain": "vite-toolchain"
+    },
+    "1242724": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+      "severity": "low",
+      "range": "<=6.4.3",
+      "chain": "vite-toolchain"
+    },
+    "1242730": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+      "severity": "moderate",
       "range": "<=6.4.3",
       "chain": "vite-toolchain"
     }
@@ -1872,7 +1886,9 @@
         1123525,
         1242622,
         1242651,
-        1242658
+        1242658,
+        1242724,
+        1242730
       ],
       "effects": [
         "@dcloudio/vite-plugin-uni",

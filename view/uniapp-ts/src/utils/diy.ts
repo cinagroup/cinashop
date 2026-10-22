@@ -7,7 +7,8 @@ import {
   type DiyPage,
 } from "@/api/diy";
 import { resolveRegisteredPageRoute, TAB_ROUTES } from "@/config/navigation";
-import { RequestError } from "@/utils/request";
+import { API_BASE, RequestError } from "@/utils/request";
+import { diyEditorialMediaCacheUsable } from './diyEditorialMediaLease';
 
 const DIY_CACHE_PREFIX = "cinashop_diy_page_v1_";
 const MAX_COMPONENTS = 200;
@@ -217,7 +218,8 @@ export async function loadDiyPage(id = 0, force = false, consumer: () => boolean
       let version = versionOf(await apiDiyVersion(safeId));
       if (!current()) return latest();
       if (!alive()) throw superseded();
-      if (!force && !stationClosed && cached?.versionVerified && version !== null && cached.version === version) {
+      if (!force && !stationClosed && cached?.versionVerified && version !== null && cached.version === version
+        && diyEditorialMediaCacheUsable(cached.data, cached.cachedAt)) {
         return complete({ ...cached, source: "cache" });
       }
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -232,6 +234,7 @@ export async function loadDiyPage(id = 0, force = false, consumer: () => boolean
         if (!alive()) throw superseded();
         if (after === version) {
           const entry: DiyCacheEntry = { version: after, data, cachedAt: Date.now(), versionVerified: after !== null };
+          if (!diyEditorialMediaCacheUsable(data, entry.cachedAt)) throw new DiyPageLoadError("页面素材访问已过期，请重新加载", "invalid");
           writeCache(safeId, entry);
           stationClosed = false;
           return complete({ ...entry, source: "network" });
@@ -245,7 +248,7 @@ export async function loadDiyPage(id = 0, force = false, consumer: () => boolean
       if (error instanceof RequestError && error.status === 410010 && (error.httpStatus === undefined || error.httpStatus < 500)) {
         closeDiyStation(error.message); throw closedError();
       }
-      if (!stationClosed && cached && transient(error)) return complete({ ...cached, source: "offline" });
+      if (!stationClosed && cached && transient(error) && diyEditorialMediaCacheUsable(cached.data, cached.cachedAt)) return complete({ ...cached, source: "offline" });
       state.completed = { error }; throw error;
     }
   })().finally(() => { if (state.pending === pending) { state.pending = undefined; state.consumers = undefined; } });
@@ -268,7 +271,7 @@ export function safeDiyImageUrl(value: unknown): string {
   if (!url || url.length > 4_096 || /[\u0000-\u001f\u007f]/.test(url)) return "";
   if (/^https:\/\//i.test(url)) return url;
   if (/^http:\/\//i.test(url)) return `https://${url.slice(7)}`;
-  if (/^\/(?!\/)/.test(url)) return url;
+  if (/^\/(?!\/)/.test(url)) return API_BASE && /^\/api\/assets\/[1-9]\d*(?:\?|#|$)/u.test(url) ? API_BASE + url : url;
   if (/^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(url) && url.length <= 262_144) return url;
   return "";
 }
