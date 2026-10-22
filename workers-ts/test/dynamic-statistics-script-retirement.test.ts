@@ -35,6 +35,8 @@ const stateIncrement=JSON.parse(read("workers-ts/audit/community-state-root-sour
   route_file:string; statistics_restoration:{file:string;sha256:string};
 };
 const availabilityFollowup=JSON.parse(read("workers-ts/audit/community-availability-root-source-followup-20261021.json")) as RouteSourceFollowup;
+const footerBindingRaw=read("workers-ts/audit/diy-footer-source-binding-20261022.json");
+const footerBinding=JSON.parse(footerBindingRaw) as { sources:Array<RouteSourceFollowup & {file:string}>;historical_statistics_restoration:{file:string;sha256:string} };
 function source(file:string){
   const raw=read(file),text=file.endsWith(".vue")?/<script\b[^>]*>([\s\S]*?)<\/script>/.exec(raw)?.[1]:raw;
   if(text===undefined)throw Error("Statistics entry script missing: "+file);
@@ -97,9 +99,12 @@ describe("restored PHP statistics script contract and retained retirement histor
     expect(digest(readFileSync(resolve(root,stateIncrement.statistics_restoration.file)))).toBe(stateIncrement.statistics_restoration.sha256);
     expect(stateIncrement.route_file).toBe("workers-ts/src/routes/v1/index.ts");
     expect(stateIncrement.inserted_source).toBe('v1Routes.get("/community/state/:id", authMiddleware({ force: false }), CommunityController.communityState);');
+    expect(digest(footerBindingRaw)).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
+    expect(footerBinding.historical_statistics_restoration).toEqual(stateIncrement.statistics_restoration);
     for(const proof of restoration.current_sources){
-      const current=read(proof.file);
-      const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(reverseRouteSourceFollowup(current,availabilityFollowup),stateIncrement):current;
+      const current=read(proof.file),footer=footerBinding.sources.find(row=>row.file===proof.file);
+      const restored=footer?reverseRouteSourceFollowup(current,footer):current;
+      const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(reverseRouteSourceFollowup(restored,availabilityFollowup),stateIncrement):restored;
       expect(digest(original),proof.file).toBe(proof.sha256);
     }
   });
@@ -112,7 +117,13 @@ describe("restored PHP statistics script contract and retained retirement histor
     const changed=read(file).replace(before,after);
     expect(changed).not.toBe(read(file));
     if(file===stateIncrement.route_file)expect(()=>reverseRouteSourceIncrement(reverseRouteSourceFollowup(changed,availabilityFollowup),stateIncrement)).toThrow();
-    else expect(digest(changed)).not.toBe(proof.sha256);
+    else {
+      const footer=footerBinding.sources.find(row=>row.file===file);
+      expect(footer).toBeDefined();
+      expect(digest(changed)).not.toBe(footer!.after_sha256);
+      expect(()=>reverseRouteSourceFollowup(changed,footer!)).toThrow();
+      expect(digest(reverseRouteSourceFollowup(read(file),footer!))).toBe(proof.sha256);
+    }
   });
 
   it("registers the real public handler and returns the configured script through the raw body",()=>{

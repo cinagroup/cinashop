@@ -9,6 +9,7 @@ import {
 import { resolveRegisteredPageRoute, TAB_ROUTES } from "@/config/navigation";
 import { API_BASE, RequestError } from "@/utils/request";
 import { diyEditorialMediaCacheUsable } from './diyEditorialMediaLease';
+import { ref } from 'vue';
 
 const DIY_CACHE_PREFIX = "cinashop_diy_page_v1_";
 const MAX_COMPONENTS = 200;
@@ -39,6 +40,15 @@ interface PageSlot {
 }
 const pageSlots = new Map<number, PageSlot>();
 let stationEpoch = 0, stationClosed = false, stationMessage = "站点暂未开放，请稍后重试";
+/** A certain closure must also revoke already mounted public consumers. */
+export const diyStationClosure = ref<string | null>(null);
+export const diyStationEpoch = () => stationEpoch;
+/** Only a fresh successful liveness read from this same station epoch may reopen. */
+export function confirmDiyStationOpen(epoch: number): boolean {
+  if (epoch !== stationEpoch) return false;
+  stationClosed = false; diyStationClosure.value = null;
+  return true;
+}
 
 export function asDiyRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -86,15 +96,18 @@ function componentTimestamp(component: DiyComponent): number {
 
 export function normalizeDiyComponents(value: unknown): DiyComponent[] {
   if (!Array.isArray(value)) return [];
-  return value
+  // Micro pages use the last exact pageFoot, independent of body cap/isHide.
+  const footer = [...value].reverse().find(raw => asDiyRecord(raw)?.name === 'pageFoot');
+  const body = value
     .slice(0, MAX_COMPONENTS)
     .flatMap((raw) => {
       const item = asDiyRecord(raw);
       const name = typeof item?.name === "string" ? item.name : "";
-      if (!item || !ALLOWED_COMPONENTS.has(name) || isDiyEnabled(item.isHide)) return [];
+      if (!item || name === 'pageFoot' || !ALLOWED_COMPONENTS.has(name) || isDiyEnabled(item.isHide)) return [];
       return [{ ...item, name: name as DiyComponentName } as DiyComponent];
     })
     .sort((left, right) => componentTimestamp(left) - componentTimestamp(right));
+  return footer ? [...body, { ...asDiyRecord(footer), name: 'pageFoot' } as DiyComponent] : body;
 }
 
 export function normalizeDiyPage(value: unknown): DiyPage | null {
@@ -156,6 +169,7 @@ function writeCache(id: number, entry: DiyCacheEntry): void {
 export function closeDiyStation(message = "站点暂未开放，请稍后重试"): void {
   stationClosed = true; stationEpoch++;
   stationMessage = message.slice(0, 400) || "站点暂未开放，请稍后重试";
+  diyStationClosure.value = stationMessage;
   for (const [id, slot] of pageSlots) {
     slot.generation++; slot.pending = undefined; slot.consumers = undefined;
     slot.completed = { error: new DiyPageLoadError(stationMessage, "closed") };
@@ -237,6 +251,7 @@ export async function loadDiyPage(id = 0, force = false, consumer: () => boolean
           if (!diyEditorialMediaCacheUsable(data, entry.cachedAt)) throw new DiyPageLoadError("页面素材访问已过期，请重新加载", "invalid");
           writeCache(safeId, entry);
           stationClosed = false;
+          diyStationClosure.value = null;
           return complete({ ...entry, source: "network" });
         }
         version = after;

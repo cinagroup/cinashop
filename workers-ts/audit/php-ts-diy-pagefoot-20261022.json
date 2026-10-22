@@ -1,0 +1,2143 @@
+{
+  "schema": "cinashop.php-ts.diy-pagefoot.v1",
+  "status": "local-footer-candidate-validated",
+  "recorded_utc": "2026-10-22T17:42:51.279601+00:00",
+  "base_commit": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+  "baseline": {
+    "path": "/tmp/cinashop-diy-footer-baseline.json",
+    "sha256": "4890ccaa6b1ef0e0759335ffa65af4cd2066a017f09ccbb79bdfd75615a26bf0",
+    "tracked_count": 6685
+  },
+  "scope": [
+    "pageFoot",
+    "global navigation",
+    "five Page hosts",
+    "native visibility coordination",
+    "cart quantity badge",
+    "Admin footer editor"
+  ],
+  "contract_facts": {
+    "backend": {
+      "media": "Case-insensitive pageFoot menuList[].imgList[0]/[1] only; canonicalize real local historical tickets on actual Admin save and refresh publicly only after current platform owner/raster/key/MIME verification. No links/preview/index2/numeric-key objects or foreign asset-shaped URLs get local authority.",
+      "budget": "Independent footer 20000 string image slots (exported constant), ordinary2500 and navigation20000 unchanged. Full collection then atomic refusal before mutation/owner lookup/HMAC; owner batches10000/sign batches256; all42500 mixed slots supported within existing Admin2MB/100k-node/depth64 write limits.",
+      "navigation": "Existing explicit template or active type1 nondeleted descending-id source retained, case-insensitive first footer; own selection independent of get_diy/version0. Raw empty string/0 fallback only. Existing parseLegacyDiyJson2MB UTF8 replaces old1M/2000 truncation; malformed/oversize nonempty imported reads return {} without partial footer/fallback. no-store.",
+      "cart": "Explicit numType=0 SQL sum or1 rowcount, optional scope=cart. Exact uid/status1/isPay0/isNew0/isDel0 predicates; no product/type/activity/staff/store/tourist filter or cleanup. Strict duplicate/invalid known selectors rejected; unrelated legacy fields remain ignored. MissingnumType old rowcounts preserved. Authenticated production route unchanged; private,no-store; aggregate must remain nonnegative safe JSON integer.",
+      "cart_actors": {
+        "uid11": {
+          "explicit_quantity": 7,
+          "explicit_rows": 2,
+          "legacy_scoped_rows": 3,
+          "legacy_unscoped_rows": 4
+        },
+        "uid22": {
+          "explicit_quantity": 4,
+          "explicit_rows": 1,
+          "legacy_scoped_rows": 1,
+          "legacy_unscoped_rows": 1
+        }
+      },
+      "station": "Navigation/cart retain pre-existing independent route gating; DIY station closed gate and raw get_script unchanged. Frontend must coordinate closed visibility."
+    },
+    "capacity_limits": [
+      "Footer独立20000实际字符串图槽，仅menuList[].imgList[0/1]；旧ordinary2500/navigation20000预算保持；完整收集后原子拒绝，无silent slice。",
+      "前端/Admin结构化菜单最多10000项，包含无图项，超额明确拒绝。PHP原视觉编辑正常add<=5；导入>5保留全部并可分页编辑。",
+      "2MB UTF8/100k节点/深度64既有Admin入口保护不扩大；紧凑容量证明不代表任意完整历史编辑器负载都能保存。"
+    ],
+    "frontend": [
+      "五个原生tab页面各由实际Page onShow/onHide/onUnload调用footer host，global navigation独立从/navigation读取，version0仅站点liveness，不替换导航来源。",
+      "微页仅最后一个exact pageFoot，保留原host footer，突破body200条选择边界且忽略footer isHide；body和子页页脚剥离合同保持。",
+      "effectConfig/custom-native、navConfig/固定浮动、navStyleConfig.tabVal样式0图文/1文字/2图标、toneConfig、双图selected0/unselected1、PHP双倍rpx间距及圆角0/1/3/2。",
+      "native OS写操作序列化；旧物理回调完成后修复新owner目标，custom须真实hide成功且无pending/error才能可用；页内modal统一仲裁。",
+      "cart/count显式numType0，仅真实PHP uid/flags聚合；guest0不发强制鉴权badge请求。成功购物车写事件触发新badge读取，owner/hide/关闭撤销迟到结果。",
+      "素材按真实显式槽位计算min(cachedAt+840s,expires-60s)，原始存储canonical；老图片load/error/tap闭包无新owner资格。"
+    ],
+    "admin": {
+      "picker": "Existing SeckillActivityImagePicker real attachment list/category/upload, canonical stable reference plus separate signed preview; unchanged independent attachment.view/manage policy.",
+      "publication": "Explicit get_diy/{actual saved rowid} guest/no-store, only original Admin selected rowstatus1. Its real public DTO omitsid and explicitid has legacy selection contract; complete canonical footer structural match required before preview adoption. Publicread is not edit/publish authority.",
+      "preservation": "Changes targeted to selected footer fields/rows; unknown nested fields, links, imageindex2 and other components preserved. Original /dise/save payload, independentcontent and immutablemetadata preserved.",
+      "capacity": "Normaladd<=5. Imported>5 complete editable paging10; >10000 explicitly blocked structured editing without clipping or rewriting original JSON. Canonical2MB budget counts compact UTF8, allowing existing prettyJSON.",
+      "lifecycle": "Picker editorKey includes session/form/JSON generation; preview aborts/ignores after JSON/key/disabled/unload; page write cannot adopt into replacementform/account, repeatedsave suppressed."
+    },
+    "browser_setup": [
+      "Actual createApp/JWT/password/role permissions and real Adminsave; only DB wiring targets disposable ownedPG. Initial authenticated browser session is setup, not loginUI acceptance.",
+      "Native fixture50tables46seq；Browser-owned ORM dependencies扩为73tables68seq，动态完整snapshot用于每个API，不能把Browser仍称50/46。",
+      "额外setup23张真实ORM空表、真实Admin/role、一次真实平台图上传、真实SKU和仅cart attrUnique修复；数量/flags不改。",
+      "Category修复仅owned数据：system_dise88 category/type3/isDel0 layout2/2；701下751/752真实平台分类；原商品关联不变；全snapshot只允许新增这三行且seq/R2/queue不变。",
+      "真实product_detail/category/products返回必须configured2/2、701children751/752、cid701 exact601/611,count2。没有合成这些业务DTO。",
+      "仅无关site/share/advertisement/theme/Admin通知chrome明确合成并逐条记录；footer/media/cart/DIY/分类/Adminsave全真实。",
+      "29stage计划含五globaltab、micro beyond200、actualnative分类→首页/微页菜单返回root、四tab新version0+navigation、category多modal、cartcheckout、三style/floating、owner22/guest、实际typedAdmin+gallerysave、close/retry/open。",
+      "业务写只允许真实Adminsave row1 value/version/updateTime和cart9101 qty3→4；场景配置/关开站另记显式配置，不算读取零写。",
+      "实际Browser不等840s自然续期；Node fakeclock证明租约定时，Browser只拟验真实新票重读和naturalpixels。",
+      "Owned servedH5 HTML仅scrollbar-width:none视口控制；原JS/CSS完全真实，raw/servedHTMLsha明确；不证明生产classic scrollbar自动行为。",
+      "reopened使用开站后新鲜页面，不声称同一closed页面原地恢复；closedRetry要求真实当前页点击。",
+      "NativeH5 DOM真实；MP/App只编译构建，未真机执行。Screenshot仅根CUA收据，不预报本地文件路径。"
+    ]
+  },
+  "no_production_ddl": true,
+  "no_acl_expansion": true,
+  "statistics_script_contract": "Restored /api/get_script and all existing Admin/Supplier/UniApp loaders retained; historical retirement audits retained through exact inverse binding.",
+  "merge": false,
+  "deploy": false,
+  "overall_migration_complete": false,
+  "parent_ci": {
+    "head": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/39768252669",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "baseline_facts_snapshot": {
+    "path": "/tmp/cinashop-diy-footer-doc-facts.json",
+    "bytes": 90039,
+    "sha256": "c4dd2ca4b08663923cd304cbb5d6a6434d01b83ad7c88b5baee5c9aac56af556"
+  },
+  "validation": [
+    {
+      "path": "/tmp/cinashop-diy-footer-unit-candidate1-result.json",
+      "bytes": 646657,
+      "sha256": "5abc2c8de9f9f152cbfdf5d5dccaadfc97591c5a26c808758b71df2d7ebe0000",
+      "summary": {
+        "exit_code": 0,
+        "seconds": 17.564,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/diy-footer-unit.test.ts",
+          "test/diy-footer-runner.test.ts",
+          "test/pc-direct-purchase-cart.test.ts",
+          "test/api-public-catalog-migration.test.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-diy-footer-unit-candidate1-vitest.json"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-backend-validate.py",
+          "unit",
+          "candidate1"
+        ],
+        "counts": {
+          "numTotalTests": 54,
+          "numPassedTests": 54,
+          "numFailedTests": 0,
+          "numPendingTests": 0,
+          "numTodoTests": 0
+        },
+        "source_drift": [],
+        "installed_drift": []
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-native-regression-candidate1-result.json",
+      "bytes": 677969,
+      "sha256": "131b243484fdec4c8acfc493039ae82654cc2ff1b959f42d76160a33fcfe1e64",
+      "summary": {
+        "exit_code": 0,
+        "seconds": 74.054,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/diy-footer-postgres.test.ts",
+          "test/diy-navigation-postgres.test.ts",
+          "test/diy-carousel-postgres.test.ts",
+          "test/diy-editorial-postgres.test.ts"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-backend-validate.py",
+          "native-regression",
+          "candidate1"
+        ],
+        "counts": {
+          "passed": 147,
+          "failed": 0,
+          "skipped": 0
+        },
+        "source_drift": [],
+        "installed_drift": [],
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "cluster_paths": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-n6DLTY"
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-admin-candidate3-result.json",
+      "bytes": 268986,
+      "sha256": "57b6329da3bc9a0dc3dbd427c74693151cd81833348b2bc461e48fdc4586ee28",
+      "summary": {
+        "exit_code": 0,
+        "source_drift": [],
+        "installed_drift": [],
+        "steps": [
+          {
+            "mode": "runtime",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-reporter=tap",
+              "scripts/diy-footer-editor-runtime.test.cjs"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+            "started_utc": "2026-10-22T12:05:24.310911+00:00",
+            "exit_code": 0,
+            "seconds": 2.157,
+            "log": "/tmp/cinashop-diy-footer-admin-candidate3-runtime.log",
+            "log_sha256": "805d868dc0f155df182155123d8632faabc185c2188a98408cb0eca213964070",
+            "counts": {
+              "tests": 17,
+              "pass": 17,
+              "fail": 0,
+              "skipped": 0,
+              "todo": 0
+            }
+          },
+          {
+            "mode": "types",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--max-old-space-size=8192",
+              "node_modules/vue-tsc/bin/vue-tsc.js",
+              "--noEmit",
+              "-p",
+              "tsconfig.json"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+            "started_utc": "2026-10-22T12:05:26.468427+00:00",
+            "exit_code": 0,
+            "seconds": 36.106,
+            "log": "/tmp/cinashop-diy-footer-admin-candidate3-types.log",
+            "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-user-center-focused-candidate1-result.json",
+      "bytes": 172164,
+      "sha256": "e32f3541f4781443e96088dbe9a80f06ae7d68a415b983769d3708ba1768ddf1",
+      "summary": {
+        "status": "passed",
+        "exit_code": 0,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "scripts/user-center-runtime.test.cjs"
+        ],
+        "counts": {
+          "tests": 43,
+          "pass": 43,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "todo": 0
+        },
+        "source_drift": []
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-front-candidate1.json",
+      "bytes": 314375,
+      "sha256": "bf016077967ff0640e7d00b6015c4b3e706e7d583059cc94da2761dbb10e8655",
+      "summary": {
+        "status": "failed",
+        "source_drift": [],
+        "steps": [
+          {
+            "name": "uni-strict",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "typecheck"
+            ],
+            "exit_code": 0,
+            "seconds": 23.607779466001375,
+            "log": "/tmp/cinashop-footer-front-candidate1-uni-strict.log",
+            "sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a"
+          },
+          {
+            "name": "all-diy-and-three-host-regressions",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-concurrency=1",
+              "--test-reporter=tap",
+              "scripts/diy-carousel-content-runtime.test.cjs",
+              "scripts/diy-carousel-media-runtime.test.cjs",
+              "scripts/diy-carousel-runtime.test.cjs",
+              "scripts/diy-commerce-runtime.test.cjs",
+              "scripts/diy-commerce-writes-runtime.test.cjs",
+              "scripts/diy-community-runtime.test.cjs",
+              "scripts/diy-editorial-media-cache-runtime.test.cjs",
+              "scripts/diy-editorial-page-media-runtime.test.cjs",
+              "scripts/diy-editorial-runtime.test.cjs",
+              "scripts/diy-footer-runtime.test.cjs",
+              "scripts/diy-navigation-content-runtime.test.cjs",
+              "scripts/diy-navigation-media-runtime.test.cjs",
+              "scripts/diy-navigation-runtime.test.cjs",
+              "scripts/diy-page-state-runtime.test.cjs",
+              "scripts/diy-state-widgets-runtime.test.cjs",
+              "scripts/category-catalog-runtime.test.cjs",
+              "scripts/cart-runtime.test.cjs",
+              "scripts/user-center-runtime.test.cjs"
+            ],
+            "exit_code": 1,
+            "seconds": 415.24100480700145,
+            "log": "/tmp/cinashop-footer-front-candidate1-all-diy-and-three-host-regressions.log",
+            "sha256": "03d29a54eab6abeb5e359c33633826c765a98bbfc26eb206b2f4a672fa72a2f9"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-front-candidate2.json",
+      "bytes": 316139,
+      "sha256": "06350b8e26a441ccf2d43fe45cb4f8dc72805032279d73dcec26c444f0e363bc",
+      "summary": {
+        "status": "passed",
+        "source_drift": [],
+        "steps": [
+          {
+            "name": "complete-carousel-regression",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-concurrency=1",
+              "--test-reporter=tap",
+              "scripts/diy-carousel-content-runtime.test.cjs"
+            ],
+            "exit_code": 0,
+            "seconds": 48.590398984000785,
+            "log": "/tmp/cinashop-footer-front-candidate2-complete-carousel-regression.log",
+            "sha256": "06683336db0b95c833a5b3b34331f932c392c7e6068acde39667cd9e19c44f99"
+          },
+          {
+            "name": "admin-footer-runtime",
+            "cwd": "view/admin-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:diy-footer"
+            ],
+            "exit_code": 0,
+            "seconds": 2.199579086001904,
+            "log": "/tmp/cinashop-footer-front-candidate2-admin-footer-runtime.log",
+            "sha256": "957786efca4e43141f327042b922cc1a2ff96de2ac08c14309b219a63e3c723c"
+          },
+          {
+            "name": "admin-strict-build",
+            "cwd": "view/admin-ts",
+            "command": [
+              "npm",
+              "run",
+              "build"
+            ],
+            "exit_code": 0,
+            "seconds": 77.06683446899842,
+            "log": "/tmp/cinashop-footer-front-candidate2-admin-strict-build.log",
+            "sha256": "ee71321e7ba14cc6f783d0fb9c83889a83fe5d7ebe19fd0cfe6a5d006b3fcdb4"
+          },
+          {
+            "name": "h5-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:h5"
+            ],
+            "exit_code": 0,
+            "seconds": 28.91481373199349,
+            "log": "/tmp/cinashop-footer-front-candidate2-h5-build.log",
+            "sha256": "397475ff026dc2d3d9558212932f0caa4ce4abedbef5b8b202c1d8cfc6ba8b25"
+          },
+          {
+            "name": "mp-weixin-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:mp-weixin"
+            ],
+            "exit_code": 0,
+            "seconds": 23.808609718005755,
+            "log": "/tmp/cinashop-footer-front-candidate2-mp-weixin-build.log",
+            "sha256": "844c00cc5aa4fa2d837e6feaebc1bc59746f4a5cbb4c16c0eb49ea94d2e51e47"
+          },
+          {
+            "name": "app-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:app"
+            ],
+            "exit_code": 0,
+            "seconds": 26.41097827500198,
+            "log": "/tmp/cinashop-footer-front-candidate2-app-build.log",
+            "sha256": "b5b8bc05716879fd5a0140f0831aa2110b8f32a1be3db7f77c3e6aed4f187356"
+          },
+          {
+            "name": "built-artifacts",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:build-artifacts"
+            ],
+            "exit_code": 0,
+            "seconds": 0.31776882199483225,
+            "log": "/tmp/cinashop-footer-front-candidate2-built-artifacts.log",
+            "sha256": "fa0b4f661b8fceed58d6e34c45caac6c32ad069edb88fee0db2482b6ffccb648"
+          },
+          {
+            "name": "runtime-i18n",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:runtime-i18n"
+            ],
+            "exit_code": 0,
+            "seconds": 81.04587607600115,
+            "log": "/tmp/cinashop-footer-front-candidate2-runtime-i18n.log",
+            "sha256": "aac9c3e9010562f4dbc1b7dd959e2ebb7f0fc925ea642acba9b001c5cee2728a"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-front-candidate3.json",
+      "bytes": 315716,
+      "sha256": "f1216767615c2ba619e1b18c23a2d2caf6e0c4cc1a6e737ebe8b4c24fea3f676",
+      "summary": {
+        "status": "passed",
+        "source_drift": [],
+        "steps": [
+          {
+            "name": "uni-strict",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "typecheck"
+            ],
+            "exit_code": 0,
+            "seconds": 27.115387056001055,
+            "log": "/tmp/cinashop-footer-front-candidate3-uni-strict.log",
+            "sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a"
+          },
+          {
+            "name": "complete-cart-regression",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-concurrency=1",
+              "--test-reporter=tap",
+              "scripts/cart-runtime.test.cjs"
+            ],
+            "exit_code": 0,
+            "seconds": 5.74135548400227,
+            "log": "/tmp/cinashop-footer-front-candidate3-complete-cart-regression.log",
+            "sha256": "ec4f4a6fdf4c1694a3cc79f6106bc10143cdd492fe82286830d8807641906efe"
+          },
+          {
+            "name": "h5-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:h5"
+            ],
+            "exit_code": 0,
+            "seconds": 34.179309395003656,
+            "log": "/tmp/cinashop-footer-front-candidate3-h5-build.log",
+            "sha256": "397475ff026dc2d3d9558212932f0caa4ce4abedbef5b8b202c1d8cfc6ba8b25"
+          },
+          {
+            "name": "mp-weixin-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:mp-weixin"
+            ],
+            "exit_code": 0,
+            "seconds": 22.9658469529968,
+            "log": "/tmp/cinashop-footer-front-candidate3-mp-weixin-build.log",
+            "sha256": "844c00cc5aa4fa2d837e6feaebc1bc59746f4a5cbb4c16c0eb49ea94d2e51e47"
+          },
+          {
+            "name": "app-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:app"
+            ],
+            "exit_code": 0,
+            "seconds": 26.733772570005385,
+            "log": "/tmp/cinashop-footer-front-candidate3-app-build.log",
+            "sha256": "b5b8bc05716879fd5a0140f0831aa2110b8f32a1be3db7f77c3e6aed4f187356"
+          },
+          {
+            "name": "built-artifacts",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:build-artifacts"
+            ],
+            "exit_code": 0,
+            "seconds": 0.31775092000316363,
+            "log": "/tmp/cinashop-footer-front-candidate3-built-artifacts.log",
+            "sha256": "d38b3a7683c2a813c36f7a105a3e12c5afec9caf2b3eeb6515922218518b9191"
+          },
+          {
+            "name": "runtime-i18n",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:runtime-i18n"
+            ],
+            "exit_code": 0,
+            "seconds": 79.25948285599588,
+            "log": "/tmp/cinashop-footer-front-candidate3-runtime-i18n.log",
+            "sha256": "adee3b049df2808390012ad213982c432d5ca68c1d820b3d9f2f1733a6c5366d"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-worker-candidate1.json",
+      "bytes": 1594457,
+      "sha256": "79584e9bf45f8416a13a470f26d6ab414c3e4061dd483cb61f9ec8e15a2f8320",
+      "summary": {
+        "status": "failed",
+        "source_drift": [],
+        "installed_drift": [],
+        "steps": [
+          {
+            "name": "full-unit-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:unit"
+            ],
+            "exit_code": 0,
+            "seconds": 177.8122655469997,
+            "log": "/tmp/cinashop-footer-worker-candidate1-full-unit-types.log",
+            "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+          },
+          {
+            "name": "full-runtime-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:runtime"
+            ],
+            "exit_code": 0,
+            "seconds": 104.08826611300174,
+            "log": "/tmp/cinashop-footer-worker-candidate1-full-runtime-types.log",
+            "sha256": "1c53d6f6daef131483537c473aaa908fb4a68517e06e54e1bdd80fafab05f315"
+          },
+          {
+            "name": "worker62",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/activity-catalog-migration.test.ts",
+              "test/activity-list-compatibility.test.ts",
+              "test/admin-article-migration.test.ts",
+              "test/admin-diy-safety-migration.test.ts",
+              "test/admin-fab-settings.test.ts",
+              "test/admin-frontend-api-audit.test.ts",
+              "test/admin-product-category-style-coverage.test.ts",
+              "test/admin-setting-frontend-parity.test.ts",
+              "test/api-public-catalog-migration.test.ts",
+              "test/article-migration.test.ts",
+              "test/attachment-storage-migration.test.ts",
+              "test/community-admin-migration.test.ts",
+              "test/community-author-workspace.test.ts",
+              "test/community-availability-frontend.test.ts",
+              "test/community-availability-migration.test.ts",
+              "test/community-comments-migration.test.ts",
+              "test/community-engagement-migration.test.ts",
+              "test/community-image-publish.test.ts",
+              "test/community-main-feed-frontend.test.ts",
+              "test/community-migration.test.ts",
+              "test/community-people-route.test.ts",
+              "test/community-publish-entry-migration.test.ts",
+              "test/community-relations-publish.test.ts",
+              "test/community-social-migration.test.ts",
+              "test/community-video-publish.test.ts",
+              "test/division-staff-navigation.test.ts",
+              "test/diy-commerce-frontend.test.ts",
+              "test/diy-community-frontend.test.ts",
+              "test/diy-editorial-frontend.test.ts",
+              "test/diy-home-frontend-migration.test.ts",
+              "test/diy-home-widgets-compatibility-scenario.test.ts",
+              "test/diy-home-widgets-migration.test.ts",
+              "test/diy-page-state-frontend.test.ts",
+              "test/diy-state-widgets-frontend.test.ts",
+              "test/diy-video-contract.test.ts",
+              "test/dynamic-statistics-script-retirement.test.ts",
+              "test/legacy-share-callback.test.ts",
+              "test/legacy-share-code.test.ts",
+              "test/legacy-share-http.test.ts",
+              "test/legacy-share-private-mini.test.ts",
+              "test/legacy-share-private-scan-flow.test.ts",
+              "test/legacy-share-private-scan.test.ts",
+              "test/legacy-share-provider-budget.test.ts",
+              "test/legacy-share-registered-http.test.ts",
+              "test/local-finance-postgres-runner.test.ts",
+              "test/public-article-compatibility-scenario.test.ts",
+              "test/public-article-migration.test.ts",
+              "test/public-product-catalog-promotion-slots.test.ts",
+              "test/public-statistics-script-http.test.ts",
+              "test/recommendation-navigation.test.ts",
+              "test/seckill-product-media.test.ts",
+              "test/statistics-script-frontend.test.ts",
+              "test/theme-host-chain.test.ts",
+              "test/uniapp-frontend-parity.test.ts",
+              "test/v2-public-diy-compatibility-migration.test.ts",
+              "test/wechat-follow-poster.test.ts",
+              "test/diy-carousel-frontend.test.ts",
+              "test/diy-navigation-frontend.test.ts",
+              "test/diy-navigation-runner.test.ts",
+              "test/diy-footer-unit.test.ts",
+              "test/diy-footer-runner.test.ts",
+              "test/pc-direct-purchase-cart.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-footer-worker-candidate1-vitest.json"
+            ],
+            "exit_code": 1,
+            "seconds": 214.20241033899947,
+            "log": "/tmp/cinashop-footer-worker-candidate1-worker62.log",
+            "sha256": "693932c30b9a86ef050887038fc4bdd73e16a862946983a26d711d2023ff7bfd"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-worker-candidate2.json",
+      "bytes": 2155199,
+      "sha256": "0c5953d96d48788bea0bc41d7f31699eaf98732e86be0a60f3b8a5550b3887b5",
+      "summary": {
+        "status": "passed",
+        "source_drift": [],
+        "installed_drift": [],
+        "steps": [
+          {
+            "name": "full-unit-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:unit"
+            ],
+            "exit_code": 0,
+            "seconds": 212.83436229200015,
+            "log": "/tmp/cinashop-footer-worker-candidate2-full-unit-types.log",
+            "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+          },
+          {
+            "name": "worker62",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/activity-catalog-migration.test.ts",
+              "test/activity-list-compatibility.test.ts",
+              "test/admin-article-migration.test.ts",
+              "test/admin-diy-safety-migration.test.ts",
+              "test/admin-fab-settings.test.ts",
+              "test/admin-frontend-api-audit.test.ts",
+              "test/admin-product-category-style-coverage.test.ts",
+              "test/admin-setting-frontend-parity.test.ts",
+              "test/api-public-catalog-migration.test.ts",
+              "test/article-migration.test.ts",
+              "test/attachment-storage-migration.test.ts",
+              "test/community-admin-migration.test.ts",
+              "test/community-author-workspace.test.ts",
+              "test/community-availability-frontend.test.ts",
+              "test/community-availability-migration.test.ts",
+              "test/community-comments-migration.test.ts",
+              "test/community-engagement-migration.test.ts",
+              "test/community-image-publish.test.ts",
+              "test/community-main-feed-frontend.test.ts",
+              "test/community-migration.test.ts",
+              "test/community-people-route.test.ts",
+              "test/community-publish-entry-migration.test.ts",
+              "test/community-relations-publish.test.ts",
+              "test/community-social-migration.test.ts",
+              "test/community-video-publish.test.ts",
+              "test/division-staff-navigation.test.ts",
+              "test/diy-commerce-frontend.test.ts",
+              "test/diy-community-frontend.test.ts",
+              "test/diy-editorial-frontend.test.ts",
+              "test/diy-home-frontend-migration.test.ts",
+              "test/diy-home-widgets-compatibility-scenario.test.ts",
+              "test/diy-home-widgets-migration.test.ts",
+              "test/diy-page-state-frontend.test.ts",
+              "test/diy-state-widgets-frontend.test.ts",
+              "test/diy-video-contract.test.ts",
+              "test/dynamic-statistics-script-retirement.test.ts",
+              "test/legacy-share-callback.test.ts",
+              "test/legacy-share-code.test.ts",
+              "test/legacy-share-http.test.ts",
+              "test/legacy-share-private-mini.test.ts",
+              "test/legacy-share-private-scan-flow.test.ts",
+              "test/legacy-share-private-scan.test.ts",
+              "test/legacy-share-provider-budget.test.ts",
+              "test/legacy-share-registered-http.test.ts",
+              "test/local-finance-postgres-runner.test.ts",
+              "test/public-article-compatibility-scenario.test.ts",
+              "test/public-article-migration.test.ts",
+              "test/public-product-catalog-promotion-slots.test.ts",
+              "test/public-statistics-script-http.test.ts",
+              "test/recommendation-navigation.test.ts",
+              "test/seckill-product-media.test.ts",
+              "test/statistics-script-frontend.test.ts",
+              "test/theme-host-chain.test.ts",
+              "test/uniapp-frontend-parity.test.ts",
+              "test/v2-public-diy-compatibility-migration.test.ts",
+              "test/wechat-follow-poster.test.ts",
+              "test/diy-carousel-frontend.test.ts",
+              "test/diy-navigation-frontend.test.ts",
+              "test/diy-navigation-runner.test.ts",
+              "test/diy-footer-unit.test.ts",
+              "test/diy-footer-runner.test.ts",
+              "test/pc-direct-purchase-cart.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-footer-worker-candidate2-vitest.json"
+            ],
+            "exit_code": 0,
+            "seconds": 247.36281338400295,
+            "log": "/tmp/cinashop-footer-worker-candidate2-worker62.log",
+            "sha256": "882e96a8ae2f497b86585bdfe07f7595d1cf648288306afa32ba94dcdbed9f82"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-footer-readiness-candidate1.json",
+      "bytes": 2319,
+      "sha256": "d0644c6ace3260855667770657655a7304d02e1db6077a9ea23c64c2948bff28",
+      "summary": {
+        "status": "passed",
+        "source_drift": [],
+        "steps": [
+          {
+            "name": "full-unit-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:unit"
+            ],
+            "exit_code": 0,
+            "seconds": 185.715,
+            "log": "/tmp/cinashop-footer-readiness-candidate1-full-unit-types.log",
+            "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+          },
+          {
+            "name": "changed-runner-and-final-template-guards",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/diy-footer-runner.test.ts",
+              "test/cart-computation-frontend.test.ts",
+              "test/theme-host-chain.test.ts",
+              "test/uniapp-frontend-parity.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-footer-readiness-candidate1-vitest.json"
+            ],
+            "exit_code": 0,
+            "seconds": 8.068,
+            "log": "/tmp/cinashop-footer-readiness-candidate1-changed-runner-and-final-template-guards.log",
+            "sha256": "2c9bd65e886ff9e0cc097e4364768aeee55ee14bfe268e461e1ea6a960333a23"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-cachefix-prebrowser5.json",
+      "sha256": "37b2f9273e261889d35c54a4345e1e5d2b7bbac493f77351e85d95f330536140",
+      "summary": {
+        "status": "passed",
+        "steps": [
+          {
+            "name": "full-unit-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:unit"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "seconds": 189.966,
+            "log": "/tmp/cinashop-diy-footer-cachefix-prebrowser5-full-unit-types.log",
+            "log_sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+          },
+          {
+            "name": "complete-footer-runner",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/diy-footer-runner.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-diy-footer-cachefix-prebrowser5-vitest.json"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "seconds": 2.294,
+            "log": "/tmp/cinashop-diy-footer-cachefix-prebrowser5-complete-footer-runner.log",
+            "log_sha256": "5d5bce4f0de62a403863c00564233b319e768f6c9dbf7aa1fff078a16345d4a3"
+          }
+        ],
+        "source_drift": [],
+        "installed_drift": []
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-aliasfix-prebrowser6.json",
+      "sha256": "615cf867c5e4b69ba863710ed969f666a79a059d5bc8c6b4064680bd1ce0db08",
+      "summary": {
+        "status": "passed",
+        "steps": [
+          {
+            "name": "full-unit-types",
+            "command": [
+              "npm",
+              "run",
+              "typecheck:unit"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "seconds": 187.012,
+            "log": "/tmp/cinashop-diy-footer-aliasfix-prebrowser6-full-unit-types.log",
+            "log_sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+          },
+          {
+            "name": "complete-footer-runner",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/diy-footer-runner.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-diy-footer-aliasfix-prebrowser6-vitest.json"
+            ],
+            "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+            "exit_code": 0,
+            "seconds": 2.343,
+            "log": "/tmp/cinashop-diy-footer-aliasfix-prebrowser6-complete-footer-runner.log",
+            "log_sha256": "a7bbbfc22536378bdd2f9e3a9e7c4d68048f60bdee75100aa1e2d5e83a7bd391"
+          }
+        ],
+        "source_drift": [],
+        "installed_drift": []
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-physical-final.json",
+      "sha256": "9682baee3723b012229e1bd33f3b1216d5f390bd2c2422beeb63ff758d101e53",
+      "summary": {
+        "status": "passed",
+        "steps": [
+          {
+            "name": "negative-before-fix",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-name-pattern=actual Page onShow revokes cached native hide",
+              "scripts/diy-footer-runtime.test.cjs"
+            ],
+            "exit_code": 1,
+            "seconds": 1.529,
+            "log": "/tmp/cinashop-diy-footer-physical-final-negative-before-fix.log",
+            "log_sha256": "633a06c0ca32697235f99399cba2a0be5c2d1fd4c5a90fa86404e44985e1e498",
+            "source_drift": []
+          },
+          {
+            "name": "focused-four-runtime",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "--test",
+              "--test-concurrency=1",
+              "--test-reporter=tap",
+              "scripts/diy-footer-runtime.test.cjs",
+              "scripts/category-catalog-runtime.test.cjs",
+              "scripts/cart-runtime.test.cjs",
+              "scripts/user-center-runtime.test.cjs"
+            ],
+            "exit_code": 0,
+            "seconds": 53.853,
+            "log": "/tmp/cinashop-diy-footer-physical-final-focused-four-runtime.log",
+            "log_sha256": "bb8d9c1036b2d41b7a00d7b337cabc3bfdd6f6c7ddb884f1cdbf3a52aa8522dd",
+            "source_drift": []
+          },
+          {
+            "name": "uni-strict",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "typecheck"
+            ],
+            "exit_code": 0,
+            "seconds": 23.218,
+            "log": "/tmp/cinashop-diy-footer-physical-final-uni-strict.log",
+            "log_sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a",
+            "source_drift": []
+          },
+          {
+            "name": "consumer-Worker-AST",
+            "cwd": "workers-ts",
+            "command": [
+              "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+              "node_modules/vitest/vitest.mjs",
+              "run",
+              "test/admin-product-category-style-coverage.test.ts",
+              "test/admin-setting-frontend-parity.test.ts",
+              "test/diy-carousel-frontend.test.ts",
+              "test/diy-navigation-frontend.test.ts",
+              "--maxWorkers=1",
+              "--reporter=verbose",
+              "--reporter=json",
+              "--outputFile=/tmp/cinashop-diy-footer-physical-final-worker-vitest.json"
+            ],
+            "exit_code": 0,
+            "seconds": 26.774,
+            "log": "/tmp/cinashop-diy-footer-physical-final-consumer-Worker-AST.log",
+            "log_sha256": "cf78d6bfc275060c4b29accf6f9d2f6feba903456d495305da73af544d87c5f0",
+            "source_drift": []
+          },
+          {
+            "name": "h5-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:h5"
+            ],
+            "exit_code": 0,
+            "seconds": 29.443,
+            "log": "/tmp/cinashop-diy-footer-physical-final-h5-build.log",
+            "log_sha256": "397475ff026dc2d3d9558212932f0caa4ce4abedbef5b8b202c1d8cfc6ba8b25",
+            "source_drift": []
+          },
+          {
+            "name": "mp-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:mp-weixin"
+            ],
+            "exit_code": 0,
+            "seconds": 23.655,
+            "log": "/tmp/cinashop-diy-footer-physical-final-mp-build.log",
+            "log_sha256": "844c00cc5aa4fa2d837e6feaebc1bc59746f4a5cbb4c16c0eb49ea94d2e51e47",
+            "source_drift": []
+          },
+          {
+            "name": "app-build",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "build:app"
+            ],
+            "exit_code": 0,
+            "seconds": 26.924,
+            "log": "/tmp/cinashop-diy-footer-physical-final-app-build.log",
+            "log_sha256": "b5b8bc05716879fd5a0140f0831aa2110b8f32a1be3db7f77c3e6aed4f187356",
+            "source_drift": []
+          },
+          {
+            "name": "artifacts",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:build-artifacts"
+            ],
+            "exit_code": 0,
+            "seconds": 0.649,
+            "log": "/tmp/cinashop-diy-footer-physical-final-artifacts.log",
+            "log_sha256": "79e94467390e968ee898f4c9429c202875cf57d9e3175106d93ee64ee527b404",
+            "source_drift": []
+          },
+          {
+            "name": "runtime-i18n",
+            "cwd": "view/uniapp-ts",
+            "command": [
+              "npm",
+              "run",
+              "test:runtime-i18n"
+            ],
+            "exit_code": 0,
+            "seconds": 78.526,
+            "log": "/tmp/cinashop-diy-footer-physical-final-runtime-i18n.log",
+            "log_sha256": "8b7a2523856ae656d8f2ace836eccde4412b25d33e89e9a006a82144607ad1bf",
+            "source_drift": []
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-physical-fullunit-final.json",
+      "bytes": 1522485,
+      "sha256": "11a37487891a2add885ec5f0343b358186995501f43a4628a57bf12232661dc2",
+      "summary": {
+        "status": "passed",
+        "exit_code": 0,
+        "seconds": 186.516,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "source_drift": [],
+        "installed_drift": [],
+        "log": "/tmp/cinashop-diy-footer-physical-fullunit-final.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "source_binding": {
+    "path": "/home/cina/cinagroup/cinashop/workers-ts/audit/diy-footer-source-binding-20261022.json",
+    "bytes": 11768,
+    "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd"
+  },
+  "historical_failure_interpretation": {
+    "backend_native_prior_receipts": {
+      "current_core_runtime_native_fixture_test_hashes_equal": [
+        {
+          "path": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+          "sha256": "3d64bb0fe594c20a74ce9129b3feef1c2d7946a2d865e0386e6d6cfd9f5e905b"
+        },
+        {
+          "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+          "sha256": "742e8d829045ff9f880292c47944da7ed2dae93e6995c167425c62f24e68a073"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+          "sha256": "4bfb956cf19c81aeee450acf9ea0b7703c5fac18a9b0f7f39226982798977eff"
+        },
+        {
+          "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+          "sha256": "51133e6ef61775edd12da570ab2d7678e9d423ee8fc75ffa855a10a295f3e8a4"
+        },
+        {
+          "path": "workers-ts/src/services/order/StoreCartService.ts",
+          "sha256": "1bbb2f381e6a10451da6f61631296df8687d3be1ff8dfadafab2965dbf808c09"
+        },
+        {
+          "path": "workers-ts/src/dao/order/OrderDaos.ts",
+          "sha256": "d4a83db5746db3729ce14fe5d9897206036a3b4249af7aad5168e4c006345c41"
+        },
+        {
+          "path": "workers-ts/test/helpers/diyFooterFixture.ts",
+          "sha256": "1d61580968f656b2fdcf04fa4924d1dbbcc05d284e005f58ee20dea2a1f830c9"
+        },
+        {
+          "path": "workers-ts/test/diy-footer-unit.test.ts",
+          "sha256": "578bd9d402360dd6d4ff9528c91c9c99d989ff294fe770c265c75f9f269bf4ab"
+        },
+        {
+          "path": "workers-ts/test/diy-footer-postgres.test.ts",
+          "sha256": "003510967bb04a0114ac35f18d3f7ea4e0854bae5fc344b5e665a7e40a21c279"
+        }
+      ],
+      "later_deltas": [
+        "workers-ts/package.json only added dedicated Browser npm script",
+        "workers-ts/scripts/run-local-finance-postgres.mjs only new footer Browser exact mode/dispatch/env/40min path",
+        "workers-ts/test/diy-footer-runner.test.ts adds7Browser AST cases retaining original5native admission cases"
+      ],
+      "installed_record_note": "Early backend installed manifest includes workers-ts/package.json; its later script-only edit is the sole current installed-captured-path drift. Captured package-lock/node_modules bytes remain equal, no dependency installation occurred. The final rootWorker62/1136 exercises current runner AST."
+    },
+    "early_admin_receipt": "Only view/admin-ts/package.json later gains test:diy-footer script; actual3Admin source/test hashes unchanged and rootcandidate2 Admin strict+build passed.",
+    "early_usercenter_receipt": "Captured broad frontend scope later changes only cart safearea template; actual usercenter test/helper/source unchanged.",
+    "final_worker62": "Only cart safearea template differs from candidate2 full capture. Exact inverse is recorded; frontend strict/cart10/threebuilds cover final amendment; no claim the whole1136 reran on that finaltemplate."
+  },
+  "boundaries": [
+    "Browser is required and runs hidden with no repeated confirmation prompts. Current connected surface is IAB; independent Chrome/Edge extension connection has not been observed.",
+    "Native regression uses 50 tables / 46 sequences; Browser adds existing ORM dependencies and snapshots 73 tables / 68 sequences. No production migration SQL is added.",
+    "Browser checkpoints are one Vitest case, not29 independent cases.",
+    "Node fakeclock validates ~840second renewal; Browser validates real fresh reads and natural pixels, not a real 840second wait.",
+    "Physical MP/App and nonzero physical safe-area are not executed; MP/App builds and real H5 native tabbar DOM are separate evidence.",
+    "Full UniApp toolchain, live npm/security audit, remote providers, production data, merge and deployment remain outside this local slice.",
+    "Admin public preview is not Admin permission or publishing authority.",
+    "Initial session bootstrap, exact fixture scenes, declared unrelated chrome responses and explicit persistent-cache eviction are synthetic test setup. Actual footer/media/cart/DIY/classification/Admin-save DTOs use production API/controller/SQL."
+  ],
+  "browser_attempts": [
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate1-result.json",
+      "bytes": 892520,
+      "sha256": "3934c7573d0c2d198edc99e0bebb4eae8418ae85f88917372a4381ad501396e7",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 380.977,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:diy-footer-browser"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-browser-launch.py",
+          "--execute",
+          "candidate1"
+        ],
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "cluster_paths": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-ngCJZ2"
+        ],
+        "completed_stages": [],
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing",
+          "fixture cleanup receipt incomplete"
+        ]
+      },
+      "accepted_checkpoints": 0,
+      "reason": "Operator used control API prefix as page URL; static path rejected.",
+      "credited_as_pass": false
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate2-result.json",
+      "bytes": 892704,
+      "sha256": "a9761963a033c201ba2537ea2c627f400d62de5eb9849810db6925f1b88e6aae",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 1624.689,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:diy-footer-browser"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-browser-launch.py",
+          "--execute",
+          "candidate2"
+        ],
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "cluster_paths": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-R2DoxD"
+        ],
+        "completed_stages": [],
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing"
+        ]
+      },
+      "accepted_checkpoints": 2,
+      "reason": "Owned category fixture lacked real configured layout/children; drawer assertion failed.",
+      "credited_as_pass": false
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate3-result.json",
+      "bytes": 892703,
+      "sha256": "54f31f6bf37220ab13f7402ace4b726d466ae29da32281ed9f8eec2162bd39eb",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 474.092,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:diy-footer-browser"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-browser-launch.py",
+          "--execute",
+          "candidate3"
+        ],
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "cluster_paths": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-M3DCtC"
+        ],
+        "completed_stages": [],
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing"
+        ]
+      },
+      "accepted_checkpoints": 10,
+      "reason": "Harness waited only for iframe.onload on hash route change; loaded=false while real micro footer/pixels were valid.",
+      "credited_as_pass": false
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate4-result.json",
+      "bytes": 892704,
+      "sha256": "8c6b9557742dbda4a8337f90d7239869865e2b3bf2bed0cc4e299fb94a14ba0e",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 1048.259,
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "audit:diy-footer-browser"
+        ],
+        "wrapper_command": [
+          "bash",
+          "/home/cina/cinagroup/tools/validate-serial.sh",
+          "python3",
+          "/tmp/cinashop-diy-footer-browser-launch.py",
+          "--execute",
+          "candidate4"
+        ],
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "cluster_paths": [
+          "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7tcQGO"
+        ],
+        "completed_stages": [],
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing"
+        ]
+      },
+      "accepted_checkpoints": 11,
+      "reason": "Full reload reused valid persistent schema cache; harness demanded fresh get_diy read without explicit eviction.",
+      "credited_as_pass": false
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate5-result.json",
+      "sha256": "b53982cf2a34896dbd5bbf8cbe9f26801ac1c7fca17afbcf272c7771a20578d3",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 920.506,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing"
+        ]
+      },
+      "accepted_checkpoints": 12,
+      "reason": "UniApp H5 first native tab resolves to exact #/ alias; harness readiness and selected/path assertions originally rejected legitimate root.",
+      "credited_as_pass": false
+    },
+    {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate6-result.json",
+      "sha256": "3f92cae9946e1ab7bd38b1f9c9168a870c9caa86589109528699e6edc19cfe97",
+      "summary": {
+        "status": "failed-browser-or-receipt",
+        "exit_code": 1,
+        "seconds": 545.486,
+        "source_drift": [],
+        "installed_drift": [],
+        "artifacts_unchanged": true,
+        "fixtures_cleaned": true,
+        "cluster_stopped": true,
+        "receipt_issues": [
+          "runner exited nonzero",
+          "full29 checkpoint evidence missing"
+        ]
+      },
+      "accepted_checkpoints": 12,
+      "reason": "Actual product regression: non-tab micro to native root transition remounts visible native bar while custom footer remains shown. Native visible assertion correctly failed; no relaxation.",
+      "credited_as_pass": false
+    }
+  ],
+  "retained_proof_interpretation": {
+    "worker62": "Complete 62files/1136 passed before final cart style and readiness additions; later relevant complete files/types/templates rerun. Do not relabel this as a full latest-source 1154 run.",
+    "front792": "Original18files792:786passed/6failed, all6onlyoldcarousel test binding. Entire changedcarousel64 rerun passed; remaining exact-input previous successes retained. Not a single792-green rerun.",
+    "runtime_types": "Original full runtime strict passes and exact runtime input closure unchanged. Latest full unit strict rechecked separately.",
+    "cart_safearea": "Final cart template and current builds checked by frontcandidate3 strict/cart10/H5/MP/App/artifact/i18n, plus subsequent Worker consuming guards.",
+    "final_physical_resume": "Original broad1136/current native147/Admin17 scopes retained. New3front production files +5Node cases and two consumingWorkerTS paths validated by complete120Node/50AST, Uni strict/allbuilds/artifacts/i18n and new complete unit strict; Browser29 uses rebuilt current artifacts."
+  },
+  "new_independent_cases": {
+    "dedicated_footer_native": 48,
+    "dedicated_footer_unit": 35,
+    "dedicated_footer_runner": 36,
+    "dedicated_footer_Uni": 48,
+    "dedicated_footer_Admin": 17,
+    "current_native_manifest_binding": 1,
+    "validated_subtotal": 185,
+    "browser_counted_pass": 1,
+    "browser_checkpoints_planned": 29,
+    "case_boundary": "29 checkpoints comprise one Browser Vitest; candidates/repeats and whole existing regressions are not counted as new cases",
+    "validated_total": 186
+  },
+  "native_resume_fix": {
+    "status": "validated-in-actual-Browser-micro-return-and-native-category-home",
+    "production_paths": [
+      "view/uniapp-ts/src/utils/nativeFooterCoordinator.ts",
+      "view/uniapp-ts/src/stores/nativeFooter.ts",
+      "view/uniapp-ts/src/composables/useDiyFooterHost.ts"
+    ],
+    "behavior": "Page show synchronously revokes cached physical confirmation, holds until Vue nextTick, then reconciles current claim. Physical epoch prevents older OS completions confirming a new physical context. Hidden/disposed Page releases only its own barrier; one OS operation remains in flight; failures require explicit retry.",
+    "regression": "Real lifecycle+SFC test fails against original source; updated four complete runtime files120 pass and consuming AST50 pass; three actual builds/artifact/i18n pass."
+  },
+  "browser": {
+    "launch": {
+      "path": "/tmp/cinashop-diy-footer-browser-candidate7-result.json",
+      "bytes": 893394,
+      "sha256": "9d225b671b7ea28b68407cd6b6a7fb23e1415a9f8c696282bb2cf3532b335dc5"
+    },
+    "summary": {
+      "status": "passed-browser29-current-source",
+      "exit_code": 0,
+      "seconds": 1716.346,
+      "completed_stages": [
+        "home",
+        "category",
+        "categoryDrawer",
+        "categoryDrawerClosed",
+        "categoryCart",
+        "categoryCartClosed",
+        "cart",
+        "cartUpdated",
+        "community",
+        "user",
+        "micro",
+        "microFresh",
+        "microReturned",
+        "native",
+        "nativeCategory",
+        "nativeHome",
+        "text",
+        "floatingIcons",
+        "floatingAll",
+        "owner22",
+        "guest",
+        "adminOpen",
+        "adminEdited",
+        "adminSaved",
+        "afterAdmin",
+        "closed",
+        "closedRetry",
+        "reopened",
+        "finished"
+      ],
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_unchanged": true,
+      "fixtures_cleaned": true,
+      "cluster_stopped": true,
+      "cluster_paths": [
+        "/home/cina/cinagroup/cinashop/.cache/finance-postgres-kBSAER"
+      ],
+      "receipt_issues": []
+    },
+    "evidence": {
+      "path": "/tmp/cinashop-diy-footer-browser-evidence.json",
+      "bytes": 4575514,
+      "sha256": "58b580aa3d1d0a5ddde953cf1d759ee2b8ae19e86d2aa188ad7e5b3212a120f2"
+    },
+    "cleanup": {
+      "path": "/tmp/cinashop-diy-footer-browser-cleanup.json",
+      "bytes": 2255474,
+      "sha256": "9dc596b3fa4506b1b96a1b4111cf0925457422d7722668d50f8e8f332c7ecdec"
+    },
+    "actual_tables": [
+      "article_category",
+      "article_content",
+      "community",
+      "community_comment",
+      "community_relevance",
+      "community_topic",
+      "community_user",
+      "delivery_service",
+      "live_anchor",
+      "live_goods",
+      "live_room",
+      "live_room_goods",
+      "member_right",
+      "store_activity",
+      "store_bargain",
+      "store_bargain_user_help",
+      "store_brand",
+      "store_cart",
+      "store_combination",
+      "store_coupon_issue",
+      "store_coupon_issue_user",
+      "store_coupon_product",
+      "store_coupon_user",
+      "store_discounts",
+      "store_discounts_products",
+      "store_integral",
+      "store_newcomer",
+      "store_order",
+      "store_order_cart_info",
+      "store_order_promotion_gift_coupon_reward",
+      "store_order_refund",
+      "store_pink",
+      "store_product",
+      "store_product_attr",
+      "store_product_attr_value",
+      "store_product_category",
+      "store_product_description",
+      "store_product_ensure",
+      "store_product_label",
+      "store_product_log",
+      "store_product_relation",
+      "store_product_reply",
+      "store_promotions",
+      "store_promotions_auxiliary",
+      "store_seckill",
+      "store_seckill_time",
+      "store_service",
+      "system_admin",
+      "system_article",
+      "system_attachment",
+      "system_attachment_category",
+      "system_config",
+      "system_dise",
+      "system_group",
+      "system_group_data",
+      "system_menus",
+      "system_message",
+      "system_role",
+      "system_sign_reward",
+      "system_store",
+      "system_store_staff",
+      "system_supplier",
+      "system_user_level",
+      "user",
+      "user_bill",
+      "user_brokerage",
+      "user_extract",
+      "user_friends",
+      "user_message",
+      "user_relation",
+      "user_sign",
+      "video",
+      "wechat_news_category"
+    ],
+    "actual_sequences": [
+      "article_category_id_seq",
+      "community_comment_id_seq",
+      "community_id_seq",
+      "community_relevance_id_seq",
+      "community_topic_id_seq",
+      "community_user_id_seq",
+      "delivery_service_id_seq",
+      "live_anchor_id_seq",
+      "live_goods_id_seq",
+      "live_room_id_seq",
+      "member_right_id_seq",
+      "store_activity_id_seq",
+      "store_bargain_id_seq",
+      "store_bargain_user_help_id_seq",
+      "store_brand_id_seq",
+      "store_cart_id_seq",
+      "store_combination_id_seq",
+      "store_coupon_issue_id_seq",
+      "store_coupon_user_id_seq",
+      "store_discounts_id_seq",
+      "store_discounts_products_id_seq",
+      "store_integral_id_seq",
+      "store_newcomer_id_seq",
+      "store_order_cart_info_id_seq",
+      "store_order_id_seq",
+      "store_order_promotion_gift_coupon_reward_id_seq",
+      "store_order_refund_id_seq",
+      "store_pink_id_seq",
+      "store_product_attr_id_seq",
+      "store_product_attr_value_id_seq",
+      "store_product_category_id_seq",
+      "store_product_ensure_id_seq",
+      "store_product_id_seq",
+      "store_product_label_id_seq",
+      "store_product_log_id_seq",
+      "store_product_relation_id_seq",
+      "store_product_reply_id_seq",
+      "store_promotions_auxiliary_id_seq",
+      "store_promotions_id_seq",
+      "store_seckill_id_seq",
+      "store_seckill_time_id_seq",
+      "store_service_id_seq",
+      "system_admin_id_seq",
+      "system_article_id_seq",
+      "system_attachment_att_id_seq",
+      "system_attachment_category_id_seq",
+      "system_config_id_seq",
+      "system_dise_id_seq",
+      "system_group_data_id_seq",
+      "system_group_id_seq",
+      "system_menus_id_seq",
+      "system_message_id_seq",
+      "system_role_id_seq",
+      "system_sign_reward_id_seq",
+      "system_store_id_seq",
+      "system_store_staff_id_seq",
+      "system_supplier_id_seq",
+      "system_user_level_id_seq",
+      "user_bill_id_seq",
+      "user_brokerage_id_seq",
+      "user_extract_id_seq",
+      "user_friends_id_seq",
+      "user_message_id_seq",
+      "user_relation_id_seq",
+      "user_sign_id_seq",
+      "user_uid_seq",
+      "video_id_seq",
+      "wechat_news_category_id_seq"
+    ],
+    "counts": {
+      "checkpoints": 29,
+      "traces": 254,
+      "real_get": 202,
+      "synthetic_chrome_get": 50,
+      "real_post": 2,
+      "setup_records": 6,
+      "configuration_and_write_records": 8,
+      "distinct_full_snapshots": 12
+    },
+    "all_get_full_snapshot_unchanged": true,
+    "all_trace_resources_unchanged": true,
+    "resources_before": {
+      "puts": 3,
+      "deletes": 0,
+      "objects": "b37f5c005ab19ea4c150dbe24c6733b847d980cc15f3a201411a83f2fc66dde5",
+      "queue": 0,
+      "images": {
+        "info": 0,
+        "input": 0,
+        "transform": 0,
+        "draw": 0,
+        "output": 0
+      }
+    },
+    "resources_after": {
+      "puts": 3,
+      "deletes": 0,
+      "objects": "b37f5c005ab19ea4c150dbe24c6733b847d980cc15f3a201411a83f2fc66dde5",
+      "queue": 0,
+      "images": {
+        "info": 0,
+        "input": 0,
+        "transform": 0,
+        "draw": 0,
+        "output": 0
+      }
+    },
+    "browser_errors": [],
+    "provider_calls": 0,
+    "setup_phases": [
+      "owned-only-ORM-schema-and-seed",
+      "owned-real-category-layout-and-children",
+      "actual-admin-auth-negative",
+      "actual-admin-auth-negative",
+      "setup",
+      "setup"
+    ],
+    "write_and_configuration_records": [
+      {
+        "phase": "actual-cart-num-business-write",
+        "before": "42272f17461333d5f4b5f8fac2ad7e5328f55241b5be3c947c3469c29964a487",
+        "after": "f5e27f5b31e64e62aa629f637bc570be09403f0d0e4ff75b79dd82c3f97da888",
+        "allowed": [
+          "store_cart.9101.cart_num:3→4"
+        ]
+      },
+      {
+        "phase": "configuration",
+        "operation": "actual-production-admin-auth-save",
+        "id": 1,
+        "before": "f5e27f5b31e64e62aa629f637bc570be09403f0d0e4ff75b79dd82c3f97da888",
+        "after": "140483f4028e0b2934799928beb7be9f619f0d28bb9a3d930d0d94eea7fa25fe",
+        "allowed": [
+          "system_dise.value",
+          "system_dise.version",
+          "system_dise.update_time"
+        ]
+      },
+      {
+        "phase": "configuration",
+        "operation": "actual-production-admin-auth-save",
+        "id": 1,
+        "before": "140483f4028e0b2934799928beb7be9f619f0d28bb9a3d930d0d94eea7fa25fe",
+        "after": "29a04ba82fa66637259aa359cafecf14700cfbe02e9793ff30edf4231b528918",
+        "allowed": [
+          "system_dise.value",
+          "system_dise.version",
+          "system_dise.update_time"
+        ]
+      },
+      {
+        "phase": "configuration",
+        "operation": "actual-production-admin-auth-save",
+        "id": 1,
+        "before": "29a04ba82fa66637259aa359cafecf14700cfbe02e9793ff30edf4231b528918",
+        "after": "035547f38c0b7a3ba1514eb36a6cf88a0085accc31235bbbb54fde8349a028ec",
+        "allowed": [
+          "system_dise.value",
+          "system_dise.version",
+          "system_dise.update_time"
+        ]
+      },
+      {
+        "phase": "configuration",
+        "operation": "actual-production-admin-auth-save",
+        "id": 1,
+        "before": "035547f38c0b7a3ba1514eb36a6cf88a0085accc31235bbbb54fde8349a028ec",
+        "after": "860a5fe14fb942324e89931c734fdfcf4da83de8991c8d3c4ac17f6a505160eb",
+        "allowed": [
+          "system_dise.value",
+          "system_dise.version",
+          "system_dise.update_time"
+        ]
+      },
+      {
+        "phase": "actual-Admin-typed-editor-business-save",
+        "before": "860a5fe14fb942324e89931c734fdfcf4da83de8991c8d3c4ac17f6a505160eb",
+        "after": "56c6326f00e60c8d2b7be237c406088eee608ae9ce26507469c20669481199f7",
+        "allowed": [
+          "system_dise.value",
+          "system_dise.version",
+          "system_dise.update_time"
+        ]
+      },
+      {
+        "phase": "station-close",
+        "before": "56c6326f00e60c8d2b7be237c406088eee608ae9ce26507469c20669481199f7",
+        "after": "a2030083f4d9e8f5d4543ae1f7640a38919af762d2431b779d57b9a9f82471ad",
+        "allowed": [
+          "system_config.station_open"
+        ]
+      },
+      {
+        "phase": "station-open",
+        "before": "a2030083f4d9e8f5d4543ae1f7640a38919af762d2431b779d57b9a9f82471ad",
+        "after": "56c6326f00e60c8d2b7be237c406088eee608ae9ce26507469c20669481199f7",
+        "allowed": [
+          "system_config.station_open"
+        ]
+      }
+    ],
+    "source_counts": {
+      "before": 2428,
+      "after": 2428
+    },
+    "artifact_counts": {
+      "h5": 382,
+      "admin": 274
+    },
+    "transport": "Actual built H5/Admin, real createApp/JWT/production Admin role middleware/controller/SQL. DB-session wiring alone targets owned PG16. Exact extended tables/sequences snapshot every API; only listed Admin/cart writes may change DB; all resources unchanged after explicit setup. No fake footer/media/cart/DIY/Admin save or permission DTO. Initial session bootstrap is synthetic authentication setup, not login UI acceptance. Native H5 bar DOM is real; physical MP/App not executed. Public previews are not Admin/publishing authority. Imported micro footer beyond200/duplicate stress is not normal PHP visual-editor capacity. Guest badge0 makes no forced-auth cart/count call. Browser does not wait840s; Node fakeclock proves timed renewal, Browser proves actual fresh ticket reread and natural pixels. Owned served H5 index only hides desktop scrollbar without changing scrollroot; raw/served hashes explicit, actual JS/CSS unmodified. Screenshots and startup console belong to root CUA receipts; no local screenshot path is claimed without a tool-returned file.",
+    "operator_additional_smoke": "After home and before category, actual shell micro→actual micro footer home click verifies native wrapper displaynone/height0 and one visible custom footer; all29 formal checkpoints subsequently completed in order.",
+    "screenshots": "Actual full-page screenshot emitted by CUA in this chat after terminal accepted; no local file path is asserted.",
+    "console": "CUA startup: existing vue-router esm-bundler deprecation warning only. Final captured error logs empty.",
+    "temporary_tab_closed": true,
+    "root_cua": {
+      "path": "/tmp/cinashop-diy-footer-root-cua-terminal.json",
+      "bytes": 1369,
+      "sha256": "ece2791c044da880168a883fdb4258d583641bd9bdd33ac982662158202e8883"
+    }
+  },
+  "changed_source_and_test_payloads": [
+    {
+      "path": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "0fae1edb73a4229fb7dd2084cdadc3bdd617fd649c8e61af13e76daf1c9bc1bc",
+      "change": "modified"
+    },
+    {
+      "path": "view/admin-ts/package.json",
+      "sha256": "fb91bb04a11e1771d3818a54cfcb0ce3d58418a7120047709bdb7894575bd2bc",
+      "change": "modified"
+    },
+    {
+      "path": "view/admin-ts/scripts/diy-footer-editor-runtime.test.cjs",
+      "sha256": "28e6b84e80da34b3e945c38658c46bb77144174ee6f2db916eb82884e2b7aad5",
+      "change": "new"
+    },
+    {
+      "path": "view/admin-ts/src/components/content/DiyFooterEditor.vue",
+      "sha256": "c5bfcda516085b7268d5b33f47008098009683a2b5b38d962f904bb1c3a22628",
+      "change": "new"
+    },
+    {
+      "path": "view/admin-ts/src/pages/content/DiseList.vue",
+      "sha256": "af5bc91f4cda0bc5e069b46e227c6c6b5bddeab158fa7ec07516e8b1f9fcfad2",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/package.json",
+      "sha256": "3071a0f44747e7e6c0bfe03b802cb51a238dc950eae9920314b46b3f32f48e52",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/cart-runtime.test.cjs",
+      "sha256": "b7233713999af70f83649a0bf1c1afc34750dd6456dbe38e6806ac52e326ed23",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/category-catalog-runtime.test.cjs",
+      "sha256": "9a306613edb89cbceef8329c42217bc7e531aa8c9aa76f8fe4c8241f1f8d707d",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/diy-carousel-content-runtime.test.cjs",
+      "sha256": "310f8a2fd908afa52c3c1cede70923707b820428095da555120087d9c82d1eec",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/diy-footer-runtime.test.cjs",
+      "sha256": "ac73cbc652ade6a0348a5d67e86050b891cf1998e52058ff0b2844f753e892b8",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/diy-navigation-content-runtime.test.cjs",
+      "sha256": "8923256551558876d4d40d4a34780850686665e798f30e7151aed308c018b201",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/scripts/user-center-runtime.test.cjs",
+      "sha256": "c19bf1d934645859df8b30ab465dd36fd5c5dea5e6c2e105701ab1bac022e126",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/App.vue",
+      "sha256": "945764d70fed2cff9f6ab9af6ae7bf7d8ecf0b4cc13afde0690f1af9b901d3bc",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyGlobalFooter.vue",
+      "sha256": "d7c974d6fb89c6fc6a5e90bf07770210243d09ca22e45834cff54d6651427315",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+      "sha256": "63e77027d6fe74fd2c4edc1d9a642a2ac2aa7670042a3fd7814b453d102bffc4",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/components/diy/DiyPageFooter.vue",
+      "sha256": "34407cf4b6291bbc229c1e17d001dc95077dbf2164e3d12e612e374fffdbc76a",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDiyFooterBadge.ts",
+      "sha256": "675b1f490a1e5d7ab07ae259e74db3ee1006617f8752d1a1c6f5fe94cfc30c1c",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDiyFooterHost.ts",
+      "sha256": "6af4335cafd1f5ce9f5abb300d37d155b129371444f06b8bdb9ced87810de865",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/composables/useDiyPageHost.ts",
+      "sha256": "c4756d9318a82ff7c78573feb4840cfa74c8e20a577bedc5196879b3d0230472",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages.json",
+      "sha256": "2de199bfb091f67ec6473fa4d90697f8269aa1d6662b77de900893371b66aaf9",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/cart/index.vue",
+      "sha256": "3d91fa57d53a989fc19678f3461f21de64278265d3f05450adf3ce9a246593e3",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/discover/index.vue",
+      "sha256": "b4c94a372293ca597faff7a92d305a35687e516d2d34c088616001d7a5d4ab0d",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/goods/cate.vue",
+      "sha256": "b35d84e8adff27fb92f82c420bb7375e18e7a3bd1738c7c0ddc906eb155af802",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/index/index.vue",
+      "sha256": "9542ec253ea910d3f33159a87009859ad566a58dc4c57515ac40696d93d8c8f9",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/pages/user/index.vue",
+      "sha256": "5ab74ce5d620a8d299e686d321f2a53730f825f17a56b40db29e529724811bbd",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/1-001.png",
+      "sha256": "2d4cba5a35b018ae34b198033ad56cdaee06fdc505b01f81418642f9ab8c8247",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/1-002.png",
+      "sha256": "4c819c62f50a1feddb7297b53eee3b4d4d14bec4f482ff0cd15d5ae05f2bdd68",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/2-001.png",
+      "sha256": "9c296032dfc058ff449c9a5736d324b38227004112bbccac1f4478120f4c4565",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/2-002.png",
+      "sha256": "753512db1dc12a3fa1908d8628aceb14956c9fc44bf26bc5fb1941da0cfd1514",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/3-001.png",
+      "sha256": "5077bba12e1ea6b7baced34b25782661b701db002fa4dd02b1184e5d3f49b1ed",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/3-002.png",
+      "sha256": "ec6a50c0142f00d20bfba224f6f459432cd2d10b0281504610f625e853ff491f",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/4-001.png",
+      "sha256": "d4cf530af97919b408cc5bfc337bb9f6504a1916219566ffb6e91f262626f207",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/4-002.png",
+      "sha256": "24e29a76a8ead3541a6a89a89f9b9922acdd9d60c343cb62ac827d7e0c722e9c",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/5-001.png",
+      "sha256": "e2c37fa3a39b87e7a2dd052b044c7e396f331c3b3dbd11c7b056c0ccb5308a80",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/static/images/footer/5-002.png",
+      "sha256": "bbf359e5c56d40cbabff3dea4c2957259116c3cfa2c8213f83f8b3a5d92386ee",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/cartMutation.ts",
+      "sha256": "ac6efb02488f34520fc61ad61507c38e7463fd788fad7147d11141946f626a79",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/diyFooter.ts",
+      "sha256": "1ba16ea1cbfe633fe6ee50f17e9cb32624742cafda031b6387864adc9c67693b",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/stores/nativeFooter.ts",
+      "sha256": "550b2230afe3ebada3e7ddd4800d52a45f1d349fec2c6854554546c4b22b608f",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diy.ts",
+      "sha256": "1464d5fe1149279f0e40b7e107633181bb54aab80be62c06cb6a69fa18859feb",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "sha256": "28fca4d5bec5ae6631c17a7554011576af99c9043f1755338aba453da7b620f0",
+      "change": "modified"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/diyFooterConfig.ts",
+      "sha256": "7474aaeeb15827724723828b072a8c7941b48eaf33a287b6090eb1f704120890",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/nativeFooterCoordinator.ts",
+      "sha256": "ececb2716910950589de941d8dec16a63e812bdd989652db8e59cc770fdba42a",
+      "change": "new"
+    },
+    {
+      "path": "view/uniapp-ts/src/utils/request.ts",
+      "sha256": "06e13d1b841eb7600466a8ca49eac15d74f2d373acb5ac4438888b9e26d3bd6a",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "sha256": "344e2756cd6253db7b6ca1273d8de0e7c760a8b24b14a21c078f37a3985b7f32",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "4c42f0a2276537fcf344dfc7a877ae702a7972c90bd082c3a736f171ed4c429b",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "sha256": "4c292578ca8d2373998496b0c8cf310765f245c2d239ff65ed3066b0d5e37a07",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "8c246c62f3bee9b1c361a4e3ce957eaa26536266c11a56ea7000c67a9912f712",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "sha256": "51133e6ef61775edd12da570ab2d7678e9d423ee8fc75ffa855a10a295f3e8a4",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "sha256": "4bfb956cf19c81aeee450acf9ea0b7703c5fac18a9b0f7f39226982798977eff",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/dao/order/OrderDaos.ts",
+      "sha256": "d4a83db5746db3729ce14fe5d9897206036a3b4249af7aad5168e4c006345c41",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "sha256": "3d64bb0fe594c20a74ce9129b3feef1c2d7946a2d865e0386e6d6cfd9f5e905b",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "1bbb2f381e6a10451da6f61631296df8687d3be1ff8dfadafab2965dbf808c09",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/src/services/product/PublicCatalogService.ts",
+      "sha256": "742e8d829045ff9f880292c47944da7ed2dae93e6995c167425c62f24e68a073",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "sha256": "814ba9c01b900dc060facc2bacd9fd05669ae0135992044d907367bfb631ca53",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "sha256": "bf1ed0b1b465cd1f4e099a983aa073d4ba5bab71433d9e57d7271aea8dac3f53",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/browser/diy-footer.acceptance.ts",
+      "sha256": "25c393973bab4995c2e758679d53fd173733705e3618558e8ca452b7efd386c9",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/diy-carousel-frontend.test.ts",
+      "sha256": "aca5f9d2335744a24e24bb369fca598384d3ab9a24bb77e27908c915e906f80c",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/diy-footer-postgres.test.ts",
+      "sha256": "003510967bb04a0114ac35f18d3f7ea4e0854bae5fc344b5e665a7e40a21c279",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/diy-footer-runner.test.ts",
+      "sha256": "688941dea954576976a9b3d4ba70b198d21ab4b5b849ca08e40e89bbc4750770",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/diy-footer-unit.test.ts",
+      "sha256": "578bd9d402360dd6d4ff9528c91c9c99d989ff294fe770c265c75f9f269bf4ab",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/diy-navigation-runner.test.ts",
+      "sha256": "6d248260cf2c390c0fe2f11285167361d3537fff8f20f2cd93a90c20ed9176cf",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+      "sha256": "ea04f94f927088895a8f904c108651b0891cc767d9c15eaf8f79ebafd79d080d",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/test/helpers/diyFooterBrowserFixture.ts",
+      "sha256": "c4dc2142ef90b5a2237e14a86d22c54b1ada15a3d1787c075b4ea8548cb36391",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/helpers/diyFooterFixture.ts",
+      "sha256": "1d61580968f656b2fdcf04fa4924d1dbbcc05d284e005f58ee20dea2a1f830c9",
+      "change": "new"
+    },
+    {
+      "path": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "sha256": "b829915214e9fbb8d48304d75f247bf3df3418a4c21ed95d15592cbfad201617",
+      "change": "modified"
+    },
+    {
+      "path": "workers-ts/vitest.diy-footer-browser.config.ts",
+      "sha256": "2d10d984f3823fb37870481838d21a14e7d90399be1018e93e871fae1fa403a2",
+      "change": "new"
+    }
+  ],
+  "doc": {
+    "path": "workers-ts/docs/php-ts-diy-pagefoot-20261022.md",
+    "sha256": "0cb6341b3e30a14cde152169c3d0eaf61907011eb42857b0bb51800bfb849cb7"
+  },
+  "final_independent_handoff": {
+    "path": "/tmp/cinashop-diy-footer-browser-passed-handoff.json",
+    "sha256": "9ace51f1c35a4a6db433f74bf65dd8f75b5855f350ab347de02a203d3cff0f85",
+    "bytes": 10062
+  },
+  "physical_handoff": {
+    "path": "/tmp/cinashop-diy-footer-physical-handoff.json",
+    "sha256": "d3f46cfa1ab9c7d02559533654c6756cdf2907180b356cb9279bde8e35125953",
+    "bytes": 362687
+  },
+  "baseline_preservation": {
+    "base": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+    "tracked_files": 6685,
+    "allowed_changed_paths": [
+      ".github/workflows/workers-runtime-linux.yml",
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "MIGRATION_SCHEMA_AUDIT.json",
+      "view/admin-ts/package.json",
+      "view/admin-ts/scripts/diy-footer-editor-runtime.test.cjs",
+      "view/admin-ts/src/components/content/DiyFooterEditor.vue",
+      "view/admin-ts/src/pages/content/DiseList.vue",
+      "view/uniapp-ts/package.json",
+      "view/uniapp-ts/scripts/cart-runtime.test.cjs",
+      "view/uniapp-ts/scripts/category-catalog-runtime.test.cjs",
+      "view/uniapp-ts/scripts/diy-carousel-content-runtime.test.cjs",
+      "view/uniapp-ts/scripts/diy-footer-runtime.test.cjs",
+      "view/uniapp-ts/scripts/diy-navigation-content-runtime.test.cjs",
+      "view/uniapp-ts/scripts/user-center-runtime.test.cjs",
+      "view/uniapp-ts/src/App.vue",
+      "view/uniapp-ts/src/components/diy/DiyGlobalFooter.vue",
+      "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+      "view/uniapp-ts/src/components/diy/DiyPageFooter.vue",
+      "view/uniapp-ts/src/composables/useDiyFooterBadge.ts",
+      "view/uniapp-ts/src/composables/useDiyFooterHost.ts",
+      "view/uniapp-ts/src/composables/useDiyPageHost.ts",
+      "view/uniapp-ts/src/pages.json",
+      "view/uniapp-ts/src/pages/cart/index.vue",
+      "view/uniapp-ts/src/pages/discover/index.vue",
+      "view/uniapp-ts/src/pages/goods/cate.vue",
+      "view/uniapp-ts/src/pages/index/index.vue",
+      "view/uniapp-ts/src/pages/user/index.vue",
+      "view/uniapp-ts/src/static/images/footer/1-001.png",
+      "view/uniapp-ts/src/static/images/footer/1-002.png",
+      "view/uniapp-ts/src/static/images/footer/2-001.png",
+      "view/uniapp-ts/src/static/images/footer/2-002.png",
+      "view/uniapp-ts/src/static/images/footer/3-001.png",
+      "view/uniapp-ts/src/static/images/footer/3-002.png",
+      "view/uniapp-ts/src/static/images/footer/4-001.png",
+      "view/uniapp-ts/src/static/images/footer/4-002.png",
+      "view/uniapp-ts/src/static/images/footer/5-001.png",
+      "view/uniapp-ts/src/static/images/footer/5-002.png",
+      "view/uniapp-ts/src/stores/cartMutation.ts",
+      "view/uniapp-ts/src/stores/diyFooter.ts",
+      "view/uniapp-ts/src/stores/nativeFooter.ts",
+      "view/uniapp-ts/src/utils/diy.ts",
+      "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "view/uniapp-ts/src/utils/diyFooterConfig.ts",
+      "view/uniapp-ts/src/utils/nativeFooterCoordinator.ts",
+      "view/uniapp-ts/src/utils/request.ts",
+      "workers-ts/audit/admin-frontend-api-contracts.json",
+      "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "workers-ts/audit/php-ts-diy-pagefoot-20261022.json",
+      "workers-ts/docs/php-ts-diy-pagefoot-20261022.md",
+      "workers-ts/package.json",
+      "workers-ts/scripts/admin-setting-frontend-parity-audit.ts",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/controllers/api/v1/OrderController.ts",
+      "workers-ts/src/controllers/api/v1/PublicController.ts",
+      "workers-ts/src/dao/order/OrderDaos.ts",
+      "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "workers-ts/src/services/order/StoreCartService.ts",
+      "workers-ts/src/services/product/PublicCatalogService.ts",
+      "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "workers-ts/test/admin-product-category-style-coverage.test.ts",
+      "workers-ts/test/browser/diy-footer.acceptance.ts",
+      "workers-ts/test/diy-carousel-frontend.test.ts",
+      "workers-ts/test/diy-footer-postgres.test.ts",
+      "workers-ts/test/diy-footer-runner.test.ts",
+      "workers-ts/test/diy-footer-unit.test.ts",
+      "workers-ts/test/diy-navigation-runner.test.ts",
+      "workers-ts/test/dynamic-statistics-script-retirement.test.ts",
+      "workers-ts/test/helpers/diyFooterBrowserFixture.ts",
+      "workers-ts/test/helpers/diyFooterFixture.ts",
+      "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "workers-ts/vitest.diy-footer-browser.config.ts"
+    ],
+    "unchanged_baseline_files_expected": 6645,
+    "modified_baseline_files_expected": 40,
+    "new_files_expected": 32,
+    "no_deleted_files": true,
+    "ledger_verification": "Markdown original byte prefixes and checkbox lines preserved. Original parsed JSON fields unchanged; one new root field appended. Exact staged preservation proof generated separately to avoid self-referential patch digest."
+  },
+  "ci": {
+    "new_head": "To be verified after normal push; this committed audit does not pre-claim a run result.",
+    "parent": {
+      "head": "802a784fcfd2a9a90817f8e8df5aaa6d6c471dea",
+      "url": "https://github.com/cinagroup/cinashop/actions/runs/39768252669",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  },
+  "final_patch_scan": "Final staged diff is scanned with gitleaks8.29.0 before commit. Exact patch/tree/scan receipt is external to this patch to avoid a self-reference."
+}

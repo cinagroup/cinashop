@@ -47,6 +47,27 @@ function wired(text: string) {
   visit(file); return allowed && flag;
 }
 
+function withoutNavigationUmbrellaOperand(text: string): string {
+  const file = ts.createSourceFile(script, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS), umbrella = variable(file, 'productPurchaseAdmissionBrowser');
+  if (!umbrella) throw Error('Missing actual Browser umbrella');
+  let removed = 0;
+  const transformed = ts.transform(file, [context => root => {
+    function edit(node: ts.Node): ts.VisitResult<ts.Node> {
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+        if (ts.isIdentifier(node.left) && node.left.text === 'diyNavigationBrowser') { removed++; return ts.visitNode(node.right, edit); }
+        if (ts.isIdentifier(node.right) && node.right.text === 'diyNavigationBrowser') { removed++; return ts.visitNode(node.left, edit); }
+      }
+      return ts.visitEachChild(node, edit, context);
+    }
+    function visit(node: ts.Node): ts.VisitResult<ts.Node> { return node === umbrella ? edit(node) : ts.visitEachChild(node, visit, context); }
+    return ts.visitNode(root, visit) as ts.SourceFile;
+  }]);
+  try {
+    if (removed !== 1) throw Error('Expected exactly one executable navigation umbrella operand');
+    return ts.createPrinter().printFile(transformed.transformed[0]) + '\n// ' + umbrella.getText(file);
+  } finally { transformed.dispose(); }
+}
+
 describe('owned DIY navigation runner exact admission', () => {
   it('admits only the exact hidden Browser mode through its owned runner up to trusted-bin lookup', () => {
     const error = admission(['--schema-maintenance','unused-bin','audit:diy-navigation-browser']);
@@ -69,8 +90,10 @@ describe('owned DIY navigation runner exact admission', () => {
     expect(admission(['--schema-maintenance','--case','x','unused-bin','audit:diy-navigation-browser'])).toContain('Literal cases apply only');
   });
   it('follows executable literal guard, umbrella, dedicated Vitest command, allowSet and environment binding', () => { expect(wired(source)).toBe(true); });
+  it('rejects an AST-disconnected navigation umbrella regardless of preceding family operands or retained commentary', () => {
+    const changed = withoutNavigationUmbrellaOperand(source); expect(changed).not.toBe(source); expect(wired(changed)).toBe(false);
+  });
   it.each([
-    ["const productPurchaseAdmissionBrowser = diyNavigationBrowser ||", 'const productPurchaseAdmissionBrowser ='],
     ["    'audit:diy-navigation-browser',", '    // audit:diy-navigation-browser'],
     ["vitest.diy-navigation-browser.config.ts", 'vitest.diy-carousel-browser.config.ts'],
     ["TEST_DIY_NAVIGATION_BROWSER: '1'", "TEST_DIY_NAVIGATION_BROWSER: '0'"],

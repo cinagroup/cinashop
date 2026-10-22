@@ -55,10 +55,14 @@
       </template>
       <button v-if="auth.isLoggedIn" class="logout" @tap="logout">退出登录</button>
     </view>
+  <DiyGlobalFooter :active="footerVisible" @height="footerHeight=$event" />
   </ThemePage>
 </template>
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import DiyGlobalFooter from '@/components/diy/DiyGlobalFooter.vue';
+import { useDiyFooterHost } from '@/composables/useDiyFooterHost';
+const { visible: footerVisible, height: footerHeight } = useDiyFooterHost();
 import UserCenterMenus from '@/components/userCenter/UserCenterMenus.vue';
 import { computed,ref,watch } from 'vue';
 import { useUserCenter } from '@/composables/useUserCenter';

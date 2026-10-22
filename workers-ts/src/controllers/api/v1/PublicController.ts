@@ -227,6 +227,7 @@ export async function nearbyStore(c: C) {
 
 /** GET /api/navigation/:template_name? — legacy DIY bottom navigation. */
 export async function navigation(c: C) {
+  c.header('Cache-Control', 'no-store');
   try {
     const data = await new PublicCatalogService(c.get("container"), c.env)
       .navigation(c.req.param("template_name") ?? "");

@@ -80,19 +80,13 @@
         <view v-else-if="!combinationLoading" class="diy-combination-status">微页面暂未开放</view>
       </template>
     </template>
-    <view v-for="(block, index) in hostFooters" :key="blockKey(block, index)" class="diy-theme-block" :style="blockThemeStyle(block)">
-      <view class="diy-page-foot">
-        <view v-for="(item, itemIndex) in footerItems(block)" :key="`${index}-foot-${itemIndex}`" class="diy-foot-item" @tap="open(item.link)">
-          <image v-if="item.image" class="diy-foot-image" :src="item.image" mode="aspectFit" />
-          <text>{{ item.label }}</text>
-        </view>
-      </view>
-    </view>
+    <DiyPageFooter v-if="microPage" :block="hostFooter" :active="pageActive || pageRefreshing" :ready="pageActive && !pageRefreshing" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import DiyPageFooter from './DiyPageFooter.vue';
 import type { DiyComponent } from '@/api/diy';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
@@ -148,7 +142,7 @@ const {selection:combinationSelection,components:combinationComponents}=combinat
 const {loading:combinationLoading,error:combinationError,available:combinationAvailable,refreshing:combinationRefreshing,page:combinationPage}=combinationTabs.micro;
 const categoryActivity=computed<DiyCombinationActivity>(()=>props.pageRefreshing?'refreshing':props.pageActive?'ready':'inactive');
 const combinationRenderable=computed(()=>(props.pageActive||props.pageRefreshing)&&!!combinationPage.value&&isDiyEnabled(combinationPage.value.is_show)&&!combinationError.value);
-const hostFooters=computed(()=>props.microPage?props.components.filter(block=>block.name==='pageFoot'):[]);
+const hostFooter=computed(()=>props.microPage?[...props.components].reverse().find(block=>block.name==='pageFoot') ?? null:null);
 watch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)emit('closed',combinationError.value);});
 function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }
 const theme = useThemeStore();
@@ -206,17 +200,6 @@ function componentLink(block: DiyComponent, key: string): string {
   return String(diyNestedValue(block, key) ?? "");
 }
 
-function footerItems(block: DiyComponent): MenuItem[] {
-  return diyList(block, "menuList").slice(0, 8).flatMap((value) => {
-    const item = asDiyRecord(value);
-    if (!item) return [];
-    const images = Array.isArray(item.imgList) ? item.imgList : [];
-    const label = typeof item.name === "string" ? item.name.slice(0, 40) : "";
-    const link = typeof item.link === "string" ? item.link : "";
-    if (!label && !link) return [];
-    return [{ image: safeDiyImageUrl(images[0]), label, link }];
-  });
-}
 
 function safeImage(value: unknown): string {
   return safeDiyImageUrl(value);
@@ -306,7 +289,4 @@ function guideStyle(block: DiyComponent): Record<string, string> {
 .diy-user-name { font-size: 28rpx; font-weight: 600; }
 .diy-user-counts { display: flex; flex-direction: column; gap: 8rpx; color: #777; font-size: 21rpx; text-align: right; }
 .diy-video-poster { height: 270rpx; }
-.diy-page-foot { position: sticky; z-index: 20; bottom: 0; display: flex; padding: 10rpx 12rpx calc(10rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #eee; background: rgba(255,255,255,.96); }
-.diy-foot-item { display: flex; flex: 1; min-width: 0; align-items: center; flex-direction: column; color: #555; font-size: 21rpx; }
-.diy-foot-image { width: 44rpx; height: 44rpx; margin-bottom: 4rpx; }
 </style>

@@ -8,6 +8,7 @@
  *   - 410000/410001/410002 → 跳登录
  */
 import { useAuthStore } from "@/stores/auth";
+import { recordCartMutation } from '@/stores/cartMutation';
 
 /**
  * API 基础地址
@@ -115,6 +116,7 @@ export function baseResponse<T>(
             if (typeof value === "string") headers[normalized] = value;
             else if (typeof value === "number") headers[normalized] = String(value);
           }
+          if (!options.noAuth && owner.token) recordCartMutation(cleanUrl, method);
           resolve({ data: body.data, headers });
           return;
         }

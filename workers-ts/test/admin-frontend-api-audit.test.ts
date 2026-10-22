@@ -75,6 +75,12 @@ const availabilityFollowup = JSON.parse(readFileSync(
     current_report_file: string; current_report_sha256: string; semantic_admin_changes: number;
     prior_state_proof: { file: string; sha256: string };
   };
+const footerBindingRaw = readFileSync(join(workerRoot, 'audit', 'diy-footer-source-binding-20261022.json'), 'utf8');
+const footerBinding = JSON.parse(footerBindingRaw) as { admin_current_report: {
+  file:string;sha256:string;previous_report_sha256:string;backend_equal:boolean;
+  frontend_source_changes:Array<{file:string;before_sha256:string;after_sha256:string}>;
+  call_line_changes:Array<{method:string;path:string;source:string;before_line:number;after_line:number}>;
+} };
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 
 function applyReportSourceIncrement(before: ApiAuditReport, proof: Pick<typeof rootSourceRefresh, "route_file" | "before_sha256" | "after_sha256" | "inserted_line" | "shifted_route_records">): ApiAuditReport {
@@ -175,12 +181,30 @@ describe("Admin frontend API registration audit", () => {
     expect(availabilityFollowup.previous_current_report_sha256).toBe(stateSourceIncrement.current_report_sha256);
     expect(availabilityFollowup.semantic_admin_changes).toBe(0);
     expect(availabilityFollowup.route_file).toBe(stateSourceIncrement.route_file);
-    expect(current).toEqual(applyReportSourceIncrement(stateReport, {
+    const prior = applyReportSourceIncrement(stateReport, {
       ...availabilityFollowup, inserted_line: availabilityFollowup.edits[0].after_line,
-    }));
-    expect(stateSourceIncrement.current_report_file).toBe("workers-ts/audit/admin-frontend-api-contracts.json");
-    expect(sha256(readFileSync(join(workerRoot, "..", stateSourceIncrement.current_report_file))))
-      .toBe(availabilityFollowup.current_report_sha256);
+    });
+    expect(sha256(JSON.stringify(prior, null, 2) + '\n')).toBe(availabilityFollowup.current_report_sha256);
+    expect(sha256(footerBindingRaw)).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
+    const footer = footerBinding.admin_current_report;
+    expect(footer.previous_report_sha256).toBe(availabilityFollowup.current_report_sha256);
+    expect(footer.backend_equal).toBe(true);
+    const updated = structuredClone(prior);
+    expect(footer.frontend_source_changes).toHaveLength(1);
+    expect(footer.frontend_source_changes[0].file).toBe('view/admin-ts/src/pages/content/DiseList.vue');
+    for (const change of footer.frontend_source_changes) {
+      const row = updated.frontendSources.find(item=>item.file===change.file)!;
+      expect(row.sha256).toBe(change.before_sha256); row.sha256=change.after_sha256;
+      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+    }
+    expect(footer.call_line_changes).toHaveLength(3);
+    for (const change of footer.call_line_changes) {
+      const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
+      expect(rows).toHaveLength(1); expect(rows[0].line).toBe(change.before_line); rows[0].line=change.after_line;
+    }
+    expect(current).toEqual(updated);
+    expect(stateSourceIncrement.current_report_file).toBe(footer.file);
+    expect(sha256(readFileSync(join(workerRoot, "..", footer.file)))).toBe(footer.sha256);
   });
 
   it.each([

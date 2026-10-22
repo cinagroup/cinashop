@@ -242,6 +242,9 @@ export function productCategoryStyleSourceFiles(): Record<string, string> {
     reads: "view/uniapp-ts/src/composables/useCategoryCatalog.ts", purchase: "view/uniapp-ts/src/composables/useCategoryPurchase.ts",
     productCard: "view/uniapp-ts/src/components/category/CategoryProductCard.vue", sku: "view/uniapp-ts/src/components/category/CategorySkuSelection.vue",
     cartSheet: "view/uniapp-ts/src/components/category/CategoryCartSheet.vue",
+    footerGlobal: "view/uniapp-ts/src/components/diy/DiyGlobalFooter.vue", footerPage: "view/uniapp-ts/src/components/diy/DiyPageFooter.vue",
+    footerHost: "view/uniapp-ts/src/composables/useDiyFooterHost.ts", nativeFooterStore: "view/uniapp-ts/src/stores/nativeFooter.ts",
+    nativeFooterCoordinator: "view/uniapp-ts/src/utils/nativeFooterCoordinator.ts",
   };
 }
 
@@ -370,23 +373,79 @@ export function hasCategoryPurchaseOwnerWatch(source: string): boolean {
   });
 }
 
+/** Follow the actual category modal union through the shared footer and its
+ * serialized native writer. Comments, unused imports and page-local remnants
+ * cannot replace this connected chain. */
+export function hasCategorySharedFooterConnection(sources: Record<string,string>): boolean {
+  const printer = ts.createPrinter({removeComments:true});
+  const compact = (text:string) => text.replace(/\s+/g,'').replace(/"/g,"'");
+  const script = (text:string,filename:string) => {
+    const parsed = parseThemeSfc(text,{filename});
+    if(parsed.errors.length || !parsed.descriptor.scriptSetup || !parsed.descriptor.template?.ast) return null;
+    const file=ts.createSourceFile(filename+'.ts',parsed.descriptor.scriptSetup.content,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    if((file as ts.SourceFile & {parseDiagnostics:readonly ts.Diagnostic[]}).parseDiagnostics.length)return null;
+    return {file,template:parsed.descriptor.template.ast};
+  };
+  const category=script(sources.consumer??'','category.vue'),global=script(sources.footerGlobal??'','global-footer.vue'),footer=script(sources.footerPage??'','page-footer.vue');
+  if(!category||!global||!footer)return false;
+  const printed=(file:ts.SourceFile,node:ts.Node|undefined)=>node?compact(printer.printNode(ts.EmitHint.Unspecified,node,file)):'';
+  const declarations=(file:ts.SourceFile)=>file.statements.filter(ts.isVariableStatement).flatMap(row=>[...row.declarationList.declarations]);
+  const variable=(file:ts.SourceFile,name:string)=>declarations(file).find(row=>ts.isIdentifier(row.name)&&row.name.text===name)?.initializer;
+  const imported=(file:ts.SourceFile,module:string,name:string,defaultImport=false)=>file.statements.some(row=>{
+    if(!ts.isImportDeclaration(row)||!ts.isStringLiteral(row.moduleSpecifier)||row.moduleSpecifier.text!==module||row.importClause?.isTypeOnly)return false;
+    return defaultImport?row.importClause?.name?.text===name:!!row.importClause?.namedBindings&&ts.isNamedImports(row.importClause.namedBindings)&&row.importClause.namedBindings.elements.some(item=>!item.isTypeOnly&&item.name.text===name&&(item.propertyName??item.name).text===name);
+  });
+  type Element={type:number;tag?:string;props?:Array<{type:number;name:string;arg?:{type:number;content:string};exp?:{type:number;content:string}}>;children?:Element[]};
+  const elements=(root:Element):Element[]=>[...(root.type===1?[root]:[]),...(root.children??[]).flatMap(elements)];
+  const component=(root:Element,name:string)=>{const values=elements(root).filter(row=>row.tag===name);return values.length===1?values[0]:null;};
+  const binding=(node:Element|null,name:string)=>node?.props?.find(prop=>prop.type===7&&prop.name==='bind'&&prop.arg?.type===4&&prop.arg.content===name)?.exp?.content;
+  const event=(node:Element|null,name:string)=>node?.props?.find(prop=>prop.type===7&&prop.name==='on'&&prop.arg?.type===4&&prop.arg.content===name)?.exp?.content;
+  const property=(node:Element|null,name:string)=>node?.props?.some(prop=>prop.type===6&&prop.name===name);
+  const categoryFooter=component(category.template as unknown as Element,'DiyGlobalFooter'),globalChild=component(global.template as unknown as Element,'DiyPageFooter');
+  if(!imported(category.file,'@/components/diy/DiyGlobalFooter.vue','DiyGlobalFooter',true)||!imported(category.file,'@/composables/useDiyFooterHost','useDiyFooterHost'))return false;
+  const host=declarations(category.file).find(row=>ts.isObjectBindingPattern(row.name)&&row.initializer&&ts.isCallExpression(row.initializer)&&row.initializer.expression.getText(category.file)==='useDiyFooterHost');
+  if(!host||!ts.isObjectBindingPattern(host.name)||!['visible:footerVisible','height:footerHeight'].every(value=>host.name.getText(category.file).replace(/[{}\s]/g,'').split(',').includes(value)))return false;
+  if(compact(binding(categoryFooter,'active')??'')!=='footerVisible'||compact(binding(categoryFooter,'modal')??'')!=='modalOpen'||compact(binding(categoryFooter,'reserve')??'')!=='false'||compact(event(categoryFooter,'height')??'')!=='footerHeight=$event')return false;
+  if(!imported(category.file,'vue','computed')||printed(category.file,variable(category.file,'modalOpen'))!=='computed(()=>drawer.value!==null||purchase.opened.value||purchase.cartOpen.value)')return false;
+  if(!imported(global.file,'./DiyPageFooter.vue','DiyPageFooter',true)||!imported(global.file,'@/stores/diyFooter','useDiyFooterStore')||printed(global.file,variable(global.file,'footer'))!=='useDiyFooterStore()')return false;
+  if(compact(binding(globalChild,'block')??'')!=='footer.block'||compact(binding(globalChild,'active')??'')!=='active&&!blocked&&!footer.closed'||compact(binding(globalChild,'ready')??'')!=='!footer.loading&&!footer.error'||binding(globalChild,'modal')!=='modal'||binding(globalChild,'reserve')!=='reserve'||!property(globalChild,'tab'))return false;
+  const hostFile=ts.createSourceFile('footer-host.ts',sources.footerHost??'',ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const hostFn=hostFile.statements.filter(ts.isFunctionDeclaration).find(row=>row.name?.text==='useDiyFooterHost');
+  if(!hostFn?.body||!['onShow','onHide','onUnload'].every(name=>imported(hostFile,'@dcloudio/uni-app',name))||!imported(hostFile,'vue','onScopeDispose')||!imported(hostFile,'vue','nextTick')||!imported(hostFile,'@/stores/diyFooter','useDiyFooterStore')||!imported(hostFile,'@/stores/nativeFooter','useNativeFooterStore'))return false;
+  const hostBody=printed(hostFile,hostFn.body);
+  if(!['footer=useDiyFooterStore()','native=useNativeFooterStore()','ticket=native.invalidatePhysical();physicalTicket=ticket;','visible.value=true;voidfooter.refresh();','voidnextTick(()=>{if(disposed||!visible.value||life!==generation)return;physicalTicket=undefined;native.reconcilePhysical(ticket);});','onHide(()=>{visible.value=false;generation++;releasePhysical();})','disposed=true;visible.value=false;height.value=0;','constticket=physicalTicket;physicalTicket=undefined;if(ticket!==undefined)voidnextTick(()=>native.reconcilePhysical(ticket));','onUnload(dispose)','onScopeDispose(dispose)'].every(token=>hostBody.includes(token)))return false;
+  if(!imported(footer.file,'@/stores/nativeFooter','useNativeFooterStore')||!imported(footer.file,'vue','watch')||!imported(footer.file,'vue','computed')||printed(footer.file,variable(footer.file,'native'))!=='useNativeFooterStore()')return false;
+  if(printed(footer.file,variable(footer.file,'visible'))!=='computed(()=>props.active&&app.active&&!diyStationClosure.value&&!disposed)'||printed(footer.file,variable(footer.file,'nativeConfirmed'))!=="computed(()=>native.hidden===true&&!native.pending&&!nativeError.value)")return false;
+  const footerWatches=footer.file.statements.filter(ts.isExpressionStatement).map(row=>row.expression).filter((node):node is ts.CallExpression=>ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='watch');
+  if(!footerWatches.some(node=>node.arguments.length===3&&printed(footer.file,node.arguments[0])==='[visible,()=>props.ready,()=>props.modal,()=>props.tab,config,()=>auth.uid,()=>auth.token,()=>auth.sessionVersion]'&&printed(footer.file,node.arguments[2])==="{immediate:true,flush:'sync'}"&&printed(footer.file,node.arguments[1]).includes('native.claim(id,{active:visible.value,custom:!!config.value?.custom,modal:props.modal,tab:props.tab,actor:`${auth.uid}:${auth.token}:${auth.sessionVersion}`})')))return false;
+  const footerOuter=elements(footer.template as unknown as Element).find(row=>row.props?.some(prop=>prop.type===6&&prop.name==='class'&&(prop as unknown as {value?:{content:string}}).value?.content==='diy-page-foot'));
+  if(!footerOuter||compact(binding(footerOuter,'style')??'')!=="[outerStyle,{visibility:nativeConfirmed?'visible':'hidden'}]")return false;
+  if(!elements(footer.template as unknown as Element).some(row=>event(row,'tap')==='native.retry'))return false;
+  const store=ts.createSourceFile('native-footer-store.ts',sources.nativeFooterStore??'',ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  if(!imported(store,'@/utils/nativeFooterCoordinator','createNativeFooterCoordinator'))return false;
+  const findVariable=(file:ts.SourceFile,name:string)=>{let value:ts.Expression|undefined;const visit=(node:ts.Node)=>{if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text===name)value=node.initializer;ts.forEachChild(node,visit);};visit(file);return value;};
+  const coordinator=findVariable(store,'coordinator');
+  if(!coordinator||!ts.isCallExpression(coordinator)||coordinator.expression.getText(store)!=='createNativeFooterCoordinator'||coordinator.arguments.length!==2)return false;
+  const writer=printed(store,coordinator.arguments[0]),adopt=printed(store,coordinator.arguments[1]);
+  if(!['constapi=hide?uni.hideTabBar:uni.showTabBar;','api({animation:false,success:()=>done(),fail:reason=>{','done(hide?','catch{done('].every(token=>writer.includes(token))||!['owner.value=id;','error.value=message;','pending.value=busy;','hidden.value=applied;'].every(token=>adopt.includes(token)))return false;
+  const storeCode=printed(store,store);
+  if(!['claim:coordinator.claim','release:coordinator.release','retry:coordinator.retry','invalidatePhysical:coordinator.invalidatePhysical','reconcilePhysical:coordinator.reconcilePhysical'].every(token=>storeCode.includes(token)))return false;
+  const serial=ts.createSourceFile('native-footer-coordinator.ts',sources.nativeFooterCoordinator??'',ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const serialFn=serial.statements.filter(ts.isFunctionDeclaration).find(row=>row.name?.text==='createNativeFooterCoordinator');
+  const sync=serialFn?.body?.statements.filter(ts.isFunctionDeclaration).find(row=>row.name?.text==='sync');
+  if(!serialFn?.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)||!sync?.body)return false;
+  const syncCode=printed(serial,sync.body),serialBody=printed(serial,serialFn?.body);
+  return ['if(held)return;','if(running)return;','running=true;changed(owner,\'\',true,applied);','constissuingPhysicalEpoch=physicalEpoch;','apply(hide,error=>{','if(!error&&issuingPhysicalEpoch===physicalEpoch)applied=hide;','issuingPhysicalEpoch!==physicalEpoch||',"key!==`${latest?.[0]??null}:${latestHide}:${revision}`",'sync();return;','changed(owner,failed,false,applied);'].every(token=>syncCode.includes(token))
+    && ['consthide=!current||!current[1].tab||current[1].custom||current[1].modal;','physicalEpoch++;held=true;applied=undefined;','if(ticket!==physicalEpoch)return;held=false;sync();','previous.actor===claim.actor','revision++;sync();','retry(){failedTarget=\'\';sync(true);}'].every(token=>serialBody.includes(token));
+}
+
 /** Require connected current implementations, not comments or legacy fixtures. */
 export function inspectProductCategoryStyleCoverage(targetScreens: string[], sources: Record<string, string>): ProductCategoryStyleCoverage {
   const code = (key: string) => categoryAuditCode(sources[key] ?? "").replace(/"/g, "'").replace(/\s+/g, " ");
   const has = (key: string, ...tokens: string[]) => tokens.every(token => code(key).includes(token.replace(/"/g, "'").replace(/\s+/g, " ")));
   const read = code("reads"), consumer = code("consumer");
   const publicRead = /readPublic\(\) \{ return withTx\(this\.container, async tx => \{(.*?)\}\); \}/.exec(code("reader"))?.[1] ?? "";
-  const modalSync = /function syncNativeTabbar\(force = false\) \{(.*?)\} function retryNativeTabbar\(\)/.exec(consumer)?.[1] ?? "";
-  const nativeTabbar = has("consumer", "watch([visible, modalOpen, () => auth.sessionVersion], () => syncNativeTabbar(), { flush: 'sync' })",
-    "function retryNativeTabbar() { if (visible.value) syncNativeTabbar(true); }", "v-if=\"visible && tabbarError\"", "@tap=\"retryNativeTabbar\"")
-    && ["const hide = visible.value && modalOpen.value", "const generation = ++tabbarGeneration, owner = { visible: visible.value, version: auth.sessionVersion, token: auth.token, uid: auth.uid }",
-      "tabbarDesired = hide", "if (!force && hide === tabbarApplied && !pending) return",
-      "const current = () => owner.visible && visible.value && generation === tabbarGeneration && hide === tabbarDesired",
-      "owner.version === auth.sessionVersion && owner.token === auth.token && owner.uid === auth.uid",
-      "const fail = () => { if (current()) { tabbarPending.value = false; tabbarError.value = hide ?",
-      "const api = hide ? uni.hideTabBar : uni.showTabBar", "if (typeof api !== 'function') { fail(); return; }",
-      "api({ animation: false, success: () => { if (current()) { tabbarApplied = hide; tabbarPending.value = false; tabbarError.value = ''; } }, fail })",
-      "catch { fail(); }"].every(token => modalSync.includes(token));
+  const nativeTabbar = hasCategorySharedFooterConnection(sources);
   const routes = [["get", ""], ["post", "/save"], ["get", "/receipt/:operationId"]].every(([method, suffix]) =>
     has("routes", `adminapiRoutes.${method}('/config/product-category-style${suffix}', adminAuth, AdminProductCategoryStyle.`)
     && has("v1Routes", `v1Routes.${method}('/admin/config/product-category-style${suffix}', adminAuth, AdminProductCategoryStyle.`));

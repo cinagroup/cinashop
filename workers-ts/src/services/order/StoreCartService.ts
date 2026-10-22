@@ -1528,6 +1528,15 @@ export class StoreCartService {
     });
   }
 
+  /** Explicit PHP footer semantics; the established row-count consumers above
+   * remain unchanged. No product normalization, cleanup or cart mutation. */
+  async footerCount(uid: number, numType: 0 | 1): Promise<number> {
+    const value = await this.container.storeCartDao.footerCount(uid, numType);
+    const count = Number(value);
+    if (!/^(0|[1-9]\d*)$/.test(value) || !Number.isSafeInteger(count) || count < 0) throw new ValidateException('购物车数量无效');
+    return count;
+  }
+
   /** 结算页只读预览；最终金额仍由建单事务重新计算。 */
   async quoteFirstOrder(
     uid: number,

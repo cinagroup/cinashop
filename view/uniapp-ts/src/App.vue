@@ -7,9 +7,12 @@ import { loadStatisticsScript } from '../../common/statisticsScript';
 import { API_BASE } from '@/utils/request';
 // #endif
 
+import { useDiyFooterStore } from '@/stores/diyFooter';
+const footer = useDiyFooterStore();
 const theme = useThemeStore();
 const referrals = useShareReferral();
 onLaunch((options) => {
+  footer.resume();
   referrals.captureInbound(options);
   theme.syncPlatform();
   void theme.refresh();
@@ -20,6 +23,7 @@ onLaunch((options) => {
 });
 
 onShow((options) => {
+  footer.resume();
   referrals.captureInbound(options);
   theme.syncPlatform();
   void theme.refresh();
@@ -27,6 +31,7 @@ onShow((options) => {
 });
 
 onHide(() => {
+  footer.pause();
   theme.pause();
   console.log("App Hide");
 });

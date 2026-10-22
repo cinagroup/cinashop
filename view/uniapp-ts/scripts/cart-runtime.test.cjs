@@ -63,7 +63,7 @@ test('mobile initial failure is explicit and retry reads without automatically s
   let fail = true; const r = setup(call => call.url.endsWith('/cart/list') && fail ? { transport: 'offline' } : undefined);
   try { await r.start(); const p = r.checkout; assert.match(p.cartStore.error, /offline/); assert.equal(p.cartStore.ready, false);
     p.goCheckout(); assert.deepEqual(r.navigations, []); fail = false; await p.reload();
-    assert.equal(p.cartStore.ready, true); assert.deepEqual(p.cartStore.checkedItems, []); assert.equal(r.calls.length, 2);
+    assert.equal(p.cartStore.ready, true); assert.deepEqual(p.cartStore.checkedItems, []); assert.equal(r.calls.filter(call => call.url.includes('/cart/')).length, 2);
   } finally { r.stop(); }
 });
 test('mobile account replacement clears old rows and requests only after final token publication', async () => {
@@ -89,9 +89,9 @@ for (const hook of ['onHide', 'onUnload']) test(`mobile pending quantity mutatio
   } finally { gate.resolve({ data: null }); r.stop(); }
 });
 test('mobile logout immediately removes rows, selection and badge without an unauthenticated cart read', async () => {
-  const r = setup(); try { await r.start(); r.checkout.toggleAll(); r.checkout.cartStore.count = 9; const count = r.calls.length;
+  const r = setup(); try { await r.start(); r.checkout.toggleAll(); r.checkout.cartStore.count = 9; const count = r.calls.filter(call => call.url.includes('/cart/')).length;
     r.auth.clear(); assert.deepEqual(r.checkout.cartStore.items, []); assert.equal(r.checkout.cartStore.count, 0); await tick();
-    assert.equal(r.calls.length, count); assert.match(r.checkout.cartStore.error, /登录/); assert.equal(r.checkout.blocked.value, true);
+    assert.equal(r.calls.filter(call => call.url.includes('/cart/')).length, count); assert.match(r.checkout.cartStore.error, /登录/); assert.equal(r.checkout.blocked.value, true);
   } finally { r.stop(); }
 });
 test('mobile hidden read cannot replace the refreshed page and returns with a fresh quote', async () => {

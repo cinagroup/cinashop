@@ -1,10 +1,9 @@
 <template>
   <ThemePage>
-    <view class="cate-page" :class="['template-' + template, 'level-' + style.level]" :data-layout="`${style.level}/${style.index}`">
+    <view class="cate-page" :style="{height:`calc(100vh - var(--window-top,0px) - ${footerHeight ? `${footerHeight}px` : 'var(--window-bottom,50px)'})`}" :class="['template-' + template, 'level-' + style.level]" :data-layout="`${style.level}/${style.index}`">
       <view class="search-bar"><button size="mini" @tap="search">搜索商品</button><button v-if="template === 'filter-products'" size="mini" @tap="openDrawer('filter')">筛选分类</button><button v-if="template === 'filter-products'" size="mini" @tap="goCart">购物车 {{ cart.count }}</button></view>
       <view v-if="styleError || !style.configured" class="notice" role="status">{{ styleError || '分类布局尚未有效配置，使用默认布局' }}</view>
       <view v-if="style.issues.length" class="notice">分类布局资料需管理员确认。</view>
-      <view v-if="visible && tabbarError" class="tabbar-error" role="alert"><text>{{ tabbarError }}</text><button size="mini" @tap="retryNativeTabbar">重新调整底部导航</button></view>
       <view v-if="loading" class="empty" role="status">正在读取分类…</view>
       <view v-else-if="error" class="empty" role="alert">{{ error }}<button size="mini" @tap="load">重新读取分类</button></view>
       <view v-else-if="!tree.length" class="empty">暂无分类</view>
@@ -48,10 +47,14 @@
       <CategoryCartSheet v-if="purchase.cartOpen.value" :disabled="purchase.locked.value || cart.updating" @close="purchase.cartOpen.value=false" @clear="confirmClear" @quantity="purchase.changeCart" @remove="removeCart" @reload="reloadCart" @checkout="purchase.checkoutCart" />
     </view>
     <DiySuspendedNavigation />
+  <DiyGlobalFooter :active="footerVisible" :modal="modalOpen" :reserve="false" @height="footerHeight=$event" />
   </ThemePage>
 </template>
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+import DiyGlobalFooter from '@/components/diy/DiyGlobalFooter.vue';
+import { useDiyFooterHost } from '@/composables/useDiyFooterHost';
+const { visible: footerVisible, height: footerHeight } = useDiyFooterHost();
 import DiySuspendedNavigation from '@/components/diy/DiySuspendedNavigation.vue';
 import CategorySkuSelection from '@/components/category/CategorySkuSelection.vue';
 import CategoryCartSheet from '@/components/category/CategoryCartSheet.vue';
@@ -68,24 +71,6 @@ const miniCart = computed(() => template.value === 'top-products' || template.va
 // The page owns the native tabbar for all its modal surfaces. Keeping this in
 // one place avoids one modal restoring the bar while another is still open.
 const modalOpen = computed(() => drawer.value !== null || purchase.opened.value || purchase.cartOpen.value);
-const tabbarError = ref(''), tabbarPending = ref(false);
-let tabbarApplied = false, tabbarDesired = false, tabbarGeneration = 0;
-function syncNativeTabbar(force = false) {
-  const hide = visible.value && modalOpen.value, pending = tabbarPending.value;
-  const generation = ++tabbarGeneration, owner = { visible: visible.value, version: auth.sessionVersion, token: auth.token, uid: auth.uid };
-  tabbarDesired = hide; tabbarPending.value = false; tabbarError.value = '';
-  if (!force && hide === tabbarApplied && !pending) return;
-  const current = () => owner.visible && visible.value && generation === tabbarGeneration && hide === tabbarDesired
-    && owner.version === auth.sessionVersion && owner.token === auth.token && owner.uid === auth.uid;
-  const fail = () => { if (current()) { tabbarPending.value = false; tabbarError.value = hide ? '底部导航暂未收起，请重试后再操作弹层。' : '底部导航暂未恢复，请重试。'; } };
-  tabbarPending.value = owner.visible;
-  const api = hide ? uni.hideTabBar : uni.showTabBar;
-  if (typeof api !== 'function') { fail(); return; }
-  try { api({ animation: false, success: () => { if (current()) { tabbarApplied = hide; tabbarPending.value = false; tabbarError.value = ''; } }, fail }); }
-  catch { fail(); }
-}
-function retryNativeTabbar() { if (visible.value) syncNativeTabbar(true); }
-watch([visible, modalOpen, () => auth.sessionVersion], () => syncNativeTabbar(), { flush: 'sync' });
 const treeSecondary = computed(() => secondary.value ?? primary.value?.children[0]);
 const cartSubtotal = computed(() => cart.ready ? cartTotal(cart.items.map(item => ({ ...item, checked: item.isValid }))) : '—');
 const drawerChoices = computed(() => moreLevel.value==='third' ? thirds.value : moreLevel.value==='secondary' ? primary.value?.children ?? [] : tree.value);

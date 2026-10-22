@@ -313,6 +313,7 @@
   </view>
   <CommunitySharePanel :controller="engagement" />
   <DiySuspendedNavigation />
+  <DiyGlobalFooter :active="footerVisible" :blocked="availability.closed.value" :modal="detailOpen || showPublish || !!engagement.sharePost.value" @height="footerHeight=$event" />
   </ThemePage>
 </template>
 
@@ -322,6 +323,9 @@ import CommunityFeaturedViewer from '@/components/community/CommunityFeaturedVie
 import { useCommunityFeatured } from '@/composables/useCommunityFeatured';
 import { useCommunityAvailability } from '@/utils/communityAvailability';
 import ThemePage from '@/components/ThemePage.vue';
+import DiyGlobalFooter from '@/components/diy/DiyGlobalFooter.vue';
+import { useDiyFooterHost } from '@/composables/useDiyFooterHost';
+const { visible: footerVisible, height: footerHeight } = useDiyFooterHost();
 import CommunityComments from '@/components/community/CommunityComments.vue';
 import CommunityPostActions from '@/components/community/CommunityPostActions.vue';
 import CommunitySharePanel from '@/components/community/CommunitySharePanel.vue';
