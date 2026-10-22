@@ -31,7 +31,7 @@
     <view v-else-if="diyPage" class="diy-home" :style="diyStyle">
       <view v-if="diyLoading" class="diy-notice">正在核对页面配置…</view>
       <view v-else-if="diyOffline" class="diy-notice diy-offline">当前显示离线缓存 <button size="mini" @tap="loadDiy(true)">重新核实</button></view>
-      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyPageActive" @closed="diyHost.close" />
+      <DiyHomeRenderer v-if="isDiyEnabled(diyPage.is_show)" :components="diyPage.value" :page-active="diyPageActive" :scroll-top="diyScrollTop" :load-more-signal="diyLoadMoreSignal" @closed="diyHost.close" />
       <view v-else class="diy-state">首页暂未开放</view>
     </view>
 
@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, onBeforeUnmount, ref, onMounted, watch } from "vue";
-import { onShow, onHide, onUnload, onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
+import { onShow, onHide, onUnload, onPageScroll, onReachBottom, onPullDownRefresh, onShareAppMessage, onShareTimeline } from "@dcloudio/uni-app";
 import { apiGoodsList, apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
 import { apiOpenAdv, type OpenAdvConfig } from "@/api/legacyContent";
@@ -129,6 +129,9 @@ import { useAuthStore } from "@/stores/auth";
 import { apiShareConfig, type ShareConfig } from "@/api/public";
 
 const diyCommunityVisible = ref(false);
+const diyScrollTop=ref(0),diyLoadMoreSignal=ref(0);
+onPageScroll(event=>{if(diyCommunityVisible.value)diyScrollTop.value=event.scrollTop;});
+onReachBottom(()=>{if(diyCommunityVisible.value)diyLoadMoreSignal.value++;});
 let diyCommunityDisposed = false;
 onShow(() => { if (!diyCommunityDisposed) { diyCommunityVisible.value = true; void load(); } });
 onHide(() => { diyCommunityVisible.value = false; goodsGeneration++; loading.value = false; closeOpenAdv(); });

@@ -1,7 +1,7 @@
 <template>
   <view class="diy-renderer">
     <template v-for="(block, index) in components" :key="blockKey(block, index)">
-      <view class="diy-theme-block" :style="blockThemeStyle(block)">
+      <view v-if="block.name!=='pageFoot' && (block.name==='homeComb' || !combinationSelection)" class="diy-theme-block" :style="blockThemeStyle(block)">
       <view
         v-if="block.name === 'headerSerch'"
         class="diy-search"
@@ -11,18 +11,13 @@
         <text class="search-copy">⌕ {{ componentText(block, 'tipConfig', '搜索商品') }}</text>
       </view>
 
-      <view v-else-if="block.name === 'homeComb'" class="diy-combination-header">
-        <view class="diy-search compact" @tap="open('/pages/goods/search')">
-          <image v-if="componentImage(block, 'logoConfig')" class="search-logo" :src="componentImage(block, 'logoConfig')" mode="heightFix" />
-          <text class="search-copy">⌕ {{ componentText(block, 'inputConfig', '搜索商品') }}</text>
-        </view>
-        <DiyMediaCarousel :items="mediaItems(block)" @open="open" />
-      </view>
-
       <DiyMediaCarousel
-        v-else-if="block.name === 'swipers' || block.name === 'swiperBg'"
-        :items="mediaItems(block)"
-        @open="open"
+        v-else-if="block.name === 'homeComb' || block.name === 'swipers' || block.name === 'swiperBg'"
+        :block="block"
+        :active="pageActive"
+        :scroll-top="scrollTop"
+        :selected-tab="combinationTabs.selected(block)"
+        @select="combinationTabs.select(block, $event.index)"
       />
 
       <view v-else-if="block.name === 'titles'" class="diy-title" @tap="open(componentLink(block, 'linkConfig'))">
@@ -92,24 +87,30 @@
         <text class="diy-more">咨询 ›</text>
       </view>
 
-      <view v-else-if="microPage && block.name === 'pageFoot'" class="diy-page-foot">
-        <view
-          v-for="(item, itemIndex) in footerItems(block)"
-          :key="`${index}-foot-${itemIndex}`"
-          class="diy-foot-item"
-          @tap="open(item.link)"
-        >
+      </view>
+    </template>
+    <template v-if="combinationSelection">
+      <DiyCombinationCategory v-if="combinationSelection.kind==='category'" :key="`${combinationSelection.host}:${combinationSelection.id}`" :id="combinationSelection.id" :active="pageActive" :load-more-signal="loadMoreSignal" />
+      <template v-else>
+        <view v-if="combinationLoading" class="diy-combination-status" role="status">正在读取微页面…</view>
+        <view v-else-if="combinationError" class="diy-combination-status" role="alert">{{combinationError}}<button @tap="combinationTabs.micro.reload(true)">重试微页面</button></view>
+        <DiyHomeRenderer v-else-if="combinationAvailable" :components="combinationComponents" :page-active="pageActive && combinationAvailable" :scroll-top="scrollTop" :load-more-signal="loadMoreSignal" :micro-page="false" @closed="emit('closed', $event)" />
+        <view v-else class="diy-combination-status">微页面暂未开放</view>
+      </template>
+    </template>
+    <view v-for="(block, index) in hostFooters" :key="blockKey(block, index)" class="diy-theme-block" :style="blockThemeStyle(block)">
+      <view class="diy-page-foot">
+        <view v-for="(item, itemIndex) in footerItems(block)" :key="`${index}-foot-${itemIndex}`" class="diy-foot-item" @tap="open(item.link)">
           <image v-if="item.image" class="diy-foot-image" :src="item.image" mode="aspectFit" />
           <text>{{ item.label }}</text>
         </view>
       </view>
-      </view>
-    </template>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import type { DiyComponent } from '@/api/diy';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
@@ -126,6 +127,8 @@ import {
   safeDiyImageUrl,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
+import DiyCombinationCategory from './DiyCombinationCategory.vue';
+import { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 import DiyListWidget from "./DiyListWidget.vue";
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
@@ -143,11 +146,20 @@ const props = withDefaults(defineProps<{
   components: DiyComponent[];
   microPage?: boolean;
   pageActive?: boolean;
+  scrollTop?: number;
+  loadMoreSignal?: number;
 }>(), {
   microPage: false,
   pageActive: true,
+  scrollTop: 0,
+  loadMoreSignal: 0,
 });
 const emit = defineEmits<{ closed: [message: string] }>();
+const combinationTabs=useDiyCombinationTabs(()=>props.components,()=>props.pageActive);
+const {selection:combinationSelection,components:combinationComponents}=combinationTabs;
+const {loading:combinationLoading,error:combinationError,available:combinationAvailable}=combinationTabs.micro;
+const hostFooters=computed(()=>props.microPage?props.components.filter(block=>block.name==='pageFoot'):[]);
+watch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)emit('closed',combinationError.value);});
 function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }
 const theme = useThemeStore();
 function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
@@ -193,15 +205,6 @@ function componentImage(block: DiyComponent, key: string): string {
 
 function componentLink(block: DiyComponent, key: string): string {
   return String(diyNestedValue(block, key) ?? "");
-}
-
-function mediaItems(block: DiyComponent): MenuItem[] {
-  return diyList(block, "swiperConfig", "list").slice(0, 20).flatMap((raw) => {
-    const item = asDiyRecord(raw);
-    const image = safeDiyImageUrl(item?.img ?? item?.image);
-    if (!item || !image) return [];
-    return [{ image, label: "", link: diyItemLink(item) }];
-  });
 }
 
 function infoLabel(item: Record<string, unknown>): string {

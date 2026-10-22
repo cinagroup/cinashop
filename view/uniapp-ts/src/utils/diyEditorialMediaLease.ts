@@ -2,17 +2,29 @@ import { API_BASE } from './request';
 
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 /** These are published media slots, never links or arbitrary editor strings. */
-function mediaValues(page: unknown): unknown[] {
+function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[] {
   const value = record(page).value;
   if (!Array.isArray(value)) return [];
   return value.slice(0, 200).flatMap(raw => {
-    const block = record(raw), field = (key: string) => record(block[key]).url;
+    const block = record(raw), field = (key: string) => ({holder:record(block[key]),key:'url'});
     if (block.name === 'news') return [field('imgConfig')];
     if (block.name === 'hotspot') return [field('picStyle')];
     if (block.name === 'follow') return [field('imgConfig'), field('codeConfig')];
-    if (block.name === 'activeParty') { const items = record(block.menuConfig).list; return Array.isArray(items) ? items.slice(0, 4).map(item => record(item).img) : []; }
+    if (block.name === 'activeParty') { const items = record(block.menuConfig).list; return Array.isArray(items) ? items.slice(0, 4).map(item => ({holder:record(item),key:'img'})) : []; }
+    if (['swipers','swiperBg','homeComb'].includes(String(block.name))) {
+      const items=record(block.swiperConfig).list;
+      return [...(Array.isArray(items)?items.map(item=>({holder:record(item),key:'img'})):[]),...(block.name==='homeComb'?[field('logoConfig')]:[])];
+    }
     return [];
   });
+}
+/** Signed capabilities are transport material, not an authored config change.
+ * Only the explicit published slots lose their ticket when comparing intent;
+ * links, external URLs, IDs, item order and every other field remain exact. */
+export function diyAuthoredPageFingerprint(components:unknown):string {
+  const copy=JSON.parse(JSON.stringify({value:components}));
+  for(const {holder,key} of mediaSlots(copy))if(assetQuery(holder[key])!==null)holder[key]=String(holder[key]).split(/[?#]/u,1)[0];
+  return JSON.stringify(copy);
 }
 function assetQuery(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -27,7 +39,8 @@ function assetQuery(value: unknown): string | null {
  * external images retain their existing offline schema contract. */
 export function diyEditorialMediaDeadline(page: unknown, cachedAt: number, now = Date.now()): number {
   let earliest=Infinity;
-  for (const value of mediaValues(page)) {
+  for (const {holder,key} of mediaSlots(page)) {
+    const value=holder[key];
     const query = assetQuery(value); if (query === null) continue;
     if (!Number.isFinite(cachedAt) || cachedAt <= 0 || cachedAt > now) return 0;
     let params: [string, string][];

@@ -33,6 +33,7 @@
     "audit:admin-marketing": "tsx scripts/admin-marketing-frontend-parity-audit.ts",
     "audit:observability": "tsx scripts/observability-audit.ts",
     "audit:uniapp": "tsx scripts/uniapp-frontend-parity-audit.ts",
+    "audit:diy-carousel-browser": "vitest run --config vitest.diy-carousel-browser.config.ts",
     "audit:legacy-schema:update": "tsx scripts/generate-legacy-schema-authority.ts",
     "data:plan": "tsx scripts/mysql-to-postgres.ts plan",
     "data:copy": "tsx scripts/mysql-to-postgres.ts copy",
