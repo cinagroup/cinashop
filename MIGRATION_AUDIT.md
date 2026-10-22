@@ -8441,3 +8441,12 @@ A3k11b调用链审查：普通创建OrderController:351先查地址但仅对查�
 最终Worker1061、native53、UniApp工具链1987／12项本地门禁与后台Browser30检查点通过；新增143例，不叠加候选或重复。Browser真实50表／46序列逐GET校验轮播／分类零业务写，setup及四次配置变化单列；搜索仅验编码路由／输入，真实缺表错误保留，不宣称产品结果／历史持久化或搜索只读。详情见[说明](workers-ts/docs/php-ts-diy-carousel-20261022.md)与[机器记录](workers-ts/audit/php-ts-diy-carousel-20261022.json)。
 
 按用户授权后台浏览器验收，不逐页弹确认；正常PHP Admin单homeComb，双实例为导入压力夹具。保留get_script和三处loader，未改DDL／ACL／生产路由／锁文件；pageFoot归属修复不等于其完整造型迁移。API-007父项、DATA-008、FE-003J／K及生产／真机／发布继续开放；只提交推送draft，不合并部署，本批精确提交CI在推送后核实。在线npm审计三次网络超时仍未通过，另列开放；下一导航四族只有静态提案。
+
+
+### 2026-10-22 DIY 导航四组件族增量
+
+在独立Worker依赖修复 `129fea7b66a6ec46bb7feb8c5f837b6c55bc1ec2` 上继续 `headerSerch`／`tabNav`／`menus`／`pictureCube`，接通首页与微页面调用链、真实分类分页与独立重试、公开受管媒体和20000导航槽位；保留原2500槽位及原Admin界限。保留已恢复 `/api/get_script` 与Admin／Supplier／UniApp统计脚本加载行为。
+
+最终本机2192工具链项、59文件1079项Worker回归、双完整strict类型和73项native通过。新增独立用例270；实际后台Browser内层1项／31检查点全部完成，50表46序列／152GET／十次明确配置写分开记账。外层143原因未知，内层日志、完整证据、清理、1899源／369产物与226安装指纹已独立复核恢复；没有把外层标成exit0。验收后台进行，不逐页弹确认。
+
+详见 `workers-ts/docs/php-ts-diy-navigation-20261022.md` 与 `workers-ts/audit/php-ts-diy-navigation-20261022.json`。历史正文和复选行保留，API-007父项、DATA-008、FE-003J／K继续开放。pageFoot／全局navigation仅完成静态提案；homeComb的H5原生标题栏偏移需独立修复与完整该族Browser验收。未合并、未部署，GitHub精确新提交CI单列跟进。

@@ -15,6 +15,12 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[]
       const items=record(block.swiperConfig).list;
       return [...(Array.isArray(items)?items.map(item=>({holder:record(item),key:'img'})):[]),...(block.name==='homeComb'?[field('logoConfig')]:[])];
     }
+    if (block.name === 'headerSerch') return [field('logoConfig')];
+    if (block.name === 'menus') { const items=record(block.menuConfig).list; return Array.isArray(items)?items.map(item=>({holder:record(item),key:'img'})):[]; }
+    if (block.name === 'pictureCube') {
+      const style=record(block.picStyle), variant=record(block.styleConfig).tabVal, normal=Array.isArray(style.picList)?style.picList:[], custom=(variant===11||variant==='11')&&Array.isArray(style.docPicList)?style.docPicList:[];
+      return [...normal.map(item=>({holder:record(item),key:'image'})),...custom.map(item=>({holder:record(item),key:'img'}))];
+    }
     return [];
   });
 }

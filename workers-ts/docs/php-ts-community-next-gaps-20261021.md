@@ -108,3 +108,12 @@ PHP `view/uniapp/pages/discover/discoverDetails/index.vue:127` 及 `components/d
 swipers／swiperBg／homeComb与共享首页／微页调用链的本机门禁和后台Browser30阶段已完成，见[本批说明](php-ts-diy-carousel-20261022.md)与[机器记录](../audit/php-ts-diy-carousel-20261022.json)。下一完整候选headerSerch／tabNav／menus／pictureCube：当前tabNav读错持久tabListConfig.list、搜索头仅固定logo／提示、menus固定四列且slice30、pictureCube缺0..11布局及自定义doc几何。只形成21个新鲜输入SHA的静态提案，尚未实施、验收或宣称完成。
 
 后续应复用真实typed微页／分类与宿主页脚归属，同时补完整作者配置／媒体canonical／owner／lease；不能只修单一helper或沿用静默截断。pageFoot完整造型、生产身份／ACL／真机／发布仍单列开放；保留get_script及三处loader，API-007父项、DATA-008、FE-003J／K不改历史复选框。
+
+
+### 2026-10-22 DIY 导航四组件族增量
+
+在独立Worker依赖修复 `129fea7b66a6ec46bb7feb8c5f837b6c55bc1ec2` 上继续 `headerSerch`／`tabNav`／`menus`／`pictureCube`，接通首页与微页面调用链、真实分类分页与独立重试、公开受管媒体和20000导航槽位；保留原2500槽位及原Admin界限。保留已恢复 `/api/get_script` 与Admin／Supplier／UniApp统计脚本加载行为。
+
+最终本机2192工具链项、59文件1079项Worker回归、双完整strict类型和73项native通过。新增独立用例270；实际后台Browser内层1项／31检查点全部完成，50表46序列／152GET／十次明确配置写分开记账。外层143原因未知，内层日志、完整证据、清理、1899源／369产物与226安装指纹已独立复核恢复；没有把外层标成exit0。验收后台进行，不逐页弹确认。
+
+详见 `workers-ts/docs/php-ts-diy-navigation-20261022.md` 与 `workers-ts/audit/php-ts-diy-navigation-20261022.json`。历史正文和复选行保留，API-007父项、DATA-008、FE-003J／K继续开放。pageFoot／全局navigation仅完成静态提案；homeComb的H5原生标题栏偏移需独立修复与完整该族Browser验收。未合并、未部署，GitHub精确新提交CI单列跟进。
