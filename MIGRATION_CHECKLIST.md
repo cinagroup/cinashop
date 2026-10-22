@@ -2889,3 +2889,12 @@ API-004 已将 `/api/v2` 的 16 条真实微信/小程序认证合同全部精�
 API-007本批完成swipers／swiperBg／homeComb及共享首页／微页调用链的配置、媒体、原地内容／分类、分页和完整owner保护；保留原宿主页脚语义。Worker1061、native53、工具链1987／12项本地门禁及后台Browser30检查点本机通过，新增143独立例。搜索只验路由／输入，MP／App未作真机验收；pageFoot完整外观与导航四族仍有后续工作。
 
 见[本批说明](workers-ts/docs/php-ts-diy-carousel-20261022.md)和[机器记录](workers-ts/audit/php-ts-diy-carousel-20261022.json)。历史复选框保持原样；API-007父项、DATA-008、FE-003J／K继续开放，不据此勾选整项完成。保留get_script兼容行为，只提交推送draft、不合并部署。
+
+
+### 2026-10-22 DIY 导航四组件族增量
+
+在独立Worker依赖修复 `129fea7b66a6ec46bb7feb8c5f837b6c55bc1ec2` 上继续 `headerSerch`／`tabNav`／`menus`／`pictureCube`，接通首页与微页面调用链、真实分类分页与独立重试、公开受管媒体和20000导航槽位；保留原2500槽位及原Admin界限。保留已恢复 `/api/get_script` 与Admin／Supplier／UniApp统计脚本加载行为。
+
+最终本机2192工具链项、59文件1079项Worker回归、双完整strict类型和73项native通过。新增独立用例270；实际后台Browser内层1项／31检查点全部完成，50表46序列／152GET／十次明确配置写分开记账。外层143原因未知，内层日志、完整证据、清理、1899源／369产物与226安装指纹已独立复核恢复；没有把外层标成exit0。验收后台进行，不逐页弹确认。
+
+详见 `workers-ts/docs/php-ts-diy-navigation-20261022.md` 与 `workers-ts/audit/php-ts-diy-navigation-20261022.json`。历史正文和复选行保留，API-007父项、DATA-008、FE-003J／K继续开放。pageFoot／全局navigation仅完成静态提案；homeComb的H5原生标题栏偏移需独立修复与完整该族Browser验收。未合并、未部署，GitHub精确新提交CI单列跟进。

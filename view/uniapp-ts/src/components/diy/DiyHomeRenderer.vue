@@ -1,15 +1,12 @@
 <template>
   <view class="diy-renderer">
     <template v-for="(block, index) in components" :key="blockKey(block, index)">
-      <view v-if="block.name!=='pageFoot' && (block.name==='homeComb' || !combinationSelection)" class="diy-theme-block" :style="blockThemeStyle(block)">
-      <view
-        v-if="block.name === 'headerSerch'"
-        class="diy-search"
-        @tap="open('/pages/goods/search')"
-      >
-        <image v-if="componentImage(block, 'logoConfig')" class="search-logo" :src="componentImage(block, 'logoConfig')" mode="heightFix" />
-        <text class="search-copy">⌕ {{ componentText(block, 'tipConfig', '搜索商品') }}</text>
-      </view>
+      <view v-if="block.name!=='pageFoot' && (block.name==='homeComb' || block.name==='headerSerch' || block.name==='tabNav' || !combinationSelection)" class="diy-theme-block" :style="blockThemeStyle(block)">
+      <DiyNavigationWidget
+        v-if="block.name === 'headerSerch' || block.name === 'tabNav' || block.name === 'menus' || block.name === 'pictureCube'"
+        :block="block" :active="pageActive" :scroll-top="scrollTop" :selected-tab="combinationTabs.selected(block)" :header-top="headerOffset(index)"
+        @select="combinationTabs.select(block,$event.index)" @layout="recordHeaderHeight(block,index,$event)"
+      />
 
       <DiyMediaCarousel
         v-else-if="block.name === 'homeComb' || block.name === 'swipers' || block.name === 'swiperBg'"
@@ -47,21 +44,6 @@
           controls
           object-fit="cover"
         />
-      </view>
-
-      <view
-        v-else-if="block.name === 'menus' || block.name === 'pictureCube' || block.name === 'tabNav'"
-        class="diy-menu-grid"
-      >
-        <view
-          v-for="(item, itemIndex) in menuItems(block)"
-          :key="`${index}-${itemIndex}`"
-          class="diy-menu-item"
-          @tap="open(item.link)"
-        >
-          <image v-if="item.image" class="diy-menu-image" :src="item.image" mode="aspectFill" />
-          <text v-if="item.label" class="diy-menu-label">{{ item.label }}</text>
-        </view>
       </view>
 
       <DiyListWidget v-else-if="block.name === 'goodList' || block.name === 'articleList'" :block="block" :active="pageActive" />
@@ -110,14 +92,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { DiyComponent } from '@/api/diy';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
 import { sanitizeArticleRichText } from "@/utils/articleRichText";
 import {
   asDiyRecord,
-  diyItemLink,
   diyList,
   diyNestedValue,
   diyNumber,
@@ -127,6 +108,9 @@ import {
   safeDiyImageUrl,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
+import DiyNavigationWidget from './DiyNavigationWidget.vue';
+import { normalizeDiyNavigation } from '@/utils/diyNavigationConfig';
+import { diyAuthoredPageFingerprint } from '@/utils/diyEditorialMediaLease';
 import DiyCombinationCategory from './DiyCombinationCategory.vue';
 import { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
@@ -163,6 +147,15 @@ watch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)
 function isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }
 const theme = useThemeStore();
 function blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }
+const headerHeights=ref<Record<string,number>>({});
+watch(()=>diyAuthoredPageFingerprint(props.components),()=>{headerHeights.value={};},{flush:'sync'});
+function recordHeaderHeight(block:DiyComponent,index:number,height:number){if(props.components[index]===block&&block.name==='headerSerch'&&Number.isFinite(height)&&height>0&&height<2000)headerHeights.value[blockKey(block,index)]=height;}
+function headerOffset(index:number){let width=375,status=0,native=false;try{const info=uni.getSystemInfoSync();if(Number.isFinite(info.windowWidth)&&info.windowWidth>0)width=info.windowWidth;
+// #ifndef H5
+native=true;
+if(Number.isFinite(info.statusBarHeight)&&Number(info.statusBarHeight)>0)status=Number(info.statusBarHeight);
+// #endif
+}catch{}let total=0,hasHeader=false;const stackTabs=props.components[index]?.name==='tabNav';for(const [i,block] of props.components.slice(0,index).entries()){if(block.name!=='headerSerch'&&block.name!=='tabNav')continue;const config=normalizeDiyNavigation(block,theme.preset);if(!config.enabled)continue;if(block.name==='headerSerch'){hasHeader=true;total+=headerHeights.value[blockKey(block,i)]??config.headerLogicalHeight*width/750+status;}else if(stackTabs&&config.sticky&&(native||hasHeader&&props.scrollTop>50))total+=config.tabLogicalHeight*width/750;}return total;}
 
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
 const COMMERCE_WIDGET_NAMES = new Set([
@@ -205,34 +198,6 @@ function componentImage(block: DiyComponent, key: string): string {
 
 function componentLink(block: DiyComponent, key: string): string {
   return String(diyNestedValue(block, key) ?? "");
-}
-
-function infoLabel(item: Record<string, unknown>): string {
-  const info = Array.isArray(item.info) ? item.info : [];
-  const first = asDiyRecord(info[0]);
-  const value = first?.value ?? first?.title ?? item.name ?? item.title ?? "";
-  return typeof value === "string" || typeof value === "number" ? String(value).slice(0, 80) : "";
-}
-
-function menuItems(block: DiyComponent): MenuItem[] {
-  let raw: unknown[] = [];
-  if (block.name === "menus") raw = diyList(block, "menuConfig", "list");
-  if (block.name === "pictureCube") {
-    raw = diyList(block, "picStyle", "picList");
-    if (!raw.length) raw = diyList(block, "picStyle", "docPicList");
-  }
-  if (block.name === "tabNav") {
-    raw = diyList(block, "tabConfig", "list");
-    if (!raw.length) raw = diyList(block, "menuConfig", "list");
-  }
-  return raw.slice(0, 30).flatMap((value) => {
-    const item = asDiyRecord(value);
-    if (!item || item.show === 0 || item.show === "0") return [];
-    const image = safeDiyImageUrl(item.img ?? item.image);
-    const label = infoLabel(item);
-    if (!image && !label) return [];
-    return [{ image, label, link: diyItemLink(item) }];
-  });
 }
 
 function footerItems(block: DiyComponent): MenuItem[] {

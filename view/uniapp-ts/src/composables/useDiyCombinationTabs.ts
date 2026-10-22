@@ -11,11 +11,11 @@ export function useDiyCombinationTabs(blocks: () => DiyComponent[], active: () =
   let disposed=false;
   const hostKey=(block:DiyComponent)=>`${block.name}:${String(block.timestamp??'')}:${blocks().indexOf(block)}`;
   const micro=useDiyPageHost(()=>selection.value?.kind==='micro'?selection.value.id:null,()=>!disposed&&active(),{adoptTitle:false});
-  const components=computed(()=>micro.page.value?.value.filter(block=>block.name!=='homeComb'&&block.name!=='headerSerch'&&block.name!=='pageFoot')??[]);
+  const components=computed(()=>micro.page.value?.value.filter(block=>block.name!=='homeComb'&&block.name!=='headerSerch'&&block.name!=='tabNav'&&block.name!=='pageFoot')??[]);
   function select(block:DiyComponent,index:number){
-    if(disposed||!active()||block.name!=='homeComb')return;
+    if(disposed||!active()||(block.name!=='homeComb'&&block.name!=='tabNav'))return;
     const host=blocks().find(item=>item===block);if(!host)return;
-    const tab=diyCarouselTabs(host).find(item=>item.index===index);if(!tab?.valid||!tab.title)return;
+    const tab=diyCarouselTabs(host,host.name==='tabNav'?6:4).find(item=>item.index===index);if(!tab?.valid||!tab.title)return;
     if(selection.value?.host===hostKey(host)&&selection.value.index===index)return;
     selection.value={...tab,host:hostKey(host)};
   }

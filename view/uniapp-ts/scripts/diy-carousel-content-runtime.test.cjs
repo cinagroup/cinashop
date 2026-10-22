@@ -32,7 +32,7 @@ async function rendererHtml(r){
  const render=new Function('Vue',compiler.compile(descriptor.template.content,{mode:'function',prefixIdentifiers:true,bindingMetadata:bindings,isCustomElement:tag=>['view','text','image','rich-text','swiper','swiper-item','video','scroll-view'].includes(tag)}).code)(vue);
  const actual=r.load(p).default;actual.render=render;
  const checkout={...r.checkout,DiyMediaCarousel:{render:()=>vue.h('div',{'data-test':'actual-header-boundary'})},DiyCombinationCategory:{render:()=>vue.h('div',{'data-test':'actual-category-boundary'})}};
- const app=vue.createSSRApp({render,setup:()=>checkout});app.component('DiyHomeRenderer',actual);app.use(require('pinia').getActivePinia());
+ const app=vue.createSSRApp({props:actual.props,render,setup:()=>checkout},{...r.props});app.component('DiyHomeRenderer',actual);app.use(require('pinia').getActivePinia());
  return (await require('@vue/server-renderer').renderToString(app)).replace(/<!--[\s\S]*?-->/gu,'');
 }
 for(const microPage of [false,true])for(const index of [0,1,2])test(`actual Renderer template keeps ${microPage?'original micro host footer':'root native footer boundary'} when selecting ${['home zero','micro page','category'][index]}`,async()=>{

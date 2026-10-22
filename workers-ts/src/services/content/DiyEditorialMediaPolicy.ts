@@ -6,21 +6,26 @@ import { canonicalizePublishedAttachmentReference } from './ArticleContentPolicy
 type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue | null => value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : null;
 
-/** Editorial and carousel components expose only these authored image slots.
+/** Editorial, carousel and navigation components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
  * schema strings never acquire an attachment signature. The shared policy
  * verifies the current platform owner, raster type, object key and MIME before
  * signing; historical tickets are canonicalized and refreshed only in output. */
 function editorialMediaSlots(components: unknown[]) {
   const slots: Array<{ owner: RecordValue; key: string }> = [];
-  const collect = (value: unknown, key: string) => {
+  let ordinaryCount = 0, navigationCount = 0;
+  const collect = (value: unknown, key: string, navigation = false) => {
     const owner = record(value);
-    if (owner && typeof owner[key] === 'string') slots.push({ owner, key });
+    if (!owner || typeof owner[key] !== 'string') return;
+    slots.push({ owner, key });
     // The UI accepts 200 components, including homeComb's ten Admin-authored
     // slides plus logo (2200 slots). Legacy carousels can contain more than ten
     // slides, so preserve their complete list within an explicit total budget.
     // Reject oversize output/save rather than silently sign a partial schema.
-    if (slots.length > 2500) throw new ValidateException('DIY公开素材超过完整读取容量');
+    // Navigation's separate budget covers 200 UI components with all 100
+    // Admin-authored menu entries. Retain the previous editorial/carousel
+    // capacity contract, including its atomic 2501-slot rejection.
+    if (navigation ? ++navigationCount > 20000 : ++ordinaryCount > 2500) throw new ValidateException('DIY公开素材超过完整读取容量');
   };
   for (const value of components) {
     const component = record(value);
@@ -39,6 +44,21 @@ function editorialMediaSlots(components: unknown[]) {
       // homeComb's blurred background is derived from the selected slide.
       // Its tabs contain text/typed destinations only, not another image slot.
     }
+    else if (component.name === 'headerSerch') collect(component.logoConfig, 'url', true);
+    else if (component.name === 'menus') {
+      const list = record(component.menuConfig)?.list;
+      if (Array.isArray(list)) for (const item of list) collect(item, 'img', true);
+    }
+    else if (component.name === 'pictureCube') {
+      const picture = record(component.picStyle);
+      if (Array.isArray(picture?.picList)) for (const item of picture.picList) collect(item, 'image', true);
+      const style = record(component.styleConfig)?.tabVal;
+      if ((style === 11 || style === '11') && Array.isArray(picture?.docPicList)) {
+        for (const item of picture.docPicList) collect(item, 'img', true);
+      }
+      // menuConfig is the Admin picker bridge. Non-custom docPicList rows,
+      // links and similarly named neighboring fields are not public slots.
+    }
     // goodList and articleList receive their real media from their independent
     // product/article APIs. Their Admin preview rows are not public authority.
   }
@@ -54,7 +74,23 @@ export function canonicalizeDiyEditorialMedia(components: unknown[]): void {
 export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appKey: string | undefined, components: unknown[]): Promise<void> {
   const slots = editorialMediaSlots(components);
   if (!slots.length) return;
-  const references = await publicProductPictures(db, slots.map(({ owner, key }) => ({ image: owner[key], type: 0, relationId: 0 })));
-  const rendered = await renderProductPictures(appKey, references);
-  slots.forEach(({ owner, key }, index) => { owner[key] = rendered[index]; });
+  // Deduplicate without pre-normalizing: ProductAssetPolicy must still reject
+  // malformed/overlong authored input before canonicalizing copied tickets.
+  // Its existing 10000-row bound also keeps each PG parameter list bounded.
+  const authored = [...new Set(slots.map(({ owner, key }) => owner[key] as string))];
+  const approved: string[] = [];
+  for (let index = 0; index < authored.length; index += 10000) {
+    approved.push(...await publicProductPictures(db, authored.slice(index, index + 10000).map(image => ({ image, type: 0, relationId: 0 }))));
+  }
+  // There can be 22500 slots across the two independent family budgets, but
+  // never start that many HMAC operations concurrently. Repeated canonical
+  // references share one fresh capability, including copied historical URLs.
+  const unique = [...new Set(approved)], rendered = new Map<string, string>();
+  for (let index = 0; index < unique.length; index += 256) {
+    const batch = unique.slice(index, index + 256), values = await renderProductPictures(appKey, batch);
+    batch.forEach((reference, offset) => { rendered.set(reference, values[offset]); });
+  }
+  const byAuthored = new Map(authored.map((reference, index) => [reference, rendered.get(approved[index])!]));
+  // Only commit projection mutations after every owner check/signing batch.
+  for (const { owner, key } of slots) owner[key] = byAuthored.get(owner[key] as string)!;
 }

@@ -4,14 +4,14 @@ import { diyThemeColor } from './diyTheme';
 import type { ThemePreset } from '../../../common/theme';
 
 export interface DiyCarouselTab { index: number; title: string; kind: 'micro' | 'category'; id: number; valid: boolean }
-export function diyCarouselTabs(value: unknown): DiyCarouselTab[] {
+export function diyCarouselTabs(value: unknown, titleLimit = 4): DiyCarouselTab[] {
   const raw = listChild(value, 'tabListConfig').list;
   return [{ index: 0, title: '首页', kind: 'micro' as const, id: 0, valid: true }, ...(Array.isArray(raw) ? raw : []).map((item, i) => {
     const type=listChild(item,'dataType').tabVal,typeValid=type===undefined||type===0||type===1||type==='0'||type==='1';
     const kind = type===1||type==='1' ? 'category' as const : 'micro' as const;
     const idValue = listChild(item, kind === 'micro' ? 'microPage' : 'classPage').id;
     const id = (typeof idValue === 'number' || typeof idValue === 'string') && /^[1-9]\d{0,9}$/u.test(String(idValue)) ? Number(idValue) : NaN;
-    return { index: i + 1, title: listText(listChild(item, 'text').val, '', 4), kind, id, valid: typeValid && Number.isSafeInteger(id) && id > 0 && id <= 2147483647 };
+    return { index: i + 1, title: listText(listChild(item, 'text').val, '', titleLimit), kind, id, valid: typeValid && Number.isSafeInteger(id) && id > 0 && id <= 2147483647 };
   })];
 }
 /** Each persisted family has a different link location. A field caption is
