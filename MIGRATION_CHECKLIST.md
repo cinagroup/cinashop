@@ -2987,3 +2987,12 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 
 
 补丁收尾仅删除新 DiyAuthorLinkPicker.vue 最后 </style> 后多余的一个 LF；原脚本、模板、样式及所有前置字节完全相同。验收区间的源码/依赖/产物零漂移收据原样保留；最终当前源码与验收终态仅此一字节空白差异，另有精确 old=new+LF 原文件证明，不为文件尾空白重跑业务测试。最终保护与完整补丁秘密扫描在修正后重新核对。
+
+
+## 2026-10-23 · 轮播作者完整闭环
+
+- 完成 swiperBg/homeComb 普通完整默认与全字段作者；旧 swipers 仅编辑/复制明确导入项。保留原有统计脚本兼容行为、所有导入未知/隐藏/数值字符串及独立 content。
+- 新增211项独立定义、Admin266、旧Uni轮播126、native16文件477项、完整类型/构建与后台Browser25检查点/3次真实GUI保存通过。普通Worker85文件的3个旧FAB native-only skip随后在真实数据库逐名通过；不把重跑或条件skip计成新通过。
+- 真实GET核全76表/71序列/资源零写入，3次POST只目标value/version/update_time。原报告字节归档与精确逆变换保留旧审计/negative；生产后端、SQL、schema/grants及六锁未改。
+
+证据：`workers-ts/docs/php-ts-diy-carousel-author-20261023.md` 与 `workers-ts/audit/php-ts-diy-carousel-author-20261023.json`。本轮仍19正文族待作者迁移；整体迁移、精确新headCI、合并及生产上线另行记录，未标完成。

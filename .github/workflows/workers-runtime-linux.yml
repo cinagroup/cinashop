@@ -309,6 +309,11 @@ jobs:
         working-directory: view/${{ matrix.directory }}
         run: npm ci
 
+      - name: Install locked Uni dependencies for actual carousel projection
+        if: matrix.directory == 'admin-ts'
+        working-directory: view/uniapp-ts
+        run: npm ci
+
       - name: Run type, test and build contract
         working-directory: view/${{ matrix.directory }}
         run: ${{ matrix.command }}
@@ -325,7 +330,7 @@ jobs:
       - name: Verify actual DIY author editors
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
-        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation
+        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel
 
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'

@@ -98,6 +98,7 @@
           <DiyFooterEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" />
         </el-form-item>
         <el-form-item label="导航组件"><DiyNavigationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="轮播组件"><DiyCarouselEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="内容排版"><DiyPresentationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="页面悬浮按钮"><DiyCustomerServiceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="装修 value" required>
@@ -154,6 +155,8 @@ import { canonicalCustomerServiceValue } from "@/utils/diyCustomerServiceEditor"
 
 import DiyNavigationEditor from "@/components/content/DiyNavigationEditor.vue";
 import { canonicalNavigationValue } from "@/utils/diyNavigationEditor";
+import DiyCarouselEditor from "@/components/content/DiyCarouselEditor.vue";
+import { canonicalCarouselValue } from "@/utils/diyCarouselEditor";
 
 import DiyPageSettingsEditor from "@/components/content/DiyPageSettingsEditor.vue";
 import { newDiyPageSettings, readDiyPageSettings, pageSettingsPatch, type DiyPageSettings } from "@/utils/diyPageSettingsEditor";
@@ -285,7 +288,7 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))));
+    return canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))));
   } catch {
     return null;
   }

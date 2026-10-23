@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "base_commit": "31c7e68e81a72a1a2fc9fd1911622907cf7a09a5",
+  "scope": "Exact additive carousel author component and canonical save integration; no backend route, permission, SQL, dependency or legacy statistics change. Whole before/after sources and unique edit locations are pinned.",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_sha256": "1008e156443029920d37f768c963ec67c2f558fd2a18b78cbb3e7760e474aa21",
+      "after_sha256": "db7aaac18ebf2df638753d402c4d779b583cbb79ac3a4c9f37549fedbc7380a7",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "        <el-form-item label=\"轮播组件\"><DiyCarouselEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+          "before_line": 101,
+          "after_line": 101
+        },
+        {
+          "before_source": "",
+          "after_source": "import DiyCarouselEditor from \"@/components/content/DiyCarouselEditor.vue\";\nimport { canonicalCarouselValue } from \"@/utils/diyCarouselEditor\";\n",
+          "before_line": 157,
+          "after_line": 158
+        },
+        {
+          "before_source": "    return canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))));\n",
+          "after_source": "    return canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))));\n",
+          "before_line": 288,
+          "after_line": 291
+        }
+      ]
+    }
+  ],
+  "previous_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts-pre-carousel-author-20261023.json",
+    "sha256": "7654e717289454d9a36d52e99e31c2c81d6b175586e7ab08aa77f42acf680aa2"
+  },
+  "current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "978dde3bcea666aa4959a15a6e36dd04cc5b29ca553b6efae6b4bfdf3783931d"
+  },
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 103,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "1008e156443029920d37f768c963ec67c2f558fd2a18b78cbb3e7760e474aa21"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "db7aaac18ebf2df638753d402c4d779b583cbb79ac3a4c9f37549fedbc7380a7"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 728,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 229,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 232,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 729,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 345,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 348,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 730,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 368,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 371,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ],
+  "counts_unchanged": {
+    "callSites": 699,
+    "pathVariants": 737,
+    "registered": 737,
+    "executable": 737,
+    "controlledUnavailable": 0,
+    "unregistered": 0,
+    "unresolved": 0
+  }
+}

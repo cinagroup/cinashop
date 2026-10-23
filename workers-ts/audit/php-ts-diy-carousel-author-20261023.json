@@ -1,0 +1,850 @@
+{
+  "schema": "cinashop.php-ts-diy-carousel-author.v1",
+  "recorded_UTC": "2026-10-23T23:24:02.280355+00:00",
+  "status": "local_carousel_author_contracts_passed_release_gates_pending",
+  "base_commit": "31c7e68e81a72a1a2fc9fd1911622907cf7a09a5",
+  "completion_boundary": "Complete modern swiperBg/homeComb author controls and explicit imported legacy swipers editor locally accepted. Browser required and performed hidden, without recurring confirmations. This is one migration increment;19 body families, GitHub exact-headCI/merge/deployment remain separate.",
+  "baseline": {
+    "path": "/tmp/cinashop-diy-carousel-author-baseline.json",
+    "sha256": "073598ac06882b6cd01e40ea24c5bb34806ebf1acdc3da915a59d53450877d82"
+  },
+  "PHP_read_method": {
+    "immutable_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "method": "Fresh immutable git show only; no execution of PHP or Vue SFCs from the fixed PHP repository. Full literal defaults statically extracted and independently copied into Admin; timestamp is instance-bound.",
+    "sources": [
+      {
+        "path": "view/admin/src/components/mobilePage/banner.vue",
+        "sha256": "29fd5c40583a8561635d186bec822c29336e5402f9549c081eccccb83c91c38b",
+        "git_blob": "3e68cc6e8bdae081d0a2e5e006fa392ff974ddac",
+        "lines": 532,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobilePage/banner.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobilePage/home_comb.vue",
+        "sha256": "04d62137919a0f2d4d3343d9cc90b60bcd55a830f0fae493879932238f695e0e",
+        "git_blob": "fa05de300b317b4877c8ecd122c635f9b0f9da69",
+        "lines": 752,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobilePage/home_comb.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfig/c_banner.vue",
+        "sha256": "dcfaa94ee304b6c08e9d807d24c2b9984c346def24dee935f9e7c1a7ccef67fe",
+        "git_blob": "cf6af54d33d9d6a9e0a3f86107493948b6c0c96a",
+        "lines": 268,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfig/c_banner.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfig/c_home_comb.vue",
+        "sha256": "b9c362f520d7d54c17690ba8152768332d54b96913826a0a6a3855b975862937",
+        "git_blob": "4c82b1900ba5f2865f5961c08f18a0db9c98310d",
+        "lines": 222,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfig/c_home_comb.vue"
+      },
+      {
+        "path": "view/admin/src/pages/setting/devise/index.vue",
+        "sha256": "79c72055fe2c24ba00e1af9af29a2311108a72b6b547948bf05f091db8701efa",
+        "git_blob": "0b22254d909c102ff5f758b1297a72b767cb6dfe",
+        "lines": 1607,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/pages/setting/devise/index.vue"
+      },
+      {
+        "path": "view/admin/src/store/modules/admin/modules/mobildConfig.js",
+        "sha256": "d556239e2401344497d1697e4913c716cabfe5ddbb6004d60544a24d9606b8a2",
+        "git_blob": "608104472c5076a5e509bc7f39250807a0b95941",
+        "lines": 394,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/store/modules/admin/modules/mobildConfig.js"
+      },
+      {
+        "path": "view/admin/src/components/diyComponents/c_upload_list.vue",
+        "sha256": "c049441d968647c78012a410f66d950aef87dcc7c471b091927be3dd9058b2dd",
+        "git_blob": "2710e07f33688031670ac01b40eb8fd3d7e32586",
+        "lines": 244,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/diyComponents/c_upload_list.vue"
+      },
+      {
+        "path": "view/admin/src/components/diyComponents/c_tab.vue",
+        "sha256": "a1102c223ea53afbc1b90f05d8ac9b404e6dadf8a89d7934bd4b6dfb034dddf7",
+        "git_blob": "05dd7a8315f8f92f12e59b5a86030edddeb1e52f",
+        "lines": 87,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/diyComponents/c_tab.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_swipers_list.vue",
+        "sha256": "ee2b8eefd2a62e3674c07ad376aebe8debb4b2794e25a720a5cd68295224bb7a",
+        "git_blob": "bdbc167cd255abe390353b078093b17ac2b89dd5",
+        "lines": 363,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_swipers_list.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_menu_list.vue",
+        "sha256": "901fd7b628fc73bb034e7616efe9d7cb7d2ba8e786c5e14961fd99ff3e86bbb3",
+        "git_blob": "55ec315de2b319c2590114e9f2c4b2e60e0a30ee",
+        "lines": 384,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_menu_list.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_input_number.vue",
+        "sha256": "5ca01ff2d799f5a36afc229cc88d5d7d19be44eb38618371639f430f822a7027",
+        "git_blob": "fa280e5322c54fb7da4f58c5d708e6ca40063109",
+        "lines": 114,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_input_number.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_input_item.vue",
+        "sha256": "47766bb6db01faef2422cd73b5c64b04aca1cdd37507b7d3ad355ed8ace67255",
+        "git_blob": "48a8924d256f874ec81fd2abbcc9c5ac56f3463a",
+        "lines": 104,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_input_item.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_slider.vue",
+        "sha256": "b27efc0259cdc0952d8edc3c70325acba33a70397f26de4496a0e73ca2d54701",
+        "git_blob": "5fbaff3f06686cadeb4be8e9e81bc15fc1f328b4",
+        "lines": 63,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_slider.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_hot_word.vue",
+        "sha256": "17791a9071f02255a1a374ff2f6c298e98b331333b351963e5d33a37222797b9",
+        "git_blob": "4d033aa4bfb5b92caabc25f2124ee6b05488dde5",
+        "lines": 154,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_hot_word.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_tab_list.vue",
+        "sha256": "aec034e2940d1949827d242abcd48f9154c02cbe1a0f64e9858d4e9066f5e7c6",
+        "git_blob": "b8b3849930b03fccf4bbc381553538d5d16843b0",
+        "lines": 245,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_tab_list.vue"
+      },
+      {
+        "path": "view/uniapp/pages/index/components/swipers.vue",
+        "sha256": "03f21857480a7e3a1180d3220e6ced8c2d3cab5f5c8974385c9d80611e6c306f",
+        "git_blob": "617bbbaf7e3664d23bda937b3d98e187d2ea25f3",
+        "lines": 150,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/uniapp/pages/index/components/swipers.vue"
+      },
+      {
+        "path": "view/uniapp/pages/index/components/swiperBg.vue",
+        "sha256": "0a6f8c6b7f9ad5a4b58de8e43d4bc0c7f0f42050cca9b9ad6b305932758cccd5",
+        "git_blob": "fcbe39625a1b8a758fd21257346670b41a0ea08e",
+        "lines": 307,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/uniapp/pages/index/components/swiperBg.vue"
+      },
+      {
+        "path": "view/uniapp/pages/index/components/homeComb.vue",
+        "sha256": "8c585955c5a5b271a65acd5f807bf82a35d1d72382bf1c28e00b2a245e957d5e",
+        "git_blob": "5553a8ef947966dfdea1e96ab864699d3a66bf8b",
+        "lines": 786,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/uniapp/pages/index/components/homeComb.vue"
+      },
+      {
+        "path": "view/admin/src/components/mobileConfigRight/c_fillet.vue",
+        "sha256": "f2e6bc9ca72b9d0e9083397fbd7e64b9a16f0aa29e61cdad17118c1df3874648",
+        "git_blob": "4a294fe007fff03d9b02cb023740357069967f86",
+        "lines": 131,
+        "copy": "/tmp/cinashop-next-author-scout-php/view/admin/src/components/mobileConfigRight/c_fillet.vue"
+      }
+    ]
+  },
+  "fresh_contract": {
+    "path": "/tmp/cinashop-carousel-author-fresh-contracts.json",
+    "sha256": "295579376b34331325349c7830ab3bde6f8a7cdb32610b1636597fbbefc50cf4"
+  },
+  "default_extraction": {
+    "path": "/tmp/cinashop-carousel-author-defaults-static.json",
+    "sha256": "86c3e0b4f79e15ded41594741cfc99a3734cc1148d06207602ad11e43455e29d"
+  },
+  "field_families": {
+    "common": {
+      "fields": [
+        "cname",
+        "name",
+        "timestamp",
+        "isHide",
+        "setUp.tabVal",
+        "title* labels and original nested metadata"
+      ],
+      "preserve": "Timestamp ownership, independent content and row metadata, unknown fields, neighbors, inactive fields, exact imported types and long lists survive mount/selection/unrelated changes. isShow is understood by TS consumer even though not present in these PHP new defaults."
+    },
+    "swiperBg": {
+      "php_default_anchor": "view/admin/src/components/mobilePage/banner.vue:157-355",
+      "panel_anchor": "view/admin/src/components/mobileConfig/c_banner.vue:35-238",
+      "ordinary_defaults": {
+        "styleConfig.tabVal": 1,
+        "swiperConfig.maxList": 10,
+        "swiperConfig.initial_list_length": 1,
+        "swiperConfig.list[].img": "",
+        "swiperConfig.list[].imgTitle": "图一",
+        "swiperConfig.list[].info[0].title": "链接",
+        "swiperConfig.list[].info[0].value": "",
+        "swiperConfig.list[].info[0].max": 100,
+        "docConfig.tabVal": 0,
+        "docPosition.tabVal": 1,
+        "toneConfig.tabVal": 0,
+        "dotColor.color[0].item": "#E93323",
+        "dotBgColor.color[0].item": "#DDDDDD",
+        "filletImg.type": 0,
+        "filletImg.val": 10,
+        "filletImg.min": 0,
+        "filletImg.valList[].val": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "imgConfig.val": 10,
+        "bgColor.color[0].item": "#F62C2C",
+        "topConfig.val": 10,
+        "bottomConfig.val": 10,
+        "prConfig.val": 10,
+        "mbConfig.val": 0,
+        "txtStyle.type": 0
+      },
+      "complete_controls": [
+        "3 styles 0/1/2",
+        "all slide image/gallery/link/edit/add/delete/reorder",
+        "4 indicators 0..3",
+        "3 dot positions 0..2",
+        "theme/custom tone with both selected and regular colors",
+        "unified/split four corner image radius",
+        "style2-only image spacing",
+        "background color",
+        "top/bottom/horizontal/page-top spacing",
+        "component visibility and body movement"
+      ],
+      "conditions": [
+        "custom dot fields shown when toneConfig.tabVal=1; changing tone does not erase custom values",
+        "imgConfig spacing shown for style2; changing style does not erase it",
+        "bottomConfig hidden for style1; retain it",
+        "c_banner lists a fillet control, but banner default has no fillet and current consumer does not read it. Preserve imported value; do not invent an effective public background-radius field.",
+        "txtStyle is persisted default metadata but dot position publicly consumes docPosition, not txtStyle.",
+        "PHP c_fillet.vue:20-25 labels the four stored slots TL/TR/BL/BR and accepts split entries as plain Input without explicit numeric bounds; current TS public normalization retains its separately tested family corner order and clamps only at render."
+      ],
+      "consumer_details": [
+        "3000ms,500ms duration",
+        "style1 background height50%; style2 previousMargin55rpx",
+        "public radius corner order0,1,3,2 and clamp80 then x2rpx",
+        "public numeric spacing clamp100 and x2rpx; imported larger/raw forms must not be rewritten by merely opening editor",
+        "actual link is info[0].value only"
+      ]
+    },
+    "homeComb": {
+      "php_default_anchor": "view/admin/src/components/mobilePage/home_comb.vue:137-473",
+      "panel_anchor": "view/admin/src/components/mobileConfig/c_home_comb.vue:35-191",
+      "ordinary_defaults": {
+        "styleConfig.tabVal": 0,
+        "classConfig.tabVal": 0,
+        "searchConfig.tabVal": 0,
+        "logoConfig.url": "",
+        "inputConfig.value": "请输入搜索词",
+        "inputConfig.max": 10,
+        "hotWords.list": [
+          {
+            "val": ""
+          }
+        ],
+        "numConfig.val": 3,
+        "numConfig.type": "words",
+        "tabListConfig.max": 100,
+        "tabListConfig.initial_list_length": 4,
+        "tabListConfig.list[].text.val": "标题标题",
+        "tabListConfig.list[].text.max": 4,
+        "tabListConfig.list[].dataType.tabVal": 0,
+        "tabListConfig.list[].microPage": {
+          "id": 0,
+          "name": ""
+        },
+        "tabListConfig.list[].classPage": {
+          "id": 0,
+          "name": ""
+        },
+        "contentConfig.val": 20,
+        "classColor.color[].item": [
+          "#E93323",
+          "#E93323"
+        ],
+        "docConfig.tabVal": 0,
+        "docPosition.tabVal": 1,
+        "toneConfig.tabVal": 0,
+        "dotColor.color[0].item": "#E93323",
+        "dotBgColor.color[0].item": "#DDDDDD",
+        "filletImg.type": 0,
+        "filletImg.val": 10,
+        "filletImg.valList[].val": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "swiperConfig.maxList": 10,
+        "swiperConfig.initial_list_length": 1,
+        "swiperConfig.list[].img": "",
+        "swiperConfig.list[].info[0].value": "标题",
+        "swiperConfig.list[].info[0].max": 4,
+        "swiperConfig.list[].info[1].value": "",
+        "swiperConfig.list[].info[1].max": 100
+      },
+      "complete_controls": [
+        "2 styles 0/1",
+        "classification show/hide",
+        "normal/sticky search",
+        "real logo gallery",
+        "search placeholder",
+        "complete real hotword catalog with selected words add/delete/reorder",
+        "hotword duration",
+        "typed micro/category tabs: text/type/active identity id+name, add/delete/reorder",
+        "slide image/title/link and add/delete/reorder",
+        "content spacing",
+        "two class gradient colors",
+        "4 indicators and3 positions",
+        "tone and both dot colors",
+        "unified/split four corner radius",
+        "visibility and fixed top placement"
+      ],
+      "conditions": [
+        "classConfig hidden public tabs must keep all entries and both target slots",
+        "active target change updates its typed slot id+name only, never parses URL and never erases inactive target",
+        "public-only 首页 tab is prepended at runtime, not persisted into authored tab list",
+        "tone controls field visibility in PHP panel; current homeComb consumer intentionally honors dot colors regardless of tone, so preserve its existing behavior",
+        "subtitle/title slot is author metadata; do not remap it into the link slot",
+        "new homeComb singleton excludes headerSerch or tabNav even if hidden, must insert at top; imported invalid combinations/duplicates remain unchanged on unrelated edits",
+        "PHP split radius labels store TL/TR/BL/BR, while established TS homeComb radius consumption is direct0/1/2/3. Preserve the existing consumer contract; author preview must show actual TS result, not silently transpose stored values."
+      ],
+      "consumer_details": [
+        "3000ms slides,500ms duration,320rpx image area; two previous margins10/50rpx",
+        "hotword numConfig actually drives interval; current parser clamps3600,0 falls back2500ms. Do not copy headerSerch fixed cadence.",
+        "placeholder max10 at render; hotword strings sanitized/max100 at render",
+        "contentConfig uses px, not x2rpx",
+        "split radius corner order0,1,2,3 differs from swiperBg",
+        "category/micro content swaps in place, preserves root headers/title/footer/selection and owner/media renewal guards",
+        "actual slide link info[1].value only"
+      ]
+    },
+    "swipers_import_adapter": {
+      "php_public_anchor": "view/uniapp/pages/index/components/swipers.vue:4-52",
+      "current_anchor": "view/uniapp-ts/src/utils/diyCarouselConfig.ts:19-58",
+      "fields": [
+        "swiperConfig.list[].img",
+        "swiperConfig.list[].info[1].title",
+        "swiperConfig.list[].info[1].value fallback only when title absent/null/blank/链接",
+        "tabConfig.tabVal 0 static advertisement or1carousel",
+        "docConfig.type 0 circular/1square",
+        "imgConfig.type radius toggle",
+        "itemEdge.val",
+        "lrConfig.val",
+        "mbConfig.val",
+        "timestamp/isHide/isShow/imported metadata"
+      ],
+      "consumer_details": [
+        "2500ms,500ms duration,natural height+10",
+        "white active/black inactive legacy indicator palette, independent of modern custom dot colors",
+        "legacy margins use rpx directly",
+        "keep all imported slides beyond10/20, never truncate",
+        "explicit invalid chosen title cannot fall back to otherwise valid value; link author action must edit actual active slot without ambiguous hidden conflict"
+      ],
+      "new_creation": "not authorized as PHP-equivalent ordinary default by this scout; exact fixed-PHP author origin remains unproven"
+    }
+  },
+  "implementation": {
+    "modern": [
+      "swiperBg",
+      "homeComb"
+    ],
+    "import_only": [
+      "swipers"
+    ],
+    "ordinary_limits": {
+      "slides": 10,
+      "typed_tabs": 100,
+      "hotwords": 20
+    },
+    "import_policy": "No mount/selection/preview/default-merge trimming or numeric/string normalization. All imported arrays, inactive targets/styles, unknown neighbors and independent content retained. Explicit legacy copy clones the selected whole imported item; no ordinary legacy component default is invented.",
+    "public_contract": "Uses current Uni timing, units, Number enum grammar, typed identities, separate corner orders and legacy winning title/fallback rules;24 projections compare actual installed Uni runtime.",
+    "canonical_media": "Gallery capability remains ephemeral; canonical asset references saved, public preview owner/lease checked.",
+    "backend_changes": "No production backend/SQL/schema/grants/dependency/lock change; reuse all five existing author-option GETs,13catalogs and complete25 fixture hotwords. Shared2500 carousel/editorial media budget remains."
+  },
+  "source_binding": {
+    "path": "workers-ts/audit/diy-carousel-author-source-binding-20261023.json",
+    "sha256": "e09f9227d29faa4932810e66e12d4c1d57c5d4db6e233ce29284b3253b4dd0b6",
+    "previous_report": {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-pre-carousel-author-20261023.json",
+      "sha256": "7654e717289454d9a36d52e99e31c2c81d6b175586e7ab08aa77f42acf680aa2"
+    },
+    "current_report": {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "sha256": "978dde3bcea666aa4959a15a6e36dd04cc5b29ca553b6efae6b4bfdf3783931d"
+    },
+    "exact_source_edits": 3,
+    "exact_API_delta": "Only one frontend hash and three existing call lines. Backend and699/737 counts unchanged. Old pinned hashes and mutation negatives survive the exact inverse."
+  },
+  "validation": {
+    "new_unique_definitions": 211,
+    "new_counts": {
+      "Admin_actual_compiled_Vue_and_installed_InputNumber_and_Uni_projection": 81,
+      "Worker_runner": 26,
+      "Worker_source_API_binding": 11,
+      "two_schema_native": 92,
+      "actual_Browser": 1
+    },
+    "Admin_all_runtime": 266,
+    "Uni_old_carousel_runtime": 126,
+    "Worker": {
+      "files": 85,
+      "passed": 1751,
+      "conditional_native_skipped": [
+        {
+          "file": "test/admin-fab-permission.test.ts",
+          "ordinal_in_actual_report": 2,
+          "name": "FAB legacy and assigned permissions in actual SQL maps only the exact legacy page pair to read in single and batched resolvers",
+          "status": "skipped"
+        },
+        {
+          "file": "test/admin-fab-permission.test.ts",
+          "ordinal_in_actual_report": 3,
+          "name": "FAB legacy and assigned permissions in actual SQL keeps explicit canonical action grants separate from the old page and generic writer",
+          "status": "skipped"
+        },
+        {
+          "file": "test/admin-fab-permission.test.ts",
+          "ordinal_in_actual_report": 4,
+          "name": "FAB legacy and assigned permissions in actual SQL uses the same FAB authority for assigned accounts, notification fanout and locked role decisions",
+          "status": "skipped"
+        }
+      ],
+      "boundary": "Three exact old FAB native-only definitions are conditionally skipped in ordinary unit context and all execute as passed in the complete fresh native file; no zero-skip unit claim."
+    },
+    "native": {
+      "files": 16,
+      "cases": {
+        "passed": 477,
+        "failed": 0,
+        "skipped": 0
+      },
+      "file_counts": {
+        "test/uniapp-checkout-postgres.test.ts": 4,
+        "test/diy-presentation-postgres.test.ts": 50,
+        "test/diy-footer-postgres.test.ts": 48,
+        "test/diy-navigation-postgres.test.ts": 46,
+        "test/diy-carousel-postgres.test.ts": 27,
+        "test/diy-editorial-postgres.test.ts": 26,
+        "test/diy-customer-service-postgres.test.ts": 42,
+        "test/diy-page-settings-postgres.test.ts": 40,
+        "test/diy-media-reference-postgres.test.ts": 32,
+        "test/admin-fab-link-catalog-postgres.test.ts": 4,
+        "test/admin-fab-link-catalog-http.test.ts": 3,
+        "test/admin-fab-permission.test.ts": 5,
+        "test/admin-diy-author-options-postgres.test.ts": 4,
+        "test/admin-diy-author-options-http.test.ts": 4,
+        "test/diy-navigation-author-postgres.test.ts": 50,
+        "test/diy-carousel-author-postgres.test.ts": 92
+      },
+      "source_drift": [],
+      "installed_drift": [],
+      "owned_pg_status": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-Rkr3Vc/data",
+          "exit": 3,
+          "postmaster_pid_exists": false
+        }
+      ]
+    },
+    "strict_and_build_steps": [
+      {
+        "name": "Admin-all-runtime",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Admin-all-runtime.log",
+          "sha256": "503af401cea3f50c6572cc326dd1a5e4288ea576879cb0a1831e2834298ecb66"
+        }
+      },
+      {
+        "name": "Admin-build",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Admin-build.log",
+          "sha256": "85a74c61e3a3ff649dfa0c263f9ee5277ce482f11b3426ee960686b416355aac"
+        }
+      },
+      {
+        "name": "Uni-old-carousel-runtime",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Uni-old-carousel-runtime.log",
+          "sha256": "3d9191f484a0a4517e83759b9fbc8eb9fb9a0b6c8dbf8ade8798f954b9cf921a"
+        }
+      },
+      {
+        "name": "Uni-H5-build",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Uni-H5-build.log",
+          "sha256": "397475ff026dc2d3d9558212932f0caa4ce4abedbef5b8b202c1d8cfc6ba8b25"
+        }
+      },
+      {
+        "name": "Worker-unit-strict",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Worker-unit-strict.log",
+          "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b"
+        }
+      },
+      {
+        "name": "Worker-runtime-strict",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Worker-runtime-strict.log",
+          "sha256": "1c53d6f6daef131483537c473aaa908fb4a68517e06e54e1bdd80fafab05f315"
+        }
+      },
+      {
+        "name": "Browser-config-strict",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Browser-config-strict.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "name": "Worker-complete-files",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-validation-candidate1-Worker-complete-files.log",
+          "sha256": "cd85a8c5ec2cb46ff6c9a5ba467f42d721fcdc493f1e2cba58a562bbc939d6cc"
+        }
+      }
+    ],
+    "receipts": [
+      {
+        "path": "/tmp/cinashop-carousel-author-validation-candidate1-result.json",
+        "sha256": "e3a14943a569601f2c70e885baf6b69a7f456d66fb83dc2b20a1ba95ba6151bd"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-validation-final-result.json",
+        "sha256": "98fe1b86eb02737e588d85d10060b791b6eea15e502186bd13cec8807682ba52"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-native-candidate1-result.json",
+        "sha256": "8c79170467fe01724546fa8257336a181a7fdfcc0c5447d17913d9c3e9e42e8c"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-validation-category-repair-result.json",
+        "sha256": "8e9aac9a97ef94383a5b4767da23eafcf11d60fdcd0b85cb0e3bf533c4377a99"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-native-candidate2-result.json",
+        "sha256": "ba212906cf2673c03f2117c04f4e4af554ad4787151c3fe56c02295aaf66f14b"
+      }
+    ],
+    "all_original_candidates_preserved": true,
+    "collector_boundary": "Original unit child0/outer97 is retained. Independent continuation requires exact source/installed/driver/report/log identities and exact three named conditionally skipped cases, then original475/16 actual named passes and PG cleanup. A later fixture-only repair adds one anonymous category/product/PNG read-only definition per schema; current fresh477/16 is separate and does not rewrite the original unit collector97 or original475 receipts.",
+    "initial_Admin_test_failures": "First two new-test attempts used the wrong stub control and omitted Vue update ticks; originals retained, actual controls/expectations fixed, no old assertion weakened.",
+    "original_native_before_fixture_repair": {
+      "receipt": {
+        "path": "/tmp/cinashop-carousel-author-native-candidate1-result.json",
+        "sha256": "8c79170467fe01724546fa8257336a181a7fdfcc0c5447d17913d9c3e9e42e8c"
+      },
+      "files": 16,
+      "passed": 475,
+      "source_drift": [],
+      "installed_drift": [],
+      "owned_pg_status": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-bKKgo7/data",
+          "exit": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "boundary": "Actual original475 passed; kept as historical source-bound evidence, not relabeled477."
+    },
+    "fresh_repair_strict_steps": [
+      {
+        "name": "Worker-unit-strict-repaired-fixture",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-native-candidate2-Worker-unit-strict-repaired-fixture.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "source_drift": [],
+        "installed_drift": []
+      },
+      {
+        "name": "Browser-config-strict-repaired-fixture",
+        "actual_exit_code": 0,
+        "log": {
+          "path": "/tmp/cinashop-carousel-author-native-candidate2-Browser-config-strict-repaired-fixture.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "source_drift": [],
+        "installed_drift": []
+      }
+    ]
+  },
+  "Browser": {
+    "receipt": {
+      "path": "/tmp/cinashop-diy-carousel-author-browser-candidate2-result.json",
+      "sha256": "09ffec78bd0f6ea448f8479d03cb6a1e934d8f967f1bf90f92b71288156571a3"
+    },
+    "raw_evidence": {
+      "path": "/tmp/cinashop-diy-carousel-author-browser-candidate2/cinashop-diy-carousel-author-browser-evidence.json",
+      "sha256": "176834a0bb933b09978f223804a94462b91ece49016a2944476ba3a27ccc9cd0"
+    },
+    "checkpoints": [
+      "admin",
+      "minimal",
+      "reader",
+      "rootOpen",
+      "catalog",
+      "latePending",
+      "lateClosed",
+      "lateReleased",
+      "rootReopened",
+      "styles",
+      "rootEdited",
+      "rootSaved",
+      "rootH5",
+      "typedMicro",
+      "typedCategory",
+      "alternateOpen",
+      "alternateEdited",
+      "alternateSaved",
+      "alternateH5",
+      "microOpen",
+      "microNoop",
+      "microEdited",
+      "microSaved",
+      "microH5",
+      "finished"
+    ],
+    "real_GUI_saves": 3,
+    "raw_JSON_edits": 0,
+    "real_GET_and_synthetic_counts": {
+      "real_GET": 165,
+      "synthetic": 60,
+      "real_POST": 3
+    },
+    "tables": 76,
+    "sequences": 71,
+    "unique_full_snapshots": 4,
+    "source_count": 6116,
+    "installed_count": 31521,
+    "artifact_count": 658,
+    "source_drift": [],
+    "installed_drift": [],
+    "artifact_equal": true,
+    "owned_pg_status": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-7qtYww/data",
+        "exit": 3,
+        "postmaster_pid_exists": false
+      }
+    ],
+    "console": {
+      "errors": 0,
+      "warnings": 1,
+      "receipt": {
+        "path": "/tmp/cinashop-carousel-author-browser-console.json",
+        "sha256": "e31530ba0876437fde681219dfc5f85696daf126231d32f6cc742a87a1c0f639"
+      }
+    },
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-carousel-author-Browser-candidate2-root-H5.png",
+        "sha256": "3d8261e6f197d9776ead4117c3718a1719fa17b3fd4b5e5dd81582a95730d864"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-Browser-candidate2-alternate-H5.png",
+        "sha256": "c65ce9dd007f40313c8646669d555fbc4c71d1aa06a8a467175485ce4cc27c9a"
+      },
+      {
+        "path": "/tmp/cinashop-carousel-author-Browser-candidate2-micro-H5.png",
+        "sha256": "89f2d8b80bf4e2f93e038e49d6c212b658779c6d1e5aa89f5198469307543e08"
+      }
+    ],
+    "boundaries": [
+      "Real built Admin/H5 and actual Worker/owned PG16/R2 metadata and bytes; unrelated chrome alone declared synthetic.",
+      "Exactly three real GUI Admin saves. All five modern style combinations are actually visited in Admin; H5 is root bg2/home1/legacycarousel, alternate bg1/home0/legacystatic and imported micro. Native/runtime cover the full independent style/indicator matrix; Browser does not claim all matrix combinations.",
+      "Browser uses owned maintenance SQL DI boundary; actual distinct production app/Admin LOGIN ACLs are separately verified by author-options native tests.",
+      "Late response is a real completed gallery response held at HTTP transport and released after closure; cancellation is not misreported as an abort-ignoring application callback.",
+      "No MP/App physical-device rendering or production deployment claim."
+    ],
+    "browser_identity": "Actual connected IAB browser2, hidden tab; no independent Chrome/Edge extension connection claim."
+  },
+  "independent_reviews": [
+    {
+      "path": "/tmp/cinashop-carousel-author-source-binding-independent-review.json",
+      "sha256": "6aafa48fc3dd15a4948ddbc373d2125e040521dae9722ca8bd31805a8a868c49"
+    },
+    {
+      "path": "/tmp/cinashop-carousel-author-frontend-independent-review.json",
+      "sha256": "ab6230a74f38769a66ebefc9906399f93aa958efb258b2403e587559f167d556"
+    },
+    {
+      "path": "/tmp/cinashop-carousel-author-native-execution-independent-review.json",
+      "sha256": "1c71feeed0a57fea7d46bca0bff6b9ab471e93d06028c539b50c577feca33df5"
+    },
+    {
+      "path": "/tmp/cinashop-carousel-author-category-repair-execution-independent-review.json",
+      "sha256": "c2b1f2bc7cb9ba3e9bf4293b821305371aac7d5401700b6627d61e8b9d5c1b96"
+    }
+  ],
+  "remaining_author_families": [
+    "userInfor",
+    "newVip",
+    "articleList",
+    "bargain",
+    "combination",
+    "coupon",
+    "goodList",
+    "liveBroadcast",
+    "news",
+    "promotionList",
+    "seckill",
+    "ranking",
+    "presale",
+    "pointsMall",
+    "signIn",
+    "hotspot",
+    "follow",
+    "community",
+    "activeParty"
+  ],
+  "remaining_count": 19,
+  "next_readonly_scout": {
+    "path": "/tmp/cinashop-next-list-author-fresh-scout.json",
+    "sha256": "86bd913d51f8dddbb5828c409db09ccfd0875b0f6db2056d5fcfb9318dcddefa"
+  },
+  "post_native_CI_prerequisite": {
+    "path": "/tmp/cinashop-carousel-author-ci-prerequisite-followup.json",
+    "sha256": "d145e9ec4bd3c7d1081b00365921c991bd27210ea4642f354aa092f57070ebc5"
+  },
+  "CI_module_resolution_review": {
+    "path": "/tmp/cinashop-carousel-author-CI-install-scope-independent-review.json",
+    "sha256": "0894ecfeb0d6b5fbb9d7f89b0ae52a352248a995f7ef67840335b957d6d6b6d8"
+  },
+  "source_followup_boundary": "Original functional/type/build/native receipts remain bound to their original source. A separately verified five-line CI-only install prerequisite passed six existing CI guards. Browser candidate1 then exposed a reused test-category level mismatch; exactly the new carousel fixture and its new native test received an inverse-proven repair. Fresh Worker unit strict, Browser-config strict and complete native16/477 execute current repaired sources; unchanged earlier frontend/build/runtime/unit receipts are reused only through the explicit two-file and CI-only transitions. Browser validates exact repaired full source/installed identity. Post-Browser only the separate one-LF native-test cosmetic supplement follows; no cross-run full-source equality claim.",
+  "post_validation_cosmetic_EOF": {
+    "recorded_utc": "2026-10-23T23:24:01.097100+00:00",
+    "file": "workers-ts/test/diy-carousel-author-postgres.test.ts",
+    "only_one_extra_final_LF_removed": true,
+    "body_byte_equal": true,
+    "before_archive": "/tmp/cinashop-carousel-author-native-before-final-cosmetic-EOF.ts",
+    "before_sha256": "d7414943c4260fe2f6e0cf2d2df46dd5c492bcbf1bc5399ec795a8fbc64cbcef",
+    "after_sha256": "340066656ae9260776339b760e9706e6090ff5c35c8b9a6273a975f9b29731e6",
+    "before_bytes": 27849,
+    "after_bytes": 27848,
+    "validated_native_result": "/tmp/cinashop-carousel-author-native-candidate2-result.json",
+    "validated_Browser_result": "/tmp/cinashop-diy-carousel-author-browser-candidate2-result.json",
+    "boundary": "All required suites completed before this cosmetic operation. Only the extra final LF was removed; no post-cosmetic suite rerun or whole-source exact identity is claimed.",
+    "receipt": {
+      "path": "/tmp/cinashop-carousel-author-post-validation-cosmetic-EOF.json",
+      "sha256": "ab48455dfe6dbf32d48ad33d28d451662be6ace4a70eb12f4d279db380cc53aa"
+    }
+  },
+  "expected_final_gates": {
+    "protection": "/tmp/cinashop-carousel-author-final-protection-review.json",
+    "secret_scan": "/tmp/cinashop-carousel-author-final-secret-scan.json",
+    "status": "Executed externally after this leaf; no self-referential hash or preclaim"
+  },
+  "release_boundary": "No merge, production deployment, live cutover, physical MP/App rendering or whole migration completion claim. Commit/push/new-headCI recorded externally after the staged patch secret gate.",
+  "CI_prerequisite_focused_guards": {
+    "receipt": {
+      "path": "/tmp/cinashop-carousel-author-CI-followup-focused-result.json",
+      "sha256": "8724d82f9697db4552233c839ec8d158634f405596cd22b5483f6d0fd12c9145"
+    },
+    "actual_exit_code": 0,
+    "cases": 6,
+    "all_named_passed": true,
+    "source_reuse": "Exact focused source after plus only the two inverse-proven fixture/test repairs equals current validation source; installed bytes identical."
+  },
+  "fixture_only_public_category_repair": {
+    "receipt": {
+      "path": "/tmp/cinashop-carousel-author-category-fixture-fix.json",
+      "sha256": "24d23486ec98beca7174ec7b079b978805af27d3496e2ddd39403425359cd9ce"
+    },
+    "changed_files": [
+      {
+        "path": "workers-ts/test/helpers/diyCarouselAuthorFixture.ts",
+        "before_archive": "/tmp/cinashop-carousel-author-before-category-fix-diyCarouselAuthorFixture.ts",
+        "before_sha256": "241b197cbb9d5c453d8291d3e53eab209728bac5ba4de8bf1f6489986fcb07a4",
+        "before_bytes": 9604,
+        "before_equals_native_candidate1_source_after": true,
+        "after_sha256": "073c3f32104d875014ac6a47787bfbebc5157f23f2f755e3afe734ebe4d546ca",
+        "after_bytes": 10331,
+        "before_trailing_LF": 1,
+        "after_trailing_LF": 1
+      },
+      {
+        "path": "workers-ts/test/diy-carousel-author-postgres.test.ts",
+        "before_archive": "/tmp/cinashop-carousel-author-before-category-fix-diy-carousel-author-postgres.test.ts",
+        "before_sha256": "a3b09944a1c50c77ebb615417081673850a4eeb1ec6a8db7c5438fcf3ae14fde",
+        "before_bytes": 26482,
+        "before_equals_native_candidate1_source_after": true,
+        "after_sha256": "d7414943c4260fe2f6e0cf2d2df46dd5c492bcbf1bc5399ec795a8fbc64cbcef",
+        "after_bytes": 27849,
+        "before_trailing_LF": 2,
+        "after_trailing_LF": 2
+      }
+    ],
+    "exact_inverse": {
+      "fixture": true,
+      "native_old_assertions": true
+    },
+    "reason": {
+      "category_child": 84022,
+      "inherited_seed_default_level": 0,
+      "parent": 84021,
+      "public_rule": "level0 requires pid0; child requires level1 and valid level0 parent. Admin typed catalog ancestry and public visibility are separate projections.",
+      "cache_excluded": "StoreCategoryService explicitly does not consume/fill old category_all_tree; categoryCatalog normalizer preserves supplied valid children."
+    },
+    "boundary": "Only new carousel-owned seed assigns child84022 level1/path84021. Old navigation seed and actual public visibility/ancestry rules remain byte-exact. New case performs actual anonymous category, scoped products and signed PNG GET with full SQL/sequences/resources equality."
+  },
+  "failed_Browser_candidates": [
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-carousel-author-browser-candidate1-result.json",
+        "sha256": "53cae0eda682511b456c3116a13dfcc811ee3dc508865830d404ce1ff5caf563"
+      },
+      "partial": {
+        "path": "/tmp/cinashop-diy-carousel-author-browser-candidate1/cinashop-diy-carousel-author-browser-partial.json",
+        "sha256": "2acdb49d8708a4877520c2864b9bba2e2fc018e38767b946232c240f554bff87"
+      },
+      "cleanup": {
+        "path": "/tmp/cinashop-diy-carousel-author-browser-candidate1/cinashop-diy-carousel-author-browser-cleanup.json",
+        "sha256": "faba28e593a8c3856943aba9abd322c7a0ac1673bc106515db5eb7a279c9918c"
+      },
+      "actual_outer_exit_code": 1,
+      "completed_stages": [
+        "admin",
+        "minimal",
+        "reader",
+        "rootOpen",
+        "catalog",
+        "latePending",
+        "lateClosed",
+        "lateReleased",
+        "rootReopened",
+        "styles",
+        "rootEdited",
+        "rootSaved",
+        "rootH5",
+        "typedMicro"
+      ],
+      "actual_GUI_saves": 1,
+      "failed_checkpoint": "typedCategory",
+      "reason": "Inherited Admin catalog child84022 had pid84021 but default level0. Actual public tree correctly excluded it; H5 reported 当前分类未开放. This was fixture setup, not a relaxed production rule.",
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_equal": true,
+      "owned_pg_status": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-izWOVB/data",
+          "exit": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "original_error": "AssertionError: expected false to be true // Object.is equality\n    at /home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-carousel-author.acceptance.ts:178:104\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    }
+  ]
+}
