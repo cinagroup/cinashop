@@ -3472,5 +3472,59 @@
     "deploy": false,
     "overall_migration_complete": false,
     "new_head_CI": "Verify exact commit after push"
+  },
+  "uniD3BracesWithdrawalVerification": {
+    "base_commit": "8bbee7c9cb6f71ff6bf3dd08b2530d7cc735d3e5",
+    "recorded": "2026-10-23T18:43:33.656449+00:00",
+    "summary": "Official braces withdrawal reconciled exactly, original fail closed gate retained",
+    "official_url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+    "withdrawn_at": "2026-10-23T12:53:02Z",
+    "original_failed_CI": 39998594954,
+    "original_failed_job": 120568498942,
+    "old_package_entries": 77,
+    "new_package_entries": 51,
+    "removed_entries": 26,
+    "remaining_direct_tuples_unchanged": 26,
+    "retained_node_lists_unchanged": 51,
+    "retained_forward_graph_changes": 25,
+    "Jest_severity_high_to_low": 6,
+    "reviewed_scope_definitions": 8,
+    "active_scopes": 7,
+    "new_distinct_cases": 3,
+    "current_D3_tests": 28,
+    "complete_Uni_runtime_files": 92,
+    "complete_Uni_runtime_tests": 2406,
+    "complete_current_Uni_CI_children": 14,
+    "all_actual_child_exit_codes": 0,
+    "original_local_outer_exit": 1,
+    "original_local_outer_failure": "post-check collector AttributeError; initial full snapshots unavailable; never converted to green outer",
+    "recovered_actual_checks": {
+      "path": "/tmp/cinashop-PR160-braces-recovered-actual-children-result.json",
+      "sha256": "4aa08fe568d4ce06bcb191c76169523d0784bfb4f6d310fcaf71eae0d5a7ee84"
+    },
+    "final_frozen_D3": {
+      "path": "/tmp/cinashop-PR160-braces-focused-final-result.json",
+      "sha256": "bf8ae195923d5210109d15d954730c5167f8c019fe329d318dd496fffb805e50"
+    },
+    "Browser_equivalence": {
+      "path": "/tmp/cinashop-PR160-braces-prior-Browser-byte-equivalence.json",
+      "sha256": "f990672e0af24ce1c08a21f3e091a3813a9fe38883af4e38508fd7a586cfafe3"
+    },
+    "independent_upstream_review": {
+      "path": "/tmp/cinashop-UniApp-advisory-20261023-independent-review.json",
+      "sha256": "36627131c2d6641e6a097f1b3f120924948b97f8db4ed64d5abeb25746b163c9"
+    },
+    "independent_patch_review": {
+      "path": "/tmp/cinashop-PR160-braces-patch-independent-review.json",
+      "sha256": "7b34a309e10b7a5badd0bde33c0066b1dbdacb44d4a420c094bb083cf8338643"
+    },
+    "node_local": "v24.19.0",
+    "node_CI": "v24.14.1",
+    "gate_dependencies_locks_application_source_changed": false,
+    "get_script_compatibility_preserved": true,
+    "overall_migration_complete": false,
+    "merge": false,
+    "deploy": false,
+    "followup_exact_head_CI": "Read exact new commit after push; not yet claimed green"
   }
 }

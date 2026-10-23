@@ -1,5 +1,33 @@
 # TEST-004D3 dependency boundary
 
+## 2026-10-23 withdrawn braces advisory review
+
+GitHub [withdrew GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+at 2026-10-23T12:53:02Z because it is not practically exploitable. The unchanged
+lock now produces **51 affected package entries** (9 low, 12 moderate, 30 high),
+**26 direct objects** and **25 distinct advisory URLs**. Eight reviewed scope
+definitions remain; seven currently have active entries. These are npm graph
+counts, not counts of independent vulnerabilities or application exploits.
+
+The [frozen graph review](../../../workers-ts/audit/uni-d3-braces-withdrawal-20261023.json)
+preserves the original PR160/run39998594954 failure and the official receipts.
+Removing only source1240992 independently explains all 26 disappearing entries
+and 25 surviving forward-graph changes. All remaining direct advisory tuples,
+51 installed node lists and the lock fingerprint are identical. Six Jest
+entries drop from high to their remaining low source; other severities stay
+unchanged. The six npm-only range/effects changes remain outside the gate's
+existing fingerprint policy.
+
+Source1240992 joins the thirteen forbidden resolved/withdrawn IDs. Reappearance,
+unknown advisories, new installed paths or changed forward edges still fail
+closed. Regression tests retain the previous 77-entry graph and reproduce all
+52 original gate issues. The gate implementation, dependencies, lockfiles and
+application resources are unchanged. This review records an upstream inventory
+correction; it does not establish a package fix or complete the optional-mode,
+physical-device or overall PHP-to-TS migration gates. All earlier sections are
+historical records. Local execution and follow-up exact-head CI are recorded
+in the [validation note](../../../workers-ts/docs/uni-d3-braces-withdrawal-20261023.md).
+
 ## 2026-10-23 withdrawn sprintf-js advisory review
 
 The publisher [withdrew GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c)

@@ -2964,3 +2964,12 @@ PR #159 首head86bef76e的39935874792保留红灯：9任务成功；分片一126
 Worker75文件1614项、真实PG16九文件315项与最终完整双strict通过；新独立105，保留旧例/失败候选且不累计重复。后台真实IAB最终14点/outer0，两次可见Admin JSON保存；111真实GET+45明确chromeGET逐次完整74表68序列/资源零写，两个业务POST仅targetvalue/version/time，setup与owner/站点4配置分列，7快照与5字面路径404保留。实际160x90视频播放/进度及结束后离页暂停状态通过，源/依赖/658产物零漂移，独占PG3/noPID清理。前3轮观察器失败0/0/6点及1次保存诚实保留；只有新harness修正，最终双strict再次执行。
 
 见 workers-ts/docs/php-ts-diy-media-reference-20261023.md 与对应机器审计。旧账本前缀/复选框/JSON键保持，get_script与loader保留，无生产DDL/ACL/路由/依赖/锁变化。父159精确772fbd12 CI39964604683全11success，原红灯与guest原因未知保留，新head另查。后台浏览器不逐页确认；完整迁移/API-007/DATA-008/FE-003J/K、其它作者编辑器及生产/真机仍开放，仅推送draft不合并部署。
+
+
+### 2026-10-23 braces撤回与UniApp CI补充
+
+PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51个条目差异。GitHub官方2026-10-23T12:53:02Z撤回GHSA-vfj7-8cjw-p6xm，独立固定点推导仅移除该source，正好解释77→51条中的26消失与25保留图变化；26剩余direct tuple、51节点及锁指纹精确不变，6个Jest降high→既有low，8个scope定义/7个活跃scope区别保留。门禁实现未放宽，13个resolved/withdrawn来源重现、新source/path/forwardedge仍拒绝，原12场景保留并新增3场景，旧77图可完整还原且重现52条原红问题。
+
+完整当前Uni CI等价14个真实子进程全部exit0：92文件2406项、完整类型、D3相关28项与live gate、真实H5/Weixin/App资源构建及ZIP/SSR/Jest/QR/独立运行时图/common边界。原本地outer在全部检查后因collector错用delta→drift而exit1，原始错误保留；初始全量快照未落盘，不能补造原区间无漂移。轻量恢复只核验14个child日志/退出码/零skip，末尾再次以真实新鲜6070源/31521依赖快照执行完整D3 28与原始/实时报告，exit0且前后零漂移。Local Node24.19与CI24.14.1差别保留，重复执行不累计新例。
+
+本增量无UI/应用源变化，前轮真实后台Browser14点/两次GUI保存的完整2477输入、31521依赖和当前658产物逐字节相同，因此沿用原验收，不冒充新浏览器轮次；视频已结束后离页观察/未动态覆盖无签名私有GET等原边界不提升。浏览器继续后台验收，不逐页弹确认。审查/执行见workers-ts/docs/uni-d3-braces-withdrawal-20261023.md与对应机器审计。旧账本/审计历史、get_script兼容、锁/依赖/production gate/DDL保持；TEST-004D3、其它作者编辑器及整体迁移仍开放。新head CI待推送后另核，仅draft不合并部署。

@@ -11,14 +11,14 @@ const { evaluateAudit } = require("./d3-advisory-gate.cjs");
 
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "d3-advisory-gate.baseline.json"), "utf8"));
 
-function reviewedFixture() {
+function reviewedFixture(reviewed = baseline) {
   const vulnerabilities = Object.create(null);
   const counts = { info: 0, low: 0, moderate: 0, high: 0, critical: 0, total: 0 };
-  for (const [name, entry] of Object.entries(baseline.entries)) {
+  for (const [name, entry] of Object.entries(reviewed.entries)) {
     vulnerabilities[name] = { name, severity: entry.severity, isDirect: entry.isDirect,
       range: entry.range, nodes: [...entry.nodes], effects: [...entry.effects],
       via: [...entry.viaPackages, ...entry.advisorySources.map((source) => {
-        const advisory = baseline.advisories[String(source)];
+        const advisory = reviewed.advisories[String(source)];
         return { source, name, dependency: name, url: advisory.url,
           severity: advisory.severity, range: advisory.range };
       })] };
@@ -44,15 +44,17 @@ function rejected(fixture, fragment) {
 }
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 77);
-  assert.equal(Object.keys(baseline.advisories).length, 27);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 12);
+  assert.equal(Object.keys(baseline.entries).length, 51);
+  assert.equal(Object.keys(baseline.advisories).length, 26);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 13);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 27);
-  assert.equal(result.distinctAdvisoryUrls, 26);
+  assert.equal(result.directAdvisoryObjects, 26);
+  assert.equal(result.distinctAdvisoryUrls, 25);
+  assert.equal(Object.keys(baseline.chains).length, 8);
+  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);
 });
 
 test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
@@ -97,13 +99,13 @@ test("reviewed lock fingerprint is stable across Git checkout line endings", () 
 
 test("unknown direct advisory and a changed existing advisory fail closed", () => {
   const added = reviewedFixture();
-  added.vulnerabilities.braces.via.push({ source: 9999999, name: "braces", dependency: "braces",
+  added.vulnerabilities.qs.via.push({ source: 9999999, name: "qs", dependency: "qs",
     url: "https://github.com/advisories/GHSA-aaaa-bbbb-cccc", severity: "high", range: "*" });
   rejected(added, "unknown direct advisory 9999999");
 
   const changed = reviewedFixture();
-  const record = changed.vulnerabilities.braces.via.find((via) => typeof via === "object");
-  record.range = "<3.0.3";
+  const record = changed.vulnerabilities.qs.via.find((via) => typeof via === "object");
+  record.range = "<6.15.3";
   rejected(changed, "direct advisory changed");
 });
 
@@ -111,27 +113,27 @@ test("new propagated package, new node path, and changed propagation are rejecte
   const added = reviewedFixture();
   added.vulnerabilities["new-glob-wrapper"] = { name: "new-glob-wrapper", severity: "high",
     isDirect: false, range: "*", nodes: ["node_modules/new-glob-wrapper"],
-    effects: [], via: ["braces"] };
+    effects: [], via: ["qs"] };
   refreshMetadata(added);
   rejected(added, "unknown affected package entry: new-glob-wrapper");
 
   const path = reviewedFixture();
-  path.vulnerabilities.braces.nodes.push("node_modules/other/node_modules/braces");
-  rejected(path, "affected package entry changed: braces");
+  path.vulnerabilities.qs.nodes.push("node_modules/other/node_modules/qs");
+  rejected(path, "affected package entry changed: qs");
 
   const edge = reviewedFixture();
-  edge.vulnerabilities.chokidar.via = ["micromatch"];
-  rejected(edge, "affected package entry changed: chokidar");
+  edge.vulnerabilities['@jest/core'].via = ["jest-config"];
+  rejected(edge, "affected package entry changed: @jest/core");
 });
 
 test("npm-only propagated range and reverse effects changes do not change the scoped chain", () => {
   const fixture = reviewedFixture();
   fixture.vulnerabilities.jest.range = "24.2.0-alpha.0 - 30.2.0";
-  fixture.vulnerabilities["@jest/environment"].effects.pop();
+  fixture.vulnerabilities["jest-config"].effects.pop();
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all twelve resolved or withdrawn advisory source IDs remain forbidden", () => {
+test("all thirteen resolved or withdrawn advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -159,12 +161,12 @@ test("offline CLI accepts the reviewed fixture and rejects a new path without ru
     assert.match(accepted.stdout, /not counts of independent vulnerabilities/);
 
     const changed = reviewedFixture();
-    changed.vulnerabilities.braces.nodes.push("node_modules/new-path/node_modules/braces");
+    changed.vulnerabilities.qs.nodes.push("node_modules/new-path/node_modules/qs");
     writeFileSync(file, JSON.stringify(changed));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--fixture", file],
       { encoding: "utf8", timeout: 10000 });
     assert.equal(denied.status, 1);
-    assert.match(denied.stderr, /affected package entry changed: braces/);
+    assert.match(denied.stderr, /affected package entry changed: qs/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -207,7 +209,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /77 affected package entries/);
+    assert.match(accepted.stdout, /51 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -229,7 +231,7 @@ test("withdrawn sprintf-js source and its exclusive propagated entries remain fo
   for (const name of ['@istanbuljs/load-nyc-config', 'argparse', 'babel-plugin-istanbul', 'js-yaml', 'sprintf-js']) {
     assert.equal(baseline.entries[name], undefined);
     const returned = reviewedFixture();
-    returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['braces']};
+    returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['qs']};
     refreshMetadata(returned);
     rejected(returned, `unknown affected package entry: ${name}`);
   }
@@ -238,4 +240,87 @@ test("withdrawn sprintf-js source and its exclusive propagated entries remain fo
     via:[{source:1241202, name:'sprintf-js', dependency:'sprintf-js', url:source.url, severity:'moderate', range:'<=1.1.3'}]};
   refreshMetadata(returned);
   rejected(returned, 'resolved advisory reappeared: 1241202');
+});
+
+const bracesReview = JSON.parse(readFileSync(resolve(__dirname,
+  '../../../workers-ts/audit/uni-d3-braces-withdrawal-20261023.json'), 'utf8'));
+
+function previousBracesBaseline() {
+  const previous = structuredClone(baseline);
+  const { source, ...advisory } = bracesReview.removed_advisory;
+  previous.advisories[source] = advisory;
+  delete previous.resolvedAdvisories[source];
+  previous.reviewedReceipt = bracesReview.old_reviewed_receipt;
+  for (const entry of [...bracesReview.removed_entries, ...bracesReview.remaining_graph_changes]) {
+    previous.entries[entry.name] = structuredClone(entry.old);
+  }
+  return previous;
+}
+
+test('withdrawn braces source and all 26 exclusive package entries remain forbidden', () => {
+  const source = baseline.resolvedAdvisories['1240992'];
+  assert.equal(source.package, 'braces');
+  assert.equal(source.url, 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm');
+  assert.equal(source.resolution, 'upstream-withdrawn');
+  assert.equal(source.withdrawnAt, '2026-10-23T12:53:02Z');
+  assert.equal(bracesReview.removed_entries.length, 26);
+  for (const { name } of bracesReview.removed_entries) {
+    assert.equal(baseline.entries[name], undefined);
+    const returned = reviewedFixture();
+    returned.vulnerabilities[name] = { name, severity: 'high', isDirect: false, range: '*',
+      nodes: [`node_modules/${name}`], effects: [], via: ['qs'] };
+    refreshMetadata(returned);
+    rejected(returned, `unknown affected package entry: ${name}`);
+  }
+  const returned = reviewedFixture(previousBracesBaseline());
+  rejected(returned, 'resolved advisory reappeared: 1240992');
+});
+
+test('removing only braces reproduces the exact 77 to 51 forward-graph inventory correction', () => {
+  const previous = previousBracesBaseline();
+  assert.equal(Object.keys(previous.entries).length, 77);
+  assert.equal(Object.keys(previous.advisories).length, 27);
+  assert.equal(evaluateAudit(reviewedFixture(previous), previous).ok, true);
+  const originalRed = evaluateAudit(reviewedFixture(), previous);
+  assert.equal(originalRed.ok, false);
+  assert.equal(originalRed.issues.length, 52);
+  assert.deepEqual(originalRed.issues.slice().sort(), bracesReview.old_gate_reproduction.issues.slice().sort());
+
+  // Derive reachability from the old graph before consulting new package names.
+  const sources = Object.fromEntries(Object.entries(previous.entries).map(([name, entry]) =>
+    [name, new Set(entry.advisorySources.filter(id => id !== 1240992))]));
+  let changed;
+  do {
+    changed = false;
+    for (const [name, entry] of Object.entries(previous.entries)) for (const via of entry.viaPackages) {
+      for (const id of sources[via]) if (!sources[name].has(id)) { sources[name].add(id); changed = true; }
+    }
+  } while (changed);
+  const removed = Object.keys(sources).filter(name => !sources[name].size).sort();
+  assert.deepEqual(removed, bracesReview.removed_entries.map(entry => entry.name).sort());
+  const survivors = Object.keys(sources).filter(name => sources[name].size).sort();
+  assert.deepEqual(survivors, Object.keys(baseline.entries).sort());
+  for (const name of survivors) {
+    const before = previous.entries[name], after = baseline.entries[name];
+    assert.deepEqual(after.nodes, before.nodes, name);
+    assert.equal(after.isDirect, before.isDirect, name);
+    assert.deepEqual(after.advisorySources, before.advisorySources.filter(id => id !== 1240992), name);
+    assert.deepEqual(after.viaPackages, before.viaPackages.filter(via => sources[via].size), name);
+    assert.deepEqual(after.chains, [...new Set([...sources[name]].map(id => previous.advisories[id].chain))].sort(), name);
+  }
+});
+
+test('only six retained Jest entries lose high severity; every remaining severity is pinned', () => {
+  const previous = previousBracesBaseline();
+  const lowered = ['@jest/core', 'jest', 'jest-cli', 'jest-config', 'jest-environment-jsdom', 'jest-runner'];
+  assert.deepEqual(Object.keys(baseline.entries).filter(name =>
+    previous.entries[name].severity !== baseline.entries[name].severity).sort(), lowered.sort());
+  for (const name of lowered) {
+    assert.equal(previous.entries[name].severity, 'high');
+    assert.equal(baseline.entries[name].severity, 'low');
+    const raised = reviewedFixture();
+    raised.vulnerabilities[name].severity = 'high';
+    refreshMetadata(raised);
+    rejected(raised, `affected package entry changed: ${name}`);
+  }
 });
