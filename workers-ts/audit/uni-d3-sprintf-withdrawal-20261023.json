@@ -1,0 +1,625 @@
+{
+  "schema": "cinashop.Uni-D3.withdrawal-review.v1",
+  "base_commit": "326b361b374e8603e0faf6fcff2b417dc652fb32",
+  "recorded": "2026-10-23T00:54:48.075Z",
+  "failed_CI": {
+    "run": 39878659720,
+    "job": 120170427763,
+    "raw_log_sha256": "b17a11abf05fcb58932959997a507560de245b2566cf017c84977bb3b64c94c1",
+    "failure": "Live D3 gate rejected disappeared source1241202 and its propagation; all preceding Uni application gates passed."
+  },
+  "official": {
+    "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+    "ghsa_id": "GHSA-hp3w-g68c-fv3c",
+    "cve_id": "CVE-2026-97058",
+    "withdrawn_at": "2026-10-22T19:21:04Z",
+    "updated_at": "2026-10-22T19:21:09Z",
+    "raw_receipt_sha256": "eb9def46ecb48ddf8a4afd914023eac4502a9a36f62a3145f044b18fc326c1d2",
+    "meaning": "The publisher withdrew the advisory because application exception handling is its responsibility; this is not proof of package remediation."
+  },
+  "npm_receipt": {
+    "path": "/tmp/cinashop-PR157-live-npm-audit-20261023.json",
+    "sha256": "da3344a227519118a0b3414faa2c3f9ffc2e97d85848dc5f8173529a234a2a21",
+    "exit_code": 1,
+    "metadata": {
+      "info": 0,
+      "low": 3,
+      "moderate": 12,
+      "high": 62,
+      "critical": 0,
+      "total": 77
+    }
+  },
+  "old_baseline_sha256": "fc43abc109342f5e2669e4e581dff0885ff80bcb983ba9a98afecc536f5d52b0",
+  "semantic_lock_sha256": "5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00",
+  "lock_bytes_sha256": "2cb822195f6939bf2e2f23da70502cafe96fb3cf4ee04c879163de9d23075d39",
+  "old_reviewed_receipt": "2026-10-22 official npm receipt: 82 affected package entries, 28 direct source objects, 27 distinct advisory URLs, 8 scoped chains; eight Vite advisories covered by ten exact reversible security fragments and two esbuild compatibility fragments. Installed Vite boundary/provenance/D3 tests 24/24 and prior Vite regressions 46/46 passed; five cwd-specific security gates passed. Independent Kefu Vitest 4.1.12 mocker regression and 30 unit cases passed, with PC/Kefu complete audits reporting zero.",
+  "removed_advisory": {
+    "source": 1241202,
+    "package": "sprintf-js",
+    "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+    "severity": "moderate",
+    "range": "<=1.1.3",
+    "chain": "jest-toolchain"
+  },
+  "removed_entries": [
+    {
+      "name": "@istanbuljs/load-nyc-config",
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "*",
+        "nodes": [
+          "node_modules/@istanbuljs/load-nyc-config"
+        ],
+        "viaPackages": [
+          "js-yaml"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "babel-plugin-istanbul"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      },
+      "exclusive_direct_sources": [
+        1241202
+      ]
+    },
+    {
+      "name": "argparse",
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "1.0.0 - 1.0.10",
+        "nodes": [
+          "node_modules/argparse"
+        ],
+        "viaPackages": [
+          "sprintf-js"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "js-yaml"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      },
+      "exclusive_direct_sources": [
+        1241202
+      ]
+    },
+    {
+      "name": "babel-plugin-istanbul",
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": ">=6.0.0-beta.0",
+        "nodes": [
+          "node_modules/babel-plugin-istanbul"
+        ],
+        "viaPackages": [
+          "@istanbuljs/load-nyc-config"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@jest/transform",
+          "babel-jest"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      },
+      "exclusive_direct_sources": [
+        1241202
+      ]
+    },
+    {
+      "name": "js-yaml",
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "3.2.7 - 3.15.2",
+        "nodes": [
+          "node_modules/js-yaml"
+        ],
+        "viaPackages": [
+          "argparse"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@istanbuljs/load-nyc-config"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      },
+      "exclusive_direct_sources": [
+        1241202
+      ]
+    },
+    {
+      "name": "sprintf-js",
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "*",
+        "nodes": [
+          "node_modules/sprintf-js"
+        ],
+        "viaPackages": [],
+        "advisorySources": [
+          1241202
+        ],
+        "effects": [
+          "argparse"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      },
+      "exclusive_direct_sources": [
+        1241202
+      ]
+    }
+  ],
+  "remaining_graph_changes": [
+    {
+      "name": "@jest/reporters",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/reporters"
+        ],
+        "viaPackages": [
+          "@jest/console",
+          "@jest/test-result",
+          "@jest/transform",
+          "jest-haste-map",
+          "jest-resolve"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/reporters"
+        ],
+        "viaPackages": [
+          "@jest/console",
+          "@jest/test-result",
+          "@jest/transform",
+          "jest-haste-map",
+          "jest-resolve"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "@jest/test-sequencer",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/test-sequencer"
+        ],
+        "viaPackages": [
+          "@jest/test-result",
+          "jest-haste-map",
+          "jest-runtime"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/test-sequencer"
+        ],
+        "viaPackages": [
+          "@jest/test-result",
+          "jest-haste-map",
+          "jest-runtime"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "@jest/transform",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/transform"
+        ],
+        "viaPackages": [
+          "babel-plugin-istanbul",
+          "jest-haste-map",
+          "micromatch"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/@jest/transform"
+        ],
+        "viaPackages": [
+          "jest-haste-map",
+          "micromatch"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "babel-jest",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/babel-jest"
+        ],
+        "viaPackages": [
+          "@jest/transform",
+          "babel-plugin-istanbul"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/babel-jest"
+        ],
+        "viaPackages": [
+          "@jest/transform"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "jest-circus",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-circus"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/test-result",
+          "expect",
+          "jest-message-util",
+          "jest-runtime",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-circus"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/test-result",
+          "expect",
+          "jest-message-util",
+          "jest-runtime",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "jest-jasmine2",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-jasmine2"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/test-result",
+          "expect",
+          "jest-message-util",
+          "jest-runtime",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-jasmine2"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/test-result",
+          "expect",
+          "jest-message-util",
+          "jest-runtime",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "jest-resolve-dependencies",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-resolve-dependencies"
+        ],
+        "viaPackages": [
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-resolve-dependencies"
+        ],
+        "viaPackages": [
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "jest-runtime",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-runtime"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/fake-timers",
+          "@jest/globals",
+          "@jest/test-result",
+          "@jest/transform",
+          "jest-haste-map",
+          "jest-message-util",
+          "jest-resolve",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-runtime"
+        ],
+        "viaPackages": [
+          "@jest/environment",
+          "@jest/fake-timers",
+          "@jest/globals",
+          "@jest/test-result",
+          "@jest/transform",
+          "jest-haste-map",
+          "jest-message-util",
+          "jest-resolve",
+          "jest-snapshot"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    },
+    {
+      "name": "jest-snapshot",
+      "before": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-snapshot"
+        ],
+        "viaPackages": [
+          "@jest/transform",
+          "expect",
+          "jest-haste-map",
+          "jest-message-util"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "after": {
+        "severity": "high",
+        "isDirect": false,
+        "nodes": [
+          "node_modules/jest-snapshot"
+        ],
+        "viaPackages": [
+          "@jest/transform",
+          "expect",
+          "jest-haste-map",
+          "jest-message-util"
+        ],
+        "advisorySources": [],
+        "chains": [
+          "glob-toolchain"
+        ]
+      }
+    }
+  ],
+  "old_counts": {
+    "entries": 82,
+    "advisories": 28,
+    "forbidden": 11
+  },
+  "new_counts": {
+    "entries": 77,
+    "advisories": 27,
+    "URLs": 26,
+    "forbidden": 12,
+    "chains": 8
+  },
+  "no_changes_to": [
+    "package manifests",
+    "lock files",
+    "installed dependency bytes",
+    "gate implementation",
+    "application sources",
+    "production configuration",
+    "DDL/ACL",
+    "build artifacts"
+  ],
+  "validation": {
+    "receipt": {
+      "path": "/tmp/cinashop-d3-withdrawal-validation-result.json",
+      "sha256": "540defbc1db344eb1003f45e9126e455ad584b011a392c106a32edde296d54a8"
+    },
+    "counts": {
+      "tests": 25,
+      "pass": 25,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "seconds": 31.471,
+    "steps": [
+      {
+        "name": "tests25",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=tap",
+          "scripts/d3-advisory-gate.test.cjs",
+          "scripts/vite-advisory-20261022.test.cjs",
+          "scripts/vite-safety-package.test.cjs"
+        ],
+        "exit_code": 0,
+        "seconds": 5.022,
+        "log": "/tmp/cinashop-d3-withdrawal-tests25.log",
+        "log_sha256": "3fd252f53932d503b4cec10c5a463717c70b5d452bf9bd44cb5e670bc9676aa6"
+      },
+      {
+        "name": "official-fixture",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/d3-advisory-gate.cjs",
+          "--fixture",
+          "/tmp/cinashop-PR157-live-npm-audit-20261023.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.068,
+        "log": "/tmp/cinashop-d3-withdrawal-official-fixture.log",
+        "log_sha256": "94e8eaf291c59db7dd46e5cc503db165b72b22bff8fa8457f1f1e6c63ffb5043"
+      },
+      {
+        "name": "official-live",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/d3-advisory-gate.cjs",
+          "--live"
+        ],
+        "exit_code": 0,
+        "seconds": 26.351,
+        "log": "/tmp/cinashop-d3-withdrawal-official-live.log",
+        "log_sha256": "94e8eaf291c59db7dd46e5cc503db165b72b22bff8fa8457f1f1e6c63ffb5043"
+      }
+    ],
+    "source_drift": [],
+    "installed_drift": [],
+    "scope": "Actual25 D3/Vite safety tests plus exact official npm fixture and subsequent fresh live strict gate. No application source, dependencies, locks or built resources changed."
+  },
+  "overall_migration_complete": false,
+  "status": "validated-local-CI-followup",
+  "validation_history": [
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-d3-withdrawal-candidate1-validation-result.json",
+        "sha256": "dd05e0cea1ba300292bd6b81208245e830f74df5dc6b10ecf199291117f17703"
+      },
+      "counts": {
+        "tests": 25,
+        "pass": 19,
+        "fail": 6
+      },
+      "reason": "Six Vite middleware tests stopped at their original exact project-module-path assertion because the whole worktree node_modules directory was a symlink. A real local copy of the same Vite package fixes the isolated setup; all original assertions remain unchanged."
+    }
+  ],
+  "independent_review": {
+    "path": "/tmp/cinashop-d3-withdrawal-independent-review.json",
+    "sha256": "a50283ec308de604f9397e734e6a390134878f017a036b83d51815c94542db02",
+    "scope": "Read-only static baseline/withdrawal/propagation/oldtest exact inverse/newnegative review before this validation metadata append."
+  },
+  "final_secret_scan": {
+    "receipt_path": "/tmp/cinashop-d3-withdrawal-secret-result.json",
+    "scope": "Exact final staged four-file patch; produced after this metadata is frozen."
+  },
+  "followup_CI": "Read exact follow-up commit after push; original326b run remains failed."
+}

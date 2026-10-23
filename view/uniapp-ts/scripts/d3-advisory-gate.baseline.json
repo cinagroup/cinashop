@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lockSemanticSha256": "5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00",
-  "reviewedReceipt": "2026-10-22 official npm receipt: 82 affected package entries, 28 direct source objects, 27 distinct advisory URLs, 8 scoped chains; eight Vite advisories covered by ten exact reversible security fragments and two esbuild compatibility fragments. Installed Vite boundary/provenance/D3 tests 24/24 and prior Vite regressions 46/46 passed; five cwd-specific security gates passed. Independent Kefu Vitest 4.1.12 mocker regression and 30 unit cases passed, with PC/Kefu complete audits reporting zero.",
+  "reviewedReceipt": "2026-10-23 official npm lock-only receipt: 77 affected package entries (3 low/12 moderate/62 high/0 critical), 27 direct source objects, 26 distinct advisory URLs and the same 8 scoped chains. GHSA-hp3w-g68c-fv3c/source1241202 was officially withdrawn 2026-10-22T19:21:04Z. Only its five exclusively propagated entries and edges are removed; all remaining tuples/nodes/severities and the exact lock fingerprint are retained; derived scopes lose only the withdrawn source influence. This is an upstream inventory correction, not a package fix or broader optional-chain safety claim.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -159,13 +159,6 @@
       "severity": "high",
       "range": "<=3.0.3",
       "chain": "glob-toolchain"
-    },
-    "1241202": {
-      "package": "sprintf-js",
-      "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
-      "severity": "moderate",
-      "range": "<=1.1.3",
-      "chain": "jest-toolchain"
     },
     "1241259": {
       "package": "@vue/server-renderer",
@@ -370,9 +363,7 @@
         "fast-glob"
       ],
       "advisorySources": [],
-      "effects": [
-        "@dcloudio/uni-app"
-      ],
+      "effects": [],
       "chains": [
         "encrypted-zip",
         "glob-toolchain",
@@ -392,7 +383,9 @@
         "@dcloudio/uni-h5"
       ],
       "advisorySources": [],
-      "effects": [],
+      "effects": [
+        "@dcloudio/uni-app"
+      ],
       "chains": [
         "encrypted-zip",
         "glob-toolchain",
@@ -748,24 +741,6 @@
         "intlify"
       ]
     },
-    "@istanbuljs/load-nyc-config": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "*",
-      "nodes": [
-        "node_modules/@istanbuljs/load-nyc-config"
-      ],
-      "viaPackages": [
-        "js-yaml"
-      ],
-      "advisorySources": [],
-      "effects": [
-        "babel-plugin-istanbul"
-      ],
-      "chains": [
-        "jest-toolchain"
-      ]
-    },
     "@jest/console": {
       "severity": "high",
       "isDirect": false,
@@ -896,10 +871,11 @@
         "jest-resolve"
       ],
       "advisorySources": [],
-      "effects": [],
+      "effects": [
+        "@jest/core"
+      ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "@jest/test-result": {
@@ -942,19 +918,17 @@
         "jest-config"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "@jest/transform": {
       "severity": "high",
       "isDirect": false,
-      "range": "*",
+      "range": "<=30.2.0",
       "nodes": [
         "node_modules/@jest/transform"
       ],
       "viaPackages": [
-        "babel-plugin-istanbul",
         "jest-haste-map",
         "micromatch"
       ],
@@ -967,8 +941,7 @@
         "jest-snapshot"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "@jimp/core": {
@@ -1159,61 +1132,22 @@
         "encrypted-zip"
       ]
     },
-    "argparse": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "1.0.0 - 1.0.10",
-      "nodes": [
-        "node_modules/argparse"
-      ],
-      "viaPackages": [
-        "sprintf-js"
-      ],
-      "advisorySources": [],
-      "effects": [
-        "js-yaml"
-      ],
-      "chains": [
-        "jest-toolchain"
-      ]
-    },
     "babel-jest": {
       "severity": "high",
       "isDirect": false,
-      "range": ">=24.2.0-alpha.0",
+      "range": "24.2.0-alpha.0 - 30.2.0",
       "nodes": [
         "node_modules/babel-jest"
       ],
       "viaPackages": [
-        "@jest/transform",
-        "babel-plugin-istanbul"
+        "@jest/transform"
       ],
       "advisorySources": [],
       "effects": [
         "jest-config"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
-      ]
-    },
-    "babel-plugin-istanbul": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": ">=6.0.0-beta.0",
-      "nodes": [
-        "node_modules/babel-plugin-istanbul"
-      ],
-      "viaPackages": [
-        "@istanbuljs/load-nyc-config"
-      ],
-      "advisorySources": [],
-      "effects": [
-        "@jest/transform",
-        "babel-jest"
-      ],
-      "chains": [
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "body-parser": {
@@ -1344,7 +1278,7 @@
     "jest": {
       "severity": "high",
       "isDirect": false,
-      "range": "23.5.0 - 30.2.0",
+      "range": "24.2.0-alpha.0 - 30.2.0",
       "nodes": [
         "node_modules/jest"
       ],
@@ -1381,8 +1315,7 @@
         "jest-config"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jest-cli": {
@@ -1489,6 +1422,7 @@
         "@jest/reporters",
         "@jest/test-sequencer",
         "jest-resolve",
+        "jest-runner",
         "jest-runtime",
         "jest-snapshot"
       ],
@@ -1516,8 +1450,7 @@
         "jest-config"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jest-message-util": {
@@ -1537,7 +1470,6 @@
         "expect",
         "jest-circus",
         "jest-jasmine2",
-        "jest-runner",
         "jest-runtime",
         "jest-snapshot"
       ],
@@ -1570,7 +1502,7 @@
     "jest-resolve-dependencies": {
       "severity": "high",
       "isDirect": false,
-      "range": "23.3.0 - 30.2.0",
+      "range": "26.1.0 - 28.1.3",
       "nodes": [
         "node_modules/jest-resolve-dependencies"
       ],
@@ -1580,8 +1512,7 @@
       "advisorySources": [],
       "effects": [],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jest-runner": {
@@ -1634,12 +1565,10 @@
       "effects": [
         "@jest/test-sequencer",
         "jest-circus",
-        "jest-jasmine2",
-        "jest-runner"
+        "jest-jasmine2"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jest-snapshot": {
@@ -1657,14 +1586,14 @@
       ],
       "advisorySources": [],
       "effects": [
+        "@jest/core",
         "jest-circus",
         "jest-jasmine2",
         "jest-resolve-dependencies",
         "jest-runtime"
       ],
       "chains": [
-        "glob-toolchain",
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jest-watcher": {
@@ -1719,24 +1648,6 @@
       ],
       "chains": [
         "automator-qr"
-      ]
-    },
-    "js-yaml": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "3.2.7 - 3.15.2",
-      "nodes": [
-        "node_modules/js-yaml"
-      ],
-      "viaPackages": [
-        "argparse"
-      ],
-      "advisorySources": [],
-      "effects": [
-        "@istanbuljs/load-nyc-config"
-      ],
-      "chains": [
-        "jest-toolchain"
       ]
     },
     "jsdom": {
@@ -1816,24 +1727,6 @@
       ],
       "chains": [
         "h5-ssr"
-      ]
-    },
-    "sprintf-js": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "*",
-      "nodes": [
-        "node_modules/sprintf-js"
-      ],
-      "viaPackages": [],
-      "advisorySources": [
-        1241202
-      ],
-      "effects": [
-        "argparse"
-      ],
-      "chains": [
-        "jest-toolchain"
       ]
     },
     "unimport": {
@@ -1951,6 +1844,13 @@
     "1240109": {
       "package": "brace-expansion",
       "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+    },
+    "1241202": {
+      "package": "sprintf-js",
+      "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+      "resolution": "upstream-withdrawn",
+      "withdrawnAt": "2026-10-22T19:21:04Z",
+      "reason": "Official advisory withdrawal; no package remediation or dependency change is claimed. A returned source still fails closed."
     },
     "1241210": {
       "package": "proxy-addr",

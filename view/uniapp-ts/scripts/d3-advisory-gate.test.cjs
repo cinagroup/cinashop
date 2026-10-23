@@ -44,15 +44,15 @@ function rejected(fixture, fragment) {
 }
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 82);
-  assert.equal(Object.keys(baseline.advisories).length, 28);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 11);
+  assert.equal(Object.keys(baseline.entries).length, 77);
+  assert.equal(Object.keys(baseline.advisories).length, 27);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 12);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 28);
-  assert.equal(result.distinctAdvisoryUrls, 27);
+  assert.equal(result.directAdvisoryObjects, 27);
+  assert.equal(result.distinctAdvisoryUrls, 26);
 });
 
 test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
@@ -131,7 +131,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all eleven resolved advisory source IDs remain forbidden", () => {
+test("all twelve resolved or withdrawn advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -207,7 +207,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /82 affected package entries/);
+    assert.match(accepted.stdout, /77 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -217,4 +217,25 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test("withdrawn sprintf-js source and its exclusive propagated entries remain forbidden", () => {
+  const source = baseline.resolvedAdvisories['1241202'];
+  assert.equal(source.package, 'sprintf-js');
+  assert.equal(source.url, 'https://github.com/advisories/GHSA-hp3w-g68c-fv3c');
+  assert.equal(source.resolution, 'upstream-withdrawn');
+  assert.equal(source.withdrawnAt, '2026-10-22T19:21:04Z');
+  for (const name of ['@istanbuljs/load-nyc-config', 'argparse', 'babel-plugin-istanbul', 'js-yaml', 'sprintf-js']) {
+    assert.equal(baseline.entries[name], undefined);
+    const returned = reviewedFixture();
+    returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['braces']};
+    refreshMetadata(returned);
+    rejected(returned, `unknown affected package entry: ${name}`);
+  }
+  const returned = reviewedFixture();
+  returned.vulnerabilities['sprintf-js'] = {name:'sprintf-js', severity:'moderate', isDirect:false, range:'<=1.1.3', nodes:['node_modules/sprintf-js'], effects:[],
+    via:[{source:1241202, name:'sprintf-js', dependency:'sprintf-js', url:source.url, severity:'moderate', range:'<=1.1.3'}]};
+  refreshMetadata(returned);
+  rejected(returned, 'resolved advisory reappeared: 1241202');
 });
