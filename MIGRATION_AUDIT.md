@@ -8525,3 +8525,17 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 完整当前Uni CI等价14个真实子进程全部exit0：92文件2406项、完整类型、D3相关28项与live gate、真实H5/Weixin/App资源构建及ZIP/SSR/Jest/QR/独立运行时图/common边界。原本地outer在全部检查后因collector错用delta→drift而exit1，原始错误保留；初始全量快照未落盘，不能补造原区间无漂移。轻量恢复只核验14个child日志/退出码/零skip，末尾再次以真实新鲜6070源/31521依赖快照执行完整D3 28与原始/实时报告，exit0且前后零漂移。Local Node24.19与CI24.14.1差别保留，重复执行不累计新例。
 
 本增量无UI/应用源变化，前轮真实后台Browser14点/两次GUI保存的完整2477输入、31521依赖和当前658产物逐字节相同，因此沿用原验收，不冒充新浏览器轮次；视频已结束后离页观察/未动态覆盖无签名私有GET等原边界不提升。浏览器继续后台验收，不逐页弹确认。审查/执行见workers-ts/docs/uni-d3-braces-withdrawal-20261023.md与对应机器审计。旧账本/审计历史、get_script兼容、锁/依赖/production gate/DDL保持；TEST-004D3、其它作者编辑器及整体迁移仍开放。新head CI待推送后另核，仅draft不合并部署。
+
+
+### 2026-10-23 完整导航作者控件增量
+
+完成 headerSerch/tabNav/menus/pictureCube 的真实PHP作者合同、五个只读选项资源、13类链接目录、完整热词与typed微页/分类、全部12魔方布局和分数自定义画布。实际图库、双槽媒体、最小作者权限和父子编辑器失效回调接通；导入重复/未知/长列表、tiny与数值字符串/0/101/true四角及独立content保持。明确固定布局trim，无确认弹框。
+
+实际Worker82完整文件1712/1712，原collector误预期1713造成outer97如实保留，独立逐项计数接受真实child0；旧原生12文件327、新navigation50及最终fresh选项8项通过，完整unit/runtime strict与Admin185项/完整build通过。Uni691消费输入、31521定义依赖与382实际H5产物精确相等复用原完整三端验证；未虚增重复。新增独立187。后台真实IAB25/25与最终outer0，76表/71序列；159真实GET+55声明chromeGET逐次全状态/资源无写，三次真实GUI POST仅目标value/version/update_time，setup单列，源/依赖/双端产物无漂移并完成独占资源清理。
+
+首轮Browser会话切换时出现真实Node aborted并被harness误作致命错误，原失败/PG清理保留；第二轮在无图库按钮的tab上提交minimal是root操作遗漏，全部5GET成功但checkpoint如实失败，第三轮已保存首页但在原生500ms分页动画约329ms时采样而失败，结束后实际DOM为0–375.2px，所有原失败与一次保存留存；未改源/断言；最终Browser复验严格绑定第二轮完整source/installed和三个已通过检查。修复仅request-bound真实stream断连与response交付，8项独立真实Node控制通过，全部业务断言保持，完整双strict与Browser重新执行。Admin/native/旧源审计失败及广回归计数错误逐一留存。API报告699calls/737variants，旧920ed报告逐字归档，精确source inverse保留原负例。见 workers-ts/docs/php-ts-diy-navigation-author-20261023.md 与对应机器审计。
+
+旧账本前缀/复选行/JSON值、其它历史审计与get_script及三端loader保持，无生产schema DDL/数据库GRANT-ACL/依赖/锁变化；应用级只读虚拟权限与十个GET路由明确另列。父PR160精确eb1fc的CI40005943304全11任务成功；本新head推送后另核。Browser继续后台，不逐页弹确认；本轮只在Admin预览12布局，H5实际消费fixed1/custom11/micro11，不冒称12次H5保存或真机/生产。完整迁移/API-007/DATA-008/FE-003J/K与其它作者控件父项继续开放，仅draft不合并部署。
+
+
+补丁收尾仅删除新 DiyAuthorLinkPicker.vue 最后 </style> 后多余的一个 LF；原脚本、模板、样式及所有前置字节完全相同。验收区间的源码/依赖/产物零漂移收据原样保留；最终当前源码与验收终态仅此一字节空白差异，另有精确 old=new+LF 原文件证明，不为文件尾空白重跑业务测试。最终保护与完整补丁秘密扫描在修正后重新核对。

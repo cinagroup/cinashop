@@ -85,6 +85,7 @@ import * as AdminProductDetailDesign from '@/controllers/api/v1/AdminProductDeta
 import * as AdminUserCenterDesign from '@/controllers/api/v1/AdminUserCenterDesignController';
 import * as AdminCityDeliverySettings from '@/controllers/api/v1/AdminCityDeliverySettingsController';
 import * as AdminFabLinkCatalog from "@/controllers/api/v1/AdminFabLinkCatalogController";
+import * as AdminDiyAuthorOptions from "@/controllers/api/v1/AdminDiyAuthorOptionsController";
 import * as AdminShippingSettings from "@/controllers/api/v1/AdminShippingSettingsController";
 import * as AdminCityDeliveryRecords from "@/controllers/api/v1/AdminCityDeliveryRecordController";
 import * as AdminRechargeOrder from "@/controllers/api/v1/AdminRechargeOrderController";
@@ -1099,6 +1100,11 @@ adminapiRoutes.post("/user_label/save", adminAuth, AdminCrud.adminUserLabelSave)
 adminapiRoutes.delete("/user_label/del/:id", adminAuth, AdminCrud.adminUserLabelDel);
 
 // ─── DIY + CMS + 系统工具 (M22) ──────────────────────────────
+adminapiRoutes.get("/dise/author-options/hot-words", adminAuth, AdminDiyAuthorOptions.hotWords);
+adminapiRoutes.get("/dise/author-options/link-categories", adminAuth, AdminDiyAuthorOptions.linkCategories);
+adminapiRoutes.get("/dise/author-options/link-targets", adminAuth, AdminDiyAuthorOptions.linkTargets);
+adminapiRoutes.get("/dise/author-options/tab-categories", adminAuth, AdminDiyAuthorOptions.tabCategories);
+adminapiRoutes.get("/dise/author-options/tab-targets", adminAuth, AdminDiyAuthorOptions.tabTargets);
 adminapiRoutes.get("/dise/list", adminAuth, AdminCrud.adminDiseList);
 adminapiRoutes.post("/dise/save", adminAuth, AdminCrud.adminDiseSave);
 adminapiRoutes.delete("/dise/del/:id", adminAuth, AdminCrud.adminDiseDel);

@@ -1,3 +1,4 @@
+import { reverseNavigationAuthorSource, applyNavigationAuthorReport, navigationAuthorSourceBinding as navigationBinding } from './helpers/diyNavigationAuthorSourceBinding';
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -89,9 +90,11 @@ const presentationBinding = JSON.parse(presentationBindingRaw) as typeof footerB
 const customerBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-customer-service-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const pageSettingsBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-page-settings-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
+const previousNavigationReport = JSON.parse(readFileSync(join(workerRoot, '..', navigationBinding.previous_report.file), 'utf8')) as ApiAuditReport;
+function beforeNavigationSource(file: string, supplied?: string): string { return reverseNavigationAuthorSource(file, normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot, '..', file), 'utf8'))); }
 
 function beforePageSettingsSource(file:string, supplied?:string):string {
-  let source=normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot,'..',file),'utf8'));
+  let source=beforeNavigationSource(file,supplied);
   const proof=pageSettingsBinding.sources.find(row=>row.file===file);
   if(!proof)return source;
   expect(sha256(source)).toBe(proof.after_sha256);
@@ -195,7 +198,7 @@ describe("Admin frontend API registration audit", () => {
     expect(stateSourceIncrement.shifted_route_records).toBe(716);
     expect(stateSourceIncrement.semantic_admin_changes).toBe(0);
     expect(stateSourceIncrement.before_sha256).toBe(rootSourceRefresh.after_sha256);
-    const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", rootSourceRefresh.route_file), "utf8"));
+    const routeSource = beforeNavigationSource(rootSourceRefresh.route_file);
     const stateSource = reverseRouteSourceFollowup(routeSource, availabilityFollowup);
     const videoSource = reverseRouteSourceIncrement(stateSource, stateSourceIncrement);
     reverseRouteSourceIncrement(videoSource, rootSourceRefresh);
@@ -295,15 +298,18 @@ describe("Admin frontend API registration audit", () => {
     for(const change of settings.frontend_source_changes) {
       const row=updated.frontendSources.find(item=>item.file===change.file)!;
       expect(row.sha256).toBe(change.before_sha256);expect(sha256(beforePageSettingsSource(change.file))).toBe(change.before_sha256);
-      row.sha256=change.after_sha256;expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+      row.sha256=change.after_sha256;expect(sha256(beforeNavigationSource(change.file))).toBe(change.after_sha256);
     }
     expect(settings.call_line_changes).toHaveLength(3);
     for(const change of settings.call_line_changes) {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
     }
-    expect(current).toEqual(updated);expect(settings.file).toBe(customer.file);
-    expect(sha256(readFileSync(join(workerRoot,'..',settings.file)))).toBe(settings.sha256);
+    expect(previousNavigationReport).toEqual(updated);expect(applyNavigationAuthorReport(updated)).toEqual(current);expect(settings.file).toBe(customer.file);
+    expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(settings.sha256);
+    expect(navigationBinding.previous_report.sha256).toBe(settings.sha256);
+    expect(sha256(readFileSync(join(workerRoot,'..',navigationBinding.previous_report.file)))).toBe(settings.sha256);
+    expect(sha256(readFileSync(join(workerRoot,'..',navigationBinding.current_report.file)))).toBe(navigationBinding.current_report.sha256);
   });
 
   it('rejects unreviewed page-settings editor wiring and metadata preservation changes before reconstructing historical inventories',()=>{
@@ -329,14 +335,14 @@ describe("Admin frontend API registration audit", () => {
     ["extra source line", (source: string) => source + "// unrelated source change\n"],
     ["changed statistics registration", (source: string) => source.replace("'/get_script'", "'/get_script_changed'")],
   ])("rejects %s instead of absorbing source drift into the dated proof", (_name, mutate) => {
-    const routeSource = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
+    const routeSource = beforeNavigationSource(stateSourceIncrement.route_file);
     const changed = mutate(reverseRouteSourceFollowup(routeSource, availabilityFollowup));
     expect(changed).not.toBe(reverseRouteSourceFollowup(routeSource, availabilityFollowup));
     expect(() => reverseRouteSourceIncrement(changed, stateSourceIncrement)).toThrow();
   });
 
   it("checks the predecessor hash as well as the current hash and exact insertion", () => {
-    const source = normalizeAdminAuditSource(readFileSync(join(workerRoot, "..", stateSourceIncrement.route_file), "utf8"));
+    const source = beforeNavigationSource(stateSourceIncrement.route_file);
     expect(() => reverseRouteSourceIncrement(reverseRouteSourceFollowup(source, availabilityFollowup), { ...stateSourceIncrement, before_sha256: "0".repeat(64) })).toThrow(/predecessor/);
   });
 

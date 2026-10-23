@@ -1,7 +1,7 @@
 /** Owned PG16 ORM-column slice + exact current production ACL intersection.
  * This does not commission all production tables or install new grants/DDL. */
 import { SQL, sql } from 'drizzle-orm';
-import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
+import { getTableConfig, PgDialect, type PgTable } from 'drizzle-orm/pg-core';
 import { createContainerFromDb, type DbClient } from '../../src/lib/di';
 import { articleCategory, pageCategory, pageLink, storeBargain, storeCombination, storeIntegral, storeProduct, storeProductAttr, storeProductAttrValue, storeProductDescription,
   storeProductCategory, storeProductRelation, storeSeckill, systemAdmin, systemArticle, systemAttachment,
@@ -15,12 +15,12 @@ export const fabLinkTables = [pageCategory,pageLink,storeProduct,storeProductAtt
   systemAttachment,systemStore,systemSupplier,systemConfig,systemAdmin,systemRole,systemMenus];
 export const fabLinkEnv = { APP_KEY: 'owned-fab-link-catalog-key' };
 const identifier = (value: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(value)) throw Error('Invalid owned FAB catalog identifier'); return `"${value}"`; };
-export async function fabLinkCatalogFixture() {
+export async function fabLinkCatalogFixture(extraTables: PgTable[] = []) {
   const f = await sequenceRunnerDatabase();
   if (f.format !== 'pg16' || !f.withRuntimeRole || !f.withPeer) { await f.close(); throw Error('FAB catalog fixture requires isolated PG16'); }
   try {
-    const dialect = new PgDialect();
-    for (const table of fabLinkTables) {
+    const dialect = new PgDialect(), tables = [...new Set([...fabLinkTables, ...extraTables])];
+    for (const table of tables) {
       const definition = getTableConfig(table), columns = definition.columns.map(column => {
         const value = column.default, initial = value === undefined ? '' : ` DEFAULT ${value instanceof SQL ? dialect.sqlToQuery(value).sql : dialect.sqlToQuery(sql`${value}`.inlineParams()).sql}`;
         return `${identifier(column.name)} ${column.getSQLType()}${initial}${column.notNull ? ' NOT NULL' : ''}${column.primary ? ' PRIMARY KEY' : ''}`;
@@ -74,7 +74,7 @@ export async function fabLinkCatalogFixture() {
     const installSlice = async (app: Peer, admin: Peer) => {
       for (const [kind, peer] of [['app',app],['admin',admin]] as const) {
         const plan = runtimeBusinessPrivilegePlan(kind);
-        for(const table of fabLinkTables) {
+        for(const table of tables) {
           const definition = getTableConfig(table), privileges = plan.tables[definition.name];
           if(!privileges?.includes('SELECT')) throw Error(`${kind} has no production SELECT on ${definition.name}`);
           await f.exec(`GRANT ${privileges.join(',')} ON public.${identifier(definition.name)} TO ${identifier(peer.role)}`);
@@ -88,7 +88,7 @@ export async function fabLinkCatalogFixture() {
         }
       }
     };
-    return { ...f, env:fabLinkEnv, tables:fabLinkTables, installSlice,
+    return { ...f, env:fabLinkEnv, tables, installSlice,
       serviceFor:(db:DbClient=f.db)=>new AdminFabLinkCatalogService(createContainerFromDb(db),fabLinkEnv),
       snapshot:async()=>({links:await f.db.select().from(pageLink).orderBy(pageLink.id),categories:await f.db.select().from(pageCategory).orderBy(pageCategory.id),diy:await f.db.select().from(systemDise).orderBy(systemDise.id)}),
       withRuntimeRole:f.withRuntimeRole,withPeer:f.withPeer };
