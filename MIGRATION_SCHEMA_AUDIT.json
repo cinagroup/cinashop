@@ -3326,5 +3326,28 @@
     "deploy": false,
     "overall_migration_complete": false,
     "new_head_CI": "Read exact head after push; oldparent run failures remain recorded."
+  },
+  "diyCustomerServiceContractVerification": {
+    "recorded": "2026-10-23T04:26:37.110564+00:00",
+    "summary": "Per-page PHP customerService complete author/public image/gesture/service-config and host lifecycle, verified hidden real Browser15",
+    "doc": "workers-ts/docs/php-ts-diy-customer-service-20261023.md",
+    "audit": "workers-ts/audit/php-ts-diy-customer-service-20261023.json",
+    "base_commit": "ee3847f798a92cdb8c00a9e71bbf7bc246c9293b",
+    "Worker_files": 69,
+    "Worker_tests": 1280,
+    "native_files": 7,
+    "native_tests": 243,
+    "Admin_tests": 81,
+    "Uni_actual_toolchain_files": 91,
+    "Uni_actual_toolchain_tests": 2374,
+    "local_browser_checkpoints": 15,
+    "browser_tables": 73,
+    "browser_sequences": 68,
+    "new_distinct_cases": 162,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "new_head_CI": "Read exact newhead after push; parentee3847 run39882339224 success is separate."
   }
 }

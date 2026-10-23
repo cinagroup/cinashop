@@ -325,7 +325,7 @@ jobs:
       - name: Verify actual DIY footer and presentation editors
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
-        run: npm run test:diy-footer && npm run test:diy-presentation
+        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service
 
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'

@@ -2930,3 +2930,12 @@ PR #156首head91e6b880的UniApp CI为2254/2258、4个旧社区零请求预期失
 最终 Worker67文件1252项、native PG16六文件201项、Admin50项、UniApp实际90文件2314项及两端完整 strict/三端构建/产物/i18n通过。新增独立207，旧族、既有结算25+4、候选重复及浏览器检查点不另计。真实后台IAB17检查点/outer0，74表68序列、166真实GET与34合成chrome GET逐次零写；一次真实Admin业务保存、初始setup和站点配置分别记录，源/依赖/构建及临时资源清理可复核。
 
 父PR #156 Worker两个分片的8+4失败是旧结算adapter缺少真实cartMutation加载，本批以真实UniVue/每runtime状态修复并完整补验，原失败保留。Browser先前三次候选与CDP截图超时未冒称通过；最终17点使用普通截图。按用户要求后台浏览器验收，不逐页弹确认。保留已恢复get_script及三端loader，不改生产DDL/ACL/路由/锁文件；三账本历史正文/复选行/JSON旧键不变。见 workers-ts/docs/php-ts-diy-presentation-20261022.md 与对应机器审计。API-007、DATA-008、FE-003J/K、整体迁移及生产/真机父项继续开放；只推送draft、不合并部署，精确新head CI推送后单列核实。
+
+
+### 2026-10-23 DIY 页面悬浮客服增量
+
+接通真实 PHP customerService 的作者数据、平台图标、圆形定位/拖动、页面链接与四种站点客服配置、MP原生contact优先，以及首页/微页完整生命周期。实际DiseList编辑器与图库保存稳定引用，导入字符串真值/0默认位置与未知字段完整保留；仅logoConfig.url增加独立20000媒体槽，既有所有权/完整预算/原子签名和其它族限额不变。
+
+最终Worker69文件1280项及两套完整strict、native PG16七文件243项、Admin81项及完整strict/build、UniApp当前91文件2374项和完整strict/三端构建/产物/i18n通过。新增独立162，重复候选/保留测试/浏览器检查点不另计。后台真实IAB15点/outer0，73表68序列、93真实GET与41声明的无关chrome GET均无状态写；一次真实Admin业务保存、初始setup和客服/站点明确配置分列，实际键盘change/鼠标拖动与真实客服跳转均验收，所有临时资源清理。
+
+预览nextTick、相邻拖动旧计时器、Uni原生鼠标归一化、工具fill缺change、两次Browser未完成、临时Vite缓存收据和新测试strict类型红灯均保留，不降断言或冒称旧失败成功；最终完整正例见 workers-ts/docs/php-ts-diy-customer-service-20261023.md 与对应机器审计。Browser后phase类型修正的精确inverse/真实序列化等价另有收据，生产/产物不变。保留已恢复get_script及三端loader，不改生产DDL/ACL/路由/依赖/锁；三账本旧正文/复选行/JSON键不变。父#157精确ee3847 CI已成功，新head CI推送后单列。仅推送draft、不合并部署，API-007、DATA-008、FE-003J/K、真机/生产父项及整体迁移继续开放。

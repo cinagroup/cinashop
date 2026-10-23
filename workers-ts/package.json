@@ -48,7 +48,8 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:runtime": "vitest run --config vitest.worker.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
-    "test:runtime:watch": "vitest --config vitest.worker.config.ts"
+    "test:runtime:watch": "vitest --config vitest.worker.config.ts",
+    "audit:diy-customer-service-browser": "vitest run --config vitest.diy-customer-service-browser.config.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
