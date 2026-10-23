@@ -299,9 +299,15 @@ export const PRODUCT_BRAND_SELECTION_PERMISSION = "brand.product_selection_view"
 export const PRODUCT_CATEGORY_SELECTION_PERMISSION = 'category.product_selection_view';
 // Read-only POST admission; exact legacy191 does not grant product writes.
 export const PRODUCT_SKU_GENERATION_PERMISSION = 'product.sku_generation_view';
+// Read admission for the DIY author chooser, not a selectable role rule. A
+// dise manager may read options without gaining FAB/product/attachment access.
+export const DISE_AUTHOR_SELECTION_PERMISSION = 'dise.author_selection_view';
 
 /** Canonical grants cover narrower legacy contracts; legacy grants stay within their own workflow. */
 export function hasAdminPermission(granted: ReadonlySet<string>, required: string): boolean {
+  if (required === DISE_AUTHOR_SELECTION_PERMISSION) {
+    return granted.has(required) || granted.has('dise.manage');
+  }
   if (required === PRODUCT_SKU_GENERATION_PERMISSION) return granted.has(required) || granted.has('product.manage');
   if (required === PRODUCT_CATEGORY_SELECTION_PERMISSION) return granted.has(required)
     || granted.has('product.view') || granted.has('product.manage') || granted.has('category.view') || granted.has('category.manage');
@@ -487,6 +493,17 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // The earlier mobile editor has a distinct /api/admin selection contract.
   if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  // No generic dise.view fallback for this author-only namespace. Unknown
+  // children and every write verb stay unregistered, even if added by mistake.
+  if (route === 'dise/author-options' || route.startsWith('dise/author-options/')) {
+    return ['GET', 'HEAD'].includes(method.toUpperCase()) && [
+      'dise/author-options/hot-words',
+      'dise/author-options/link-categories',
+      'dise/author-options/link-targets',
+      'dise/author-options/tab-categories',
+      'dise/author-options/tab-targets',
+    ].includes(route) ? DISE_AUTHOR_SELECTION_PERMISSION : null;
+  }
   if (route === 'supplier/list' || route.startsWith('supplier/list/')) {
     return route === 'supplier/list' && ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'product.view' : null;
   }
@@ -699,7 +716,8 @@ export function assertDelegablePermissions(
   granted: ReadonlySet<string>,
   requested: Iterable<string>,
 ): void {
-  const excess = [...new Set(requested)].filter((key) => key === legacyRolePreviewPermission || !hasAdminPermission(granted, key));
+  const excess = [...new Set(requested)].filter((key) => key === legacyRolePreviewPermission
+    || key === DISE_AUTHOR_SELECTION_PERMISSION || !hasAdminPermission(granted, key));
   if (excess.length) {
     throw new ValidateException(`不能授予超出当前管理员范围的权限: ${excess.join(",")}`);
   }

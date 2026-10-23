@@ -1,0 +1,980 @@
+// Full literal defaults from immutable PHP 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5.
+// Only new blocks receive these fields; imported blocks are never default-merged.
+export const DIY_NAVIGATION_DEFAULTS: Record<string, Record<string, unknown>> = {
+  "headerSerch": {
+    "cname": "搜索框",
+    "name": "headerSerch",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "展示设置",
+    "titleSearch": "搜索内容",
+    "titleHotWords": "搜索热词",
+    "titleRight": "搜索框",
+    "titleCurrency": "通用样式",
+    "styleConfig": {
+      "title": "选择风格",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "logo+搜索"
+        },
+        {
+          "name": "标题+搜索"
+        },
+        {
+          "name": "搜索"
+        }
+      ]
+    },
+    "logoConfig": {
+      "info": "建议：144px * 44px",
+      "url": "",
+      "type": "code",
+      "delType": 1,
+      "name": "logo图"
+    },
+    "titleConfig": {
+      "title": "标题",
+      "value": "标题",
+      "place": "请输入标题",
+      "max": 6
+    },
+    "styleSearchConfig": {
+      "title": "选择风格",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "样式1"
+        },
+        {
+          "name": "样式2"
+        },
+        {
+          "name": "样式3"
+        }
+      ]
+    },
+    "tipConfig": {
+      "title": "提示文字",
+      "value": "搜索商品",
+      "place": "填写内容",
+      "max": 20
+    },
+    "hotWords": {
+      "list": [
+        {
+          "val": ""
+        }
+      ]
+    },
+    "numConfig": {
+      "placeholder": "设置搜索热词显示时间",
+      "title": "显示时间",
+      "val": 3,
+      "type": "words"
+    },
+    "searchBoxColor": {
+      "title": "搜索框",
+      "default": [
+        {
+          "item": "#F5F5F5"
+        }
+      ],
+      "color": [
+        {
+          "item": "#F5F5F5"
+        }
+      ]
+    },
+    "tipColor": {
+      "title": "提示文字",
+      "default": [
+        {
+          "item": "#CCCCCC"
+        }
+      ],
+      "color": [
+        {
+          "item": "#CCCCCC"
+        }
+      ]
+    },
+    "hotWordsColor": {
+      "title": "热词文字",
+      "default": [
+        {
+          "item": "#888"
+        }
+      ],
+      "color": [
+        {
+          "item": "#888"
+        }
+      ]
+    },
+    "toneConfig": {
+      "title": "色调",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "跟随主题风格"
+        },
+        {
+          "name": "自定义"
+        }
+      ]
+    },
+    "searchColor": {
+      "title": "搜索文字",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "searchTxtColor": {
+      "title": "搜索文字",
+      "default": [
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "searchBgColor": {
+      "title": "搜索背景",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "moduleColor": {
+      "title": "组件背景",
+      "default": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "default": [
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "fillet": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    }
+  },
+  "tabNav": {
+    "cname": "选项卡",
+    "name": "tabNav",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "展示设置",
+    "titleTab": "选项卡设置",
+    "titleRight": "选项卡样式",
+    "titleCurrency": "通用样式",
+    "styleConfig": {
+      "title": "选择风格",
+      "tabVal": 0,
+      "type": "navBar"
+    },
+    "stickyConfig": {
+      "title": "滑动置顶",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "启用"
+        },
+        {
+          "name": "不启用"
+        }
+      ]
+    },
+    "tabListConfig": {
+      "title": "鼠标拖拽版块可调整选项卡顺序",
+      "max": 100,
+      "list": [
+        {
+          "text": {
+            "title": "显示文字",
+            "val": "标题标题",
+            "max": 6,
+            "pla": "请输入分类名称"
+          },
+          "dataType": {
+            "title": "数据类型",
+            "tabVal": 0,
+            "tabList": [
+              {
+                "name": "微页面"
+              },
+              {
+                "name": "商品分类"
+              }
+            ]
+          },
+          "microPage": {
+            "name": "",
+            "id": 0
+          },
+          "classPage": {
+            "name": "",
+            "id": 0
+          }
+        },
+        {
+          "text": {
+            "title": "显示文字",
+            "val": "标题标题",
+            "max": 6,
+            "pla": "请输入分类名称"
+          },
+          "dataType": {
+            "title": "数据类型",
+            "tabVal": 0,
+            "tabList": [
+              {
+                "name": "微页面"
+              },
+              {
+                "name": "商品分类"
+              }
+            ]
+          },
+          "microPage": {
+            "name": "",
+            "id": 0
+          },
+          "classPage": {
+            "name": "",
+            "id": 0
+          }
+        },
+        {
+          "text": {
+            "title": "显示文字",
+            "val": "标题标题",
+            "max": 6,
+            "pla": "请输入分类名称"
+          },
+          "dataType": {
+            "title": "数据类型",
+            "tabVal": 0,
+            "tabList": [
+              {
+                "name": "微页面"
+              },
+              {
+                "name": "商品分类"
+              }
+            ]
+          },
+          "microPage": {
+            "name": "",
+            "id": 0
+          },
+          "classPage": {
+            "name": "",
+            "id": 0
+          }
+        },
+        {
+          "text": {
+            "title": "显示文字",
+            "val": "标题标题",
+            "max": 6,
+            "pla": "请输入分类名称"
+          },
+          "dataType": {
+            "title": "数据类型",
+            "tabVal": 0,
+            "tabList": [
+              {
+                "name": "微页面"
+              },
+              {
+                "name": "商品分类"
+              }
+            ]
+          },
+          "microPage": {
+            "name": "",
+            "id": 0
+          },
+          "classPage": {
+            "name": "",
+            "id": 0
+          }
+        }
+      ]
+    },
+    "toneConfig": {
+      "title": "色调",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "跟随主题风格"
+        },
+        {
+          "name": "自定义"
+        }
+      ]
+    },
+    "decorateColor": {
+      "title": "装饰元素",
+      "default": [
+        {
+          "item": "#E93323"
+        },
+        {
+          "item": "#FF7931"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        },
+        {
+          "item": "#FF7931"
+        }
+      ]
+    },
+    "decorateColor2": {
+      "title": "装饰元素",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "textColor": {
+      "title": "选中文字",
+      "default": [
+        {
+          "item": "#333333"
+        }
+      ],
+      "color": [
+        {
+          "item": "#333333"
+        }
+      ]
+    },
+    "textColor2": {
+      "title": "选中文字",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "textColor3": {
+      "title": "选中文字",
+      "default": [
+        {
+          "item": "#FFFFFF"
+        }
+      ],
+      "color": [
+        {
+          "item": "#FFFFFF"
+        }
+      ]
+    },
+    "moduleColor": {
+      "title": "组件背景",
+      "default": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "default": [
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "mbConfig": {
+      "title": "页面间距",
+      "val": 0,
+      "min": 0
+    },
+    "fillet": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    }
+  },
+  "menus": {
+    "cname": "导航组",
+    "name": "menus",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "展示设置",
+    "titleContent": "内容设置",
+    "titleRight": "图片样式",
+    "titlePointer": "指示器设置",
+    "titleCurrency": "通用样式",
+    "menuStyleConfig": {
+      "title": "导航样式",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "图片加文字"
+        },
+        {
+          "name": "图片"
+        },
+        {
+          "name": "文字"
+        }
+      ]
+    },
+    "number": {
+      "title": "单行显示",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "3个"
+        },
+        {
+          "name": "4个"
+        },
+        {
+          "name": "5个"
+        }
+      ]
+    },
+    "showConfig": {
+      "title": "展示样式",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "固定显示"
+        },
+        {
+          "name": "分页滑动"
+        }
+      ]
+    },
+    "rowsNum": {
+      "title": "显示行数",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "1行"
+        },
+        {
+          "name": "2行"
+        },
+        {
+          "name": "3行"
+        },
+        {
+          "name": "4行"
+        }
+      ]
+    },
+    "filletImg": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    },
+    "toneConfig": {
+      "title": "色调",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "跟随主题风格"
+        },
+        {
+          "name": "自定义"
+        }
+      ]
+    },
+    "pointerBgColor": {
+      "title": "常规样式",
+      "default": [
+        {
+          "item": "#DDDDDD"
+        }
+      ],
+      "color": [
+        {
+          "item": "#DDDDDD"
+        }
+      ]
+    },
+    "pointerColor": {
+      "title": "选中样式",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "bgColor": {
+      "title": "组件背景",
+      "default": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "default": [
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "mbConfig": {
+      "title": "页面上间距",
+      "val": 0,
+      "min": 0
+    },
+    "menuConfig": {
+      "title": "最多可添加1张图片，建议宽度90 * 90px",
+      "bnt": "添加",
+      "type": 1,
+      "maxList": 100,
+      "list": [
+        {
+          "img": "",
+          "show": true,
+          "info": [
+            {
+              "title": "标题",
+              "value": "标题",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "show": true,
+          "info": [
+            {
+              "title": "标题",
+              "value": "标题",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "show": true,
+          "info": [
+            {
+              "title": "标题",
+              "value": "标题",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "show": true,
+          "info": [
+            {
+              "title": "标题",
+              "value": "标题",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        }
+      ]
+    },
+    "fillet": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    }
+  },
+  "pictureCube": {
+    "cname": "图片魔方",
+    "name": "pictureCube",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "展示设置",
+    "titleShow": "展示设置",
+    "titleContent": "内容设置",
+    "titleRight": "图片魔方",
+    "titleCurrency": "通用样式",
+    "styleConfig": {
+      "title": "选择风格",
+      "tabVal": 0,
+      "count": 2,
+      "type": "pictureCube"
+    },
+    "picStyle": {
+      "tabVal": 0,
+      "picList": [],
+      "docPicList": []
+    },
+    "menuConfig": {
+      "title": "",
+      "maxList": 1,
+      "isCube": 1,
+      "list": [
+        {
+          "img": "",
+          "info": [
+            {
+              "title": "链接",
+              "tips": "请输入链接",
+              "value": "",
+              "max": 100
+            }
+          ]
+        }
+      ]
+    },
+    "imgConfig": {
+      "title": "图片间距",
+      "val": 0,
+      "min": 0
+    },
+    "filletImg": {
+      "title": "图片圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconDot"
+        },
+        {
+          "val": "单个",
+          "icon": "iconSquarepoint"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "default": [
+        {
+          "item": "#f5f5f5"
+        }
+      ],
+      "color": [
+        {
+          "item": "#f5f5f5"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "mbConfig": {
+      "title": "页面上间距",
+      "val": 0,
+      "min": 0
+    }
+  }
+};

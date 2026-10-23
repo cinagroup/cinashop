@@ -97,6 +97,7 @@
         <el-form-item label="底部导航">
           <DiyFooterEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" />
         </el-form-item>
+        <el-form-item label="导航组件"><DiyNavigationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="内容排版"><DiyPresentationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="页面悬浮按钮"><DiyCustomerServiceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="装修 value" required>
@@ -150,6 +151,9 @@ import DiyPresentationEditor from "@/components/content/DiyPresentationEditor.vu
 import { canonicalPresentationValue } from "@/utils/diyPresentationEditor";
 import DiyCustomerServiceEditor from "@/components/content/DiyCustomerServiceEditor.vue";
 import { canonicalCustomerServiceValue } from "@/utils/diyCustomerServiceEditor";
+
+import DiyNavigationEditor from "@/components/content/DiyNavigationEditor.vue";
+import { canonicalNavigationValue } from "@/utils/diyNavigationEditor";
 
 import DiyPageSettingsEditor from "@/components/content/DiyPageSettingsEditor.vue";
 import { newDiyPageSettings, readDiyPageSettings, pageSettingsPatch, type DiyPageSettings } from "@/utils/diyPageSettingsEditor";
@@ -281,7 +285,7 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)));
+    return canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))));
   } catch {
     return null;
   }

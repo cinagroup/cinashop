@@ -51,7 +51,10 @@
     "test:runtime:watch": "vitest --config vitest.worker.config.ts",
     "audit:diy-customer-service-browser": "vitest run --config vitest.diy-customer-service-browser.config.ts",
     "audit:diy-page-settings-browser": "vitest run --config vitest.diy-page-settings-browser.config.ts",
-    "audit:diy-media-reference-browser": "vitest run --config vitest.diy-media-reference-browser.config.ts"
+    "audit:diy-media-reference-browser": "vitest run --config vitest.diy-media-reference-browser.config.ts",
+    "audit:diy-navigation-author-browser": "vitest run --config vitest.diy-navigation-author-browser.config.ts",
+    "test:diy-author-options": "vitest run --config vitest.config.ts --maxWorkers=1 test/admin-diy-author-options.test.ts test/admin-diy-author-options-postgres.test.ts test/admin-diy-author-options-http.test.ts",
+    "test:diy-navigation-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-navigation-author-postgres.test.ts test/diy-navigation-author-runner.test.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",

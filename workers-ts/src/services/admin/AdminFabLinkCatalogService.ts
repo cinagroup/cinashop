@@ -99,7 +99,7 @@ const categoryTree = sql`WITH RECURSIVE visible_categories AS (
   WHERE c.type=0 AND c.relation_id=0 AND c.is_show=1 AND cardinality(v.chain)<32 AND NOT c.id=ANY(v.chain)
 )`;
 const staticKinds = new Set<FabLinkKind>(['basic', 'personal', 'distribution', 'marketing']);
-function selectFor(query: FabLinkQuery): SQL {
+function selectFor(query: FabLinkQuery, requireDiyMicroPage = false): SQL {
   if (staticKinds.has(query.kind)) {
     const type = query.kind === 'basic' ? 1 : query.kind === 'distribution' ? 2 : 3;
     // The old chooser grouped by category.type and link.type, never seed ids or
@@ -130,7 +130,8 @@ function selectFor(query: FabLinkQuery): SQL {
     FROM public.system_article a WHERE a.status=1 AND a.is_del=0 AND a.hide=0 AND
     (a.cid=0 OR EXISTS (SELECT 1 FROM public.article_category c WHERE c.id=a.cid AND c.status=1 AND c.is_del=0 AND c.hidden=0))`;
   if (query.kind === 'special') return sql`SELECT d.id,d.name,d.cover_image AS image,0 AS owner_type,0 AS relation_id,d.id AS sort,d.value
-    FROM public.system_dise d WHERE d.status=1 AND d.is_del=0 AND d.type IN (1,2)`;
+    FROM public.system_dise d WHERE d.status=1 AND d.is_del=0 AND d.type IN (1,2)
+    ${requireDiyMicroPage ? sql`AND d.is_diy=1` : sql``}`;
   if (query.kind === 'integral') return sql`SELECT a.id,a.product_id,a.store_name AS name,a.image,a.price::text,a.stock,a.quota,
     a.type AS owner_type,a.relation_id,a.sort FROM public.store_integral a JOIN public.store_product p ON p.id=a.product_id
     WHERE ${integralPublicCandidateSql('a', 'p')}`;
@@ -160,7 +161,19 @@ export class AdminFabLinkCatalogService {
     return { list: FAB_LINK_CATEGORIES.map(item => ({ ...item })), issues: [] as string[] };
   }
   async targets(parameters: URLSearchParams) {
+    return this.readTargets(parseFabLinkQuery(parameters), false);
+  }
+  /** The DIY tab author selects identities, not arbitrary URLs. Restrict the
+   * micro-page predicate before counting/paging in the same readonly snapshot;
+   * the existing FAB/general chooser continues to use its original policy. */
+  async diyTabTargets(parameters: URLSearchParams) {
     const query = parseFabLinkQuery(parameters);
+    if (query.kind !== 'special' && query.kind !== 'product_category') {
+      throw new ValidateException('选项卡只能选择 DIY 微页面或商品分类');
+    }
+    return this.readTargets(query, true);
+  }
+  private async readTargets(query: FabLinkQuery, requireDiyMicroPage: boolean) {
     const result = await withTx(this.container, async tx => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`); await fabDeadlines(tx);
       if (query.parent_id) {
@@ -169,7 +182,7 @@ export class AdminFabLinkCatalogService {
       }
       // Product search uses the old chooser's private keyword/info/barcode
       // sources above. Those fields never become part of its public projection.
-      const base = selectFor(query), filter = query.search && query.kind !== 'product' && query.kind !== 'presale'
+      const base = selectFor(query, requireDiyMicroPage), filter = query.search && query.kind !== 'product' && query.kind !== 'presale'
         ? sql`WHERE position(lower(${query.search}) in lower(target.name))>0 OR target.id::text=${query.search}` : sql``;
       const count = await tx.execute<{ count: number }>(sql`SELECT count(*)::integer AS count FROM (${base}) target ${filter}`);
       const rows = await tx.execute<CatalogRow>(sql`SELECT * FROM (${base}) target ${filter} ORDER BY target.sort DESC,${staticKinds.has(query.kind) ? sql`target.id ASC` : sql`target.id DESC`} LIMIT ${query.limit} OFFSET ${query.offset}`);
