@@ -1,0 +1,798 @@
+{
+  "schema": "cinashop.diy-media-reference-contract.v1",
+  "recorded_UTC": "2026-10-23T15:03:22.149975+00:00",
+  "status": "validated-local-draft-ready",
+  "base_commit": "772fbd1249d038ca27b37a683b3ffc16eded696b",
+  "fresh_baseline": {
+    "path": "/tmp/cinashop-diy-media-reference-baseline-v2.json",
+    "sha256": "c248e80aff9cdadb7f8f63fe3337978960e9f196544e829e0fde4d65dfe8eb25"
+  },
+  "fresh_source_proposal": {
+    "path": "/tmp/cinashop-after-page-settings-diy-media-reference-next-slice-proposal-v2.json",
+    "sha256": "37bbe8a5c6240decb01d8c41c3bdb960baa5e2ebc710808e86a8837f1cad7eef"
+  },
+  "PHP_source_manifest": [
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_search_box.vue",
+      "sha256": "d0e54780d02ac1a31d07720cc2d911015e0a3adb18643a906941cf0c514cd1a8",
+      "git_blob": "6c9486b20b9b737353391b4d99118e593f1c42cf",
+      "anchors": [
+        {
+          "line": 58,
+          "text": "configNme: 'logoConfig'"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_nav_bar.vue",
+      "sha256": "0970c83314e3c258aa3c4808426eda44f732748935b4eec89f770ed2a850aff9",
+      "git_blob": "272cb761b3051edc41f8fe16a8874695a23fcb76",
+      "anchors": [
+        {
+          "line": 159,
+          "text": "configNme: 'tabListConfig'"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_menu.vue",
+      "sha256": "cea59d041ea0f6acabadfd9ba02a7793c8ace09cd7f32ad621a5baf8cb07e109",
+      "git_blob": "5ad573ea6600a086372a206045709d94925bd227",
+      "anchors": [
+        {
+          "line": 73,
+          "text": "configNme: 'menuConfig'"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_picture_cube.vue",
+      "sha256": "eab944eb9c5f05084735b5adabbb7917adb0b9a97e6d7afb399c8730b5a940d4",
+      "git_blob": "f504fbbea0e90b0c8b9ee967818423550b1812c2",
+      "anchors": [
+        {
+          "line": 83,
+          "text": "configNme: 'menuConfig'"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/search_box.vue",
+      "sha256": "a7e3bc9be8f2b10279107d3e86fc9d5257b30830d582bf3e902cf1d246683423",
+      "git_blob": "2fe45eafc191928ea6c752f8527a910e6541eab6",
+      "anchors": [
+        {
+          "line": 123,
+          "text": "defaultConfig: {"
+        },
+        {
+          "line": 125,
+          "text": "name: 'headerSerch',"
+        },
+        {
+          "line": 151,
+          "text": "logoConfig:{"
+        },
+        {
+          "line": 391,
+          "text": "this.logoUrl = data.logoConfig.url;"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/nav_bar.vue",
+      "sha256": "2b60f83b0662d7d53982152544c560b320c8467bbf4f1bcf11b765e50ba1a02f",
+      "git_blob": "255ea7948745e0a364a977d4ad76a3713bc7e654",
+      "anchors": [
+        {
+          "line": 92,
+          "text": "defaultConfig: {"
+        },
+        {
+          "line": 94,
+          "text": "name: \"tabNav\","
+        },
+        {
+          "line": 121,
+          "text": "tabListConfig: {"
+        },
+        {
+          "line": 431,
+          "text": "this.navList = data.tabListConfig.list;"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_menu.vue",
+      "sha256": "3d454f41cc18a1a9093fff76a4602cc604f626b08b0ff5464d8a0e2cc32b427d",
+      "git_blob": "049ef316424428114e505e50b91fc80b555132cc",
+      "anchors": [
+        {
+          "line": 159,
+          "text": "defaultConfig: {"
+        },
+        {
+          "line": 161,
+          "text": "name: \"menus\","
+        },
+        {
+          "line": 341,
+          "text": "menuConfig: {"
+        },
+        {
+          "line": 503,
+          "text": "let lists = this.objToArr(data.menuConfig.list);"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/picture_cube.vue",
+      "sha256": "ca1d697dba4366ed858279db8043c54b21c4b83fded5a992d523b9c30c94320a",
+      "git_blob": "b8a192e7e7eb94888cb8c33eb7fe54cf66ae3b0f",
+      "anchors": [
+        {
+          "line": 22,
+          "text": "v-for=\"(item, index) in picList\""
+        },
+        {
+          "line": 48,
+          "text": "v-for=\"(item, index) in picList\""
+        },
+        {
+          "line": 74,
+          "text": "v-for=\"(item, index) in picList\""
+        },
+        {
+          "line": 105,
+          "text": ":src=\"picList[0].image\""
+        },
+        {
+          "line": 106,
+          "text": "v-if=\"picList[0].image\""
+        },
+        {
+          "line": 127,
+          "text": ":src=\"picList[1].image\""
+        },
+        {
+          "line": 128,
+          "text": "v-if=\"picList[1].image\""
+        },
+        {
+          "line": 144,
+          "text": ":src=\"picList[2].image\""
+        },
+        {
+          "line": 145,
+          "text": "v-if=\"picList[2].image\""
+        },
+        {
+          "line": 160,
+          "text": ":src=\"picList[0].image\""
+        },
+        {
+          "line": 161,
+          "text": "v-if=\"picList[0].image\""
+        },
+        {
+          "line": 175,
+          "text": ":src=\"picList[1].image\""
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/headerSerch.vue",
+      "sha256": "5b44cc1c651e64c030fbeea088e1653266c858ae370e8b72208e92baa4531b77",
+      "git_blob": "6a8d2325fba7e1534a7e670cfe65ac6cf505726d",
+      "anchors": [
+        {
+          "line": 9,
+          "text": "<view class=\"logo skeleton-rect\" v-if=\"!dataConfig.styleConfig.tabVal && dataConfig.logoConfig.url\">"
+        },
+        {
+          "line": 10,
+          "text": "<image :src=\"dataConfig.logoConfig.url\" mode=\"heightFix\"></image>"
+        },
+        {
+          "line": 42,
+          "text": "name: 'headerSerch',"
+        },
+        {
+          "line": 59,
+          "text": "logoConfig: '',"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/tabNav.vue",
+      "sha256": "f1d881feb375343d87bd90a54e392f47ca4f2c1293a705f0fb05df63a8839aff",
+      "git_blob": "46ed6be5a4b7d6ba1053626ed8d6a5f7df0d4c11",
+      "anchors": [
+        {
+          "line": 17,
+          "text": "<view v-for=\"(item, index) in tabListConfig\" :key=\"index\" :class=\"{ on: index == tabClick }\" :style=\"["
+        },
+        {
+          "line": 40,
+          "text": "name: 'tabNav',"
+        },
+        {
+          "line": 118,
+          "text": "tabListConfig() {"
+        },
+        {
+          "line": 119,
+          "text": "let tabList = this.dataConfig.tabListConfig.list;"
+        },
+        {
+          "line": 120,
+          "text": "tabList.unshift({"
+        },
+        {
+          "line": 163,
+          "text": "data.unshift({"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/menus.vue",
+      "sha256": "2ef6aa868cfe45b755885b25e3f686b288ca4f4af1e598c883db0b315ae82412",
+      "git_blob": "f18781b8db2792c1fcd45d1aa028efd4aec651d6",
+      "anchors": [
+        {
+          "line": 76,
+          "text": "name: 'menus',"
+        },
+        {
+          "line": 105,
+          "text": "return this.dataConfig.menuConfig.list || []"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/pictureCube.vue",
+      "sha256": "ba2a54aacca008a74f4b24c60d50c931d3bf4581d3dfae1c80e277903ef401c3",
+      "git_blob": "5a2f70f2b8f9096980f57343e7b011f415002538",
+      "anchors": [
+        {
+          "line": 7,
+          "text": "}\" v-if=\"picList.length\">"
+        },
+        {
+          "line": 9,
+          "text": "<view class=\"item\" v-for=\"(item,index) in picList\" :key=\"index\" :style=\"[imgGap]\" @click=\"goDetail(item)\">"
+        },
+        {
+          "line": 14,
+          "text": "<view class=\"item\" v-for=\"(item,index) in picList\" :key=\"index\" :style=\"[imgGap]\" @click=\"goDetail(item)\">"
+        },
+        {
+          "line": 19,
+          "text": "<view class=\"item\" v-for=\"(item,index) in picList\" :key=\"index\" :style=\"[imgGap]\" @click=\"goDetail(item)\">"
+        },
+        {
+          "line": 25,
+          "text": "<view class=\"pic\" :style=\"[imgGap]\" @click=\"goDetail(picList[0])\">"
+        },
+        {
+          "line": 26,
+          "text": "<easy-loadimage mode=\"aspectFill\" width=\"100%\" height=\"100%\" :image-src=\"picList[0].image\" class=\"image\" :borderRadius=\"imgBorderRadius\"></easy-loadimage>"
+        },
+        {
+          "line": 28,
+          "text": "<view class=\"pic\" :style=\"[imgGap]\" @click=\"goDetail(picList[1])\">"
+        },
+        {
+          "line": 29,
+          "text": "<easy-loadimage mode=\"aspectFill\" width=\"100%\" height=\"100%\" :image-src=\"picList[1].image\" class=\"image\" :borderRadius=\"imgBorderRadius\"></easy-loadimage>"
+        },
+        {
+          "line": 32,
+          "text": "<view class=\"item\" :style=\"[imgGap]\" @click=\"goDetail(picList[2])\">"
+        },
+        {
+          "line": 33,
+          "text": "<easy-loadimage mode=\"aspectFill\" width=\"100%\" height=\"100%\" :image-src=\"picList[2].image\" class=\"image\" :borderRadius=\"imgBorderRadius\"></easy-loadimage>"
+        },
+        {
+          "line": 37,
+          "text": "<view class=\"item\" :style=\"[imgGap]\" @click=\"goDetail(picList[0])\">"
+        },
+        {
+          "line": 38,
+          "text": "<easy-loadimage mode=\"aspectFill\" width=\"100%\" height=\"100%\" :image-src=\"picList[0].image\" class=\"image\" :borderRadius=\"imgBorderRadius\"></easy-loadimage>"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/pages/setting/devise/index.vue",
+      "sha256": "79c72055fe2c24ba00e1af9af29a2311108a72b6b547948bf05f091db8701efa",
+      "git_blob": "0b22254d909c102ff5f758b1297a72b767cb6dfe",
+      "anchors": [
+        {
+          "line": 656,
+          "text": "if (this.isSearch) return this.$Message.error(\"该组件只能添加一次\");"
+        },
+        {
+          "line": 661,
+          "text": "if (this.isTab) return this.$Message.error(\"该组件只能添加一次\");"
+        },
+        {
+          "line": 666,
+          "text": "if (this.isComb) return this.$Message.error(\"该组件只能添加一次\");"
+        },
+        {
+          "line": 671,
+          "text": "if (this.isService) return this.$Message.error(\"该组件只能添加一次\");"
+        },
+        {
+          "line": 683,
+          "text": "this.mConfig.unshift(tempItem);"
+        },
+        {
+          "line": 688,
+          "text": "this.mConfig.unshift(tempItem);"
+        },
+        {
+          "line": 694,
+          "text": "this.mConfig.splice(1, 0, tempItem);"
+        }
+      ],
+      "read_method": "git show exact immutable ref; no PHP executed"
+    }
+  ],
+  "PHP_read_method": "git show immutable8ed2a5b139f9170dd11b0dff91803f2fd59e40a5 only; no PHP environment executed",
+  "families": [
+    "news",
+    "hotspot",
+    "follow",
+    "activeParty",
+    "swipers",
+    "swiperBg",
+    "homeComb",
+    "headerSerch",
+    "menus",
+    "pictureCube",
+    "pageFoot",
+    "customerService",
+    "videos",
+    "richText"
+  ],
+  "contract": [
+    "Keep each slot own prior grammar. Legacy image policy can decode once BEFORE approval; JSON image/video is literal, HTML attributes have their defined attribute parse. Never decode approved strings before HMAC.",
+    "Only exact positiveInt32 canonical approved local IDs are signed. Static/foreign values preserve approved bytes and need no APP_KEY; pure URL and Unicode-whitespace refusal remains.",
+    "Complete ordinary2500, navigation/footer/presentation/customer20000 each, plus independent row background1, owner lookup10000, SDK HMAC batches256, all kind approvals before first HMAC, atomic schema+HTML+row commit.",
+    "No widened href/preview/unknown-field authority; current owner/MIME/key checks and original saved author behavior retained.",
+    "Do not change shared Article/Product parser used by other consumers. One production DIY orchestration file changes."
+  ],
+  "old_source_negative": {
+    "receipt": {
+      "path": "/tmp/cinashop-diy-media-reference-native-old-source-candidate1-result.json",
+      "sha256": "4e8fff33a4b34550849845b32e8b6a1be925df7a70c86c89ab6d5b0d02c71b6d"
+    },
+    "native_passed": 15,
+    "native_failed": 17,
+    "runner_passed": 5,
+    "confirmed_unapproved_capabilities": 16,
+    "distinction": "15 rejection cases exposed16 real private capabilities, with independently valid HMAC and15x429-byte PNG+1x3142-byte MP4 anonymous bytes;1 additional static JSON literal assertion failed;1 NEW station test had a wrong navigation gate assumption. Preserve original failure; correct that new expectation only, without changing navigation production200 contract.",
+    "independent_review": {
+      "path": "/tmp/cinashop-diy-media-reference-old-source-independent-review.json",
+      "sha256": "f205683a1f33200db336c94c721de467b40b838887922aaa339a66ecaf7f8581"
+    }
+  },
+  "focused_validation": {
+    "policy_files": 3,
+    "policy_cases": 74,
+    "policy_report": {
+      "path": "/tmp/cinashop-diy-media-reference-focused-candidate1.json",
+      "sha256": "a2e9e4f94b4f4544b09d8246d3afb73ed7aa75175843936b5f5ab91102408fc1"
+    },
+    "policy_manifest": {
+      "path": "/tmp/cinashop-diy-media-reference-focused-candidate1-receipt.json",
+      "sha256": "7e377e74e5d05947e203ae440a2fe2d8b237001ce3838cc83095f703f5eeb470"
+    },
+    "native_cases": 32,
+    "native_receipt": {
+      "path": "/tmp/cinashop-diy-media-reference-native-focused-corrected1-result.json",
+      "sha256": "00b91b7db8262b3416017c9cb6734f495c626a401022151cea200586dd3ac2b7"
+    },
+    "GETs": 58,
+    "snapshot_registry": 38,
+    "observations": 42,
+    "unapproved_fresh_capabilities": 0,
+    "tables": 73,
+    "sequences": 68,
+    "native_source_scope": "Focused native32: all original full source scope retained except concurrently authored NEW media-reference Browser harness/config/unit and Browser-only helper prefix. None is consumed by native32. Actual production/native fixture, runner and all manifest/lock inputs captured; no complete-repository-source claim.",
+    "native_source_files": 6064,
+    "installed_files": 31521,
+    "source_drift": [],
+    "installed_drift": [],
+    "owned_pg_status": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-aR4U5A/data",
+        "pg_ctl_status": 3,
+        "stdout": "pg_ctl: no server running",
+        "stderr": "",
+        "postmaster_pid_exists": false
+      }
+    ]
+  },
+  "old_test_adaptations": [
+    "Existing customer orchestration15 keeps all owner/budget/atomic assertions; spy follows actual AttachmentService signer.",
+    "Existing presentation13 retains count and strengthens second-batch fault from257 static strings to257 actual eligible memory-PG rows, plus exact256+1 and no DB delta.",
+    "Existing native presentation50/customer42 use same257 actual service uploads and original assertions; only signer import/hook adapter changes."
+  ],
+  "pending": [
+    "Final exact staged-patch secret scan, commit/push and draft PR",
+    "Read exact newhead CI after push; parent green is separate"
+  ],
+  "boundaries": [
+    "Browser acceptance required in background without recurring per-page confirmation requests. Current connected tool is IAB; independent extension not observed.",
+    "Keep restored /api/get_script and Admin/Supplier/Uni loaders.",
+    "No production DDL/ACL/routes/dependencies/lock changes. Existing nonproduction Admin video addon adds real Browser table74; native32 remains73.",
+    "Other dedicated Admin author editors and complete migration remain open; media authority completion does not imply those author controls exist.",
+    "No merge or deployment; API-007/DATA-008/FE-003J/K and production/device parents stay open."
+  ],
+  "final_recorded_UTC": "2026-10-23T17:40:49.162956+00:00",
+  "validation": {
+    "complete_Worker": {
+      "files": 75,
+      "passed": 1614,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-worker-final-final1-result.json",
+        "sha256": "515e350fc940b5b7ea123d42222ef426ea36f2dd402caf3b20ab5ad054afb4cb"
+      }
+    },
+    "complete_native": {
+      "files": 9,
+      "passed": 315,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-native-final-final1-result.json",
+        "sha256": "d8f1c81cf89efe8a349c2d172191bbd9631ede93f277f0b64f40d980b5a2521c"
+      },
+      "owned_pg_status": [
+        {
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vTng0s",
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-vTng0s/data",
+          "pg_ctl_status": 3,
+          "stdout": "pg_ctl: no server running",
+          "stderr": "",
+          "postmaster_pid_exists": false
+        }
+      ]
+    },
+    "final_complete_types": {
+      "scopes": [
+        "unit",
+        "runtime"
+      ],
+      "receipt": {
+        "path": "/tmp/cinashop-media-reference-post-Browser-final-types-final1-result.json",
+        "sha256": "aa281d1f83e3d5a421adfde52450b5f5dc0243e93988cc32c2b0c2c75b716d08"
+      },
+      "source_files": 6068,
+      "installed_files": 31521
+    },
+    "Browser": {
+      "checkpoints": 14,
+      "real_GET": 111,
+      "declared_chrome_GET": 45,
+      "GUI_business_POST": 2,
+      "explicit_owner_and_station_changes": 4,
+      "tables": 74,
+      "sequences": 68,
+      "snapshots": 7,
+      "unavailable_literal404": 5,
+      "source_files": 2477,
+      "installed_files": 31521,
+      "artifacts": 658,
+      "actual_MP4_dimensions": [
+        160,
+        90
+      ],
+      "native_video_controls": false,
+      "actual_Uni_controls": true,
+      "real_play_progress_and_departure_paused_observation": true,
+      "video_already_ended_before_departure": true,
+      "mid_play_hide_pause_not_Browser_proved": true,
+      "setup_baseline_resources": {
+        "puts": 267,
+        "queue": 10
+      },
+      "measured_resource_write_delta": 0,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-browser-candidate4-result.json",
+        "sha256": "730e6e5bdd2150a967edd01ec42a6de24f3bf6860dcc3750d67756329f664d77"
+      },
+      "raw": {
+        "path": "/tmp/cinashop-diy-media-reference-browser-candidate4/cinashop-diy-media-reference-browser-evidence.json",
+        "sha256": "2f6859fef6af6ed5656807a45b68d5f37f7fa1fd9cc99f943c09045450363f97"
+      },
+      "owned_pg_status": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-3yKmNJ/data",
+          "pg_ctl_status": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "screenshot": {
+        "path": "/tmp/cinashop-media-reference-browser4-final.jpg",
+        "sha256": "cfd201cdc1e521492d4851d13844beedcfea5e81f419e95b71d61423bf5efcdb"
+      },
+      "console": {
+        "path": "/tmp/cinashop-media-reference-browser4-console.json",
+        "sha256": "f9d5c3c117b2543884d5805446e2cd52cced7209d4b36cdebc6a603509037bf1"
+      },
+      "console_counts": {
+        "log": 20,
+        "same_vue_router_deprecation_warning": 7,
+        "error": 0
+      },
+      "scope": "Real hidden IAB. All actual GETs and5 explicit unavailable literal404 compare complete snapshots/resources. Two actual GUI JSON saves only targetvalue/version/update_time; setup/config changes separate. No unsigned privateasset GET was actually emitted; guarded refusal branch is not counted as exercised."
+    },
+    "frontend_build_reuse": {
+      "path": "/tmp/cinashop-media-reference-reused-frontend-build-equivalence.json",
+      "sha256": "505109b7b037729dd48c4785f4da93f29314a3b3a81e8d6ec18c0a480b8a3261"
+    }
+  },
+  "new_independent_case_definitions": {
+    "Worker_media": 46,
+    "Worker_runner": 26,
+    "native": 32,
+    "Browser_one_Vitest": 1,
+    "total": 105,
+    "note": "Original retained cases, repeated candidates and14 GUI checkpoints are not counted again."
+  },
+  "post_backend_Browser_only_corrections": {
+    "changed_files": [
+      "workers-ts/test/browser/diy-media-reference.acceptance.ts"
+    ],
+    "current_backend_and_all75unit315native_consumed_bytes_unchanged": true,
+    "final_dual_strict_reran_after_corrections": true,
+    "corrections": [
+      {
+        "path": "/tmp/cinashop-media-reference-Browser-dimension-only-correction.json",
+        "sha256": "91c8e73104ea5bbd77751255d1ad40e5449eec0c908194716d14252e3a1dad3f"
+      },
+      {
+        "path": "/tmp/cinashop-media-reference-Browser-Uni-controls-correction.json",
+        "sha256": "5d17c92f364f000c9d1a6ad316451000a452ac273b430dca01e350b5701cc034"
+      },
+      {
+        "path": "/tmp/cinashop-media-reference-Browser-literal-preview-correction.json",
+        "sha256": "f58f070799cb59c768916ffa68f6069318b25aab7ca0fdfdde7b26171d7d8c3c"
+      }
+    ],
+    "meaning": "Only the newly authored nonconsumed Browser observer changed after broad execution; all product/backend/oldtest/fixture/package/runner bytes remain exact. Final Browser4 runs its corrected actual source; complete strict rerun certifies final source."
+  },
+  "Browser_failure_history": [
+    {
+      "candidate": 1,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-browser-candidate1-result.json",
+        "sha256": "2b5fb66d8ad3d624aef932a77df688b1263f85c844a02587bb70f04a703810e0"
+      },
+      "exit_code": 1,
+      "completed_checkpoints": 0,
+      "business_saves": 0,
+      "error": "AssertionError: expected 160 to be 32 // Object.is equality\n    at assertRendered (/home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:75:569)\n    at /home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:85:12\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "cleanup": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-EoGfys/data",
+          "pg_ctl_status": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_unchanged": true
+    },
+    {
+      "candidate": 2,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-browser-candidate2-result.json",
+        "sha256": "ba6743b7dc634a9cdfa061a37f9c7b44b6bdb772255aa07c7db2da778793eb71"
+      },
+      "exit_code": 1,
+      "completed_checkpoints": 0,
+      "business_saves": 0,
+      "error": "AssertionError: expected false to be true // Object.is equality\n    at assertRendered (/home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:75:688)\n    at /home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:85:12\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "cleanup": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-LqLHh1/data",
+          "pg_ctl_status": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_unchanged": true
+    },
+    {
+      "candidate": 3,
+      "receipt": {
+        "path": "/tmp/cinashop-diy-media-reference-browser-candidate3-result.json",
+        "sha256": "cb855dabdb98f0a39d855e58794fd2ef2cb3d5c020b94611c25af1fa3e42b1a2"
+      },
+      "exit_code": 1,
+      "completed_checkpoints": 6,
+      "business_saves": 1,
+      "error": "Error: Unowned static path /&amp;amp;\n    at serveStatic (/home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:114:13)\n    at /home/cina/cinagroup/cinashop/workers-ts/test/browser/diy-media-reference.acceptance.ts:116:823",
+      "cleanup": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-I68Mve/data",
+          "pg_ctl_status": 3,
+          "postmaster_pid_exists": false
+        }
+      ],
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_unchanged": true
+    }
+  ],
+  "independent_reviews": {
+    "signer_cross_review": {
+      "path": "/tmp/media-reference-signer-independent-review.json",
+      "sha256": "e4ef3ce7ce13070133695e5d2cc0a3d8071bd64e9d318932772e3b91a3c511ac"
+    },
+    "backend_raw": {
+      "path": "/tmp/cinashop-diy-media-reference-final-backend-independent-review.json",
+      "sha256": "be005d7e60ee2e61f90f5fbe0b947fdeaab2b6425f41b298ce636c42447fc48f"
+    },
+    "Browser_raw": {
+      "path": "/tmp/cinashop-diy-media-reference-Browser4-independent-review.json",
+      "sha256": "d19c4269a44cea3c6660d3bba79387900728979623d26cecb72021e6a9c81675"
+    },
+    "reviewer_boundary": "Cross-review agent authored native/harness portions; read-only consistency/proof review, not an independently authored end-to-end implementation."
+  },
+  "parent_exact_head_CI": {
+    "head": "772fbd1249d038ca27b37a683b3ffc16eded696b",
+    "run_id": 39964604683,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/39964604683",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": 11,
+    "raw_run_sha256": "a140c95194b35f0ef7f8550296761b3cb88cdade75a8c33fd8c4317bcb9e74f0",
+    "raw_jobs_sha256": "1169d8eaedfafe485f6de0396ea92fd0c124a14e8d1cc01048ca6a1f77f46a2a",
+    "original86bef_red_preserved": true,
+    "guest_original_cause": "unknown; new run success does not establish diagnosis",
+    "proof": {
+      "path": "/tmp/cinashop-page-settings-exact-head772-CI-green.json",
+      "sha256": "cb42603abf23e2c0f66bd6519731b31903bba7c080b0f662f39517a0c9a8d8d9"
+    }
+  },
+  "static404_boundary": "Only three decoded relative literal spellings &, &amp;, &amp;amp; (normal URL percent-decoding aliases included), emptyquery and explicit privateEdited/privateSaved/privateMicro1/2save phases are eligible. Always404 plaintext, no synthetic business/media success. Observed raw paths were only /& and /&amp;amp;.",
+  "current_family_manifest": [
+    {
+      "path": "workers-ts/docs/php-ts-diy-media-reference-20261023.md",
+      "sha256": "efec10ce0b64543032f9d0534a255010b4f20c6cfa5e0da57b773501c2d1db1e"
+    },
+    {
+      "path": "workers-ts/package.json",
+      "sha256": "ff2faa25329858cdf327af62f202fa44df988cd5db5b23fc463d9ab1af8c5c95"
+    },
+    {
+      "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "ef790111f9a2e81b26d1302c1adc08e9bd98d4b84a5128982b48c64e9f6890a0"
+    },
+    {
+      "path": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "sha256": "44f602287a7ec500148f01d0a94e0e798371b7b20fa5863b9ecfd2d250759a15"
+    },
+    {
+      "path": "workers-ts/test/browser/diy-media-reference.acceptance.ts",
+      "sha256": "fcb9c3f88cad49af5346e148668f2b90324c341f9e4b6d3ac5f71ce5060dd5de"
+    },
+    {
+      "path": "workers-ts/test/diy-customer-service-media.test.ts",
+      "sha256": "03f8fd76f409d9bff0e4272588344037fe37d9911c6f5041c66cfb0df2c8f26d"
+    },
+    {
+      "path": "workers-ts/test/diy-customer-service-postgres.test.ts",
+      "sha256": "975728392dae60d85bc05036bc91da636248eb0cdae7c3fae4e86fc651cb5ea5"
+    },
+    {
+      "path": "workers-ts/test/diy-media-reference-postgres.test.ts",
+      "sha256": "200878d69470813ec11352d469216073547d48922c39f28899dde07490e99d23"
+    },
+    {
+      "path": "workers-ts/test/diy-media-reference-runner.test.ts",
+      "sha256": "6aae9a7a58d33b42e40e4705e8a8bb48857f0a8e8cec84297ff82c9ff58c8de5"
+    },
+    {
+      "path": "workers-ts/test/diy-media-reference.test.ts",
+      "sha256": "0b22382f84a998720a96020254cec823d22786febf05e0bc21204327056e1dce"
+    },
+    {
+      "path": "workers-ts/test/diy-presentation-media.test.ts",
+      "sha256": "1111115d4f725a3b07d860030fc427cc6aa823fe4095fb2730e773ca2b7863f4"
+    },
+    {
+      "path": "workers-ts/test/diy-presentation-postgres.test.ts",
+      "sha256": "c1c9b7ff7df078bc343378f6ad92e920c7eeab662fc6d01c452e226ec6185ae6"
+    },
+    {
+      "path": "workers-ts/test/helpers/diyMediaReferenceBrowserFixture.ts",
+      "sha256": "ffbcd28b5f3c1b68369c1d8ffd38a8e555c1dc84417fddc569d84c61051bccfe"
+    },
+    {
+      "path": "workers-ts/test/helpers/diyMediaReferenceFixture.ts",
+      "sha256": "893203430e451bd9840ac05ad791f2ad0df0a65dd1b50287d8bcc4d217bd7500"
+    },
+    {
+      "path": "workers-ts/vitest.diy-media-reference-browser.config.ts",
+      "sha256": "1cb602ee9f0a13a7e9030ca4ca5458838b354008112414e567e35d3edfc2c358"
+    }
+  ],
+  "protected_baseline": {
+    "files": 6773,
+    "allowed_paths": [
+      "MIGRATION_AUDIT.md",
+      "MIGRATION_CHECKLIST.md",
+      "MIGRATION_SCHEMA_AUDIT.json",
+      "workers-ts/audit/php-ts-diy-media-reference-20261023.json",
+      "workers-ts/docs/php-ts-diy-media-reference-20261023.md",
+      "workers-ts/package.json",
+      "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "workers-ts/test/browser/diy-media-reference.acceptance.ts",
+      "workers-ts/test/diy-customer-service-media.test.ts",
+      "workers-ts/test/diy-customer-service-postgres.test.ts",
+      "workers-ts/test/diy-media-reference-postgres.test.ts",
+      "workers-ts/test/diy-media-reference-runner.test.ts",
+      "workers-ts/test/diy-media-reference.test.ts",
+      "workers-ts/test/diy-presentation-media.test.ts",
+      "workers-ts/test/diy-presentation-postgres.test.ts",
+      "workers-ts/test/helpers/diyMediaReferenceBrowserFixture.ts",
+      "workers-ts/test/helpers/diyMediaReferenceFixture.ts",
+      "workers-ts/vitest.diy-media-reference-browser.config.ts"
+    ],
+    "rule": "Every other base Git blob/mode immutable; old Markdown prefixes/checkboxes and every old JSON key/value exact. Old audits/bindings/locks immutable; package only adds one explicit Browser script. External preservation proof avoids circular hashes."
+  },
+  "final_secret_scan": {
+    "external_receipt": "/tmp/cinashop-media-reference-final-staged-secret-result.json",
+    "scope": "Exact complete19-file staged binary patch after final audit and ledgers frozen; verify commit byte equality before push."
+  }
+}
