@@ -293,6 +293,18 @@ describe('pure product-detail full-contract source coverage', () => {
     expect(classifyProductDetailDesignCoverage(coverage)).toBe('partial');
   });
 
+  it.each(['type', 'template_name', 'is_diy', 'showPrice', 'operationId', 'revision'])('rejects generic admission of protected field %s despite legitimate row-appearance fields', key => {
+    expect(baseline.genericProtection).toBe(true);
+    const prefix = 'const ADMIN_DISE_ALLOWED_SAVE_KEYS = new Set([';
+    const changed = mutation('crud', prefix, `${prefix}${JSON.stringify(key)},`);
+    // A detached copy of the valid declaration cannot restore executable
+    // whitelist evidence after a protected key was admitted.
+    changed.crud += '\n/* ' + sources.crud!.slice(sources.crud!.indexOf(prefix), sources.crud!.indexOf(']);', sources.crud!.indexOf(prefix)) + 3) + ' */';
+    const coverage = inspectProductDetailDesignCoverage(screens, changed);
+    expect(coverage.genericProtection).toBe(false);
+    expect(classifyProductDetailDesignCoverage(coverage)).toBe('partial');
+  });
+
   it('requires real provider and activity producers even when their pages and imports exist', () => {
     const noActivity = { ...sources, activity: "import {readActivityDetailDesign} from './ProductDetailDesignData';" };
     expect(inspectProductDetailDesignCoverage(screens, noActivity).activityConsumers).toBe(false);

@@ -291,8 +291,8 @@ export function safeDiyImageUrl(value: unknown): string {
   return "";
 }
 
-export function diyPageStyle(page: DiyPage | null): Record<string, string> {
-  if (!page) return {};
+export function diyPageStyle(page: DiyPage | null, admitted = true): Record<string, string> {
+  if (!page || !admitted || !isDiyEnabled(page.is_show)) return {};
   const result: Record<string, string> = {};
   if (isDiyEnabled(page.is_bg_color)) {
     const color = safeDiyColor(page.color_picker);
@@ -300,10 +300,10 @@ export function diyPageStyle(page: DiyPage | null): Record<string, string> {
   }
   if (isDiyEnabled(page.is_bg_pic)) {
     const image = safeDiyImageUrl(page.bg_pic);
-    if (image) {
+    if (image && !/[\u0000-\u0020\u007f\\]/u.test(image) && diyEditorialMediaCacheUsable({is_show: 1, is_bg_pic: 1, bg_pic: image}, Date.now())) {
       result.backgroundImage = `url("${image.replaceAll('"', "%22")}")`;
-      result.backgroundSize = String(page.bg_tab_val) === "2" ? "cover" : "100% auto";
-      result.backgroundRepeat = String(page.bg_tab_val) === "1" ? "repeat-y" : "no-repeat";
+      result.backgroundSize = String(page.bg_tab_val) === "2" ? "100% 100%" : "100%";
+      result.backgroundRepeat = String(page.bg_tab_val) === "1" ? "repeat" : "no-repeat";
     }
   }
   return result;

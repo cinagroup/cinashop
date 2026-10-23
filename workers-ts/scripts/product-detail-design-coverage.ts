@@ -213,7 +213,10 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     && s('theme').in('lockDiseCatalogForMutation','LOCK TABLE ${systemDise} IN SHARE ROW EXCLUSIVE MODE')
     && s('httpController').in('save','PRODUCT_DETAIL_DESIGN_STALE_VERSION','PRODUCT_DETAIL_DESIGN_REJECTED','operationId:error.operationId','payloadHash:error.payloadHash','},status)');
   const genericProtection = s('crud').in('parseAdminDiseSaveInput','!ADMIN_DISE_ALLOWED_SAVE_KEYS.has(key)','if(unknownKeys.length)throw', "raw.create_kind !== 'diy_page'")
-    && s('crud').has("const ADMIN_DISE_ALLOWED_SAVE_KEYS = new Set(['id','create_kind','name','title','value','content','status'])")
+    // The six row-appearance fields are independent DIY-page metadata. The
+    // exact whitelist still excludes every dedicated product-detail identity
+    // and mutation field; adding appearance controls must not waive this gate.
+    && s('crud').has("const ADMIN_DISE_ALLOWED_SAVE_KEYS = new Set(['id','create_kind','name','title','value','content','status','is_show','is_bg_color','is_bg_pic','color_picker','bg_pic','bg_tab_val'])")
     && s('crud').in('adminDiseDeletionProtectionReason','normalizeDiseTemplateName(row.templateName)', "templateName === 'product_detail'")
     && s('crud').ordered('adminDiseDel','lockDiseCatalogForMutation(tx)','adminDiseDeletionProtectionReason(row)','if(reason)throw new ValidateException(reason)','tx.update(systemDise)')
     && s('crud').call('adminDiseDel','adminDiseDeletionProtectionReason','row')

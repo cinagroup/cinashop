@@ -12738,7 +12738,7 @@
     },
     {
       "file": "view/admin-ts/src/pages/content/DiseList.vue",
-      "sha256": "76874e5fd1c618ecb25b1fa6d01f83886b279a89eaafceed5049a9cd40b71e77"
+      "sha256": "92bfadea96db63a0f0c81412448c8d7702d3299c9352fe96ce5454628fe203bc"
     },
     {
       "file": "view/admin-ts/src/pages/label/LabelList.vue",
@@ -19992,7 +19992,7 @@
       "method": "GET",
       "path": "/dise/list",
       "source": "view/admin-ts/src/pages/content/DiseList.vue",
-      "line": 218,
+      "line": 225,
       "registered": true,
       "matchedRoute": "/dise/list",
       "matchedHandler": "AdminCrud.adminDiseList",
@@ -20002,7 +20002,7 @@
       "method": "POST",
       "path": "/dise/save",
       "source": "view/admin-ts/src/pages/content/DiseList.vue",
-      "line": 320,
+      "line": 341,
       "registered": true,
       "matchedRoute": "/dise/save",
       "matchedHandler": "AdminCrud.adminDiseSave",
@@ -20012,7 +20012,7 @@
       "method": "DELETE",
       "path": "/dise/del/:param",
       "source": "view/admin-ts/src/pages/content/DiseList.vue",
-      "line": 343,
+      "line": 364,
       "registered": true,
       "matchedRoute": "/dise/del/:id",
       "matchedHandler": "AdminCrud.adminDiseDel",

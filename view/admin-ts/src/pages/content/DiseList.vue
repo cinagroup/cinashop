@@ -83,7 +83,8 @@
           <el-input v-model="form.name" maxlength="255" show-word-limit />
         </el-form-item>
         <el-form-item label="标题">
-          <el-input v-model="form.title" maxlength="255" show-word-limit />
+          <el-input v-model="form.title" :maxlength="Math.max(30, importedTitleLength)" show-word-limit />
+          <span v-if="importedTitleLength > 30" class="help">保留已导入的长标题；背景修改不会截断原标题。</span>
         </el-form-item>
         <el-form-item v-if="form.id" label="不可变合同">
           <el-descriptions :column="3" border size="small" class="contract">
@@ -92,6 +93,7 @@
             <el-descriptions-item label="is_diy">{{ form.isDiy }}</el-descriptions-item>
           </el-descriptions>
         </el-form-item>
+        <el-form-item label="页面设置"><DiyPageSettingsEditor v-model="pageSettings" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :context-value="form.value" :page-title="form.title" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="底部导航">
           <DiyFooterEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" />
         </el-form-item>
@@ -149,7 +151,10 @@ import { canonicalPresentationValue } from "@/utils/diyPresentationEditor";
 import DiyCustomerServiceEditor from "@/components/content/DiyCustomerServiceEditor.vue";
 import { canonicalCustomerServiceValue } from "@/utils/diyCustomerServiceEditor";
 
-interface DiseRow {
+import DiyPageSettingsEditor from "@/components/content/DiyPageSettingsEditor.vue";
+import { newDiyPageSettings, readDiyPageSettings, pageSettingsPatch, type DiyPageSettings } from "@/utils/diyPageSettingsEditor";
+
+interface DiseRow extends DiyPageSettings {
   id: number;
   name: string;
   title: string;
@@ -191,6 +196,8 @@ const sessionRevision = ref(0);
 function currentSession() { return !!auth.token && !!auth.userInfo && auth.token === getToken(); }
 const sessionReady = computed(() => { void sessionRevision.value; return currentSession(); });
 const persistedPublished = ref(false);
+const pageSettings = ref<DiyPageSettings>(newDiyPageSettings()), importedTitleLength = ref(0);
+let originalSettings = newDiyPageSettings(), originalForm = "";
 let alive = true, listGeneration = 0;
 const actorStamp = () => `${editorIdentity.value}:${getToken()}:${localStorage.getItem('admin_session')}`;
 const list = ref<DiseRow[]>([]);
@@ -264,6 +271,8 @@ function openForm(row?: DiseRow): void {
     form.templateName = "";
     form.isDiy = 1;
   }
+  pageSettings.value = row ? readDiyPageSettings(row) : newDiyPageSettings();
+  originalSettings = {...pageSettings.value}; originalForm = JSON.stringify(form); importedTitleLength.value = row?.title?.length ?? 0;
   editorEpoch.value++;
   formVisible.value = true;
 }
@@ -297,17 +306,29 @@ async function save(): Promise<void> {
     return;
   }
 
-  const payload = form.id
+  let settings: Partial<DiyPageSettings>;
+  try { settings = pageSettingsPatch(form.id ? originalSettings : null, pageSettings.value); }
+  catch (reason) { ElMessage.error(reason instanceof Error ? reason.message : '页面设置无效'); return; }
+  // A page appearance edit must not reserialize untouched component JSON,
+  // independent content, or imported titles through another editor's contract.
+  const initial = JSON.parse(originalForm || '{}') as Partial<DiseForm>;
+  const metadata = {...settings, ...(form.name !== initial.name ? {name} : {}), ...(form.title !== initial.title ? {title: form.title.trim()} : {}), ...(form.status !== initial.status ? {status: form.status} : {})};
+  const metadataOnly = !!form.id && Object.keys(metadata).length > 0 && form.value === initial.value && form.content === initial.content;
+  const originalTitle = initial.title;
+  const preserveImportedTitle = form.id && form.title === originalTitle && (form.title.length > 30 || form.title !== form.title.trim());
+  const payload = metadataOnly ? {id: form.id, ...metadata} : form.id
     ? {
         id: form.id,
         name,
-        title: form.title.trim(),
+        ...(preserveImportedTitle ? {} : {title: form.title.trim()}),
+        ...settings,
         value,
         content: form.content,
         status: form.status,
       }
     : {
         create_kind: "diy_page" as const,
+        ...settings,
         name,
         title: form.title.trim(),
         value,

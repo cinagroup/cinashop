@@ -147,7 +147,7 @@ const loading = ref(true);
 const diyHost = useDiyPageHost(() => 0, () => diyCommunityVisible.value);
 const { page: diyPage, loading: diyLoading, error: diyError, phase: diyPhase, offline: diyOffline, available: diyPageActive, refreshing: diyPageRefreshing } = diyHost;
 const loadDiy = (force = false) => diyHost.reload(force);
-const diyStyle = computed(() => diyPageStyle(diyPage.value));
+const diyStyle = computed(() => diyPageStyle(diyPage.value, diyHost.appearanceAvailable.value));
 const auth = useAuthStore();
 const goodsOwner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
 let goodsGeneration = 0;
@@ -306,7 +306,8 @@ onBeforeUnmount(closeOpenAdv);
 }
 
 .diy-home {
-  min-height: 100vh;
+  width: 100%;
+  min-height: calc(100vh - var(--window-top, 0px) - var(--window-bottom, 0px));
   padding: 1rpx 0 40rpx;
   box-sizing: border-box;
 }

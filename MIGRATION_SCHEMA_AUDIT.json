@@ -3349,5 +3349,97 @@
     "deploy": false,
     "overall_migration_complete": false,
     "new_head_CI": "Read exact newhead after push; parentee3847 run39882339224 success is separate."
+  },
+  "diyPageSettingsContractVerification": {
+    "recorded": "2026-10-23T09:27:51.858488+00:00",
+    "summary": "PHP row-level page title/visibility/background author, public media, host CSS and independent paint lease, verified hidden Browser23",
+    "doc": "workers-ts/docs/php-ts-diy-page-settings-20261023.md",
+    "audit": "workers-ts/audit/php-ts-diy-page-settings-20261023.json",
+    "base_commit": "eb7ff895b31a0304f63b4ea0ff9d097e38db89f2",
+    "Worker_files": 72,
+    "Worker_tests": 1318,
+    "native_files": 8,
+    "native_tests": 283,
+    "Admin_tests": 115,
+    "Uni_actual_toolchain_files": 92,
+    "Uni_actual_toolchain_tests": 2406,
+    "local_browser_checkpoints": 23,
+    "browser_tables": 73,
+    "browser_sequences": 68,
+    "new_distinct_cases": 145,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "new_head_CI": "Read exact newhead after push; parenteb7ff895 run39901480969 all11 success is separate."
+  },
+  "diyPageSettingsCISupplementVerification": {
+    "recorded_UTC": "2026-10-23T13:44:15.146653+00:00",
+    "first_head": "86bef76eec5cf0c261097da72efcda22f1ff543b",
+    "first_CI_run": 39935874792,
+    "first_CI_url": "https://github.com/cinagroup/cinashop/actions/runs/39935874792",
+    "first_CI_result": "failure",
+    "first_CI_jobs": {
+      "success": 9,
+      "failure": 2
+    },
+    "first_shard1": {
+      "total": 12611,
+      "passed": 12602,
+      "failed": 9,
+      "audit_failures": 8,
+      "guest_manual_checkout_failures": 1
+    },
+    "original_red": {
+      "path": "/tmp/cinashop-page-settings-exact-head86-CI-failed.json",
+      "sha256": "58b5b69c8ec4f412dcc820464a8c93c0366073993921f2f97b817847849f382a"
+    },
+    "correction": "Exact13-key source audit now admits the original7 plus the six row appearance fields. Six forbidden-field mutation cases keep generic domain isolation fail-closed. No production change.",
+    "guest_runtime_status": "cause unknown; not reproduced, not labelled fixed",
+    "diagnostic": "Only the existing guest/manual case observes original fingerprint and all existing KV calls by delegation; all49 case behavior and assertions remain. Failure-only full synthetic facts are retained in uploaded unit-shard.log, without retries, changed clock, or substituted receipts.",
+    "final_complete_local_gates": {
+      "unit_types": "passed complete scope",
+      "runtime_types": "passed complete scope",
+      "audit_files": 2,
+      "audit_tests": 242,
+      "real_PG16_flow_files": 1,
+      "real_PG16_flow_tests": 49,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": {
+        "path": "/tmp/cinashop-page-settings-CI-supplement-final1-result.json",
+        "sha256": "30d12c783c5a9110f67c2e26b3944934df5d47dd6c8f8011d4b6d368104b46f9"
+      },
+      "source_files": 6060,
+      "installed_files": 31521,
+      "source_drift": [],
+      "installed_drift": [],
+      "owned_clusters": [
+        {
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-JYnsrQ/data",
+          "pg_ctl_status": 3,
+          "postmaster_pid_exists": false
+        }
+      ]
+    },
+    "independent_review": {
+      "path": "/tmp/cinashop-page-settings-CI-supplement-independent-review.json",
+      "sha256": "868b13221bc83fdb75802d6fbb58b3a90c4721f2e8ff85ee64619df13af1687b",
+      "issues": []
+    },
+    "Browser23_scope_equivalence": {
+      "path": "/tmp/cinashop-page-settings-CI-supplement-Browser23-scope-equivalence.json",
+      "sha256": "e91ec3de64c471d2b11161c64f6aefeee4e2fd4177c27ec54c4e614f6ddc3871",
+      "inputs": 2452,
+      "artifacts": 658
+    },
+    "new_distinct_cases_supplement": 6,
+    "new_distinct_cases_family_including_supplement": 151,
+    "history": "Original145 definitions and earlier1318/283/115/2406/Browser23 results remain as historical results. Six extra source-audit negatives are counted once, diagnosis adds no cases.",
+    "new_head_CI": "Verify after push for the actual new commit; never borrow parent or original red run.",
+    "next_media_WIP": "Protected by exact stash9a67fe9470ebf871a4f6fc86fcfcd0cf7f73c72f and /tmp/cinashop-media-reference-pre-parent-CI-fix-backup; not part of this supplement.",
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false
   }
 }

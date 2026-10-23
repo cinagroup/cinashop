@@ -4,6 +4,7 @@ import type { DbClient } from '@/lib/di';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { ValidateException } from '@/utils/errors';
 import { canonicalizePublishedAttachmentReference } from './ArticleContentPolicy';
+import { canonicalDiyPageBackground, signDiyPageBackground } from './DiyPageAppearancePolicy';
 
 type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue | null => value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : null;
@@ -16,8 +17,8 @@ export const DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT = 20_000;
  * schema strings never acquire an attachment signature. The shared policy
  * verifies the current platform owner, raster type, object key and MIME before
  * signing; historical tickets are canonicalized and refreshed only in output. */
-function editorialMediaSlots(components: unknown[], publication = false) {
-  const slots: Array<{ value: string; kind?: DiyPresentationMediaKind; set: (value: string) => void }> = [];
+function editorialMediaSlots(components: unknown[], publication = false, page?: RecordValue) {
+  const slots: Array<{ value: string; kind?: DiyPresentationMediaKind | 'page-background'; set: (value: string) => void }> = [];
   const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0 };
   const htmlGroups: Array<{owner: RecordValue; source: string; slots: number[]}> = [];
   const collect = (value: unknown, key: string, navigation = false) => {
@@ -104,6 +105,14 @@ function editorialMediaSlots(components: unknown[], publication = false) {
     // goodList and articleList receive their real media from their independent
     // product/article APIs. Their Admin preview rows are not public authority.
   }
+  // Row metadata has exactly one separate image slot. It is not a component,
+  // and cannot consume or enlarge any existing family budget. Its JSON grammar
+  // is deliberately separate from the legacy article attribute decoder.
+  if (page) {
+    let background = '';
+    try { background = canonicalDiyPageBackground(page.bg_pic); } catch { /* Invalid imported row backgrounds are unavailable in the public projection. */ }
+    slots.push({ value: background, kind: 'page-background', set: value => { page.bg_pic = value; } });
+  }
   // Collect first, reject before any canonical mutation, database owner lookup
   // or signature. The footer's independent budget cannot consume a previously
   // valid full editorial/carousel or navigation budget.
@@ -125,22 +134,24 @@ export function canonicalizeDiyEditorialMedia(components: unknown[]): void {
   commitMedia(collection,collection.slots.map(slot=>slot.kind?canonicalDiyPresentationReference(slot.value):canonicalizePublishedAttachmentReference(slot.value)));
 }
 
-export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appKey: string | undefined, components: unknown[]): Promise<void> {
-  const collection=editorialMediaSlots(components,true), {slots}=collection;
+export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appKey: string | undefined, components: unknown[], page?: RecordValue): Promise<void> {
+  const collection=editorialMediaSlots(components,true,page), {slots}=collection;
   if(!slots.length){commitMedia(collection,[],true);return;}
   // Kind belongs to the actual slot, never to client-supplied file metadata.
   const resolved=new Map<string,string>();
-  for(const kind of ['legacy-image','image','video'] as const){
+  for(const kind of ['legacy-image','image','video','page-background'] as const){
     const authored=[...new Set(slots.filter(slot=>(slot.kind??'legacy-image')===kind).map(slot=>slot.value))];
     for(let i=0;i<authored.length;i+=10000){const batch=authored.slice(i,i+10000);
-      const approved=kind==='video'?await publicDiyPresentationVideos(db,batch):kind==='image'?await publicDiyPresentationImages(db,batch):await publicProductPictures(db,batch.map(image=>({image,type:0,relationId:0})));
+      const approved=kind==='video'?await publicDiyPresentationVideos(db,batch):kind==='image'||kind==='page-background'?await publicDiyPresentationImages(db,batch):await publicProductPictures(db,batch.map(image=>({image,type:0,relationId:0})));
       batch.forEach((reference,index)=>resolved.set(kind+'\n'+reference,approved[index]!));
     }
   }
   // Every family retains its own budget; adding a service icon cannot consume
   // an already valid editorial, navigation, footer or presentation allowance.
   // Resolve all owners first, then bounded HMAC batches, then one atomic commit.
-  const approved=[...new Set(resolved.values())],rendered=new Map<string,string>();
+  const approved=[...new Set([...resolved].filter(([key])=>!key.startsWith('page-background\n')).map(([,value])=>value))],rendered=new Map<string,string>();
   for(let i=0;i<approved.length;i+=256){const batch=approved.slice(i,i+256),values=await renderProductPictures(appKey,batch);batch.forEach((ref,index)=>rendered.set(ref,values[index]!));}
-  commitMedia(collection,slots.map(slot=>rendered.get(resolved.get((slot.kind??'legacy-image')+'\n'+slot.value)!)!),true);
+  const backgroundSlot=slots.find(slot=>slot.kind==='page-background');
+  const background=backgroundSlot?await signDiyPageBackground(appKey,resolved.get('page-background\n'+backgroundSlot.value)??''):'';
+  commitMedia(collection,slots.map(slot=>slot.kind==='page-background'?background:rendered.get(resolved.get((slot.kind??'legacy-image')+'\n'+slot.value)!)!),true);
 }
