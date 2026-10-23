@@ -81,7 +81,25 @@ const footerBinding = JSON.parse(footerBindingRaw) as { admin_current_report: {
   frontend_source_changes:Array<{file:string;before_sha256:string;after_sha256:string}>;
   call_line_changes:Array<{method:string;path:string;source:string;before_line:number;after_line:number}>;
 } };
+const presentationBindingRaw = readFileSync(join(workerRoot, 'audit', 'diy-presentation-source-binding-20261022.json'), 'utf8');
+const presentationBinding = JSON.parse(presentationBindingRaw) as typeof footerBinding & { sources:Array<{
+  file:string;before_sha256:string;after_sha256:string;
+  edits:Array<{before_source:string;after_source:string}>;
+}> };
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
+
+function beforePresentationSource(file:string):string {
+  const proof=presentationBinding.sources.find(row=>row.file===file)!;
+  expect(proof).toBeDefined();
+  let source=normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',file),'utf8'));
+  expect(sha256(source)).toBe(proof.after_sha256);
+  for(const edit of [...proof.edits].reverse()) {
+    expect(source.split(edit.after_source)).toHaveLength(2);
+    source=source.replace(edit.after_source,edit.before_source);
+  }
+  expect(sha256(source)).toBe(proof.before_sha256);
+  return source;
+}
 
 function applyReportSourceIncrement(before: ApiAuditReport, proof: Pick<typeof rootSourceRefresh, "route_file" | "before_sha256" | "after_sha256" | "inserted_line" | "shifted_route_records">): ApiAuditReport {
   const expected = structuredClone(before);
@@ -195,16 +213,36 @@ describe("Admin frontend API registration audit", () => {
     for (const change of footer.frontend_source_changes) {
       const row = updated.frontendSources.find(item=>item.file===change.file)!;
       expect(row.sha256).toBe(change.before_sha256); row.sha256=change.after_sha256;
-      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+      expect(sha256(beforePresentationSource(change.file))).toBe(change.after_sha256);
     }
     expect(footer.call_line_changes).toHaveLength(3);
     for (const change of footer.call_line_changes) {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1); expect(rows[0].line).toBe(change.before_line); rows[0].line=change.after_line;
     }
-    expect(current).toEqual(updated);
     expect(stateSourceIncrement.current_report_file).toBe(footer.file);
-    expect(sha256(readFileSync(join(workerRoot, "..", footer.file)))).toBe(footer.sha256);
+    expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(footer.sha256);
+    expect(sha256(presentationBindingRaw)).toBe('ebd5c6c880685b6fe276cb9b21e894257e00dc2e7f160bdf8bde094dd2c859b6');
+    const presentation=presentationBinding.admin_current_report;
+    expect(presentation.previous_report_sha256).toBe(footer.sha256);
+    expect(presentation.backend_equal).toBe(true);
+    expect(presentation.frontend_source_changes).toHaveLength(1);
+    expect(presentation.frontend_source_changes[0].file).toBe('view/admin-ts/src/pages/content/DiseList.vue');
+    expect(presentationBinding.sources.map(row=>row.file)).toEqual(['view/admin-ts/src/pages/content/DiseList.vue','view/admin-ts/src/components/ProductVideoUploader.vue']);
+    for(const proof of presentationBinding.sources) beforePresentationSource(proof.file);
+    for(const change of presentation.frontend_source_changes) {
+      const row=updated.frontendSources.find(item=>item.file===change.file)!;
+      expect(row.sha256).toBe(change.before_sha256);row.sha256=change.after_sha256;
+      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+    }
+    expect(presentation.call_line_changes).toHaveLength(3);
+    for(const change of presentation.call_line_changes) {
+      const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
+      expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
+    }
+    expect(current).toEqual(updated);
+    expect(presentation.file).toBe(footer.file);
+    expect(sha256(readFileSync(join(workerRoot,'..',presentation.file)))).toBe(presentation.sha256);
   });
 
   it.each([

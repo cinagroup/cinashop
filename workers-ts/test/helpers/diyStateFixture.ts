@@ -47,11 +47,11 @@ export function diyStateBlocks() {
 }
 
 /** Owned historical fixture; it does not install or claim production runtime ACLs. */
-export async function diyStateFixture(now = new Date()) {
+export async function diyStateFixture(now = new Date(), options: { namespace?: 'public' } = {}) {
   const extraTables = [userFriends, systemUserLevel, video, systemDise, storeCouponIssue, storeCouponUser, storeCouponProduct,
     storeNewcomer, storeOrder, memberRight, userSign, systemSignReward, systemStore, systemSupplier, storeBrand, storeProductLabel,
     storePromotions, storePromotionsAuxiliary, storeProductRelation, storeSeckill, storeSeckillTime, storeCombination, storeBargain];
-  const f = await communityVideoFixture(extraTables);
+  const f = await communityVideoFixture(extraTables, options);
   try {
     const png = new Uint8Array(await readFile(resolve(import.meta.dirname, '../fixtures/community-teal.png')));
     const image = await new AttachmentService(f.container, f.env).uploadImage(userAttachmentScope(11), new File([png], 'diy-state.png', { type: 'image/png' }), 0);

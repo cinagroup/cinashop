@@ -50,8 +50,8 @@ export function diyCommerceBlocks(): DiyStateRow[] {
 /** Owned PG16 historical fixture, extending the already-owned DIY state data.
  * Additional CREATE TABLE statements derive only from the checked-in Drizzle
  * models inside this disposable database; no production DDL/ACL claim is made. */
-export async function diyCommerceFixture(now = new Date()) {
-  const f = await diyStateFixture(now);
+export async function diyCommerceFixture(now = new Date(), options: { namespace?: 'public' } = {}) {
+  const f = await diyStateFixture(now, options);
   try {
     const additions: PgTable[] = [storeCouponIssueUser, storeActivity, storeIntegral, storeCart, storeProductCategory, liveAnchor, liveGoods, liveRoom, liveRoomGoods, storePink, storeBargainUserHelp];
     const dialect = new PgDialect();

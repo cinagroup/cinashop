@@ -20,8 +20,8 @@ export function diyFooterBlock(image = '/static/logo.png'): DiyStateRow {
  * transaction and the inherited full50-table/46-sequence snapshot. No new DDL,
  * endpoint or ACL. Second included cart intentionally has nonstandard product,
  * staff/store/type/activity fields: PHP's badge is strictly actor/flags only. */
-export async function diyFooterFixture(now = new Date()) {
-  const f = await diyCarouselFixture(now);
+export async function diyFooterFixture(now = new Date(), options: { namespace?: 'public' } = {}) {
+  const f = await diyCarouselFixture(now, options);
   try {
     const blocks = [{ name: 'titles', timestamp: 1, titleConfig: { value: '真实页脚合同' } }, diyFooterBlock(f.platformImage.url)];
     for (const id of [1, 2]) await f.db.update(systemDise).set({ value: JSON.stringify(blocks), version: 'diy-footer-1' }).where(eq(systemDise.id, id));

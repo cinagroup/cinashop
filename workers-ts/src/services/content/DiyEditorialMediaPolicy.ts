@@ -1,3 +1,5 @@
+import { canonicalDiyPresentationReference, diyPresentationHtmlMediaReferences, mapDiyPresentationHtmlMedia, sanitizeDiyPresentationHtml, type DiyPresentationMediaKind } from '../../../../view/common/diyPresentationHtml';
+import { publicDiyPresentationVideos, publicDiyPresentationImages } from './DiyPresentationVideoPolicy';
 import type { DbClient } from '@/lib/di';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { ValidateException } from '@/utils/errors';
@@ -6,15 +8,17 @@ import { canonicalizePublishedAttachmentReference } from './ArticleContentPolicy
 type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue | null => value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : null;
 export const DIY_FOOTER_MEDIA_SLOT_LIMIT = 20_000;
+export const DIY_PRESENTATION_MEDIA_SLOT_LIMIT = 20_000;
 
 /** Editorial, carousel and navigation components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
  * schema strings never acquire an attachment signature. The shared policy
  * verifies the current platform owner, raster type, object key and MIME before
  * signing; historical tickets are canonicalized and refreshed only in output. */
-function editorialMediaSlots(components: unknown[]) {
-  const slots: Array<{ value: string; set: (value: string) => void }> = [];
-  const counts = { ordinary: 0, navigation: 0, footer: 0 };
+function editorialMediaSlots(components: unknown[], publication = false) {
+  const slots: Array<{ value: string; kind?: DiyPresentationMediaKind; set: (value: string) => void }> = [];
+  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0 };
+  const htmlGroups: Array<{owner: RecordValue; source: string; slots: number[]}> = [];
   const collect = (value: unknown, key: string, navigation = false) => {
     const owner = record(value);
     if (!owner || typeof owner[key] !== 'string') return;
@@ -44,6 +48,20 @@ function editorialMediaSlots(components: unknown[]) {
           counts.footer++;
         }
       }
+    }
+    else if (component.name === 'videos') {
+      for(const [key,kind] of [['videoConfig','video'],['imgConfig','image']] as const){
+        const owner=record(component[key]);if(!owner||typeof owner.url!=='string')continue;
+        slots.push({value:owner.url,kind,set:value=>{owner.url=value;}});counts.presentation++;
+      }
+    }
+    else if (component.name === 'richText') {
+      const owner=record(component.richText);if(!owner||typeof owner.val!=='string')continue;
+      let source=owner.val;
+      let refs: ReturnType<typeof diyPresentationHtmlMediaReferences>;
+      try{if(publication)source=sanitizeDiyPresentationHtml(source);refs=diyPresentationHtmlMediaReferences(source);}catch(reason){throw new ValidateException(reason instanceof Error?reason.message:'DIY富文本格式错误');}
+      const group={owner,source,slots:[] as number[]};htmlGroups.push(group);
+      for(const ref of refs){group.slots.push(slots.length);slots.push({value:ref.value,kind:ref.kind,set:()=>{}});counts.presentation++;}
     }
     else if (component.name === 'news') collect(component.imgConfig, 'url');
     else if (component.name === 'hotspot') collect(component.picStyle, 'url');
@@ -80,38 +98,39 @@ function editorialMediaSlots(components: unknown[]) {
   // Collect first, reject before any canonical mutation, database owner lookup
   // or signature. The footer's independent budget cannot consume a previously
   // valid full editorial/carousel or navigation budget.
-  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT) {
+  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT) {
     throw new ValidateException('DIY公开素材超过完整读取容量');
   }
-  return slots;
+  return {slots, htmlGroups};
 }
 
 /** Local relative asset references only. The shared rule never treats an
  * arbitrary foreign HTTPS /api/assets path as a platform attachment. */
+function commitMedia(collection: ReturnType<typeof editorialMediaSlots>, values: string[], publication = false) {
+  const html=collection.htmlGroups.map(group=>{const mapped=mapDiyPresentationHtmlMedia(group.source,(_ref,_kind,index)=>values[group.slots[index]!]!);return {owner:group.owner,value:publication?sanitizeDiyPresentationHtml(mapped):mapped};});
+  collection.slots.forEach((slot,index)=>slot.set(values[index]!));
+  html.forEach(item=>{item.owner.val=item.value;});
+}
 export function canonicalizeDiyEditorialMedia(components: unknown[]): void {
-  for (const slot of editorialMediaSlots(components)) slot.set(canonicalizePublishedAttachmentReference(slot.value));
+  const collection=editorialMediaSlots(components);
+  commitMedia(collection,collection.slots.map(slot=>slot.kind?canonicalDiyPresentationReference(slot.value):canonicalizePublishedAttachmentReference(slot.value)));
 }
 
 export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appKey: string | undefined, components: unknown[]): Promise<void> {
-  const slots = editorialMediaSlots(components);
-  if (!slots.length) return;
-  // Deduplicate without pre-normalizing: ProductAssetPolicy must still reject
-  // malformed/overlong authored input before canonicalizing copied tickets.
-  // Its existing 10000-row bound also keeps each PG parameter list bounded.
-  const authored = [...new Set(slots.map(slot => slot.value))];
-  const approved: string[] = [];
-  for (let index = 0; index < authored.length; index += 10000) {
-    approved.push(...await publicProductPictures(db, authored.slice(index, index + 10000).map(image => ({ image, type: 0, relationId: 0 }))));
+  const collection=editorialMediaSlots(components,true), {slots}=collection;
+  if(!slots.length){commitMedia(collection,[],true);return;}
+  // Kind belongs to the actual slot, never to client-supplied file metadata.
+  const resolved=new Map<string,string>();
+  for(const kind of ['legacy-image','image','video'] as const){
+    const authored=[...new Set(slots.filter(slot=>(slot.kind??'legacy-image')===kind).map(slot=>slot.value))];
+    for(let i=0;i<authored.length;i+=10000){const batch=authored.slice(i,i+10000);
+      const approved=kind==='video'?await publicDiyPresentationVideos(db,batch):kind==='image'?await publicDiyPresentationImages(db,batch):await publicProductPictures(db,batch.map(image=>({image,type:0,relationId:0})));
+      batch.forEach((reference,index)=>resolved.set(kind+'\n'+reference,approved[index]!));
+    }
   }
-  // There can be 42500 slots across the three independent family budgets, but
-  // never start that many HMAC operations concurrently. Repeated canonical
-  // references share one fresh capability, including copied historical URLs.
-  const unique = [...new Set(approved)], rendered = new Map<string, string>();
-  for (let index = 0; index < unique.length; index += 256) {
-    const batch = unique.slice(index, index + 256), values = await renderProductPictures(appKey, batch);
-    batch.forEach((reference, offset) => { rendered.set(reference, values[offset]); });
-  }
-  const byAuthored = new Map(authored.map((reference, index) => [reference, rendered.get(approved[index])!]));
-  // Only commit projection mutations after every owner check/signing batch.
-  for (const slot of slots) slot.set(byAuthored.get(slot.value)!);
+  // Preserve the previous42500 slots plus a separate20000 presentation budget.
+  // Resolve all owners first, then bounded HMAC batches, then one atomic commit.
+  const approved=[...new Set(resolved.values())],rendered=new Map<string,string>();
+  for(let i=0;i<approved.length;i+=256){const batch=approved.slice(i,i+256),values=await renderProductPictures(appKey,batch);batch.forEach((ref,index)=>rendered.set(ref,values[index]!));}
+  commitMedia(collection,slots.map(slot=>rendered.get(resolved.get((slot.kind??'legacy-image')+'\n'+slot.value)!)!),true);
 }

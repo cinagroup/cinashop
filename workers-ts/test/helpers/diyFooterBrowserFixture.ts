@@ -14,8 +14,8 @@ import { systemAdmin, systemRole, systemMenus, systemGroup, systemGroupData, sys
 /** Owned Browser-only schema maintenance. The native50/46 fixture is unchanged.
  * Additional ORM tables serve actual Admin auth, cart and user-tab reads; no
  * production migration/ACL, alternate endpoint or seeded business response. */
-export async function diyFooterBrowserFixture() {
-  const f = await diyFooterFixture();
+export async function diyFooterBrowserFixture(options: { namespace?: 'public'; now?: Date } = {}) {
+  const f = await diyFooterFixture(options.now ?? new Date(), options);
   try {
     const dialect = new PgDialect(), additional: string[] = [];
     const tables = [systemAdmin, systemRole, systemMenus, systemGroup, systemGroupData, systemStoreStaff, deliveryService,

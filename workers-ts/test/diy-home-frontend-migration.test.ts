@@ -181,7 +181,11 @@ describe("DIY-home frontend migration", () => {
     expect(loader).toContain("ALLOWED_COMPONENTS.has(name)");
     expect(renderer).not.toContain("<component");
     expect(renderer).not.toContain("v-html");
-    expect(renderer).toContain("sanitizeArticleRichText");
+    expect(renderer).toContain("<DiyPresentationWidget");
+    const config=readFileSync(resolve(root,'../view/uniapp-ts/src/utils/diyPresentationConfig.ts'),'utf8');
+    expect(config).toContain('diyPresentationHtmlTree(html)');
+    const html=readFileSync(resolve(root,'../view/common/diyPresentationHtml.ts'),'utf8');
+    expect(html).toContain('const html=sanitizeDiyPresentationHtml(source)');
   });
 
   it("registers reachable home, micro-page, and suspended-navigation consumers", () => {
