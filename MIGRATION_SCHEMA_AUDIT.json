@@ -3349,5 +3349,28 @@
     "deploy": false,
     "overall_migration_complete": false,
     "new_head_CI": "Read exact newhead after push; parentee3847 run39882339224 success is separate."
+  },
+  "diyPageSettingsContractVerification": {
+    "recorded": "2026-10-23T09:27:51.858488+00:00",
+    "summary": "PHP row-level page title/visibility/background author, public media, host CSS and independent paint lease, verified hidden Browser23",
+    "doc": "workers-ts/docs/php-ts-diy-page-settings-20261023.md",
+    "audit": "workers-ts/audit/php-ts-diy-page-settings-20261023.json",
+    "base_commit": "eb7ff895b31a0304f63b4ea0ff9d097e38db89f2",
+    "Worker_files": 72,
+    "Worker_tests": 1318,
+    "native_files": 8,
+    "native_tests": 283,
+    "Admin_tests": 115,
+    "Uni_actual_toolchain_files": 92,
+    "Uni_actual_toolchain_tests": 2406,
+    "local_browser_checkpoints": 23,
+    "browser_tables": 73,
+    "browser_sequences": 68,
+    "new_distinct_cases": 145,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "new_head_CI": "Read exact newhead after push; parenteb7ff895 run39901480969 all11 success is separate."
   }
 }

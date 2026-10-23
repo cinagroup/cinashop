@@ -429,8 +429,9 @@ export class DiyHomeCompatibilityService {
         component.routine_contact_type = parseConfigInteger(routineContactType, 0);
       }
     }
-    await renderDiyEditorialMedia(this.container.db, this.env.APP_KEY, components);
-    return { ...row, value: components };
+    const page = { ...row };
+    await renderDiyEditorialMedia(this.container.db, this.env.APP_KEY, components, page);
+    return { ...page, value: components };
   }
 
   async diyVersion(idValue: unknown): Promise<{ version: string | null }> {

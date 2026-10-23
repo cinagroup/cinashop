@@ -118,11 +118,16 @@ function explicitFollowBound(source: string) {
     && ['stop', 'stopDialog', 'reset'].every(name => calls(dispose, name, file).length === 1);
 }
 function mediaLeaseBound(hostSource: string, cacheSource: string) {
-  const host = tree(hostSource), cache = tree(cacheSource), schedule = fn(host, 'scheduleMediaRefresh'), reload = fn(host, 'reload'), invalidate = fn(host, 'invalidate');
-  return !!schedule && !!reload && !!invalidate && imported(host, '@/utils/diyEditorialMediaLease', 'diyEditorialMediaDeadline')
+  const host = tree(hostSource), cache = tree(cacheSource), schedule = fn(host, 'scheduleMediaRefresh'), reload = fn(host, 'reload'), invalidate = fn(host, 'invalidate'), load = fn(cache, 'loadDiyPage');
+  return !!schedule && !!reload && !!invalidate && !!load && imported(host, '@/utils/diyEditorialMediaLease', 'diyEditorialMediaDeadline')
     && calls(schedule, 'diyEditorialMediaDeadline', host).length === 1 && calls(schedule, 'setTimeout', host).length === 1
     && text(schedule, host).includes('timerEpoch!==mediaTimerEpoch||!current()') && calls(reload, 'scheduleMediaRefresh', host).some(node => node.arguments.map(value => text(value, host)).join(',') === 'snapshot.data,snapshot.cachedAt,current')
-    && calls(invalidate, 'cancelMediaTimer', host).length === 1 && imported(cache, './diyEditorialMediaLease', 'diyEditorialMediaCacheUsable') && calls(cache, 'diyEditorialMediaCacheUsable', cache).length === 3;
+    && calls(invalidate, 'cancelMediaTimer', host).length === 1 && imported(cache, './diyEditorialMediaLease', 'diyEditorialMediaCacheUsable') && calls(load, 'diyEditorialMediaCacheUsable', cache).length === 3;
+}
+function removeOwnedCall(source: string, owner: string, name: string): string {
+  const file = tree(source), scope = fn(file, owner), call = scope && calls(scope, name, file)[0];
+  if (!call) throw Error(`Missing actual ${owner}.${name}`);
+  return source.slice(0, call.getStart(file)) + 'unrelated()' + source.slice(call.end);
 }
 const actual = {
   renderer: read('components/diy/DiyHomeRenderer.vue'), list: read('components/diy/DiyListWidget.vue'), card: read('components/diy/DiyListProductCard.vue'),
@@ -168,7 +173,7 @@ describe('six-component DIY editorial actual frontend boundaries', () => {
   });
   it('connects active page renewal to snapshot media deadlines and refuses expired cache and offline reuse', () => {
     expect(mediaLeaseBound(actual.host, actual.cache)).toBe(true);
-    for (const mutant of [actual.host.replace('snapshot.cachedAt', 'Date.now()'), actual.host.replace('timerEpoch !== mediaTimerEpoch || !current()', 'false'), actual.host.replace('cancelMediaTimer();\n    generation++', 'unrelated();\n    generation++')]) expect(mediaLeaseBound(mutant, actual.cache)).toBe(false);
+    for (const mutant of [actual.host.replace('scheduleMediaRefresh(snapshot.data, snapshot.cachedAt, current)', 'scheduleMediaRefresh(snapshot.data, Date.now(), current)'), actual.host.replace('timerEpoch !== mediaTimerEpoch || !current()', 'false'), removeOwnedCall(actual.host, 'invalidate', 'cancelMediaTimer')]) expect(mediaLeaseBound(mutant, actual.cache)).toBe(false);
     expect(mediaLeaseBound(actual.host, actual.cache.replaceAll('diyEditorialMediaCacheUsable(cached.data, cached.cachedAt)', 'true'))).toBe(false);
   });
 });

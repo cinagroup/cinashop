@@ -2939,3 +2939,12 @@ PR #156首head91e6b880的UniApp CI为2254/2258、4个旧社区零请求预期失
 最终Worker69文件1280项及两套完整strict、native PG16七文件243项、Admin81项及完整strict/build、UniApp当前91文件2374项和完整strict/三端构建/产物/i18n通过。新增独立162，重复候选/保留测试/浏览器检查点不另计。后台真实IAB15点/outer0，73表68序列、93真实GET与41声明的无关chrome GET均无状态写；一次真实Admin业务保存、初始setup和客服/站点明确配置分列，实际键盘change/鼠标拖动与真实客服跳转均验收，所有临时资源清理。
 
 预览nextTick、相邻拖动旧计时器、Uni原生鼠标归一化、工具fill缺change、两次Browser未完成、临时Vite缓存收据和新测试strict类型红灯均保留，不降断言或冒称旧失败成功；最终完整正例见 workers-ts/docs/php-ts-diy-customer-service-20261023.md 与对应机器审计。Browser后phase类型修正的精确inverse/真实序列化等价另有收据，生产/产物不变。保留已恢复get_script及三端loader，不改生产DDL/ACL/路由/依赖/锁；三账本旧正文/复选行/JSON键不变。父#157精确ee3847 CI已成功，新head CI推送后单列。仅推送draft、不合并部署，API-007、DATA-008、FE-003J/K、真机/生产父项及整体迁移继续开放。
+
+
+### 2026-10-23 DIY 页面标题、显隐与背景设置增量
+
+完成真实 PHP 行级页面设置的 Admin 作者控件、精确元数据保存、独立公开背景媒体和首页/微页完整生命周期。保留导入长标题与 value/content 原字节；单图/平铺/拉伸遵循 PHP，独立 paint lease 在失效或刷新挂起时撤销被动背景。严格0/1、模式0/1/2、颜色通道、Unicode列长与平台Int32边界；新建仍隐藏且不启用，原组件预算/owner与原子签名合同保持。
+
+最终Worker72文件1318项与两套完整strict、native PG16八文件283项、Admin115项及完整strict/build、当前UniApp实际92文件2406项和完整strict/三端构建/产物/i18n通过。新增独立145，旧例/重复/浏览器检查点不累计。后台真实IAB23点/outer0，73表68序列；101真实GET与39明确无关chrome GET逐次无状态写，4次真实Admin元数据POST、初始setup和站点关开分别记账，value/content原字节保持；源码/完整实际依赖/658双端产物零漂移，临时资源清理完成。
+
+失败候选完整保留：指纹顺序、越界素材ID、PG char(30)原始填充断言、Browser观察器/入场及关闭动画时序；广回归首轮1316/1318的两处旧AST定位已修正并保留负例，相关44项与最终全量通过。产品与最终Browser产物不因测试修正改变。见 workers-ts/docs/php-ts-diy-page-settings-20261023.md 与对应机器审计。保留已恢复get_script及三端loader，无生产DDL/ACL/路由/依赖/锁变化；三账本旧正文/复选行/JSON键保持。按用户要求后台浏览器验收，不逐页弹确认；当前连接IAB，不宣称独立Chrome/Edge扩展已连。父#158精确eb7ff895的CI39901480969全11任务成功，本批新head另核实。仅推送draft、不合并部署，API-007、DATA-008、FE-003J/K、生产/真机父项和整体迁移继续开放；其它作者编辑器与旧组件媒体HTML解码静态线索另列后续。

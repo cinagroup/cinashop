@@ -21,6 +21,7 @@ import { withTx } from "@/lib/di";
 import { lockDiseCatalogForMutation, normalizeDiseTemplateName, themeDeadlines,DISE_TEMPLATE_TRIM_CHARACTERS } from "@/services/content/ThemeReadService";
 import { isCityCredentialKey, isCityConfigKey } from '@/services/delivery/CityDeliverySettingsResolver';
 import { canonicalizeDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
+import { canonicalDiyPageBackground, normalizeDiyPageColour } from '@/services/content/DiyPageAppearancePolicy';
 import { StoreIntegralOrderService } from "@/services/activity/StoreIntegralOrderService";
 import { integralPurchaseLimit } from '@/services/activity/IntegralPurchaseAdmission';
 import {
@@ -2075,6 +2076,12 @@ const ADMIN_DISE_ALLOWED_SAVE_KEYS = new Set([
   "value",
   "content",
   "status",
+  "is_show",
+  "is_bg_color",
+  "is_bg_pic",
+  "color_picker",
+  "bg_pic",
+  "bg_tab_val",
 ]);
 const ADMIN_DISE_UNSAFE_JSON_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
@@ -2084,6 +2091,12 @@ interface AdminDiseEditableFields {
   value?: string;
   content?: string;
   status?: 0 | 1;
+  isShow?: 0 | 1;
+  isBgColor?: 0 | 1;
+  isBgPic?: 0 | 1;
+  colorPicker?: string;
+  bgPic?: string;
+  bgTabVal?: 0 | 1 | 2;
 }
 
 export type AdminDiseSaveInput =
@@ -2095,6 +2108,12 @@ export type AdminDiseSaveInput =
       title?: string;
       value: string;
       content?: string;
+      isShow?: 0;
+      isBgColor?: 0 | 1;
+      isBgPic?: 0 | 1;
+      colorPicker?: string;
+      bgPic?: string;
+      bgTabVal?: 0 | 1 | 2;
     });
 
 export interface AdminDiseDeletionCandidate {
@@ -2186,6 +2205,22 @@ export function parseAdminDiseSaveInput(raw: unknown): AdminDiseSaveInput {
     throw new ValidateException("value与content必须独立维护，不能写入相同内容");
   }
 
+  // Page appearance lives in its own persisted columns, never in value/content.
+  // Keep absent keys absent so older callers retain their exact DTO contract.
+  const appearance: Pick<AdminDiseEditableFields, 'isShow' | 'isBgColor' | 'isBgPic' | 'colorPicker' | 'bgPic' | 'bgTabVal'> = {};
+  for (const [wire, field] of [['is_show', 'isShow'], ['is_bg_color', 'isBgColor'], ['is_bg_pic', 'isBgPic']] as const) {
+    if (Object.prototype.hasOwnProperty.call(raw, wire)) {
+      if (raw[wire] !== 0 && raw[wire] !== 1) throw new ValidateException(`${wire}只能为0或1`);
+      appearance[field] = raw[wire];
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(raw, 'bg_tab_val')) {
+    if (raw.bg_tab_val !== 0 && raw.bg_tab_val !== 1 && raw.bg_tab_val !== 2) throw new ValidateException('bg_tab_val只能为0、1或2');
+    appearance.bgTabVal = raw.bg_tab_val;
+  }
+  if (Object.prototype.hasOwnProperty.call(raw, 'color_picker')) appearance.colorPicker = normalizeDiyPageColour(raw.color_picker);
+  if (Object.prototype.hasOwnProperty.call(raw, 'bg_pic')) appearance.bgPic = canonicalDiyPageBackground(raw.bg_pic);
+
   if (Object.prototype.hasOwnProperty.call(raw, "id")) {
     if (!Number.isSafeInteger(raw.id) || (raw.id as number) <= 0) {
       throw new ValidateException("ID错误");
@@ -2193,7 +2228,7 @@ export function parseAdminDiseSaveInput(raw: unknown): AdminDiseSaveInput {
     if (Object.prototype.hasOwnProperty.call(raw, "create_kind")) {
       throw new ValidateException("更新请求不能包含create_kind");
     }
-    const editable: AdminDiseEditableFields = { name, title, value, content, status };
+    const editable: AdminDiseEditableFields = { name, title, value, content, status, ...appearance };
     if (Object.values(editable).every((item) => item === undefined)) {
       throw new ValidateException("没有可更新的字段");
     }
@@ -2209,7 +2244,9 @@ export function parseAdminDiseSaveInput(raw: unknown): AdminDiseSaveInput {
   if (status !== undefined && status !== 0) {
     throw new ValidateException("新增页面必须先以停用状态保存");
   }
-  return { mode: "create", createKind: "diy_page", name, title, value, content };
+  if (appearance.isShow !== undefined && appearance.isShow !== 0) throw new ValidateException('新增页面必须先以隐藏状态保存');
+  const { isShow, ...createdAppearance } = appearance;
+  return { mode: "create", createKind: "diy_page", name, title, value, content, ...createdAppearance, ...(isShow === undefined ? {} : { isShow: 0 as const }) };
 }
 
 export function adminDiseDeletionProtectionReason(
@@ -2264,6 +2301,11 @@ export async function adminDiseList(c: C) {
       templateName: systemDise.templateName,
       isDiy: systemDise.isDiy,
       isShow: systemDise.isShow,
+      isBgColor: systemDise.isBgColor,
+      isBgPic: systemDise.isBgPic,
+      colorPicker: systemDise.colorPicker,
+      bgPic: systemDise.bgPic,
+      bgTabVal: systemDise.bgTabVal,
       version: systemDise.version,
       addTime: systemDise.addTime,
       updateTime: systemDise.updateTime,
@@ -2284,7 +2326,12 @@ export async function adminDiseList(c: C) {
       type: row.type,
       template_name: row.templateName,
       is_diy: row.isDiy,
-      is_show: row.isShow,
+      is_show: row.isShow ?? 0,
+      is_bg_color: row.isBgColor ?? 0,
+      is_bg_pic: row.isBgPic ?? 0,
+      color_picker: row.colorPicker ?? '#f5f5f5',
+      bg_pic: row.bgPic ?? '',
+      bg_tab_val: row.bgTabVal ?? 0,
       version: row.version,
       add_time: row.addTime,
       update_time: row.updateTime,
@@ -2317,6 +2364,11 @@ export async function adminDiseSave(c: C) {
         templateName: "",
         isDiy: 1,
         isShow: 0,
+        ...(body.isBgColor !== undefined ? { isBgColor: body.isBgColor } : {}),
+        ...(body.isBgPic !== undefined ? { isBgPic: body.isBgPic } : {}),
+        ...(body.colorPicker !== undefined ? { colorPicker: body.colorPicker } : {}),
+        ...(body.bgPic !== undefined ? { bgPic: body.bgPic } : {}),
+        ...(body.bgTabVal !== undefined ? { bgTabVal: body.bgTabVal } : {}),
         status: 0,
         isDel: 0,
         version,
@@ -2353,6 +2405,12 @@ export async function adminDiseSave(c: C) {
       ...(body.value !== undefined ? { value: body.value } : {}),
       ...(body.content !== undefined ? { content: body.content } : {}),
       ...(body.status !== undefined ? { status: body.status } : {}),
+      ...(body.isShow !== undefined ? { isShow: body.isShow } : {}),
+      ...(body.isBgColor !== undefined ? { isBgColor: body.isBgColor } : {}),
+      ...(body.isBgPic !== undefined ? { isBgPic: body.isBgPic } : {}),
+      ...(body.colorPicker !== undefined ? { colorPicker: body.colorPicker } : {}),
+      ...(body.bgPic !== undefined ? { bgPic: body.bgPic } : {}),
+      ...(body.bgTabVal !== undefined ? { bgTabVal: body.bgTabVal } : {}),
       version,
       updateTime: sql<number>`GREATEST(${systemDise.updateTime} + 1, ${now})`,
     }).where(and(eq(systemDise.id, body.id), eq(systemDise.isDel, 0))).returning({

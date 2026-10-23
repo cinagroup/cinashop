@@ -4,10 +4,12 @@ import { API_BASE } from './request';
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 /** These are published media slots, never links or arbitrary editor strings. */
 function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string; html?:boolean}[] {
-  const value = record(page).value;
-  if (!Array.isArray(value)) return [];
+  const row = record(page), value = row.value;
+  const enabled = (value: unknown) => value === true || value === 1 || typeof value === 'string' && ['1', 'true'].includes(value.trim().toLowerCase());
+  const background = enabled(row.is_show) && enabled(row.is_bg_pic) ? [{holder: row, key: 'bg_pic'}] : [];
+  if (!Array.isArray(value)) return background;
   const footers = value.filter(raw => typeof record(raw).name === 'string' && String(record(raw).name).toLowerCase() === 'pagefoot');
-  return [...value.slice(0, 200).filter(raw => !footers.includes(raw)), ...footers].flatMap(raw => {
+  return [...background, ...[...value.slice(0, 200).filter(raw => !footers.includes(raw)), ...footers].flatMap(raw => {
     const block = record(raw), field = (key: string) => ({holder:record(block[key]),key:'url'});
     if (typeof block.name === 'string' && block.name.toLowerCase() === 'pagefoot') {
       const items = block.menuList;
@@ -30,7 +32,7 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string; h
       return [...normal.map(item=>({holder:record(item),key:'image'})),...custom.map(item=>({holder:record(item),key:'img'}))];
     }
     return [];
-  });
+  })];
 }
 /** Signed capabilities are transport material, not an authored config change.
  * Only the explicit published slots lose their ticket when comparing intent;

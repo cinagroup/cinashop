@@ -41,7 +41,7 @@ const pageId = ref<number | null>(null);
 const routeError = ref("");
 const diyHost = useDiyPageHost(() => pageId.value, () => diyCommunityVisible.value);
 const { page, loading, error, phase, offline, available: diyPageActive, refreshing: diyPageRefreshing, reload } = diyHost;
-const pageStyle = computed(() => diyPageStyle(page.value));
+const pageStyle = computed(() => diyPageStyle(page.value, diyHost.appearanceAvailable.value));
 
 onLoad((options) => {
   const raw = options?.id;
@@ -61,7 +61,7 @@ onPullDownRefresh(() => {
 </script>
 
 <style scoped>
-.diy-detail { min-height: 100vh; padding: 1rpx 0 40rpx; box-sizing: border-box; }
+.diy-detail { width: 100%; min-height: calc(100vh - var(--window-top, 0px) - var(--window-bottom, 0px)); padding: 1rpx 0 40rpx; box-sizing: border-box; }
 .diy-state { display: flex; min-height: 60vh; align-items: center; justify-content: center; gap: 24rpx; color: #999; text-align: center; flex-direction: column; }
 .diy-state.error { color: #777; }
 .retry { color: #fff; border: 0; background: var(--view-theme, #e93323); }

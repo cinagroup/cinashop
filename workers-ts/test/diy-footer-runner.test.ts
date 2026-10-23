@@ -111,7 +111,7 @@ describe('owned footer Browser runner executable AST contract', () => {
   it.each([
     ['commented admission', "    'audit:diy-footer-browser',", "    // 'audit:diy-footer-browser',"],
     ['detached boolean', "const diyFooterBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-footer-browser';", 'const diyFooterBrowser = false;'],
-    ['detached umbrella', 'const productPurchaseAdmissionBrowser = diyFooterBrowser ||', 'const productPurchaseAdmissionBrowser ='],
+    ['detached umbrella', 'diyFooterBrowser ||', ''],
     ['wrong dispatch config', "vitest.diy-footer-browser.config.ts", 'vitest.diy-navigation-browser.config.ts'],
     ['wrong environment', "TEST_DIY_FOOTER_BROWSER: '1'", "TEST_DIY_FOOTER_BROWSER_WRONG: '1'"],
     ['removed outer timeout', 'diyFooterBrowser ? 40 :', ''],

@@ -87,10 +87,24 @@ const presentationBinding = JSON.parse(presentationBindingRaw) as typeof footerB
   edits:Array<{before_source:string;after_source:string}>;
 }> };
 const customerBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-customer-service-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
+const pageSettingsBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-page-settings-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 
-function beforeCustomerSource(file:string, supplied?:string):string {
+function beforePageSettingsSource(file:string, supplied?:string):string {
   let source=normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot,'..',file),'utf8'));
+  const proof=pageSettingsBinding.sources.find(row=>row.file===file);
+  if(!proof)return source;
+  expect(sha256(source)).toBe(proof.after_sha256);
+  for(const edit of [...proof.edits].reverse()) {
+    expect(source.split(edit.after_source)).toHaveLength(2);
+    source=source.replace(edit.after_source,edit.before_source);
+  }
+  expect(sha256(source)).toBe(proof.before_sha256);
+  return source;
+}
+
+function beforeCustomerSource(file:string, supplied?:string):string {
+  let source=beforePageSettingsSource(file,supplied);
   const proof=customerBinding.sources.find(row=>row.file===file);
   if(!proof)return source;
   expect(sha256(source)).toBe(proof.after_sha256);
@@ -266,16 +280,37 @@ describe("Admin frontend API registration audit", () => {
       expect(row.sha256).toBe(change.before_sha256);
       expect(sha256(beforeCustomerSource(change.file))).toBe(change.before_sha256);
       row.sha256=change.after_sha256;
-      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+      expect(sha256(beforePageSettingsSource(change.file))).toBe(change.after_sha256);
     }
     expect(customer.call_line_changes).toHaveLength(3);
     for(const change of customer.call_line_changes) {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
     }
-    expect(current).toEqual(updated);
-    expect(customer.file).toBe(presentation.file);
-    expect(sha256(readFileSync(join(workerRoot,'..',customer.file)))).toBe(customer.sha256);
+    expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(customer.sha256);
+    const settings=pageSettingsBinding.admin_current_report;
+    expect(settings.previous_report_sha256).toBe(customer.sha256);expect(settings.backend_equal).toBe(true);
+    expect(pageSettingsBinding.sources.map(row=>row.file)).toEqual(['view/admin-ts/src/pages/content/DiseList.vue']);
+    expect(settings.frontend_source_changes).toHaveLength(1);
+    for(const change of settings.frontend_source_changes) {
+      const row=updated.frontendSources.find(item=>item.file===change.file)!;
+      expect(row.sha256).toBe(change.before_sha256);expect(sha256(beforePageSettingsSource(change.file))).toBe(change.before_sha256);
+      row.sha256=change.after_sha256;expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+    }
+    expect(settings.call_line_changes).toHaveLength(3);
+    for(const change of settings.call_line_changes) {
+      const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
+      expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
+    }
+    expect(current).toEqual(updated);expect(settings.file).toBe(customer.file);
+    expect(sha256(readFileSync(join(workerRoot,'..',settings.file)))).toBe(settings.sha256);
+  });
+
+  it('rejects unreviewed page-settings editor wiring and metadata preservation changes before reconstructing historical inventories',()=>{
+    const file='view/admin-ts/src/pages/content/DiseList.vue',source=readFileSync(join(workerRoot,'..',file),'utf8');
+    for(const changed of [source+'\n// unreviewed edit\n',source.replace('<DiyPageSettingsEditor ','<DiyCustomerServiceEditor '),source.replace('metadataOnly ? {id: form.id, ...metadata}','metadataOnly ? {id: form.id, value, ...metadata}')]) {
+      expect(changed).not.toBe(source);expect(()=>beforePageSettingsSource(file,changed)).toThrow();
+    }
   });
 
   it('rejects unreviewed customer editor wiring and canonical save changes instead of absorbing them into the historical presentation inventory',()=>{
