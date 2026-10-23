@@ -3441,5 +3441,36 @@
     "merge": false,
     "deploy": false,
     "overall_migration_complete": false
+  },
+  "diyMediaReferenceContractVerification": {
+    "recorded_UTC": "2026-10-23T17:40:49.162956+00:00",
+    "base_commit": "772fbd1249d038ca27b37a683b3ffc16eded696b",
+    "summary": "Fourteen existing DIY media families keep approved byte identity before strict HMAC; actual private capability old-red retained and fixed; hidden Browser14 with two actual GUI saves",
+    "doc": "workers-ts/docs/php-ts-diy-media-reference-20261023.md",
+    "audit": "workers-ts/audit/php-ts-diy-media-reference-20261023.json",
+    "Worker_files": 75,
+    "Worker_tests": 1614,
+    "native_files": 9,
+    "native_tests": 315,
+    "final_complete_types": [
+      "unit",
+      "runtime"
+    ],
+    "Browser_checkpoints": 14,
+    "Browser_tables": 74,
+    "Browser_sequences": 68,
+    "Browser_real_GET": 111,
+    "Browser_declared_chrome_GET": 45,
+    "Browser_GUI_POST": 2,
+    "new_distinct_cases": 105,
+    "frontend_build_inputs_unchanged": 1000,
+    "frontend_artifacts_unchanged": 658,
+    "parent_CI": 39964604683,
+    "parent_CI_all11success": true,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "new_head_CI": "Verify exact commit after push"
   }
 }

@@ -4,7 +4,7 @@ import { systemAttachment } from '@/models/schema';
 import { R2_IMAGE_TYPE } from '@/services/system/AttachmentService';
 import { canonicalizeDiyEditorialMedia, renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
 import { publicDiyPresentationVideos } from '@/services/content/DiyPresentationVideoPolicy';
-import * as productMedia from '@/services/activity/ProductAssetPolicy';
+import * as attachmentMedia from '@/services/system/AttachmentService';
 import { financeMemoryPostgres } from './helpers/financePostgres';
 const key='attachments/admin/1/2026/10/00000000-0000-4000-8000-000000000002.mp4',ticket=(id:number)=>`/api/assets/${id}?expires=1&signature=old`,appKey='diy-presentation-owned-unit-key';
 describe('current platform MP4 ownership and atomic DIY presentation publication',()=>{
@@ -39,10 +39,13 @@ describe('current platform MP4 ownership and atomic DIY presentation publication
   });
   it('preserves complete long JSON media URLs without widening old catalogue/editorial image limits',async()=>{const long='https://cdn.test/'+ 'a'.repeat(300)+'.mp4',blocks=[{name:'videos',videoConfig:{url:long},imgConfig:{url:long.replace('.mp4','.png')}},{name:'news',imgConfig:{url:long.replace('.mp4','.png')}}];await renderDiyEditorialMedia(f.db,appKey,blocks);expect(blocks[0].videoConfig!.url).toBe(long);expect(blocks[0].imgConfig!.url).toBe(long.replace('.mp4','.png'));expect(blocks[1].imgConfig!.url).toBe('');});
   it('a later HMAC batch failure leaves all media and raw HTML byte-for-byte unchanged',async()=>{
-    const blocks=[{name:'richText',richText:{val:'<p onclick="bad()">'+Array.from({length:257},(_,i)=>`<img src="/static/${i}.png">`).join('')+'</p>'}},{name:'videos',videoConfig:{url:'/static/a.mp4'},imgConfig:{url:'/static/cover.png'}}];
-    const before=JSON.stringify(blocks),real=productMedia.renderProductPictures;let calls=0;
-    const signing=vi.spyOn(productMedia,'renderProductPictures').mockImplementation(async(...args)=>{if(++calls===2)throw Error('owned second HMAC failure');return real(...args);});
-    try{await expect(renderDiyEditorialMedia(f.db,appKey,blocks)).rejects.toThrow('owned second HMAC failure');expect(calls).toBe(2);expect(JSON.stringify(blocks)).toBe(before);}finally{signing.mockRestore();}
+    // Static references need no HMAC. Use257 real current platform rows so the
+    // second SDK signing batch, rather than a redundant static call, fails.
+    await f.db.insert(systemAttachment).values(Array.from({length:257},(_,i)=>({attId:i+20,type:1,relationId:0,moduleType:1,fileType:1,imageType:R2_IMAGE_TYPE,attDir:`/api/assets/${i+20}`,name:`attachments/admin/1/2026/10/batch-${i}.png`,attType:'image/png'})));
+    const blocks=[{name:'richText',richText:{val:'<p onclick="bad()">'+Array.from({length:257},(_,i)=>`<img src="/api/assets/${i+20}">`).join('')+'</p>'}},{name:'videos',videoConfig:{url:'/static/a.mp4'},imgConfig:{url:'/static/cover.png'}}];
+    const before=JSON.stringify(blocks),rows=await f.db.select().from(systemAttachment),real=attachmentMedia.signAttachmentReferences;let calls=0;
+    const signing=vi.spyOn(attachmentMedia,'signAttachmentReferences').mockImplementation(async(...args)=>{if(++calls===2)throw Error('owned second HMAC failure');return real(...args);});
+    try{await expect(renderDiyEditorialMedia(f.db,appKey,blocks)).rejects.toThrow('owned second HMAC failure');expect(calls).toBe(2);expect(signing.mock.calls.map(call=>call[1].length)).toEqual([256,1]);expect(JSON.stringify(blocks)).toBe(before);expect(await f.db.select().from(systemAttachment)).toEqual(rows);}finally{signing.mockRestore();}
   });
   it('complete HTML media excess is rejected before owner lookup or any component mutation',async()=>{
     const blocks=[{name:'videos',videoConfig:{url:ticket(2)}},{name:'richText',richText:{val:'<img src="/api/assets/1">'.repeat(10001)}}],before=JSON.stringify(blocks);

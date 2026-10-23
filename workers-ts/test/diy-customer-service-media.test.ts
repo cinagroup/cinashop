@@ -13,7 +13,10 @@ vi.mock('@/services/content/DiyPresentationVideoPolicy', () => ({
 }));
 vi.mock('@/services/activity/ProductAssetPolicy', () => ({
   publicProductPictures: authority.legacy,
-  renderProductPictures: authority.sign,
+}));
+vi.mock('@/services/system/AttachmentService', async importOriginal => ({
+  ...await importOriginal<typeof import('@/services/system/AttachmentService')>(),
+  signAttachmentReferences: authority.sign,
 }));
 import { canonicalizeDiyEditorialMedia, DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT, renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
 

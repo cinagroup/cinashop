@@ -8,7 +8,7 @@ import { createApp } from '@/app';
 import type { Container } from '@/lib/di';
 import { systemAttachment, systemDise, systemRole } from '@/models/schema';
 import { DIY_PRESENTATION_MEDIA_SLOT_LIMIT, renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
-import * as productMedia from '@/services/activity/ProductAssetPolicy';
+import * as attachmentMedia from '@/services/system/AttachmentService';
 import { diyPresentationHtmlMediaReferences, canonicalizeDiyPresentationHtml, sanitizeDiyPresentationHtml } from '../../view/common/diyPresentationHtml';
 import { diyPresentationBlocks, diyPresentationFixture } from './helpers/diyPresentationFixture';
 import { communityVideoFixture } from './helpers/communityVideoFixture';
@@ -259,7 +259,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual PG16 five
   }, 30_000);
   it('a clearly injected second HMAC batch failure leaves the collected full schema/author HTML entirely unmodified', async () => {
     const value = [richBlock(f.batchImages.map(image => `<img src="${stale(image.url)}">`).join('')), videoBlock(stale(f.platformVideo.url), stale(f.platformImage.url))], before = JSON.stringify(value);
-    const real = productMedia.renderProductPictures; let batches = 0; const signature = vi.spyOn(productMedia, 'renderProductPictures').mockImplementation(async (...args) => { if (++batches === 2) throw Error('explicit owned second-batch fault'); return real(...args); });
+    const real = attachmentMedia.signAttachmentReferences; let batches = 0; const signature = vi.spyOn(attachmentMedia, 'signAttachmentReferences').mockImplementation(async (...args) => { if (++batches === 2) throw Error('explicit owned second-batch fault'); return real(...args); });
     try { await expect(renderDiyEditorialMedia(f.db, f.env.APP_KEY, value)).rejects.toThrow('explicit owned second-batch fault'); expect(batches).toBe(2); expect(JSON.stringify(value)).toBe(before); }
     finally { signature.mockRestore(); }
     // Provider-fault injection is separate from the real257-upload positive.

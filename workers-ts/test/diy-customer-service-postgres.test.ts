@@ -8,7 +8,7 @@ import { createApp } from '@/app';
 import type { Container } from '@/lib/di';
 import { systemAttachment, systemConfig, systemDise, systemRole } from '@/models/schema';
 import { DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT, renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
-import * as productMedia from '@/services/activity/ProductAssetPolicy';
+import * as attachmentMedia from '@/services/system/AttachmentService';
 import { canonicalDiyPresentationReference } from '../../view/common/diyPresentationHtml';
 import { diyCustomerServiceFixture, DIY_CUSTOMER_CONFIG_DEFAULTS, DIY_CUSTOMER_CONFIG_KEYS } from './helpers/diyCustomerServiceFixture';
 import { sortedDiyState, stableDiyState, type DiyStateRow as Row, type DiyStateSnapshot } from './helpers/diyStateFixture';
@@ -240,8 +240,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real owned PG16 
   });
   it('a separately labeled synthetic second-signature fault cannot partially mutate the collected schema', async () => {
     const value = f.batchImages.map(row => compact(historical(row.url))), original = JSON.stringify(value), resources = f.resources(), before = await f.snapshot();
-    const real = productMedia.renderProductPictures; let batches = 0;
-    const spy = vi.spyOn(productMedia, 'renderProductPictures').mockImplementation(async (...args) => { if (++batches === 2) throw Error('explicit owned customer second-batch fault'); return real(...args); });
+    const real = attachmentMedia.signAttachmentReferences; let batches = 0;
+    const spy = vi.spyOn(attachmentMedia, 'signAttachmentReferences').mockImplementation(async (...args) => { if (++batches === 2) throw Error('explicit owned customer second-batch fault'); return real(...args); });
     try { await expect(renderDiyEditorialMedia(f.db, f.env.APP_KEY, value)).rejects.toThrow('explicit owned customer second-batch fault'); expect(batches).toBe(2); expect(JSON.stringify(value)).toBe(original); }
     finally { spy.mockRestore(); }
     expect(await f.snapshot()).toEqual(before); expect(f.resources()).toEqual(resources);

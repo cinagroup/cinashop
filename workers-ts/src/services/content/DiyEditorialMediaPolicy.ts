@@ -1,7 +1,8 @@
-import { canonicalDiyPresentationReference, diyPresentationHtmlMediaReferences, mapDiyPresentationHtmlMedia, sanitizeDiyPresentationHtml, type DiyPresentationMediaKind } from '../../../../view/common/diyPresentationHtml';
+import { canonicalDiyPresentationReference, diyPresentationHtmlMediaReferences, mapDiyPresentationHtmlMedia, safeDiyPresentationUrl, sanitizeDiyPresentationHtml, type DiyPresentationMediaKind } from '../../../../view/common/diyPresentationHtml';
 import { publicDiyPresentationVideos, publicDiyPresentationImages } from './DiyPresentationVideoPolicy';
 import type { DbClient } from '@/lib/di';
-import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { publicProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { parseCanonicalAttachmentId, signAttachmentReferences } from '@/services/system/AttachmentService';
 import { ValidateException } from '@/utils/errors';
 import { canonicalizePublishedAttachmentReference } from './ArticleContentPolicy';
 import { canonicalDiyPageBackground, signDiyPageBackground } from './DiyPageAppearancePolicy';
@@ -149,8 +150,16 @@ export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appK
   // Every family retains its own budget; adding a service icon cannot consume
   // an already valid editorial, navigation, footer or presentation allowance.
   // Resolve all owners first, then bounded HMAC batches, then one atomic commit.
-  const approved=[...new Set([...resolved].filter(([key])=>!key.startsWith('page-background\n')).map(([,value])=>value))],rendered=new Map<string,string>();
-  for(let i=0;i<approved.length;i+=256){const batch=approved.slice(i,i+256),values=await renderProductPictures(appKey,batch);batch.forEach((ref,index)=>rendered.set(ref,values[index]!));}
+  const approved=[...new Set([...resolved].filter(([key])=>!key.startsWith('page-background\n')).map(([,value])=>value))];
+  // Owner policies have already interpreted each slot's own JSON/HTML grammar.
+  // Preserve that approved byte identity: the article renderer decodes entities
+  // again and could turn an approved static literal into a private local ID.
+  // Retain URL/Unicode-whitespace refusal without decoding or recanonicalizing.
+  const rendered=new Map(approved.map(reference=>[reference,/\s/u.test(reference)?'':safeDiyPresentationUrl(reference)]));
+  const assets=[...new Set([...rendered.values()].filter(reference=>{
+    const id=parseCanonicalAttachmentId(reference);return id!==null&&id<=2_147_483_647;
+  }))];
+  for(let i=0;i<assets.length;i+=256){const batch=assets.slice(i,i+256),values=await signAttachmentReferences(appKey,batch);batch.forEach((ref,index)=>rendered.set(ref,values[index]!));}
   const backgroundSlot=slots.find(slot=>slot.kind==='page-background');
   const background=backgroundSlot?await signDiyPageBackground(appKey,resolved.get('page-background\n'+backgroundSlot.value)??''):'';
   commitMedia(collection,slots.map(slot=>slot.kind==='page-background'?background:rendered.get(resolved.get((slot.kind??'legacy-image')+'\n'+slot.value)!)!),true);
