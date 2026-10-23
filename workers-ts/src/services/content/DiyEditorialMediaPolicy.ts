@@ -9,6 +9,7 @@ type RecordValue = Record<string, unknown>;
 const record = (value: unknown): RecordValue | null => value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : null;
 export const DIY_FOOTER_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_PRESENTATION_MEDIA_SLOT_LIMIT = 20_000;
+export const DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT = 20_000;
 
 /** Editorial, carousel and navigation components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
@@ -17,7 +18,7 @@ export const DIY_PRESENTATION_MEDIA_SLOT_LIMIT = 20_000;
  * signing; historical tickets are canonicalized and refreshed only in output. */
 function editorialMediaSlots(components: unknown[], publication = false) {
   const slots: Array<{ value: string; kind?: DiyPresentationMediaKind; set: (value: string) => void }> = [];
-  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0 };
+  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0 };
   const htmlGroups: Array<{owner: RecordValue; source: string; slots: number[]}> = [];
   const collect = (value: unknown, key: string, navigation = false) => {
     const owner = record(value);
@@ -48,6 +49,14 @@ function editorialMediaSlots(components: unknown[], publication = false) {
           counts.footer++;
         }
       }
+    }
+    else if (component.name === 'customerService') {
+      const owner = record(component.logoConfig);
+      if (owner && typeof owner.url === 'string') {
+        slots.push({value: owner.url, kind: 'image', set: value => { owner.url = value; }});
+        counts.customerService++;
+      }
+      // The authored destination and Admin preview fields are never media slots.
     }
     else if (component.name === 'videos') {
       for(const [key,kind] of [['videoConfig','video'],['imgConfig','image']] as const){
@@ -98,7 +107,7 @@ function editorialMediaSlots(components: unknown[], publication = false) {
   // Collect first, reject before any canonical mutation, database owner lookup
   // or signature. The footer's independent budget cannot consume a previously
   // valid full editorial/carousel or navigation budget.
-  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT) {
+  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT) {
     throw new ValidateException('DIY公开素材超过完整读取容量');
   }
   return {slots, htmlGroups};
@@ -128,7 +137,8 @@ export async function renderDiyEditorialMedia(db: Pick<DbClient, 'select'>, appK
       batch.forEach((reference,index)=>resolved.set(kind+'\n'+reference,approved[index]!));
     }
   }
-  // Preserve the previous42500 slots plus a separate20000 presentation budget.
+  // Every family retains its own budget; adding a service icon cannot consume
+  // an already valid editorial, navigation, footer or presentation allowance.
   // Resolve all owners first, then bounded HMAC batches, then one atomic commit.
   const approved=[...new Set(resolved.values())],rendered=new Map<string,string>();
   for(let i=0;i<approved.length;i+=256){const batch=approved.slice(i,i+256),values=await renderProductPictures(appKey,batch);batch.forEach((ref,index)=>rendered.set(ref,values[index]!));}

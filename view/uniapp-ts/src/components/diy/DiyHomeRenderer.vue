@@ -37,10 +37,7 @@
         :active="pageActive"
       />
 
-      <view v-else-if="block.name === 'customerService'" class="diy-service" @tap="open('/pages/user/kefu')">
-        <text>在线客服</text>
-        <text class="diy-more">咨询 ›</text>
-      </view>
+      <DiyCustomerService v-else-if="block.name === 'customerService'" :block="block" :active="pageActive" />
 
       </view>
     </template>
@@ -63,10 +60,10 @@ import DiyPageFooter from './DiyPageFooter.vue';
 import type { DiyComponent } from '@/api/diy';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
+import DiyCustomerService from './DiyCustomerService.vue';
 import DiyPresentationWidget from './DiyPresentationWidget.vue';
 import { DIY_PRESENTATION_NAMES } from '@/utils/diyPresentationConfig';
 import {
-  openDiyLink,
   isDiyEnabled,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
@@ -143,7 +140,6 @@ function blockKey(block: DiyComponent, index: number): string {
 }
 
 function isPresentationWidget(block:DiyComponent){return DIY_PRESENTATION_NAMES.some(name=>name===block.name);}
-function open(value:unknown){openDiyLink(value);}
 
 </script>
 

@@ -86,12 +86,26 @@ const presentationBinding = JSON.parse(presentationBindingRaw) as typeof footerB
   file:string;before_sha256:string;after_sha256:string;
   edits:Array<{before_source:string;after_source:string}>;
 }> };
+const customerBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-customer-service-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
+
+function beforeCustomerSource(file:string, supplied?:string):string {
+  let source=normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot,'..',file),'utf8'));
+  const proof=customerBinding.sources.find(row=>row.file===file);
+  if(!proof)return source;
+  expect(sha256(source)).toBe(proof.after_sha256);
+  for(const edit of [...proof.edits].reverse()) {
+    expect(source.split(edit.after_source)).toHaveLength(2);
+    source=source.replace(edit.after_source,edit.before_source);
+  }
+  expect(sha256(source)).toBe(proof.before_sha256);
+  return source;
+}
 
 function beforePresentationSource(file:string):string {
   const proof=presentationBinding.sources.find(row=>row.file===file)!;
   expect(proof).toBeDefined();
-  let source=normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',file),'utf8'));
+  let source=beforeCustomerSource(file);
   expect(sha256(source)).toBe(proof.after_sha256);
   for(const edit of [...proof.edits].reverse()) {
     expect(source.split(edit.after_source)).toHaveLength(2);
@@ -233,16 +247,43 @@ describe("Admin frontend API registration audit", () => {
     for(const change of presentation.frontend_source_changes) {
       const row=updated.frontendSources.find(item=>item.file===change.file)!;
       expect(row.sha256).toBe(change.before_sha256);row.sha256=change.after_sha256;
-      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+      expect(sha256(beforeCustomerSource(change.file))).toBe(change.after_sha256);
     }
     expect(presentation.call_line_changes).toHaveLength(3);
     for(const change of presentation.call_line_changes) {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
     }
-    expect(current).toEqual(updated);
     expect(presentation.file).toBe(footer.file);
-    expect(sha256(readFileSync(join(workerRoot,'..',presentation.file)))).toBe(presentation.sha256);
+    expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(presentation.sha256);
+    const customer=customerBinding.admin_current_report;
+    expect(customer.previous_report_sha256).toBe(presentation.sha256);
+    expect(customer.backend_equal).toBe(true);
+    expect(customerBinding.sources.map(row=>row.file)).toEqual(['view/admin-ts/src/pages/content/DiseList.vue']);
+    expect(customer.frontend_source_changes).toHaveLength(1);
+    for(const change of customer.frontend_source_changes) {
+      const row=updated.frontendSources.find(item=>item.file===change.file)!;
+      expect(row.sha256).toBe(change.before_sha256);
+      expect(sha256(beforeCustomerSource(change.file))).toBe(change.before_sha256);
+      row.sha256=change.after_sha256;
+      expect(sha256(normalizeAdminAuditSource(readFileSync(join(workerRoot,'..',change.file),'utf8')))).toBe(change.after_sha256);
+    }
+    expect(customer.call_line_changes).toHaveLength(3);
+    for(const change of customer.call_line_changes) {
+      const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
+      expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
+    }
+    expect(current).toEqual(updated);
+    expect(customer.file).toBe(presentation.file);
+    expect(sha256(readFileSync(join(workerRoot,'..',customer.file)))).toBe(customer.sha256);
+  });
+
+  it('rejects unreviewed customer editor wiring and canonical save changes instead of absorbing them into the historical presentation inventory',()=>{
+    const file='view/admin-ts/src/pages/content/DiseList.vue',source=readFileSync(join(workerRoot,'..',file),'utf8');
+    for(const changed of [source+'\n// extra edit\n',source.replace('<DiyCustomerServiceEditor ','<DiyPresentationEditor '),source.replace('canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))','canonicalPresentationValue(canonicalFooterValue(value))')]) {
+      expect(changed).not.toBe(source);
+      expect(()=>beforeCustomerSource(file,changed)).toThrow();
+    }
   });
 
   it.each([

@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "date": "2026-10-23",
+  "base_commit": "ee3847f798a92cdb8c00a9e71bbf7bc246c9293b",
+  "scope": "Current customer-service editor binding; exact inverses reconstruct the complete prior DiseList source. Historical footer/presentation bindings and reports are immutable. No route, ACL, dependency or public-response authorization is inferred by this source inventory.",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_sha256": "50b11ef829712dbcfdc184ff229b19326124aef87e1a3fc6f90484a642d4f189",
+      "after_sha256": "76874e5fd1c618ecb25b1fa6d01f83886b279a89eaafceed5049a9cd40b71e77",
+      "edits": [
+        {
+          "before_line": 98,
+          "after_line": 98,
+          "before_source": "        <el-form-item label=\"内容排版\"><DiyPresentationEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n        <el-form-item label=\"装修 value\" required>\n",
+          "after_source": "        <el-form-item label=\"内容排版\"><DiyPresentationEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n        <el-form-item label=\"页面悬浮按钮\"><DiyCustomerServiceEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n        <el-form-item label=\"装修 value\" required>\n"
+        },
+        {
+          "before_line": 147,
+          "after_line": 148,
+          "before_source": "import { canonicalPresentationValue } from \"@/utils/diyPresentationEditor\";\n\n",
+          "after_source": "import { canonicalPresentationValue } from \"@/utils/diyPresentationEditor\";\nimport DiyCustomerServiceEditor from \"@/components/content/DiyCustomerServiceEditor.vue\";\nimport { canonicalCustomerServiceValue } from \"@/utils/diyCustomerServiceEditor\";\n\n"
+        },
+        {
+          "before_line": 271,
+          "after_line": 274,
+          "before_source": "    if (parsed === null) return null;\n    return canonicalPresentationValue(canonicalFooterValue(value));\n  } catch {\n",
+          "after_source": "    if (parsed === null) return null;\n    return canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)));\n  } catch {\n"
+        }
+      ]
+    }
+  ],
+  "admin_current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "16635737279b2fad8e63a4e208757ba73ff4ea4eb3651f464fa82a446b1fcd9e",
+    "previous_report_sha256": "419238c3200e05731bf05322b5e766009a770c724edd77dbd9862a396f711950",
+    "frontend_source_changes": [
+      {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_sha256": "50b11ef829712dbcfdc184ff229b19326124aef87e1a3fc6f90484a642d4f189",
+        "after_sha256": "76874e5fd1c618ecb25b1fa6d01f83886b279a89eaafceed5049a9cd40b71e77"
+      }
+    ],
+    "call_line_changes": [
+      {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 215,
+        "after_line": 218
+      },
+      {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 317,
+        "after_line": 320
+      },
+      {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 340,
+        "after_line": 343
+      }
+    ],
+    "previous_counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "backend_equal": true,
+    "reason": "The new typed customer-service component and composed canonicalizer shift the three existing DiseList API calls by three lines. Its credential-omitting published public preview uses an existing public route outside the Admin inventory; the real existing attachment API adapter retains its existing route/permission contracts."
+  }
+}

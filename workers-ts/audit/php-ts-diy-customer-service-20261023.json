@@ -1,0 +1,1073 @@
+{
+  "schema": "cinashop.php-ts-diy-customer-service.v1",
+  "recorded_UTC": "2026-10-23T01:31:54.969838+00:00",
+  "status": "validated-local-draft-ready",
+  "base_commit": "ee3847f798a92cdb8c00a9e71bbf7bc246c9293b",
+  "base_baseline": {
+    "path": "/tmp/cinashop-diy-customer-service-baseline.json",
+    "sha256": "c97912963c344082287ca4e24748bbeb51ac2250e1187c46730d82f5268f2f5a"
+  },
+  "parent_draft": "https://github.com/cinagroup/cinashop/pull/157",
+  "fresh_source_proposal": {
+    "path": "/tmp/cinashop-after-presentation-next-slice-proposal.json",
+    "sha256": "c7354ab8267a245dfd9a1a9cc551479c2b61ac668809c6cb0bfd92a66ad8023c"
+  },
+  "PHP_read_method": {
+    "repository": "/home/cina/cinagroup/cinashop-php",
+    "immutable_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "example_command": "git -C /home/cina/cinagroup/cinashop-php show 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5:view/admin/src/components/mobilePage/home_service.vue",
+    "raw_root_example": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobilePage/home_service.vue",
+    "important": "8ed2a5b is a commit only in the separate cinashop-php repository, not an object in current cinashop. PHP execution was not used. util.js working file has EOL-only diff; both raw working and immutable blob SHA are separately recorded, normalized text exact."
+  },
+  "PHP_source_manifest": [
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobilePage/home_service.vue",
+      "git_relative_path": "view/admin/src/components/mobilePage/home_service.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "d42df01e485964e5c38bb7035a53ebad51c351b3",
+      "git_blob_sha256": "6e0fc554c75be823c1a36d6f5445142357d7e18037e86fdb33e65fe1bfa57da2",
+      "working_file_sha256": "6e0fc554c75be823c1a36d6f5445142357d7e18037e86fdb33e65fe1bfa57da2",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfig/c_home_service.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "d294e9e56074cb3d5c03bbcccc2931f0397d7fc8",
+      "git_blob_sha256": "3fea0c28baf9d3de298251ddfa13c8c87b1b065f5829c0a9098ce505ddbc88b6",
+      "working_file_sha256": "3fea0c28baf9d3de298251ddfa13c8c87b1b065f5829c0a9098ce505ddbc88b6",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfigRight/c_upload_img.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfigRight/c_upload_img.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "c8cdb60c6d4699055a8bf6721519357a40df9c77",
+      "git_blob_sha256": "03bdc1e9630cb32fffa9718cec43fe00da3e1a3c2709f5e3da49357a35947dd8",
+      "working_file_sha256": "03bdc1e9630cb32fffa9718cec43fe00da3e1a3c2709f5e3da49357a35947dd8",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfigRight/c_slider.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfigRight/c_slider.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "5fbaff3f06686cadeb4be8e9e81bc15fc1f328b4",
+      "git_blob_sha256": "b27efc0259cdc0952d8edc3c70325acba33a70397f26de4496a0e73ca2d54701",
+      "working_file_sha256": "b27efc0259cdc0952d8edc3c70325acba33a70397f26de4496a0e73ca2d54701",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfigRight/c_radio.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfigRight/c_radio.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "fbc2a7c7f793dcdbac0c143e3ffcc0cff1b363ac",
+      "git_blob_sha256": "be70b5c4259c58fa75795e907894b88cca34882c531ba790ea2fa20a74daa9ce",
+      "working_file_sha256": "be70b5c4259c58fa75795e907894b88cca34882c531ba790ea2fa20a74daa9ce",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/pages/setting/devise/index.vue",
+      "git_relative_path": "view/admin/src/pages/setting/devise/index.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "0b22254d909c102ff5f758b1297a72b767cb6dfe",
+      "git_blob_sha256": "79c72055fe2c24ba00e1af9af29a2311108a72b6b547948bf05f091db8701efa",
+      "working_file_sha256": "79c72055fe2c24ba00e1af9af29a2311108a72b6b547948bf05f091db8701efa",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfig/pageTitle.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfig/pageTitle.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "91b12f472792bfbf2dbd83d720a34ab16991548b",
+      "git_blob_sha256": "8d497897e7edce2c467d79bee3cdd092a3bed2e618a7a18160ad1f1097f975e6",
+      "working_file_sha256": "8d497897e7edce2c467d79bee3cdd092a3bed2e618a7a18160ad1f1097f975e6",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/index/components/customerService.vue",
+      "git_relative_path": "view/uniapp/pages/index/components/customerService.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "9f2d194d9bac17ed303187e4ee823817031755b6",
+      "git_blob_sha256": "1eab45ad85c32759d7874983156e6868459397c1efa9e98488e6929dcf03ef24",
+      "working_file_sha256": "1eab45ad85c32759d7874983156e6868459397c1efa9e98488e6929dcf03ef24",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/index/index.vue",
+      "git_relative_path": "view/uniapp/pages/index/index.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "8d907fbceaaa8451e793d0a4bd8f0b46a033a306",
+      "git_blob_sha256": "bd19c2bf3036a1d6c76ad05d562682d8df5d4ccd984bb9486568869e0f4c1b01",
+      "working_file_sha256": "bd19c2bf3036a1d6c76ad05d562682d8df5d4ccd984bb9486568869e0f4c1b01",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/pages/annex/special/index.vue",
+      "git_relative_path": "view/uniapp/pages/annex/special/index.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "982e3e1f6ff77509570c70c71f4a6bb1c9d48426",
+      "git_blob_sha256": "d701fe3901b2b591f522dad0a669e58442d997ec2ceab1e5a4fa8ba6ad649f4d",
+      "working_file_sha256": "d701fe3901b2b591f522dad0a669e58442d997ec2ceab1e5a4fa8ba6ad649f4d",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/utils/util.js",
+      "git_relative_path": "view/uniapp/utils/util.js",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "d3e4c716ae80d4cd4f6f314d72f07408412063e4",
+      "git_blob_sha256": "8d8c5c89fe0848f950f3699086519c0ee00dbc6a539c98057601ec007c7d6622",
+      "working_file_sha256": "571d58c3182ca792263d9760995aad70f167f6d2e68887fb80b82c39065b183b",
+      "working_bytes_equal_git_blob": false,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/uniapp/api/api.js",
+      "git_relative_path": "view/uniapp/api/api.js",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "6b2044482856643bea297d9d60b1af28ced6da3a",
+      "git_blob_sha256": "b088deb0fd65406f8456a511621fbbf6ef12958d5333da42389b5c7e6dcc6f66",
+      "working_file_sha256": "b088deb0fd65406f8456a511621fbbf6ef12958d5333da42389b5c7e6dcc6f66",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/diy/DiyServices.php",
+      "git_relative_path": "app/services/diy/DiyServices.php",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "0f053bd3949171006551cd688e894837145b1112",
+      "git_blob_sha256": "dcbbd3d089c9bf2f1253ee12139023987d4780362bc391363e8cd542bce17d00",
+      "working_file_sha256": "dcbbd3d089c9bf2f1253ee12139023987d4780362bc391363e8cd542bce17d00",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/controller/api/v2/PublicController.php",
+      "git_relative_path": "app/controller/api/v2/PublicController.php",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "59adaeee8d921294ad2e5708dcaa2cbf43da5bcd",
+      "git_blob_sha256": "b0e3486af5b8dba34fc13e3cce5c8563844939693e8e9a52a7f3b708e0bd2fb6",
+      "working_file_sha256": "b0e3486af5b8dba34fc13e3cce5c8563844939693e8e9a52a7f3b708e0bd2fb6",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/app/services/system/config/SystemConfigServices.php",
+      "git_relative_path": "app/services/system/config/SystemConfigServices.php",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "bd190ed9971332874110edefe8a8ef9a8e1a64f2",
+      "git_blob_sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "working_file_sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobilePage/index.js",
+      "git_relative_path": "view/admin/src/components/mobilePage/index.js",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "cbc3155898ce86ba6ffc11017aeacfed546c8ff6",
+      "git_blob_sha256": "ae1f8538b0ec003f01f1d8eae2b2c84664a257e06ef364f5f72043be71901337",
+      "working_file_sha256": "ae1f8538b0ec003f01f1d8eae2b2c84664a257e06ef364f5f72043be71901337",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfig/index.js",
+      "git_relative_path": "view/admin/src/components/mobileConfig/index.js",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "cbc3155898ce86ba6ffc11017aeacfed546c8ff6",
+      "git_blob_sha256": "ae1f8538b0ec003f01f1d8eae2b2c84664a257e06ef364f5f72043be71901337",
+      "working_file_sha256": "ae1f8538b0ec003f01f1d8eae2b2c84664a257e06ef364f5f72043be71901337",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    },
+    {
+      "path": "/home/cina/cinagroup/cinashop-php/view/admin/src/components/mobileConfig/c_short_video.vue",
+      "git_relative_path": "view/admin/src/components/mobileConfig/c_short_video.vue",
+      "git_repository": "/home/cina/cinagroup/cinashop-php",
+      "git_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "git_blob_id": "998ef062919a32453574806d50b0fc435ff9041b",
+      "git_blob_sha256": "8ad89a23ba8f834576095bfa50238d2d5514f61f46492b8426ed9a558edae97b",
+      "working_file_sha256": "8ad89a23ba8f834576095bfa50238d2d5514f61f46492b8426ed9a558edae97b",
+      "working_bytes_equal_git_blob": true,
+      "working_text_equal_after_EOL_normalization": true,
+      "read_scope": "full contract source except unrelated method bodies not audited; evidence anchors identify consumed sections"
+    }
+  ],
+  "PHP_line_anchors": [
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "defaultName:",
+      "lines": [
+        21
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "defaultConfig:",
+      "lines": [
+        58
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "buttonConfig:",
+      "lines": [
+        68
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "locationConfig:",
+      "lines": [
+        80
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "logoConfig:",
+      "lines": [
+        92
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobilePage/home_service.vue",
+      "needle": "topConfig:",
+      "lines": [
+        98
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "needle": "'configObj.setUp.tabVal'",
+      "lines": [
+        59
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "needle": "configNme: 'buttonConfig'",
+      "lines": [
+        70
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "needle": "configNme: 'logoConfig'",
+      "lines": [
+        74
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "needle": "configNme: 'locationConfig'",
+      "lines": [
+        86
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/admin/src/components/mobileConfig/c_home_service.vue",
+      "needle": "configNme: 'topConfig'",
+      "lines": [
+        90
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "routineContact:",
+      "lines": [
+        43
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "topConfig:",
+      "lines": [
+        45
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "positions:",
+      "lines": [
+        46
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "routineContact === 1",
+      "lines": [
+        17
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "licks(){",
+      "lines": [
+        52
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "setTouchMove(e)",
+      "lines": [
+        72
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/pages/index/components/customerService.vue",
+      "needle": "clientY < 545",
+      "lines": [
+        74
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "getCustomer(userInfo",
+      "lines": [
+        899
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "customer_type == 0",
+      "lines": [
+        903
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "customer_type == 1",
+      "lines": [
+        907
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "customer_type == 2",
+      "lines": [
+        911
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "customer_type == 3",
+      "lines": [
+        934
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "view/uniapp/utils/util.js",
+      "needle": "JumpPath: function",
+      "lines": [
+        162
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "app/services/diy/DiyServices.php",
+      "needle": "$item['name'] == 'customerService'",
+      "lines": [
+        338
+      ]
+    },
+    {
+      "repository": "/home/cina/cinagroup/cinashop-php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "path": "app/services/diy/DiyServices.php",
+      "needle": "$item['routine_contact_type']",
+      "lines": [
+        339
+      ]
+    }
+  ],
+  "family": "customerService (per-page floating control, independent of global get_suspended/FAB)",
+  "contract": {
+    "persisted_keys": [
+      "name",
+      "isHide",
+      "timestamp",
+      "setUp",
+      "titleLeft",
+      "titleRight",
+      "buttonConfig",
+      "locationConfig",
+      "logoConfig",
+      "topConfig"
+    ],
+    "import_types": "numeric0 false; string0 true for original switch truthiness. Source strings are not rewritten. Typed setters emit0/1. numeric top0 or absent=>30%; string0=>0%; finite nonnegative<=MAX_SAFE_INTEGER capped80%. Malformed controls fail closed.",
+    "geometry": "fixed86rpx circle;20rpx selected side;z40;strict66<clientY<545 drag corridor;5px drag recognition;350ms click suppression. H5 mouse extension and keyboard supported.",
+    "native_contact": "MP routine_contact_type1 renders native button open-type=contact before normal mode;0 normal;unknown hidden. H5/App use normal mode.",
+    "entry_types": {
+      "0": "existing canonical /pages/user/kefu",
+      "1": "existing uni.makePhoneCall",
+      "2": "H5 actual location.assign; App plus.runtime.openURL; MP bounded existing webview/registered page",
+      "3": "MP-WEIXIN actual wx.openCustomerServiceChat with extInfo.url/corpId; H5/App configured URL"
+    },
+    "gesture": "Service-only preload of actual /api/get_customer_type,60s freshness. No async result/retry/activation auto-opens. Stale tap rereads; subsequent fresh explicit user gesture opens.",
+    "lifecycle": "captured callbacks fenced by actor uid/token/session, complete raw block epoch, active, station closure, media expiry and disposal; stale successes/failures never regain authority."
+  },
+  "media_authority": {
+    "only_new_slot": "customerService.logoConfig.url",
+    "independent_new_slot_limit": 20000,
+    "existing_limits_preserved": {
+      "ordinary": 2500,
+      "navigation": 20000,
+      "footer": 20000,
+      "presentation": 20000
+    },
+    "asset_and_owner_policy": "Existing current platform image/raster policy and4096 public authored reference bound. Entire count/parse/owner checks finish before query/sign;10000 query chunks,256-signature batches; atomic apply.",
+    "excluded": [
+      "logoConfig.link",
+      "preview",
+      "authorExtra",
+      "unknown-neighbor.logoConfig.url",
+      "global suspended_window"
+    ],
+    "cache": "Only actual new logo slot contributes to media deadline and fingerprint; same-version root/micro renewal uses existing host; ticket deadline is expires minus60s capped at840s cache age."
+  },
+  "security_and_scope": {
+    "new_production_routes": [],
+    "production_DDL_changes": [],
+    "production_ACL_changes": [],
+    "dependencies_and_locks_changed": false,
+    "preserve_restored_statistics": [
+      "/api/get_script",
+      "Admin loader",
+      "Supplier loader",
+      "UniApp loader"
+    ],
+    "Admin": "actual DiseList and actual image picker; stable saved reference; same-reference signed preview only; full-array preservation; existing dise.manage/attachment.view/session fences.",
+    "backend": "existing real optional-auth customer config route; existing station middleware; no synthetic business DTO."
+  },
+  "official_primary_docs": [
+    {
+      "url": "https://developers.weixin.qq.com/miniprogram/dev/api/open-api/service-chat/wx.openCustomerServiceChat.html",
+      "decision": "customer-chat API requires user click, not async config response"
+    },
+    {
+      "url": "https://uniapp.dcloud.net.cn/component/button.html",
+      "decision": "native open-type contact template remains MP conditional"
+    },
+    {
+      "url": "https://www.html5plus.org/doc/zh_cn/runtime.html",
+      "decision": "App external customer URL delegates existing OS runtime API"
+    }
+  ],
+  "known_passed_receipts": {
+    "Admin": {
+      "path": "/tmp/cinashop-diy-customer-service-admin-candidate3.json",
+      "sha256": "8741813c474ff98c209e82a57253c8f652f0cb4b01f075b54735f2abad92c6b5"
+    },
+    "Admin_handoff": {
+      "path": "/tmp/cinashop-diy-customer-service-admin-final-handoff.json",
+      "sha256": "546cbb182ad64ab58260f3ba3c5a8c3c90d339d2d02d2bb9dbeebe6d454321c6"
+    },
+    "backend": {
+      "path": "/tmp/cinashop-diy-customer-service-backend-candidate1-result.json",
+      "sha256": "d7ed7049f9b22506a4a275cbc43371decf702f1c8b4f14510c59a79458b307c6"
+    }
+  },
+  "pending": [
+    "Final exact staged-patch secret scan, commit/push and new draft PR; exact newhead CI read after push. Whole migration goal remains active."
+  ],
+  "failure_history": [
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-admin-candidate2.json",
+        "sha256": "45cbecfd0c7d968aed91f45e233358984df5495699c1c0d9eb71c1c9bdea359a"
+      },
+      "result": "30/31; actual picker preview lost after parent nextTick. Fixed commit timing with immediate revocation, await nextTick and exact same actor/editor/value/ref guards; candidate3 actual31+old50 all passed."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-customer-Uni-expanded-candidate1.json",
+        "sha256": "e19a11b2dc2ec0882d1db550ae619d7f2febd4a0ab146c5cf45ba0b088f397c0"
+      },
+      "result": "57/58; new H5 SSR adapter omitted window.location.origin. Adapter corrected, production unchanged; final run pending."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-customer-Uni-final-candidate1.json",
+        "sha256": "a7c1bf7ffe7c215eaf9efdeb57cbecc1483d8ff6644deb3af3664a7e9b4496c6"
+      },
+      "actual_tests": "Entire91 files2372/2372 passed at earlier58-case revision; wrapper failed while hashing two removed generated node_modules/.vite deps_temp package.json files before any build. No full successful receipt claimed.",
+      "diagnostic": {
+        "path": "/tmp/cinashop-customer-Uni-final-candidate1-cache-diagnostic.json",
+        "sha256": "8300cf2e4ef011cb403b7afa6b2a76c73a885960b583731b8ba0efc0374ca3ac"
+      }
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-customer-Uni-drag-red-candidate1.json",
+        "sha256": "b47524c0d50dc517a2d1eac6d0407918f7f7e817af70c3ace099ac5537fd9232"
+      },
+      "actual_tests": "58/59; added adjacent-drag test genuinely reproduced old350ms timer unlocking next drag. begin now cancels prior timer; later60 fullfile passed."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-browser-candidate1-result.json",
+        "sha256": "a1e4da74f5bc7e29862013f93730825f0dbcdc32a7196b15eddc9cbf22ca7bab"
+      },
+      "result": "Only home/resize passed; drag assertion failed at249.1125 instead200. Later observed IAB focus auto-scroll changed frame origin, so this is NOT isolated GUI proof of the Uni normalization bug. Independently installed Uni code demonstrably discards button on UNI currentTarget; H5 native div fix and final stable-coordinate real drag passed.",
+      "independent_source_review": {
+        "path": "/tmp/cinashop-diy-customer-service-h5-mouse-review.json",
+        "sha256": "6304f2bb9b23b6dadbcf16051ef279968f82b2827c1fd578c6284d355d1174db"
+      }
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-browser-candidate2-result.json",
+        "sha256": "8ebaa0194b501b809f48bac0e10553631171e9ea5d09beae65a807b7806ef102"
+      },
+      "result": "Six stages including real top200 drag passed;35-minute owned deadline reached during investigation of fill/Tab display. No business POST. Both failed Browser attempts retained with0 source/installed/artifact drift and actual PG cleanup.",
+      "interaction_boundary": {
+        "path": "/tmp/cinashop-diy-customer-service-browser2-interaction-boundary-review.json",
+        "sha256": "8b4bcd7d0025dfb650f86ca72224655b3fd5d3bf10f2bd648fed1d996c881bd8"
+      }
+    },
+    {
+      "result": "fill/Tab did not deliver the native change required by Element Plus. Final real sequential keyboard input produced trusted input4/input45/change45/blur45, DOM/aria45 and raw45; no Admin numeric production change was made."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-worker-final-final1-result.json",
+        "sha256": "65ed842dbd7d8cdf4a9e640d39b2adb00e7c2df38fbe6f475e1ce77fbf28cb98"
+      },
+      "result": "First complete unit strict failed on3 new test-only type errors: duplicate setup phase overwritten by fixture, unused native import, nullable SQL JSON.parse value. Removed duplicate literal without serialized change, removed unused import, added explicit string assertion before parse. No production/old assertion weakened. Full final2 strict/69/native7 passed."
+    }
+  ],
+  "boundaries": [
+    "Only existing PHP contract was read statically; no PHP production execution.",
+    "No full migration completion or full author-editor coverage claim. Many existing dedicated client families still have JSON-only Admin controls.",
+    "Real hidden IAB is connected; independent Chrome/Edge extension session is not observed. No repeated acceptance confirmation requests.",
+    "MP/App true devices, phone dialer, enterprise provider chat and OS handoff are not browser acceptance claims.",
+    "Physical deployment/merge and stateful Kefu conversation creation/send are outside this family."
+  ],
+  "goal_status": "active; whole PHP-to-TS migration remains unfinished",
+  "validation": {
+    "Admin": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-admin-candidate3.json",
+        "sha256": "8741813c474ff98c209e82a57253c8f652f0cb4b01f075b54735f2abad92c6b5"
+      },
+      "tests": 81,
+      "new": 31,
+      "retained": 50,
+      "full_strict": true,
+      "production_build": true,
+      "source_drift": [],
+      "installed_snapshot_scope": "16 selected compiler/bootstrap/package inputs, not a full transitive closure. Browser and final regressions separately bind all selected installed package bytes.",
+      "artifacts": 276
+    },
+    "frontend": {
+      "receipt": {
+        "path": "/tmp/cinashop-customer-Uni-frontend-candidate3.json",
+        "sha256": "fb559342c3965e1032c60cba99f618561cbe5f53ca032cba84bcfa6cd603fe15"
+      },
+      "tests": 60,
+      "full_strict": true,
+      "builds": [
+        "H5",
+        "MP-WEIXIN",
+        "APP-PLUS"
+      ],
+      "artifacts": true,
+      "runtime_i18n": true,
+      "source_and_installed_drift_at_execution": [],
+      "current_test_assertions": {
+        "path": "/tmp/cinashop-customer-Uni-pre-Browser2.json",
+        "sha256": "5aab21bdf2e38de5429822b1d93599f13ce461c792d0d65283a2d70fcbfe9bdf"
+      },
+      "post_build_test_only_strengthening": {
+        "path": "/tmp/cinashop-customer-frontend3-post-template-assertion-proof.json",
+        "sha256": "86494972a4e9b61f382a1b632f5da96c9d58f6558ac92b098bfbe43a6c77dc8f"
+      }
+    },
+    "Worker_focused": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-worker-candidate1-result.json",
+        "sha256": "a39dd2edf2722f6a5b0ebe77433bb172161fae825cde7aafa1a7521e6bd36b9e"
+      },
+      "files": 5,
+      "tests": 62,
+      "strict": "complete inherited strict options over selected Worker closure; full two-config strict final pending"
+    },
+    "native_initial": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-backend-candidate1-result.json",
+        "sha256": "d7ed7049f9b22506a4a275cbc43371decf702f1c8b4f14510c59a79458b307c6"
+      },
+      "runner": 12,
+      "native": 42,
+      "actual_GET": 110,
+      "customer_config_GET": 23,
+      "tables": 73,
+      "sequences": 68,
+      "real_image_upload_setup": 257,
+      "final7_files": "pending"
+    },
+    "Browser": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-browser-candidate3-result.json",
+        "sha256": "aa655fa347b357b104af53ea3b2ee7712aa4e918e5eaf402316ee8feb8da9b75"
+      },
+      "evidence": {
+        "path": "/tmp/cinashop-diy-customer-service-browser-candidate3/cinashop-diy-customer-service-browser-evidence.json",
+        "sha256": "1bfeefbacb4a3e0611207ec76daad3a271bfddb84f7fa3946aebfd563cc9f479"
+      },
+      "status": "passed-browser15-current-source",
+      "exit_code": 0,
+      "Vitest_tests": 1,
+      "checkpoints": 15,
+      "seconds": 1603.971,
+      "tables": 73,
+      "sequences": 68,
+      "snapshot_registry": 6,
+      "actual_GET": 93,
+      "synthetic_chrome_GET": 41,
+      "actual_customer_config_GET": 7,
+      "actual_business_POST": 1,
+      "explicit_config_phases": [
+        "actual-Admin-typed-customer-save",
+        "owned-customer-config",
+        "station-close",
+        "station-open"
+      ],
+      "all_GET_full_snapshot_and_resources_equal": true,
+      "source_drift": [],
+      "installed_drift": [],
+      "artifacts_drift": [],
+      "fixtures_cleaned": true,
+      "cluster_stopped": true,
+      "real_keyboard_numeric_events": [
+        {
+          "type": "input",
+          "value": "4",
+          "isTrusted": true
+        },
+        {
+          "type": "input",
+          "value": "45",
+          "isTrusted": true
+        },
+        {
+          "type": "change",
+          "value": "45",
+          "isTrusted": true
+        },
+        {
+          "type": "blur",
+          "value": "45",
+          "isTrusted": true
+        }
+      ],
+      "actual_mouse": "ordinary CDP Input browser mouse only, from fresh DOM bounds after focusing the frame; top200px and root href retained. No JavaScript event dispatch or app method call.",
+      "screenshot": {
+        "path": "/tmp/cinashop-diy-customer-service-browser-final.jpg",
+        "sha256": "64961d8c795bbf7e5f6dca126b6c92b8cad2d00f9dfa5b4ada5cba5ed20f46ac"
+      },
+      "warning": "Only existing vue-router direct esm import deprecation; no browser errors/console errors.",
+      "limits": [
+        "Real H5 GUI and owned relative configured target; external provider, native phone, MP contact/chat and App OS handoff require devices and are not claimed.",
+        "Root/micro840s renewal uses separately executed clock-controlled real runtime tests; Browser does not wait840seconds.",
+        "Controls bootstrap initial sessions and explicit config only; all family/media/customer/Admin/cart responses are real Worker/ORM.",
+        "H5 HTML hides native desktop scrollbar; original JS/CSS artifacts unchanged.",
+        "Reopened is a fresh page load after real station reopen."
+      ],
+      "independent_actual_snapshot_review": {
+        "path": "/tmp/cinashop-customer-browser-independent-review.json",
+        "sha256": "46985d6cfad36b78513fdf3d9411226661fc990c63a5371e606435aaf86c7dbc"
+      },
+      "independent_agent_review": {
+        "path": "/tmp/cinashop-diy-customer-service-browser3-independent-review.json",
+        "sha256": "e912164987a40323d3ebc6fd752733e10674b06a8a27f7a8ba8ef3a4f48fdf9b"
+      },
+      "post_execution_type_only_equivalence": {
+        "path": "/tmp/cinashop-customer-browser-post-type-equivalence.json",
+        "sha256": "ab0081a68ab7d207c4af9bf8595528bb94fbb6d47f833258094c7e7ee5f44e66"
+      }
+    },
+    "Worker_final": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-worker-final-final2-result.json",
+        "sha256": "0a882ada9e041bac70a70810a477b74b3e81cfde48863878041e819c618a563f"
+      },
+      "files": 69,
+      "tests": 1280,
+      "passed": 1280,
+      "failed": 0,
+      "skipped": 0,
+      "complete_unit_types": true,
+      "complete_runtime_types": true,
+      "source_drift": [],
+      "installed_drift": [],
+      "steps": [
+        {
+          "name": "complete-unit-types",
+          "exit_code": 0,
+          "seconds": 123.395,
+          "log": {
+            "path": "/tmp/cinashop-diy-customer-service-worker-final-final2-complete-unit-types.log",
+            "sha256": "95af0b0d88edd521dcd25b2d9229a9cc8d67cc906de683dbfd672a1fb5f35fc3"
+          }
+        },
+        {
+          "name": "complete-runtime-types",
+          "exit_code": 0,
+          "seconds": 89.042,
+          "log": {
+            "path": "/tmp/cinashop-diy-customer-service-worker-final-final2-complete-runtime-types.log",
+            "sha256": "003d8a18a74cc2bae98ef66fcd9220f4969ebd7e60c591e6acfb625a1293de28"
+          }
+        },
+        {
+          "name": "worker69",
+          "exit_code": 0,
+          "seconds": 215.365,
+          "log": {
+            "path": "/tmp/cinashop-diy-customer-service-worker-final-final2-worker69.log",
+            "sha256": "c929b2d72dd6a34fc525716883dd1b457428693064c9cdaa560f3aedab556b92"
+          }
+        }
+      ],
+      "independent_review": {
+        "path": "/tmp/cinashop-diy-customer-service-final2-worker-native-review.json",
+        "sha256": "9080f4981a8683770a47e619bb56dae92a3437402a509fb9f860aa2d7f189851"
+      }
+    },
+    "native_final": {
+      "receipt": {
+        "path": "/tmp/cinashop-diy-customer-service-native-final-final2-result.json",
+        "sha256": "f5879848f269e9bcbab692b3f2130500a4bfdf59c45483925b93e93b62c61045"
+      },
+      "files": 7,
+      "tests": 243,
+      "counts": {
+        "passed": 243,
+        "failed": 0,
+        "skipped": 0
+      },
+      "new_customer_cases": 42,
+      "retained_other_cases": 201,
+      "source_drift": [],
+      "installed_drift": [],
+      "fixtures_cleaned": true,
+      "cluster_stopped": true,
+      "owned_pg_status": [
+        {
+          "task_root": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-QTh0TA",
+          "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-QTh0TA/data",
+          "pg_ctl_status": 3,
+          "stdout": "pg_ctl: no server running",
+          "stderr": "",
+          "postmaster_pid_exists": false
+        }
+      ],
+      "native_proofs": [
+        {
+          "family": "PRESENTATION",
+          "type": "SETUP",
+          "path": "/tmp/cinashop-diy-presentation-native-IWoFIC/setup.json",
+          "sha256": "54dbe8daa2d7a18b641f087653775b6b9a4752915e86054c122de026ac3f9a66",
+          "tables": 74,
+          "sequences": 68,
+          "real_mp4_bytes": 3142,
+          "image_uploads": 257,
+          "verified": true,
+          "archived_path": "/tmp/cinashop-diy-customer-service-native-final-final2-presentation-setup.json",
+          "archived_sha256": "54dbe8daa2d7a18b641f087653775b6b9a4752915e86054c122de026ac3f9a66"
+        },
+        {
+          "family": "PRESENTATION",
+          "type": "READS",
+          "path": "/tmp/cinashop-diy-presentation-native-IWoFIC/reads.json",
+          "sha256": "35a57a507f3daf82ec3858c6b03c6d7ac4e514c0f9b1c374517e72cd87ccd640",
+          "count": 103,
+          "all_unchanged": true,
+          "verified": true,
+          "archived_path": "/tmp/cinashop-diy-customer-service-native-final-final2-presentation-reads.json",
+          "archived_sha256": "35a57a507f3daf82ec3858c6b03c6d7ac4e514c0f9b1c374517e72cd87ccd640",
+          "read_proof_scope": "Existing presentation source asserts full table/sequence snapshots and resource equality for everyGET before recording matching hashes; legacy raw receipt stores those hashes plus final full snapshot/resources, not a perGET snapshot registry. Source remains unchanged and this boundary is not upgraded by the reader."
+        },
+        {
+          "family": "CUSTOMER_SERVICE",
+          "type": "SETUP",
+          "path": "/tmp/cinashop-diy-customer-service-native-6kCTND/setup.json",
+          "sha256": "b3ec00ea61e6430c105a0d6eabf8be496608489fcf3a740a25a4d6fe7cb5afdf",
+          "tables": 73,
+          "sequences": 68,
+          "image_uploads": 257,
+          "verified": true,
+          "archived_path": "/tmp/cinashop-diy-customer-service-native-final-final2-customer_service-setup.json",
+          "archived_sha256": "b3ec00ea61e6430c105a0d6eabf8be496608489fcf3a740a25a4d6fe7cb5afdf"
+        },
+        {
+          "family": "CUSTOMER_SERVICE",
+          "type": "READS",
+          "path": "/tmp/cinashop-diy-customer-service-native-6kCTND/reads.json",
+          "sha256": "37002deabd45f40b59a8e2c6d592c462fd36e4eb46a9d3ec70b6dfaa98b93ea4",
+          "count": 110,
+          "all_unchanged": true,
+          "verified": true,
+          "archived_path": "/tmp/cinashop-diy-customer-service-native-final-final2-customer_service-reads.json",
+          "archived_sha256": "37002deabd45f40b59a8e2c6d592c462fd36e4eb46a9d3ec70b6dfaa98b93ea4",
+          "read_proof_scope": "Full deduplicated before/after snapshots and perGET resource values are archived and compared."
+        }
+      ],
+      "independent_review": {
+        "path": "/tmp/cinashop-diy-customer-service-final2-worker-native-review.json",
+        "sha256": "9080f4981a8683770a47e619bb56dae92a3437402a509fb9f860aa2d7f189851"
+      }
+    },
+    "Uni91_final": {
+      "receipt": {
+        "path": "/tmp/cinashop-customer-Uni91-final-candidate1.json",
+        "sha256": "9c73a61947826b5d2c7a45b47ae5d60da7d579a5c8b6d5a2c54522924162f509"
+      },
+      "actual_script_files": 91,
+      "tests": 2374,
+      "counts": {
+        "tests": 2374,
+        "suites": 0,
+        "pass": 2374,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "seconds": 784.033,
+      "source_drift": [],
+      "installed_drift": [],
+      "artifact_drift": [],
+      "command": [
+        "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "scripts/postcss-selector-parser-compat.test.cjs",
+        "scripts/d3-postcss-dir-glob-boundary.test.cjs",
+        "scripts/agent-self-service-runtime.test.cjs",
+        "scripts/assisted-cashier-runtime.test.cjs",
+        "scripts/assisted-checkout-runtime.test.cjs",
+        "scripts/assisted-selection-runtime.test.cjs",
+        "scripts/assisted-records-runtime.test.cjs",
+        "scripts/assisted-detail-runtime.test.cjs",
+        "scripts/dev-server-security.test.cjs",
+        "scripts/checkout-runtime.test.cjs",
+        "scripts/cart-runtime.test.cjs",
+        "scripts/wallet-runtime.test.cjs",
+        "scripts/coupon-products-runtime.test.cjs",
+        "scripts/product-sku-runtime.test.cjs",
+        "scripts/product-detail-lifecycle.test.cjs",
+        "scripts/order-detail-lifecycle.test.cjs",
+        "scripts/order-list-lifecycle.test.cjs",
+        "scripts/order-pay-result.test.cjs",
+        "scripts/offline-cashier-runtime.test.cjs",
+        "scripts/operator-writeoff-runtime.test.cjs",
+        "scripts/member-code-runtime.test.cjs",
+        "scripts/refund-apply-lifecycle.test.cjs",
+        "scripts/refund-records-lifecycle.test.cjs",
+        "scripts/seckill-runtime.test.cjs",
+        "scripts/combination-runtime.test.cjs",
+        "scripts/pink-status-runtime.test.cjs",
+        "scripts/pink-cancellation-runtime.test.cjs",
+        "scripts/bargain-runtime.test.cjs",
+        "scripts/bargain-cancel-runtime.test.cjs",
+        "scripts/bargain-friend-runtime.test.cjs",
+        "scripts/visit-history-runtime.test.cjs",
+        "scripts/presale-runtime.test.cjs",
+        "scripts/presale-catalog-runtime.test.cjs",
+        "scripts/community-deep-links-runtime.test.cjs",
+        "scripts/community-publish-runtime.test.cjs",
+        "scripts/community-images-runtime.test.cjs",
+        "scripts/community-relations-runtime.test.cjs",
+        "scripts/community-author-runtime.test.cjs",
+        "scripts/community-page-alias.test.cjs",
+        "scripts/community-people-runtime.test.cjs",
+        "scripts/feedback-work-runtime.test.cjs",
+        "scripts/newcomer-runtime.test.cjs",
+        "scripts/product-rank-runtime.test.cjs",
+        "scripts/governance-agreements-runtime.test.cjs",
+        "scripts/vite-safety-package.test.cjs",
+        "scripts/vite-editor-security.test.cjs",
+        "scripts/vite-path-security.test.cjs",
+        "scripts/vite-windows-path-security.test.cjs",
+        "scripts/esbuild-server-security.test.cjs",
+        "scripts/vite-esbuild-compatibility.test.cjs",
+        "scripts/fab-runtime.test.cjs",
+        "scripts/integral-purchase-runtime.test.cjs",
+        "scripts/theme-runtime.test.cjs",
+        "scripts/category-catalog-runtime.test.cjs",
+        "scripts/category-recommend-image-runtime.test.cjs",
+        "scripts/product-unit-runtime.test.cjs",
+        "scripts/product-detail-design-runtime.test.cjs",
+        "scripts/vue-ssr-safety-package.test.cjs",
+        "scripts/feedback-lifecycle-runtime.test.cjs",
+        "scripts/customer-work-cashier-read-runtime.test.cjs",
+        "scripts/customer-work-cashier-protocol.test.cjs",
+        "scripts/customer-work-cashier-runtime.test.cjs",
+        "scripts/customer-work-cashier-images-protocol.test.cjs",
+        "scripts/customer-work-cashier-images-runtime.test.cjs",
+        "scripts/customer-ordinary-cashier-request.test.cjs",
+        "scripts/customer-ordinary-cashier-protocol.test.cjs",
+        "scripts/customer-ordinary-cashier-runtime.test.cjs",
+        "scripts/customer-ordinary-cashier-read.test.cjs",
+        "scripts/customer-ordinary-cashier-page.test.cjs",
+        "scripts/community-comments-runtime.test.cjs",
+        "scripts/community-engagement-runtime.test.cjs",
+        "scripts/community-publish-entry-runtime.test.cjs",
+        "scripts/community-availability-runtime.test.cjs",
+        "scripts/community-main-feed-runtime.test.cjs",
+        "scripts/diy-community-runtime.test.cjs",
+        "scripts/diy-state-widgets-runtime.test.cjs",
+        "scripts/diy-page-state-runtime.test.cjs",
+        "scripts/diy-commerce-runtime.test.cjs",
+        "scripts/diy-commerce-writes-runtime.test.cjs",
+        "scripts/diy-editorial-runtime.test.cjs",
+        "scripts/diy-editorial-page-media-runtime.test.cjs",
+        "scripts/diy-editorial-media-cache-runtime.test.cjs",
+        "scripts/diy-carousel-runtime.test.cjs",
+        "scripts/diy-carousel-content-runtime.test.cjs",
+        "scripts/diy-carousel-media-runtime.test.cjs",
+        "scripts/diy-navigation-runtime.test.cjs",
+        "scripts/diy-navigation-content-runtime.test.cjs",
+        "scripts/diy-navigation-media-runtime.test.cjs",
+        "scripts/diy-footer-runtime.test.cjs",
+        "scripts/diy-presentation-runtime.test.cjs",
+        "scripts/diy-customer-service-runtime.test.cjs"
+      ],
+      "source_scope": "All Worker production/tests/scripts/audit, all Uni/Admin source/scripts, shared common and locked Uni vendor archives/configs/workflow. Only the explicitly non-consumed current customer-service result audit leaf is excluded; all older audits and new source-binding contract remain captured.",
+      "installed_scope": "Full regular JS/MJS/CJS/JSON/TS/WASM bytes under actual Worker/Uni/Admin node_modules (following package links), .package-lock.json, explicit actual42-module UniVue closure and Node/PG executables. Only mutable node_modules/.vite and .cache result/transform outputs are excluded."
+    }
+  },
+  "new_independent_case_definitions": {
+    "Uni": 60,
+    "Admin": 31,
+    "Worker_media": 15,
+    "Worker_runner": 12,
+    "existing_Admin_API_audit_negative_added": 1,
+    "native": 42,
+    "Browser_one_Vitest": 1,
+    "total": 162,
+    "note": "Retained cases, repeated candidates and15 checkpoints are not new tests."
+  },
+  "updated_UTC": "2026-10-23T03:38:22.046414+00:00",
+  "parent_exact_head_CI": {
+    "head": "ee3847f798a92cdb8c00a9e71bbf7bc246c9293b",
+    "run_id": 39882339224,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/39882339224",
+    "status": "completed",
+    "conclusion": "success",
+    "scope": "Parent #157 only, exact GitHub connector read after all11 jobs passed. This is not this family newhead CI."
+  },
+  "finalized_UTC": "2026-10-23T04:26:37.110564+00:00",
+  "protected_baseline": {
+    "files": 6741,
+    "allowed_family_scope_files": 31,
+    "external_proof": "/tmp/cinashop-customer-preservation-proof.json",
+    "rule": "Only explicit scope; all old Markdown prefixes/checkbox lines and JSON keys unchanged; package dependencies/locks unchanged."
+  },
+  "final_secret_scan": {
+    "external_receipt": "/tmp/cinashop-customer-secret-final-result.json",
+    "scope": "Actual complete final staged patch after this result leaf and three ledgers are frozen. No circular patch SHA stored in its own patch."
+  },
+  "post_validation_whitespace_only_equivalence": {
+    "path": "/tmp/cinashop-customer-post-validation-EOF-equivalence.json",
+    "sha256": "0186c93d81b9129dc4eb92023a4abce26c359a24c66fab093518724861100206",
+    "scope": "workers-ts/test/diy-customer-service-runner.test.ts",
+    "exact_inverse_restores_all_three_final_source_capture_hashes": true
+  }
+}
