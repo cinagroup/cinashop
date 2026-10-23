@@ -3577,5 +3577,22 @@
       "business_tests_rerun": false,
       "external_proof": "/tmp/cinashop-navigation-author-cosmetic-EOF-root.json"
     }
+  },
+  "diyCarouselAuthorContractVerification": {
+    "status": "local_carousel_author_passed_release_pending",
+    "base_commit": "31c7e68e81a72a1a2fc9fd1911622907cf7a09a5",
+    "audit": "workers-ts/audit/php-ts-diy-carousel-author-20261023.json",
+    "audit_sha256": "bd9ee72516e84885121c5374f6cca7a9fc3ad8abf906760c573856c90fea0a58",
+    "documentation": "workers-ts/docs/php-ts-diy-carousel-author-20261023.md",
+    "new_unique_definitions": 211,
+    "actual_Admin_runtime": 266,
+    "actual_Uni_old_carousel_runtime": 126,
+    "actual_native_files": 16,
+    "actual_native_passed": 477,
+    "actual_hidden_Browser_checkpoints": 25,
+    "actual_GUI_saves": 3,
+    "remaining_author_body_families": 19,
+    "global_migration_complete": false,
+    "merge_or_deploy": false
   }
 }
