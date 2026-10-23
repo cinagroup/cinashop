@@ -3303,5 +3303,28 @@
       "merge": false,
       "deploy": false
     }
+  },
+  "diyPresentationContractVerification": {
+    "recorded": "2026-10-23T00:27:55.121136+00:00",
+    "summary": "Five PHP presentation component families, complete typedAdmin/publicmedia/render/lifecycle chain; actual hiddenBrowser17 and final complete local gates verified",
+    "doc": "workers-ts/docs/php-ts-diy-presentation-20261022.md",
+    "audit": "workers-ts/audit/php-ts-diy-presentation-20261022.json",
+    "base_commit": "7c2b73bd22e0bcb21808fcc90fa0c8fda26c23f0",
+    "Worker_files": 67,
+    "Worker_tests": 1252,
+    "native_files": 6,
+    "native_tests": 201,
+    "Admin_tests": 50,
+    "Uni_actual_toolchain_files": 90,
+    "Uni_actual_toolchain_tests": 2314,
+    "local_browser_checkpoints": 17,
+    "browser_tables": 74,
+    "browser_sequences": 68,
+    "new_distinct_cases": 207,
+    "production_schema_changed": false,
+    "merge": false,
+    "deploy": false,
+    "overall_migration_complete": false,
+    "new_head_CI": "Read exact head after push; oldparent run failures remain recorded."
   }
 }

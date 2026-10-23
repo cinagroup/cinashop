@@ -95,6 +95,7 @@
         <el-form-item label="底部导航">
           <DiyFooterEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" />
         </el-form-item>
+        <el-form-item label="内容排版"><DiyPresentationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="装修 value" required>
           <div class="field">
             <el-input
@@ -142,6 +143,8 @@ import request, { getData } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
 import { getToken } from "@/utils/auth";
 import DiyFooterEditor, { canonicalFooterValue } from "@/components/content/DiyFooterEditor.vue";
+import DiyPresentationEditor from "@/components/content/DiyPresentationEditor.vue";
+import { canonicalPresentationValue } from "@/utils/diyPresentationEditor";
 
 interface DiseRow {
   id: number;
@@ -266,7 +269,7 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return canonicalFooterValue(value);
+    return canonicalPresentationValue(canonicalFooterValue(value));
   } catch {
     return null;
   }

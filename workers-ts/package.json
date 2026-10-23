@@ -35,6 +35,7 @@
     "audit:uniapp": "tsx scripts/uniapp-frontend-parity-audit.ts",
     "audit:diy-carousel-browser": "vitest run --config vitest.diy-carousel-browser.config.ts",
     "audit:diy-footer-browser": "vitest run --config vitest.diy-footer-browser.config.ts",
+    "audit:diy-presentation-browser": "vitest run --config vitest.diy-presentation-browser.config.ts",
     "audit:diy-navigation-browser": "vitest run --config vitest.diy-navigation-browser.config.ts",
     "audit:legacy-schema:update": "tsx scripts/generate-legacy-schema-authority.ts",
     "data:plan": "tsx scripts/mysql-to-postgres.ts plan",

@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "date": "2026-10-22",
+  "base_commit": "7c2b73bd22e0bcb21808fcc90fa0c8fda26c23f0",
+  "scope": "Current presentation editor binding. Exact inverses reconstruct prior whole sources. Historical footer/statistics reports remain immutable. ProductVideoUploader only gains the optional subjectLabel default 商品 and four visible label substitutions; upload, session and ACL code reconstruct exactly.",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_sha256": "af5bc91f4cda0bc5e069b46e227c6c6b5bddeab158fa7ec07516e8b1f9fcfad2",
+      "after_sha256": "50b11ef829712dbcfdc184ff229b19326124aef87e1a3fc6f90484a642d4f189",
+      "edits": [
+        {
+          "before_line": 97,
+          "after_line": 97,
+          "before_source": "        </el-form-item>\n        <el-form-item label=\"装修 value\" required>\n",
+          "after_source": "        </el-form-item>\n        <el-form-item label=\"内容排版\"><DiyPresentationEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n        <el-form-item label=\"装修 value\" required>\n"
+        },
+        {
+          "before_line": 144,
+          "after_line": 145,
+          "before_source": "import DiyFooterEditor, { canonicalFooterValue } from \"@/components/content/DiyFooterEditor.vue\";\n\n",
+          "after_source": "import DiyFooterEditor, { canonicalFooterValue } from \"@/components/content/DiyFooterEditor.vue\";\nimport DiyPresentationEditor from \"@/components/content/DiyPresentationEditor.vue\";\nimport { canonicalPresentationValue } from \"@/utils/diyPresentationEditor\";\n\n"
+        },
+        {
+          "before_line": 268,
+          "after_line": 271,
+          "before_source": "    if (parsed === null) return null;\n    return canonicalFooterValue(value);\n  } catch {\n",
+          "after_source": "    if (parsed === null) return null;\n    return canonicalPresentationValue(canonicalFooterValue(value));\n  } catch {\n"
+        }
+      ]
+    },
+    {
+      "file": "view/admin-ts/src/components/ProductVideoUploader.vue",
+      "before_sha256": "cf21b1348788f504a9135413b994798f154b20eaa8b43dc7be3c1336454fd50c",
+      "after_sha256": "13c3c28311981575d0259aad2526b6ee00feb993d8c83045dcc58f13403a7bb6",
+      "edits": [
+        {
+          "before_line": 2,
+          "after_line": 2,
+          "before_source": "  <el-button v-if=\"pending\" class=\"recover-video\" @click=\"emit('update:open', true)\">查看视频上传记录</el-button>\n  <el-dialog :model-value=\"open\" title=\"上传商品视频\" width=\"min(680px, 95vw)\" @update:model-value=\"emit('update:open', $event)\" @closed=\"stopTransfer\">\n    <p>支持100 MiB以内的MP4。上传完成后选择“使用这个视频”，再保存商品。</p>\n    <el-alert v-if=\"error\" :title=\"error\" type=\"warning\" :closable=\"false\" show-icon />\n",
+          "after_source": "  <el-button v-if=\"pending\" class=\"recover-video\" @click=\"emit('update:open', true)\">查看视频上传记录</el-button>\n  <el-dialog :model-value=\"open\" :title=\"`上传${subjectLabel}视频`\" width=\"min(680px, 95vw)\" @update:model-value=\"emit('update:open', $event)\" @closed=\"stopTransfer\">\n    <p>支持100 MiB以内的MP4。上传完成后选择“使用这个视频”，再保存{{ subjectLabel }}。</p>\n    <el-alert v-if=\"error\" :title=\"error\" type=\"warning\" :closable=\"false\" show-icon />\n"
+        },
+        {
+          "before_line": 25,
+          "after_line": 25,
+          "before_source": "    </div>\n    <p v-if=\"!canUpload\">上传需要当前商品可编辑，并具有素材管理权限；原账号仍可查询或取消自己的未完成记录。</p>\n    <template v-if=\"receipt?.result\">\n",
+          "after_source": "    </div>\n    <p v-if=\"!canUpload\">上传需要当前{{ subjectLabel }}可编辑，并具有素材管理权限；原账号仍可查询或取消自己的未完成记录。</p>\n    <template v-if=\"receipt?.result\">\n"
+        },
+        {
+          "before_line": 34,
+          "after_line": 34,
+          "before_source": "    <p v-if=\"receipt?.state === 'cancelled'\">本次上传已取消，迟到的请求不会创建素材。</p>\n    <p>取消上传与移除商品视频分别处理。已经提交的素材会保留在素材库中。</p>\n  </el-dialog>\n",
+          "after_source": "    <p v-if=\"receipt?.state === 'cancelled'\">本次上传已取消，迟到的请求不会创建素材。</p>\n    <p>取消上传与移除{{ subjectLabel }}视频分别处理。已经提交的素材会保留在素材库中。</p>\n  </el-dialog>\n"
+        },
+        {
+          "before_line": 44,
+          "after_line": 44,
+          "before_source": "\nconst props = defineProps<{ open: boolean; disabled: boolean; contextKey: string }>();\nconst emit = defineEmits<{ (event: 'update:open', value: boolean): void; (event: 'use', value: { url: string; src: string }): void }>();\n",
+          "after_source": "\nconst props = withDefaults(defineProps<{ open: boolean; disabled: boolean; contextKey: string; subjectLabel?: string }>(), { subjectLabel: '商品' });\nconst emit = defineEmits<{ (event: 'update:open', value: boolean): void; (event: 'use', value: { url: string; src: string }): void }>();\n"
+        }
+      ]
+    }
+  ],
+  "admin_current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "419238c3200e05731bf05322b5e766009a770c724edd77dbd9862a396f711950",
+    "previous_report_sha256": "344e2756cd6253db7b6ca1273d8de0e7c760a8b24b14a21c078f37a3985b7f32",
+    "frontend_source_changes": [
+      {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_sha256": "af5bc91f4cda0bc5e069b46e227c6c6b5bddeab158fa7ec07516e8b1f9fcfad2",
+        "after_sha256": "50b11ef829712dbcfdc184ff229b19326124aef87e1a3fc6f90484a642d4f189"
+      }
+    ],
+    "call_line_changes": [
+      {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 212,
+        "after_line": 215
+      },
+      {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 314,
+        "after_line": 317
+      },
+      {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "before_line": 337,
+        "after_line": 340
+      }
+    ],
+    "previous_counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "counts": {
+      "callSites": 696,
+      "pathVariants": 732,
+      "registered": 732,
+      "executable": 732,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "backend_equal": true,
+    "reason": "New composed editor shifts three existing DiseList calls by three lines; existing typed attachment API wrappers supply the library, and public preview is outside the Admin route inventory. No new route or authorization is inferred."
+  }
+}

@@ -43,8 +43,8 @@ export function diyCarouselBlocks(image = '/static/logo.png'): DiyStateRow[] {
 
 /** Reuses real createApp/JWT/Admin parser/AttachmentService and the complete
  * owned 50-table/46-sequence snapshot. No new schema or production ACL exists. */
-export async function diyCarouselFixture(now = new Date()) {
-  const f = await diyEditorialFixture(now);
+export async function diyCarouselFixture(now = new Date(), options: { namespace?: 'public' } = {}) {
+  const f = await diyEditorialFixture(now, options);
   try {
     const blocks = diyCarouselBlocks(f.platformImage.url);
     for (const id of [1, 2]) await f.db.update(systemDise).set({ title: `真实轮播${id === 1 ? '首页' : '微页面'}`,

@@ -2921,3 +2921,12 @@ API-007本批完成swipers／swiperBg／homeComb及共享首页／微页调用�
 ### 2026-10-22 pageFoot CI兼容补验
 
 PR #156首head91e6b880的UniApp CI为2254/2258、4个旧社区零请求预期失败，原红灯保留。仅三个CJS测试明确允许两条精确公开页脚读取，所有其它业务请求仍拒绝；三个完整文件98/98及实际89文件完整工具链2258/2258通过，零失败或跳过。相对Browser29终态产品源、依赖和产物不变，未重跑Browser或虚增新case，批次仍186。补提交的CI按新head另查；API-007、DATA-008、FE-003J/K、整体迁移及生产／真机父项继续开放。详见 workers-ts/docs/php-ts-diy-pagefoot-20261022.md 和对应机器审计。
+
+
+### 2026-10-23 DIY 标题、空白、辅助线、富文本与视频增量
+
+本批接通 titles/blankPage/guide/richText/videos 的真实 PHP 配置、Admin 编辑器、首页/微页与完整媒体调用链；保留严格数字字符串导入、四角顺序、实际视频比例及安全富文标题/列表/合并表格。仅真实 img/video src 投影，完整预算/owner/当前素材权限先校验后原子签名，所有生命周期与票据回调撤销成套。
+
+最终 Worker67文件1252项、native PG16六文件201项、Admin50项、UniApp实际90文件2314项及两端完整 strict/三端构建/产物/i18n通过。新增独立207，旧族、既有结算25+4、候选重复及浏览器检查点不另计。真实后台IAB17检查点/outer0，74表68序列、166真实GET与34合成chrome GET逐次零写；一次真实Admin业务保存、初始setup和站点配置分别记录，源/依赖/构建及临时资源清理可复核。
+
+父PR #156 Worker两个分片的8+4失败是旧结算adapter缺少真实cartMutation加载，本批以真实UniVue/每runtime状态修复并完整补验，原失败保留。Browser先前三次候选与CDP截图超时未冒称通过；最终17点使用普通截图。按用户要求后台浏览器验收，不逐页弹确认。保留已恢复get_script及三端loader，不改生产DDL/ACL/路由/锁文件；三账本历史正文/复选行/JSON旧键不变。见 workers-ts/docs/php-ts-diy-presentation-20261022.md 与对应机器审计。API-007、DATA-008、FE-003J/K、整体迁移及生产/真机父项继续开放；只推送draft、不合并部署，精确新head CI推送后单列核实。

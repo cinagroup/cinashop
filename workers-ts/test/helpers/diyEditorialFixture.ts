@@ -63,8 +63,8 @@ const POSTER_JPEG = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgk
 
 /** Extends the owned 46-table/43-sequence fixture. No production schema or ACL
  * changes are made. Article details/likes are deliberately not used to hydrate. */
-export async function diyEditorialFixture(now = new Date()) {
-  const f = await diyCommerceFixture(now);
+export async function diyEditorialFixture(now = new Date(), options: { namespace?: 'public' } = {}) {
+  const f = await diyCommerceFixture(now, options);
   try {
     const dialect = new PgDialect();
     for (const table of [systemArticle, articleCategory, articleContent, wechatNewsCategory] as PgTable[]) {

@@ -17,34 +17,7 @@
         @select="combinationTabs.select(block, $event.index)"
       />
 
-      <view v-else-if="block.name === 'titles'" class="diy-title" @tap="open(componentLink(block, 'linkConfig'))">
-        <text>{{ componentText(block, 'titleConfig', '精选内容') }}</text>
-        <text v-if="componentText(block, 'titleConfigRight')" class="diy-more">
-          {{ componentText(block, 'titleConfigRight') }} ›
-        </text>
-      </view>
-
-      <view
-        v-else-if="block.name === 'blankPage'"
-        class="diy-spacer"
-        :style="spacerStyle(block)"
-      />
-
-      <view v-else-if="block.name === 'guide'" class="diy-guide" :style="guideStyle(block)" />
-
-      <view v-else-if="block.name === 'richText' && sanitizedRichText(block)" class="diy-rich-text">
-        <rich-text :nodes="sanitizedRichText(block)" />
-      </view>
-
-      <view v-else-if="block.name === 'videos' && configuredVideo(block)" class="diy-video-card">
-        <video
-          class="diy-video"
-          :src="configuredVideo(block)"
-          :poster="componentImage(block, 'imgConfig')"
-          controls
-          object-fit="cover"
-        />
-      </view>
+      <DiyPresentationWidget v-else-if="isPresentationWidget(block)" :block="block" :active="pageActive" :refreshing="pageRefreshing" />
 
       <DiyListWidget v-else-if="block.name === 'goodList' || block.name === 'articleList'" :block="block" :active="pageActive" />
 
@@ -90,16 +63,10 @@ import DiyPageFooter from './DiyPageFooter.vue';
 import type { DiyComponent } from '@/api/diy';
 import { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';
 import DiyStateWidget from './DiyStateWidget.vue';
-import { sanitizeArticleRichText } from "@/utils/articleRichText";
+import DiyPresentationWidget from './DiyPresentationWidget.vue';
+import { DIY_PRESENTATION_NAMES } from '@/utils/diyPresentationConfig';
 import {
-  asDiyRecord,
-  diyList,
-  diyNestedValue,
-  diyNumber,
-  diyText,
   openDiyLink,
-  safeDiyColor,
-  safeDiyImageUrl,
   isDiyEnabled,
 } from "@/utils/diy";
 import DiyMediaCarousel from "./DiyMediaCarousel.vue";
@@ -115,12 +82,6 @@ import DiyCommerceWidget from "./DiyCommerceWidget.vue";
 import DiyCommunityWidget from "./DiyCommunityWidget.vue";
 import { useThemeStore } from '@/stores/theme';
 import { diyThemeVariables } from '@/utils/diyTheme';
-
-interface MenuItem {
-  image: string;
-  label: string;
-  link: string;
-}
 
 const props = withDefaults(defineProps<{
   components: DiyComponent[];
@@ -181,58 +142,8 @@ function blockKey(block: DiyComponent, index: number): string {
   return `${block.name}-${String(block.timestamp ?? index)}-${index}`;
 }
 
-function tabValue(source: unknown, key: string, fallback = 0): number {
-  const record = asDiyRecord(asDiyRecord(source)?.[key]);
-  const value = Number(record?.tabVal ?? record?.activeValue ?? record?.value ?? fallback);
-  return Number.isFinite(value) ? value : fallback;
-}
-
-function componentText(block: DiyComponent, key: string, fallback = ""): string {
-  return diyText(block, key, fallback);
-}
-
-function componentImage(block: DiyComponent, key: string): string {
-  const config = asDiyRecord(block[key]);
-  return safeDiyImageUrl(config?.url ?? config?.img ?? config?.value);
-}
-
-function componentLink(block: DiyComponent, key: string): string {
-  return String(diyNestedValue(block, key) ?? "");
-}
-
-
-function safeImage(value: unknown): string {
-  return safeDiyImageUrl(value);
-}
-
-function open(value: unknown): void {
-  openDiyLink(value);
-}
-
-function sanitizedRichText(block: DiyComponent): string {
-  const value = diyNestedValue(block, "richText");
-  return typeof value === "string"
-    ? sanitizeArticleRichText(value.slice(0, 2_097_152))
-    : "";
-}
-
-function configuredVideo(block: DiyComponent): string {
-  return safeDiyImageUrl(asDiyRecord(block.videoConfig)?.url);
-}
-
-function spacerStyle(block: DiyComponent): Record<string, string> {
-  const height = Math.min(300, Math.max(0, diyNumber(block, "heightConfig", 12)));
-  const colorConfig = asDiyRecord(block.bgColor);
-  const colors = Array.isArray(colorConfig?.color) ? colorConfig.color : [];
-  const color = safeDiyColor(asDiyRecord(colors[0])?.item, "transparent");
-  return { height: `${height * 2}rpx`, backgroundColor: color };
-}
-
-function guideStyle(block: DiyComponent): Record<string, string> {
-  const colorConfig = asDiyRecord(block.lineColor);
-  const colors = Array.isArray(colorConfig?.color) ? colorConfig.color : [];
-  return { borderTopColor: safeDiyColor(asDiyRecord(colors[0])?.item, "#e5e5e5") };
-}
+function isPresentationWidget(block:DiyComponent){return DIY_PRESENTATION_NAMES.some(name=>name===block.name);}
+function open(value:unknown){openDiyLink(value);}
 
 </script>
 

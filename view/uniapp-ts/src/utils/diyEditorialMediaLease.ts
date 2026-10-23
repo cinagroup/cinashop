@@ -1,8 +1,9 @@
+import { diyPresentationHtmlMediaReferences, mapDiyPresentationHtmlMedia } from '../../../common/diyPresentationHtml';
 import { API_BASE } from './request';
 
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 /** These are published media slots, never links or arbitrary editor strings. */
-function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[] {
+function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string; html?:boolean}[] {
   const value = record(page).value;
   if (!Array.isArray(value)) return [];
   const footers = value.filter(raw => typeof record(raw).name === 'string' && String(record(raw).name).toLowerCase() === 'pagefoot');
@@ -12,6 +13,8 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[]
       const items = block.menuList;
       return Array.isArray(items) ? items.flatMap(item => { const icons = record(item).imgList; return Array.isArray(icons) ? [0, 1].map(index => ({holder: icons as unknown as Record<string, unknown>, key: String(index)})) : []; }) : [];
     }
+    if(block.name==='videos')return [field('videoConfig'),field('imgConfig')];
+    if(block.name==='richText'){const holder=record(block.richText);if(typeof holder.val!=='string')return [];return [{holder,key:'val',html:true}];}
     if (block.name === 'news') return [field('imgConfig')];
     if (block.name === 'hotspot') return [field('picStyle')];
     if (block.name === 'follow') return [field('imgConfig'), field('codeConfig')];
@@ -34,7 +37,7 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string}[]
  * links, external URLs, IDs, item order and every other field remain exact. */
 export function diyAuthoredPageFingerprint(components:unknown):string {
   const copy=JSON.parse(JSON.stringify({value:components}));
-  for(const {holder,key} of mediaSlots(copy))if(assetQuery(holder[key])!==null)holder[key]=String(holder[key]).split(/[?#]/u,1)[0];
+  for(const {holder,key,html} of mediaSlots(copy)){if(html)holder[key]=mapDiyPresentationHtmlMedia(String(holder[key]),ref=>assetQuery(ref)!==null?ref.split(/[?#]/u,1)[0]!:ref);else if(assetQuery(holder[key])!==null)holder[key]=String(holder[key]).split(/[?#]/u,1)[0];}
   return JSON.stringify(copy);
 }
 function assetQuery(value: unknown): string | null {
@@ -50,8 +53,10 @@ function assetQuery(value: unknown): string | null {
  * external images retain their existing offline schema contract. */
 export function diyEditorialMediaDeadline(page: unknown, cachedAt: number, now = Date.now()): number {
   let earliest=Infinity;
-  for (const {holder,key} of mediaSlots(page)) {
-    const value=holder[key];
+  let slots:ReturnType<typeof mediaSlots>;try{slots=mediaSlots(page);}catch{return 0;}
+  for (const {holder,key,html} of slots) {
+    let references:unknown[];try{references=html?diyPresentationHtmlMediaReferences(String(holder[key])).map(ref=>ref.value):[holder[key]];}catch{return 0;}
+    for(const value of references){
     const query = assetQuery(value); if (query === null) continue;
     if (!Number.isFinite(cachedAt) || cachedAt <= 0 || cachedAt > now) return 0;
     let params: [string, string][];
@@ -62,6 +67,7 @@ export function diyEditorialMediaDeadline(page: unknown, cachedAt: number, now =
     const deadline = Number(expires[0]![1]) * 1000;
     if (!Number.isSafeInteger(deadline)) return 0;
     earliest=Math.min(earliest,cachedAt+840000,deadline-60000);
+  }
   }
   return earliest;
 }

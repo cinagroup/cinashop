@@ -22,7 +22,7 @@ function loader(overrides = {}) {
   const env = { window: new EventTarget(), localStorage:{ getItem:key => storage.get(key) ?? null } };
   const gateway = overrides.gateway ?? { get:async () => ({ data:[] }),post:async () => ({ data:{ id:2,version:'fresh' } }) };
   function load(file) {
-    file=path.resolve(file);if(cache.has(file))return cache.get(file);
+    file=path.resolve(file);if(!path.extname(file))file+='.ts';if(cache.has(file))return cache.get(file);
     const exports={};cache.set(file,exports);
     let source=fs.readFileSync(file,'utf8');if(file.endsWith('.vue'))source=sfc.compileScript(sfc.parse(source,{ filename:file }).descriptor,{ id:'footer-editor-runtime' }).content;
     const output=ts.transpileModule(source,{ compilerOptions:{ target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,esModuleInterop:true } }).outputText;
@@ -32,8 +32,10 @@ function loader(overrides = {}) {
       if(name==='@/stores/auth')return { useAuthStore:() => actor };
       if(name==='@/utils/auth')return { getToken:() => storage.get('admin_token') ?? null };
       if(name==='@/utils/request')return { __esModule:true,default:gateway,getData:async p => (await p).data };
+      if(name==='@/components/content/DiyPresentationEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/pages/activity/SeckillActivityImagePicker.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name.startsWith('@/'))return load(path.join(root,name.slice(2)));
+      if(name.startsWith('.'))return load(path.resolve(path.dirname(file),name.endsWith('.ts')?name:name+'.ts'));
       return require(name);
     },exports,env.window,env.localStorage);
     return exports;

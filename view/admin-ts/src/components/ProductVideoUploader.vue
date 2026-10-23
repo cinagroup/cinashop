@@ -1,7 +1,7 @@
 <template>
   <el-button v-if="pending" class="recover-video" @click="emit('update:open', true)">查看视频上传记录</el-button>
-  <el-dialog :model-value="open" title="上传商品视频" width="min(680px, 95vw)" @update:model-value="emit('update:open', $event)" @closed="stopTransfer">
-    <p>支持100 MiB以内的MP4。上传完成后选择“使用这个视频”，再保存商品。</p>
+  <el-dialog :model-value="open" :title="`上传${subjectLabel}视频`" width="min(680px, 95vw)" @update:model-value="emit('update:open', $event)" @closed="stopTransfer">
+    <p>支持100 MiB以内的MP4。上传完成后选择“使用这个视频”，再保存{{ subjectLabel }}。</p>
     <el-alert v-if="error" :title="error" type="warning" :closable="false" show-icon />
     <p v-if="pending" class="upload-id">上传记录 {{ pending.upload_id }}</p>
     <p v-if="receipt?.manifest">原文件：{{ receipt.manifest.filename }} · {{ formatBytes(receipt.manifest.total_size) }}</p>
@@ -23,7 +23,7 @@
       <el-button v-if="receipt?.state === 'active' && receipt.confirmed.length" :disabled="!canUpload || !selectedFile || busy" @click="upload(true)">重新传输原文件分片</el-button>
       <el-button v-if="receipt?.state === 'cancelled' || receipt?.state === 'committed'" :disabled="busy || !canUpload" @click="fresh">开始另一个上传</el-button>
     </div>
-    <p v-if="!canUpload">上传需要当前商品可编辑，并具有素材管理权限；原账号仍可查询或取消自己的未完成记录。</p>
+    <p v-if="!canUpload">上传需要当前{{ subjectLabel }}可编辑，并具有素材管理权限；原账号仍可查询或取消自己的未完成记录。</p>
     <template v-if="receipt?.result">
       <p>素材 #{{ receipt.result.id }} 已保存。{{ receipt.result.url }}</p>
       <video v-if="previewSrc" :src="previewSrc" controls preload="metadata" aria-label="已上传视频预览" />
@@ -32,7 +32,7 @@
     </template>
     <p v-if="receipt?.state === 'expired'">上传记录已过期，请取消本次上传后重新选择文件。</p>
     <p v-if="receipt?.state === 'cancelled'">本次上传已取消，迟到的请求不会创建素材。</p>
-    <p>取消上传与移除商品视频分别处理。已经提交的素材会保留在素材库中。</p>
+    <p>取消上传与移除{{ subjectLabel }}视频分别处理。已经提交的素材会保留在素材库中。</p>
   </el-dialog>
 </template>
 
@@ -42,7 +42,7 @@ import { getAdminSession, getToken } from '@/utils/auth';
 import { apiVideoCancel, apiVideoComplete, apiVideoInitialize, apiVideoPart, apiVideoPreview, apiVideoQuery,
   parsePendingVideo, videoConfirmedBytes, videoFileManifest, type PendingVideoUpload, type VideoManifest, type VideoReceipt } from '@/api/productVideoUpload';
 
-const props = defineProps<{ open: boolean; disabled: boolean; contextKey: string }>();
+const props = withDefaults(defineProps<{ open: boolean; disabled: boolean; contextKey: string; subjectLabel?: string }>(), { subjectLabel: '商品' });
 const emit = defineEmits<{ (event: 'update:open', value: boolean): void; (event: 'use', value: { url: string; src: string }): void }>();
 const pending = ref<PendingVideoUpload | null>(null), receipt = ref<VideoReceipt | null>(null), selectedFile = ref<File | null>(null);
 const busy = ref(false), phase = ref(''), error = ref(''), previewSrc = ref(''), sessionVersion = ref(0), storageReady = ref(false);

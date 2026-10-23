@@ -1,5 +1,27 @@
 # TEST-004D3 dependency boundary
 
+## 2026-10-23 withdrawn sprintf-js advisory review
+
+The publisher [withdrew GHSA-hp3w-g68c-fv3c](https://github.com/advisories/GHSA-hp3w-g68c-fv3c)
+at 2026-10-22T19:21:04Z. The advisory concerns exception handling, and its
+withdrawal does not establish a package fix or remove the documented optional
+Jest/jsdom boundary. The raw official API receipt and exact propagation delta
+are recorded in [the review](../../../workers-ts/audit/uni-d3-sprintf-withdrawal-20261023.json).
+
+For the unchanged lock, the official npm lock-only result is now **77 affected
+package entries** (3 low, 12 moderate, 62 high), **27 direct objects**, **26 GHSA
+URLs** and the same eight reviewed scopes. Source 1241202 and five exclusively
+propagated entries disappear; nine retained entries lose only the corresponding
+edges or derived scope. Every remaining direct tuple, installed node and
+severity is unchanged. Gate implementation, dependencies, locks and application
+resources are unchanged. The withdrawn source joins the twelve forbidden
+resolved/withdrawn source IDs: its return, any new advisory, node or forward
+edge still fails closed. Older sections remain historical point-in-time records.
+
+Local frozen-patch execution and the exact follow-up commit CI are recorded in
+the machine review; the old PR157/run39878659720 failure is retained. No merge,
+deployment, physical-device or complete migration acceptance is claimed.
+
 ## 2026-10-22 HTML and filesystem identity increment
 
 Official npm metadata adds source 1242724 (GHSA-9jrq-w75r-8gcw) and 1242730
