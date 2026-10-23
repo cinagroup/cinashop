@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono, type MiddlewareHandler } from 'hono';
+import { createHash } from 'node:crypto';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import * as checkoutConfirmation from '../src/services/order/CheckoutConfirmation';
 import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainer, createContainerFromDb, withTx } from '../src/lib/di';
@@ -1133,10 +1138,26 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   it.each([[11,'saved'],[0,'manual'],[11,'manual'],[11,'pickup'],[11,'virtual'],[0,'virtual']] as const)
     ('captures uid=%i %s checkout and restores once via scheduled close using only the app profile',async(uid,delivery)=>{
     await profiles(async(app,admin)=>{
+      // Observe the actual failing CI scenario without replacing its pricing,
+      // confirmation, KV, transaction or side-effect behavior. These synthetic
+      // facts are written only to a uniquely owned temporary diagnostic file.
+      const observe=uid===0&&delivery==='manual',facts:Array<{phase:string;at:number;fingerprint:string;facts:unknown}>=[],kv:Array<{phase:string;at:number;operation:string;key:string;value:unknown;options?:unknown}>=[];
+      let completed=false,diagnosticPhase='confirm';const originalFingerprint=checkoutConfirmation.checkoutFingerprint,originalKv=f.env.CONFIG_KV;
+      const fingerprint=observe?vi.spyOn(checkoutConfirmation,'checkoutFingerprint').mockImplementation(async value=>{
+        const result=await originalFingerprint(value);facts.push({phase:diagnosticPhase,at:Date.now(),fingerprint:result,facts:JSON.parse(JSON.stringify(value))});return result;
+      }):undefined;
+      if(observe)f.env.CONFIG_KV={...originalKv,
+        get:async(...args:unknown[])=>{const value=await Reflect.apply(originalKv.get,originalKv,args);kv.push({phase:diagnosticPhase,at:Date.now(),operation:'get',key:String(args[0]),value,options:args.slice(1)});return value;},
+        put:async(...args:unknown[])=>{const result=await Reflect.apply(originalKv.put,originalKv,args);kv.push({phase:diagnosticPhase,at:Date.now(),operation:'put',key:String(args[0]),value:args[1],options:args.slice(2)});return result;},
+        delete:async(...args:unknown[])=>{const result=await Reflect.apply(originalKv.delete,originalKv,args);kv.push({phase:diagnosticPhase,at:Date.now(),operation:'delete',key:String(args[0]),value:null,options:args.slice(1)});return result;},
+      } as unknown as Env['CONFIG_KV'];
+      try{
       const client=await http(app,admin),{body,quote,before}=await confirm(client,uid,delivery);
+      diagnosticPhase='computed';
       const computed=await client.post<{result:{quoteToken:string;usedIntegral:number}}>(`computed/${quote.orderKey}/${uid}`,body);
       expect(computed.status,computed.msg).toBe(200);expect(computed.data.result.usedIntegral).toBe(uid?100:0);
       const input={...body,quoteToken:computed.data.result.quoteToken},path=`create/${quote.orderKey}/${uid}`;
+      diagnosticPhase='create';
       const created=await client.post<Created>(path,input);expect(created.status,created.msg).toBe(200);
       const [root]=await app.exec('SELECT id,order_id,uid,staff_id,is_channel,add_time,use_integral FROM store_order');
       expect(root).toMatchObject({uid,staff_id:1,is_channel:2});
@@ -1150,6 +1171,15 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       expect(client.identities.every(pair=>pair.app===app.role&&pair.admin===admin.role)).toBe(true);
       await expect(admin.exec('SELECT * FROM store_order_purchase_origin')).rejects.toMatchObject({code:'42501'});
       await expect(app.exec("UPDATE system_config SET value='0'")).rejects.toMatchObject({code:'42501'});
+      completed=true;
+      }finally{
+        fingerprint?.mockRestore();f.env.CONFIG_KV=originalKv;
+        if(observe){const directory=await mkdtemp(join(tmpdir(),'cinashop-assisted-quote-facts-')),path=join(directory,'facts.json');
+          const fullSyntheticFacts={uid,delivery,facts,kv,phase:diagnosticPhase,note:'Actual delegated checkoutFingerprint and existing KV calls only; no retry, clock manipulation, substituted return, or disabled checkout assertion.'};
+          const text=JSON.stringify(fullSyntheticFacts,null,2)+'\n';
+          await writeFile(path,text);process.stdout.write('ASSISTED_CHECKOUT_FACTS '+JSON.stringify({path,sha256:createHash('sha256').update(text).digest('hex'),fingerprints:facts.length,kv_calls:kv.length})+'\n');
+          if(!completed)process.stdout.write('ASSISTED_CHECKOUT_FACTS_RAW '+JSON.stringify(fullSyntheticFacts)+'\n');}
+      }
     });
   },60_000);
   it.each([11,0])('rejects cross-actor and cross-target uid=%i carts/quotes without business writes',async uid=>{
