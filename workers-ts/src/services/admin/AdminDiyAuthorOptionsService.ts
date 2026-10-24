@@ -3,6 +3,7 @@ import type { Container } from '@/lib/di';
 import { ProductWordsService } from '@/services/product/ProductWordsService';
 import { ValidateException } from '@/utils/errors';
 import { AdminFabLinkCatalogService, type FabLinkTarget } from './AdminFabLinkCatalogService';
+import { AdminDiyListAuthorOptionsService } from './AdminDiyListAuthorOptionsService';
 
 /** Typed identities map directly to the active authored microPage/classPage
  * slot. The safe URL remains available for display, never parsed for identity. */
@@ -32,9 +33,11 @@ function tabTarget(item: FabLinkTarget): DiyAuthorTabTarget {
 export class AdminDiyAuthorOptionsService {
   private readonly catalog: AdminFabLinkCatalogService;
   private readonly words: ProductWordsService;
+  private readonly lists: AdminDiyListAuthorOptionsService;
   constructor(container: Container, env: Pick<Env, 'APP_KEY'>) {
     this.catalog = new AdminFabLinkCatalogService(container, env);
     this.words = new ProductWordsService(container);
+    this.lists = new AdminDiyListAuthorOptionsService(container, env);
   }
   async hotWords(parameters = new URLSearchParams()) {
     noQuery(parameters);
@@ -57,4 +60,8 @@ export class AdminDiyAuthorOptionsService {
     const result = await this.catalog.diyTabTargets(parameters);
     return { ...result, list: result.list.map(tabTarget) };
   }
+  async listProducts(parameters = new URLSearchParams()) { return this.lists.products(parameters); }
+  async listBrands(parameters = new URLSearchParams()) { return this.lists.brands(parameters); }
+  async listLabels(parameters = new URLSearchParams()) { return this.lists.labels(parameters); }
+  async listArticleCategories(parameters = new URLSearchParams()) { return this.lists.articleCategories(parameters); }
 }

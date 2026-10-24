@@ -3594,5 +3594,31 @@
     "remaining_author_body_families": 19,
     "global_migration_complete": false,
     "merge_or_deploy": false
+  },
+  "diyListAuthorContractVerification": {
+    "status": "local_list_author_contracts_covered_across_two_browser_sessions_release_gates_pending",
+    "base_commit": "f08f27580ded0b1047a8d77f57b33b27918a28c0",
+    "audit": "workers-ts/audit/php-ts-diy-list-author-20261023.json",
+    "audit_sha256": "2997c0d03c594e3c6941115bf0df20d6337b5cc63112b70657f6a0b206dbf900",
+    "documentation": "workers-ts/docs/php-ts-diy-list-author-20261024.md",
+    "new_unique_definitions": 327,
+    "actual_Admin_runtime": 412,
+    "actual_Uni_runtime": 262,
+    "actual_Worker_files": 88,
+    "actual_Worker_passed": 1842,
+    "old_FAB_native_only_skipped": 3,
+    "actual_native_files": 19,
+    "actual_native_passed": 566,
+    "actual_hidden_Browser_checkpoints": 25,
+    "Browser_sessions": 3,
+    "selected_coverage_sessions": 2,
+    "intermediate_duplicate_readonly_session_preserved": true,
+    "original_Browser_failed_deadline": true,
+    "continuation_readonly_checkpoints": 2,
+    "continuation_GUI_saves": 0,
+    "actual_GUI_saves": 3,
+    "remaining_author_body_families": 17,
+    "global_migration_complete": false,
+    "merge_or_deploy": false
   }
 }

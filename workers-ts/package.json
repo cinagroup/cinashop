@@ -56,7 +56,10 @@
     "test:diy-author-options": "vitest run --config vitest.config.ts --maxWorkers=1 test/admin-diy-author-options.test.ts test/admin-diy-author-options-postgres.test.ts test/admin-diy-author-options-http.test.ts",
     "test:diy-navigation-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-navigation-author-postgres.test.ts test/diy-navigation-author-runner.test.ts",
     "audit:diy-carousel-author-browser": "vitest run --config vitest.diy-carousel-author-browser.config.ts",
-    "test:diy-carousel-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-carousel-author-postgres.test.ts test/diy-carousel-author-runner.test.ts"
+    "test:diy-carousel-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-carousel-author-postgres.test.ts test/diy-carousel-author-runner.test.ts",
+    "audit:diy-list-author-browser": "vitest run --config vitest.diy-list-author-browser.config.ts",
+    "test:diy-list-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-list-author-postgres.test.ts test/diy-list-author-runner.test.ts",
+    "test:diy-list-author-options": "vitest run --config vitest.config.ts --maxWorkers=1 test/admin-diy-list-author-options.test.ts test/admin-diy-list-author-options-postgres.test.ts test/admin-diy-list-author-options-http.test.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",

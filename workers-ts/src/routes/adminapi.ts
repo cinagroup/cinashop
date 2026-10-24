@@ -1105,6 +1105,10 @@ adminapiRoutes.get("/dise/author-options/link-categories", adminAuth, AdminDiyAu
 adminapiRoutes.get("/dise/author-options/link-targets", adminAuth, AdminDiyAuthorOptions.linkTargets);
 adminapiRoutes.get("/dise/author-options/tab-categories", adminAuth, AdminDiyAuthorOptions.tabCategories);
 adminapiRoutes.get("/dise/author-options/tab-targets", adminAuth, AdminDiyAuthorOptions.tabTargets);
+adminapiRoutes.get("/dise/author-options/list-products", adminAuth, AdminDiyAuthorOptions.listProducts);
+adminapiRoutes.get("/dise/author-options/list-brands", adminAuth, AdminDiyAuthorOptions.listBrands);
+adminapiRoutes.get("/dise/author-options/list-labels", adminAuth, AdminDiyAuthorOptions.listLabels);
+adminapiRoutes.get("/dise/author-options/list-article-categories", adminAuth, AdminDiyAuthorOptions.listArticleCategories);
 adminapiRoutes.get("/dise/list", adminAuth, AdminCrud.adminDiseList);
 adminapiRoutes.post("/dise/save", adminAuth, AdminCrud.adminDiseSave);
 adminapiRoutes.delete("/dise/del/:id", adminAuth, AdminCrud.adminDiseDel);
