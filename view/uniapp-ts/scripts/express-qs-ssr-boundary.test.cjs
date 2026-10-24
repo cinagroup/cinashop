@@ -1,7 +1,9 @@
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const { existsSync, readFileSync } = require("node:fs");
 const http = require("node:http");
 const https = require("node:https");
+const { createRequire } = require("node:module");
 const net = require("node:net");
 const { resolve } = require("node:path");
 const test = require("node:test");
@@ -16,7 +18,7 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
       "@dcloudio/vite-plugin-uni": DCLOUD,
       express: "4.22.2",
       qs: "6.15.3",
-      "body-parser": "1.20.6",
+      "body-parser": "1.20.9",
       "proxy-addr": "2.0.8",
     }[name];
     assert.equal(locked(name).version, expected, name);
@@ -25,7 +27,30 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   assert.equal(locked("@dcloudio/vite-plugin-uni").dependencies.express, "^4.17.1");
   assert.equal(locked("express").dependencies.qs, "~6.15.1");
   assert.equal(locked("express").dependencies["proxy-addr"], "~2.0.7");
-  assert.equal(locked("body-parser").dependencies.qs, "~6.15.1");
+  assert.equal(locked("body-parser").dependencies.qs, "~6.16.0");
+
+  // Resolve metadata from the real entries without loading either main module:
+  // the later DCloud test still proves its original require-cache boundary.
+  const fromBodyParser = createRequire(require.resolve("body-parser"));
+  const parserQsPackage = fromBodyParser.resolve("qs/package.json");
+  assert.equal(parserQsPackage, resolve(__dirname, "../node_modules/body-parser/node_modules/qs/package.json"));
+  assert.equal(fromBodyParser("qs/package.json").version, "6.16.1");
+  assert.equal(locked("body-parser/node_modules/qs").version, "6.16.1");
+  assert.deepEqual(fromBodyParser("qs/package.json").dependencies, locked("body-parser/node_modules/qs").dependencies);
+  assert.deepEqual(locked("body-parser/node_modules/qs").dependencies, {
+    "es-define-property": "^1.0.1", "side-channel": "^1.1.1",
+  });
+  assert.equal(locked("body-parser/node_modules/qs").resolved, "https://registry.npmjs.org/qs/-/qs-6.16.1.tgz");
+  assert.equal(locked("body-parser/node_modules/qs").integrity,
+    "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==");
+  assert.equal(locked("body-parser").resolved, "https://registry.npmjs.org/body-parser/-/body-parser-1.20.9.tgz");
+  assert.equal(locked("body-parser").integrity,
+    "sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw==");
+  assert.deepEqual(require("body-parser/package.json").dependencies, locked("body-parser").dependencies);
+  const fromExpress = createRequire(require.resolve("express"));
+  assert.equal(fromExpress.resolve("qs/package.json"), require.resolve("qs/package.json"));
+  assert.equal(fromExpress("qs/package.json").version, "6.15.3");
+  assert.notEqual(parserQsPackage, fromExpress.resolve("qs/package.json"));
 
   const cli = readFileSync(require.resolve("@dcloudio/vite-plugin-uni/dist/cli/index.js"), "utf8");
   const action = readFileSync(require.resolve("@dcloudio/vite-plugin-uni/dist/cli/action.js"), "utf8");
@@ -40,6 +65,80 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   assert.match(server, /app\.listen\(port, hostname, onSuccess\)/);
   assert.match(express, /this\.set\('query parser', 'extended'\)/);
   assert.match(utils, /function parseExtendedQueryString\(str\)\s*\{\s*return qs\.parse\(str,/);
+});
+
+// Each real HTTP case owns a fresh child process and temporary loopback port.
+// The helper refuses old body-parser installations and bounds payload and time.
+function compressionProbe(kind, encoding, mode, consumer) {
+  const child = spawnSync(process.execPath, ["--unhandled-rejections=strict",
+    resolve(__dirname, "body-parser-compression-probe.cjs"), kind, encoding, mode, consumer], {
+    cwd: resolve(__dirname, ".."), encoding: "utf8", timeout: 10000, maxBuffer: 64 * 1024,
+  });
+  assert.ifError(child.error);
+  assert.equal(child.signal, null, child.stderr);
+  assert.equal(child.status, 0, child.stderr);
+  assert.equal(child.stderr, "");
+  const result = JSON.parse(child.stdout);
+  assert.deepEqual([result.kind, result.encoding, result.mode], [kind, encoding, mode]);
+  assert.equal(result.parserVersion, "1.20.9");
+  assert.equal(result.ownedHost, "127.0.0.1");
+  assert.ok(Number.isInteger(result.port) && result.port > 0);
+  assert.ok(result.decodedBodyBytes > 0 && result.decodedBodyBytes < 1024);
+  assert.ok(result.requestBodyBytes > 0 && result.requestBodyBytes < 2048);
+  assert.equal(result.requestEnded, true);
+  assert.equal(result.requestComplete, true);
+  assert.equal(result.healthyAfterTrailingDelay, true);
+  assert.equal(result.healthStatus, 204);
+  assert.equal(result.observationDelayMs, 100);
+  assert.equal(result.rawConsumer, consumer === "raw");
+  if (consumer === "raw") {
+    assert.match(result.rawSha256, /^[a-f0-9]{64}$/);
+    assert.equal(result.rawSha256, result.expectedRawSha256);
+    assert.equal(result.rawBytes, result.requestBodyBytes);
+    assert.ok(result.events.includes("raw-finish"));
+  } else {
+    assert.equal(result.rawSha256, null);
+    assert.equal(result.expectedRawSha256, null);
+    assert.equal(result.rawBytes, null);
+    assert.equal(result.events.includes("raw-finish"), false);
+  }
+  const event = name => {
+    assert.equal(result.events.filter(item => item === name).length, 1, name);
+    return result.events.indexOf(name);
+  };
+  assert.ok(event("request-end") < event("response-end"));
+  assert.ok(event("response-end") < event("health-end"));
+  assert.equal(result.parsedBeforeTail, mode === "trailing");
+  if (mode === "trailing") {
+    assert.ok(event("parser-callback") < event("send-tail"));
+    assert.ok(event("send-tail") < event("request-end"));
+  } else assert.equal(result.events.includes("send-tail"), false);
+  if (mode === "charset") {
+    assert.equal(result.errorType, "charset.unsupported");
+    assert.equal(result.verifyCalls, 0);
+    assert.equal(result.body, null);
+  } else {
+    assert.equal(result.errorType, null);
+    assert.equal(result.verifyCalls, 1);
+    assert.deepEqual(result.body, { a: kind === "json" ? 1 : "1", item: { id: "42" }, word: "safe" });
+  }
+}
+
+for (const kind of ["json", "urlencoded"]) {
+  for (const encoding of ["gzip", "deflate"]) {
+    test(`patched body-parser ${kind}/${encoding} preserves a second raw consumer`, { timeout: 12000 }, () => {
+      compressionProbe(kind, encoding, "normal", "raw");
+    });
+    test(`patched body-parser ${kind}/${encoding} preserves delayed trailing bytes for a second raw consumer`, { timeout: 12000 }, () => {
+      compressionProbe(kind, encoding, "trailing", "raw");
+    });
+    test(`patched body-parser ${kind}/${encoding} drains delayed trailing bytes without another consumer`, { timeout: 12000 }, () => {
+      compressionProbe(kind, encoding, "trailing", "none");
+    });
+  }
+}
+test("patched body-parser rejects unsupported charset without consuming the second raw stream", { timeout: 12000 }, () => {
+  compressionProbe("json", "gzip", "charset", "raw");
 });
 
 test("patched proxy-addr does not trust IPv4 through a malformed mapped subnet", () => {

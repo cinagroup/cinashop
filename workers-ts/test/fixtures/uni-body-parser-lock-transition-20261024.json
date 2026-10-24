@@ -1,0 +1,98 @@
+{
+  "schema": "cinashop.uni-body-parser-lock-transition.v1",
+  "transition": "body-parser-20261024",
+  "lock_path": "view/uniapp-ts/package-lock.json",
+  "old": {
+    "raw_sha256": "2cb822195f6939bf2e2f23da70502cafe96fb3cf4ee04c879163de9d23075d39",
+    "semantic_sha256": "5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00",
+    "bytes": 426733,
+    "package_nodes": 837
+  },
+  "patched": {
+    "raw_sha256": "486b4c38690dd7cbaf3a9ec9f1f73523f192beaff379dc388f0a5fc3621104b8",
+    "semantic_sha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
+    "bytes": 427287,
+    "package_nodes": 838
+  },
+  "records": {
+    "old_body_parser": {
+      "version": "1.20.6",
+      "resolved": "https://registry.npmmirror.com/body-parser/-/body-parser-1.20.6.tgz",
+      "integrity": "sha512-p5tAzS57i5MV9fZFDj9LeIiTZEufbSe2eDozP+ElheSUq1m74CRq1jI4mYNDdVs9vQztXFLuk/Gd6BWTdwRJ5g==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "bytes": "~3.1.2",
+        "content-type": "~1.0.5",
+        "debug": "2.6.9",
+        "depd": "2.0.0",
+        "destroy": "~1.2.0",
+        "http-errors": "~2.0.1",
+        "iconv-lite": "~0.4.24",
+        "on-finished": "~2.4.1",
+        "qs": "~6.15.1",
+        "raw-body": "~2.5.3",
+        "type-is": "~1.6.18",
+        "unpipe": "~1.0.0"
+      },
+      "engines": {
+        "node": ">= 0.8",
+        "npm": "1.2.8000 || >= 1.4.16"
+      }
+    },
+    "patched_body_parser": {
+      "version": "1.20.9",
+      "resolved": "https://registry.npmjs.org/body-parser/-/body-parser-1.20.9.tgz",
+      "integrity": "sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "bytes": "~3.1.2",
+        "content-type": "~1.0.5",
+        "debug": "2.6.9",
+        "depd": "2.0.0",
+        "destroy": "~1.2.0",
+        "http-errors": "~2.0.1",
+        "iconv-lite": "~0.4.24",
+        "on-finished": "~2.4.1",
+        "qs": "~6.16.0",
+        "raw-body": "~2.5.3",
+        "type-is": "~1.6.18",
+        "unpipe": "~1.0.0"
+      },
+      "engines": {
+        "node": ">= 0.8",
+        "npm": "1.2.8000 || >= 1.4.16"
+      }
+    },
+    "patched_nested_qs": {
+      "version": "6.16.1",
+      "resolved": "https://registry.npmjs.org/qs/-/qs-6.16.1.tgz",
+      "integrity": "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==",
+      "dev": true,
+      "license": "BSD-3-Clause",
+      "dependencies": {
+        "es-define-property": "^1.0.1",
+        "side-channel": "^1.1.1"
+      },
+      "engines": {
+        "node": ">=0.6"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/ljharb"
+      }
+    }
+  },
+  "official_metadata": [
+    {
+      "url": "https://registry.npmjs.org/body-parser/1.20.9",
+      "sha256": "5367ca530e3f61e1035c4bdab1a5374bd4368ca1e9e84727417148448a9b3402"
+    },
+    {
+      "url": "https://registry.npmjs.org/qs/6.16.1",
+      "sha256": "10dce9e40d8e419126d6a743e54509db9c080ca2aebbe605b10a46f51f0abf91"
+    }
+  ],
+  "inverse": "Restore only node_modules/body-parser to old_body_parser, delete only node_modules/body-parser/node_modules/qs, serialize JSON with two-space indentation and one final LF; exact raw bytes and semantic SHA must match old.",
+  "boundary": "The linked historical GUI-save rows remain historical business data. This explicit test-only transition verifies the current new dependency lock; it does not claim cross-session lock identity, new GUI saves, or another full25-checkpoint pass."
+}

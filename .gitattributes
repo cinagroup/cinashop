@@ -14,3 +14,5 @@ workers-ts/docs/customer-*.md text eol=lf
 # Admin system ledgers must match their generators byte-for-byte on Windows.
 workers-ts/audit/admin-legacy-system-route-parity.json text eol=lf
 workers-ts/audit/admin-legacy-system-route-parity-read-followup-20260928.json text eol=lf
+view/uniapp-ts/scripts/d3-advisory-gate.pre-body-parser-20261024.baseline.json text eol=lf
+workers-ts/test/fixtures/uni-body-parser-lock-transition-20261024.json text eol=lf

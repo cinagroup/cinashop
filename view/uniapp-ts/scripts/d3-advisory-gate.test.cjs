@@ -44,9 +44,9 @@ function rejected(fixture, fragment) {
 }
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 51);
+  assert.equal(Object.keys(baseline.entries).length, 50);
   assert.equal(Object.keys(baseline.advisories).length, 26);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 13);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 14);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
@@ -133,7 +133,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all thirteen resolved or withdrawn advisory source IDs remain forbidden", () => {
+test("all fourteen resolved or withdrawn advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -209,7 +209,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /51 affected package entries/);
+    assert.match(accepted.stdout, /50 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -242,11 +242,23 @@ test("withdrawn sprintf-js source and its exclusive propagated entries remain fo
   rejected(returned, 'resolved advisory reappeared: 1241202');
 });
 
+// Historical77->51 checks use the exact reviewed pre-body-parser baseline.
+// Current patched dependency tuples remain checked against the live baseline.
+const preBodyParserBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-body-parser-20261024.baseline.json"));
+const preBodyParserBaseline = JSON.parse(preBodyParserBaselineBytes.toString("utf8"));
+test('pre-body-parser historical51 baseline retains its exact reviewed bytes', () => {
+  assert.equal(createHash('sha256').update(preBodyParserBaselineBytes).digest('hex'), '5b82bc7222590c0904d7091981640bf559aa6dc625df27ef4eb545493d7eebc2');
+  assert.equal(Object.keys(preBodyParserBaseline.entries).length, 51);
+  assert.equal(Object.keys(preBodyParserBaseline.advisories).length, 26);
+  assert.equal(Object.keys(preBodyParserBaseline.resolvedAdvisories).length, 13);
+  assert.equal(preBodyParserBaseline.lockSemanticSha256, '5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00');
+});
+
 const bracesReview = JSON.parse(readFileSync(resolve(__dirname,
   '../../../workers-ts/audit/uni-d3-braces-withdrawal-20261023.json'), 'utf8'));
 
 function previousBracesBaseline() {
-  const previous = structuredClone(baseline);
+  const previous = structuredClone(preBodyParserBaseline);
   const { source, ...advisory } = bracesReview.removed_advisory;
   previous.advisories[source] = advisory;
   delete previous.resolvedAdvisories[source];
@@ -281,7 +293,7 @@ test('removing only braces reproduces the exact 77 to 51 forward-graph inventory
   assert.equal(Object.keys(previous.entries).length, 77);
   assert.equal(Object.keys(previous.advisories).length, 27);
   assert.equal(evaluateAudit(reviewedFixture(previous), previous).ok, true);
-  const originalRed = evaluateAudit(reviewedFixture(), previous);
+  const originalRed = evaluateAudit(reviewedFixture(preBodyParserBaseline), previous);
   assert.equal(originalRed.ok, false);
   assert.equal(originalRed.issues.length, 52);
   assert.deepEqual(originalRed.issues.slice().sort(), bracesReview.old_gate_reproduction.issues.slice().sort());
@@ -299,9 +311,9 @@ test('removing only braces reproduces the exact 77 to 51 forward-graph inventory
   const removed = Object.keys(sources).filter(name => !sources[name].size).sort();
   assert.deepEqual(removed, bracesReview.removed_entries.map(entry => entry.name).sort());
   const survivors = Object.keys(sources).filter(name => sources[name].size).sort();
-  assert.deepEqual(survivors, Object.keys(baseline.entries).sort());
+  assert.deepEqual(survivors, Object.keys(preBodyParserBaseline.entries).sort());
   for (const name of survivors) {
-    const before = previous.entries[name], after = baseline.entries[name];
+    const before = previous.entries[name], after = preBodyParserBaseline.entries[name];
     assert.deepEqual(after.nodes, before.nodes, name);
     assert.equal(after.isDirect, before.isDirect, name);
     assert.deepEqual(after.advisorySources, before.advisorySources.filter(id => id !== 1240992), name);
@@ -313,14 +325,79 @@ test('removing only braces reproduces the exact 77 to 51 forward-graph inventory
 test('only six retained Jest entries lose high severity; every remaining severity is pinned', () => {
   const previous = previousBracesBaseline();
   const lowered = ['@jest/core', 'jest', 'jest-cli', 'jest-config', 'jest-environment-jsdom', 'jest-runner'];
-  assert.deepEqual(Object.keys(baseline.entries).filter(name =>
-    previous.entries[name].severity !== baseline.entries[name].severity).sort(), lowered.sort());
+  assert.deepEqual(Object.keys(preBodyParserBaseline.entries).filter(name =>
+    previous.entries[name].severity !== preBodyParserBaseline.entries[name].severity).sort(), lowered.sort());
   for (const name of lowered) {
     assert.equal(previous.entries[name].severity, 'high');
-    assert.equal(baseline.entries[name].severity, 'low');
+    assert.equal(preBodyParserBaseline.entries[name].severity, 'low');
     const raised = reviewedFixture();
     raised.vulnerabilities[name].severity = 'high';
     refreshMetadata(raised);
     rejected(raised, `affected package entry changed: ${name}`);
   }
+});
+
+test('body-parser patch preserves every other reviewed forward graph and resolved source', () => {
+  assert.deepEqual(baseline.advisories, preBodyParserBaseline.advisories);
+  assert.deepEqual(baseline.chains, preBodyParserBaseline.chains);
+  const { '1243073': patched, ...previousResolved } = baseline.resolvedAdvisories;
+  assert.deepEqual(previousResolved, preBodyParserBaseline.resolvedAdvisories);
+  assert.equal(patched.package, 'body-parser');
+  assert.equal(patched.resolution, 'patched');
+  assert.equal(patched.fixedVersion, '1.20.9');
+  assert.equal(patched.affectedRange, '<1.20.9');
+  assert.equal(patched.url, 'https://github.com/advisories/GHSA-27r3-jxmh-p828');
+  assert.equal(baseline.entries['body-parser'], undefined);
+  const expected = structuredClone(preBodyParserBaseline.entries);
+  delete expected['body-parser'];
+  const forwardGraph = entries => Object.fromEntries(Object.entries(entries).map(([name, entry]) =>
+    [name, Object.fromEntries(Object.entries(entry).filter(([key]) => !['range', 'effects'].includes(key)))]));
+  assert.deepEqual(forwardGraph(baseline.entries), forwardGraph(expected));
+  assert.deepEqual(baseline.entries.qs.nodes, ['node_modules/qs']);
+  assert.deepEqual(baseline.entries.qs.advisorySources, [1158506, 1158507]);
+});
+
+test('patched body-parser high advisory cannot be restored as an accepted allowance', () => {
+  const returned = reviewedFixture();
+  returned.vulnerabilities['body-parser'] = { name: 'body-parser', severity: 'high',
+    isDirect: false, range: '<1.20.9', nodes: ['node_modules/body-parser'], effects: [],
+    via: [{ source: 1243073, name: 'body-parser', dependency: 'body-parser', severity: 'high',
+      range: '<1.20.9', url: 'https://github.com/advisories/GHSA-27r3-jxmh-p828' }] };
+  refreshMetadata(returned);
+  rejected(returned, 'resolved advisory reappeared: 1243073');
+  rejected(returned, 'unknown direct advisory 1243073');
+});
+
+function rejectsPatchedLockMutation(mutate) {
+  const dir = mkdtempSync(join(tmpdir(), 'd3-body-parser-lock-'));
+  try {
+    const scripts = join(dir, 'scripts');
+    mkdirSync(scripts);
+    for (const file of ['d3-advisory-gate.cjs', 'd3-advisory-gate.baseline.json']) {
+      copyFileSync(resolve(__dirname, file), join(scripts, file));
+    }
+    const changed = JSON.parse(readFileSync(resolve(__dirname, '../package-lock.json'), 'utf8'));
+    mutate(changed.packages);
+    writeFileSync(join(dir, 'package-lock.json'), JSON.stringify(changed));
+    writeFileSync(join(dir, 'audit.json'), JSON.stringify(reviewedFixture()));
+    const denied = spawnSync(process.execPath, [join(scripts, 'd3-advisory-gate.cjs'), '--fixture', join(dir, 'audit.json')],
+      { encoding: 'utf8', timeout: 10000 });
+    assert.ifError(denied.error);
+    assert.equal(denied.status, 1);
+    assert.match(denied.stderr, /package-lock\.json semantic SHA-256 changed/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('reverting the patched body-parser lock is rejected before the audit receipt', () => {
+  rejectsPatchedLockMutation(packages => { packages['node_modules/body-parser'].version = '1.20.6'; });
+});
+
+test('redirecting body-parser to the old qs version is rejected before the audit receipt', () => {
+  rejectsPatchedLockMutation(packages => { packages['node_modules/body-parser/node_modules/qs'].version = '6.15.3'; });
+});
+
+test('a newly vulnerable qs node under body-parser is not accepted with the existing root qs', () => {
+  const returned = reviewedFixture();
+  returned.vulnerabilities.qs.nodes.push('node_modules/body-parser/node_modules/qs');
+  rejected(returned, 'affected package entry changed: qs');
 });

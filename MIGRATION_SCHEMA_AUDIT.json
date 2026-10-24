@@ -3620,5 +3620,24 @@
     "remaining_author_body_families": 17,
     "global_migration_complete": false,
     "merge_or_deploy": false
+  },
+  "uni_body_parser_remediation_20261024": {
+    "audit": "workers-ts/audit/uni-body-parser-remediation-20261024.json",
+    "body_parser": "1.20.9",
+    "nested_qs": "6.16.1",
+    "Express_root_qs_unchanged": "6.15.3",
+    "package_node_delta": 2,
+    "official_report_package_entries": 50,
+    "direct_advisory_sources": 26,
+    "distinct_advisory_urls": 25,
+    "resolved_forbidden_sources": 14,
+    "actual_Uni_CI_steps_exit0": 13,
+    "new_isolated_parser_definitions": 13,
+    "actual_fresh_hidden_Browser_checkpoints": 2,
+    "actual_fresh_GUI_saves": 0,
+    "actual_fresh_business_POSTs": 0,
+    "remaining_author_body_families": 17,
+    "global_migration_complete": false,
+    "merge_or_deploy": false
   }
 }
