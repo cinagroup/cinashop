@@ -1,0 +1,777 @@
+{
+  "schema": "cinashop.php-ts-diy-list-author.v1",
+  "recorded_UTC": "2026-10-24T03:04:10.843418+00:00",
+  "status": "local_list_author_contracts_covered_across_two_browser_sessions_release_gates_pending",
+  "base_commit": "f08f27580ded0b1047a8d77f57b33b27918a28c0",
+  "completion_boundary": "Complete ordinary goodList/articleList author controls, real directories and read-only public previews locally accepted through actual hidden Browser across two sessions: deadline-failed23 checkpoints/3GUI saves, followed by successful2-checkpoint read-only continuation. The original failure remains failed. This is one increment;17 body families remain. No merge/deploy/global completion claim.",
+  "baseline": {
+    "path": "/tmp/cinashop-diy-list-author-baseline.json",
+    "sha256": "26de71bd8aa56ccae5ba2faac68178d13f82b4205a2ca78bf307644d0489de0c",
+    "bytes": 1753448
+  },
+  "fresh_contract": {
+    "path": "/tmp/cinashop-list-author-fresh-contracts-20261023.json",
+    "sha256": "5faf999cb10e231d96c450646e64f0eba868f885aaa2f7ed1be3615a40b4d323",
+    "bytes": 14259
+  },
+  "PHP_read_method": {
+    "immutable_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+    "raw_php_executed": false,
+    "fresh_blobs": 19,
+    "raw_and_decoded_copies_separate": true
+  },
+  "default_extraction": {
+    "path": "/tmp/cinashop-list-author-defaults-static-fresh.json",
+    "sha256": "ff0101e29b91d1548fa6d2ca0eb19aa75d6fc3d6184ad7280cb948d01b4f6ec8",
+    "bytes": 1597
+  },
+  "complete_defaults": {
+    "bytes": 11954,
+    "sha256": "117fd5bc74fa2e242d96ddec544ee60c88584e07745b8cb783577115f03cbd47",
+    "Admin_literal_and_Worker_fixture_equal": true,
+    "ordinary_goods_max20_metadata_preserved": true,
+    "ordinary_author_identity_capacity100_is_new_policy_not_unverified_PHP_limit": true
+  },
+  "implementation": {
+    "families": [
+      "goodList",
+      "articleList"
+    ],
+    "layouts": {
+      "goodList": 6,
+      "articleList": 3
+    },
+    "goods_scopes": [
+      "product",
+      "brand",
+      "category",
+      "label"
+    ],
+    "article_hot0": "Only an explicit selection; empty import never broadens to0.",
+    "fields": [
+      "current identity add/remove/reorder/clear",
+      "quantity and sorting",
+      "display checks and action/button styles",
+      "font weight and colours/gradients",
+      "spacing and independent image/background corners"
+    ],
+    "imports": "Whole raw document, unknown neighbors, dormant scopes, hidden components, missing IDs, numeric grammar,0/101,tiny/exponent radii,101 identity selections,107 dormant article options and2501 product materials preserved. Old materials never become current public media authority.",
+    "readonly_preview": "Anonymous GET products/article-list only, no detail/visit/like/SKU/cart writes. Saved JSON never receives ephemeral tickets/catalogue snapshots.",
+    "ordinary_limits": "Explicit new IDs<=100, count1..100. Invalid/empty/over-identity imports never broaden queries; article count cap100 has visible notice.",
+    "late_result_guards": "Actor/token/persisted session/page/block/scope/raw revision/lifetime; real held HTTP cancellation in Browser and abort-ignoring callbacks in runtime tests.",
+    "waterfall": "Measured actual card heights with stable column/id ref ownership; old unmount callback cannot remove new DOM.",
+    "new_GET_resources": [
+      "list-products",
+      "list-brands",
+      "list-labels",
+      "list-article-categories"
+    ],
+    "route_prefixes": [
+      "/adminapi",
+      "/api/admin"
+    ],
+    "category_reuse": "Existing typed tab-targets?kind=product_category",
+    "ACL": "Only four exact read-only memberships in the existing DIY selection projection; no new assignable privilege or FAB/product/attachment management grant.",
+    "Uni_button_fix": "One exact template expression gives single/big-image purchase/plus/cart labels and other action layouts plus/cart; original handlers unchanged."
+  },
+  "article_list_cover_repair": {
+    "transition": {
+      "path": "/tmp/cinashop-list-author-public-article-cover-owner-transition.json",
+      "sha256": "ea448f6db5ee2cc10d037a9b306074e29b028c84d1a223343c13565f94a63159",
+      "bytes": 7504
+    },
+    "file": "workers-ts/src/services/content/PublicArticleCompatibilityService.ts",
+    "before_sha256": "90fe4ddabea1fd43c92df8a1768fd8a09cf5b7ff47154ddd458d17a61ba6e8c0",
+    "after_sha256": "a1bdf0eab9dc122c5af186637568c492b13e1677b84fde66d72ed90be8a250d9",
+    "full_inverse_equal_base": true,
+    "reason": "All8 original native revocation assertions failed before repair. New public list-cover tickets now require current platform owner/raster metadata/key/MIME policy; sorting, complete positions and nonattachment URL grammar remain.",
+    "unchanged": "Global signer, old helper/private-R2 tests, article details/HTML and already-issued TTL capabilities unchanged. No actual private-byte GET PoC claim.",
+    "all_original_tests_and_fixtures_unchanged": true
+  },
+  "source_binding": {
+    "receipt": {
+      "path": "workers-ts/audit/diy-list-author-source-binding-20261023.json",
+      "sha256": "4ddd06f3bef5ef330d46ec6289b76c81876e2d4da8d5bcd623dca73d540e3149",
+      "bytes": 190002
+    },
+    "archive": {
+      "path": "workers-ts/audit/admin-frontend-api-contracts-pre-list-author-20261023.json",
+      "sha256": "978dde3bcea666aa4959a15a6e36dd04cc5b29ca553b6efae6b4bfdf3783931d",
+      "bytes": 638729
+    },
+    "current_API": {
+      "path": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "sha256": "31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73",
+      "bytes": 642264
+    },
+    "exact_inverted_sources": 7,
+    "old_test_adapters": 5,
+    "API_delta": {
+      "new_GET_routes": 8,
+      "new_calls": 4,
+      "old_route_line_changes": 294,
+      "old_call_line_changes": 3,
+      "routes_before": 1665,
+      "routes_after": 1673,
+      "callSites": 703,
+      "pathVariants": 741,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "all_old_source_and_report_records_preserved": true,
+    "stats_contract": "Restored /api/get_script and shared loader plus Admin/Supplier/UniApp entries remain exact; historical retirement/restoration audits unchanged."
+  },
+  "validation": {
+    "new_unique_definitions": 327,
+    "new_counts": {
+      "Admin": 146,
+      "Worker_options_pure": 19,
+      "Worker_runner": 26,
+      "Worker_source_binding": 46,
+      "Worker_native": 89,
+      "Browser": 1
+    },
+    "actual_Admin_runtime": 412,
+    "actual_Uni_editorial_carousel_runtime": 262,
+    "Worker": {
+      "files": 88,
+      "passed": 1842,
+      "old_FAB_native_only_skipped": 3,
+      "all_fresh_after_article_repair": true
+    },
+    "native": {
+      "files": 19,
+      "passed": 566,
+      "skipped": 0,
+      "new_list_per_schema": 39,
+      "all8_original_media_negatives_pass": true
+    },
+    "steps": [
+      {
+        "name": "Worker-unit-strict",
+        "command": [
+          "npm",
+          "run",
+          "typecheck:unit"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-article-repair-Worker-unit-strict.log",
+        "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b",
+        "seconds": 164.9206094580004
+      },
+      {
+        "name": "Worker-runtime-strict",
+        "command": [
+          "npm",
+          "run",
+          "typecheck:runtime"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-article-repair-Worker-runtime-strict.log",
+        "sha256": "1c53d6f6daef131483537c473aaa908fb4a68517e06e54e1bdd80fafab05f315",
+        "seconds": 89.40298442498897
+      },
+      {
+        "name": "Worker-complete-files",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "test/activity-catalog-migration.test.ts",
+          "test/activity-list-compatibility.test.ts",
+          "test/admin-article-migration.test.ts",
+          "test/admin-diy-safety-migration.test.ts",
+          "test/admin-fab-settings.test.ts",
+          "test/admin-frontend-api-audit.test.ts",
+          "test/admin-product-category-style-coverage.test.ts",
+          "test/admin-setting-frontend-parity.test.ts",
+          "test/api-public-catalog-migration.test.ts",
+          "test/article-migration.test.ts",
+          "test/attachment-storage-migration.test.ts",
+          "test/community-admin-migration.test.ts",
+          "test/community-author-workspace.test.ts",
+          "test/community-availability-frontend.test.ts",
+          "test/community-availability-migration.test.ts",
+          "test/community-comments-migration.test.ts",
+          "test/community-engagement-migration.test.ts",
+          "test/community-image-publish.test.ts",
+          "test/community-main-feed-frontend.test.ts",
+          "test/community-migration.test.ts",
+          "test/community-people-route.test.ts",
+          "test/community-publish-entry-migration.test.ts",
+          "test/community-relations-publish.test.ts",
+          "test/community-social-migration.test.ts",
+          "test/community-video-publish.test.ts",
+          "test/division-staff-navigation.test.ts",
+          "test/diy-commerce-frontend.test.ts",
+          "test/diy-community-frontend.test.ts",
+          "test/diy-editorial-frontend.test.ts",
+          "test/diy-home-frontend-migration.test.ts",
+          "test/diy-home-widgets-compatibility-scenario.test.ts",
+          "test/diy-home-widgets-migration.test.ts",
+          "test/diy-page-state-frontend.test.ts",
+          "test/diy-state-widgets-frontend.test.ts",
+          "test/diy-video-contract.test.ts",
+          "test/dynamic-statistics-script-retirement.test.ts",
+          "test/legacy-share-callback.test.ts",
+          "test/legacy-share-code.test.ts",
+          "test/legacy-share-http.test.ts",
+          "test/legacy-share-private-mini.test.ts",
+          "test/legacy-share-private-scan-flow.test.ts",
+          "test/legacy-share-private-scan.test.ts",
+          "test/legacy-share-provider-budget.test.ts",
+          "test/legacy-share-registered-http.test.ts",
+          "test/local-finance-postgres-runner.test.ts",
+          "test/public-article-compatibility-scenario.test.ts",
+          "test/public-article-migration.test.ts",
+          "test/public-product-catalog-promotion-slots.test.ts",
+          "test/public-statistics-script-http.test.ts",
+          "test/recommendation-navigation.test.ts",
+          "test/seckill-product-media.test.ts",
+          "test/statistics-script-frontend.test.ts",
+          "test/theme-host-chain.test.ts",
+          "test/uniapp-frontend-parity.test.ts",
+          "test/v2-public-diy-compatibility-migration.test.ts",
+          "test/wechat-follow-poster.test.ts",
+          "test/diy-carousel-frontend.test.ts",
+          "test/diy-navigation-frontend.test.ts",
+          "test/diy-navigation-runner.test.ts",
+          "test/diy-footer-unit.test.ts",
+          "test/diy-footer-runner.test.ts",
+          "test/pc-direct-purchase-cart.test.ts",
+          "test/uniapp-checkout-contract.test.ts",
+          "test/diy-presentation-html.test.ts",
+          "test/diy-presentation-media.test.ts",
+          "test/diy-presentation-frontend.test.ts",
+          "test/diy-presentation-runner.test.ts",
+          "test/diy-customer-service-media.test.ts",
+          "test/diy-customer-service-runner.test.ts",
+          "test/diy-page-settings-contract.test.ts",
+          "test/diy-page-settings-media.test.ts",
+          "test/diy-page-settings-runner.test.ts",
+          "test/admin-product-detail-design-coverage.test.ts",
+          "test/diy-media-reference.test.ts",
+          "test/diy-media-reference-runner.test.ts",
+          "test/admin-permission.test.ts",
+          "test/legacy-admin-permissions.test.ts",
+          "test/route-parity-audit.test.ts",
+          "test/admin-fab-link-catalog.test.ts",
+          "test/admin-diy-author-options.test.ts",
+          "test/diy-navigation-author-runner.test.ts",
+          "test/diy-navigation-author-source-binding.test.ts",
+          "test/admin-fab-permission.test.ts",
+          "test/diy-carousel-author-runner.test.ts",
+          "test/diy-carousel-author-source-binding.test.ts",
+          "test/admin-diy-list-author-options.test.ts",
+          "test/diy-list-author-runner.test.ts",
+          "test/diy-list-author-source-binding.test.ts",
+          "--maxWorkers=1",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=/tmp/cinashop-list-author-validation-article-repair-vitest.json"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-article-repair-Worker-complete-files.log",
+        "sha256": "29f9941357b19cafb6c52170b3b634edfbed8cd5aa37d2830083d53b71355cbd",
+        "case_counts": {
+          "passed": 1842,
+          "skipped": 3
+        },
+        "files_count": 88,
+        "seconds": 412.95728126799804
+      },
+      {
+        "name": "native-complete-files",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "scripts/run-local-finance-postgres.mjs",
+          "--schema-maintenance",
+          "--verbose-tests",
+          "/home/cina/cinagroup/cinashop/.cache/php-ts-tools/pg16/bin",
+          "test/uniapp-checkout-postgres.test.ts",
+          "test/diy-presentation-postgres.test.ts",
+          "test/diy-footer-postgres.test.ts",
+          "test/diy-navigation-postgres.test.ts",
+          "test/diy-carousel-postgres.test.ts",
+          "test/diy-editorial-postgres.test.ts",
+          "test/diy-customer-service-postgres.test.ts",
+          "test/diy-page-settings-postgres.test.ts",
+          "test/diy-media-reference-postgres.test.ts",
+          "test/admin-fab-link-catalog-postgres.test.ts",
+          "test/admin-fab-link-catalog-http.test.ts",
+          "test/admin-fab-permission.test.ts",
+          "test/admin-diy-author-options-postgres.test.ts",
+          "test/admin-diy-author-options-http.test.ts",
+          "test/diy-navigation-author-postgres.test.ts",
+          "test/diy-carousel-author-postgres.test.ts",
+          "test/admin-diy-list-author-options-postgres.test.ts",
+          "test/admin-diy-list-author-options-http.test.ts",
+          "test/diy-list-author-postgres.test.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-article-repair-native-complete-files.log",
+        "sha256": "1c9593717017a3994ce7036502569557c6b4022d6a512556e9501449e5b6289e",
+        "case_counts": {
+          "passed": 566
+        },
+        "files_count": 19,
+        "seconds": 311.21891521001817
+      },
+      {
+        "name": "Admin-all-runtime",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/diy-footer-editor-runtime.test.cjs",
+          "scripts/diy-presentation-editor-runtime.test.cjs",
+          "scripts/diy-customer-service-editor-runtime.test.cjs",
+          "scripts/diy-page-settings-editor-runtime.test.cjs",
+          "scripts/diy-navigation-editor-runtime.test.cjs",
+          "scripts/diy-navigation-input-number-runtime.test.cjs",
+          "scripts/diy-carousel-editor-runtime.test.cjs",
+          "scripts/diy-carousel-input-number-runtime.test.cjs",
+          "scripts/diy-carousel-consumer-projection-runtime.test.cjs",
+          "scripts/diy-list-editor-runtime.test.cjs",
+          "scripts/diy-list-input-number-runtime.test.cjs",
+          "scripts/diy-list-consumer-projection-runtime.test.cjs",
+          "scripts/diy-list-catalog-picker-runtime.test.cjs",
+          "scripts/diy-list-waterfall-runtime.test.cjs"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-candidate2-Admin-all-runtime.log",
+        "sha256": "5b07ab53cc84a32cf5a5c4ca200f712686cc50622f1eb04c17835a132eb362bd",
+        "node_summary": [
+          "ℹ tests 412",
+          "ℹ pass 412",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 174902.593164"
+        ],
+        "seconds": 174.93838019500254
+      },
+      {
+        "name": "Admin-build",
+        "command": [
+          "npm",
+          "run",
+          "build"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/admin-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-candidate2-Admin-build.log",
+        "sha256": "8c29879b3c70750eb23a885026427eaa6e8c980354168d88b92c6334cfc5a9ff",
+        "seconds": 68.72520505901775
+      },
+      {
+        "name": "Uni-editorial-and-carousel-runtime",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/diy-editorial-runtime.test.cjs",
+          "scripts/diy-editorial-page-media-runtime.test.cjs",
+          "scripts/diy-editorial-media-cache-runtime.test.cjs",
+          "scripts/diy-carousel-runtime.test.cjs",
+          "scripts/diy-carousel-content-runtime.test.cjs",
+          "scripts/diy-carousel-media-runtime.test.cjs"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-candidate2-Uni-editorial-and-carousel-runtime.log",
+        "sha256": "acb21e172f18ce4456c3804810f995012803adfcfd21aae6bde5b7a3bacfb3ff",
+        "node_summary": [
+          "ℹ tests 262",
+          "ℹ pass 262",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 128214.561784"
+        ],
+        "seconds": 128.2528780809953
+      },
+      {
+        "name": "Uni-H5-build",
+        "command": [
+          "npm",
+          "run",
+          "build:h5"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/view/uniapp-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-candidate2-Uni-H5-build.log",
+        "sha256": "397475ff026dc2d3d9558212932f0caa4ce4abedbef5b8b202c1d8cfc6ba8b25",
+        "seconds": 26.02097123998101
+      },
+      {
+        "name": "Browser-config-strict",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--moduleResolution",
+          "bundler",
+          "--module",
+          "esnext",
+          "--target",
+          "ES2022",
+          "--types",
+          "node",
+          "vitest.diy-list-author-browser.config.ts"
+        ],
+        "cwd": "/home/cina/cinagroup/cinashop/workers-ts",
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-list-author-validation-candidate2-Browser-config-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "seconds": 0.9626858699775767
+      }
+    ],
+    "final_receipt": {
+      "path": "/tmp/cinashop-list-author-validation-article-repair-result.json",
+      "sha256": "d43049a6ee379d87a2981623a50755a98af5d617aa18409f06b78e9eb36c3665",
+      "bytes": 14243482
+    },
+    "post_Browser_test_only_transition": {
+      "prepared_review": {
+        "path": "/tmp/cinashop-list-author-browser-resume-candidate/prepared-review.json",
+        "sha256": "8eca78e2b9f55fdeb43e5ea00b3191aa908a35a909341f52eb15508b8f1af578",
+        "bytes": 6993
+      },
+      "only_changed_file": "workers-ts/test/browser/diy-list-author.acceptance.ts",
+      "before_sha256": "20a001257093a7f0aedbe3e179ec610654f8c4f86ab9c6313c08126b9bb3bc88",
+      "after_sha256": "358e8ad01951ceb5319737b8d9472c90a0cc33501915a947e428c0969b6d5e66",
+      "new_strict_steps": [
+        {
+          "name": "Worker-unit-strict",
+          "command": [
+            "npm",
+            "run",
+            "typecheck:unit"
+          ],
+          "actual_exit_code": 0,
+          "log": "/tmp/cinashop-diy-list-author-browser-resume1/Worker-unit-strict.log",
+          "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b",
+          "seconds": 180.45564194701728
+        },
+        {
+          "name": "Browser-config-strict",
+          "command": [
+            "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+            "--max-old-space-size=8192",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit",
+            "--strict",
+            "--skipLibCheck",
+            "--moduleResolution",
+            "bundler",
+            "--module",
+            "esnext",
+            "--target",
+            "ES2022",
+            "--types",
+            "node",
+            "vitest.diy-list-author-browser.config.ts"
+          ],
+          "actual_exit_code": 0,
+          "log": "/tmp/cinashop-diy-list-author-browser-resume1/Browser-config-strict.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "seconds": 4.588590236991877
+        }
+      ],
+      "all_other6145_sources_and31521_installed_exact": true,
+      "business_frontend_and_production_receipts_reused_only_via_this_exact_transition": true
+    },
+    "source_count": 6146,
+    "installed_count": 31521,
+    "source_installed_driver_drift": [],
+    "reuse_boundary": "Only public article list-cover publication changed. All Admin/Uni sources, runtime tests/build inputs and Browser config are exact previous successful inputs. Worker full88 and native19 are freshly rerun; no prior failed receipt is rewritten.",
+    "all_failed_candidates_preserved": true
+  },
+  "failed_candidates": [
+    {
+      "path": "/tmp/cinashop-list-author-initial-Admin-runtime.log",
+      "sha256": "25c8d4c3ebc7b715d046e4d2be268e461b01d45a1a302e27e0267ee96d4eb7b4",
+      "bytes": 16184
+    },
+    {
+      "path": "/tmp/cinashop-list-author-validation-candidate1-result.json",
+      "sha256": "ee5603514ba66c9cc4863c632da1bc21959c445e288b9d7ff96355d50a55f462",
+      "bytes": 13464783
+    },
+    {
+      "path": "/tmp/cinashop-list-author-validation-candidate2-result.json",
+      "sha256": "07e5c5d872ab1cb2aa4d8a805bae0be38ea82d52e571b972dfb7ea50167b362f",
+      "bytes": 14067348
+    },
+    {
+      "path": "/tmp/cinashop-list-author-validation-final-result.json",
+      "sha256": "d63c0c56adbaf0a9074fa8b5bbec7566d5c35b2bf06fd7b2f08ce64370fb0b5f",
+      "bytes": 14258289
+    },
+    {
+      "path": "/tmp/cinashop-diy-list-author-browser-candidate1/interrupted-collector-recovery.json",
+      "sha256": "09b3f58ae6222385363a8092b09e937d07a424103c1e6cc008cbdb77fc4463a8",
+      "bytes": 7110109
+    }
+  ],
+  "Browser": {
+    "receipt": {
+      "path": "/tmp/cinashop-diy-list-author-browser-resume2-result.json",
+      "sha256": "da9e7f06c9d4b6a2aa7ff976090a84803afa4e4fd1e64e226c223cd7437c984b",
+      "bytes": 13661540
+    },
+    "raw_evidence": {
+      "path": "/tmp/cinashop-diy-list-author-browser-resume2/cinashop-diy-list-author-browser-evidence.json",
+      "sha256": "38cccec354f1de149a5bb987d5be47f594da101938e58f70126c9688370f6944",
+      "bytes": 4298412
+    },
+    "prior_failed_receipt": {
+      "path": "/tmp/cinashop-diy-list-author-browser-candidate1/interrupted-collector-recovery.json",
+      "sha256": "09b3f58ae6222385363a8092b09e937d07a424103c1e6cc008cbdb77fc4463a8",
+      "bytes": 7110109
+    },
+    "prior_failed_partial": {
+      "path": "/tmp/cinashop-diy-list-author-browser-candidate1/terminal-original/cinashop-diy-list-author-browser-partial.json",
+      "sha256": "14a11a97e72bd187c7ad7b9c7563db9a1c9164007422cf9dbc21f5a40b3048ee",
+      "bytes": 14586719
+    },
+    "prior_outer_exit143_child_exit1": true,
+    "prior_deadline_failure_retained": true,
+    "actual_session_history": 3,
+    "intermediate_repeat": {
+      "path": "/tmp/cinashop-diy-list-author-browser-resume1/interrupted-collector-preserved.json",
+      "sha256": "6a87bb15bd9b6f5b8cb9bba0bb976cf396ebac3bacf1fe7a33d80e2a53e1538b",
+      "bytes": 2213
+    },
+    "intermediate_repeat_boundary": "Its two checks and Vitest passed but outer143/child terminal unavailable; retained separately, no added unique check or save. Final repeat has actual outer and child0.",
+    "prior_completed_stages": [
+      "admin",
+      "minimal",
+      "reader",
+      "rootOpen",
+      "catalog",
+      "latePending",
+      "lateClosed",
+      "lateReleased",
+      "rootReopened",
+      "styles",
+      "rootEdited",
+      "rootSaved",
+      "rootH5",
+      "publicSources",
+      "articleReadOnly",
+      "alternateOpen",
+      "alternateEdited",
+      "alternateSaved",
+      "alternateH5",
+      "microOpen",
+      "microNoop",
+      "microEdited",
+      "microSaved"
+    ],
+    "continuation_completed_stages": [
+      "microH5",
+      "finished"
+    ],
+    "checkpoints": [
+      "admin",
+      "minimal",
+      "reader",
+      "rootOpen",
+      "catalog",
+      "latePending",
+      "lateClosed",
+      "lateReleased",
+      "rootReopened",
+      "styles",
+      "rootEdited",
+      "rootSaved",
+      "rootH5",
+      "publicSources",
+      "articleReadOnly",
+      "alternateOpen",
+      "alternateEdited",
+      "alternateSaved",
+      "alternateH5",
+      "microOpen",
+      "microNoop",
+      "microEdited",
+      "microSaved",
+      "microH5",
+      "finished"
+    ],
+    "coverage_boundary": "All25 declared stages covered across two actual sessions. First full test remains failed at63minute deadline after23 checkpoints/3GUI saves. Fresh successful continuation restores exactly final persisted dise1/2 whole rows as explicit setup, does only2read-only stages and0newGUI saves. No cross-session whole-DB identity or single-round25pass claim.",
+    "real_GUI_saves": 3,
+    "continuation_GUI_saves": 0,
+    "raw_JSON_edits": 0,
+    "browser_identity": "Codex In-app Browser id2, hidden; no external Chrome extension connection claimed.",
+    "viewport": "Actual built Admin iframe1200 and anonymous H5 iframe375.",
+    "all9_Admin_loaded_layouts": true,
+    "H5_matrix": [
+      "root",
+      "alternate",
+      "imported_micro"
+    ],
+    "all101_imported_selection_options_trusted_GUI": true,
+    "continuation_real_and_synthetic_counts": {
+      "real_GET": 13,
+      "synthetic": 1
+    },
+    "prior_request_counts": {
+      "real_GET": 144,
+      "synthetic": 151,
+      "real_POST": 3
+    },
+    "tables": 76,
+    "sequences": 71,
+    "prior_unique_full_snapshots": 4,
+    "continuation_unique_full_snapshots": 1,
+    "GET_full_snapshot_and_resources_equal": true,
+    "write_scope": "Prior session has exactly three901 /adminapi/dise/save GUI POSTs targeting1,1,2, changes only value/version/update_time. Continuation seeds archived final whole dise1/2 rows before measurement, records this separately, then allows only anonymous GET with0writes. All other rows/sequences of each own session remain unchanged.",
+    "owned_pg_status": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-AonkPv/data",
+        "exit": 3,
+        "postmaster_pid_exists": false
+      }
+    ],
+    "prior_owned_pg_status": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-D0gjq9/data",
+        "actual_exit": 3,
+        "postmaster_pid_exists": false
+      }
+    ],
+    "post_deadline_console": {
+      "path": "/tmp/cinashop-list-author-browser-candidate1-post-deadline-console.json",
+      "sha256": "c2533a6bd9e160d2916ee077b3d4644d2171923a4e361789df01cc0b5905e35b",
+      "bytes": 361
+    },
+    "continuation_console": {
+      "path": "/tmp/cinashop-list-author-browser-resume-console.json",
+      "sha256": "f002119390a8b35c2f363d07d30a70fde27f3518297557663193f4649626f975",
+      "bytes": 271
+    },
+    "cleanup": "Server, timer, DB, globals restored; owned PG status3/noPID; source/installed/build/driver exact.",
+    "screenshots": [
+      {
+        "path": "/tmp/cinashop-list-author-browser-root-home.jpg",
+        "sha256": "9c4a7de2c0f1118f1d25ecd5451fe67176573d6cac3b91eb7930d5887ca2b97c",
+        "bytes": 93949
+      },
+      {
+        "path": "/tmp/cinashop-list-author-browser-alternate-home.jpg",
+        "sha256": "d6edd7766a21edb0bef0612242841ffdd1577de0180a71e29aa1d559b5cc47b4",
+        "bytes": 90891
+      },
+      {
+        "path": "/tmp/cinashop-list-author-browser-imported-micro.jpg",
+        "sha256": "b7c1e910dc816ecde59ac56d64fc49eb13378f3bd795835870341387c10c0743",
+        "bytes": 67169
+      }
+    ],
+    "boundaries": [
+      "Fresh continuation has only microH5/finished and0GUI saves. Earlier23/checkpoints and3actualGUI saves belong to a preserved failed-deadline candidate linked by fixed SHA.",
+      "Fresh explicit fixture seed restores only archived final dise1/2 whole rows. No old/new whole-database/signedURL/timestamp identity claim. Current GET snapshots/resources prove fresh read-only behavior.",
+      "Real built H5 and actual Worker on fresh owned PG16/R2 fixture; only declared unrelated chrome GETs are synthetic. No new Admin controls/9style/101option/3GUI-save claim in this continuation.",
+      "Owned maintenance SQL DI boundary remains; no production LOGIN ACL or MP/App physical-device/deployment claim."
+    ]
+  },
+  "independent_reviews": [
+    {
+      "path": "/tmp/cinashop-list-author-sourcebinding-independent-review.json",
+      "sha256": "8a7c6898c067587d0a434edbc093f89104641611da926e1fbca64151fd653f60",
+      "bytes": 12080
+    },
+    {
+      "path": "/tmp/cinashop-list-author-frontend-independent-review-v2.json",
+      "sha256": "4304398d53523e0f3e8d4e243e5245ebdbed4e00b44e32297fe36bf75de716dc",
+      "bytes": 21671
+    },
+    {
+      "path": "/tmp/cinashop-list-author-two-adapter-applied-independent-review.json",
+      "sha256": "0555f5fb0c36963fe04d32cc2f3d38e0fffbc0e1c731477670f1026075013d04",
+      "bytes": 10177
+    },
+    {
+      "path": "/tmp/cinashop-list-author-article-media-failure-independent-review.json",
+      "sha256": "9d8d8c98223a33b9ba52291bbc3405bcbd8b22b3e76fb198c098331733f5b9c0",
+      "bytes": 19094
+    },
+    {
+      "path": "/tmp/cinashop-list-author-article-repair-execution-independent-review.json",
+      "sha256": "340a81b21dd96b3964a92a69f3b4fb4935ed0fe54744b5fd942d1facb6d90e7f",
+      "bytes": 741236
+    },
+    {
+      "path": "/tmp/cinashop-list-author-browser-independent-review.json",
+      "sha256": "b8d5acfebe291e5bec350ed6986ae43bfcfba2598396d5028f70622413823785",
+      "bytes": 39986
+    }
+  ],
+  "remaining_author_families": [
+    "userInfor",
+    "newVip",
+    "bargain",
+    "combination",
+    "coupon",
+    "liveBroadcast",
+    "news",
+    "promotionList",
+    "seckill",
+    "ranking",
+    "presale",
+    "pointsMall",
+    "signIn",
+    "hotspot",
+    "follow",
+    "community",
+    "activeParty"
+  ],
+  "remaining_count": 17,
+  "next_readonly_scout": {
+    "path": "/tmp/cinashop-next-state-author-fresh-scout-20261024.json",
+    "sha256": "e4df6f41ab9955807b063d4070232ccc4ca48c6d6b7ec621e377df91fa3ed59e",
+    "bytes": 102679
+  },
+  "known_prior_CI_block": {
+    "receipt": {
+      "path": "/tmp/cinashop-body-parser-CI40039715005-independent-triage.json",
+      "sha256": "f9c93e220cddb15fa9d8819d620331ebf738ea397b5be2b8b48086570040d0b7",
+      "bytes": 10750
+    },
+    "run": "https://github.com/cinagroup/cinashop/actions/runs/40039715005",
+    "head": "f08f27580ded0b1047a8d77f57b33b27918a28c0",
+    "finding": "UniApp live D3 gate unknown body-parser advisory1243073/GHSA-27r3-jxmh-p828/CVE-2026-111181 published after previous local pass; patched1.20.9 also requiresqs~6.16.0. No dependency/install/allowlist edit in this increment.",
+    "new_head_CI": "Must inspect after push; no pass claim."
+  },
+  "expected_final_gates": {
+    "protection_script": {
+      "path": "/tmp/cinashop-list-author-final-protection-with-article.py",
+      "sha256": "1f2d19626e69c6506bce2b49b23d8068a63f3459a56087bb4e7c90842aabcd0e",
+      "bytes": 37194
+    },
+    "status": "Execute after this result leaf and append-only ledgers are frozen; then stage immutable exact patch, secret scan, commit/push and create draft PR. Receipts are recorded externally to avoid self-referential audit hashes.",
+    "expected_old_changed": 21,
+    "expected_old_unchanged": 6812,
+    "expected_new_files": 31,
+    "expected_delta_paths": 52,
+    "MD_old_checkbox_lines": [
+      88,
+      405
+    ],
+    "old_JSON_typed_nodes": 3213
+  },
+  "release_boundary": "No merge, production deployment/live cutover, MP/App physical rendering or whole migration completion."
+}

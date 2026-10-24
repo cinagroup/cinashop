@@ -21,10 +21,13 @@ import {
   ValidateException,
 } from "@/utils/errors";
 import {
+  canonicalizePublishedAttachmentReference,
   normalizePublishedArticleLink,
   renderPublishedArticleHtml,
   renderPublishedArticleMediaReferences,
 } from "@/services/content/ArticleContentPolicy";
+import { publicProductPictures } from "@/services/activity/ProductAssetPolicy";
+import { parseCanonicalAttachmentId } from "@/services/system/AttachmentService";
 
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_PAGED_SIZE = 20;
@@ -426,7 +429,20 @@ export class PublicArticleCompatibilityService {
     const includeLikes = kind === "category";
     const items = rows.map((row) => articleListProjection(row, includeLikes));
     const references = items.flatMap((item) => item.image_input);
-    const signed = await renderPublishedArticleMediaReferences(this.appKey, references);
+    // Public list covers may publish only current platform raster attachments.
+    // Preserve nonattachment URL grammar and every original cover position;
+    // only canonical local IDs pass through the existing owner/media policy.
+    const canonical = references.map(canonicalizePublishedAttachmentReference);
+    const assets = [...new Set(canonical.filter(reference => parseCanonicalAttachmentId(reference) !== null))];
+    const approved = new Map<string, string>();
+    for (let offset = 0; offset < assets.length; offset += 10_000) {
+      const batch = assets.slice(offset, offset + 10_000);
+      const pictures = await publicProductPictures(this.container.db, batch.map(image => ({ image, type: 0, relationId: 0 })));
+      batch.forEach((reference, index) => approved.set(reference, pictures[index]!));
+    }
+    const publicReferences = references.map((reference, index) => parseCanonicalAttachmentId(canonical[index]!) !== null
+      ? approved.get(canonical[index]!) ?? "" : reference);
+    const signed = await renderPublishedArticleMediaReferences(this.appKey, publicReferences);
     let cursor = 0;
     return items.map((item) => ({
       ...item,

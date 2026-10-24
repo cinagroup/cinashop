@@ -502,6 +502,10 @@ export function requiredAdminPermission(method: string, routePath: string): stri
       'dise/author-options/link-targets',
       'dise/author-options/tab-categories',
       'dise/author-options/tab-targets',
+      'dise/author-options/list-products',
+      'dise/author-options/list-brands',
+      'dise/author-options/list-labels',
+      'dise/author-options/list-article-categories',
     ].includes(route) ? DISE_AUTHOR_SELECTION_PERMISSION : null;
   }
   if (route === 'supplier/list' || route.startsWith('supplier/list/')) {

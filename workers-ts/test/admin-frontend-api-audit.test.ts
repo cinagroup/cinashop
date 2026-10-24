@@ -1,3 +1,4 @@
+import { reverseListAuthorSource, applyListAuthorReport } from './helpers/diyListAuthorSourceBinding';
 import { reverseCarouselAuthorSource, applyCarouselAuthorReport, carouselAuthorSourceBinding as carouselBinding } from './helpers/diyCarouselAuthorSourceBinding';
 import { reverseNavigationAuthorSource, applyNavigationAuthorReport, navigationAuthorSourceBinding as navigationBinding } from './helpers/diyNavigationAuthorSourceBinding';
 import { readFileSync } from "node:fs";
@@ -92,7 +93,7 @@ const customerBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-c
 const pageSettingsBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-page-settings-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 const previousNavigationReport = JSON.parse(readFileSync(join(workerRoot, '..', navigationBinding.previous_report.file), 'utf8')) as ApiAuditReport;
-function beforeNavigationSource(file: string, supplied?: string): string { return reverseNavigationAuthorSource(file, reverseCarouselAuthorSource(file, normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot, '..', file), 'utf8')))); }
+function beforeNavigationSource(file: string, supplied?: string): string { return reverseNavigationAuthorSource(file, reverseCarouselAuthorSource(file, reverseListAuthorSource(file, normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot, '..', file), 'utf8'))))); }
 
 function beforePageSettingsSource(file:string, supplied?:string):string {
   let source=beforeNavigationSource(file,supplied);
@@ -306,7 +307,7 @@ describe("Admin frontend API registration audit", () => {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
     }
-    expect(previousNavigationReport).toEqual(updated);expect(applyCarouselAuthorReport(applyNavigationAuthorReport(updated))).toEqual(current);expect(settings.file).toBe(customer.file);
+    expect(previousNavigationReport).toEqual(updated);expect(applyListAuthorReport(applyCarouselAuthorReport(applyNavigationAuthorReport(updated)))).toEqual(current);expect(settings.file).toBe(customer.file);
     expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(settings.sha256);
     expect(navigationBinding.previous_report.sha256).toBe(settings.sha256);
     expect(sha256(readFileSync(join(workerRoot,'..',navigationBinding.previous_report.file)))).toBe(settings.sha256);

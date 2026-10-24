@@ -1,3 +1,4 @@
+import { reverseListAuthorSource } from './helpers/diyListAuthorSourceBinding';
 import { reverseNavigationAuthorSource } from './helpers/diyNavigationAuthorSourceBinding';
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -103,7 +104,7 @@ describe("restored PHP statistics script contract and retained retirement histor
     expect(digest(footerBindingRaw)).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
     expect(footerBinding.historical_statistics_restoration).toEqual(stateIncrement.statistics_restoration);
     for(const proof of restoration.current_sources){
-      const current=reverseNavigationAuthorSource(proof.file,read(proof.file)),footer=footerBinding.sources.find(row=>row.file===proof.file);
+      const current=reverseNavigationAuthorSource(proof.file,reverseListAuthorSource(proof.file,read(proof.file))),footer=footerBinding.sources.find(row=>row.file===proof.file);
       const restored=footer?reverseRouteSourceFollowup(current,footer):current;
       const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(reverseRouteSourceFollowup(restored,availabilityFollowup),stateIncrement):restored;
       expect(digest(original),proof.file).toBe(proof.sha256);
@@ -115,7 +116,7 @@ describe("restored PHP statistics script contract and retained retirement histor
     ["handler", "workers-ts/src/controllers/api/v1/PublicController.ts", "c.body(script)", "c.body('')"],
   ])("rejects a statistics %s mutation even when the state route exists",(_role,file,before,after)=>{
     const proof=restoration.current_sources.find(row=>row.file===file)!;
-    const historical=reverseNavigationAuthorSource(file,read(file)),changed=historical.replace(before,after);
+    const historical=reverseNavigationAuthorSource(file,reverseListAuthorSource(file,read(file))),changed=historical.replace(before,after);
     expect(changed).not.toBe(historical);
     if(file===stateIncrement.route_file)expect(()=>reverseRouteSourceIncrement(reverseRouteSourceFollowup(changed,availabilityFollowup),stateIncrement)).toThrow();
     else {

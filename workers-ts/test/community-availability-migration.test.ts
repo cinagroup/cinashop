@@ -1,3 +1,4 @@
+import { reverseListAuthorSource } from './helpers/diyListAuthorSourceBinding';
 import { reverseNavigationAuthorSource } from './helpers/diyNavigationAuthorSourceBinding';
 import { readFileSync } from "node:fs";
 import ts from "typescript";
@@ -44,14 +45,14 @@ describe("PHP community availability route admission", () => {
       expect(edit.before_source.startsWith(`v1Routes.${route.method.toLowerCase()}(`)).toBe(true);
       expect(edit.after_source).toBe(edit.before_source.replace("authMiddleware(", "stationOpenMiddleware(), communityOpenMiddleware(), authMiddleware("));
     }
-    expect(() => reverseRouteSourceFollowup(reverseNavigationAuthorSource('workers-ts/src/routes/v1/index.ts',source), followup)).not.toThrow();
+    expect(() => reverseRouteSourceFollowup(reverseNavigationAuthorSource('workers-ts/src/routes/v1/index.ts',reverseListAuthorSource('workers-ts/src/routes/v1/index.ts',source)), followup)).not.toThrow();
   });
   it.each(["after_line", "before_line", "before_source", "after_source", "before_sha256"] as const)("rejects a changed %s source followup", key => {
     const changed = structuredClone(followup);
     if (key === "before_sha256") changed.before_sha256 = "0".repeat(64);
     else if (key === "before_line" || key === "after_line") changed.edits[1][key] = 1;
     else changed.edits[1][key] += " /* unrelated */";
-    expect(() => reverseRouteSourceFollowup(reverseNavigationAuthorSource('workers-ts/src/routes/v1/index.ts',source), changed)).toThrow();
+    expect(() => reverseRouteSourceFollowup(reverseNavigationAuthorSource('workers-ts/src/routes/v1/index.ts',reverseListAuthorSource('workers-ts/src/routes/v1/index.ts',source)), changed)).toThrow();
   });
   it("binds the two real gates in order before unchanged auth on exactly 28 actions, excluding public config", () => {
     expect(communityAvailabilityRoutes).toHaveLength(28); expect(() => verify(source)).not.toThrow();

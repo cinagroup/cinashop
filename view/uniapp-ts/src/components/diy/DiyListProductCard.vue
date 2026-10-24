@@ -10,7 +10,7 @@
       <view v-if="config.showLabels" class="list-labels"><view v-for="label in product.labels" :key="label.id" class="list-label" :style="{color:label.color,background:label.background,borderColor:label.border}"><image v-if="label.icon" :src="label.icon" />{{label.name}}</view></view>
       <view class="list-price-line"><text v-if="config.showPrice" class="list-price" :style="config.priceStyle">¥{{product.price}}</text><text v-if="config.showOffer && product.offer" class="list-offer">{{product.offer.label}} ¥{{product.offer.price}}</text></view>
       <view class="list-meta"><text v-if="config.showSales" class="list-sales" :style="config.salesStyle">已售{{product.sales}}{{product.unit_name}}</text><text v-if="config.showRating" class="list-rating" :style="config.ratingStyle">评分{{product.star}}</text></view>
-      <button v-if="config.showAction" class="list-action" :data-action-style="config.actionStyle" :style="config.buttonStyle" :disabled="disabled" :aria-label="config.cartMode?'选择规格加入购物车':'查看商品'" @tap.stop="$emit('action',product.id)">{{config.actionStyle===0 && (config.style===0 || config.style===4)?'购买':config.actionStyle<2?'＋':'购物车'}}</button>
+      <button v-if="config.showAction" class="list-action" :data-action-style="config.actionStyle" :style="config.buttonStyle" :disabled="disabled" :aria-label="config.cartMode?'选择规格加入购物车':'查看商品'" @tap.stop="$emit('action',product.id)">{{config.style===0 || config.style===4 ? config.actionStyle===0?'购买':config.actionStyle===1?'＋':'购物车' : config.actionStyle===0?'＋':'购物车'}}</button>
     </view>
   </view>
 </template>

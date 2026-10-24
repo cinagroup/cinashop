@@ -14,3 +14,7 @@ export async function linkCategories(c: C) { return jsonOk(c, await service(c).l
 export async function linkTargets(c: C) { return jsonOk(c, await service(c).linkTargets(parameters(c))); }
 export async function tabCategories(c: C) { return jsonOk(c, await service(c).tabCategories(parameters(c))); }
 export async function tabTargets(c: C) { return jsonOk(c, await service(c).tabTargets(parameters(c))); }
+export async function listProducts(c: C) { return jsonOk(c, await service(c).listProducts(parameters(c))); }
+export async function listBrands(c: C) { return jsonOk(c, await service(c).listBrands(parameters(c))); }
+export async function listLabels(c: C) { return jsonOk(c, await service(c).listLabels(parameters(c))); }
+export async function listArticleCategories(c: C) { return jsonOk(c, await service(c).listArticleCategories(parameters(c))); }

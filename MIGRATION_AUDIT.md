@@ -8548,3 +8548,8 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 - 真实GET核全76表/71序列/资源零写入，3次POST只目标value/version/update_time。原报告字节归档与精确逆变换保留旧审计/negative；生产后端、SQL、schema/grants及六锁未改。
 
 证据：`workers-ts/docs/php-ts-diy-carousel-author-20261023.md` 与 `workers-ts/audit/php-ts-diy-carousel-author-20261023.json`。本轮仍19正文族待作者迁移；整体迁移、精确新headCI、合并及生产上线另行记录，未标完成。
+
+
+### 2026-10-24 商品/文章列表作者合同
+
+本批完成普通 goodList/articleList 控件、四类商品范围与文章分类、只读当前公开预览；导入内容及独立 content 保留。实际 Admin412、Uni262、Worker1842（原3项原生专用跳过）、PostgreSQL566和隐藏浏览器两会话合计覆盖25阶段/3次GUI保存；原轮63分钟超时失败保留，续轮仅2个只读阶段通过。公开文章列表封面新增当前平台附件校验，原8项失败用例重验通过。机器证据见 `workers-ts/audit/php-ts-diy-list-author-20261023.json`。剩余17族，父级原有未完成项保持开放；get_script恢复合同与三端加载保留。前一提交UniApp CI的新body-parser门禁另行修复；新提交CI另核对，本批未合并或部署。

@@ -2387,6 +2387,10 @@ v1Routes.get("/admin/dise/author-options/link-categories", adminAuth, AdminDiyAu
 v1Routes.get("/admin/dise/author-options/link-targets", adminAuth, AdminDiyAuthorOptions.linkTargets);
 v1Routes.get("/admin/dise/author-options/tab-categories", adminAuth, AdminDiyAuthorOptions.tabCategories);
 v1Routes.get("/admin/dise/author-options/tab-targets", adminAuth, AdminDiyAuthorOptions.tabTargets);
+v1Routes.get("/admin/dise/author-options/list-products", adminAuth, AdminDiyAuthorOptions.listProducts);
+v1Routes.get("/admin/dise/author-options/list-brands", adminAuth, AdminDiyAuthorOptions.listBrands);
+v1Routes.get("/admin/dise/author-options/list-labels", adminAuth, AdminDiyAuthorOptions.listLabels);
+v1Routes.get("/admin/dise/author-options/list-article-categories", adminAuth, AdminDiyAuthorOptions.listArticleCategories);
 v1Routes.get("/admin/dise/list", adminAuth, AdminCrud.adminDiseList);
 v1Routes.post("/admin/dise/save", adminAuth, AdminCrud.adminDiseSave);
 v1Routes.delete("/admin/dise/del/:id", adminAuth, AdminCrud.adminDiseDel);
