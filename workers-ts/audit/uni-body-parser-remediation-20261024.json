@@ -1,0 +1,4902 @@
+{
+  "schema": "cinashop.uni-body-parser-remediation.v1",
+  "recorded_utc": "2026-10-24T05:00:24.954625+00:00",
+  "base_commit": "e8c76fe745400e7bda381c9cc0c3029021084f4e",
+  "scope": "Minimal resolver-produced optional UniApp H5 SSR body-parser patch. Production app sources, guard/gate implementation, all other locks, SQL/schema/ACL and restored statistics compatibility remain unchanged.",
+  "ci_original_failure": {
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/40058660438/job/120767225809",
+    "head": "e8c76fe745400e7bda381c9cc0c3029021084f4e",
+    "log": {
+      "path": "/tmp/cinashop-body-parser-PR163-Uni-job120767225809.log",
+      "sha256": "0cdb5795aafd756576b1af784d5531474dca6b49b7e27a7b13b5565fc27aaadc",
+      "bytes": 492548
+    },
+    "actual_message": "D3 advisory gate: unknown direct advisory 1243073 on body-parser"
+  },
+  "advisory": {
+    "source": 1243073,
+    "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+    "cve": "CVE-2026-111181",
+    "severity": "high",
+    "official_json": {
+      "path": "/tmp/cinashop-body-parser-GHSA-27r3-jxmh-p828-official.json",
+      "sha256": "b606146c9eb623f96816310df099ab00fbcc7e2ef618e6d9b162e0b6d32241e7",
+      "bytes": 6970
+    },
+    "affected_1x": "<1.20.9",
+    "fixed_1x": "1.20.9"
+  },
+  "resolver": {
+    "toolchain": {
+      "node": {
+        "execPath": "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "version": "v24.19.0"
+      },
+      "npm": "11.11.0",
+      "pg": "postgres (PostgreSQL) 16.14"
+    },
+    "exact_package_node_delta": [
+      {
+        "path": "node_modules/body-parser",
+        "before": {
+          "version": "1.20.6",
+          "resolved": "https://registry.npmmirror.com/body-parser/-/body-parser-1.20.6.tgz",
+          "integrity": "sha512-p5tAzS57i5MV9fZFDj9LeIiTZEufbSe2eDozP+ElheSUq1m74CRq1jI4mYNDdVs9vQztXFLuk/Gd6BWTdwRJ5g==",
+          "dev": true,
+          "license": "MIT",
+          "dependencies": {
+            "bytes": "~3.1.2",
+            "content-type": "~1.0.5",
+            "debug": "2.6.9",
+            "depd": "2.0.0",
+            "destroy": "~1.2.0",
+            "http-errors": "~2.0.1",
+            "iconv-lite": "~0.4.24",
+            "on-finished": "~2.4.1",
+            "qs": "~6.15.1",
+            "raw-body": "~2.5.3",
+            "type-is": "~1.6.18",
+            "unpipe": "~1.0.0"
+          },
+          "engines": {
+            "node": ">= 0.8",
+            "npm": "1.2.8000 || >= 1.4.16"
+          }
+        },
+        "after": {
+          "version": "1.20.9",
+          "resolved": "https://registry.npmjs.org/body-parser/-/body-parser-1.20.9.tgz",
+          "integrity": "sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw==",
+          "dev": true,
+          "license": "MIT",
+          "dependencies": {
+            "bytes": "~3.1.2",
+            "content-type": "~1.0.5",
+            "debug": "2.6.9",
+            "depd": "2.0.0",
+            "destroy": "~1.2.0",
+            "http-errors": "~2.0.1",
+            "iconv-lite": "~0.4.24",
+            "on-finished": "~2.4.1",
+            "qs": "~6.16.0",
+            "raw-body": "~2.5.3",
+            "type-is": "~1.6.18",
+            "unpipe": "~1.0.0"
+          },
+          "engines": {
+            "node": ">= 0.8",
+            "npm": "1.2.8000 || >= 1.4.16"
+          }
+        }
+      },
+      {
+        "path": "node_modules/body-parser/node_modules/qs",
+        "before": null,
+        "after": {
+          "version": "6.16.1",
+          "resolved": "https://registry.npmjs.org/qs/-/qs-6.16.1.tgz",
+          "integrity": "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==",
+          "dev": true,
+          "license": "BSD-3-Clause",
+          "dependencies": {
+            "es-define-property": "^1.0.1",
+            "side-channel": "^1.1.1"
+          },
+          "engines": {
+            "node": ">=0.6"
+          },
+          "funding": {
+            "url": "https://github.com/sponsors/ljharb"
+          }
+        }
+      }
+    ],
+    "other_top_level_changes": [],
+    "official_metadata": [
+      {
+        "url": "https://registry.npmjs.org/body-parser/1.20.9",
+        "path": "/tmp/cinashop-body-parser-install-20261024/body-parser-1.20.9-official.json",
+        "sha256": "5367ca530e3f61e1035c4bdab1a5374bd4368ca1e9e84727417148448a9b3402",
+        "version": "1.20.9",
+        "integrity": "sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw=="
+      },
+      {
+        "url": "https://registry.npmjs.org/qs/6.16.1",
+        "path": "/tmp/cinashop-body-parser-install-20261024/qs-6.16.1-official.json",
+        "sha256": "10dce9e40d8e419126d6a743e54509db9c080ca2aebbe605b10a46f51f0abf91",
+        "version": "6.16.1",
+        "integrity": "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg=="
+      }
+    ],
+    "clean_locked_install": {
+      "name": "clean-locked-install",
+      "args": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund",
+        "--registry=https://registry.npmjs.org"
+      ],
+      "started": "2026-10-24T03:55:10.035654+00:00",
+      "exit_code": 0,
+      "finished": "2026-10-24T03:55:22.676516+00:00",
+      "stdout_sha256": "376c0d0d8be39612645d41fbc433832b589115d4b6220052f938cfb40e07060d",
+      "stderr_sha256": "818f9a9d721bef3df22eba989319b2999dc996bacc737ab7af3a87044d941bea"
+    },
+    "installed_definition_change_count": 16,
+    "installed_definition_changes": [
+      "view/uniapp-ts/node_modules/.package-lock.json",
+      "view/uniapp-ts/node_modules/.vue-global-types/vue_3.4_0_0_0.d.ts",
+      "view/uniapp-ts/node_modules/body-parser/lib/read.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/dist/qs.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/eslint.config.mjs",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/lib/formats.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/lib/index.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/lib/parse.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/lib/stringify.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/lib/utils.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/package.json",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/test/empty-keys-cases.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/test/parse.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/test/stringify.js",
+      "view/uniapp-ts/node_modules/body-parser/node_modules/qs/test/utils.js",
+      "view/uniapp-ts/node_modules/body-parser/package.json"
+    ],
+    "express_unchanged": "4.22.2; qs~6.15.1 resolves original root6.15.3",
+    "body_parser_qs": "~6.16.0 resolves own nested6.16.1",
+    "no_manifest_override": true
+  },
+  "actual_official_audit_before": {
+    "auditReportVersion": 2,
+    "vulnerabilities": {
+      "@dcloudio/uni-app": {
+        "name": "@dcloudio/uni-app",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-components",
+          "@dcloudio/uni-push",
+          "@dcloudio/uni-stat"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-plus": {
+        "name": "@dcloudio/uni-app-plus",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-app-uts",
+          "@dcloudio/uni-app-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-plus"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-uts": {
+        "name": "@dcloudio/uni-app-uts",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-plus"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-uts"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-vite": {
+        "name": "@dcloudio/uni-app-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vitejs/plugin-vue"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-plus"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-vite"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-automator": {
+        "name": "@dcloudio/uni-automator",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "jest"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-automator"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-cli-shared": {
+        "name": "@dcloudio/uni-cli-shared",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@intlify/core-base",
+          "@intlify/vue-devtools",
+          "@vue/server-renderer",
+          "adm-zip"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-uts",
+          "@dcloudio/uni-app-vite",
+          "@dcloudio/uni-automator",
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-mp-alipay",
+          "@dcloudio/uni-mp-baidu",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-toutiao",
+          "@dcloudio/uni-mp-vite",
+          "@dcloudio/uni-mp-weixin",
+          "@dcloudio/uni-push",
+          "@dcloudio/uni-stat"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-cli-shared"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-cloud": {
+        "name": "@dcloudio/uni-cloud",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [
+          "@dcloudio/uni-app"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-cloud"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-components": {
+        "name": "@dcloudio/uni-components",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-h5"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-components"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-h5": {
+        "name": "@dcloudio/uni-h5",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-h5-vite",
+          "@dcloudio/uni-h5-vue",
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@dcloudio/uni-components"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-h5",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-h5-vite": {
+        "name": "@dcloudio/uni-h5-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vue/server-renderer"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5-vite"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-h5-vue": {
+        "name": "@dcloudio/uni-h5-vue",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@dcloudio/uni-h5"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5-vue"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-h5",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-alipay": {
+        "name": "@dcloudio/uni-mp-alipay",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-alipay"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-alipay",
+          "version": "0.0.827",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-baidu": {
+        "name": "@dcloudio/uni-mp-baidu",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-vite",
+          "@dcloudio/uni-mp-weixin",
+          "jimp"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-baidu"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-baidu",
+          "version": "0.0.857",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-compiler": {
+        "name": "@dcloudio/uni-mp-compiler",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-compiler"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-mp-toutiao": {
+        "name": "@dcloudio/uni-mp-toutiao",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-toutiao"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-toutiao",
+          "version": "0.0.352",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-vite": {
+        "name": "@dcloudio/uni-mp-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-vite"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-mp-weixin": {
+        "name": "@dcloudio/uni-mp-weixin",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-vite",
+          "jimp"
+        ],
+        "effects": [
+          "@dcloudio/uni-mp-baidu"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-weixin"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-push": {
+        "name": "@dcloudio/uni-push",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-push"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-stat": {
+        "name": "@dcloudio/uni-stat",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-stat"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/vite-plugin-uni": {
+        "name": "@dcloudio/vite-plugin-uni",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vitejs/plugin-legacy",
+          "@vitejs/plugin-vue",
+          "@vitejs/plugin-vue-jsx",
+          "vite"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/vite-plugin-uni"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/core-base": {
+        "name": "@intlify/core-base",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-compiler",
+          "@intlify/message-resolver",
+          "@intlify/runtime",
+          "@intlify/vue-devtools",
+          {
+            "source": 1106453,
+            "name": "@intlify/core-base",
+            "dependency": "@intlify/core-base",
+            "title": "vue-i18n's escapeParameterHtml does not prevent DOM-based XSS through its tag attributes",
+            "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-79"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.0.0 <9.14.5"
+          },
+          {
+            "source": 1146054,
+            "name": "@intlify/core-base",
+            "dependency": "@intlify/core-base",
+            "title": "Vue I18n Allows Prototype Pollution in `handleFlatJson`",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.1.0 <9.1.11"
+          }
+        ],
+        "effects": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "range": "9.0.0 - 9.14.4",
+        "nodes": [
+          "node_modules/@intlify/core-base"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/message-compiler": {
+        "name": "@intlify/message-compiler",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-resolver"
+        ],
+        "effects": [],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/message-compiler"
+        ],
+        "fixAvailable": true
+      },
+      "@intlify/message-resolver": {
+        "name": "@intlify/message-resolver",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1146058,
+            "name": "@intlify/message-resolver",
+            "dependency": "@intlify/message-resolver",
+            "title": "Vue I18n Allows Prototype Pollution in `handleFlatJson`",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.1.0 <9.1.11"
+          }
+        ],
+        "effects": [
+          "@intlify/core-base",
+          "@intlify/message-compiler",
+          "@intlify/runtime",
+          "@intlify/vue-devtools"
+        ],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/message-resolver"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/runtime": {
+        "name": "@intlify/runtime",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-compiler",
+          "@intlify/message-resolver"
+        ],
+        "effects": [],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/runtime"
+        ],
+        "fixAvailable": true
+      },
+      "@intlify/vue-devtools": {
+        "name": "@intlify/vue-devtools",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-resolver",
+          "@intlify/runtime"
+        ],
+        "effects": [],
+        "range": "<=9.1.10",
+        "nodes": [
+          "node_modules/@intlify/vue-devtools"
+        ],
+        "fixAvailable": true
+      },
+      "@jest/core": {
+        "name": "@jest/core",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-config",
+          "jest-runner"
+        ],
+        "effects": [
+          "jest",
+          "jest-cli"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/@jest/core"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/core": {
+        "name": "@jimp/core",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "phin"
+        ],
+        "effects": [
+          "@jimp/custom"
+        ],
+        "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/@jimp/core"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/custom": {
+        "name": "@jimp/custom",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/core"
+        ],
+        "effects": [
+          "jimp"
+        ],
+        "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/@jimp/custom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/jpeg": {
+        "name": "@jimp/jpeg",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "jpeg-js"
+        ],
+        "effects": [
+          "@jimp/types"
+        ],
+        "range": "<=0.12.0",
+        "nodes": [
+          "node_modules/@jimp/jpeg"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/types": {
+        "name": "@jimp/types",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/jpeg"
+        ],
+        "effects": [
+          "jimp"
+        ],
+        "range": "<=0.11.1-canary.891.908.0",
+        "nodes": [
+          "node_modules/@jimp/types"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@tootallnate/once": {
+        "name": "@tootallnate/once",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1119438,
+            "name": "@tootallnate/once",
+            "dependency": "@tootallnate/once",
+            "title": "@tootallnate/once vulnerable to Incorrect Control Flow Scoping",
+            "url": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+            "severity": "low",
+            "cwe": [
+              "CWE-705"
+            ],
+            "cvss": {
+              "score": 3.3,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": "<2.0.1"
+          }
+        ],
+        "effects": [
+          "http-proxy-agent"
+        ],
+        "range": "<2.0.1",
+        "nodes": [
+          "node_modules/@tootallnate/once"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@vitejs/plugin-legacy": {
+        "name": "@vitejs/plugin-legacy",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [],
+        "range": "1.0.1 - 5.4.3",
+        "nodes": [
+          "node_modules/@vitejs/plugin-legacy"
+        ],
+        "fixAvailable": true
+      },
+      "@vitejs/plugin-vue": {
+        "name": "@vitejs/plugin-vue",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-vite",
+          "@dcloudio/vite-plugin-uni"
+        ],
+        "range": "1.8.0 - 5.2.0",
+        "nodes": [
+          "node_modules/@vitejs/plugin-vue"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@vitejs/plugin-vue-jsx": {
+        "name": "@vitejs/plugin-vue-jsx",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [],
+        "range": "2.0.0-alpha.0 - 4.1.0",
+        "nodes": [
+          "node_modules/@vitejs/plugin-vue-jsx"
+        ],
+        "fixAvailable": true
+      },
+      "@vue/server-renderer": {
+        "name": "@vue/server-renderer",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          {
+            "source": 1241259,
+            "name": "@vue/server-renderer",
+            "dependency": "@vue/server-renderer",
+            "title": "@vue/server-renderer: XSS via missing CR in attribute-name blacklist",
+            "url": "https://github.com/advisories/GHSA-g2v6-rqmx-r4w6",
+            "severity": "high",
+            "cwe": [
+              "CWE-79",
+              "CWE-116"
+            ],
+            "cvss": {
+              "score": 7.2,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N"
+            },
+            "range": "<3.5.42"
+          },
+          "vue"
+        ],
+        "effects": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-h5",
+          "@dcloudio/uni-h5-vite",
+          "@dcloudio/uni-h5-vue",
+          "vue"
+        ],
+        "range": "<=3.5.41",
+        "nodes": [
+          "node_modules/@vue/server-renderer"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "adm-zip": {
+        "name": "adm-zip",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1123686,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Crafted ZIP file triggers 4GB memory allocation",
+            "url": "https://github.com/advisories/GHSA-xcpc-8h2w-3j85",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-789"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.6.0"
+          },
+          {
+            "source": 1193734,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip extraction follows destination symlinks, allowing arbitrary file overwrite",
+            "url": "https://github.com/advisories/GHSA-vwc7-r8mq-g2x9",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-59"
+            ],
+            "cvss": {
+              "score": 6.5,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:N"
+            },
+            "range": ">=0.5.9 <=0.6.0"
+          },
+          {
+            "source": 1239030,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Uncontrolled memory allocation via the declared uncompressed size (DoS)",
+            "url": "https://github.com/advisories/GHSA-7q85-xj36-vmfc",
+            "severity": "high",
+            "cwe": [
+              "CWE-789"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.6.1"
+          },
+          {
+            "source": 1240032,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Decompression-bomb protection (fix for CVE-2026-39244) can be bypassed by declaring uncompressed size as 0",
+            "url": "https://github.com/advisories/GHSA-rcw4-f5rp-g42v",
+            "severity": "high",
+            "cwe": [
+              "CWE-409"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240034,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip extraction preserves SUID/SGID bits from untrusted ZIPs -> local privilege escalation",
+            "url": "https://github.com/advisories/GHSA-j5f4-cc29-5x44",
+            "severity": "high",
+            "cwe": [
+              "CWE-732"
+            ],
+            "cvss": {
+              "score": 7.1,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240064,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Duplicate ZIP entry names: getEntry() and extractAllTo() resolve to different content",
+            "url": "https://github.com/advisories/GHSA-p634-w6r4-rjp2",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-436",
+              "CWE-696"
+            ],
+            "cvss": {
+              "score": 5.9,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240065,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: getDataAsync() bypasses the maxOutputLength size guard enforced by the synchronous getData() path",
+            "url": "https://github.com/advisories/GHSA-c6fg-446q-cg94",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240066,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Unhandled error event in async DEFLATE decompression crashes Node.js process (DoS)",
+            "url": "https://github.com/advisories/GHSA-8238-w5pm-2374",
+            "severity": "high",
+            "cwe": [
+              "CWE-248",
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=0.6.0"
+          }
+        ],
+        "effects": [],
+        "range": "<=0.6.0",
+        "nodes": [
+          "node_modules/adm-zip"
+        ],
+        "fixAvailable": true
+      },
+      "body-parser": {
+        "name": "body-parser",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1243073,
+            "name": "body-parser",
+            "dependency": "body-parser",
+            "title": "body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body",
+            "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+            "severity": "high",
+            "cwe": [
+              "CWE-248"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<1.20.9"
+          },
+          "qs"
+        ],
+        "effects": [],
+        "range": "<=1.20.8",
+        "nodes": [
+          "node_modules/body-parser"
+        ],
+        "fixAvailable": true
+      },
+      "express": {
+        "name": "express",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "qs"
+        ],
+        "effects": [],
+        "range": "4.22.2",
+        "nodes": [
+          "node_modules/express"
+        ],
+        "fixAvailable": true
+      },
+      "http-proxy-agent": {
+        "name": "http-proxy-agent",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@tootallnate/once"
+        ],
+        "effects": [
+          "jsdom"
+        ],
+        "range": "4.0.1",
+        "nodes": [
+          "node_modules/http-proxy-agent"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest": {
+        "name": "jest",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "effects": [
+          "@dcloudio/uni-automator"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-cli": {
+        "name": "jest-cli",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "effects": [
+          "jest"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-cli"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-config": {
+        "name": "jest-config",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-environment-jsdom",
+          "jest-runner"
+        ],
+        "effects": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-config"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-environment-jsdom": {
+        "name": "jest-environment-jsdom",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jsdom"
+        ],
+        "effects": [
+          "jest-config",
+          "jest-runner"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-environment-jsdom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-runner": {
+        "name": "jest-runner",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-environment-jsdom"
+        ],
+        "effects": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "range": "27.0.4 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-runner"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jimp": {
+        "name": "jimp",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/custom",
+          "@jimp/types"
+        ],
+        "effects": [
+          "@dcloudio/uni-mp-weixin"
+        ],
+        "range": "0.3.6-alpha.5 - 0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/jimp"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "jpeg-js": {
+        "name": "jpeg-js",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1088964,
+            "name": "jpeg-js",
+            "dependency": "jpeg-js",
+            "title": "Infinite loop in jpeg-js",
+            "url": "https://github.com/advisories/GHSA-xvf7-4v9q-58w6",
+            "severity": "high",
+            "cwe": [
+              "CWE-835"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.4.4"
+          },
+          {
+            "source": 1093580,
+            "name": "jpeg-js",
+            "dependency": "jpeg-js",
+            "title": "Uncontrolled resource consumption in jpeg-js",
+            "url": "https://github.com/advisories/GHSA-w7q9-p3jq-fmhm",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 5.5,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.4.0"
+          }
+        ],
+        "effects": [
+          "@jimp/jpeg"
+        ],
+        "range": "<=0.4.3",
+        "nodes": [
+          "node_modules/jpeg-js"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "jsdom": {
+        "name": "jsdom",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "http-proxy-agent"
+        ],
+        "effects": [
+          "jest-environment-jsdom"
+        ],
+        "range": "16.6.0 - 17.0.0",
+        "nodes": [
+          "node_modules/jsdom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "phin": {
+        "name": "phin",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1096967,
+            "name": "phin",
+            "dependency": "phin",
+            "title": "phin may include sensitive headers in subsequent requests after redirect",
+            "url": "https://github.com/advisories/GHSA-x565-32qp-m3vf",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 4.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N"
+            },
+            "range": "<3.7.1"
+          }
+        ],
+        "effects": [
+          "@jimp/core"
+        ],
+        "range": "<3.7.1",
+        "nodes": [
+          "node_modules/phin"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "qs": {
+        "name": "qs",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1158506,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs array-limit bypass via bracket-key comma parsing",
+            "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 3.7,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=6.14.2 <=6.15.3"
+          },
+          {
+            "source": 1158507,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+            "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-248",
+              "CWE-703"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=2.2.5 <6.16.0"
+          }
+        ],
+        "effects": [
+          "body-parser",
+          "express"
+        ],
+        "range": "2.2.5 - 6.15.3",
+        "nodes": [
+          "node_modules/qs"
+        ],
+        "fixAvailable": true
+      },
+      "vite": {
+        "name": "vite",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          {
+            "source": 1116229,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite Vulnerable to Path Traversal in Optimized Deps `.map` Handling",
+            "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-22",
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.1"
+          },
+          {
+            "source": 1120784,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows",
+            "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-73",
+              "CWE-522"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.2"
+          },
+          {
+            "source": 1123525,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
+            "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+            "severity": "high",
+            "cwe": [
+              "CWE-22",
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+            },
+            "range": "<=6.4.2"
+          },
+          {
+            "source": 1242622,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+            "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-78"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242651,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+            "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-88"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242658,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+            "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+            "severity": "high",
+            "cwe": [
+              "CWE-77"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242724,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite: Cross origin script execution through Vite custom middleware",
+            "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+            "severity": "low",
+            "cwe": [
+              "CWE-80"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242730,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+            "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-22",
+              "CWE-284"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          }
+        ],
+        "effects": [
+          "@dcloudio/vite-plugin-uni",
+          "@vitejs/plugin-legacy",
+          "@vitejs/plugin-vue",
+          "@vitejs/plugin-vue-jsx"
+        ],
+        "range": "<=6.4.3",
+        "nodes": [
+          "node_modules/vite"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "vue": {
+        "name": "vue",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@vue/server-renderer"
+        ],
+        "range": "3.2.13 - 3.5.41",
+        "nodes": [
+          "node_modules/vue"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      }
+    },
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 9,
+        "moderate": 11,
+        "high": 31,
+        "critical": 0,
+        "total": 51
+      },
+      "dependencies": {
+        "prod": 307,
+        "dev": 461,
+        "optional": 53,
+        "peer": 253,
+        "peerOptional": 0,
+        "total": 836
+      }
+    }
+  },
+  "actual_official_audit_after": {
+    "auditReportVersion": 2,
+    "vulnerabilities": {
+      "@dcloudio/uni-app": {
+        "name": "@dcloudio/uni-app",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-components",
+          "@dcloudio/uni-push",
+          "@dcloudio/uni-stat"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-plus": {
+        "name": "@dcloudio/uni-app-plus",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-app-uts",
+          "@dcloudio/uni-app-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-plus"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-uts": {
+        "name": "@dcloudio/uni-app-uts",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-plus"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-uts"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-app-vite": {
+        "name": "@dcloudio/uni-app-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vitejs/plugin-vue"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-plus"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-app-vite"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-app-plus",
+          "version": "0.0.253",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-automator": {
+        "name": "@dcloudio/uni-automator",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "jest"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-automator"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-cli-shared": {
+        "name": "@dcloudio/uni-cli-shared",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@intlify/core-base",
+          "@intlify/vue-devtools",
+          "@vue/server-renderer",
+          "adm-zip"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-uts",
+          "@dcloudio/uni-app-vite",
+          "@dcloudio/uni-automator",
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-mp-alipay",
+          "@dcloudio/uni-mp-baidu",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-toutiao",
+          "@dcloudio/uni-mp-vite",
+          "@dcloudio/uni-mp-weixin",
+          "@dcloudio/uni-push",
+          "@dcloudio/uni-stat"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-cli-shared"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-cloud": {
+        "name": "@dcloudio/uni-cloud",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [
+          "@dcloudio/uni-app"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-cloud"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-components": {
+        "name": "@dcloudio/uni-components",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cloud",
+          "@dcloudio/uni-h5"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-components"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-h5": {
+        "name": "@dcloudio/uni-h5",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-h5-vite",
+          "@dcloudio/uni-h5-vue",
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@dcloudio/uni-components"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-h5",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-h5-vite": {
+        "name": "@dcloudio/uni-h5-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vue/server-renderer"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5-vite"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-h5-vue": {
+        "name": "@dcloudio/uni-h5-vue",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@dcloudio/uni-h5"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-h5-vue"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-h5",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-alipay": {
+        "name": "@dcloudio/uni-mp-alipay",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-alipay"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-alipay",
+          "version": "0.0.827",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-baidu": {
+        "name": "@dcloudio/uni-mp-baidu",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-vite",
+          "@dcloudio/uni-mp-weixin",
+          "jimp"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-baidu"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-baidu",
+          "version": "0.0.857",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-compiler": {
+        "name": "@dcloudio/uni-mp-compiler",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-compiler"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-mp-toutiao": {
+        "name": "@dcloudio/uni-mp-toutiao",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler",
+          "@dcloudio/uni-mp-vite"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-toutiao"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-toutiao",
+          "version": "0.0.352",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-mp-vite": {
+        "name": "@dcloudio/uni-mp-vite",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-compiler"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-vite"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-mp-weixin": {
+        "name": "@dcloudio/uni-mp-weixin",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-mp-vite",
+          "jimp"
+        ],
+        "effects": [
+          "@dcloudio/uni-mp-baidu"
+        ],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-mp-weixin"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@dcloudio/uni-push": {
+        "name": "@dcloudio/uni-push",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/uni-push"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/uni-stat": {
+        "name": "@dcloudio/uni-stat",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "effects": [],
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-stat"
+        ],
+        "fixAvailable": true
+      },
+      "@dcloudio/vite-plugin-uni": {
+        "name": "@dcloudio/vite-plugin-uni",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@dcloudio/uni-cli-shared",
+          "@vitejs/plugin-legacy",
+          "@vitejs/plugin-vue",
+          "@vitejs/plugin-vue-jsx",
+          "vite"
+        ],
+        "effects": [],
+        "range": "*",
+        "nodes": [
+          "node_modules/@dcloudio/vite-plugin-uni"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/core-base": {
+        "name": "@intlify/core-base",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-compiler",
+          "@intlify/message-resolver",
+          "@intlify/runtime",
+          "@intlify/vue-devtools",
+          {
+            "source": 1106453,
+            "name": "@intlify/core-base",
+            "dependency": "@intlify/core-base",
+            "title": "vue-i18n's escapeParameterHtml does not prevent DOM-based XSS through its tag attributes",
+            "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-79"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.0.0 <9.14.5"
+          },
+          {
+            "source": 1146054,
+            "name": "@intlify/core-base",
+            "dependency": "@intlify/core-base",
+            "title": "Vue I18n Allows Prototype Pollution in `handleFlatJson`",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.1.0 <9.1.11"
+          }
+        ],
+        "effects": [
+          "@dcloudio/uni-cli-shared"
+        ],
+        "range": "9.0.0 - 9.14.4",
+        "nodes": [
+          "node_modules/@intlify/core-base"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/message-compiler": {
+        "name": "@intlify/message-compiler",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-resolver"
+        ],
+        "effects": [],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/message-compiler"
+        ],
+        "fixAvailable": true
+      },
+      "@intlify/message-resolver": {
+        "name": "@intlify/message-resolver",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1146058,
+            "name": "@intlify/message-resolver",
+            "dependency": "@intlify/message-resolver",
+            "title": "Vue I18n Allows Prototype Pollution in `handleFlatJson`",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.1.0 <9.1.11"
+          }
+        ],
+        "effects": [
+          "@intlify/core-base",
+          "@intlify/message-compiler",
+          "@intlify/runtime",
+          "@intlify/vue-devtools"
+        ],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/message-resolver"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "@intlify/runtime": {
+        "name": "@intlify/runtime",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-compiler",
+          "@intlify/message-resolver"
+        ],
+        "effects": [],
+        "range": "9.1.0 - 9.1.10",
+        "nodes": [
+          "node_modules/@intlify/runtime"
+        ],
+        "fixAvailable": true
+      },
+      "@intlify/vue-devtools": {
+        "name": "@intlify/vue-devtools",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@intlify/message-resolver",
+          "@intlify/runtime"
+        ],
+        "effects": [],
+        "range": "<=9.1.10",
+        "nodes": [
+          "node_modules/@intlify/vue-devtools"
+        ],
+        "fixAvailable": true
+      },
+      "@jest/core": {
+        "name": "@jest/core",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-config",
+          "jest-runner"
+        ],
+        "effects": [],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/@jest/core"
+        ],
+        "fixAvailable": true
+      },
+      "@jimp/core": {
+        "name": "@jimp/core",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "phin"
+        ],
+        "effects": [
+          "@jimp/custom"
+        ],
+        "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/@jimp/core"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/custom": {
+        "name": "@jimp/custom",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/core"
+        ],
+        "effects": [
+          "jimp"
+        ],
+        "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/@jimp/custom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/jpeg": {
+        "name": "@jimp/jpeg",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "jpeg-js"
+        ],
+        "effects": [
+          "@jimp/types"
+        ],
+        "range": "<=0.12.0",
+        "nodes": [
+          "node_modules/@jimp/jpeg"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@jimp/types": {
+        "name": "@jimp/types",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/jpeg"
+        ],
+        "effects": [
+          "jimp"
+        ],
+        "range": "<=0.11.1-canary.891.908.0",
+        "nodes": [
+          "node_modules/@jimp/types"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "@tootallnate/once": {
+        "name": "@tootallnate/once",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1119438,
+            "name": "@tootallnate/once",
+            "dependency": "@tootallnate/once",
+            "title": "@tootallnate/once vulnerable to Incorrect Control Flow Scoping",
+            "url": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+            "severity": "low",
+            "cwe": [
+              "CWE-705"
+            ],
+            "cvss": {
+              "score": 3.3,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": "<2.0.1"
+          }
+        ],
+        "effects": [
+          "http-proxy-agent"
+        ],
+        "range": "<2.0.1",
+        "nodes": [
+          "node_modules/@tootallnate/once"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@vitejs/plugin-legacy": {
+        "name": "@vitejs/plugin-legacy",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [],
+        "range": "1.0.1 - 5.4.3",
+        "nodes": [
+          "node_modules/@vitejs/plugin-legacy"
+        ],
+        "fixAvailable": true
+      },
+      "@vitejs/plugin-vue": {
+        "name": "@vitejs/plugin-vue",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [
+          "@dcloudio/uni-app-vite",
+          "@dcloudio/vite-plugin-uni"
+        ],
+        "range": "1.8.0 - 5.2.0",
+        "nodes": [
+          "node_modules/@vitejs/plugin-vue"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "@vitejs/plugin-vue-jsx": {
+        "name": "@vitejs/plugin-vue-jsx",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "vite"
+        ],
+        "effects": [],
+        "range": "2.0.0-alpha.0 - 4.1.0",
+        "nodes": [
+          "node_modules/@vitejs/plugin-vue-jsx"
+        ],
+        "fixAvailable": true
+      },
+      "@vue/server-renderer": {
+        "name": "@vue/server-renderer",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          {
+            "source": 1241259,
+            "name": "@vue/server-renderer",
+            "dependency": "@vue/server-renderer",
+            "title": "@vue/server-renderer: XSS via missing CR in attribute-name blacklist",
+            "url": "https://github.com/advisories/GHSA-g2v6-rqmx-r4w6",
+            "severity": "high",
+            "cwe": [
+              "CWE-79",
+              "CWE-116"
+            ],
+            "cvss": {
+              "score": 7.2,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N"
+            },
+            "range": "<3.5.42"
+          },
+          "vue"
+        ],
+        "effects": [
+          "@dcloudio/uni-cli-shared",
+          "@dcloudio/uni-h5",
+          "@dcloudio/uni-h5-vite",
+          "@dcloudio/uni-h5-vue",
+          "vue"
+        ],
+        "range": "<=3.5.41",
+        "nodes": [
+          "node_modules/@vue/server-renderer"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      },
+      "adm-zip": {
+        "name": "adm-zip",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1123686,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Crafted ZIP file triggers 4GB memory allocation",
+            "url": "https://github.com/advisories/GHSA-xcpc-8h2w-3j85",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-789"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.6.0"
+          },
+          {
+            "source": 1193734,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip extraction follows destination symlinks, allowing arbitrary file overwrite",
+            "url": "https://github.com/advisories/GHSA-vwc7-r8mq-g2x9",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-59"
+            ],
+            "cvss": {
+              "score": 6.5,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:N"
+            },
+            "range": ">=0.5.9 <=0.6.0"
+          },
+          {
+            "source": 1239030,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Uncontrolled memory allocation via the declared uncompressed size (DoS)",
+            "url": "https://github.com/advisories/GHSA-7q85-xj36-vmfc",
+            "severity": "high",
+            "cwe": [
+              "CWE-789"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.6.1"
+          },
+          {
+            "source": 1240032,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Decompression-bomb protection (fix for CVE-2026-39244) can be bypassed by declaring uncompressed size as 0",
+            "url": "https://github.com/advisories/GHSA-rcw4-f5rp-g42v",
+            "severity": "high",
+            "cwe": [
+              "CWE-409"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240034,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip extraction preserves SUID/SGID bits from untrusted ZIPs -> local privilege escalation",
+            "url": "https://github.com/advisories/GHSA-j5f4-cc29-5x44",
+            "severity": "high",
+            "cwe": [
+              "CWE-732"
+            ],
+            "cvss": {
+              "score": 7.1,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240064,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Duplicate ZIP entry names: getEntry() and extractAllTo() resolve to different content",
+            "url": "https://github.com/advisories/GHSA-p634-w6r4-rjp2",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-436",
+              "CWE-696"
+            ],
+            "cvss": {
+              "score": 5.9,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240065,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: getDataAsync() bypasses the maxOutputLength size guard enforced by the synchronous getData() path",
+            "url": "https://github.com/advisories/GHSA-c6fg-446q-cg94",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": "<=0.6.0"
+          },
+          {
+            "source": 1240066,
+            "name": "adm-zip",
+            "dependency": "adm-zip",
+            "title": "adm-zip: Unhandled error event in async DEFLATE decompression crashes Node.js process (DoS)",
+            "url": "https://github.com/advisories/GHSA-8238-w5pm-2374",
+            "severity": "high",
+            "cwe": [
+              "CWE-248",
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=0.6.0"
+          }
+        ],
+        "effects": [],
+        "range": "<=0.6.0",
+        "nodes": [
+          "node_modules/adm-zip"
+        ],
+        "fixAvailable": true
+      },
+      "express": {
+        "name": "express",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "qs"
+        ],
+        "effects": [],
+        "range": "4.22.2",
+        "nodes": [
+          "node_modules/express"
+        ],
+        "fixAvailable": true
+      },
+      "http-proxy-agent": {
+        "name": "http-proxy-agent",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@tootallnate/once"
+        ],
+        "effects": [
+          "jsdom"
+        ],
+        "range": "4.0.1",
+        "nodes": [
+          "node_modules/http-proxy-agent"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest": {
+        "name": "jest",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "effects": [
+          "@dcloudio/uni-automator"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-cli": {
+        "name": "jest-cli",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "effects": [
+          "jest"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-cli"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-config": {
+        "name": "jest-config",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-environment-jsdom",
+          "jest-runner"
+        ],
+        "effects": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-config"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-environment-jsdom": {
+        "name": "jest-environment-jsdom",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jsdom"
+        ],
+        "effects": [
+          "jest-config",
+          "jest-runner"
+        ],
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-environment-jsdom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-runner": {
+        "name": "jest-runner",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-environment-jsdom"
+        ],
+        "effects": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "range": "27.0.4 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-runner"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jimp": {
+        "name": "jimp",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "@jimp/custom",
+          "@jimp/types"
+        ],
+        "effects": [
+          "@dcloudio/uni-mp-weixin"
+        ],
+        "range": "0.3.6-alpha.5 - 0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+        "nodes": [
+          "node_modules/jimp"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "jpeg-js": {
+        "name": "jpeg-js",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1088964,
+            "name": "jpeg-js",
+            "dependency": "jpeg-js",
+            "title": "Infinite loop in jpeg-js",
+            "url": "https://github.com/advisories/GHSA-xvf7-4v9q-58w6",
+            "severity": "high",
+            "cwe": [
+              "CWE-835"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.4.4"
+          },
+          {
+            "source": 1093580,
+            "name": "jpeg-js",
+            "dependency": "jpeg-js",
+            "title": "Uncontrolled resource consumption in jpeg-js",
+            "url": "https://github.com/advisories/GHSA-w7q9-p3jq-fmhm",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 5.5,
+              "vectorString": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"
+            },
+            "range": "<0.4.0"
+          }
+        ],
+        "effects": [
+          "@jimp/jpeg"
+        ],
+        "range": "<=0.4.3",
+        "nodes": [
+          "node_modules/jpeg-js"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "jsdom": {
+        "name": "jsdom",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "http-proxy-agent"
+        ],
+        "effects": [
+          "jest-environment-jsdom"
+        ],
+        "range": "16.6.0 - 17.0.0",
+        "nodes": [
+          "node_modules/jsdom"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-automator",
+          "version": "2.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "phin": {
+        "name": "phin",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1096967,
+            "name": "phin",
+            "dependency": "phin",
+            "title": "phin may include sensitive headers in subsequent requests after redirect",
+            "url": "https://github.com/advisories/GHSA-x565-32qp-m3vf",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 4.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N"
+            },
+            "range": "<3.7.1"
+          }
+        ],
+        "effects": [
+          "@jimp/core"
+        ],
+        "range": "<3.7.1",
+        "nodes": [
+          "node_modules/phin"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-mp-weixin",
+          "version": "0.0.973",
+          "isSemVerMajor": true
+        }
+      },
+      "qs": {
+        "name": "qs",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1158506,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs array-limit bypass via bracket-key comma parsing",
+            "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 3.7,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=6.14.2 <=6.15.3"
+          },
+          {
+            "source": 1158507,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+            "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-248",
+              "CWE-703"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=2.2.5 <6.16.0"
+          }
+        ],
+        "effects": [
+          "express"
+        ],
+        "range": "2.2.5 - 6.15.3",
+        "nodes": [
+          "node_modules/qs"
+        ],
+        "fixAvailable": true
+      },
+      "vite": {
+        "name": "vite",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          {
+            "source": 1116229,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite Vulnerable to Path Traversal in Optimized Deps `.map` Handling",
+            "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-22",
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.1"
+          },
+          {
+            "source": 1120784,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows",
+            "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-73",
+              "CWE-522"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.2"
+          },
+          {
+            "source": 1123525,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
+            "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+            "severity": "high",
+            "cwe": [
+              "CWE-22",
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+            },
+            "range": "<=6.4.2"
+          },
+          {
+            "source": 1242622,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+            "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-78"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242651,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+            "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-88"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242658,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+            "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+            "severity": "high",
+            "cwe": [
+              "CWE-77"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242724,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite: Cross origin script execution through Vite custom middleware",
+            "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+            "severity": "low",
+            "cwe": [
+              "CWE-80"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          },
+          {
+            "source": 1242730,
+            "name": "vite",
+            "dependency": "vite",
+            "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+            "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-22",
+              "CWE-284"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=6.4.3"
+          }
+        ],
+        "effects": [
+          "@dcloudio/vite-plugin-uni",
+          "@vitejs/plugin-legacy",
+          "@vitejs/plugin-vue",
+          "@vitejs/plugin-vue-jsx"
+        ],
+        "range": "<=6.4.3",
+        "nodes": [
+          "node_modules/vite"
+        ],
+        "fixAvailable": {
+          "isSemVerMajor": true
+        }
+      },
+      "vue": {
+        "name": "vue",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@vue/server-renderer"
+        ],
+        "effects": [
+          "@vue/server-renderer"
+        ],
+        "range": "3.2.13 - 3.5.41",
+        "nodes": [
+          "node_modules/vue"
+        ],
+        "fixAvailable": {
+          "name": "@dcloudio/uni-cli-shared",
+          "version": "0.2.994",
+          "isSemVerMajor": true
+        }
+      }
+    },
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 9,
+        "moderate": 11,
+        "high": 30,
+        "critical": 0,
+        "total": 50
+      },
+      "dependencies": {
+        "prod": 307,
+        "dev": 462,
+        "optional": 53,
+        "peer": 253,
+        "peerOptional": 0,
+        "total": 837
+      }
+    }
+  },
+  "baseline_change": {
+    "gate_implementation_unchanged": true,
+    "normalized_complete_review": {
+      "normalized": {
+        "advisories": {
+          "1088964": {
+            "package": "jpeg-js",
+            "url": "https://github.com/advisories/GHSA-xvf7-4v9q-58w6",
+            "severity": "high",
+            "range": "<0.4.4",
+            "chain": "automator-qr"
+          },
+          "1093580": {
+            "package": "jpeg-js",
+            "url": "https://github.com/advisories/GHSA-w7q9-p3jq-fmhm",
+            "severity": "moderate",
+            "range": "<0.4.0",
+            "chain": "automator-qr"
+          },
+          "1096967": {
+            "package": "phin",
+            "url": "https://github.com/advisories/GHSA-x565-32qp-m3vf",
+            "severity": "moderate",
+            "range": "<3.7.1",
+            "chain": "automator-qr"
+          },
+          "1106453": {
+            "package": "@intlify/core-base",
+            "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph",
+            "severity": "moderate",
+            "range": ">=9.0.0 <9.14.5",
+            "chain": "intlify"
+          },
+          "1116229": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+            "severity": "moderate",
+            "range": "<=6.4.1",
+            "chain": "vite-toolchain"
+          },
+          "1119438": {
+            "package": "@tootallnate/once",
+            "url": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+            "severity": "low",
+            "range": "<2.0.1",
+            "chain": "jest-toolchain"
+          },
+          "1120784": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+            "severity": "moderate",
+            "range": "<=6.4.2",
+            "chain": "vite-toolchain"
+          },
+          "1123525": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+            "severity": "high",
+            "range": "<=6.4.2",
+            "chain": "vite-toolchain"
+          },
+          "1123686": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-xcpc-8h2w-3j85",
+            "severity": "high",
+            "range": "<0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1146054": {
+            "package": "@intlify/core-base",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "range": ">=9.1.0 <9.1.11",
+            "chain": "intlify"
+          },
+          "1146058": {
+            "package": "@intlify/message-resolver",
+            "url": "https://github.com/advisories/GHSA-p2ph-7g93-hw3m",
+            "severity": "high",
+            "range": ">=9.1.0 <9.1.11",
+            "chain": "intlify"
+          },
+          "1158506": {
+            "package": "qs",
+            "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+            "severity": "moderate",
+            "range": ">=6.14.2 <=6.15.3",
+            "chain": "h5-ssr"
+          },
+          "1158507": {
+            "package": "qs",
+            "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+            "severity": "moderate",
+            "range": ">=2.2.5 <6.16.0",
+            "chain": "h5-ssr"
+          },
+          "1193734": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-vwc7-r8mq-g2x9",
+            "severity": "moderate",
+            "range": ">=0.5.9 <=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1239030": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-7q85-xj36-vmfc",
+            "severity": "high",
+            "range": "<0.6.1",
+            "chain": "encrypted-zip"
+          },
+          "1240032": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-rcw4-f5rp-g42v",
+            "severity": "high",
+            "range": "<=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1240034": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-j5f4-cc29-5x44",
+            "severity": "high",
+            "range": "<=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1240064": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-p634-w6r4-rjp2",
+            "severity": "moderate",
+            "range": "<=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1240065": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-c6fg-446q-cg94",
+            "severity": "moderate",
+            "range": "<=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1240066": {
+            "package": "adm-zip",
+            "url": "https://github.com/advisories/GHSA-8238-w5pm-2374",
+            "severity": "high",
+            "range": "<=0.6.0",
+            "chain": "encrypted-zip"
+          },
+          "1241259": {
+            "package": "@vue/server-renderer",
+            "url": "https://github.com/advisories/GHSA-g2v6-rqmx-r4w6",
+            "severity": "high",
+            "range": "<3.5.42",
+            "chain": "vue-ssr"
+          },
+          "1242622": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+            "severity": "moderate",
+            "range": "<=6.4.3",
+            "chain": "vite-toolchain"
+          },
+          "1242651": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+            "severity": "moderate",
+            "range": "<=6.4.3",
+            "chain": "vite-toolchain"
+          },
+          "1242658": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+            "severity": "high",
+            "range": "<=6.4.3",
+            "chain": "vite-toolchain"
+          },
+          "1242724": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+            "severity": "low",
+            "range": "<=6.4.3",
+            "chain": "vite-toolchain"
+          },
+          "1242730": {
+            "package": "vite",
+            "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+            "severity": "moderate",
+            "range": "<=6.4.3",
+            "chain": "vite-toolchain"
+          }
+        },
+        "entries": {
+          "@dcloudio/uni-app": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-app"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cloud",
+              "@dcloudio/uni-components",
+              "@dcloudio/uni-push",
+              "@dcloudio/uni-stat"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-app-plus": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-app-plus"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-app-uts",
+              "@dcloudio/uni-app-vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vite-toolchain",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-app-uts": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-app-uts"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app-plus"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-app-vite": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-app-vite"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@vitejs/plugin-vue"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app-plus"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vite-toolchain",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-automator": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-automator"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "jest"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "jest-toolchain",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-cli-shared": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-cli-shared"
+            ],
+            "viaPackages": [
+              "@intlify/core-base",
+              "@intlify/vue-devtools",
+              "@vue/server-renderer",
+              "adm-zip"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app-uts",
+              "@dcloudio/uni-app-vite",
+              "@dcloudio/uni-automator",
+              "@dcloudio/uni-cloud",
+              "@dcloudio/uni-mp-alipay",
+              "@dcloudio/uni-mp-baidu",
+              "@dcloudio/uni-mp-compiler",
+              "@dcloudio/uni-mp-toutiao",
+              "@dcloudio/uni-mp-vite",
+              "@dcloudio/uni-mp-weixin",
+              "@dcloudio/uni-push",
+              "@dcloudio/uni-stat"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-cloud": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-cloud"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-components": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-components"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cloud",
+              "@dcloudio/uni-h5"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-h5": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-h5"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-h5-vite",
+              "@dcloudio/uni-h5-vue",
+              "@vue/server-renderer"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-components"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-h5-vite": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-h5-vite"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@vue/server-renderer"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-h5-vue": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-h5-vue"
+            ],
+            "viaPackages": [
+              "@vue/server-renderer"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-h5"
+            ],
+            "chains": [
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-alipay": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-alipay"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-mp-vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-baidu": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-baidu"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-mp-compiler",
+              "@dcloudio/uni-mp-vite",
+              "@dcloudio/uni-mp-weixin",
+              "jimp"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "automator-qr",
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-compiler": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-compiler"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-toutiao": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-toutiao"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-mp-compiler",
+              "@dcloudio/uni-mp-vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-vite": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-vite"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-mp-compiler"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-mp-weixin": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-mp-weixin"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-mp-vite",
+              "jimp"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-mp-baidu"
+            ],
+            "chains": [
+              "automator-qr",
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-push": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-push"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/uni-stat": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+            "nodes": [
+              "node_modules/@dcloudio/uni-stat"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "@dcloudio/vite-plugin-uni": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/vite-plugin-uni"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared",
+              "@vitejs/plugin-legacy",
+              "@vitejs/plugin-vue",
+              "@vitejs/plugin-vue-jsx",
+              "vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vite-toolchain",
+              "vue-ssr"
+            ]
+          },
+          "@intlify/core-base": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "9.0.0 - 9.14.4",
+            "nodes": [
+              "node_modules/@intlify/core-base"
+            ],
+            "viaPackages": [
+              "@intlify/message-compiler",
+              "@intlify/message-resolver",
+              "@intlify/runtime",
+              "@intlify/vue-devtools"
+            ],
+            "advisorySources": [
+              1106453,
+              1146054
+            ],
+            "effects": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "chains": [
+              "intlify"
+            ]
+          },
+          "@intlify/message-compiler": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "9.1.0 - 9.1.10",
+            "nodes": [
+              "node_modules/@intlify/message-compiler"
+            ],
+            "viaPackages": [
+              "@intlify/message-resolver"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "intlify"
+            ]
+          },
+          "@intlify/message-resolver": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "9.1.0 - 9.1.10",
+            "nodes": [
+              "node_modules/@intlify/message-resolver"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1146058
+            ],
+            "effects": [
+              "@intlify/core-base",
+              "@intlify/message-compiler",
+              "@intlify/runtime",
+              "@intlify/vue-devtools"
+            ],
+            "chains": [
+              "intlify"
+            ]
+          },
+          "@intlify/runtime": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "9.1.0 - 9.1.10",
+            "nodes": [
+              "node_modules/@intlify/runtime"
+            ],
+            "viaPackages": [
+              "@intlify/message-compiler",
+              "@intlify/message-resolver"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "intlify"
+            ]
+          },
+          "@intlify/vue-devtools": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "<=9.1.10",
+            "nodes": [
+              "node_modules/@intlify/vue-devtools"
+            ],
+            "viaPackages": [
+              "@intlify/message-resolver",
+              "@intlify/runtime"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "intlify"
+            ]
+          },
+          "@jest/core": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/@jest/core"
+            ],
+            "viaPackages": [
+              "jest-config",
+              "jest-runner"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "@jimp/core": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+            "nodes": [
+              "node_modules/@jimp/core"
+            ],
+            "viaPackages": [
+              "phin"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@jimp/custom"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "@jimp/custom": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "<=0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+            "nodes": [
+              "node_modules/@jimp/custom"
+            ],
+            "viaPackages": [
+              "@jimp/core"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jimp"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "@jimp/jpeg": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "<=0.12.0",
+            "nodes": [
+              "node_modules/@jimp/jpeg"
+            ],
+            "viaPackages": [
+              "jpeg-js"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@jimp/types"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "@jimp/types": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "<=0.11.1-canary.891.908.0",
+            "nodes": [
+              "node_modules/@jimp/types"
+            ],
+            "viaPackages": [
+              "@jimp/jpeg"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jimp"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "@tootallnate/once": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "<2.0.1",
+            "nodes": [
+              "node_modules/@tootallnate/once"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1119438
+            ],
+            "effects": [
+              "http-proxy-agent"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "@vitejs/plugin-legacy": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "1.0.1 - 5.4.3",
+            "nodes": [
+              "node_modules/@vitejs/plugin-legacy"
+            ],
+            "viaPackages": [
+              "vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "vite-toolchain"
+            ]
+          },
+          "@vitejs/plugin-vue": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "1.8.0 - 5.2.0",
+            "nodes": [
+              "node_modules/@vitejs/plugin-vue"
+            ],
+            "viaPackages": [
+              "vite"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app-vite",
+              "@dcloudio/vite-plugin-uni"
+            ],
+            "chains": [
+              "vite-toolchain"
+            ]
+          },
+          "@vitejs/plugin-vue-jsx": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "2.0.0-alpha.0 - 4.1.0",
+            "nodes": [
+              "node_modules/@vitejs/plugin-vue-jsx"
+            ],
+            "viaPackages": [
+              "vite"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "vite-toolchain"
+            ]
+          },
+          "@vue/server-renderer": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=3.5.41",
+            "nodes": [
+              "node_modules/@vue/server-renderer"
+            ],
+            "viaPackages": [
+              "vue"
+            ],
+            "advisorySources": [
+              1241259
+            ],
+            "effects": [
+              "@dcloudio/uni-cli-shared",
+              "@dcloudio/uni-h5",
+              "@dcloudio/uni-h5-vite",
+              "@dcloudio/uni-h5-vue",
+              "vue"
+            ],
+            "chains": [
+              "vue-ssr"
+            ]
+          },
+          "adm-zip": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "<=0.6.0",
+            "nodes": [
+              "node_modules/adm-zip"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1123686,
+              1193734,
+              1239030,
+              1240032,
+              1240034,
+              1240064,
+              1240065,
+              1240066
+            ],
+            "effects": [],
+            "chains": [
+              "encrypted-zip"
+            ]
+          },
+          "express": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "4.22.2",
+            "nodes": [
+              "node_modules/express"
+            ],
+            "viaPackages": [
+              "qs"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "h5-ssr"
+            ]
+          },
+          "http-proxy-agent": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "4.0.1",
+            "nodes": [
+              "node_modules/http-proxy-agent"
+            ],
+            "viaPackages": [
+              "@tootallnate/once"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jsdom"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jest": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/jest"
+            ],
+            "viaPackages": [
+              "@jest/core",
+              "jest-cli"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-automator"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jest-cli": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/jest-cli"
+            ],
+            "viaPackages": [
+              "@jest/core",
+              "jest-config"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jest"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jest-config": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/jest-config"
+            ],
+            "viaPackages": [
+              "jest-environment-jsdom",
+              "jest-runner"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@jest/core",
+              "jest-cli"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jest-environment-jsdom": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/jest-environment-jsdom"
+            ],
+            "viaPackages": [
+              "jsdom"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jest-config",
+              "jest-runner"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jest-runner": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.4 - 27.5.1",
+            "nodes": [
+              "node_modules/jest-runner"
+            ],
+            "viaPackages": [
+              "jest-environment-jsdom"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@jest/core",
+              "jest-config"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "jimp": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "0.3.6-alpha.5 - 0.21.4--canary.1163.d07ed6254d130e2995d24101e93427ec091016e6.0",
+            "nodes": [
+              "node_modules/jimp"
+            ],
+            "viaPackages": [
+              "@jimp/custom",
+              "@jimp/types"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-mp-weixin"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "jpeg-js": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "<=0.4.3",
+            "nodes": [
+              "node_modules/jpeg-js"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1088964,
+              1093580
+            ],
+            "effects": [
+              "@jimp/jpeg"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "jsdom": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "16.6.0 - 17.0.0",
+            "nodes": [
+              "node_modules/jsdom"
+            ],
+            "viaPackages": [
+              "http-proxy-agent"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jest-environment-jsdom"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "phin": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "<3.7.1",
+            "nodes": [
+              "node_modules/phin"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1096967
+            ],
+            "effects": [
+              "@jimp/core"
+            ],
+            "chains": [
+              "automator-qr"
+            ]
+          },
+          "qs": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "2.2.5 - 6.15.3",
+            "nodes": [
+              "node_modules/qs"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1158506,
+              1158507
+            ],
+            "effects": [
+              "express"
+            ],
+            "chains": [
+              "h5-ssr"
+            ]
+          },
+          "vite": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "<=6.4.3",
+            "nodes": [
+              "node_modules/vite"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1116229,
+              1120784,
+              1123525,
+              1242622,
+              1242651,
+              1242658,
+              1242724,
+              1242730
+            ],
+            "effects": [
+              "@dcloudio/vite-plugin-uni",
+              "@vitejs/plugin-legacy",
+              "@vitejs/plugin-vue",
+              "@vitejs/plugin-vue-jsx"
+            ],
+            "chains": [
+              "vite-toolchain"
+            ]
+          },
+          "vue": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "3.2.13 - 3.5.41",
+            "nodes": [
+              "node_modules/vue"
+            ],
+            "viaPackages": [
+              "@vue/server-renderer"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@vue/server-renderer"
+            ],
+            "chains": [
+              "vue-ssr"
+            ]
+          }
+        }
+      },
+      "advisoryDelta": [],
+      "entryDelta": [
+        {
+          "name": "@dcloudio/uni-cloud",
+          "before": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-cloud"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "after": {
+            "severity": "high",
+            "isDirect": false,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-cloud"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cli-shared"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          }
+        },
+        {
+          "name": "@dcloudio/uni-components",
+          "before": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-components"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cloud",
+              "@dcloudio/uni-h5"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "@dcloudio/uni-app"
+            ],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          },
+          "after": {
+            "severity": "high",
+            "isDirect": true,
+            "range": "*",
+            "nodes": [
+              "node_modules/@dcloudio/uni-components"
+            ],
+            "viaPackages": [
+              "@dcloudio/uni-cloud",
+              "@dcloudio/uni-h5"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "encrypted-zip",
+              "intlify",
+              "vue-ssr"
+            ]
+          }
+        },
+        {
+          "name": "@jest/core",
+          "before": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/@jest/core"
+            ],
+            "viaPackages": [
+              "jest-config",
+              "jest-runner"
+            ],
+            "advisorySources": [],
+            "effects": [
+              "jest",
+              "jest-cli"
+            ],
+            "chains": [
+              "jest-toolchain"
+            ]
+          },
+          "after": {
+            "severity": "low",
+            "isDirect": false,
+            "range": "27.0.1 - 27.5.1",
+            "nodes": [
+              "node_modules/@jest/core"
+            ],
+            "viaPackages": [
+              "jest-config",
+              "jest-runner"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "jest-toolchain"
+            ]
+          }
+        },
+        {
+          "name": "body-parser",
+          "before": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "1.20.5 - 1.20.6",
+            "nodes": [
+              "node_modules/body-parser"
+            ],
+            "viaPackages": [
+              "qs"
+            ],
+            "advisorySources": [],
+            "effects": [],
+            "chains": [
+              "h5-ssr"
+            ]
+          }
+        },
+        {
+          "name": "qs",
+          "before": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "2.2.5 - 6.15.3",
+            "nodes": [
+              "node_modules/qs"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1158506,
+              1158507
+            ],
+            "effects": [
+              "body-parser",
+              "express"
+            ],
+            "chains": [
+              "h5-ssr"
+            ]
+          },
+          "after": {
+            "severity": "moderate",
+            "isDirect": false,
+            "range": "2.2.5 - 6.15.3",
+            "nodes": [
+              "node_modules/qs"
+            ],
+            "viaPackages": [],
+            "advisorySources": [
+              1158506,
+              1158507
+            ],
+            "effects": [
+              "express"
+            ],
+            "chains": [
+              "h5-ssr"
+            ]
+          }
+        }
+      ],
+      "oldGate": {
+        "ok": false,
+        "issues": [
+          "unknown direct advisory 1243073 on body-parser"
+        ]
+      }
+    },
+    "original_gate_and_reappearance_results": {
+      "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
+      "result": {
+        "ok": true,
+        "issues": [],
+        "packageEntries": 50,
+        "directAdvisoryObjects": 26,
+        "distinctAdvisoryUrls": 25,
+        "scopedChains": 8
+      },
+      "oldGate": {
+        "ok": false,
+        "issues": [
+          "unknown direct advisory 1243073 on body-parser"
+        ]
+      },
+      "newGateOnOld": {
+        "ok": false,
+        "issues": [
+          "resolved advisory reappeared: 1243073 (body-parser)",
+          "unknown direct advisory 1243073 on body-parser"
+        ]
+      }
+    },
+    "only_removed_forward_graph": "body-parser",
+    "all_remaining_direct_tuples_severities_nodes_forward_edges_exact": true,
+    "sources": 26,
+    "distinct_urls": 25,
+    "entries": 50,
+    "resolved_sources": 14,
+    "scopes_defined": 8,
+    "scopes_active": 7,
+    "raw_report_counts_are_not_independent_vulnerability_counts": true,
+    "express_root_qs_both_moderates_remain_reviewed": true
+  },
+  "historical_preservation": {
+    "archived_baseline": {
+      "path": "/home/cina/cinagroup/cinashop/view/uniapp-ts/scripts/d3-advisory-gate.pre-body-parser-20261024.baseline.json",
+      "sha256": "5b82bc7222590c0904d7091981640bf559aa6dc625df27ef4eb545493d7eebc2",
+      "bytes": 30922
+    },
+    "exact_old77_to51_test_and52issues_retained": true,
+    "historical_audits_unchanged": true,
+    "historical_binding_inverse": {
+      "path": "/tmp/cinashop-body-parser-20261024-historical-binding-applied.json",
+      "sha256": "08e487362500c2f706384f91ff4b4b46e97bd3a0e8f2b8c805a7d563de5dad3b",
+      "bytes": 2380
+    },
+    "parser_test_inverse": {
+      "path": "/tmp/cinashop-body-parser-20261024-parser-test-change.json",
+      "sha256": "58350996c48d1b3c4987ef69bcd962a28405498c57fd53e245fb3e0e99730ff8",
+      "bytes": 4715
+    }
+  },
+  "local_full_Uni": {
+    "receipt": {
+      "path": "/tmp/cinashop-body-parser-full-uni-final-20261024/receipt.json",
+      "sha256": "b6190d2f8d86e909355dc8b31cf518fc221a959f132091578eed7cf52712aa1a",
+      "bytes": 13418444
+    },
+    "actual_outer_exit": 0,
+    "actual_steps": [
+      {
+        "name": "typecheck",
+        "args": [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        "started": "2026-10-24T04:11:46.879968+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:12:07.319534+00:00",
+        "stdout_sha256": "8df3dce693eb220393fcacf48ff5aa51254bd573a4b59e9f912c5cb11caf918a",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": []
+      },
+      {
+        "name": "test:toolchain",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/postcss-selector-parser-compat.test.cjs scripts/d3-postcss-dir-glob-boundary.test.cjs scripts/agent-self-service-runtime.test.cjs scripts/assisted-cashier-runtime.test.cjs scripts/assisted-checkout-runtime.test.cjs scripts/assisted-selection-runtime.test.cjs scripts/assisted-records-runtime.test.cjs scripts/assisted-detail-runtime.test.cjs scripts/dev-server-security.test.cjs scripts/checkout-runtime.test.cjs scripts/cart-runtime.test.cjs scripts/wallet-runtime.test.cjs scripts/coupon-products-runtime.test.cjs scripts/product-sku-runtime.test.cjs scripts/product-detail-lifecycle.test.cjs scripts/order-detail-lifecycle.test.cjs scripts/order-list-lifecycle.test.cjs scripts/order-pay-result.test.cjs scripts/offline-cashier-runtime.test.cjs scripts/operator-writeoff-runtime.test.cjs scripts/member-code-runtime.test.cjs scripts/refund-apply-lifecycle.test.cjs scripts/refund-records-lifecycle.test.cjs scripts/seckill-runtime.test.cjs scripts/combination-runtime.test.cjs scripts/pink-status-runtime.test.cjs scripts/pink-cancellation-runtime.test.cjs scripts/bargain-runtime.test.cjs scripts/bargain-cancel-runtime.test.cjs scripts/bargain-friend-runtime.test.cjs scripts/visit-history-runtime.test.cjs scripts/presale-runtime.test.cjs scripts/presale-catalog-runtime.test.cjs scripts/community-deep-links-runtime.test.cjs scripts/community-publish-runtime.test.cjs scripts/community-images-runtime.test.cjs scripts/community-relations-runtime.test.cjs scripts/community-author-runtime.test.cjs scripts/community-page-alias.test.cjs scripts/community-people-runtime.test.cjs scripts/feedback-work-runtime.test.cjs scripts/newcomer-runtime.test.cjs scripts/product-rank-runtime.test.cjs scripts/governance-agreements-runtime.test.cjs scripts/vite-safety-package.test.cjs scripts/vite-editor-security.test.cjs scripts/vite-path-security.test.cjs scripts/vite-windows-path-security.test.cjs scripts/esbuild-server-security.test.cjs scripts/vite-esbuild-compatibility.test.cjs scripts/fab-runtime.test.cjs scripts/integral-purchase-runtime.test.cjs scripts/theme-runtime.test.cjs scripts/category-catalog-runtime.test.cjs scripts/category-recommend-image-runtime.test.cjs scripts/product-unit-runtime.test.cjs scripts/product-detail-design-runtime.test.cjs scripts/vue-ssr-safety-package.test.cjs scripts/feedback-lifecycle-runtime.test.cjs scripts/customer-work-cashier-read-runtime.test.cjs scripts/customer-work-cashier-protocol.test.cjs scripts/customer-work-cashier-runtime.test.cjs scripts/customer-work-cashier-images-protocol.test.cjs scripts/customer-work-cashier-images-runtime.test.cjs scripts/customer-ordinary-cashier-request.test.cjs scripts/customer-ordinary-cashier-protocol.test.cjs scripts/customer-ordinary-cashier-runtime.test.cjs scripts/customer-ordinary-cashier-read.test.cjs scripts/customer-ordinary-cashier-page.test.cjs scripts/community-comments-runtime.test.cjs scripts/community-engagement-runtime.test.cjs scripts/community-publish-entry-runtime.test.cjs scripts/community-availability-runtime.test.cjs scripts/community-main-feed-runtime.test.cjs scripts/diy-community-runtime.test.cjs scripts/diy-state-widgets-runtime.test.cjs scripts/diy-page-state-runtime.test.cjs scripts/diy-commerce-runtime.test.cjs scripts/diy-commerce-writes-runtime.test.cjs scripts/diy-editorial-runtime.test.cjs scripts/diy-editorial-page-media-runtime.test.cjs scripts/diy-editorial-media-cache-runtime.test.cjs scripts/diy-carousel-runtime.test.cjs scripts/diy-carousel-content-runtime.test.cjs scripts/diy-carousel-media-runtime.test.cjs scripts/diy-navigation-runtime.test.cjs scripts/diy-navigation-content-runtime.test.cjs scripts/diy-navigation-media-runtime.test.cjs scripts/diy-footer-runtime.test.cjs scripts/diy-presentation-runtime.test.cjs scripts/diy-customer-service-runtime.test.cjs scripts/diy-page-settings-runtime.test.cjs"
+        ],
+        "started": "2026-10-24T04:12:07.370751+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:26:19.372799+00:00",
+        "stdout_sha256": "ac33f6c12e0470079f34372efe357afdb4998ea4a68a66c7c524cfd7b1cd3c96",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 2406",
+          "ℹ pass 2406",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 851903.04031"
+        ]
+      },
+      {
+        "name": "test:admzip",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/encrypted-uni-modules-admzip.test.cjs"
+        ],
+        "started": "2026-10-24T04:26:19.435367+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:26:19.873199+00:00",
+        "stdout_sha256": "5acaf7f8f6ed6fc4af2aa963e488b6c9fa30d08560d126d2a9017ba44cfea61e",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 6",
+          "ℹ pass 6",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 331.397562"
+        ]
+      },
+      {
+        "name": "test:express-qs",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/express-qs-ssr-boundary.test.cjs scripts/h5-ssr-guard.test.cjs"
+        ],
+        "started": "2026-10-24T04:26:19.934547+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:26:24.397316+00:00",
+        "stdout_sha256": "25491638877fd492c42a9a677d51028b9046e82f98104cc59d47c9e4153c8f09",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 20",
+          "ℹ pass 20",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 4362.375213"
+        ]
+      },
+      {
+        "name": "test:jest-jsdom-once",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/jest-jsdom-once-boundary.test.cjs"
+        ],
+        "started": "2026-10-24T04:26:24.455356+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:26:25.813536+00:00",
+        "stdout_sha256": "065d56d0055bb0104092265567e33b61074bf9c363eb8686797cc988a6fd19b7",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 4",
+          "ℹ pass 4",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 1255.240201"
+        ]
+      },
+      {
+        "name": "test:d3-advisories",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/d3-advisory-gate.test.cjs scripts/vite-advisory-20261022.test.cjs scripts/vite-safety-package.test.cjs && node scripts/d3-advisory-gate.cjs --live"
+        ],
+        "started": "2026-10-24T04:26:25.876477+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:27:05.096339+00:00",
+        "stdout_sha256": "cdcc33906af2b162ddfd1bb6e68bbf9f727e7d4f87b4f6cb7821356bd46569fa",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 34",
+          "ℹ pass 34",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 4586.311688"
+        ]
+      },
+      {
+        "name": "build:h5",
+        "args": [
+          "npm",
+          "run",
+          "build:h5"
+        ],
+        "started": "2026-10-24T04:27:05.158628+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:27:31.338689+00:00",
+        "stdout_sha256": "e5c3f2e0caa5c2795b05382888dbd8c405a2d1d2002b52e17184f0079f14cbfc",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": []
+      },
+      {
+        "name": "build:mp-weixin",
+        "args": [
+          "npm",
+          "run",
+          "build:mp-weixin"
+        ],
+        "started": "2026-10-24T04:27:31.400408+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:27:53.536087+00:00",
+        "stdout_sha256": "844c00cc5aa4fa2d837e6feaebc1bc59746f4a5cbb4c16c0eb49ea94d2e51e47",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": []
+      },
+      {
+        "name": "build:app",
+        "args": [
+          "npm",
+          "run",
+          "build:app"
+        ],
+        "started": "2026-10-24T04:27:53.600508+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:28:17.178561+00:00",
+        "stdout_sha256": "b5b8bc05716879fd5a0140f0831aa2110b8f32a1be3db7f77c3e6aed4f187356",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": []
+      },
+      {
+        "name": "test:build-artifacts",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/build-artifacts.test.cjs"
+        ],
+        "started": "2026-10-24T04:28:17.239984+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:28:17.454479+00:00",
+        "stdout_sha256": "90b1cf0dc0ad4aaacf15cd218c92f49a12932471e426ad64da8cfdeaf2aad3a1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 4",
+          "ℹ pass 4",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 106.4865"
+        ]
+      },
+      {
+        "name": "test:automator-qr",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/automator-qr-dependency.test.cjs"
+        ],
+        "started": "2026-10-24T04:28:17.514401+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:28:18.236518+00:00",
+        "stdout_sha256": "53fa89d78951c68253b0581881f3825b02710002766be5297fb73eb72e3dca5b",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 5",
+          "ℹ pass 5",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 618.222252"
+        ]
+      },
+      {
+        "name": "test:runtime-i18n",
+        "args": [
+          "bash",
+          "-c",
+          "node --test --test-concurrency=1 scripts/runtime-i18n-audit.test.cjs"
+        ],
+        "started": "2026-10-24T04:28:18.299520+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:29:28.586418+00:00",
+        "stdout_sha256": "35d1caf2039abe8ad522cee2701cb7995323de2505021dbf4a4125921c929127",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 13",
+          "ℹ pass 13",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 70177.058075"
+        ]
+      },
+      {
+        "name": "shared-toolchain-security",
+        "args": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--test",
+          "--test-concurrency=1",
+          "../common/toolchain-security.test.mjs"
+        ],
+        "started": "2026-10-24T04:29:28.647283+00:00",
+        "exit_code": 0,
+        "finished": "2026-10-24T04:29:29.371848+00:00",
+        "stdout_sha256": "cb03d2f7c8c13f1a47725e2108e25538f104c654e258ea79b636b851d0b0d5f8",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tap_summary": [
+          "ℹ tests 14",
+          "ℹ pass 14",
+          "ℹ fail 0",
+          "ℹ cancelled 0",
+          "ℹ skipped 0",
+          "ℹ todo 0",
+          "ℹ duration_ms 621.438225"
+        ]
+      }
+    ],
+    "source_count": 6149,
+    "installed_count": 31533,
+    "source_before_id": "72d739f95220c7a7d1fe20fe554b614436614179691b17903e8e7641fdac8796",
+    "source_after_id": "72d739f95220c7a7d1fe20fe554b614436614179691b17903e8e7641fdac8796",
+    "installed_before_id": "e4ee9752ba4a661606291f32deba6202be8899ff2aaa1857e5290ff442449d72",
+    "installed_after_id": "e4ee9752ba4a661606291f32deba6202be8899ff2aaa1857e5290ff442449d72",
+    "source_drift": [],
+    "installed_drift": []
+  },
+  "fresh_hidden_Browser": {
+    "receipt": {
+      "path": "/tmp/cinashop-body-parser-browser-final-20261024-result.json",
+      "sha256": "4d395a9edd7ff0e64d4ae37bfdf9356676c449fcb1858ef07ab1a01230e0154f",
+      "bytes": 13687450
+    },
+    "actual_outer_exit": 0,
+    "actual_child_exit": 0,
+    "steps": [
+      {
+        "name": "Worker-unit-strict",
+        "command": [
+          "npm",
+          "run",
+          "typecheck:unit"
+        ],
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-body-parser-browser-final-20261024/Worker-unit-strict.log",
+        "sha256": "6473e420fcb25db5b882d9b1823d83837f69c69af1624cad4ac4d0c421a6ec3b",
+        "seconds": 193.48929178598337
+      },
+      {
+        "name": "Browser-config-strict",
+        "command": [
+          "/home/cina/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "--max-old-space-size=8192",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "--strict",
+          "--skipLibCheck",
+          "--moduleResolution",
+          "bundler",
+          "--module",
+          "esnext",
+          "--target",
+          "ES2022",
+          "--types",
+          "node",
+          "vitest.diy-list-author-browser.config.ts"
+        ],
+        "actual_exit_code": 0,
+        "log": "/tmp/cinashop-body-parser-browser-final-20261024/Browser-config-strict.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "seconds": 1.47101824299898
+      }
+    ],
+    "checkpoints": [
+      "microH5",
+      "finished"
+    ],
+    "GUI_saves": 0,
+    "business_POSTs": 0,
+    "read_counts": {
+      "real_GET": 13,
+      "synthetic": 1
+    },
+    "source_drift": [],
+    "installed_drift": [],
+    "driver_drift": [],
+    "artifacts_unchanged": true,
+    "owned_pg_status": [
+      {
+        "data": "/home/cina/cinagroup/cinashop/.cache/finance-postgres-r0lFma/data",
+        "exit": 3,
+        "postmaster_pid_exists": false
+      }
+    ],
+    "fixtures_cleaned": true,
+    "cluster_stopped": true,
+    "fresh_seed_review": {
+      "archived_whole25column_rows": [
+        1,
+        2
+      ],
+      "other_fresh_rows_sequences_resources_exact": true,
+      "cross_session_whole_database_identity_claimed": false
+    },
+    "boundaries": "Only two fresh read-only H5 checkpoints. Earlier25 and3 GUI saves belong to preserved historical list-author sessions; no repeated credit. Real owned PG16/Worker/R2 fixture; unrelated chrome responses remain declared synthetic. No physical MP/App device or production deployment claim.",
+    "source_count": 6150,
+    "installed_count": 31533,
+    "artifact_count": 659,
+    "console": {
+      "path": "/tmp/cinashop-body-parser-browser-final-20261024-console.json",
+      "sha256": "d1a05e51be77d3dc28a3fe408a48f88ef0ca4a0c1ca112b4901abd1d803a26ac",
+      "bytes": 272
+    },
+    "console_errors": 0,
+    "existing_warnings": 1,
+    "screenshot": {
+      "path": "/tmp/cinashop-body-parser-browser-final-20261024.jpg",
+      "sha256": "221ac069b698d44f72d420bfba0ea883143a3e4b1b946e4f906ec92b60595aa1",
+      "bytes": 66319
+    },
+    "temporary_tab_closed_after_actual_terminal0": true,
+    "final_tab_inventory": [],
+    "independent_execution_review": {
+      "path": "/tmp/cinashop-body-parser-browser-final-20261024-execution-independent-review.json",
+      "sha256": "113191836254df676e0b7f689cff95d81caa1e8f5c598becbc34483ce93fc46b",
+      "bytes": 20503
+    }
+  },
+  "independent_review": {
+    "receipt": {
+      "path": "/tmp/cinashop-body-parser-20261024-independent-review.json",
+      "sha256": "9ab172f55137ace0a16dbfef3c508283b1e23883eea65b1445d1824535ae8c8c",
+      "bytes": 145678
+    },
+    "issues": [],
+    "author_boundary": {
+      "Root_authored_independently_reviewed": [
+        "resolver lock transition",
+        "current normalized baseline",
+        "five new D3 regression definitions and current count pins"
+      ],
+      "agent_authored_not_independent_code_review": [
+        "historical immutable archive binding",
+        "Express parser test additions",
+        "compression child helper"
+      ],
+      "Root_previously_reviewed_agent_diff": true
+    }
+  },
+  "preserved_initial_failures": [
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-body-parser-full-uni-fixed-20261024/receipt.json",
+        "sha256": "0c4d9f2b118cd087a17f065eaa99463e577a48c1ea2fc8fb3b330cbae7d22b3b",
+        "bytes": 13414478
+      },
+      "actual_outer_exit": 1,
+      "reason": "An added collector-wide600-second cap interrupted the complete serial toolchain after1550 pass markers without a test failure. Final attempt preserves original per-test limits and removes that added aggregate cap. The failed interval legitimately regenerated only Uni Vue global declarations from the clean install; no all-installed-zero-drift claim is made for that interval."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-body-parser-resolver-20261024/receipt.json",
+        "sha256": "0e4fa25d53a968688aea36645cc0a71578e2550a3844381076de9eda3a6b8cf7",
+        "bytes": 5647884
+      },
+      "actual_outer_exit": 1,
+      "reason": "Actual resolver selected newly available qs6.16.1 rather than readonly plan prediction6.16.0; lock delta remained exactly two nodes and official6.16.1 integrity was subsequently verified."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-body-parser-full-uni-20261024/receipt.json",
+        "sha256": "86fe469a03a39b1c005dd548f22ba8b949c457e36b77adc6759701b662bf24bb",
+        "bytes": 13406240
+      },
+      "actual_outer_exit": 1,
+      "actual_typecheck_exit": 9,
+      "reason": "Node does not allow --test-concurrency in NODE_OPTIONS; no typecheck/test actually began. Corrected runner inserts flag into each actual node --test command; original receipt preserved."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/cinashop-body-parser-browser-20261024-result.json",
+        "sha256": "84e3383531c34eb5d36044426e2f7fc76f9752942ed52f09bebc61a6e76300ff",
+        "bytes": 13686598
+      },
+      "actual_outer_exit": 1,
+      "actual_child_exit": 1,
+      "completed_checkpoints": [],
+      "reason": "Original historical Browser fixture compared current upgraded lock to the old raw lock SHA and correctly stopped before ready/no UI; source/installed/driver drift were empty and owned PG cleaned/status3/noPID. Exact opt-in test-only dependency transition was subsequently added and reviewed; original assertions remain."
+    }
+  ],
+  "global_migration_complete": false,
+  "remaining_author_body_families": 17,
+  "merge_or_deploy": false,
+  "new_head_remote_CI": "To be checked after publication; local results do not assert remote all-green.",
+  "independent_full_execution_review": {
+    "path": "/tmp/cinashop-body-parser-full-uni-final-20261024-execution-independent-review.json",
+    "sha256": "ac0552405f92ef90a6a2b2b30b109bf503e7aae5b89f73776e177212b571fa24",
+    "bytes": 54883
+  },
+  "all_2506_named_test_results": {
+    "path": "/tmp/cinashop-body-parser-full-uni-final-20261024-execution-named-cases.json",
+    "sha256": "d79779ba8176ea624fb9da8f0c87171120855d012acf624d0f8bf6acbdb19525",
+    "bytes": 569017
+  },
+  "test_result_accounting": "Nine test commands produced2506 pass rows, including retained duplicate names and repeated safety suites; not2506 distinct new tests. Nineteen new independent definitions comprise13 parser regressions, one immutable historical archive guard and five current D3 cases.",
+  "official_npm_audit_exit_codes": {
+    "before": 1,
+    "after": 1,
+    "meaning": "npm audit still reports the50 previously reviewed affected package entries. The unchanged scoped D3 gate accepts that exact graph; this repair does not claim zero vulnerabilities or general SSR safety."
+  },
+  "reviewed_Worker_test_only_transition_after_full_Uni": {
+    "Root_review": {
+      "path": "/tmp/cinashop-body-parser-browser-lock-transition-20261024.json",
+      "sha256": "a4f4d642bb3d84cd852b27d4ff927d3144ba9de3879484b8ab748d89a39bbe54",
+      "bytes": 955
+    },
+    "implementation_proof": {
+      "path": "/tmp/cinashop-body-parser-browser-dependency-bridge-20261024/implementation-proof.json",
+      "sha256": "6ddc1ba05d43539e39ede8359355533c12af778b41afc5932468cf1b42fb16f1",
+      "bytes": 4835
+    },
+    "driver_static_review": {
+      "path": "/tmp/cinashop-body-parser-browser-final-20261024-driver-independent-static-review.json",
+      "sha256": "985647674f6b3d0ddb000ecc3c1c6321cd8aa3867327d51a8e924e12317efd41",
+      "bytes": 3078
+    },
+    "changed_or_added_paths": [
+      "workers-ts/test/browser/diy-list-author.acceptance.ts",
+      "workers-ts/test/fixtures/uni-body-parser-lock-transition-20261024.json"
+    ],
+    "full_Uni_source_count": 6149,
+    "fresh_Browser_source_count": 6150,
+    "all_other6148_sources_exact": true,
+    "full_current_equals_prior_whole_source_tree_claimed": false,
+    "coverage": "Actual Uni consumed inputs remain exact; only the Worker Browser test harness/fixture changed after full Uni. Both strict Worker-unit/Browser-config steps and the fresh actual Browser were rerun. Original default source/artifact assertions remain byte-exact; explicit mode proves full old/new lock raw and semantic hashes and whole-byte two-node inverse."
+  }
+}

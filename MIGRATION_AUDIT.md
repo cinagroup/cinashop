@@ -8553,3 +8553,10 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 ### 2026-10-24 商品/文章列表作者合同
 
 本批完成普通 goodList/articleList 控件、四类商品范围与文章分类、只读当前公开预览；导入内容及独立 content 保留。实际 Admin412、Uni262、Worker1842（原3项原生专用跳过）、PostgreSQL566和隐藏浏览器两会话合计覆盖25阶段/3次GUI保存；原轮63分钟超时失败保留，续轮仅2个只读阶段通过。公开文章列表封面新增当前平台附件校验，原8项失败用例重验通过。机器证据见 `workers-ts/audit/php-ts-diy-list-author-20261023.json`。剩余17族，父级原有未完成项保持开放；get_script恢复合同与三端加载保留。前一提交UniApp CI的新body-parser门禁另行修复；新提交CI另核对，本批未合并或部署。
+
+
+### 2026-10-24 UniApp body-parser依赖门禁修复
+
+修复PR163新source1243073高危门禁：真实npm resolver将body-parser升级1.20.9并独立解析qs6.16.1，仅两个锁节点变化，Express/root qs及其他五锁保持。新高危只记patched并禁止重现；完整原始前后报告支持50/26/25/14（包条目/直接source/URL/已解决来源），其余forward图精确保留。旧51完整归档，77→51/52条历史断言和旧audit不改写。13个隔离真实HTTP回归验证微小压缩正文/延迟尾部/完整raw消费者与drain，原SSR保护保持。
+
+最终13个Uni CI步骤、三端构建与后台浏览器两个新只读阶段通过，源/依赖闭包无漂移；0新GUI保存/业务POST，真实GET核76表71序列与资源零写，PG清零停止。NODE_OPTIONS拒绝和collector600秒超时原失败留存，最终全量重验通过。详见workers-ts/docs/uni-body-parser-remediation-20261024.md及同名机器审计。原get_script恢复合同、全部旧checkbox及JSON节点保留；17作者族/整体迁移仍开放，新head远端CI另核，仅draft不合并部署。

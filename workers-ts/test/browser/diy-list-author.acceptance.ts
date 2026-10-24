@@ -24,6 +24,8 @@ async function files(directory: string): Promise<string[]> { return (await Promi
 // the two remaining read-only checkpoints from that exact archived candidate.
 const resumePartialPath = process.env.TEST_DIY_LIST_AUTHOR_RESUME_PARTIAL;
 const resumeMode = resumePartialPath !== undefined;
+const dependencyTransitionName = process.env.TEST_DIY_LIST_AUTHOR_DEPENDENCY_TRANSITION;
+const DEPENDENCY_TRANSITION_FIXTURE_SHA256 = '36b92e9a9af159ee4eb1c16749f0fd6fcbc367d20c113738ff55fbe9c122c8b7';
 const RESUME_PARTIAL_SHA256 = '14a11a97e72bd187c7ad7b9c7563db9a1c9164007422cf9dbc21f5a40b3048ee';
 const RESUME_HARNESS_BEFORE_SHA256 = '20a001257093a7f0aedbe3e179ec610654f8c4f86ab9c6313c08126b9bb3bc88';
 const FULL_PLANS = ['admin', 'minimal', 'reader', 'rootOpen', 'catalog', 'latePending', 'lateClosed', 'lateReleased', 'rootReopened', 'styles', 'rootEdited', 'rootSaved', 'rootH5', 'publicSources', 'articleReadOnly', 'alternateOpen', 'alternateEdited', 'alternateSaved', 'alternateH5', 'microOpen', 'microNoop', 'microEdited', 'microSaved', 'microH5', 'finished'];
@@ -70,9 +72,52 @@ async function archivedResume(path: string) {
   return { prior, rows, linkedPrior };
 }
 
+// Opt-in only: preserve the historical business-data seed while proving the
+// exact resolver-produced lock transition, rather than ignoring its source row.
+async function reviewedDependencyTransition(repository: string, prior: Row, currentSources: Row[]) {
+  expect(dependencyTransitionName).toBe('body-parser-20261024'); expect(resumeMode).toBe(true);
+  const fixturePath = resolve(repository, 'workers-ts/test/fixtures/uni-body-parser-lock-transition-20261024.json');
+  const fixtureRaw = await readFile(fixturePath); expect(hash(fixtureRaw)).toBe(DEPENDENCY_TRANSITION_FIXTURE_SHA256);
+  const fixture = JSON.parse(fixtureRaw.toString()) as Row;
+  expect(fixture.schema).toBe('cinashop.uni-body-parser-lock-transition.v1'); expect(fixture.transition).toBe('body-parser-20261024');
+  expect(fixture.lock_path).toBe('view/uniapp-ts/package-lock.json');
+  const lockRaw = await readFile(resolve(repository, fixture.lock_path)), lock = JSON.parse(lockRaw.toString()) as Row;
+  expect(hash(lockRaw)).toBe(fixture.patched.raw_sha256); expect(lockRaw.length).toBe(fixture.patched.bytes);
+  expect(hash(JSON.stringify(lock))).toBe(fixture.patched.semantic_sha256);
+  expect(Object.keys(lock.packages)).toHaveLength(fixture.patched.package_nodes);
+  expect(lock.packages['node_modules/body-parser']).toEqual(fixture.records.patched_body_parser);
+  expect(lock.packages['node_modules/body-parser/node_modules/qs']).toEqual(fixture.records.patched_nested_qs);
+  expect(lock.packages['node_modules/body-parser'].version).toBe('1.20.9');
+  expect(lock.packages['node_modules/body-parser'].dependencies.qs).toBe('~6.16.0');
+  expect(lock.packages['node_modules/body-parser/node_modules/qs'].version).toBe('6.16.1');
+  expect(lock.packages['node_modules/express'].version).toBe('4.22.2'); expect(lock.packages['node_modules/qs'].version).toBe('6.15.3');
+  const restored = structuredClone(lock);
+  restored.packages['node_modules/body-parser'] = structuredClone(fixture.records.old_body_parser);
+  delete restored.packages['node_modules/body-parser/node_modules/qs'];
+  const restoredRaw = JSON.stringify(restored, null, 2) + '\n';
+  expect(hash(restoredRaw)).toBe(fixture.old.raw_sha256); expect(Buffer.byteLength(restoredRaw)).toBe(fixture.old.bytes);
+  expect(hash(JSON.stringify(restored))).toBe(fixture.old.semantic_sha256);
+  expect(Object.keys(restored.packages)).toHaveLength(fixture.old.package_nodes);
+  const expectedSource = structuredClone(prior.source_before) as Row[];
+  const previousLocks = expectedSource.filter(entry => entry.path === fixture.lock_path), currentLocks = currentSources.filter(entry => entry.path === fixture.lock_path);
+  expect(previousLocks).toHaveLength(1); expect(currentLocks).toHaveLength(1);
+  expect(previousLocks[0]!.sha256).toBe(fixture.old.raw_sha256); expect(currentLocks[0]!.sha256).toBe(fixture.patched.raw_sha256);
+  // This is the sole change to historical expected source identity. Every
+  // other row and both complete artifact comparisons below remain mandatory.
+  previousLocks[0]!.sha256 = fixture.patched.raw_sha256;
+  return { fixturePath, expectedSource, receipt: { transition: fixture.transition,
+    fixture: 'workers-ts/test/fixtures/uni-body-parser-lock-transition-20261024.json', fixture_sha256: DEPENDENCY_TRANSITION_FIXTURE_SHA256,
+    lock_path: fixture.lock_path, old: fixture.old, patched: fixture.patched,
+    exact_changed_nodes: ['node_modules/body-parser', 'node_modules/body-parser/node_modules/qs'],
+    raw_and_semantic_inverse_verified: true, historical_expected_source_change: 'only the exact old lock SHA becomes the exact patched lock SHA',
+    boundary: fixture.boundary } };
+}
+
 it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints from archived GUI saves on owned PG16' : 'actual complete list author controls, three GUI saves and anonymous built H5 on owned PG16', async () => {
+  if (dependencyTransitionName !== undefined) { expect(dependencyTransitionName).toBe('body-parser-20261024'); expect(resumeMode).toBe(true); }
   vi.stubGlobal('FixedLengthStream', OwnedFixedLengthStream);
   const resume = resumeMode ? await archivedResume(resumePartialPath!) : undefined;
+  let dependencyTransition: Awaited<ReturnType<typeof reviewedDependencyTransition>> | undefined;
   const f = await diyListAuthorFixture(new Date(), { namespace: 'public' }); wiring.container = f.container;
   const app = createApp(), repository = resolve(import.meta.dirname, '../../..'), origin = 'http://127.0.0.1:40785';
   const control = '/__list-author/' + randomUUID(), prefix = '/tmp/cinashop-diy-list-author-browser-';
@@ -94,6 +139,7 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
   });
   const json = (res: ServerResponse, value: unknown, status = 200) => send(res, JSON.stringify(value), status, 'application/json');
   const sources = async () => {
+    if (dependencyTransition) expect(hash(await readFile(dependencyTransition.fixturePath))).toBe(DEPENDENCY_TRANSITION_FIXTURE_SHA256);
     const selected = ['workers-ts/test/browser/diy-list-author.acceptance.ts', 'workers-ts/vitest.diy-list-author-browser.config.ts', 'workers-ts/scripts/run-local-finance-postgres.mjs', 'workers-ts/package.json', 'workers-ts/package-lock.json', 'workers-ts/test/fixtures/diy-list-author-defaults.json', 'workers-ts/test/fixtures/diy-navigation-author-defaults.json', 'workers-ts/test/fixtures/community-teal.png', 'view/uniapp-ts/package.json', 'view/uniapp-ts/package-lock.json', 'view/admin-ts/package.json', 'view/admin-ts/package-lock.json'];
     const all = [...selected.map(path => resolve(repository, path)), ...await files(resolve(repository, 'workers-ts/src')), ...await files(resolve(repository, 'workers-ts/test/helpers')), ...await files(resolve(repository, 'view/admin-ts/src')), ...await files(resolve(repository, 'view/uniapp-ts/src')), ...await files(resolve(repository, 'view/common'))];
     return Promise.all([...new Set(all)].sort().map(async path => ({ path: path.slice(repository.length + 1), sha256: hash(await readFile(path)) })));
@@ -120,6 +166,7 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
   }
   const persist = async () => writeFile(prefix + 'partial.json', JSON.stringify({ status: failure ? 'failed' : 'running', error: failure instanceof Error ? failure.stack : failure, next: stage(), evidence, traces, setup, writes, transport,
     snapshots_by_sha256: snapshots, observation: lastObservation, source_before: sourceBefore, h5_before: h5Before, admin_before: adminBefore,
+    ...(dependencyTransition ? { dependency_transition: dependencyTransition.receipt } : {}),
     ...(resume ? { mode: 'remaining-two-read-only', linked_prior: resume.linkedPrior, business_save_count: businessSave } : {}) }, null, 2) + '\n');
   const instructions: Record<string,string> = {
     admin:'真实Admin列表。',
@@ -191,7 +238,12 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
     sourceBefore = await sources(); h5Before = await artifacts(h5); adminBefore = await artifacts(admin); expect(h5Before.length).toBeGreaterThan(100); expect(adminBefore.length).toBeGreaterThan(20);
     if (resume) {
       const unchanged = (items: Row[]) => items.filter(entry => entry.path !== 'workers-ts/test/browser/diy-list-author.acceptance.ts');
+      if (dependencyTransitionName === undefined) {
       expect(unchanged(sourceBefore)).toEqual(unchanged(resume.prior.source_before));
+      } else {
+        dependencyTransition = await reviewedDependencyTransition(repository, resume.prior, sourceBefore);
+        expect(unchanged(sourceBefore)).toEqual(unchanged(dependencyTransition.expectedSource));
+      }
       expect(h5Before).toEqual(resume.prior.h5_before); expect(adminBefore).toEqual(resume.prior.admin_before);
     }
     const chrome: Row = { '/api/site_config': { site_name: '列表作者完整验收', site_logo: '', record_No: '', ico_path: '' }, '/api/share': { title: '列表作者', synopsis: '', img: '' },
@@ -274,6 +326,7 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
         else expect(businessSave).toBe(3); expect(held).toHaveLength(0); expect(external).not.toHaveBeenCalled();
         const sourceAfter = await sources(), h5After = await artifacts(h5), adminAfter = await artifacts(admin); expect(sourceAfter).toEqual(sourceBefore); expect(h5After).toEqual(h5Before); expect(adminAfter).toEqual(adminBefore);
         await writeFile(prefix + 'evidence.json', JSON.stringify({ status: resume ? 'passed-remaining-two-checkpoints-from-archived-GUI-saves' : 'passed-all-25-checkpoints', plans, evidence, traces, setup, writes, transport, snapshots_by_sha256: snapshots,
+          ...(dependencyTransition ? { dependency_transition: dependencyTransition.receipt } : {}),
           ...(resume ? { mode: 'remaining-two-read-only', linked_prior: resume.linkedPrior, current_business_save_count: 0, prior_actual_GUI_save_count: 3 } : {}),
           tables: f.tables, sequences: f.sequences, source_before: sourceBefore, source_after: sourceAfter, h5_before: h5Before, h5_after: h5After, admin_before: adminBefore, admin_after: adminAfter,
           static_paths: staticPaths, served_html: servedHtml, resources_before: initialResources, resources_after: resources(), business_save_count: businessSave,
@@ -320,6 +373,7 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
     await new Promise<void>((yes, no) => { server!.once('error', no); server!.listen(40785, '127.0.0.1', yes); });
     timer = setTimeout(() => { failure = Error('Owned list author Browser deadline exceeded'); fail(failure as Error); }, 63 * 60_000);
     await writeFile(prefix + 'ready.json', JSON.stringify({ url: origin + '/', origin, control, plans, instructions, pid: process.pid, tables: f.tables, sequences: f.sequences, source: sourceBefore, h5: h5Before, admin: adminBefore,
+      ...(dependencyTransition ? { dependency_transition: dependencyTransition.receipt } : {}),
       ...(resume ? { mode: 'remaining-two-read-only', linked_prior: resume.linkedPrior, business_save_count: 0 } : {}),
       expected: { initialRoot, initialMicro, editedRoot, alternateRoot, editedMicro, platformImage: f.platformImage, secondIcon: f.secondIcon, supplierImage: f.supplierImage, phases: resume ? 'fresh remaining-two read-only checkpoints;0GUI saves; archived prior3saves linked separately' : 'three GUI business saves only' },
       boundary: 'Only initial true persisted-role sessions and HTTP response transport gating are outer controls. No app method invocation, application event dispatch or fabricated business DTO.' }, null, 2) + '\n');
@@ -332,6 +386,7 @@ it(resumeMode ? 'actual remaining microH5 and finished read-only checkpoints fro
     catch (reason) { inspectionError = reason instanceof Error ? reason.stack : String(reason); }
     finally { external.mockRestore(); wiring.container = undefined; vi.unstubAllGlobals(); await f.close(); }
     await writeFile(prefix + 'cleanup.json', JSON.stringify({ server_closed: true, database_fixture_closed: true, timer_cleared: true, external_restored: true, fixed_stream_restored: true, checked: evidence.map(item => item.stage), inspection_error: inspectionError,
+      ...(dependencyTransition ? { dependency_transition: dependencyTransition.receipt } : {}),
       final_snapshot: finalSnapshot, snapshots_by_sha256: snapshots, final_resources: resources(), source_after: sourceAfter, h5_after: h5After, admin_after: adminAfter,
       ...(resume ? { mode: 'remaining-two-read-only', linked_prior: resume.linkedPrior, business_save_count: businessSave, writes } : {}),
       source_drift: sourceBefore.length ? digest(sourceBefore) !== digest(sourceAfter) : null, h5_drift: h5Before.length ? digest(h5Before) !== digest(h5After) : null, admin_drift: adminBefore.length ? digest(adminBefore) !== digest(adminAfter) : null }, null, 2) + '\n');

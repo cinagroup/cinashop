@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "lockSemanticSha256": "5f3a3a04a94f2201e54acd4c3eac651a606a25eb9e426916a3034a33fbc59e00",
-  "reviewedReceipt": "2026-10-23 official npm lock-only receipt: 51 affected package entries (9 low/12 moderate/30 high/0 critical), 26 direct source objects and 25 distinct advisory URLs. The eight reviewed scope definitions remain; seven have active report entries. GHSA-vfj7-8cjw-p6xm/source1240992 was officially withdrawn 2026-10-23T12:53:02Z. Only its 26 exclusively propagated package entries disappear; 25 surviving forward graphs lose that influence and six Jest entries drop from high to their remaining low source. All remaining direct tuples, installed nodes and the exact lock fingerprint are retained. This is an upstream inventory correction, not a package fix or broader optional-chain safety claim. Earlier sprintf-js withdrawal remains forbidden.",
+  "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
+  "reviewedReceipt": "2026-10-24 official npm lock-only receipt after resolver-produced body-parser1.20.9 and its own nested qs6.16.1: 50 affected package entries (9 low/11 moderate/30 high/0 critical), 26 direct source objects, 25 distinct advisory URLs, eight scope definitions/seven active chains. Source1243073/GHSA-27r3-jxmh-p828 is patched and forbidden on reappearance. Only body-parser disappears from the accepted affected-package forward graph; every surviving severity, direct tuple, installed vulnerable node and forward edge is unchanged. Express4.22.2 retains its semver-compatible root qs6.15.3 and both reviewed moderate qs advisories; optional H5 SSR remains disabled. Full raw reverse-effects drift is preserved in the remediation audit. Earlier withdrawals, all prior resolved sources and the exact old51 snapshot remain immutable; historical77-to51 assertions use that snapshot. Counts describe the npm graph, not independent vulnerabilities or general runtime safety.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -345,7 +345,9 @@
         "@dcloudio/uni-cli-shared"
       ],
       "advisorySources": [],
-      "effects": [],
+      "effects": [
+        "@dcloudio/uni-app"
+      ],
       "chains": [
         "encrypted-zip",
         "intlify",
@@ -364,9 +366,7 @@
         "@dcloudio/uni-h5"
       ],
       "advisorySources": [],
-      "effects": [
-        "@dcloudio/uni-app"
-      ],
+      "effects": [],
       "chains": [
         "encrypted-zip",
         "intlify",
@@ -720,10 +720,7 @@
         "jest-runner"
       ],
       "advisorySources": [],
-      "effects": [
-        "jest",
-        "jest-cli"
-      ],
+      "effects": [],
       "chains": [
         "jest-toolchain"
       ]
@@ -914,22 +911,6 @@
       "effects": [],
       "chains": [
         "encrypted-zip"
-      ]
-    },
-    "body-parser": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "1.20.5 - 1.20.6",
-      "nodes": [
-        "node_modules/body-parser"
-      ],
-      "viaPackages": [
-        "qs"
-      ],
-      "advisorySources": [],
-      "effects": [],
-      "chains": [
-        "h5-ssr"
       ]
     },
     "express": {
@@ -1149,7 +1130,6 @@
         1158507
       ],
       "effects": [
-        "body-parser",
         "express"
       ],
       "chains": [
@@ -1261,6 +1241,14 @@
     "1242605": {
       "package": "follow-redirects",
       "url": "https://github.com/advisories/GHSA-8r9p-f939-6h3c"
+    },
+    "1243073": {
+      "package": "body-parser",
+      "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+      "resolution": "patched",
+      "fixedVersion": "1.20.9",
+      "affectedRange": "<1.20.9",
+      "reason": "Official body-parser1.20.9 fixes trailing compressed-body bytes. Actual npm resolver and clean npm ci retain Express4.22.2/root qs6.15.3, with patched qs6.16.1 owned only by body-parser."
     }
   }
 }
