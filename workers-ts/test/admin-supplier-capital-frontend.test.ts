@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -92,7 +93,7 @@ it("requires its independent view permission, lists 20 rows per page and routes 
     expect(allowed.calls.find(call => call.url.endsWith("/list")).params)
       .toMatchObject({ supplier_id: "", data: "", keyword: "", page: 1, limit: 20 });
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "supplier/capital-flow"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/supplier/capital-flow')");
+    expect(hasCurrentAdminNavigationMenu('/supplier/capital-flow')).toBe(true);
   } finally { allowed.close(); }
 });
 

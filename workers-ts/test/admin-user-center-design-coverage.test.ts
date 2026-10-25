@@ -12,6 +12,11 @@ const sources = Object.fromEntries(Object.entries(userCenterDesignSourceFiles())
 const baseline = inspectUserCenterDesignCoverage(screens,sources);
 type Mutant = [string,string,string,string,UserCenterDesignGate];
 const mutants: Mutant[] = [
+  ["navigation actual layout permission prop", "sidebar", ":can-menu=\"canMenu\"", ":can-menu=\"() => true\"", "adminScreen"],
+  ["navigation actual per-item permission filter", "adminNavigation", "section.items.filter(item => canMenu(item.permissionPath))", "section.items", "adminScreen"],
+  ["navigation actual menu route", "adminNavigation", "\"path\": \"/setting/user-center-design\"", "\"path\": \"/setting/unregistered-user-center-design\"", "adminScreen"],
+  ["navigation actual template consumption", "sidebarNavigation", "v-for=\"item in section.items\"", "v-for=\"item in []\"", "adminScreen"],
+
   ['manager middleware actual factory','v1Routes','const managerAuth = managerRuntimeAuthMiddleware();','const managerAuth = authMiddleware({force:true});','statisticsTwoStyles'],
   ['manager middleware actual import','v1Routes','"@/middleware/manager-runtime-auth"','"@/middleware/fake-manager-runtime-auth"','statisticsTwoStyles'],
   ['manager authenticated producer','managerAuth','return (c, next) => authenticate(c, async () => {','return (c, next) => fakeAuthenticate(c, async () => {','statisticsTwoStyles'],

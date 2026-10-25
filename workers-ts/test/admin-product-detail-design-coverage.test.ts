@@ -16,6 +16,11 @@ function mutation(role: string, before: string, after: string) {
 }
 type Mutant = [string, string, string, string, ProductDetailDesignGate];
 const mutants: Mutant[] = [
+  ["navigation actual layout permission prop", "sidebar", ":can-menu=\"canMenu\"", ":can-menu=\"() => true\"", "permissions1594"],
+  ["navigation actual per-item permission filter", "adminNavigation", "section.items.filter(item => canMenu(item.permissionPath))", "section.items", "permissions1594"],
+  ["navigation actual menu route", "adminNavigation", "\"path\": \"/setting/product-detail-design\"", "\"path\": \"/setting/unregistered-product-detail-design\"", "permissions1594"],
+  ["navigation actual template consumption", "sidebarNavigation", "v-for=\"item in section.items\"", "v-for=\"item in []\"", "permissions1594"],
+
   ['Admin readonly showPrice preserved', 'admin', 'data-testid="detail-readonly-showPrice"', 'data-testid="missing-readonly-showPrice"', 'editor18'],
   ['Admin count actual control', 'admin', 'currentModule.count && controller.setCount(currentModule.count, value)', 'void currentModule.count', 'editor18'],
   ['Admin count range', 'admin', "count:'recommendNum',countLabel:'商品数量',max:24", "count:'recommendNum',countLabel:'商品数量',max:100", 'editor18'],

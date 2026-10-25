@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -113,7 +114,7 @@ it("enforces an independent statistics role and renders the old six-card and sev
     expect(page).toContain('prop="orderPrice" label="订单金额"');
     expect(page).not.toContain("已支付订单数");
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "division/statistics"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/division/statistics')");
+    expect(hasCurrentAdminNavigationMenu('/division/statistics')).toBe(true);
   } finally { allowed.close(); }
 });
 

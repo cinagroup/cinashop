@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/pg-core";
@@ -483,10 +484,9 @@ describe("third-party API migration boundary", () => {
 
   it("wires a responsive Admin account, interface catalog and redacted audit", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/system/ExternalApi.vue", "utf8");
     expect(router).toContain('path: "system/out"');
-    expect(layout).toContain('index="/system/out"');
+    expect(hasCurrentAdminNavigationMenu('/system/out')).toBe(true);
     expect(page).toContain("旧系统明文凭据与任意外部推送不会在 Worker 中执行");
     expect(page).toContain("issuedSecret");
     expect(page).toContain("mobile-list");

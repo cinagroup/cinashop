@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { requiredAdminPermission } from "@/services/admin/AdminPermissionService";
@@ -184,7 +185,7 @@ describe("community admin migration", () => {
     expect(page).toContain("apiCommunityFictitiousComment");
     expect(router).toContain('path: "community"');
     expect(router).toContain('import("@/pages/community/CommunityOperations.vue")');
-    expect(layout).toContain('index="/community"');
+    expect(hasCurrentAdminNavigationMenu('/community')).toBe(true);
     expect(layout).toContain('path.startsWith("/community")');
   });
 

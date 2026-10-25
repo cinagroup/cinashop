@@ -1,3 +1,4 @@
+import { ADMIN_NAVIGATION_SOURCE_FILES, hasAdminNavigationMenu } from './admin-navigation-source';
 import ts from 'typescript';
 
 /** Pure source evidence only. This module neither reads files nor runs reports,
@@ -21,7 +22,7 @@ export function productDetailDesignSourceFiles(): Record<string, string> {
   return {
     contract: 'view/common/productDetailDesign.ts', controller: 'view/common/productDetailDesignController.ts',
     admin: 'view/admin-ts/src/pages/setting/ProductDetailDesign.vue', preview: 'view/admin-ts/src/pages/setting/ProductDetailDesignPreview.vue',
-    api: 'view/admin-ts/src/api/productDetailDesign.ts', router: 'view/admin-ts/src/router/index.ts', sidebar: 'view/admin-ts/src/layouts/AdminLayout.vue',
+    api: 'view/admin-ts/src/api/productDetailDesign.ts', router: 'view/admin-ts/src/router/index.ts', ...ADMIN_NAVIGATION_SOURCE_FILES,
     adminRoutes: 'workers-ts/src/routes/adminapi.ts', v1Routes: 'workers-ts/src/routes/v1/index.ts',
     permission: 'workers-ts/src/services/admin/AdminPermissionService.ts', reader: 'workers-ts/src/services/content/ProductDetailDesignReadService.ts', theme: 'workers-ts/src/services/content/ThemeReadService.ts',
     service: 'workers-ts/src/services/admin/AdminProductDetailDesignService.ts', input: 'workers-ts/src/services/admin/AdminProductDetailDesignInput.ts',
@@ -190,8 +191,7 @@ export function inspectProductDetailDesignCoverage(screens: readonly string[], s
     "if(menu.id===1594&&menu.authType===1&&menu.menuPath==='/admin/setting/pages/product_detail'&&menu.uniqueAuth==='admin-setting-pages-product_detail')resolved.add('product_detail_design.view')",
     "requiredAdminPermission('POST',menu.apiUrl)?.startsWith('product_detail_design.')")
     && admin.has("auth.uniqueAuth.includes('product_detail_design.view')", "auth.uniqueAuth.includes('product_detail_design.manage')")
-    && s('sidebar').html("canMenu('/setting/product-detail-design')", 'index="/setting/product-detail-design"')
-    && s('sidebar').in('canMenu','allowedMenuPaths.value.has(path)');
+    && hasAdminNavigationMenu(sources, '/setting/product-detail-design');
   const sharedSettingsAuthority = reader.call('read','withTx','this.container')
     && reader.in('read', 'REPEATABLE READ, READ ONLY', 'themeDeadlines(tx)', 'return readProductDetailDesignSnapshot(tx)')
     && reader.in('productDetailDesignCatalog', 'octet_length(', 'PRODUCT_DETAIL_MAX_VALUE_BYTES', 'lower(btrim(', 'DISE_TEMPLATE_TRIM_CHARACTERS', '.limit(3)', 'themeHash(', 'xmin::text')

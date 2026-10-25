@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -144,10 +145,9 @@ describe("official-account content migration", () => {
 
   it("wires a previewable Admin page without exposing push controls", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/content/WechatContent.vue", "utf8");
     expect(router).toContain('path: "content/wechat"');
-    expect(layout).toContain('index="/content/wechat"');
+    expect(hasCurrentAdminNavigationMenu('/content/wechat')).toBe(true);
     expect(page).toContain("回复二维码现通过可靠队列异步生成");
     expect(page).toContain("公众号扫码回调、用户/卡券事件链与群发仍保持关闭");
     expect(page).toContain("查看脱敏详情");

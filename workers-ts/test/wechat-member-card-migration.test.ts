@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/pg-core";
@@ -84,11 +85,10 @@ describe("official-account member-card migration boundary", () => {
 
   it("wires a responsive previewable Admin catalog without mutation controls", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const api = readFileSync("../view/admin-ts/src/api/wechatMemberCard.ts", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/content/WechatMemberCard.vue", "utf8");
     expect(router).toContain('path: "content/wechat-card"');
-    expect(layout).toContain('index="/content/wechat-card"');
+    expect(hasCurrentAdminNavigationMenu('/content/wechat-card')).toBe(true);
     expect(api).toContain('get("/wechat/card/summary")');
     expect(page).toContain("远端制卡、激活和回调写入保持关闭");
     expect(page).toContain("mobile-list");

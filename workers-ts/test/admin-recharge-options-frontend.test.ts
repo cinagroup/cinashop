@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -116,7 +117,7 @@ it('validates full-list responses, exact money, repairable invalid rows and uniq
   for (const value of [row(1, { price: '10' }), row(1, { give_money: '0.001' })]) expect(() => runtime.quota.parseRechargeQuota(value)).toThrow('金额格式错误');
   expect(runtime.quota.parseRechargeQuota(row(1, { price: '', give_money: '', valid: false })).valid).toBe(false);
   expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "marketing/recharge-options"');
-  expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain('index="/marketing/recharge-options"');
+  expect(hasCurrentAdminNavigationMenu('/marketing/recharge-options')).toBe(true);
 });
 
 it('fetches all twenty options and previews only saved, enabled, valid rows across the entire list', async () => {

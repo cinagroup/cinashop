@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -77,7 +78,7 @@ it('uses a dedicated read role and only the recharge order endpoints', async () 
     expect(viewer.view.list.value[0].order_id).toBe('recharge-41');
     expect(viewer.view.stats.value.sum_price).toBe('100.00');
     expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "finance/recharges"');
-    expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain("canMenu('/finance/recharges')");
+    expect(hasCurrentAdminNavigationMenu('/finance/recharges')).toBe(true);
   } finally { viewer.close(); }
 });
 it('applies Shanghai minute boundaries while keeping paid-only statistics separate from unpaid list', async () => {

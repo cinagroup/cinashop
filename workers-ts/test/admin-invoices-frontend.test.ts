@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -126,7 +127,7 @@ it('exposes the independent invoice menu and queries ten rows without writes', a
     expect(f.calls[0]).toMatchObject({ url: endpoint, params: { page: 1, limit: 10, start_time: '', end_time: '', field: 'all', keyword: '', status: 'all' } });
     expect(f.view.list.value).toHaveLength(1); expect(writes(f.calls)).toEqual([]);
     expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "order/invoice"');
-    expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain('canMenu(\'/order/invoice\')');
+    expect(hasCurrentAdminNavigationMenu('/order/invoice')).toBe(true);
   } finally { f.close(); }
 });
 it('supports minute-precision Shanghai filters, distinct contact fields and stable pagination', async () => {

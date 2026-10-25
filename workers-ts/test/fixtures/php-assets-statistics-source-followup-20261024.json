@@ -1,0 +1,63 @@
+{
+  "schema": "cinashop.php-assets.statistics-source-adjunct.v1",
+  "file": "view/uniapp-ts/src/App.vue",
+  "before_commit": "57333a443d2d6539d56449a744671f9292894351",
+  "after_commit": "d6776ee2fcb365018614f6ae5eea39a9d7c91c82",
+  "before_sha256": "945764d70fed2cff9f6ab9af6ae7bf7d8ecf0b4cc13afde0690f1af9b901d3bc",
+  "after_sha256": "cfc3c8ba61192ae61ab19806f34e26bc8d73cb4c9884edcf225807a6ebe82926",
+  "unchanged_pre_style_prefix_sha256": "b89df5cb3dbd0f9484522f65558f9f0f2c1bf1d362010aed7f701dc76f135f7c",
+  "edits": [
+    {
+      "before_source": "<style>\n/* 全局样式 */",
+      "after_source": "<style>\n/* The original UniApp registers this same local D-DIN 600 font. */\n@font-face {\n  font-family: \"CinaShop DIN\";\n  src: url(\"/static/php-assets/fonts/D-DIN-PRO-600-SemiBold.ttf\") format(\"truetype\");\n  font-weight: 600;\n  font-style: normal;\n  font-display: swap;\n  /* Price digits and symbols only; Chinese and full-width ￥ keep system glyphs. */\n  unicode-range: U+0020, U+0024-0025, U+0028-003A, U+00A0, U+00A3, U+00A5, U+20AC;\n}\n\n/* 全局样式 */",
+      "before_line": 40,
+      "after_line": 40
+    },
+    {
+      "before_source": "page {\n  background-color: #f5f5f5;\n  font-size: 28rpx;\n  color: #333;\n}",
+      "after_source": "page {\n  background-color: #f5f5f5;\n  font-size: 28rpx;\n  color: #333;\n  font-family: \"PingFang SC\", -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif;\n}",
+      "before_line": 42,
+      "after_line": 53
+    },
+    {
+      "before_source": ".goods-card {\n  width: 48%;\n  background: #fff;\n  border-radius: 12rpx;\n  margin-bottom: 20rpx;\n  overflow: hidden;\n}",
+      "after_source": ".goods-card {\n  width: 48%;\n  background: #fff;\n  border-radius: 20rpx;\n  margin-bottom: 20rpx;\n  overflow: hidden;\n}",
+      "before_line": 59,
+      "after_line": 72
+    },
+    {
+      "before_source": ".goods-info {\n  padding: 16rpx;\n}",
+      "after_source": ".goods-info {\n  padding: 16rpx 20rpx;\n}",
+      "before_line": 73,
+      "after_line": 86
+    },
+    {
+      "before_source": ".price {\n  color: var(--view-priceColor, #e93323);\n  font-size: 32rpx;\n  font-weight: 600;\n}",
+      "after_source": ".price {\n  font-family: \"CinaShop DIN\", \"PingFang SC\", -apple-system, BlinkMacSystemFont,\n    \"Segoe UI\", \"Microsoft YaHei\", sans-serif;\n  color: var(--view-priceColor, #e93323);\n  font-size: 32rpx;\n  font-weight: 600;\n}",
+      "before_line": 94,
+      "after_line": 107
+    }
+  ],
+  "retained_historical_proofs": [
+    {
+      "file": "workers-ts/audit/statistics-script-restoration-20261015.json",
+      "sha256": "68dbcb37e31f6ed8c57efe0ab0c41684f1e1edda9394a547129cf235ab5cf8f1"
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd"
+    },
+    {
+      "file": "workers-ts/audit/diy-navigation-author-source-binding-20261023.json",
+      "sha256": "91d6a8f07f1330ddabceff904a9ace6fe4c5641756b9faee838c4a117f3f99fd"
+    },
+    {
+      "file": "workers-ts/audit/diy-list-author-source-binding-20261023.json",
+      "sha256": "4ddd06f3bef5ef330d46ec6289b76c81876e2d4da8d5bcd623dca73d540e3149"
+    },
+    {
+      "file": "workers-ts/audit/legacy-route-decisions.json",
+      "sha256": "1108831bf6b9da4b6640c2b80d49da590bd5a169e607815958abad8b82f1cf74"
+    }
+  ]
+}

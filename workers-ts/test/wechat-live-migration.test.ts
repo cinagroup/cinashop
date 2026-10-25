@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/pg-core";
@@ -143,10 +144,9 @@ describe("WeChat mini-program live catalog migration", () => {
 
   it("wires responsive local controls without remote WeChat mutation controls", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/marketing/WechatLiveCatalog.vue", "utf8");
     expect(router).toContain('path: "marketing/live"');
-    expect(layout).toContain('index="/marketing/live"');
+    expect(hasCurrentAdminNavigationMenu('/marketing/live')).toBe(true);
     const api = readFileSync("../view/admin-ts/src/api/wechatLive.ts", "utf8");
     expect(page).toContain("微信远程写操作仍受保护");
     expect(page).toContain("本地管理 + 只读同步");

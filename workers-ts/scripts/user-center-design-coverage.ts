@@ -1,3 +1,4 @@
+import { ADMIN_NAVIGATION_SOURCE_FILES, hasAdminNavigationMenu } from './admin-navigation-source';
 import ts from 'typescript';
 
 /** Connected source evidence only. Runtime, SQL/JWT, browser, native/provider
@@ -22,7 +23,7 @@ export function userCenterDesignSourceFiles(): Record<string, string> {
     contract: 'view/common/userCenterDesign.ts', controller: 'view/common/userCenterDesignController.ts',
     admin: 'view/admin-ts/src/pages/setting/UserCenterDesign.vue', preview: 'view/admin-ts/src/pages/setting/UserCenterDesignPreview.vue',
     picker: 'view/admin-ts/src/pages/setting/UserCenterDesignPicker.vue', api: 'view/admin-ts/src/api/userCenterDesign.ts',
-    router: 'view/admin-ts/src/router/index.ts', sidebar: 'view/admin-ts/src/layouts/AdminLayout.vue',
+    router: 'view/admin-ts/src/router/index.ts', ...ADMIN_NAVIGATION_SOURCE_FILES,
     adminRoutes: 'workers-ts/src/routes/adminapi.ts', v1Routes: 'workers-ts/src/routes/v1/index.ts',
     permission: 'workers-ts/src/services/admin/AdminPermissionService.ts', input: 'workers-ts/src/services/admin/AdminUserCenterDesignInput.ts',
     service: 'workers-ts/src/services/admin/AdminUserCenterDesignService.ts', httpController: 'workers-ts/src/controllers/api/v1/AdminUserCenterDesignController.ts',
@@ -190,7 +191,7 @@ export function hasUserCenterDesignContract(source: string): boolean {
  * cannot replace the required AST CallExpression. */
 export function inspectUserCenterDesignCoverage(screens: string[], sources: Record<string, string>): UserCenterDesignCoverage {
   const s = Object.fromEntries(Object.entries(userCenterDesignSourceFiles()).map(([role]) => [role, new Source(sources[role] ?? '')]));
-  const { contract:c, controller:ctl, admin:a, preview:p, picker:k, api, router:r, sidebar, adminRoutes:ar, v1Routes:vr, permission:perm, input, service:w, httpController:hc, reader:read, publicReader:pub, catalog:cat, publicCatalog:pc, crud, pcBanner, signDay, recharge, profile, profileController, operator, collectionService:cs, collectionController:cc, mobile:m, mobileConsumer:u, mobileDecoder:d, mobileApi:ma, menus, collection:collect, collectionConsumer:uc, memberCodePage:code, navigation:nav } = s as Record<keyof ReturnType<typeof userCenterDesignSourceFiles>, Source>;
+  const { contract:c, controller:ctl, admin:a, preview:p, picker:k, api, router:r, adminRoutes:ar, v1Routes:vr, permission:perm, input, service:w, httpController:hc, reader:read, publicReader:pub, catalog:cat, publicCatalog:pc, crud, pcBanner, signDay, recharge, profile, profileController, operator, collectionService:cs, collectionController:cc, mobile:m, mobileConsumer:u, mobileDecoder:d, mobileApi:ma, menus, collection:collect, collectionConsumer:uc, memberCodePage:code, navigation:nav } = s as Record<keyof ReturnType<typeof userCenterDesignSourceFiles>, Source>;
   const route = (method: string, suffix: string, action: string) => ar!.call('$root', `adminapiRoutes.${method}`, `'/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`) && vr!.call('$root', `v1Routes.${method}`, `'/admin/config/user-center-design${suffix}'`, 'adminAuth', `AdminUserCenterDesign.${action}`);
   const publicConnected = pc!.call('menuUser', 'new UserCenterPublicReadService(this.container,this.env).menu', 'uid') && pc!.call('menuUserData', 'new UserCenterPublicReadService(this.container,this.env).data', 'uid');
   // These five legacy paths delegate to a bounded operational-image service.
@@ -273,7 +274,7 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
     && nav!.rule('/pages/admin/order/index','partial_replacement') && nav!.in('REGISTERED_PAGE_ROUTES', "'/pages/merchant/statistics'") && nav!.rule('/pages/admin/orderList/index','partial_replacement')
     && manager('workerRegistry').in('$root',"'/pages/merchant/statistics'","'/pages/merchant/orders'");
   return {
-    adminScreen: screens.filter(path => path === '/setting/user-center-design').length === 1 && r!.in('$root', "path:'setting/user-center-design'", "import('@/pages/setting/UserCenterDesign.vue')", "alias:'/admin/setting/pages/home'") && sidebar!.binding('el-menu-item', 'v-if', "canMenu('/setting/user-center-design')") && a!.in('canView', "auth.uniqueAuth.includes('user_center_design.view')") && a!.call('$root', 'new UserCenterDesignController') && a!.binding('UserCenterDesignPreview', ':value', 'state.draft') && a!.binding('el-button', '@click', 'controller.save()'),
+    adminScreen: screens.filter(path => path === '/setting/user-center-design').length === 1 && r!.in('$root', "path:'setting/user-center-design'", "import('@/pages/setting/UserCenterDesign.vue')", "alias:'/admin/setting/pages/home'") && hasAdminNavigationMenu(sources, '/setting/user-center-design') && a!.in('canView', "auth.uniqueAuth.includes('user_center_design.view')") && a!.call('$root', 'new UserCenterDesignController') && a!.binding('UserCenterDesignPreview', ':value', 'state.draft') && a!.binding('el-button', '@click', 'controller.save()'),
     sixBlockContract: hasUserCenterDesignContract(sources.contract ?? '') && input!.call('userCenterDesignInput', 'isUserCenterDesignValue', 'body.value') && input!.call('userCenterDesignInput', 'userCenterDesignPayload', 'body.revision', 'body.value'),
     memberEditor: a!.binding('el-radio-group', ':model-value', 'state.draft.member.style') && a!.binding('el-radio-group', '@change', 'memberStyle') && a!.binding('el-checkbox', '@change', '(checked:unknown)=>controller.toggleProperty(option.id,checked)') && a!.binding('el-radio-group', ':model-value', 'state.draft.member.per_show_type') && a!.call('memberStyle', 'controller.edit') && a!.in('memberStyle', 'draft.member.style=value', 'draft.member.property=[0,1,2]') && ctl!.in('toggleProperty', 'draft.member.property', '[...old,value]', 'old.filter(item=>item!==value)') && a!.call('setToggle', 'controller.edit'),
     orderStatisticsEditor: a!.binding('el-radio-group', ':model-value', 'state.draft.order.style') && a!.binding('el-radio-group', '@change', "(value:unknown)=>setStyle('order',value)") && a!.binding('el-radio-group', ':model-value', 'state.draft.orderStatic.style') && a!.binding('el-radio-group', ':model-value', 'state.draft.orderStatic.is_show') && a!.call('setStyle', 'controller.edit') && a!.call('setToggle', 'controller.edit'),

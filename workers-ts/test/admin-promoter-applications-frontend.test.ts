@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -124,7 +125,7 @@ it('validates server rows and keeps the new route and its menu distinct from dis
   const layout = readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8');
   expect(router).toContain('path: "agent/promoter-applications"');
   expect(router).toContain('@/pages/agent/PromoterApplications.vue');
-  expect(layout).toContain('index="/agent/promoter-applications"');
+  expect(hasCurrentAdminNavigationMenu('/agent/promoter-applications')).toBe(true);
   expect(layout.indexOf('if (path.startsWith("/agent/promoter-applications"))')).toBeLessThan(layout.indexOf('if (path.startsWith("/agent"))'));
 });
 

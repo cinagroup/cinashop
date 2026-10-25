@@ -1,3 +1,4 @@
+import { phpAssetsStatisticsSourceBinding, reversePhpAssetsStatisticsSource } from './helpers/phpAssetsStatisticsSourceBinding';
 import { reverseListAuthorSource } from './helpers/diyListAuthorSourceBinding';
 import { reverseNavigationAuthorSource } from './helpers/diyNavigationAuthorSourceBinding';
 import { createHash } from "node:crypto";
@@ -104,11 +105,44 @@ describe("restored PHP statistics script contract and retained retirement histor
     expect(digest(footerBindingRaw)).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
     expect(footerBinding.historical_statistics_restoration).toEqual(stateIncrement.statistics_restoration);
     for(const proof of restoration.current_sources){
-      const current=reverseNavigationAuthorSource(proof.file,reverseListAuthorSource(proof.file,read(proof.file))),footer=footerBinding.sources.find(row=>row.file===proof.file);
+      const current=reverseNavigationAuthorSource(proof.file,reverseListAuthorSource(proof.file,reversePhpAssetsStatisticsSource(proof.file,read(proof.file)))),footer=footerBinding.sources.find(row=>row.file===proof.file);
       const restored=footer?reverseRouteSourceFollowup(current,footer):current;
       const original=proof.file===stateIncrement.route_file?reverseRouteSourceIncrement(reverseRouteSourceFollowup(restored,availabilityFollowup),stateIncrement):restored;
       expect(digest(original),proof.file).toBe(proof.sha256);
     }
+  });
+
+  it("peels only the five pinned PHP visual style edits before the historical whole-source chain",()=>{
+    const binding=phpAssetsStatisticsSourceBinding,current=read(binding.file);
+    expect(binding.file).toBe('view/uniapp-ts/src/App.vue');
+    expect(binding.before_commit).toBe('57333a443d2d6539d56449a744671f9292894351');
+    expect(binding.after_commit).toBe('d6776ee2fcb365018614f6ae5eea39a9d7c91c82');
+    expect(binding.before_sha256).toBe('945764d70fed2cff9f6ab9af6ae7bf7d8ecf0b4cc13afde0690f1af9b901d3bc');
+    expect(binding.after_sha256).toBe('cfc3c8ba61192ae61ab19806f34e26bc8d73cb4c9884edcf225807a6ebe82926');
+    expect(binding.edits).toHaveLength(5);
+    const previous=reversePhpAssetsStatisticsSource(binding.file,current);
+    expect(digest(previous)).toBe(binding.before_sha256);
+    const beforePrefix=previous.slice(0,previous.indexOf('<style>')),afterPrefix=current.slice(0,current.indexOf('<style>'));
+    expect(afterPrefix).toBe(beforePrefix);
+    expect(digest(afterPrefix)).toBe(binding.unchanged_pre_style_prefix_sha256);
+    for(const edit of binding.edits){
+      expect(current.indexOf(edit.after_source)).toBeGreaterThanOrEqual(current.indexOf('<style>'));
+      expect(previous.indexOf(edit.before_source)).toBeGreaterThanOrEqual(previous.indexOf('<style>'));
+      expect(()=>reversePhpAssetsStatisticsSource(binding.file,current.replace(edit.after_source,edit.after_source+' /* unreviewed */'))).toThrow();
+    }
+    for(const proof of binding.retained_historical_proofs)expect(digest(read(proof.file)),proof.file).toBe(proof.sha256);
+    const footer=footerBinding.sources.find(row=>row.file===binding.file)!;
+    expect(digest(reverseRouteSourceFollowup(previous,footer))).toBe(restoration.current_sources.find(row=>row.file===binding.file)!.sha256);
+    expect(reversePhpAssetsStatisticsSource('view/common/statisticsScript.ts','unrelated source')).toBe('unrelated source');
+  });
+  it.each([
+    ['unexpected source bytes',(source:string)=>source+'\n'],
+    ['statistics loader removal',(source:string)=>source.replace('loadStatisticsScript(API_BASE)','loadStatisticsScriptChanged(API_BASE)')],
+    ['H5 guard removal',(source:string)=>source.replace('// #ifdef H5','// removed H5 guard')],
+  ] as const)("rejects the PHP visual adjunct with %s",(_name,mutate)=>{
+    const file=phpAssetsStatisticsSourceBinding.file,current=read(file),changed=mutate(current);
+    expect(changed).not.toBe(current);
+    expect(()=>reversePhpAssetsStatisticsSource(file,changed)).toThrow();
   });
 
   it.each([

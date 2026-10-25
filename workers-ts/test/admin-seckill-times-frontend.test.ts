@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -88,7 +89,7 @@ it('checks pagination, unique record identity and repairable invalid DTOs', () =
   const page = readFileSync(resolve(root, 'src/pages/activity/SeckillTimes.vue'), 'utf8');
   expect(page).toContain('label="时段图片"'); expect(page).toContain('label="时段描述"'); expect(page).toContain('preview-teleported');
   expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "activity/seckill-times"');
-  expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain('index="/activity/seckill-times"');
+  expect(hasCurrentAdminNavigationMenu('/activity/seckill-times')).toBe(true);
   expect(readFileSync(resolve(root, 'src/pages/activity/ActivityList.vue'), 'utf8')).not.toContain('continuedTime');
 });
 it('uses twenty-item pagination, status switching and title search without resetting applied filters on refresh', async () => {

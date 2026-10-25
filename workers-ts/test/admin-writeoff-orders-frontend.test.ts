@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -91,7 +92,7 @@ it("enforces the independent writeoff role and only the three GET read routes", 
     expect(page).toMatch(/prop="order_id"[^>]*sortable/);
     expect(page).toMatch(/prop="add_time"[^>]*sortable/);
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "operations/writeoff-orders"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/operations/writeoff-orders')");
+    expect(hasCurrentAdminNavigationMenu('/operations/writeoff-orders')).toBe(true);
   } finally { viewer.close(); }
 });
 

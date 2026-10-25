@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
@@ -150,11 +151,10 @@ describe("Enterprise WeChat migration boundary", () => {
 
   it("wires a responsive Admin catalog with only the audited action decision control", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const api = readFileSync("../view/admin-ts/src/api/enterpriseWechat.ts", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/operations/EnterpriseWechat.vue", "utf8");
     expect(router).toContain('path: "operations/work"');
-    expect(layout).toContain('index="/operations/work"');
+    expect(hasCurrentAdminNavigationMenu('/operations/work')).toBe(true);
     expect(api).toContain('get("/work/summary")');
     expect(api).toContain('get("/work/contact_action"');
     expect(api).toContain('post(`/work/contact_action/${id}/decision`');

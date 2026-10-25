@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -79,7 +80,7 @@ it("keeps an independent view role and only GET routes for the new finance scree
     expect(viewer.calls.every(call => call.method === "get")).toBe(true);
     expect(viewer.view.list.value[0]).toMatchObject({ display_name: "用户7|13800000007|7", sum_number: "10.00", extract_price: "2.00" });
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "finance/commissions"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/finance/commissions')");
+    expect(hasCurrentAdminNavigationMenu('/finance/commissions')).toBe(true);
     expect(readFileSync(resolve(root, "src/pages/finance/CommissionRecords.vue"), "utf8")).toContain("导出待迁移");
   } finally { viewer.close(); }
 });

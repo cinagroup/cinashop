@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -112,7 +113,7 @@ it("uses an independent view permission and loads all six read endpoints with th
     expect(allowed.view.channel.value.items).toHaveLength(5);
     expect(allowed.view.typeDistribution.value.items.map((item: any) => item.key)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "supplier/order-statistics"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/supplier/order-statistics')");
+    expect(hasCurrentAdminNavigationMenu('/supplier/order-statistics')).toBe(true);
     expect(readFileSync(resolve(root, "src/api/system.ts"), "utf8")).toContain("supplier_order_statistics.view");
     expect(readFileSync(resolve(root, "src/pages/supplier/SupplierOrderStatistics.vue"), "utf8")).not.toMatch(/导出 CSV|导出 Excel/u);
   } finally { allowed.close(); }

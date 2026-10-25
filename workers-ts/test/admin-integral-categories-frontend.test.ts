@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -105,7 +106,7 @@ it('validates pagination, revisions, row types and unique IDs without requiring 
   expect(() => runtime.category.parseIntegralCategoryPage(rows(1, [row(), row()]), query)).toThrow('记录重复');
   expect(runtime.category.parseIntegralCategory(row(1, { integral_min: 0, integral_max: 0 })).id).toBe(1);
   expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "marketing/integral-categories"');
-  expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain('index="/marketing/integral-categories"');
+  expect(hasCurrentAdminNavigationMenu('/marketing/integral-categories')).toBe(true);
 });
 
 it('keeps category read and write permissions independent from other activity and point permissions', async () => {

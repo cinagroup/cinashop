@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -97,13 +98,12 @@ describe("legacy queue and timer catalog migration", () => {
 
   it("wires a responsive read-only Admin view with no fake controls", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync(
       "../view/admin-ts/src/pages/operations/LegacyRuntimeHistory.vue",
       "utf8",
     );
     expect(router).toContain('path: "operations/legacy-runtime"');
-    expect(layout).toContain('index="/operations/legacy-runtime"');
+    expect(hasCurrentAdminNavigationMenu('/operations/legacy-runtime')).toBe(true);
     expect(page).toContain("不是 Cloudflare 的任务控制台");
     expect(page).toContain("不提供伪重试按钮");
     expect(page).toContain("mobile-list");

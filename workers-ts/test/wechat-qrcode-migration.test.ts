@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -116,11 +117,10 @@ describe("official-account QR and channel-code migration", () => {
 
   it("wires responsive Admin workflows and keeps callback limitations visible", () => {
     const router = readFileSync("../view/admin-ts/src/router/index.ts", "utf8");
-    const layout = readFileSync("../view/admin-ts/src/layouts/AdminLayout.vue", "utf8");
     const page = readFileSync("../view/admin-ts/src/pages/content/WechatQrcode.vue", "utf8");
     const contentPage = readFileSync("../view/admin-ts/src/pages/content/WechatContent.vue", "utf8");
     expect(router).toContain('path: "content/wechat-qrcode"');
-    expect(layout).toContain('index="/content/wechat-qrcode"');
+    expect(hasCurrentAdminNavigationMenu('/content/wechat-qrcode')).toBe(true);
     expect(page).toContain("二维码由队列异步生成");
     expect(page).toContain("公众号扫码回调尚未启用");
     expect(page).toContain("apiChannelStatistics");

@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { build } from "esbuild";
 import { readFileSync } from "node:fs";
@@ -139,7 +140,7 @@ it("keeps detail and export bound to the selected period and supplier after filt
     expect(mounted.calls.at(-1).params.status).toBe("1");
     expect(runtime.routing.state.pushes.at(-1)).toMatchObject({ path: "/supplier/bills", query: { status: "1" } });
     expect(readFileSync(resolve(root, "src/router/index.ts"), "utf8")).toContain('path: "supplier/bills"');
-    expect(readFileSync(resolve(root, "src/layouts/AdminLayout.vue"), "utf8")).toContain("canMenu('/supplier/bills')");
+    expect(hasCurrentAdminNavigationMenu('/supplier/bills')).toBe(true);
   } finally { mounted.close(); }
 });
 

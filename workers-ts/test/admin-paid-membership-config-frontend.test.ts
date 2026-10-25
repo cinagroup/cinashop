@@ -1,3 +1,4 @@
+import { hasCurrentAdminNavigationMenu } from './helpers/adminNavigationSource';
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
@@ -73,7 +74,7 @@ it('reads the two keys without writes or a menu grant and registers a dedicated 
     expect(f.calls.map(call => call.url)).toEqual(['/config/paid-membership']); expect(f.calls[0].params).toBeUndefined();
     expect(f.view.form.value).toEqual(config().settings); expect(f.view.config.value.raw_values).toEqual(config().raw_values); expect(writes(f.calls)).toEqual([]);
     expect(readFileSync(resolve(root, 'src/router/index.ts'), 'utf8')).toContain('path: "config/paid-membership"');
-    expect(readFileSync(resolve(root, 'src/layouts/AdminLayout.vue'), 'utf8')).toContain('v-if="canMenu(\'/config\')" index="/config/paid-membership"');
+    expect(hasCurrentAdminNavigationMenu('/config/paid-membership', '/config')).toBe(true);
   } finally { f.close(); }
 });
 it.each([{ permissions: ['member.manage'] }, { permissions: ['level.manage'] }, { permissions: [] }])('does not read or mutate with unrelated permission $permissions', async ({ permissions }) => {
