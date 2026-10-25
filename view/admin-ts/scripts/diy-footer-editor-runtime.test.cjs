@@ -32,15 +32,17 @@ function loader(overrides = {}) {
       if(name==='@/stores/auth')return { useAuthStore:() => actor };
       if(name==='@/utils/auth')return { getToken:() => storage.get('admin_token') ?? null };
       if(name==='@/utils/request')return { __esModule:true,default:gateway,getData:async p => (await p).data };
+      // Isolate the adjacent view; DiseList still imports the real editorial canonicalizer separately.
+      if(name==='@/components/content/DiyEditorialEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/components/content/DiyPresentationEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/pages/activity/SeckillActivityImagePicker.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name.startsWith('@/'))return load(path.join(root,name.slice(2)));
-      if(name.startsWith('.'))return load(path.resolve(path.dirname(file),name.endsWith('.ts')?name:name+'.ts'));
+      if(name.startsWith('.'))return load(path.resolve(path.dirname(file),name));
       return require(name);
     },exports,env.window,env.localStorage);
     return exports;
   }
-  return { load,actor,storage,notices,env };
+  return { load,actor,storage,notices,env,loadedFiles:()=>[...cache.keys()] };
 }
 function mount(component, props = {}, emit = () => {}) {
   let state; const app=renderer.createApp({ setup() { state=vue.proxyRefs(component.setup(props,{ emit,expose:()=>{} }));return()=>null; } });
@@ -116,4 +118,21 @@ test('new page preserves dormant DIY creation contract and validation never subm
 test('late page write cannot close or notify a replacement editor/account and duplicate save is suppressed',async()=>{
   const gate=deferred(),writes=[],l=loader({gateway:{get:async()=>({data:[]}),post:async(url,body)=>{writes.push({url,body});return gate.promise;}}}),m=mount(l.load(pageFile).default);m.state.openForm({id:2,name:'页面',title:'标题',value:JSON.stringify([footer()]),content:'separate',status:1,type:1,template_name:'default',is_diy:1});const task=m.state.save();await tick();await m.state.save();assert.equal(writes.length,1);l.storage.set('admin_token','ownerB');l.actor.token='ownerB';l.actor.userInfo={id:22,level:0};assert.equal(m.state.formVisible,false);gate.resolve({data:{id:2}});await task;assert.ok(!l.notices.some(([kind])=>kind==='success'));assert.equal(m.state.formVisible,false);m.unmount();
   const stale=loader(),fresh=mount(stale.load(pageFile).default);assert.equal(fresh.state.sessionReady,true);stale.storage.set('admin_token','foreign-stored');fresh.state.storedChanged(new Event('storage'));assert.equal(fresh.state.sessionReady,false);fresh.state.openForm();assert.equal(fresh.state.formVisible,false);fresh.unmount();
+});
+
+
+test('legacy page-save harness isolates the adjacent editorial view and retains its real canonical media save chain',async()=>{
+  const writes=[],l=loader({gateway:{get:async()=>({data:[]}),post:async(url,body)=>{writes.push({url,body:clone(body)});return{data:{id:2}};}}}),m=mount(l.load(pageFile).default);
+  const signed=id=>`/api/assets/${id}?expires=1&signature=old-canonical-only`,value=[
+    {name:'news',imgConfig:{url:signed(31),meta:{keep:[]}},link:signed(31)},
+    {name:'hotspot',picStyle:{url:signed(32),list:[{link:signed(32),opaque:0}]}},
+    {name:'activeParty',titleConfig:{place:'retain-author-title',max:30},desConfig:{place:'retain-author-description',max:40},menuConfig:{list:Array.from({length:6},(_,i)=>({img:signed(33+i),link:signed(33+i),opaque:{i}}))}}
+  ];
+  try{m.state.openForm({id:2,name:'旧suite实际保存',title:'标题',value:JSON.stringify(value),content:'independent-content',status:1,type:1,template_name:'default',is_diy:1});await m.state.save();
+    assert.equal(writes.length,1);assert.equal(writes[0].url,'/dise/save');assert.equal(writes[0].body.content,'independent-content');
+    const expected=clone(value);expected[0].imgConfig.url='/api/assets/31';expected[1].picStyle.url='/api/assets/32';for(let i=0;i<4;i++)expected[2].menuConfig.list[i].img=`/api/assets/${33+i}`;
+    assert.deepEqual(JSON.parse(writes[0].body.value),expected);
+    assert.ok(l.loadedFiles().includes(path.join(root,'utils/diyEditorialEditor.ts')));
+    assert.ok(!l.loadedFiles().includes(path.join(root,'components/content/DiyEditorialEditor.vue')));
+  }finally{m.unmount();}
 });
