@@ -37,6 +37,8 @@ import { isBargainParticipationReady } from "@/services/activity/BargainParticip
 import { findBargainParticipation } from "@/services/activity/BargainParticipationSelection";
 import { lockBargainHelpRuleShared } from "@/services/activity/BargainHelpRuleLock";
 import { lockBargainSourceProductAdmission } from "@/services/activity/BargainSourceProductLifecycle";
+import { publicPinkAvatarPictures } from "@/services/activity/PinkAvatarMediaPolicy";
+import { renderProductPictures } from "@/services/activity/ProductAssetPolicy";
 
 const BARGAIN_HELP_LOCK_NAMESPACE = 731_627;
 const BARGAIN_HELP_USER_LOCK_NAMESPACE = 731_628;
@@ -170,31 +172,23 @@ export class ActivityJoinService {
 
   /** PHP GET /pink: completed/all participant count and up to three avatars. */
   async pinkStats(type = 1): Promise<{ pink_count: number; avatars: string[] }> {
-    const conditions = [eq(storePink.isRefund, 0), gt(storePink.uid, 0)];
-    if (type === 1) conditions.push(eq(storePink.status, 2));
-    const [countRows, participantRows] = await Promise.all([
-      this.container.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(storePink)
-        .where(and(...conditions)),
-      this.container.db
-        .select({ uid: storePink.uid })
-        .from(storePink)
-        .where(and(...conditions))
-        .orderBy(desc(storePink.addTime), desc(storePink.id))
-        .limit(20),
-    ]);
-    const uids = [...new Set(participantRows.map((row) => row.uid))].slice(0, 3);
-    if (!uids.length) return { pink_count: Number(countRows[0]?.count ?? 0), avatars: [] };
-    const users = await this.container.db
-      .select({ uid: user.uid, avatar: user.avatar })
-      .from(user)
-      .where(inArray(user.uid, uids));
-    const avatarsByUid = new Map(users.map((item) => [item.uid, item.avatar]));
-    return {
-      pink_count: Number(countRows[0]?.count ?? 0),
-      avatars: uids.map((uid) => avatarsByUid.get(uid) ?? "").filter(Boolean),
-    };
+    const snapshot = await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      const conditions = [eq(storePink.isRefund, 0), gt(storePink.uid, 0)];
+      if (type === 1) conditions.push(eq(storePink.status, 2));
+      const [countRows, participantRows] = await Promise.all([
+        tx.select({ count: sql<number>`COUNT(*)::int` }).from(storePink).where(and(...conditions)),
+        tx.select({ uid: storePink.uid }).from(storePink).where(and(...conditions))
+          .orderBy(desc(storePink.addTime), desc(storePink.id)).limit(20),
+      ]);
+      const uids = [...new Set(participantRows.map(row => row.uid))].slice(0, 3);
+      const users = uids.length ? await tx.select({ uid: user.uid, avatar: user.avatar }).from(user).where(inArray(user.uid, uids)) : [];
+      const byUid = new Map(users.map(row => [row.uid, row.avatar]));
+      const references = await publicPinkAvatarPictures(tx, uids.map(uid => ({ uid, image: byUid.get(uid) ?? '' })));
+      return { pink_count: Number(countRows[0]?.count ?? 0), references };
+    });
+    const avatars = await renderProductPictures(this.env?.APP_KEY, snapshot.references);
+    return { pink_count: snapshot.pink_count, avatars: avatars.filter(Boolean) };
   }
 
   async combinationPoster(uid: number, pinkId: number) {

@@ -369,10 +369,17 @@ export class ActivityService {
   async combinationList(pageValue?: unknown, limitValue?: unknown) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
     const rows = await this.container.storeCombinationDao.list(page, limit);
-    return rows.map((item) => ({
+    // Match the existing combination SKU view: store-owned goods use shared
+    // platform media, while supplier goods keep their persisted supplier scope.
+    const pictures = rows.map(item => ({ image: item.image,
+      ...(item.type === 1 && Number.isSafeInteger(item.relationId) && item.relationId > 0 && item.relationId <= 2147483647
+        ? { type: 0, relationId: 0 } : { type: item.type, relationId: item.relationId }) }));
+    const images = await renderProductPictures(this.env?.APP_KEY,
+      await publicProductPictures(this.container.db, pictures, 256));
+    return rows.map((item, index) => ({
       id: item.id,
       title: item.storeName,
-      image: item.image,
+      image: images[index] ?? '',
       price: Number(item.price),
       product_id: item.productId,
       people: item.people,

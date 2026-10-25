@@ -624,7 +624,7 @@ export class PublicCatalogService {
       throw new ValidateException('预售页码超出范围');
     }
     const clock = Date.now(), now = Math.floor(clock / 1_000);
-    return withPresaleCatalogSnapshot(this.container, async snapshot => {
+    const result = await withPresaleCatalogSnapshot(this.container, async snapshot => {
       const account = await readPresaleCatalogAccount(snapshot.db, uid);
       const timeCondition = timeType === 1
         ? gt(storeProduct.presaleStartTime, now)
@@ -642,8 +642,15 @@ export class PublicCatalogService {
           .orderBy(desc(storeProduct.addTime), desc(storeProduct.id)).limit(limit).offset((page - 1) * limit),
         snapshot.db.select({ count: sql<number>`COUNT(*)::int` }).from(storeProduct).where(condition),
       ]);
-      return { list: await new PublicCatalogService(snapshot, this.env).decorateProducts(rows.map(productListRow), now), count: Number(countRows[0]?.count ?? 0) };
+      // Match the existing presale SKU image scope. Resolve these main images
+      // alongside visible products, then sign them after the snapshot ends.
+      const pictures = await publicProductPictures(snapshot.db, rows.map(item => ({ image: item.image,
+        ...(item.type === 1 && Number.isSafeInteger(item.relationId) && item.relationId > 0 && item.relationId <= 2147483647
+          ? { type: 0, relationId: 0 } : { type: item.type, relationId: item.relationId }) })), 256);
+      return { list: await new PublicCatalogService(snapshot, this.env).decorateProducts(rows.map(productListRow), now), count: Number(countRows[0]?.count ?? 0), pictures };
     });
+    const images = await renderProductPictures(this.env.APP_KEY, result.pictures);
+    return { list: result.list.map((item, index): Record<string, unknown> => ({ ...item, image: images[index] ?? '' })), count: result.count };
   }
 
   async decorateProducts(list: Record<string, unknown>[], presaleNow?: number): Promise<Record<string, unknown>[]> {

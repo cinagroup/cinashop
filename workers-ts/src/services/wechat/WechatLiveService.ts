@@ -25,6 +25,8 @@ import { normalizePublishedArticleMediaReference } from "@/services/content/Arti
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
 import { ValidateException } from "@/utils/errors";
+import { renderProductPictures } from "@/services/activity/ProductAssetPolicy";
+import { MAX_WECHAT_LIVE_MEDIA_REFERENCES, publicWechatLivePictures, type WechatLivePicture } from "./WechatLiveMediaPolicy";
 
 const INVALID_TOKEN_CODES = new Set([40001, 40014, 42001]);
 const MAX_WECHAT_JSON_BYTES = 512 * 1024;
@@ -509,86 +511,103 @@ export class WechatLiveService {
   async publicRooms(query: Record<string, string>) {
     const page = intParam(query.page, "页码", { fallback: 1, min: 1, max: 1_000_000 });
     const limit = intParam(query.limit, "每页数量", { fallback: 20, min: 1, max: 50 });
-    const rooms = await this.container.db
-      .select()
-      .from(liveRoom)
-      .where(and(eq(liveRoom.isShow, 1), eq(liveRoom.isDel, 0)))
-      .orderBy(desc(liveRoom.sort), desc(liveRoom.id), asc(liveRoom.phone))
-      .limit(limit)
-      .offset((page - 1) * limit);
-    if (!rooms.length) return [];
+    const snapshot = await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      const rooms = await tx
+        .select()
+        .from(liveRoom)
+        .where(and(eq(liveRoom.isShow, 1), eq(liveRoom.isDel, 0)))
+        .orderBy(desc(liveRoom.sort), desc(liveRoom.id), asc(liveRoom.phone))
+        .limit(limit)
+        .offset((page - 1) * limit);
+      if (!rooms.length) return { rooms: [], references: [] as string[] };
 
-    const roomIds = [...new Set(rooms.map((room) => room.id))];
-    const anchorIds = [...new Set(rooms.map((room) => room.anchorWechat).filter(Boolean))];
-    const relations = await this.container.db
-      .select()
-      .from(liveRoomGoods)
-      .where(inArray(liveRoomGoods.liveRoomId, roomIds));
-    const goodsIds = [...new Set(relations.map((relation) => relation.liveGoodsId))];
-    const [goodsRows, anchorRows] = await Promise.all([
-      goodsIds.length
-        ? this.container.db.select().from(liveGoods).where(inArray(liveGoods.id, goodsIds))
-        : Promise.resolve([]),
-      anchorIds.length
-        ? this.container.db
-            .select()
-            .from(liveAnchor)
-            .where(and(
-              inArray(liveAnchor.wechat, anchorIds),
-              eq(liveAnchor.isShow, 1),
-              eq(liveAnchor.isDel, 0),
-            ))
-            .orderBy(asc(liveAnchor.id))
-        : Promise.resolve([]),
-    ]);
-    const goodsById = new Map(goodsRows.map((row) => [row.id, row]));
-    const anchorByWechat = new Map<string, typeof liveAnchor.$inferSelect>();
-    for (const anchor of anchorRows) {
-      if (!anchorByWechat.has(anchor.wechat)) anchorByWechat.set(anchor.wechat, anchor);
-    }
-    const relationsByRoom = new Map<number, typeof relations>();
-    for (const relation of relations) {
-      const bucket = relationsByRoom.get(relation.liveRoomId) ?? [];
-      bucket.push(relation);
-      relationsByRoom.set(relation.liveRoomId, bucket);
-    }
+      const roomIds = [...new Set(rooms.map((room) => room.id))];
+      const anchorIds = [...new Set(rooms.map((room) => room.anchorWechat).filter(Boolean))];
+      const relations = await tx
+        .select()
+        .from(liveRoomGoods)
+        .where(inArray(liveRoomGoods.liveRoomId, roomIds)).limit(MAX_WECHAT_LIVE_MEDIA_REFERENCES + 1);
+      if (relations.length > MAX_WECHAT_LIVE_MEDIA_REFERENCES) throw new ValidateException("直播关联超过完整预览容量");
+      const goodsIds = [...new Set(relations.map((relation) => relation.liveGoodsId))];
+      const [goodsRows, anchorRows] = await Promise.all([
+        goodsIds.length
+          ? tx.select().from(liveGoods).where(inArray(liveGoods.id, goodsIds))
+          : Promise.resolve([]),
+        anchorIds.length
+          ? tx
+              .select()
+              .from(liveAnchor)
+              .where(and(
+                inArray(liveAnchor.wechat, anchorIds),
+                eq(liveAnchor.isShow, 1),
+                eq(liveAnchor.isDel, 0),
+              ))
+              .orderBy(asc(liveAnchor.id)).limit(MAX_WECHAT_LIVE_MEDIA_REFERENCES + 1)
+          : Promise.resolve([]),
+      ]);
+      if (anchorRows.length > MAX_WECHAT_LIVE_MEDIA_REFERENCES) throw new ValidateException("直播主播超过完整预览容量");
+      const goodsById = new Map(goodsRows.map((row) => [row.id, row]));
+      const anchorByWechat = new Map<string, typeof liveAnchor.$inferSelect>();
+      for (const anchor of anchorRows) {
+        if (!anchorByWechat.has(anchor.wechat)) anchorByWechat.set(anchor.wechat, anchor);
+      }
+      const relationsByRoom = new Map<number, typeof relations>();
+      for (const relation of relations) {
+        const bucket = relationsByRoom.get(relation.liveRoomId) ?? [];
+        bucket.push(relation);
+        relationsByRoom.set(relation.liveRoomId, bucket);
+      }
 
-    return rooms.map((room) => {
-      const normalizedStatus = publicLiveStatus(room.liveStatus);
-      const anchor = anchorByWechat.get(room.anchorWechat);
-      const goods = (relationsByRoom.get(room.id) ?? [])
-        .map((relation) => goodsById.get(relation.liveGoodsId))
-        .filter((value): value is typeof liveGoods.$inferSelect => Boolean(value))
-        .map((good) => ({
-          id: good.id,
-          goods_id: good.goodsId,
-          product_id: good.productId,
-          name: good.name,
-          cover_img: good.coverImg,
-          url: good.url,
-          price_type: good.priceType,
-          price: good.price,
-          price2: good.price2,
-        }));
-      return {
-        id: room.id,
-        room_id: room.roomId,
-        roomid: room.roomId,
-        name: room.name,
-        cover_img: room.coverImg,
-        share_img: room.shareImg,
-        start_time: room.startTime,
-        end_time: room.endTime,
-        show_time: formatMonthDayTime(room.startTime),
-        anchor_name: room.anchorName,
-        anchor_img: anchor?.coverImg ?? "",
-        type: room.type,
-        screen_type: room.screenType,
-        live_status: normalizedStatus,
-        replay_status: room.replayStatus,
-        goods,
-      };
+      const output = rooms.map((room) => {
+        const normalizedStatus = publicLiveStatus(room.liveStatus);
+        const anchor = anchorByWechat.get(room.anchorWechat);
+        const goods = (relationsByRoom.get(room.id) ?? [])
+          .map((relation) => goodsById.get(relation.liveGoodsId))
+          .filter((value): value is typeof liveGoods.$inferSelect => Boolean(value))
+          .map((good) => ({
+            id: good.id,
+            goods_id: good.goodsId,
+            product_id: good.productId,
+            name: good.name,
+            cover_img: good.coverImg,
+            url: good.url,
+            price_type: good.priceType,
+            price: good.price,
+            price2: good.price2,
+          }));
+        return {
+          id: room.id,
+          room_id: room.roomId,
+          roomid: room.roomId,
+          name: room.name,
+          cover_img: room.coverImg,
+          share_img: room.shareImg,
+          start_time: room.startTime,
+          end_time: room.endTime,
+          show_time: formatMonthDayTime(room.startTime),
+          anchor_name: room.anchorName,
+          anchor_img: anchor?.coverImg ?? "",
+          type: room.type,
+          screen_type: room.screenType,
+          live_status: normalizedStatus,
+          replay_status: room.replayStatus,
+          goods,
+        };
+      });
+      const pictures: WechatLivePicture[] = output.flatMap(room => [
+        { image: room.cover_img, scope: 'platform' as const },
+        { image: room.share_img, scope: 'platform' as const },
+        { image: room.anchor_img, scope: 'platform' as const },
+        ...room.goods.map(good => ({ image: good.cover_img, scope: 'product' as const, productId: good.product_id })),
+      ]);
+      return { rooms: output, references: await publicWechatLivePictures(tx, pictures) };
     });
+    const rendered = await renderProductPictures(this.env.APP_KEY, snapshot.references);
+    let cursor = 0;
+    return snapshot.rooms.map(room => ({ ...room, cover_img: rendered[cursor++], share_img: rendered[cursor++], anchor_img: rendered[cursor++],
+      goods: room.goods.map(good => ({ ...good, cover_img: rendered[cursor++] })),
+    }));
   }
 
   async playbacks(idValue: string, query: Record<string, string>) {

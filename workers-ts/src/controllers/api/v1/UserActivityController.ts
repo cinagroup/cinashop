@@ -492,7 +492,7 @@ export async function seckillDetail(c: C) {
 }
 
 export async function combinationList(c: C) {
-  const svc = new ActivityService(c.get("container"));
+  const svc = new ActivityService(c.get("container"), c.env);
   return jsonOk(c, await svc.combinationList(c.req.query("page"), c.req.query("limit")));
 }
 

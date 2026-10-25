@@ -55,6 +55,8 @@ describe("legacy activity-list compatibility", () => {
     const combinationList = vi.fn().mockResolvedValue([{
       id: 12,
       productId: 102,
+      type: 0,
+      relationId: 0,
       storeName: "拼团商品",
       image: "/combination.png",
       price: "9.00",

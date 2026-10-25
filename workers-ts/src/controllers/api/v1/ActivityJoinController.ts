@@ -48,7 +48,7 @@ export async function pinkInfo(c: C) {
 /** GET /api/pink — 拼团成功人数与头像；实际参团只能经订单创建。 */
 export async function pinkStats(c: C) {
   const type = Number(c.req.query("type") ?? "1");
-  const svc = new ActivityJoinService(c.get("container"));
+  const svc = new ActivityJoinService(c.get("container"), c.env);
   return jsonOk(c, await svc.pinkStats(Number.isSafeInteger(type) ? type : 1));
 }
 
