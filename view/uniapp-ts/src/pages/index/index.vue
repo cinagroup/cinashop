@@ -87,7 +87,11 @@
     </scroll-view>
 
     <!-- 推荐商品 -->
-    <view class="section-title">为你推荐</view>
+    <view class="section-title">
+      <image class="section-decoration" src="/static/php-assets/images/recommend_zs.png" mode="aspectFit" aria-hidden="true" />
+      <text>为你推荐</text>
+      <image class="section-decoration" src="/static/php-assets/images/recommend_zs.png" mode="aspectFit" aria-hidden="true" />
+    </view>
     <view class="goods-grid">
       <view
         class="goods-card"
@@ -469,10 +473,20 @@ onBeforeUnmount(closeOpenAdv);
 }
 
 .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
   font-size: 32rpx;
-  font-weight: 600;
-  margin: 20rpx 0;
-  padding-left: 16rpx;
-  border-left: 6rpx solid var(--view-theme, #e93323);
+  font-weight: 500;
+  line-height: 44rpx;
+  margin: 40rpx 0 24rpx;
+  color: #333;
+}
+
+.section-decoration {
+  width: 42rpx;
+  height: 36rpx;
+  flex-shrink: 0;
 }
 </style>

@@ -38,11 +38,24 @@ onHide(() => {
 </script>
 
 <style>
+/* The original UniApp registers this same local D-DIN 600 font. */
+@font-face {
+  font-family: "CinaShop DIN";
+  src: url("/static/php-assets/fonts/D-DIN-PRO-600-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  /* Price digits and symbols only; Chinese and full-width ￥ keep system glyphs. */
+  unicode-range: U+0020, U+0024-0025, U+0028-003A, U+00A0, U+00A3, U+00A5, U+20AC;
+}
+
 /* 全局样式 */
 page {
   background-color: #f5f5f5;
   font-size: 28rpx;
   color: #333;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
 .container {
@@ -59,7 +72,7 @@ page {
 .goods-card {
   width: 48%;
   background: #fff;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   margin-bottom: 20rpx;
   overflow: hidden;
 }
@@ -71,7 +84,7 @@ page {
 }
 
 .goods-info {
-  padding: 16rpx;
+  padding: 16rpx 20rpx;
 }
 
 .goods-name {
@@ -92,6 +105,8 @@ page {
 }
 
 .price {
+  font-family: "CinaShop DIN", "PingFang SC", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Microsoft YaHei", sans-serif;
   color: var(--view-priceColor, #e93323);
   font-size: 32rpx;
   font-weight: 600;

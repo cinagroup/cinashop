@@ -8,9 +8,9 @@
       <el-menu
         :default-active="activeMenu"
         router
-        background-color="#001529"
-        text-color="rgba(255,255,255,0.65)"
-        active-text-color="#fff"
+        background-color="#ffffff"
+        text-color="#515a6e"
+        active-text-color="#2d8cf0"
       >
         <el-menu-item v-if="canMenu('/dashboard')" index="/dashboard">
           <el-icon><Odometer /></el-icon>
@@ -596,17 +596,20 @@ function handleCommand(cmd: string) {
 }
 
 .aside {
-  background: #001529;
+  background: #fff;
+  border-right: 1px solid #e8eaec;
   overflow-y: auto;
 }
 
 .logo {
-  color: #fff;
+  color: #17233d;
   font-size: 16px;
   font-weight: 600;
-  padding: 16px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #e8eaec;
 }
 
 .logo-img {
@@ -619,8 +622,29 @@ function handleCommand(cmd: string) {
   border-right: none;
 }
 
+.aside :deep(.el-menu-item) {
+  height: 52px;
+  line-height: 52px;
+}
+
+.aside :deep(.el-menu-item .el-icon) {
+  width: 24px;
+  margin-right: 8px;
+}
+
+.aside :deep(.el-menu-item:hover),
+.aside :deep(.el-menu-item.is-active) {
+  background: #f3f8fe;
+}
+
+.aside :deep(.el-menu-item.is-active) {
+  border-right: 3px solid #2d8cf0;
+}
+
 .header {
-  background: #fff;
+  --el-header-height: 64px;
+  color: #fff;
+  background: linear-gradient(to right, #1d42ab, #2173dc, #1e93ff);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -639,6 +663,7 @@ function handleCommand(cmd: string) {
 }
 
 .user-name {
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;

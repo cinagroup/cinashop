@@ -1,0 +1,32 @@
+/* Original PHP numeric font, scoped to Admin dashboard figures. */
+@font-face {
+  font-family:"PHP Admin DIN";
+  src:url('/php-assets/admin/D-DIN-PRO-600-SemiBold.ttf') format('truetype');
+  font-weight:600;
+  font-style:normal;
+  font-display:swap;
+  unicode-range:U+0020-007E,U+00A5;
+}
+.admin-layout .dashboard .stat-value,
+.admin-layout .dashboard .overview-val,
+.admin-layout .dashboard .stat-total strong {
+  font-family:"PHP Admin DIN",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+
+}
+
+/* PHP style.css table colors, mapped to Element Plus variables. */
+.admin-layout .main .el-table {
+  --el-table-header-bg-color: #f3f8fe;
+  --el-table-row-hover-bg-color: #f3f8fe;
+  --el-table-current-row-bg-color: #f3f8fe;
+  --el-table-header-text-color: #515a6e;
+}
+.admin-layout .main .el-card {
+  --el-card-border-color: #e8eaec;
+}
+.admin-layout .main .el-card__header {
+  color: #17233d;
+  font-weight: 500;
+}
