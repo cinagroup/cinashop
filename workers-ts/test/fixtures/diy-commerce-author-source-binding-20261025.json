@@ -1,0 +1,604 @@
+{
+  "schema": "cinashop.diy-commerce-author.source-binding.v1",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "source": {
+    "file": "view/admin-ts/src/pages/content/DiseList.vue",
+    "before_sha256": "657e3a5ce372cd6f2bfae85c885d936ff7fcdaf2dc75526df37fd459952e72bd",
+    "after_sha256": "bb5a0f03252aa3265c0e87be6b7b7690c23b04b6fc942311a2095a91a43c655c",
+    "edits": [
+      {
+        "before_source": "",
+        "after_source": "        <el-form-item label=\"商城组件\"><DiyCommerceEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+        "before_line": 104,
+        "after_line": 104
+      },
+      {
+        "before_source": "",
+        "after_source": "import DiyCommerceEditor from '@/components/content/DiyCommerceEditor.vue';\nimport { canonicalCommerceValue } from '@/utils/diyCommerceEditor';\n",
+        "before_line": 165,
+        "after_line": 166
+      },
+      {
+        "before_source": "    return canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))));\n",
+        "after_source": "    return canonicalCommerceValue(canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))));\n",
+        "before_line": 299,
+        "after_line": 302
+      }
+    ]
+  },
+  "previous_report": {
+    "sha256": "655f65ad26d65896df24a75ae1bb28debdb88fd2ea046e8bcda68481f11cacf7",
+    "base_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "base_sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+    "predecessor_binding": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+    "predecessor_binding_sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+  },
+  "current_report": {
+    "generator": "workers-ts/scripts/admin-frontend-api-audit.ts#buildAdminFrontendApiAuditReport",
+    "sha256": "dd842ab557a89bc64e62a1ec1179034b0017bb0167cd8579d2198918365689cf",
+    "serialization": "JSON.stringify(report, null, 2) + LF",
+    "raw_capture": {
+      "sha256": "bc757aca4eb12a81c606816338a42ebc5c892e1eceaa3067d6250208327e2378",
+      "bytes": 470098,
+      "serialization": "JSON.stringify(report) + LF"
+    }
+  },
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "657e3a5ce372cd6f2bfae85c885d936ff7fcdaf2dc75526df37fd459952e72bd"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "bb5a0f03252aa3265c0e87be6b7b7690c23b04b6fc942311a2095a91a43c655c"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 240,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 243,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 356,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 359,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 379,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 382,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ],
+  "consumer_sources": [
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommerceEditor.vue",
+      "sha256": "8d42cc973a5a2c411984791d0781ac7e37769868b175076100ea7c1cce7bb5f7"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommerceFields.vue",
+      "sha256": "aa0e5f2c73e2f73f5db6df4af9ece7e10efc23f7c1181cf016087cb78974e6b0"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommercePreview.vue",
+      "sha256": "cea7172a02a598db40057a4144b0d176a207d4102730ca706139c4f54d19a011"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceEditor.ts",
+      "sha256": "4d0d1fcdd62b15d356fe39be563be3bf131c64cfb59d76aee77beb447ffad891"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceDefaults.ts",
+      "sha256": "1b7e14c9ee9e41becb3e1ed1b8cdb7ec04366ab54671098971dbb81ccdf2c8c4"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceControls.ts",
+      "sha256": "ab4d6634ce3c879205d03c279ca520465447805e09569cdd208bb5dd76c384fe"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceProjection.ts",
+      "sha256": "fd6dbf2262e4c5631106803ac9c476a7c1d2ccb52e171bf7b94642357d7790a1"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceTheme.ts",
+      "sha256": "8db0a80abe91a07444b2617c6bfe2528fec5b190acb52bfe0753fc45db43a32b"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceData.ts",
+      "sha256": "647c0671e780fcda7b24f6fa112944f4f381db8e94b036ff4ed20f38ff38a51a"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommerceAuthor.ts",
+      "sha256": "d9c2601b5f573863b30dec068acbf011bae7ef19463d74f42ab148d85acddafa"
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "sha256": "f798641f30679890efa049872fcf56b69c8eca9e658539c7908f6a1925ac28f2"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "sha256": "fdad2d028b67e5ea935177dd4fc63e9ac41a7574089187573c84df2280d3fa97"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyCommerceConfig.ts",
+      "sha256": "c9b656d95070231ffeebe49ec65a6288ef3c041991edf8dacab66b1bc824f2ce"
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue",
+      "sha256": "97a942500442e8d8caefbbfd9c96ea4017e4ea423bc67e2b4074f4aa0608cb4a"
+    }
+  ],
+  "defaults_fixture": {
+    "file": "workers-ts/test/fixtures/diy-commerce-author-defaults-20261025.json",
+    "sha256": "6e664d677447e24d357ae6cc1655ea4d84684b169b81e6cc7edaee7354a8a475",
+    "top_level_keys": 319
+  },
+  "condition_fixture": {
+    "file": "workers-ts/test/fixtures/diy-commerce-author-php-panels-20261025.json",
+    "sha256": "f9ce18c01927f51850637fcf0386ebef96d84e078915c9dc19ea64663709c3c5",
+    "php_method_cases": 408
+  },
+  "assets": [
+    {
+      "public_path": "/static/images/diy/seckillBg.png",
+      "php_path": "public/statics/images/seckillBg.png",
+      "sha256": "3fe120cae5fc77d695f278287ccee3d443aa754c31121e9e4ef3b9eb20df06e9",
+      "bytes": 20424,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/seckillBg.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/seckillBg.png"
+    },
+    {
+      "public_path": "/static/images/diy/seckill02.png",
+      "php_path": "view/admin/src/assets/images/seckill02.png",
+      "sha256": "da308c25e644803f8dd2dc48a816a5f362bd91047d6db17ffae6c2186d35cd43",
+      "bytes": 3058,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/seckill02.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/seckill02.png"
+    },
+    {
+      "public_path": "/static/images/diy/seckill01.png",
+      "php_path": "view/admin/src/assets/images/seckill01.png",
+      "sha256": "1105e53f2687407575e02f0b25d478336cde1cbf26a947f6b98b5e4f85f76c56",
+      "bytes": 3286,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/seckill01.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/seckill01.png"
+    },
+    {
+      "public_path": "/static/images/diy/pinkBg.png",
+      "php_path": "public/statics/images/pinkBg.png",
+      "sha256": "6b95e30b67fb853f57b49872dc754d537fbd19cdcc6cb4261ccbebcfa86804bf",
+      "bytes": 21196,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/pinkBg.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/pinkBg.png"
+    },
+    {
+      "public_path": "/static/images/diy/pink02.png",
+      "php_path": "view/admin/src/assets/images/pink02.png",
+      "sha256": "dad8f41d98720a8964d1a21a280dfa020e8859f0f324a3377799a0910d646b20",
+      "bytes": 2058,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/pink02.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/pink02.png"
+    },
+    {
+      "public_path": "/static/images/diy/pink01.png",
+      "php_path": "view/admin/src/assets/images/pink01.png",
+      "sha256": "436293d064821e2675d2329ff2f8d35ee6420849ffaaa5e412809082f91213d3",
+      "bytes": 2264,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/pink01.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/pink01.png"
+    },
+    {
+      "public_path": "/static/images/diy/bargainBg.png",
+      "php_path": "public/statics/images/bargainBg.png",
+      "sha256": "26006d4b73f24ebde7437dc73ab80bb583c20882d8d956a68f034238521a2c76",
+      "bytes": 20945,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/bargainBg.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/bargainBg.png"
+    },
+    {
+      "public_path": "/static/images/diy/bargain02.png",
+      "php_path": "view/admin/src/assets/images/bargain02.png",
+      "sha256": "7f0205406a3785e52bf75374f9f655d33fffbd6c06c9b758af63bb59782f2aea",
+      "bytes": 2521,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/bargain02.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/bargain02.png"
+    },
+    {
+      "public_path": "/static/images/diy/bargain01.png",
+      "php_path": "view/admin/src/assets/images/bargain01.png",
+      "sha256": "45299a139ab0a3dad07d69d0f5403d41b5fedcb8782c097f425984cb8f519509",
+      "bytes": 2762,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/bargain01.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/bargain01.png"
+    },
+    {
+      "public_path": "/static/images/diy/presaleBg.png",
+      "php_path": "public/statics/images/presaleBg.png",
+      "sha256": "13bf2d6bfc6ebbdfe2c7981b61fefa3db1755d8112094f9a0804ece7693d730e",
+      "bytes": 15556,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/presaleBg.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/presaleBg.png"
+    },
+    {
+      "public_path": "/static/images/diy/presale02.png",
+      "php_path": "view/admin/src/assets/images/presale02.png",
+      "sha256": "bcdff400fba8ad7e1436a0874e6c319253c16e566c887ed227a2131ade0db7ac",
+      "bytes": 1866,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/presale02.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/presale02.png"
+    },
+    {
+      "public_path": "/static/images/diy/presale01.png",
+      "php_path": "view/admin/src/assets/images/presale01.png",
+      "sha256": "d5ef072254794e45c47d6335a09da76e8ea4057c17a87648a8f3de12d52f9237",
+      "bytes": 2405,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/presale01.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/presale01.png"
+    },
+    {
+      "public_path": "/static/images/diy/pointsBg.png",
+      "php_path": "public/statics/images/pointsBg.png",
+      "sha256": "f091108145214600a2ce57a7837147675b0bb590848088f5fb7d84d43fbdbd7f",
+      "bytes": 29009,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/pointsBg.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/pointsBg.png"
+    },
+    {
+      "public_path": "/static/images/diy/points01.png",
+      "php_path": "view/admin/src/assets/images/points01.png",
+      "sha256": "c010c32a90caaa85a5603acb8e2711f8628c2bc0486ec130658aa1b58cb5aa2a",
+      "bytes": 3125,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/points01.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/points01.png"
+    },
+    {
+      "public_path": "/static/images/diy/points02.png",
+      "php_path": "view/admin/src/assets/images/points02.png",
+      "sha256": "f762f3bf6d887ead5283f94327693f76afd71c9cd662ee3c5e73f79b8e660ddd",
+      "bytes": 3609,
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "admin_file": "view/admin-ts/public/static/images/diy/points02.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/points02.png"
+    }
+  ],
+  "default_bindings": [
+    {
+      "path": [
+        "coupon",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "seckill",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "seckill",
+        "imgBgConfig",
+        "url"
+      ],
+      "source": "Setting.apiBaseURL.replace(/adminapi/, '')+'statics/images/seckillBg.png'",
+      "literal": "/static/images/diy/seckillBg.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "seckill",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/seckill02.png",
+      "literal": "/static/images/diy/seckill02.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "seckill",
+        "imgColorConfig",
+        "url"
+      ],
+      "source": "@/assets/images/seckill01.png",
+      "literal": "/static/images/diy/seckill01.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "combination",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "combination",
+        "imgBgConfig",
+        "url"
+      ],
+      "source": "Setting.apiBaseURL.replace(/adminapi/, '')+'statics/images/pinkBg.png'",
+      "literal": "/static/images/diy/pinkBg.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "combination",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/pink02.png",
+      "literal": "/static/images/diy/pink02.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "combination",
+        "imgColorConfig",
+        "url"
+      ],
+      "source": "@/assets/images/pink01.png",
+      "literal": "/static/images/diy/pink01.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "bargain",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "bargain",
+        "imgBgConfig",
+        "url"
+      ],
+      "source": "Setting.apiBaseURL.replace(/adminapi/, '')+'statics/images/bargainBg.png'",
+      "literal": "/static/images/diy/bargainBg.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "bargain",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/bargain02.png",
+      "literal": "/static/images/diy/bargain02.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "bargain",
+        "imgColorConfig",
+        "url"
+      ],
+      "source": "@/assets/images/bargain01.png",
+      "literal": "/static/images/diy/bargain01.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "presale",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "presale",
+        "imgBgConfig",
+        "url"
+      ],
+      "source": "Setting.apiBaseURL.replace(/adminapi/, '')+'statics/images/presaleBg.png'",
+      "literal": "/static/images/diy/presaleBg.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "presale",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/presale02.png",
+      "literal": "/static/images/diy/presale02.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "presale",
+        "imgColorConfig",
+        "url"
+      ],
+      "source": "@/assets/images/presale01.png",
+      "literal": "/static/images/diy/presale01.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "pointsMall",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "pointsMall",
+        "imgBgConfig",
+        "url"
+      ],
+      "source": "Setting.apiBaseURL.replace(/adminapi/, '')+'statics/images/pointsBg.png'",
+      "literal": "/static/images/diy/pointsBg.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "pointsMall",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/points01.png",
+      "literal": "/static/images/diy/points01.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "pointsMall",
+        "imgConfig2",
+        "url"
+      ],
+      "source": "@/assets/images/points02.png",
+      "literal": "/static/images/diy/points02.png",
+      "meaning": "proposed same-byte local asset path; must copy listed asset before using literal"
+    },
+    {
+      "path": [
+        "promotionList",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    },
+    {
+      "path": [
+        "liveBroadcast",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0,
+      "meaning": "timestamp placeholder; new block constructor must assign a fresh value"
+    }
+  ],
+  "promotion_grid_sources": [
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue",
+      "before_ref": "91a5edd3a0ec04e9fa8a0a65cf74279e2f1c0e05",
+      "before_sha256": "7feb561ead43b2c7203a721febe599df5a12e1c29ad76b8d78097479205d979a",
+      "after_sha256": "97a942500442e8d8caefbbfd9c96ea4017e4ea423bc67e2b4074f4aa0608cb4a",
+      "edits": [
+        {
+          "before_source": ".promotion-products{columns:2;column-gap:20rpx}.promotion-products>.commerce-card{break-inside:avoid;display:inline-block;width:100%;margin-bottom:20rpx}",
+          "after_source": ".promotion-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20rpx;align-items:start}.promotion-products>.commerce-card{width:100%;min-width:0}",
+          "before_line": 108,
+          "after_line": 108
+        }
+      ]
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommercePreview.vue",
+      "before_ref": "pre-grid Commerce binding 12e1d67e2c735d7ae81cab4eac90ef4149d88dd53c9f3c54396313ed0a20ae2a",
+      "before_sha256": "c6ad358b3473d2223ed3040dcc72759f34777817b8cec7d92c9dea24d9e57716",
+      "after_sha256": "776bd0cc3965017e169742a61236e8a3a1a3fc9dd08a37226b8ce6b508702890",
+      "edits": [
+        {
+          "before_source": ".promotion-products{columns:2;column-gap:10px}.promotion-products>.commerce-card{break-inside:avoid;display:inline-block;width:100%;margin-bottom:10px}",
+          "after_source": ".promotion-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.promotion-products>.commerce-card{width:100%;min-width:0}",
+          "before_line": 113,
+          "after_line": 113
+        }
+      ]
+    }
+  ],
+  "formatting_source": {
+    "file": "view/admin-ts/src/components/content/DiyCommercePreview.vue",
+    "before_sha256": "776bd0cc3965017e169742a61236e8a3a1a3fc9dd08a37226b8ce6b508702890",
+    "after_sha256": "cea7172a02a598db40057a4144b0d176a207d4102730ca706139c4f54d19a011",
+    "edits": [
+      {
+        "before_source": "          <div v-if=\"!coupons.length\" class=\"commerce-empty\">暂无可展示的优惠券</div>\n          \n          \n          \n        </div>\n",
+        "after_source": "          <div v-if=\"!coupons.length\" class=\"commerce-empty\">暂无可展示的优惠券</div>\n\n\n\n        </div>\n",
+        "before_line": 50,
+        "after_line": 50
+      }
+    ]
+  }
+}

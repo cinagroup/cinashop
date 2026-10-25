@@ -33,6 +33,7 @@ function loader(overrides = {}) {
       if(name==='@/utils/auth')return { getToken:() => storage.get('admin_token') ?? null };
       if(name==='@/utils/request')return { __esModule:true,default:gateway,getData:async p => (await p).data };
       // Isolate the adjacent view; DiseList still imports the real editorial canonicalizer separately.
+      if(name==='@/components/content/DiyCommerceEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/components/content/DiyEditorialEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/components/content/DiyPresentationEditor.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };
       if(name==='@/pages/activity/SeckillActivityImagePicker.vue')return { __esModule:true,default:vue.defineComponent({ setup:()=>()=>null }) };

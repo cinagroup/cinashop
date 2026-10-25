@@ -1,0 +1,119 @@
+{
+  "kind": "cinashop.php-ts.diy-commerce-author.v1",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "base_commit": "91a5edd3a0ec04e9fa8a0a65cf74279e2f1c0e05",
+  "scope": [
+    "promotionList",
+    "seckill",
+    "combination",
+    "bargain",
+    "presale",
+    "pointsMall",
+    "coupon",
+    "liveBroadcast"
+  ],
+  "authored_defaults": {
+    "top_level_keys": 319,
+    "php_conditional_panel_cases": 408,
+    "same_byte_original_assets": 15,
+    "fixtures": [
+      "test/fixtures/diy-commerce-author-defaults.json",
+      "test/fixtures/diy-commerce-author-php-controls.json",
+      "test/fixtures/diy-commerce-author-source-binding-20261025.json"
+    ]
+  },
+  "behavior": [
+    "Structured add/duplicate/move/remove/hide and conditional content/style controls share the existing complete DIY value; independent content, opaque neighbors, imported overflow and dormant fields survive.",
+    "Promotion tabs use existing typed product/brand/category/label catalogs; ordinary manual product additions respect PHP20 while imported overflow remains editable.",
+    "All promotion tabs are retained instead of silently truncating at12.",
+    "Exact authored activity title/background and promotion-tab image slots use existing platform-raster ownership and legacy reference grammar, current signatures and an independent atomic20000-slot budget. Coupon/live API rows and stored product previews never gain authored-image authority.",
+    "Anonymous author previews read existing public commerce lists; buttons cannot claim coupons, mutate carts, increment detail counters or navigate. Actor/page/raw/scope changes abort and clear pending material.",
+    "Explicit two-column CSS grid fixes the real H5 UNI-VIEW multi-column layout that stacked both cards in the left column; Admin preview uses matching geometry."
+  ],
+  "verification": {
+    "admin_full_author_chain": {
+      "passed": 773
+    },
+    "worker_source_binding_and_historical_media": {
+      "passed": 231
+    },
+    "exact_final_binding": {
+      "passed": 46
+    },
+    "historical_runner_suites": {
+      "passed": 104
+    },
+    "uni_commerce_and_media_runtime": {
+      "passed": 102
+    },
+    "native_postgresql16": {
+      "passed": 6,
+      "namespaces": [
+        "isolated",
+        "public"
+      ],
+      "actual_http_routes": "all8 commerce families, Admin save, published page and raster reads",
+      "measured_http_checks_per_namespace": 17
+    },
+    "builds": [
+      "Admin strict+production",
+      "Uni strict",
+      "H5",
+      "MP-Weixin",
+      "App",
+      "Worker unit+runtime strict"
+    ],
+    "browser": {
+      "status": "passed",
+      "browser_saves": 2,
+      "anonymous_and_admin_actual_gets": 47,
+      "tables": 76,
+      "sequences": 71,
+      "exact_gui_payload_saved_values": true,
+      "all_read_snapshots_and_resources_unchanged": true,
+      "source_and_build_files_unchanged": 2984,
+      "real_h5_two_columns": {
+        "cards": [
+          {
+            "height": 259.88751220703125,
+            "width": 156.02500915527344,
+            "x": 19.17500114440918,
+            "y": 194.3874969482422
+          },
+          {
+            "height": 263.8999938964844,
+            "width": 156.03750610351562,
+            "x": 184.7875061035156,
+            "y": 194.3874969482422
+          }
+        ],
+        "display": "grid",
+        "scrollWidth": 341,
+        "width": 340.82501220703125
+      },
+      "receipt_sha256": "a4f1e2add6d1c09d446bd8f084bdd51f8071bba25ebd6ab5f21bd39450c27815"
+    },
+    "browser_boundary": "Actual final built Admin and H5, real createApp/JWT, owned PostgreSQL16/R2 bytes. Only five declared unrelated branding/advert/theme/notification GET payloads are synthetic. Source/build2984-file inventory unchanged throughout final Browser execution, including formatting cleanup. Two exact GUI saves and 47 real GETs. Initial all8 preview/role checks also passed before independently bound CSS-only and compile-equivalent formatting deltas.",
+    "notes": [
+      "Logs preserve the earlier tab-focus failure, test-only TypeScript correction and stale binding pin failure; final checks are separate.",
+      "H5 console has the existing vue-router deep-import deprecation warning; no application error overlay or console error was observed."
+    ],
+    "worker_commerce_media": {
+      "passed": 24,
+      "engine": "PGlite for the isolated media-policy suite"
+    },
+    "post_browser_formatting": {
+      "source": "view/admin-ts/src/components/content/DiyCommercePreview.vue",
+      "delta": "Exactly three blank-line spaces removed before final Browser run. Actual Vue compiled script/template/styles are identical; exact formatting inverse is independently tested and source-pinned.",
+      "source_binding": "test/fixtures/diy-commerce-author-source-binding-20261025.json#formatting_source"
+    }
+  },
+  "compatibility_boundaries": [
+    "Fixed PHP source imports a missing config/app.js; its $config.LIMIT cannot be independently proven from this checkout. Existing six-family client cap10, promotion public-query cap100 and live cap50 are retained; quantity metadata is not rewritten on mount.",
+    "PHP presale checkbox labels0/1/2 conflict with its legacy rendered price2/old-price3 branches and layout exceptions. This batch retains existing consumer behavior and records this pre-existing mismatch rather than silently renumbering stored data.",
+    "The grid fix guarantees two visible columns; PHP measured-height waterfall allocation is not claimed.",
+    "Live author preview is read-only. Real H5/App playback remains unavailable; MP-Weixin device playback and release deployment are outside these checks.",
+    "Community author controls remain a separate migration gap; follow author work is owned by another chat. No PHP source, schema migration, production data, statistics-script behavior or deployment is changed."
+  ],
+  "source_binding": "test/helpers/diyCommerceAuthorSourceBinding.ts"
+}

@@ -29,7 +29,7 @@ export interface PromotionTab { label: string; description: string; image: strin
 function promotionTabs(block: Record<string, unknown>): PromotionTab[] {
   const raw = child(block, 'tabConfig').list;
   if (!Array.isArray(raw)) return [];
-  return raw.slice(0, 12).flatMap(rawTab => {
+  return raw.flatMap(rawTab => {
     const tab = asDiyRecord(rawTab); if (!tab) return [];
     const labels = Array.isArray(tab.chiild) ? tab.chiild : [];
     const selection = Number(tab.tabVal ?? 0) || 3;

@@ -79,6 +79,7 @@ function loader(options = {}) {
       // These adjacent editors are not this suite's producer. Keep the footer's
       // real named canonicalizer because actual DiseList.save composes it.
       // Isolate the adjacent view; retain the separate real editorial canonicalizer.
+      if (name === '@/components/content/DiyCommerceEditor.vue') return { __esModule: true, default: vue.defineComponent({ setup: () => () => null }) };
       if (name === '@/components/content/DiyEditorialEditor.vue') return { __esModule: true, default: vue.defineComponent({ setup: () => () => null }) };
       if (name === '@/components/content/DiyPresentationEditor.vue') return { __esModule: true, default: vue.defineComponent({ setup: () => () => null }) };
       if (name === '@/components/content/DiyFooterEditor.vue') return { __esModule: true, ...load(path.join(root, name.slice(2))), default: vue.defineComponent({ setup: () => () => null }) };

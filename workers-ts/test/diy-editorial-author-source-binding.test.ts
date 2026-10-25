@@ -1,3 +1,4 @@
+import { reverseCommerceAuthorSource, reverseCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -7,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
 import { applyEditorialAuthorReport, editorialAuthorSourceBinding as proof, reverseEditorialAuthorSource } from './helpers/diyEditorialAuthorSourceBinding';
 const { parse } = createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8'),sha=(value:string)=>createHash('sha256').update(value).digest('hex');
+const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseCommerceAuthorSource(file,readFileSync(resolve(root,file),'utf8')),sha=(value:string)=>createHash('sha256').update(value).digest('hex');
 const reportHash=(value:unknown)=>sha(JSON.stringify(value,null,2)+'\n');
 const previousRaw=read(proof.previous_report.file),previous=JSON.parse(previousRaw),source=read(proof.source.file);
 const ast=(source:string)=>ts.createSourceFile('actual.ts',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
@@ -57,7 +58,7 @@ describe('exact editorial parent integration retains every dated source and API 
     for(const row of proof.consumer_sources){expect(sha(read(row.file))).toBe(row.sha256);expect(sha(read(row.file)+'\n// unreviewed\n')).not.toBe(row.sha256);}
   });
   it('reconstructs the whole freshly built report using one source hash and three existing call shifts only',()=>{
-    const actual=buildAdminFrontendApiAuditReport(),expected=applyEditorialAuthorReport(previous);expect(actual).toEqual(expected);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
+    const actual=reverseCommerceAuthorReport(buildAdminFrontendApiAuditReport()),expected=applyEditorialAuthorReport(previous);expect(actual).toEqual(expected);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
     expect(actual.counts).toEqual(previous.counts);expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,executable:741,unregistered:0,unresolved:0});expect(actual.backend).toEqual(previous.backend);expect(actual.methodology).toEqual(previous.methodology);
     expect(proof.report_changes.map(row=>row.array)).toEqual(['frontendSources','calls','calls','calls']);
     for(const change of proof.report_changes){expect(change.after.file??change.after.source).toBe(proof.source.file);const before={...change.before},after={...change.after};if(change.array==='calls'){expect(after.line).toBe(Number(before.line)+3);delete before.line;delete after.line;}else{delete before.sha256;delete after.sha256;}expect(after).toEqual(before);}

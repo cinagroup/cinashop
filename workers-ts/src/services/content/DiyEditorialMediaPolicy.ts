@@ -12,6 +12,7 @@ const record = (value: unknown): RecordValue | null => value && typeof value ===
 export const DIY_FOOTER_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_PRESENTATION_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT = 20_000;
+export const DIY_COMMERCE_MEDIA_SLOT_LIMIT = 20_000;
 
 /** Editorial, carousel and navigation components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
@@ -20,7 +21,7 @@ export const DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT = 20_000;
  * signing; historical tickets are canonicalized and refreshed only in output. */
 function editorialMediaSlots(components: unknown[], publication = false, page?: RecordValue) {
   const slots: Array<{ value: string; kind?: DiyPresentationMediaKind | 'page-background'; set: (value: string) => void }> = [];
-  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0 };
+  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0, commerce: 0 };
   const htmlGroups: Array<{owner: RecordValue; source: string; slots: number[]}> = [];
   const collect = (value: unknown, key: string, navigation = false) => {
     const owner = record(value);
@@ -34,6 +35,14 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
     // Admin-authored menu entries. Retain the previous editorial/carousel
     // capacity contract, including its atomic 2501-slot rejection.
     counts[navigation ? 'navigation' : 'ordinary']++;
+  };
+  const collectCommerce = (value: unknown, key: string) => {
+    const owner = record(value);
+    if (!owner || typeof owner[key] !== 'string') return;
+    // Commerce author images retain the existing legacy JSON grammar. Product
+    // previews and arbitrary row metadata never enter this separate budget.
+    slots.push({ value: owner[key], set: value => { owner[key] = value; } });
+    counts.commerce++;
   };
   for (const value of components) {
     const component = record(value);
@@ -91,6 +100,18 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
       const list = record(component.menuConfig)?.list;
       if (Array.isArray(list)) for (const item of list.slice(0, 4)) collect(item, 'img');
     }
+    else if (component.name === 'seckill' || component.name === 'combination' || component.name === 'bargain' || component.name === 'presale') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgColorConfig']) collectCommerce(component[key], 'url');
+    }
+    else if (component.name === 'pointsMall') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgConfig2']) collectCommerce(component[key], 'url');
+    }
+    else if (component.name === 'promotionList') {
+      const list = record(component.tabConfig)?.list;
+      if (Array.isArray(list)) for (const item of list) collectCommerce(item, 'image');
+      // Only each authored tab icon is public media. goodsList/productList,
+      // API result images, nested children and links remain opaque imports.
+    }
     else if (component.name === 'swipers' || component.name === 'swiperBg' || component.name === 'homeComb') {
       const list = record(component.swiperConfig)?.list;
       if (Array.isArray(list)) for (const item of list) collect(item, 'img');
@@ -127,7 +148,7 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
   // Collect first, reject before any canonical mutation, database owner lookup
   // or signature. The footer's independent budget cannot consume a previously
   // valid full editorial/carousel or navigation budget.
-  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT) {
+  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT || counts.commerce > DIY_COMMERCE_MEDIA_SLOT_LIMIT) {
     throw new ValidateException('DIY公开素材超过完整读取容量');
   }
   return {slots, htmlGroups};

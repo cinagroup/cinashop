@@ -101,6 +101,7 @@
         <el-form-item label="轮播组件"><DiyCarouselEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="列表组件"><DiyListEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="会员权益组件"><DiyStateEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="商城组件"><DiyCommerceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="新闻热区活动"><DiyEditorialEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="内容排版"><DiyPresentationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="页面悬浮按钮"><DiyCustomerServiceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
@@ -162,6 +163,8 @@ import DiyCarouselEditor from "@/components/content/DiyCarouselEditor.vue";
 import DiyListEditor from "@/components/content/DiyListEditor.vue";
 import DiyStateEditor from "@/components/content/DiyStateEditor.vue";
 import { canonicalStateValue } from "@/utils/diyStateEditor";
+import DiyCommerceEditor from '@/components/content/DiyCommerceEditor.vue';
+import { canonicalCommerceValue } from '@/utils/diyCommerceEditor';
 import DiyEditorialEditor from "@/components/content/DiyEditorialEditor.vue";
 import { canonicalEditorialValue } from "@/utils/diyEditorialEditor";
 import { canonicalCarouselValue } from "@/utils/diyCarouselEditor";
@@ -296,7 +299,7 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))));
+    return canonicalCommerceValue(canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))));
   } catch {
     return null;
   }

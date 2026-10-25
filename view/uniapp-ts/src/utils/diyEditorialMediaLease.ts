@@ -21,6 +21,14 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string; h
     if (block.name === 'hotspot') return [field('picStyle')];
     if (block.name === 'follow') return [field('imgConfig'), field('codeConfig')];
     if (block.name === 'activeParty') { const items = record(block.menuConfig).list; return Array.isArray(items) ? items.slice(0, 4).map(item => ({holder:record(item),key:'img'})) : []; }
+    if (block.name === 'seckill' || block.name === 'combination' || block.name === 'bargain' || block.name === 'presale') return [field('imgBgConfig'), field('imgConfig'), field('imgColorConfig')];
+    if (block.name === 'pointsMall') return [field('imgBgConfig'), field('imgConfig'), field('imgConfig2')];
+    if (block.name === 'promotionList') {
+      const items = record(block.tabConfig).list;
+      // Every actual tab icon participates, including dormant and imported
+      // tail tabs. Product material and other similarly named fields do not.
+      return Array.isArray(items) ? items.map(item => ({holder:record(item),key:'image'})) : [];
+    }
     if (['swipers','swiperBg','homeComb'].includes(String(block.name))) {
       const items=record(block.swiperConfig).list;
       return [...(Array.isArray(items)?items.map(item=>({holder:record(item),key:'img'})):[]),...(block.name==='homeComb'?[field('logoConfig')]:[])];
