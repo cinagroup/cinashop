@@ -33,7 +33,10 @@
         </view>
       </view>
     </view>
-    <view v-else class="empty">购物车是空的</view>
+    <view v-else class="cart-empty" role="status">
+      <image class="cart-empty-image" src="/static/php-assets/images/empty-box.gif" mode="aspectFit" aria-hidden="true" />
+      <view class="cart-empty-title">暂无商品，去加点别的吧～</view>
+    </view>
 
     <view v-if="cartStore.checkedItems.length && cartStore.ready" class="budget-panel" aria-live="polite">
       <view v-if="budget.loading" role="status">正在计算选中商品的优惠预算…</view>
@@ -174,6 +177,27 @@ onUnload(() => { disposed = true; visible.value = false; budgetSession.reset(); 
 </script>
 
 <style scoped>
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 82rpx 0 160rpx;
+  background: #fff;
+  border-radius: 24rpx;
+}
+
+.cart-empty-image {
+  width: 440rpx;
+  height: 360rpx;
+}
+
+.cart-empty-title {
+  padding-top: 16rpx;
+  color: #999;
+  font-size: 26rpx;
+  line-height: 36rpx;
+}
+
 .cart-page {
   padding: 20rpx;
   padding-bottom: 140rpx;
