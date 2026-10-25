@@ -4,3 +4,8 @@ export const cartMutationRevision = ref(0);
 export function recordCartMutation(url: string, method: string): void {
   if (method !== 'GET' && /^(?:cart\/(?:add|num|del|update|remove)|cart\/add\/newcomer-replay)$/u.test(url.split('?')[0] ?? '')) cartMutationRevision.value++;
 }
+
+/** Explicit successful recovery reads can reconcile an uncertain write outcome.
+ * This signal never represents an acknowledged cart mutation. */
+export const cartReconciliationRevision = ref(0);
+export function requestCartReconciliation(): void { cartReconciliationRevision.value++; }

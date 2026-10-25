@@ -26,6 +26,7 @@ interface Actions {
   cancelPending(): void;
   updateQuantity(id: number, quantity: number): Promise<void>;
   removeItem(id: number): Promise<void>;
+  removeItems(ids: number[]): Promise<boolean>;
 }
 type Model = CartState & Actions;
 const message = (error: unknown) => error instanceof Error ? error.message : '购物车读取失败，请重试';
@@ -35,9 +36,9 @@ export function createCartActions(io: Transport): Actions {
   async function mutate(model: Model, write: () => Promise<unknown>) {
     const owner = io.capture(), version = ++model.writeVersion;
     const current = () => owner() && model.writeVersion === version;
-    model.readVersion++; model.loading = false; model.updating = true; model.ready = false; model.error = '';
-    try { await write(); if (current()) await model.fetchList(); }
-    catch (error) { if (current()) { model.items = []; model.ready = false; model.error = message(error); } }
+    model.readVersion++; model.countVersion++; model.loading = false; model.updating = true; model.ready = false; model.error = '';
+    try { await write(); if (current()) await model.fetchList(); return current() && model.ready; }
+    catch (error) { if (current()) { model.items = []; model.ready = false; model.error = message(error); } return false; }
     finally { if (current()) model.updating = false; }
   }
   return {
@@ -75,7 +76,7 @@ export function createCartActions(io: Transport): Actions {
       this.selection = this.items.filter(row => row.checked).map(row => row.id);
     },
     cancelPending(this: Model): void {
-      this.readVersion++; this.writeVersion++; this.loading = false; this.updating = false; this.ready = false;
+      this.readVersion++; this.writeVersion++; this.countVersion++; this.loading = false; this.updating = false; this.ready = false;
       // Keep owner-local selection for checkout's next read; hidden pages never render it as a current quote.
     },
     async updateQuantity(this: Model, id: number, quantity: number): Promise<void> {
@@ -86,7 +87,16 @@ export function createCartActions(io: Transport): Actions {
     },
     async removeItem(this: Model, id: number): Promise<void> {
       if (!this.ready || this.updating || !io.authenticated() || !this.items.some(row => row.id === id)) return;
-      await mutate(this, () => io.remove([id]));
+      await this.removeItems([id]);
+    },
+    async removeItems(this: Model, ids: number[]): Promise<boolean> {
+      if (!this.ready || this.updating || !io.authenticated() || !Array.isArray(ids) || !ids.length || ids.length > 200
+        || new Set(ids).size !== ids.length || ids.some(id => !Number.isSafeInteger(id) || id <= 0 || !this.items.some(row => row.id === id))) return false;
+      const owner = io.capture(), version = this.writeVersion + 1;
+      const removed = await mutate(this, () => io.remove([...ids]));
+      if (!removed || !owner() || this.writeVersion !== version) return false;
+      await this.fetchCount();
+      return owner() && this.writeVersion === version && this.ready;
     },
   };
 }

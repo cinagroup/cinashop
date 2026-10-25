@@ -1,13 +1,13 @@
 import { onScopeDispose, ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { cartMutationRevision } from '@/stores/cartMutation';
+import { cartMutationRevision, cartReconciliationRevision } from '@/stores/cartMutation';
 import { http } from '@/utils/request';
 
 export function useDiyFooterBadge(active: () => boolean) {
   const auth = useAuthStore(), count = ref(0);
   let epoch = 0, disposed = false;
   const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
-  const stop = watch([active, owner, cartMutationRevision], async () => {
+  const stop = watch([active, owner, cartMutationRevision, cartReconciliationRevision], async () => {
     const generation = ++epoch, actor = owner(); count.value = 0;
     if (disposed || !active() || !auth.isLoggedIn) return;
     // Login updates uid/token/epoch synchronously. Clear immediately, then issue

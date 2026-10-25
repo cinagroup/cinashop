@@ -15,6 +15,6 @@ export const useCartStore = defineStore('cart', {
     list: () => http.get('/cart/list', { scope: 'cart' }),
     count: async () => (await http.get<{ count: number }>('/cart/count', { scope: 'cart' })).count,
     update: (id, cartNum) => http.post('/cart/num', { id, cartNum }),
-    remove: ids => http.post('/cart/del', { ids }),
+    remove: ids => http.post('/cart/del', { ids, scope: 'cart' }),
   }),
 });

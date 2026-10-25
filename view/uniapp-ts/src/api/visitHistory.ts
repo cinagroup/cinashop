@@ -1,4 +1,5 @@
 import { http } from "@/utils/request";
+import { apiCollectProducts } from "./productCollection";
 import { useAuthStore } from "@/stores/auth";
 
 export const VISIT_PAGE_SIZE = 20;
@@ -143,12 +144,7 @@ export async function apiDeleteVisitHistory(productIds: number[]): Promise<numbe
 
 export async function apiCollectVisitProducts(productIds: number[]): Promise<number> {
   requireOwner();
-  if (!Array.isArray(productIds) || !productIds.length || productIds.length > VISIT_COLLECT_LIMIT || new Set(productIds).size !== productIds.length) throw Error("请选择 1 至 100 件商品");
-  productIds.forEach(id => integer(id, 1));
-  const data = record(await http.post<unknown>("/collect/add", { id: productIds, category: "product" }));
-  const count = integer(data.count);
-  if (count > productIds.length) throw Error("收藏结果无效");
-  return count;
+  return apiCollectProducts(productIds);
 }
 
 /** The public hot catalogue returns an array, unlike the private history envelope. */

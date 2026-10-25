@@ -42,7 +42,7 @@ export function apiCartNum(id: number, cartNum: number): Promise<null> {
 
 /** 删除购物车 (POST /api/cart/del) */
 export function apiCartDel(ids: number[]): Promise<null> {
-  return getData(request.post<null>("/cart/del", { ids }));
+  return getData(request.post<null>("/cart/del", { ids, scope: "cart" }));
 }
 
 /** 购物车数量 (GET /api/cart/count) */

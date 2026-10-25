@@ -302,10 +302,20 @@ export async function cartSetNumV2(c: C) {
 export async function cartDel(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as { ids?: number[] };
-  if (!body.ids?.length) return jsonFail(c, "参数错误");
+  const body = await readBoundedJsonObject(c);
   const svc = new StoreCartService(c.get("container"));
-  await svc.del(uid, body.ids);
+  if (Object.prototype.hasOwnProperty.call(body, "scope")) {
+    if (body.scope !== "cart" || Object.keys(body).some(key => key !== "scope" && key !== "ids")) {
+      throw new ValidateException("购物车删除范围无效");
+    }
+    c.header("Cache-Control", "private, no-store");
+    await svc.delOrdinaryCart(uid, body.ids);
+  } else {
+    // Existing valid unscoped object callers retain their legacy semantics.
+    const ids = body.ids as number[] | undefined;
+    if (!ids?.length) return jsonFail(c, "参数错误");
+    await svc.del(uid, ids);
+  }
   return jsonOk(c, null, "删除成功");
 }
 

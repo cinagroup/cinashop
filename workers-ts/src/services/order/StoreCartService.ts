@@ -1507,6 +1507,41 @@ export class StoreCartService {
     });
   }
 
+  /** Exact ordinary-cart management deletion. Invalid products/status-zero rows
+   * remain removable; immediate-buy, assisted, paid and other actors never do.
+   * This scoped contract is intentionally separate from the legacy del below. */
+  async delOrdinaryCart(uid: number, values: unknown): Promise<void> {
+    if (!Number.isSafeInteger(uid) || uid <= 0 || uid > 2_147_483_647
+      || !Array.isArray(values) || !values.length || values.length > 200
+      || Array.from(values).some(id => typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647)
+      || new Set(values).size !== values.length) {
+      throw new ValidateException("请选择1至200个不同的购物车项");
+    }
+    // Copy before awaiting any lock: caller mutation cannot change the set.
+    const ids = [...(values as number[])].sort((a, b) => a - b);
+    await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED`);
+      await tx.execute(sql.raw(`SELECT
+        pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+        pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text || 'ms',true),
+        pg_catalog.set_config('idle_in_transaction_session_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text || 'ms',true)`));
+      // Reuse the ordinary-cart user boundary, then lock rows in ID order as
+      // the existing assisted/cart writers do. No product/SKU locks are added.
+      await lockCartUser(tx, uid);
+      const scope = and(inArray(storeCart.id, ids), eq(storeCart.uid, uid),
+        eq(storeCart.staffId, 0), eq(storeCart.touristUid, ""), eq(storeCart.storeId, 0),
+        eq(storeCart.isPay, 0), eq(storeCart.isDel, 0), eq(storeCart.isNew, 0));
+      const rows = await tx.select({ id: storeCart.id }).from(storeCart).where(scope)
+        .orderBy(asc(storeCart.id)).for("update");
+      if (rows.length !== ids.length) throw new ValidateException("购物车项已变化，请重新读取后操作");
+      const changed = await tx.update(storeCart).set({ isDel: 1 }).where(scope).returning({ id: storeCart.id });
+      const changedIds = changed.map(row => row.id).sort((a, b) => a - b);
+      if (changedIds.length !== ids.length || changedIds.some((id, index) => id !== ids[index])) {
+        throw new ValidateException("购物车删除未完整确认，请重新读取");
+      }
+    });
+  }
+
   /** 删除 (软删除, 对应 PHP delCart) */
   async del(uid: number, ids: number[]): Promise<void> {
     if (!ids.length) return;

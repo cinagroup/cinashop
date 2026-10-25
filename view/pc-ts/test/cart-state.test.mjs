@@ -67,6 +67,19 @@ export function registerCartStateTests(context) {
     for (const [id, quantity] of [[1, 0], [1, 9], [1, 1.5], [2, 1], [99, 1]]) await cart.updateQuantity(id, quantity);
     await cart.removeItem(99); assert.equal(calls.length, 1);
   });
+  it('PC ordinary bulk removal submits one exact scoped request and rereads list and count', async () => {
+    let rows = [row(), { ...row(2), isValid: false, productInfo: null }];
+    const { cart, calls } = fixture(config => {
+      if (config.url === '/cart/list') return { status: 200, data: structuredClone(rows) };
+      if (config.url === '/cart/del') { const input = JSON.parse(config.data); rows = rows.filter(item => !input.ids.includes(item.id)); return { status: 200, data: null }; }
+      if (config.url === '/cart/count') return { status: 200, data: { count: rows.length } };
+    });
+    await cart.fetchList(); cart.toggleChecked(1, true);
+    assert.equal(await cart.removeItems([1, 2]), true);
+    assert.deepEqual(calls.filter(call => call.url === '/cart/del').map(call => JSON.parse(call.data)), [{ ids: [1, 2], scope: 'cart' }]);
+    assert.deepEqual(cart.items, []); assert.deepEqual(cart.selection, []); assert.equal(cart.ready, true); assert.equal(cart.count, 0);
+    assert.deepEqual(calls.slice(-2).map(call => call.url), ['/cart/list', '/cart/count']);
+  });
   it('cart uncertain mutation exposes a read-only retry without replaying its write', async () => {
     const { cart, calls } = fixture(config => config.url === '/cart/num' ? { status: 400, msg: 'uncertain' } : undefined);
     await cart.fetchList(); await cart.updateQuantity(1, 3); assert.match(cart.error, /uncertain/); assert.equal(cart.ready, false);

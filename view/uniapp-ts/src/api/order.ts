@@ -58,7 +58,7 @@ export function apiCartNum(id: number, cartNum: number): Promise<null> {
 }
 
 export function apiCartDel(ids: number[]): Promise<null> {
-  return http.post<null>("/cart/del", { ids });
+  return http.post<null>("/cart/del", { ids, scope: "cart" });
 }
 
 export function apiCartCount(): Promise<{ count: number }> {
