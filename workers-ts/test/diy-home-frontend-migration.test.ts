@@ -365,8 +365,62 @@ describe("DIY-home frontend migration", () => {
     expect(commerce).not.toContain("v-html");
   });
 
-  it("bounds commerce configuration and fails closed on empty scoped product selections", () => {
-    expect(commerceConfig).toContain("slice(0, 12)");
+  it("retains complete promotion imports while bounding queries and rejecting empty product scopes", () => {
+    const names = new Set(['asDiyRecord', 'isDiyEnabled', 'safeDiyColor', 'safeDiyImageUrl']);
+    const pureFile = createSourceFile('diy.ts', loader, ScriptTarget.Latest, true);
+    const declarations = pureFile.statements.filter(isFunctionDeclaration).filter(node => node.name && names.has(node.name.text));
+    expect(declarations.map(node => node.name!.text).sort()).toEqual([...names].sort());
+    const pureExports: Record<string, unknown> = {};
+    runInNewContext(compile(declarations.map(node => node.getText(pureFile)).join('\n')), { exports: pureExports, API_BASE: '' });
+    const dependencies = new Map<string, Record<string, unknown>>([['@/utils/diy', pureExports]]);
+    const actualModule = (source: string) => {
+      const exports: Record<string, unknown> = {};
+      runInNewContext(compile(source), { exports, require: (name: string) => {
+        const value = dependencies.get(name);
+        if (!value) throw Error(`Unexpected commerce pure dependency: ${name}`);
+        return value;
+      } });
+      return exports;
+    };
+    dependencies.set('@/utils/diyTheme', actualModule(readFileSync(resolve(root, '../view/uniapp-ts/src/utils/diyTheme.ts'), 'utf8')));
+    const presets = actualModule(readFileSync(resolve(root, '../view/common/theme.ts'), 'utf8')).THEME_PRESETS;
+    if (!Array.isArray(presets) || !presets[2]) throw Error('Actual theme preset missing');
+    type Projection = { tabs: { label: string; limit: number; query: { ids: string; page: number; limit: number } | null }[]; limit: number };
+    const normalize = (source: string, block: unknown): Projection => {
+      const normalizer = actualModule(source).normalizeDiyCommerce;
+      if (typeof normalizer !== 'function') throw Error('Actual commerce normalizer export missing');
+      return Reflect.apply(normalizer, undefined, [block, presets[2]]) as Projection;
+    };
+    const tabs = Array.from({ length: 33 }, (_, index) => ({
+      chiild: [{ val: `完整分组${index + 1}` }], tabVal: 1, goodsList: { ids: [index + 1] }, numConfig: { val: 999 },
+    }));
+    const block = { name: 'promotionList', tabConfig: { list: [null, [], ...tabs] } };
+    const before = JSON.stringify(block);
+    const expected = tabs.map((tab, index) => ({ label: tab.chiild[0]!.val, limit: 100, query: { ids: String(index + 1), page: 1, limit: 100 } }));
+    const selected = (source: string) => normalize(source, block).tabs.map(({ label, limit, query }) => ({ label, limit, query }));
+    expect(selected(commerceConfig)).toEqual(expected);
+    expect(JSON.stringify(block)).toBe(before);
+    for (const ids of [[], ['01'], Array(101).fill(1)]) {
+      expect(normalize(commerceConfig, { name: 'promotionList', tabConfig: { list: [{ tabVal: 1, goodsList: { ids }, numConfig: { val: 999 } }] } }).tabs[0]!.query).toBeNull();
+    }
+    expect(normalize(commerceConfig, { name: 'seckill', numberConfig: { val: 999 } }).limit).toBe(10);
+    expect(normalize(commerceConfig, { name: 'liveBroadcast', numberConfig: { val: 999 } }).limit).toBe(50);
+    const file = createSourceFile('diyCommerceConfig.ts', commerceConfig, ScriptTarget.Latest, true);
+    const promotion = file.statements.filter(isFunctionDeclaration).find(node => node.name?.text === 'promotionTabs');
+    if (!promotion) throw Error('Actual promotion tab normalizer missing');
+    const filters: Node[] = [];
+    const visit = (node: Node) => {
+      if (isCallExpression(node) && isPropertyAccessExpression(node.expression) && node.expression.name.text === 'flatMap' && isIdentifier(node.expression.expression) && node.expression.expression.text === 'raw') filters.push(node);
+      node.forEachChild(visit);
+    };
+    visit(promotion);
+    if (filters.length !== 1) throw Error('Ambiguous actual promotion filter');
+    const filter = filters[0]!;
+    if (!isCallExpression(filter) || !isPropertyAccessExpression(filter.expression)) throw Error('Actual promotion filter missing');
+    for (const at of [filter.expression.expression.end, filter.end]) {
+      const mutant = commerceConfig.slice(0, at) + '.slice(0, 12)' + commerceConfig.slice(at);
+      expect(selected(mutant)).not.toEqual(expected);
+    }
     expect(commerceConfig).toContain("value.length > 100");
     expect(commerceConfig).toContain("kind === 'liveBroadcast' ? 50 : 10");
     expect(commerceConfig).toContain("selected.length && limit > 0");
