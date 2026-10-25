@@ -63,7 +63,9 @@
     "test:diy-state-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-state-author-media.test.ts test/diy-state-author-postgres.test.ts test/diy-state-author-runner.test.ts",
     "audit:diy-state-author-browser": "vitest run --config vitest.diy-state-author-browser.config.ts",
     "audit:diy-commerce-author-browser": "vitest run --config vitest.diy-commerce-author-browser.config.ts",
-    "test:diy-commerce-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-commerce-author-media.test.ts test/diy-commerce-author-postgres.test.ts"
+    "test:diy-commerce-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-commerce-author-media.test.ts test/diy-commerce-author-postgres.test.ts",
+    "audit:diy-community-author-browser": "vitest run --config vitest.diy-community-author-browser.config.ts",
+    "test:diy-community-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-community-author-media.test.ts test/diy-community-author-postgres.test.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",

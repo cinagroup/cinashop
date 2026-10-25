@@ -36,7 +36,7 @@ for (const kind of kinds) test(`${kind} unsigned/malformed/duplicate/expired act
   } } finally { r.stop(); }
 }));
 test('commerce lease does not authorize data API images, unknown/case variants, wrong slots, nested objects or object-like lists', () => clock(async () => {
-  const r = host(); try { const value = ['coupon','liveBroadcast','community','Seckill','pointsmall','unknown'].map(name => ({ name, imgConfig: { url: asset(origin-1) }, imgBgConfig: { url: asset(origin-1) }, tabConfig: { list: [{ image: asset(origin-1) }] }, productList: { list: [{ image: asset(origin-1) }] } }));
+  const r = host(); try { const value = ['coupon','liveBroadcast','Community','Seckill','pointsmall','unknown'].map(name => ({ name, imgConfig: { url: asset(origin-1) }, imgBgConfig: { url: asset(origin-1) }, tabConfig: { list: [{ image: asset(origin-1) }] }, productList: { list: [{ image: asset(origin-1) }] } }));
     value.push({ name:'promotionList', tabConfig:{list:{0:{image:asset(origin-1)}}} }, { name:'pointsMall', imgColorConfig:{url:asset(origin-1)} }, { name:'seckill', imgConfig2:{url:asset(origin-1)} });
     const before=JSON.stringify(value); assert.equal(r.m.diyEditorialMediaDeadline({value}, origin, origin), Infinity); assert.equal(JSON.stringify(value),before);
     const copy=structuredClone(value); copy[0].productList.list[0].image=asset(); assert.notEqual(r.m.diyAuthoredPageFingerprint(copy),r.m.diyAuthoredPageFingerprint(value)); assert.deepEqual(r.calls,[]);

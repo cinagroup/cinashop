@@ -17,7 +17,7 @@ function mediaSlots(page: unknown): {holder:Record<string,unknown>;key:string; h
     }
     if(block.name==='videos')return [field('videoConfig'),field('imgConfig')];
     if(block.name==='richText'){const holder=record(block.richText);if(typeof holder.val!=='string')return [];return [{holder,key:'val',html:true}];}
-    if (block.name === 'news') return [field('imgConfig')];
+    if (block.name === 'news' || block.name === 'community') return [field('imgConfig')];
     if (block.name === 'hotspot') return [field('picStyle')];
     if (block.name === 'follow') return [field('imgConfig'), field('codeConfig')];
     if (block.name === 'activeParty') { const items = record(block.menuConfig).list; return Array.isArray(items) ? items.slice(0, 4).map(item => ({holder:record(item),key:'img'})) : []; }

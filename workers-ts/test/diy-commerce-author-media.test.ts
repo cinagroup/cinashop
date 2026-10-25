@@ -61,7 +61,7 @@ describe('commerce author exact legacy image slots and independent complete capa
   });
 
   it('never grants author-media authority to coupon/live API rows, product snapshots, wrong cases, nested components or object-like lists', async () => {
-    const value = ['coupon', 'liveBroadcast', 'community', 'Seckill', 'pointsmall', 'unknown'].map(name => ({ name,
+    const value = ['coupon', 'liveBroadcast', 'Community', 'Seckill', 'pointsmall', 'unknown'].map(name => ({ name,
       imgConfig: { url: historical(1) }, imgBgConfig: { url: historical(1) }, imgColorConfig: { url: historical(1) }, imgConfig2: { url: historical(1) },
       tabConfig: { list: [{ image: historical(1) }] }, products: [{ image: historical(1) }], rooms: [{ cover_img: historical(1) }], child: sample('seckill', historical(1)).block }));
     const malformed = [{ name: 'promotionList', tabConfig: { list: { 0: { image: historical(1) } } } }, { name: 'seckill', imgBgConfig: [{ url: historical(1) }], imgConfig2: { url: historical(1) } }, { name: 'pointsMall', imgColorConfig: { url: historical(1) } }];

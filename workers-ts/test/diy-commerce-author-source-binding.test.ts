@@ -1,3 +1,4 @@
+import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -7,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
 import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
 import { applyCommerceAuthorReport, reverseCommerceAuthorReport, reverseCommerceAuthorSource, reverseCommerceFormattingSource, reverseCommerceGridSource, commerceAuthorSourceBinding as proof } from './helpers/diyCommerceAuthorSourceBinding';
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8'),sha=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
+const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseCommunityAuthorSource(file,readFileSync(resolve(root,file),'utf8')),sha=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
 const reportHash=(value:unknown)=>sha(JSON.stringify(value,null,2)+'\n');
 const previous=applyEditorialAuthorReport(JSON.parse(read(proof.previous_report.base_file))),source=read(proof.source.file);
 const {parse}=createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');
@@ -39,7 +40,7 @@ describe('complete commerce author source and additive dated-history binding',()
   for(const kind of ['extra','other-css','duplicate','before-hash','after-hash','before-line','after-line']){const changed=structuredClone(proof),row=changed.promotion_grid_sources.find(item=>item.file===entry.file)!;let candidate=live;if(kind==='extra')candidate+='\n// unrelated unreviewed source\n';if(kind==='other-css')candidate=candidate.replace(edit.after_source,edit.after_source+' .unreviewed{display:none}');if(kind==='duplicate')candidate+=edit.after_source;if(kind==='before-hash')row.before_sha256='0'.repeat(64);if(kind==='after-hash')row.after_sha256='0'.repeat(64);if(kind==='before-line')row.edits[0]!.before_line!++;if(kind==='after-line')row.edits[0]!.after_line++;expect(()=>reverseCommerceGridSource(entry.file,candidate,changed)).toThrow();}
  });
  it('reconstructs the whole live report with only one source hash and three existing line shifts',()=>{
-  const actual=buildAdminFrontendApiAuditReport();expect(applyCommerceAuthorReport(previous)).toEqual(actual);expect(reverseCommerceAuthorReport(actual)).toEqual(previous);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
+  const actual=reverseCommunityAuthorReport(buildAdminFrontendApiAuditReport());expect(applyCommerceAuthorReport(previous)).toEqual(actual);expect(reverseCommerceAuthorReport(actual)).toEqual(previous);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
   expect(proof.report_changes).toHaveLength(4);expect(proof.report_changes.filter(row=>row.array==='calls')).toHaveLength(3);for(const row of proof.report_changes){const before={...row.before},after={...row.after};if(row.array==='calls'){expect(after.line).toBe(Number(before.line)+3);delete before.line;delete after.line;}else{delete before.sha256;delete after.sha256;}expect(after).toEqual(before);}
  });
  it.each(['missing','duplicate','index','array','before-row','after-row','before-hash','after-hash'] as const)('rejects forged exact report deltas %s',kind=>{

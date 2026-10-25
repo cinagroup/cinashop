@@ -13,6 +13,7 @@ export const DIY_FOOTER_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_PRESENTATION_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT = 20_000;
 export const DIY_COMMERCE_MEDIA_SLOT_LIMIT = 20_000;
+export const DIY_COMMUNITY_MEDIA_SLOT_LIMIT = 20_000;
 
 /** Editorial, carousel and navigation components expose only these authored image slots.
  * Navigation URLs, preview rows, neighboring components and arbitrary
@@ -21,7 +22,7 @@ export const DIY_COMMERCE_MEDIA_SLOT_LIMIT = 20_000;
  * signing; historical tickets are canonicalized and refreshed only in output. */
 function editorialMediaSlots(components: unknown[], publication = false, page?: RecordValue) {
   const slots: Array<{ value: string; kind?: DiyPresentationMediaKind | 'page-background'; set: (value: string) => void }> = [];
-  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0, commerce: 0 };
+  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0, commerce: 0, community: 0 };
   const htmlGroups: Array<{owner: RecordValue; source: string; slots: number[]}> = [];
   const collect = (value: unknown, key: string, navigation = false) => {
     const owner = record(value);
@@ -93,6 +94,15 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
       const group={owner,source,slots:[] as number[]};htmlGroups.push(group);
       for(const ref of refs){group.slots.push(slots.length);slots.push({value:ref.value,kind:ref.kind,set:()=>{}});counts.presentation++;}
     }
+    else if (component.name === 'community') {
+      const owner = record(component.imgConfig);
+      if (owner && typeof owner.url === 'string') {
+        // Only the authored title image; public posts, avatars and snapshots
+        // never gain authority through the DIY schema or this separate budget.
+        slots.push({ value: owner.url, set: value => { owner.url = value; } });
+        counts.community++;
+      }
+    }
     else if (component.name === 'news') collect(component.imgConfig, 'url');
     else if (component.name === 'hotspot') collect(component.picStyle, 'url');
     else if (component.name === 'follow') { collect(component.imgConfig, 'url'); collect(component.codeConfig, 'url'); }
@@ -148,7 +158,7 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
   // Collect first, reject before any canonical mutation, database owner lookup
   // or signature. The footer's independent budget cannot consume a previously
   // valid full editorial/carousel or navigation budget.
-  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT || counts.commerce > DIY_COMMERCE_MEDIA_SLOT_LIMIT) {
+  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT || counts.commerce > DIY_COMMERCE_MEDIA_SLOT_LIMIT || counts.community > DIY_COMMUNITY_MEDIA_SLOT_LIMIT) {
     throw new ValidateException('DIY公开素材超过完整读取容量');
   }
   return {slots, htmlGroups};

@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:diy-footer": "node --test scripts/diy-footer-editor-runtime.test.cjs",
+    "test:diy-footer": "node --test --test-concurrency=1 scripts/diy-footer-editor-runtime.test.cjs",
     "test:diy-customer-service": "node --test --test-concurrency=1 scripts/diy-customer-service-editor-runtime.test.cjs",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "test:diy-presentation": "node --test scripts/diy-presentation-editor-runtime.test.cjs",
+    "test:diy-presentation": "node --test --test-concurrency=1 scripts/diy-presentation-editor-runtime.test.cjs",
     "test:diy-page-settings": "node --test --test-concurrency=1 scripts/diy-page-settings-editor-runtime.test.cjs",
     "test:diy-navigation": "node --test --test-concurrency=1 scripts/diy-navigation-editor-runtime.test.cjs scripts/diy-navigation-input-number-runtime.test.cjs",
     "test:diy-carousel": "node --test --test-concurrency=1 scripts/diy-carousel-editor-runtime.test.cjs scripts/diy-carousel-input-number-runtime.test.cjs scripts/diy-carousel-consumer-projection-runtime.test.cjs",
@@ -17,7 +17,8 @@
     "test:diy-state-author": "node --test --test-concurrency=1 scripts/diy-state-consumer-projection-runtime.test.cjs scripts/diy-state-editor-runtime.test.cjs scripts/diy-state-preview-runtime.test.cjs scripts/diy-state-input-number-runtime.test.cjs scripts/diy-state-review-regression-runtime.test.cjs",
     "test:admin-navigation": "node --test --test-concurrency=1 scripts/admin-navigation-runtime.test.cjs",
     "test:diy-editorial-author": "node --test --test-concurrency=1 scripts/diy-news-author-fields-runtime.test.cjs scripts/diy-editorial-author-runtime.test.cjs",
-    "test:diy-commerce-author": "node --test --test-concurrency=1 scripts/diy-commerce-author-runtime.test.cjs scripts/diy-commerce-projection-runtime.test.cjs"
+    "test:diy-commerce-author": "node --test --test-concurrency=1 scripts/diy-commerce-author-runtime.test.cjs scripts/diy-commerce-projection-runtime.test.cjs",
+    "test:diy-community-author": "node --test --test-concurrency=1 scripts/diy-community-author-runtime.test.cjs scripts/diy-community-editor-runtime.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

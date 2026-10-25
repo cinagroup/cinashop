@@ -1,0 +1,131 @@
+{
+  "schema": "cinashop.php-ts-diy-community-author.v1",
+  "status": "verified_local_draft_ready",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "base_ref": "a7ad9f6cead6a0c1cbb2d09f740f6280c65b7d66",
+  "scope": [
+    "community structured author with complete36-key PHP constructor",
+    "all4 content and8 style conditional panel sequences",
+    "whole-document add/copy/move/delete/hide and exact image canonical save",
+    "owner/page/config-scoped approved public post preview and active Admin topic picker",
+    "same-byte original PHP title image in Admin and Uni builds",
+    "independent legacy image policy and cache deadline/fingerprint slot"
+  ],
+  "source_binding": {
+    "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+    "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+    "consumer_sources": 14,
+    "existing_source_boundaries": 3,
+    "report_delta_rows": 4,
+    "dated_fixtures_modified": false
+  },
+  "assets": [
+    {
+      "path": "/static/images/diy/community.png",
+      "sha256": "48785691c5387e98d65dc662913a3fdd3d146db9152b042d51f1f2647c8d8b4c",
+      "bytes": 1886
+    }
+  ],
+  "api_contract": {
+    "new_business_routes": 0,
+    "admin_call_sites": 703,
+    "registered_path_variants": 741,
+    "unresolved": 0,
+    "topic_read_permission": "community.view",
+    "preview_methods": [
+      "GET /api/community/config",
+      "GET /api/community/list?page=1&limit=<1..100>&is_follow=0"
+    ],
+    "topic_selector": "GET /adminapi/community/all_topic",
+    "author_media_slots": [
+      "community.imgConfig.url"
+    ],
+    "api_post_media_authority": false,
+    "preview_business_writes": false
+  },
+  "verified": {
+    "admin_author_chain_before_browser_fixes": 857,
+    "admin_navigation": 4,
+    "latest_community_admin": 89,
+    "historical_worker_bindings": 224,
+    "latest_community_source_binding": 43,
+    "uni_community_and_lease_history": 54,
+    "worker_community_and_commerce_media": 37,
+    "native_postgres16": {
+      "tests": 6,
+      "namespaces": [
+        "isolated",
+        "public"
+      ],
+      "checks_per_namespace": 11,
+      "remaining_fixtures": 0
+    },
+    "admin_build": true,
+    "uni_h5_build": true,
+    "uni_mp_weixin_build": true,
+    "uni_app_build": true,
+    "worker_unit_strict": true,
+    "worker_runtime_strict": true
+  },
+  "browser": {
+    "status": "passed",
+    "real_gui_saves": 2,
+    "actual_gets": 51,
+    "database_tables": 76,
+    "database_sequences": 71,
+    "source_inventory_files": 2295,
+    "build_inventory_files": 701,
+    "explicit_owned_role_revoke_setups": 1,
+    "source_and_build_changed_during_acceptance": false,
+    "get_database_or_resource_writes": false,
+    "app_width_css_px": 375,
+    "layouts": [
+      "horizontal",
+      "columns"
+    ],
+    "actual_micro_route": "/pages/diy/detail?id=2",
+    "roles_verified": [
+      "dise.manage minimum author with no attachment/topic read",
+      "read-only actor",
+      "revoked author"
+    ],
+    "console": {
+      "application_errors": 0,
+      "existing_warning": "vue-router deep import deprecation"
+    },
+    "cleanup": {
+      "runner_exit": 0,
+      "remaining_owned_fixtures": 0,
+      "postgres_stopped": true,
+      "temporary_tabs_closed": true
+    },
+    "receipt": {
+      "external_file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-community-author-20261025/browser-final-receipt.json",
+      "sha256": "efe94b26e1087eb7cdf7e26bca30143b73c21765ffd2a1820b46728cbf5789b7"
+    },
+    "screenshots": [
+      "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-community-author-20261025/admin-columns.png",
+      "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-community-author-20261025/h5-micro-final-mobile.png"
+    ],
+    "earlier_iteration": "Interrupted before writes to fix image label/name and signed title-image projection; prior evidence and logs retained.",
+    "numeric_input": "GUI uses real keyboard entry then Enter/Tab; DOM, raw JSON, actual query and persisted count all verified2.",
+    "independent_verification": {
+      "external_file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-community-author-20261025/browser-independent-verification.json",
+      "sha256": "b22285e8b79be1b611be73bd01beef3f5424f50567447395cd0d391e259eb80d",
+      "passed": true
+    }
+  },
+  "boundaries": [
+    "PHP topic selection is authored metadata; public PHP widget does not filter by it",
+    "PHP tone/like-success controls are preserved; existing published widget does not consume them",
+    "existing two-column grid is not a claim of complete PHP measured waterfall parity",
+    "published italic title remains the pre-existing TS bold+italic behavior; not silently renumbered",
+    "existing render bounds remain display-only; imported raw numeric forms and dormant metadata remain exact",
+    "live external services, device playback and deployment are not claimed"
+  ],
+  "github": {
+    "merged": false,
+    "deployed": false,
+    "base_branch": "codex/diy-commerce-author-controls"
+  }
+}

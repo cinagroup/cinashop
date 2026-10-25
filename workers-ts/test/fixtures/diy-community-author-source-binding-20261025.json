@@ -1,0 +1,341 @@
+{
+  "schema": "cinashop.community-author.exact-source-binding.v1",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_ref": "a7ad9f6cead6a0c1cbb2d09f740f6280c65b7d66",
+      "before_sha256": "bb5a0f03252aa3265c0e87be6b7b7690c23b04b6fc942311a2095a91a43c655c",
+      "after_sha256": "a234d83d8eff6b64c5f1ed11c2dc0247ec86277b25d3ba8dca043b6090583893",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "        <el-form-item label=\"社区组件\"><DiyCommunityEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+          "before_line": 105,
+          "after_line": 105
+        },
+        {
+          "before_source": "",
+          "after_source": "import DiyCommunityEditor from '@/components/content/DiyCommunityEditor.vue';\nimport { canonicalCommunityValue } from '@/utils/diyCommunityEditor';\n",
+          "before_line": 168,
+          "after_line": 169
+        },
+        {
+          "before_source": "    return canonicalCommerceValue(canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))));\n",
+          "after_source": "    return canonicalCommunityValue(canonicalCommerceValue(canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))))));\n",
+          "before_line": 302,
+          "after_line": 305
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "before_ref": "a7ad9f6cead6a0c1cbb2d09f740f6280c65b7d66",
+      "before_sha256": "f798641f30679890efa049872fcf56b69c8eca9e658539c7908f6a1925ac28f2",
+      "after_sha256": "a86968d78716dd83e9ed34c045d5b32da07ccc2ea6274a1b74f7c968a629dfd2",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "export const DIY_COMMUNITY_MEDIA_SLOT_LIMIT = 20_000;\n",
+          "before_line": 16,
+          "after_line": 16
+        },
+        {
+          "before_source": "  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0, commerce: 0 };\n",
+          "after_source": "  const counts = { ordinary: 0, navigation: 0, footer: 0, presentation: 0, customerService: 0, commerce: 0, community: 0 };\n",
+          "before_line": 24,
+          "after_line": 25
+        },
+        {
+          "before_source": "",
+          "after_source": "    else if (component.name === 'community') {\n      const owner = record(component.imgConfig);\n      if (owner && typeof owner.url === 'string') {\n        // Only the authored title image; public posts, avatars and snapshots\n        // never gain authority through the DIY schema or this separate budget.\n        slots.push({ value: owner.url, set: value => { owner.url = value; } });\n        counts.community++;\n      }\n    }\n",
+          "before_line": 96,
+          "after_line": 97
+        },
+        {
+          "before_source": "  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT || counts.commerce > DIY_COMMERCE_MEDIA_SLOT_LIMIT) {\n",
+          "after_source": "  if (counts.ordinary > 2500 || counts.navigation > 20000 || counts.footer > DIY_FOOTER_MEDIA_SLOT_LIMIT || counts.presentation > DIY_PRESENTATION_MEDIA_SLOT_LIMIT || counts.customerService > DIY_CUSTOMER_SERVICE_MEDIA_SLOT_LIMIT || counts.commerce > DIY_COMMERCE_MEDIA_SLOT_LIMIT || counts.community > DIY_COMMUNITY_MEDIA_SLOT_LIMIT) {\n",
+          "before_line": 151,
+          "after_line": 161
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "before_ref": "a7ad9f6cead6a0c1cbb2d09f740f6280c65b7d66",
+      "before_sha256": "fdad2d028b67e5ea935177dd4fc63e9ac41a7574089187573c84df2280d3fa97",
+      "after_sha256": "6d6dd351cd5c4648be897e8cdfc68c204e905b35d92655f1c461322e94bd7a52",
+      "edits": [
+        {
+          "before_source": "    if (block.name === 'news') return [field('imgConfig')];\n",
+          "after_source": "    if (block.name === 'news' || block.name === 'community') return [field('imgConfig')];\n",
+          "before_line": 20,
+          "after_line": 20
+        }
+      ]
+    }
+  ],
+  "previous_report": {
+    "sha256": "dd842ab557a89bc64e62a1ec1179034b0017bb0167cd8579d2198918365689cf",
+    "base_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "base_sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+    "binding_chain": [
+      {
+        "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+        "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+        "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+      }
+    ]
+  },
+  "current_report": {
+    "sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "raw_capture": {
+      "sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+      "bytes": 642264,
+      "serialization": "JSON.stringify(report, null, 2) + newline"
+    },
+    "compact": {
+      "sha256": "192e45c353abefea38acaa88f5ca475a72ad87dfafd019a96c6c843c99f9c7cb",
+      "bytes": 470098
+    }
+  },
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "bb5a0f03252aa3265c0e87be6b7b7690c23b04b6fc942311a2095a91a43c655c"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "a234d83d8eff6b64c5f1ed11c2dc0247ec86277b25d3ba8dca043b6090583893"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 243,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 246,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 359,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 362,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 382,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 385,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ],
+  "consumer_sources": [
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityEditor.vue",
+      "sha256": "3f950f26f70377ebe43743691acd650bb0e7f6645dbd96a51182a2bb77b802d0"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityFields.vue",
+      "sha256": "c8c2d8c77782f2e309a1798d795578bf6d9336ff57ed655a34443a90fdccbd8c"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityPreview.vue",
+      "sha256": "654c68784d5e327dfbdb5a0af06721ebe2fb66af1dbcd19907a6098e648f4f74"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityDefaults.ts",
+      "sha256": "a8667d33c1035290ef9d76e4e490aa804f6c6355d1fece894b8207bfb2226ef5"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityControls.ts",
+      "sha256": "05537ba9437ce2361cbac23011004d91cc10c78d2cf0b22bd922823ee22d0b00"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityEditor.ts",
+      "sha256": "d9d14b3211468c0e38d8d8c8e66b9ed51834057477852c9560f9ab5967ea2002"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityProjection.ts",
+      "sha256": "be5b02a2a22e1b556938ee0a88ab2027c8edc551e50b5507d840c9bd72056b8d"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommunityAuthor.ts",
+      "sha256": "8e60b78a10013e026d58db1716a086ad0ac44cd02c51c964fbe80ef4b8c19739"
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "sha256": "a86968d78716dd83e9ed34c045d5b32da07ccc2ea6274a1b74f7c968a629dfd2"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "sha256": "6d6dd351cd5c4648be897e8cdfc68c204e905b35d92655f1c461322e94bd7a52"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyCommunity.ts",
+      "sha256": "d9871907b599a365ef82895c4eca098740803d1e0d6c54a654e07d3bcdb8cafb"
+    },
+    {
+      "file": "view/uniapp-ts/src/composables/useDiyCommunity.ts",
+      "sha256": "8f21797d8d7a7aa2fb429593fb3f95335751174034994ab6644c3f8deb3cd821"
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommunityWidget.vue",
+      "sha256": "ba5a97a1ca89bb2d2828103805083e7829bc9ba28998942e09c5a30dbbc32729"
+    },
+    {
+      "file": "view/admin-ts/src/api/community.ts",
+      "sha256": "202622384b920ce59ec4f3b3de15bb0b1ec8a0a0029dbe84ac4ccd4b22556acd"
+    }
+  ],
+  "defaults_fixture": {
+    "file": "workers-ts/test/fixtures/diy-community-author-defaults.json",
+    "sha256": "e412f893e264daf14b415d4e5c5238d77d747abeca644c410e89e5ca25520621",
+    "top_level_keys": 36
+  },
+  "condition_fixture": {
+    "file": "workers-ts/test/fixtures/diy-community-author-php-panels-20261025.json",
+    "sha256": "d81544d45f0cc2377668244ae7f7c1424f79ffed7bc427710057686350e6b756",
+    "php_method_cases": 12
+  },
+  "php_sources": [
+    {
+      "path": "view/admin/src/components/mobilePage/home_community.vue",
+      "sha256": "748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc",
+      "bytes": 17530,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/admin/src/components/mobileConfig/c_community.vue",
+      "sha256": "6e4250dc590e71a4d0d4137a7924406fca8b3af5791bcfe560cffeef8b5174b6",
+      "bytes": 8950,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/uniapp/pages/index/components/community.vue",
+      "sha256": "b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671",
+      "bytes": 16568,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/admin/src/components/mobileConfigRight/c_slider.vue",
+      "sha256": "b27efc0259cdc0952d8edc3c70325acba33a70397f26de4496a0e73ca2d54701",
+      "bytes": 1446,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/admin/src/components/mobileConfigRight/c_select.vue",
+      "sha256": "db75dbe86b6eba12ba7aa29e8a2ac19d5cdeb617d4d97e23f6966664c29ff107",
+      "bytes": 1967,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/admin/src/api/community.js",
+      "sha256": "d4758b0701932fcc39a38faae30e9ca7efc73cdbd99a2ffd689eb5bcc01f9b20",
+      "bytes": 5451,
+      "matches_prior_fixed_source_scout": true
+    },
+    {
+      "path": "view/uniapp/api/community.js",
+      "sha256": "a5fb75acb0bb8cd88146ba806b4662952a5c26f8043880a1c6e319a2b9411372",
+      "bytes": 2710
+    },
+    {
+      "path": "view/admin/src/assets/images/community.png",
+      "sha256": "48785691c5387e98d65dc662913a3fdd3d146db9152b042d51f1f2647c8d8b4c",
+      "bytes": 1886,
+      "dimensions_px": [
+        128,
+        32
+      ]
+    }
+  ],
+  "default_bindings": [
+    {
+      "path": [
+        "community",
+        "timestamp"
+      ],
+      "source": "this.num",
+      "literal": 0
+    },
+    {
+      "path": [
+        "community",
+        "imgConfig",
+        "url"
+      ],
+      "source": "@/assets/images/community.png",
+      "literal": "/static/images/diy/community.png"
+    }
+  ],
+  "assets": [
+    {
+      "public_path": "/static/images/diy/community.png",
+      "php_path": "view/admin/src/assets/images/community.png",
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "sha256": "48785691c5387e98d65dc662913a3fdd3d146db9152b042d51f1f2647c8d8b4c",
+      "bytes": 1886,
+      "admin_file": "view/admin-ts/public/static/images/diy/community.png",
+      "uni_file": "view/uniapp-ts/src/static/images/diy/community.png"
+    }
+  ]
+}

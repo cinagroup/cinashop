@@ -1,0 +1,427 @@
+{
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "source": {
+    "path": "view/admin/src/components/mobileConfig/c_community.vue",
+    "sha256": "6e4250dc590e71a4d0d4137a7924406fca8b3af5791bcfe560cffeef8b5174b6"
+  },
+  "families": [
+    {
+      "name": "community",
+      "axis_mapping": {
+        "setUp": "setUp.tabVal",
+        "type": "styleConfig.tabVal",
+        "type3": "toneConfig.tabVal",
+        "type2": "titleConfig.tabVal"
+      },
+      "methods": [
+        {
+          "name": "getRComContent",
+          "source_sha256": "b86c0a497e7b814f04c480d5010a0b13abeecdea676df30dd769122d8fbebd08",
+          "axes": [
+            {
+              "param": "type",
+              "path": "styleConfig.tabVal",
+              "values": [
+                0,
+                1
+              ]
+            },
+            {
+              "param": "type2",
+              "path": "titleConfig.tabVal",
+              "values": [
+                0,
+                1
+              ]
+            }
+          ],
+          "cases": [
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleLeft",
+                "styleConfig",
+                "titleHead",
+                "titleConfig",
+                "imgConfig",
+                "rightBntConfig",
+                "titleContent",
+                "numberConfig"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleLeft",
+                "styleConfig",
+                "titleHead",
+                "titleConfig",
+                "titleTxtConfig",
+                "rightBntConfig",
+                "titleContent",
+                "numberConfig"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleLeft",
+                "styleConfig",
+                "titleHead",
+                "titleConfig",
+                "imgConfig",
+                "rightBntConfig",
+                "titleContent",
+                "numberConfig",
+                "selectConfig"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleLeft",
+                "styleConfig",
+                "titleHead",
+                "titleConfig",
+                "titleTxtConfig",
+                "rightBntConfig",
+                "titleContent",
+                "numberConfig",
+                "selectConfig"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "getRComStyle",
+          "source_sha256": "ebada57fbfffb5491758334d6e966c425819fdcc385930816c52ac93eb6659e8",
+          "axes": [
+            {
+              "param": "type",
+              "path": "styleConfig.tabVal",
+              "values": [
+                0,
+                1
+              ]
+            },
+            {
+              "param": "type2",
+              "path": "titleConfig.tabVal",
+              "values": [
+                0,
+                1
+              ]
+            },
+            {
+              "param": "type3",
+              "path": "toneConfig.tabVal",
+              "values": [
+                0,
+                1
+              ]
+            }
+          ],
+          "cases": [
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 0,
+                "toneConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace2",
+                "filletImg",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 0,
+                "toneConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace2",
+                "filletImg",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 1,
+                "toneConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "titleText",
+                "titleColor",
+                "titleNumber",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace2",
+                "filletImg",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 0,
+                "titleConfig.tabVal": 1,
+                "toneConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "titleText",
+                "titleColor",
+                "titleNumber",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace2",
+                "filletImg",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 0,
+                "toneConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace",
+                "filletImg",
+                "toneConfig",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 0,
+                "toneConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace",
+                "filletImg",
+                "toneConfig",
+                "likeSuccessColor",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 1,
+                "toneConfig.tabVal": 0
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "titleText",
+                "titleColor",
+                "titleNumber",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace",
+                "filletImg",
+                "toneConfig",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            },
+            {
+              "when": {
+                "styleConfig.tabVal": 1,
+                "titleConfig.tabVal": 1,
+                "toneConfig.tabVal": 1
+              },
+              "controls": [
+                "setUp",
+                "titleRight",
+                "headerBgColor",
+                "titleText",
+                "titleColor",
+                "titleNumber",
+                "headerBntColor",
+                "bntNumber",
+                "titleVideoStyle",
+                "videoSpace",
+                "filletImg",
+                "toneConfig",
+                "likeSuccessColor",
+                "titleCurrency",
+                "moduleColor",
+                "bottomBgColor",
+                "topConfig",
+                "bottomConfig",
+                "prConfig",
+                "mbConfig",
+                "fillet"
+              ]
+            }
+          ]
+        }
+      ],
+      "control_data_arrays": {
+        "rCom": [
+          "setUp"
+        ],
+        "oneContent": [
+          "titleLeft",
+          "styleConfig",
+          "titleHead",
+          "titleConfig"
+        ],
+        "oneContentImg": [
+          "imgConfig"
+        ],
+        "oneContentText": [
+          "titleTxtConfig"
+        ],
+        "twoContent": [
+          "rightBntConfig",
+          "titleContent",
+          "numberConfig"
+        ],
+        "threeContent": [
+          "selectConfig"
+        ],
+        "oneStyle": [
+          "titleRight",
+          "headerBgColor"
+        ],
+        "twoStyle": [
+          "titleText",
+          "titleColor",
+          "titleNumber"
+        ],
+        "threeStyle": [
+          "headerBntColor",
+          "bntNumber",
+          "titleVideoStyle"
+        ],
+        "videoSpaceStyle": [
+          "videoSpace",
+          "filletImg"
+        ],
+        "videoSpaceStyle2": [
+          "videoSpace2",
+          "filletImg"
+        ],
+        "fourStyle": [
+          "toneConfig"
+        ],
+        "fiveStyle": [
+          "likeSuccessColor"
+        ],
+        "currencyStyle": [
+          "titleCurrency",
+          "moduleColor",
+          "bottomBgColor",
+          "topConfig",
+          "bottomConfig",
+          "prConfig",
+          "mbConfig",
+          "fillet"
+        ]
+      }
+    }
+  ]
+}
