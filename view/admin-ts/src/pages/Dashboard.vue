@@ -28,6 +28,8 @@
       </el-col>
     </el-row>
 
+    <AdminDashboardShortcuts />
+
     <el-card class="section-card" shadow="never">
       <template #header>
         <div class="card-head">
@@ -106,6 +108,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import * as echarts from "echarts";
+import AdminDashboardShortcuts from "@/components/AdminDashboardShortcuts.vue";
 import { apiDashboard, apiDashboardOrder, apiDashboardUser, apiNewPush } from "@/api/auth";
 import { apiAdminStatisticOverview } from "@/api/coupon";
 import type {
