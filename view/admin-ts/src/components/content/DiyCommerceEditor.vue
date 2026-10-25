@@ -48,7 +48,7 @@ import { navFlag as flag,navText as text,navSet } from '@/utils/diyNavigationEdi
 import { listRawNumber as number,type ListSelection } from '@/utils/diyListEditor';
 import { normalizeDiyCommerce } from '@/utils/diyCommerceProjection';
 import { themePreset } from '../../../../common/theme';
-import { readCommercePreview,type CommercePreview } from '@/api/diyCommerceAuthor';
+import { readCommercePreview,commercePreviewDeadline,type CommercePreview } from '@/api/diyCommerceAuthor';
 const props=withDefaults(defineProps<{modelValue:string;editorKey:string;disabled?:boolean;pageId?:number;pagePublished?:boolean}>(),{disabled:false,pageId:0,pagePublished:false}),emit=defineEmits<{'update:modelValue':[value:string]}>(),auth=useAuthStore();
 const selected=ref(-1),addKind=ref<CommerceKind>('promotionList'),revision=ref(0),error=ref(''),previews=ref<Record<string,string>>({}),mediaLoading=ref(false),leaseTick=ref(0);
 let alive=true,lastCommitted='',mediaAbort:AbortController|null=null,leaseTimer:ReturnType<typeof setTimeout>|undefined;
@@ -73,9 +73,9 @@ const picker=computed(()=>{const issued=stamp(),index=tabIndex.value,expected=se
 function selectPreviewTab(index:number){if(!editable())return;invalidate();previewTab.value=index;void loadContent();}
 function selectPreviewSlot(id:number){if(!editable())return;invalidate();previewSlot.value=id;void loadContent();}
 async function loadContent(){
- if(!editable()||!block.value)return;previewAbort?.abort();const issued=stamp(),controller=new AbortController(),tab=previewTab.value,slot=previewSlot.value;previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';
- try{const result=await readCommercePreview(normalizeDiyCommerce(block.value,themePreset(3)),tab,slot,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted||tab!==previewTab.value||slot!==previewSlot.value)return;previewData.value=result;previewSlot.value=result.selectedSlot;previewLoaded.value=true;
- const expiries=[...JSON.stringify(result).matchAll(/[?&]expires=(\d+)/gu)].map(match=>Number(match[1])*1000).filter(value=>Number.isFinite(value));clearTimeout(contentTimer);if(expiries.length)contentTimer=setTimeout(()=>{if(current(issued)){previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}},Math.min(2147483647,Math.max(1,Math.min(...expiries)-Date.now()+1)));
+ if(!editable()||!block.value)return;previewAbort?.abort();clearTimeout(contentTimer);contentTimer=undefined;const issued=stamp(),controller=new AbortController(),tab=previewTab.value,slot=previewSlot.value;previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';
+ try{const result=await readCommercePreview(normalizeDiyCommerce(block.value,themePreset(3)),tab,slot,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted||tab!==previewTab.value||slot!==previewSlot.value)return;const deadline=commercePreviewDeadline(result);previewData.value=result;previewSlot.value=result.selectedSlot;previewLoaded.value=true;const adopted=previewData.value;
+ const expireContent=()=>{if(current(issued)&&previewData.value===adopted){contentTimer=undefined;previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}};if(Number.isFinite(deadline))contentTimer=setTimeout(expireContent,Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));
  }catch(reason){if(current(issued)&&previewAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'商城预览读取失败';}finally{if(previewAbort===controller){previewAbort=null;previewLoading.value=false;}}
 }
 function stamp(){return{revision:revision.value,actor:actor(),editor:props.editorKey,index:selected.value,raw:props.modelValue};}

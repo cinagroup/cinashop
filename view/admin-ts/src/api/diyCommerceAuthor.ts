@@ -23,3 +23,24 @@ export async function readCommercePreview(config:DiyCommerceConfig,tab:number,sl
  return{...empty,cards,pink:kind==='combination'?checkedCommercePink(await commercePublicRead('/api/pink',{},signal)):null};
 }
 export type CommercePreview=Awaited<ReturnType<typeof readCommercePreview>>;
+
+/** The largest checked DTO is100 products with two image slots and100 label
+ * icons each. Inspect complete declared media only; ordinary text and provider
+ * HTTPS/static query parameters never carry a platform preview deadline. */
+export function commercePreviewDeadline(preview:CommercePreview):number{
+ let deadline=Infinity,slots=0;
+ const imageDeadline=(image:string)=>{
+  if(++slots>10200)throw Error('公开商城图片超过完整预览容量');
+  if(image.length>4096||/[\u0000-\u0020\u007f\\]/u.test(image))return;
+  const match=/^\/api\/assets\/([1-9]\d*)\?([^#]*)$/u.exec(image);
+  if(!match||!Number.isSafeInteger(Number(match[1]))||Number(match[1])>2147483647)return;
+  const query=new URLSearchParams(match[2]),expires=query.getAll('expires'),signature=query.getAll('signature');
+  if(expires.length!==1||signature.length!==1||!/^[1-9]\d{0,10}$/u.test(expires[0]!)||!/^[A-Za-z0-9_-]{16,256}$/u.test(signature[0]!))return;
+  deadline=Math.min(deadline,Number(expires[0])*1000);
+ };
+ for(const card of preview.cards)imageDeadline(card.image);
+ for(const avatar of preview.pink?.avatars??[])imageDeadline(avatar);
+ for(const room of preview.rooms){imageDeadline(room.cover_img);imageDeadline(room.anchor_img);for(const good of room.goods)imageDeadline(good.cover_img);}
+ for(const product of preview.products){imageDeadline(product.image);imageDeadline(product.frameImage);for(const label of product.labels)imageDeadline(label.icon);}
+ return deadline;
+}

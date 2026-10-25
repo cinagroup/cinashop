@@ -1,0 +1,162 @@
+{
+  "schema": "cinashop.diy-commerce-preview-expiry-source-binding.v1",
+  "base_ref": "74cb1125611ea266e165bbeb59e387605d31808d",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommerceEditor.vue",
+      "before_ref": "74cb1125611ea266e165bbeb59e387605d31808d",
+      "before_sha256": "8d42cc973a5a2c411984791d0781ac7e37769868b175076100ea7c1cce7bb5f7",
+      "after_sha256": "53ade2581764a874d2408f700f1abb3466c39208e9308243063741a754a4efb3",
+      "before_bytes": 23033,
+      "after_bytes": 23095,
+      "edits": [
+        {
+          "before_source": "import { readCommercePreview,type CommercePreview } from '@/api/diyCommerceAuthor';\n",
+          "after_source": "import { readCommercePreview,commercePreviewDeadline,type CommercePreview } from '@/api/diyCommerceAuthor';\n",
+          "before_line": 51,
+          "after_line": 51
+        },
+        {
+          "before_source": "async function loadContent(){\n if(!editable()||!block.value)return;previewAbort?.abort();const issued=stamp(),controller=new AbortController(),tab=previewTab.value,slot=previewSlot.value;previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';\n try{const result=await readCommercePreview(normalizeDiyCommerce(block.value,themePreset(3)),tab,slot,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted||tab!==previewTab.value||slot!==previewSlot.value)return;previewData.value=result;previewSlot.value=result.selectedSlot;previewLoaded.value=true;\n const expiries=[...JSON.stringify(result).matchAll(/[?&]expires=(\\d+)/gu)].map(match=>Number(match[1])*1000).filter(value=>Number.isFinite(value));clearTimeout(contentTimer);if(expiries.length)contentTimer=setTimeout(()=>{if(current(issued)){previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}},Math.min(2147483647,Math.max(1,Math.min(...expiries)-Date.now()+1)));\n }catch(reason){if(current(issued)&&previewAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'商城预览读取失败';}finally{if(previewAbort===controller){previewAbort=null;previewLoading.value=false;}}\n}\n",
+          "after_source": "async function loadContent(){\n if(!editable()||!block.value)return;previewAbort?.abort();clearTimeout(contentTimer);contentTimer=undefined;const issued=stamp(),controller=new AbortController(),tab=previewTab.value,slot=previewSlot.value;previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';\n try{const result=await readCommercePreview(normalizeDiyCommerce(block.value,themePreset(3)),tab,slot,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted||tab!==previewTab.value||slot!==previewSlot.value)return;const deadline=commercePreviewDeadline(result);previewData.value=result;previewSlot.value=result.selectedSlot;previewLoaded.value=true;const adopted=previewData.value;\n const expireContent=()=>{if(current(issued)&&previewData.value===adopted){contentTimer=undefined;previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}};if(Number.isFinite(deadline))contentTimer=setTimeout(expireContent,Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));\n }catch(reason){if(current(issued)&&previewAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'商城预览读取失败';}finally{if(previewAbort===controller){previewAbort=null;previewLoading.value=false;}}\n}\n",
+          "before_line": 75,
+          "after_line": 75
+        }
+      ]
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommerceAuthor.ts",
+      "before_ref": "74cb1125611ea266e165bbeb59e387605d31808d",
+      "before_sha256": "d9c2601b5f573863b30dec068acbf011bae7ef19463d74f42ab148d85acddafa",
+      "after_sha256": "1d06aaa9e760f9b30d68e95dea1b785214efa4be676db4588e8c78b713d85c71",
+      "before_bytes": 3157,
+      "after_bytes": 4627,
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "\n/** The largest checked DTO is100 products with two image slots and100 label\n * icons each. Inspect complete declared media only; ordinary text and provider\n * HTTPS/static query parameters never carry a platform preview deadline. */\nexport function commercePreviewDeadline(preview:CommercePreview):number{\n let deadline=Infinity,slots=0;\n const imageDeadline=(image:string)=>{\n  if(++slots>10200)throw Error('公开商城图片超过完整预览容量');\n  if(image.length>4096||/[\\u0000-\\u0020\\u007f\\\\]/u.test(image))return;\n  const match=/^\\/api\\/assets\\/([1-9]\\d*)\\?([^#]*)$/u.exec(image);\n  if(!match||!Number.isSafeInteger(Number(match[1]))||Number(match[1])>2147483647)return;\n  const query=new URLSearchParams(match[2]),expires=query.getAll('expires'),signature=query.getAll('signature');\n  if(expires.length!==1||signature.length!==1||!/^[1-9]\\d{0,10}$/u.test(expires[0]!)||!/^[A-Za-z0-9_-]{16,256}$/u.test(signature[0]!))return;\n  deadline=Math.min(deadline,Number(expires[0])*1000);\n };\n for(const card of preview.cards)imageDeadline(card.image);\n for(const avatar of preview.pink?.avatars??[])imageDeadline(avatar);\n for(const room of preview.rooms){imageDeadline(room.cover_img);imageDeadline(room.anchor_img);for(const good of room.goods)imageDeadline(good.cover_img);}\n for(const product of preview.products){imageDeadline(product.image);imageDeadline(product.frameImage);for(const label of product.labels)imageDeadline(label.icon);}\n return deadline;\n}\n",
+          "before_line": 26,
+          "after_line": 26
+        }
+      ]
+    }
+  ],
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyEditorialAuthorSourceBinding.ts",
+      "bytes": 2719,
+      "sha256": "8904f8b161f88c6533a2b93f3a5a8ce2067e017bb4dd55da5ca10b02a4936d06"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceAuthorSourceBinding.ts",
+      "bytes": 4218,
+      "sha256": "8b98d1772c0499e36bba942bf6ffa704feecc44a07bf998fc760039bd9b2a96b"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityAuthorSourceBinding.ts",
+      "bytes": 4311,
+      "sha256": "092ade2343b7f2fe684aef4bfaf6bc82d9663b6a23e9bfea78fb824c73852d23"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceImagePreviewSourceBinding.ts",
+      "bytes": 3786,
+      "sha256": "363d8581ccb5fbfd0423c24b2717a926e54a917a81f9eb6c4c24a18b24512106"
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "bytes": 2717,
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 642264,
+      "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd"
+    }
+  ],
+  "unchanged_dependency_sources": [
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceData.ts",
+      "bytes": 6785,
+      "sha256": "add68bcac2b007d3d8c3b7a9889aade98675d588dae836be3540e7bc44a6f378"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceProjection.ts",
+      "bytes": 11553,
+      "sha256": "00495cd069f0060c7f5f3dbfe21acc14842d40c14250b8c0dc99d6cf5eb8f9df"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyPresentationEditor.ts",
+      "bytes": 6922,
+      "sha256": "d5a025b53da975ef0f60d91980c42a9e836f4e1592f9b30bca9714deab41b1c6"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyListAuthor.ts",
+      "bytes": 9843,
+      "sha256": "01b3135f5d56d82e6bf343e03dec4987ac73049fdd9388749fa4871692cd2e3f"
+    },
+    {
+      "file": "view/common/categoryCatalog.ts",
+      "bytes": 9601,
+      "sha256": "59089bfc857fe9c21a7993ee574d77b85e8010ff6a1b3d151c076f65158cfd60"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommunityAuthor.ts",
+      "bytes": 3888,
+      "sha256": "8e60b78a10013e026d58db1716a086ad0ac44cd02c51c964fbe80ef4b8c19739"
+    }
+  ],
+  "api_report": {
+    "generator": "workers-ts/scripts/admin-frontend-api-audit.ts#buildAdminFrontendApiAuditReport",
+    "base_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "base_sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+    "binding_chain": [
+      {
+        "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+        "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+        "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+        "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+      }
+    ],
+    "before_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "after_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "serialization": "JSON.stringify(report, null, 2) + LF",
+    "compact_sha256": "192e45c353abefea38acaa88f5ca475a72ad87dfafd019a96c6c843c99f9c7cb",
+    "pretty_bytes": 642264,
+    "compact_bytes": 470098,
+    "changes": [],
+    "call_sites": 703,
+    "path_variants": 741,
+    "frontend_sources": 106
+  },
+  "boundary": {
+    "production": "Only the two exact frozen sources; typed eight-slot deadline and caller timer adoption. No media authority, API, route, pagination or save contract change.",
+    "history": "All prior dated fixture/helper files retained byte-exact; latest inverse runs before older Commerce consumer comparison.",
+    "report": "Exact expected zero delta; new suite recomputes the complete report. This preparation does not assert that validation has run."
+  }
+}

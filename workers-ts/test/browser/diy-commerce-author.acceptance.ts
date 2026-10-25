@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { eq,inArray } from 'drizzle-orm';
 import { createApp } from '@/app';
 import type { Container } from '@/lib/di';
-import { systemRole,storeProduct,storeSeckill,storeCombination,storeBargain,storeIntegral,liveAnchor,liveGoods,liveRoom,user } from '@/models/schema';
+import { systemRole,storeProduct,storeSeckill,storeCombination,storeBargain,storeIntegral,storeCouponIssue,liveAnchor,liveGoods,liveRoom,user } from '@/models/schema';
 import { diyCommerceAuthorFixture } from '../helpers/diyCommerceAuthorFixture';
 import { readNavigationAuthorBody,sendNavigationAuthorResponse,isNavigationAuthorBodyDisconnect } from '../helpers/diyNavigationAuthorTransport';
 import { sortedDiyState,type DiyStateRow as Row } from '../helpers/diyStateFixture';
@@ -21,11 +21,11 @@ it('real GUI commerce author saves and built H5 on owned PostgreSQL16',async()=>
  const f=await diyCommerceAuthorFixture(new Date(),{namespace:'public'});wiring.container=f.container;const app=createApp(),origin='http://127.0.0.1:40787',admin=resolve(repository,'view/admin-ts/dist'),h5=resolve(repository,'view/uniapp-ts/dist/build/h5');
  const traces:Row[]=[],writes:Row[]=[],setups:Row[]=[],snapshots:Record<string,unknown>={};let server:Server|undefined,timer:ReturnType<typeof setTimeout>|undefined,failure:unknown;let queue=Promise.resolve();
  const remember=(value:unknown)=>{const key=hash(JSON.stringify(value));snapshots[key]??=structuredClone(value);return key;};
- let resources:ReturnType<typeof f.resources>;let canonicalInputs:Row[]=[];let sourceBefore:Row[]=[],buildBefore:Row[]=[];
+ let resources:ReturnType<typeof f.resources>;let canonicalInputs:Row[]=[];let expiryTextInputs:Row[]=[];let sourceBefore:Row[]=[],buildBefore:Row[]=[];
  let finish!:()=>void,fail!:(error:unknown)=>void;const complete=new Promise<void>((yes,no)=>{finish=yes;fail=no;});complete.catch(()=>{});
  const send=(res:Parameters<typeof sendNavigationAuthorResponse>[0],data:string|Uint8Array,status=200,type='text/html')=>sendNavigationAuthorResponse(res,data,status,type,()=>{});
  const json=(res:Parameters<typeof sendNavigationAuthorResponse>[0],value:unknown)=>send(res,JSON.stringify(value),200,'application/json');
- const persist=async()=>writeFile(prefix+'receipt.json',JSON.stringify({status:failure?'failed':'running',error:failure instanceof Error?failure.stack:failure,tables:f.tables,sequences:f.sequences,traces,writes,setups,snapshots,canonicalInputs,sourceBefore,buildBefore},null,2)+'\n');
+ const persist=async()=>writeFile(prefix+'receipt.json',JSON.stringify({status:failure?'failed':'running',error:failure instanceof Error?failure.stack:failure,tables:f.tables,sequences:f.sequences,traces,writes,setups,snapshots,canonicalInputs,expiryTextInputs,sourceBefore,buildBefore},null,2)+'\n');
  const chrome:Row={'/api/site_config':{site_name:'商城作者验收',site_logo:'',record_No:'',ico_path:''},'/api/share':{title:'商城作者',synopsis:'',img:''},'/api/get_open_adv':{status:0,time:3,interval_time:24,type:'pic',value:[],video_link:''},'/api/v2/diy/color_change/color_change':{},'/adminapi/new_push':{ordernum:0,inventory:0,commentnum:0,reflectnum:0,msgcount:0,sampled_at:Math.floor(Date.now()/1000)}};
  const shell=()=>{const sessions={admin:{token:f.adminToken,session:f.adminSession},minimal:{token:f.minimalToken,session:f.minimalSession},reader:{token:f.readerToken,session:f.readerSession}};return`<!doctype html><html lang="zh"><meta charset="utf-8"><title>商城作者实际浏览器验收</title><style>body{font:13px sans-serif;margin:8px}button{margin:3px}iframe{width:1200px;height:850px;border:1px solid #ddd;display:block}pre{white-space:pre-wrap;max-height:100px;overflow:auto}</style><h1>商城作者实际 Admin / H5</h1><button data-role="admin">真实Admin</button><button data-role="minimal">最小作者</button><button data-role="reader">只读账号</button><button id="revoke">撤回最小作者</button><button id="home">匿名首页</button><button id="micro">匿名微页</button><button id="finish">完成验收</button><pre id="result"></pre><iframe title="实际应用"></iframe><script>const sessions=${JSON.stringify(sessions)},frame=document.querySelector('iframe');for(const button of document.querySelectorAll('[data-role]'))button.onclick=()=>{const s=sessions[button.dataset.role];localStorage.setItem('admin_token',s.token);localStorage.setItem('admin_session',JSON.stringify(s.session));frame.style.width='1200px';frame.src='/content/dise'};document.querySelector('#home').onclick=()=>{localStorage.removeItem('token');localStorage.removeItem('uid');frame.style.width='375px';frame.src='/__h5#/pages/index/index'};document.querySelector('#micro').onclick=()=>{localStorage.removeItem('token');localStorage.removeItem('uid');frame.style.width='375px';frame.src='/__h5#/pages/diy/detail?id=2'};document.querySelector('#revoke').onclick=async()=>{await fetch('/__qa/revoke',{method:'POST'});sessions.minimal.session.uniqueAuth=['dise.view'];localStorage.setItem('admin_token',sessions.minimal.token);localStorage.setItem('admin_session',JSON.stringify(sessions.minimal.session));frame.style.width='1200px';frame.src='/content/dise'};document.querySelector('#finish').onclick=async()=>{const r=await fetch('/__qa/finish',{method:'POST'});document.querySelector('#result').textContent=await r.text()};</script></html>`;};
  try{
@@ -36,7 +36,33 @@ it('real GUI commerce author saves and built H5 on owned PostgreSQL16',async()=>
  await f.db.update(liveAnchor).set({coverImg:f.platformImage.url}).where(eq(liveAnchor.id,2201));
  await f.db.update(liveGoods).set({coverImg:f.platformImage.url}).where(eq(liveGoods.id,2301));
  await f.db.update(liveRoom).set({coverImg:f.platformImage.url}).where(inArray(liveRoom.id,[2101,2102,2103]));
+ // Persist literal expiry-like text before the measured baseline. These are
+ // ordinary DTO titles, never asset tickets or author JSON image references.
+ await f.db.update(storeProduct).set({storeName:'真实促销零价商品601?expires=1'}).where(eq(storeProduct.id,601));
+ await f.db.update(storeProduct).set({storeName:'真实预售商品605?expires=1'}).where(eq(storeProduct.id,605));
+ await f.db.update(storeSeckill).set({storeName:'真实秒杀1701?expires=1'}).where(eq(storeSeckill.id,1701));
+ await f.db.update(storeCombination).set({storeName:'真实三人拼团1801?expires=1'}).where(eq(storeCombination.id,1801));
+ await f.db.update(storeBargain).set({title:'真实砍价标题1901?expires=1'}).where(eq(storeBargain.id,1901));
+ await f.db.update(storeIntegral).set({storeName:'真实零积分商品2001?expires=1'}).where(eq(storeIntegral.id,2001));
+ await f.db.update(storeCouponIssue).set({couponTitle:'真实手动现金券901?expires=1'}).where(eq(storeCouponIssue.id,901));
+ await f.db.update(liveAnchor).set({name:'真实直播主播?expires=1'}).where(eq(liveAnchor.id,2201));
+ await f.db.update(liveGoods).set({name:'真实直播商品2301?expires=1'}).where(eq(liveGoods.id,2301));
+ await f.db.update(liveRoom).set({name:'真实直播间2101?expires=1',anchorName:'真实直播主播?expires=1'}).where(eq(liveRoom.id,2101));
  const initial=await f.snapshot();
+ expiryTextInputs=[
+  {table:'store_product',id:601,field:'store_name',value:'真实促销零价商品601?expires=1'},
+  {table:'store_product',id:605,field:'store_name',value:'真实预售商品605?expires=1'},
+  {table:'store_seckill',id:1701,field:'store_name',value:'真实秒杀1701?expires=1'},
+  {table:'store_combination',id:1801,field:'store_name',value:'真实三人拼团1801?expires=1'},
+  {table:'store_bargain',id:1901,field:'title',value:'真实砍价标题1901?expires=1'},
+  {table:'store_integral',id:2001,field:'store_name',value:'真实零积分商品2001?expires=1'},
+  {table:'store_coupon_issue',id:901,field:'coupon_title',value:'真实手动现金券901?expires=1'},
+  {table:'live_anchor',id:2201,field:'name',value:'真实直播主播?expires=1'},
+  {table:'live_goods',id:2301,field:'name',value:'真实直播商品2301?expires=1'},
+  {table:'live_room',id:2101,field:'name',value:'真实直播间2101?expires=1'},
+  {table:'live_room',id:2101,field:'anchor_name',value:'真实直播主播?expires=1'},
+ ];
+ for(const input of expiryTextInputs)expect(initial[input.table].find(row=>row.id===input.id)?.[input.field]).toBe(input.value);
  for(const [table,key,ids] of [['store_product','image',[601,611,602,603,604,605,606,84032]],['store_seckill','image',[1701,1702]],['store_combination','image',[1801,84043]],['store_bargain','image',[1901]],['store_integral','image',[2001]],['user','avatar',[11,22]],['live_anchor','cover_img',[2201]],['live_goods','cover_img',[2301]],['live_room','cover_img',[2101,2102,2103]]] as const){
   for(const id of ids){const row=initial[table].find(value=>(table==='user'?value.uid:value.id)===id);expect(row).toBeDefined();expect(row![key]).toBe(f.platformImage.url);canonicalInputs.push({table,id,field:key,reference:row![key]});}
  }
@@ -61,12 +87,14 @@ it('real GUI commerce author saves and built H5 on owned PostgreSQL16',async()=>
   else if(url.pathname==='/api/wechat/live'&&Array.isArray(data))for(const room of data){previewMedia.push(room.cover_img,room.anchor_img);if(Array.isArray(room.goods))for(const goods of room.goods)previewMedia.push(goods.cover_img);}
   else if(/^\/api\/(?:seckill\/list\/|combination\/list|bargain\/list|store_integral\/list|presale\/list)/u.test(url.pathname))for(const card of Array.isArray(data)?data:Array.isArray(data?.list)?data.list:[])previewMedia.push(card.image);
  }
- traces.push({path:url.pathname,query:url.search,method,synthetic:false,preview_media:previewMedia.filter(value=>typeof value==='string'),status:payload?.status??response.status,before:remember(before),after:remember(after),resource_before:start,resource_after:f.resources(),bytes:bytes.length,sha256:hash(bytes)});const out:Record<string,string>={};response.headers.forEach((value,key)=>{if(!['content-length','content-encoding','transfer-encoding','connection'].includes(key.toLowerCase()))out[key]=value;});if(url.pathname.startsWith('/api/assets/')){expect(url.searchParams.get('expires')).toBeTruthy();expect(url.searchParams.get('signature')).toBeTruthy();expect(response.status).toBe(200);}res.writeHead(response.status,out);res.end(bytes);await persist();return;
+ const previewText:Row[]=[];
+ if(method==='GET'&&payload?.status===200){const rows=Array.isArray(data)?data:Array.isArray(data?.list)?data.list:[];for(const row of rows){if(!row||typeof row!=='object')continue;for(const field of ['store_name','title','coupon_title','name','anchor_name'])if(typeof row[field]==='string'&&row[field].includes('?expires=1'))previewText.push({id:row.id,field,value:row[field]});if(Array.isArray(row.goods))for(const good of row.goods)if(typeof good.name==='string'&&good.name.includes('?expires=1'))previewText.push({id:good.id,field:'goods.name',value:good.name});}}
+ traces.push({path:url.pathname,query:url.search,method,synthetic:false,completed_at_ms:Date.now(),preview_text:previewText,preview_media:previewMedia.filter(value=>typeof value==='string'),status:payload?.status??response.status,before:remember(before),after:remember(after),resource_before:start,resource_after:f.resources(),bytes:bytes.length,sha256:hash(bytes)});const out:Record<string,string>={};response.headers.forEach((value,key)=>{if(!['content-length','content-encoding','transfer-encoding','connection'].includes(key.toLowerCase()))out[key]=value;});if(url.pathname.startsWith('/api/assets/')){expect(url.searchParams.get('expires')).toBeTruthy();expect(url.searchParams.get('signature')).toBeTruthy();expect(response.status).toBe(200);}res.writeHead(response.status,out);res.end(bytes);await persist();return;
  }
  expect(req.method).toBe('GET');if(url.pathname==='/content/dise'||url.pathname==='/__h5'){send(res,await readFile(resolve(url.pathname==='/content/dise'?admin:h5,'index.html')));return;}
  const relative=decodeURIComponent(url.pathname).replace(/^\/+/,''),dirs=String(req.headers.referer??'').includes('/content/dise')?[admin,h5]:[h5,admin];for(const directory of dirs){const path=resolve(directory,relative);if(!path.startsWith(directory+sep))continue;try{const bytes=await readFile(path),types:Record<string,string>={'.js':'application/javascript','.css':'text/css','.png':'image/png','.gif':'image/gif','.woff2':'font/woff2','.svg':'image/svg+xml','.ico':'image/x-icon'};send(res,bytes,200,types[extname(path)]??'application/octet-stream');return;}catch(reason){if(!['ENOENT','EISDIR'].includes((reason as NodeJS.ErrnoException).code??''))throw reason;}}send(res,'missing',404,'text/plain');
  };const next=queue.then(run);queue=next.catch(async reason=>{if(isNavigationAuthorBodyDisconnect(reason,req))return;failure??=reason;await persist();if(!res.headersSent)send(res,String(reason),500,'text/plain');else res.end();fail(reason);});});
- await new Promise<void>((yes,no)=>{server!.once('error',no);server!.listen(40787,'127.0.0.1',yes);});await writeFile(prefix+'ready.json',JSON.stringify({origin,sourceBefore,buildBefore,tables:f.tables,sequences:f.sequences,canonicalInputs},null,2)+'\n');process.stdout.write('COMMERCE_AUTHOR_BROWSER_READY '+origin+'\n');timer=setTimeout(()=>fail(Error('commerce Browser deadline')),90*60000);await complete;
- await writeFile(prefix+'receipt.json',JSON.stringify({status:'passed',tables:f.tables,sequences:f.sequences,traces,writes,setups,snapshots,canonicalInputs,sourceBefore,buildBefore,boundary:'Actual built Admin/H5, createApp/JWT, owned maintenance PostgreSQL and fixture R2 bytes. Only five explicitly listed unrelated chrome GET payloads are synthetic. No production deployment or device claim.'},null,2)+'\n');
+ await new Promise<void>((yes,no)=>{server!.once('error',no);server!.listen(40787,'127.0.0.1',yes);});await writeFile(prefix+'ready.json',JSON.stringify({origin,sourceBefore,buildBefore,tables:f.tables,sequences:f.sequences,canonicalInputs,expiryTextInputs},null,2)+'\n');process.stdout.write('COMMERCE_AUTHOR_BROWSER_READY '+origin+'\n');timer=setTimeout(()=>fail(Error('commerce Browser deadline')),90*60000);await complete;
+ await writeFile(prefix+'receipt.json',JSON.stringify({status:'passed',tables:f.tables,sequences:f.sequences,traces,writes,setups,snapshots,canonicalInputs,expiryTextInputs,sourceBefore,buildBefore,boundary:'Actual built Admin/H5, createApp/JWT, owned maintenance PostgreSQL and fixture R2 bytes. Only five explicitly listed unrelated chrome GET payloads are synthetic. No production deployment or device claim.'},null,2)+'\n');
  }finally{clearTimeout(timer);try{server?.closeAllConnections();if(server?.listening)await new Promise<void>(yes=>server!.close(()=>yes()));await queue;}finally{wiring.container=undefined;await f.close();}}
 },93*60000);
