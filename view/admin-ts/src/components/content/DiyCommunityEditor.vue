@@ -55,9 +55,9 @@ async function loadTopics(){
 }
 function chooseTopic(value:unknown){if(typeof value!=='string'||value!==''&&!topics.value.some(row=>String(row.id)===value))return;setLeaf(['selectConfig','activeValue'],value);}
 async function loadContent(){
- if(!editable()||!block.value)return;previewAbort?.abort();const issued=stamp(),controller=new AbortController();previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';
- try{const result=await readCommunityPreview(normalizeDiyCommunity(block.value).limit,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted)return;previewData.value=result;previewLoaded.value=true;
- const deadline=communityPreviewDeadline(result);clearTimeout(contentTimer);if(Number.isFinite(deadline))contentTimer=setTimeout(()=>{if(current(issued)){previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}},Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));
+ if(!editable()||!block.value)return;previewAbort?.abort();clearTimeout(contentTimer);contentTimer=undefined;const issued=stamp(),controller=new AbortController();previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';
+ try{const result=await readCommunityPreview(normalizeDiyCommunity(block.value).limit,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted)return;const deadline=communityPreviewDeadline(result);previewData.value=result;previewLoaded.value=true;const adopted=previewData.value;
+ const expireContent=()=>{if(current(issued)&&previewData.value===adopted){contentTimer=undefined;previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}};if(Number.isFinite(deadline))contentTimer=setTimeout(expireContent,Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));
  }catch(reason){if(current(issued)&&previewAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'社区预览读取失败';}finally{if(previewAbort===controller){previewAbort=null;previewLoading.value=false;}}
 }
 function stamp(){return{revision:revision.value,actor:actor(),editor:props.editorKey,index:selected.value,raw:props.modelValue};}

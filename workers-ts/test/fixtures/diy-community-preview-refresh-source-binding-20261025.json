@@ -1,0 +1,250 @@
+{
+  "schema": "cinashop.diy-community-preview-refresh-source-binding.v1",
+  "base_ref": "6dd4db7a4fccb574134a7a19f64386c22f09e73c",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityEditor.vue",
+      "before_ref": "6dd4db7a4fccb574134a7a19f64386c22f09e73c",
+      "before_sha256": "3f950f26f70377ebe43743691acd650bb0e7f6645dbd96a51182a2bb77b802d0",
+      "after_sha256": "be38fc0a7814671f80aa82b710113cd633dfeb55d9ca25c94f9e7bc6fa036b79",
+      "before_bytes": 18448,
+      "after_bytes": 18589,
+      "edits": [
+        {
+          "before_source": " if(!editable()||!block.value)return;previewAbort?.abort();const issued=stamp(),controller=new AbortController();previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';\n try{const result=await readCommunityPreview(normalizeDiyCommunity(block.value).limit,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted)return;previewData.value=result;previewLoaded.value=true;\n const deadline=communityPreviewDeadline(result);clearTimeout(contentTimer);if(Number.isFinite(deadline))contentTimer=setTimeout(()=>{if(current(issued)){previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}},Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));\n",
+          "after_source": " if(!editable()||!block.value)return;previewAbort?.abort();clearTimeout(contentTimer);contentTimer=undefined;const issued=stamp(),controller=new AbortController();previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';\n try{const result=await readCommunityPreview(normalizeDiyCommunity(block.value).limit,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted)return;const deadline=communityPreviewDeadline(result);previewData.value=result;previewLoaded.value=true;const adopted=previewData.value;\n const expireContent=()=>{if(current(issued)&&previewData.value===adopted){contentTimer=undefined;previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}};if(Number.isFinite(deadline))contentTimer=setTimeout(expireContent,Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));\n",
+          "before_line": 58,
+          "after_line": 58
+        }
+      ]
+    }
+  ],
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyEditorialAuthorSourceBinding.ts",
+      "bytes": 2719,
+      "sha256": "8904f8b161f88c6533a2b93f3a5a8ce2067e017bb4dd55da5ca10b02a4936d06"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceAuthorSourceBinding.ts",
+      "bytes": 4218,
+      "sha256": "8b98d1772c0499e36bba942bf6ffa704feecc44a07bf998fc760039bd9b2a96b"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityAuthorSourceBinding.ts",
+      "bytes": 4311,
+      "sha256": "092ade2343b7f2fe684aef4bfaf6bc82d9663b6a23e9bfea78fb824c73852d23"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceImagePreviewSourceBinding.ts",
+      "bytes": 3786,
+      "sha256": "363d8581ccb5fbfd0423c24b2717a926e54a917a81f9eb6c4c24a18b24512106"
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "bytes": 2717,
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 642264,
+      "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd"
+    },
+    {
+      "file": "view/admin-ts/scripts/diy-commerce-author-runtime.test.cjs",
+      "bytes": 37855,
+      "sha256": "aa906a8e9968b0a5bfe3f9806c33b1cf6faf8dc69263af85dcb589fc75345475"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommerceAuthor.ts",
+      "bytes": 4627,
+      "sha256": "1d06aaa9e760f9b30d68e95dea1b785214efa4be676db4588e8c78b713d85c71"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommerceEditor.vue",
+      "bytes": 23095,
+      "sha256": "53ade2581764a874d2408f700f1abb3466c39208e9308243063741a754a4efb3"
+    },
+    {
+      "file": "workers-ts/test/browser/diy-commerce-author.acceptance.ts",
+      "bytes": 20451,
+      "sha256": "e797fcc1a59f26c1e96ef50a40f6eccba2b509ddb0337cd142ed35c384a877e7"
+    },
+    {
+      "file": "workers-ts/test/diy-commerce-author-source-binding.test.ts",
+      "bytes": 16289,
+      "sha256": "7bb37a06cacb8018a0171bbaec171e91f786595d8f92d00862b3fd1d0a8214b9"
+    },
+    {
+      "file": "workers-ts/test/diy-commerce-preview-expiry-source-binding.test.ts",
+      "bytes": 16535,
+      "sha256": "3b339958983d20cee3b0a4abdb0d1a0d232c0cd30d6e5f5dace4c9eb835896da"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommercePreviewExpirySourceBinding.ts",
+      "bytes": 3214,
+      "sha256": "a8a48009b26a1b88c030da707e5e3990529982ab5063328cfc2383a05d22675c"
+    }
+  ],
+  "unchanged_dependency_sources": [
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceData.ts",
+      "bytes": 6785,
+      "sha256": "add68bcac2b007d3d8c3b7a9889aade98675d588dae836be3540e7bc44a6f378"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceProjection.ts",
+      "bytes": 11553,
+      "sha256": "00495cd069f0060c7f5f3dbfe21acc14842d40c14250b8c0dc99d6cf5eb8f9df"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyPresentationEditor.ts",
+      "bytes": 6922,
+      "sha256": "d5a025b53da975ef0f60d91980c42a9e836f4e1592f9b30bca9714deab41b1c6"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyListAuthor.ts",
+      "bytes": 9843,
+      "sha256": "01b3135f5d56d82e6bf343e03dec4987ac73049fdd9388749fa4871692cd2e3f"
+    },
+    {
+      "file": "view/common/categoryCatalog.ts",
+      "bytes": 9601,
+      "sha256": "59089bfc857fe9c21a7993ee574d77b85e8010ff6a1b3d151c076f65158cfd60"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommunityAuthor.ts",
+      "bytes": 3888,
+      "sha256": "8e60b78a10013e026d58db1716a086ad0ac44cd02c51c964fbe80ef4b8c19739"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommerceEditor.vue",
+      "bytes": 23095,
+      "sha256": "53ade2581764a874d2408f700f1abb3466c39208e9308243063741a754a4efb3"
+    },
+    {
+      "file": "view/admin-ts/src/api/diyCommerceAuthor.ts",
+      "bytes": 4627,
+      "sha256": "1d06aaa9e760f9b30d68e95dea1b785214efa4be676db4588e8c78b713d85c71"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityFields.vue",
+      "bytes": 5128,
+      "sha256": "c8c2d8c77782f2e309a1798d795578bf6d9336ff57ed655a34443a90fdccbd8c"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyCommunityPreview.vue",
+      "bytes": 5172,
+      "sha256": "654c68784d5e327dfbdb5a0af06721ebe2fb66af1dbcd19907a6098e648f4f74"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityDefaults.ts",
+      "bytes": 5812,
+      "sha256": "a8667d33c1035290ef9d76e4e490aa804f6c6355d1fece894b8207bfb2226ef5"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityControls.ts",
+      "bytes": 1394,
+      "sha256": "05537ba9437ce2361cbac23011004d91cc10c78d2cf0b22bd922823ee22d0b00"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityEditor.ts",
+      "bytes": 10105,
+      "sha256": "d9d14b3211468c0e38d8d8c8e66b9ed51834057477852c9560f9ab5967ea2002"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommunityProjection.ts",
+      "bytes": 4359,
+      "sha256": "be5b02a2a22e1b556938ee0a88ab2027c8edc551e50b5507d840c9bd72056b8d"
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "bytes": 14118,
+      "sha256": "a86968d78716dd83e9ed34c045d5b32da07ccc2ea6274a1b74f7c968a629dfd2"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "bytes": 6864,
+      "sha256": "6d6dd351cd5c4648be897e8cdfc68c204e905b35d92655f1c461322e94bd7a52"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyCommunity.ts",
+      "bytes": 4126,
+      "sha256": "d9871907b599a365ef82895c4eca098740803d1e0d6c54a654e07d3bcdb8cafb"
+    },
+    {
+      "file": "view/uniapp-ts/src/composables/useDiyCommunity.ts",
+      "bytes": 4200,
+      "sha256": "8f21797d8d7a7aa2fb429593fb3f95335751174034994ab6644c3f8deb3cd821"
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommunityWidget.vue",
+      "bytes": 6443,
+      "sha256": "ba5a97a1ca89bb2d2828103805083e7829bc9ba28998942e09c5a30dbbc32729"
+    },
+    {
+      "file": "view/admin-ts/src/api/community.ts",
+      "bytes": 15727,
+      "sha256": "202622384b920ce59ec4f3b3de15bb0b1ec8a0a0029dbe84ac4ccd4b22556acd"
+    }
+  ],
+  "api_report": {
+    "generator": "workers-ts/scripts/admin-frontend-api-audit.ts#buildAdminFrontendApiAuditReport",
+    "base_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "base_sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+    "binding_chain": [
+      {
+        "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+        "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+        "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+        "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+      }
+    ],
+    "before_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "after_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "serialization": "JSON.stringify(report, null, 2) + LF",
+    "compact_sha256": "192e45c353abefea38acaa88f5ca475a72ad87dfafd019a96c6c843c99f9c7cb",
+    "pretty_bytes": 642264,
+    "compact_bytes": 470098,
+    "changes": [],
+    "call_sites": 703,
+    "path_variants": 741,
+    "frontend_sources": 106
+  },
+  "boundary": {
+    "production": "Exactly the three replacement lines in actual loadContent. No API helper,DTO,normalizer,ownership,route or save change.",
+    "history": "Latest exact inverse before the sole original Community consumer read gate; all dated proof/helper and all8E5commit files preserved byte-exact.",
+    "report": "Expected complete zero delta; new suite actually recomputes full report and invokes both prior unchanged-report gates. Preparation itself does not claim test execution."
+  }
+}

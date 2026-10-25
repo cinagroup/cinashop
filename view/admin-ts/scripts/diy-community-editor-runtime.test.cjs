@@ -46,3 +46,26 @@ test('an actual platform image ticket expires the visible public receipt at its 
 test('actual image control has the PHP label and renders the same current ticket in thumbnail and component heading',async()=>{
  const r=harness();try{await tick();assert.equal(text(r.tree).includes('[object Object]'),false);const u=r.load(path.join(root,'utils/diyCommunityEditor.ts'));assert.equal(u.communityFields(r.value()[0]).find(field=>field.key==='imgConfig').label,'上传图片');await r.state.mediaSession(['imgConfig','url']).choose('/api/assets/7',ticket(7));await tick();assert.equal(all(r.tree,n=>n.tag==='img'&&n.props.src===ticket(7)).length,2);}finally{r.unmount();}
 });
+
+// Exercise the actual parent, public client and checked DTOs across refresh;
+// no authored JSON is edited and no replacement deadline implementation runs.
+for(const pendingStage of ['config','list'])test('refresh keeps a pending '+pendingStage+' read free of the superseded image expiry',async context=>{
+ const original=global.fetch,origin=Date.UTC(2026,9,25),pending=deferred(),calls=[];let configs=0,lists=0,load;
+ context.mock.timers.enable({apis:['setTimeout','Date'],now:origin});
+ const oldPost=post(17,{title:'旧社区预览',image:ticket(7,origin/1000+1)}),freshPost=post(18,{title:'新社区预览',image:ticket(8,origin/1000+10)});
+ global.fetch=async(url,options)=>{calls.push({url,options});if(url.startsWith('/api/community/config')){configs++;return pendingStage==='config'&&configs===2?pending.promise:response(header);}lists++;return lists===1?response([oldPost]):pendingStage==='list'?pending.promise:response([freshPost]);};
+ const r=harness();try{
+  await tick();const before=r.props.modelValue;await r.state.loadContent();await tick();assert.equal(r.state.previewLoaded,true);assert.ok(text(r.tree).includes('旧社区预览'));
+  context.mock.timers.tick(500);load=r.state.loadContent();await tick();assert.equal(r.state.previewLoading,true);assert.equal(r.state.previewData,null);
+  context.mock.timers.tick(502);await tick();assert.equal(r.state.error,'','old expiry must not poison a pending refresh');assert.equal(r.state.previewLoading,true);
+  pending.resolve(response(pendingStage==='config'?header:[freshPost]));await load;await tick();assert.equal(r.state.previewLoaded,true);assert.equal(r.state.previewLoading,false);assert.equal(r.state.previewData.rows[0].id,18);assert.equal(r.state.error,'');assert.ok(text(r.tree).includes('新社区预览'));assert.equal(text(r.tree).includes('旧社区预览'),false);assert.equal(all(r.tree,n=>n.props.role==='alert').length,0);
+  assert.equal(r.props.modelValue,before);assert.equal(r.writes.length,0);assert.deepEqual(calls.map(c=>c.url),['/api/community/config','/api/community/list?page=1&limit=3&is_follow=0','/api/community/config','/api/community/list?page=1&limit=3&is_follow=0']);for(const call of calls){assert.equal(call.options.method,'GET');assert.equal(call.options.credentials,'omit');assert.equal(call.options.headers.Authorization,undefined);}
+  context.mock.timers.tick(8998);await tick();assert.equal(r.state.previewLoaded,true);context.mock.timers.tick(2);await tick();assert.equal(r.state.previewData,null);assert.equal(r.state.previewLoaded,false);assert.match(r.state.error,/过期/);assert.equal(r.writes.length,0);
+ }finally{pending.resolve(response(pendingStage==='config'?header:[freshPost]));if(load)await load;r.unmount();global.fetch=original;context.mock.timers.reset();}
+});
+test('an already queued old expiry callback cannot clear the newly adopted Vue preview object',async context=>{
+ const original=global.fetch,origin=Date.UTC(2026,9,25);context.mock.timers.enable({apis:['setTimeout','Date'],now:origin});const schedule=global.setTimeout;let queued,reads=0;
+ global.setTimeout=(callback,delay,...args)=>{if(delay===1001&&!queued)queued=()=>callback(...args);return schedule(callback,delay,...args);};
+ global.fetch=async url=>response(url.startsWith('/api/community/config')?header:[++reads===1?post(17,{image:ticket(7,origin/1000+1)}):post(18,{title:'已替换的新社区',image:ticket(8,origin/1000+10)})]);
+ const r=harness();try{await tick();await r.state.loadContent();await tick();assert.equal(typeof queued,'function');await r.state.loadContent();await tick();const adopted=r.state.previewData;context.mock.timers.tick(1002);await tick();assert.equal(r.state.previewLoaded,true);queued();await tick();assert.equal(r.state.previewData,adopted);assert.equal(r.state.previewData.rows[0].id,18);assert.equal(r.state.previewLoaded,true);assert.equal(r.state.error,'');assert.ok(text(r.tree).includes('已替换的新社区'));assert.equal(r.writes.length,0);}finally{r.unmount();global.fetch=original;global.setTimeout=schedule;context.mock.timers.reset();}
+});
