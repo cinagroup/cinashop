@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { runInNewContext } from "node:vm";
-import { ModuleKind, ScriptTarget, transpileModule } from "typescript";
+import { createSourceFile, isCallExpression, isFunctionDeclaration, isIdentifier, isPropertyAccessExpression, isVariableDeclaration, ModuleKind, ScriptTarget, transpileModule, type Node, type VariableDeclaration } from "typescript";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "..");
@@ -245,8 +245,85 @@ describe("DIY-home frontend migration", () => {
     expect(editorial).not.toContain("downloadFile");
   });
 
-  it("bounds editorial collections and responsive hotspot geometry through the actual extracted normalizer", () => {
-    for (const limit of [10, 30, 4]) expect(editorialConfig).toContain(`slice(0, ${limit})`);
+  it("retains complete imported news and hotspot collections while bounding party items and hotspot geometry", () => {
+    // Extract exact pure declarations; never replace the production normalizer or its policies.
+    const pureNames = new Set(['asDiyRecord', 'isDiyEnabled', 'safeDiyColor', 'safeDiyImageUrl', 'stringLink', 'normalizeDiyLink']);
+    const pureFile = createSourceFile('diy.ts', loader, ScriptTarget.Latest, true);
+    const pureDeclarations = pureFile.statements.filter(isFunctionDeclaration).filter(node => node.name && pureNames.has(node.name.text));
+    expect(pureDeclarations.map(node => node.name!.text).sort()).toEqual([...pureNames].sort());
+    const pureExports: Record<string, unknown> = {};
+    runInNewContext(compile(pureDeclarations.map(node => node.getText(pureFile)).join('\n')), {
+      exports: pureExports, API_BASE: '', resolveRegisteredPageRoute: navigationExports.resolveRegisteredPageRoute,
+    });
+    const dependencies = new Map<string, Record<string, unknown>>([
+      ['./diy', pureExports], ['@/utils/diy', pureExports],
+    ]);
+    const actualModule = (source: string) => {
+      const exports: Record<string, unknown> = {};
+      runInNewContext(compile(source), { exports, require: (name: string) => {
+        const value = dependencies.get(name);
+        if (!value) throw Error(`Unexpected editorial pure dependency: ${name}`);
+        return value;
+      } });
+      return exports;
+    };
+    const themeExports = actualModule(readFileSync(resolve(root, '../view/uniapp-ts/src/utils/diyTheme.ts'), 'utf8'));
+    dependencies.set('./diyTheme', themeExports); dependencies.set('@/utils/diyTheme', themeExports);
+    dependencies.set('./diyListConfig', actualModule(listConfig));
+    const presets = actualModule(readFileSync(resolve(root, '../view/common/theme.ts'), 'utf8')).THEME_PRESETS;
+    if (!Array.isArray(presets) || !presets[2]) throw Error('Actual theme preset missing');
+    type Projection = {
+      newsItems: { title: string; link: string }[];
+      hotspotAreas: { index: number; left: number; top: number; width: number; height: number; link: string }[];
+      partyItems: { title: string }[];
+    };
+    const normalize = (source: string, block: unknown): Projection => {
+      const normalizer = actualModule(source).normalizeDiyEditorial;
+      if (typeof normalizer !== 'function') throw Error('Actual editorial normalizer export missing');
+      return Reflect.apply(normalizer, undefined, [block, presets[2]]) as Projection;
+    };
+    const link = '/pages/article/list';
+    const news = { name: 'news', listConfig: { list: Array.from({ length: 24 }, (_, index) => ({
+      show: index >= 10, chiild: [{ val: `完整公告${index + 1}` }, { val: link }], opaque: index,
+    })) } };
+    const expectedNews = Array.from({ length: 14 }, (_, index) => ({ title: `完整公告${index + 11}`, link }));
+    const region = { starX: ' 1.25 ', starY: 0, areaWidth: 20, areaHeight: 10, link };
+    const hotspot = { name: 'hotspot', picStyle: { list: [
+      { ...region, starX: -1 }, { ...region, areaWidth: 0 }, { ...region, link: 'javascript:bad' },
+      ...Array.from({ length: 33 }, (_, index) => ({ ...region, starY: index, opaque: index })),
+    ] } };
+    const expectedAreas = Array.from({ length: 33 }, (_, index) => ({ index: index + 3, left: 1.25, top: index, width: 20, height: 10, link }));
+    const party = { name: 'activeParty', menuConfig: { list: Array.from({ length: 5 }, (_, index) => ({
+      img: '/party.png', info: [{ value: `活动${index}` }, { value: '说明' }, { value: link }],
+    })) } };
+    const before = JSON.stringify([news, hotspot, party]);
+    expect(normalize(editorialConfig, news).newsItems).toEqual(expectedNews);
+    expect(normalize(editorialConfig, hotspot).hotspotAreas).toEqual(expectedAreas);
+    expect(normalize(editorialConfig, party).partyItems.map(item => item.title)).toEqual(['活动0', '活动1', '活动2', '活动3']);
+    expect(JSON.stringify([news, hotspot, party])).toBe(before);
+    // Mutate each actual collection initializer, before and after filtering.
+    // Both historical caps must be detected, including otherwise valid tail items.
+    const withCollectionCap = (name: string, limit: number, afterFilter: boolean) => {
+      const file = createSourceFile('diyEditorialConfig.ts', editorialConfig, ScriptTarget.Latest, true);
+      const normalizer = file.statements.filter(isFunctionDeclaration).find(node => node.name?.text === 'normalizeDiyEditorial');
+      if (!normalizer) throw Error('Actual editorial normalizer declaration missing');
+      const declarations: VariableDeclaration[] = [];
+      const visit = (node: Node) => {
+        if (isVariableDeclaration(node) && isIdentifier(node.name) && node.name.text === name) declarations.push(node);
+        node.forEachChild(visit);
+      };
+      visit(normalizer);
+      if (declarations.length !== 1) throw Error(`Ambiguous actual collection: ${name}`);
+      const initializer = declarations[0]!.initializer;
+      if (!initializer || !isCallExpression(initializer) || !isPropertyAccessExpression(initializer.expression) || initializer.expression.name.text !== 'flatMap') throw Error(`Actual collection filter missing: ${name}`);
+      const at = afterFilter ? initializer.end : initializer.expression.expression.end;
+      return editorialConfig.slice(0, at) + `.slice(0, ${limit})` + editorialConfig.slice(at);
+    };
+    for (const afterFilter of [false, true]) {
+      expect(normalize(withCollectionCap('newsItems', 10, afterFilter), news).newsItems).not.toEqual(expectedNews);
+      expect(normalize(withCollectionCap('hotspotAreas', 30, afterFilter), hotspot).hotspotAreas).not.toEqual(expectedAreas);
+    }
+    expect(editorialConfig).toContain('slice(0, 4)');
     expect(editorialConfig).toContain('coordinates.some(');
     expect(editorialConfig).toContain('left < 0 || top < 0 || left >= 750 || width <= 0 || height <= 0');
     expect(editorialConfig).toContain('Math.min(area.width, 750 - area.left)');
