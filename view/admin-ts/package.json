@@ -14,7 +14,8 @@
     "test:diy-navigation": "node --test --test-concurrency=1 scripts/diy-navigation-editor-runtime.test.cjs scripts/diy-navigation-input-number-runtime.test.cjs",
     "test:diy-carousel": "node --test --test-concurrency=1 scripts/diy-carousel-editor-runtime.test.cjs scripts/diy-carousel-input-number-runtime.test.cjs scripts/diy-carousel-consumer-projection-runtime.test.cjs",
     "test:diy-list": "node --test --test-concurrency=1 scripts/diy-list-editor-runtime.test.cjs scripts/diy-list-input-number-runtime.test.cjs scripts/diy-list-consumer-projection-runtime.test.cjs scripts/diy-list-catalog-picker-runtime.test.cjs scripts/diy-list-waterfall-runtime.test.cjs",
-    "test:diy-state-author": "node --test --test-concurrency=1 scripts/diy-state-consumer-projection-runtime.test.cjs scripts/diy-state-editor-runtime.test.cjs scripts/diy-state-preview-runtime.test.cjs scripts/diy-state-input-number-runtime.test.cjs scripts/diy-state-review-regression-runtime.test.cjs"
+    "test:diy-state-author": "node --test --test-concurrency=1 scripts/diy-state-consumer-projection-runtime.test.cjs scripts/diy-state-editor-runtime.test.cjs scripts/diy-state-preview-runtime.test.cjs scripts/diy-state-input-number-runtime.test.cjs scripts/diy-state-review-regression-runtime.test.cjs",
+    "test:admin-navigation": "node --test --test-concurrency=1 scripts/admin-navigation-runtime.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

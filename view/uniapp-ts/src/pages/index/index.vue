@@ -54,26 +54,21 @@
       </swiper-item>
     </swiper>
 
-    <!-- 快捷入口 -->
+    <!-- PHP 菜单支持纯文字样式；图片仍由后台 DIY 配置提供。 -->
     <view class="quick-grid">
       <view class="quick-item" @tap="goActivity">
-        <text class="quick-icon">🎯</text>
         <text class="quick-text">营销活动</text>
       </view>
       <view class="quick-item" @tap="goSign">
-        <text class="quick-icon">✍️</text>
         <text class="quick-text">每日签到</text>
       </view>
       <view class="quick-item" @tap="goCouponCenter">
-        <text class="quick-icon">🎁</text>
         <text class="quick-text">领券中心</text>
       </view>
       <view class="quick-item" @tap="goIntegral">
-        <text class="quick-icon">🏆</text>
         <text class="quick-text">积分商城</text>
       </view>
       <view class="quick-item" @tap="goArticles">
-        <text class="quick-icon">📰</text>
         <text class="quick-text">品牌资讯</text>
       </view>
     </view>
@@ -110,7 +105,10 @@
       </view>
     </view>
 
-    <view v-if="!goods.length && !loading" class="empty">暂无商品</view>
+    <view v-if="!goods.length && !loading" class="empty fallback-empty">
+      <image class="fallback-empty-image" src="/static/php-assets/images/empty-box.gif" mode="aspectFit" aria-hidden="true" />
+      <text class="fallback-empty-text">暂无商品</text>
+    </view>
     </view>
 
     <DiySuspendedNavigation v-if="diyCommunityVisible && !diyLoading && !diyError" />
@@ -406,7 +404,9 @@ onBeforeUnmount(closeOpenAdv);
 }
 
 .quick-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  row-gap: 24rpx;
   background: #fff;
   border-radius: 16rpx;
   padding: 20rpx 0;
@@ -414,21 +414,41 @@ onBeforeUnmount(closeOpenAdv);
 }
 
 .quick-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  /* Keep the text-only entries as comfortable touch targets. */
+  min-height: 88rpx;
   padding: 10rpx 0;
 }
 
-.quick-icon {
-  font-size: 48rpx;
-  margin-bottom: 8rpx;
+.quick-text {
+  font-size: 24rpx;
+  line-height: 36rpx;
+  color: #333;
 }
 
-.quick-text {
-  font-size: 22rpx;
-  color: #666;
+.fallback-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 82rpx 0 160rpx;
+  border-radius: 24rpx;
+  background: #fff;
+}
+
+.fallback-empty-image {
+  width: 440rpx;
+  max-width: 100%;
+  height: 360rpx;
+}
+
+.fallback-empty-text {
+  padding-top: 16rpx;
+  color: #999;
+  font-size: 26rpx;
+  line-height: 36rpx;
 }
 
 .act-icon {
