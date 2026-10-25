@@ -3639,5 +3639,62 @@
     "remaining_author_body_families": 17,
     "global_migration_complete": false,
     "merge_or_deploy": false
+  },
+  "diyStateAuthorContractVerification": {
+    "batch": "complete ordinary userInfor/newVip/signIn/ranking authors",
+    "base": "4094ce1e033bdd8b4dc4ccf43da9057a76514228",
+    "date_label": "2026-10-24",
+    "fresh_recovery_completed_at_utc": "2026-10-25T02:21:57.139435+00:00",
+    "families": 4,
+    "literal_default_keys": 114,
+    "styles": 8,
+    "new_independent_definitions": 265,
+    "Admin_actual_passed": 540,
+    "Uni_state_media_actual_passed": 17,
+    "Uni_toolchain_actual_passed": 2423,
+    "Browser_checkpoints": 25,
+    "Browser_real_GUI_business_POSTs": 3,
+    "Browser_role_setup_changes": 2,
+    "full_tables": 76,
+    "full_sequences": 71,
+    "remaining_author_body_families": 13,
+    "global_migration_complete": false,
+    "merge_or_deploy": false,
+    "statistics_contract": "preserve restored PHP-compatible /api/get_script and shared/Admin/Supplier/Uni loaders",
+    "new_head_CI": "pending actual push and exact remote HEAD inspection",
+    "machine_audit": "workers-ts/audit/php-ts-diy-state-author-20261024.json",
+    "document": "workers-ts/docs/php-ts-diy-state-author-20261024.md",
+    "old_raw_ledger_prefixes_preserved": true,
+    "prior_tmp_execution_evidence_reused": false,
+    "fresh_evidence_refs": {
+      "pre": {
+        "path": ".cache/migration-evidence/state-author-recovery-20261025/pre-candidate1/receipt.json",
+        "sha256": "da77117a536520fc2a1cbda7df169f49d824314fd03a6bb5ee2e20d93f1b0353",
+        "bytes": 13783495
+      },
+      "browser": {
+        "path": ".cache/migration-evidence/state-author-recovery-20261025/browser-observer-candidate1/receipt.json",
+        "sha256": "5c3dc320ccc0487fbc61958d67a2ff1381135764ca31f12f341e42a1a4170126",
+        "bytes": 13903029
+      },
+      "post": {
+        "path": ".cache/migration-evidence/state-author-recovery-20261025/post-candidate1/receipt.json",
+        "sha256": "14a15a876bfc30b563826f5a6d23d759bdb7a084fae2e8dfb107ebc2c7b8c297",
+        "bytes": 13902558
+      },
+      "review": {
+        "path": ".cache/migration-evidence/state-author-recovery-20261025/fresh-browser-independent-review-v4.json",
+        "sha256": "9be62e07d95a855c2b99679703c029a15aacc741f5297e2a93d809609cd41477",
+        "bytes": 13001
+      }
+    },
+    "new_independent_definition_breakdown": {
+      "Worker_unit_media": 15,
+      "Worker_native_two_schemas": 78,
+      "Worker_runner": 26,
+      "Admin": 128,
+      "Uni": 17,
+      "Browser": 1
+    }
   }
 }

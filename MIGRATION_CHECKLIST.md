@@ -3008,3 +3008,10 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 修复PR163新source1243073高危门禁：真实npm resolver将body-parser升级1.20.9并独立解析qs6.16.1，仅两个锁节点变化，Express/root qs及其他五锁保持。新高危只记patched并禁止重现；完整原始前后报告支持50/26/25/14（包条目/直接source/URL/已解决来源），其余forward图精确保留。旧51完整归档，77→51/52条历史断言和旧audit不改写。13个隔离真实HTTP回归验证微小压缩正文/延迟尾部/完整raw消费者与drain，原SSR保护保持。
 
 最终13个Uni CI步骤、三端构建与后台浏览器两个新只读阶段通过，源/依赖闭包无漂移；0新GUI保存/业务POST，真实GET核76表71序列与资源零写，PG清零停止。NODE_OPTIONS拒绝和collector600秒超时原失败留存，最终全量重验通过。详见workers-ts/docs/uni-body-parser-remediation-20261024.md及同名机器审计。原get_script恢复合同、全部旧checkbox及JSON节点保留；17作者族/整体迁移仍开放，新head远端CI另核，仅draft不合并部署。
+
+
+### 2026-10-24 会员权益/新人/签到/排行榜普通作者合同
+
+完整迁移 userInfor/newVip/signIn/ranking 四族114默认键与8种展示；新增独立定义265，保留原始导入/重复/隐藏/未知邻居及独立content。环境切换导致旧临时证据不可用，已重新进行本批fresh验证；不把旧摘要充作原始结果。实际Admin540、Uni媒体17、完整toolchain2423与三端构建通过，Worker strict/source-binding/选定19个Worker文件（17个PG、2个普通unit）实际计数详见机器审计。隔离pre10实际0后，首轮Browser20/2失败保留；仅观察器selector一表达式有意变更并新strict2实际0，完整源码逆变换可核。随后新fixture后台Browser完整25阶段/3次GUI保存，76表71序列、API/预检GET资源零写，角色setup单列，原内置图/延迟图库/两账户切换/微页八实例和分段源码与全程依赖/双端产物闭包复核通过，已完成独占PG/端口清理。
+
+见 `workers-ts/docs/php-ts-diy-state-author-20261024.md` 和 `workers-ts/audit/php-ts-diy-state-author-20261024.json`。旧6869路径、原账本文字/checkbox/JSON节点与get_script恢复合同保留；无生产DDL/ACL/新依赖/锁变化。剩余13作者族及整体迁移继续开放，新head远端CI另核，仅draft不合并部署；浏览器后台验收不逐页弹确认。

@@ -60,6 +60,16 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
       }
       // The authored destination and Admin preview fields are never media slots.
     }
+    else if (component.name === 'userInfor' || component.name === 'ranking') {
+      const owner = record(component[component.name === 'userInfor' ? 'logoConfig' : 'imgConfig']);
+      if (owner && typeof owner.url === 'string') {
+        // These authored JSON images use the existing platform-raster policy,
+        // without the legacy HTML attribute/entity decoder. Account avatars,
+        // product rows and other state/preview fields confer no image authority.
+        slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+        counts.ordinary++;
+      }
+    }
     else if (component.name === 'videos') {
       for(const [key,kind] of [['videoConfig','video'],['imgConfig','image']] as const){
         const owner=record(component[key]);if(!owner||typeof owner.url!=='string')continue;

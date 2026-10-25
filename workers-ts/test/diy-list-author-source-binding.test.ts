@@ -1,10 +1,37 @@
+import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './helpers/routeSourceIncrement';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
 import { reverseListAuthorSource, applyListAuthorReport, listAuthorSourceBinding as proof } from './helpers/diyListAuthorSourceBinding';
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8').replace(/\r\n?/gu,'\n'),sha=(s:string)=>createHash('sha256').update(s).digest('hex');
+// Exact additive state-author adapter; original definitions and dated proofs below remain intact.
+const stateAuthorHistoricalRaw = readFileSync(resolve(import.meta.dirname, 'fixtures/diy-state-author-historical-bindings-20261024.json'), 'utf8');
+const stateAuthorHash = (value: string) => createHash('sha256').update(value).digest('hex');
+if (stateAuthorHash(stateAuthorHistoricalRaw) !== '8ddc626ef49c2ada520940518c99a3b3bb803df5b1047308af9d4241ff96a7d9') throw Error('State historical fixture bytes differ');
+const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
+  source: RouteSourceFollowup & { file: string };
+  previous_report: { original_file: string; sha256: string; raw_utf8: string };
+  current_report: { file: string; sha256: string };
+  report_changes: Array<{ array: 'frontendSources' | 'calls'; index: number; before: Record<string, unknown>; after: Record<string, unknown> }>;
+};
+if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
+function beforeStateAuthorSource(file: string, source: string): string {
+  return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(source, stateAuthorHistorical.source) : source;
+}
+function applyStateAuthorReport<T>(before: T): T {
+  if (stateAuthorHash(JSON.stringify(before, null, 2) + '\n') !== stateAuthorHistorical.previous_report.sha256) throw Error('State report complete predecessor differs');
+  const updated = structuredClone(before) as unknown as { frontendSources: Array<Record<string, unknown>>; calls: Array<Record<string, unknown>> };
+  for (const change of stateAuthorHistorical.report_changes) {
+    const values = updated[change.array];
+    if (!['frontendSources', 'calls'].includes(change.array) || JSON.stringify(values?.[change.index]) !== JSON.stringify(change.before)) throw Error('State report exact predecessor row differs');
+    values[change.index] = structuredClone(change.after);
+  }
+  if (stateAuthorHash(JSON.stringify(updated, null, 2) + '\n') !== stateAuthorHistorical.current_report.sha256) throw Error('State report complete result differs');
+  return updated as unknown as T;
+}
+
+const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>file===stateAuthorHistorical.previous_report.original_file?stateAuthorHistorical.previous_report.raw_utf8:beforeStateAuthorSource(file,readFileSync(resolve(root,file),'utf8').replace(/\r\n?/gu,'\n')),sha=(s:string)=>createHash('sha256').update(s).digest('hex');
 const before=JSON.parse(read(proof.previous_report.file)),current=JSON.parse(read(proof.current_report.file));
 describe('complete source-bound list author increment retains every historical contract',()=>{
   it('pins immutable predecessor, seven changed production sources and exact complete report reconstruction',()=>{
@@ -12,7 +39,7 @@ describe('complete source-bound list author increment retains every historical c
     expect(proof.sources.map(row=>row.file)).toEqual(['workers-ts/src/routes/adminapi.ts','workers-ts/src/routes/v1/index.ts','workers-ts/src/controllers/api/v1/AdminDiyAuthorOptionsController.ts','workers-ts/src/services/admin/AdminDiyAuthorOptionsService.ts','workers-ts/src/services/admin/AdminPermissionService.ts','view/admin-ts/src/pages/content/DiseList.vue','view/uniapp-ts/src/components/diy/DiyListProductCard.vue']);
     expect(sha(read(proof.previous_report.file))).toBe(proof.previous_report.sha256);expect(sha(read(proof.current_report.file))).toBe(proof.current_report.sha256);
     for(const row of proof.sources){expect(sha(read(row.file))).toBe(row.after_sha256);expect(sha(reverseListAuthorSource(row.file,read(row.file)))).toBe(row.before_sha256);}
-    expect(applyListAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(current);
+    expect(applyListAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyStateAuthorReport(current));
   });
   it('adds exactly eight GET registrations and four actual Admin calls without discarding old inventory',()=>{
     expect(current.counts).toEqual({...before.counts,callSites:before.counts.callSites+4,pathVariants:before.counts.pathVariants+4,registered:before.counts.registered+4,executable:before.counts.executable+4});
