@@ -22,7 +22,7 @@ export function normalizeDiyEditorial(value: unknown, preset: ThemePreset) {
   const gradient = (key: string, fallback = '#ffffff') => `linear-gradient(90deg, ${color(key, fallback)} 0%, ${color(key, fallback, 1)} 100%)`;
   const size = (key: string) => `${listNumber(listChild(block, key).val, 0, key === 'prConfig' ? 80 : 100) * 2}rpx`;
   const rawNews = listChild(block, 'listConfig').list, rawParty = listChild(block, 'menuConfig').list;
-  const newsItems = (Array.isArray(rawNews) ? rawNews : []).slice(0, 10).flatMap(value => {
+  const newsItems = (Array.isArray(rawNews) ? rawNews : []).flatMap(value => {
     const item = listRecord(value), children = Array.isArray(item.chiild) ? item.chiild : [];
     const title = listText(listRecord(children[0]).val, '', 100);
     return isDiyEnabled(item.show) && title ? [{ title, link: normalizeDiyLink(listRecord(children[1]).val) }] : [];
@@ -33,7 +33,7 @@ export function normalizeDiyEditorial(value: unknown, preset: ThemePreset) {
     return title || description || image ? [{ title, description, image, link: normalizeDiyLink(listRecord(info[2]).value) }] : [];
   });
   const rawAreas = listChild(block, 'picStyle').list;
-  const hotspotAreas: DiyHotspotArea[] = (Array.isArray(rawAreas) ? rawAreas : []).slice(0, 30).flatMap((value, index) => {
+  const hotspotAreas: DiyHotspotArea[] = (Array.isArray(rawAreas) ? rawAreas : []).flatMap((value, index) => {
     const item = listRecord(value), link = normalizeDiyLink(item.link);
     const coordinates = [item.starX, item.starY, item.areaWidth, item.areaHeight];
     if (!link || coordinates.some(value => !(typeof value === 'number' || typeof value === 'string' && value.trim() !== '') || !Number.isFinite(Number(value)) || Number(value) > 1_000_000)) return [];
@@ -57,7 +57,9 @@ export function normalizeDiyEditorial(value: unknown, preset: ThemePreset) {
     radiusStyle: { borderRadius: listRadius(block, 'fillet') },
     cardStyle: { borderRadius: listRadius(block, 'fillet'), background: gradient('moduleColor') },
     titleStyle: { color: color('titleColor', '#333333') },
-    tickerTitleStyle: { color: color('titleColor', '#ffffff'), background: gradient('titleBgColor', preset.theme) },
+    tickerTitleStyle: Number(listChild(block, 'toneConfig').tabVal) === 1
+      ? { color: color('titleColor', '#ffffff'), background: gradient('titleBgColor', preset.theme) }
+      : { color: '#ffffff', background: preset.theme },
     newsTextStyle: { color: color('newsColor', '#333333') }, buttonStyle: { color: color('bntColor', '#999999') },
     partyStyle: { background: color('boxColor', '#fff4f2') },
     partyTitleStyle: { color: color('themeColor', preset.theme) }, partyBadgeStyle: { background: gradient('bgColor', preset.theme) },

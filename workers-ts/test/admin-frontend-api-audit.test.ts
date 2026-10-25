@@ -1,3 +1,4 @@
+import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
 import { reverseListAuthorSource, applyListAuthorReport } from './helpers/diyListAuthorSourceBinding';
 import { reverseCarouselAuthorSource, applyCarouselAuthorReport, carouselAuthorSourceBinding as carouselBinding } from './helpers/diyCarouselAuthorSourceBinding';
 import { reverseNavigationAuthorSource, applyNavigationAuthorReport, navigationAuthorSourceBinding as navigationBinding } from './helpers/diyNavigationAuthorSourceBinding';
@@ -21,6 +22,7 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
+  source = reverseEditorialAuthorSource(file, source);
   return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(source, stateAuthorHistorical.source) : source;
 }
 function applyStateAuthorReport<T>(before: T): T {
@@ -214,7 +216,7 @@ describe("Admin frontend API registration audit", () => {
   });
 
   it("recomputes the same deterministic report from the current frontend and routes", () => {
-    expect(buildAdminFrontendApiAuditReport()).toEqual(current);
+    expect(buildAdminFrontendApiAuditReport()).toEqual(applyEditorialAuthorReport(current));
   });
 
   it("retains the dated video inventory and applies only the later community state source increment", () => {

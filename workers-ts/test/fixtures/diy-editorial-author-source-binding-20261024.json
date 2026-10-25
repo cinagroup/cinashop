@@ -1,0 +1,166 @@
+{
+  "schema": "cinashop.diy-editorial-author.source-binding.v1",
+  "source": {
+    "file": "view/admin-ts/src/pages/content/DiseList.vue",
+    "before_sha256": "ac481a4d44bd7ed7385719dd76149f0747f41a7a68c6135edc4c84acdfc3d3c7",
+    "after_sha256": "657e3a5ce372cd6f2bfae85c885d936ff7fcdaf2dc75526df37fd459952e72bd",
+    "edits": [
+      {
+        "before_source": "",
+        "after_source": "        <el-form-item label=\"新闻热区活动\"><DiyEditorialEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+        "before_line": 104,
+        "after_line": 104
+      },
+      {
+        "before_source": "",
+        "after_source": "import DiyEditorialEditor from \"@/components/content/DiyEditorialEditor.vue\";\nimport { canonicalEditorialValue } from \"@/utils/diyEditorialEditor\";\n",
+        "before_line": 164,
+        "after_line": 165
+      },
+      {
+        "before_source": "    return canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))));\n",
+        "after_source": "    return canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))));\n",
+        "before_line": 296,
+        "after_line": 299
+      }
+    ]
+  },
+  "previous_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd"
+  },
+  "current_report": {
+    "generator": "workers-ts/scripts/admin-frontend-api-audit.ts#buildAdminFrontendApiAuditReport",
+    "sha256": "655f65ad26d65896df24a75ae1bb28debdb88fd2ea046e8bcda68481f11cacf7",
+    "serialization": "JSON.stringify(report, null, 2) + LF",
+    "raw_capture": {
+      "sha256": "6c1bef93b112952dd06c5c449fe0fbe6e8a5f77632e28f353b831c3a9ae9c61f",
+      "bytes": 470098,
+      "serialization": "JSON.stringify(report) + LF"
+    }
+  },
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "ac481a4d44bd7ed7385719dd76149f0747f41a7a68c6135edc4c84acdfc3d3c7"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "657e3a5ce372cd6f2bfae85c885d936ff7fcdaf2dc75526df37fd459952e72bd"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 237,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 240,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 353,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 356,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 376,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 379,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ],
+  "consumer_sources": [
+    {
+      "file": "view/admin-ts/src/components/content/DiyEditorialEditor.vue",
+      "sha256": "e54de906647f5d31c5cefe9339fe0030a0b9a541f38dcbc3daec945b09f48f2c"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyHotspotAuthorCanvas.vue",
+      "sha256": "ce42b91ccbb627840d7f04d76c4e791d1d404b8b94d0b87fd2bcf9dc3faee1fd"
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyNewsAuthorFields.vue",
+      "sha256": "4fca2e70215faaaada36e7f55eafb330ccb0ce284b70d2411fc63db1b9972df7"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyEditorialEditor.ts",
+      "sha256": "7d0581ab5345d2ef6a22a2d72c11c1b06662ce86dd4e24a6d846d24e75bad913"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyEditorialDefaults.ts",
+      "sha256": "807b5e50aa4515aec025cbc8c810dd1af8d3a5543cdb764dab85cba022e18b02"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyNewsAuthorFields.ts",
+      "sha256": "a78ce6cb1f24b41d9a0e19019ee818127b8a89ff2895e88e950a20c80ee90fb4"
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyEditorialProjection.ts",
+      "sha256": "fe738b68224f5c739bc7e2d28332777093e155a4ab3101c32fe6a2acc274d064"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialConfig.ts",
+      "sha256": "d3db1c101188babe639bfcfea3156c2dcc52f53ad47e591511999a067c7932cb"
+    }
+  ],
+  "defaults_fixture": {
+    "file": "workers-ts/test/fixtures/diy-editorial-author-defaults.json",
+    "sha256": "bb3240a618e9e8b798e26e75bb538474b18fd3091184bc2c362034a907879ace"
+  }
+}

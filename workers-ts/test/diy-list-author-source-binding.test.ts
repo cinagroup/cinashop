@@ -1,3 +1,4 @@
+import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './helpers/routeSourceIncrement';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -17,6 +18,7 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
+  source = reverseEditorialAuthorSource(file, source);
   return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(source, stateAuthorHistorical.source) : source;
 }
 function applyStateAuthorReport<T>(before: T): T {
@@ -39,7 +41,7 @@ describe('complete source-bound list author increment retains every historical c
     expect(proof.sources.map(row=>row.file)).toEqual(['workers-ts/src/routes/adminapi.ts','workers-ts/src/routes/v1/index.ts','workers-ts/src/controllers/api/v1/AdminDiyAuthorOptionsController.ts','workers-ts/src/services/admin/AdminDiyAuthorOptionsService.ts','workers-ts/src/services/admin/AdminPermissionService.ts','view/admin-ts/src/pages/content/DiseList.vue','view/uniapp-ts/src/components/diy/DiyListProductCard.vue']);
     expect(sha(read(proof.previous_report.file))).toBe(proof.previous_report.sha256);expect(sha(read(proof.current_report.file))).toBe(proof.current_report.sha256);
     for(const row of proof.sources){expect(sha(read(row.file))).toBe(row.after_sha256);expect(sha(reverseListAuthorSource(row.file,read(row.file)))).toBe(row.before_sha256);}
-    expect(applyListAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyStateAuthorReport(current));
+    expect(applyListAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyEditorialAuthorReport(applyStateAuthorReport(current)));
   });
   it('adds exactly eight GET registrations and four actual Admin calls without discarding old inventory',()=>{
     expect(current.counts).toEqual({...before.counts,callSites:before.counts.callSites+4,pathVariants:before.counts.pathVariants+4,registered:before.counts.registered+4,executable:before.counts.executable+4});

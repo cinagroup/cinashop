@@ -1,0 +1,519 @@
+// Full literal defaults from PHP ref 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5.
+// Only newly added components use these defaults; imports are never merged.
+export const DIY_EDITORIAL_DEFAULTS = {
+  "news": {
+    "cname": "新闻公告",
+    "name": "news",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "展示设置",
+    "titleStyle": "公告风格",
+    "titleButton": "按钮设置",
+    "titleContent": "公告内容",
+    "titleRight": "标题样式",
+    "titleCurrency": "通用样式",
+    "styleConfig": {
+      "title": "选择风格",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "样式一"
+        },
+        {
+          "name": "样式二"
+        }
+      ]
+    },
+    "titleConfig": {
+      "title": "标题类型",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "图片"
+        },
+        {
+          "name": "文字"
+        }
+      ]
+    },
+    "imgConfig": {
+      "url": "/static/images/diy/news2.png",
+      "type": "code",
+      "delType": 0,
+      "name": "上传图片",
+      "info": "建议尺寸：28px*28px"
+    },
+    "titleTxtConfig": {
+      "title": "标题文字",
+      "value": "商城头条",
+      "place": "请输入标题文字",
+      "max": 4
+    },
+    "rollConfig": {
+      "title": "滚动方式",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "上下滚动"
+        },
+        {
+          "name": "左右滚动"
+        }
+      ]
+    },
+    "buttonConfig": {
+      "title": "右侧按钮",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "显示"
+        },
+        {
+          "name": "隐藏"
+        }
+      ]
+    },
+    "textConfig": {
+      "title": "右侧文字",
+      "value": "更多",
+      "place": "请输入右侧文字",
+      "max": 4
+    },
+    "linkConfig": {
+      "title": "跳转链接",
+      "value": "",
+      "place": "选择跳转链接",
+      "max": 100,
+      "type": "link"
+    },
+    "listConfig": {
+      "max": 10,
+      "type": 1,
+      "list": [
+        {
+          "chiild": [
+            {
+              "title": "标题",
+              "val": "标题",
+              "max": 20,
+              "pla": "输入标题"
+            },
+            {
+              "title": "链接",
+              "val": "",
+              "max": 200,
+              "pla": "输入连接"
+            }
+          ],
+          "show": true
+        }
+      ]
+    },
+    "toneConfig": {
+      "title": "色调",
+      "tabVal": 0,
+      "tabList": [
+        {
+          "name": "跟随主题风格"
+        },
+        {
+          "name": "自定义"
+        }
+      ]
+    },
+    "titleBgColor": {
+      "title": "标题背景",
+      "default": [
+        {
+          "item": "#FCEAE9"
+        },
+        {
+          "item": "#FCEAE9"
+        }
+      ],
+      "color": [
+        {
+          "item": "#FCEAE9"
+        },
+        {
+          "item": "#FCEAE9"
+        }
+      ]
+    },
+    "titleColor": {
+      "title": "标题文字",
+      "default": [
+        {
+          "item": "#E93323"
+        }
+      ],
+      "color": [
+        {
+          "item": "#E93323"
+        }
+      ]
+    },
+    "newsColor": {
+      "title": "新闻标题",
+      "default": [
+        {
+          "item": "#333333"
+        }
+      ],
+      "color": [
+        {
+          "item": "#333333"
+        }
+      ]
+    },
+    "bntColor": {
+      "title": "按钮颜色",
+      "default": [
+        {
+          "item": "#999999"
+        }
+      ],
+      "color": [
+        {
+          "item": "#999999"
+        }
+      ]
+    },
+    "moduleColor": {
+      "title": "组件背景",
+      "default": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fff"
+        },
+        {
+          "item": "#fff"
+        }
+      ]
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "default": [
+        {
+          "item": "#f5f5f5"
+        }
+      ],
+      "color": [
+        {
+          "item": "#f5f5f5"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "mbConfig": {
+      "title": "页面上间距",
+      "val": 0,
+      "min": 0
+    },
+    "fillet": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    }
+  },
+  "hotspot": {
+    "cname": "热区",
+    "name": "hotspot",
+    "timestamp": 0,
+    "isHide": false,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleLeft": "内容设置",
+    "titleRight": "通用样式",
+    "picStyle": {
+      "url": "",
+      "list": []
+    },
+    "bottomBgColor": {
+      "title": "底部背景",
+      "name": "bottomBgColor",
+      "default": [
+        {
+          "item": "#F5F5F5"
+        }
+      ],
+      "color": [
+        {
+          "item": "#F5F5F5"
+        }
+      ]
+    },
+    "topConfig": {
+      "title": "上边距",
+      "val": 0,
+      "min": 0
+    },
+    "bottomConfig": {
+      "title": "下边距",
+      "val": 0,
+      "min": 0
+    },
+    "prConfig": {
+      "title": "左右边距",
+      "val": 0,
+      "min": 0
+    },
+    "mbConfig": {
+      "title": "页面上间距",
+      "val": 0,
+      "min": 0
+    },
+    "fillet": {
+      "title": "背景圆角",
+      "type": 0,
+      "list": [
+        {
+          "val": "全部",
+          "icon": "iconcaozuo-zhengti"
+        },
+        {
+          "val": "单个",
+          "icon": "iconcaozuo-bianjiao"
+        }
+      ],
+      "valName": "圆角值",
+      "val": 0,
+      "min": 0,
+      "valList": [
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        },
+        {
+          "val": 0
+        }
+      ]
+    }
+  },
+  "activeParty": {
+    "name": "activeParty",
+    "timestamp": 0,
+    "setUp": {
+      "tabVal": 0
+    },
+    "titleConfig": {
+      "title": "促销标题",
+      "value": "超值爆款",
+      "place": "请输入标题",
+      "max": 10
+    },
+    "desConfig": {
+      "title": "促销简介",
+      "value": "美好生活由此开始",
+      "place": "请输入简介",
+      "max": 8
+    },
+    "menuConfig": {
+      "title": "最多可添加4个版块，图片建议尺寸140 * 140px；鼠标拖拽左侧圆点可 调整版块顺序",
+      "maxList": 4,
+      "list": [
+        {
+          "img": "",
+          "info": [
+            {
+              "title": "标题",
+              "value": "今日推荐",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "简介",
+              "value": "店主诚意推荐 品质商品",
+              "tips": "选填，不超过20个字",
+              "max": 20
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "info": [
+            {
+              "title": "标题",
+              "value": "热门榜单",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "简介",
+              "value": "店主诚意推荐 品质商品",
+              "tips": "选填，不超过20个字",
+              "max": 20
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "info": [
+            {
+              "title": "标题",
+              "value": "首发新品",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "简介",
+              "value": "新品上架等 你来拿",
+              "tips": "选填，不超过20个字",
+              "max": 20
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        },
+        {
+          "img": "",
+          "info": [
+            {
+              "title": "标题",
+              "value": "促销单品",
+              "tips": "选填，不超过4个字",
+              "max": 4
+            },
+            {
+              "title": "简介",
+              "value": "综合评选好 产品",
+              "tips": "选填，不超过20个字",
+              "max": 20
+            },
+            {
+              "title": "链接",
+              "value": "",
+              "tips": "请输入链接",
+              "max": 100
+            }
+          ]
+        }
+      ]
+    },
+    "themeColor": {
+      "title": "主题颜色",
+      "name": "themeColor",
+      "default": [
+        {
+          "item": "#fc3c3e"
+        }
+      ],
+      "color": [
+        {
+          "item": "#fc3c3e"
+        }
+      ]
+    },
+    "bgColor": {
+      "title": "标签背景颜色",
+      "name": "bgColor",
+      "default": [
+        {
+          "item": "#F62C2C"
+        },
+        {
+          "item": "#F96E29"
+        }
+      ],
+      "color": [
+        {
+          "item": "#F62C2C"
+        },
+        {
+          "item": "#F96E29"
+        }
+      ]
+    },
+    "boxColor": {
+      "title": "背景颜色",
+      "name": "boxColor",
+      "default": [
+        {
+          "item": "#ffe5e3"
+        }
+      ],
+      "color": [
+        {
+          "item": "#ffe5e3"
+        }
+      ]
+    },
+    "mbConfig": {
+      "title": "页面间距",
+      "val": 0,
+      "min": 0
+    }
+  }
+} as const;

@@ -1,3 +1,4 @@
+import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
 import { reverseListAuthorSource, applyListAuthorReport, listAuthorSourceBinding as listProof } from './helpers/diyListAuthorSourceBinding';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './helpers/routeSourceIncrement';
 import { readFileSync } from 'node:fs';
@@ -18,6 +19,7 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
+  source = reverseEditorialAuthorSource(file, source);
   return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(source, stateAuthorHistorical.source) : source;
 }
 function applyStateAuthorReport<T>(before: T): T {
@@ -42,7 +44,7 @@ describe('whole-source-bound carousel author integration preserves complete hist
     for(const row of proof.sources){expect(sha(reverseListAuthorSource(row.file,read(row.file)))).toBe(row.after_sha256);expect(sha(reverseCarouselAuthorSource(row.file,reverseListAuthorSource(row.file,read(row.file))))).toBe(row.before_sha256);}
   });
   it('reconstructs every old route/call/resource using only one exact source hash and three shifted call lines',()=>{
-    expect(applyCarouselAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyStateAuthorReport(applyListAuthorReport(current)));expect(current.counts).toEqual(before.counts);expect(current.backend).toEqual(before.backend);expect(current.counts).toMatchObject({callSites:699,pathVariants:737,registered:737,unregistered:0,unresolved:0});
+    expect(applyCarouselAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyEditorialAuthorReport(applyStateAuthorReport(applyListAuthorReport(current))));expect(current.counts).toEqual(before.counts);expect(current.backend).toEqual(before.backend);expect(current.counts).toMatchObject({callSites:699,pathVariants:737,registered:737,unregistered:0,unresolved:0});
     expect(proof.report_changes.filter(c=>c.array==='frontendSources')).toHaveLength(1);expect(proof.report_changes.filter(c=>c.array==='calls')).toHaveLength(3);
     for(const change of proof.report_changes){expect(change.after.file??change.after.source).toBe('view/admin-ts/src/pages/content/DiseList.vue');const old={...change.before},next={...change.after};if(change.array==='calls'){delete old.line;delete next.line;}else{delete old.sha256;delete next.sha256;}expect(next).toEqual(old);}
   });
