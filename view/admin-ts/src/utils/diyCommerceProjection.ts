@@ -3,7 +3,7 @@ import type { ThemePreset } from '../../../common/theme';
 import type { GoodsListParams } from './diyListProjection';
 import { navigationRecord as asDiyRecord, navFlag as isDiyEnabled } from './diyNavigationEditor';
 import { listSafeColor as safeDiyColor } from './diyListProjection';
-import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';
+import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';
 import { diyThemeColor, diyThemeVariables } from './diyCommerceTheme';
 
 export const DIY_COMMERCE_NAMES = ['promotionList', 'seckill', 'combination', 'bargain', 'presale', 'pointsMall', 'coupon', 'liveBroadcast'] as const;

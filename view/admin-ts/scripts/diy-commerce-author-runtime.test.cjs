@@ -22,6 +22,7 @@ function loader(options = {}) {
     if (cache.has(file)) return cache.get(file);
     const exports = {}; cache.set(file, exports);
     let source = fs.readFileSync(file, 'utf8'), descriptor, script;
+    if (options.sourceTransform) source = options.sourceTransform(file, source);
     if (file.endsWith('.vue')) { descriptor = sfc.parse(source, { filename: file }).descriptor; script = sfc.compileScript(descriptor, { id: 'navigation-editor-runtime' }); source = script.content; }
     const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
     new Function('require', 'exports', 'window', 'localStorage', output)(name => {
@@ -122,4 +123,91 @@ test('actual DiseList save composes commerce canonicalizer and preserves indepen
  const l=loader(),file=path.join(root,'pages/content/DiseList.vue'),tree=node('root'),component=l.load(file).default,app=renderer.createApp({setup:()=>()=>vue.h(component)});
  for(const name of [...new Set([...elementNames,'el-radio-button','el-checkbox'])])app.component(name,elementStub(name));app.directive('loading',{});app.mount(tree);
  try{await tick();const state=l.instances.get(file).at(-1),b=block('seckill'),promotion=block('promotionList',20);b.imgConfig.url='/api/assets/7?expires=1&signature=old';promotion.tabConfig.list[0].image='/api/assets/8?expires=1&signature=old';const opaque={name:'opaque',image:'/api/assets/9?keep',value:[0,false,[]]};state.openForm();await tick();state.form.name='商城测试页';state.form.value=JSON.stringify([b,promotion,opaque]);state.form.content='独立内容';await state.save();await tick();const save=l.calls.find(call=>call.method==='POST'&&call.url==='/dise/save');assert.ok(save);const expected=[clone(b),clone(promotion),opaque];expected[0].imgConfig.url='/api/assets/7';expected[1].tabConfig.list[0].image='/api/assets/8';assert.deepEqual(JSON.parse(save.body.value),expected);assert.equal(save.body.content,'独立内容');assert.equal(save.body.create_kind,'diy_page');}finally{app.unmount();}
+});
+
+
+// Resolved public/gallery image tickets must reach the actual child template.
+// The old one-argument reference resolver silently erased these URLs.
+const imageFamilies=['seckill','combination','bargain','presale','pointsMall'];
+const imageNodes=r=>all(r.tree,n=>n.tag==='img');
+const hasClass=(n,name)=>String(n.props.class??'').split(/\s+/u).includes(name);
+const oldImageImport=(target)=>(file,source)=>file===path.join(root,`utils/${target}.ts`)
+ ? source.replace("import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';","import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';") : source;
+async function proveAuthoredHeader(kind,style,options={}){
+ const b=block(kind);b.styleConfig.tabVal=style;b.titleConfig.tabVal=0;
+ // PHP pointsMall exposes imgConfig2 on the grid's colour-header panel.
+ if(kind==='pointsMall'&&style===0)b.goodStyleConfig.tabVal=1;
+ const titleKey=style?'imgConfig':kind==='pointsMall'?'imgConfig2':'imgColorConfig';
+ b[titleKey].url='/api/assets/7';b.imgBgConfig.url='/api/assets/8';
+ const before=clone(b),r=harness([b,{name:'opaque',image:'/api/assets/9?keep'}],options);
+ try{
+  await tick();await r.state.mediaSession([titleKey,'url']).choose('/api/assets/7',ticket(7));
+  if(style)await r.state.mediaSession(['imgBgConfig','url']).choose('/api/assets/8',ticket(8));await tick();
+  assert.equal(r.writes.length,0);assert.deepEqual(r.value()[0],before);
+  assert.ok(imageNodes(r).some(n=>n.props.alt==='商城作者图片'&&n.props.src===ticket(7)),'gallery title thumbnail');
+  assert.equal(imageNodes(r).find(n=>hasClass(n,'commerce-heading-image'))?.props.src,ticket(7),'rendered heading retains signed ticket');
+  const heading=all(r.tree,n=>hasClass(n,'commerce-heading'))[0];assert.ok(heading);
+  if(style)assert.equal(heading.props.style.backgroundImage,`url("${ticket(8)}")`);
+  else assert.match(heading.props.style.backgroundImage,/^linear-gradient/u);
+ }finally{r.unmount();}
+}
+for(const kind of imageFamilies)for(const style of [0,1])test(`resolved gallery tickets render real ${kind} title/background style${style} without JSON writes`,()=>proveAuthoredHeader(kind,style));
+test('old projection resolver mutant fails the same actual parent/heading proof',async()=>{
+ await assert.rejects(()=>proveAuthoredHeader('seckill',1,{sourceTransform:oldImageImport('diyCommerceProjection')}),{name:'AssertionError'});
+});
+
+test('published15-tab receipt renders first and final signed tab icons without changing overflow metadata',async()=>{
+ const b=block('promotionList');b.styleConfig.tabVal=4;b.tabConfig.list=Array.from({length:15},(_,i)=>({...clone(b.tabConfig.list[0]),image:`/api/assets/${i+1}`,opaque:{index:i,empty:[]}}));
+ const saved=clone(b);for(const [index,t]of saved.tabConfig.list.entries())t.image=ticket(index+1);
+ const original=global.fetch,calls=[];global.fetch=async(url,opts)=>{calls.push({url,opts});return response({value:[saved]});};const r=harness([b]);
+ try{await tick();await r.state.loadSavedMedia();await tick();const icons=all(r.tree,n=>hasClass(n,'promotion-tab')).map(tab=>all(tab,n=>n.tag==='img')[0]?.props.src);assert.deepEqual(icons,Array.from({length:15},(_,i)=>ticket(i+1)));assert.deepEqual(r.value()[0],b);assert.equal(r.writes.length,0);assert.equal(calls.length,1);assert.equal(calls[0].url,'/api/diy/get_diy/2');assert.equal(calls[0].opts.credentials,'omit');}
+ finally{r.unmount();global.fetch=original;}
+});
+const commerceApiCard=(image=ticket(17))=>({id:101,product_id:601,title:'真实活动商品',store_name:'真实预售商品',image,price:'2.50',ot_price:'3',people:2,pink_count:3,sales:4,stock:5,percent:50,integral:10,presale_pay_status:2});
+const commerceApiRoom=(image=ticket(31))=>({id:201,room_id:301,name:'公开直播间',cover_img:image,show_time:'今天',anchor_name:'公开主播',anchor_img:ticket(32),live_status:101,goods:[{id:401,name:'直播商品',cover_img:ticket(33),price:'4'}]});
+async function provePublicImages(kind,style=1,options={}){
+ const b=block(kind);b.styleConfig.tabVal=style;const r=harness([b],options),original=global.fetch,calls=[];
+ global.fetch=async(url,opts)=>{calls.push({url,opts});const pathname=new URL(url,'https://example.invalid').pathname;
+  return response(pathname==='/api/seckill/index'?{seckillTime:[{id:501,start_time:'00:00',end_time:'24:00',state:'进行中',stop:ticketExpires,status:1}],seckillTimeIndex:0}
+   :pathname==='/api/pink'?{pink_count:3,avatars:[ticket(41),ticket(42)]}
+   :pathname==='/api/wechat/live'?[commerceApiRoom()]:kind==='presale'?{list:[commerceApiCard()],count:1}:[commerceApiCard()]);};
+ try{
+  await tick();await r.state.loadContent();await tick();assert.equal(r.state.error,'');assert.equal(r.state.previewLoaded,true);
+  const imgs=imageNodes(r);
+  if(kind==='liveBroadcast'){
+   assert.equal(imgs.find(n=>hasClass(n,'live-cover'))?.props.src,ticket(31),'room cover');
+   const anchors=all(r.tree,n=>hasClass(n,'live-anchor')).flatMap(n=>all(n,c=>c.tag==='img'));
+   const goods=all(r.tree,n=>hasClass(n,'live-goods')).flatMap(n=>all(n,c=>c.tag==='img'));
+   assert.deepEqual(anchors.map(n=>n.props.src),style===1?[]:[ticket(32)]);assert.deepEqual(goods.map(n=>n.props.src),style===1?[ticket(33)]:[]);
+  }else{
+   assert.equal(imgs.find(n=>hasClass(n,'commerce-image'))?.props.src,ticket(17),'actual public DTO card image');
+   if(kind==='combination')assert.deepEqual(all(r.tree,n=>hasClass(n,'commerce-pink')).flatMap(n=>all(n,c=>c.tag==='img')).map(n=>n.props.src),[ticket(41),ticket(42)]);
+  }
+  assert.equal(r.writes.length,0);assert.deepEqual(r.value()[0],b);assert.ok(calls.length>0);assert.ok(calls.every(call=>call.opts.method==='GET'&&call.opts.credentials==='omit'&&!call.opts.headers.Authorization));
+ }finally{r.unmount();global.fetch=original;}
+}
+for(const kind of imageFamilies)test('actual public '+kind+' DTO and child render retain signed card images'+(kind==='combination'?' and pink avatars':''),()=>provePublicImages(kind));
+for(const style of [0,1,2,3])test('actual public live DTO retains cover/anchor/goods in layout'+style,()=>provePublicImages('liveBroadcast',style));
+test('old data resolver mutant fails the same public image and avatar rendering proof',async()=>{
+ await assert.rejects(()=>provePublicImages('combination',1,{sourceTransform:oldImageImport('diyCommerceData')}),{name:'AssertionError'});
+});
+const invalidResolvedImages=[
+ ['unsigned','/api/assets/7'],['expired',ticket(7,1)],['duplicate expiry',ticket(7)+'&expires='+ticketExpires],['encoded duplicate expiry',ticket(7)+'&%65xpires='+ticketExpires],
+ ['duplicate signature',ticket(7)+'&signature='+('B'.repeat(43))],['encoded duplicate signature',ticket(7)+'&%73ignature='+('B'.repeat(43))],
+ ['malformed signature',`/api/assets/7?expires=${ticketExpires}&signature=x`],['fragment',ticket(7)+'#fragment'],['protocol relative','//example.invalid/img.png'],['javascript','javascript:alert(1)'],['backslash','/static\\bad.png'],['space','/static/bad image.png']
+];
+for(const [label,image]of invalidResolvedImages)test('resolved URL rejection remains active for '+label,async()=>{
+ const l=loader(),data=l.load(path.join(root,'utils/diyCommerceData.ts')),project=l.load(path.join(root,'utils/diyCommerceProjection.ts')),theme=l.load(path.resolve(root,'../../common/theme.ts')).themePreset(3),b=block('seckill');
+ b.styleConfig.tabVal=1;b.titleConfig.tabVal=0;b.imgConfig.url=image;b.imgBgConfig.url=image;
+ const cfg=project.normalizeDiyCommerce(b,theme);assert.equal(cfg.titleImage,'');assert.match(cfg.headerStyle.backgroundImage,/^linear-gradient/u);
+ assert.equal(data.checkedCommerceCards('seckill',[commerceApiCard(image)],10)[0].image,'');
+ assert.deepEqual(data.checkedCommercePink({pink_count:1,avatars:[image]}).avatars,[]);
+ const room=commerceApiRoom(image);room.anchor_img=image;room.goods[0].cover_img=image;
+ const checked=data.checkedCommerceRooms([room],10)[0];assert.equal(checked.cover_img,'');assert.equal(checked.anchor_img,'');assert.equal(checked.goods[0].cover_img,'');
+ const r=harness([b]),original=global.fetch;global.fetch=async url=>response(url.startsWith('/api/seckill/index')?{seckillTime:[{id:501,start_time:'00:00',end_time:'24:00',state:'进行中',stop:ticketExpires,status:1}],seckillTimeIndex:0}:[commerceApiCard(image)]);
+ try{await tick();await r.state.loadContent();await tick();assert.equal(r.state.error,'');assert.equal(imageNodes(r).filter(n=>hasClass(n,'commerce-image')||hasClass(n,'commerce-heading-image')).length,0);assert.equal(r.writes.length,0);}finally{r.unmount();global.fetch=original;}
+});
+test('reference resolver still binds the same asset and never grants a URL-only capability',()=>{
+ const l=loader(),editor=l.load(path.join(root,'utils/diyCommerceEditor.ts'));
+ assert.equal(editor.commercePreviewUrl('/api/assets/7',ticket(7)),ticket(7));assert.equal(editor.commercePreviewUrl('/api/assets/7',ticket(8)),'');assert.equal(editor.commercePreviewUrl(ticket(7)),'');assert.equal(editor.commercePreviewUrl('/api/assets/7',ticket(7,1)),'');
 });

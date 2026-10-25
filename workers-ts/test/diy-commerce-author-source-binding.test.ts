@@ -1,3 +1,4 @@
+import { reverseCommerceImagePreviewSource } from './helpers/diyCommerceImagePreviewSourceBinding';
 import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -8,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
 import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
 import { applyCommerceAuthorReport, reverseCommerceAuthorReport, reverseCommerceAuthorSource, reverseCommerceFormattingSource, reverseCommerceGridSource, commerceAuthorSourceBinding as proof } from './helpers/diyCommerceAuthorSourceBinding';
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseCommunityAuthorSource(file,readFileSync(resolve(root,file),'utf8')),sha=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
+const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseCommerceImagePreviewSource(file,reverseCommunityAuthorSource(file,readFileSync(resolve(root,file),'utf8'))),sha=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
 const reportHash=(value:unknown)=>sha(JSON.stringify(value,null,2)+'\n');
 const previous=applyEditorialAuthorReport(JSON.parse(read(proof.previous_report.base_file))),source=read(proof.source.file);
 const {parse}=createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');

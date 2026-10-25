@@ -1,6 +1,6 @@
 // Anonymous author preview parser; no navigation, coupon or cart actions.
 import { navigationRecord as asDiyRecord } from './diyNavigationEditor';
-import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';
+import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';
 import type { DiyCommerceKind } from './diyCommerceProjection';
 
 export interface CommerceCard {

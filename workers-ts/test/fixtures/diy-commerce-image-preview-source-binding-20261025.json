@@ -1,0 +1,142 @@
+{
+  "schema": "cinashop.diy-commerce-image-preview-source-binding.v1",
+  "base_ref": "f111330091fdda222496d575c7215a02a41e6d0e",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceProjection.ts",
+      "before_ref": "f111330091fdda222496d575c7215a02a41e6d0e",
+      "before_sha256": "fd6dbf2262e4c5631106803ac9c476a7c1d2ccb52e171bf7b94642357d7790a1",
+      "after_sha256": "00495cd069f0060c7f5f3dbfe21acc14842d40c14250b8c0dc99d6cf5eb8f9df",
+      "before_bytes": 11547,
+      "after_bytes": 11553,
+      "edits": [
+        {
+          "before_source": "import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';",
+          "after_source": "import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';",
+          "before_line": 6,
+          "after_line": 6
+        }
+      ]
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceData.ts",
+      "before_ref": "f111330091fdda222496d575c7215a02a41e6d0e",
+      "before_sha256": "647c0671e780fcda7b24f6fa112944f4f381db8e94b036ff4ed20f38ff38a51a",
+      "after_sha256": "add68bcac2b007d3d8c3b7a9889aade98675d588dae836be3540e7bc44a6f378",
+      "before_bytes": 6779,
+      "after_bytes": 6785,
+      "edits": [
+        {
+          "before_source": "import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';",
+          "after_source": "import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';",
+          "before_line": 3,
+          "after_line": 3
+        }
+      ]
+    }
+  ],
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9",
+      "bytes": 6294
+    },
+    {
+      "file": "workers-ts/test/helpers/diyEditorialAuthorSourceBinding.ts",
+      "sha256": "8904f8b161f88c6533a2b93f3a5a8ce2067e017bb4dd55da5ca10b02a4936d06",
+      "bytes": 2719
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50",
+      "bytes": 23388
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceAuthorSourceBinding.ts",
+      "sha256": "8b98d1772c0499e36bba942bf6ffa704feecc44a07bf998fc760039bd9b2a96b",
+      "bytes": 4218
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+      "bytes": 13813
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityAuthorSourceBinding.ts",
+      "sha256": "092ade2343b7f2fe684aef4bfaf6bc82d9663b6a23e9bfea78fb824c73852d23",
+      "bytes": 4311
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0",
+      "bytes": 2717
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+      "bytes": 642264
+    }
+  ],
+  "runtime_helper_sources": [
+    {
+      "file": "view/admin-ts/src/utils/diyPresentationEditor.ts",
+      "sha256": "d5a025b53da975ef0f60d91980c42a9e836f4e1592f9b30bca9714deab41b1c6",
+      "bytes": 6922
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyEditorialEditor.ts",
+      "sha256": "7d0581ab5345d2ef6a22a2d72c11c1b06662ce86dd4e24a6d846d24e75bad913",
+      "bytes": 6811
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyNavigationEditor.ts",
+      "sha256": "38da1bc7b7de5f90bf167e796b040fa3bd9ea20a905088ca0d328f98938df044",
+      "bytes": 21336
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyListProjection.ts",
+      "sha256": "9e855527f64b886cd8fe9e45838e961c7e05d868807914c9afcbb4b4215e3d91",
+      "bytes": 9993
+    },
+    {
+      "file": "view/admin-ts/src/utils/diyCommerceTheme.ts",
+      "sha256": "8db0a80abe91a07444b2617c6bfe2528fec5b190acb52bfe0753fc45db43a32b",
+      "bytes": 3372
+    },
+    {
+      "file": "view/common/theme.ts",
+      "sha256": "7bd38e3b6552d71b73d79dfc6047b25e9f96b21335e17b0c7ceeca5e20ba993d",
+      "bytes": 2705
+    }
+  ],
+  "api_report": {
+    "generator": "workers-ts/scripts/admin-frontend-api-audit.ts#buildAdminFrontendApiAuditReport",
+    "base_file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "base_sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+    "binding_chain": [
+      {
+        "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+        "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+        "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+        "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+      }
+    ],
+    "before_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "after_sha256": "0ed30a0bbf03246a46fa0039fb7975628515fc7b36e743c86cebd5965563d40a",
+    "serialization": "JSON.stringify(report, null, 2) + LF",
+    "compact_sha256": "192e45c353abefea38acaa88f5ca475a72ad87dfafd019a96c6c843c99f9c7cb",
+    "pretty_bytes": 642264,
+    "compact_bytes": 470098,
+    "changes": [],
+    "call_sites": 703,
+    "path_variants": 741,
+    "frontend_sources": 106
+  },
+  "boundary": "Only two exact Admin resolved-URL sanitizer imports. Stored-reference/lease resolver, image authority, API calls, schema, Uni/Worker production, historical fixtures/helpers and complete API report remain byte-exact."
+}

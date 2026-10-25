@@ -1,0 +1,195 @@
+{
+  "schema": "cinashop.php-ts-diy-commerce-image-preview-audit.v1",
+  "date": "2026-10-25",
+  "status": "verified_local_draft_ready",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "base_ref": "f111330091fdda222496d575c7215a02a41e6d0e",
+  "problem": "Admin Commerce used an identity-plus-lease resolver on an already resolved signed URL. Canonicalization removed its query and the unsigned result was rejected, hiding valid authored and public DTO images.",
+  "production_change": {
+    "files": [
+      {
+        "file": "view/admin-ts/src/utils/diyCommerceProjection.ts",
+        "before_sha256": "fd6dbf2262e4c5631106803ac9c476a7c1d2ccb52e171bf7b94642357d7790a1",
+        "after_sha256": "00495cd069f0060c7f5f3dbfe21acc14842d40c14250b8c0dc99d6cf5eb8f9df",
+        "edits": [
+          {
+            "before_source": "import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';",
+            "after_source": "import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';",
+            "before_line": 6,
+            "after_line": 6
+          }
+        ]
+      },
+      {
+        "file": "view/admin-ts/src/utils/diyCommerceData.ts",
+        "before_sha256": "647c0671e780fcda7b24f6fa112944f4f381db8e94b036ff4ed20f38ff38a51a",
+        "after_sha256": "add68bcac2b007d3d8c3b7a9889aade98675d588dae836be3540e7bc44a6f378",
+        "edits": [
+          {
+            "before_source": "import { editorialPreviewUrl as safeDiyImageUrl } from './diyEditorialEditor';",
+            "after_source": "import { presentationPreviewUrl as safeDiyImageUrl } from './diyPresentationEditor';",
+            "before_line": 3,
+            "after_line": 3
+          }
+        ]
+      }
+    ],
+    "behavior": "Use the unchanged presentationPreviewUrl sanitizer for the two resolved-URL display adapters. Keep the reference-plus-lease resolver, media ownership policy, business endpoints and Uni runtime byte-identical."
+  },
+  "verified_surfaces": [
+    "Five activity families: seckill, combination, bargain, presale and pointsMall image titles, image header backgrounds and signed public card images",
+    "All15 imported promotion tab icons, including first and final entries, without truncating unknown metadata",
+    "Combination participant avatars",
+    "All4 live layout branches in runtime; real Browser cover/anchor layout0 and cover/goods layout1",
+    "Unsigned, expired, duplicate and encoded duplicate capability keys, malformed signatures, fragments and unsafe URLs remain rejected",
+    "Reference and lease must still identify the same asset; restoring each previous import makes the corresponding actual runtime proof fail"
+  ],
+  "source_binding": {
+    "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+    "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693",
+    "preserved_dated_files": [
+      {
+        "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+        "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9",
+        "bytes": 6294
+      },
+      {
+        "file": "workers-ts/test/helpers/diyEditorialAuthorSourceBinding.ts",
+        "sha256": "8904f8b161f88c6533a2b93f3a5a8ce2067e017bb4dd55da5ca10b02a4936d06",
+        "bytes": 2719
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+        "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50",
+        "bytes": 23388
+      },
+      {
+        "file": "workers-ts/test/helpers/diyCommerceAuthorSourceBinding.ts",
+        "sha256": "8b98d1772c0499e36bba942bf6ffa704feecc44a07bf998fc760039bd9b2a96b",
+        "bytes": 4218
+      },
+      {
+        "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+        "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+        "bytes": 13813
+      },
+      {
+        "file": "workers-ts/test/helpers/diyCommunityAuthorSourceBinding.ts",
+        "sha256": "092ade2343b7f2fe684aef4bfaf6bc82d9663b6a23e9bfea78fb824c73852d23",
+        "bytes": 4311
+      },
+      {
+        "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+        "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0",
+        "bytes": 2717
+      },
+      {
+        "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+        "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd",
+        "bytes": 642264
+      }
+    ],
+    "api_report_delta": 0,
+    "call_sites": 703,
+    "path_variants": 741,
+    "frontend_sources": 106
+  },
+  "validation": {
+    "resource_policy": "All heavy commands used one outer shared validate-serial wrapper; Node tests concurrency1 and Vitest maxWorkers1. Waited for another live validation to release the lock.",
+    "admin_runtime": {
+      "passed": 182,
+      "new_image_regressions": 35,
+      "existing_tests": 147,
+      "log": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/admin-verified.log"
+    },
+    "worker_source_gates": {
+      "passed": 126,
+      "files": 3,
+      "new_image_gate_cases": 37,
+      "log": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/worker-gates.log"
+    },
+    "admin_production_build": "passed",
+    "worker_typecheck_unit": "passed, repeated after final Browser test observation addition",
+    "worker_typecheck_runtime": "passed",
+    "original_failed_test_attempts": [
+      "admin-initial.log:6 new test thumbnail selector failures",
+      "admin-final.log:1 new pointsMall case selected a PHP panel that does not expose imgConfig2; fixed the case to the actual PHP grid panel. No production title-selection rule changed."
+    ],
+    "no_later_production_edits": true
+  },
+  "browser": {
+    "environment": "Background Codex IAB; actual built Admin and H5 served through createApp with real JWT and owned PostgreSQL16.14. No Playwright fallback or viewport override.",
+    "fixture_boundary": "Before baseline,9 explicitly scoped owned tables use a real signed platform attachment URL minted by the unchanged signer with3600s TTL. Authored header/tab JSON remains canonical and goes through the actual DIY public signer. This proves preservation/loading of valid signed public DTO URLs; it does not prove automatic canonical-ID signing for all public endpoints.",
+    "receipt": {
+      "file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/browser-final-receipt.json",
+      "sha256": "243e272589390c853297a35d27ece87a0e54eb6de4aa5817314ff8a4e05b88eb"
+    },
+    "independent_verification": {
+      "file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/browser-independent-verification.json",
+      "sha256": "fb34ace6e1322b8c29cefc811cd16ce4a33d91a2ee19677ea29c6bb9cb12d6b8"
+    },
+    "actual_get": 74,
+    "actual_save_posts": 2,
+    "explicit_role_setups": 0,
+    "snapshot_objects": 3,
+    "tables": 76,
+    "sequences": 71,
+    "sources": 2295,
+    "builds": 701,
+    "checks": "All measured GET database/sequence/resource states unchanged; only dise id2 value/version/update_time changed in two full GUI saves; all2996 source/build file inventories unchanged.",
+    "interaction": "Read published images and public data for five activity families; test live layouts0/1; save1 through the visible raw JSON field; reopen and load15 icons; save2 through the promotion style control; anonymous H5 home and actual micro detail route; actual H5 refresh.",
+    "images": "One early combination capture is retained as initial-load-pending. A later independent actual read/loaded DOM capture proves the same images loaded. All required final media roles have loaded evidence and successful asset GET receipts.",
+    "h5_layout": "The shell iframe CSS width is375; measured document/widget content width is360 with scrollbar/layout. Do not call the360 DOM reading a375 measurement.",
+    "console": "No application error; one existing vue-router deep-import deprecation warning in H5.",
+    "h5_observed_unsigned_asset_404": [
+      {
+        "trace_index": 80,
+        "path": "/api/assets/2",
+        "query": "",
+        "status": 404,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before": "2eb9c431398fbb8ab46ae91df8da7a5fec3b9499027865542124f23c48eac5ec",
+        "after": "2eb9c431398fbb8ab46ae91df8da7a5fec3b9499027865542124f23c48eac5ec",
+        "excluded_from_successful_signed_media_coverage": true
+      },
+      {
+        "trace_index": 97,
+        "path": "/api/assets/2",
+        "query": "",
+        "status": 404,
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "before": "2eb9c431398fbb8ab46ae91df8da7a5fec3b9499027865542124f23c48eac5ec",
+        "after": "2eb9c431398fbb8ab46ae91df8da7a5fec3b9499027865542124f23c48eac5ec",
+        "excluded_from_successful_signed_media_coverage": true
+      }
+    ],
+    "h5_404_boundary": "Two H5 requests for an unsigned canonical reference returned404. These are observed existing public-endpoint/display gaps, not deliberately executed negative tests. They are excluded from every successful signed image claim; H5 all-media-request success is not proven.",
+    "roles": "Role UI not rechecked in this narrow image batch; existing role-boundary runtime regressions passed.",
+    "native_session_exit": 0,
+    "cleanup": "remaining=0; owned finance-postgres-Vn4e5g stopped and postmaster.pid absent; own Browser tab closed."
+  },
+  "compatibility_limits": [
+    "PHP pointsMall itself exposes imgConfig at style0/title0/layout0 in the Admin panel while both PHP display templates use imgConfig2 for every style0 layout. This batch retains both original rules; the direct image regression uses its matching grid panel.",
+    "Four current public output families still pass some stored canonical image references through: combination, presale main image, pink avatars and live images. They need separate persisted-owner and media-budget review; this patch grants no general signing authority.",
+    "The unchanged commerce editor scans whole public preview JSON for expires values; non-media text may clear a preview. This is a separately recorded follow-up."
+  ],
+  "external_reviews": [
+    {
+      "file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/independent-source-review.json",
+      "sha256": "48aa0e3fb37608374b9e9ceefa2832b2b720e797d160df757e2d6ae536ec9dcf"
+    },
+    {
+      "file": "/home/cina/.codex/visualizations/2026/10/14/01a13811-3465-7b62-98e5-0a1bbf92b6a5/diy-commerce-image-preview-20261025/public-commerce-media-canonical-scout.json",
+      "sha256": "4767ddbfc3c46fcaf377398abf067aca8766674c9f13b32c0991a02a3d9eb20a"
+    }
+  ],
+  "github": {
+    "head_branch": "codex/diy-commerce-image-preview",
+    "base_branch": "codex/diy-community-author-controls",
+    "draft": true,
+    "merged": false,
+    "deployed": false
+  }
+}
