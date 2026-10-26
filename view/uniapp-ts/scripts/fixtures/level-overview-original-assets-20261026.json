@@ -1,0 +1,61 @@
+{
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "assets": [
+    {
+      "source": "public/statics/images/userVip1.png",
+      "target": "view/uniapp-ts/src/static/php-level/userVip1.png",
+      "bytes": 1057,
+      "sha256": "e6cc9ddae00eeddce75e13651d7e3c2a41139de36d47b6c59234960ea792a227",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "public/statics/images/userVip2.png",
+      "target": "view/uniapp-ts/src/static/php-level/userVip2.png",
+      "bytes": 1891,
+      "sha256": "4e14960268ef3afb1b1778996a604e8e48a0844d8871c2ba3e5659e2e6ec66ae",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "public/statics/images/userVip3.png",
+      "target": "view/uniapp-ts/src/static/php-level/userVip3.png",
+      "bytes": 1356,
+      "sha256": "07dc4f46b073cd07b33b1f8358dae13339365d473bf6fb6823dd11b72a6fd453",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "public/statics/images/userVip4.png",
+      "target": "view/uniapp-ts/src/static/php-level/userVip4.png",
+      "bytes": 2144,
+      "sha256": "9e84f07624cd2de36834acb19b1c740460541a2edbab1ca8811822800be57d87",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "source": "public/statics/images/user-vip-qd.png",
+      "target": "view/uniapp-ts/src/static/php-level/user-vip-qd.png",
+      "bytes": 5687,
+      "sha256": "36359ac217394c09181370327cbd16f910bf908775c8026d2181bf41a5be7e3d",
+      "width": 100,
+      "height": 104
+    },
+    {
+      "source": "public/statics/images/user-vip-gm.png",
+      "target": "view/uniapp-ts/src/static/php-level/user-vip-gm.png",
+      "bytes": 6346,
+      "sha256": "8bbeac18d4d9c8c78fec53ebb2e5fabe23c183e569c19d889de5dfacaa978808",
+      "width": 100,
+      "height": 105
+    },
+    {
+      "source": "public/statics/images/user-vip-yq.png",
+      "target": "view/uniapp-ts/src/static/php-level/user-vip-yq.png",
+      "bytes": 5905,
+      "sha256": "895cb1709d5b4f789ecf8e5df7007bc23f5f52e72b5958a94b8562ad3c332fbf",
+      "width": 100,
+      "height": 103
+    }
+  ]
+}

@@ -25,14 +25,20 @@ export async function levelGrade(c: C) {
 
 /** GET /api/user/level/info — 我的等级信息 */
 export async function levelInfo(c: C) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new UserLevelService(c.get("container"), c.env);
-  return jsonOk(c, await svc.userLevelInfo(uid));
+  const overview = new URL(c.req.url).searchParams.getAll("overview");
+  if (overview.length > 1 || overview.length === 1 && overview[0] !== "1") {
+    throw new ValidateException("会员概览参数无效");
+  }
+  return jsonOk(c, await svc.userLevelInfo(uid, overview.length === 1));
 }
 
 /** GET /api/user/level/detection — 检测经验等级 */
 export async function levelDetection(c: C) {
+  c.header("Cache-Control", "private, no-store, max-age=0");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const svc = new UserLevelService(c.get("container"), c.env);

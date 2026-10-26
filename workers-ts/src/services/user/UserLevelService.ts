@@ -17,11 +17,12 @@ import {
   userBill as userBillTable,
   userMoney,
 } from "@/models/schema";
-import { type Container, withTx } from "@/lib/di";
+import { type Container, createContainerFromDb, withTx } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException } from "@/utils/errors";
 import { detectUserLevel } from "@/services/order/OrderRewardService";
 import { userGrowthRecordsPagination } from "./UserGrowthRecordsInput";
+import { readUserLevelOverview, renderUserLevelOverview, type UserLevelOverview } from "./UserLevelOverviewService";
 import {
   configFlag,
   parseConfigIds,
@@ -313,8 +314,30 @@ export class UserLevelService {
     }));
   }
 
-  /** 用户等级信息 (user/level/info) */
-  async userLevelInfo(uid: number): Promise<{
+  /** One read-only snapshot for both established clients and the new overview.
+   * Page-entry detection remains a separate explicit legacy business request. */
+  async userLevelInfo(uid: number, includeOverview = false): Promise<{
+    level: LevelInfo | null;
+    currentExp: number;
+    nextLevel: LevelInfo | null;
+    nextExpNeed: number;
+    level_info: { id: number; name: string; grade: number; icon: string; vip: true; vip_id: number; vip_name: string; vip_icon: string } | [];
+    level_list: { id: number; name: string; grade: number; color: string; icon: string; image: string; discount: number; money: string; exp_num: number; next_exp_num: number; is_forever: number }[];
+  } & { overview?: UserLevelOverview }> {
+    if (includeOverview === false) return this.legacyUserLevelInfo(uid);
+    if (includeOverview !== true) throw new ValidateException("会员概览参数无效");
+    const state = await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      const scoped = createContainerFromDb(tx);
+      const legacy = await new UserLevelService(scoped, this.env).legacyUserLevelInfo(uid);
+      const overview = await readUserLevelOverview(scoped, uid);
+      return { ...legacy, overview };
+    });
+    return { ...state, overview: await renderUserLevelOverview(this.env.APP_KEY, state.overview) };
+  }
+
+  /** Preserve the six established fields, including their legacy flag priority. */
+  private async legacyUserLevelInfo(uid: number): Promise<{
     level: LevelInfo | null;
     currentExp: number;
     nextLevel: LevelInfo | null;

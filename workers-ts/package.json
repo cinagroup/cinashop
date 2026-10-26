@@ -71,7 +71,8 @@
     "test:admin-member-packages:browser": "vitest run --config vitest.admin-member-packages-browser.config.ts --maxWorkers=1",
     "test:customer-sign-centre:browser": "vitest run --config vitest.customer-sign-centre-browser.config.ts --maxWorkers=1",
     "test:customer-points-centre:browser": "vitest run --config vitest.customer-points-centre-browser.config.ts --maxWorkers=1",
-    "test:customer-growth-records:browser": "vitest run --config vitest.customer-growth-records-browser.config.ts --maxWorkers=1"
+    "test:customer-growth-records:browser": "vitest run --config vitest.customer-growth-records-browser.config.ts --maxWorkers=1",
+    "test:customer-level-overview:browser": "vitest run --config vitest.customer-level-overview-browser.config.ts --maxWorkers=1"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
