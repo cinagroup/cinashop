@@ -1,0 +1,11 @@
+{
+  "schema": "cinashop.customer-points-centre-manifest-increment.v1",
+  "base_ref": "b004692bace893213816e1ad2cdffc251ed2d2c5",
+  "file": "view/uniapp-ts/src/pages.json",
+  "before_sha256": "f1ca432d16d99225077715b446405ca8dadc50a1e38df92b49f3bfdb634e7560",
+  "after_sha256": "56f878f2841bc9c21aefbe70afe9d08789123563b5b96b84f3ddfbfbaaa2b72c",
+  "before_bytes": 19910,
+  "after_bytes": 20032,
+  "inserted_line": 386,
+  "inserted_source": "    {\n      \"path\": \"pages/user/points\",\n      \"style\": {\n        \"navigationBarTitleText\": \"积分详情\"\n      }\n    },\n"
+}

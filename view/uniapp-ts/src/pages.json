@@ -384,6 +384,12 @@
       }
     },
     {
+      "path": "pages/user/points",
+      "style": {
+        "navigationBarTitleText": "积分详情"
+      }
+    },
+    {
       "path": "pages/user/integral",
       "style": {
         "navigationBarTitleText": "积分商城"

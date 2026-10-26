@@ -1,3 +1,5 @@
+import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
+import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
@@ -175,9 +177,12 @@ describe("complete shared community publishing and registered legacy entries", (
     expect(workspacePublisherBound(original.replace('@tap="publish"', '@tap="openPublish"'))).toBe(false);
     expect(workspacePublisherBound(original.replace("await publisher.publish()", "await disconnectedPublisher()"))).toBe(false);
   });
-  it("keeps all 138 actual page registrations and both runtime route allowlists synchronized", () => {
-    const pages = JSON.parse(client("pages.json")).pages.map((row: { path: string }) => "/" + row.path);
-    expect(pages).toHaveLength(138); expect(new Set(pages).size).toBe(138);
+  it("preserves the exact reviewed138-page baseline through only the sign/points additions and synchronizes both live route allowlists", () => {
+    const raw = client("pages.json"), previous = reverseSignCentreManifest(reversePointsCentreManifest(raw));
+    const historical = JSON.parse(previous).pages.map((row: { path: string }) => "/" + row.path);
+    const pages = JSON.parse(raw).pages.map((row: { path: string }) => "/" + row.path);
+    expect(historical).toHaveLength(138); expect(new Set(historical).size).toBe(138);
+    expect(pages).toHaveLength(historical.length + 2); expect(new Set(pages).size).toBe(pages.length);
     expect([...clientPages].sort()).toEqual(pages.slice().sort()); expect([...serverPages].sort()).toEqual(pages.slice().sort());
     for (const name of legacy) expect(pages).toContain(legacyPath(name));
     expect(pages).toContain("/pages/discover/discoverDetails/index"); expect(pages).toContain("/pages/discover/workspace");

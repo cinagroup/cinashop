@@ -271,7 +271,7 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
       ["get", "/integral/list", "integralList"], ["get", "/extract/bank", "extractBank"],
       ["post", "/spread/order", "spreadOrder"], ["get", "/spread/count/:type", "spreadCount"],
       ["get", "/brokerage_rank", "brokerageRank"], ["get", "/rank", "spreadRank"],
-    ]) expect(source).toContain(`v1Routes.${method}("${path}", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.${name})`);
+    ]) expect(source).toContain(`v1Routes.${method}("${path}", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.${name})`);
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     app.get("/integral/list", controller.integralList);
     const response = await app.request("/integral/list?uid=7", {}, env);

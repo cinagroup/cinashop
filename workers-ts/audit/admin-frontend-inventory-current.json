@@ -3738,6 +3738,7 @@
       "src/pages/system/PcBannerList.vue",
       "src/pages/system/SystemList.vue",
       "src/pages/user/PaidMembership.vue",
+      "src/pages/user/UserDirectoryOptionPicker.vue",
       "src/pages/user/UserGroups.vue",
       "src/pages/user/UserList.vue"
     ],
@@ -4937,7 +4938,8 @@
       "src/pages/shipping/ShippingTemplateEditor.vue",
       "src/pages/statistic/components/BalanceStatisticsPanel.vue",
       "src/pages/statistic/components/TradeStatisticsPanel.vue",
-      "src/pages/statistic/components/UserStatisticsPanel.vue"
+      "src/pages/statistic/components/UserStatisticsPanel.vue",
+      "src/pages/user/UserDirectoryOptionPicker.vue"
     ],
     "duplicatePaths": [],
     "duplicateComponents": [
@@ -4979,7 +4981,7 @@
       "user": 2
     },
     "counts": {
-      "pageVueFiles": 138,
+      "pageVueFiles": 139,
       "routeRecords": 117,
       "businessPageRouteRecords": 116,
       "distinctRoutedPageComponents": 115,
@@ -4987,7 +4989,7 @@
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,
       "unresolvedComponents": 0,
-      "unroutedPageFiles": 23
+      "unroutedPageFiles": 24
     }
   }
 }

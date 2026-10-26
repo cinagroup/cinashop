@@ -1,0 +1,128 @@
+{
+  "schema": "cinashop.customer-points-centre.original-assets.v1",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "path": "view/uniapp/pages/users/user_integral/index.vue",
+      "bytes": 11527,
+      "sha256": "b77e571a649353b64b349c97e0fd525d8f157d882d5974cb4a62fe55c4454156"
+    },
+    {
+      "path": "view/uniapp/pages/users/user_integral_detail/index.vue",
+      "bytes": 3285,
+      "sha256": "a3f8fefc76fd55311aef6d47784e7c690b21147a6ea449c13eacce36b25a6c10"
+    },
+    {
+      "path": "view/uniapp/pages/activity/points_mall/index.vue",
+      "bytes": 11504,
+      "sha256": "c4d26fc0391e2a6f3f4607a330d601f10d2e9592ca8b0a2e6b1f52979d1de2c8"
+    },
+    {
+      "path": "app/services/user/UserSignServices.php",
+      "bytes": 21751,
+      "sha256": "54652077bf8cc830aa030008ec3d78265d8971c4b1e31af863783b529599fd08"
+    },
+    {
+      "path": "app/services/user/UserBillServices.php",
+      "bytes": 19205,
+      "sha256": "64fe87aaddde876425ecf474837406fd824b14c58b2a5bd36926bb04a13d7f49"
+    },
+    {
+      "path": "app/services/user/UserIntegralServices.php",
+      "bytes": 9246,
+      "sha256": "9f31307fd287a25587cf38d4bdb3b674902b254b29286ab1479062adf248d5fe"
+    }
+  ],
+  "assets": [
+    {
+      "source": "view/uniapp/pages/users/static/integral.png",
+      "bytes": 2125,
+      "width": 38,
+      "height": 37,
+      "sha256": "248327d09b932064b43836e7453218f37366856ae9ab9dbdb88c7eec1a87abd3",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/integral.png",
+      "target": "view/uniapp-ts/src/static/php-points/integral.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/integralBg.png",
+      "bytes": 1380,
+      "width": 710,
+      "height": 240,
+      "sha256": "e87458a66c45caf9fe6ad8941ae78b733ded27bcb033d8ef28a6ce11aedde9da",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/integralBg.png",
+      "target": "view/uniapp-ts/src/static/php-points/integralBg.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/integralBg01.png",
+      "bytes": 5226,
+      "width": 212,
+      "height": 298,
+      "sha256": "6a8a7d4c7355e75bbcf95e08992a66257a4e91dbdb148a21001116e652875154",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/integralBg01.png",
+      "target": "view/uniapp-ts/src/static/php-points/integralBg01.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/integralBg02.png",
+      "bytes": 5852,
+      "width": 212,
+      "height": 302,
+      "sha256": "cc4bb0d9a810b68e0a17f2f4a43287c8b5d5f9b126da025b4815a3cca8960004",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/integralBg02.png",
+      "target": "view/uniapp-ts/src/static/php-points/integralBg02.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/integralBg03.png",
+      "bytes": 4196,
+      "width": 212,
+      "height": 294,
+      "sha256": "10cf775c9d821c07e027a98992203222eeddde232341c954cea3cbd716e81d6f",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/integralBg03.png",
+      "target": "view/uniapp-ts/src/static/php-points/integralBg03.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/goumai.png",
+      "bytes": 3114,
+      "width": 88,
+      "height": 88,
+      "sha256": "c519b105cbd5be8d285825b65f7afb7b4e821c80eb8830dde696ef4e3b4a61c6",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/goumai.png",
+      "target": "view/uniapp-ts/src/static/php-points/goumai.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/qiandao.png",
+      "bytes": 5982,
+      "width": 88,
+      "height": 88,
+      "sha256": "c415838da1651ea32af655eace649195f43b2efc20eee033486aa91ae9caae61",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/qiandao.png",
+      "target": "view/uniapp-ts/src/static/php-points/qiandao.png"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/choujiang.png",
+      "bytes": 6583,
+      "width": 88,
+      "height": 88,
+      "sha256": "b4bf7f24d62c768569b5e5ddd20cba729e94e934dd88a78e70b08188f01c160f",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/choujiang.png",
+      "target": "view/uniapp-ts/src/static/php-points/choujiang.png"
+    },
+    {
+      "source": "public/statics/images/balance_species.png",
+      "bytes": 24042,
+      "width": 412,
+      "height": 378,
+      "sha256": "070e97d641435528ba408ef921e1dddb802057deac1161993ee11e0f10195401",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/balance_species.png",
+      "target": "view/uniapp-ts/src/static/php-points/balance_species.png"
+    },
+    {
+      "source": "public/statics/images/noOrder.gif",
+      "bytes": 138859,
+      "width": 440,
+      "height": 360,
+      "sha256": "6b56971c5aa9c69b13740fa361812a327a2e96ec74d7f51d93cf702e5c4bcceb",
+      "suggested_target": "view/uniapp-ts/src/static/php-points/noOrder.gif",
+      "target": "view/uniapp-ts/src/static/php-points/noOrder.gif"
+    }
+  ]
+}

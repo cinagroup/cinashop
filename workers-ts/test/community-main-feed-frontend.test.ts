@@ -1,3 +1,5 @@
+import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
+import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -167,9 +169,12 @@ describe('complete community main feed frontend wiring', () => {
       {feed:'featured',author_id:'self'},{feed:'featured',publish:'1'},{feed:'featured',topic_id:'9'},{feed:['featured']}, {feed:'featured',edit_id:'31'}])
       expect(() => parseCommunityWorkspaceEntry(input)).toThrow();
   });
-  it('registers the exact old main bridge and both real pull-refresh roots in a synchronized 138-page manifest', () => {
-    const manifest = JSON.parse(read('pages.json')) as {pages:Array<{path:string;style?:{enablePullDownRefresh?:boolean}}>};
-    const pages = manifest.pages.map(row=>'/'+row.path); expect(pages).toHaveLength(138); expect(new Set(pages).size).toBe(138);
+  it('registers the exact old main bridge and both real pull-refresh roots while preserving the reviewed138-page manifest before exact sign/points additions', () => {
+    const raw = read('pages.json'), previous = reverseSignCentreManifest(reversePointsCentreManifest(raw));
+    const manifest = JSON.parse(raw) as {pages:Array<{path:string;style?:{enablePullDownRefresh?:boolean}}>};
+    const historical = (JSON.parse(previous) as typeof manifest).pages.map(row=>'/'+row.path);
+    const pages = manifest.pages.map(row=>'/'+row.path); expect(historical).toHaveLength(138); expect(new Set(historical).size).toBe(138);
+    expect(pages).toHaveLength(historical.length + 2); expect(new Set(pages).size).toBe(pages.length);
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(pages.slice().sort()); expect([...serverPages].sort()).toEqual(pages.slice().sort());
     expect(pages).toContain('/pages/discoverIndex/index');
     for (const path of ['pages/discover/index','pages/discover/workspace']) expect(manifest.pages.find(row=>row.path===path)?.style?.enablePullDownRefresh).toBe(true);

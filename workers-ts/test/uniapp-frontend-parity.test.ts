@@ -1,3 +1,4 @@
+import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -55,7 +56,7 @@ const footerBindingRaw = readFileSync('audit/diy-footer-source-binding-20261022.
 const footerBinding = JSON.parse(footerBindingRaw) as { sources:Array<RouteSourceFollowup & {file:string}>; native_icon_sources:Array<{file:string;sha256:string;php_sha256:string;pagePath:string;slot:'iconPath'|'selectedIconPath'}> };
 // Exact footer inverse reconstructs the pre-footer manifest; all dated ledgers stay immutable.
 function historicalFooterManifest(manifest: string): string {
-  manifest = reverseSignCentreManifest(manifest);
+  manifest = reverseSignCentreManifest(reversePointsCentreManifest(manifest));
   expect(createHash('sha256').update(footerBindingRaw).digest('hex')).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
   const proof = footerBinding.sources.find(row=>row.file==='view/uniapp-ts/src/pages.json');
   expect(proof).toBeDefined();
@@ -98,7 +99,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   it('pins the complete current manifest and all ten real native selected/unselected icon assets without altering historical ledgers', () => {
     const manifest = readFileSync('../view/uniapp-ts/src/pages.json','utf8').replace(/\r\n/g,'\n');
     const prior = historicalFooterManifest(manifest), current = JSON.parse(manifest), previous = JSON.parse(prior);
-    expect(current.pages.filter((row: {path:string}) => row.path !== 'pages/user/signRecords')).toEqual(previous.pages); expect(current.tabBar.list).toHaveLength(5);
+    expect(current.pages.filter((row: {path:string}) => !['pages/user/signRecords','pages/user/points'].includes(row.path))).toEqual(previous.pages); expect(current.tabBar.list).toHaveLength(5);
     expect(footerBinding.native_icon_sources).toHaveLength(10);
     const slots = current.tabBar.list.flatMap((row:{pagePath:string;iconPath:string;selectedIconPath:string})=>['iconPath','selectedIconPath'].map(slot=>({pagePath:row.pagePath,slot,file:'view/uniapp-ts/src/'+row[slot as 'iconPath'|'selectedIconPath']})));
     expect(slots).toEqual(footerBinding.native_icon_sources.map(({pagePath,slot,file})=>({pagePath,slot,file})));
@@ -130,7 +131,7 @@ describe("UniApp manifest and legacy-navigation parity", () => {
     expect([...REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect([...SERVER_REGISTERED_PAGE_ROUTES].sort()).toEqual(manifestRoutes);
     expect(currentParity.counting.target.logicalManifestRouteRecords).toBe(125);
-    expect(manifestRoutes).toHaveLength(139);
+    expect(manifestRoutes).toHaveLength(140);
     expect(manifestRoutes.filter(route => route === memberCodeRoute)).toHaveLength(1);
     const cashierRecords = [
       { path: '/pages/customer-work/cashier', title: '次卡现金收银' },
