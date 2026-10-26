@@ -396,6 +396,12 @@
       }
     },
     {
+      "path": "pages/user/signRecords",
+      "style": {
+        "navigationBarTitleText": "签到记录"
+      }
+    },
+    {
       "path": "pages/user/profile",
       "style": {
         "navigationBarTitleText": "个人资料"

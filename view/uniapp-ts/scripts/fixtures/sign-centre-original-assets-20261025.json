@@ -1,0 +1,105 @@
+{
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "assets": [
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/sign-bg.png",
+      "sha256": "d8a54b2a1cda5271b6c7075c3f1987418af7a88debdf999f71f70f4c5f71c08f",
+      "bytes": 103146,
+      "width": 750,
+      "height": 1056,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-bg.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/sign-total.png",
+      "sha256": "d1a6266cc4d340d75c3092a6eb911719f38cf69633265c949ef166c8a3cabfe8",
+      "bytes": 8645,
+      "width": 378,
+      "height": 275,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-total.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/sign-bubble.png",
+      "sha256": "a1d9e0a14ff221b6571c8eedcb2fb155326a24a09951862ca194c6b1f4d2673c",
+      "bytes": 5277,
+      "width": 96,
+      "height": 99,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-bubble.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/sign-btn-bg.png",
+      "sha256": "2156d047a18bde4fc2d17c7c171b2ff3ffcdf178f22b23be70e50f6fd3d668bb",
+      "bytes": 12002,
+      "width": 438,
+      "height": 160,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-btn-bg.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/sign-disabled-btn-bg.png",
+      "sha256": "8034822e89a45fd7d252328ca5708b9c2735318f350eb0480976f765e959e42c",
+      "bytes": 8543,
+      "width": 438,
+      "height": 160,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-disabled-btn-bg.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "public/statics/images/users/hand.png",
+      "sha256": "24e51aa032b9de104f21daa120982420b44dd6816a3aa9e181edb464dc58e462",
+      "bytes": 3942,
+      "width": 108,
+      "height": 116,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/hand.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "view/uniapp/pages/users/static/sign-today.png",
+      "sha256": "767b96cf632973e3867f7a91da1aeea831b8d8a6749c9e535d2870442012f296",
+      "bytes": 2191,
+      "width": 48,
+      "height": 48,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-today.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "view/uniapp/pages/users/static/sign-record.png",
+      "sha256": "83f4a731c7b302d02a918ab86739d2ea67ad40c7264f0e778118ebc22005bc7f",
+      "bytes": 3128,
+      "width": 80,
+      "height": 80,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-record.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "view/uniapp/static/images/sign-icon-01.png",
+      "sha256": "b28410f2efe8d67e7af6b06af1f422acc41b0e26868ee4966b02d3c78ac3987e",
+      "bytes": 2660,
+      "width": 49,
+      "height": 50,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-icon-01.png"
+    },
+    {
+      "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "file": "view/uniapp/static/images/sign-icon-02.png",
+      "sha256": "70907beea1bfa39a504d5e2908cabb7ac1ec726c063ae3e4435b773953e9949f",
+      "bytes": 1899,
+      "width": 48,
+      "height": 48,
+      "reuse": "Copy exact PNG bytes into local Uni static assets; original PHP CSS references are source evidence, not a claimed screenshot. No CDN/provider request required.",
+      "target": "src/static/php-sign/sign-icon-02.png"
+    }
+  ]
+}

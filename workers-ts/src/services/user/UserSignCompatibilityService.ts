@@ -20,11 +20,13 @@ const POSTGRES_INT_MAX = 2_147_483_647;
 const SIGN_COMPAT_CONFIG_KEYS = [
   "sign_mode",
   "sign_give_point",
+  "sign_in_integral",
   "sign_give_exp",
   "member_func_status",
   "member_card_status",
   "sign_remind",
   "sign_status",
+  "sign_in_switch",
   "integral_effective_status",
   "integral_effective_time",
   "store_brokerage_statu",
@@ -153,12 +155,15 @@ async function loadConfig(db: DbClient): Promise<CompatConfig> {
   const rawSignMode = configIntegerWithPresence(values, "sign_mode", 1);
   return {
     signMode: rawSignMode === 0 ? 0 : 1,
-    basePoint: nonNegativeConfig(values.sign_give_point, 0),
+    // Match sign/status: an existing primary, including zero/empty, wins.
+    basePoint: nonNegativeConfig(Object.hasOwn(values, "sign_give_point")
+      ? values.sign_give_point : values.sign_in_integral, 0),
     baseExp: nonNegativeConfig(values.sign_give_exp, 0),
     memberFunctionEnabled: configIntegerWithPresence(values, "member_func_status", 1) === 1,
     memberCardEnabled: configIntegerWithPresence(values, "member_card_status", 1) === 1,
     signRemindSwitch: parseConfigInteger(values.sign_remind, 0),
-    signStatus: parseConfigInteger(values.sign_status, 0),
+    signStatus: configIntegerWithPresence(values, "sign_status",
+      parseConfigInteger(values.sign_in_switch, 0)),
     integralEffectiveStatus: parseConfigInteger(values.integral_effective_status, 0),
     integralEffectiveTime: configIntegerWithPresence(values, "integral_effective_time", 3),
     brokerageStatus: parseConfigInteger(values.store_brokerage_statu, 0),

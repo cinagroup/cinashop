@@ -1,0 +1,11 @@
+{
+  "schema": "cinashop.customer-sign-centre-manifest-increment.v1",
+  "base_ref": "b3760bf8b10f58913afaeafc04ebb133f09de967",
+  "file": "view/uniapp-ts/src/pages.json",
+  "before_sha256": "2de199bfb091f67ec6473fa4d90697f8269aa1d6662b77de900893371b66aaf9",
+  "after_sha256": "f1ca432d16d99225077715b446405ca8dadc50a1e38df92b49f3bfdb634e7560",
+  "before_bytes": 19783,
+  "after_bytes": 19910,
+  "inserted_line": 398,
+  "inserted_source": "    {\n      \"path\": \"pages/user/signRecords\",\n      \"style\": {\n        \"navigationBarTitleText\": \"签到记录\"\n      }\n    },\n"
+}

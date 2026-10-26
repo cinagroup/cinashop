@@ -67,7 +67,8 @@
     "audit:diy-community-author-browser": "vitest run --config vitest.diy-community-author-browser.config.ts",
     "test:diy-community-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-community-author-media.test.ts test/diy-community-author-postgres.test.ts",
     "test:cart-management:browser": "vitest run --config vitest.cart-management-browser.config.ts --maxWorkers=1",
-    "test:admin-user-filters:browser": "vitest run --config vitest.admin-user-filters-browser.config.ts --maxWorkers=1"
+    "test:admin-user-filters:browser": "vitest run --config vitest.admin-user-filters-browser.config.ts --maxWorkers=1",
+    "test:customer-sign-centre:browser": "vitest run --config vitest.customer-sign-centre-browser.config.ts --maxWorkers=1"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
