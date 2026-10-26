@@ -1,6 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { errorHandler } from '../src/middleware/error';
+import { md5 } from '../src/utils/jwt';
 import { financePostgres } from './helpers/financePostgres';
 import { createContainerFromDb } from '../src/lib/di';
 import type { AppVariables, Env } from '../src/env';
@@ -8,7 +10,7 @@ import { UserLevelService } from '../src/services/user/UserLevelService';
 import { StoreProductService } from '../src/services/product/StoreProductService';
 import { adminLevelSave, adminLevelDel } from '../src/controllers/api/v1/AdminCrudController';
 import { storeProduct, storeProductAttrValue, storeProductRelation, storeProductEnsure,
-  systemUserLevel, user, userRelation, systemConfig, memberRight, storePromotions,
+  systemUserLevel, userLevel, systemAdmin, systemRole, systemMenus, user, userRelation, systemConfig, memberRight, storePromotions,
   storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts } from '../src/models/schema';
 
 describe('level definitions follow database authority after admin edits', () => {
@@ -30,16 +32,21 @@ describe('level definitions follow database authority after admin edits', () => 
     delete: (key: string) => remove(key),
   } } as Env;
   beforeAll(async () => {
-    f = await financePostgres([systemUserLevel, user, userRelation, storeProduct,
+    f = await financePostgres([systemUserLevel, userLevel, systemAdmin, systemRole, systemMenus, user, userRelation, storeProduct,
       storeProductAttrValue, storeProductRelation, storeProductEnsure, systemConfig, memberRight,
-      storePromotions, storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts]);
+      storePromotions, storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts], { namespace: 'public' });
     container = createContainerFromDb(f.db);
     levels = new UserLevelService(container, env);
     products = new StoreProductService(container, env);
     // Real admin controllers/SQL, deliberately no production authentication.
     // Authorization and complete route-registration coverage are separate gates.
     app = new Hono();
-    app.use('*', async (c, next) => { c.set('container', container); await next(); });
+    app.onError(errorHandler);
+    app.use('*', async (c, next) => {
+      c.set('container', container); c.set('adminId', 100);
+      c.set('socketAuthVersion', md5('cache-fixture-admin'));
+      c.set('socketTokenExp', Math.floor(Date.now()/1000)+3600); await next();
+    });
     app.post('/adminapi/level/save', adminLevelSave);
     app.post('/api/admin/level/save', adminLevelSave);
     app.delete('/adminapi/level/del/:id', adminLevelDel);
@@ -48,6 +55,7 @@ describe('level definitions follow database authority after admin edits', () => 
   afterAll(async () => { await f?.close(); }, 60_000);
   beforeEach(async () => {
     await f.reset(); kv.clear(); vi.clearAllMocks();
+    await f.db.insert(systemAdmin).values({id:100,account:'cache-level-admin',pwd:'cache-fixture-admin',level:0,status:1,adminType:1});
     await f.db.insert(memberRight).values({ id: 1, rightType: 'vip_price', status: 1, number: 1 });
     await f.db.insert(systemUserLevel).values([
       { id: 1, name: 'Original level', grade: 1, discount: '80', isShow: 1 },
@@ -93,13 +101,21 @@ describe('level definitions follow database authority after admin edits', () => 
     await expectCurrentQuote('level', '75.00', 'Original level');
   });
 
-  it.each(['/adminapi/level/del/1', '/api/admin/level/del/1'])('rejects an old cached definition after %s', async (path) => {
+  it.each(['/adminapi/level/del/1', '/api/admin/level/del/1'])('retains an occupied cached definition after PHP-compatible refusal at %s', async (path) => {
     await levels.getLevel(1);
+    const before = await f.db.select().from(systemUserLevel);
+    const response = await app.request(path, { method: 'DELETE' }, env);
+    expect(await response.json()).toMatchObject({ status: 400 });
+    expect(await f.db.select().from(systemUserLevel)).toEqual(before);
+    await expectCurrentQuote('level', '80.00', 'Original level');
+    expect(await levels.getLevel(1)).toMatchObject({ id: 1 });
+  });
+  it.each(['/adminapi/level/del/2', '/api/admin/level/del/2'])('rejects an unoccupied cached definition after %s', async (path) => {
+    await levels.getLevel(2);
     const response = await app.request(path, { method: 'DELETE' }, env);
     expect(await response.json()).toMatchObject({ status: 200 });
-    expect(await levels.getLevel(1)).toBeNull();
-    await expectCurrentQuote('member', '90.00', '');
-    expect((await levels.userLevelInfo(11)).level).toBeNull();
+    expect(await levels.getLevel(2)).toBeNull();
+    await expectCurrentQuote('level', '80.00', 'Original level');
   });
 
   it('does not use a cached definition for a physically missing row', async () => {

@@ -67,6 +67,7 @@ import {
   type AdminMobileUserActor,
 } from "@/services/admin/AdminMobileUserService";
 import { readBoundedJsonObject } from "@/utils/request-body";
+import { AdminLevelDefinitionService, readAdminLevelDefinitionBody } from "@/services/admin/AdminLevelDefinitionService";
 import { retireBargain } from "@/services/activity/BargainRetirementService";
 import { saveBargain, setBargainStatus } from "@/services/activity/BargainAdminService";
 import { recycleAlias } from "@/controllers/api/v1/AdminProductRecycleController";
@@ -1668,77 +1669,27 @@ export async function adminBillList(c: C) {
 // 会员等级管理 (M18)
 // ═══════════════════════════════════════════════════════════
 
-/** GET /api/admin/level/list — 会员等级列表 */
+/** GET /api/admin/level/list — legacy array or explicit paged catalogue. */
 export async function adminLevelList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(systemUserLevel)
-    .where(sql`${systemUserLevel.isDel} = 0`)
-    .orderBy(sql`${systemUserLevel.grade} ASC`);
-  return jsonOk(c, rows);
+  const actor = systemAuthorityActor(c);
+  const result = await new AdminLevelDefinitionService(c.get("container"), c.env)
+    .list(new URL(c.req.url).searchParams, actor);
+  return jsonOk(c, result);
 }
 
-/** POST /api/admin/level/save — 新增/编辑会员等级 */
+/** POST /api/admin/level/save — exact partial legacy patches and full author form. */
 export async function adminLevelSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    name?: string;
-    grade?: number;
-    discount?: number;
-    exp_num?: number;
-    is_show?: number;
-    image?: string;
-    color?: string;
-    explain?: string;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-
-  if (body.id) {
-    const updates: Record<string, unknown> = {};
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.grade !== undefined) updates.grade = body.grade;
-    if (body.discount !== undefined) updates.discount = body.discount;
-    if (body.exp_num !== undefined) updates.expNum = body.exp_num;
-    if (body.is_show !== undefined) updates.isShow = body.is_show;
-    if (body.image !== undefined) updates.image = body.image;
-    if (body.color !== undefined) updates.color = body.color;
-    if (body.explain !== undefined) updates.explain = body.explain;
-    await container.db.update(systemUserLevel).set(updates).where(eq(systemUserLevel.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const row = await container.db
-    .insert(systemUserLevel)
-    .values({
-      name: body.name ?? "新等级",
-      grade: body.grade ?? 0,
-      discount: (body.discount ?? 100).toFixed(2),
-      expNum: body.exp_num ?? 0,
-      isShow: body.is_show ?? 1,
-      image: body.image ?? "",
-      color: body.color ?? "",
-      explain: body.explain ?? "",
-      isDel: 0,
-      addTime: now,
-    })
-    .returning({ id: systemUserLevel.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
+  const actor = systemAuthorityActor(c);
+  const result = await new AdminLevelDefinitionService(c.get("container"), c.env)
+    .save(await readAdminLevelDefinitionBody(c.req.raw), actor);
+  return jsonOk(c, result, "保存成功");
 }
 
-/** DELETE /api/admin/level/del/:id — 删除会员等级 */
+/** DELETE /api/admin/level/del/:id — occupied definitions cannot be removed. */
 export async function adminLevelDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-  await container.db.update(systemUserLevel).set({ isDel: 1 }).where(eq(systemUserLevel.id, id));
-  return jsonOk(c, null, "删除成功");
+  const actor = systemAuthorityActor(c);
+  return jsonOk(c, await new AdminLevelDefinitionService(c.get("container"), c.env)
+    .remove(c.req.param("id"), actor), "删除成功");
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -562,7 +562,12 @@ export async function detectUserLevel(
         sql`${systemUserLevel.expNum}::numeric <= ${exp}::numeric`,
       ),
     )
-    .orderBy(asc(systemUserLevel.grade), asc(systemUserLevel.id));
+    // Match Admin definition row locking in stable ID order. The shared locks
+    // remain in the caller transaction through the actual grant/user update;
+    // a concurrent soft-delete must finish before this predicate is adopted.
+    .orderBy(asc(systemUserLevel.id))
+    .for("share");
+  levels.sort((a, b) => a.grade - b.grade || a.id - b.id);
   if (!levels.length) return;
   const existing = await tx
     .select()

@@ -68,6 +68,7 @@
     "test:diy-community-author": "vitest run --config vitest.config.ts --maxWorkers=1 test/diy-community-author-media.test.ts test/diy-community-author-postgres.test.ts",
     "test:cart-management:browser": "vitest run --config vitest.cart-management-browser.config.ts --maxWorkers=1",
     "test:admin-user-filters:browser": "vitest run --config vitest.admin-user-filters-browser.config.ts --maxWorkers=1",
+    "test:admin-level-definitions:browser": "vitest run --config vitest.admin-level-definitions-browser.config.ts --maxWorkers=1",
     "test:admin-member-packages:browser": "vitest run --config vitest.admin-member-packages-browser.config.ts --maxWorkers=1",
     "test:customer-sign-centre:browser": "vitest run --config vitest.customer-sign-centre-browser.config.ts --maxWorkers=1",
     "test:customer-points-centre:browser": "vitest run --config vitest.customer-points-centre-browser.config.ts --maxWorkers=1",
