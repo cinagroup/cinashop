@@ -17,7 +17,7 @@ beforeAll(async () => {
       export { default as Page } from './src/pages/user/PaidMembership.vue';
       export { default as request } from './src/utils/request';
       export * as api from './src/api/membership';
-      export { createRenderer, nextTick } from 'vue'; export * as messages from 'element-plus';
+      export { createRenderer, nextTick } from 'vue'; export { createPinia } from 'pinia'; export * as messages from 'element-plus';
     ` }, alias: { '@': resolve(root, 'src') }, define: { 'import.meta.env.DEV': 'false' },
     bundle: true, write: false, platform: 'browser', format: 'esm',
     plugins: [{ name: 'member-record-runtime', setup(builder) {
@@ -67,7 +67,7 @@ async function mount() {
     createComment: (text: string) => ({ text }), insert(node: any, parent: any) { node.parent = parent; (parent.children ??= []).push(node); },
     remove() {}, parentNode: (node: any) => node.parent, nextSibling: () => null, patchProp() {}, setText() {}, setElementText() {} });
   const app = renderer.createApp({ setup(props: unknown, context: unknown) { view = runtime.Page.setup(props, context); return () => null; } });
-  app.mount({ children: [] }); await flush();
+  app.use(runtime.createPinia()); app.mount({ children: [] }); await flush();
   return { calls, view, close: () => app.unmount() };
 }
 

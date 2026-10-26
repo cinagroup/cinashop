@@ -211,12 +211,16 @@ export async function apiSetMembershipCardStatus(card: Pick<MembershipCard, "id"
   }));
 }
 
-export async function apiMembershipPlans(params: Record<string, unknown> = {}): Promise<{ list: MembershipPlan[]; count: number }> {
-  if (previewMode) return pageResult(previewPlans.filter((row) => !row.is_del).map((row) => ({ ...row })), params);
-  return getData(request.get<{ list: MembershipPlan[]; count: number }>("/member/ship", { params }));
+export async function apiMembershipPlans(params: Record<string, unknown> = {}, signal?: AbortSignal): Promise<{ list: MembershipPlan[]; count: number }> {
+  if (previewMode) {
+    const includeDeleted = String(params.include_deleted ?? params.includeDeleted ?? '0') === '1';
+    return pageResult(previewPlans.filter(row => includeDeleted || row.is_del === 0)
+      .sort((a, b) => b.sort - a.sort || a.id - b.id).map(row => ({ ...row })), params);
+  }
+  return getData(request.get<{ list: MembershipPlan[]; count: number }>("/member/ship", { params, signal }));
 }
 
-export async function apiSaveMembershipPlan(id: number, data: Record<string, unknown>) {
+export async function apiSaveMembershipPlan(id: number, data: Record<string, unknown>): Promise<{ id: number }> {
   if (previewMode) {
     const existing = previewPlans.find((row) => row.id === id);
     if (existing) Object.assign(existing, data);
@@ -226,7 +230,7 @@ export async function apiSaveMembershipPlan(id: number, data: Record<string, unk
   return getData(request.post<{ id: number }>(`/member_ship/save/${id}`, data));
 }
 
-export async function apiSetMembershipPlanStatus(id: number, isDel: number) {
+export async function apiSetMembershipPlanStatus(id: number, isDel: number): Promise<{ id: number }> {
   if (previewMode) {
     const row = previewPlans.find((item) => item.id === id);
     if (row) row.is_del = isDel;

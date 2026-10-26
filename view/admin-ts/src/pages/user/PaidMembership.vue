@@ -18,7 +18,7 @@
     />
 
     <section class="summary-grid" aria-label="付费会员运营概览">
-      <el-card shadow="never"><span>启用套餐</span><strong>{{ activePlanCount }}</strong></el-card>
+      <el-card shadow="never"><span>本页启用套餐</span><strong>{{ activePlanCount }}</strong></el-card>
       <el-card shadow="never"><span>卡片库存</span><strong>{{ batchTotals.cards }}</strong></el-card>
       <el-card shadow="never"><span>已兑换</span><strong>{{ batchTotals.used }}</strong></el-card>
       <el-card shadow="never"><span>会员记录</span><strong>{{ recordCount }}</strong></el-card>
@@ -28,10 +28,12 @@
       <el-tabs v-model="activeTab" @tab-change="loadTab">
         <el-tab-pane label="会员套餐" name="plans">
           <div class="toolbar">
-            <div><strong>会员套餐</strong><p>免费、周期与永久会员的运营目录</p></div>
-            <el-button type="primary" @click="openPlan()">新增套餐</el-button>
+            <div><strong>会员套餐</strong><p>免费、周期与永久会员；包含停用套餐，可重新启用</p></div>
+            <el-button type="primary" :disabled="!canManagePlans || planBusy" @click="openPlan()">新增套餐</el-button>
           </div>
-          <el-table :data="plans" v-loading="planLoading" stripe row-key="id" empty-text="暂无会员套餐">
+          <el-alert v-if="!canViewPlans" title="暂无查看会员套餐权限" type="info" :closable="false" />
+          <el-alert v-if="planError && canViewPlans" :title="planError" type="error" :closable="false" class="plan-error"><el-button link type="primary" :disabled="planBusy" @click="loadPlans()">重新加载套餐</el-button></el-alert>
+          <el-table v-if="canViewPlans" :data="plans" v-loading="planLoading" stripe row-key="id" empty-text="暂无会员套餐" data-membership-plan-table>
             <el-table-column label="套餐" min-width="190">
               <template #default="{ row }"><strong>{{ row.title }}</strong><div class="sub mono">#{{ row.id }} · {{ planTypeLabel(row.type) }}</div></template>
             </el-table-column>
@@ -39,10 +41,11 @@
             <el-table-column label="价格" width="150"><template #default="{ row }"><strong>¥{{ row.pre_price }}</strong><div class="sub line-through">¥{{ row.price }}</div></template></el-table-column>
             <el-table-column label="推荐" width="90"><template #default="{ row }"><el-tag v-if="row.is_label" type="warning">推荐</el-tag><span v-else class="sub">—</span></template></el-table-column>
             <el-table-column label="状态" width="110">
-              <template #default="{ row }"><el-switch :model-value="row.is_del === 0" active-text="启用" inactive-text="停用" inline-prompt @change="togglePlan(row, $event)" /></template>
+              <template #default="{ row }"><el-switch :model-value="row.is_del === 0" active-text="启用" inactive-text="停用" inline-prompt :disabled="!canManagePlans || planBusy" :loading="statusSavingId === row.id" :aria-label="`${row.title}：${row.is_del === 0 ? '停用' : '启用'}`" @change="togglePlan(row, $event)" /></template>
             </el-table-column>
-            <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openPlan(row)">编辑</el-button></template></el-table-column>
+            <el-table-column label="操作" width="100" fixed="right"><template #default="{ row }"><el-button link type="primary" :disabled="!canManagePlans || planBusy" @click="openPlan(row)">编辑</el-button></template></el-table-column>
           </el-table>
+          <div v-if="canViewPlans" class="pager" data-membership-plan-pager><el-pagination :current-page="planPage" :page-size="20" layout="prev, pager, next, total" :total="planCount" :disabled="planBusy" @current-change="loadPlans" /></div>
         </el-tab-pane>
 
         <el-tab-pane label="卡批次" name="batches">
@@ -110,7 +113,7 @@
     </el-card>
 
     <el-dialog v-model="planDialog" :title="planForm.id ? '编辑会员套餐' : '新增会员套餐'" width="min(560px, 94vw)" append-to-body>
-      <el-form label-position="top">
+      <el-form label-position="top" :disabled="planSaving || !canManagePlans">
         <div class="form-grid">
           <el-form-item label="套餐名称"><el-input v-model="planForm.title" maxlength="200" /></el-form-item>
           <el-form-item label="套餐类型"><el-select v-model="planForm.type" :disabled="planForm.id > 0"><el-option v-for="item in planTypes" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
@@ -121,7 +124,7 @@
         </div>
         <el-form-item><el-checkbox v-model="planForm.is_label" :true-value="1" :false-value="0">标记为推荐套餐</el-checkbox></el-form-item>
       </el-form>
-      <template #footer><el-button @click="planDialog = false">取消</el-button><el-button type="primary" :loading="planSaving" @click="savePlan">保存</el-button></template>
+      <template #footer><el-button @click="planDialog = false">取消</el-button><el-button type="primary" :loading="planSaving" :disabled="!canManagePlans" @click="savePlan">保存</el-button></template>
     </el-dialog>
 
     <el-dialog v-model="batchDialog" :title="batchForm.id ? '编辑会员卡批次' : '新建批次并制卡'" width="min(600px, 94vw)" append-to-body>
@@ -188,26 +191,23 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useMembershipPlanCatalogue } from "@/composables/useMembershipPlanCatalogue";
 import {
   apiMembershipScan,
   apiMembershipAgreement,
   apiMembershipBatches,
   apiMembershipCards,
-  apiMembershipPlans,
   apiMembershipRecordPlanOptions,
   apiMembershipRecords,
   apiMembershipRights,
   apiSaveMembershipAgreement,
   apiSaveMembershipBatch,
-  apiSaveMembershipPlan,
   apiSaveMembershipRight,
   apiSetMembershipBatchStatus,
   apiSetMembershipCardStatus,
-  apiSetMembershipPlanStatus,
   type IssuedMembershipCard,
   type MembershipBatch,
   type MembershipCard,
-  type MembershipPlan,
   type MembershipRecord,
   type MembershipRecordFilterDraft,
   type MembershipRight,
@@ -217,12 +217,12 @@ import {
 
 type TabName = "plans" | "batches" | "rights" | "records" | "agreement";
 const activeTab = ref<TabName>("plans");
-const plans = ref<MembershipPlan[]>([]);
+const { plans, planPage, planCount, planError, planLoading, planSaving, statusSavingId, planDialog, planForm,
+  canViewPlans, canManagePlans, planBusy, activePlanCount, loadPlans, openPlan, savePlan, togglePlan } = useMembershipPlanCatalogue();
 const batches = ref<MembershipBatch[]>([]);
 const rights = ref<MembershipRight[]>([]);
 const records = ref<MembershipRecord[]>([]);
 const cards = ref<MembershipCard[]>([]);
-const planLoading = ref(false);
 const batchLoading = ref(false);
 const rightLoading = ref(false);
 const recordLoading = ref(false);
@@ -240,7 +240,6 @@ const selectedBatch = ref<MembershipBatch | null>(null);
 const recordQuery = reactive<MembershipRecordFilterDraft>({ name: "", member_type: "", pay_type: "", purchase_time: [] });
 const cardQuery = reactive<{ card_number: string; is_use: "" | number }>({ card_number: "", is_use: "" });
 
-const activePlanCount = computed(() => plans.value.filter((row) => row.is_del === 0).length);
 const batchTotals = computed(() => batches.value.reduce((sum, row) => ({ cards: sum.cards + row.actual_card_count, used: sum.used + row.actual_used_count }), { cards: 0, used: 0 }));
 
 const planTypes = [
@@ -250,9 +249,6 @@ const planTypes = [
   { value: "year", label: "年度会员" },
   { value: "ever", label: "永久会员" },
 ] as const;
-const planDialog = ref(false);
-const planSaving = ref(false);
-const planForm = reactive({ id: 0, type: "month" as MembershipPlan["type"], title: "", vip_day: 30, price: "0.00", pre_price: "0.00", is_label: 0, sort: 0 });
 const batchDialog = ref(false);
 const batchSaving = ref(false);
 const batchForm = reactive({ id: 0, title: "", total_num: 100, use_day: 30, status: 0, sort: 0, remark: "" });
@@ -283,7 +279,6 @@ function recordExpiryLabel(row: MembershipRecord): string {
 }
 function planTypeLabel(type: string) { return planTypes.find((item) => item.value === type)?.label ?? type; }
 
-async function loadPlans() { planLoading.value = true; try { const result = await apiMembershipPlans({ limit: 100 }); plans.value = result.list; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员套餐加载失败"); } finally { planLoading.value = false; } }
 async function loadBatches() { batchLoading.value = true; try { const result = await apiMembershipBatches({ page: batchPage.value, limit: 20 }); batches.value = result.list; batchCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员卡批次加载失败"); } finally { batchLoading.value = false; } }
 async function loadRights() { rightLoading.value = true; try { const result = await apiMembershipRights(); rights.value = result.list; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员权益加载失败"); } finally { rightLoading.value = false; } }
 async function loadRecordPlanOptions() { recordPlanLoading.value = true; recordPlanError.value = ""; try { recordPlanOptions.value = await apiMembershipRecordPlanOptions(); } catch (error) { recordPlanOptions.value = []; recordPlanError.value = error instanceof Error ? error.message : "会员类型目录加载失败"; } finally { recordPlanLoading.value = false; } }
@@ -303,27 +298,6 @@ function refreshActive() { loadTab(activeTab.value); }
 async function openScan() { scanDialog.value = true; scanLoading.value = true; try { scan.value = await apiMembershipScan(); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "激活二维码加载失败"); } finally { scanLoading.value = false; } }
 function resetRecords() { recordPage.value = 1; void loadRecords(); }
 function resetCards() { cardPage.value = 1; void loadCards(); }
-
-function openPlan(row?: MembershipPlan) {
-  Object.assign(planForm, row ? { id: row.id, type: row.type, title: row.title, vip_day: row.vip_day, price: row.price, pre_price: row.pre_price, is_label: row.is_label, sort: row.sort } : { id: 0, type: "month", title: "", vip_day: 30, price: "0.00", pre_price: "0.00", is_label: 0, sort: 0 });
-  planDialog.value = true;
-}
-async function savePlan() {
-  if (!planForm.title.trim()) return ElMessage.warning("请填写套餐名称");
-  planSaving.value = true;
-  try {
-    const payload = { ...planForm, vip_day: planForm.type === "ever" ? -1 : planForm.vip_day, price: planForm.type === "free" ? "0.00" : planForm.price, pre_price: planForm.type === "free" ? "0.00" : planForm.pre_price };
-    await apiSaveMembershipPlan(planForm.id, payload);
-    planDialog.value = false;
-    ElMessage.success("会员套餐已保存");
-    await loadPlans();
-  } catch (error) { ElMessage.error(error instanceof Error ? error.message : "保存失败"); } finally { planSaving.value = false; }
-}
-async function togglePlan(row: MembershipPlan, enabled: string | number | boolean) {
-  const previous = row.is_del;
-  row.is_del = enabled ? 0 : 1;
-  try { await apiSetMembershipPlanStatus(row.id, row.is_del); ElMessage.success(row.is_del ? "套餐已停用" : "套餐已启用"); } catch (error) { row.is_del = previous; ElMessage.error(error instanceof Error ? error.message : "状态修改失败"); }
-}
 
 function openBatch(row?: MembershipBatch) {
   Object.assign(batchForm, row ? { id: row.id, title: row.title, total_num: row.total_num, use_day: row.use_day, status: row.status, sort: row.sort, remark: row.remark } : { id: 0, title: "", total_num: 100, use_day: 30, status: 0, sort: 0, remark: "" });
@@ -379,7 +353,7 @@ async function saveAgreement() {
   try { await apiSaveMembershipAgreement({ ...agreement }); ElMessage.success("会员协议已保存"); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "保存失败"); } finally { agreementSaving.value = false; }
 }
 
-onMounted(async () => { await Promise.all([loadPlans(), loadBatches(), loadRecordPlanOptions(), loadRecords()]); });
+onMounted(async () => { await Promise.all([loadBatches(), loadRecordPlanOptions(), loadRecords()]); });
 </script>
 
 <style scoped>
@@ -408,7 +382,7 @@ onMounted(async () => { await Promise.all([loadPlans(), loadBatches(), loadRecor
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 .record-filter { display: grid; grid-template-columns: minmax(180px, 1fr) 180px 150px minmax(300px, 1.4fr) auto; gap: 10px; margin-bottom: 18px; }
 .record-filter :deep(.el-date-editor) { width: 100%; min-width: 0; }
-.record-plan-error { margin-bottom: 12px; }
+.record-plan-error, .plan-error { margin-bottom: 12px; }
 .card-filter { display: grid; grid-template-columns: minmax(220px, 1fr) 180px auto; gap: 10px; margin-bottom: 18px; }
 .agreement-form { max-width: 820px; padding: 12px 4px; }
 .agreement-actions, .issued-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
