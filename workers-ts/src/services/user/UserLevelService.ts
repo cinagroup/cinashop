@@ -21,11 +21,28 @@ import { type Container, withTx } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException } from "@/utils/errors";
 import { detectUserLevel } from "@/services/order/OrderRewardService";
+import { userGrowthRecordsPagination } from "./UserGrowthRecordsInput";
 import {
   configFlag,
   parseConfigIds,
   parseLegacyWholeMoney,
 } from "@/services/activity/StoreNewcomerService";
+
+export interface UserGrowthRecord {
+  id: number;
+  title: string;
+  number: string;
+  pm: number;
+  add_time: string;
+  time_key: string;
+  time: string;
+}
+
+export interface UserGrowthRecordsPage {
+  count: number;
+  list: UserGrowthRecord[];
+  time: string[];
+}
 
 const ACTIVATION_CONFIG_KEYS = [
   "member_func_status",
@@ -518,21 +535,38 @@ export class UserLevelService {
     });
   }
 
-  /** 经验明细 (user/level/expList) */
-  async expList(uid: number, page = 1, limit = 10) {
-    const c = this.container;
-    const rows = await c.db
-      .select({
-        id: userBillTable.id,
-        title: userBillTable.title,
-        number: userBillTable.number,
-        addTime: userBillTable.addTime,
-      })
-      .from(userBillTable)
-      .where(sql`${userBillTable.uid} = ${uid} AND ${userBillTable.category} = 'exp'`)
-      .orderBy(sql`${userBillTable.addTime} DESC`)
-      .limit(limit)
-      .offset((page - 1) * limit);
-    return rows;
+  /** PHP growth ledger: exact decimals, valid owned rows and one page/count snapshot. */
+  async expList(uid: number, page = 1, limit = 20): Promise<UserGrowthRecordsPage> {
+    if (!Number.isSafeInteger(uid) || uid < 1 || uid > 2_147_483_647) {
+      throw new ValidateException("用户参数无效");
+    }
+    const { offset, limit: take } = userGrowthRecordsPagination(page, limit);
+    const rows = await this.container.db.execute<{ valid_user: boolean; data: UserGrowthRecordsPage }>(sql`
+      with account as (
+        select uid from ${userTable}
+        where uid = ${uid} and status = 1 and is_del = 0 and delete_time is null
+      ), owned as (
+        select b.* from ${userBillTable} b
+        where b.uid = ${uid} and b.category = 'exp' and b.status = 1
+          and exists (select 1 from account)
+      ), page as (
+        select id, title, number::text as number, pm, add_time
+        from owned order by id desc limit ${take} offset ${offset}
+      ), projected as (
+        select id, title, number, pm,
+          case when add_time <> 0 then to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY-MM-DD HH24:MI:SS') else '' end as add_time,
+          case when add_time <> 0 then to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY-MM') else '' end as time_key,
+          case when add_time <> 0 then to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY-MM') else '' end as time
+        from page
+      )
+      select exists (select 1 from account) as valid_user, jsonb_build_object(
+        'count', (select count(*) from owned),
+        'list', coalesce((select jsonb_agg(to_jsonb(p) order by id desc) from projected p), '[]'::jsonb),
+        'time', coalesce((select jsonb_agg(time_key order by last_id desc) from
+          (select time_key, max(id) as last_id from projected group by time_key) months), '[]'::jsonb)
+      ) as data
+    `);
+    if (!rows[0]?.valid_user) throw new ValidateException("没有此用户");
+    return rows[0].data;
   }
 }

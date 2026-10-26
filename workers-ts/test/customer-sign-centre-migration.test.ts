@@ -1,3 +1,4 @@
+import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -10,7 +11,7 @@ const root = resolve(import.meta.dirname, '../..'), read = (file: string) => rea
 const hash = (source: string | Buffer) => createHash('sha256').update(source).digest('hex');
 describe('customer sign centre exact additive page and original PHP assets', () => {
   it('registers only one new page and reconstructs the complete existing138-page manifest without changing dated footer proof', () => {
-    const actual = reversePointsCentreManifest(read(proof.file)), previous = reverseSignCentreManifest(actual);
+    const actual = reversePointsCentreManifest(reverseGrowthRecordsManifest(read(proof.file))), previous = reverseSignCentreManifest(actual);
     expect(hash(actual)).toBe(proof.after_sha256); expect(hash(previous)).toBe(proof.before_sha256);
     const current = JSON.parse(actual), old = JSON.parse(previous);
     expect(current.pages).toHaveLength(139); expect(old.pages).toHaveLength(138);
@@ -20,7 +21,7 @@ describe('customer sign centre exact additive page and original PHP assets', () 
     expect(hash(read('workers-ts/audit/diy-footer-source-binding-20261022.json'))).toBe('88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd');
   });
   it.each(['extra', 'missing', 'duplicate', 'old', 'newline', 'unrelated-title'])('rejects unreviewed manifest bytes before the historical proof: %s', kind => {
-    const actual = reversePointsCentreManifest(read(proof.file)); let changed = actual;
+    const actual = reversePointsCentreManifest(reverseGrowthRecordsManifest(read(proof.file))); let changed = actual;
     if (kind === 'extra') changed += '\n'; if (kind === 'missing') changed = actual.replace(proof.inserted_source, '');
     if (kind === 'duplicate') changed += proof.inserted_source; if (kind === 'old') changed = reverseSignCentreManifest(actual);
     if (kind === 'newline') changed = actual.replace('\n', '\r\n'); if (kind === 'unrelated-title') changed = actual.replace('个人资料', '别的标题');

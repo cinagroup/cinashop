@@ -658,6 +658,12 @@
       }
     },
     {
+      "path": "pages/user/growthRecords",
+      "style": {
+        "navigationBarTitleText": "成长值记录"
+      }
+    },
+    {
       "path": "pages/user/recharge",
       "style": {
         "navigationBarTitleText": "余额充值"

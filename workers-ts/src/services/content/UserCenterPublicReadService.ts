@@ -62,7 +62,7 @@ export class UserCenterPublicReadService{
         const path=target.target.split('?',1)[0],original=item.url.split('?',1)[0];
         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];
         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];
-        if((original==='/pages/users/user_vip/index'||path==='/pages/user/level')&&!capabilities.member)return[];
+        if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];
         if(path==='/pages/user/vipOpen'&&!capabilities.paid_member)return[];
         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];
         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];

@@ -19,6 +19,10 @@
       </view>
     </view>
 
+    <navigator class="growth-record-link" url="/pages/user/growthRecords" hover-class="none">
+      <text>我的成长值记录</text><text aria-hidden="true">›</text>
+    </navigator>
+
     <!-- 等级列表 -->
     <view class="grade-list">
       <view
@@ -94,6 +98,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.growth-record-link { display:flex; align-items:center; justify-content:space-between; margin-bottom:20rpx; padding:28rpx 24rpx; border-radius:24rpx; background:#fff; font-size:28rpx; color:#333; }
+
 .level-page {
   padding: 20rpx;
 }

@@ -1,0 +1,48 @@
+{
+  "schema": "cinashop.customer-growth-records-manifest-increment.v1",
+  "base_ref": "c92584cd42a3329b6eb1d41dd7c875b070deb39b",
+  "file": "view/uniapp-ts/src/pages.json",
+  "before_sha256": "56f878f2841bc9c21aefbe70afe9d08789123563b5b96b84f3ddfbfbaaa2b72c",
+  "after_sha256": "ec90962a384cec1f92dd9a011f56874a5ae353a977e13b9f9e459ad22dbad0bc",
+  "before_bytes": 20032,
+  "after_bytes": 20164,
+  "before_pages": 140,
+  "after_pages": 141,
+  "inserted_line": 660,
+  "inserted_source": "    {\n      \"path\": \"pages/user/growthRecords\",\n      \"style\": {\n        \"navigationBarTitleText\": \"成长值记录\"\n      }\n    },\n",
+  "legacy_rule": {
+    "key": "/pages/users/user_vip_areer/index",
+    "before": {
+      "target": "/pages/user/level",
+      "coverage": "partial_replacement"
+    },
+    "after": {
+      "target": "/pages/user/growthRecords",
+      "coverage": "candidate_covered"
+    },
+    "before_rules_sha256": "ea644fd31086a7b9de7bc8175f585fb634e8ab05687d52393a459809ccfaed79",
+    "after_rules_sha256": "2e5c93836a205f0cab21000bf02e4b445a69d043873d0e00885371a6f4f44668"
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/customer-points-centre-manifest-20261025.json",
+      "bytes": 582,
+      "sha256": "008cc87b7a91918b04ff949d7684dff38b05324df8544af41ad25d59d7ef5d8d"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerPointsCentreManifest.ts",
+      "bytes": 1552,
+      "sha256": "01980b2cd124302886c7c39f9efa0d699cf099d1e09de13a0e067c60aa36ea06"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-sign-centre-manifest-20261025.json",
+      "bytes": 585,
+      "sha256": "1363555e325961e69a5f1632b8d901246f206f435ba74c7c6d0517c846045d0a"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerSignCentreManifest.ts",
+      "bytes": 1637,
+      "sha256": "c6d3037e66184e8dc413db5f9edab4970542e75f5ec8cf85d9b218ae211461ab"
+    }
+  ]
+}

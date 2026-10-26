@@ -1,3 +1,4 @@
+import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -10,7 +11,7 @@ const root = resolve(import.meta.dirname, '../..'), read = (p: string) => readFi
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 describe('PHP personal points centre remains distinct from its exchange mall', () => {
   it('adds one actual page and reconstructs both complete prior manifest proofs exactly', () => {
-    const actual = read(proof.file), previous = reversePointsCentreManifest(actual), old = JSON.parse(previous), current = JSON.parse(actual);
+    const actual = reverseGrowthRecordsManifest(read(proof.file)), previous = reversePointsCentreManifest(actual), old = JSON.parse(previous), current = JSON.parse(actual);
     expect(sha(actual)).toBe(proof.after_sha256); expect(sha(previous)).toBe(proof.before_sha256);
     expect(current.pages).toHaveLength(140); expect(old.pages).toHaveLength(139);
     expect(current.pages.filter((p: {path: string}) => p.path !== 'pages/user/points')).toEqual(old.pages);
@@ -18,7 +19,7 @@ describe('PHP personal points centre remains distinct from its exchange mall', (
     expect(JSON.parse(reverseSignCentreManifest(previous)).pages).toHaveLength(138);
   });
   it.each(['extra','missing','duplicate','title','newline'])('rejects unreviewed page bytes: %s', variant => {
-    const actual = read(proof.file), changed = variant === 'extra' ? actual + '\n' : variant === 'missing' ? actual.replace(proof.inserted_source, '')
+    const actual = reverseGrowthRecordsManifest(read(proof.file)), changed = variant === 'extra' ? actual + '\n' : variant === 'missing' ? actual.replace(proof.inserted_source, '')
       : variant === 'duplicate' ? actual + proof.inserted_source : variant === 'title' ? actual.replace('积分详情','其他详情') : actual.replace('\n','\r\n');
     expect(() => reversePointsCentreManifest(changed)).toThrow();
   });

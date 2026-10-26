@@ -149,6 +149,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/columnGoods/live_list/index",
   "/pages/order/payResult",
   "/pages/user/level",
+  "/pages/user/growthRecords",
   "/pages/user/recharge",
   "/pages/user/message",
   "/pages/activity/lottery",
@@ -192,7 +193,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/goods_cate/goods_cate": { target: "/pages/goods/cate", coverage: "candidate_covered" },
   "/pages/discoverIndex/index": { target: "/pages/discover/index", coverage: "candidate_covered" },
 
-  "/pages/users/user_vip_areer/index": { target: "/pages/user/level", coverage: "partial_replacement" },
+  "/pages/users/user_vip_areer/index": { target: "/pages/user/growthRecords", coverage: "candidate_covered" },
   "/pages/users/message_center/index": { target: "/pages/user/message", coverage: "candidate_covered" },
   "/pages/users/message_center/messageDetail": { target: "/pages/user/messageDetail", coverage: "candidate_covered" },
   "/pages/users/user_invoice_order/index": { target: "/pages/user/invoice", coverage: "partial_replacement" },

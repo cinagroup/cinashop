@@ -11,6 +11,7 @@ import type { Context } from "hono";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
+import { parseUserGrowthRecordsQuery } from "@/services/user/UserGrowthRecordsInput";
 import { readBoundedJsonValue } from "@/utils/request-body";
 import type { AppVariables, Env } from "@/env";
 
@@ -62,10 +63,8 @@ export async function levelActivate(c: C) {
 export async function levelExpList(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const q = c.req.query();
+  c.header("Cache-Control", "private, no-store, max-age=0");
+  const query = parseUserGrowthRecordsQuery(new URL(c.req.url).searchParams);
   const svc = new UserLevelService(c.get("container"), c.env);
-  return jsonOk(
-    c,
-    await svc.expList(uid, Number(q.page ?? 1), Number(q.limit ?? 10)),
-  );
+  return jsonOk(c, await svc.expList(uid, query.page, query.limit));
 }
