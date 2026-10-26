@@ -1,0 +1,681 @@
+{
+  "schema": "cinashop.migration-audit-followup-source-binding.v1",
+  "base_ref": "b3760bf8b10f58913afaeafc04ebb133f09de967",
+  "current_ref": "b7dcd8cfd27a73db2cd5128644fd9d286ea23d86",
+  "sources": [
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "before_ref": "b3760bf8b10f58913afaeafc04ebb133f09de967",
+      "before_sha256": "f6e97ce204ff157246db0b2b4522a953cf89078d3c4788f6017ffc2d48b921bd",
+      "after_sha256": "0c987f27673ab37bfc6c5338c046e6f85bee58f1762d619b6a3e9816da4faec0",
+      "before_bytes": 175990,
+      "after_bytes": 176010,
+      "edits": [
+        {
+          "before_source": "v1Routes.get(\"/integral/list\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.integralList);\n",
+          "after_source": "v1Routes.get(\"/integral/list\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.integralList);\n",
+          "before_line": 933,
+          "after_line": 933
+        },
+        {
+          "before_source": "v1Routes.get(\"/extract/bank\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.extractBank);\n",
+          "after_source": "v1Routes.get(\"/extract/bank\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.extractBank);\n",
+          "before_line": 934,
+          "after_line": 934
+        },
+        {
+          "before_source": "v1Routes.post(\"/spread/order\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.spreadOrder);\n",
+          "after_source": "v1Routes.post(\"/spread/order\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.spreadOrder);\n",
+          "before_line": 935,
+          "after_line": 935
+        },
+        {
+          "before_source": "v1Routes.get(\"/spread/count/:type\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.spreadCount);\n",
+          "after_source": "v1Routes.get(\"/spread/count/:type\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.spreadCount);\n",
+          "before_line": 936,
+          "after_line": 936
+        },
+        {
+          "before_source": "v1Routes.get(\"/brokerage_rank\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.brokerageRank);\n",
+          "after_source": "v1Routes.get(\"/brokerage_rank\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.brokerageRank);\n",
+          "before_line": 937,
+          "after_line": 937
+        },
+        {
+          "before_source": "v1Routes.get(\"/rank\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceReadController.spreadRank);\n",
+          "after_source": "v1Routes.get(\"/rank\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceReadController.spreadRank);\n",
+          "before_line": 938,
+          "after_line": 938
+        },
+        {
+          "before_source": "v1Routes.post(\"/spread/people\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.spreadPeople);\n",
+          "after_source": "v1Routes.post(\"/spread/people\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.spreadPeople);\n",
+          "before_line": 939,
+          "after_line": 939
+        },
+        {
+          "before_source": "v1Routes.get(\"/spread/commission/:type\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.commissionList);\n",
+          "after_source": "v1Routes.get(\"/spread/commission/:type\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.commissionList);\n",
+          "before_line": 940,
+          "after_line": 940
+        },
+        {
+          "before_source": "v1Routes.get(\"/user/commission/list/:type\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.commissionItems);\n",
+          "after_source": "v1Routes.get(\"/user/commission/list/:type\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.commissionItems);\n",
+          "before_line": 941,
+          "after_line": 941
+        },
+        {
+          "before_source": "v1Routes.post(\"/extract/cash\", stationOpenMiddleware, authMiddleware({ force: true }), UserFinanceController.extractCash);\n",
+          "after_source": "v1Routes.post(\"/extract/cash\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.extractCash);\n",
+          "before_line": 942,
+          "after_line": 942
+        }
+      ]
+    },
+    {
+      "file": "view/admin-ts/src/api/membership.ts",
+      "before_ref": "b3760bf8b10f58913afaeafc04ebb133f09de967",
+      "before_sha256": "6287c57be4f41a1342bde48f973db15dc3b092bd520ebb44bc33955cfdea4e43",
+      "after_sha256": "8448113634fb7b359bd7d0bd9612134fbe86f6e190b2afcf7648f37d2b051893",
+      "before_bytes": 15667,
+      "after_bytes": 15929,
+      "edits": [
+        {
+          "before_source": "export async function apiMembershipPlans(params: Record<string, unknown> = {}): Promise<{ list: MembershipPlan[]; count: number }> {\n  if (previewMode) return pageResult(previewPlans.filter((row) => !row.is_del).map((row) => ({ ...row })), params);\n  return getData(request.get<{ list: MembershipPlan[]; count: number }>(\"/member/ship\", { params }));\n",
+          "after_source": "export async function apiMembershipPlans(params: Record<string, unknown> = {}, signal?: AbortSignal): Promise<{ list: MembershipPlan[]; count: number }> {\n  if (previewMode) {\n    const includeDeleted = String(params.include_deleted ?? params.includeDeleted ?? '0') === '1';\n    return pageResult(previewPlans.filter(row => includeDeleted || row.is_del === 0)\n      .sort((a, b) => b.sort - a.sort || a.id - b.id).map(row => ({ ...row })), params);\n  }\n  return getData(request.get<{ list: MembershipPlan[]; count: number }>(\"/member/ship\", { params, signal }));\n",
+          "before_line": 214,
+          "after_line": 214
+        },
+        {
+          "before_source": "export async function apiSaveMembershipPlan(id: number, data: Record<string, unknown>) {\n",
+          "after_source": "export async function apiSaveMembershipPlan(id: number, data: Record<string, unknown>): Promise<{ id: number }> {\n",
+          "before_line": 219,
+          "after_line": 223
+        },
+        {
+          "before_source": "export async function apiSetMembershipPlanStatus(id: number, isDel: number) {\n",
+          "after_source": "export async function apiSetMembershipPlanStatus(id: number, isDel: number): Promise<{ id: number }> {\n",
+          "before_line": 229,
+          "after_line": 233
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "before_ref": "b3760bf8b10f58913afaeafc04ebb133f09de967",
+      "before_sha256": "9dfff7cc75d18dde638f012a737f5655423cf2b347ed272888373b70fb882cae",
+      "after_sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0",
+      "before_bytes": 6796,
+      "after_bytes": 7016,
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './migrationAuditFollowupSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "",
+          "after_source": "  source=reverseMigrationAuditSource(file,source);\n",
+          "before_line": 29,
+          "after_line": 30
+        },
+        {
+          "before_source": "",
+          "after_source": "  if(reverse)input=reverseMigrationAuditReport(input);\n",
+          "before_line": 41,
+          "after_line": 43
+        }
+      ]
+    }
+  ],
+  "api_report": {
+    "before_sha256": "a99c42f5be30da197bc127a2489a67a3c13cc226246de3279160aa3f18362ab8",
+    "after_sha256": "0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f",
+    "before_bytes": 644215,
+    "after_bytes": 644215,
+    "operations": [
+      {
+        "path": [
+          "backend",
+          "rootRouteSources",
+          2,
+          "sha256"
+        ],
+        "before": "f6e97ce204ff157246db0b2b4522a953cf89078d3c4788f6017ffc2d48b921bd",
+        "after": "0c987f27673ab37bfc6c5338c046e6f85bee58f1762d619b6a3e9816da4faec0"
+      },
+      {
+        "path": [
+          "frontendSources",
+          46,
+          "sha256"
+        ],
+        "before": "6287c57be4f41a1342bde48f973db15dc3b092bd520ebb44bc33955cfdea4e43",
+        "after": "8448113634fb7b359bd7d0bd9612134fbe86f6e190b2afcf7648f37d2b051893"
+      },
+      {
+        "path": [
+          "calls",
+          316,
+          "line"
+        ],
+        "before": 216,
+        "after": 220
+      },
+      {
+        "path": [
+          "calls",
+          317,
+          "line"
+        ],
+        "before": 226,
+        "after": 230
+      },
+      {
+        "path": [
+          "calls",
+          318,
+          "line"
+        ],
+        "before": 235,
+        "after": 239
+      },
+      {
+        "path": [
+          "calls",
+          319,
+          "line"
+        ],
+        "before": 293,
+        "after": 297
+      },
+      {
+        "path": [
+          "calls",
+          320,
+          "line"
+        ],
+        "before": 303,
+        "after": 307
+      },
+      {
+        "path": [
+          "calls",
+          321,
+          "line"
+        ],
+        "before": 321,
+        "after": 325
+      },
+      {
+        "path": [
+          "calls",
+          322,
+          "line"
+        ],
+        "before": 326,
+        "after": 330
+      },
+      {
+        "path": [
+          "calls",
+          323,
+          "line"
+        ],
+        "before": 334,
+        "after": 338
+      },
+      {
+        "path": [
+          "calls",
+          324,
+          "line"
+        ],
+        "before": 346,
+        "after": 350
+      }
+    ],
+    "before_counts": {
+      "callSites": 706,
+      "pathVariants": 744,
+      "registered": 744,
+      "executable": 744,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "after_counts": {
+      "callSites": 706,
+      "pathVariants": 744,
+      "registered": 744,
+      "executable": 744,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "frontend_sources": 107,
+    "registered_routes": 1677
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/audit/admin-api-root-source-refresh-20261021.json",
+      "bytes": 1303,
+      "sha256": "f9d8a11715cb1a07bcf9aa14b806527788be6d197978807639320a3d10127cc7"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-20260928.json",
+      "bytes": 270039,
+      "sha256": "171d7a39e70f1146c233e5928ebcb5c658179c764e418c0150e0b07bd226e099"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-activity-background-followup-20260930.json",
+      "bytes": 316948,
+      "sha256": "22009303e57fbc410262eda67c79b694e3b42f48e55fdaf04d9c2491167cbabe"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-activity-frame-followup-20260930.json",
+      "bytes": 311724,
+      "sha256": "fd91bdcc6085769b955e3478ed45a424c9ba43aa1666bdd1b7432f680f5ae317"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-before-diy-navigation-author-20261023.json",
+      "bytes": 634409,
+      "sha256": "920ed25edd6321c32da0a5599fa370cbfda6a0204167e58977e3b1032f023f23"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-category-create-form-followup-20261008.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-category-edit-form-followup-20261008.json",
+      "bytes": 379508,
+      "sha256": "7ff15304e1acbe6e75a9e16cf113b0c2a2f580c793d56c1eee5ad44d8ec08c68"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-ci-repair-20261006.json",
+      "bytes": 377870,
+      "sha256": "d610377061b3209ffdf98663312c03de1a249e38fee98ac181e6fc9377f1e1b4"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-city-delivery-records-followup-20261001.json",
+      "bytes": 349554,
+      "sha256": "d2c6fa6b6d0d901b72b26ae5a6c8278943d8db9220fb2454fbbc8256770c78dd"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-city-delivery-settings-followup-20261002.json",
+      "bytes": 370014,
+      "sha256": "0e6a129d80bc41cc20501e5f6cfc08be108bda6e484115a1978348650049ab31"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-commission-followup-20260928.json",
+      "bytes": 277326,
+      "sha256": "cd563f05a6722d3081176bf3f0737d34e245c01fbef044d91b2fd36315ff7881"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-delivery-workbench-followup-20261003.json",
+      "bytes": 377239,
+      "sha256": "47bdf1e8a59ac0b924ed3232c2b4313b8b4326b141ece2940554baab24a47f39"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-delivery-workbench-followup-final-20261003.json",
+      "bytes": 377239,
+      "sha256": "47bdf1e8a59ac0b924ed3232c2b4313b8b4326b141ece2940554baab24a47f39"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-distributor-levels-followup-20261001.json",
+      "bytes": 362730,
+      "sha256": "31a0fbae0c8d5fa75268427136df64b3003392a1d318782739e54dfdc128edd0"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-division-statistics-followup-20260928.json",
+      "bytes": 281195,
+      "sha256": "906b0b6922193acad8ee1c51bb0b8dbafb71adf95346df460f115a29e78f7339"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-fab-settings-followup-20261001.json",
+      "bytes": 365388,
+      "sha256": "ff107a64125f3989c5f6d277488e58cac0e3b7cec645b2a8daa180df0b3d5e35"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-full-discount-followup-20260930.json",
+      "bytes": 327903,
+      "sha256": "2648553569b6ea43473a7d7b603183467325a07fe19056e55bf4b7184da9e012"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-full-gift-followup-20260930.json",
+      "bytes": 339068,
+      "sha256": "ffedd5b9db9fbb8d960a191cce3b85baf05b97e6f70436da70e94230df54c7ca"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-guest-invoice-manual-red-note-followup-20261013.json",
+      "bytes": 393332,
+      "sha256": "570b1f0ae132e3fd9b52ace2d7d6ecfceb31f1bd38d0d36c9c144b6c2320611e"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-integral-batch-followup-20260930.json",
+      "bytes": 341414,
+      "sha256": "7cbe9a544ef6e54b3126cc90ef8d5fee0cc527f2e565eee32c8728d506dca03f"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-integral-detail-followup-20261001.json",
+      "bytes": 365388,
+      "sha256": "ff107a64125f3989c5f6d277488e58cac0e3b7cec645b2a8daa180df0b3d5e35"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-invoice-admin-20260928.json",
+      "bytes": 199731,
+      "sha256": "156c3b2e03815245232f1534e412d60f44ec817382578d5cfd28d7c814307fa6"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-invoice-followup-20260928.json",
+      "bytes": 273414,
+      "sha256": "07cd4cea361db1d24b16c6d97b9d30241a553083565c21a4986778b556f0a91b"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-legacy-role-operations-followup-20261009.json",
+      "bytes": 391071,
+      "sha256": "2f870baccb6152d19d62327b52ba58f3954119e4789201c9040dbb7f84858ab9"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-legacy-role-workflow-followup-20261008.json",
+      "bytes": 380116,
+      "sha256": "9d6cbd183efa710df3d29cd80c69d24c8385bc6e286f05049b68a48cc036d301"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-legacy-system-list-followup-20261008.json",
+      "bytes": 379299,
+      "sha256": "269c85ddadf1df8bb77238901adb4b49102aa273f73d85cf738ac7a9f6d77745"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-lottery-feedback-followup-20260928.json",
+      "bytes": 300221,
+      "sha256": "41619ef8a280256087520bdc20f41ef4d5db4f5bf23ae3458e446ab4136f92c2"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-marketing-config-followup-20260930.json",
+      "bytes": 345590,
+      "sha256": "d0276c0e5d8873e28d13cf442d1885deb9bd88de05c79239597135271056e386"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-merchant-management-followup-20261003.json",
+      "bytes": 377239,
+      "sha256": "47bdf1e8a59ac0b924ed3232c2b4313b8b4326b141ece2940554baab24a47f39"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-merchant-management-followup-final6-20261003.json",
+      "bytes": 377239,
+      "sha256": "47bdf1e8a59ac0b924ed3232c2b4313b8b4326b141ece2940554baab24a47f39"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-merged-work-branches-20261015.json",
+      "bytes": 634409,
+      "sha256": "707ff4a109977b12bbf13caf8a48ec9edb116579e189d0873972fc1bc96c9cb8"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-nth-discount-followup-20260930.json",
+      "bytes": 333320,
+      "sha256": "f8c517d255e7f936cf14454a3176932272e2a10547ddf5e679bcebf1258fc47d"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-paid-membership-20260928.json",
+      "bytes": 198533,
+      "sha256": "ab8984c41cbe883547200bf52c9ecd3dc4467cd496bb74b3f472f47dfbf6dd8e"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-pc-banner-followup-20261001.json",
+      "bytes": 353220,
+      "sha256": "aefa02efaab91a85847a27d8026c36d2c9f1d4cce2b731c5cd2f3d45efe008f3"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-pre-carousel-author-20261023.json",
+      "bytes": 638729,
+      "sha256": "7654e717289454d9a36d52e99e31c2c81d6b175586e7ab08aa77f42acf680aa2"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-pre-list-author-20261023.json",
+      "bytes": 638729,
+      "sha256": "978dde3bcea666aa4959a15a6e36dd04cc5b29ca553b6efae6b4bfdf3783931d"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-product-category-style-followup-20261002.json",
+      "bytes": 371889,
+      "sha256": "ae2f003653acb4b9aa6766d6b83c2dff410b4d27e56781a7283f414b50ec9e24"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-product-detail-design-followup-20261002.json",
+      "bytes": 373745,
+      "sha256": "8d4bad1533702888b3af9da416d4d3a3f551debe3685c16faab36e60b9a561dd"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-recharge-read-followup-20260928.json",
+      "bytes": 275599,
+      "sha256": "2ddf90dc15caca90825a34c1e974f7b11940e1eebc6a020e637044a05451f9fe"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-shipping-settings-followup-20261001.json",
+      "bytes": 347813,
+      "sha256": "c82f474b813cdddb2a439c111a07b1ed76df037a38afc9a0c2ea4961a1c20471"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-speechcraft-user-point-followup-20260928.json",
+      "bytes": 304998,
+      "sha256": "34ed0553f0e9be3a119079437881ce4f05d4960623e7dc66d85069522450ddfa"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-bill-followup-20260928.json",
+      "bytes": 283503,
+      "sha256": "4a3f9a5886260edb40c473218b112bc6354a35083ecedddf22fced41d1e80868"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-capital-followup-20260928.json",
+      "bytes": 285887,
+      "sha256": "9de0e009d994f3f262ab10b7241bced292be9a355eb30f80478b325daba5acc1"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-cash-followup-20260928.json",
+      "bytes": 290593,
+      "sha256": "0f30857f84d3c56ffd13680843f441e04eae36cbbe135d85d65372e5880b591a"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-closure-followup-20260928.json",
+      "bytes": 295837,
+      "sha256": "02d223e7e0bd6dfdcfe225b13d9b8d15731b527f08b61d87cdfb67b187824c2b"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-menu-followup-20260928.json",
+      "bytes": 298457,
+      "sha256": "7119a74b1a6dd21351ba3eeeb07c2059b493fabbc183b968d1453d3c8681f774"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-supplier-order-statistics-followup-20260928.json",
+      "bytes": 289703,
+      "sha256": "f36193d628cb86ddd212f271f9c4f550bb159e5e6f88dcfc5e91991425404513"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-system-directory-followup-20261008.json",
+      "bytes": 378913,
+      "sha256": "cd34e210fa6d23b264f495baac37485424d52a44dda31eb4f5c2b4bd6bea8bf6"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-theme-style-followup-20261001.json",
+      "bytes": 367085,
+      "sha256": "e30e0d7b6098961977df1f94c1c7acc0c131273b74cbc446e593a679df2a9331"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-time-discount-followup-20260930.json",
+      "bytes": 322425,
+      "sha256": "0587ed366e147da83a859e3082d5ebaf6f669f51314da33473c250a2a4c1883f"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-user-center-design-followup-20261003.json",
+      "bytes": 377239,
+      "sha256": "47bdf1e8a59ac0b924ed3232c2b4313b8b4326b141ece2940554baab24a47f39"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-user-money-ledger-followup-20260928.json",
+      "bytes": 306774,
+      "sha256": "0e669193c0a2265cb079099c3810b65a4f71c8c60098814346d6a9cb54e459b9"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts-writeoff-followup-20260928.json",
+      "bytes": 279275,
+      "sha256": "04028cbaec063db8fbbcce82a4c3477943af7e5f8008940e693271422a1d0ee1"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 642264,
+      "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd"
+    },
+    {
+      "file": "workers-ts/audit/community-availability-root-source-followup-20261021.json",
+      "bytes": 15362,
+      "sha256": "b91835800984c19b230cfadedece1d1606978c6082a990d8e0da917e5cb59d7c"
+    },
+    {
+      "file": "workers-ts/audit/community-state-root-source-increment-20261021.json",
+      "bytes": 1589,
+      "sha256": "dd1c00d3d717e1ba8d68c675af276f3605c8aea33772713a295ab2285b646d73"
+    },
+    {
+      "file": "workers-ts/audit/diy-carousel-author-source-binding-20261023.json",
+      "bytes": 4895,
+      "sha256": "e09f9227d29faa4932810e66e12d4c1d57c5d4db6e233ce29284b3253b4dd0b6"
+    },
+    {
+      "file": "workers-ts/audit/diy-customer-service-source-binding-20261023.json",
+      "bytes": 4697,
+      "sha256": "ab9fab8257ae6d691ce64cc89494adc9684b2475a6421754323e16fa5f5a9872"
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "bytes": 11768,
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd"
+    },
+    {
+      "file": "workers-ts/audit/diy-list-author-source-binding-20261023.json",
+      "bytes": 190002,
+      "sha256": "4ddd06f3bef5ef330d46ec6289b76c81876e2d4da8d5bcd623dca73d540e3149"
+    },
+    {
+      "file": "workers-ts/audit/diy-navigation-author-source-binding-20261023.json",
+      "bytes": 483817,
+      "sha256": "91d6a8f07f1330ddabceff904a9ace6fe4c5641756b9faee838c4a117f3f99fd"
+    },
+    {
+      "file": "workers-ts/audit/diy-page-settings-source-binding-20261023.json",
+      "bytes": 8649,
+      "sha256": "513f54754067194827f221b392198e582f8cc76646caf46e8bda00eac79e3933"
+    },
+    {
+      "file": "workers-ts/audit/diy-presentation-source-binding-20261022.json",
+      "bytes": 7378,
+      "sha256": "ebd5c6c880685b6fe276cb9b21e894257e00dc2e7f160bdf8bde094dd2c859b6"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de",
+      "bytes": 66571
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "bytes": 2940,
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13",
+      "bytes": 11589
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterTestHarnessSourceBinding.ts",
+      "bytes": 2203,
+      "sha256": "e6b42dd9b9ece0553efa4f6dc4b1af4d8bbc25e924c411f8a16bdedbb4fdc242"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCarouselAuthorSourceBinding.ts",
+      "bytes": 1685,
+      "sha256": "68500365fa9f677dd7b937d571c734a9494d00c8ffcd9bb8cfd62292ce4afd18"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceAuthorSourceBinding.ts",
+      "bytes": 4218,
+      "sha256": "8b98d1772c0499e36bba942bf6ffa704feecc44a07bf998fc760039bd9b2a96b"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommerceImagePreviewSourceBinding.ts",
+      "bytes": 3786,
+      "sha256": "363d8581ccb5fbfd0423c24b2717a926e54a917a81f9eb6c4c24a18b24512106"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommercePreviewExpirySourceBinding.ts",
+      "bytes": 3214,
+      "sha256": "a8a48009b26a1b88c030da707e5e3990529982ab5063328cfc2383a05d22675c"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityAuthorSourceBinding.ts",
+      "bytes": 4311,
+      "sha256": "092ade2343b7f2fe684aef4bfaf6bc82d9663b6a23e9bfea78fb824c73852d23"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityPreviewRefreshSourceBinding.ts",
+      "sha256": "a7838f1071d6db051d4f2388525a1abd17a6ec3c9b56dd9e39fd0bb3c7d08250",
+      "bytes": 3101
+    },
+    {
+      "file": "workers-ts/test/helpers/diyEditorialAuthorSourceBinding.ts",
+      "bytes": 2719,
+      "sha256": "8904f8b161f88c6533a2b93f3a5a8ce2067e017bb4dd55da5ca10b02a4936d06"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyListAuthorSourceBinding.ts",
+      "bytes": 2702,
+      "sha256": "fe89a23a69e3fc5c4491b740cce80118cf4577961b0cacdbc508b8e4b12a6e21"
+    },
+    {
+      "file": "workers-ts/test/helpers/diyNavigationAuthorSourceBinding.ts",
+      "bytes": 2980,
+      "sha256": "bcdc3fe7640973a35c50ac2804a845bf87a2abe5b5ed634a85e3f5e3466cf704"
+    },
+    {
+      "file": "workers-ts/test/helpers/phpAssetsStatisticsSourceBinding.ts",
+      "bytes": 1042,
+      "sha256": "2a27cd5d3f9fb40f4ad54520b3c862feb1dbd875d82070a139958351d2ac6582"
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "bytes": 2717,
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0"
+    }
+  ],
+  "boundary": "Only the ten reviewed station middleware factory invocations, the complete reviewed membership API source increment and its complete eleven-scalar API-report delta are peeled. The historical Admin user-filter helper output and immutable dated proofs remain byte-identical. A separate whole-source inverse restores the changed test helper for its older harness pin; it never enters production source or report reconstruction. Historical Browser receipts retain their actual execution revision and are not represented as current-head reruns."
+}

@@ -1,3 +1,4 @@
+import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -26,6 +27,7 @@ function inventory(binding:AdminUserFilterSourceBinding){
 /** Peel only reviewed complete source bytes; no route, permission or sibling drift is filtered. */
 export function reverseAdminUserFilterSource(file:string,source:string,binding=adminUserFilterSourceBinding):string{
   inventory(binding);const entry=binding.sources.find(row=>row.file===file);if(!entry)return source;
+  source=reverseMigrationAuditSource(file,source);
   if(Buffer.byteLength(source)!==entry.after_bytes)throw Error('Admin user-filter whole-source bytes differ');
   const previous=reverseRouteSourceFollowup(source,entry);
   if(Buffer.byteLength(previous)!==entry.before_bytes)throw Error('Admin user-filter predecessor bytes differ');return previous;
@@ -38,6 +40,7 @@ function at(value:unknown,path:JsonPath):unknown{for(const key of path)value=chi
 const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 function reconstruct<T>(input:T,reverse:boolean,binding:AdminUserFilterSourceBinding):T{
   inventory(binding);const proof=binding.api_report,pretty=(value:unknown)=>JSON.stringify(value,null,2)+'\n';
+  if(reverse)input=reverseMigrationAuditReport(input);
   if(sha(JSON.stringify(proof))!=='3bf1f6af42892fd8c07da19dda19e3a7dbb07b90adac0a95f691014e0878f541')throw Error('Admin user-filter exact report delta inventory differs');
   const incoming=pretty(input);if(sha(incoming)!==(reverse?proof.after_sha256:proof.before_sha256)||Buffer.byteLength(incoming)!==(reverse?proof.after_bytes:proof.before_bytes))throw Error('Admin user-filter complete report input differs');
   const result=structuredClone(input);const operations=reverse?[...proof.operations].reverse():proof.operations;

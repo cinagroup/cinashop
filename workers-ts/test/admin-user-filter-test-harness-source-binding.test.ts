@@ -1,3 +1,4 @@
+import { reverseMigrationAuditHarnessSource } from './helpers/migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -22,9 +23,9 @@ describe('Admin user-filter exact test-harness adjunct for immutable E6 history'
   expect(sha(read('workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json'))).toBe('003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e');expect(proof.sources.map(row=>row.file)).toEqual(files);
   for(const entry of proof.sources){const actual=read(entry.file),historical=reverseAdminUserFilterTestHarnessSource(entry.file,actual),original=old.preserved_files.find(row=>row.file===entry.file)!;expect(original).toBeDefined();expect(entry.edits).toHaveLength(2);expect(entry.edits[0]!.before_source).toBe('');expect(entry.edits[0]!.after_source).toBe("import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';\n");expect(entry.edits[1]!.before_source).toBe('buildAdminFrontendApiAuditReport()');expect(entry.edits[1]!.after_source).toBe('reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())');expect(sha(actual)).toBe(entry.after_sha256);expect(Buffer.byteLength(actual)).toBe(entry.after_bytes);expect(sha(historical)).toBe(entry.before_sha256);expect(sha(historical)).toBe(original.sha256);expect(Buffer.byteLength(historical)).toBe(original.bytes);expect(entry.before_bytes).toBe(original.bytes);expect(entry.edits[0]!.after_source+historical.replace(entry.edits[1]!.before_source,entry.edits[1]!.after_source)).toBe(actual);}
  });
- it('keeps all E6 preserved/dependency bytes,all80old proofs and the production/report adjunct unchanged',()=>{
+ it('keeps all E6 and80old proof bytes and reconstructs the historical production adjunct after the exact migration harness inverse',()=>{
   for(const row of [...old.preserved_files,...old.unchanged_dependency_sources]){const actual=reverseAdminUserFilterTestHarnessSource(row.file,read(row.file));expect(sha(actual),row.file).toBe(row.sha256);expect(Buffer.byteLength(actual),row.file).toBe(row.bytes);}
-  for(const row of [...proof.unchanged_contract_files,...production.preserved_files]){const actual=read(row.file);expect(sha(actual),row.file).toBe(row.sha256);expect(Buffer.byteLength(actual),row.file).toBe(row.bytes);}
+  for(const row of [...proof.unchanged_contract_files,...production.preserved_files]){const actual=reverseMigrationAuditHarnessSource(row.file,read(row.file));expect(sha(actual),row.file).toBe(row.sha256);expect(Buffer.byteLength(actual),row.file).toBe(row.bytes);}
   expect(proof.unchanged_contract_files.map(row=>row.file)).toEqual(['workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json','workers-ts/test/helpers/diyCommunityPreviewRefreshSourceBinding.ts','workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json','workers-ts/test/helpers/adminUserFilterSourceBinding.ts']);
   // E6's own new read adapter is not recursively inserted into its old preserved manifest.
   expect(old.preserved_files.some(row=>row.file===e6)).toBe(false);expect(proof.sources.some(row=>row.file===e6)).toBe(false);expect(reverseAdminUserFilterTestHarnessSource(e6,read(e6))).toBe(read(e6));expect(boundRead(read(e6))).toBe(true);
