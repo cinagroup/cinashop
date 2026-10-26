@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterSource, reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { reverseCommerceAuthorSource, reverseCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
 import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
@@ -24,6 +25,7 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
+  source = reverseAdminUserFilterSource(file, source);
   source = reverseCommunityAuthorSource(file, source);
   source = reverseCommerceAuthorSource(file, source);
   source = reverseEditorialAuthorSource(file, source);
@@ -220,7 +222,7 @@ describe("Admin frontend API registration audit", () => {
   });
 
   it("recomputes the same deterministic report from the current frontend and routes", () => {
-    expect(reverseCommerceAuthorReport(reverseCommunityAuthorReport(buildAdminFrontendApiAuditReport()))).toEqual(applyEditorialAuthorReport(current));
+    expect(reverseCommerceAuthorReport(reverseCommunityAuthorReport(reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())))).toEqual(applyEditorialAuthorReport(current));
   });
 
   it("retains the dated video inventory and applies only the later community state source increment", () => {
@@ -419,7 +421,7 @@ describe("Admin frontend API registration audit", () => {
       "workers-ts/src/app.ts", "workers-ts/src/routes/index.ts", "workers-ts/src/routes/v1/index.ts",
     ]);
     for (const source of current.backend.rootRouteSources ?? []) {
-      const text = readFileSync(join(workerRoot, "..", source.file), "utf8");
+      const text = reverseAdminUserFilterSource(source.file, readFileSync(join(workerRoot, "..", source.file), "utf8"));
       expect(source.sha256).toBe(createHash("sha256").update(normalizeAdminAuditSource(text)).digest("hex"));
     }
     expect(current.backend.registeredRoutes.some(route => route.path === "/api/v1/admin/erp/config")).toBe(false);

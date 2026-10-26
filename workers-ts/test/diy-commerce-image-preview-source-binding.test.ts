@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -111,7 +112,7 @@ describe('two-source Commerce resolved-image preview correction retains complete
     expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);
     for (const row of proof.api_report.binding_chain) expect(sha(read(row.file))).toBe(row.sha256);
     const expected = applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(proof.api_report.base_file)))));
-    const actual = buildAdminFrontendApiAuditReport();
+    const actual = reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport());
     expect(assertCommerceImagePreviewReport(actual)).toBe(actual); expect(actual).toEqual(expected);
     expect(proof.api_report.changes).toEqual([]); expect(proof.api_report.before_sha256).toBe(communityAuthorSourceBinding.current_report.sha256); expect(proof.api_report.after_sha256).toBe(proof.api_report.before_sha256);
     const pretty = JSON.stringify(actual, null, 2) + '\n', compact = JSON.stringify(actual) + '\n';

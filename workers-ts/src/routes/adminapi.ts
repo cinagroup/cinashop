@@ -557,6 +557,8 @@ adminapiRoutes.delete("/merchant/store_staff/del/:id", adminAuth, AdminStore.sta
 
 // ─── 用户管理 ───────────────────────────────────────────────
 adminapiRoutes.get("/user/list", adminAuth, AdminCrud.adminUserList);
+adminapiRoutes.get("/user/filter_options", adminAuth, AdminCrud.adminUserOptions);
+adminapiRoutes.get("/user/filter_regions", adminAuth, AdminCrud.adminUserRegions);
 adminapiRoutes.get("/user/info/:id", adminAuth, AdminCrud.adminUserInfo);
 adminapiRoutes.post("/user/set_user_grade/:id", adminAuth, AdminCrud.adminUserUpdate);
 adminapiRoutes.post("/user/set_other/:uid", adminAuth, AdminCrud.adminMobileUserUpdateOther);

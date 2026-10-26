@@ -57,6 +57,7 @@ function loader(options = {}) {
   const actor = options.actor ?? vue.reactive({ token: 'A', userInfo: { id: 11, level: 0 }, uniqueAuth: [] });
   const storage = new Map([['admin_token', 'A'], ['admin_session', 'session-A']]);
   const window = new EventTarget();
+  const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, String(value)), removeItem: key => storage.delete(key) };
   const gateway = options.gateway ?? { get: async url => { calls.push({ method: 'GET', url }); return { data: [] }; }, post: async (url, body) => { calls.push({ method: 'POST', url, body: clone(body) }); return { data: { id: 2 } }; } };
   function load(file) {
     file = path.resolve(file); if (!path.extname(file)) file += '.ts';
@@ -69,6 +70,7 @@ function loader(options = {}) {
       if (name === 'vue') return vue;
       if (name === 'element-plus') return { ElMessage: { error: value => notices.push(['error', value]), success: value => notices.push(['success', value]), warning: value => notices.push(['warning', value]) }, ElMessageBox: { confirm: async () => {} } };
       if (name === '@/stores/auth') return { useAuthStore: () => actor };
+      if (name === '@/utils/auth' && options.actualAuth) return load(path.join(root, 'utils/auth.ts'));
       if (name === '@/utils/auth') return { getToken: () => storage.get('admin_token') ?? null, getAdminSession: () => ({ userInfo: actor.userInfo, uniqueAuth: actor.uniqueAuth }) };
       if (name === '@/utils/request') return { __esModule: true, default: gateway, getData: async promise => (await promise).data };
       if (name === '@/api/attachment') return {
@@ -87,7 +89,7 @@ function loader(options = {}) {
       if (name.startsWith('@/')) return load(path.join(root, name.slice(2)));
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name));
       return require(name);
-    }, exports, window, { getItem: key => storage.get(key) ?? null });
+    }, exports, window, localStorage);
     if (descriptor) {
       const component = exports.default, setup = component.setup;
       component.setup = (props, context) => { const state = setup(props, context); const values = instances.get(file) ?? []; values.push(vue.proxyRefs(state)); instances.set(file, values); return state; };
@@ -95,7 +97,7 @@ function loader(options = {}) {
     }
     return exports;
   }
-  return { load, instances, actor, storage, window, notices, calls, galleryCalls, categoryCalls, uploadCalls, componentOverrides: options.componentOverrides };
+  return { load, instances, actor, storage, localStorage, window, notices, calls, galleryCalls, categoryCalls, uploadCalls, componentOverrides: options.componentOverrides };
 }
 function mount(l, file, props, emit = () => {}) {
   const tree = node('root'), component = l.load(file).default;

@@ -58,7 +58,7 @@ import { AdminRefundReadService, adminRefundId } from "@/services/admin/AdminRef
 import { AdminOrderReadService } from "@/services/admin/AdminOrderReadService";
 import { AdminSystemLogReadService } from "@/services/admin/AdminSystemLogReadService";
 import { AdminLegacySystemListService, type AdminLegacySystemListActor } from "@/services/admin/AdminLegacySystemListService";
-import { listAdminUsers } from "@/services/admin/AdminUserListService";
+import { listAdminUsers, adminUserFilterOptions, adminUserFilterRegions } from "@/services/admin/AdminUserListService";
 import { listAdminActivities } from "@/services/admin/AdminActivityListService";
 import { AdminMobileRefundService } from "@/services/admin/AdminMobileRefundService";
 import { AdminMobileProductService } from "@/services/admin/AdminMobileProductService";
@@ -681,6 +681,20 @@ export async function adminUserList(c: C) {
     throw new ValidateException('用户查询参数不能重复');
   }
   return jsonOk(c, await listAdminUsers(c.get('container'), c.req.query()));
+}
+
+function userDirectoryQuery(c: C) {
+  privateNoStore(c);
+  if (Object.values(c.req.queries()).some(values => values.length !== 1)) throw new ValidateException('用户查询参数不能重复');
+  return c.req.query();
+}
+export async function adminUserOptions(c: C) {
+  const query = userDirectoryQuery(c);
+  return jsonOk(c, await adminUserFilterOptions(c.get('container'), query));
+}
+export async function adminUserRegions(c: C) {
+  const query = userDirectoryQuery(c);
+  return jsonOk(c, await adminUserFilterRegions(c.get('container'), c.env, query));
 }
 
 /** GET /api/admin/user/info/:id — 用户详情 */

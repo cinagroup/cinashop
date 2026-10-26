@@ -493,6 +493,9 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // The earlier mobile editor has a distinct /api/admin selection contract.
   if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  if (['user/filter_options', 'user/filter_regions'].includes(route)) {
+    return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'user.view' : null;
+  }
   // No generic dise.view fallback for this author-only namespace. Unknown
   // children and every write verb stay unregistered, even if added by mistake.
   if (route === 'dise/author-options' || route.startsWith('dise/author-options/')) {

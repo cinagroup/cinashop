@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -81,7 +82,7 @@ describe('Commerce preview media-only expiry exact source adjunct',()=>{
  });
  it('recomputes the complete real API report as zero delta without filtering rows or source files',()=>{
   const p=proof.api_report;expect(sha(read(p.base_file))).toBe(p.base_sha256);for(const row of p.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);
-  const expected=applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(p.base_file))))),actual=buildAdminFrontendApiAuditReport();expect(assertCommercePreviewExpiryReport(actual)).toBe(actual);expect(assertCommerceImagePreviewReport(actual)).toBe(actual);expect(actual).toEqual(expected);expect(p.changes).toEqual([]);expect(p.after_sha256).toBe(p.before_sha256);
+  const expected=applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(p.base_file))))),actual=reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport());expect(assertCommercePreviewExpiryReport(actual)).toBe(actual);expect(assertCommerceImagePreviewReport(actual)).toBe(actual);expect(actual).toEqual(expected);expect(p.changes).toEqual([]);expect(p.after_sha256).toBe(p.before_sha256);
   expect(sha(JSON.stringify(actual,null,2)+'\n')).toBe(p.after_sha256);expect(Buffer.byteLength(JSON.stringify(actual,null,2)+'\n')).toBe(p.pretty_bytes);expect(sha(JSON.stringify(actual)+'\n')).toBe(p.compact_sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(p.compact_bytes);expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,unregistered:0,unresolved:0});expect(actual.frontendSources).toHaveLength(106);expect(actual.frontendSources.some(row=>files.includes(row.file))).toBe(false);
   for(const kind of ['counts','call','source','backend','methodology']){const changed=structuredClone(actual);if(kind==='counts')changed.counts.registered++;if(kind==='call')changed.calls[0].line++;if(kind==='source')changed.frontendSources[0].sha256='0'.repeat(64);if(kind==='backend')changed.backend.sha256='0'.repeat(64);if(kind==='methodology')changed.methodology.scope='unreviewed';expect(()=>assertCommercePreviewExpiryReport(changed)).toThrow();}
   const changed=structuredClone(proof);changed.api_report.changes.push({unreviewed:true});expect(()=>assertCommercePreviewExpiryReport(actual,changed)).toThrow();

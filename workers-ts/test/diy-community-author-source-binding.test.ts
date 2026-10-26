@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { reverseCommunityPreviewRefreshSource } from './helpers/diyCommunityPreviewRefreshSourceBinding';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -77,7 +78,7 @@ describe('complete community author source and additive dated-history binding',(
   for(const row of proof.consumer_sources){expect(sha(read(row.file)),row.file).toBe(row.sha256);expect(sha(read(row.file)+'\n// unreviewed\n')).not.toBe(row.sha256);}
  });
  it('reconstructs the complete report with exactly one parent hash and three existing call-line shifts',()=>{
-  const actual=buildAdminFrontendApiAuditReport();expect(applyCommunityAuthorReport(previous)).toEqual(actual);expect(reverseCommunityAuthorReport(actual)).toEqual(previous);expect(reportHash(actual)).toBe(proof.current_report.sha256);
+  const actual=reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport());expect(applyCommunityAuthorReport(previous)).toEqual(actual);expect(reverseCommunityAuthorReport(actual)).toEqual(previous);expect(reportHash(actual)).toBe(proof.current_report.sha256);
   const captured=proof.current_report.raw_capture.serialization==='JSON.stringify(report, null, 2) + newline'?JSON.stringify(actual,null,2)+'\n':JSON.stringify(actual)+'\n';expect(sha(captured)).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(captured)).toBe(proof.current_report.raw_capture.bytes);
   expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.compact.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.compact.bytes);
   expect(proof.report_changes).toHaveLength(4);for(const row of proof.report_changes){const before={...row.before},after={...row.after};if(row.array==='calls'){expect(after.line).toBe(Number(before.line)+3);delete before.line;delete after.line;}else{delete before.sha256;delete after.sha256;}expect(after).toEqual(before);}

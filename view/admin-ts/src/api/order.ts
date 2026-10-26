@@ -164,20 +164,22 @@ export function apiAdminUserList(params: {
   return getData(request.get("/user/list", { params }));
 }
 
-export function apiAdminUserInfo(id: number): Promise<AdminUser> {
-  return getData(request.get(`/user/info/${id}`));
+export function apiAdminUserInfo(id: number, signal?: AbortSignal): Promise<AdminUser> {
+  return getData(request.get(`/user/info/${id}`, { signal }));
 }
 
 export function apiAdminUserMoney(
   id: number,
   money: string,
   type: "add" | "sub",
+  signal?: AbortSignal,
 ): Promise<{ balance: string }> {
   return getData(request.post(`/user/update_other/${id}`, {
     status: type === "add" ? 1 : 2,
     number: money,
     type: 1,
   }, {
+    signal,
     headers: { "Idempotency-Key": crypto.randomUUID() },
   }));
 }

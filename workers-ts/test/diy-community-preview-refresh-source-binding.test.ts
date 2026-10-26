@@ -1,3 +1,5 @@
+import { reverseAdminUserFilterTestHarnessSource } from './helpers/adminUserFilterTestHarnessSourceBinding';
+import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -11,7 +13,7 @@ import { applyCommunityAuthorReport,communityAuthorSourceBinding } from './helpe
 import { assertCommerceImagePreviewReport } from './helpers/diyCommerceImagePreviewSourceBinding';
 import { assertCommercePreviewExpiryReport } from './helpers/diyCommercePreviewExpirySourceBinding';
 import { assertCommunityPreviewRefreshReport,reverseCommunityPreviewRefreshSource,communityPreviewRefreshSourceBinding as proof } from './helpers/diyCommunityPreviewRefreshSourceBinding';
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8'),sha=(source:string)=>createHash('sha256').update(source).digest('hex');
+const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseAdminUserFilterTestHarnessSource(file,readFileSync(resolve(root,file),'utf8')),sha=(source:string)=>createHash('sha256').update(source).digest('hex');
 const file='view/admin-ts/src/components/content/DiyCommunityEditor.vue';
 const {parse}=createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');
 const ast=(source:string)=>ts.createSourceFile('actual.ts',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
@@ -61,7 +63,7 @@ describe('Community preview refresh exact single-source adjunct',()=>{
  });
  it('recomputes the entire real API report as zero delta through both existing display/expiry proof gates',()=>{
   const p=proof.api_report;expect(sha(read(p.base_file))).toBe(p.base_sha256);for(const row of p.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);
-  const expected=applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(p.base_file))))),actual=buildAdminFrontendApiAuditReport();expect(actual).toEqual(expected);expect(assertCommerceImagePreviewReport(actual)).toBe(actual);expect(assertCommercePreviewExpiryReport(actual)).toBe(actual);expect(assertCommunityPreviewRefreshReport(actual)).toBe(actual);expect(p.changes).toEqual([]);expect(p.before_sha256).toBe(p.after_sha256);expect(sha(JSON.stringify(actual,null,2)+'\n')).toBe(p.after_sha256);expect(Buffer.byteLength(JSON.stringify(actual,null,2)+'\n')).toBe(p.pretty_bytes);expect(sha(JSON.stringify(actual)+'\n')).toBe(p.compact_sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(p.compact_bytes);expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,unregistered:0,unresolved:0});expect(actual.frontendSources).toHaveLength(106);expect(actual.frontendSources.some(row=>row.file===file)).toBe(false);
+  const expected=applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(p.base_file))))),actual=reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport());expect(actual).toEqual(expected);expect(assertCommerceImagePreviewReport(actual)).toBe(actual);expect(assertCommercePreviewExpiryReport(actual)).toBe(actual);expect(assertCommunityPreviewRefreshReport(actual)).toBe(actual);expect(p.changes).toEqual([]);expect(p.before_sha256).toBe(p.after_sha256);expect(sha(JSON.stringify(actual,null,2)+'\n')).toBe(p.after_sha256);expect(Buffer.byteLength(JSON.stringify(actual,null,2)+'\n')).toBe(p.pretty_bytes);expect(sha(JSON.stringify(actual)+'\n')).toBe(p.compact_sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(p.compact_bytes);expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,unregistered:0,unresolved:0});expect(actual.frontendSources).toHaveLength(106);expect(actual.frontendSources.some(row=>row.file===file)).toBe(false);
   for(const kind of ['counts','call','source','backend','methodology']){const changed=structuredClone(actual);if(kind==='counts')changed.counts.registered++;if(kind==='call')changed.calls[0].line++;if(kind==='source')changed.frontendSources[0].sha256='0'.repeat(64);if(kind==='backend')changed.backend.sha256='0'.repeat(64);if(kind==='methodology')changed.methodology.scope='unreviewed';expect(()=>assertCommunityPreviewRefreshReport(changed)).toThrow();}
   const changed=structuredClone(proof);changed.api_report.changes.push({unreviewed:true});expect(()=>assertCommunityPreviewRefreshReport(actual,changed)).toThrow();
  });

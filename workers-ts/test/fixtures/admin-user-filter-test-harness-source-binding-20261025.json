@@ -1,0 +1,71 @@
+{
+  "schema": "cinashop.admin-user-filter-test-harness-source-binding.v1",
+  "base_ref": "330625d39b3988eb37ee73d19fde8e51e14cf625",
+  "sources": [
+    {
+      "file": "workers-ts/test/diy-commerce-author-source-binding.test.ts",
+      "before_ref": "330625d39b3988eb37ee73d19fde8e51e14cf625",
+      "before_sha256": "7bb37a06cacb8018a0171bbaec171e91f786595d8f92d00862b3fd1d0a8214b9",
+      "after_sha256": "eaddb868a25b8d0219b5a2b6f8f114b9f4d75b77b47571c3b949f326c9749c14",
+      "before_bytes": 16289,
+      "after_bytes": 16406,
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';\n",
+          "after_line": 1
+        },
+        {
+          "before_source": "buildAdminFrontendApiAuditReport()",
+          "after_source": "reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())",
+          "before_line": 45,
+          "after_line": 46
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/diy-commerce-preview-expiry-source-binding.test.ts",
+      "before_ref": "330625d39b3988eb37ee73d19fde8e51e14cf625",
+      "before_sha256": "3b339958983d20cee3b0a4abdb0d1a0d232c0cd30d6e5f5dace4c9eb835896da",
+      "after_sha256": "85864ed4b574d15808d3cf147a3841b65cdb7416da2cc664e25034934d1de85b",
+      "before_bytes": 16535,
+      "after_bytes": 16652,
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';\n",
+          "after_line": 1
+        },
+        {
+          "before_source": "buildAdminFrontendApiAuditReport()",
+          "after_source": "reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())",
+          "before_line": 84,
+          "after_line": 85
+        }
+      ]
+    }
+  ],
+  "unchanged_contract_files": [
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13",
+      "bytes": 11589
+    },
+    {
+      "file": "workers-ts/test/helpers/diyCommunityPreviewRefreshSourceBinding.ts",
+      "sha256": "a7838f1071d6db051d4f2388525a1abd17a6ec3c9b56dd9e39fd0bb3c7d08250",
+      "bytes": 3101
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de",
+      "bytes": 66571
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "sha256": "9dfff7cc75d18dde638f012a737f5655423cf2b347ed272888373b70fb882cae",
+      "bytes": 6796
+    }
+  ],
+  "boundary": "Only the two later test import/report-call adaptations are reversed for the original E6 preserved inventory. No application source/report transformation, old proof/helper edit, hash filtering or E6-self hash cycle."
+}

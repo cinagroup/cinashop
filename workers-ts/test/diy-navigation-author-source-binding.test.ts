@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterSource, reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { reverseCommerceAuthorSource, reverseCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
 import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
@@ -22,6 +23,7 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
+  source = reverseAdminUserFilterSource(file, source);
   source = reverseCommunityAuthorSource(file, source);
   source = reverseCommerceAuthorSource(file, source);
   source = reverseEditorialAuthorSource(file, source);
@@ -55,7 +57,7 @@ describe('exact additive navigation author source and API inventory increment', 
     expect(sha(read(proof.previous_report.file))).toBe(proof.previous_report.sha256);
   });
   it('reconstructs every current route/call/source using only ten exact GET registrations and five executable consumer paths', () => {
-    expect(applyNavigationAuthorReport(previous)).toEqual(current); expect(reverseCommerceAuthorReport(reverseCommunityAuthorReport(buildAdminFrontendApiAuditReport()))).toEqual(applyEditorialAuthorReport(applyStateAuthorReport(applyListAuthorReport(applyCarouselAuthorReport(current)))));
+    expect(applyNavigationAuthorReport(previous)).toEqual(current); expect(reverseCommerceAuthorReport(reverseCommunityAuthorReport(reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())))).toEqual(applyEditorialAuthorReport(applyStateAuthorReport(applyListAuthorReport(applyCarouselAuthorReport(current)))));
     expect(sha(read(carouselProof.previous_report.file))).toBe(proof.current_report.sha256);
     expect(current.counts).toEqual({...previous.counts,callSites:previous.counts.callSites+3,pathVariants:previous.counts.pathVariants+5,registered:previous.counts.registered+5,executable:previous.counts.executable+5});
     const arrays=proof.report_reconstruction.arrays, routes=arrays.registered_routes!.additions.map(row=>row.value), calls=arrays.calls!.additions.map(row=>row.value);

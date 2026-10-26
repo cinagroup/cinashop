@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { reverseCommerceAuthorSource, reverseCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
 import { readFileSync } from 'node:fs';
@@ -59,7 +60,7 @@ describe('exact editorial parent integration retains every dated source and API 
     for(const row of proof.consumer_sources){expect(sha(read(row.file))).toBe(row.sha256);expect(sha(read(row.file)+'\n// unreviewed\n')).not.toBe(row.sha256);}
   });
   it('reconstructs the whole freshly built report using one source hash and three existing call shifts only',()=>{
-    const actual=reverseCommerceAuthorReport(reverseCommunityAuthorReport(buildAdminFrontendApiAuditReport())),expected=applyEditorialAuthorReport(previous);expect(actual).toEqual(expected);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
+    const actual=reverseCommerceAuthorReport(reverseCommunityAuthorReport(reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport()))),expected=applyEditorialAuthorReport(previous);expect(actual).toEqual(expected);expect(reportHash(actual)).toBe(proof.current_report.sha256);expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.raw_capture.bytes);
     expect(actual.counts).toEqual(previous.counts);expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,executable:741,unregistered:0,unresolved:0});expect(actual.backend).toEqual(previous.backend);expect(actual.methodology).toEqual(previous.methodology);
     expect(proof.report_changes.map(row=>row.array)).toEqual(['frontendSources','calls','calls','calls']);
     for(const change of proof.report_changes){expect(change.after.file??change.after.source).toBe(proof.source.file);const before={...change.before},after={...change.after};if(change.array==='calls'){expect(after.line).toBe(Number(before.line)+3);delete before.line;delete after.line;}else{delete before.sha256;delete after.sha256;}expect(after).toEqual(before);}

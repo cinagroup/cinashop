@@ -1849,6 +1849,8 @@ v1Routes.delete("/admin/merchant/store_staff/del/:id", adminAuth, AdminStore.sta
 
 // 用户管理
 v1Routes.get("/admin/user/list", adminAuth, AdminCrud.adminUserList);
+v1Routes.get("/admin/user/filter_options", adminAuth, AdminCrud.adminUserOptions);
+v1Routes.get("/admin/user/filter_regions", adminAuth, AdminCrud.adminUserRegions);
 v1Routes.get("/admin/user/label/:uid", adminAuth, AdminCrud.adminMobileUserLabels);
 v1Routes.get("/admin/user/coupon/grant", adminAuth, AdminCrud.adminMobileUserCouponGrant);
 v1Routes.get("/admin/user/group/list", adminAuth, AdminCrud.adminMobileUserGroups);

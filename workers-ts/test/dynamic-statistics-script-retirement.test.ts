@@ -1,3 +1,4 @@
+import { reverseAdminUserFilterSource } from './helpers/adminUserFilterSourceBinding';
 import { phpAssetsStatisticsSourceBinding, reversePhpAssetsStatisticsSource } from './helpers/phpAssetsStatisticsSourceBinding';
 import { reverseListAuthorSource } from './helpers/diyListAuthorSourceBinding';
 import { reverseNavigationAuthorSource } from './helpers/diyNavigationAuthorSourceBinding';
@@ -26,7 +27,7 @@ interface RestorationProof {
   current_sources: Array<SourceProof & { role: string }>;
 }
 const root=resolve(import.meta.dirname,"../..");
-const read=(file:string)=>readFileSync(resolve(root,file),"utf8");
+const read=(file:string)=>reverseAdminUserFilterSource(file,readFileSync(resolve(root,file),"utf8"));
 const digest=(value:string|Uint8Array)=>createHash("sha256").update(value).digest("hex");
 const authority=JSON.parse(read("workers-ts/audit/legacy-route-authority.json")) as {
   files:Record<string,{sha256:string;lineCount:number}>;
