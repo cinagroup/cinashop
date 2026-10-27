@@ -10,6 +10,7 @@
  *   - StoreIntegralServices (lst/detail)
  */
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
+import {claimMembershipCouponLocked,membershipCouponLockError,membershipCouponConflict} from './MembershipCouponService';
 import {
   legacyCategory,
   storeActivity,
@@ -168,6 +169,10 @@ export class ActivityService {
         .limit(1)
         .for("update");
       const issue = issueRows[0];
+      if (issue?.category === 2) {
+        try { const result = await claimMembershipCouponLocked(tx,uid,issue,false); return [result.row]; }
+        catch(error) { if(membershipCouponLockError(error))throw membershipCouponConflict(); throw error; }
+      }
       if (!issue || issue.status !== 1 || issue.isDel !== 0) {
         throw new NotFoundException("优惠券不存在或已停发");
       }

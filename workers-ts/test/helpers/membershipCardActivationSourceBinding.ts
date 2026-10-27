@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsSourceIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './membershipCouponsSourceBinding';
 import { relative, resolve, sep } from 'node:path';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './routeSourceIncrement';
 
@@ -39,26 +39,26 @@ function reverse(file:string,source:string,entries:SourceProof[]):string {
   return previous;
 }
 export function reverseMembershipCardActivationSource(file:string,source:string,binding=membershipCardActivationSourceBinding):string {
-  inventory(binding);return reverse(file,source,binding.sources);
+  inventory(binding);return reverse(file,peelMembershipCouponsSourceIfPresent(file,source),binding.sources);
 }
 export function reverseMembershipCardActivationHarnessSource(file:string,source:string,binding=membershipCardActivationSourceBinding):string {
   inventory(binding);return reverse(file,source,binding.harness_sources);
 }
 /** Only these two exact complete states reach the immutable membership-rights bridge. */
 export function peelMembershipCardActivationSource(file:string,source:string,binding=membershipCardActivationSourceBinding):string {
-  inventory(binding);const entry=entryFor(file,binding.sources);if(!entry)return source;
+  inventory(binding);source=peelMembershipCouponsSourceIfPresent(file,source);const entry=entryFor(file,binding.sources);if(!entry)return source;
   return whole(source,entry,true)?source:reverse(file,source,binding.sources);
 }
 const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 export function reverseMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {
-  inventory(binding);const p=binding.navigation;
+  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsLegacyRulesIfPresent(current);
   if(sha(JSON.stringify(current))!==p.after_rules_sha256||!equal(current[p.key],p.after_rule))throw Error('Membership card activation complete current rules differ');
   const previous={...current,[p.key]:structuredClone(p.before_rule)} as T;
   if(sha(JSON.stringify(previous))!==p.before_rules_sha256)throw Error('Membership card activation complete predecessor rules differ');
   return previous;
 }
 export function peelMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {
-  inventory(binding);const p=binding.navigation;
+  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsLegacyRulesIfPresent(current);
   if(sha(JSON.stringify(current))===p.before_rules_sha256&&equal(current[p.key],p.before_rule))return current;
   return reverseMembershipCardActivationLegacyRules(current,binding);
 }

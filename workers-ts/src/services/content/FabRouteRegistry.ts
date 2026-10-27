@@ -128,6 +128,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/user/bank",
   "/pages/user/payPassword",
   "/pages/user/vipOpen",
+  "/pages/user/memberCoupons",
   "/pages/user/vipRights",
   "/pages/annex/vip_active/index",
   "/pages/annex/offline_pay/index",
@@ -266,7 +267,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/annex/vip_paid_rights/index": { target: "/pages/user/vipRights", coverage: "candidate_covered" },
   "/pages/annex/vip_grade/index": { target: "/pages/user/level", coverage: "candidate_covered" },
   "/pages/annex/vip_grade_active/index": { target: "/pages/user/level", coverage: "partial_replacement" },
-  "/pages/annex/vip_coupon/index": { target: "/pages/user/vipOpen", coverage: "partial_replacement" },
+  "/pages/annex/vip_coupon/index": { target: "/pages/user/memberCoupons", coverage: "candidate_covered" },
   "/pages/annex/vip_clause/index": { target: "/pages/user/vipOpen", coverage: "partial_replacement" },
   "/pages/annex/special/index": { target: "/pages/diy/detail", coverage: "candidate_covered" },
 

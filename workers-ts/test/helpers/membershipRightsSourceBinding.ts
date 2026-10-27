@@ -1,3 +1,4 @@
+import { peelMembershipCouponsRegisteredRoutesIfPresent } from './membershipCouponsSourceBinding';
 import { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -83,7 +84,7 @@ export function peelMembershipRightsReport<T>(input:T,binding=membershipRightsSo
   return reverseMembershipRightsReport(input,binding);
 }
 export function reverseMembershipRightsRegisteredRoutes(current:ReadonlySet<string>,binding=membershipRightsSourceBinding):Set<string> {
-  inventory(binding);const p=binding.navigation;
+  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsRegisteredRoutesIfPresent(current);
   if(current.size!==p.after_count||sha(JSON.stringify([...current].sort()))!==p.after_routes_sha256||!current.has(p.route))throw Error('Membership rights complete current registered routes differ');
   const previous=new Set(current);previous.delete(p.route);
   if(previous.size!==p.before_count||sha(JSON.stringify([...previous].sort()))!==p.before_routes_sha256)throw Error('Membership rights complete predecessor registered routes differ');

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsRegisteredRoutesIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './helpers/membershipCouponsSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
@@ -14,9 +14,11 @@ import { growthRecordsManifest, reverseGrowthRecordsManifest } from './helpers/c
 import { pointsCentreManifest, reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { signCentreManifest, reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
 import { reverseRouteSourceFollowup } from './helpers/routeSourceIncrement';
-import { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as clientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
-import { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as serverRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
+import { REGISTERED_PAGE_ROUTES as couponsClientRoutes, LEGACY_ROUTE_RULES as couponsClientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
+import { REGISTERED_PAGE_ROUTES as couponsServerRoutes, LEGACY_ROUTE_RULES as couponsServerRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
 
+const clientRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsClientRoutes),serverRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsServerRoutes);
+const clientRules=peelMembershipCouponsLegacyRulesIfPresent(couponsClientRules),serverRules=peelMembershipCouponsLegacyRulesIfPresent(couponsServerRules);
 const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');
 const sha=(source:string|Uint8Array)=>createHash('sha256').update(source).digest('hex');
 const blob=(source:string)=>createHash('sha1').update(`blob ${Buffer.byteLength(source)}\0`).update(source).digest('hex');

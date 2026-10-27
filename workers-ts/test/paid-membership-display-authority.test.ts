@@ -201,10 +201,19 @@ describe('personal-home and membership-menu SQL flag authority', () => {
     { member: '0', paid: '1', memberEnabled: false, paidEnabled: true },
     { member: '1', paid: '0', memberEnabled: true, paidEnabled: false },
     { member: '1', paid: '1', memberEnabled: true, paidEnabled: true },
-  ])('independently authorizes ordinary $member and paid $paid routes in every module', async row => {
+    { member: '0', paid: '0', memberEnabled: false, paidEnabled: false, couponRoutes: true },
+    { member: '0', paid: '1', memberEnabled: false, paidEnabled: true, couponRoutes: true },
+    { member: '1', paid: '0', memberEnabled: true, paidEnabled: false, couponRoutes: true },
+    { member: '1', paid: '1', memberEnabled: true, paidEnabled: true, couponRoutes: true },
+  ])('independently authorizes ordinary $member and paid $paid routes in every module (coupon batch $couponRoutes)', async row => {
     await setFlag(row.paid);
     await f.db.insert(systemConfig).values({ menuName: 'member_func_status', value: row.member });
-    const routes = [
+    // Each poster batch stays within its existing ten-item contract.
+    const routes = 'couponRoutes' in row && row.couponRoutes ? [
+      { name: 'Coupon canonical', url: '/pages/user/memberCoupons', target: '/pages/user/memberCoupons', allowed: row.paidEnabled },
+      { name: 'Coupon legacy', url: '/pages/annex/vip_coupon/index', target: '/pages/user/memberCoupons', allowed: row.paidEnabled },
+      { name: 'Coupon legacy query', url: '/pages/annex/vip_coupon/index?from=menu', target: '/pages/user/memberCoupons?from=menu', allowed: row.paidEnabled },
+    ] : [
       { name: 'Paid canonical', url: '/pages/user/vipOpen', target: '/pages/user/vipOpen', allowed: row.paidEnabled },
       { name: 'Paid legacy', url: '/pages/annex/vip_paid/index', target: '/pages/user/vipOpen', allowed: row.paidEnabled },
       { name: 'Paid legacy query', url: '/pages/annex/vip_paid/index?from=menu', target: '/pages/user/vipOpen?from=menu', allowed: row.paidEnabled },

@@ -25,8 +25,10 @@ checks `is_get_free.user_info.uid` against the current authenticated owner.
 The default index and `?rights=1` responses retain their existing keys. Member
 levels greater than zero include the value `2` produced by card activation.
 Used free trials are hidden; permanent members have no purchase choices.
-Coupon details use the existing paginated member coupon endpoint and an actual
-modal. The existing agreement reader supplies `payVip` content.
+The coupon preview links to the registered `/pages/user/memberCoupons`, which
+loads full rules and the actual owned-coupon claim/use flow described in the
+[member coupon contract](membership-coupons-contract.md). The existing agreement
+reader supplies `payVip` content.
 
 The existing `POST /api/user/member/card/create` optionally accepts exactly
 `{member_type,from,request_id}`. Omitting `request_id` preserves the legacy body
@@ -125,5 +127,6 @@ callback delivery. No manufactured business response or external provider
 transaction is used. Raw execution receipts remain outside the repository.
 
 This increment does not claim production LOGIN grants, deployed Durable Object
-behavior, live WeChat/Alipay settlement, or complete migration of the separate
-legacy coupon page. Whole-project PHP-to-TS migration remains ongoing.
+behavior or live WeChat/Alipay settlement. The separate legacy coupon page now
+has its own migration contract and verification. Whole-project PHP-to-TS
+migration remains ongoing.

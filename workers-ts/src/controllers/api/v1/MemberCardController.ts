@@ -2,6 +2,8 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { readMembershipCreateBody, membershipPurchaseRequestId } from '@/services/user/MembershipPurchasePolicy';
 import { PaidMembershipService } from "@/services/user/PaidMembershipService";
+import {MembershipCouponService} from '@/services/activity/MembershipCouponService';
+import {membershipCouponQuery} from '@/services/activity/MembershipCouponInput';
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { jsonFail, jsonOk } from "@/utils/json";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
@@ -46,6 +48,8 @@ export async function draw(c: C) {
 }
 
 export async function memberCouponList(c: C) {
+  const query=membershipCouponQuery(new URL(c.req.url).searchParams);
+  if(query){c.header('Cache-Control','private, no-store');const coupons=new MembershipCouponService(c.get('container'));return jsonOk(c,query.kind==='claim'?await coupons.receipt(c.get('uid'),query.issueId):await coupons.list(c.get('uid'),query.page,query.limit));}
   return jsonOk(
     c,
     await service(c).memberCoupons(c.get("uid"), c.req.query("page"), c.req.query("limit")),

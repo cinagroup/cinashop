@@ -1,4 +1,6 @@
 import { http } from "@/utils/request";
+import {memberLevelImage} from '@/api/memberLevels';
+import {memberRightResolvedMedia} from '../../../common/memberRightMedia';
 import { useAuthStore } from "@/stores/auth";
 import { couponProductId, normalizeCouponProducts } from "../../../common/couponProducts";
 import { normalizeScopeDescription } from "../../../common/couponScopeDescription";
@@ -12,7 +14,8 @@ export async function apiCouponProductSearch(couponId: number, options: CouponSe
   const owner = { uid: auth.uid, token: auth.token, version: auth.sessionVersion };
   const data = await http.get<unknown>(`/coupons/user/${couponId}/products`, { view: "search", limit: 20, ...query, ...(cursor !== undefined ? { cursor } : {}) });
   if (auth.uid !== owner.uid || auth.token !== owner.token || auth.sessionVersion !== owner.version) throw new Error("登录状态已变化，请重新加载");
-  return normalizeCouponSearch(data, couponId, query, cursor);
+  const page=normalizeCouponSearch(data,couponId,query,cursor);
+  return{...page,list:page.list.map(product=>({...product,image:memberLevelImage(memberRightResolvedMedia(product.image))}))};
 }
 
 export async function apiCouponScopeDescription(couponId: number, before?: number) {

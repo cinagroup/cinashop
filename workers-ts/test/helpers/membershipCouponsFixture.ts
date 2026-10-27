@@ -1,0 +1,26 @@
+import {expect} from 'vitest';
+import {eq,sql,SQL} from 'drizzle-orm';
+import {PgDialect,getTableConfig} from 'drizzle-orm/pg-core';
+import {memberRight,storeCouponIssue,storeCouponIssueUser,storeCouponUser,systemConfig,user} from '@/models/schema';
+import {membershipHomeFixture} from './membershipHomeFixture';
+import {sortedDiyState,type DiyStateSnapshot,type DiyStateRow as Row} from './diyStateFixture';
+/** Additive owned PG16 fixture. Existing home/activation/DIY fixtures are immutable. */
+export async function membershipCouponsFixture(){
+ const f=await membershipHomeFixture();try{
+  const dialect=new PgDialect(),definition=getTableConfig(storeCouponIssueUser);
+  if(!(await f.db.execute(sql`SELECT to_regclass(${definition.name}) AS name`))[0]?.name){const columns=definition.columns.map(c=>{const v=c.default,initial=v===undefined?'':` default ${v instanceof SQL?dialect.sqlToQuery(v).sql:dialect.sqlToQuery(sql`${v}`.inlineParams()).sql}`;return`"${c.name}" ${c.getSQLType()}${initial}${c.notNull?' not null':''}${c.primary?' primary key':''}`;});await f.exec(`CREATE TABLE "${definition.name}" (${columns.join(',')})`);}
+  const tables=(await f.db.execute<{name:string}>(sql`SELECT tablename AS name FROM pg_tables WHERE schemaname=current_schema() ORDER BY tablename`)).map(v=>v.name),sequences=(await f.db.execute<{name:string}>(sql`SELECT sequencename AS name FROM pg_sequences WHERE schemaname=current_schema() ORDER BY sequencename`)).map(v=>v.name);
+  async function snapshot():Promise<DiyStateSnapshot>{const result:DiyStateSnapshot={};for(const row of await f.db.execute<{name:string;rows:Row[]}>(sql.join(tables.map(name=>sql`SELECT ${name}::text AS name,COALESCE(jsonb_agg(to_jsonb(t)),'[]'::jsonb) AS rows FROM ${sql.identifier(name)} t`),sql` UNION ALL `)))result[row.name]=row.rows;result.__sequences=await f.db.execute(sql.join(sequences.map(name=>sql`SELECT ${name}::text AS name,last_value::text AS last,is_called AS called FROM ${sql.identifier(name)}`),sql` UNION ALL `));return sortedDiyState(result);}
+  const before=await snapshot(),resourceBefore=f.resources(),now=Math.floor(Date.now()/1000),date=(delta:number)=>new Date((now+delta)*1000);
+  await f.db.insert(memberRight).values({id:130001,rightType:'coupon',title:'会员专享优惠券',showTitle:'会员优惠券',status:1,image:f.platformImage.url,explain:'会员专享领取'});
+  await f.db.update(user).set({nickname:'原版会员领券11',isMoneyLevel:2,isEverLevel:0,overdueTime:now+60*86400}).where(eq(user.uid,11));await f.db.update(user).set({nickname:'原版会员领券22',isMoneyLevel:0,isEverLevel:0,overdueTime:0}).where(eq(user.uid,22));
+  const issues=Array.from({length:32},(_,n)=>({id:130001+n,category:2,receiveType:1,appType:0,couponType:n%4,type:n%2?2:1,couponTitle:(n%2?'会员八折券':'会员专享券')+String(n+1).padStart(2,'0'),title:'原版会员领券'+(n+1),couponPrice:n%2?'80.00':'5.00',useMinPrice:n%3?'10.00':'0.00',day:n===1?0:7,useStartTime:n===1?date(-86400):null,useEndTime:n===1?date(7*86400):null,totalCount:n===30?0:3,remainCount:n===30||n===31?0:3,isPermanent:n===30?1:0,receiveLimit:0,status:1,isDel:0,startTime:date(-86400),endTime:date(30*86400),sort:50000-n,addTime:now,rule:'<b>真实用券规则'+(n+1)+'</b>\n会员专享，不可转让'}));await f.db.insert(storeCouponIssue).values(issues);
+  const variants=[{id:130101,status:0},{id:130102,isDel:1},{id:130103,receiveType:3},{id:130104,appType:1},{id:130105,category:3},{id:130106,category:1},{id:130107,startTime:date(86400)},{id:130108,endTime:date(-1)}];await f.db.insert(storeCouponIssue).values(variants.map(v=>({...issues[0]!,couponTitle:'不可见会员券旁观'+v.id,...v})));
+  await f.db.insert(storeCouponUser).values([{id:150001,uid:11,issueCouponId:130028,status:3},{id:150002,uid:11,issueCouponId:130029,status:1},{id:150003,uid:11,issueCouponId:130030,status:2},{id:150004,uid:11,issueCouponId:130026,status:0},{id:150005,uid:11,issueCouponId:130026,status:1},{id:150006,uid:22,issueCouponId:130004,status:0}].map((v,n)=>({...v,couponTitle:'真实历史会员券'+v.id,couponPrice:'5.00',useMinPrice:'0.00',type:1,startTime:date(-86400),endTime:date(v.status===2?-1:7*86400),receiveTime:now-100+n,receiveSource:'get',isFail:v.status===2?1:0})));
+  await f.db.insert(storeCouponIssueUser).values({uid:11,issueCouponId:130027,addTime:now-100});
+  const baseline=await snapshot();f.cache.clear();expect(f.resources()).toEqual(resourceBefore);
+  async function restore(){await f.exec('TRUNCATE '+tables.map(v=>'"'+v+'"').join(',')+' RESTART IDENTITY');await f.db.transaction(async tx=>{for(const name of tables)if(baseline[name].length)await tx.execute(sql`INSERT INTO ${sql.identifier(name)} SELECT * FROM jsonb_populate_recordset(NULL::${sql.identifier(name)},${JSON.stringify(baseline[name])}::jsonb)`);for(const v of baseline.__sequences)await tx.execute(sql`SELECT setval(${String(v.name)}::regclass,${String(v.last)}::bigint,${Boolean(v.called)})`);});f.cache.clear();}
+  async function memberConfig(value:string){await f.db.update(systemConfig).set({value}).where(eq(systemConfig.menuName,'member_card_status'));f.cache.clear();}
+  return{...f,tables,sequences,snapshot,restore,issues,now,memberConfig,baseline,setup:{before,after:baseline,resources_before:resourceBefore,resources_after:f.resources(),legacy_entry:'/pages/annex/vip_coupon/index',target:'/pages/user/memberCoupons',issue_ids:issues.map(v=>v.id),coupon_right_id:130001}};
+ }catch(error){await f.close();throw error;}
+}

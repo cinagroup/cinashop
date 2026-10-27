@@ -52,7 +52,6 @@ export function createMemberHomeRequests(current:()=>boolean){const scope=create
  create:async(planId:number,key:string)=>{if(!memberRequestId(key)||!Number.isSafeInteger(planId)||planId<1)throw invalid();return order(await scope.request('user/member/card/create','POST',{member_type:planId,from:memberPurchaseChannel(),request_id:key},true),planId);},
  cashier:async(id:string)=>decodeMemberCashier(await scope.request(`order/cashier/${encodeURIComponent(id)}/vip`,'GET',{},true),id),
  pay:async(id:string,method:MemberPayMethod)=>decodeMemberPayment(await scope.request('user/member/card/pay','POST',{uni:id,paytype:method,from:memberPurchaseChannel()},true),id,method),
- coupons:async(page:number)=>decodeMemberCoupons(await scope.request('user/member/coupons/list','GET',{page,limit:10},true)),
  products:async(page:number)=>{const r=record(await scope.request('groom/list/5','GET',{page,limit:15},true));return unique(array(r.list,15).map(v=>{const p=record(v);return{id:integer(p.id,1),title:text(p.store_name,512),image:text(p.image,4096),price:money(p.price),vipPrice:money(p.vip_price)};}));},
  };}
 export type MemberHomeRequests=ReturnType<typeof createMemberHomeRequests>;

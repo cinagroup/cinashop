@@ -31,8 +31,8 @@
     <view v-if="state.loading" class="notice">正在读取券范围商品…</view>
     <view v-if="error" class="error"><view>{{ error }}</view><button size="mini" :disabled="state.loading" @tap="load(state.nextCursor !== null)">重试加载范围商品</button></view>
     <view class="scope-grid">
-      <view v-for="product in state.list" :key="product.id" class="scope-product">
-        <image v-if="product.image" :src="product.image" mode="aspectFit" class="product-image" />
+      <view v-for="product in productItems" :key="product.id" class="scope-product">
+        <image v-if="product.preview.src" :key="product.preview.key" :src="product.preview.src" mode="aspectFit" class="product-image" @error="product.preview.error" /><view v-else class="product-image image-unavailable">商品图片暂不可用</view>
         <view class="product-title">{{ product.title }}</view><view class="catalog-price">目录价 ¥{{ product.catalogPrice }}</view>
         <button size="mini" :disabled="blocked" @tap="openProduct(product.id)">查看商品详情</button>
       </view>
@@ -50,7 +50,7 @@ import ThemePage from '@/components/ThemePage.vue';
 import { useCouponProducts } from "@/composables/useCouponProducts";
 import { computed } from "vue";
 defineOptions({ inheritAttrs: false });
-const { state, scopeState, error, blocked, scopeLabel, keyword, filters, sorts, applySearch, clearSearch, load, loadScope, openProduct } = useCouponProducts();
+const { state, productItems, scopeState, error, blocked, scopeLabel, keyword, filters, sorts, applySearch, clearSearch, load, loadScope, openProduct } = useCouponProducts();
 const sortIndex = computed(() => sorts.findIndex(option => option.value === filters.value.sort));
 function changeSort(event: { detail: { value: string | number } }) { void applySearch(sorts[Number(event.detail.value)]?.value); }
 </script>
@@ -61,5 +61,5 @@ function changeSort(event: { detail: { value: string | number } }) { void applyS
 .scope-definition { background: white; border-radius: 14rpx; margin: 24rpx 0; padding: 24rpx; line-height: 1.7; }.scope-names { max-height: 400rpx; }.scope-name { margin: 16rpx 0; }
 .notice { color: #666; line-height: 1.7; font-size: 24rpx; margin: 24rpx 0; }.error { color: #b72a1d; margin: 20rpx 0; line-height: 1.7; }
 .scope-grid { display: flex; flex-wrap: wrap; gap: 20rpx; margin: 24rpx 0; }.scope-product { box-sizing: border-box; flex: 1 1 280rpx; max-width: 680rpx; padding: 24rpx; border-radius: 14rpx; background: white; }
-.product-image { width: 100%; height: 230rpx; }.product-title { font-weight: 600; margin: 16rpx 0; }.catalog-price { color: var(--view-priceColor, #e93323); margin: 16rpx 0; }.scope-product button { margin: 0; }
+.image-unavailable{display:flex;align-items:center;justify-content:center;background:#f1ede6;color:#9b8b75;font-size:24rpx}.product-image { width: 100%; height: 230rpx; }.product-title { font-weight: 600; margin: 16rpx 0; }.catalog-price { color: var(--view-priceColor, #e93323); margin: 16rpx 0; }.scope-product button { margin: 0; }
 </style>

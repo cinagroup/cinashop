@@ -1,5 +1,5 @@
 import {AsyncLocalStorage} from 'node:async_hooks';
-import {createHash} from 'node:crypto';
+import {createHash,createHmac} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {beforeAll,beforeEach,afterAll,describe,it,expect,vi} from 'vitest';
 import {eq,sql} from 'drizzle-orm';
@@ -69,6 +69,21 @@ describe('membership home explicit purchase recovery and server accounting',()=>
   return data;
  }
  it('keeps the default and rights DTO exact while home=1 adds only a server UUID and writes no SQL or owned resource',async()=>{
+  const now=Date.now(),clock=vi.spyOn(Date,'now').mockReturnValue(now);
+  try{
+   const tickets=(result:Awaited<ReturnType<typeof request>>)=>{
+    const rows=result.data!.member_rights as Row[];expect(rows.length).toBeGreaterThan(0);
+    for(const right of rows){
+     const persisted=one(result.before.member_right,'id',right.id),reference=String(persisted.image);
+     expect(reference).toMatch(/^\/api\/assets\/[1-9]\d*$/u);expect(typeof right.pic).toBe('string');
+     const url=new URL(right.pic,'https://owned-member-home.test');expect(url.origin).toBe('https://owned-member-home.test');expect(url.hash).toBe('');expect(url.pathname).toBe(reference);
+     expect([...url.searchParams.keys()].sort()).toEqual(['expires','signature']);
+     const expires=url.searchParams.get('expires')!;expect(expires).toBe(String(Math.floor(now/1000)+900));
+     expect(url.searchParams.get('signature')).toBe(createHmac('sha256',env.APP_KEY).update(`GET\n${reference}\n${expires}`).digest('base64url'));
+     const attachment=one(result.before.system_attachment,'att_id',Number(reference.split('/').at(-1)));
+     expect(attachment.att_dir).toBe(reference);expect({type:attachment.type,relation_id:attachment.relation_id,module_type:attachment.module_type,file_type:attachment.file_type,image_type:attachment.image_type}).toEqual({type:1,relation_id:0,module_type:1,file_type:1,image_type:8});
+    }
+   };
   const legacy=await request('/api/user/member/card/index');expect(legacy.status,legacy.msg).toBe(200);noWrite(legacy);
   expect(Object.keys(legacy.data!).sort()).toEqual(['is_get_free','member_coupons','member_explain','member_rights','member_type']);
   const home=await request('/api/user/member/card/index?home=1');expect(home.status,home.msg).toBe(200);noWrite(home);expect(home.response.headers.get('cache-control')).toContain('no-store');
@@ -76,6 +91,8 @@ describe('membership home explicit purchase recovery and server accounting',()=>
   const{purchase_request_id:_id,...original}=home.data!;expect(original).toEqual(legacy.data);expect((home.data!.is_get_free as Row).user_info.uid).toBe(11);
   const rights=await request('/api/user/member/card/index?rights=1');expect(rights.status).toBe(200);noWrite(rights);expect(rights.data!.rights_owner_uid).toBe(11);expect(rights.data).not.toHaveProperty('purchase_request_id');
   expect((home.data!.member_coupons as Row[]).map(row=>row.id)).toEqual([11001,11002,11003,11004]);expect((home.data!.is_get_free as Row).user_info.economize_money).toBe('15.30');
+   tickets(legacy);tickets(home);tickets(rights);
+  }finally{clock.mockRestore();}
  });
  it('issues independent server UUIDs across reads and owners without allocating a business order',async()=>{
   const ids:string[]=[];for(const uid of[11,11,22]){const result=await request('/api/user/member/card/index?home=1',{uid});expect(result.status).toBe(200);noWrite(result);ids.push(String(result.data!.purchase_request_id));expect((result.data!.is_get_free as Row).user_info.uid).toBe(uid);}expect(new Set(ids).size).toBe(3);

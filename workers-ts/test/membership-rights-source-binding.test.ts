@@ -1,3 +1,4 @@
+import { peelMembershipCouponsRegisteredRoutesIfPresent } from './helpers/membershipCouponsSourceBinding';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readMembershipCardActivationHistoricalFile as readFileSync, peelMembershipCardActivationLegacyRules } from './helpers/membershipCardActivationSourceBinding';
@@ -19,9 +20,10 @@ import { membershipRightsSourceBinding as proof, applyMembershipRightsReport, re
   peelMembershipRightsReport, reverseMembershipRightsSource, reverseMembershipRightsHarnessSource,
   reverseMembershipRightsManifest, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules,
   readMembershipRightsHistoricalFile } from './helpers/membershipRightsSourceBinding';
-import { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as activationClientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
-import { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as activationServerRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
+import { REGISTERED_PAGE_ROUTES as couponsClientRoutes, LEGACY_ROUTE_RULES as activationClientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
+import { REGISTERED_PAGE_ROUTES as couponsServerRoutes, LEGACY_ROUTE_RULES as activationServerRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
 
+const clientRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsClientRoutes),serverRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsServerRoutes);
 const clientRules=peelMembershipCardActivationLegacyRules(activationClientRules),serverRules=peelMembershipCardActivationLegacyRules(activationServerRules);
 
 const root=resolve(import.meta.dirname,'../..');

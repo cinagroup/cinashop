@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { effect, stop } = require('vue');
 const { runtime, tick, deferred } = require('./uni-store-runtime.cjs');
 const product = { id: 70, store_name: '范围商品', image: '/api/qa/image.svg', catalog_price: '10.00' };
 const page = (id = 42, list = [product], cursor = null, options = {}) => ({ coupon_id: id, coupon_title: '测试券', scope_type: 2, scope_only: true, list,
@@ -160,4 +161,91 @@ test('search rejects invalid requests before I/O, bad response echoes and imposs
     change = bad; await r.checkout.load(); assert.ok(r.checkout.error.value); assert.deepEqual(r.checkout.state.value.list, []);
   }
   r.auth.clear(); await assert.rejects(api(42, { keyword: '', sort: 'recommended' }), /请先登录/); r.stop();
+});
+
+for (const platform of ['H5', 'MP-WEIXIN', 'APP-PLUS']) test(platform + ' resolves signed scope-product media without altering the legacy adapter', async () => {
+  const signed = '/api/assets/9?expires=' + (Math.floor(Date.now() / 1000) + 900) + '&signature=' + 'a'.repeat(43);
+  const origin = platform === 'H5' ? '' : 'https://cinashop-api.cinagroup.workers.dev';
+  const r = runtime({ feature: 'useCouponProducts', platform, send: call => {
+    assert.equal(call.url, origin + '/api/coupons/user/42/products');
+    return { data: call.data.view === 'search' ? page(42, [{ ...product, image: signed }]) : { coupon_id: 42, coupon_title: '测试券', scope_type: 2, scope_only: true, list: [product], next_cursor: null } };
+  } });
+  try {
+    await r.start({ couponId: '42' }); assert.equal(r.checkout.state.value.list[0].image, origin + signed);
+    const legacy = await r.load(path.resolve(__dirname, '../src/api/couponProducts.ts')).apiCouponProducts(42);
+    assert.equal(legacy.list[0].image, product.image); assert.equal(r.calls.length, 2); assert.deepEqual(r.navigations, []);
+  } finally { r.stop(); }
+});
+test('scope-product search hides expired, unsigned and ambiguous asset capabilities without dropping usable goods', async () => {
+  const signed = '/api/assets/9?expires=' + (Math.floor(Date.now() / 1000) + 900) + '&signature=' + 'a'.repeat(43);
+  const images = ['/api/assets/9', signed + '&expires=1', signed.replace(/expires=\d+/, 'expires=1'), 'javascript:bad()'];
+  let image = images[0];
+  const r = await start(() => ({ data: page(42, [{ ...product, image }]) }));
+  try { for (image of images) { await r.checkout.load(); assert.equal(r.checkout.state.value.list[0].image, ''); assert.equal(r.checkout.state.value.list[0].id, 70); assert.equal(r.checkout.error.value, ''); }
+    r.checkout.openProduct(70); assert.deepEqual(r.navigations, ['/pages/goods/detail?id=70']);
+  } finally { r.stop(); }
+});
+
+
+test('real Vue effects immediately show the image fallback without mutating catalogue DTOs or breaking pagination', async () => {
+  const firstImage = '/static/actual-scope-first.png', secondImage = '/static/actual-scope-second.png';
+  const r = await start(call => ({ data: call.data.cursor
+    ? page(42, [{ ...product, id: 60, image: secondImage }])
+    : page(42, [{ ...product, image: firstImage }], 'next') }));
+  let rendered;
+  const render = effect(() => { rendered = r.checkout.productItems.value.map(row => row.preview.src || 'fallback'); });
+  try {
+    const published = r.checkout.state.value, raw = structuredClone(published), first = r.checkout.productItems.value[0];
+    assert.deepEqual(rendered, [firstImage]); first.preview.error();
+    assert.deepEqual(rendered, ['fallback']); assert.equal(r.checkout.state.value, published);
+    assert.deepEqual(r.checkout.state.value, raw); assert.equal(r.calls.length, 1);
+    first.preview.error(); assert.deepEqual(rendered, ['fallback']); assert.equal(r.calls.length, 1);
+    await r.checkout.load(true);
+    assert.deepEqual(r.checkout.state.value.list.map(row => row.id), [70, 60]);
+    assert.deepEqual(r.checkout.state.value.list.map(row => row.image), [firstImage, secondImage]);
+    assert.equal(r.checkout.state.value.nextCursor, null); assert.equal(r.checkout.error.value, '');
+    const current = r.checkout.productItems.value, before = [...rendered];
+    assert.notEqual(current[0].preview.key, first.preview.key);
+    first.preview.error(); assert.deepEqual(rendered, before);
+    current[1].preview.error(); assert.equal(rendered[1], 'fallback');
+    assert.equal(r.checkout.state.value.list[1].image, secondImage); assert.equal(r.calls.length, 2);
+    r.checkout.openProduct(60); assert.deepEqual(r.navigations, ['/pages/goods/detail?id=60']);
+  } finally { stop(render); r.stop(); }
+});
+for (const action of ['refresh-same-source', 'refresh-new-source', 'hide-show', 'same-token-renewal', 'owner-replacement'])
+  test('old image error closure cannot poison a current preview after ' + action, async () => {
+    let image = '/static/actual-scope-old.png';
+    const r = await start(call => ({ data: page(call.url.includes('/43/') ? 43 : 42, [{ ...product, image }]) }));
+    let rendered;
+    const render = effect(() => { rendered = r.checkout.productItems.value.map(row => row.preview.src || 'fallback'); });
+    try {
+      const old = r.checkout.productItems.value[0].preview;
+      if (action === 'refresh-new-source') image = '/static/actual-scope-new.png';
+      if (action === 'hide-show') {
+        r.hooks.onHide(); old.error(); assert.deepEqual(rendered, []);
+        r.hooks.onShow(); await tick();
+      } else if (action === 'same-token-renewal') {
+        r.auth.setLogin(r.auth.token, r.auth.uid); old.error(); assert.deepEqual(rendered, []);
+        await r.checkout.load();
+      } else if (action === 'owner-replacement') {
+        r.auth.setLogin('synthetic-next-owner-token', 22); old.error(); assert.deepEqual(rendered, []);
+        r.hooks.onLoad({ couponId: '43' }); r.hooks.onShow(); await tick();
+      } else await r.checkout.load();
+      const current = r.checkout.productItems.value[0].preview;
+      assert.notEqual(current.key, old.key); assert.deepEqual(rendered, [image]);
+      old.error(); assert.deepEqual(rendered, [image]);
+      assert.equal(r.checkout.state.value.list[0].image, image);
+      current.error(); assert.deepEqual(rendered, ['fallback']);
+      assert.equal(r.checkout.state.value.list[0].image, image); assert.equal(r.checkout.error.value, '');
+    } finally { stop(render); r.stop(); }
+  });
+test('unload clears reactive previews and late image failures cannot resurrect readonly UI or issue network calls', async () => {
+  const r = await start(() => ({ data: page() }));
+  let rendered;
+  const render = effect(() => { rendered = r.checkout.productItems.value.map(row => row.preview.src || 'fallback'); });
+  try {
+    const old = r.checkout.productItems.value[0].preview, calls = r.calls.length;
+    r.hooks.onUnload(); assert.deepEqual(rendered, []); old.error();
+    assert.deepEqual(rendered, []); assert.deepEqual(r.checkout.state.value.list, []); assert.equal(r.calls.length, calls);
+  } finally { stop(render); r.stop(); }
 });

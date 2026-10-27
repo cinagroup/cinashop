@@ -8,6 +8,8 @@ import { UserCenterService } from "@/services/user/UserCenterService";
 import { UserSignCompatibilityService } from "@/services/user/UserSignCompatibilityService";
 import { UserCollectCompatibilityService } from "@/services/user/UserCollectCompatibilityService";
 import { ActivityService } from "@/services/activity/ActivityService";
+import {MembershipCouponService} from '@/services/activity/MembershipCouponService';
+import {readMembershipCouponBody} from '@/services/activity/MembershipCouponInput';
 import { integralDetailId } from '@/services/activity/IntegralProductDetailData';
 import { SeckillSkuCatalogService } from "@/services/activity/SeckillSkuCatalogService";
 import { CombinationSkuCatalogService } from "@/services/activity/CombinationSkuCatalogService";
@@ -411,9 +413,10 @@ export async function couponTodayV2(c: C) {
 export async function couponReceive(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body: unknown = await c.req.json().catch(() => null);
+  const body: unknown = await readMembershipCouponBody(c.req.raw);
   if (!body || typeof body !== "object" || Array.isArray(body)) return jsonFail(c, "参数错误");
   const input = body as Record<string, unknown>;
+  if(Object.hasOwn(input,'member')){privateNoStore(c);if(new URL(c.req.url).search)throw new ValidateException('会员券领取不接受查询参数');return jsonOk(c,await new MembershipCouponService(c.get('container')).claim(uid,input.couponId),'领取成功');}
   const hasId = Object.prototype.hasOwnProperty.call(input, "id");
   const hasCouponId = Object.prototype.hasOwnProperty.call(input, "couponId");
   // PHP UniApp posts couponId; the migrated clients already post id. Validate

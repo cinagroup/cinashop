@@ -15,7 +15,30 @@ export function useCouponProducts() {
     if (page.title !== state.value.title || page.scopeType !== state.value.scopeType) throw new Error("优惠券配置范围已变化，请刷新范围商品");
     return page;
   }, next => { scopeState.value = next; });
-  const session = new CouponSearchSession(apiCouponProductSearch, next => { state.value = next; });
+  const failedImages = shallowRef(new Set<string>());
+  let imageEpoch = 0;
+  const identity = () => JSON.stringify([auth.uid, auth.token, auth.sessionVersion]);
+  const session = new CouponSearchSession(apiCouponProductSearch, next => {
+    imageEpoch++;
+    failedImages.value = new Set();
+    state.value = next;
+  });
+  // Preview failure is UI state. Keep the session's catalogue DTO and cursor
+  // untouched, and reject events from an old state, owner or image node.
+  const productItems = computed(() => {
+    if (!visible.value || !auth.isLoggedIn || auth.uid <= 0) return [];
+    const snapshot = state.value, epoch = imageEpoch, owner = identity();
+    return snapshot.list.map(product => {
+      const source = product.image, key = JSON.stringify([epoch, product.id, source]);
+      return { ...product, preview: { key, src: failedImages.value.has(key) ? "" : source,
+        error: () => {
+          if (!source || !visible.value || !auth.isLoggedIn || auth.uid <= 0
+            || snapshot !== state.value || epoch !== imageEpoch || owner !== identity()
+            || product.image !== source || failedImages.value.has(key)) return;
+          failedImages.value = new Set([...failedImages.value, key]);
+        } } };
+    });
+  });
   const error = computed(() => guardError.value || state.value.error);
   const blocked = computed(() => !visible.value || !auth.isLoggedIn || auth.uid <= 0 || !couponId.value || !!error.value || state.value.loading || !!scopeState.value.error);
   const scopeLabel = computed(() => couponScopeLabels[state.value.scopeType]);
@@ -47,5 +70,5 @@ export function useCouponProducts() {
   onLoad(query => { session.reset(); scopeSession.reset(); filters.value = defaultCouponSearch(); keyword.value = ""; couponId.value = 0; try { couponId.value = couponProductId(query?.couponId); guardError.value = ""; }
     catch { guardError.value = "优惠券标识无效，请返回钱包重新进入"; } });
   onShow(() => { visible.value = true; void load(); }); onHide(suspend); onUnload(suspend);
-  return { state, scopeState, error, blocked, scopeLabel, filters, keyword, sorts: couponSearchSorts, applySearch, clearSearch, load, loadScope, openProduct };
+  return { state, productItems, scopeState, error, blocked, scopeLabel, filters, keyword, sorts: couponSearchSorts, applySearch, clearSearch, load, loadScope, openProduct };
 }

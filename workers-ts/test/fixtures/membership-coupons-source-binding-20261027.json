@@ -1,0 +1,412 @@
+{
+  "schema": "cinashop.membership-coupons-source-binding.v1",
+  "base_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/uniapp-ts/src/pages.json",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 20447,
+      "after_bytes": 20673,
+      "before_sha256": "580c6bf4a484a3720c01ac30cc107e261ac870aa2d21728609bbeef29dff7b64",
+      "after_sha256": "0dfcfefafb36a379b5718218ed753e89f412ee81b2fd4c2a964d8f03b7a1facd",
+      "before_git_blob_sha1": "5534a363953a3055197f151afcdb021f2daa8b55",
+      "after_git_blob_sha1": "dbf4aa9e0b13c62fa8f432057be9bf650eaba74c",
+      "edits": [
+        {
+          "before_line": 556,
+          "after_line": 556,
+          "before_source": "    {\n      \"path\": \"pages/user/vipOpen\",\n      \"style\": {\n        \"navigationBarTitleText\": \"付费会员\"\n      }\n    },",
+          "after_source": "    {\n      \"path\": \"pages/user/vipOpen\",\n      \"style\": {\n        \"navigationBarTitleText\": \"付费会员\"\n      }\n    },\n    {\n      \"path\": \"pages/user/memberCoupons\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员优惠券\",\n        \"navigationBarBackgroundColor\": \"#F5F5F5\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },"
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/config/navigation.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 22949,
+      "after_bytes": 22984,
+      "before_sha256": "806571a8d73485a4e84183a989b6bdf0dc08cfded5526179ea70a8b638f1e648",
+      "after_sha256": "13b7055e816b48a7bbad80ea375c34669cd16fc9839844bec8b6d00aed713aa4",
+      "before_git_blob_sha1": "67d0db4542718ce35872eb1e4d986633962a3dad",
+      "after_git_blob_sha1": "af0415b9f06fbe1fb0dd04f553ad56313ed594c4",
+      "edits": [
+        {
+          "before_line": 129,
+          "after_line": 129,
+          "before_source": "  \"/pages/user/vipOpen\",",
+          "after_source": "  \"/pages/user/vipOpen\",\n  \"/pages/user/memberCoupons\","
+        },
+        {
+          "before_line": 268,
+          "after_line": 269,
+          "before_source": "  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },",
+          "after_source": "  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 22974,
+      "after_bytes": 23009,
+      "before_sha256": "a6623aeb6305f256d81b72638ff58be23191f759fcbb0dbf152287573a84a1bf",
+      "after_sha256": "8b8c3b2b98f8577dffd30b0244b1a05989ad0f38fd90387905496e5fa7961575",
+      "before_git_blob_sha1": "5fbd9940ea6ff5de7083a5c7935ee475fc69cdff",
+      "after_git_blob_sha1": "cc6a4df0766ac7357aedb6fdce6c46e882584396",
+      "edits": [
+        {
+          "before_line": 130,
+          "after_line": 130,
+          "before_source": "  \"/pages/user/vipOpen\",",
+          "after_source": "  \"/pages/user/vipOpen\",\n  \"/pages/user/memberCoupons\","
+        },
+        {
+          "before_line": 269,
+          "after_line": 270,
+          "before_source": "  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },",
+          "after_source": "  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 18057,
+      "after_bytes": 18085,
+      "before_sha256": "95e5d65c1287bc9e0035da3a76d476f331c4b0b7bbc1fadf3c527f90efc4e81b",
+      "after_sha256": "f0063f62b8c516afec40bd953dddc32e1408d0d22b75e797b508b7322dc4ad1d",
+      "before_git_blob_sha1": "f7662ecb7a286268f5ae1066c058194f4f2920e4",
+      "after_git_blob_sha1": "9abc6fbd8348ed9517f0913c1c1df13b557293ce",
+      "edits": [
+        {
+          "before_line": 66,
+          "after_line": 66,
+          "before_source": "['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index']",
+          "after_source": "['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons']"
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/membershipCardActivationSourceBinding.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 5804,
+      "after_bytes": 6167,
+      "before_sha256": "db97a4dc8ab78fe3e7b873b78a5716875317f763cd8097c71d5d3f0cf65d76e4",
+      "after_sha256": "751ae0e010f72709fe3e0075b95efa9315e0efca2187b2dfe0801da87af20d68",
+      "before_git_blob_sha1": "0064fb94bc5039b61d3e733a80eccf175ca0af60",
+      "after_git_blob_sha1": "4119342f0fa789eaa1c23fc076b50cb379dc2f11",
+      "edits": [
+        {
+          "before_line": 2,
+          "after_line": 2,
+          "before_source": "import { readFileSync } from 'node:fs';",
+          "after_source": "import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsSourceIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './membershipCouponsSourceBinding';"
+        },
+        {
+          "before_line": 42,
+          "after_line": 42,
+          "before_source": "inventory(binding);return reverse(file,source,binding.sources);",
+          "after_source": "inventory(binding);return reverse(file,peelMembershipCouponsSourceIfPresent(file,source),binding.sources);"
+        },
+        {
+          "before_line": 49,
+          "after_line": 49,
+          "before_source": "  inventory(binding);const entry=entryFor(file,binding.sources);if(!entry)return source;",
+          "after_source": "  inventory(binding);source=peelMembershipCouponsSourceIfPresent(file,source);const entry=entryFor(file,binding.sources);if(!entry)return source;"
+        },
+        {
+          "before_line": 53,
+          "after_line": 53,
+          "before_source": "export function reverseMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {\n  inventory(binding);const p=binding.navigation;",
+          "after_source": "export function reverseMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {\n  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsLegacyRulesIfPresent(current);"
+        },
+        {
+          "before_line": 60,
+          "after_line": 60,
+          "before_source": "export function peelMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {\n  inventory(binding);const p=binding.navigation;",
+          "after_source": "export function peelMembershipCardActivationLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipCardActivationSourceBinding):T {\n  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsLegacyRulesIfPresent(current);"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/helpers/membershipRightsSourceBinding.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 9016,
+      "after_bytes": 9179,
+      "before_sha256": "e6e1f3e2088e75f4ea949884aedfc4a0e8f6bc585ab371105fc2b5317c09435a",
+      "after_sha256": "fef2ad05ac7b6d57a0b40053446cb735fa99c763bd00a0a03e9bc2a605e80f71",
+      "before_git_blob_sha1": "89e5d0d7106156ca2e5c9a05b094993f0c8c1cc1",
+      "after_git_blob_sha1": "c92e96311285fed876b6acc405b87f4779ec8a84",
+      "edits": [
+        {
+          "before_line": 1,
+          "after_line": 1,
+          "before_source": "import { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';",
+          "after_source": "import { peelMembershipCouponsRegisteredRoutesIfPresent } from './membershipCouponsSourceBinding';\nimport { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';"
+        },
+        {
+          "before_line": 85,
+          "after_line": 86,
+          "before_source": "export function reverseMembershipRightsRegisteredRoutes(current:ReadonlySet<string>,binding=membershipRightsSourceBinding):Set<string> {\n  inventory(binding);const p=binding.navigation;",
+          "after_source": "export function reverseMembershipRightsRegisteredRoutes(current:ReadonlySet<string>,binding=membershipRightsSourceBinding):Set<string> {\n  inventory(binding);const p=binding.navigation;current=peelMembershipCouponsRegisteredRoutesIfPresent(current);"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-card-activation-source-binding.test.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 18306,
+      "after_bytes": 18821,
+      "before_sha256": "04144ad804625c0cbf5261bffee07bfbaeead9de6cac7d7bd98a9835b589c2d2",
+      "after_sha256": "f64864a99c83a7833d61923c3f3f0711ffd3c35a4aca956f7c56e7bfc32bb52b",
+      "before_git_blob_sha1": "ea6f6b54b8581af130c25f61473ff852f1057e0b",
+      "after_git_blob_sha1": "9f8626595dd57c17357fe596f6309bdaf7840923",
+      "edits": [
+        {
+          "before_line": 2,
+          "after_line": 2,
+          "before_source": "import { readFileSync } from 'node:fs';",
+          "after_source": "import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsRegisteredRoutesIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './helpers/membershipCouponsSourceBinding';"
+        },
+        {
+          "before_line": 17,
+          "after_line": 17,
+          "before_source": "REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as clientRules",
+          "after_source": "REGISTERED_PAGE_ROUTES as couponsClientRoutes, LEGACY_ROUTE_RULES as couponsClientRules"
+        },
+        {
+          "before_line": 18,
+          "after_line": 18,
+          "before_source": "REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as serverRules",
+          "after_source": "REGISTERED_PAGE_ROUTES as couponsServerRoutes, LEGACY_ROUTE_RULES as couponsServerRules"
+        },
+        {
+          "before_line": 20,
+          "after_line": 20,
+          "before_source": "const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');",
+          "after_source": "const clientRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsClientRoutes),serverRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsServerRoutes);\nconst clientRules=peelMembershipCouponsLegacyRulesIfPresent(couponsClientRules),serverRules=peelMembershipCouponsLegacyRulesIfPresent(couponsServerRules);\nconst root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-rights-source-binding.test.ts",
+      "before_ref": "42acfe26dcd98d0e4c48f1bc5f92a85fdc8ca131",
+      "before_bytes": 21489,
+      "after_bytes": 21779,
+      "before_sha256": "392e2ac9799bbc18305a2d953fe300379d56c5baecd634fc29a358b3495246f3",
+      "after_sha256": "fd4ccc83b6a68bbd493f2fe05754ba3803326c318c7f4d22a6495730dec948ce",
+      "before_git_blob_sha1": "b14a35af051a9c62a71c9742ab1f5b87abdf9d6f",
+      "after_git_blob_sha1": "516202571fa008797b6843bb2da011f1c80e3582",
+      "edits": [
+        {
+          "before_line": 1,
+          "after_line": 1,
+          "before_source": "import { createHash } from 'node:crypto';",
+          "after_source": "import { peelMembershipCouponsRegisteredRoutesIfPresent } from './helpers/membershipCouponsSourceBinding';\nimport { createHash } from 'node:crypto';"
+        },
+        {
+          "before_line": 22,
+          "after_line": 23,
+          "before_source": "REGISTERED_PAGE_ROUTES as clientRoutes",
+          "after_source": "REGISTERED_PAGE_ROUTES as couponsClientRoutes"
+        },
+        {
+          "before_line": 23,
+          "after_line": 24,
+          "before_source": "REGISTERED_PAGE_ROUTES as serverRoutes",
+          "after_source": "REGISTERED_PAGE_ROUTES as couponsServerRoutes"
+        },
+        {
+          "before_line": 25,
+          "after_line": 26,
+          "before_source": "const clientRules=peelMembershipCardActivationLegacyRules(activationClientRules),serverRules=peelMembershipCardActivationLegacyRules(activationServerRules);",
+          "after_source": "const clientRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsClientRoutes),serverRoutes=peelMembershipCouponsRegisteredRoutesIfPresent(couponsServerRoutes);\nconst clientRules=peelMembershipCardActivationLegacyRules(activationClientRules),serverRules=peelMembershipCardActivationLegacyRules(activationServerRules);"
+        }
+      ]
+    }
+  ],
+  "production_patch": {
+    "sha256": "d589d8d447da82005cfe474ae5cab8f7776e69ec33170962b5fe6e98dacb9ef9",
+    "bytes": 4532,
+    "unified_diff": "diff --git a/view/uniapp-ts/src/pages.json b/view/uniapp-ts/src/pages.json\nindex 5534a363953a3055197f151afcdb021f2daa8b55..dbf4aa9e0b13c62fa8f432057be9bf650eaba74c 100644\n--- a/view/uniapp-ts/src/pages.json\n+++ b/view/uniapp-ts/src/pages.json\n@@ -557,6 +557,14 @@\n       \"path\": \"pages/user/vipOpen\",\n       \"style\": {\n         \"navigationBarTitleText\": \"付费会员\"\n+      }\n+    },\n+    {\n+      \"path\": \"pages/user/memberCoupons\",\n+      \"style\": {\n+        \"navigationBarTitleText\": \"会员优惠券\",\n+        \"navigationBarBackgroundColor\": \"#F5F5F5\",\n+        \"navigationBarTextStyle\": \"black\"\n       }\n     },\n     {\ndiff --git a/view/uniapp-ts/src/config/navigation.ts b/view/uniapp-ts/src/config/navigation.ts\nindex 67d0db4542718ce35872eb1e4d986633962a3dad..af0415b9f06fbe1fb0dd04f553ad56313ed594c4 100644\n--- a/view/uniapp-ts/src/config/navigation.ts\n+++ b/view/uniapp-ts/src/config/navigation.ts\n@@ -127,6 +127,7 @@\n   \"/pages/user/bank\",\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n+  \"/pages/user/memberCoupons\",\n   \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n@@ -265,7 +266,7 @@\n   \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n-  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n   \"/pages/annex/special/index\": { target: \"/pages/diy/detail\", coverage: \"candidate_covered\" },\n \ndiff --git a/workers-ts/src/services/content/FabRouteRegistry.ts b/workers-ts/src/services/content/FabRouteRegistry.ts\nindex 5fbd9940ea6ff5de7083a5c7935ee475fc69cdff..cc6a4df0766ac7357aedb6fdce6c46e882584396 100644\n--- a/workers-ts/src/services/content/FabRouteRegistry.ts\n+++ b/workers-ts/src/services/content/FabRouteRegistry.ts\n@@ -128,6 +128,7 @@\n   \"/pages/user/bank\",\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n+  \"/pages/user/memberCoupons\",\n   \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n@@ -266,7 +267,7 @@\n   \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n-  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n   \"/pages/annex/special/index\": { target: \"/pages/diy/detail\", coverage: \"candidate_covered\" },\n \ndiff --git a/workers-ts/src/services/content/UserCenterPublicReadService.ts b/workers-ts/src/services/content/UserCenterPublicReadService.ts\nindex f7662ecb7a286268f5ae1066c058194f4f2920e4..9abc6fbd8348ed9517f0913c1c1df13b557293ce 100644\n--- a/workers-ts/src/services/content/UserCenterPublicReadService.ts\n+++ b/workers-ts/src/services/content/UserCenterPublicReadService.ts\n@@ -63,7 +63,7 @@\n         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n         if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n-        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index'].includes(path)&&!capabilities.paid_member)return[];\n+        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons'].includes(path)&&!capabilities.paid_member)return[];\n         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n         if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n"
+  },
+  "navigation": {
+    "route": "/pages/user/memberCoupons",
+    "before_count": 142,
+    "after_count": 143,
+    "before_routes_sha256": "b7a5cd59b6460b24c63cde9803b244febd3d048c627030ee1e0df5383a4f72e4",
+    "after_routes_sha256": "2cb722586466869d2dcf75eaf9e10a14d5bb4e7d1c749939e78c7a1e5394a731",
+    "key": "/pages/annex/vip_coupon/index",
+    "before_rule": {
+      "target": "/pages/user/vipOpen",
+      "coverage": "partial_replacement"
+    },
+    "after_rule": {
+      "target": "/pages/user/memberCoupons",
+      "coverage": "candidate_covered"
+    },
+    "before_rules_sha256": "213f1faa57135c7392de83f96fcfbd218184e7e28eb57563e9f518ff2858999c",
+    "after_rules_sha256": "452871b4a998e6b5f535823502a1eb1035cec23cde431feb5134445af4cc638d"
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "bytes": 55307,
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "bytes": 45718,
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "bytes": 66571,
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "bytes": 2940,
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "bytes": 11589,
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "bytes": 28750,
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-growth-records-manifest-20261026.json",
+      "bytes": 1914,
+      "sha256": "ad63de188028e7801656cae00e94dd2b1132abf0953febe3611c5439cb292298"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-points-centre-manifest-20261025.json",
+      "bytes": 582,
+      "sha256": "008cc87b7a91918b04ff949d7684dff38b05324df8544af41ad25d59d7ef5d8d"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-sign-centre-manifest-20261025.json",
+      "bytes": 585,
+      "sha256": "1363555e325961e69a5f1632b8d901246f206f435ba74c7c6d0517c846045d0a"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerGrowthRecordsManifest.ts",
+      "bytes": 2043,
+      "sha256": "d00f042a01a8e2af4a11a806f3832b13b3392d4adf80553bbe3fd697a4f3ce85"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerPointsCentreManifest.ts",
+      "bytes": 1552,
+      "sha256": "01980b2cd124302886c7c39f9efa0d699cf099d1e09de13a0e067c60aa36ea06"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerSignCentreManifest.ts",
+      "bytes": 1637,
+      "sha256": "c6d3037e66184e8dc413db5f9edab4970542e75f5ec8cf85d9b218ae211461ab"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "bytes": 7016,
+      "sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0"
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "bytes": 6302,
+      "sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d"
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "bytes": 2717,
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0"
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "bytes": 17141,
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472"
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "bytes": 11768,
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminLevelDefinitionSourceBinding.ts",
+      "bytes": 6644,
+      "sha256": "06cd50d4e272b3fc293e177b2169414999884247d352ea39b21e701d6ffd3187"
+    },
+    {
+      "file": "workers-ts/test/admin-level-definition-source-binding.test.ts",
+      "bytes": 15924,
+      "sha256": "aa15ce2ae11400d7a37ab0abd3bb5620bfa93097b3cb97465449ebd3d91c7861"
+    },
+    {
+      "file": "workers-ts/test/customer-growth-records-migration.test.ts",
+      "bytes": 12677,
+      "sha256": "0041c48805850866b251e720f47a42cacdfb4934f319326dd4ee096a755ca835"
+    },
+    {
+      "file": "workers-ts/test/customer-points-centre-migration.test.ts",
+      "bytes": 4694,
+      "sha256": "5a6f35651d1db93ffb349cce4d4e35687614584df290ad02fd8e8be0542f0344"
+    },
+    {
+      "file": "workers-ts/test/customer-sign-centre-migration.test.ts",
+      "bytes": 4861,
+      "sha256": "b3df438217bc3475283cd7369e8b12610cc40ec39bb2125832ed584d2c22727e"
+    },
+    {
+      "file": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "bytes": 29432,
+      "sha256": "668d0cb128f6aae27ccbf62f5b4079e47352d630e1139babea6e29ce13b4eb20"
+    },
+    {
+      "file": "workers-ts/test/community-main-feed-frontend.test.ts",
+      "bytes": 19687,
+      "sha256": "373b8e4e619b970b34bfa0255ac67174ed7f31747d496c460ebc52be0c6cd9fe"
+    },
+    {
+      "file": "workers-ts/test/community-publish-entry-migration.test.ts",
+      "bytes": 24072,
+      "sha256": "b198edeb77ccf0e23bafced36126122f6d9ad6d53eedfbb6bd8019dc11a7f172"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+      "bytes": 26571,
+      "sha256": "66383437d4f55f432b11211d4f85e31ce2fe713a291988e70c273d913bb8f09c"
+    }
+  ],
+  "boundary": "Exactly four production route/manifest/capability edits; four historical harness adapters peel only this complete reviewed state. Immutable earlier fixtures, reports and original assertions remain unchanged."
+}

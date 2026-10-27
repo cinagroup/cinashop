@@ -560,6 +560,14 @@
       }
     },
     {
+      "path": "pages/user/memberCoupons",
+      "style": {
+        "navigationBarTitleText": "会员优惠券",
+        "navigationBarBackgroundColor": "#F5F5F5",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
       "path": "pages/annex/offline_pay/index",
       "style": {
         "navigationBarTitleText": "线下消费收银"
