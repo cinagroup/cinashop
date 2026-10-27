@@ -18,8 +18,9 @@ import {
   userMoney,
 } from "@/models/schema";
 import { type Container, createContainerFromDb, withTx } from "@/lib/di";
-import type { Env } from "@/env";
-import { ValidateException } from "@/utils/errors";
+import type { AuthUser, Env } from "@/env";
+import { AuthException, ValidateException } from "@/utils/errors";
+import {assertMemberLevelActivationFields,readMemberLevelActivationPolicy,memberLevelActivationConflict,type MemberLevelActivationState,type MemberLevelOwnedCoupon} from "./MemberLevelActivationInput";
 import { detectUserLevel } from "@/services/order/OrderRewardService";
 import { userGrowthRecordsPagination } from "./UserGrowthRecordsInput";
 import { readUserLevelOverview, renderUserLevelOverview, type UserLevelOverview } from "./UserLevelOverviewService";
@@ -258,6 +259,9 @@ export interface LevelInfo {
   color?: string;
 }
 
+export interface MemberLevelActivationCommit {owner_uid:number;activated:true;level_status:1;rewards:LevelActivationResult;integral_bill_id:number|null;money_bill_id:number|null;owned_coupons:MemberLevelOwnedCoupon[]}
+type ModernActivation={actor:Pick<AuthUser,"uid"|"pwd">;revision:string};
+
 export class UserLevelService {
   constructor(
     private readonly container: Container,
@@ -374,8 +378,8 @@ export class UserLevelService {
     };
   }
 
-  private async activationConfig(container: Container = this.container): Promise<ActivationConfig> {
-    const rows = await container.db
+  private async activationConfig(container: Container = this.container, supplied?:readonly {menuName:string;value:string}[]): Promise<ActivationConfig> {
+    const rows = supplied ?? await container.db
       .select({ menuName: systemConfig.menuName, value: systemConfig.value })
       .from(systemConfig)
       .where(and(eq(systemConfig.isStore, 0), inArray(systemConfig.menuName, [...ACTIVATION_CONFIG_KEYS])))
@@ -406,6 +410,18 @@ export class UserLevelService {
     return config.extendInfo;
   }
 
+  /** Explicit modern read is factual current state, never a lost-request gift receipt. */
+  async activationState(actor:Pick<AuthUser,"uid"|"pwd">):Promise<MemberLevelActivationState>{
+    return withTx(this.container,async tx=>{
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+      const policy=await readMemberLevelActivationPolicy(tx,actor.uid),config=await this.activationConfig({...this.container,db:tx},policy.rows);
+      const [account]=await tx.select({uid:userTable.uid,pwd:userTable.pwd,levelStatus:userTable.levelStatus}).from(userTable).where(and(eq(userTable.uid,actor.uid),eq(userTable.status,1),eq(userTable.isDel,0),isNull(userTable.deleteTime))).limit(1);
+      if(!account||account.pwd!==actor.pwd)throw new AuthException('登录状态已变化，请重新登录');
+      return{owner_uid:account.uid,member_enabled:config.memberEnabled,activation_required:config.activationRequired,level_status:account.levelStatus,activated:account.levelStatus===1,revision:policy.revision,fields:policy.fields};
+    });
+  }
+
   /** GET user/level/detection — 只按经验检测，客户端不能指定目标等级。 */
   async detection(uid: number): Promise<boolean> {
     return withTx(this.container, async (tx) => {
@@ -432,16 +448,29 @@ export class UserLevelService {
   }
 
   /** POST user/level/activate — 激活状态、奖励和证据在同一事务内提交。 */
-  async activateLevel(uid: number, input: unknown): Promise<LevelActivationResult> {
+  async activateLevel(uid:number,input:unknown):Promise<LevelActivationResult>;
+  async activateLevel(uid:number,input:unknown,modern:ModernActivation):Promise<MemberLevelActivationCommit>;
+  async activateLevel(uid: number, input: unknown,modern?:ModernActivation): Promise<LevelActivationResult|MemberLevelActivationCommit> {
     const now = Math.floor(Date.now() / 1_000);
     return withTx(this.container, async (tx) => {
-      const config = await this.activationConfig({ ...this.container, db: tx });
+      let policy:Awaited<ReturnType<typeof readMemberLevelActivationPolicy>>|undefined;
+      if(modern){
+        if(modern.actor.uid!==uid)throw new AuthException('等级激活身份不一致');
+        await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE`);
+        await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+        await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+        policy=await readMemberLevelActivationPolicy(tx,uid);
+        if(modern.revision!==policy.revision)throw memberLevelActivationConflict();
+        assertMemberLevelActivationFields(input,policy.fields);
+      }
+      const config = await this.activationConfig({ ...this.container, db: tx },policy?.rows);
       if (!config.memberEnabled) throw new ValidateException("会员卡功能暂未开启");
       if (!config.activationRequired) throw new ValidateException("会员卡功能暂不需要激活");
       const normalized = normalizeLevelActivationFields(input, config.extendInfo);
       const accounts = await tx
         .select({
           uid: userTable.uid,
+          ...(modern?{pwd:userTable.pwd,status:userTable.status}:{}),
           integral: userTable.integral,
           nowMoney: userTable.nowMoney,
           levelStatus: userTable.levelStatus,
@@ -452,6 +481,7 @@ export class UserLevelService {
         .for("update");
       const account = accounts[0];
       if (!account) throw new ValidateException("用户已注销，或不存在");
+      if(modern&&(account.status!==1||account.pwd!==modern.actor.pwd))throw new AuthException('登录状态已变化，请重新登录');
       if (account.levelStatus === 1) throw new ValidateException("不需要重复激活");
 
       const integral = config.integral;
@@ -474,8 +504,10 @@ export class UserLevelService {
         ...(giftMoneyCents > 0 ? { nowMoney: nextMoney } : {}),
       }).where(eq(userTable.uid, uid));
 
+      let integralBillId:number|null=null,moneyBillId:number|null=null;
+      const ownedCoupons:MemberLevelOwnedCoupon[]=[];
       if (integral > 0) {
-        await tx.insert(userBillTable).values({
+        const insert=tx.insert(userBillTable).values({
           uid,
           linkId: "0",
           pm: 1,
@@ -489,9 +521,10 @@ export class UserLevelService {
           status: 1,
           addTime: now,
         });
+        if(modern){const [row]=await insert.returning({id:userBillTable.id});if(!row)throw Error('Missing actual level integral bill');integralBillId=row.id;}else await insert;
       }
       if (giftMoneyCents > 0) {
-        await tx.insert(userMoney).values({
+        const insert=tx.insert(userMoney).values({
           uid,
           linkId: "0",
           type: "level_add",
@@ -503,6 +536,7 @@ export class UserLevelService {
           status: 1,
           addTime: now,
         });
+        if(modern){const [row]=await insert.returning({id:userMoney.id});if(!row)throw Error('Missing actual level money bill');moneyBillId=row.id;}else await insert;
       }
 
       const couponIds = [...new Set(config.couponIds)].sort((left, right) => left - right);
@@ -523,7 +557,7 @@ export class UserLevelService {
           if (!updated[0]) continue;
         }
         const rolling = issue.day > 0;
-        await tx.insert(storeCouponUser).values({
+        const insert=tx.insert(storeCouponUser).values({
           uid,
           issueCouponId: issue.id,
           couponTitle: issue.title || issue.couponTitle,
@@ -538,6 +572,7 @@ export class UserLevelService {
           receiveSource: "activate_level",
           isFail: 0,
         });
+        if(modern){const [row]=await insert.returning();if(!row||row.uid!==uid||row.issueCouponId!==issue.id)throw Error('Missing actual level owned coupon');ownedCoupons.push({id:row.id,issue_id:row.issueCouponId,status:row.status,start_time:row.startTime?.toISOString()??null,end_time:row.endTime?.toISOString()??null,is_fail:row.isFail,type:row.type,coupon_title:row.couponTitle,coupon_price:row.couponPrice,use_min_price:row.useMinPrice});}else await insert;
         await tx.insert(storeCouponIssueUser).values({ uid, issueCouponId: issue.id, addTime: now });
         coupons.push({
           id: issue.id,
@@ -547,7 +582,7 @@ export class UserLevelService {
           use_min_price: issue.useMinPrice,
         });
       }
-      return {
+      const rewards:LevelActivationResult={
         level_integral_status: config.integralEnabled ? 1 : 0,
         level_give_integral: integral,
         level_money_status: config.moneyEnabled ? 1 : 0,
@@ -555,7 +590,8 @@ export class UserLevelService {
         level_coupon_status: config.couponEnabled ? 1 : 0,
         level_give_coupon: coupons,
       };
-    });
+      return modern?{owner_uid:uid,activated:true as const,level_status:1 as const,rewards,integral_bill_id:integralBillId,money_bill_id:moneyBillId,owned_coupons:ownedCoupons}:rewards;
+    }).catch((error:unknown)=>{if(modern&&error&&typeof error==='object'&&('code'in error&&error.code==='40001'||'cause'in error&&error.cause&&typeof error.cause==='object'&&'code'in error.cause&&error.cause.code==='40001'))throw memberLevelActivationConflict();throw error;});
   }
 
   /** PHP growth ledger: exact decimals, valid owned rows and one page/count snapshot. */

@@ -13,6 +13,7 @@ import { ValidateException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
 import { parseUserGrowthRecordsQuery } from "@/services/user/UserGrowthRecordsInput";
 import { readBoundedJsonValue } from "@/utils/request-body";
+import {memberLevelActivationView,readMemberLevelActivationBody} from "@/services/user/MemberLevelActivationInput";
 import type { AppVariables, Env } from "@/env";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
@@ -48,6 +49,8 @@ export async function levelDetection(c: C) {
 /** GET /api/user/level/activate_info — 激活表单 */
 export async function levelActivateInfo(c: C) {
   const svc = new UserLevelService(c.get("container"), c.env);
+  const query=new URL(c.req.url).searchParams;if(query.has('view'))c.header('Cache-Control','private, no-store');
+  if(memberLevelActivationView(query)){return jsonOk(c,await svc.activationState(c.get('user')!));}
   return jsonOk(c, await svc.activateInfo());
 }
 
@@ -55,9 +58,12 @@ export async function levelActivateInfo(c: C) {
 export async function levelActivate(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const body = await readBoundedJsonValue(c.req.raw, 16 * 1024);
+  const query=new URL(c.req.url).searchParams;if(query.has('view'))c.header('Cache-Control','private, no-store');
+  const modern=memberLevelActivationView(query);
+  const body = modern?await readMemberLevelActivationBody(c.req.raw):await readBoundedJsonValue(c.req.raw, 16 * 1024);
   const svc = new UserLevelService(c.get("container"), c.env);
   try {
+    if(modern){const input=body as Awaited<ReturnType<typeof readMemberLevelActivationBody>>;return jsonOk(c,await svc.activateLevel(uid,input.fields,{actor:c.get('user')!,revision:input.revision}),'激活成功');}
     return jsonOk(c, await svc.activateLevel(uid, body), "激活成功");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);

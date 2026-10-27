@@ -3,16 +3,18 @@ import { onShow,onHide,onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
 import { useAdminSession } from '@/stores/adminSession';
 import { createUserCenterRequests,type UserCenterRequests } from '@/api/userCenter';
+import {createLevelActivationRequests,type LevelActivationRequests} from '@/api/memberLevelActivation';
 import { parseUserCenterMenu,parseUserCenterStats,userCenterProperties,userCenterCountdown,userCenterDestination,openUserCenterDestination } from '@/utils/userCenter';
 import QRCode from 'qrcode-terminal/vendor/QRCode';
 import type { UserCenterSnapshot } from '@/types/userCenter';
 
 export function useUserCenter(options:{autoMemberCode?:boolean}={}){
   const auth=useAuthStore(),admin=useAdminSession(),snapshot=ref<UserCenterSnapshot|null>(null),loading=ref(false),error=ref(''),navigationError=ref('');
+  const memberOpening=ref(false);let memberRequests:LevelActivationRequests|null=null;
   const toolsOpen=ref(false),codeOpen=ref(false),codeLoading=ref(false),codeError=ref(''),code=ref(''),codeDeadline=ref(0),clock=ref(Date.now()),showBalance=ref(false);
   let visible=false,disposed=false,generation=0,requests:UserCenterRequests|null=null,codeRequests:UserCenterRequests|null=null,timer:ReturnType<typeof setInterval>|null=null;
   function closeCode(){codeRequests?.abort();codeRequests=null;codeOpen.value=false;codeLoading.value=false;code.value='';codeDeadline.value=0;codeError.value='';}
-  function clear(){generation++;requests?.abort();requests=null;closeCode();if(timer)clearInterval(timer);timer=null;snapshot.value=null;loading.value=false;error.value='';navigationError.value='';toolsOpen.value=false;showBalance.value=false;}
+  function clear(){generation++;memberRequests?.abort();memberRequests=null;memberOpening.value=false;requests?.abort();requests=null;closeCode();if(timer)clearInterval(timer);timer=null;snapshot.value=null;loading.value=false;error.value='';navigationError.value='';toolsOpen.value=false;showBalance.value=false;}
   function current(){return visible&&!disposed;}
   async function load(){
     if(!current())return;clear();loading.value=true;const epoch=generation;
@@ -47,6 +49,16 @@ export function useUserCenter(options:{autoMemberCode?:boolean}={}){
     const target=userCenterDestination(url);if(!target){navigationError.value='该入口暂不可用，请联系管理员更新';return;}
     if(target.kind==='page'&&target.url.startsWith('/pages/customer-work/')&&snapshot.value.menu.capabilities.work!==true){navigationError.value='当前账号没有手机经营权限';return;}
     navigationError.value='';openUserCenterDestination(target,current);
+  }
+  async function openMemberLevel(){
+    if(!current()||!snapshot.value?.menu.capabilities.member||memberOpening.value)return;
+    if(!auth.isLoggedIn){login();return;}
+    const persisted=()=>{try{return uni.getStorageSync('uni_token')===auth.token&&Number(uni.getStorageSync('uni_uid'))===auth.uid;}catch{return false;}};
+    if(!persisted()){navigationError.value='登录状态已变化，请重新读取个人中心';return;}
+    const epoch=generation,scope=createLevelActivationRequests(()=>current()&&generation===epoch&&persisted());memberRequests=scope;memberOpening.value=true;navigationError.value='';
+    try{const status=await scope.state();if(!scope.active())return;if(!status.member_enabled){navigationError.value='会员卡功能暂未开启';return;}go(status.activation_required&&!status.activated?'/pages/user/levelActivation':'/pages/user/level');}
+    catch(reason){if(scope.active())navigationError.value=reason instanceof Error?reason.message:'会员状态读取失败，请重试';}
+    finally{if(generation===epoch){memberOpening.value=false;if(memberRequests===scope)memberRequests=null;}scope.abort();}
   }
   function openMenu(group:'menu'|'merMenu'|'poster',index:number){
     const menu=snapshot.value?.menu,block=menu?.diy_data[group];if(!current()||!menu||!block||!block.is_show)return;
@@ -93,5 +105,5 @@ export function useUserCenter(options:{autoMemberCode?:boolean}={}){
   function goAdmin(url:'/pages/behalf/record/index'|'/pages/behalf/user_list/index'){if(current()&&admin.ensureFresh()&&admin.canAssist)uni.navigateTo({url});}
   watch(()=>[auth.uid,auth.token,auth.sessionVersion],()=>{clear();if(current())void load();},{flush:'sync'});
   onShow(()=>{visible=true;void load().then(()=>{if(options.autoMemberCode&&current()&&snapshot.value)void getMemberCode();});});onHide(()=>{visible=false;clear();});onUnload(()=>{disposed=true;visible=false;clear();});
-  return {auth,admin,snapshot,loading,error,navigationError,properties,pendingOrder,countdown,orderEntries,toolsOpen,shortcuts,codeOpen,codeLoading,codeError,code,codeDeadline,clock,qrRows,showBalance,load,login,go,openMenu,openProperty,openOperator,openMerchant,logout,getMemberCode,closeCode,goAdmin};
+  return {auth,admin,snapshot,loading,error,navigationError,properties,pendingOrder,countdown,orderEntries,toolsOpen,shortcuts,codeOpen,codeLoading,codeError,code,codeDeadline,clock,qrRows,showBalance,load,login,go,openMemberLevel,memberOpening,openMenu,openProperty,openOperator,openMerchant,logout,getMemberCode,closeCode,goAdmin};
 }

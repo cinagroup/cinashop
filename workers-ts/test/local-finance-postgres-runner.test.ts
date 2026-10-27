@@ -73,6 +73,35 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits the exact member-level-activation native suite up to the owned binary boundary', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/member-level-activation-postgres.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it('admits the exact owned member-level-activation Browser mode before native setup', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:member-level-activation-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER_PACKAGE_JSON');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:member-level-activation-browser-extra', 'audit:member-level-activation-browser.other'])
+    ('rejects malformed member-level-activation Browser mode %s before native launch', mode => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).not.toContain('ENOENT');
+    });
+
+
+  it.each(['test/member-level-activation-postgres.test.ts.extra','test/member-level-activation-postgres.other.ts'])('rejects a malformed member-level-activation native spelling %s',path=>{const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',path],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('Only explicit unit test paths are accepted');expect(r.stderr).not.toContain('ENOENT');});
+  it.each([
+   {args:['unused-bin','audit:member-level-activation-browser'],error:'Only explicit unit test paths are accepted'},
+   {args:['--schema-maintenance','unused-bin','audit:member-level-activation-browser','test/price.test.ts'],error:'Only explicit unit test paths are accepted'},
+   {args:['--schema-maintenance','--case','clause','unused-bin','audit:member-level-activation-browser'],error:'Literal cases apply only to explicit test files'},
+   {args:['--schema-maintenance','--verbose-tests','unused-bin','audit:member-level-activation-browser'],error:'Verbose reporting applies only to explicit native test files'},
+  ])('rejects invalid member-level-activation Browser boundary $args before native launch',({args,error})=>{const r=spawnSync(process.execPath,[script,...args],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain(error);expect(r.stderr).not.toContain('ENOENT');});
   it('admits the exact membership-clause native suite up to the owned binary boundary', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/membership-clause-postgres.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

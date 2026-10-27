@@ -79,6 +79,7 @@
     "test:membership-card-activation:browser": "vitest run --config vitest.membership-card-activation-browser.config.ts --maxWorkers=1",
     "test:membership-home:browser": "vitest run --config vitest.membership-home-browser.config.ts --maxWorkers=1",
     "test:membership-coupons:browser": "vitest run --config vitest.membership-coupons-browser.config.ts --maxWorkers=1",
+    "test:member-level-activation:browser": "vitest run --config vitest.member-level-activation-browser.config.ts --maxWorkers=1",
     "test:membership-clause:browser": "vitest run --config vitest.membership-clause-browser.config.ts --maxWorkers=1"
   },
   "dependencies": {

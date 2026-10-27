@@ -31,10 +31,10 @@
             <view v-for="item in properties" :key="item.id" class="property-item" role="button" :aria-label="item.label" @tap="openProperty(item.id)"><text class="property-value">{{ item.value }}</text><text class="property-label">{{ item.label }}</text></view>
           </view>
           <view v-if="design.member.style===1" class="member-links">
-            <view v-if="snapshot.menu.capabilities.member" @tap="go('/pages/user/level')"><text>{{ profile?.level_name || '会员等级' }}</text><text class="link-description">查看等级与权益 ›</text></view>
+            <view v-if="snapshot.menu.capabilities.member" role="button" aria-label="会员中心" :aria-busy="memberOpening" @tap="openMemberLevel"><text>{{ profile?.level_name || '会员等级' }}</text><text class="link-description">查看等级与权益 ›</text></view>
             <view @tap="go('/pages/user/integral')"><text>积分商城</text><text class="link-description">查看积分兑换 ›</text></view>
           </view>
-          <view v-if="design.member.style===2 && snapshot.menu.capabilities.member" class="level-card" @tap="go('/pages/user/level')"><text>{{ profile?.level_name || '会员等级' }}</text><text>{{ profile?.vip_discount!=='' && profile?.vip_discount!==undefined ? `${Number(profile.vip_discount)/10}折 · ` : '' }}查看会员权益 ›</text></view>
+          <view v-if="design.member.style===2 && snapshot.menu.capabilities.member" class="level-card" role="button" aria-label="会员中心" :aria-busy="memberOpening" @tap="openMemberLevel"><text>{{ profile?.level_name || '会员等级' }}</text><text>{{ profile?.vip_discount!=='' && profile?.vip_discount!==undefined ? `${Number(profile.vip_discount)/10}折 · ` : '' }}查看会员权益 ›</text></view>
           <view v-if="design.member.style===3 && snapshot.menu.capabilities.paid_member" class="paid-card" @tap="go('/pages/user/vipOpen')"><text>{{ profile?.pay_vip_status ? 'SVIP会员权益' : '开通SVIP会员' }}</text><text>{{ profile?.pay_vip_status ? '查看权益' : '查看开通详情' }} ›</text></view>
           <view v-if="design.member.style===4 && snapshot.menu.capabilities.promotion && commission" class="commission-card">
             <view class="withdraw-row"><view><text class="commission-label">可提现（元）</text><text class="withdraw-amount">{{ profile?.commissionCount }}</text></view><button size="mini" @tap="go('/pages/user/finance')">立即提现</button></view>
@@ -67,7 +67,7 @@ import UserCenterMenus from '@/components/userCenter/UserCenterMenus.vue';
 import { computed,ref,watch } from 'vue';
 import { useUserCenter } from '@/composables/useUserCenter';
 import { userCenterMedia as media,userCenterIssueText } from '@/utils/userCenter';
-const {auth,admin,snapshot,loading,error,navigationError,properties,pendingOrder,countdown,orderEntries,toolsOpen,shortcuts,load,login,go,openMenu,openProperty,openOperator,openMerchant,logout,goAdmin}=useUserCenter();
+const {auth,admin,snapshot,loading,error,navigationError,properties,pendingOrder,countdown,orderEntries,toolsOpen,shortcuts,load,login,go,openMemberLevel,memberOpening,openMenu,openProperty,openOperator,openMerchant,logout,goAdmin}=useUserCenter();
 const design=computed(()=>snapshot.value!.menu.diy_data),profile=computed(()=>snapshot.value?.menu.profile);
 const diagnostics=computed(()=>[...new Set((snapshot.value?.menu.user_center_design_state.issues??[]).map(userCenterIssueText))]);
 const commission=computed(()=>{const value=snapshot.value?.stats.commission;return value&&!Array.isArray(value)?value:null;});

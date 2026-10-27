@@ -576,6 +576,14 @@
       }
     },
     {
+      "path": "pages/user/levelActivation",
+      "style": {
+        "navigationBarTitleText": "激活会员",
+        "navigationBarBackgroundColor": "#1E1C19",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/annex/offline_pay/index",
       "style": {
         "navigationBarTitleText": "线下消费收银"

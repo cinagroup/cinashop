@@ -1,12 +1,14 @@
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {readMemberLevelActivationHistoricalFile as readFileSync,peelMemberLevelActivationRegisteredRoutesIfPresent,peelMemberLevelActivationLegacyRulesIfPresent} from './helpers/memberLevelActivationSourceBinding';
 import {resolve} from 'node:path';
 import ts from 'typescript';
 import {describe,it,expect} from 'vitest';
 import {membershipClauseSourceBinding as p,reverseMembershipClauseSource,peelMembershipClauseSource,peelMembershipClauseSourceIfPresent,reverseMembershipClauseRegisteredRoutes,peelMembershipClauseRegisteredRoutesIfPresent,reverseMembershipClauseLegacyRules,peelMembershipClauseLegacyRulesIfPresent,readMembershipClauseHistoricalFile,membershipClauseHistoricalResolvedRoute} from './helpers/membershipClauseSourceBinding';
 import {reverseMembershipCouponsSource,reverseMembershipCouponsRegisteredRoutes,reverseMembershipCouponsLegacyRules} from './helpers/membershipCouponsSourceBinding';
-import {REGISTERED_PAGE_ROUTES as clientRoutes,LEGACY_ROUTE_RULES as clientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';
-import {REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';
+import {REGISTERED_PAGE_ROUTES as activationClientRoutes,LEGACY_ROUTE_RULES as activationClientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';
+import {REGISTERED_PAGE_ROUTES as activationServerRoutes,LEGACY_ROUTE_RULES as activationServerRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';
+const clientRoutes=peelMemberLevelActivationRegisteredRoutesIfPresent(activationClientRoutes),serverRoutes=peelMemberLevelActivationRegisteredRoutesIfPresent(activationServerRoutes);
+const clientRules=peelMemberLevelActivationLegacyRulesIfPresent(activationClientRules),serverRules=peelMemberLevelActivationLegacyRulesIfPresent(activationServerRules);
 const root=resolve(import.meta.dirname,'../..'),read=(f:string)=>readFileSync(resolve(root,f),'utf8'),sha=(s:string)=>createHash('sha256').update(s).digest('hex'),blob=(s:string)=>createHash('sha1').update(`blob ${Buffer.byteLength(s)}\0`).update(s).digest('hex');
 const production=['view/uniapp-ts/src/pages.json','view/uniapp-ts/src/config/navigation.ts','workers-ts/src/services/content/FabRouteRegistry.ts','workers-ts/src/services/content/UserCenterPublicReadService.ts'];
 const harness=['workers-ts/test/helpers/membershipCouponsSourceBinding.ts','workers-ts/test/membership-coupons-source-binding.test.ts'];
