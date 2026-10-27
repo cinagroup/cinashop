@@ -1,3 +1,4 @@
+import { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
@@ -38,7 +39,7 @@ function reverseSource(file:string,source:string,entries:SourceProof[]):string {
 }
 /** Restore only the independently captured whole predecessor, including an absent new API module. */
 export function reverseMembershipRightsSource(file:string,source:string,binding=membershipRightsSourceBinding):string {
-  inventory(binding);return reverseSource(file,source,binding.sources);
+  inventory(binding);return reverseSource(file,peelMembershipCardActivationSource(file,source),binding.sources);
 }
 export function reverseMembershipRightsHarnessSource(file:string,source:string,binding=membershipRightsSourceBinding):string {
   inventory(binding);return reverseSource(file,source,binding.harness_sources);
@@ -90,6 +91,7 @@ export function reverseMembershipRightsRegisteredRoutes(current:ReadonlySet<stri
 }
 export function reverseMembershipRightsLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipRightsSourceBinding):T {
   inventory(binding);const p=binding.navigation;
+  current=peelMembershipCardActivationLegacyRules(current);
   if(sha(JSON.stringify(current))!==p.after_rules_sha256||!equal(current[p.key],p.after_rule))throw Error('Membership rights complete current legacy rules differ');
   const previous={...current,[p.key]:structuredClone(p.before_rule)} as T;
   if(sha(JSON.stringify(previous))!==p.before_rules_sha256)throw Error('Membership rights complete predecessor legacy rules differ');

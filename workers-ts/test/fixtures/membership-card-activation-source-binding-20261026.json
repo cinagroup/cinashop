@@ -1,0 +1,327 @@
+{
+  "schema": "cinashop.membership-card-activation-source-binding.v1",
+  "base_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/uniapp-ts/src/pages.json",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "52c029545994c52ebfa699a4376a0079d669657892482a23051921a9dfbadc14",
+      "after_sha256": "580c6bf4a484a3720c01ac30cc107e261ac870aa2d21728609bbeef29dff7b64",
+      "before_bytes": 20353,
+      "after_bytes": 20447,
+      "before_git_blob_sha1": "e2786dce432c7c6ac9286660709f9859e6ffe57f",
+      "after_git_blob_sha1": "5534a363953a3055197f151afcdb021f2daa8b55",
+      "edits": [
+        {
+          "before_source": "    {\n      \"path\": \"pages/annex/vip_active/index\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员卡激活\"\n      }\n    },\n    {\n",
+          "after_source": "    {\n      \"path\": \"pages/annex/vip_active/index\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员卡激活\",\n        \"navigationBarBackgroundColor\": \"#F3ECE4\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },\n    {\n",
+          "before_line": 574,
+          "after_line": 574
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/config/navigation.ts",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "97fea06f3fe5ead3da7564c26004aee138eb0615056def633c59189f54e6fc8b",
+      "after_sha256": "806571a8d73485a4e84183a989b6bdf0dc08cfded5526179ea70a8b638f1e648",
+      "before_bytes": 22941,
+      "after_bytes": 22949,
+      "before_git_blob_sha1": "62e022d21f7bdfa374f7fa73bc87bbc5f83cf3fd",
+      "after_git_blob_sha1": "67d0db4542718ce35872eb1e4d986633962a3dad",
+      "edits": [
+        {
+          "before_source": "  \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n",
+          "after_source": "  \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/annex/vip_active/index\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n",
+          "before_line": 261,
+          "after_line": 261
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "fdc21e16d3026bd0d81b01bdbf6a827d128e3958130aac6b22ba592e31c7de19",
+      "after_sha256": "a6623aeb6305f256d81b72638ff58be23191f759fcbb0dbf152287573a84a1bf",
+      "before_bytes": 22966,
+      "after_bytes": 22974,
+      "before_git_blob_sha1": "a5e2202bc913be515b903e7f65897bc4ade33999",
+      "after_git_blob_sha1": "5fbd9940ea6ff5de7083a5c7935ee475fc69cdff",
+      "edits": [
+        {
+          "before_source": "  \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n",
+          "after_source": "  \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/annex/vip_active/index\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n",
+          "before_line": 262,
+          "after_line": 262
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "c359c09b80d5ecffad5ba1ce2ee0233d376fcd446be6bc69f3cf04164225766d",
+      "after_sha256": "95e5d65c1287bc9e0035da3a76d476f331c4b0b7bbc1fadf3c527f90efc4e81b",
+      "before_bytes": 18025,
+      "after_bytes": 18057,
+      "before_git_blob_sha1": "70deaf533277c29fe61ee2e558289923eab70a65",
+      "after_git_blob_sha1": "f7662ecb7a286268f5ae1066c058194f4f2920e4",
+      "edits": [
+        {
+          "before_source": "        if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n        if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n        if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n        if(['/pages/user/vipOpen','/pages/user/vipRights'].includes(path)&&!capabilities.paid_member)return[];\n        if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n        if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n        if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n",
+          "after_source": "        if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n        if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n        if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index'].includes(path)&&!capabilities.paid_member)return[];\n        if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n        if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n        if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n",
+          "before_line": 63,
+          "after_line": 63
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/membershipRightsSourceBinding.ts",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "3eae8143606d6d5b52f67fb3daf04835021ced16aa3085f274280fe8532c87f0",
+      "after_sha256": "e6e1f3e2088e75f4ea949884aedfc4a0e8f6bc585ab371105fc2b5317c09435a",
+      "before_bytes": 8780,
+      "after_bytes": 9016,
+      "before_git_blob_sha1": "cc62f3cf67bc673e2169e9dbe84eb25a6dd57d39",
+      "after_git_blob_sha1": "89e5d0d7106156ca2e5c9a05b094993f0c8c1cc1",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { relative, resolve, sep } from 'node:path';\n",
+          "after_source": "import { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { relative, resolve, sep } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "}\n/** Restore only the independently captured whole predecessor, including an absent new API module. */\nexport function reverseMembershipRightsSource(file:string,source:string,binding=membershipRightsSourceBinding):string {\n  inventory(binding);return reverseSource(file,source,binding.sources);\n}\nexport function reverseMembershipRightsHarnessSource(file:string,source:string,binding=membershipRightsSourceBinding):string {\n  inventory(binding);return reverseSource(file,source,binding.harness_sources);\n",
+          "after_source": "}\n/** Restore only the independently captured whole predecessor, including an absent new API module. */\nexport function reverseMembershipRightsSource(file:string,source:string,binding=membershipRightsSourceBinding):string {\n  inventory(binding);return reverseSource(file,peelMembershipCardActivationSource(file,source),binding.sources);\n}\nexport function reverseMembershipRightsHarnessSource(file:string,source:string,binding=membershipRightsSourceBinding):string {\n  inventory(binding);return reverseSource(file,source,binding.harness_sources);\n",
+          "before_line": 38,
+          "after_line": 39
+        },
+        {
+          "before_source": "}\nexport function reverseMembershipRightsLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipRightsSourceBinding):T {\n  inventory(binding);const p=binding.navigation;\n  if(sha(JSON.stringify(current))!==p.after_rules_sha256||!equal(current[p.key],p.after_rule))throw Error('Membership rights complete current legacy rules differ');\n  const previous={...current,[p.key]:structuredClone(p.before_rule)} as T;\n  if(sha(JSON.stringify(previous))!==p.before_rules_sha256)throw Error('Membership rights complete predecessor legacy rules differ');\n",
+          "after_source": "}\nexport function reverseMembershipRightsLegacyRules<T extends Readonly<Record<string,LegacyRule>>>(current:T,binding=membershipRightsSourceBinding):T {\n  inventory(binding);const p=binding.navigation;\n  current=peelMembershipCardActivationLegacyRules(current);\n  if(sha(JSON.stringify(current))!==p.after_rules_sha256||!equal(current[p.key],p.after_rule))throw Error('Membership rights complete current legacy rules differ');\n  const previous={...current,[p.key]:structuredClone(p.before_rule)} as T;\n  if(sha(JSON.stringify(previous))!==p.before_rules_sha256)throw Error('Membership rights complete predecessor legacy rules differ');\n",
+          "before_line": 90,
+          "after_line": 91
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-rights-source-binding.test.ts",
+      "before_ref": "d86de83238127ce4722b1e9f26fb220dbf116587",
+      "before_sha256": "1896ce1fceda38a6f87d393bede2bf8aeaf4f7754c09f871ea83ff44aa62ce25",
+      "after_sha256": "392e2ac9799bbc18305a2d953fe300379d56c5baecd634fc29a358b3495246f3",
+      "before_bytes": 21158,
+      "after_bytes": 21489,
+      "before_git_blob_sha1": "f9acf9785d5dd2c424249a5a425599e2f58999a3",
+      "after_git_blob_sha1": "b14a35af051a9c62a71c9742ab1f5b87abdf9d6f",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\nimport { describe, expect, it } from 'vitest';\n",
+          "after_source": "import { createHash } from 'node:crypto';\nimport { existsSync } from 'node:fs';\nimport { readMembershipCardActivationHistoricalFile as readFileSync, peelMembershipCardActivationLegacyRules } from './helpers/membershipCardActivationSourceBinding';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\nimport { describe, expect, it } from 'vitest';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  peelMembershipRightsReport, reverseMembershipRightsSource, reverseMembershipRightsHarnessSource,\n  reverseMembershipRightsManifest, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules,\n  readMembershipRightsHistoricalFile } from './helpers/membershipRightsSourceBinding';\nimport { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as clientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as serverRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';\n\nconst root=resolve(import.meta.dirname,'../..');\nconst read=(file:string)=>readFileSync(resolve(root,file),'utf8');\n",
+          "after_source": "  peelMembershipRightsReport, reverseMembershipRightsSource, reverseMembershipRightsHarnessSource,\n  reverseMembershipRightsManifest, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules,\n  readMembershipRightsHistoricalFile } from './helpers/membershipRightsSourceBinding';\nimport { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as activationClientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as activationServerRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';\n\nconst clientRules=peelMembershipCardActivationLegacyRules(activationClientRules),serverRules=peelMembershipCardActivationLegacyRules(activationServerRules);\n\nconst root=resolve(import.meta.dirname,'../..');\nconst read=(file:string)=>readFileSync(resolve(root,file),'utf8');\n",
+          "before_line": 18,
+          "after_line": 19
+        }
+      ]
+    }
+  ],
+  "production_patch": {
+    "sha256": "45986d61e479420267b55d39602fa497b61a269da9919050001857e77cda7ce2",
+    "bytes": 4186,
+    "unified_diff": "diff --git a/view/uniapp-ts/src/config/navigation.ts b/view/uniapp-ts/src/config/navigation.ts\nindex 62e022d21f7bdfa374f7fa73bc87bbc5f83cf3fd..67d0db4542718ce35872eb1e4d986633962a3dad 100644\n--- a/view/uniapp-ts/src/config/navigation.ts\n+++ b/view/uniapp-ts/src/config/navigation.ts\n@@ -261,7 +261,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {\n   \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n \n   \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n-  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/annex/vip_active/index\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\ndiff --git a/view/uniapp-ts/src/pages.json b/view/uniapp-ts/src/pages.json\nindex e2786dce432c7c6ac9286660709f9859e6ffe57f..5534a363953a3055197f151afcdb021f2daa8b55 100644\n--- a/view/uniapp-ts/src/pages.json\n+++ b/view/uniapp-ts/src/pages.json\n@@ -574,7 +574,9 @@\n     {\n       \"path\": \"pages/annex/vip_active/index\",\n       \"style\": {\n-        \"navigationBarTitleText\": \"会员卡激活\"\n+        \"navigationBarTitleText\": \"会员卡激活\",\n+        \"navigationBarBackgroundColor\": \"#F3ECE4\",\n+        \"navigationBarTextStyle\": \"black\"\n       }\n     },\n     {\ndiff --git a/workers-ts/src/services/content/FabRouteRegistry.ts b/workers-ts/src/services/content/FabRouteRegistry.ts\nindex a5e2202bc913be515b903e7f65897bc4ade33999..5fbd9940ea6ff5de7083a5c7935ee475fc69cdff 100644\n--- a/workers-ts/src/services/content/FabRouteRegistry.ts\n+++ b/workers-ts/src/services/content/FabRouteRegistry.ts\n@@ -262,7 +262,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {\n   \"/pages/admin/writeOffCard/index\": { target: \"/pages/operator/writeoff\", coverage: \"candidate_covered\" },\n \n   \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n-  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/annex/vip_active/index\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\ndiff --git a/workers-ts/src/services/content/UserCenterPublicReadService.ts b/workers-ts/src/services/content/UserCenterPublicReadService.ts\nindex 70deaf533277c29fe61ee2e558289923eab70a65..f7662ecb7a286268f5ae1066c058194f4f2920e4 100644\n--- a/workers-ts/src/services/content/UserCenterPublicReadService.ts\n+++ b/workers-ts/src/services/content/UserCenterPublicReadService.ts\n@@ -63,7 +63,7 @@ export class UserCenterPublicReadService{\n         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n         if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n-        if(['/pages/user/vipOpen','/pages/user/vipRights'].includes(path)&&!capabilities.paid_member)return[];\n+        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index'].includes(path)&&!capabilities.paid_member)return[];\n         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n         if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n"
+  },
+  "manifest": {
+    "file": "view/uniapp-ts/src/pages.json",
+    "count": 142,
+    "route": "pages/annex/vip_active/index",
+    "before_style": {
+      "navigationBarTitleText": "会员卡激活"
+    },
+    "after_style": {
+      "navigationBarTitleText": "会员卡激活",
+      "navigationBarBackgroundColor": "#F3ECE4",
+      "navigationBarTextStyle": "black"
+    },
+    "routes_sha256": "8a8c702c002dfd840e7aac1f20cafeb6bb52be9acf0fe3407d5b8a4bfb0fd363"
+  },
+  "navigation": {
+    "key": "/pages/annex/vip_paid_active/index",
+    "before_rule": {
+      "target": "/pages/user/vipOpen",
+      "coverage": "partial_replacement"
+    },
+    "after_rule": {
+      "target": "/pages/annex/vip_active/index",
+      "coverage": "candidate_covered"
+    },
+    "before_rules_sha256": "4e5304a9e55a77460c751edda3829f2684d3e93b6ff2193c053ff5e82acfbbd8",
+    "after_rules_sha256": "213f1faa57135c7392de83f96fcfbd218184e7e28eb57563e9f518ff2858999c",
+    "registered_routes_sha256": "b7a5cd59b6460b24c63cde9803b244febd3d048c627030ee1e0df5383a4f72e4"
+  },
+  "admin_api_report": {
+    "sha256": "1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0",
+    "bytes": 645939,
+    "calls": 711,
+    "variants": 749
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab",
+      "bytes": 55307
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431",
+      "bytes": 45718
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de",
+      "bytes": 66571
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e",
+      "bytes": 2940
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50",
+      "bytes": 23388
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693",
+      "bytes": 5851
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295",
+      "bytes": 10746
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+      "bytes": 13813
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13",
+      "bytes": 11589
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9",
+      "bytes": 6294
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236",
+      "bytes": 28750
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-growth-records-manifest-20261026.json",
+      "sha256": "ad63de188028e7801656cae00e94dd2b1132abf0953febe3611c5439cb292298",
+      "bytes": 1914
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-points-centre-manifest-20261025.json",
+      "sha256": "008cc87b7a91918b04ff949d7684dff38b05324df8544af41ad25d59d7ef5d8d",
+      "bytes": 582
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-sign-centre-manifest-20261025.json",
+      "sha256": "1363555e325961e69a5f1632b8d901246f206f435ba74c7c6d0517c846045d0a",
+      "bytes": 585
+    },
+    {
+      "file": "workers-ts/test/helpers/customerGrowthRecordsManifest.ts",
+      "sha256": "d00f042a01a8e2af4a11a806f3832b13b3392d4adf80553bbe3fd697a4f3ce85",
+      "bytes": 2043
+    },
+    {
+      "file": "workers-ts/test/helpers/customerPointsCentreManifest.ts",
+      "sha256": "01980b2cd124302886c7c39f9efa0d699cf099d1e09de13a0e067c60aa36ea06",
+      "bytes": 1552
+    },
+    {
+      "file": "workers-ts/test/helpers/customerSignCentreManifest.ts",
+      "sha256": "c6d3037e66184e8dc413db5f9edab4970542e75f5ec8cf85d9b218ae211461ab",
+      "bytes": 1637
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0",
+      "bytes": 7016
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d",
+      "bytes": 6302
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0",
+      "bytes": 2717
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472",
+      "bytes": 17141
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd",
+      "bytes": 11768
+    },
+    {
+      "file": "workers-ts/test/helpers/adminLevelDefinitionSourceBinding.ts",
+      "sha256": "06cd50d4e272b3fc293e177b2169414999884247d352ea39b21e701d6ffd3187",
+      "bytes": 6644
+    },
+    {
+      "file": "workers-ts/test/admin-level-definition-source-binding.test.ts",
+      "sha256": "aa15ce2ae11400d7a37ab0abd3bb5620bfa93097b3cb97465449ebd3d91c7861",
+      "bytes": 15924
+    },
+    {
+      "file": "workers-ts/test/customer-growth-records-migration.test.ts",
+      "sha256": "0041c48805850866b251e720f47a42cacdfb4934f319326dd4ee096a755ca835",
+      "bytes": 12677
+    },
+    {
+      "file": "workers-ts/test/customer-points-centre-migration.test.ts",
+      "sha256": "5a6f35651d1db93ffb349cce4d4e35687614584df290ad02fd8e8be0542f0344",
+      "bytes": 4694
+    },
+    {
+      "file": "workers-ts/test/customer-sign-centre-migration.test.ts",
+      "sha256": "b3df438217bc3475283cd7369e8b12610cc40ec39bb2125832ed584d2c22727e",
+      "bytes": 4861
+    },
+    {
+      "file": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "sha256": "668d0cb128f6aae27ccbf62f5b4079e47352d630e1139babea6e29ce13b4eb20",
+      "bytes": 29432
+    },
+    {
+      "file": "workers-ts/test/community-main-feed-frontend.test.ts",
+      "sha256": "373b8e4e619b970b34bfa0255ac67174ed7f31747d496c460ebc52be0c6cd9fe",
+      "bytes": 19687
+    },
+    {
+      "file": "workers-ts/test/community-publish-entry-migration.test.ts",
+      "sha256": "b198edeb77ccf0e23bafced36126122f6d9ad6d53eedfbb6bd8019dc11a7f172",
+      "bytes": 24072
+    }
+  ],
+  "boundary": "Four exact production source changes only: existing142-page activation navbar style, one legacy alias in each registry, and paid-member menu gating. No Admin API/report, membership payment/redemption service, new route or historical fixture change. Generation independently reads predecessor Git blobs; CI uses embedded exact patches and complete hashes without Git/PHP checkout dependencies."
+}

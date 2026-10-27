@@ -73,6 +73,26 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits the exact native membership-card activation suite up to the owned binary boundary', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/membership-card-activation-postgres.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it('admits the exact owned membership-card activation Browser mode before native setup', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:membership-card-activation-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER_PACKAGE_JSON');
+    expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:membership-card-activation-browser-extra', 'audit:membership-card-activation-browser.other'])
+    ('rejects malformed membership-card activation Browser mode %s before native launch', mode => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).not.toContain('ENOENT');
+    });
   it("admits the exact DIY carousel background Browser mode without external browser configuration", () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:diy-carousel-browser'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

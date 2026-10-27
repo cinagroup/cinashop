@@ -262,7 +262,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {
   "/pages/admin/writeOffCard/index": { target: "/pages/operator/writeoff", coverage: "candidate_covered" },
 
   "/pages/annex/vip_paid/index": { target: "/pages/user/vipOpen", coverage: "candidate_covered" },
-  "/pages/annex/vip_paid_active/index": { target: "/pages/user/vipOpen", coverage: "partial_replacement" },
+  "/pages/annex/vip_paid_active/index": { target: "/pages/annex/vip_active/index", coverage: "candidate_covered" },
   "/pages/annex/vip_paid_rights/index": { target: "/pages/user/vipRights", coverage: "candidate_covered" },
   "/pages/annex/vip_grade/index": { target: "/pages/user/level", coverage: "candidate_covered" },
   "/pages/annex/vip_grade_active/index": { target: "/pages/user/level", coverage: "partial_replacement" },

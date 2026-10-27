@@ -85,4 +85,26 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native actor-saf
    expect(commands.filter(command=>/^\s*(?:insert|update|delete|merge|alter|create|drop|truncate|grant|revoke)\b/iu.test(command))).toEqual([]);
   });
  });
+ it('filters the original card-activation alias and native activation path across all personal modules when paid membership is disabled',async()=>{
+  await profile(async app=>{
+   const [row]=await f.db.select().from(systemDise).where(eq(systemDise.id,88)),value=JSON.parse(row.value!);
+   const paths=['/pages/annex/vip_paid_active/index','/pages/annex/vip_active/index'];
+   for(const group of ['poster','menu','merMenu'])value[group].list=paths.map((url,index)=>({...value[group].list[0],name:`卡密激活入口${index}`,url}));
+   await f.db.update(systemDise).set({value:JSON.stringify(value)}).where(eq(systemDise.id,88));
+   const commands:string[]=[],db=observeUserCenterDb(app.db,async(_tx,command)=>{commands.push(command);}),service=new UserCenterPublicReadService(createContainerFromDb(db),userCenterEnv);
+   const enabled=await f.snapshot();
+   for(const uid of[11,0]){const menu=await service.menu(uid);expect(menu.capabilities.paid_member).toBe(true);for(const group of[menu.diy_data.poster,menu.diy_data.menu,menu.diy_data.merMenu])expect(group.list.map(item=>item.url)).toEqual(paths);}
+   expect(await f.snapshot()).toEqual(enabled);
+   await f.db.update(systemConfig).set({value:'0'}).where(eq(systemConfig.menuName,'member_card_status'));
+   const disabled=await f.snapshot();
+   for(const uid of[11,0]){const menu=await service.menu(uid);expect(menu.capabilities.paid_member).toBe(false);for(const group of[menu.diy_data.poster,menu.diy_data.menu,menu.diy_data.merMenu])expect(group.list).toEqual([]);}
+   expect(await f.snapshot()).toEqual(disabled);
+   await f.db.update(systemConfig).set({value:'1'}).where(eq(systemConfig.menuName,'member_card_status'));
+   const restored=await f.snapshot();
+   for(const uid of[11,0]){const menu=await service.menu(uid);expect(menu.capabilities.paid_member).toBe(true);for(const group of[menu.diy_data.poster,menu.diy_data.menu,menu.diy_data.merMenu])expect(group.list.map(item=>item.url)).toEqual(paths);}
+   expect(await f.snapshot()).toEqual(restored);
+   expect(commands.filter(command=>/^\s*(?:insert|update|delete|merge|alter|create|drop|truncate|grant|revoke)\b/iu.test(command))).toEqual([]);
+  });
+ });
+
 });

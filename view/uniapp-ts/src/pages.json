@@ -574,7 +574,9 @@
     {
       "path": "pages/annex/vip_active/index",
       "style": {
-        "navigationBarTitleText": "会员卡激活"
+        "navigationBarTitleText": "会员卡激活",
+        "navigationBarBackgroundColor": "#F3ECE4",
+        "navigationBarTextStyle": "black"
       }
     },
     {

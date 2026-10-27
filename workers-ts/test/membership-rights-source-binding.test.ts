@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { readMembershipCardActivationHistoricalFile as readFileSync, peelMembershipCardActivationLegacyRules } from './helpers/membershipCardActivationSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
@@ -18,8 +19,10 @@ import { membershipRightsSourceBinding as proof, applyMembershipRightsReport, re
   peelMembershipRightsReport, reverseMembershipRightsSource, reverseMembershipRightsHarnessSource,
   reverseMembershipRightsManifest, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules,
   readMembershipRightsHistoricalFile } from './helpers/membershipRightsSourceBinding';
-import { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as clientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
-import { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as serverRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
+import { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as activationClientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
+import { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as activationServerRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
+
+const clientRules=peelMembershipCardActivationLegacyRules(activationClientRules),serverRules=peelMembershipCardActivationLegacyRules(activationServerRules);
 
 const root=resolve(import.meta.dirname,'../..');
 const read=(file:string)=>readFileSync(resolve(root,file),'utf8');
