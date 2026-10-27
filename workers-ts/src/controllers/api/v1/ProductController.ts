@@ -18,11 +18,11 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { categoryPublicId, publicCategoryQuery } from '@/services/product/PublicCategoryPolicy';
-import { withTx } from '@/lib/di';
+import { withTx, createContainerFromDb } from '@/lib/di';
 import { sql } from 'drizzle-orm';
 import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { readProductCommunity } from '@/services/product/ProductDetailDesignData';
-import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
+import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
@@ -254,6 +254,25 @@ export async function groomList(c: C) {
   if (!Object.hasOwn(mapping, type)) return jsonOk(c, { banner: [], list: [] });
   const [flag, group] = mapping[type as keyof typeof mapping];
   const svc = new PublicCatalogService(c.get("container"), c.env);
+  const query = new URL(c.req.url).searchParams;
+  if (type === 5 && (query.has('page') || query.has('limit'))) {
+    for (const key of query.keys()) if (!['page', 'limit'].includes(key) || query.getAll(key).length !== 1) throw new ValidateException('会员推荐分页参数未知或重复');
+    const pageText = query.get('page') ?? '1', limitText = query.get('limit') ?? '10';
+    if (!/^[1-9]\d*$/.test(pageText) || !/^[1-9]\d*$/.test(limitText)) throw new ValidateException('会员推荐分页参数无效');
+    const page = Number(pageText), limit = Number(limitText);
+    if (!Number.isSafeInteger(page) || !Number.isSafeInteger(limit) || limit > 100 || (page - 1) * limit > 2147483647) throw new ValidateException('会员推荐分页参数超出范围');
+    const projected = await withTx(c.get('container'), async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await themeDeadlines(tx);
+      const list = await new PublicCatalogService(createContainerFromDb(tx), c.env)
+        .recommend(c.get('uid') ?? 0, { flag, page, limit });
+      const references = await publicProductPictures(tx, list.map(row => ({ image: row.image,
+        type: Number(row.type), relationId: Number(row.relation_id) })), 256);
+      return { list, references };
+    });
+    const images = await renderProductPictures(c.env.APP_KEY, projected.references);
+    return jsonOk(c, { banner: [], list: projected.list.map((row, index) => ({ ...row, image: images[index] })) });
+  }
   const [groups, list] = await Promise.all([
     group
       ? svc.groupDataMany([group])

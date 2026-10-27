@@ -1,8 +1,9 @@
+import { membershipPurchaseOrderId, membershipPurchaseRequestId, membershipPurchaseOrder, membershipPurchaseConflict, type MembershipPurchaseReceipt } from './MembershipPurchasePolicy';
 import { membershipRightMedia } from './MembershipRightMediaPolicy';
 import { publicUserAvatars } from './UserProfilePublicAvatar';
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
-import { withTx, type Container, type DbClient } from "@/lib/di";
+import { withTx, createContainerFromDb, type Container, type DbClient } from "@/lib/di";
 import {
   memberCard,
   memberCardBatch,
@@ -52,6 +53,8 @@ export interface CreateMembershipOrderInput {
   orderId: string;
   channel: string;
   now?: number;
+  /** Only the UUID opt-in branch may replay; legacy requests always create. */
+  purchaseReplay?: boolean;
 }
 
 export interface CreateMembershipOrderResult {
@@ -216,6 +219,21 @@ export async function createMembershipOrder(
       .for("update");
     const account = users[0];
     if (!account) throw new NotFoundException("用户不存在，请重新登录");
+    if (params.purchaseReplay) {
+      // Read only: pay locks order->user. Taking a second order lock here after
+      // user->order would introduce a new lock cycle. The user lock is enough
+      // to serialize all creates for this authenticated UID and UUID.
+      const previous = await tx.select().from(otherOrder).where(eq(otherOrder.orderId, params.orderId)).limit(2);
+      if (previous.length) {
+        if (previous.length !== 1) throw membershipPurchaseConflict();
+        const row = previous[0]!, original = membershipPurchaseOrder(row, params.uid);
+        if (original.member_type !== params.planId || row.channelType !== channel) throw membershipPurchaseConflict();
+        const { member_type: _plan, ...result } = original;
+        return result;
+      }
+      const enabled = normalizeConfigScalar(await createContainerFromDb(tx).systemConfigDao.getValue("member_card_status"));
+      if (parseConfigInteger(enabled, 1) !== 1) throw new ValidateException("付费会员功能暂未开启");
+    }
     if (account.isMoneyLevel > 0 && account.isEverLevel === 1) {
       throw new ValidateException("您已是永久会员，无需再次购买");
     }
@@ -475,7 +493,7 @@ export class PaidMembershipService {
 
   async createOrder(
     uid: number,
-    input: { memberType?: unknown; from?: unknown },
+    input: { memberType?: unknown; from?: unknown; requestId?: unknown },
   ): Promise<CreateMembershipOrderResult> {
     const planId = Number(input.memberType);
     if (!Number.isSafeInteger(planId) || planId <= 0) {
@@ -483,6 +501,11 @@ export class PaidMembershipService {
     }
     const channel = normalizeMemberChannel(input.from ?? "weixin");
     if (!channel) throw new ValidateException("非法渠道");
+    if (input.requestId !== undefined) {
+      const requestId = membershipPurchaseRequestId(input.requestId);
+      return createMembershipOrder(this.container, { uid, planId, channel,
+        orderId: await membershipPurchaseOrderId(uid, requestId), purchaseReplay: true });
+    }
     // New purchases use the committed global SQL winner, never a stale KV flag.
     const enabled = normalizeConfigScalar(await this.container.systemConfigDao.getValue("member_card_status"));
     if (parseConfigInteger(enabled, 1) !== 1) {
@@ -496,6 +519,14 @@ export class PaidMembershipService {
     });
   }
 
+  async purchaseReceipt(uid: number, requestId: unknown): Promise<MembershipPurchaseReceipt> {
+    const id = membershipPurchaseRequestId(requestId), orderId = await membershipPurchaseOrderId(uid, id);
+    const rows = await this.container.db.select().from(otherOrder).where(eq(otherOrder.orderId, orderId)).limit(2);
+    if (rows.length > 1) throw membershipPurchaseConflict();
+    return { owner_uid: uid, request_id: id, state: rows.length ? 'committed' : 'unknown',
+      order: rows.length ? membershipPurchaseOrder(rows[0]!, uid) : null };
+  }
+
   async payOrder(
     uid: number,
     input: {
@@ -503,6 +534,8 @@ export class PaidMembershipService {
       payType?: unknown;
       from?: unknown;
       payerClientIp?: string;
+      /** PHP App sends body from=weixin and identifies the App in Form-type. */
+      appClient?: boolean;
     },
   ): Promise<Record<string, unknown>> {
     const orderId = typeof input.orderId === "string" ? input.orderId.trim() : "";
@@ -542,7 +575,7 @@ export class PaidMembershipService {
       const identity = await resolveWechatPaymentIdentity(
         this.container,
         uid,
-        channel,
+        input.appClient === true && channel === 'wechat' ? 'app' : channel,
         input.payerClientIp,
       );
       await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
@@ -563,6 +596,7 @@ export class PaidMembershipService {
         ...(identity.openid ? { openid: identity.openid } : {}),
         ...(identity.payerClientIp ? { payerClientIp: identity.payerClientIp } : {}),
         attach: "member",
+        includeInvocationParameters: true,
       });
       return { order_id: orderId, paid: false, pay_type: PayType.WEIXIN, jsConfig: config };
     }

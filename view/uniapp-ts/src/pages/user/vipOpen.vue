@@ -1,238 +1,130 @@
 <template>
-  <ThemePage>
-  <view class="vip-page">
-    <view class="vip-banner">
-      <text class="vip-kicker">CINASHOP MEMBERSHIP</text>
-      <text class="vip-title">付费会员</text>
-      <text class="vip-sub">会员专享价、权益与优惠券，以当前套餐为准</text>
-      <view v-if="home" class="account-row">
-        <text>余额 ¥{{ home.is_get_free.user_info.now_money }}</text>
-        <text v-if="home.is_get_free.user_info.is_ever_level">永久会员</text>
-        <text v-else-if="home.is_get_free.user_info.is_money_level">会员有效期至 {{ memberExpiry }}</text>
-        <text v-else>当前未开通</text>
+ <ThemePage>
+  <view class="vip-home" :data-member-home-owner="s.loggedIn ? auth.uid : 0" :data-member-home-phase="s.phase" :data-selected-plan="s.selectedId" :data-member-order="s.order?.orderId || ''">
+   <view class="header-bg" />
+   <view class="card-section">
+    <image class="vip-paid" src="/static/membership/vip-paid.png" mode="aspectFit" />
+    <view class="member-card">
+     <view class="avatar-wrap">
+      <image v-if="s.home && s.avatarPreview.src" :key="s.avatarPreview.src" class="avatar" :src="s.avatarPreview.src" mode="aspectFill" @error="s.avatarPreview.error" />
+      <view v-else class="avatar avatar-placeholder">{{s.home?.nickname.slice(0,1) || '会'}}</view>
+      <view class="identity">
+       <view class="nickname">{{s.home?.nickname || (s.loggedIn ? 'SVIP会员' : '登录后开通会员')}}</view>
+       <view v-if="s.home?.permanent" class="member-tips">永久SVIP会员</view>
+       <view v-else-if="s.home?.member" class="member-tips">会员有效期至 {{s.expiry}}</view>
+       <view v-else class="member-tips">享受会员专属优惠与权益</view>
+       <button v-if="s.loggedIn" class="rights-entry" @tap="s.rights()">权益介绍 <text>›</text></button>
+       <button v-else class="rights-entry" @tap="s.login">去登录 <text>›</text></button>
       </view>
-    </view>
-
-    <view v-if="loading" class="state">会员套餐加载中…</view>
-    <view v-else-if="!home?.member_type.length" class="state">暂无可用会员套餐</view>
-    <view v-else class="plan-list">
-      <view
-        v-for="plan in home.member_type"
-        :key="plan.id"
-        class="plan-card"
-        :class="{ active: selectedPlan?.id === plan.id }"
-        @tap="selectPlan(plan)"
-      >
-        <view class="plan-top"><text class="plan-title">{{ plan.title }}</text><text v-if="plan.is_label" class="tag">推荐</text></view>
-        <text class="plan-duration">{{ plan.type === 'ever' ? '永久有效' : `${plan.vip_day} 天` }}</text>
-        <view class="price-row"><text class="price">{{ plan.type === 'free' ? '免费' : `¥${plan.pre_price}` }}</text><text v-if="plan.type !== 'free'" class="list-price">¥{{ plan.price }}</text></view>
-        <text class="expiry">开通后：{{ plan.overdue_time }}</text>
+     </view>
+     <scroll-view v-if="s.rightItems.length" class="rights-scroll" scroll-x :show-scrollbar="false">
+      <view class="rights-row" :class="{compact:s.rightItems.length<=5}">
+       <button v-for="right in s.rightItems" :key="right.id" class="right-item" :data-member-right="right.id" :aria-label="'查看'+right.title+'权益'" @tap="s.rights(right.id)">
+        <view class="right-icon"><image v-if="right.preview.src" :key="right.preview.src" class="right-image" :src="right.preview.src" mode="aspectFit" @error="right.preview.error" /><text v-else>{{right.title.slice(0,1)}}</text></view>
+        <view class="right-name">{{right.title}}</view><view class="right-explain">{{right.explain}}</view>
+       </button>
       </view>
+     </scroll-view>
+     <view v-else class="rights-empty">{{s.loggedIn ? '尊享更多会员权益' : '会员专享 · 品质好物'}}</view>
     </view>
-
-    <view v-if="home?.member_rights.length" class="rights-card">
-      <text class="section-title">会员权益</text>
-      <view v-for="right in home.member_rights" :key="right.id" class="right-row" role="button" :aria-label="`查看${right.title}权益介绍`" @tap="openRightDetail(right.id)">
-        <image v-if="right.pic" class="right-image" :src="right.pic" mode="aspectFill" />
-        <view><text class="right-title">{{ right.title }}</text><text class="right-desc">{{ right.explain }}</text></view>
+   </view>
+   <view class="other-section">
+    <view v-if="!s.loggedIn" class="state"><view>登录后查看会员卡种和专属优惠</view><button class="gold-button" @tap="s.login">去登录</button></view>
+    <template v-else>
+     <view v-if="s.loading" class="state compact-state" role="status">正在读取会员资料…</view>
+     <view v-if="s.error" class="notice" role="alert">{{s.error}}</view>
+     <view v-if="s.phase==='uncertain'" class="recovery-actions">
+      <button :disabled="s.loading || s.busy" @tap="s.readOriginal">查看原订单状态</button>
+      <button class="gold-button" :disabled="s.loading || s.busy" @tap="s.continueOriginal">继续处理原订单</button>
+     </view>
+     <view v-if="!s.home && !s.loading" class="state"><view>会员资料暂不可用</view><button @tap="s.load">重新读取会员首页</button></view>
+     <template v-if="s.home">
+      <view class="member-statistics"><text>{{s.home.shopName || '会员专享'}}</text><text>已加入 {{s.home.registerDays}} 天 · 累计节省 ¥{{s.home.saved}}</text></view>
+      <view v-if="s.home.permanent" class="permanent-note">您已是永久SVIP会员，尽享会员权益</view>
+      <view v-else-if="s.plans.length" class="type-section">
+       <view class="type-inner">
+        <view class="section-heading plan-heading"><text>选择卡种</text><button :disabled="s.busy" @tap="s.activation">点击兑换卡密</button></view>
+        <scroll-view class="plan-scroll" scroll-x :show-scrollbar="false">
+         <button v-for="plan in s.plans" :key="plan.id" :data-member-plan="plan.id" :aria-label="'选择'+plan.title" :aria-pressed="s.selectedId===plan.id" class="plan-card" :class="{on:s.selectedId===plan.id}" :disabled="s.phase!=='idle' || s.busy" @tap="s.selectPlan(plan.id)">
+          <view v-if="plan.label" class="badge">限时特惠</view><view class="plan-name">{{plan.title}}</view>
+          <view class="plan-price">￥<text>{{plan.payPrice}}</text></view><view class="original-price">￥{{plan.price}}</view>
+          <view class="saving">{{s.savings(plan)==='0.00' ? (plan.type==='free' ? '免费体验' : '会员专享') : '立省'+s.savings(plan)+'元'}}</view>
+         </button>
+        </scroll-view>
+        <view v-if="s.selected" class="plan-duration">{{s.selected.type==='ever' ? '永久有效' : s.selected.vipDay+'天会员'}} · 开通后{{s.selected.expiry}}</view>
+       </view>
       </view>
-    </view>
-
-    <view v-if="selectedPlan?.type !== 'free'" class="pay-card">
-      <text class="section-title">支付方式</text>
-      <view class="pay-row" :class="{ active: payType === 'yue', disabled: !readiness?.yue.enabled }" @tap="selectPayType('yue')"><text>余额支付</text><text>{{ readiness?.yue.enabled ? `¥${home?.is_get_free.user_info.now_money ?? '0.00'}` : readiness?.yue.reason }}</text></view>
-      <view class="pay-row" :class="{ active: payType === 'weixin', disabled: !readiness?.weixin.enabled }" @tap="selectPayType('weixin')"><text>微信支付</text><text>{{ readiness?.weixin.enabled ? '›' : readiness?.weixin.reason }}</text></view>
-      <view v-if="channel === 'h5'" class="pay-row" :class="{ active: payType === 'alipay', disabled: !readiness?.alipay.enabled }" @tap="selectPayType('alipay')"><text>支付宝</text><text>{{ readiness?.alipay.enabled ? '›' : readiness?.alipay.reason }}</text></view>
-    </view>
-
-    <view class="activation-link" @tap="goActivation">已有会员卡？使用卡密激活</view>
-    <view class="bottom-space" />
-    <view class="submit-bar">
-      <view class="submit-btn" :class="{ disabled: submitting || !selectedPlan || !canSubmit }" @tap="submit">
-        {{ submitting ? '处理中…' : submitText }}
+      <view v-else class="state compact-state">{{s.home.freeUsed ? '体验会员已领取，暂无其他可用卡种' : '暂无可用会员卡种'}}</view>
+      <view v-if="s.home.coupons.length" class="coupon-section">
+       <view class="section-heading"><text>会员优惠券</text><button @tap="s.openCoupons">查看更多会员优惠券 <text>›</text></button></view>
+       <scroll-view class="coupon-scroll" scroll-x :show-scrollbar="false">
+        <view v-for="coupon in s.home.coupons" :key="coupon.id" class="coupon-item" :class="{gray:coupon.disabled}" :data-member-coupon="coupon.id" :aria-label="coupon.title+' '+coupon.status">
+         <view class="coupon-inner"><view class="coupon-type">{{coupon.scope}}</view><view class="coupon-price"><text v-if="coupon.type===1">￥</text><text class="coupon-number">{{s.couponAmount(coupon)}}</text><text v-if="coupon.type===2">折</text></view><view class="coupon-status">{{coupon.status}}</view></view>
+         <view class="coupon-footer">{{coupon.minimum==='0.00' ? '无门槛券' : '满'+coupon.minimum+'可用'}}</view>
+        </view>
+       </scroll-view>
       </view>
+      <view v-if="s.mediaExpired" class="notice">图片预览已过期，重新读取后查看 <button :disabled="s.busy" @tap="s.load">重新读取</button></view>
+      <view class="recommend-section">
+       <view class="recommend-heading"><view /><text>SVIP商品推荐</text><view /></view>
+       <view class="products">
+        <button v-for="item in s.productItems" :key="item.id" class="product-card" :data-member-product="item.id" :aria-label="'查看'+item.title" @tap="s.product(item.id)">
+         <image v-if="item.preview.src" :key="item.preview.src" :src="item.preview.src" class="product-image" mode="aspectFill" @error="item.preview.error" /><view v-else class="product-image product-placeholder">商品图片暂不可用</view>
+         <view class="product-name">{{item.title}}</view><view class="product-price">¥{{item.price}} <text v-if="item.vipPrice!=='0.00'" class="vip-price">SVIP ¥{{item.vipPrice}}</text></view>
+        </button>
+       </view>
+       <view v-if="s.productError" class="notice" role="alert">{{s.productError}}</view>
+       <view v-if="!s.products.length && s.productFinished" class="state compact-state">暂无推荐商品</view>
+       <button v-if="!s.productFinished" class="more-products" :disabled="s.productLoading" @tap="s.moreProducts">{{s.productLoading?'推荐加载中…':'加载更多推荐'}}</button>
+       <view v-else-if="s.products.length" class="list-end">已经到底了</view>
+      </view>
+     </template>
+    </template>
+   </view>
+   <view v-if="s.loggedIn && s.selected && (s.phase==='idle' || s.phase==='creating')" class="purchase-footer">
+    <view class="purchase-row"><view class="footer-price"><text class="currency">¥</text><text class="amount">{{s.selected.payPrice}}</text><text class="struck-price">划线价¥{{s.selected.price}}</text></view><button :disabled="!s.canCreate" class="buy" @tap="s.create">{{s.busy?'正在创建…':s.selected.type==='free'?'立即试用':'立即支付'}}</button></view>
+    <view class="agreement-row"><button role="checkbox" aria-label="同意会员服务协议" :aria-checked="s.agreed" :disabled="s.busy" class="agreement-check" :class="{checked:s.agreed}" @tap="s.toggleAgreement"><text>{{s.agreed?'✓':''}}</text></button><text>开通前请确认</text><button class="agreement-link" @tap="s.agreement">《会员服务协议》</button></view>
+   </view>
+   <view v-if="s.phase==='choosing' || s.phase==='paying'" class="modal-mask">
+    <view class="payment-dialog" role="dialog" aria-label="会员订单支付" aria-modal="true">
+     <view class="dialog-title">会员订单支付</view><view class="order-number">{{s.order?.orderId}}</view><view class="checkout-price">¥{{s.cashier?.price || s.order?.price}}</view>
+     <view class="balance-caption">账户余额 ¥{{s.home?.balance || '—'}}</view>
+     <button v-for="entry in paymentMethods" :key="entry.value" :data-member-pay-method="entry.value" class="payment-method" :class="{on:s.method===entry.value}" :disabled="s.busy || !s.cashier?.methods[entry.value].enabled || (s.lockedMethod && s.method!==entry.value)" :aria-pressed="s.method===entry.value" @tap="s.selectMethod(entry.value)"><text>{{entry.label}}</text><text>{{s.cashier?.methods[entry.value].enabled ? (s.method===entry.value?'✓':'') : s.cashier?.methods[entry.value].reason}}</text></button>
+     <view v-if="s.error" class="notice" role="alert">{{s.error}}</view><view v-if="s.cashier && !s.cashier.payable" class="notice">{{s.cashier.reason}}</view>
+     <button class="gold-button confirm-pay" :disabled="!s.canPay" @tap="s.pay">{{s.busy?'正在支付…':'确认支付 ¥'+(s.cashier?.price || s.order?.price || '0.00')}}</button>
+     <button v-if="!s.lockedMethod" class="change-plan" :disabled="s.busy" @tap="s.changePlan">更换套餐</button>
+     <button v-else class="change-plan" :disabled="s.busy" @tap="s.readOriginal">查看原订单状态</button>
     </view>
+   </view>
+   <view v-if="s.phase==='success' && s.order?.paid" class="modal-mask">
+    <view class="success-dialog" role="dialog" aria-label="会员开通成功" aria-modal="true"><view class="success-mark">✓</view><view class="dialog-title">会员开通成功</view><view class="success-note">{{s.home?.permanent?'尊享永久会员权益':'会员权益已生效'}}</view><view v-if="s.error" class="notice">{{s.error}}</view><button class="gold-button" @tap="s.successHome">返回会员首页</button></view>
+   </view>
+   <view v-if="s.couponsOpen" class="modal-mask">
+    <view class="coupon-dialog" role="dialog" aria-label="会员优惠券" aria-modal="true"><view class="dialog-heading"><text>会员优惠券</text><button aria-label="关闭会员优惠券" @tap="s.closeCoupons">×</button></view><scroll-view class="coupon-list" scroll-y @scrolltolower="s.moreCoupons"><view v-for="coupon in s.coupons" :key="coupon.id" class="coupon-detail" :data-member-coupon-detail="coupon.id"><view class="coupon-detail-value">{{coupon.type===1?'¥':''}}{{s.couponAmount(coupon)}}{{coupon.type===2?'折':''}}</view><view class="coupon-detail-text"><view>{{coupon.title}}</view><text>{{coupon.minimum==='0.00'?'无门槛券':'满'+coupon.minimum+'可用'}} · {{coupon.status}}</text></view></view><view v-if="s.couponError" class="notice" role="alert">{{s.couponError}}</view><button v-if="!s.couponFinished" class="more-products" :disabled="s.couponLoading" @tap="s.moreCoupons">{{s.couponLoading?'优惠券加载中…':'加载更多优惠券'}}</button><view v-else class="list-end">{{s.coupons.length?'已显示全部会员优惠券':'暂无会员优惠券'}}</view></scroll-view><button class="gold-button" @tap="s.closeCoupons">返回会员首页</button></view>
+   </view>
   </view>
   <DiySuspendedNavigation />
-  </ThemePage>
+ </ThemePage>
 </template>
-
 <script setup lang="ts">
+import {computed,reactive} from 'vue';
+import {onShow} from '@dcloudio/uni-app';
 import ThemePage from '@/components/ThemePage.vue';
-import { computed, ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
-import {
-  apiCreateMembershipOrder,
-  apiMembershipHome,
-  apiPayMembershipOrder,
-  type MembershipHome,
-  type MembershipPlan,
-} from "@/api/membership";
-import { apiPaymentReadiness } from "@/api/order";
-import type { PaymentReadiness } from "@/types/order";
-import { getFormType } from "@/utils/request";
-
-const channel = getFormType();
-const loading = ref(false);
-const submitting = ref(false);
-const home = ref<MembershipHome | null>(null);
-const selectedPlan = ref<MembershipPlan | null>(null);
-const payType = ref<"yue" | "weixin" | "alipay">("yue");
-const readiness = ref<PaymentReadiness | null>(null);
-
-const submitText = computed(() => {
-  const plan = selectedPlan.value;
-  if (!plan) return "请选择套餐";
-  return plan.type === "free" ? "免费领取" : `立即开通 ¥${plan.pre_price}`;
-});
-const memberExpiry = computed(() => {
-  const epoch = home.value?.is_get_free.user_info.overdue_time ?? 0;
-  return epoch > 0 ? new Date(epoch * 1000).toLocaleDateString() : "—";
-});
-const canSubmit = computed(() => {
-  if (!selectedPlan.value) return false;
-  if (selectedPlan.value.type === "free") return true;
-  return readiness.value?.[payType.value].enabled === true;
-});
-
-async function load() {
-  loading.value = true;
-  try {
-    home.value = await apiMembershipHome();
-    try {
-      readiness.value = await apiPaymentReadiness();
-    } catch {
-      // Free membership must remain usable when payment-readiness lookup fails.
-      readiness.value = null;
-    }
-    selectedPlan.value = home.value.member_type.find((plan) => plan.is_label === 1)
-      ?? home.value.member_type[0]
-      ?? null;
-    const firstEnabled = (["yue", "weixin", "alipay"] as const)
-      .find((method) => readiness.value?.[method].enabled);
-    if (firstEnabled) payType.value = firstEnabled;
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "会员信息加载失败", icon: "none" });
-  } finally {
-    loading.value = false;
-  }
-}
-
-function openRightDetail(id: number) {
-  if (Number.isSafeInteger(id) && id > 0 && home.value?.member_rights.some(right => right.id === id)) uni.navigateTo({ url: `/pages/user/vipRights?id=${id}` });
-}
-
-function selectPayType(method: "yue" | "weixin" | "alipay") {
-  if (readiness.value?.[method].enabled) payType.value = method;
-}
-
-function selectPlan(plan: MembershipPlan) {
-  selectedPlan.value = plan;
-  if (plan.type === "free") payType.value = "yue";
-}
-
-async function submit() {
-  const plan = selectedPlan.value;
-  if (!plan || submitting.value || !canSubmit.value) {
-    if (plan?.type !== "free") {
-      uni.showToast({ title: readiness.value?.[payType.value].reason || "支付方式不可用", icon: "none" });
-    }
-    return;
-  }
-  submitting.value = true;
-  try {
-    const order = await apiCreateMembershipOrder(plan.id);
-    if (order.paid) {
-      uni.showToast({ title: "会员领取成功", icon: "success" });
-      await load();
-      return;
-    }
-    const result = await apiPayMembershipOrder(order.order_id, payType.value);
-    if (result.paid) {
-      uni.showToast({ title: "会员开通成功", icon: "success" });
-      await load();
-      return;
-    }
-    if (result.pay_type === "alipay" && result.payUrl) {
-      // #ifdef H5
-      window.location.assign(result.payUrl);
-      // #endif
-      return;
-    }
-    if (result.pay_type === "weixin" && result.jsConfig) {
-      const h5Url = typeof result.jsConfig.h5_url === "string" ? result.jsConfig.h5_url : "";
-      if (h5Url) {
-        // #ifdef H5
-        window.location.assign(h5Url);
-        // #endif
-        return;
-      }
-      // #ifdef MP-WEIXIN
-      await new Promise<void>((resolve, reject) => {
-        uni.requestPayment({
-          provider: "wxpay",
-          timeStamp: String(result.jsConfig?.timeStamp ?? ""),
-          nonceStr: String(result.jsConfig?.nonceStr ?? ""),
-          package: String(result.jsConfig?.package ?? ""),
-          signType: String(result.jsConfig?.signType ?? "RSA") as "MD5" | "HMAC-SHA256" | "RSA",
-          paySign: String(result.jsConfig?.paySign ?? ""),
-          success: () => resolve(),
-          fail: (error) => reject(new Error(error.errMsg)),
-        });
-      });
-      uni.showToast({ title: "支付已提交", icon: "success" });
-      setTimeout(() => void load(), 800);
-      // #endif
-      return;
-    }
-    throw new Error("支付下单结果无效");
-  } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "会员开通失败", icon: "none" });
-  } finally {
-    submitting.value = false;
-  }
-}
-
-function goActivation() {
-  uni.navigateTo({ url: "/pages/annex/vip_active/index" });
-}
-
-onShow(load);
+import {useAuthStore} from '@/stores/auth';
+import {useMemberHome} from '@/composables/useMemberHome';
+import type {MemberPayMethod} from '@/api/memberHome';
+const auth=useAuthStore(),s=reactive(useMemberHome());
+const paymentMethods=computed(()=>[{value:'yue' as MemberPayMethod,label:'余额支付'},{value:'weixin' as MemberPayMethod,label:'微信支付'},...(s.platform==='h5'?[{value:'alipay' as MemberPayMethod,label:'支付宝支付'}]:[])]);
+onShow(()=>{if(typeof uni.setNavigationBarTitle==='function')uni.setNavigationBarTitle({title:'SVIP会员'});if(typeof uni.setNavigationBarColor==='function')uni.setNavigationBarColor({frontColor:'#ffffff',backgroundColor:'#121212'});});
 </script>
-
 <style scoped>
-.vip-page { min-height: 100vh; padding: 22rpx; color: #241d13; background: #f7f3eb; }
-.vip-banner { padding: 42rpx 30rpx; border-radius: 28rpx; color: #fff8e7; background: radial-gradient(circle at 90% 0, rgba(255,255,255,.3), transparent 35%), linear-gradient(135deg, #251b0d, #735321 62%, #c79a45); box-shadow: 0 20rpx 50rpx rgba(71,50,15,.2); }
-.vip-kicker,.vip-title,.vip-sub { display: block; }
-.vip-kicker { font-size: 20rpx; letter-spacing: .16em; opacity: .72; }
-.vip-title { margin-top: 10rpx; font-size: 48rpx; font-weight: 800; }
-.vip-sub { margin-top: 8rpx; font-size: 24rpx; opacity: .84; }
-.account-row { display: flex; justify-content: space-between; gap: 20rpx; margin-top: 30rpx; padding-top: 22rpx; border-top: 1rpx solid rgba(255,255,255,.2); font-size: 22rpx; }
-.state { padding: 100rpx 20rpx; text-align: center; color: #8b806f; }
-.plan-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; margin-top: 24rpx; }
-.plan-card { padding: 26rpx; border: 3rpx solid transparent; border-radius: 22rpx; background: #fff; box-shadow: 0 10rpx 28rpx rgba(62,44,16,.07); }
-.plan-card.active { border-color: #b88937; background: #fffaf0; }
-.plan-top,.price-row { display: flex; align-items: center; gap: 12rpx; }
-.plan-title { font-size: 29rpx; font-weight: 700; }
-.tag { padding: 4rpx 10rpx; border-radius: 20rpx; color: #fff; background: #b88937; font-size: 18rpx; }
-.plan-duration,.expiry { display: block; margin-top: 12rpx; color: #8b806f; font-size: 21rpx; }
-.price-row { margin-top: 22rpx; }
-.price { color: #a46f16; font-size: 38rpx; font-weight: 800; }
-.list-price { color: #aaa093; text-decoration: line-through; font-size: 21rpx; }
-.rights-card,.pay-card { margin-top: 24rpx; padding: 28rpx; border-radius: 22rpx; background: #fff; }
-.section-title { display: block; margin-bottom: 14rpx; font-size: 30rpx; font-weight: 700; }
-.right-row,.pay-row { display: flex; align-items: center; gap: 18rpx; padding: 20rpx 0; border-bottom: 1rpx solid #f0ece4; }
-.right-image { width: 72rpx; height: 72rpx; border-radius: 18rpx; }
-.right-title,.right-desc { display: block; }
-.right-title { font-size: 27rpx; font-weight: 600; }
-.right-desc { margin-top: 5rpx; color: #8b806f; font-size: 22rpx; }
-.pay-row { justify-content: space-between; color: #5f5547; }
-.pay-row.active { color: #9b6814; font-weight: 700; }
-.pay-row.disabled { color: #aaa093; }
-.activation-link { padding: 34rpx 0; text-align: center; color: #8a641f; font-size: 25rpx; }
-.bottom-space { height: 130rpx; }
-.submit-bar { position: fixed; right: 0; bottom: 0; left: 0; padding: 18rpx 28rpx calc(18rpx + env(safe-area-inset-bottom)); background: rgba(247,243,235,.96); }
-.submit-btn { padding: 25rpx; border-radius: 50rpx; text-align: center; color: #fffaf0; background: linear-gradient(135deg, #2c210f, #a5772d); font-size: 30rpx; font-weight: 700; }
-.submit-btn.disabled { opacity: .5; }
-@media (max-width: 360px) { .plan-list { grid-template-columns: 1fr; } }
+.vip-home{position:relative;min-height:100vh;max-width:750px;margin:auto;padding-bottom:calc(220rpx + env(safe-area-inset-bottom));overflow:hidden;color:#333;background:#f5f5f5;box-sizing:border-box}.vip-home button{font:inherit;line-height:inherit;box-sizing:border-box}.vip-home button::after{border:0}.vip-home button:disabled{opacity:.48}
+.header-bg{position:absolute;top:0;left:0;width:100%;height:820rpx;background:#121212 url('/static/membership/home-header.png') no-repeat right top;background-size:566rpx 334rpx}.card-section{position:relative;min-height:528rpx;padding:48rpx 20rpx 30rpx;box-sizing:border-box}.vip-paid{position:absolute;top:40rpx;right:52rpx;width:229rpx;height:329rpx;pointer-events:none}.member-card{position:relative;min-height:450rpx;border-radius:24rpx;background:rgba(255,255,255,.05)}.avatar-wrap{display:flex;align-items:flex-start;min-height:236rpx;padding:62rpx 24rpx 0 40rpx;box-sizing:border-box}.avatar{flex:none;width:88rpx;height:88rpx;border-radius:50%;margin-right:35rpx}.avatar-placeholder{display:flex;align-items:center;justify-content:center;background:#3c3327;color:#f3d598;font-size:36rpx}.identity{min-width:0;max-width:330rpx;z-index:1}.nickname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ffeac0;font-weight:500;font-size:32rpx;line-height:44rpx}.member-tips{margin-top:6rpx;font-size:22rpx;line-height:30rpx;color:rgba(254,227,174,.8)}.rights-entry{display:inline-block;padding:0;margin:12rpx 0 0;background:transparent;text-align:left;font-size:22rpx!important;line-height:30rpx!important;color:rgba(254,227,174,.6)}.rights-entry text{font-size:30rpx;margin-left:8rpx}
+.rights-scroll{width:100%}.rights-row{display:flex;width:max-content;min-width:100%;padding:0 0 32rpx;box-sizing:border-box}.rights-row.compact{width:100%}.right-item{flex:0 0 140rpx;width:140rpx;padding:0 8rpx;margin:0;border:0;border-radius:0;background:transparent;color:rgba(255,255,255,.4);text-align:center}.compact .right-item{flex:1;width:auto;min-width:0}.right-icon{display:flex;align-items:center;justify-content:center;width:88rpx;height:88rpx;margin:auto;border-radius:50%;color:#edca86;font-size:32rpx;background:linear-gradient(180deg,rgba(255,255,255,.08),transparent)}.right-image{width:100%;height:100%}.right-name{margin-top:24rpx;color:rgba(255,255,255,.7);font-size:26rpx;line-height:37rpx;overflow-wrap:anywhere}.right-explain{margin-top:8rpx;font-size:20rpx;line-height:28rpx;overflow-wrap:anywhere}.rights-empty{padding:60rpx 24rpx 50rpx;text-align:center;color:#89735b;font-size:24rpx}
+.other-section{position:relative;border-radius:48rpx 48rpx 0 0;background:#f5f5f5;min-height:500rpx}.member-statistics{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10rpx;padding:26rpx 32rpx 6rpx;color:#89735b;font-size:20rpx;line-height:30rpx}.permanent-note{margin:26rpx 20rpx;padding:30rpx;border-radius:24rpx;background:#fff2d9;color:#7e4b06;font-size:28rpx;text-align:center}.type-section{padding:20rpx}.type-inner{border-radius:24rpx;background:#fff;overflow:hidden}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:16rpx;padding:32rpx 32rpx 24rpx;font-size:32rpx;font-weight:700;line-height:44rpx}.section-heading button{flex:none;padding:0;margin:0;background:transparent;font-size:24rpx;font-weight:400;line-height:36rpx;color:#666}.plan-heading{padding-bottom:36rpx;border-radius:24rpx 24rpx 0 0;background:linear-gradient(180deg,#ffefce,#fff)}.plan-heading button{color:rgba(217,126,29,.8)}.plan-scroll{width:100%;white-space:nowrap}.plan-card{position:relative;display:inline-block;vertical-align:top;width:220rpx;padding:36rpx 8rpx 32rpx;border:1rpx solid #ddd;border-radius:24rpx;margin:16rpx 24rpx 18rpx 0;background:#fff;white-space:normal;text-align:center}.plan-card:first-child{margin-left:32rpx}.plan-card:last-child{margin-right:32rpx}.plan-card.on{border:2rpx solid #d97e1d;background:linear-gradient(180deg,#fff,#fef5e6)}.badge{position:absolute;top:-18rpx;left:0;padding:0 12rpx;border-radius:22rpx 22rpx 22rpx 0;background:linear-gradient(90deg,#ff7931,#e93323);color:#fff;font-size:24rpx;line-height:44rpx}.plan-name{min-height:40rpx;color:#7e4b06;font-size:28rpx;font-weight:500;line-height:40rpx}.plan-price{margin-top:16rpx;font-size:30rpx;line-height:62rpx;color:#333}.plan-price text{font-size:48rpx;font-weight:600}.original-price{margin-top:4rpx;text-decoration:line-through;color:#999;font-size:24rpx;line-height:34rpx}.saving{width:160rpx;height:52rpx;margin:18rpx auto 0;border-radius:22rpx;background:#fee8bc;font-size:22rpx;line-height:52rpx}.plan-duration{padding:0 26rpx 22rpx;color:#999;font-size:22rpx;line-height:32rpx;text-align:center;overflow-wrap:anywhere}
+.coupon-section{margin:0 20rpx;border-radius:24rpx;background:#fff}.coupon-scroll{width:100%;padding-bottom:24rpx;white-space:nowrap}.coupon-item{position:relative;display:inline-block;vertical-align:top;width:151rpx;padding:0 6rpx;border-radius:24rpx;margin:20rpx 14rpx 0 0;background:#e0a558;box-sizing:content-box}.coupon-item:first-child{margin-left:32rpx}.coupon-item:last-child{margin-right:32rpx}.coupon-inner{min-height:185rpx;padding-bottom:76rpx;border:2rpx solid #ffedca;border-radius:12rpx;margin-top:-20rpx;background:#fff;box-sizing:border-box}.coupon-type{width:96rpx;height:38rpx;margin:auto;border-radius:0 0 12rpx 12rpx;background:rgba(224,165,88,.2);font-size:20rpx;line-height:38rpx;text-align:center}.coupon-price{margin-top:16rpx;text-align:center;color:#e0a558;font-size:24rpx;line-height:44rpx}.coupon-number{font-size:40rpx;font-weight:500}.coupon-status{text-align:center;color:#a08769;font-size:18rpx;line-height:28rpx}.coupon-footer{position:absolute;bottom:0;left:0;width:100%;height:76rpx;padding-top:30rpx;box-sizing:border-box;background:url('/static/membership/coupon-footer.png') no-repeat;background-size:100% 100%;text-align:center;color:rgba(250,204,125,.8);font-size:20rpx;line-height:30rpx}.coupon-item.gray{background:#aaa url('/static/membership/coupon-unavailable.png') center/100% 100%}.gray .coupon-inner{border-color:#ddd;background:#eee}.gray .coupon-price,.gray .coupon-status,.gray .coupon-footer{color:#999}.gray .coupon-footer{filter:grayscale(1)}
+.recommend-section{padding:32rpx 20rpx}.recommend-heading{display:flex;align-items:center;justify-content:center;gap:18rpx;margin-bottom:26rpx;color:#7e4b06;font-size:30rpx;font-weight:600}.recommend-heading view{width:50rpx;height:1rpx;background:#bca584}.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20rpx}.product-card{display:block;min-width:0;padding:0;margin:0;border:0;border-radius:20rpx;background:#fff;overflow:hidden;text-align:left}.product-image{display:block;width:100%;height:330rpx}.product-placeholder{display:flex;align-items:center;justify-content:center;background:#eee8df;color:#9b8b75;font-size:22rpx}.product-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:72rpx;margin:16rpx 20rpx;color:#333;font-size:26rpx;line-height:36rpx;overflow-wrap:anywhere}.product-price{padding:0 20rpx 22rpx;color:#333;font-size:28rpx;font-weight:600;overflow-wrap:anywhere}.vip-price{display:inline-block;margin-left:8rpx;color:#a56a13;font-size:21rpx;font-weight:400}.more-products,.list-end{display:block;margin:24rpx auto 0;padding:20rpx;background:transparent;text-align:center;font-size:24rpx;line-height:36rpx;color:#9b8b75}.state{padding:70rpx 32rpx;text-align:center;font-size:26rpx;line-height:40rpx;color:#999}.compact-state{padding:26rpx 24rpx}.state button{max-width:360rpx;margin:24rpx auto 0;padding:18rpx;background:#fff;border-radius:40rpx;color:#7e4b06;font-size:26rpx}.notice{margin:20rpx;padding:20rpx;border-radius:14rpx;background:#fff3df;color:#8e5c20;font-size:24rpx;line-height:36rpx;overflow-wrap:anywhere}.notice button{display:inline;padding:0;margin:0;background:transparent;text-decoration:underline;font-size:inherit;color:inherit}.recovery-actions{display:flex;gap:16rpx;padding:0 20rpx 20rpx}.recovery-actions button{flex:1;padding:20rpx 12rpx;border-radius:40rpx;background:#fff;color:#7e4b06;font-size:24rpx;text-align:center}
+.purchase-footer{position:fixed;bottom:0;left:50%;z-index:20;width:100%;max-width:750px;transform:translateX(-50%);padding:22rpx 20rpx calc(22rpx + env(safe-area-inset-bottom));box-sizing:border-box;background:#fff}.purchase-row{display:flex;height:108rpx}.footer-price{display:flex;align-items:center;flex:1;min-width:0;padding-left:34rpx;border-radius:54rpx 0 0 54rpx;background:#222;color:#facc7d;white-space:nowrap}.currency{font-size:36rpx;font-weight:600}.amount{font-size:48rpx;font-weight:600}.struck-price{margin-left:12rpx;text-decoration:line-through;color:rgba(255,255,255,.4);font-size:22rpx}.buy{position:relative;flex:none;width:250rpx;margin:0;padding:0 10rpx 0 20rpx;border-radius:0 54rpx 54rpx 0;background:linear-gradient(90deg,#ffdd9c,#eea82f);color:#7e4b06;font-size:32rpx!important;line-height:108rpx!important;font-weight:500}.buy::before{content:'';position:absolute;top:0;left:0;border-width:54rpx 20rpx;border-style:solid;border-color:#222 transparent transparent #222}.agreement-row{display:flex;align-items:center;justify-content:center;gap:6rpx;padding-top:20rpx;color:#999;font-size:24rpx;line-height:36rpx}.agreement-check{display:flex;align-items:center;justify-content:center;flex:none;width:30rpx;height:30rpx;padding:0;margin:0 8rpx 0 0;border:2rpx solid #ccc;border-radius:50%;color:#fff;font-size:22rpx!important;line-height:26rpx!important;background:#fff}.agreement-check.checked{border-color:#d88d0e;background:#d88d0e}.agreement-link{padding:0;margin:0;background:transparent;color:#d88d0e;font-size:24rpx!important;line-height:36rpx!important}
+.modal-mask{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:28rpx;background:rgba(0,0,0,.5);box-sizing:border-box}.payment-dialog,.success-dialog,.coupon-dialog{width:100%;max-width:570px;max-height:85vh;padding:34rpx;border-radius:28rpx;background:#fffaf2;box-sizing:border-box;overflow:auto}.dialog-title{text-align:center;font-size:34rpx;font-weight:600;line-height:48rpx;color:#5b3c16}.order-number{text-align:center;margin-top:12rpx;font-size:20rpx;line-height:30rpx;color:#999;overflow-wrap:anywhere}.checkout-price{text-align:center;margin:20rpx 0 8rpx;font-size:56rpx;font-weight:600;color:#7e4b06}.balance-caption{text-align:center;margin-bottom:24rpx;color:#999;font-size:24rpx}.payment-method{display:flex;justify-content:space-between;align-items:center;gap:20rpx;width:100%;margin:0;padding:22rpx 8rpx;border:0;border-bottom:1rpx solid #ebdfd1;border-radius:0;background:transparent;font-size:28rpx!important;line-height:40rpx!important;text-align:left;color:#514234}.payment-method text:last-child{max-width:65%;font-size:22rpx}.payment-method.on{color:#bb7c18}.gold-button{display:block;padding:22rpx 20rpx;border-radius:50rpx;background:linear-gradient(90deg,#ffdd9c,#eea82f)!important;color:#7e4b06!important;text-align:center;font-size:28rpx!important;line-height:40rpx!important}.confirm-pay{margin-top:30rpx}.change-plan{display:block;margin:18rpx auto 0;padding:12rpx;background:transparent;color:#9b8b75;font-size:24rpx!important;line-height:36rpx!important}.success-mark{display:flex;align-items:center;justify-content:center;width:100rpx;height:100rpx;margin:12rpx auto 26rpx;border-radius:50%;background:#f6dfae;color:#9c681e;font-size:56rpx}.success-note{margin:20rpx 0 36rpx;text-align:center;color:#9b8b75;font-size:26rpx;line-height:38rpx}.dialog-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:24rpx;font-size:32rpx;font-weight:600;color:#5b3c16}.dialog-heading button{margin:0;padding:0 14rpx;background:transparent;color:#9b8b75;font-size:44rpx!important;line-height:44rpx!important}.coupon-list{height:55vh;max-height:700rpx}.coupon-detail{display:flex;align-items:center;gap:24rpx;padding:24rpx 0;border-bottom:1rpx solid #ecdcc5}.coupon-detail-value{flex:none;min-width:130rpx;color:#d0902f;font-size:36rpx}.coupon-detail-text{min-width:0;font-size:26rpx;line-height:38rpx;overflow-wrap:anywhere}.coupon-detail-text text{font-size:22rpx;color:#999}.coupon-dialog>.gold-button{margin-top:24rpx}
+@media(min-width:768px){.vip-home{padding-bottom:150px}.card-section{padding-top:32px}.member-statistics{font-size:14px}.purchase-footer{padding:14px 18px calc(14px + env(safe-area-inset-bottom))}.purchase-row{height:64px}.footer-price{padding-left:28px}.currency{font-size:24px}.amount{font-size:32px}.struck-price{font-size:14px}.buy{width:230px;font-size:22px!important;line-height:64px!important}.buy::before{border-width:32px 14px}.agreement-row{padding-top:12px;font-size:16px;line-height:24px}.agreement-link{font-size:16px!important;line-height:24px!important}.agreement-check{width:20px;height:20px;font-size:14px!important}.payment-dialog,.success-dialog,.coupon-dialog{padding:28px}.dialog-title,.dialog-heading{font-size:24px;line-height:32px}.gold-button{padding:14px 20px;font-size:18px!important;line-height:28px!important}.payment-method{padding:16px 8px;font-size:18px!important;line-height:28px!important}.payment-method text:last-child{font-size:14px}.checkout-price{font-size:38px}.balance-caption,.notice{font-size:16px}.order-number{font-size:14px}.coupon-detail-text{font-size:18px}.coupon-detail-text text{font-size:14px}.coupon-detail-value{font-size:26px}}
 </style>

@@ -132,6 +132,9 @@ export class WechatPayService {
     openid?: string;
     attach?: string;
     payerClientIp?: string;
+    /** Explicit new clients need complete JSAPI/App invocation parameters.
+     * Other callers retain their historical response shape. */
+    includeInvocationParameters?: boolean;
     /** Assisted orders persist their one-shot claim after local validation and before HTTP. */
     beforeProviderRequest?: () => Promise<void>;
   }): Promise<Record<string, unknown>> {
@@ -166,7 +169,11 @@ export class WechatPayService {
     if (params.type === "jsapi" && typeof result.prepay_id === "string") {
       const { buildJsapiPaySign } = await import("@/utils/wechat-crypto");
       const signParams = await buildJsapiPaySign(cfg.privateKey, cfg.appId, result.prepay_id);
-      return { prepay_id: result.prepay_id, ...signParams };
+      return { ...(params.includeInvocationParameters ? { appId: cfg.appId } : {}), prepay_id: result.prepay_id, ...signParams };
+    }
+    if (params.type === 'app' && params.includeInvocationParameters) {
+      const { buildWechatAppPaymentLaunch } = await import('@/services/payment/WechatPaymentLaunch');
+      return buildWechatAppPaymentLaunch(cfg.privateKey, cfg.appId, cfg.mchId, result.prepay_id);
     }
     return result;
   }

@@ -76,7 +76,8 @@
     "test:customer-level-overview:browser": "vitest run --config vitest.customer-level-overview-browser.config.ts --maxWorkers=1",
     "test:customer-profile:browser": "vitest run --config vitest.customer-profile-browser.config.ts --maxWorkers=1",
     "test:membership-rights:browser": "vitest run --config vitest.membership-rights-browser.config.ts --maxWorkers=1",
-    "test:membership-card-activation:browser": "vitest run --config vitest.membership-card-activation-browser.config.ts --maxWorkers=1"
+    "test:membership-card-activation:browser": "vitest run --config vitest.membership-card-activation-browser.config.ts --maxWorkers=1",
+    "test:membership-home:browser": "vitest run --config vitest.membership-home-browser.config.ts --maxWorkers=1"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",
