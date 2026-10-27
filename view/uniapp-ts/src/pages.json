@@ -490,6 +490,10 @@
       }
     },
     {
+      "path": "pages/user/promoterPeople",
+      "style": { "navigationBarTitleText": "我的推广" }
+    },
+    {
       "path": "pages/user/promoterOrders",
       "style": { "navigationBarTitleText": "分销订单" }
     },

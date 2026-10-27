@@ -340,7 +340,7 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
   });
 
   it("filters and sorts both referral levels before paging, retaining complete team totals", async () => {
-    await db.update(user).set({ spreadUid: 7, spreadTime: september }).where(sql`uid = 8`);
+    await db.update(user).set({ spreadUid: 7, spreadTime: september, spreadCount: 10 }).where(sql`uid = 8`);
     await db.update(user).set({ spreadUid: 8, spreadTime: september }).where(sql`uid = 9`);
     await db.insert(user).values({ uid: 11, nickname: "另一位一级", spreadUid: 7, spreadTime: september });
     await db.insert(storeOrder).values({ uid: 8, paid: 1, payPrice: "20.00", spreadUid: 7, oneBrokerage: "2.00" });
@@ -348,6 +348,29 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
     expect(await service.spreadPeople(7, { grade: 1, keyword: "买家" })).toMatchObject({ list: [{ uid: 9 }], total: 2, totalLevel: 1 });
     expect(await service.spreadPeople(7, { grade: 0, keyword: "不存在" })).toMatchObject({ list: [], count: 0, total: 2, price: "0" });
     await expect(service.spreadPeople(7, { grade: 9 })).rejects.toThrow("等级错误");
+  });
+
+  it("sorts by persisted referral caches but displays current children, retaining NULL purchase stats and MySQL NULL order", async () => {
+    await db.update(user).set({ spreadUid: 7, spreadCount: 99 }).where(sql`uid = 8`);
+    await db.update(user).set({ spreadUid: 7, spreadCount: 1 }).where(sql`uid = 9`);
+    await db.insert(user).values({ uid: 11, nickname: "actual child", spreadUid: 9 });
+    await db.insert(storeOrder).values({ uid: 9, paid: 1, payPrice: "0.00" });
+    expect((await service.spreadPeople(7, { sort: "childCount DESC" })).list).toMatchObject([
+      { uid: 8, childCount: 0, orderCount: null, numberCount: null }, { uid: 9, childCount: 1, orderCount: 1, numberCount: "0.00" },
+    ]);
+    for (const sort of ["numberCount", "orderCount"]) {
+      expect((await service.spreadPeople(7, { sort: sort + " ASC" })).list?.map(row => row.uid)).toEqual([8,9]);
+      expect((await service.spreadPeople(7, { sort: sort + " DESC" })).list?.map(row => row.uid)).toEqual([9,8]);
+    }
+  });
+
+  it("uses spread_time BETWEEN literally without order-report midnight expansion, preserving keyword zero", async () => {
+    await db.update(user).set({ spreadUid: 7, spreadTime: september, nickname: "zero0" }).where(sql`uid = 8`);
+    await db.update(user).set({ spreadUid: 7, spreadTime: september + 1, phone: "13811111119" }).where(sql`uid = 9`);
+    expect((await service.spreadPeople(7, { start: september, stop: september })).list?.map(row => row.uid)).toEqual([8]);
+    expect((await service.spreadPeople(7, { start: september, stop: 0 })).list).toEqual([]);
+    expect((await service.spreadPeople(7, { start: 0, stop: september })).list?.map(row => row.uid)).toEqual([8]);
+    expect((await service.spreadPeople(7, { keyword: "0" })).list?.map(row => row.uid)).toEqual([8]);
   });
 
   it("keeps withdrawal restorations out of earned commission while matching legacy net funds", async () => {

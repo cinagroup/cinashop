@@ -106,31 +106,7 @@
       </view>
     </view>
 
-    <!-- 推广人列表弹窗 -->
-    <view v-if="showPeople" class="mask" @tap="showPeople = false">
-      <view class="sheet" @tap.stop>
-        <view class="sheet-title">我的推广（一级 {{ peopleTotal }} / 二级 {{ peopleTotalLevel }}）</view>
-        <view class="method-row">
-          <button size="mini" :class="{ selected: peopleGrade === 0 }" @tap="changeGrade(0)">一级推荐</button>
-          <button size="mini" :class="{ selected: peopleGrade === 1 }" @tap="changeGrade(1)">二级推荐</button>
-        </view>
-        <input v-model="peopleKeyword" class="sheet-input" placeholder="搜索昵称或手机号" @confirm="loadPeople(false)" />
-        <button size="mini" @tap="loadPeople(false)">搜索推广用户</button>
-        <view v-if="peopleError" class="notice">{{ peopleError }}</view>
-        <view v-if="people.length" class="people-list">
-          <view v-for="p in people" :key="p.uid" class="people-item">
-            <text class="people-avatar">👤</text>
-            <view class="people-info">
-              <view class="people-name">{{ p.nickname || "用户" }}</view>
-              <view class="people-time">{{ formatTime(p.addTime) }}</view>
-              <view class="people-time">团队 {{ p.childCount }} · 订单 {{ p.orderCount }} · 消费 ¥{{ p.numberCount }}</view>
-            </view>
-          </view>
-        </view>
-        <view v-else class="empty">{{ peopleLoading ? "加载中…" : "暂无推广用户" }}</view>
-        <button v-if="peopleMore" class="more-btn" :disabled="peopleLoading" @tap="loadPeople(true)">加载更多推广用户</button>
-      </view>
-    </view>
+
   </view>
   <DiySuspendedNavigation />
   </ThemePage>
@@ -143,7 +119,6 @@ import { onLoad } from "@dcloudio/uni-app";
 import {
   apiCommission,
   apiCommissionList,
-  apiSpreadPeople,
   apiBindSpread,
   apiExtractCash,
   apiExtractConfig,
@@ -152,7 +127,6 @@ import {
   type ExtractInput,
   type CommissionInfo,
   type CommissionItem,
-  type SpreadUser,
 } from "@/api/finance";
 import { RequestError } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
@@ -175,10 +149,8 @@ const tabs = [
 ];
 const activeTab = ref(1);
 const list = ref<CommissionItem[]>([]);
-const people = ref<SpreadUser[]>([]);
 const showExtract = ref(false);
 const showBind = ref(false);
-const showPeople = ref(false);
 const bindUid = ref("");
 const auth = useAuthStore();
 function openDistributionLevel(): void { uni.navigateTo({ url: '/pages/users/user_distribution_level/index' }); }
@@ -194,15 +166,6 @@ const listLoading = ref(false);
 const listMore = ref(false);
 let listPage = 1;
 let listGeneration = 0;
-const peopleGrade = ref(0);
-const peopleKeyword = ref("");
-const peopleTotal = ref(0);
-const peopleTotalLevel = ref(0);
-const peopleLoading = ref(false);
-const peopleError = ref("");
-const peopleMore = ref(false);
-let peoplePage = 1;
-let peopleGeneration = 0;
 const methods = computed(() => [
   { value: "bank", label: "银行卡" }, { value: "alipay", label: "支付宝" },
   ...(extractConfig.value?.extract_wechat_type === 0 ? [{ value: "weixin", label: "微信" }] : []),
@@ -340,37 +303,7 @@ async function openExtract() {
   }
 }
 
-async function openPeople() {
-  showPeople.value = true;
-  await loadPeople(false);
-}
-
-async function changeGrade(grade: number) {
-  peopleGrade.value = grade;
-  people.value = [];
-  await loadPeople(false);
-}
-
-async function loadPeople(more: boolean) {
-  if (more && peopleLoading.value) return;
-  const generation = ++peopleGeneration;
-  const page = more ? peoplePage + 1 : 1;
-  peopleLoading.value = true;
-  peopleError.value = "";
-  try {
-    const result = await apiSpreadPeople(page, 20, { grade: peopleGrade.value, keyword: peopleKeyword.value });
-    if (generation !== peopleGeneration) return;
-    people.value = more ? [...people.value, ...result.list] : result.list;
-    peopleTotal.value = result.total;
-    peopleTotalLevel.value = result.totalLevel;
-    peoplePage = page;
-    peopleMore.value = result.list.length === 20;
-  } catch (error) {
-    if (generation === peopleGeneration) peopleError.value = (error as Error).message || "推广用户加载失败";
-  } finally {
-    if (generation === peopleGeneration) peopleLoading.value = false;
-  }
-}
+function openPeople() { if (auth.isLoggedIn) uni.navigateTo({url:'/pages/user/promoterPeople'}); }
 
 onLoad(() => {
   const pending = uni.getStorageSync(withdrawalStorageKey(auth.uid)) as ExtractInput | undefined;
@@ -577,31 +510,4 @@ onLoad(() => {
 .method-row .selected { color: var(--view-theme, #e93323); border: 1px solid var(--view-theme, #e93323); }
 .more-btn { margin: 20rpx 0 0; font-size: 24rpx; background: #fff; color: #666; }
 
-.people-list {
-  max-height: 600rpx;
-  overflow-y: auto;
-}
-
-.people-item {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f7f7f7;
-}
-
-.people-avatar {
-  font-size: 48rpx;
-  margin-right: 16rpx;
-}
-
-.people-name {
-  font-size: 26rpx;
-  color: #333;
-}
-
-.people-time {
-  font-size: 22rpx;
-  color: #999;
-  margin-top: 4rpx;
-}
 </style>

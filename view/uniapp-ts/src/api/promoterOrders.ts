@@ -2,7 +2,9 @@ import {createUserCenterRequests} from '@/api/userCenter';
 import {memberLevelImage} from '@/api/memberLevels';
 import {memberRightImage,memberRightMediaDeadline} from '../../../common/memberRightMedia';
 export const PROMOTER_ORDER_PAGE_SIZE=10,MAX_PROMOTER_ORDER_PAGE=1000;
-export type OrderPeriod='all'|'today'|'yesterday'|'seven'|'custom';
+export type {DistributionReportPeriod as OrderPeriod} from '@/utils/distributionReportFilters';
+export {shanghaiDay,distributionDaySeconds as orderDaySeconds,distributionRange as orderRange,distributionKeyword as orderKeyword} from '@/utils/distributionReportFilters';
+import {shanghaiDay} from '@/utils/distributionReportFilters';
 export interface PromoterOrderQuery {page:number;limit:10;start:number;stop:number;keyword:string}
 export interface PromoterOrder {id:number;order_id:string;uid:number;nickname:string;avatar_source:string;avatar:string;paid_at:number;add_time:number;time_key:string;type:'brokerage'|'number';time:string;is_frozen:0|1;store_name:string;number:string}
 export interface PromoterOrderMonth {month:string;count:number;pay_price:string}
@@ -13,18 +15,6 @@ const integer=(v:unknown,min=0):number=>typeof v==='number'&&Number.isSafeIntege
 const text=(v:unknown,max=255):string=>typeof v==='string'&&[...v].length<=max?v:invalid();
 function keys(v:Record<string,unknown>,expected:string){if(Object.keys(v).sort().join(',')!==expected)invalid();}
 const money=(v:unknown):string=>typeof v==='string'&&/^-?(?:0|[1-9]\d{0,30})\.\d{2}$/.test(v)?v:invalid();
-export function shanghaiDay(now=Date.now()):string{return new Date(now+28800000).toISOString().slice(0,10);}
-export function orderDaySeconds(day:string):number {
- if(!/^\d{4}-\d{2}-\d{2}$/.test(day))throw Error('请选择有效日期');
- const stamp=Date.parse(day+'T00:00:00+08:00')/1000;
- if(!Number.isInteger(stamp)||stamp<=0||stamp+86399>2147483647||shanghaiDay(stamp*1000)!==day)throw Error('请选择1970年1月2日至2038年1月18日内的日期');
- return stamp;
-}
-export function orderRange(period:Exclude<OrderPeriod,'custom'>,now=Date.now()):{start:number;stop:number}{
- if(period==='all')return{start:0,stop:0};const today=orderDaySeconds(shanghaiDay(now));
- return{start:today-(period==='yesterday'?86400:period==='seven'?6*86400:0),stop:today+(period==='yesterday'?-1:86399)};
-}
-export function orderKeyword(value:string):string{const keyword=value.trim();if([...keyword].length>64||/[\u0000-\u001f\u007f\uD800-\uDFFF]/u.test(keyword))throw Error('关键词最多64个字，不能含控制字符');return keyword;}
 export function orderBefore(a:PromoterOrder,b:PromoterOrder):boolean{return a.paid_at>b.paid_at||a.paid_at===b.paid_at&&a.id>b.id;}
 export function orderAvatar(row:PromoterOrder,now=Date.now()):string{return memberLevelImage(memberRightImage(row.avatar_source,row.avatar,now));}
 export function orderMediaDeadline(rows:PromoterOrder[]):number|null{return memberRightMediaDeadline(rows.map(row=>row.avatar),[]);}

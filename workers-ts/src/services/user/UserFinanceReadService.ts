@@ -5,6 +5,7 @@ import { user, userBill, userBrokerage, userExtract, userMoney, userSpread, stor
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { signAttachmentReferences } from "@/services/system/AttachmentService";
+import { readPromoterPeople } from './PromoterPeopleRead';
 import { parseLegacyUserLedgerQuery } from "./V2UserCompatibilityService";
 
 type JsonRecord = Record<string, unknown>;
@@ -224,50 +225,10 @@ export class UserFinanceReadService {
     const grade = Number(raw.grade ?? 0);
     if (grade !== 0 && grade !== 1) throw new ValidateException("等级错误");
     const { start, stop, keyword, limit, offset } = parseFinanceReadQuery(raw);
-    const sorts: Record<string, SQL> = {
-      "childcount asc": sql`"childCount" asc`, "childcount desc": sql`"childCount" desc`,
-      "numbercount asc": sql`"numberCount" asc`, "numbercount desc": sql`"numberCount" desc`,
-      "ordercount asc": sql`"orderCount" asc`, "ordercount desc": sql`"orderCount" desc`,
-    };
-    const sort = sorts[String(raw.sort ?? "").trim().toLowerCase()] ?? sql`add_time desc`;
-    const pattern = `%${keyword.replace(/[\\%_]/g, "\\$&")}%`;
     const level = Number(await new SystemConfigService(this.container, this.env).get("brokerage_level") || 2);
-    const result = await this.result(sql`
-      with active as (select uid, spread_uid, nickname, avatar, phone, add_time, spread_time from ${user}
-        where is_del = 0 and delete_time is null),
-      one as (select * from active where spread_uid = ${uid}),
-      two as (select * from active where spread_uid in (select uid from one) and uid <> ${uid}),
-      candidates as (select * from ${grade === 0 ? sql`one` : sql`two`}),
-      filtered as (select * from candidates where
-        ${keyword ? sql`(nickname ilike ${pattern} or phone ilike ${pattern})` : sql`true`}
-        and ${start ? sql`spread_time >= ${start}` : sql`true`}
-        and ${stop ? sql`spread_time <= ${stop}` : sql`true`}),
-      enriched as (
-        select f.uid, f.nickname, f.avatar, f.add_time, f.spread_time,
-          (select count(*) from active a where a.spread_uid = f.uid) as "childCount",
-          (select count(*) from ${storeOrder} o where o.uid = f.uid and o.pid in (0,-1) and o.paid = 1
-            and o.is_del = 0 and o.is_system_del = 0 and o.refund_status in (0,3)) as "orderCount",
-          (select coalesce(sum(o.pay_price),0) from ${storeOrder} o where o.uid = f.uid and o.pid in (0,-1) and o.paid = 1
-            and o.is_del = 0 and o.is_system_del = 0 and o.refund_status in (0,3)) as "numberCount"
-        from filtered f
-      ), page as (select * from enriched order by ${sort}, uid desc limit ${limit} offset ${offset}),
-      projected as (
-        select uid, nickname, avatar, add_time as "addTime", spread_time, "childCount", "orderCount", "numberCount"::text,
-          case when spread_time > 0 then to_char(to_timestamp(spread_time) at time zone 'Asia/Shanghai', 'YYYY-MM-DD')
-            else to_char(to_timestamp(add_time) at time zone 'Asia/Shanghai', 'YYYY/MM/DD') end as time,
-          row_number() over (order by ${sort}, uid desc) as position
-        from page
-      )
-      select jsonb_build_object('total', (select count(*) from one), 'totalLevel', (select count(*) from two),
-        'list', coalesce((select jsonb_agg(to_jsonb(p) - 'position' order by position) from projected p), '[]'::jsonb),
-        'count', (select count(*) from page), 'brokerage_level', ${level}::int,
-        'price', case when exists(select 1 from page) then (select coalesce(sum(
-          case when (select division_type from ${user} where uid = ${uid}) = 1 then
-            case when o.division_id = ${uid} then o.division_brokerage else 0 end
-          else ${grade === 0 ? sql`case when o.spread_uid = ${uid} then o.one_brokerage else 0 end` : sql`case when o.spread_two_uid = ${uid} then o.two_brokerage else 0 end`} end),0)::text
-          from ${storeOrder} o where o.pid = 0 and o.type = 0 and o.paid = 1 and o.refund_status in (0,3) and o.is_del = 0 and o.is_system_del = 0) else '0' end
-      ) as data
-    `);
+    const report = await readPromoterPeople(this.container, uid, { grade, start, stop, keyword, limit, offset, sort: String(raw.sort ?? '') });
+    const result = { total: report.total, totalLevel: report.totalLevel, count: report.count, brokerage_level: level, price: report.price,
+      list: report.list.map(({ add_time, ...row }) => ({ ...row, addTime: add_time })) };
     return this.avatars(result);
   }
 

@@ -73,6 +73,18 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it.each(['test/promoter-people-postgres.test.ts','audit:promoter-people-browser'])('admits exact promoter people command %s before native setup',mode=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each([['audit:promoter-people-browser-extra'],['test/promoter-people-postgres-extra.test.ts'],['audit:promoter-people-browser','test/promoter-people-postgres.test.ts']])('rejects unreviewed promoter people command %j',(...modes)=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',...modes],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
+  });
+  it('rejects literal cases for interactive promoter people Browser mode',()=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','--case','people','unused-bin','audit:promoter-people-browser'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.status).not.toBe(0);expect(r.stderr).toContain('Literal cases apply only to explicit test files');
+  });
   it.each(['test/promoter-orders-postgres.test.ts','audit:promoter-orders-browser'])('admits exact promoter orders command %s before native setup',mode=>{
     const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');

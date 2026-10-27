@@ -14,6 +14,8 @@ import { jsonOk, jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
 import { normalizeWithdrawalBody } from "@/services/user/UserWithdrawalService";
+import { readPromoterPeopleInput } from '@/services/user/PromoterPeopleInput';
+import { PromoterPeopleService } from '@/services/user/PromoterPeopleService';
 import { UserFinanceReadService } from "@/services/user/UserFinanceReadService";
 import { CapitalFlowService } from "@/services/finance/CapitalFlowService";
 import { OrderOutboxService } from "@/services/order/OrderOutboxService";
@@ -48,6 +50,10 @@ export async function spreadPeople(c: C) {
   c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
+  if (new URL(c.req.url).searchParams.has('view')) {
+    const query = await readPromoterPeopleInput(c.req.raw);
+    return jsonOk(c, await new PromoterPeopleService(c.get('container'), c.env).read(uid, query));
+  }
   const raw: unknown = await c.req.json().catch(() => ({}));
   const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
   return jsonOk(c, await new UserFinanceReadService(c.get("container"), c.env).spreadPeople(uid, body));
