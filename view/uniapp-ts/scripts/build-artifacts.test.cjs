@@ -37,6 +37,7 @@ test("registered community pages bind their actual template components to compil
   const root = resolve("dist/build/mp-weixin");
   for (const [page, tags] of [
     ["pages/discover/workspace", ["theme-page"]],
+    ["pages/user/promoterOrders", ["theme-page"]],
     ...["promoterRank", "commissionRank"].map(page => [`pages/user/${page}`, ["theme-page", "distribution-ranking"]]),
     ...["discoverUser", "discoverFollow", "discoverCreate"].map(page => [`pages/discover/${page}/index`, ["theme-page"]]),
     ["pages/discover/discoverVideo/app", ["theme-page", "community-deep-link-feed"]],

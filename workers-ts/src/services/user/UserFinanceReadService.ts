@@ -333,9 +333,12 @@ export class UserFinanceReadService {
     await this.account(uid);
     const { start, stop, keyword, limit, offset } = parseFinanceReadQuery(raw);
     const pattern = `%${keyword.replace(/[\\%_]/g, "\\$&")}%`;
-    const time = sql`${start === 0 ? sql`true` : sql`o.add_time >= ${start}`} and ${stop === 0 ? sql`true` : sql`o.add_time <= ${stop}`}`;
+    // ModelTrait::searchTimeAttr receives an array, not an open-ended range.
+    // Equal endpoints or a Shanghai-midnight stop expand by one day, inclusively.
+    const boundedStop = (start || stop) && (start === stop || (stop + SHANGHAI_OFFSET) % 86_400 === 0) ? stop + 86_400 : stop;
+    const time = start || stop ? sql`o.add_time between ${start} and ${boundedStop}` : sql`true`;
     // The PHP search spans buyer/contact/product fields, but the response never exposes contacts.
-    const search = keyword ? sql`(
+    const search = keyword && keyword !== "0" ? sql`(
       o.order_id ilike ${pattern} or o.real_name ilike ${pattern} or o.user_phone ilike ${pattern}
       or exists (select 1 from "user" b where b.uid = o.uid and
         (b.nickname ilike ${pattern} or b.uid::text ilike ${pattern} or b.phone ilike ${pattern}))
@@ -349,18 +352,19 @@ export class UserFinanceReadService {
     )` : sql`true`;
     return this.avatars(await this.result(sql`
       with eligible as (
-        select o.id, o.order_id, o.uid, o.add_time, o.spread_uid, o.status, o.spread_two_uid,
+        select o.id, o.order_id, o.uid, o.add_time, o.pay_time, o.spread_uid, o.status, o.spread_two_uid,
           o.one_brokerage, o.two_brokerage, o.pay_price, o.cart_id, o.division_id, o.division_brokerage,
           o.division_agent_id, o.division_agent_brokerage, o.division_staff_id, o.division_staff_brokerage,
           o.real_name, o.user_phone, o.activity_id
-        from ${storeOrder} o where o.pid = 0 and o.type = 0 and o.paid = 1
+        from ${storeOrder} o where o.pid >= 0 and o.type = 0 and o.paid = 1
           and o.refund_status in (0, 3) and o.is_del = 0 and o.is_system_del = 0 and ${time}
           and (o.spread_uid = ${uid} or o.spread_two_uid = ${uid} or o.division_id = ${uid}
             or o.division_agent_id = ${uid} or o.division_staff_id = ${uid})
       ), matched as (select o.* from eligible o where ${search}),
-      page as (select * from matched order by id desc limit ${limit} offset ${offset}),
+      page as (select *, row_number() over (order by pay_time desc, id desc) as __position from matched
+        order by pay_time desc, id desc limit ${limit} offset ${offset}),
       projected as (
-        select p.id, p.order_id, p.uid, p.add_time, p.spread_uid, p.status, p.spread_two_uid,
+        select p.__position, p.id, p.order_id, p.uid, p.add_time, p.spread_uid, p.status, p.spread_two_uid,
           p.one_brokerage::text, p.two_brokerage::text, p.pay_price::text,
           case when p.cart_id is json array then p.cart_id::jsonb else '[]'::jsonb end as cart_id,
           p.division_id, p.division_brokerage::text, p.division_agent_id, p.division_agent_brokerage::text,
@@ -377,9 +381,8 @@ export class UserFinanceReadService {
           coalesce(t.store_name, '') as store_name
         from page p left join ${user} u on u.uid = p.uid and u.is_del = 0 and u.delete_time is null
         left join lateral (select b.add_time, b.frozen_time from ${userBrokerage} b
-          where b.uid = ${uid} and b.link_id = p.id::text and b.pm = 1
-            and b.type in ('self_brokerage', 'one_brokerage', 'two_brokerage', 'staff_brokerage', 'agent_brokerage', 'division_brokerage')
-          order by b.id desc limit 1) b on true
+          where b.uid = ${uid} and b.link_id = p.id::text
+          order by b.id asc limit 1) b on true
         left join lateral (select string_agg(title, '|' order by id) as store_name from
           (select c.id, case when c.cart_info is json object then
             coalesce(c.cart_info::jsonb #>> '{productInfo,store_name}', c.cart_info::jsonb #>> '{productInfo,storeName}') end as title
@@ -390,9 +393,10 @@ export class UserFinanceReadService {
         from matched group by time
       )
       select jsonb_build_object(
-        'list', coalesce((select jsonb_agg(to_jsonb(p) order by id desc) from projected p), '[]'::jsonb),
+        'list', coalesce((select jsonb_agg(to_jsonb(p) - '__position' order by __position) from projected p), '[]'::jsonb),
         'count', (select count(*) from matched),
-        'time', coalesce((select jsonb_agg(to_jsonb(m) order by time desc) from months m
+        'time', coalesce((select jsonb_agg(to_jsonb(m) order by
+          (select min(p.__position) from projected p where p.time_key = m.time)) from months m
           where m.time in (select time_key from projected)), '[]'::jsonb),
         'sum_brokerage', (select round(coalesce(sum(
           case when spread_uid = ${uid} then one_brokerage else 0 end +

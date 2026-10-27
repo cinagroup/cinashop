@@ -185,7 +185,7 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
       { id: 5, orderId: "STAFF", uid: 9, paid: 1, divisionStaffId: 7, divisionStaffBrokerage: "5.05", payPrice: "50.50", addTime: september, status: 2, cartId: '["cart-a","cart-b"]' },
       { id: 6, orderId: "UNPAID", uid: 9, spreadUid: 7, oneBrokerage: "900.00" },
       { id: 7, orderId: "REFUND", uid: 9, paid: 1, spreadUid: 7, refundStatus: 1, oneBrokerage: "900.00" },
-      { id: 8, orderId: "CHILD", uid: 9, paid: 1, spreadUid: 7, pid: 1, oneBrokerage: "900.00" },
+      { id: 8, orderId: "SPLIT-PARENT", uid: 9, paid: 1, spreadUid: 7, pid: -1, oneBrokerage: "900.00" },
       { id: 9, orderId: "DELETED", uid: 9, paid: 1, spreadUid: 7, isDel: 1, oneBrokerage: "900.00" },
       { id: 10, orderId: "OTHER", uid: 9, paid: 1, spreadUid: 8, oneBrokerage: "900.00" },
     ]);
@@ -220,6 +220,39 @@ describe("API-013 actual PostgreSQL user-finance read contracts", () => {
     expect(await service.spreadOrder(7, { keyword: "买家", start: september, stop: now }, now)).toMatchObject({ count: 4, sum_brokerage: "14.14" });
     expect(await service.spreadOrder(7, { keyword: "%' OR true --" }, now)).toMatchObject({ count: 0, list: [], sum_brokerage: "15.15" });
     expect(await service.spreadOrder(7, { start: now, stop: september }, now)).toMatchObject({ count: 0, list: [], sum_brokerage: "0.00" });
+  });
+
+  it("includes split children, excludes split parents and orders by payment time before id", async () => {
+    await db.insert(storeOrder).values([
+      { id: 1, uid: 9, orderId: "FIRST-PAID", paid: 1, spreadUid: 7, oneBrokerage: "1.00", payTime: 30, addTime: august },
+      { id: 2, uid: 9, orderId: "CHILD", pid: 1, paid: 1, spreadUid: 7, oneBrokerage: "2.00", payTime: 20, addTime: september },
+      { id: 3, uid: 9, orderId: "SPLIT-PARENT", pid: -1, paid: 1, spreadUid: 7, oneBrokerage: "999.00", payTime: 99, addTime: september },
+      { id: 4, uid: 9, orderId: "TIED-CHILD", pid: 1, paid: 1, spreadUid: 7, oneBrokerage: "4.00", payTime: 20, addTime: august },
+    ]);
+    const result = await service.spreadOrder(7, {}, now);
+    expect(result).toMatchObject({ count: 3, sum_brokerage: "7.00", time: [{ time: "2026-08", count: 2 }, { time: "2026-09", count: 1 }] });
+    expect(result.list?.map(row => row.id)).toEqual([1, 4, 2]);
+    expect(result.list?.[0]).not.toHaveProperty("__position"); expect(result.list?.[0]).not.toHaveProperty("pay_time");
+  });
+
+  it("retains PHP array date expansion, inclusive stops and non-open one-sided intervals", async () => {
+    await db.insert(storeOrder).values([september - 1, september, september + 86399, september + 86400, september + 86401]
+      .map((addTime, i) => ({ id: i + 1, uid: 9, paid: 1, spreadUid: 7, oneBrokerage: "1.00", addTime })));
+    expect((await service.spreadOrder(7, { start: september, stop: september }, now)).list?.map(row => row.id)).toEqual([4, 3, 2]);
+    expect((await service.spreadOrder(7, { start: 0, stop: september }, now)).list?.map(row => row.id)).toEqual([4, 3, 2, 1]);
+    expect(await service.spreadOrder(7, { start: september, stop: 0 }, now)).toMatchObject({ count: 0, list: [], sum_brokerage: "0.00" });
+    expect((await service.spreadOrder(7, { start: september, stop: september + 86399 }, now)).list?.map(row => row.id)).toEqual([3, 2]);
+  });
+
+  it("uses the first UID/link brokerage candidate without pm/type/status restrictions and preserves empty title segments", async () => {
+    await db.insert(storeOrder).values({ id: 1, uid: 9, paid: 1, spreadUid: 7, status: 0, oneBrokerage: "-1.25", addTime: september });
+    await db.insert(userBrokerage).values([
+      { uid: 8, linkId: "1", pm: 1, type: "one_brokerage", addTime: 1 },
+      { uid: 7, linkId: "1", pm: 0, type: "refund", status: 0, addTime: now - 60, frozenTime: now + 1 },
+      { uid: 7, linkId: "1", pm: 1, type: "one_brokerage", addTime: 1, frozenTime: 0 },
+    ]);
+    await db.insert(storeOrderCartInfo).values([" 甲 ", "", "乙"].map(store_name => ({ oid: 1, cartInfo: JSON.stringify({ productInfo: { store_name } }) })));
+    expect(await service.spreadOrder(7, {}, now)).toMatchObject({ sum_brokerage: "-1.25", list: [{ number: "-1.25", type: "number", is_frozen: 1, time: "2026-09-05 12:29", store_name: " 甲 ||乙" }] });
   });
 
   it("uses staff/agent/division precedence for a row, but adds each entitled role to total commission", async () => {
