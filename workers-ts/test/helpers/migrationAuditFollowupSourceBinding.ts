@@ -1,3 +1,4 @@
+import { peelAdminLevelDefinitionReport } from './adminLevelDefinitionSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -85,4 +86,4 @@ function reportBridge<T>(input: T, reverse: boolean, binding: MigrationAuditFoll
 }
 /** The old applyAdminUserFilterReport remains historical; this explicit bridge alone advances it. */
 export const applyMigrationAuditReport = <T>(historical: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(historical, false, binding);
-export const reverseMigrationAuditReport = <T>(current: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(current, true, binding);
+export const reverseMigrationAuditReport = <T>(current: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(peelAdminLevelDefinitionReport(current), true, binding);

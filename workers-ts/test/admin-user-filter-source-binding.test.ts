@@ -1,3 +1,4 @@
+import { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';
 import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -35,7 +36,7 @@ describe('complete Admin user-directory additive source and API history boundary
  });
  it('preserves every old dated proof/helper/report and binds all new source dependencies',()=>{
   expect(proof.preserved_files).toHaveLength(80);expect(new Set(proof.preserved_files.map(row=>row.file)).size).toBe(80);expect(proof.new_consumer_sources.map(row=>row.file)).toEqual(['workers-ts/src/services/admin/AdminUserListService.ts','workers-ts/src/controllers/api/v1/AdminCrudController.ts','view/admin-ts/src/api/userDirectory.ts','view/admin-ts/src/utils/userDirectoryFilters.ts','view/admin-ts/src/composables/useUserDirectoryOwner.ts','view/admin-ts/src/pages/user/UserDirectoryOptionPicker.vue']);
-  for(const row of [...proof.preserved_files,...proof.new_consumer_sources,proof.api_report.builder]){const source=read(row.file);expect(sha(source),row.file).toBe(row.sha256);expect(Buffer.byteLength(source),row.file).toBe(row.bytes);}
+  for(const row of [...proof.preserved_files,...proof.new_consumer_sources,proof.api_report.builder]){const source=reverseAdminLevelDefinitionSource(row.file,read(row.file));expect(sha(source),row.file).toBe(row.sha256);expect(Buffer.byteLength(source),row.file).toBe(row.bytes);}
   expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);
  });
  for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed source or proof mutation %s in '+file,kind=>{

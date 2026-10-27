@@ -1,3 +1,4 @@
+import { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -15,7 +16,7 @@ const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
 let builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
-const currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= buildAdminFrontendApiAuditReport());
+const currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));
 const historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));
 const routeContracts = [
  ['get','/integral/list','UserFinanceReadController.integralList'], ['get','/extract/bank','UserFinanceReadController.extractBank'],

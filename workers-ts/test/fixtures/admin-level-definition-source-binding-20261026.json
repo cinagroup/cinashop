@@ -1,0 +1,325 @@
+{
+  "schema": "cinashop.admin-level-definition-source-binding.v1",
+  "base_ref": "1846f34db81e90a661a41f53d56095509d5eeb92",
+  "level_ref": "9969402715601d596dc4a310167b86d98655acc2",
+  "current_ref": "677b60d86e11a78e57dcf3688ca476f3427f9579",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/api/level.ts",
+      "before_ref": "1846f34db81e90a661a41f53d56095509d5eeb92",
+      "before_sha256": "553b40a64d6fcfbc6e13fa5d0825911c2e9192c9f55d6ed739a8e57ef890cadf",
+      "after_sha256": "e3482d01cb90e3c59e0a5f80b7602f3be71c0953f85368376cfc63757b6b20c6",
+      "before_bytes": 845,
+      "after_bytes": 7726,
+      "before_git_blob_sha1": "04cd12b9bf1faa5460130ba6970e7a957e7c08c0",
+      "after_git_blob_sha1": "db8785a292a15d8618c97338fc8402d218be9bfe",
+      "edits": [
+        {
+          "before_source": "/**\n * 会员等级管理 API\n */\nimport request, { getData } from \"@/utils/request\";\n\nexport interface LevelItem {\n  id: number;\n  name: string;\n  grade: number;\n  discount: string;\n  expNum: number;\n  isShow: number;\n  image: string;\n  color: string;\n  explain: string;\n  isDel: number;\n}\n\n/** 等级列表 (GET /adminapi/level/list) */\nexport function apiAdminLevelList(): Promise<LevelItem[]> {\n  return getData(request.get<LevelItem[]>(\"/level/list\"));\n}\n\n/** 新增/编辑 (POST /adminapi/level/save) */\nexport function apiAdminLevelSave(data: Record<string, unknown>): Promise<{ id: number }> {\n  return getData(request.post<{ id: number }>(\"/level/save\", data));\n}\n\n/** 删除 (DELETE /adminapi/level/del/:id) */\nexport function apiAdminLevelDel(id: number): Promise<null> {\n  return getData(request.delete<null>(`/level/del/${id}`));\n}\n",
+          "after_source": "/** Ordinary membership-level definitions; default array callers remain compatible. */\nimport request, { getData } from '@/utils/request';\nimport { distributorColor, distributorImageReference, distributorImagePreview } from './distributorLevels';\n\nexport interface LevelItem {\n  id: number; name: string; grade: number; discount: string; expNum: number; isShow: number;\n  icon: string; image: string; color: string; explain: string | null; isDel: number;\n  icon_preview?: string; image_preview?: string;\n  merId?: number; money?: string; validDate?: number; isForever?: number; isPay?: number; addTime?: number;\n}\nexport interface LevelQuery { page: number; limit: number; title?: string; is_show?: 0 | 1 }\nexport interface LevelPage { list: LevelItem[]; count: number; page: number; limit: number }\nexport interface LevelForm { id: number; name: string; grade: number; discount: string; exp_num: number;\n  icon: string; image: string; color: string; is_show: number; explain: string }\nexport type LevelSave = Omit<LevelForm, 'id' | 'explain'> & { id?: number; explain?: string };\nconst integer = (v: unknown, min = 0, max = 2147483647): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= min && v <= max;\nconst object = (v: unknown): Record<string, unknown> => { if (!v || typeof v !== 'object' || Array.isArray(v)) throw Error('会员等级响应格式错误'); return v as Record<string, unknown>; };\nconst text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length <= max && !/[\\u0000-\\u001f\\u007f]/u.test(v);\nexport function normalizeLevelQuery(query: LevelQuery): LevelQuery {\n  if (!integer(query.page, 1, 10000) || !integer(query.limit, 1, 100) || (query.page - 1) * query.limit > 100000\n    || query.is_show !== undefined && query.is_show !== 0 && query.is_show !== 1 || query.title !== undefined && !text(query.title, 255)) throw Error('等级查询条件无效');\n  const title = query.title?.trim() ?? '';\n  return { page: query.page, limit: query.limit, ...(title ? { title } : {}), ...(query.is_show === undefined ? {} : { is_show: query.is_show }) };\n}\nexport function parseLevelPage(value: unknown, query: LevelQuery): LevelPage {\n  const r = object(value), q = normalizeLevelQuery(query);\n  if (r.page !== q.page || r.limit !== q.limit || !integer(r.count, 0, Number.MAX_SAFE_INTEGER) || !Array.isArray(r.list)\n    || r.list.length !== Math.max(0, Math.min(q.limit, r.count - (q.page - 1) * q.limit))) throw Error('等级分页结果与请求不一致');\n  const ids = new Set<number>(); let previous: LevelItem | undefined;\n  const list = r.list.map(raw => {\n    const row = object(raw);\n    if (!integer(row.id, 1) || ids.has(row.id) || !text(row.name, 255) || !integer(row.grade, -2147483648)\n      || typeof row.discount !== 'string' || !/^-?\\d{1,10}\\.\\d{2}$/u.test(row.discount) || !integer(row.expNum, -2147483648)\n      || !integer(row.isShow, -32768, 32767) || row.isDel !== 0 || !text(row.icon, 255) || !text(row.image, 255)\n      || !text(row.color, 32) || row.explain !== null && typeof row.explain !== 'string'\n      || typeof row.icon_preview !== 'string' || typeof row.image_preview !== 'string'\n      || q.is_show !== undefined && row.isShow !== q.is_show) throw Error('等级数据格式错误');\n    const result: LevelItem = { id: row.id, name: row.name, grade: row.grade, discount: row.discount, expNum: row.expNum,\n      isShow: row.isShow, isDel: 0, icon: row.icon, image: row.image, color: row.color, explain: row.explain as string | null,\n      icon_preview: row.icon_preview, image_preview: row.image_preview };\n    if (previous && (previous.grade > result.grade || previous.grade === result.grade && previous.id >= result.id)) throw Error('等级排序结果错误');\n    previous = result; ids.add(result.id); return result;\n  });\n  return { list, count: r.count, page: q.page, limit: q.limit };\n}\nexport function levelImagePreview(reference: string, resolved = ''): string {\n  if (!distributorImageReference(reference) || !distributorImagePreview(resolved)) return '';\n  if (!reference.startsWith('/api/assets/')) return resolved === reference ? resolved : '';\n  if (!resolved.startsWith('/') || resolved.startsWith('//')) return '';\n  try {\n    const url = new URL(resolved, 'https://level-image.invalid');\n    if (url.origin !== 'https://level-image.invalid' || url.pathname !== reference || url.hash\n      || [...url.searchParams.keys()].length !== 2 || url.searchParams.getAll('expires').length !== 1\n      || url.searchParams.getAll('signature').length !== 1 || !/^[1-9]\\d{0,11}$/u.test(url.searchParams.get('expires') ?? '')\n      || !/^[A-Za-z0-9_-]{43}$/u.test(url.searchParams.get('signature') ?? '')\n      || Number(url.searchParams.get('expires')) * 1000 <= Date.now()) return '';\n    return resolved;\n  } catch { return ''; }\n}\nexport function normalizeLevelForm(form: LevelForm, base?: LevelItem): LevelSave {\n  const unchanged = (field: keyof LevelForm, old: unknown) => !!base && form[field] === old;\n  const required = (field: 'name' | 'explain', old: unknown, max: number) => {\n    const v = form[field]; if (unchanged(field, old)) return v;\n    const controls = field === 'explain' ? /[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]/u : /[\\u0000-\\u001f\\u007f]/u;\n    if (typeof v !== 'string' || [...v].length > max || controls.test(v) || !v.trim()) throw Error(field === 'name' ? '请填写等级名称' : '请填写等级说明'); return field === 'name' ? v.trim() : v;\n  };\n  if (!integer(form.id, 0) || base && form.id !== base.id || !integer(form.grade, 1) && !unchanged('grade', base?.grade === 0 ? 0 : undefined)\n    || !integer(form.exp_num, 1) && !unchanged('exp_num', base?.expNum === 0 ? 0 : undefined)) throw Error('等级和解锁经验须为正整数；导入的原有0值可原样保留');\n  if (!/^(?:0|[1-9]\\d{0,2})(?:\\.\\d{1,2})?$/u.test(form.discount)) throw Error('折扣须为0至100，最多两位小数');\n  const [whole, fraction = ''] = form.discount.split('.'), units = BigInt(whole!) * 100n + BigInt(fraction.padEnd(2, '0'));\n  if (units > 10000n || form.is_show !== 0 && form.is_show !== 1) throw Error('折扣或显示状态无效');\n  for (const slot of ['icon', 'image'] as const) if (!unchanged(slot, base?.[slot]) && !distributorImageReference(form[slot])) throw Error('请选择两张稳定图片地址，不能保存签名预览链接');\n  if (!unchanged('color', base?.color) && !distributorColor(form.color)) throw Error('请选择有效字体颜色');\n  return { ...(form.id ? { id: form.id } : {}), name: required('name', base?.name, 255), grade: form.grade,\n    discount: `${units / 100n}.${String(units % 100n).padStart(2, '0')}`, exp_num: form.exp_num,\n    icon: form.icon, image: form.image, color: form.color, is_show: form.is_show, ...(base?.explain === null && form.explain === '' ? {} : { explain: required('explain', base?.explain ?? '', 10000) }) };\n}\n/** Established bare array response. */\nexport function apiAdminLevelList(): Promise<LevelItem[]> { return getData(request.get<LevelItem[]>('/level/list')); }\nexport async function apiAdminLevelPage(query: LevelQuery, signal?: AbortSignal): Promise<LevelPage> {\n  const normalized = normalizeLevelQuery(query);\n  return parseLevelPage(await getData(request.get('/level/list', { params: { paged: 1, ...normalized }, signal })), normalized);\n}\nexport function apiAdminLevelSave(data: LevelSave | { id: number; is_show: 0 | 1 }, signal?: AbortSignal): Promise<{ id: number }> {\n  return getData(request.post<{ id: number }>('/level/save', data, { signal }));\n}\nexport function apiAdminLevelDel(id: number, signal?: AbortSignal): Promise<null> { return getData(request.delete<null>(`/level/del/${id}`, { signal })); }\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminCrudController.ts",
+      "before_ref": "1846f34db81e90a661a41f53d56095509d5eeb92",
+      "before_sha256": "15a46c5ed194debb5dd24b814aa9cd2dcf805d6434caad64f0a0f8456421011d",
+      "after_sha256": "8f8aafa4a5c5c14cc288a040d66705d7e6dee9ff35b816624e174325b4435482",
+      "before_bytes": 112713,
+      "after_bytes": 111149,
+      "before_git_blob_sha1": "8eb2d1442f8a2268323a6733defb9d5336522d9d",
+      "after_git_blob_sha1": "52131e03230f0df3cd938ddf88e12a3e66bd50e1",
+      "edits": [
+        {
+          "before_source": "  type AdminMobileUserActor,\n} from \"@/services/admin/AdminMobileUserService\";\nimport { readBoundedJsonObject } from \"@/utils/request-body\";\nimport { retireBargain } from \"@/services/activity/BargainRetirementService\";\nimport { saveBargain, setBargainStatus } from \"@/services/activity/BargainAdminService\";\nimport { recycleAlias } from \"@/controllers/api/v1/AdminProductRecycleController\";\n",
+          "after_source": "  type AdminMobileUserActor,\n} from \"@/services/admin/AdminMobileUserService\";\nimport { readBoundedJsonObject } from \"@/utils/request-body\";\nimport { AdminLevelDefinitionService, readAdminLevelDefinitionBody } from \"@/services/admin/AdminLevelDefinitionService\";\nimport { retireBargain } from \"@/services/activity/BargainRetirementService\";\nimport { saveBargain, setBargainStatus } from \"@/services/activity/BargainAdminService\";\nimport { recycleAlias } from \"@/controllers/api/v1/AdminProductRecycleController\";\n",
+          "before_line": 67,
+          "after_line": 67
+        },
+        {
+          "before_source": "// 会员等级管理 (M18)\n// ═══════════════════════════════════════════════════════════\n\n/** GET /api/admin/level/list — 会员等级列表 */\nexport async function adminLevelList(c: C) {\n  const container = c.get(\"container\");\n  const { sql } = await import(\"drizzle-orm\");\n  const { systemUserLevel } = await import(\"@/models/schema\");\n  const rows = await container.db\n    .select()\n    .from(systemUserLevel)\n    .where(sql`${systemUserLevel.isDel} = 0`)\n    .orderBy(sql`${systemUserLevel.grade} ASC`);\n  return jsonOk(c, rows);\n}\n\n/** POST /api/admin/level/save — 新增/编辑会员等级 */\nexport async function adminLevelSave(c: C) {\n  const body = (await c.req.json().catch(() => ({}))) as {\n    id?: number;\n    name?: string;\n    grade?: number;\n    discount?: number;\n    exp_num?: number;\n    is_show?: number;\n    image?: string;\n    color?: string;\n    explain?: string;\n  };\n  const container = c.get(\"container\");\n  const { eq } = await import(\"drizzle-orm\");\n  const { systemUserLevel } = await import(\"@/models/schema\");\n\n  if (body.id) {\n    const updates: Record<string, unknown> = {};\n    if (body.name !== undefined) updates.name = body.name;\n    if (body.grade !== undefined) updates.grade = body.grade;\n    if (body.discount !== undefined) updates.discount = body.discount;\n    if (body.exp_num !== undefined) updates.expNum = body.exp_num;\n    if (body.is_show !== undefined) updates.isShow = body.is_show;\n    if (body.image !== undefined) updates.image = body.image;\n    if (body.color !== undefined) updates.color = body.color;\n    if (body.explain !== undefined) updates.explain = body.explain;\n    await container.db.update(systemUserLevel).set(updates).where(eq(systemUserLevel.id, body.id));\n    return jsonOk(c, { id: body.id }, \"更新成功\");\n  }\n\n  const now = Math.floor(Date.now() / 1000);\n  const row = await container.db\n    .insert(systemUserLevel)\n    .values({\n      name: body.name ?? \"新等级\",\n      grade: body.grade ?? 0,\n      discount: (body.discount ?? 100).toFixed(2),\n      expNum: body.exp_num ?? 0,\n      isShow: body.is_show ?? 1,\n      image: body.image ?? \"\",\n      color: body.color ?? \"\",\n      explain: body.explain ?? \"\",\n      isDel: 0,\n      addTime: now,\n    })\n    .returning({ id: systemUserLevel.id });\n  return jsonOk(c, { id: row[0].id }, \"创建成功\");\n}\n\n/** DELETE /api/admin/level/del/:id — 删除会员等级 */\nexport async function adminLevelDel(c: C) {\n  const id = Number(c.req.param(\"id\") ?? \"0\");\n  const container = c.get(\"container\");\n  const { eq } = await import(\"drizzle-orm\");\n  const { systemUserLevel } = await import(\"@/models/schema\");\n  await container.db.update(systemUserLevel).set({ isDel: 1 }).where(eq(systemUserLevel.id, id));\n  return jsonOk(c, null, \"删除成功\");\n}\n\n// ═══════════════════════════════════════════════════════════\n",
+          "after_source": "// 会员等级管理 (M18)\n// ═══════════════════════════════════════════════════════════\n\n/** GET /api/admin/level/list — legacy array or explicit paged catalogue. */\nexport async function adminLevelList(c: C) {\n  const actor = systemAuthorityActor(c);\n  const result = await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n    .list(new URL(c.req.url).searchParams, actor);\n  return jsonOk(c, result);\n}\n\n/** POST /api/admin/level/save — exact partial legacy patches and full author form. */\nexport async function adminLevelSave(c: C) {\n  const actor = systemAuthorityActor(c);\n  const result = await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n    .save(await readAdminLevelDefinitionBody(c.req.raw), actor);\n  return jsonOk(c, result, \"保存成功\");\n}\n\n/** DELETE /api/admin/level/del/:id — occupied definitions cannot be removed. */\nexport async function adminLevelDel(c: C) {\n  const actor = systemAuthorityActor(c);\n  return jsonOk(c, await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n    .remove(c.req.param(\"id\"), actor), \"删除成功\");\n}\n\n// ═══════════════════════════════════════════════════════════\n",
+          "before_line": 1668,
+          "after_line": 1669
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "before_ref": "677b60d86e11a78e57dcf3688ca476f3427f9579",
+      "before_sha256": "770ead6c9868b25e1e2a53c6d20b75d43310691b3c0d9f33a6cee202008b6f5b",
+      "after_sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d",
+      "before_bytes": 6184,
+      "after_bytes": 6302,
+      "before_git_blob_sha1": "02b49b09696d983022d89cc20a972b4648d88e5f",
+      "after_git_blob_sha1": "78c86a10891ce3d6e012b8e7d0d1ca162755880b",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "after_source": "import { peelAdminLevelDefinitionReport } from './adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "}\n/** The old applyAdminUserFilterReport remains historical; this explicit bridge alone advances it. */\nexport const applyMigrationAuditReport = <T>(historical: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(historical, false, binding);\nexport const reverseMigrationAuditReport = <T>(current: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(current, true, binding);\n",
+          "after_source": "}\n/** The old applyAdminUserFilterReport remains historical; this explicit bridge alone advances it. */\nexport const applyMigrationAuditReport = <T>(historical: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(historical, false, binding);\nexport const reverseMigrationAuditReport = <T>(current: T, binding = migrationAuditFollowupSourceBinding): T => reportBridge(peelAdminLevelDefinitionReport(current), true, binding);\n",
+          "before_line": 85,
+          "after_line": 86
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/migration-audit-followup-source-binding.test.ts",
+      "before_ref": "677b60d86e11a78e57dcf3688ca476f3427f9579",
+      "before_sha256": "2e3a7e785f74278f7d27e62502a4f89be964645b9d4bb71adc73a2714e6977bb",
+      "after_sha256": "cd87accebbed5fef7ad7b324797854e1e1ca35839b548590cf222a0abc7b1b96",
+      "before_bytes": 12890,
+      "after_bytes": 13022,
+      "before_git_blob_sha1": "310998fdf27a6a7a650192c31031dd087efe2489",
+      "after_git_blob_sha1": "ff0063f9e0329032376a7cade72fd4bebb79ba30",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "after_source": "import { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const sha = (value: string) => createHash('sha256').update(value).digest('hex');\nconst pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nlet builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= buildAdminFrontendApiAuditReport());\nconst historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst routeContracts = [\n ['get','/integral/list','UserFinanceReadController.integralList'], ['get','/extract/bank','UserFinanceReadController.extractBank'],\n",
+          "after_source": "const sha = (value: string) => createHash('sha256').update(value).digest('hex');\nconst pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nlet builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));\nconst historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst routeContracts = [\n ['get','/integral/list','UserFinanceReadController.integralList'], ['get','/extract/bank','UserFinanceReadController.extractBank'],\n",
+          "before_line": 15,
+          "after_line": 16
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/admin-user-filter-source-binding.test.ts",
+      "before_ref": "677b60d86e11a78e57dcf3688ca476f3427f9579",
+      "before_sha256": "1240ea3cc44507a634b1c7062d195d6b6939699f329046a17817a54757b8cf10",
+      "after_sha256": "fa4e1b3efc5193c5f51435ba5e5409a46b57cafe12b46bd6d7645dbde392947e",
+      "before_bytes": 14512,
+      "after_bytes": 14653,
+      "before_git_blob_sha1": "c9c2ccdb08d897076cf286a70be8e9929934b947",
+      "after_git_blob_sha1": "48d730c231e8bc764c7c9abbe9d55f505d4eff4d",
+      "edits": [
+        {
+          "before_source": "import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "after_source": "import { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';\nimport { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": " });\n it('preserves every old dated proof/helper/report and binds all new source dependencies',()=>{\n  expect(proof.preserved_files).toHaveLength(80);expect(new Set(proof.preserved_files.map(row=>row.file)).size).toBe(80);expect(proof.new_consumer_sources.map(row=>row.file)).toEqual(['workers-ts/src/services/admin/AdminUserListService.ts','workers-ts/src/controllers/api/v1/AdminCrudController.ts','view/admin-ts/src/api/userDirectory.ts','view/admin-ts/src/utils/userDirectoryFilters.ts','view/admin-ts/src/composables/useUserDirectoryOwner.ts','view/admin-ts/src/pages/user/UserDirectoryOptionPicker.vue']);\n  for(const row of [...proof.preserved_files,...proof.new_consumer_sources,proof.api_report.builder]){const source=read(row.file);expect(sha(source),row.file).toBe(row.sha256);expect(Buffer.byteLength(source),row.file).toBe(row.bytes);}\n  expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);\n });\n for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed source or proof mutation %s in '+file,kind=>{\n",
+          "after_source": " });\n it('preserves every old dated proof/helper/report and binds all new source dependencies',()=>{\n  expect(proof.preserved_files).toHaveLength(80);expect(new Set(proof.preserved_files.map(row=>row.file)).size).toBe(80);expect(proof.new_consumer_sources.map(row=>row.file)).toEqual(['workers-ts/src/services/admin/AdminUserListService.ts','workers-ts/src/controllers/api/v1/AdminCrudController.ts','view/admin-ts/src/api/userDirectory.ts','view/admin-ts/src/utils/userDirectoryFilters.ts','view/admin-ts/src/composables/useUserDirectoryOwner.ts','view/admin-ts/src/pages/user/UserDirectoryOptionPicker.vue']);\n  for(const row of [...proof.preserved_files,...proof.new_consumer_sources,proof.api_report.builder]){const source=reverseAdminLevelDefinitionSource(row.file,read(row.file));expect(sha(source),row.file).toBe(row.sha256);expect(Buffer.byteLength(source),row.file).toBe(row.bytes);}\n  expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);\n });\n for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed source or proof mutation %s in '+file,kind=>{\n",
+          "before_line": 35,
+          "after_line": 36
+        }
+      ]
+    }
+  ],
+  "production_patch": {
+    "before_ref": "1846f34db81e90a661a41f53d56095509d5eeb92",
+    "after_ref": "9969402715601d596dc4a310167b86d98655acc2",
+    "sha256": "963e15a586f37ca8be05c4d7a553e47f88703e3e07739fc54e98c32e3600f233",
+    "bytes": 13792,
+    "unified_diff": "diff --git a/view/admin-ts/src/api/level.ts b/view/admin-ts/src/api/level.ts\nindex 04cd12b9..db8785a2 100644\n--- a/view/admin-ts/src/api/level.ts\n+++ b/view/admin-ts/src/api/level.ts\n@@ -1,32 +1,87 @@\n-/**\n- * 会员等级管理 API\n- */\n-import request, { getData } from \"@/utils/request\";\n+/** Ordinary membership-level definitions; default array callers remain compatible. */\n+import request, { getData } from '@/utils/request';\n+import { distributorColor, distributorImageReference, distributorImagePreview } from './distributorLevels';\n \n export interface LevelItem {\n-  id: number;\n-  name: string;\n-  grade: number;\n-  discount: string;\n-  expNum: number;\n-  isShow: number;\n-  image: string;\n-  color: string;\n-  explain: string;\n-  isDel: number;\n+  id: number; name: string; grade: number; discount: string; expNum: number; isShow: number;\n+  icon: string; image: string; color: string; explain: string | null; isDel: number;\n+  icon_preview?: string; image_preview?: string;\n+  merId?: number; money?: string; validDate?: number; isForever?: number; isPay?: number; addTime?: number;\n }\n-\n-/** 等级列表 (GET /adminapi/level/list) */\n-export function apiAdminLevelList(): Promise<LevelItem[]> {\n-  return getData(request.get<LevelItem[]>(\"/level/list\"));\n+export interface LevelQuery { page: number; limit: number; title?: string; is_show?: 0 | 1 }\n+export interface LevelPage { list: LevelItem[]; count: number; page: number; limit: number }\n+export interface LevelForm { id: number; name: string; grade: number; discount: string; exp_num: number;\n+  icon: string; image: string; color: string; is_show: number; explain: string }\n+export type LevelSave = Omit<LevelForm, 'id' | 'explain'> & { id?: number; explain?: string };\n+const integer = (v: unknown, min = 0, max = 2147483647): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= min && v <= max;\n+const object = (v: unknown): Record<string, unknown> => { if (!v || typeof v !== 'object' || Array.isArray(v)) throw Error('会员等级响应格式错误'); return v as Record<string, unknown>; };\n+const text = (v: unknown, max: number): v is string => typeof v === 'string' && [...v].length <= max && !/[\\u0000-\\u001f\\u007f]/u.test(v);\n+export function normalizeLevelQuery(query: LevelQuery): LevelQuery {\n+  if (!integer(query.page, 1, 10000) || !integer(query.limit, 1, 100) || (query.page - 1) * query.limit > 100000\n+    || query.is_show !== undefined && query.is_show !== 0 && query.is_show !== 1 || query.title !== undefined && !text(query.title, 255)) throw Error('等级查询条件无效');\n+  const title = query.title?.trim() ?? '';\n+  return { page: query.page, limit: query.limit, ...(title ? { title } : {}), ...(query.is_show === undefined ? {} : { is_show: query.is_show }) };\n }\n-\n-/** 新增/编辑 (POST /adminapi/level/save) */\n-export function apiAdminLevelSave(data: Record<string, unknown>): Promise<{ id: number }> {\n-  return getData(request.post<{ id: number }>(\"/level/save\", data));\n+export function parseLevelPage(value: unknown, query: LevelQuery): LevelPage {\n+  const r = object(value), q = normalizeLevelQuery(query);\n+  if (r.page !== q.page || r.limit !== q.limit || !integer(r.count, 0, Number.MAX_SAFE_INTEGER) || !Array.isArray(r.list)\n+    || r.list.length !== Math.max(0, Math.min(q.limit, r.count - (q.page - 1) * q.limit))) throw Error('等级分页结果与请求不一致');\n+  const ids = new Set<number>(); let previous: LevelItem | undefined;\n+  const list = r.list.map(raw => {\n+    const row = object(raw);\n+    if (!integer(row.id, 1) || ids.has(row.id) || !text(row.name, 255) || !integer(row.grade, -2147483648)\n+      || typeof row.discount !== 'string' || !/^-?\\d{1,10}\\.\\d{2}$/u.test(row.discount) || !integer(row.expNum, -2147483648)\n+      || !integer(row.isShow, -32768, 32767) || row.isDel !== 0 || !text(row.icon, 255) || !text(row.image, 255)\n+      || !text(row.color, 32) || row.explain !== null && typeof row.explain !== 'string'\n+      || typeof row.icon_preview !== 'string' || typeof row.image_preview !== 'string'\n+      || q.is_show !== undefined && row.isShow !== q.is_show) throw Error('等级数据格式错误');\n+    const result: LevelItem = { id: row.id, name: row.name, grade: row.grade, discount: row.discount, expNum: row.expNum,\n+      isShow: row.isShow, isDel: 0, icon: row.icon, image: row.image, color: row.color, explain: row.explain as string | null,\n+      icon_preview: row.icon_preview, image_preview: row.image_preview };\n+    if (previous && (previous.grade > result.grade || previous.grade === result.grade && previous.id >= result.id)) throw Error('等级排序结果错误');\n+    previous = result; ids.add(result.id); return result;\n+  });\n+  return { list, count: r.count, page: q.page, limit: q.limit };\n }\n-\n-/** 删除 (DELETE /adminapi/level/del/:id) */\n-export function apiAdminLevelDel(id: number): Promise<null> {\n-  return getData(request.delete<null>(`/level/del/${id}`));\n+export function levelImagePreview(reference: string, resolved = ''): string {\n+  if (!distributorImageReference(reference) || !distributorImagePreview(resolved)) return '';\n+  if (!reference.startsWith('/api/assets/')) return resolved === reference ? resolved : '';\n+  if (!resolved.startsWith('/') || resolved.startsWith('//')) return '';\n+  try {\n+    const url = new URL(resolved, 'https://level-image.invalid');\n+    if (url.origin !== 'https://level-image.invalid' || url.pathname !== reference || url.hash\n+      || [...url.searchParams.keys()].length !== 2 || url.searchParams.getAll('expires').length !== 1\n+      || url.searchParams.getAll('signature').length !== 1 || !/^[1-9]\\d{0,11}$/u.test(url.searchParams.get('expires') ?? '')\n+      || !/^[A-Za-z0-9_-]{43}$/u.test(url.searchParams.get('signature') ?? '')\n+      || Number(url.searchParams.get('expires')) * 1000 <= Date.now()) return '';\n+    return resolved;\n+  } catch { return ''; }\n+}\n+export function normalizeLevelForm(form: LevelForm, base?: LevelItem): LevelSave {\n+  const unchanged = (field: keyof LevelForm, old: unknown) => !!base && form[field] === old;\n+  const required = (field: 'name' | 'explain', old: unknown, max: number) => {\n+    const v = form[field]; if (unchanged(field, old)) return v;\n+    const controls = field === 'explain' ? /[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]/u : /[\\u0000-\\u001f\\u007f]/u;\n+    if (typeof v !== 'string' || [...v].length > max || controls.test(v) || !v.trim()) throw Error(field === 'name' ? '请填写等级名称' : '请填写等级说明'); return field === 'name' ? v.trim() : v;\n+  };\n+  if (!integer(form.id, 0) || base && form.id !== base.id || !integer(form.grade, 1) && !unchanged('grade', base?.grade === 0 ? 0 : undefined)\n+    || !integer(form.exp_num, 1) && !unchanged('exp_num', base?.expNum === 0 ? 0 : undefined)) throw Error('等级和解锁经验须为正整数；导入的原有0值可原样保留');\n+  if (!/^(?:0|[1-9]\\d{0,2})(?:\\.\\d{1,2})?$/u.test(form.discount)) throw Error('折扣须为0至100，最多两位小数');\n+  const [whole, fraction = ''] = form.discount.split('.'), units = BigInt(whole!) * 100n + BigInt(fraction.padEnd(2, '0'));\n+  if (units > 10000n || form.is_show !== 0 && form.is_show !== 1) throw Error('折扣或显示状态无效');\n+  for (const slot of ['icon', 'image'] as const) if (!unchanged(slot, base?.[slot]) && !distributorImageReference(form[slot])) throw Error('请选择两张稳定图片地址，不能保存签名预览链接');\n+  if (!unchanged('color', base?.color) && !distributorColor(form.color)) throw Error('请选择有效字体颜色');\n+  return { ...(form.id ? { id: form.id } : {}), name: required('name', base?.name, 255), grade: form.grade,\n+    discount: `${units / 100n}.${String(units % 100n).padStart(2, '0')}`, exp_num: form.exp_num,\n+    icon: form.icon, image: form.image, color: form.color, is_show: form.is_show, ...(base?.explain === null && form.explain === '' ? {} : { explain: required('explain', base?.explain ?? '', 10000) }) };\n+}\n+/** Established bare array response. */\n+export function apiAdminLevelList(): Promise<LevelItem[]> { return getData(request.get<LevelItem[]>('/level/list')); }\n+export async function apiAdminLevelPage(query: LevelQuery, signal?: AbortSignal): Promise<LevelPage> {\n+  const normalized = normalizeLevelQuery(query);\n+  return parseLevelPage(await getData(request.get('/level/list', { params: { paged: 1, ...normalized }, signal })), normalized);\n+}\n+export function apiAdminLevelSave(data: LevelSave | { id: number; is_show: 0 | 1 }, signal?: AbortSignal): Promise<{ id: number }> {\n+  return getData(request.post<{ id: number }>('/level/save', data, { signal }));\n }\n+export function apiAdminLevelDel(id: number, signal?: AbortSignal): Promise<null> { return getData(request.delete<null>(`/level/del/${id}`, { signal })); }\ndiff --git a/workers-ts/src/controllers/api/v1/AdminCrudController.ts b/workers-ts/src/controllers/api/v1/AdminCrudController.ts\nindex 8eb2d144..52131e03 100644\n--- a/workers-ts/src/controllers/api/v1/AdminCrudController.ts\n+++ b/workers-ts/src/controllers/api/v1/AdminCrudController.ts\n@@ -67,6 +67,7 @@ import {\n   type AdminMobileUserActor,\n } from \"@/services/admin/AdminMobileUserService\";\n import { readBoundedJsonObject } from \"@/utils/request-body\";\n+import { AdminLevelDefinitionService, readAdminLevelDefinitionBody } from \"@/services/admin/AdminLevelDefinitionService\";\n import { retireBargain } from \"@/services/activity/BargainRetirementService\";\n import { saveBargain, setBargainStatus } from \"@/services/activity/BargainAdminService\";\n import { recycleAlias } from \"@/controllers/api/v1/AdminProductRecycleController\";\n@@ -1668,77 +1669,27 @@ export async function adminBillList(c: C) {\n // 会员等级管理 (M18)\n // ═══════════════════════════════════════════════════════════\n \n-/** GET /api/admin/level/list — 会员等级列表 */\n+/** GET /api/admin/level/list — legacy array or explicit paged catalogue. */\n export async function adminLevelList(c: C) {\n-  const container = c.get(\"container\");\n-  const { sql } = await import(\"drizzle-orm\");\n-  const { systemUserLevel } = await import(\"@/models/schema\");\n-  const rows = await container.db\n-    .select()\n-    .from(systemUserLevel)\n-    .where(sql`${systemUserLevel.isDel} = 0`)\n-    .orderBy(sql`${systemUserLevel.grade} ASC`);\n-  return jsonOk(c, rows);\n+  const actor = systemAuthorityActor(c);\n+  const result = await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n+    .list(new URL(c.req.url).searchParams, actor);\n+  return jsonOk(c, result);\n }\n \n-/** POST /api/admin/level/save — 新增/编辑会员等级 */\n+/** POST /api/admin/level/save — exact partial legacy patches and full author form. */\n export async function adminLevelSave(c: C) {\n-  const body = (await c.req.json().catch(() => ({}))) as {\n-    id?: number;\n-    name?: string;\n-    grade?: number;\n-    discount?: number;\n-    exp_num?: number;\n-    is_show?: number;\n-    image?: string;\n-    color?: string;\n-    explain?: string;\n-  };\n-  const container = c.get(\"container\");\n-  const { eq } = await import(\"drizzle-orm\");\n-  const { systemUserLevel } = await import(\"@/models/schema\");\n-\n-  if (body.id) {\n-    const updates: Record<string, unknown> = {};\n-    if (body.name !== undefined) updates.name = body.name;\n-    if (body.grade !== undefined) updates.grade = body.grade;\n-    if (body.discount !== undefined) updates.discount = body.discount;\n-    if (body.exp_num !== undefined) updates.expNum = body.exp_num;\n-    if (body.is_show !== undefined) updates.isShow = body.is_show;\n-    if (body.image !== undefined) updates.image = body.image;\n-    if (body.color !== undefined) updates.color = body.color;\n-    if (body.explain !== undefined) updates.explain = body.explain;\n-    await container.db.update(systemUserLevel).set(updates).where(eq(systemUserLevel.id, body.id));\n-    return jsonOk(c, { id: body.id }, \"更新成功\");\n-  }\n-\n-  const now = Math.floor(Date.now() / 1000);\n-  const row = await container.db\n-    .insert(systemUserLevel)\n-    .values({\n-      name: body.name ?? \"新等级\",\n-      grade: body.grade ?? 0,\n-      discount: (body.discount ?? 100).toFixed(2),\n-      expNum: body.exp_num ?? 0,\n-      isShow: body.is_show ?? 1,\n-      image: body.image ?? \"\",\n-      color: body.color ?? \"\",\n-      explain: body.explain ?? \"\",\n-      isDel: 0,\n-      addTime: now,\n-    })\n-    .returning({ id: systemUserLevel.id });\n-  return jsonOk(c, { id: row[0].id }, \"创建成功\");\n+  const actor = systemAuthorityActor(c);\n+  const result = await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n+    .save(await readAdminLevelDefinitionBody(c.req.raw), actor);\n+  return jsonOk(c, result, \"保存成功\");\n }\n \n-/** DELETE /api/admin/level/del/:id — 删除会员等级 */\n+/** DELETE /api/admin/level/del/:id — occupied definitions cannot be removed. */\n export async function adminLevelDel(c: C) {\n-  const id = Number(c.req.param(\"id\") ?? \"0\");\n-  const container = c.get(\"container\");\n-  const { eq } = await import(\"drizzle-orm\");\n-  const { systemUserLevel } = await import(\"@/models/schema\");\n-  await container.db.update(systemUserLevel).set({ isDel: 1 }).where(eq(systemUserLevel.id, id));\n-  return jsonOk(c, null, \"删除成功\");\n+  const actor = systemAuthorityActor(c);\n+  return jsonOk(c, await new AdminLevelDefinitionService(c.get(\"container\"), c.env)\n+    .remove(c.req.param(\"id\"), actor), \"删除成功\");\n }\n \n // ═══════════════════════════════════════════════════════════\n"
+  },
+  "api_report": {
+    "before_sha256": "0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f",
+    "after_sha256": "022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7",
+    "before_bytes": 644215,
+    "after_bytes": 644498,
+    "operations": [
+      {
+        "kind": "replace",
+        "path": [
+          "frontendSources",
+          43,
+          "sha256"
+        ],
+        "before": "553b40a64d6fcfbc6e13fa5d0825911c2e9192c9f55d6ed739a8e57ef890cadf",
+        "after": "e3482d01cb90e3c59e0a5f80b7602f3be71c0953f85368376cfc63757b6b20c6"
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "callSites"
+        ],
+        "before": 706,
+        "after": 707
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "pathVariants"
+        ],
+        "before": 744,
+        "after": 745
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "registered"
+        ],
+        "before": 744,
+        "after": 745
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "executable"
+        ],
+        "before": 744,
+        "after": 745
+      },
+      {
+        "kind": "splice",
+        "path": [
+          "calls"
+        ],
+        "index": 295,
+        "before": [
+          {
+            "method": "GET",
+            "path": "/level/list",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 21,
+            "registered": true,
+            "matchedRoute": "/level/list",
+            "matchedHandler": "AdminCrud.adminLevelList",
+            "availability": "executable"
+          },
+          {
+            "method": "POST",
+            "path": "/level/save",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 26,
+            "registered": true,
+            "matchedRoute": "/level/save",
+            "matchedHandler": "AdminCrud.adminLevelSave",
+            "availability": "executable"
+          },
+          {
+            "method": "DELETE",
+            "path": "/level/del/:param",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 31,
+            "registered": true,
+            "matchedRoute": "/level/del/:id",
+            "matchedHandler": "AdminCrud.adminLevelDel",
+            "availability": "executable"
+          }
+        ],
+        "after": [
+          {
+            "method": "GET",
+            "path": "/level/list",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 79,
+            "registered": true,
+            "matchedRoute": "/level/list",
+            "matchedHandler": "AdminCrud.adminLevelList",
+            "availability": "executable"
+          },
+          {
+            "method": "GET",
+            "path": "/level/list",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 82,
+            "registered": true,
+            "matchedRoute": "/level/list",
+            "matchedHandler": "AdminCrud.adminLevelList",
+            "availability": "executable"
+          },
+          {
+            "method": "POST",
+            "path": "/level/save",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 85,
+            "registered": true,
+            "matchedRoute": "/level/save",
+            "matchedHandler": "AdminCrud.adminLevelSave",
+            "availability": "executable"
+          },
+          {
+            "method": "DELETE",
+            "path": "/level/del/:param",
+            "source": "view/admin-ts/src/api/level.ts",
+            "line": 87,
+            "registered": true,
+            "matchedRoute": "/level/del/:id",
+            "matchedHandler": "AdminCrud.adminLevelDel",
+            "availability": "executable"
+          }
+        ]
+      }
+    ]
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de",
+      "bytes": 66571
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e",
+      "bytes": 2940
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50",
+      "bytes": 23388
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693",
+      "bytes": 5851
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295",
+      "bytes": 10746
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+      "bytes": 13813
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13",
+      "bytes": 11589
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9",
+      "bytes": 6294
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236",
+      "bytes": 28750
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0",
+      "bytes": 7016
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472",
+      "bytes": 17141
+    }
+  ],
+  "boundary": "Only the two complete ordinary-level sources and six exact complete-report operations are reversible; the original migration apply output, all historical fixtures, unrelated routes, calls, handlers and source bytes remain authoritative."
+}
