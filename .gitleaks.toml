@@ -1376,3 +1376,22 @@ paths = [
 regexes = [
   '''^\s*"workers-ts/src/routes/adminapi\.ts": "c6b7473d26123652099d7b212f5c6e2c817c4ee618e147468d3ed7fa90146947",\s*$''',
 ]
+
+[[allowlists]]
+description = "Exact synthetic membership-card secret in owned frontend and Browser fixtures"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = [
+  '''(^|/)view/uniapp-ts/scripts/member-card-activation-runtime\.test\.cjs$''',
+  '''(^|/)workers-ts/test/helpers/membershipCardActivationBrowserFixture\.ts$''',
+]
+regexes = ['''^ABCD1234EFGH$''']
+
+[[allowlists]]
+description = "Exact Vue password input cursor-spacing attribute false positive"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''(^|/)view/uniapp-ts/src/pages/annex/vip_active/index\.vue$''']
+regexes = ['''^cursor-spacing=$''']
