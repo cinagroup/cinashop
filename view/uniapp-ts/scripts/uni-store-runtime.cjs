@@ -20,11 +20,12 @@ function plainIo(value) {
 // Only native lifecycle/I/O is replaced. An explicit platform selects source
 // guards for adapter tests; the three real builds still verify Uni compilation.
 function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {}, platform } = {}) {
-  const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], scrolls = [], cache = new Map();
+  const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], scrolls = [], titles = [], cache = new Map();
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
     navigateTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); }, redirectTo: opts => { navigations.push(opts.url); if (navigationFails) opts.fail?.(new Error('navigation failed')); else opts.success?.(); },
     pageScrollTo: opts => { scrolls.push(structuredClone(plainIo({ scrollTop: opts.scrollTop, duration: opts.duration }))); opts.success?.({ errMsg: 'pageScrollTo:ok' }); opts.complete?.({ errMsg: 'pageScrollTo:ok' }); },
+    setNavigationBarTitle: opts => titles.push(opts.title),
     stopPullDownRefresh() {}, showToast: opts => toasts.push(opts), switchTab: opts => navigations.push(opts.url),
     showModal: modal === undefined ? undefined : opts => { modals.push(opts); if (typeof modal === 'function') modal(opts);
       else opts.success?.({ confirm: modal, cancel: !modal }); },
@@ -78,7 +79,7 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
   const checkout = scope.run(() => component
     ? load(path.join(root, 'src', component)).default.setup(props, { expose() {}, emit })
     : load(path.join(root, 'src/composables', feature + '.ts'))[feature]());
-  return { checkout, auth, storage, calls, navigations, toasts, modals, scrolls, hooks, load, uni,
+  return { checkout, auth, storage, calls, navigations, toasts, modals, scrolls, titles, hooks, load, uni,
     async start(query = { mode: 'buy', cartId: '1' }) { await hooks.onLoad?.(query); hooks.onShow?.(); await tick(); },
     stop() { hooks.onUnload?.(); scope.stop(); unbindAuth(); },
   };

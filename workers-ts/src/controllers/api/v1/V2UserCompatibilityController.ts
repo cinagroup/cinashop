@@ -1,5 +1,7 @@
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
+import { readDistributionLedgerInput } from '@/services/user/DistributionLedgerInput';
+import { DistributionLedgerService } from '@/services/user/DistributionLedgerService';
 import { CapitalFlowService } from "@/services/finance/CapitalFlowService";
 import {
   parseLegacyUserLedgerQuery,
@@ -95,6 +97,14 @@ export async function moneyList(c: C) {
       );
     }
     return [];
+  });
+}
+
+/** POST is an explicit bounded read view; legacy GET and its types remain intact. */
+export async function distributionLedger(c: C) {
+  return response(c, async () => {
+    const owner = uid(c), input = await readDistributionLedgerInput(c.req.raw, c.req.param('type'));
+    return new DistributionLedgerService(c.get('container')).read(owner, input.mode, input.query);
   });
 }
 

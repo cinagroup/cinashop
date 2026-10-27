@@ -1,3 +1,4 @@
+import { legacyDistributionLedgerPeriod } from './DistributionLedgerRead';
 import { publicUserAvatars } from './UserProfilePublicAvatar';
 import {
   and,
@@ -244,6 +245,12 @@ function ledgerTimeConditions(
   return conditions;
 }
 
+/** Only PHP's brokerage/withdrawal `time` arrays expand midnight stops. */
+function distributionLedgerTimeConditions(query: LegacyUserLedgerQuery): SQL[] {
+  const period = legacyDistributionLedgerPeriod(query.start, query.stop);
+  return period ? [sql`${userBrokerage.addTime} between ${period.start}::bigint and ${period.stop}::bigint`] : [];
+}
+
 export class V2UserCompatibilityService {
   constructor(private readonly container: Container, private readonly appKey?: string) {}
 
@@ -396,7 +403,7 @@ export class V2UserCompatibilityService {
 
   async brokerageList(uid: number, raw: Record<string, unknown>) {
     const query = parseLegacyUserLedgerQuery(raw);
-    const base: SQL[] = [eq(userBrokerage.uid, uid), ...ledgerTimeConditions(userBrokerage.addTime, query)];
+    const base: SQL[] = [eq(userBrokerage.uid, uid), ...distributionLedgerTimeConditions(query)];
     if (query.keyword) {
       const pattern = `%${query.keyword}%`;
       base.push(or(
@@ -416,18 +423,18 @@ export class V2UserCompatibilityService {
     const [rows, incomeRows, expendRows] = await Promise.all([
       this.container.db.select().from(userBrokerage).where(where)
         .orderBy(desc(userBrokerage.id)).limit(query.limit).offset((query.page - 1) * query.limit),
-      this.container.db.select({ total: sql<string>`COALESCE(SUM(${userBrokerage.number}), 0)::numeric(14,2)::text` })
+      this.container.db.select({ total: sql<string>`round(COALESCE(SUM(${userBrokerage.number}), 0),2)::text` })
         .from(userBrokerage).where(and(...base, eq(userBrokerage.pm, 1), ne(userBrokerage.type, "extract_fail"))),
-      this.container.db.select({ total: sql<string>`COALESCE(SUM(${userBrokerage.number}), 0)::numeric(14,2)::text` })
+      this.container.db.select({ total: sql<string>`round(COALESCE(SUM(${userBrokerage.number}), 0),2)::text` })
         .from(userBrokerage).where(and(...base, eq(userBrokerage.pm, 0))),
     ]);
-    const extractIds = validLinkedIds(rows.filter((row) => ["extract", "extract_fail"].includes(row.type)));
+    const extractIds = validLinkedIds(rows.filter((row) => ["extract", "extract_fail"].includes(row.type))).filter(id => id <= 2147483647);
     const extracts = extractIds.length
       ? await this.container.db.select({
         id: userExtract.id,
         status: userExtract.status,
         failMsg: userExtract.failMsg,
-      }).from(userExtract).where(inArray(userExtract.id, extractIds))
+      }).from(userExtract).where(and(inArray(userExtract.id, extractIds), eq(userExtract.uid, uid)))
       : [];
     const extractById = new Map(extracts.map((row) => [row.id, row]));
     const list = rows.map((row) => legacyBrokerageProjection(
@@ -447,7 +454,7 @@ export class V2UserCompatibilityService {
     const where = and(
       eq(userBrokerage.uid, uid),
       inArray(userBrokerage.type, ["extract", "extract_money", "extract_fail"]),
-      ...ledgerTimeConditions(userBrokerage.addTime, query),
+      ...distributionLedgerTimeConditions(query),
     );
     const rows = await this.container.db.select().from(userBrokerage).where(where)
       .orderBy(desc(userBrokerage.id)).limit(query.limit).offset((query.page - 1) * query.limit);

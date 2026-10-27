@@ -41,6 +41,7 @@
       </view>
     </view>
 
+    <view class="ranking-links ledger-links"><button @tap="openLedger(1)">佣金记录 <text>›</text></button><button @tap="openLedger(4)">提现记录 <text>›</text></button></view>
     <view class="order-entry"><button @tap="openPromoterOrders">分销订单 <text>›</text></button></view>
     <view class="ranking-links"><button @tap="openRanking('promoterRank')">推广人排行 <text>›</text></button><button @tap="openRanking('commissionRank')">佣金排行 <text>›</text></button></view>
 
@@ -116,6 +117,7 @@
 import ThemePage from '@/components/ThemePage.vue';
 import { computed, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
+import {resolveRegisteredPageRoute} from '@/config/navigation';
 import {
   apiCommission,
   apiCommissionList,
@@ -303,6 +305,7 @@ async function openExtract() {
   }
 }
 
+function openLedger(type:1|4) { const url=resolveRegisteredPageRoute('/pages/users/user_spread_money/index','type='+type);if(auth.isLoggedIn&&url)uni.navigateTo({url}); }
 function openPeople() { if (auth.isLoggedIn) uni.navigateTo({url:'/pages/user/promoterPeople'}); }
 
 onLoad(() => {

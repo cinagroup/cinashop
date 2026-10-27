@@ -73,6 +73,7 @@ v2Routes.get("/user/service/record", authMiddleware({ force: true }), UserMessag
 v2Routes.post("/user/user_update", authMiddleware({ force: true }), V2UserCompatibilityController.updateRoutineProfile);
 v2Routes.get("/user/wechat", authMiddleware({ force: true }), V2UserCompatibilityController.refreshWechatProfile);
 v2Routes.get("/user/money_list/:type", authMiddleware({ force: true }), V2UserCompatibilityController.moneyList);
+v2Routes.post("/user/money_list/:type", authMiddleware({ force: true }), V2UserCompatibilityController.distributionLedger);
 v2Routes.get("/agent/agent_user_list/:type", authMiddleware({ force: true }), V2UserCompatibilityController.agentUserList);
 v2Routes.get("/agent/agent_info", authMiddleware({ force: true }), V2UserCompatibilityController.agentInfo);
 
