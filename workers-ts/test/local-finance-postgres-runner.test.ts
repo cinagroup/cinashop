@@ -131,6 +131,29 @@ describe('local PostgreSQL runner command boundary', () => {
    {args:['--schema-maintenance','--case','clause','unused-bin','audit:membership-clause-browser'],error:'Literal cases apply only to explicit test files'},
    {args:['--schema-maintenance','--verbose-tests','unused-bin','audit:membership-clause-browser'],error:'Verbose reporting applies only to explicit native test files'},
   ])('rejects invalid membership-clause Browser boundary $args before native launch',({args,error})=>{const r=spawnSync(process.execPath,[script,...args],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain(error);expect(r.stderr).not.toContain('ENOENT');});
+  it('admits only the exact owned member-level recommendations Browser mode before native setup', () => {
+    const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:member-level-recommendations-browser'], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe(''); expect(r.stderr).toContain('ENOENT');
+    expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:member-level-recommendations-browser-extra', 'audit:member-level-recommendations-browser.other'])
+    ('rejects an unreviewed member-level recommendations Browser mode %s', mode => {
+      const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe(''); expect(r.stderr).not.toContain('ENOENT');
+    });
+  it('admits the exact member-level recommendations App native suite up to the owned binary boundary', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/member-level-recommendations-postgres.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/member-level-recommendations-postgres-extra.test.ts', 'test/member-level-recommendations-postgres.test.ts.other'])
+    ('rejects an unreviewed member-level recommendations suite %s before native launch', file => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', file],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).not.toContain('ENOENT');
+    });
   it('admits the exact member-coupon formal App native suite up to the owned binary boundary', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/member-coupon-app-role-postgres.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

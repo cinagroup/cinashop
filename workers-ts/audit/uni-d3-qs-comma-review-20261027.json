@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "kind": "new-advisory-existing-optional-ssr-node",
+  "source": {
+    "url": "https://github.com/ljharb/qs/security/advisories/GHSA-6pq8-jhm2-2vcw",
+    "read_on": "2026-10-27",
+    "affected_range": ">=6.7.0 <=6.16.0",
+    "patched_version": "6.16.1",
+    "trigger": "qs.stringify comma array serialization on attacker-influenced objects containing non-callable own toString."
+  },
+  "npm_receipt": {
+    "file": "/tmp/cinashop-member-level-recommendations-20261027/uniapp-current-audit-v1.json",
+    "sha256": "12c7db4178ad4c498a98082a30a8abeb72a07b499e1972674d276e8c267c7f95",
+    "bytes": 36804,
+    "actual_exit_code": 1,
+    "new_object": {
+      "source": 1243452,
+      "name": "qs",
+      "dependency": "qs",
+      "title": "qs : qs.stringify with arrayFormat 'comma' throws an uncaught TypeError on array elements carrying a non-callable own toString (DoS)",
+      "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
+      "severity": "moderate",
+      "cwe": [
+        "CWE-248",
+        "CWE-704"
+      ],
+      "cvss": {
+        "score": 5.3,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+      },
+      "range": ">=6.7.0 <=6.16.0"
+    },
+    "old_direct_objects_remaining": 26,
+    "affected_package_entries": 50
+  },
+  "historical_baseline": {
+    "file": "view/uniapp-ts/scripts/d3-advisory-gate.pre-qs-comma-20261027.baseline.json",
+    "sha256": "f62308efc2f92f0424407851024a2915f9bfa21741bacb15ca77ff1fdb80341d",
+    "bytes": 31286,
+    "base_ref": "24a886896a8c573779cd02a20e96bc99223b8269"
+  },
+  "reviewed_delta": {
+    "advisory_sources_before": [
+      1158506,
+      1158507
+    ],
+    "advisory_sources_after": [
+      1158506,
+      1158507,
+      1243452
+    ],
+    "qs_affected_range_before": "2.2.5 - 6.15.3",
+    "qs_affected_range_after": "2.2.5 - 6.16.0",
+    "all_other_baseline_fields_unchanged_except_receipt": true
+  },
+  "boundary": {
+    "installed_root_qs": "6.15.3",
+    "root_remains_affected": true,
+    "nested_body_parser_qs": "6.16.1",
+    "chain": "h5-ssr",
+    "ordinary_scripts": "h5-ssr-guard.cjs explicitly rejects SSR; manifest has no SSR opt-in and no entry-server source. Actual DCloud ordinary entrypoint defers Express/qs; resource graph audit rejects server packages.",
+    "proofs": [
+      "view/uniapp-ts/scripts/express-qs-ssr-boundary.test.cjs",
+      "view/uniapp-ts/scripts/h5-ssr-guard.test.cjs",
+      "view/uniapp-ts/scripts/runtime-i18n-audit.test.cjs"
+    ],
+    "limits": "This review does not fix root qs or authorize SSR. Manual SSR or any new package node, path, direct tuple, or build entrypoint needs a fresh review. Gate implementation, lock, dependencies and vendor archives unchanged."
+  }
+}

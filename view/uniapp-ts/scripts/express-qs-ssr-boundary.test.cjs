@@ -258,3 +258,25 @@ test("real DCloud server entrypoints defer Express and pass undefined host in SS
     net.Server.prototype.listen = savedNetListen;
   }
 });
+
+test("new qs comma advisory still affects the optional root serializer, while nested body-parser qs is patched", () => {
+  const root = require("qs");
+  const nested = createRequire(require.resolve("body-parser"))("qs");
+  assert.equal(require("qs/package.json").version, "6.15.3");
+  assert.equal(createRequire(require.resolve("body-parser"))("qs/package.json").version, "6.16.1");
+  for (const encodeValuesOnly of [false, true]) {
+    const options = { arrayFormat:"comma", encodeValuesOnly };
+    for (const payload of [
+      () => JSON.parse('{"a":[{"toString":"x"}]}'),
+      () => root.parse('a[0][toString]=x', { allowPrototypes:true }),
+      () => root.parse('a[][b]=c', { plainObjects:true }),
+    ]) {
+      assert.throws(() => root.stringify(payload(), options), TypeError);
+      let result;
+      assert.doesNotThrow(() => { result = nested.stringify(payload(), options); });
+      assert.equal(typeof result, "string");
+    }
+    assert.equal(root.stringify({a:['x','y']}, options), encodeValuesOnly ? 'a=x,y' : 'a=x%2Cy');
+    assert.equal(nested.stringify({a:['x','y']}, options), encodeValuesOnly ? 'a=x,y' : 'a=x%2Cy');
+  }
+});

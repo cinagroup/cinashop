@@ -45,14 +45,14 @@ function rejected(fixture, fragment) {
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
   assert.equal(Object.keys(baseline.entries).length, 50);
-  assert.equal(Object.keys(baseline.advisories).length, 26);
+  assert.equal(Object.keys(baseline.advisories).length, 27);
   assert.equal(Object.keys(baseline.resolvedAdvisories).length, 15);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 26);
-  assert.equal(result.distinctAdvisoryUrls, 25);
+  assert.equal(result.directAdvisoryObjects, 27);
+  assert.equal(result.distinctAdvisoryUrls, 26);
   assert.equal(Object.keys(baseline.chains).length, 8);
   assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);
 });
@@ -407,6 +407,7 @@ test('a newly vulnerable qs node under body-parser is not accepted with the exis
 const preViteSourceBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-vite-source-20261027.baseline.json"));
 const preViteSourceBaseline = JSON.parse(preViteSourceBaselineBytes.toString("utf8"));
 test('Vite source replacement preserves the complete earlier reviewed baseline and every unrelated tuple', () => {
+  const baseline = preQsCommaBaseline; // Preserve the original Vite review against its exact resulting baseline.
   assert.equal(createHash('sha256').update(preViteSourceBaselineBytes).digest('hex'), 'a80b3b1cb4ba8e0e9861afdbc08e169baf94e4e9a34503cd828b8d791a91eaf8');
   const expected = structuredClone(preViteSourceBaseline);
   const old = expected.advisories['1123525'];
@@ -433,4 +434,34 @@ for (const kind of ['source','url','severity','range','missing','old-source']) t
   if (kind === 'old-source') entry.source = 1123525;
   const result = evaluateAudit(report, baseline); assert.equal(result.ok, false);
   if (kind === 'old-source') assert(result.issues.some(v => v.includes('resolved advisory reappeared: 1123525')));
+});
+
+const preQsCommaBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-qs-comma-20261027.baseline.json"));
+const preQsCommaBaseline = JSON.parse(preQsCommaBaselineBytes.toString("utf8"));
+test('new qs comma advisory preserves every previously reviewed tuple and installed forward path', () => {
+  assert.equal(createHash('sha256').update(preQsCommaBaselineBytes).digest('hex'), 'f62308efc2f92f0424407851024a2915f9bfa21741bacb15ca77ff1fdb80341d');
+  const expected = structuredClone(preQsCommaBaseline);
+  expected.advisories['1243452'] = { package:'qs', url:'https://github.com/advisories/GHSA-6pq8-jhm2-2vcw', severity:'moderate', range:'>=6.7.0 <=6.16.0', chain:'h5-ssr' };
+  expected.entries.qs.advisorySources = [1158506,1158507,1243452];
+  expected.entries.qs.range = '2.2.5 - 6.16.0';
+  expected.reviewedReceipt = baseline.reviewedReceipt;
+  assert.deepEqual(baseline, expected);
+  assert.equal(evaluateAudit(reviewedFixture(preQsCommaBaseline), preQsCommaBaseline).ok, true);
+  assert.deepEqual(baseline.entries.qs.nodes, ['node_modules/qs']);
+  assert.equal(baseline.advisories['1243452'].chain, 'h5-ssr');
+});
+for (const kind of ['source','url','severity','range','missing','new-node','old-source-disappeared']) test('qs comma review rejects changed ' + kind, () => {
+  const report = reviewedFixture(), via = report.vulnerabilities.qs.via;
+  const entry = via.find(v => v && typeof v === 'object' && v.source === 1243452);
+  if (kind === 'source') entry.source = 9999999;
+  if (kind === 'url') entry.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
+  if (kind === 'severity') entry.severity = 'low';
+  if (kind === 'range') entry.range = '*';
+  if (kind === 'missing') report.vulnerabilities.qs.via = via.filter(v => v !== entry);
+  if (kind === 'new-node') report.vulnerabilities.qs.nodes.push('node_modules/body-parser/node_modules/qs');
+  if (kind === 'old-source-disappeared') report.vulnerabilities.qs.via = via.filter(v => v.source !== 1158506);
+  const result = evaluateAudit(report, baseline); assert.equal(result.ok, false);
+  const fragment = kind === 'source' ? 'unknown direct advisory 9999999' : kind === 'new-node' ? 'affected package entry changed: qs'
+    : ['missing','old-source-disappeared'].includes(kind) ? 'direct advisory disappeared without baseline review' : 'direct advisory changed: 1243452';
+  assert.ok(result.issues.some(v => v.includes(fragment)), JSON.stringify(result.issues));
 });

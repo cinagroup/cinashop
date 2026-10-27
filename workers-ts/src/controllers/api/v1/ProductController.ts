@@ -12,6 +12,8 @@ import { ProductExperienceService } from "@/services/product/ProductExperienceSe
 import { PublicCatalogService, normalizeCatalogPage } from "@/services/product/PublicCatalogService";
 import { RecommendationNavigationService } from "@/services/product/RecommendationNavigationService";
 import { PresaleSkuCatalogService } from "@/services/activity/PresaleSkuCatalogService";
+import { memberLevelRecommendationsPage } from '@/services/product/MemberLevelRecommendationsInput';
+import { MemberLevelRecommendationsService } from '@/services/product/MemberLevelRecommendationsService';
 import { V2PromotionCompatibilityService } from "@/services/activity/V2PromotionCompatibilityService";
 import { jsonFail } from "@/utils/json";
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -284,6 +286,11 @@ export async function groomList(c: C) {
 
 /** GET /api/product/hot */
 export async function productHot(c: C) {
+  if (new URL(c.req.url).searchParams.has('view')) {
+    c.header('Cache-Control', 'private, no-store');
+    const paging = memberLevelRecommendationsPage(new URL(c.req.url).searchParams);
+    return jsonOk(c, await new MemberLevelRecommendationsService(c.get('container'), c.env).read(c.get('uid') ?? 0, paging));
+  }
   const paging = normalizeCatalogPage(c.req.query("page"), c.req.query("limit"));
   paging.limit = Math.max(1, paging.limit);
   // Keep legacy offset pagination, but reject offsets that cannot be represented safely.

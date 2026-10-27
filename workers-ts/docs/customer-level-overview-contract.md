@@ -4,8 +4,10 @@ Reference PHP commit: `8ed2a5b139f9170dd11b0dff91803f2fd59e40a5`,
 `view/uniapp/pages/users/user_vip/index.vue` and the corresponding membership,
 configuration and sign services. This increment covers the level carousel,
 level steps, four privileges, three upgrade task destinations and the existing
-growth-record link. The PHP product recommendation section is outside this
-increment; this page does not claim that catalogue feed has been migrated.
+growth-record link. The original overview increment excluded the PHP product
+recommendation section. Its subsequent additive migration is defined in
+[Ordinary membership level recommendations](member-level-recommendations-contract.md);
+that separate read does not replay this overview's level detection.
 
 ## Explicit overview on the existing info route
 

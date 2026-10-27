@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
-  "reviewedReceipt": "2026-10-27 npm receipt: GHSA-fx2h-pf6j-xcff remains the same already backported Windows path advisory; npm replaced source1123525/high with source1243432/moderate, same <=6.4.2 affected range. Exact source proof and original baseline are in workers-ts/audit/uni-d3-vite-source-replacement-20261027.json. Only that numeric source and advisory severity change; all 50 package entries, nodes, forward paths, package severities, other 25 direct objects, eight scope definitions, lock and vendor bytes remain fixed. Old source1123525 is forbidden on reappearance. Historical body-parser and withdrawal checks use immutable earlier baselines.",
+  "reviewedReceipt": "2026-10-27 actual npm receipt adds source1243452/GHSA-6pq8-jhm2-2vcw, moderate, >=6.7.0 <=6.16.0, on the existing optional H5 SSR root qs6.15.3 node. This is a new advisory, not a numeric replacement or a fixed vulnerability. Existing scripts leave SSR disabled and the runtime graph audit rejects server packages; the actual installed root serializer remains affected, independently contrasted with body-parser nested qs6.16.1. Exact tuple, full prior baseline, actual receipt SHA and boundary are in workers-ts/audit/uni-d3-qs-comma-review-20261027.json. Only this direct object and qs source list/range change; all 50 entries, nodes, forward paths, severities, other26 direct objects, eight chains,15 resolved records, lock and vendor bytes remain fixed. Earlier Vite/body-parser history uses immutable earlier baselines.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -194,6 +194,13 @@
       "severity": "moderate",
       "range": "<=6.4.2",
       "chain": "vite-toolchain"
+    },
+    "1243452": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
+      "severity": "moderate",
+      "range": ">=6.7.0 <=6.16.0",
+      "chain": "h5-ssr"
     }
   },
   "entries": {
@@ -1120,14 +1127,15 @@
     "qs": {
       "severity": "moderate",
       "isDirect": false,
-      "range": "2.2.5 - 6.15.3",
+      "range": "2.2.5 - 6.16.0",
       "nodes": [
         "node_modules/qs"
       ],
       "viaPackages": [],
       "advisorySources": [
         1158506,
-        1158507
+        1158507,
+        1243452
       ],
       "effects": [
         "express"
