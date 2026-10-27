@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { readMembershipCreateBody, membershipPurchaseRequestId } from '@/services/user/MembershipPurchasePolicy';
 import { PaidMembershipService } from "@/services/user/PaidMembershipService";
+import {MembershipClauseReadService} from '@/services/user/MembershipClauseReadService';
 import {MembershipCouponService} from '@/services/activity/MembershipCouponService';
 import {membershipCouponQuery} from '@/services/activity/MembershipCouponInput';
 import { NotFoundException, ValidateException } from "@/utils/errors";
@@ -15,12 +16,13 @@ function service(c: C): PaidMembershipService {
 }
 
 export async function index(c: C) {
-  const query = new URL(c.req.url).searchParams, details = query.has('rights'), home = query.has('home'), purchase = query.has('purchase_request');
-  if (details || home || purchase) {
+  const query = new URL(c.req.url).searchParams, details = query.has('rights'), home = query.has('home'), purchase = query.has('purchase_request'), clause = query.has('clause');
+  if (details || home || purchase || clause) {
     c.header('Cache-Control', 'private, no-store');
-    const key = details ? 'rights' : home ? 'home' : 'purchase_request';
+    const key = details ? 'rights' : home ? 'home' : purchase ? 'purchase_request' : 'clause';
     if (query.size !== 1 || query.getAll(key).length !== 1 || (!purchase && query.get(key) !== '1')) throw new ValidateException('会员显式查询参数未知、重复或无效');
     if (purchase) return jsonOk(c, await service(c).purchaseReceipt(c.get('uid'), membershipPurchaseRequestId(query.get(key))));
+    if (clause) return jsonOk(c, await new MembershipClauseReadService(c.get('container'),c.env).read(c.get('uid')));
   }
   const result = await service(c).index(c.get('uid'), details);
   return jsonOk(c, home ? { ...result, purchase_request_id: crypto.randomUUID() } : result);

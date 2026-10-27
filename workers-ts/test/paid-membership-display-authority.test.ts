@@ -213,6 +213,9 @@ describe('personal-home and membership-menu SQL flag authority', () => {
       { name: 'Coupon canonical', url: '/pages/user/memberCoupons', target: '/pages/user/memberCoupons', allowed: row.paidEnabled },
       { name: 'Coupon legacy', url: '/pages/annex/vip_coupon/index', target: '/pages/user/memberCoupons', allowed: row.paidEnabled },
       { name: 'Coupon legacy query', url: '/pages/annex/vip_coupon/index?from=menu', target: '/pages/user/memberCoupons?from=menu', allowed: row.paidEnabled },
+      { name: 'Clause canonical', url: '/pages/user/memberClause', target: '/pages/user/memberClause', allowed: row.paidEnabled },
+      { name: 'Clause legacy', url: '/pages/annex/vip_clause/index', target: '/pages/user/memberClause', allowed: row.paidEnabled },
+      { name: 'Clause legacy query', url: '/pages/annex/vip_clause/index?from=menu', target: '/pages/user/memberClause?from=menu', allowed: row.paidEnabled },
     ] : [
       { name: 'Paid canonical', url: '/pages/user/vipOpen', target: '/pages/user/vipOpen', allowed: row.paidEnabled },
       { name: 'Paid legacy', url: '/pages/annex/vip_paid/index', target: '/pages/user/vipOpen', allowed: row.paidEnabled },

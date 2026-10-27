@@ -1,0 +1,381 @@
+{
+  "schema": "cinashop.membership-clause-source-binding.v1",
+  "base_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/uniapp-ts/src/pages.json",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 20673,
+      "after_bytes": 20895,
+      "before_sha256": "0dfcfefafb36a379b5718218ed753e89f412ee81b2fd4c2a964d8f03b7a1facd",
+      "after_sha256": "7bca042f4261e059af466618ba52324922b45ff2fa647c8049a97d85331e1e05",
+      "before_git_blob_sha1": "dbf4aa9e0b13c62fa8f432057be9bf650eaba74c",
+      "after_git_blob_sha1": "124401209bcb2393e526e1283294c64e7fc60bd2",
+      "edits": [
+        {
+          "before_line": 562,
+          "after_line": 562,
+          "before_source": "    {\n      \"path\": \"pages/user/memberCoupons\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员优惠券\",\n        \"navigationBarBackgroundColor\": \"#F5F5F5\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },",
+          "after_source": "    {\n      \"path\": \"pages/user/memberCoupons\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员优惠券\",\n        \"navigationBarBackgroundColor\": \"#F5F5F5\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },\n    {\n      \"path\": \"pages/user/memberClause\",\n      \"style\": {\n        \"navigationBarTitleText\": \"会员协议\",\n        \"navigationBarBackgroundColor\": \"#FFFFFF\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },"
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/config/navigation.ts",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 22984,
+      "after_bytes": 23017,
+      "before_sha256": "13b7055e816b48a7bbad80ea375c34669cd16fc9839844bec8b6d00aed713aa4",
+      "after_sha256": "fbd4aa5ca722f429a0c77b26f0ed942c003ace42df15079fa84ea835ccb63dd4",
+      "before_git_blob_sha1": "af0415b9f06fbe1fb0dd04f553ad56313ed594c4",
+      "after_git_blob_sha1": "9c9b8a9b32ce3aa7459266663985d64f1c5428f8",
+      "edits": [
+        {
+          "before_line": 130,
+          "after_line": 130,
+          "before_source": "  \"/pages/user/memberCoupons\",",
+          "after_source": "  \"/pages/user/memberCoupons\",\n  \"/pages/user/memberClause\","
+        },
+        {
+          "before_line": 270,
+          "after_line": 271,
+          "before_source": "  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },",
+          "after_source": "  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/memberClause\", coverage: \"candidate_covered\" },"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 23009,
+      "after_bytes": 23042,
+      "before_sha256": "8b8c3b2b98f8577dffd30b0244b1a05989ad0f38fd90387905496e5fa7961575",
+      "after_sha256": "4ca1dc0dedc90dbbbae9d070c5f0251068b9c76f0cbaa16ad59b07408a712f7d",
+      "before_git_blob_sha1": "cc6a4df0766ac7357aedb6fdce6c46e882584396",
+      "after_git_blob_sha1": "bb929adc0c16d4deea2a170acde70f8fdc06e40f",
+      "edits": [
+        {
+          "before_line": 131,
+          "after_line": 131,
+          "before_source": "  \"/pages/user/memberCoupons\",",
+          "after_source": "  \"/pages/user/memberCoupons\",\n  \"/pages/user/memberClause\","
+        },
+        {
+          "before_line": 271,
+          "after_line": 272,
+          "before_source": "  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },",
+          "after_source": "  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/memberClause\", coverage: \"candidate_covered\" },"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 18085,
+      "after_bytes": 18112,
+      "before_sha256": "f0063f62b8c516afec40bd953dddc32e1408d0d22b75e797b508b7322dc4ad1d",
+      "after_sha256": "bc61b64866dfcd24f6f4146199174e29161e757aad5fcbd2204afc3ba4d130ae",
+      "before_git_blob_sha1": "9abc6fbd8348ed9517f0913c1c1df13b557293ce",
+      "after_git_blob_sha1": "42a8d9776086afe5fdea0959963a309489f73d10",
+      "edits": [
+        {
+          "before_line": 66,
+          "after_line": 66,
+          "before_source": "['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons']",
+          "after_source": "['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons','/pages/user/memberClause']"
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/membershipCouponsSourceBinding.ts",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 5671,
+      "after_bytes": 6266,
+      "before_sha256": "a26af05f8af4396ae89eb4c14d56ed83194a7c63160a97938fcd45a9fd69ee0e",
+      "after_sha256": "314d27725c502c27ca527fc361d8c9ba16fbc1e93579236a6a61a1bbaae0c413",
+      "before_git_blob_sha1": "433e3b98bd9e5da07b5fea46d0ff22062052bcb3",
+      "after_git_blob_sha1": "2b801b65b5798d6f5be2f1f2abb7ba124b138953",
+      "edits": [
+        {
+          "before_line": 2,
+          "after_line": 2,
+          "before_source": "import {readFileSync} from 'node:fs';",
+          "after_source": "import {readMembershipClauseHistoricalFile as readFileSync,peelMembershipClauseSourceIfPresent,peelMembershipClauseRegisteredRoutesIfPresent,peelMembershipClauseLegacyRulesIfPresent} from './membershipClauseSourceBinding';"
+        },
+        {
+          "before_line": 15,
+          "after_line": 15,
+          "before_source": "export function reverseMembershipCouponsSource(file:string,source:string,p=membershipCouponsSourceBinding):string{inventory(p);",
+          "after_source": "export function reverseMembershipCouponsSource(file:string,source:string,p=membershipCouponsSourceBinding):string{inventory(p);source=peelMembershipClauseSourceIfPresent(file,source);"
+        },
+        {
+          "before_line": 16,
+          "after_line": 16,
+          "before_source": "export function peelMembershipCouponsSource(file:string,source:string,p=membershipCouponsSourceBinding):string{inventory(p);",
+          "after_source": "export function peelMembershipCouponsSource(file:string,source:string,p=membershipCouponsSourceBinding):string{inventory(p);source=peelMembershipClauseSourceIfPresent(file,source);"
+        },
+        {
+          "before_line": 20,
+          "after_line": 20,
+          "before_source": "export function reverseMembershipCouponsRegisteredRoutes(current:ReadonlySet<string>,p=membershipCouponsSourceBinding):Set<string>{inventory(p);",
+          "after_source": "export function reverseMembershipCouponsRegisteredRoutes(current:ReadonlySet<string>,p=membershipCouponsSourceBinding):Set<string>{inventory(p);current=peelMembershipClauseRegisteredRoutesIfPresent(current);"
+        },
+        {
+          "before_line": 22,
+          "after_line": 22,
+          "before_source": "export function reverseMembershipCouponsLegacyRules<T extends Readonly<Record<string,Rule>>>(current:T,p=membershipCouponsSourceBinding):T{inventory(p);",
+          "after_source": "export function reverseMembershipCouponsLegacyRules<T extends Readonly<Record<string,Rule>>>(current:T,p=membershipCouponsSourceBinding):T{inventory(p);current=peelMembershipClauseLegacyRulesIfPresent(current);"
+        },
+        {
+          "before_line": 19,
+          "after_line": 19,
+          "before_source": "export function peelMembershipCouponsSourceIfPresent(file:string,source:string):string{const p=membershipCouponsSourceBinding;inventory(p);",
+          "after_source": "export function peelMembershipCouponsSourceIfPresent(file:string,source:string):string{const p=membershipCouponsSourceBinding;inventory(p);source=peelMembershipClauseSourceIfPresent(file,source);"
+        },
+        {
+          "before_line": 21,
+          "after_line": 21,
+          "before_source": "export function peelMembershipCouponsRegisteredRoutesIfPresent(current:ReadonlySet<string>):Set<string>{const p=membershipCouponsSourceBinding;inventory(p);",
+          "after_source": "export function peelMembershipCouponsRegisteredRoutesIfPresent(current:ReadonlySet<string>):Set<string>{const p=membershipCouponsSourceBinding;inventory(p);current=peelMembershipClauseRegisteredRoutesIfPresent(current);"
+        },
+        {
+          "before_line": 23,
+          "after_line": 23,
+          "before_source": "export function peelMembershipCouponsLegacyRulesIfPresent<T extends Readonly<Record<string,Rule>>>(current:T):T{const p=membershipCouponsSourceBinding;inventory(p);",
+          "after_source": "export function peelMembershipCouponsLegacyRulesIfPresent<T extends Readonly<Record<string,Rule>>>(current:T):T{const p=membershipCouponsSourceBinding;inventory(p);current=peelMembershipClauseLegacyRulesIfPresent(current);"
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-coupons-source-binding.test.ts",
+      "before_ref": "b91a5d364799f9a97c9d440b53f249ebda6a129f",
+      "before_bytes": 11394,
+      "after_bytes": 12004,
+      "before_sha256": "692e8916b096a42eeee21042667fbad1248f439a25416b8d4a46474b8ca792ad",
+      "after_sha256": "487bad1d58d912de6a5cbb9bcd09da2505a299ed5ad4f50f0318a8ddb928c5c8",
+      "before_git_blob_sha1": "c8e0dbd1ed60e5dc559027a9510322ba3669f009",
+      "after_git_blob_sha1": "06aef30c70e7f0f74a30e299aaf522b60ce602a5",
+      "edits": [
+        {
+          "before_line": 2,
+          "after_line": 2,
+          "before_source": "import {readFileSync} from 'node:fs';",
+          "after_source": "import {readMembershipClauseHistoricalFile as readFileSync,peelMembershipClauseRegisteredRoutesIfPresent,peelMembershipClauseLegacyRulesIfPresent,membershipClauseHistoricalResolvedRoute} from './helpers/membershipClauseSourceBinding';"
+        },
+        {
+          "before_line": 9,
+          "after_line": 9,
+          "before_source": "REGISTERED_PAGE_ROUTES as clientRoutes,LEGACY_ROUTE_RULES as clientRules",
+          "after_source": "REGISTERED_PAGE_ROUTES as clauseClientRoutes,LEGACY_ROUTE_RULES as clauseClientRules"
+        },
+        {
+          "before_line": 10,
+          "after_line": 10,
+          "before_source": "REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules",
+          "after_source": "REGISTERED_PAGE_ROUTES as clauseServerRoutes,LEGACY_ROUTE_RULES as clauseServerRules"
+        },
+        {
+          "before_line": 11,
+          "after_line": 11,
+          "before_source": "const root=resolve(import.meta.dirname,'../..'),read=",
+          "after_source": "const clientRoutes=peelMembershipClauseRegisteredRoutesIfPresent(clauseClientRoutes),serverRoutes=peelMembershipClauseRegisteredRoutesIfPresent(clauseServerRoutes);\nconst clientRules=peelMembershipClauseLegacyRulesIfPresent(clauseClientRules),serverRules=peelMembershipClauseLegacyRulesIfPresent(clauseServerRules);\nconst root=resolve(import.meta.dirname,'../..'),read="
+        },
+        {
+          "before_line": 25,
+          "after_line": 27,
+          "before_source": "expect(resolver('/pages/annex/vip_clause/index')).toBe('/pages/user/vipOpen')",
+          "after_source": "expect(membershipClauseHistoricalResolvedRoute('/pages/annex/vip_clause/index',resolver('/pages/annex/vip_clause/index'))).toBe('/pages/user/vipOpen')"
+        }
+      ]
+    }
+  ],
+  "production_patch": {
+    "sha256": "a2943b1aea10644cef2d086ac2904a57c8c7eb1cf40f37d72aa60298990ccc74",
+    "bytes": 4658,
+    "unified_diff": "diff --git a/view/uniapp-ts/src/pages.json b/view/uniapp-ts/src/pages.json\nindex dbf4aa9e0b13c62fa8f432057be9bf650eaba74c..124401209bcb2393e526e1283294c64e7fc60bd2 100644\n--- a/view/uniapp-ts/src/pages.json\n+++ b/view/uniapp-ts/src/pages.json\n@@ -564,6 +564,14 @@\n       \"style\": {\n         \"navigationBarTitleText\": \"会员优惠券\",\n         \"navigationBarBackgroundColor\": \"#F5F5F5\",\n+        \"navigationBarTextStyle\": \"black\"\n+      }\n+    },\n+    {\n+      \"path\": \"pages/user/memberClause\",\n+      \"style\": {\n+        \"navigationBarTitleText\": \"会员协议\",\n+        \"navigationBarBackgroundColor\": \"#FFFFFF\",\n         \"navigationBarTextStyle\": \"black\"\n       }\n     },\ndiff --git a/view/uniapp-ts/src/config/navigation.ts b/view/uniapp-ts/src/config/navigation.ts\nindex af0415b9f06fbe1fb0dd04f553ad56313ed594c4..9c9b8a9b32ce3aa7459266663985d64f1c5428f8 100644\n--- a/view/uniapp-ts/src/config/navigation.ts\n+++ b/view/uniapp-ts/src/config/navigation.ts\n@@ -128,6 +128,7 @@\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n   \"/pages/user/memberCoupons\",\n+  \"/pages/user/memberClause\",\n   \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n@@ -267,7 +268,7 @@\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n   \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },\n-  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/memberClause\", coverage: \"candidate_covered\" },\n   \"/pages/annex/special/index\": { target: \"/pages/diy/detail\", coverage: \"candidate_covered\" },\n \n   \"/pages/extension/invite_friend/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\ndiff --git a/workers-ts/src/services/content/FabRouteRegistry.ts b/workers-ts/src/services/content/FabRouteRegistry.ts\nindex cc6a4df0766ac7357aedb6fdce6c46e882584396..bb929adc0c16d4deea2a170acde70f8fdc06e40f 100644\n--- a/workers-ts/src/services/content/FabRouteRegistry.ts\n+++ b/workers-ts/src/services/content/FabRouteRegistry.ts\n@@ -129,6 +129,7 @@\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n   \"/pages/user/memberCoupons\",\n+  \"/pages/user/memberClause\",\n   \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n@@ -268,7 +269,7 @@\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n   \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/memberCoupons\", coverage: \"candidate_covered\" },\n-  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n+  \"/pages/annex/vip_clause/index\": { target: \"/pages/user/memberClause\", coverage: \"candidate_covered\" },\n   \"/pages/annex/special/index\": { target: \"/pages/diy/detail\", coverage: \"candidate_covered\" },\n \n   \"/pages/extension/invite_friend/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\ndiff --git a/workers-ts/src/services/content/UserCenterPublicReadService.ts b/workers-ts/src/services/content/UserCenterPublicReadService.ts\nindex 9abc6fbd8348ed9517f0913c1c1df13b557293ce..42a8d9776086afe5fdea0959963a309489f73d10 100644\n--- a/workers-ts/src/services/content/UserCenterPublicReadService.ts\n+++ b/workers-ts/src/services/content/UserCenterPublicReadService.ts\n@@ -63,7 +63,7 @@\n         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n         if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n-        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons'].includes(path)&&!capabilities.paid_member)return[];\n+        if(['/pages/user/vipOpen','/pages/user/vipRights','/pages/annex/vip_active/index','/pages/user/memberCoupons','/pages/user/memberClause'].includes(path)&&!capabilities.paid_member)return[];\n         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n         if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n"
+  },
+  "navigation": {
+    "route": "/pages/user/memberClause",
+    "before_count": 143,
+    "after_count": 144,
+    "before_routes_sha256": "2cb722586466869d2dcf75eaf9e10a14d5bb4e7d1c749939e78c7a1e5394a731",
+    "after_routes_sha256": "3ed428d84dce97d7b2f29b223f030067e25f32afdc3169928c5752f0861a6bda",
+    "key": "/pages/annex/vip_clause/index",
+    "before_rule": {
+      "target": "/pages/user/vipOpen",
+      "coverage": "partial_replacement"
+    },
+    "after_rule": {
+      "target": "/pages/user/memberClause",
+      "coverage": "candidate_covered"
+    },
+    "before_rules_sha256": "452871b4a998e6b5f535823502a1eb1035cec23cde431feb5134445af4cc638d",
+    "after_rules_sha256": "0972cdf84b00627c75bb10969df22997593b50be5b1e7948780da39bb9bb851f"
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "bytes": 55307,
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "bytes": 45718,
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "bytes": 66571,
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "bytes": 2940,
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "bytes": 11589,
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "bytes": 28750,
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-growth-records-manifest-20261026.json",
+      "bytes": 1914,
+      "sha256": "ad63de188028e7801656cae00e94dd2b1132abf0953febe3611c5439cb292298"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-points-centre-manifest-20261025.json",
+      "bytes": 582,
+      "sha256": "008cc87b7a91918b04ff949d7684dff38b05324df8544af41ad25d59d7ef5d8d"
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-sign-centre-manifest-20261025.json",
+      "bytes": 585,
+      "sha256": "1363555e325961e69a5f1632b8d901246f206f435ba74c7c6d0517c846045d0a"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerGrowthRecordsManifest.ts",
+      "bytes": 2043,
+      "sha256": "d00f042a01a8e2af4a11a806f3832b13b3392d4adf80553bbe3fd697a4f3ce85"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerPointsCentreManifest.ts",
+      "bytes": 1552,
+      "sha256": "01980b2cd124302886c7c39f9efa0d699cf099d1e09de13a0e067c60aa36ea06"
+    },
+    {
+      "file": "workers-ts/test/helpers/customerSignCentreManifest.ts",
+      "bytes": 1637,
+      "sha256": "c6d3037e66184e8dc413db5f9edab4970542e75f5ec8cf85d9b218ae211461ab"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "bytes": 7016,
+      "sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0"
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "bytes": 6302,
+      "sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d"
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "bytes": 2717,
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0"
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "bytes": 17141,
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472"
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "bytes": 11768,
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd"
+    },
+    {
+      "file": "workers-ts/test/helpers/adminLevelDefinitionSourceBinding.ts",
+      "bytes": 6644,
+      "sha256": "06cd50d4e272b3fc293e177b2169414999884247d352ea39b21e701d6ffd3187"
+    },
+    {
+      "file": "workers-ts/test/admin-level-definition-source-binding.test.ts",
+      "bytes": 15924,
+      "sha256": "aa15ce2ae11400d7a37ab0abd3bb5620bfa93097b3cb97465449ebd3d91c7861"
+    },
+    {
+      "file": "workers-ts/test/customer-growth-records-migration.test.ts",
+      "bytes": 12677,
+      "sha256": "0041c48805850866b251e720f47a42cacdfb4934f319326dd4ee096a755ca835"
+    },
+    {
+      "file": "workers-ts/test/customer-points-centre-migration.test.ts",
+      "bytes": 4694,
+      "sha256": "5a6f35651d1db93ffb349cce4d4e35687614584df290ad02fd8e8be0542f0344"
+    },
+    {
+      "file": "workers-ts/test/customer-sign-centre-migration.test.ts",
+      "bytes": 4861,
+      "sha256": "b3df438217bc3475283cd7369e8b12610cc40ec39bb2125832ed584d2c22727e"
+    },
+    {
+      "file": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "bytes": 29432,
+      "sha256": "668d0cb128f6aae27ccbf62f5b4079e47352d630e1139babea6e29ce13b4eb20"
+    },
+    {
+      "file": "workers-ts/test/community-main-feed-frontend.test.ts",
+      "bytes": 19687,
+      "sha256": "373b8e4e619b970b34bfa0255ac67174ed7f31747d496c460ebc52be0c6cd9fe"
+    },
+    {
+      "file": "workers-ts/test/community-publish-entry-migration.test.ts",
+      "bytes": 24072,
+      "sha256": "b198edeb77ccf0e23bafced36126122f6d9ad6d53eedfbb6bd8019dc11a7f172"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+      "bytes": 26571,
+      "sha256": "66383437d4f55f432b11211d4f85e31ce2fe713a291988e70c273d913bb8f09c"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-coupons-source-binding-20261027.json",
+      "bytes": 25356,
+      "sha256": "af39b16bbeebea0205d2255b1c427cca78f15fecc2cf877773787abefc7cc0b2"
+    }
+  ],
+  "boundary": "Four complete production page/route/paid-menu edits and two historical coupon harness adapters. Earlier fixture bytes and assertions remain historical; only the reviewed complete new state is peeled. The new dedicated tests assert the actual current clause resolution directly."
+}

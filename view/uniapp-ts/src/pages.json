@@ -568,6 +568,14 @@
       }
     },
     {
+      "path": "pages/user/memberClause",
+      "style": {
+        "navigationBarTitleText": "会员协议",
+        "navigationBarBackgroundColor": "#FFFFFF",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
       "path": "pages/annex/offline_pay/index",
       "style": {
         "navigationBarTitleText": "线下消费收银"
