@@ -153,7 +153,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
     if (kind === 'source-line') binding.sources[0]!.edits[0]!.after_line++; if (kind === 'source-literal') binding.sources[0]!.edits[0]!.before_source += '// unknown';
     if (kind === 'harness-hash') binding.harness_sources[0]!.after_sha256 = '0'.repeat(64); if (kind === 'operation-order') binding.api_report.operations.reverse();
     if (kind === 'operation-missing') binding.api_report.operations.pop(); if (kind === 'operation-path') binding.api_report.operations[0]!.path = [];
-    const splice = binding.api_report.operations[5]!; if (splice.kind === 'splice') { if (kind === 'operation-splice') splice.index++; if (kind === 'operation-rows') splice.after.pop(); }
+    const splice = binding.api_report.operations[5]; if (splice?.kind === 'splice') { if (kind === 'operation-splice') splice.index++; if (kind === 'operation-rows') splice.after.pop(); }
     if (kind === 'report-hash') binding.api_report.after_sha256 = '0'.repeat(64); if (kind === 'report-bytes') binding.api_report.before_bytes++;
     if (kind === 'base') binding.base_ref = 'unknown'; if (kind === 'patch') binding.production_patch.unified_diff += '\n';
     if (kind === 'preserved') binding.preserved_files.pop(); if (kind === 'extra') Object.assign(binding, { unknown: true });
