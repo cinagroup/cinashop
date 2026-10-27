@@ -1,3 +1,4 @@
+import { publicUserAvatars } from '@/services/user/UserProfilePublicAvatar';
 import { and, desc, eq, gt, inArray, or, sql, type SQL } from "drizzle-orm";
 import {
   community,
@@ -477,6 +478,10 @@ export class CommunitySocialService {
         is_fans: flags.fans.has(relationId) ? 1 : 0,
       });
     }
+    const customerProfiles=[...result.values()].filter(row=>row.type===2&&row.relation_id>0);
+    const avatars=await publicUserAvatars(this.container.db,this.appKey,customerProfiles.flatMap(row=>[
+      {uid:row.relation_id,image:row.avatar},{uid:row.relation_id,image:row.author_image}]));
+    customerProfiles.forEach((row,index)=>{row.avatar=avatars[index*2];row.author_image=avatars[index*2+1];});
     return result;
   }
 

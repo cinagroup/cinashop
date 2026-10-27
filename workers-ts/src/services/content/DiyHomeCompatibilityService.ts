@@ -55,6 +55,7 @@ import { parseConfigInteger } from "@/utils/config";
 import { ValidateException } from "@/utils/errors";
 import { parseLegacyDiyJson } from "./V2PublicCompatibilityService";
 import { FabReadService } from "./FabReadService";
+import { publicUserAvatars } from "@/services/user/UserProfilePublicAvatar";
 import { renderDiyEditorialMedia } from "./DiyEditorialMediaPolicy";
 
 const MAX_PAGE = 1_000_000;
@@ -499,8 +500,10 @@ export class DiyHomeCompatibilityService {
       : currentLevel
         ? levels[levelIndex + 1]?.exp_num ?? currentLevel.exp_num
         : 0;
+    const [avatar] = await publicUserAvatars(this.container.db, this.env.APP_KEY, [{ uid: account.uid, image: account.avatar }]);
     return {
       ...account,
+      avatar: avatar ?? "",
       coupon_num: Number(couponRows[0]?.value ?? 0),
       vip_name: currentLevel?.name ?? "",
       next_exp: nextExp,

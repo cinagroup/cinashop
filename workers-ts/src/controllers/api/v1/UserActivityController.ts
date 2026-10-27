@@ -525,7 +525,7 @@ export async function bargainDetail(c: C) {
       if (!["view", "bargain_user_id", "bargain_user_uid"].includes(key) || query.getAll(key).length !== 1)
         throw new ValidateException("砍价邀请参数无效");
     }
-    return jsonOk(c, await new BargainHelpViewService(c.get("container")).read(
+    return jsonOk(c, await new BargainHelpViewService(c.get("container"),c.env.APP_KEY).read(
       c.get("uid") ?? 0, c.req.param("id"), participationId, c.req.query("bargain_user_uid"),
     ));
   }

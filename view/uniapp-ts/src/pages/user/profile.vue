@@ -1,225 +1,44 @@
 <template>
   <ThemePage>
-  <view class="profile-page">
-    <!-- 头像 -->
-    <view class="avatar-card">
-      <view class="avatar">{{ (userInfo.nickname || "用")[0] }}</view>
-      <view class="avatar-name">{{ userInfo.nickname || "未设置昵称" }}</view>
+    <view class="personal-data">
+      <view v-if="!s.loggedIn" class="profile-state"><text>登录后管理个人资料</text><button @tap="s.login">去登录</button></view>
+      <template v-else>
+        <view v-if="s.loading" class="profile-state" role="status">正在读取个人资料…</view>
+        <view v-if="s.error" class="profile-notice error" role="alert"><text>{{ s.error }}</text><button :disabled="s.locked" @tap="s.load">重新读取并核对</button></view>
+        <view v-if="s.notice" class="profile-notice" role="status">{{ s.notice }}</view>
+        <template v-if="s.snapshot">
+          <view class="profile-toolbar"><text>个人资料</text><button :disabled="s.locked" @tap="s.load">重新读取</button></view>
+          <view class="profile-list">
+            <view class="profile-item avatar-row"><text>头像</text><button class="avatar-box" :disabled="!s.editable" aria-label="修改头像" @tap="s.chooseAvatar"><image v-if="s.avatarView.src" :key="s.avatarView.src" :src="s.avatarView.src" mode="aspectFill" @error="s.avatarView.error" /><text v-else class="avatar-empty">{{ s.draft.nickname.slice(0,1) || '头像' }}</text></button></view>
+            <view v-if="s.busy==='choose'||s.busy==='upload'" class="field-note">{{ s.busy==='upload'?'头像上传中…':'请选择一张头像图片' }}</view>
+            <view v-if="s.uploadReview" class="field-note"><button :disabled="s.locked" @tap="s.keepAvatar">保留原头像</button></view>
+            <view class="profile-item"><text>昵称</text><input class="profile-input" :value="s.draft.nickname" type="nickname" :maxlength="Math.max(16,s.snapshot.profile.nickname.length)" placeholder="请输入昵称" aria-label="昵称" :disabled="!s.editable" @input="s.setNickname" /></view>
+            <view class="profile-item action-row" role="button" aria-label="手机号码" @tap="s.phone"><text>手机号码</text><view class="profile-value"><text>{{ s.snapshot.profile.phone || '点击绑定手机号' }}</text><text class="arrow">›</text></view></view>
+            <view class="profile-item"><text>ID号</text><view class="profile-value"><text>{{ s.snapshot.profile.uid }}</text><text class="lock-symbol" aria-label="不可修改"></text></view></view>
+            <view v-if="s.snapshot.profile.phone && s.passwordAvailable" class="profile-item action-row" role="button" aria-label="修改密码" @tap="s.password"><text>密码</text><view class="profile-value"><text>点击修改密码</text><text class="arrow">›</text></view></view>
+            <view v-for="field in s.fields" :key="field.info" class="profile-item extended-item" :data-profile-field="field.info">
+              <view class="field-label"><text>{{ field.info }}</text><text v-if="field.required" class="required">*</text></view>
+              <radio-group v-if="field.format==='radio'" class="profile-radios" :aria-label="field.info" @change="(event: unknown) => s.setField(field.info,event)">
+                <label v-for="(option,index) in field.singlearr" :key="index"><radio :value="String(index)" :checked="s.draft.fields[field.info]===String(index)" :disabled="!s.editable" color="#e93323" /><text>{{ option }}</text></label>
+              </radio-group>
+              <picker v-else-if="field.format==='date'" mode="date" :value="s.draft.fields[field.info]" :disabled="!s.editable" class="date-picker" :aria-label="field.info" @change="(event: unknown) => s.setField(field.info,event)"><view class="profile-value"><text>{{ s.draft.fields[field.info] || field.tip }}</text><text class="arrow">›</text></view></picker>
+              <input v-else class="profile-input" :value="s.draft.fields[field.info]" :type="field.format==='num'?'digit':field.format==='id'?'idcard':'text'" :inputmode="field.format==='mail'?'email':field.format==='phone'?'tel':field.format==='num'?'decimal':'text'" :maxlength="Math.max(1024,field.value.length)" :placeholder="field.tip" :aria-label="field.info" :disabled="!s.editable" @input="(event: unknown) => s.setField(field.info,event)" />
+            </view>
+          </view>
+          <view v-if="s.backup" class="draft-card"><text class="draft-title">已保留的草稿</text><view class="draft-row"><text>昵称</text><text>{{ s.backup.draft.nickname }}</text></view><view v-for="(value,name) in s.backup.draft.fields" :key="name" class="draft-row"><text>{{ name }}</text><text>{{ value || '未填写' }}</text></view><text v-if="!s.canRestore" class="field-note">资料填写要求已变化时，请按当前要求重新填写。</text><view class="draft-actions"><button :disabled="!s.canRestore" @tap="s.restore">恢复草稿</button><button :disabled="s.locked" @tap="s.discardBackup">放弃草稿</button></view></view>
+          <button class="modifyBnt" :loading="s.busy==='save'" :disabled="!s.editable" @tap="s.save">{{ s.busy==='save'?'保存中…':'保存修改' }}</button>
+        </template>
+      </template>
     </view>
-
-    <!-- 基本信息 -->
-    <view class="info-card">
-      <view class="info-row interactive" @tap="openPhoneSettings">
-        <text class="label">手机号</text>
-        <view class="value phone-value">
-          <text>{{ userInfo.phone || "未绑定" }}</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-      <view class="info-row">
-        <text class="label">UID</text>
-        <text class="value">{{ userInfo.uid || "—" }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">余额</text>
-        <text class="value">¥{{ userInfo.now_money || "0.00" }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">积分</text>
-        <text class="value">{{ userInfo.integral || 0 }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">注册时间</text>
-        <text class="value">{{ formatTime(userInfo.add_time ?? 0) }}</text>
-      </view>
-    </view>
-
-    <!-- 编辑昵称 -->
-    <view class="edit-card">
-      <view class="edit-title">修改昵称</view>
-      <view class="edit-row">
-        <input
-          v-model="nickname"
-          class="edit-input"
-          type="text"
-          :placeholder="userInfo.nickname || '请输入昵称'"
-          :maxlength="16"
-        />
-        <view class="save-btn" @tap="save">保存</view>
-      </view>
-    </view>
-  </view>
-  <DiySuspendedNavigation />
+    <DiySuspendedNavigation />
   </ThemePage>
 </template>
-
 <script setup lang="ts">
+import { reactive } from 'vue';
 import ThemePage from '@/components/ThemePage.vue';
-import { ref, onMounted } from "vue";
-import { http } from "@/utils/request";
-
-interface UserProfile {
-  uid: number;
-  nickname: string;
-  avatar: string;
-  phone: string;
-  now_money: string;
-  integral: number;
-  add_time?: number;
-}
-
-const userInfo = ref<UserProfile>({
-  uid: 0,
-  nickname: "",
-  avatar: "",
-  phone: "",
-  now_money: "0.00",
-  integral: 0,
-});
-const nickname = ref("");
-
-function formatTime(ts: number): string {
-  if (!ts) return "—";
-  const d = new Date(ts * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-function openPhoneSettings() {
-  uni.navigateTo({ url: "/pages/user/phone" });
-}
-
-async function load() {
-  try {
-    const info = await http.get<UserProfile>("/user/info");
-    userInfo.value = { ...userInfo.value, ...info };
-    nickname.value = info.nickname || "";
-  } catch {
-    // 静默
-  }
-}
-
-async function save() {
-  const name = nickname.value.trim();
-  if (!name) return uni.showToast({ title: "请输入昵称", icon: "none" });
-  try {
-    await http.post<null>("/user/edit", { nickname: name });
-    uni.showToast({ title: "保存成功", icon: "success" });
-    load();
-  } catch (e) {
-    uni.showToast({ title: (e as Error).message || "保存失败", icon: "none" });
-  }
-}
-
-onMounted(load);
+import { useCustomerProfile } from '@/composables/useCustomerProfile';
+const s=reactive(useCustomerProfile());
 </script>
-
 <style scoped>
-.profile-page {
-  padding: 20rpx;
-}
-
-.avatar-card {
-  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
-  border-radius: 16rpx;
-  padding: 40rpx 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
-.avatar {
-  width: 120rpx;
-  height: 120rpx;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  color: #fff;
-  font-size: 52rpx;
-  text-align: center;
-  line-height: 120rpx;
-}
-
-.avatar-name {
-  color: #fff;
-  font-size: 30rpx;
-  font-weight: 600;
-  margin-top: 16rpx;
-}
-
-.info-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 10rpx 24rpx;
-  margin-bottom: 20rpx;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #f7f7f7;
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.label {
-  font-size: 26rpx;
-  color: #999;
-}
-
-.value {
-  font-size: 26rpx;
-  color: #333;
-}
-
-.interactive {
-  cursor: pointer;
-}
-
-.phone-value {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.arrow {
-  color: #bbb;
-  font-size: 32rpx;
-}
-
-.edit-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-}
-
-.edit-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-
-.edit-row {
-  display: flex;
-  gap: 16rpx;
-}
-
-.edit-input {
-  flex: 1;
-  background: #f7f7f7;
-  border-radius: 12rpx;
-  padding: 18rpx 24rpx;
-  font-size: 26rpx;
-}
-
-.save-btn {
-  background: var(--view-theme, #e93323);
-  color: #fff;
-  font-size: 26rpx;
-  border-radius: 12rpx;
-  padding: 18rpx 40rpx;
-}
+.personal-data{min-height:100vh;padding:15rpx 20rpx 50rpx;background:#f5f5f5;box-sizing:border-box;color:#333;max-width:1000rpx;margin:auto}.profile-list{background:#fff;border-radius:24rpx;overflow:hidden}.profile-item{display:flex;align-items:center;justify-content:space-between;gap:24rpx;padding:32rpx 20rpx 32rpx 24rpx;font-size:30rpx;min-height:42rpx;border-bottom:1rpx solid #f3f3f3}.profile-item:last-child{border-bottom:0}.profile-input{flex:1;min-width:0;max-width:460rpx;text-align:right;color:#666;font-size:30rpx}.profile-value{display:flex;align-items:center;justify-content:flex-end;gap:12rpx;color:#999;min-width:0;overflow-wrap:anywhere}.arrow{font-size:38rpx;line-height:1;color:#aaa}.lock-symbol{display:inline-block;position:relative;width:17rpx;height:14rpx;border:2rpx solid #aaa;border-radius:3rpx;box-sizing:border-box;margin-top:8rpx}.lock-symbol::before{content:"";position:absolute;width:9rpx;height:10rpx;border:2rpx solid #aaa;border-bottom:0;border-radius:8rpx 8rpx 0 0;left:2rpx;top:-11rpx;box-sizing:border-box}.avatar-box{width:96rpx;height:96rpx;border-radius:50%;margin:0;padding:0;flex-shrink:0;border:1rpx solid #eee;overflow:hidden;background:#f5f5f5}.avatar-box::after{border:0}.avatar-box image{width:100%;height:100%}.avatar-empty{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:34rpx;color:#999}.field-label{display:flex;gap:6rpx;align-items:center;flex-shrink:0;max-width:240rpx;overflow-wrap:anywhere}.required{color:#e93323;font-size:22rpx}.profile-radios{display:flex;gap:16rpx;flex-wrap:wrap;justify-content:flex-end;flex:1;min-width:0}.profile-radios label{display:flex;align-items:center;gap:4rpx;font-size:27rpx}.date-picker{flex:1;min-width:0}.modifyBnt{font-size:30rpx;color:#333;width:100%;height:98rpx;border-radius:24rpx;line-height:98rpx;margin:20rpx auto 0;padding:0;background:#fff}.modifyBnt::after{border:0}.profile-toolbar{display:flex;justify-content:space-between;align-items:center;font-size:26rpx;color:#777;padding:8rpx 4rpx 18rpx}.profile-toolbar button,.profile-notice button,.field-note button,.draft-actions button{margin:0;padding:4rpx 20rpx;border-radius:16rpx;font-size:24rpx;line-height:2;background:#fff;color:#666}.profile-toolbar button::after,.profile-notice button::after,.field-note button::after,.draft-actions button::after{border:1rpx solid #ddd}.profile-state{padding:70rpx 20rpx;text-align:center;font-size:28rpx;color:#777}.profile-state button{font-size:28rpx;margin-top:24rpx}.profile-notice{padding:22rpx 24rpx;margin-bottom:20rpx;border-radius:18rpx;background:#fff;color:#666;font-size:25rpx;line-height:1.6;overflow-wrap:anywhere}.profile-notice button{margin-top:12rpx;width:max-content}.profile-notice.error{color:#a82f25;background:#fff6f3}.field-note{display:block;padding:0 24rpx 20rpx;color:#999;font-size:24rpx;line-height:1.6}.draft-card{margin-top:20rpx;border-radius:24rpx;background:#fff;padding:24rpx;font-size:26rpx;color:#666}.draft-title{display:block;font-size:28rpx;font-weight:600;margin-bottom:12rpx}.draft-row{display:flex;gap:24rpx;justify-content:space-between;padding:12rpx 0;overflow-wrap:anywhere}.draft-row text:last-child{max-width:70%;text-align:right}.draft-actions{display:flex;gap:16rpx;margin-top:20rpx}.draft-card .field-note{padding:12rpx 0}button[disabled]{opacity:.55}@media(max-width:360px){.extended-item{align-items:flex-start;flex-wrap:wrap}.extended-item .profile-input,.extended-item .profile-radios,.extended-item .date-picker{flex-basis:100%;max-width:100%;margin-top:8rpx}}
 </style>

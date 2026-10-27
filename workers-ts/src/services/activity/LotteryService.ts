@@ -1,3 +1,4 @@
+import { publicUserAvatars } from '@/services/user/UserProfilePublicAvatar';
 import {
   and,
   asc,
@@ -610,7 +611,7 @@ function recordPrize(record: { prizeInfo: string | null }, fallback?: PrizeRow |
 }
 
 export class LotteryService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   async info(uid: number, factorValue: unknown): Promise<Record<string, unknown> | []> {
     const factor = positiveInteger(factorValue ?? 1, "抽奖类型");
@@ -836,14 +837,15 @@ export class LotteryService {
       .where(and(...conditions))
       .orderBy(desc(luckLotteryRecord.id))
       .limit(limit);
-    return rows.map(({ record, prize, nickname, avatar }) => {
+    const avatars=await publicUserAvatars(this.container.db,this.appKey,rows.map(row=>({uid:row.record.uid,image:row.avatar??''})));
+    return rows.map(({ record, prize, nickname },index) => {
       const storedPrize = recordPrize(record, prize);
       return {
         id: record.id,
         uid: record.uid,
         add_time: record.addTime,
         receive_time: record.receiveTime,
-        user: { nickname: nickname || "用户已注销", avatar: avatar || "" },
+        user: { nickname: nickname || "用户已注销", avatar: avatars[index] },
         prize: storedPrize
           ? publicPrize(storedPrize)
           : { id: record.prizeId, type: record.type, lottery_id: record.lotteryId, name: "历史奖品", prompt: "", image: "" },

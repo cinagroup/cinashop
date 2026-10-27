@@ -51,7 +51,7 @@ export async function commentList(c: C) {
   const replyId = Number(c.req.param("id") ?? "0");
   if (!Number.isSafeInteger(replyId) || replyId <= 0) return jsonFail(c, "缺少参数");
   const q = c.req.query();
-  return jsonOk(c, await new ReplyService(c.get("container")).commentList(
+  return jsonOk(c, await new ReplyService(c.get("container"), c.env.APP_KEY).commentList(
     replyId,
     Number(q.page ?? 1),
     Number(q.limit ?? 10),

@@ -1,3 +1,4 @@
+import { publicUserAvatars } from './UserProfilePublicAvatar';
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { withTx, type Container, type DbClient } from "@/lib/di";
@@ -753,6 +754,7 @@ export class PaidMembershipService {
       : [];
 
     const freePlan = plans.find((plan) => plan.type === "free");
+    const [avatar]=await publicUserAvatars(this.container.db,this.env.APP_KEY,[{uid:account.uid,image:account.avatar}]);
     return {
       member_rights: enabled
         ? rights.map((right) => ({
@@ -775,7 +777,7 @@ export class PaidMembershipService {
         user_info: {
           uid: account.uid,
           nickname: account.nickname,
-          avatar: account.avatar,
+          avatar,
           phone: account.phone,
           now_money: account.nowMoney,
           is_ever_level: account.isEverLevel,

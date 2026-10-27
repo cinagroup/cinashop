@@ -46,7 +46,7 @@ async function boundedBody(c: C): Promise<Record<string, unknown>> {
 }
 
 function service(c: C): LotteryService {
-  return new LotteryService(c.get("container"));
+  return new LotteryService(c.get("container"),c.env.APP_KEY);
 }
 
 export async function info(c: C) {

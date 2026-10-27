@@ -23,6 +23,8 @@ import { lockReviewProducts, refreshProductReviewStar, verifyReviewProductSnapsh
 import { renderProductReplyMedia } from './ProductReplyMediaPolicy';
 import { publicProductPictures, renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
+import { publicUserAvatars } from '@/services/user/UserProfilePublicAvatar';
+import { canonicalizePublishedAttachmentReference } from '@/services/content/ArticleContentPolicy';
 
 const REVIEW_LOCK_NAMESPACE = 46_301;
 const MAX_COMMENT_LENGTH = 512;
@@ -378,6 +380,29 @@ export class ReplyService {
     const now = Math.floor(Date.now() / 1_000);
     const memberLevelsEnabled = String(config.member_func_status ?? "1") === "1";
     const paidMembershipEnabled = String(config.member_card_status ?? "1") === "1";
+    // The existing DTO exposes the first already-ordered child per root.
+    // Use that same selection for media: at most200 displayed slots, without
+    // authorizing private references from other, undisplayed children.
+    const pickedChildren = new Map<number, typeof storeProductReplyComment.$inferSelect>();
+    for (const child of children) if (!pickedChildren.has(child.pid)) pickedChildren.set(child.pid, child);
+    // Legacy/UID0 values do not consume the new authorization budget. Repeated
+    // persisted (UID, canonical reference) pairs authorize once, then fill back.
+    const avatarByComment = new Map<number, string>();
+    const canonicalSlots: Array<{ uid: number; image: string }> = [];
+    const slotByIdentity = new Map<string, number>(), nodeSlots = new Map<number, number>();
+    for (const item of [...roots, ...pickedChildren.values()]) {
+      if (item.uid <= 0) continue;
+      const image = userMap.get(item.uid)?.avatar || item.avatar;
+      avatarByComment.set(item.id, image);
+      const canonical = canonicalizePublishedAttachmentReference(image);
+      if (parseCanonicalAttachmentId(canonical) === null) continue;
+      const identity = `${item.uid}:${canonical}`;
+      let slot = slotByIdentity.get(identity);
+      if (slot === undefined) { slot = canonicalSlots.length; slotByIdentity.set(identity, slot); canonicalSlots.push({ uid: item.uid, image: canonical }); }
+      nodeSlots.set(item.id, slot);
+    }
+    const participantAvatars = await publicUserAvatars(this.container.db, this.appKey, canonicalSlots);
+    for (const [id, slot] of nodeSlots) avatarByComment.set(id, participantAvatars[slot] ?? "");
     const serialize = (item: typeof storeProductReplyComment.$inferSelect) => {
       const current = userMap.get(item.uid);
       const isPlatform = item.uid === 0;
@@ -391,8 +416,8 @@ export class ReplyService {
           uid: item.uid,
           nickname: anonymizeNickname(current?.nickname || item.nickname
             || (isPlatform ? String(config.site_name || "CinaShop") : "用户")),
-          avatar: current?.avatar || item.avatar
-            || (isPlatform ? String(config.site_logo_square || "") : ""),
+          avatar: item.uid > 0 ? avatarByComment.get(item.id) ?? ""
+            : current?.avatar || item.avatar || (isPlatform ? String(config.site_logo_square || "") : ""),
           level_name: current && memberLevelsEnabled ? levelMap.get(current.level) ?? "" : "",
           vip_status: current && paidMembershipEnabled
             && (current.isEverLevel === 1
@@ -402,7 +427,7 @@ export class ReplyService {
     };
     return roots.map((root) => ({
       ...serialize(root),
-      children: children.filter((item) => item.pid === root.id).map(serialize)[0] ?? null,
+      children: pickedChildren.has(root.id) ? serialize(pickedChildren.get(root.id)!) : null,
     }));
   }
 
@@ -473,6 +498,12 @@ export class ReplyService {
       && (current.isEverLevel === 1
         || (current.isMoneyLevel === 1 && current.overdueTime > now)) ? 1 : 0;
     const [media] = await renderProductReplyMedia(this.container.db, [{ ...reply, pics: this.parsePics(reply.pics) }], this.appKey);
+    // A review avatar is a persisted author snapshot; the user pane is current.
+    // Each slot keeps its own UID, and UID0 retains the platform review policy.
+    const [authorAvatar, currentAvatar] = await publicUserAvatars(this.container.db, this.appKey, [
+      { uid: reply.uid, image: reply.uid > 0 ? reply.avatar : "" },
+      { uid: current?.uid ?? 0, image: current?.avatar ?? "" },
+    ]);
     let productImage = products[0]?.image ?? '';
     if (products[0] && parseCanonicalAttachmentId(productImage) !== null) {
       if (!this.appKey) productImage = '';
@@ -492,7 +523,7 @@ export class ReplyService {
         unique: reply.unique,
         uid: reply.uid,
         nickname: anonymizeNickname(reply.nickname),
-        avatar: media.avatar,
+        avatar: reply.uid > 0 ? authorAvatar ?? "" : media.avatar,
         comment: reply.comment,
         sku: reply.sku,
         sku_unique: reply.skuUnique,
@@ -527,7 +558,7 @@ export class ReplyService {
       user: current ? {
         nickname: anonymizeNickname(current.nickname),
         uid: current.uid,
-        avatar: current.avatar,
+        avatar: current.uid > 0 ? currentAvatar ?? "" : current.avatar,
         is_money_level: current.isMoneyLevel,
         level_name: levelName,
         vip_status: vipStatus,

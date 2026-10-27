@@ -1,3 +1,4 @@
+import { publicUserAvatars } from './UserProfilePublicAvatar';
 import {
   and,
   desc,
@@ -244,7 +245,7 @@ function ledgerTimeConditions(
 }
 
 export class V2UserCompatibilityService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
 
   async updateRoutineProfile(
     uid: number,
@@ -477,11 +478,12 @@ export class V2UserCompatibilityService {
         .limit(query.limit).offset((query.page - 1) * query.limit),
       this.container.db.select({ count: sql<number>`COUNT(*)::int` }).from(userTable).where(where),
     ]);
+    const avatars=await publicUserAvatars(this.container.db,this.appKey,rows.map(row=>({uid:row.uid,image:row.avatar})));
     return {
-      list: rows.map((row) => ({
+      list: rows.map((row,index) => ({
         uid: row.uid,
         nickname: row.nickname,
-        avatar: row.avatar,
+        avatar: avatars[index],
         spread_time: formatLegacyShanghaiUnix(row.spreadTime, "agent"),
       })),
       count: countRows[0]?.count ?? 0,

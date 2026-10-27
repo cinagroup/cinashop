@@ -1,3 +1,4 @@
+import { resolvePublicUserAvatars,renderPublicUserAvatars } from '@/services/user/UserProfilePublicAvatar';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
 import { storeBargain, storeBargainUser, storeBargainUserHelp, storeProduct, user } from '@/models/schema';
@@ -68,7 +69,7 @@ export async function readBargainInvitationTarget(db: DbClient, activityId: numb
 /** Authenticated invitation presentation; it grants no purchase authority.
  * Legacy owner links resolve once to a sole record, never a latest-row guess. */
 export class BargainHelpViewService {
-  constructor(private readonly container: Container) {}
+  constructor(private readonly container: Container, private readonly appKey?: string) {}
   async read(uid: number, rawActivity: unknown, rawParticipant?: unknown, rawOwner?: unknown, now = new Date()) {
     const activityId = id(rawActivity);
     if ((rawParticipant === undefined) === (rawOwner === undefined)) throw new ValidateException('请指定一条砍价邀请');
@@ -76,7 +77,7 @@ export class BargainHelpViewService {
     const ownerUid = rawOwner === undefined ? 0 : id(rawOwner);
     if (!Number.isSafeInteger(uid) || uid <= 0 || uid > 2147483647) throw new AuthException('请登录后帮助好友砍价');
     if (!Number.isFinite(now.getTime())) throw new ValidateException('砍价查询时间无效');
-    return withTx(this.container, async tx => {
+    const result=await withTx(this.container, async tx => {
       await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
       await tx.execute(sql.raw(`SELECT
         pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
@@ -115,11 +116,13 @@ export class BargainHelpViewService {
       return { help_only: true as const, type: 2 as const, bargain_id: activityId, participant_id: exactId,
         product_id: target.productId, title: text(target.title || target.storeName, 255),
         image: image(target.image) || image(target.productImage),
-        owner: { nickname: text(target.nickname, 128), avatar: image(target.avatar) }, is_owner: isOwner,
+        owner: { nickname: text(target.nickname, 128), avatar: (await resolvePublicUserAvatars(tx,[{uid:target.ownerUid,image:image(target.avatar)}]))[0] }, is_owner: isOwner,
         start_time: target.startTime?.toISOString() ?? null, stop_time: target.stopTime?.toISOString() ?? null,
         date_window: dateWindow, participation: target.progress, people: target.people,
         help_count: help.count, already_helped: help.alreadyHelped, remaining_helper_uses: remainingUses,
         in_stock: inStock, can_help: helpState === 'available', help_state: helpState };
     });
+    [result.owner.avatar]=await renderPublicUserAvatars(this.appKey,[result.owner.avatar]);
+    return result;
   }
 }

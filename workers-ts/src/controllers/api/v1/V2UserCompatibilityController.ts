@@ -15,7 +15,7 @@ type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_PROFILE_BODY_BYTES = 8 * 1_024;
 
 function service(c: C): V2UserCompatibilityService {
-  return new V2UserCompatibilityService(c.get("container"));
+  return new V2UserCompatibilityService(c.get("container"),c.env.APP_KEY);
 }
 
 function uid(c: C): number {

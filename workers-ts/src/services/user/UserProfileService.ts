@@ -1,3 +1,4 @@
+import { publicUserAvatars } from './UserProfilePublicAvatar';
 import { and, asc, desc, eq, gt, gte, lt, lte, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
@@ -473,8 +474,10 @@ export class UserProfileService {
     }).from(userTable).where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0))).limit(1);
     const account = rows[0];
     if (!account) throw new NotFoundException("用户不存在");
+    const [avatar]=await publicUserAvatars(this.container.db,this.env.APP_KEY,[{uid,image:account.avatar}]);
     return {
       ...account,
+      avatar,
       extend_info: parseJson(account.extend_info),
       level_extend_info: parseJson(account.level_extend_info),
     };

@@ -134,50 +134,25 @@ export async function messageDetail(c: C) {
   }
 }
 
-/** GET /api/user/info — 用户基本信息 (对应 PHP User::info) */
+/** Legacy DTO remains the default; profile=1 opts into versioned editable metadata. */
 export async function userInfo(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const container = c.get("container");
-  const user = await container.userDao.findForAuth(uid);
-  if (!user) return jsonFail(c, "用户不存在");
-  const { nowMoney, integral, brokeragePrice, spreadCount, nickname, avatar, phone, spreadUid, isPromoter } = user;
-  return jsonOk(c, {
-    uid,
-    account: user.account,
-    nickname,
-    avatar,
-    phone,
-    now_money: nowMoney,
-    integral,
-    brokerage_price: brokeragePrice,
-    spread_count: spreadCount,
-    spread_uid: spreadUid,
-    is_promoter: isPromoter,
-  });
+  c.header("Cache-Control", "private, no-store");
+  const actor=c.get("user");
+  if(!actor)throw new AuthException("请先登录");
+  const { CustomerProfileService }=await import("@/services/user/CustomerProfileService");
+  const { parseProfileQuery }=await import("@/services/user/UserProfileInput");
+  return jsonOk(c,await new CustomerProfileService(c.get("container"),c.env).read(actor,parseProfileQuery(new URL(c.req.url).searchParams)));
 }
 
-/** POST /api/user/edit — 编辑用户资料 (昵称) */
+/** Versioned full profile or compatible nickname/avatar partial update. */
 export async function userEdit(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const body = (await c.req.json().catch(() => ({}))) as {
-    nickname?: string;
-    avatar?: string;
-  };
-  const container = c.get("container");
-  const user = await container.userDao.findForAuth(uid);
-  if (!user) return jsonFail(c, "用户不存在");
-
-  const nickname = (body.nickname ?? "").trim();
-  if (nickname && nickname.length > 16) return jsonFail(c, "昵称最长 16 个字符");
-  if (nickname === user.nickname && !body.avatar) return jsonOk(c, null, "资料未变更");
-
-  await container.userDao.update(uid, {
-    ...(nickname ? { nickname } : {}),
-    ...(body.avatar ? { avatar: body.avatar } : {}),
-  });
-  return jsonOk(c, null, "保存成功");
+  c.header("Cache-Control", "private, no-store");
+  const actor=c.get("user");
+  if(!actor)throw new AuthException("请先登录");
+  const { CustomerProfileService }=await import("@/services/user/CustomerProfileService");
+  const { readProfileInput }=await import("@/services/user/UserProfileInput");
+  await new CustomerProfileService(c.get("container"),c.env).edit(actor,await readProfileInput(c.req.raw));
+  return jsonOk(c,null,"保存成功");
 }
 
 /** GET /api/service/chat_history?to_uid= — 用户端客服聊天记录 */
