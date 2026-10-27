@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "kind": "upstream-source-replacement",
+  "source": {
+    "url": "https://github.com/vitejs/vite/security/advisories/GHSA-fx2h-pf6j-xcff",
+    "read_on": "2026-10-27",
+    "severity": "moderate",
+    "affected_v6_range": "<=6.4.2",
+    "patched_v6": "6.4.3"
+  },
+  "npm_receipt": {
+    "file": "/tmp/cinashop-member-coupon-app-role-20261027/uniapp-audit-current-v2.json",
+    "sha256": "e94903933b85dc73318e96e9f9a99c8e41cf88810f59111603202c4ae8fb7801",
+    "exit_code": 1,
+    "old_source": 1123525,
+    "new_source": 1243432,
+    "same_ghsa_url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+    "old_severity": "high",
+    "new_severity": "moderate",
+    "same_range": "<=6.4.2"
+  },
+  "historical_baseline": {
+    "file": "view/uniapp-ts/scripts/d3-advisory-gate.pre-vite-source-20261027.baseline.json",
+    "bytes": 31189,
+    "sha256": "a80b3b1cb4ba8e0e9861afdbc08e169baf94e4e9a34503cd828b8d791a91eaf8",
+    "base_ref": "2d30c121fd4d7972ea02786409ec5b53b4dc264f"
+  },
+  "current_baseline": {
+    "file": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+    "bytes": 31286,
+    "sha256": "f62308efc2f92f0424407851024a2915f9bfa21741bacb15ca77ff1fdb80341d"
+  },
+  "existing_backport": {
+    "builder": "view/uniapp-ts/scripts/build-vite-safety-backport.cjs",
+    "advisory": "GHSA-fx2h-pf6j-xcff",
+    "official_commit": "96b0c10162e9c55485d922db2cfc6b8227cbc176",
+    "unchanged": true
+  },
+  "boundary": "The gate implementation, package.json, lock, vendored archive, its ten patches/eight GHSA sources and installed dependency bytes are unchanged. This is an exact reviewed upstream record replacement, never a wildcard allowance or ignored new advisory."
+}

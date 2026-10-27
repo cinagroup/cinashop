@@ -46,7 +46,7 @@ function rejected(fixture, fragment) {
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
   assert.equal(Object.keys(baseline.entries).length, 50);
   assert.equal(Object.keys(baseline.advisories).length, 26);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 14);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 15);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
@@ -60,7 +60,7 @@ test("reviewed package entries each resolve to a scoped advisory chain", () => {
 test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
   const builder = require("./build-vite-safety-backport.cjs");
   const sources = baseline.entries.vite.advisorySources;
-  assert.deepEqual(sources, [1116229, 1120784, 1123525, 1242622, 1242651, 1242658, 1242724, 1242730]);
+  assert.deepEqual(sources, [1116229, 1120784, 1242622, 1242651, 1242658, 1242724, 1242730, 1243432]);
   const fixes = builder.PATCHES.filter(patch => patch.advisory);
   assert.equal(fixes.length, 10);
   assert.equal(new Set(fixes.map(patch => patch.advisory)).size, 8);
@@ -133,7 +133,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all fourteen resolved or withdrawn advisory source IDs remain forbidden", () => {
+test("all fifteen resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -338,6 +338,7 @@ test('only six retained Jest entries lose high severity; every remaining severit
 });
 
 test('body-parser patch preserves every other reviewed forward graph and resolved source', () => {
+  const baseline = preViteSourceBaseline; // Preserve the original body-parser review's exact historical authority.
   assert.deepEqual(baseline.advisories, preBodyParserBaseline.advisories);
   assert.deepEqual(baseline.chains, preBodyParserBaseline.chains);
   const { '1243073': patched, ...previousResolved } = baseline.resolvedAdvisories;
@@ -400,4 +401,36 @@ test('a newly vulnerable qs node under body-parser is not accepted with the exis
   const returned = reviewedFixture();
   returned.vulnerabilities.qs.nodes.push('node_modules/body-parser/node_modules/qs');
   rejected(returned, 'affected package entry changed: qs');
+});
+
+// This exact snapshot predates the reviewed npm numeric-source replacement.
+const preViteSourceBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-vite-source-20261027.baseline.json"));
+const preViteSourceBaseline = JSON.parse(preViteSourceBaselineBytes.toString("utf8"));
+test('Vite source replacement preserves the complete earlier reviewed baseline and every unrelated tuple', () => {
+  assert.equal(createHash('sha256').update(preViteSourceBaselineBytes).digest('hex'), 'a80b3b1cb4ba8e0e9861afdbc08e169baf94e4e9a34503cd828b8d791a91eaf8');
+  const expected = structuredClone(preViteSourceBaseline);
+  const old = expected.advisories['1123525'];
+  assert.deepEqual(old, { package:'vite', url:'https://github.com/advisories/GHSA-fx2h-pf6j-xcff', severity:'high', range:'<=6.4.2', chain:'vite-toolchain' });
+  delete expected.advisories['1123525']; expected.advisories['1243432'] = { ...old, severity:'moderate' };
+  expected.entries.vite.advisorySources = expected.entries.vite.advisorySources.filter(id => id !== 1123525).concat(1243432).sort((a,b)=>a-b);
+  expected.resolvedAdvisories['1123525'] = { package:'vite', url:old.url, resolution:'upstream-source-replaced', replacementSource:1243432, affectedRange:'<=6.4.2', note:'Retired numeric npm source, not a newly resolved vulnerability. The identical GHSA remains reviewed only under source1243432/moderate; existing source backport is unchanged.' };
+  expected.reviewedReceipt = baseline.reviewedReceipt;
+  assert.deepEqual(baseline, expected);
+  assert.deepEqual(baseline.advisories['1243432'], { ...old, severity:'moderate' });
+  assert.equal(baseline.advisories['1123525'], undefined);
+  const builder = require('./build-vite-safety-backport.cjs');
+  assert.equal(builder.PATCHES.filter(p => p.advisory === 'GHSA-fx2h-pf6j-xcff').length, 1);
+  assert.equal(builder.PATCHES.find(p => p.advisory === 'GHSA-fx2h-pf6j-xcff').commit, '96b0c10162e9c55485d922db2cfc6b8227cbc176');
+});
+for (const kind of ['source','url','severity','range','missing','old-source']) test('reviewed replacement rejects changed ' + kind, () => {
+  const report = reviewedFixture(), via = report.vulnerabilities.vite.via;
+  const entry = via.find(v => v && typeof v === 'object' && v.source === 1243432);
+  if (kind === 'source') entry.source = 9999999;
+  if (kind === 'url') entry.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
+  if (kind === 'severity') entry.severity = 'high';
+  if (kind === 'range') entry.range = '*';
+  if (kind === 'missing') report.vulnerabilities.vite.via = via.filter(v => v !== entry);
+  if (kind === 'old-source') entry.source = 1123525;
+  const result = evaluateAudit(report, baseline); assert.equal(result.ok, false);
+  if (kind === 'old-source') assert(result.issues.some(v => v.includes('resolved advisory reappeared: 1123525')));
 });

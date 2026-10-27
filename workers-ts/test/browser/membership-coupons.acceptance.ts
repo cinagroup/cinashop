@@ -11,7 +11,7 @@ import {readFile,readdir,writeFile,access} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {createApp} from '@/app';
 import type {Container} from '@/lib/di';
-import {membershipCouponsFixture} from '../helpers/membershipCouponsFixture';
+import {membershipCouponPricingFixture as membershipCouponsFixture} from '../helpers/membershipCouponPricingFixture';
 import {stableDiyState,sortedDiyState,type DiyStateSnapshot as Snapshot,type DiyStateRow as Row} from '../helpers/diyStateFixture';
 const wiring=vi.hoisted(()=>({container:undefined as Container|undefined}));
 vi.mock('@/lib/di',async original=>({...await original<typeof import('@/lib/di')>(),createContainer:()=>{if(!wiring.container)throw Error('Missing owned membership coupon container');return wiring.container;}}));

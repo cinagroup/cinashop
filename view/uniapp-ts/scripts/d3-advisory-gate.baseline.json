@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
-  "reviewedReceipt": "2026-10-24 official npm lock-only receipt after resolver-produced body-parser1.20.9 and its own nested qs6.16.1: 50 affected package entries (9 low/11 moderate/30 high/0 critical), 26 direct source objects, 25 distinct advisory URLs, eight scope definitions/seven active chains. Source1243073/GHSA-27r3-jxmh-p828 is patched and forbidden on reappearance. Only body-parser disappears from the accepted affected-package forward graph; every surviving severity, direct tuple, installed vulnerable node and forward edge is unchanged. Express4.22.2 retains its semver-compatible root qs6.15.3 and both reviewed moderate qs advisories; optional H5 SSR remains disabled. Full raw reverse-effects drift is preserved in the remediation audit. Earlier withdrawals, all prior resolved sources and the exact old51 snapshot remain immutable; historical77-to51 assertions use that snapshot. Counts describe the npm graph, not independent vulnerabilities or general runtime safety.",
+  "reviewedReceipt": "2026-10-27 npm receipt: GHSA-fx2h-pf6j-xcff remains the same already backported Windows path advisory; npm replaced source1123525/high with source1243432/moderate, same <=6.4.2 affected range. Exact source proof and original baseline are in workers-ts/audit/uni-d3-vite-source-replacement-20261027.json. Only that numeric source and advisory severity change; all 50 package entries, nodes, forward paths, package severities, other 25 direct objects, eight scope definitions, lock and vendor bytes remain fixed. Old source1123525 is forbidden on reappearance. Historical body-parser and withdrawal checks use immutable earlier baselines.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -59,13 +59,6 @@
       "package": "vite",
       "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
       "severity": "moderate",
-      "range": "<=6.4.2",
-      "chain": "vite-toolchain"
-    },
-    "1123525": {
-      "package": "vite",
-      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
-      "severity": "high",
       "range": "<=6.4.2",
       "chain": "vite-toolchain"
     },
@@ -193,6 +186,13 @@
       "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
       "severity": "moderate",
       "range": "<=6.4.3",
+      "chain": "vite-toolchain"
+    },
+    "1243432": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+      "severity": "moderate",
+      "range": "<=6.4.2",
       "chain": "vite-toolchain"
     }
   },
@@ -1147,12 +1147,12 @@
       "advisorySources": [
         1116229,
         1120784,
-        1123525,
         1242622,
         1242651,
         1242658,
         1242724,
-        1242730
+        1242730,
+        1243432
       ],
       "effects": [
         "@dcloudio/vite-plugin-uni",
@@ -1187,6 +1187,14 @@
     "1106459": {
       "package": "vue-i18n",
       "url": "https://github.com/advisories/GHSA-x8qp-wqqm-57ph"
+    },
+    "1123525": {
+      "package": "vite",
+      "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+      "resolution": "upstream-source-replaced",
+      "replacementSource": 1243432,
+      "affectedRange": "<=6.4.2",
+      "note": "Retired numeric npm source, not a newly resolved vulnerability. The identical GHSA remains reviewed only under source1243432/moderate; existing source backport is unchanged."
     },
     "1193726": {
       "package": "js-yaml",

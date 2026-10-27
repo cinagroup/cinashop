@@ -131,6 +131,19 @@ describe('local PostgreSQL runner command boundary', () => {
    {args:['--schema-maintenance','--case','clause','unused-bin','audit:membership-clause-browser'],error:'Literal cases apply only to explicit test files'},
    {args:['--schema-maintenance','--verbose-tests','unused-bin','audit:membership-clause-browser'],error:'Verbose reporting applies only to explicit native test files'},
   ])('rejects invalid membership-clause Browser boundary $args before native launch',({args,error})=>{const r=spawnSync(process.execPath,[script,...args],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain(error);expect(r.stderr).not.toContain('ENOENT');});
+  it('admits the exact member-coupon formal App native suite up to the owned binary boundary', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/member-coupon-app-role-postgres.test.ts'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/member-coupon-app-role-postgres-extra.test.ts', 'test/member-coupon-app-role-postgres.test.ts.other'])
+    ('rejects an unreviewed formal coupon suite %s before native launch', file => {
+      const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', file],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+      expect(result.stderr).not.toContain('ENOENT');
+    });
   it('admits the exact membership-coupons native suite up to the owned binary boundary', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/membership-coupons-postgres.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

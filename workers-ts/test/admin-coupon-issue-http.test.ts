@@ -152,7 +152,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Independent issu
       const before = await snapshot(); expect(await claim()).toMatchObject({ status: 400, msg: expect.stringContaining('限领') }); expect(await snapshot()).toEqual(before);
       for (const fields of [{ receiveType: 0 }, { receiveType: 2 }, { receiveType: 3 }, { receiveType: 4 }, { category: 2 }, { appType: 1 }]) {
         await f.db.update(storeCouponIssue).set({ receiveType: 1, category: 1, appType: 0, ...fields }).where(eq(storeCouponIssue.id, id));
-        const snapshotBefore = await snapshot(); expect(await claim()).toMatchObject({ status: 400, msg: expect.stringContaining('不允许手动领取') });
+        const snapshotBefore = await snapshot(); expect(await claim()).toMatchObject({ status: 400, msg: 'category' in fields && fields.category === 2 ? '已领取过该优惠券，每人限领1张' : expect.stringContaining('不允许手动领取') });
         expect(await snapshot()).toEqual(snapshotBefore);
       }
     });

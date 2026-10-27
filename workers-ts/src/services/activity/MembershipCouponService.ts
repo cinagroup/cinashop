@@ -5,6 +5,7 @@ import {ApiException,ValidateException} from '@/utils/errors';
 import {normalizeConfigScalar,parseConfigInteger} from '@/utils/config';
 import {themeDeadlines} from '@/services/content/ThemeReadService';
 import {membershipCouponId} from './MembershipCouponInput';
+import {protectCheckoutPricingSources} from '@/services/order/CheckoutPricingSources';
 
 type Issue=typeof storeCouponIssue.$inferSelect;
 type Owned=typeof storeCouponUser.$inferSelect;
@@ -20,13 +21,14 @@ function rule(value:string|null){const result=text(value,Number.MAX_SAFE_INTEGER
 export function membershipOwnedCoupon(row:Owned):MembershipOwnedCoupon{return{id:row.id,issue_id:row.issueCouponId,title:text(row.couponTitle,255),benefit_type:row.type,benefit_value:money(row.couponPrice),minimum:money(row.useMinPrice),status:row.status,start_time:epoch(row.startTime),end_time:epoch(row.endTime),is_fail:row.isFail!==0};}
 async function owned(tx:DbClient,uid:number,issueId:number){return(await tx.select().from(storeCouponUser).where(and(eq(storeCouponUser.uid,uid),eq(storeCouponUser.issueCouponId,issueId))).orderBy(desc(storeCouponUser.receiveTime),desc(storeCouponUser.id)).limit(1))[0];}
 function genuine(account:typeof user.$inferSelect|undefined,now:number){return !!account&&account.status===1&&account.isDel===0&&(account.isEverLevel>0||(account.isMoneyLevel>0&&account.overdueTime>now));}
-/** Existing rows are held through grant. NOWAIT avoids an issue->user wait cycle
- * against payment/gift transactions that can already hold user->issue locks.
- * Config/right edits blocked by these locks cannot revoke halfway through a grant.
+/** User rows are held through grant. The reviewed fixed capability holds SHARE
+ * on both pricing-source tables without granting the caller configuration UPDATE.
+ * NOWAIT avoids reverse-order waits and also fences newly inserted winner rows.
  * Reads use the same predicates in a single repeatable-read read-only snapshot. */
 async function eligibility(tx:DbClient,uid:number,now:number,lock=false):Promise<MembershipCouponEligibility>{
+ if(lock){const busy='会员优惠券配置正在更新，请重新读取领取状态';try{await protectCheckoutPricingSources(tx,busy);}catch(error){if(error instanceof ValidateException&&error.message===busy)throw membershipCouponConflict();throw error;}}
  const users=tx.select().from(user).where(eq(user.uid,uid)).limit(1),configs=tx.select().from(systemConfig).where(and(eq(systemConfig.menuName,'member_card_status'),eq(systemConfig.isStore,0))).orderBy(desc(systemConfig.sort),desc(systemConfig.id)),rights=tx.select().from(memberRight).where(eq(memberRight.rightType,'coupon')).orderBy(asc(memberRight.id));
- const [accounts,settings,entitlements]=lock?await Promise.all([users.for('share',{noWait:true}),configs.for('share',{noWait:true}),rights.for('share',{noWait:true})]):await Promise.all([users,configs,rights]);
+ const [accounts,settings,entitlements]=await Promise.all([lock?users.for('share',{noWait:true}):users,configs,rights]);
  const member_enabled=parseConfigInteger(normalizeConfigScalar(settings[0]?.value??''),1)===1,coupon_right_enabled=entitlements[0]?.status===1,is_svip=genuine(accounts[0],now),eligible=member_enabled&&coupon_right_enabled&&is_svip;
  const reason=!member_enabled?'会员功能暂未开启':!coupon_right_enabled?'会员优惠券权益暂未开启':!is_svip?'请先购买有效的付费会员后领取':'';
  return{member_enabled,coupon_right_enabled,is_svip,eligible,reason};
@@ -52,7 +54,7 @@ export async function claimMembershipCouponLocked(tx:DbClient,uid:number,issue:I
  if(!issue||issue.category!==2)throw new ValidateException('该优惠券不允许手动领取');
  const previous=await owned(tx,uid,issue.id);
  if(modern&&previous)return{row:previous,replayed:true};
- if(!modern){const[account]=await tx.select().from(user).where(eq(user.uid,uid)).limit(1).for('share',{noWait:true});if(!genuine(account,Math.floor(Date.now()/1000)))throw new ValidateException('该优惠券不允许手动领取，请先购买有效的付费会员后领取');}
+ if(!modern){if(issue.receiveType!==1||issue.appType!==0)throw new ValidateException('该优惠券不允许手动领取');const[account]=await tx.select().from(user).where(eq(user.uid,uid)).limit(1).for('share',{noWait:true});if(!genuine(account,Math.floor(Date.now()/1000)))throw new ValidateException('该优惠券不允许手动领取');}
  const evidence=await tx.select().from(storeCouponIssueUser).where(and(eq(storeCouponIssueUser.uid,uid),eq(storeCouponIssueUser.issueCouponId,issue.id))).limit(1);
  if(previous||evidence.length){if(modern)throw membershipCouponConflict();throw new ValidateException('已领取过该优惠券，每人限领1张');}
  const now=new Date(),reason=admission(issue,now);if(reason)throw new ValidateException(reason);

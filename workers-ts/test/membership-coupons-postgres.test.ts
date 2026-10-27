@@ -6,7 +6,7 @@ import {eq,sql} from 'drizzle-orm';
 import {createApp} from '@/app';
 import {createContainerFromDb,type Container,type DbClient} from '@/lib/di';
 import {memberRight,storeCouponIssue,systemAttachment,user} from '@/models/schema';
-import {membershipCouponsFixture} from './helpers/membershipCouponsFixture';
+import {membershipCouponPricingFixture as membershipCouponsFixture} from './helpers/membershipCouponPricingFixture';
 import {sortedDiyState,type DiyStateSnapshot as Snapshot,type DiyStateRow as Row} from './helpers/diyStateFixture';
 import {withFinancePeers} from './helpers/financePeers';
 import {CouponScopeProductsService} from '@/services/activity/CouponScopeProductsService';
