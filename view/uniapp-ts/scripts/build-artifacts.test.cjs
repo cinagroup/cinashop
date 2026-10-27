@@ -37,6 +37,7 @@ test("registered community pages bind their actual template components to compil
   const root = resolve("dist/build/mp-weixin");
   for (const [page, tags] of [
     ["pages/discover/workspace", ["theme-page"]],
+    ...["promoterRank", "commissionRank"].map(page => [`pages/user/${page}`, ["theme-page", "distribution-ranking"]]),
     ...["discoverUser", "discoverFollow", "discoverCreate"].map(page => [`pages/discover/${page}/index`, ["theme-page"]]),
     ["pages/discover/discoverVideo/app", ["theme-page", "community-deep-link-feed"]],
   ]) {
@@ -50,7 +51,7 @@ test("registered community pages bind their actual template components to compil
       const component = resolve(dirname(jsonPath), registered);
       assert.ok(component.startsWith(root + sep), page + ": " + registered);
       assert.equal(component, resolve(root, tag === "theme-page"
-        ? "components/ThemePage" : "components/community/CommunityDeepLinkFeed"), page + ": " + tag);
+        ? "components/ThemePage" : tag === "distribution-ranking" ? "components/user/DistributionRanking" : "components/community/CommunityDeepLinkFeed"), page + ": " + tag);
       assert.match(artifact(component + ".js"), /\.createComponent\(/, component);
       artifact(component + ".wxml");
       assert.equal(JSON.parse(artifact(component + ".json")).component, true, component);

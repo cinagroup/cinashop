@@ -13,7 +13,7 @@ describe('dedicated FAB target catalog contract', () => {
     for(const url of ['javascript:alert(1)','/pages/removed/index']) {
       expect(projectFabLinkTarget({id:41,name:'历史目标',kind:'integral',url})).toMatchObject({url:'',selectable:false,issues:[expect.any(String)]});
     }
-    expect(projectFabLinkTarget({id:5,name:'佣金排行',kind:'distribution',url:'/pages/users/commission_rank/index'})).toMatchObject({selectable:true,partial:true});
+    expect(projectFabLinkTarget({id:5,name:'佣金排行',kind:'distribution',url:'/pages/users/commission_rank/index'})).toMatchObject({selectable:true,partial:false});
     expect(projectFabLinkTarget({id:7,name:'商品',kind:'product',url:'/pages/goods_details/index?id=7'})).toMatchObject({selectable:true,partial:false,url:'/pages/goods_details/index?id=7'});
   });
   it('keeps the integral activity identity linkable when sold out and diagnoses unsafe summary values without inventing a free price', () => {

@@ -490,6 +490,22 @@
       }
     },
     {
+      "path": "pages/user/promoterRank",
+      "style": {
+        "navigationBarTitleText": "推广人排行",
+        "navigationBarBackgroundColor": "#FCCEA4",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/user/commissionRank",
+      "style": {
+        "navigationBarTitleText": "佣金排行",
+        "navigationBarBackgroundColor": "#1B1311",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/users/user_distribution_level/index",
       "style": {
         "navigationBarTitleText": "分销等级"

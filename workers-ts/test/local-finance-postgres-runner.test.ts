@@ -73,6 +73,19 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it.each(['test/distribution-rankings-postgres.test.ts','audit:distribution-rankings-browser'])('admits the exact distribution rankings command %s before native setup', mode => {
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/distribution-rankings-postgres-extra.test.ts','audit:distribution-rankings-browser-other'])('rejects unreviewed distribution rankings command %s', mode => {
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
+  });
+  it('rejects literal case filtering for interactive distribution Browser mode',()=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','--case','rank','unused-bin','audit:distribution-rankings-browser'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('Literal cases apply only to explicit test files');
+  });
+
   it('admits the exact member-level-activation native suite up to the owned binary boundary', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'test/member-level-activation-postgres.test.ts'],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

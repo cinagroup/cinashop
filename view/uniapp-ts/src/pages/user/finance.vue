@@ -41,6 +41,8 @@
       </view>
     </view>
 
+    <view class="ranking-links"><button @tap="openRanking('promoterRank')">推广人排行 <text>›</text></button><button @tap="openRanking('commissionRank')">佣金排行 <text>›</text></button></view>
+
     <view v-if="uncertain" class="notice" @tap="openExtract">上一笔提现结果待确认，点击查询或重试同一申请。请勿重复发起新申请。</view>
     <view v-if="pageError" class="notice">{{ pageError }}</view>
 
@@ -154,6 +156,8 @@ import {
 import { RequestError } from "@/utils/request";
 import { useAuthStore } from "@/stores/auth";
 import { estimateWithdrawal, newWithdrawalKey, withdrawalStorageKey } from "@/utils/withdrawal";
+
+function openRanking(page: 'promoterRank'|'commissionRank') { if (useAuthStore().isLoggedIn) uni.navigateTo({url:'/pages/user/'+page}); }
 
 const info = ref<CommissionInfo>({
   yesterdayCommission: "0.00",
@@ -422,6 +426,7 @@ onLoad(() => {
   margin-top: 6rpx;
 }
 
+.ranking-links{display:flex;gap:20rpx;margin:0 0 24rpx}.ranking-links button{flex:1;margin:0;background:white;text-align:left;padding:0 24rpx;font-size:28rpx;line-height:90rpx;border-radius:16rpx}.ranking-links button::after{border:0}.ranking-links text{float:right;color:#999}
 .action-row {
   display: flex;
   gap: 20rpx;
