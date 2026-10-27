@@ -1,5 +1,6 @@
+import { readMembershipRightsHistoricalFile as readFileSync } from './helpers/membershipRightsSourceBinding';
 import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
-import { readFileSync } from 'node:fs';
+
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';

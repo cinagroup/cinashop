@@ -1,0 +1,525 @@
+{
+  "schema": "cinashop.membership-rights-source-binding.v1",
+  "base_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/api/membershipRights.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": false,
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after_sha256": "306019433610c8b1b4c00e78ba93c40ce3f7d2574de359b260792b412cf7314e",
+      "before_bytes": 0,
+      "after_bytes": 5478,
+      "before_git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "after_git_blob_sha1": "3485c46db33bfb5488f94b2a615851f7b4160635",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import request, { getData } from '@/utils/request';\nexport interface MembershipRightAuthorRow {\n  id:number;right_type:string;title:string;show_title:string;image:string;explain:string;content:string;\n  number:number;sort:number;status:number;add_time:number;version:string;image_preview:string;content_preview:string;\n}\nexport interface MembershipRightAuthorPage {author:1;actor_id:number;page:number;limit:number;count:number;list:MembershipRightAuthorRow[]}\nexport interface MembershipRightMetadata {right_type:string;title:string;show_title:string;image:string;explain:string;number:number;sort:number}\nexport type MembershipRightDraft=MembershipRightMetadata&{id:number;status:0|1};\nconst object=(v:unknown):Record<string,unknown>=>{if(!v||typeof v!=='object'||Array.isArray(v))throw Error('会员权益响应无效');return v as Record<string,unknown>;};\nconst integer=(v:unknown,min=-2147483648,max=2147483647):v is number=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=min&&v<=max;\nconst hash=(v:unknown):v is string=>typeof v==='string'&&/^[a-f0-9]{64}$/u.test(v);\nexport function decodeMembershipRightPage(value:unknown,page:number,owner:number,limit=30):MembershipRightAuthorPage {\n  const data=object(value);\n  if(data.author!==1||data.actor_id!==owner||!integer(owner,1)||data.page!==page||data.limit!==limit||!integer(data.count,0,Number.MAX_SAFE_INTEGER)\n    ||!Array.isArray(data.list)||data.list.length!==Math.max(0,Math.min(limit,data.count-(page-1)*limit)))throw Error('会员权益目录与当前账户或分页不一致');\n  let previewBytes=0;const ids=new Set<number>();let prior:MembershipRightAuthorRow|undefined;\n  const list=data.list.map(value=>{\n    const r=object(value);\n    if(!integer(r.id,1)||ids.has(r.id)||!hash(r.version)||!['right_type','title','show_title','image','explain','content','image_preview','content_preview'].every(k=>typeof r[k]==='string')\n      ||!['number','sort','status','add_time'].every(k=>integer(r[k])))throw Error('会员权益数据不完整，请重新读取');\n    previewBytes+=new TextEncoder().encode(r.content_preview as string).byteLength;\n    if(new TextEncoder().encode(r.content as string).byteLength>4000000||previewBytes>10*1024*1024)throw Error('会员权益内容超过显示容量');\n    const row={id:r.id,right_type:r.right_type,title:r.title,show_title:r.show_title,image:r.image,explain:r.explain,content:r.content,\n      number:r.number,sort:r.sort,status:r.status,add_time:r.add_time,version:r.version,image_preview:r.image_preview,content_preview:r.content_preview} as MembershipRightAuthorRow;\n    if(prior&&(prior.sort<row.sort||prior.sort===row.sort&&prior.id<=row.id))throw Error('会员权益排序错误');\n    ids.add(row.id);prior=row;return row;\n  });\n  return{author:1,actor_id:owner,page,limit,count:data.count,list};\n}\nexport function membershipRightMetadata(form:MembershipRightMetadata,base?:MembershipRightAuthorRow):MembershipRightMetadata {\n  const text=(key:'right_type'|'title'|'show_title'|'image'|'explain',max:number,required=false)=>{\n    const v=form[key];if(base&&v===base[key])return v;\n    if(typeof v!=='string'||[...v].length>max||(key==='explain'?/[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]/u:/[\\u0000-\\u001f\\u007f]/u).test(v)||required&&!v.trim())throw Error('请核对权益名称、图标和说明');\n    return v;\n  };\n  if(!integer(form.number)||!integer(form.sort)||(!base||form.number!==base.number||form.right_type!==base.right_type)&&form.number<0)throw Error('权益数值或排序无效');\n  const number=form.number;\n  if((!base||form.number!==base.number||form.right_type!==base.right_type)&&(['integral','sign','express'].includes(form.right_type)?number<1||number>10000:form.right_type==='offline'&& (number<1||number>100)))throw Error('权益数值超出允许范围');\n  return{right_type:text('right_type',100,true),title:text('title',200,true),show_title:text('show_title',8,true),image:text('image',200),explain:text('explain',8,true),number,sort:form.sort};\n}\nfunction version(value:unknown,id:number):{id:number;version:string} {\n  const r=object(value);if(!integer(r.id,1)||id>0&&r.id!==id||!hash(r.version))throw Error('权益保存回执无效，请重新读取核对');\n  return{id:r.id,version:r.version};\n}\nfunction bounded(payload:Record<string,unknown>){if(new TextEncoder().encode(JSON.stringify(payload)).byteLength>256*1024)throw Error('权益内容超过256 KiB请求容量');return payload;}\nexport async function apiMembershipRightAuthorPage(page:number,owner:number,signal?:AbortSignal){\n  return decodeMembershipRightPage(await getData<unknown>(request.get('/member/right',{params:{author:1,page,limit:30},signal})),page,owner);\n}\nexport async function apiSaveMembershipRightMetadata(id:number,token:string,data:MembershipRightMetadata,status:0|1,signal?:AbortSignal){\n  return version(await getData<unknown>(request.post(`/member_right/save/${id}`,bounded({author:1,version:token,...data,...(id?{}:{status})}),{signal})),id);\n}\nexport async function apiSetMembershipRightStatus(id:number,token:string,status:0|1,signal?:AbortSignal){\n  return version(await getData<unknown>(request.post(`/member_right/save/${id}`,{author:1,version:token,status},{signal})),id);\n}\nexport async function apiSaveMembershipRightContent(id:number,token:string,content:string,signal?:AbortSignal){\n  return version(await getData<unknown>(request.post(`/member/save/content/${id}`,bounded({author:1,version:token,content}),{signal})),id);\n}\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/pages.json",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "ec90962a384cec1f92dd9a011f56874a5ae353a977e13b9f9e459ad22dbad0bc",
+      "after_sha256": "52c029545994c52ebfa699a4376a0079d669657892482a23051921a9dfbadc14",
+      "before_bytes": 20164,
+      "after_bytes": 20353,
+      "before_git_blob_sha1": "e3162a46b14b0e7065ff7164ead0feb2d3831fa2",
+      "after_git_blob_sha1": "e2786dce432c7c6ac9286660709f9859e6ffe57f",
+      "edits": [
+        {
+          "before_source": "      }\n    },\n    {\n      \"path\": \"pages/user/vipOpen\",\n      \"style\": {\n        \"navigationBarTitleText\": \"付费会员\"\n",
+          "after_source": "      }\n    },\n    {\n      \"path\": \"pages/user/vipRights\",\n      \"style\": { \"navigationBarTitleText\": \"会员权益\", \"navigationBarBackgroundColor\": \"#312B23\", \"navigationBarTextStyle\": \"white\" }\n    },\n    {\n      \"path\": \"pages/user/vipOpen\",\n      \"style\": {\n        \"navigationBarTitleText\": \"付费会员\"\n",
+          "before_line": 550,
+          "after_line": 550
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/src/config/navigation.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "ea5098bd6002755a461c03f1b6277314ad2645fdc7b6cb27997737d8f946dd07",
+      "after_sha256": "97fea06f3fe5ead3da7564c26004aee138eb0615056def633c59189f54e6fc8b",
+      "before_bytes": 22912,
+      "after_bytes": 22941,
+      "before_git_blob_sha1": "fe9dcb4ac720eac860200372fc211c925ed7de20",
+      "after_git_blob_sha1": "62e022d21f7bdfa374f7fa73bc87bbc5f83cf3fd",
+      "edits": [
+        {
+          "before_source": "  \"/pages/user/bank\",\n  \"/pages/user/payPassword\",\n  \"/pages/user/vipOpen\",\n  \"/pages/annex/vip_active/index\",\n  \"/pages/annex/offline_pay/index\",\n  \"/pages/annex/offline_result/index\",\n",
+          "after_source": "  \"/pages/user/bank\",\n  \"/pages/user/payPassword\",\n  \"/pages/user/vipOpen\",\n  \"/pages/user/vipRights\",\n  \"/pages/annex/vip_active/index\",\n  \"/pages/annex/offline_pay/index\",\n  \"/pages/annex/offline_result/index\",\n",
+          "before_line": 127,
+          "after_line": 127
+        },
+        {
+          "before_source": "\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n",
+          "after_source": "\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n",
+          "before_line": 261,
+          "after_line": 262
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "35d9aa55667690f8f24cfb8b684f0f6e60212fe3733cb2399c06490e40e920aa",
+      "after_sha256": "fdc21e16d3026bd0d81b01bdbf6a827d128e3958130aac6b22ba592e31c7de19",
+      "before_bytes": 22937,
+      "after_bytes": 22966,
+      "before_git_blob_sha1": "c46afe7190822ae240c2360826b3d4ee2e0415c5",
+      "after_git_blob_sha1": "a5e2202bc913be515b903e7f65897bc4ade33999",
+      "edits": [
+        {
+          "before_source": "  \"/pages/user/bank\",\n  \"/pages/user/payPassword\",\n  \"/pages/user/vipOpen\",\n  \"/pages/annex/vip_active/index\",\n  \"/pages/annex/offline_pay/index\",\n  \"/pages/annex/offline_result/index\",\n",
+          "after_source": "  \"/pages/user/bank\",\n  \"/pages/user/payPassword\",\n  \"/pages/user/vipOpen\",\n  \"/pages/user/vipRights\",\n  \"/pages/annex/vip_active/index\",\n  \"/pages/annex/offline_pay/index\",\n  \"/pages/annex/offline_result/index\",\n",
+          "before_line": 128,
+          "after_line": 128
+        },
+        {
+          "before_source": "\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n",
+          "after_source": "\n  \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n  \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n",
+          "before_line": 262,
+          "after_line": 263
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/services/content/UserCenterPublicReadService.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "082b61a28e66496c53c32fec17bbb8820b8413bc64095a475fd99425d38b9505",
+      "after_sha256": "c359c09b80d5ecffad5ba1ce2ee0233d376fcd446be6bc69f3cf04164225766d",
+      "before_bytes": 17991,
+      "after_bytes": 18025,
+      "before_git_blob_sha1": "3b515a943541d3479b415dc51b1512e53835c219",
+      "after_git_blob_sha1": "70deaf533277c29fe61ee2e558289923eab70a65",
+      "edits": [
+        {
+          "before_source": "        if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n        if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n        if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n        if(path==='/pages/user/vipOpen'&&!capabilities.paid_member)return[];\n        if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n        if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n        if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n",
+          "after_source": "        if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n        if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n        if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n        if(['/pages/user/vipOpen','/pages/user/vipRights'].includes(path)&&!capabilities.paid_member)return[];\n        if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n        if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n        if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n",
+          "before_line": 63,
+          "after_line": 63
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/adminLevelDefinitionSourceBinding.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "c7acae289e73405f1cb549e3270600f56e52189889dcfd36bfb37d3d4bff9268",
+      "after_sha256": "06cd50d4e272b3fc293e177b2169414999884247d352ea39b21e701d6ffd3187",
+      "before_bytes": 6538,
+      "after_bytes": 6644,
+      "before_git_blob_sha1": "843d6fb5a914061c4596693f44cf0f921851c3f5",
+      "after_git_blob_sha1": "cfbf33d146e3e97a80beae2644ff290afaabcbd4",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "after_source": "import { peelMembershipRightsReport } from './membershipRightsSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  return result;\n}\nexport const applyAdminLevelDefinitionReport = <T>(historical: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(historical, false, binding);\nexport const reverseAdminLevelDefinitionReport = <T>(current: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(current, true, binding);\n/** The historical migration API still accepts its one exact original result;\n * current live input must match the independently captured complete level report. */\nexport function peelAdminLevelDefinitionReport<T>(input: T, binding = adminLevelDefinitionSourceBinding): T {\n",
+          "after_source": "  return result;\n}\nexport const applyAdminLevelDefinitionReport = <T>(historical: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(historical, false, binding);\nexport const reverseAdminLevelDefinitionReport = <T>(current: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(peelMembershipRightsReport(current), true, binding);\n/** The historical migration API still accepts its one exact original result;\n * current live input must match the independently captured complete level report. */\nexport function peelAdminLevelDefinitionReport<T>(input: T, binding = adminLevelDefinitionSourceBinding): T {\n",
+          "before_line": 80,
+          "after_line": 81
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/admin-level-definition-source-binding.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "7cb2abfee9f4a98502f3247ff0dbe2539a915adc2799ad21737362dd4a76554a",
+      "after_sha256": "aa15ce2ae11400d7a37ab0abd3bb5620bfa93097b3cb97465449ebd3d91c7861",
+      "before_bytes": 15804,
+      "after_bytes": 15924,
+      "before_git_blob_sha1": "29c57d77133d42cfdbe9c1cafba719af1372b635",
+      "after_git_blob_sha1": "f21dea941217d0719cf9dd3a4871cd670c5d82db",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "after_source": "import { reverseMembershipRightsReport } from './helpers/membershipRightsSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nconst blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\\0`).update(value).digest('hex');\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst current = () => structuredClone(report ??= buildAdminFrontendApiAuditReport());\nconst previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;\nconst sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];\n",
+          "after_source": "const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nconst blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\\0`).update(value).digest('hex');\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst current = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));\nconst previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;\nconst sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];\n",
+          "before_line": 18,
+          "after_line": 19
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/customer-growth-records-migration.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "933fe01e99089b0ba4cf7f0ffb56f9296f84f98a6e8a57719b57f59d7eaa519e",
+      "after_sha256": "0041c48805850866b251e720f47a42cacdfb4934f319326dd4ee096a755ca835",
+      "before_bytes": 12143,
+      "after_bytes": 12677,
+      "before_git_blob_sha1": "d414f829e4c0c41b635efef23f0ad542b40edd04",
+      "after_git_blob_sha1": "da658f8e36ac520a8b4eb1d7a4d10fa7a1c37aff",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\nimport { createRequire } from 'node:module';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules } from './helpers/membershipRightsSourceBinding';\nconst REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);\nconst serverRoutes=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);\nconst LEGACY_ROUTE_RULES=reverseMembershipRightsLegacyRules(currentClientRules);\nconst serverRules=reverseMembershipRightsLegacyRules(currentServerRules);\nimport { createHash } from 'node:crypto';\n\nimport { createRequire } from 'node:module';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "import { growthRecordsManifest as proof,reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { pointsCentreManifest,reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { REGISTERED_PAGE_ROUTES,LEGACY_ROUTE_RULES,resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules,resolveRegisteredPageRoute as serverResolve } from '@/services/content/FabRouteRegistry';\nconst root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');\nconst sha=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');\nconst requireUni=createRequire(resolve(root,'view/uniapp-ts/package.json'));\n",
+          "after_source": "import { growthRecordsManifest as proof,reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { pointsCentreManifest,reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { REGISTERED_PAGE_ROUTES as currentClientRoutes,LEGACY_ROUTE_RULES as currentClientRules,resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as currentServerRoutes,LEGACY_ROUTE_RULES as currentServerRules,resolveRegisteredPageRoute as serverResolve } from '@/services/content/FabRouteRegistry';\nconst root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');\nconst sha=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');\nconst requireUni=createRequire(resolve(root,'view/uniapp-ts/package.json'));\n",
+          "before_line": 7,
+          "after_line": 12
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/customer-points-centre-migration.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "17fb8e63cd6df0c5ba3f8d4b28cccdfa87a41b3176e7b2f065d8b62181f3dde7",
+      "after_sha256": "5a6f35651d1db93ffb349cce4d4e35687614584df290ad02fd8e8be0542f0344",
+      "before_bytes": 4623,
+      "after_bytes": 4694,
+      "before_git_blob_sha1": "e3ae6975b5143101d818bccdff49d251c818665b",
+      "after_git_blob_sha1": "3f81e8b1ef8698f1d6578662f3e6a5d45ddbb740",
+      "edits": [
+        {
+          "before_source": "import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { readFileSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nimport { resolve } from 'node:path';\nimport { describe, expect, it } from 'vitest';\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync } from './helpers/membershipRightsSourceBinding';\nimport { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\n\nimport { createHash } from 'node:crypto';\nimport { resolve } from 'node:path';\nimport { describe, expect, it } from 'vitest';\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/customer-sign-centre-migration.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "4a68c7f4e3e113e1d1a43412cc468122bd437c6e0664e04f1057bf7840955b60",
+      "after_sha256": "b3df438217bc3475283cd7369e8b12610cc40ec39bb2125832ed584d2c22727e",
+      "before_bytes": 4790,
+      "after_bytes": 4861,
+      "before_git_blob_sha1": "c4f9fe52e3f6722c1d9020851b4bb0dbb8edafc7",
+      "after_git_blob_sha1": "1fd7aaf0f54ad251cc868e651ed1663ac85050b5",
+      "edits": [
+        {
+          "before_source": "import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { readFileSync } from 'node:fs';\nimport { createHash } from 'node:crypto';\nimport { resolve } from 'node:path';\nimport { describe, expect, it } from 'vitest';\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync } from './helpers/membershipRightsSourceBinding';\nimport { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\n\nimport { createHash } from 'node:crypto';\nimport { resolve } from 'node:path';\nimport { describe, expect, it } from 'vitest';\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/uniapp-frontend-parity.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "c923f5bd200483f9e5ef3d38a8e3e49aa58c8a596befab9b0f9485e1d27353ba",
+      "after_sha256": "668d0cb128f6aae27ccbf62f5b4079e47352d630e1139babea6e29ce13b4eb20",
+      "before_bytes": 28954,
+      "after_bytes": 29432,
+      "before_git_blob_sha1": "bb8f6a9e88ebdabb26dedcbbdda937b19a8ce8b3",
+      "after_git_blob_sha1": "5d9a7f1ee6cab980ad0db93aa515dc7d97e1c847",
+      "edits": [
+        {
+          "before_source": "import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { existsSync, readFileSync } from \"node:fs\";\nimport { resolve } from \"node:path\";\nimport { createHash } from \"node:crypto\";\nimport { describe, expect, it } from \"vitest\";\nimport { reverseRouteSourceFollowup, type RouteSourceFollowup } from \"./helpers/routeSourceIncrement\";\nimport {\n  LEGACY_ROUTE_RULES,\n  REGISTERED_PAGE_ROUTES,\n  resolveRegisteredPageRoute,\n} from \"../../view/uniapp-ts/src/config/navigation\";\nimport {\n  REGISTERED_PAGE_ROUTES as SERVER_REGISTERED_PAGE_ROUTES,\n  resolveRegisteredPageRoute as resolveServerRegisteredPageRoute,\n} from \"../src/services/content/FabRouteRegistry\";\n\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules } from './helpers/membershipRightsSourceBinding';\nconst REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);\nconst SERVER_REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);\nconst LEGACY_ROUTE_RULES=reverseMembershipRightsLegacyRules(currentClientRules);\nimport { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { existsSync } from \"node:fs\";\nimport { resolve } from \"node:path\";\nimport { createHash } from \"node:crypto\";\nimport { describe, expect, it } from \"vitest\";\nimport { reverseRouteSourceFollowup, type RouteSourceFollowup } from \"./helpers/routeSourceIncrement\";\nimport {\n  LEGACY_ROUTE_RULES as currentClientRules,\n  REGISTERED_PAGE_ROUTES as currentClientRoutes,\n  resolveRegisteredPageRoute,\n} from \"../../view/uniapp-ts/src/config/navigation\";\nimport {\n  REGISTERED_PAGE_ROUTES as currentServerRoutes,\n  resolveRegisteredPageRoute as resolveServerRegisteredPageRoute,\n} from \"../src/services/content/FabRouteRegistry\";\n\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/community-main-feed-frontend.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "673830ba9da4dc0d99f1eabc3700c3ec6658d21cea89992ce071ab03aeb5b9bf",
+      "after_sha256": "373b8e4e619b970b34bfa0255ac67174ed7f31747d496c460ebc52be0c6cd9fe",
+      "before_bytes": 19373,
+      "after_bytes": 19687,
+      "before_git_blob_sha1": "177ab858ee66ace538f0ea5afeedb37b0bd17047",
+      "after_git_blob_sha1": "5e9df5e4b119fe9a3a76b8162004e6c016d84076",
+      "edits": [
+        {
+          "before_source": "import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { readFileSync } from 'node:fs';\nimport { createRequire } from 'node:module';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\nimport { describe, expect, it } from 'vitest';\nimport { parseCommunityWorkspaceEntry } from '../../view/common/communityRoute';\nimport { REGISTERED_PAGE_ROUTES, resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as serverPages, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';\nconst { parse, compileTemplate } = createRequire(import.meta.url)('../../view/uniapp-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/uniapp-ts/node_modules/@vue/compiler-sfc');\nconst root = resolve(import.meta.dirname, '../../view/uniapp-ts/src');\nconst read = (file: string) => readFileSync(resolve(root, file), 'utf8');\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes } from './helpers/membershipRightsSourceBinding';\nconst REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);\nconst serverPages=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);\nimport { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\n\nimport { createRequire } from 'node:module';\nimport { resolve } from 'node:path';\nimport ts from 'typescript';\nimport { describe, expect, it } from 'vitest';\nimport { parseCommunityWorkspaceEntry } from '../../view/common/communityRoute';\nimport { REGISTERED_PAGE_ROUTES as currentClientRoutes, resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';\nimport { REGISTERED_PAGE_ROUTES as currentServerRoutes, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';\nconst { parse, compileTemplate } = createRequire(import.meta.url)('../../view/uniapp-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/uniapp-ts/node_modules/@vue/compiler-sfc');\nconst root = resolve(import.meta.dirname, '../../view/uniapp-ts/src');\nconst read = (file: string) => readFileSync(resolve(root, file), 'utf8');\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/community-publish-entry-migration.test.ts",
+      "before_ref": "547b055c9b9e9748a6acb0a81539cc34aae3d2cc",
+      "before_exists": true,
+      "before_sha256": "8bed5642182774d389208b57cc246ed89b4a3e14d83a9a5f4c958bbd3bf7f69d",
+      "after_sha256": "b198edeb77ccf0e23bafced36126122f6d9ad6d53eedfbb6bd8019dc11a7f172",
+      "before_bytes": 23784,
+      "after_bytes": 24072,
+      "before_git_blob_sha1": "d55c5641acbfb563fb817e2952b676bb20e1adec",
+      "after_git_blob_sha1": "8438f83d83f7b29529a5f8164db564b9fb5bb343",
+      "edits": [
+        {
+          "before_source": "import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\nimport { readFileSync } from \"node:fs\";\nimport { createRequire } from \"node:module\";\nimport { resolve } from \"node:path\";\nimport ts from \"typescript\";\nimport { describe, expect, it } from \"vitest\";\nimport { REGISTERED_PAGE_ROUTES as clientPages, resolveRegisteredPageRoute as clientRoute } from \"../../view/uniapp-ts/src/config/navigation\";\nimport { REGISTERED_PAGE_ROUTES as serverPages, resolveRegisteredPageRoute as serverRoute } from \"../src/services/content/FabRouteRegistry\";\nimport { parseCommunityWorkspaceEntry, resolveCommunityLegacyPageEntry, resolveCommunityPageRoute } from \"../../view/common/communityRoute\";\nimport { communityInbound, communityQuery } from \"../../view/common/communityShare\";\n\n",
+          "after_source": "import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes } from './helpers/membershipRightsSourceBinding';\nconst clientPages=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);\nconst serverPages=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);\nimport { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';\nimport { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';\nimport { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';\n\nimport { createRequire } from \"node:module\";\nimport { resolve } from \"node:path\";\nimport ts from \"typescript\";\nimport { describe, expect, it } from \"vitest\";\nimport { REGISTERED_PAGE_ROUTES as currentClientRoutes, resolveRegisteredPageRoute as clientRoute } from \"../../view/uniapp-ts/src/config/navigation\";\nimport { REGISTERED_PAGE_ROUTES as currentServerRoutes, resolveRegisteredPageRoute as serverRoute } from \"../src/services/content/FabRouteRegistry\";\nimport { parseCommunityWorkspaceEntry, resolveCommunityLegacyPageEntry, resolveCommunityPageRoute } from \"../../view/common/communityRoute\";\nimport { communityInbound, communityQuery } from \"../../view/common/communityShare\";\n\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ]
+    }
+  ],
+  "production_patch": {
+    "sha256": "f68d2fd4d06523698707bdc3a278f960074e418d5126e940759c2f180eacb277",
+    "bytes": 10530,
+    "unified_diff": "diff --git a/view/admin-ts/src/api/membershipRights.ts b/view/admin-ts/src/api/membershipRights.ts\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..3485c46db33bfb5488f94b2a615851f7b4160635\n--- /dev/null\n+++ b/view/admin-ts/src/api/membershipRights.ts\n@@ -0,0 +1,57 @@\n+import request, { getData } from '@/utils/request';\n+export interface MembershipRightAuthorRow {\n+  id:number;right_type:string;title:string;show_title:string;image:string;explain:string;content:string;\n+  number:number;sort:number;status:number;add_time:number;version:string;image_preview:string;content_preview:string;\n+}\n+export interface MembershipRightAuthorPage {author:1;actor_id:number;page:number;limit:number;count:number;list:MembershipRightAuthorRow[]}\n+export interface MembershipRightMetadata {right_type:string;title:string;show_title:string;image:string;explain:string;number:number;sort:number}\n+export type MembershipRightDraft=MembershipRightMetadata&{id:number;status:0|1};\n+const object=(v:unknown):Record<string,unknown>=>{if(!v||typeof v!=='object'||Array.isArray(v))throw Error('会员权益响应无效');return v as Record<string,unknown>;};\n+const integer=(v:unknown,min=-2147483648,max=2147483647):v is number=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=min&&v<=max;\n+const hash=(v:unknown):v is string=>typeof v==='string'&&/^[a-f0-9]{64}$/u.test(v);\n+export function decodeMembershipRightPage(value:unknown,page:number,owner:number,limit=30):MembershipRightAuthorPage {\n+  const data=object(value);\n+  if(data.author!==1||data.actor_id!==owner||!integer(owner,1)||data.page!==page||data.limit!==limit||!integer(data.count,0,Number.MAX_SAFE_INTEGER)\n+    ||!Array.isArray(data.list)||data.list.length!==Math.max(0,Math.min(limit,data.count-(page-1)*limit)))throw Error('会员权益目录与当前账户或分页不一致');\n+  let previewBytes=0;const ids=new Set<number>();let prior:MembershipRightAuthorRow|undefined;\n+  const list=data.list.map(value=>{\n+    const r=object(value);\n+    if(!integer(r.id,1)||ids.has(r.id)||!hash(r.version)||!['right_type','title','show_title','image','explain','content','image_preview','content_preview'].every(k=>typeof r[k]==='string')\n+      ||!['number','sort','status','add_time'].every(k=>integer(r[k])))throw Error('会员权益数据不完整，请重新读取');\n+    previewBytes+=new TextEncoder().encode(r.content_preview as string).byteLength;\n+    if(new TextEncoder().encode(r.content as string).byteLength>4000000||previewBytes>10*1024*1024)throw Error('会员权益内容超过显示容量');\n+    const row={id:r.id,right_type:r.right_type,title:r.title,show_title:r.show_title,image:r.image,explain:r.explain,content:r.content,\n+      number:r.number,sort:r.sort,status:r.status,add_time:r.add_time,version:r.version,image_preview:r.image_preview,content_preview:r.content_preview} as MembershipRightAuthorRow;\n+    if(prior&&(prior.sort<row.sort||prior.sort===row.sort&&prior.id<=row.id))throw Error('会员权益排序错误');\n+    ids.add(row.id);prior=row;return row;\n+  });\n+  return{author:1,actor_id:owner,page,limit,count:data.count,list};\n+}\n+export function membershipRightMetadata(form:MembershipRightMetadata,base?:MembershipRightAuthorRow):MembershipRightMetadata {\n+  const text=(key:'right_type'|'title'|'show_title'|'image'|'explain',max:number,required=false)=>{\n+    const v=form[key];if(base&&v===base[key])return v;\n+    if(typeof v!=='string'||[...v].length>max||(key==='explain'?/[\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]/u:/[\\u0000-\\u001f\\u007f]/u).test(v)||required&&!v.trim())throw Error('请核对权益名称、图标和说明');\n+    return v;\n+  };\n+  if(!integer(form.number)||!integer(form.sort)||(!base||form.number!==base.number||form.right_type!==base.right_type)&&form.number<0)throw Error('权益数值或排序无效');\n+  const number=form.number;\n+  if((!base||form.number!==base.number||form.right_type!==base.right_type)&&(['integral','sign','express'].includes(form.right_type)?number<1||number>10000:form.right_type==='offline'&& (number<1||number>100)))throw Error('权益数值超出允许范围');\n+  return{right_type:text('right_type',100,true),title:text('title',200,true),show_title:text('show_title',8,true),image:text('image',200),explain:text('explain',8,true),number,sort:form.sort};\n+}\n+function version(value:unknown,id:number):{id:number;version:string} {\n+  const r=object(value);if(!integer(r.id,1)||id>0&&r.id!==id||!hash(r.version))throw Error('权益保存回执无效，请重新读取核对');\n+  return{id:r.id,version:r.version};\n+}\n+function bounded(payload:Record<string,unknown>){if(new TextEncoder().encode(JSON.stringify(payload)).byteLength>256*1024)throw Error('权益内容超过256 KiB请求容量');return payload;}\n+export async function apiMembershipRightAuthorPage(page:number,owner:number,signal?:AbortSignal){\n+  return decodeMembershipRightPage(await getData<unknown>(request.get('/member/right',{params:{author:1,page,limit:30},signal})),page,owner);\n+}\n+export async function apiSaveMembershipRightMetadata(id:number,token:string,data:MembershipRightMetadata,status:0|1,signal?:AbortSignal){\n+  return version(await getData<unknown>(request.post(`/member_right/save/${id}`,bounded({author:1,version:token,...data,...(id?{}:{status})}),{signal})),id);\n+}\n+export async function apiSetMembershipRightStatus(id:number,token:string,status:0|1,signal?:AbortSignal){\n+  return version(await getData<unknown>(request.post(`/member_right/save/${id}`,{author:1,version:token,status},{signal})),id);\n+}\n+export async function apiSaveMembershipRightContent(id:number,token:string,content:string,signal?:AbortSignal){\n+  return version(await getData<unknown>(request.post(`/member/save/content/${id}`,bounded({author:1,version:token,content}),{signal})),id);\n+}\ndiff --git a/view/uniapp-ts/src/pages.json b/view/uniapp-ts/src/pages.json\nindex e3162a46b14b0e7065ff7164ead0feb2d3831fa2..e2786dce432c7c6ac9286660709f9859e6ffe57f 100644\n--- a/view/uniapp-ts/src/pages.json\n+++ b/view/uniapp-ts/src/pages.json\n@@ -549,6 +549,10 @@\n         \"navigationBarTitleText\": \"支付密码\"\n       }\n     },\n+    {\n+      \"path\": \"pages/user/vipRights\",\n+      \"style\": { \"navigationBarTitleText\": \"会员权益\", \"navigationBarBackgroundColor\": \"#312B23\", \"navigationBarTextStyle\": \"white\" }\n+    },\n     {\n       \"path\": \"pages/user/vipOpen\",\n       \"style\": {\ndiff --git a/view/uniapp-ts/src/config/navigation.ts b/view/uniapp-ts/src/config/navigation.ts\nindex fe9dcb4ac720eac860200372fc211c925ed7de20..62e022d21f7bdfa374f7fa73bc87bbc5f83cf3fd 100644\n--- a/view/uniapp-ts/src/config/navigation.ts\n+++ b/view/uniapp-ts/src/config/navigation.ts\n@@ -127,6 +127,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([\n   \"/pages/user/bank\",\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n+  \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n   \"/pages/annex/offline_result/index\",\n@@ -261,7 +262,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {\n \n   \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n-  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n+  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n   \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\ndiff --git a/workers-ts/src/services/content/FabRouteRegistry.ts b/workers-ts/src/services/content/FabRouteRegistry.ts\nindex c46afe7190822ae240c2360826b3d4ee2e0415c5..a5e2202bc913be515b903e7f65897bc4ade33999 100644\n--- a/workers-ts/src/services/content/FabRouteRegistry.ts\n+++ b/workers-ts/src/services/content/FabRouteRegistry.ts\n@@ -128,6 +128,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([\n   \"/pages/user/bank\",\n   \"/pages/user/payPassword\",\n   \"/pages/user/vipOpen\",\n+  \"/pages/user/vipRights\",\n   \"/pages/annex/vip_active/index\",\n   \"/pages/annex/offline_pay/index\",\n   \"/pages/annex/offline_result/index\",\n@@ -262,7 +263,7 @@ export const LEGACY_ROUTE_RULES: Readonly<Record<string, LegacyRouteRule>> = {\n \n   \"/pages/annex/vip_paid/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_paid_active/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\n-  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipOpen\", coverage: \"candidate_covered\" },\n+  \"/pages/annex/vip_paid_rights/index\": { target: \"/pages/user/vipRights\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n   \"/pages/annex/vip_grade_active/index\": { target: \"/pages/user/level\", coverage: \"partial_replacement\" },\n   \"/pages/annex/vip_coupon/index\": { target: \"/pages/user/vipOpen\", coverage: \"partial_replacement\" },\ndiff --git a/workers-ts/src/services/content/UserCenterPublicReadService.ts b/workers-ts/src/services/content/UserCenterPublicReadService.ts\nindex 3b515a943541d3479b415dc51b1512e53835c219..70deaf533277c29fe61ee2e558289923eab70a65 100644\n--- a/workers-ts/src/services/content/UserCenterPublicReadService.ts\n+++ b/workers-ts/src/services/content/UserCenterPublicReadService.ts\n@@ -63,7 +63,7 @@ export class UserCenterPublicReadService{\n         if((path==='/pages/user/balanceLogs'||path==='/pages/user/recharge')&&!capabilities.balance)return[];\n         if((path==='/pages/user/finance'||path==='/pages/user/spread')&&!capabilities.promotion)return[];\n         if((original==='/pages/users/user_vip/index'||['/pages/user/level','/pages/user/growthRecords'].includes(path))&&!capabilities.member)return[];\n-        if(path==='/pages/user/vipOpen'&&!capabilities.paid_member)return[];\n+        if(['/pages/user/vipOpen','/pages/user/vipRights'].includes(path)&&!capabilities.paid_member)return[];\n         if(path==='/pages/operator/writeoff'&&!capabilities.writeoff)return[];\n         if(path.startsWith('/pages/merchant/')&&!capabilities.merchant)return[];\n         if(path.startsWith('/pages/customer-work/')&&!capabilities.work)return[];\n"
+  },
+  "api_report": {
+    "before_sha256": "022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7",
+    "after_sha256": "1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0",
+    "before_bytes": 644498,
+    "after_bytes": 645939,
+    "operations": [
+      {
+        "kind": "splice",
+        "path": [
+          "frontendSources"
+        ],
+        "index": 47,
+        "before": [],
+        "after": [
+          {
+            "file": "view/admin-ts/src/api/membershipRights.ts",
+            "sha256": "306019433610c8b1b4c00e78ba93c40ce3f7d2574de359b260792b412cf7314e"
+          }
+        ]
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "callSites"
+        ],
+        "before": 707,
+        "after": 711
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "pathVariants"
+        ],
+        "before": 745,
+        "after": 749
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "registered"
+        ],
+        "before": 745,
+        "after": 749
+      },
+      {
+        "kind": "replace",
+        "path": [
+          "counts",
+          "executable"
+        ],
+        "before": 745,
+        "after": 749
+      },
+      {
+        "kind": "splice",
+        "path": [
+          "calls"
+        ],
+        "index": 326,
+        "before": [],
+        "after": [
+          {
+            "method": "GET",
+            "path": "/member/right",
+            "source": "view/admin-ts/src/api/membershipRights.ts",
+            "line": 47,
+            "registered": true,
+            "matchedRoute": "/member/right",
+            "matchedHandler": "AdminPaidMembership.rights",
+            "availability": "executable"
+          },
+          {
+            "method": "POST",
+            "path": "/member_right/save/:param",
+            "source": "view/admin-ts/src/api/membershipRights.ts",
+            "line": 50,
+            "registered": true,
+            "matchedRoute": "/member_right/save/:id",
+            "matchedHandler": "AdminPaidMembership.saveRight",
+            "availability": "executable"
+          },
+          {
+            "method": "POST",
+            "path": "/member_right/save/:param",
+            "source": "view/admin-ts/src/api/membershipRights.ts",
+            "line": 53,
+            "registered": true,
+            "matchedRoute": "/member_right/save/:id",
+            "matchedHandler": "AdminPaidMembership.saveRight",
+            "availability": "executable"
+          },
+          {
+            "method": "POST",
+            "path": "/member/save/content/:param",
+            "source": "view/admin-ts/src/api/membershipRights.ts",
+            "line": 56,
+            "registered": true,
+            "matchedRoute": "/member/save/content/:id",
+            "matchedHandler": "AdminPaidMembership.saveRightContent",
+            "availability": "executable"
+          }
+        ]
+      }
+    ]
+  },
+  "navigation": {
+    "route": "/pages/user/vipRights",
+    "before_count": 141,
+    "after_count": 142,
+    "before_routes_sha256": "b80a240e19847caa2c2e349adfb29452aa610cc54388beecbef47aa4fa7a061e",
+    "after_routes_sha256": "b7a5cd59b6460b24c63cde9803b244febd3d048c627030ee1e0df5383a4f72e4",
+    "key": "/pages/annex/vip_paid_rights/index",
+    "before_rule": {
+      "target": "/pages/user/vipOpen",
+      "coverage": "candidate_covered"
+    },
+    "after_rule": {
+      "target": "/pages/user/vipRights",
+      "coverage": "candidate_covered"
+    },
+    "before_rules_sha256": "2e5c93836a205f0cab21000bf02e4b445a69d043873d0e00885371a6f4f44668",
+    "after_rules_sha256": "4e5304a9e55a77460c751edda3829f2684d3e93b6ff2193c053ff5e82acfbbd8"
+  },
+  "preserved_files": [
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431",
+      "bytes": 45718
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de",
+      "bytes": 66571
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e",
+      "bytes": 2940
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50",
+      "bytes": 23388
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693",
+      "bytes": 5851
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295",
+      "bytes": 10746
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86",
+      "bytes": 13813
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13",
+      "bytes": 11589
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9",
+      "bytes": 6294
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236",
+      "bytes": 28750
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-growth-records-manifest-20261026.json",
+      "sha256": "ad63de188028e7801656cae00e94dd2b1132abf0953febe3611c5439cb292298",
+      "bytes": 1914
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-points-centre-manifest-20261025.json",
+      "sha256": "008cc87b7a91918b04ff949d7684dff38b05324df8544af41ad25d59d7ef5d8d",
+      "bytes": 582
+    },
+    {
+      "file": "workers-ts/test/fixtures/customer-sign-centre-manifest-20261025.json",
+      "sha256": "1363555e325961e69a5f1632b8d901246f206f435ba74c7c6d0517c846045d0a",
+      "bytes": 585
+    },
+    {
+      "file": "workers-ts/test/helpers/customerGrowthRecordsManifest.ts",
+      "sha256": "d00f042a01a8e2af4a11a806f3832b13b3392d4adf80553bbe3fd697a4f3ce85",
+      "bytes": 2043
+    },
+    {
+      "file": "workers-ts/test/helpers/customerPointsCentreManifest.ts",
+      "sha256": "01980b2cd124302886c7c39f9efa0d699cf099d1e09de13a0e067c60aa36ea06",
+      "bytes": 1552
+    },
+    {
+      "file": "workers-ts/test/helpers/customerSignCentreManifest.ts",
+      "sha256": "c6d3037e66184e8dc413db5f9edab4970542e75f5ec8cf85d9b218ae211461ab",
+      "bytes": 1637
+    },
+    {
+      "file": "workers-ts/test/helpers/adminUserFilterSourceBinding.ts",
+      "sha256": "10a933d5b1e00f44f659e42caa968e37ae4677a4539b62e0c98d946649ce8fe0",
+      "bytes": 7016
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d",
+      "bytes": 6302
+    },
+    {
+      "file": "workers-ts/test/helpers/routeSourceIncrement.ts",
+      "sha256": "45afe65afab764619fe0bbef35ca1385c6793600e905c72703dfa9356af3e3c0",
+      "bytes": 2717
+    },
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472",
+      "bytes": 17141
+    },
+    {
+      "file": "workers-ts/audit/diy-footer-source-binding-20261022.json",
+      "sha256": "88ada866df4f97a5f50e3cce0321ac7accf16f0989198e2877d4455c7f51b2dd",
+      "bytes": 11768
+    }
+  ],
+  "boundary": "Only five exact whole production sources, eight explicit historical test adapters, one native page/alias and six complete-report operations are reversible. Every historical fixture and report apply output remains immutable; unreviewed source/report/navigation bytes fail closed."
+}

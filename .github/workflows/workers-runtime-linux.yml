@@ -340,7 +340,7 @@ jobs:
       - name: Verify Admin user filters
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
-        run: npm run test:user-directory
+        run: npm run test:user-directory && npm run test:membership-rights
 
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'

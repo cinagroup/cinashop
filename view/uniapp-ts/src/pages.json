@@ -550,6 +550,10 @@
       }
     },
     {
+      "path": "pages/user/vipRights",
+      "style": { "navigationBarTitleText": "会员权益", "navigationBarBackgroundColor": "#312B23", "navigationBarTextStyle": "white" }
+    },
+    {
       "path": "pages/user/vipOpen",
       "style": {
         "navigationBarTitleText": "付费会员"

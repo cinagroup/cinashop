@@ -1,18 +1,22 @@
+import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules } from './helpers/membershipRightsSourceBinding';
+const REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);
+const SERVER_REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);
+const LEGACY_ROUTE_RULES=reverseMembershipRightsLegacyRules(currentClientRules);
 import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from "./helpers/routeSourceIncrement";
 import {
-  LEGACY_ROUTE_RULES,
-  REGISTERED_PAGE_ROUTES,
+  LEGACY_ROUTE_RULES as currentClientRules,
+  REGISTERED_PAGE_ROUTES as currentClientRoutes,
   resolveRegisteredPageRoute,
 } from "../../view/uniapp-ts/src/config/navigation";
 import {
-  REGISTERED_PAGE_ROUTES as SERVER_REGISTERED_PAGE_ROUTES,
+  REGISTERED_PAGE_ROUTES as currentServerRoutes,
   resolveRegisteredPageRoute as resolveServerRegisteredPageRoute,
 } from "../src/services/content/FabRouteRegistry";
 

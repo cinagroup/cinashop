@@ -1,3 +1,4 @@
+import { peelMembershipRightsReport } from './membershipRightsSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -80,7 +81,7 @@ function reportBridge<T>(input: T, reverse: boolean, binding: AdminLevelDefiniti
   return result;
 }
 export const applyAdminLevelDefinitionReport = <T>(historical: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(historical, false, binding);
-export const reverseAdminLevelDefinitionReport = <T>(current: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(current, true, binding);
+export const reverseAdminLevelDefinitionReport = <T>(current: T, binding = adminLevelDefinitionSourceBinding): T => reportBridge(peelMembershipRightsReport(current), true, binding);
 /** The historical migration API still accepts its one exact original result;
  * current live input must match the independently captured complete level report. */
 export function peelAdminLevelDefinitionReport<T>(input: T, binding = adminLevelDefinitionSourceBinding): T {

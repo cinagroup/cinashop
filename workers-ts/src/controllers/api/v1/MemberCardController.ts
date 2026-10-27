@@ -12,7 +12,10 @@ function service(c: C): PaidMembershipService {
 }
 
 export async function index(c: C) {
-  return jsonOk(c, await service(c).index(c.get("uid")));
+  const query = new URL(c.req.url).searchParams, details = query.has('rights');
+  if (details && (query.size !== 1 || query.getAll('rights').length !== 1 || query.get('rights') !== '1')) throw new ValidateException('权益介绍只接受rights=1');
+  if (details) c.header('Cache-Control', 'private, no-store');
+  return jsonOk(c, await service(c).index(c.get('uid'), details));
 }
 
 export async function draw(c: C) {

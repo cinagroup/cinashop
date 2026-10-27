@@ -19,7 +19,8 @@
     "test:diy-editorial-author": "node --test --test-concurrency=1 scripts/diy-news-author-fields-runtime.test.cjs scripts/diy-editorial-author-runtime.test.cjs",
     "test:diy-commerce-author": "node --test --test-concurrency=1 scripts/diy-commerce-author-runtime.test.cjs scripts/diy-commerce-projection-runtime.test.cjs",
     "test:diy-community-author": "node --test --test-concurrency=1 scripts/diy-community-author-runtime.test.cjs scripts/diy-community-editor-runtime.test.cjs",
-    "test:user-directory": "node --test --test-concurrency=1 scripts/user-directory-runtime.test.cjs"
+    "test:user-directory": "node --test --test-concurrency=1 scripts/user-directory-runtime.test.cjs",
+    "test:membership-rights": "node --test --test-concurrency=1 scripts/membership-rights-runtime.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

@@ -1,13 +1,16 @@
+import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes } from './helpers/membershipRightsSourceBinding';
+const clientPages=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);
+const serverPages=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);
 import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
-import { readFileSync } from "node:fs";
+
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { REGISTERED_PAGE_ROUTES as clientPages, resolveRegisteredPageRoute as clientRoute } from "../../view/uniapp-ts/src/config/navigation";
-import { REGISTERED_PAGE_ROUTES as serverPages, resolveRegisteredPageRoute as serverRoute } from "../src/services/content/FabRouteRegistry";
+import { REGISTERED_PAGE_ROUTES as currentClientRoutes, resolveRegisteredPageRoute as clientRoute } from "../../view/uniapp-ts/src/config/navigation";
+import { REGISTERED_PAGE_ROUTES as currentServerRoutes, resolveRegisteredPageRoute as serverRoute } from "../src/services/content/FabRouteRegistry";
 import { parseCommunityWorkspaceEntry, resolveCommunityLegacyPageEntry, resolveCommunityPageRoute } from "../../view/common/communityRoute";
 import { communityInbound, communityQuery } from "../../view/common/communityShare";
 

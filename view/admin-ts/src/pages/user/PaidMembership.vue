@@ -65,17 +65,18 @@
         </el-tab-pane>
 
         <el-tab-pane label="会员权益" name="rights">
-          <div class="toolbar">
-            <div><strong>会员权益</strong><p>控制会员中心展示与积分等运行时参数</p></div>
-            <el-button type="primary" @click="openRight()">新增权益</el-button>
-          </div>
-          <el-table :data="rights" v-loading="rightLoading" stripe row-key="id" empty-text="暂无会员权益">
-            <el-table-column label="权益" min-width="220"><template #default="{ row }"><strong>{{ row.show_title }}</strong><div class="sub mono">{{ row.right_type }} · {{ row.title }}</div></template></el-table-column>
-            <el-table-column prop="explain" label="说明" min-width="260" show-overflow-tooltip />
+          <div class="toolbar"><div><strong>会员权益</strong><p>设置权益图标、展示名称与独立介绍</p></div><el-button type="primary" :disabled="!canManageRights || rightBusy || rightBlocked" @click="openRight()">新增权益</el-button></div>
+          <el-alert v-if="!canViewRights" title="暂无查看会员权益权限" type="info" :closable="false" />
+          <el-alert v-if="rightError" :title="rightError" type="warning" :closable="false" class="plan-error"><el-button link type="primary" :disabled="rightBusy" @click="loadRights()">重新读取权益</el-button></el-alert>
+          <el-table v-if="canViewRights" :data="rightItems" v-loading="rightLoading" row-key="id" empty-text="暂无会员权益" data-membership-right-table>
+            <el-table-column label="图标" width="85"><template #default="{ row }"><img v-if="row.preview" :key="row.preview" class="right-table-icon" :src="row.preview" :alt="row.show_title" @error="row.imageError" /><span v-else class="sub">暂无图标</span></template></el-table-column>
+            <el-table-column label="权益名称" min-width="180"><template #default="{ row }"><strong>{{ row.show_title }}</strong><div class="sub">{{ row.title }} · {{ row.right_type }}</div></template></el-table-column>
+            <el-table-column prop="explain" label="权益简介" min-width="220" show-overflow-tooltip />
             <el-table-column prop="number" label="数值" width="90" />
-            <el-table-column label="状态" width="90"><template #default="{ row }"><el-tag :type="row.status ? 'success' : 'info'">{{ row.status ? '启用' : '停用' }}</el-tag></template></el-table-column>
-            <el-table-column label="操作" width="90" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openRight(row)">编辑</el-button></template></el-table-column>
+            <el-table-column label="状态" width="110"><template #default="{ row }"><el-switch :model-value="row.status === 1" inline-prompt active-text="启用" inactive-text="停用" :disabled="!canManageRights || rightBusy || rightBlocked" :loading="rightStatusId===row.id" :aria-label="`${row.show_title}：${row.status===1?'停用':'启用'}`" @change="toggleRight(row.original,$event)" /></template></el-table-column>
+            <el-table-column label="操作" width="180" fixed="right"><template #default="{ row }"><el-button link type="primary" :disabled="!canManageRights || rightBusy || rightBlocked" @click="openRight(row.original)">编辑</el-button><el-button link type="primary" :disabled="!canManageRights || rightBusy || rightBlocked" @click="openRight(row.original,true)">权益介绍</el-button></template></el-table-column>
           </el-table>
+          <div v-if="canViewRights" class="pager"><el-pagination :current-page="rightPage" :page-size="30" :total="rightCount" layout="prev, pager, next, total" :disabled="rightBusy" @current-change="loadRights" /></div>
         </el-tab-pane>
 
         <el-tab-pane label="会员记录" name="records">
@@ -163,20 +164,24 @@
       <div class="pager"><el-pagination v-model:current-page="cardPage" :page-size="20" layout="prev, pager, next, total" :total="cardCount" @current-change="loadCards" /></div>
     </el-drawer>
 
-    <el-dialog v-model="rightDialog" :title="rightForm.id ? '编辑会员权益' : '新增会员权益'" width="min(680px, 94vw)" append-to-body>
-      <el-form label-position="top">
-        <div class="form-grid">
-          <el-form-item label="权益类型"><el-input v-model="rightForm.right_type" maxlength="100" /></el-form-item>
-          <el-form-item label="内部名称"><el-input v-model="rightForm.title" maxlength="200" /></el-form-item>
-          <el-form-item label="展示名称"><el-input v-model="rightForm.show_title" maxlength="255" /></el-form-item>
-          <el-form-item label="权益数值"><el-input-number v-model="rightForm.number" :min="0" :max="2147483647" /></el-form-item>
-          <el-form-item label="排序"><el-input-number v-model="rightForm.sort" :min="-99999" :max="99999" /></el-form-item>
-          <el-form-item label="状态"><el-switch v-model="rightForm.status" :active-value="1" :inactive-value="0" /></el-form-item>
-        </div>
-        <el-form-item label="简要说明"><el-input v-model="rightForm.explain" maxlength="1024" /></el-form-item>
-        <el-form-item label="详细内容"><el-input v-model="rightForm.content" type="textarea" :rows="5" maxlength="200000" /></el-form-item>
+    <el-dialog v-model="rightDialog" :title="rightForm.id ? '编辑会员权益' : '新增会员权益'" width="min(620px, 94vw)" append-to-body :close-on-click-modal="false" :before-close="requestCloseRight" :close-on-press-escape="!rightSaving" :show-close="!rightSaving">
+      <el-alert v-if="rightBlocked || editorStale" title="请先重新读取核对；可复制当前草稿，关闭后重新编辑" type="warning" :closable="false" />
+      <el-form label-width="100px" class="right-form" :disabled="!canSaveRight">
+        <el-form-item label="权益图标"><div class="right-image-field"><img v-if="rightIcon" :src="rightIcon" class="right-form-icon" alt="权益图标预览" /><span v-else class="right-form-icon empty">暂无图标</span><SeckillActivityImagePicker :key="editorKey" :editor-key="editorKey" :disabled="!canSaveRight" title="选择权益图标" @choose="chooseRightImage" /></div></el-form-item>
+        <el-form-item label="权益类型"><el-input v-model="rightForm.right_type" aria-label="权益类型" /></el-form-item>
+        <el-form-item label="内部名称"><el-input v-model="rightForm.title" aria-label="内部名称" /></el-form-item>
+        <el-form-item label="展示名称"><div class="right-input"><el-input v-model="rightForm.show_title" aria-label="展示名称" /><span class="sub">修改后最多8个字</span></div></el-form-item>
+        <el-form-item label="权益简介"><div class="right-input"><el-input v-model="rightForm.explain" type="textarea" :rows="2" aria-label="权益简介" /><span class="sub">修改后最多8个字</span></div></el-form-item>
+        <el-form-item label="权益数值"><el-input-number v-model="rightForm.number" :min="-2147483648" :max="2147483647" aria-label="权益数值" /></el-form-item>
+        <el-form-item label="排序"><el-input-number v-model="rightForm.sort" :min="-2147483648" :max="2147483647" aria-label="权益排序" /></el-form-item>
+        <el-form-item v-if="!rightForm.id" label="状态"><el-switch v-model="rightForm.status" :active-value="1" :inactive-value="0" /></el-form-item>
       </el-form>
-      <template #footer><el-button @click="rightDialog = false">取消</el-button><el-button type="primary" :loading="rightSaving" @click="saveRight">保存</el-button></template>
+      <template #footer><el-button :disabled="rightSaving" @click="requestCloseRight">关闭</el-button><el-button type="primary" :disabled="!canSaveRight" :loading="rightSaving" @click="saveRight">保存</el-button></template>
+    </el-dialog>
+    <el-dialog v-model="contentDialog" title="权益介绍" width="min(960px, 96vw)" append-to-body :close-on-click-modal="false" :before-close="requestCloseRight" :close-on-press-escape="!rightSaving" :show-close="!rightSaving">
+      <el-alert v-if="rightBlocked || editorStale" title="请先重新读取核对；可复制当前草稿，关闭后重新编辑" type="warning" :closable="false" />
+      <MembershipRightEditor v-if="contentDialog" :key="editorKey" v-model="rightContent" :preview="rightContentPreview" :disabled="!canSaveRight" :editor-key="editorKey" />
+      <template #footer><el-button :disabled="rightSaving" @click="requestCloseRight">关闭</el-button><el-button type="primary" :disabled="!canSaveRight" :loading="rightSaving" @click="saveContent">保存介绍</el-button></template>
     </el-dialog>
 
     <el-dialog v-model="scanDialog" title="会员激活二维码" width="min(720px, 94vw)" append-to-body>
@@ -191,6 +196,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import SeckillActivityImagePicker from '@/pages/activity/SeckillActivityImagePicker.vue';
+import MembershipRightEditor from './MembershipRightEditor.vue';
+import { useMembershipRights } from '@/composables/useMembershipRights';
 import { useMembershipPlanCatalogue } from "@/composables/useMembershipPlanCatalogue";
 import {
   apiMembershipScan,
@@ -199,10 +207,8 @@ import {
   apiMembershipCards,
   apiMembershipRecordPlanOptions,
   apiMembershipRecords,
-  apiMembershipRights,
   apiSaveMembershipAgreement,
   apiSaveMembershipBatch,
-  apiSaveMembershipRight,
   apiSetMembershipBatchStatus,
   apiSetMembershipCardStatus,
   type IssuedMembershipCard,
@@ -210,7 +216,6 @@ import {
   type MembershipCard,
   type MembershipRecord,
   type MembershipRecordFilterDraft,
-  type MembershipRight,
   type MembershipScan,
   membershipRecordParams,
 } from "@/api/membership";
@@ -220,11 +225,12 @@ const activeTab = ref<TabName>("plans");
 const { plans, planPage, planCount, planError, planLoading, planSaving, statusSavingId, planDialog, planForm,
   canViewPlans, canManagePlans, planBusy, activePlanCount, loadPlans, openPlan, savePlan, togglePlan } = useMembershipPlanCatalogue();
 const batches = ref<MembershipBatch[]>([]);
-const rights = ref<MembershipRight[]>([]);
+const { rightItems, rightPage, rightCount, rightLoading, rightSaving, rightStatusId, rightBusy, rightError, rightBlocked,
+  rightDialog, contentDialog, rightForm, rightContent, rightContentPreview, rightIcon, editorKey, editorStale, canSaveRight,
+  canViewRights, canManageRights, loadRights, openRight, requestCloseRight, saveRight, saveContent, toggleRight, chooseRightImage } = useMembershipRights();
 const records = ref<MembershipRecord[]>([]);
 const cards = ref<MembershipCard[]>([]);
 const batchLoading = ref(false);
-const rightLoading = ref(false);
 const recordLoading = ref(false);
 const cardLoading = ref(false);
 const batchPage = ref(1);
@@ -255,9 +261,6 @@ const batchForm = reactive({ id: 0, title: "", total_num: 100, use_day: 30, stat
 const issuedDialog = ref(false);
 const issuedCards = ref<IssuedMembershipCard[]>([]);
 const cardDrawer = ref(false);
-const rightDialog = ref(false);
-const rightSaving = ref(false);
-const rightForm = reactive({ id: 0, right_type: "", title: "", show_title: "", image: "", explain: "", content: "", number: 1, sort: 0, status: 1 });
 const agreement = reactive({ id: 0, title: "", content: "", status: 1, sort: 0 });
 const agreementSaving = ref(false);
 const scanDialog = ref(false);
@@ -280,7 +283,6 @@ function recordExpiryLabel(row: MembershipRecord): string {
 function planTypeLabel(type: string) { return planTypes.find((item) => item.value === type)?.label ?? type; }
 
 async function loadBatches() { batchLoading.value = true; try { const result = await apiMembershipBatches({ page: batchPage.value, limit: 20 }); batches.value = result.list; batchCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员卡批次加载失败"); } finally { batchLoading.value = false; } }
-async function loadRights() { rightLoading.value = true; try { const result = await apiMembershipRights(); rights.value = result.list; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员权益加载失败"); } finally { rightLoading.value = false; } }
 async function loadRecordPlanOptions() { recordPlanLoading.value = true; recordPlanError.value = ""; try { recordPlanOptions.value = await apiMembershipRecordPlanOptions(); } catch (error) { recordPlanOptions.value = []; recordPlanError.value = error instanceof Error ? error.message : "会员类型目录加载失败"; } finally { recordPlanLoading.value = false; } }
 async function loadRecords() { recordLoading.value = true; try { const result = await apiMembershipRecords(membershipRecordParams(recordQuery, recordPage.value)); records.value = result.list; recordCount.value = result.count; } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员记录加载失败"); } finally { recordLoading.value = false; } }
 async function loadAgreement() { try { const result = await apiMembershipAgreement(); if (result) Object.assign(agreement, { id: result.id, title: result.title, content: result.content ?? "", status: result.status, sort: result.sort }); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "会员协议加载失败"); } }
@@ -338,15 +340,6 @@ function downloadIssuedCards() {
   URL.revokeObjectURL(url);
 }
 
-function openRight(row?: MembershipRight) {
-  Object.assign(rightForm, row ? { ...row } : { id: 0, right_type: "", title: "", show_title: "", image: "", explain: "", content: "", number: 1, sort: 0, status: 1 });
-  rightDialog.value = true;
-}
-async function saveRight() {
-  if (!rightForm.right_type.trim() || !rightForm.title.trim() || !rightForm.show_title.trim()) return ElMessage.warning("请完整填写权益类型和名称");
-  rightSaving.value = true;
-  try { await apiSaveMembershipRight(rightForm.id, { ...rightForm }); rightDialog.value = false; ElMessage.success("会员权益已保存"); await loadRights(); } catch (error) { ElMessage.error(error instanceof Error ? error.message : "保存失败"); } finally { rightSaving.value = false; }
-}
 async function saveAgreement() {
   if (!agreement.title.trim() || !agreement.content.trim()) return ElMessage.warning("请填写协议标题与内容");
   agreementSaving.value = true;
@@ -357,6 +350,7 @@ onMounted(async () => { await Promise.all([loadBatches(), loadRecordPlanOptions(
 </script>
 
 <style scoped>
+.right-table-icon{width:36px;height:36px;object-fit:contain}.right-form{padding-top:20px}.right-form-icon{display:flex;align-items:center;justify-content:center;width:60px;height:60px;object-fit:contain;border:1px solid #dcdee2;border-radius:3px}.right-form-icon.empty{font-size:12px;color:#808695}.right-image-field{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.right-input{width:100%}
 .membership-page { display: grid; gap: 18px; }
 .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 28px; color: #fff; border-radius: 18px; background: radial-gradient(circle at 85% 0%, rgba(255,255,255,.19), transparent 34%), linear-gradient(135deg, #172554, #4338ca 56%, #7c3aed); box-shadow: 0 18px 45px rgba(49,46,129,.22); }
 .hero h2 { margin: 4px 0 8px; font-size: 28px; }

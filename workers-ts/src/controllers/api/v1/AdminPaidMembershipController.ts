@@ -1,3 +1,6 @@
+import { AdminMembershipRightAuthorService } from '@/services/admin/AdminMembershipRightAuthorService';
+import { parseMembershipRightAuthorJson } from '@/services/admin/AdminMembershipRightInput';
+import type { AdminAuthorityActor } from '@/services/admin/AdminAuthorityWriteService';
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { AdminPaidMembershipService } from "@/services/user/AdminPaidMembershipService";
@@ -9,7 +12,7 @@ type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 
 const MAX_BODY_BYTES = 256 * 1024;
 
-async function boundedBody(c: C): Promise<Record<string, unknown>> {
+async function boundedBody(c: C, rightAuthor = false): Promise<Record<string, unknown>> {
   const declared = Number(c.req.header("content-length") ?? "0");
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
     throw new ValidateException("请求数据不能超过256 KiB");
@@ -36,9 +39,10 @@ async function boundedBody(c: C): Promise<Record<string, unknown>> {
     offset += chunk.byteLength;
   }
   try {
-    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    const text = new TextDecoder().decode(bytes);
+    const parsed: unknown = JSON.parse(text);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
+      return rightAuthor && Object.hasOwn(parsed, "author") ? parseMembershipRightAuthorJson(text) : parsed as Record<string, unknown>;
     }
   } catch {
     // Normalized below.
@@ -110,20 +114,35 @@ export async function records(c: C) {
   return jsonOk(c, await service(c).records(c.req.query()));
 }
 
+function rightActor(c: C): AdminAuthorityActor {
+  c.header('Cache-Control', 'private, no-store'); c.header('Pragma', 'no-cache');
+  return { id: c.get('adminId') ?? 0, authVersion: c.get('socketAuthVersion') ?? '', expiresAt: c.get('socketTokenExp') ?? 0 };
+}
+function rightAuthorService(c: C) { return new AdminMembershipRightAuthorService(c.get('container'), c.env); }
+function authorWrite(c: C) {
+  if (new URL(c.req.url).searchParams.size) throw new ValidateException('权益保存不接受查询参数');
+  return rightActor(c);
+}
 export async function rights(c: C) {
+  const query = new URL(c.req.url).searchParams;
+  if (query.has('author')) return jsonOk(c, await rightAuthorService(c).list(query, rightActor(c)));
   return jsonOk(c, await service(c).rights());
 }
 
 export async function saveRight(c: C) {
-  return jsonOk(c, await service(c).saveRight(c.req.param("id"), await boundedBody(c)), "权益保存成功");
+  c.header('Cache-Control', 'private, no-store');
+  const body = await boundedBody(c, true);
+  return jsonOk(c, Object.hasOwn(body, 'author')
+    ? await rightAuthorService(c).save(c.req.param('id'), body, authorWrite(c))
+    : await service(c).saveRight(c.req.param('id'), body), '权益保存成功');
 }
 
 export async function saveRightContent(c: C) {
-  return jsonOk(
-    c,
-    await service(c).saveRightContent(c.req.param("id"), await boundedBody(c)),
-    "权益内容保存成功",
-  );
+  c.header('Cache-Control', 'private, no-store');
+  const body = await boundedBody(c, true);
+  return jsonOk(c, Object.hasOwn(body, 'author')
+    ? await rightAuthorService(c).saveContent(c.req.param('id'), body, authorWrite(c))
+    : await service(c).saveRightContent(c.req.param('id'), body), '权益内容保存成功');
 }
 
 export async function membershipAgreement(c: C) {

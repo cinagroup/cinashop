@@ -1,3 +1,4 @@
+import { reverseMembershipRightsReport } from './helpers/membershipRightsSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -18,7 +19,7 @@ const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
 const blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\0`).update(value).digest('hex');
 let report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
-const current = () => structuredClone(report ??= buildAdminFrontendApiAuditReport());
+const current = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));
 const previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));
 const historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;
 const sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];

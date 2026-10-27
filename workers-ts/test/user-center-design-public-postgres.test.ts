@@ -66,4 +66,23 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native actor-saf
    expect(commands.filter(command=>/^\s*(?:insert|update|delete|merge|alter|create|drop|truncate|grant|revoke)\b/iu.test(command))).toEqual([]);
   });
  });
+ it('filters both membership-rights URLs and their genuine legacy alias from menus and posters when paid membership is disabled',async()=>{
+  await profile(async app=>{
+   const [row]=await f.db.select().from(systemDise).where(eq(systemDise.id,88)),value=JSON.parse(row.value!);
+   const paths=['/pages/annex/vip_paid_rights/index','/pages/user/vipRights','/pages/user/vipOpen'];
+   for(const group of ['poster','menu'])value[group].list=paths.map((url,index)=>({...value[group].list[0],name:`权益入口${index}`,url}));
+   await f.db.update(systemDise).set({value:JSON.stringify(value)}).where(eq(systemDise.id,88));
+   const commands:string[]=[],db=observeUserCenterDb(app.db,async(_tx,command)=>{commands.push(command);}),service=new UserCenterPublicReadService(createContainerFromDb(db),userCenterEnv);
+   const enabled=await f.snapshot();
+   for(const uid of[11,0]){const menu=await service.menu(uid);expect(menu.capabilities.paid_member).toBe(true);for(const group of[menu.diy_data.poster,menu.diy_data.menu])expect(group.list.map(item=>item.url)).toEqual(paths);}
+   expect(await f.snapshot()).toEqual(enabled);
+   await f.db.update(systemConfig).set({value:'0'}).where(eq(systemConfig.menuName,'member_card_status'));
+   const disabled=await f.snapshot();
+   for(const uid of[11,0]){const menu=await service.menu(uid);expect(menu.capabilities.paid_member).toBe(false);expect(menu.diy_data.poster.list).toEqual([]);expect(menu.diy_data.menu.list).toEqual([]);}
+   expect(await f.snapshot()).toEqual(disabled);
+   await f.db.update(systemConfig).set({value:'1'}).where(eq(systemConfig.menuName,'member_card_status'));
+   const restored=await f.snapshot(),menu=await service.menu(11);expect(menu.diy_data.poster.list).toHaveLength(3);expect(menu.diy_data.menu.list).toHaveLength(3);expect(await f.snapshot()).toEqual(restored);
+   expect(commands.filter(command=>/^\s*(?:insert|update|delete|merge|alter|create|drop|truncate|grant|revoke)\b/iu.test(command))).toEqual([]);
+  });
+ });
 });

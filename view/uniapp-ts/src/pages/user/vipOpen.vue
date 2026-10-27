@@ -32,7 +32,7 @@
 
     <view v-if="home?.member_rights.length" class="rights-card">
       <text class="section-title">会员权益</text>
-      <view v-for="right in home.member_rights" :key="right.id" class="right-row">
+      <view v-for="right in home.member_rights" :key="right.id" class="right-row" role="button" :aria-label="`查看${right.title}权益介绍`" @tap="openRightDetail(right.id)">
         <image v-if="right.pic" class="right-image" :src="right.pic" mode="aspectFill" />
         <view><text class="right-title">{{ right.title }}</text><text class="right-desc">{{ right.explain }}</text></view>
       </view>
@@ -116,6 +116,10 @@ async function load() {
   } finally {
     loading.value = false;
   }
+}
+
+function openRightDetail(id: number) {
+  if (Number.isSafeInteger(id) && id > 0 && home.value?.member_rights.some(right => right.id === id)) uni.navigateTo({ url: `/pages/user/vipRights?id=${id}` });
 }
 
 function selectPayType(method: "yue" | "weixin" | "alipay") {

@@ -1,5 +1,10 @@
+import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes, reverseMembershipRightsLegacyRules } from './helpers/membershipRightsSourceBinding';
+const REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);
+const serverRoutes=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);
+const LEGACY_ROUTE_RULES=reverseMembershipRightsLegacyRules(currentClientRules);
+const serverRules=reverseMembershipRightsLegacyRules(currentServerRules);
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import ts from 'typescript';
@@ -7,8 +12,8 @@ import { describe,expect,it } from 'vitest';
 import { growthRecordsManifest as proof,reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { pointsCentreManifest,reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
-import { REGISTERED_PAGE_ROUTES,LEGACY_ROUTE_RULES,resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';
-import { REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules,resolveRegisteredPageRoute as serverResolve } from '@/services/content/FabRouteRegistry';
+import { REGISTERED_PAGE_ROUTES as currentClientRoutes,LEGACY_ROUTE_RULES as currentClientRules,resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';
+import { REGISTERED_PAGE_ROUTES as currentServerRoutes,LEGACY_ROUTE_RULES as currentServerRules,resolveRegisteredPageRoute as serverResolve } from '@/services/content/FabRouteRegistry';
 const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>readFileSync(resolve(root,file),'utf8');
 const sha=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 const requireUni=createRequire(resolve(root,'view/uniapp-ts/package.json'));

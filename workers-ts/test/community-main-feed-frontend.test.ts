@@ -1,14 +1,17 @@
+import { readMembershipRightsHistoricalFile as readFileSync, reverseMembershipRightsRegisteredRoutes } from './helpers/membershipRightsSourceBinding';
+const REGISTERED_PAGE_ROUTES=reverseMembershipRightsRegisteredRoutes(currentClientRoutes);
+const serverPages=reverseMembershipRightsRegisteredRoutes(currentServerRoutes);
 import { reverseGrowthRecordsManifest } from './helpers/customerGrowthRecordsManifest';
 import { reversePointsCentreManifest } from './helpers/customerPointsCentreManifest';
 import { reverseSignCentreManifest } from './helpers/customerSignCentreManifest';
-import { readFileSync } from 'node:fs';
+
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { parseCommunityWorkspaceEntry } from '../../view/common/communityRoute';
-import { REGISTERED_PAGE_ROUTES, resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';
-import { REGISTERED_PAGE_ROUTES as serverPages, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
+import { REGISTERED_PAGE_ROUTES as currentClientRoutes, resolveRegisteredPageRoute } from '../../view/uniapp-ts/src/config/navigation';
+import { REGISTERED_PAGE_ROUTES as currentServerRoutes, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';
 const { parse, compileTemplate } = createRequire(import.meta.url)('../../view/uniapp-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/uniapp-ts/node_modules/@vue/compiler-sfc');
 const root = resolve(import.meta.dirname, '../../view/uniapp-ts/src');
 const read = (file: string) => readFileSync(resolve(root, file), 'utf8');

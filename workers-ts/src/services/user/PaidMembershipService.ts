@@ -1,3 +1,4 @@
+import { membershipRightMedia } from './MembershipRightMediaPolicy';
 import { publicUserAvatars } from './UserProfilePublicAvatar';
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import type { Env } from "@/env";
@@ -668,7 +669,7 @@ export class PaidMembershipService {
     return `https://openapi.alipay.com/gateway.do?${new URLSearchParams(params).toString()}`;
   }
 
-  async index(uid: number): Promise<Record<string, unknown>> {
+  async index(uid: number, rightsView = false): Promise<Record<string, unknown>> {
     const now = Math.floor(Date.now() / 1000);
     const [users, rights, agreements, plans, freeRecords, economizeRows, config, coupons, memberCardStatus] =
       await Promise.all([
@@ -691,7 +692,7 @@ export class PaidMembershipService {
           .select()
           .from(memberRight)
           .where(eq(memberRight.status, 1))
-          .orderBy(desc(memberRight.sort), memberRight.id),
+          .orderBy(desc(memberRight.sort), rightsView ? desc(memberRight.id) : memberRight.id),
         readVisibleAgreement(this.container, 1),
         this.container.db
           .select()
@@ -755,15 +756,18 @@ export class PaidMembershipService {
 
     const freePlan = plans.find((plan) => plan.type === "free");
     const [avatar]=await publicUserAvatars(this.container.db,this.env.APP_KEY,[{uid:account.uid,image:account.avatar}]);
+    const rightMedia = enabled ? await membershipRightMedia(this.container.db, this.env.APP_KEY, rights, rightsView) : { images: [], contents: [] };
     return {
+      ...(rightsView ? { rights_owner_uid: account.uid } : {}),
       member_rights: enabled
-        ? rights.map((right) => ({
+        ? rights.map((right, index) => ({
             id: right.id,
             right_type: right.rightType,
             title: right.showTitle,
-            pic: right.image,
+            pic: rightMedia.images[index]!,
             explain: right.explain,
             content: right.content,
+            ...(rightsView ? { content_preview: rightMedia.contents[index]! } : {}),
             number: right.number,
           }))
         : [],
