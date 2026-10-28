@@ -107,8 +107,31 @@ it('restores PHP message center, private page read receipts and selected custome
      expect(data.conversation_ids).toEqual(records.map(r=>r.id));expect(data.service_uids).toEqual(records.map(r=>r.to_uid));expect(data.system_id).toBe(visible[0]?.id??0);expect(data.system_unread).toBe(Boolean(visible.length&&messageUnreadCount(expected,plan!.owner)>0));expect(data.loading).toBe(false);expect(data.alerts).toEqual([]);
      if(plan!.owner===ids.a){expect(text).not.toContain('B独立会话正文');expect(text).not.toContain('B本人消息');}
      if(plan!.owner===ids.b){expect(text).toContain('B本人消息');expect(text).not.toContain('本人最新通知');expect(data.conversation_ids).toEqual([730101]);}
-     if(plan!.kind==='media-error'){expect(data.avatar_images).toHaveLength(0);expect(data.avatar_fallbacks).toBe(plan!.rows);expect(data.resource_errors.length).toBeGreaterThan(0);}else if(plan!.rows>0){expect(data.avatar_images).toHaveLength(plan!.rows);expect(data.avatar_images.every((r:Row)=>r.complete&&r.naturalWidth>0)).toBe(true);}
-     if(plan!.name==='owner-center'){expect(data.cards[0].radius).toBeCloseTo(data.clientWidth*24/750,1);expect(data.cards[0].padding).toBeCloseTo(data.clientWidth*32/750,1);expect(data.cards[0].avatar_width).toBeCloseTo(data.clientWidth*88/750,1);expect(data.cards.every((r:Row)=>r.right<=plan!.width&&r.left>=0)).toBe(true);expect(data.badges).toContain('99+');expect(data.badges).toContain('2');expect(data.emojis.some((r:Row)=>r.name==='smile'&&r.position==='65% 60%'&&r.background.includes('/static/php-messages/sheet_apple_64_indexed_256colors.png')&&r.width===22&&r.height===22)).toBe(true);expect(data.system_time).toMatch(/前$/);expect(data.unsafe_markup).toBe(false);}
+     if(plan!.kind==='media-error'){
+      // UniApp H5 loads a detached Image and appends it only after onload.
+      // Its component @error reaches the real fallback without a window DOM
+      // resource-error event. Bind the visible fallbacks to real asset delivery.
+      expect(data.avatar_images).toHaveLength(0);expect(data.avatar_fallbacks).toBe(plan!.rows);
+      const media=current.filter(t=>t.path==='/api/assets/'+ids.media);
+      expect(media.length).toBeGreaterThan(0);
+      const summaries=current.filter(t=>t.path==='/api/user/message'&&t.owner===plan!.owner&&t.dto?.status===200);
+      expect(summaries).toHaveLength(1);
+      const previews=new Set(summaries[0]!.dto.data.service.map((r:Row)=>r.avatar));
+      for(const request of media){
+       expect(request.owner).toBe(0);expect(request.r2_reads).toBe(1);
+       expect(previews.has(request.path+request.query)).toBe(true);
+       const bytes=Buffer.from(request.body_base64,'base64');
+       if(plan!.name==='missing-image'){expect(request.status).toBe(404);expect(bytes).toHaveLength(0);}
+       else{expect(plan!.name).toBe('corrupt-image');expect(request.status).toBe(200);expect(bytes).toEqual(Buffer.from([137,80,78,71,0,1,2]));}
+      }
+     }else if(plan!.rows>0){expect(data.avatar_images).toHaveLength(plan!.rows);expect(data.avatar_images.every((r:Row)=>r.complete&&r.naturalWidth>0)).toBe(true);}
+     if(plan!.name==='owner-center'){
+      // Frozen H5 compiles 24/32/88rpx to .75/1/2.75rem. UniApp may
+      // size rem from either document client width or viewport width as
+      // scrollbars settle; bind exact geometry to the observed root size.
+      expect(plan!.width).toBe(375);expect(Number.isFinite(data.root_font_px)).toBe(true);expect(data.root_font_px).toBeGreaterThan(0);
+      expect(data.root_font_px).toBeGreaterThanOrEqual(data.clientWidth*16/375);expect(data.root_font_px).toBeLessThanOrEqual(data.viewportWidth*16/375);
+      expect(data.cards[0].radius).toBeCloseTo(data.root_font_px*.75,1);expect(data.cards[0].padding).toBeCloseTo(data.root_font_px,1);expect(data.cards[0].avatar_width).toBeCloseTo(data.root_font_px*2.75,1);expect(data.cards.every((r:Row)=>r.right<=plan!.width&&r.left>=0)).toBe(true);expect(data.badges).toContain('99+');expect(data.badges).toContain('2');expect(data.emojis.some((r:Row)=>r.name==='smile'&&r.position==='65% 60%'&&r.background.includes('/static/php-messages/sheet_apple_64_indexed_256colors.png')&&r.width===22&&r.height===22)).toBe(true);expect(data.system_time).toMatch(/前$/);expect(data.unsafe_markup).toBe(false);}
     }else if(plan!.kind==='messages'||plan!.kind==='messages-error'){const rows=messageVisibleRows(expected,plan!.owner).slice(0,plan!.rows);expect(data.message_ids).toEqual(rows.map(r=>r.id));if(plan!.kind==='messages-error'){expect(data.alerts.length).toBe(1);expect(text).toContain('重试当前页');}else{expect(data.alerts).toEqual([]);expect(data.loading).toBe(false);}if(plan!.rows){expect(text).toContain('<img src=x onerror="globalThis.__messageUnsafe=1">');expect(data.unsafe_markup).toBe(false);}if(plan!.name==='system-terminal')expect(current.filter(t=>t.path==='/api/user/message_system/list')).toEqual([]);}
     else if(plan!.kind==='chat'){expect(text).toContain('离线客服34');expect(data.chat_messages).toEqual(['离线客服给A的历史','A回复离线客服']);expect(text).not.toContain('B独立历史不得给A');expect(current.some(t=>t.path==='/api/user/service/record'&&t.query.includes('to_uid=34'))).toBe(true);expect(controls.some(c=>c.kind==='qa-websocket-unavailable'&&c.path.includes('to_uid=34'))).toBe(true);}
     else if(plan!.kind==='disabled-chat'){expect(data.chat_messages).toEqual([]);expect(data.chat_service).toBe('');expect(data.alerts.join(' ')).toContain('指定客服');expect(current.filter(t=>t.path==='/api/user/service/record')).toHaveLength(1);expect(current.find(t=>t.path==='/api/user/service/record')?.query).toContain('to_uid=56');expect(controls.some(c=>c.kind==='qa-websocket-unavailable'&&c.phase==='disabled-chat')).toBe(false);}

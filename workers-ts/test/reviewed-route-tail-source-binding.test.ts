@@ -1,3 +1,4 @@
+import { peelMessageCenterReportIfPresent,peelMessageCenterSourceIfPresent } from './helpers/messageCenterSourceBinding';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -32,7 +33,7 @@ const aliases = {
   '/pages/users/user_cash/status': '/pages/user/withdrawalReceipt', '/pages/users/user_distribution_info/index': '/pages/user/agentExplanation',
 };
 let report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
-const currentReport = () => structuredClone(report ??= buildAdminFrontendApiAuditReport());
+const currentReport = () => structuredClone(report ??= peelMessageCenterReportIfPresent(buildAdminFrontendApiAuditReport()));
 
 describe('reviewed current route tail retains dated proofs and proves real current coverage', () => {
   it('pins all later source stages, five explicit harness rewires and every prior dated fixture', () => {
@@ -85,7 +86,7 @@ describe('reviewed current route tail retains dated proofs and proves real curre
     expect(sha(JSON.stringify(oldRules))).toBe(p.route_stages[0]!.before_rules_sha256);
   });
 
-  it('recomputes the complete real report under its unchanged Axios/static-call scope and bridges exactly to the711-call dated report', () => {
+  it('recomputes the complete real report, peels the exact message-source tail and bridges to the711-call dated report', () => {
     const actual = currentReport(), previous = reverseReviewedRouteTailReport(actual), final = p.report_stages.at(-1)!;
     expect([sha(pretty(actual)), Buffer.byteLength(pretty(actual))]).toEqual([final.after_sha256, final.after_bytes]);
     expect(actual.counts).toEqual({ callSites: 711, pathVariants: 749, registered: 749, executable: 749, controlledUnavailable: 0, unregistered: 0, unresolved: 0 });
@@ -93,7 +94,7 @@ describe('reviewed current route tail retains dated proofs and proves real curre
     expect(sha(pretty(previous))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');
     expect(applyReviewedRouteTailReport(previous)).toEqual(actual); expect(peelReviewedRouteTailReportForHistoricalAudit(previous)).toEqual(previous);
     for (const source of [{ file: actual.backend.file, sha256: actual.backend.sha256 }, ...actual.backend.rootRouteSources, ...actual.frontendSources])
-      expect(sha(read(source.file).replace(/\r\n?/gu, '\n')), source.file).toBe(source.sha256);
+      expect(sha(peelMessageCenterSourceIfPresent(source.file,read(source.file)).replace(/\r\n?/gu, '\n')), source.file).toBe(source.sha256);
     for (const source of p.current_extra_sources) expect([sha(read(source.file)), Buffer.byteLength(read(source.file))]).toEqual([source.sha256, source.bytes]);
     expect(actual.backend.registeredRoutes.filter(row => row.path.includes('/extract/directory')).map(row => [row.method, row.path, row.handler, row.availability]))
       .toEqual([['GET', '/extract/directory', 'AdminWithdrawalDirectory.directory', 'executable'], ['GET', '/extract/directory/:id/media', 'AdminWithdrawalDirectory.media', 'executable'],

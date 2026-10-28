@@ -1,0 +1,413 @@
+{
+  "schema": "cinashop.message-center-ci-source-binding.v1",
+  "base_ref": "f7b85c9c4d116d3376b67be207a2b5af9d462279",
+  "current_ref": "frozen-message-center-working-tree",
+  "sources": [
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "before_bytes": 176649,
+      "after_bytes": 176888,
+      "before_sha256": "749fa0f4d9961cf9b8e40f69dcb75e0995d97678ccb3ca997c65609fbd9a2fa5",
+      "after_sha256": "32855666c141538440ebf0d191f2a7c902f36bf6e0ae0346a02567a7ffe3a38f",
+      "before_git_blob_sha1": "3c04535756efea50af011977370efae979b5905c",
+      "after_git_blob_sha1": "805cdc1154a1df3ca7e057aee3c4ef46f567a33d",
+      "edits": [
+        {
+          "before_source": "v1Routes.get(\"/user/message\", authMiddleware({ force: true }), UserMessageController.messageList);",
+          "after_source": "v1Routes.get(\"/user/message\", async (c,next)=>{c.header(\"Cache-Control\",\"private, no-store\");await next();}, authMiddleware({ force: true }), UserMessageController.messageCenter);",
+          "before_line": 1068,
+          "after_line": 1068
+        },
+        {
+          "before_source": "v1Routes.get(\"/user/message_system/list\", authMiddleware({ force: true }), UserMessageController.messageList);",
+          "after_source": "v1Routes.get(\"/user/message_system/list\", async (c,next)=>{c.header(\"Cache-Control\",\"private, no-store\");await next();}, authMiddleware({ force: true }), UserMessageController.messageList);",
+          "before_line": 1069,
+          "after_line": 1069
+        },
+        {
+          "before_source": "v1Routes.get(\"/user/message_system/detail/:id\", authMiddleware({ force: true }), UserMessageController.messageDetail);",
+          "after_source": "v1Routes.get(\"/user/message_system/detail/:id\", async (c,next)=>{c.header(\"Cache-Control\",\"private, no-store\");await next();}, authMiddleware({ force: true }), UserMessageController.messageDetail);",
+          "before_line": 1070,
+          "after_line": 1070
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/UserMessageController.ts",
+      "before_bytes": 8258,
+      "after_bytes": 8258,
+      "before_sha256": "df9b0f6a11d38098ec22e6f5b69362111de374551ed0212a7cf7fa4d6e4d42ac",
+      "after_sha256": "47afb1f2511c83c8781228125a8b45411a75da96f33dc38bb79c77575dd6c4ac",
+      "before_git_blob_sha1": "b59fdb8de2653ca8872e5667b0ea3532d18634fb",
+      "after_git_blob_sha1": "1da84b6592a63feb316a6f6eaa5d5925fcb82bd9",
+      "edits": [
+        {
+          "before_source": " *   - GET  /api/user/message_system/detail/:id  消息详情\n */\nimport type { Context } from \"hono\";\nimport { and, desc, eq } from \"drizzle-orm\";\nimport { jsonOk, jsonFail } from \"@/utils/json\";\nimport { AuthException, ValidateException } from \"@/utils/errors\";\nimport { UserFinanceService } from \"@/services/user/UserFinanceService\";\n",
+          "after_source": " *   - GET  /api/user/message_system/detail/:id  消息详情\n */\nimport type { Context } from \"hono\";\nimport { jsonOk, jsonFail } from \"@/utils/json\";\nimport { AuthException, ValidateException } from \"@/utils/errors\";\nimport { UserFinanceService } from \"@/services/user/UserFinanceService\";\n",
+          "before_line": 9,
+          "after_line": 9
+        },
+        {
+          "before_source": "} from \"@/services/kefu/KefuRealtimeService\";\nimport { chatPrincipalName } from \"@/services/kefu/KefuSocketGateway\";\nimport type { AppVariables, Env } from \"@/env\";\nimport { systemMessage } from \"@/models/schema\";\nimport { visibleSystemMessageWhere } from \"@/services/message/UserMessageVisibility\";\nexport { visibleSystemMessageWhere } from \"@/services/message/UserMessageVisibility\";\nimport { readBoundedJsonObject } from \"@/utils/request-body\";\nimport { emitOperationalEvent, operationalErrorCode } from \"@/utils/observability\";\n\ntype C = Context<{ Bindings: Env; Variables: AppVariables }>;\nconst MAX_CHAT_BODY_BYTES = 8 * 1024;\n",
+          "after_source": "} from \"@/services/kefu/KefuRealtimeService\";\nimport { chatPrincipalName } from \"@/services/kefu/KefuSocketGateway\";\nimport type { AppVariables, Env } from \"@/env\";\nexport { visibleSystemMessageWhere } from \"@/services/message/UserMessageVisibility\";\nimport { readBoundedJsonObject } from \"@/utils/request-body\";\nimport { emitOperationalEvent, operationalErrorCode } from \"@/utils/observability\";\nimport { MessageCenterService } from \"@/services/message/MessageCenterService\";\nimport { messageActor, parseMessageId, parseMessageQuery, type MessageView } from \"@/services/message/MessageCenterInput\";\n\ntype C = Context<{ Bindings: Env; Variables: AppVariables }>;\nconst MAX_CHAT_BODY_BYTES = 8 * 1024;\n",
+          "before_line": 19,
+          "after_line": 18
+        },
+        {
+          "before_source": "\n// ═══ 站内信 ═════════════════════════════════════════════════\n\n/** GET /api/user/message — 站内信列表 */\nexport async function messageList(c: C) {\n  const uid = c.get(\"uid\");\n  if (!uid) return jsonFail(c, \"请先登录\");\n  const container = c.get(\"container\");\n  try {\n    const rows = await container.db\n      .select()\n      .from(systemMessage)\n      .where(visibleSystemMessageWhere(uid))\n      .orderBy(desc(systemMessage.addTime))\n      .limit(20);\n    return jsonOk(c, rows);\n  } catch {\n    return jsonOk(c, []);\n  }\n}\n\n/** GET /api/user/message_system/detail/:id — 消息详情 */\nexport async function messageDetail(c: C) {\n  const uid = c.get(\"uid\");\n  if (!uid) return jsonFail(c, \"请先登录\");\n  const id = Number(c.req.param(\"id\") ?? \"0\");\n  const container = c.get(\"container\");\n  try {\n    const rows = await container.db\n      .select()\n      .from(systemMessage)\n      .where(and(eq(systemMessage.id, id), visibleSystemMessageWhere(uid)))\n      .limit(1);\n    return jsonOk(c, rows[0] ?? null);\n  } catch {\n    return jsonOk(c, null);\n  }\n}\n\n/** Legacy DTO remains the default; profile=1 opts into versioned editable metadata. */\nexport async function userInfo(c: C) {\n",
+          "after_source": "\n// ═══ 站内信 ═════════════════════════════════════════════════\n\nfunction messages(c:C,kind:MessageView){\n  c.header('Cache-Control','private, no-store');\n  const actor=messageActor(c.get('uid'),c.get('user'));\n  const query=parseMessageQuery(kind,new URL(c.req.url).searchParams);\n  return {actor,query,service:new MessageCenterService(c.get('container'),c.env)};\n}\n/** PHP summary is distinct from the paginated consuming inbox. */\nexport async function messageCenter(c:C){const {actor,query,service}=messages(c,'center');return jsonOk(c,await service.center(actor,query));}\n/** PHP-compatible GET intentionally consumes only this user's page read state. */\nexport async function messageList(c:C){const {actor,query,service}=messages(c,'list');return jsonOk(c,await service.list(actor,query));}\n/** Modern id detail remains nullable for a hidden/foreign/missing record. */\nexport async function messageDetail(c:C){const {actor,query,service}=messages(c,'detail');return jsonOk(c,await service.detail(actor,parseMessageId(c.req.param('id')),query));}\n\n/** Legacy DTO remains the default; profile=1 opts into versioned editable metadata. */\nexport async function userInfo(c: C) {\n",
+          "before_line": 98,
+          "after_line": 97
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/reviewedAdminSourceTailBinding.ts",
+      "before_bytes": 3338,
+      "after_bytes": 3570,
+      "before_sha256": "382834141f892a93ebf406669d52dec3c312442480ab74f3a6569f1b506f232d",
+      "after_sha256": "359048c9faadf49dd97ba77771db99dd9cc6db7991b8e98684d08553e30fe1d3",
+      "before_git_blob_sha1": "5ab29b7ea7a095752d2cb03763150645f48a6854",
+      "after_git_blob_sha1": "44ca1c5f9e790a796b896f8ca7c2b7672b21b259",
+      "edits": [
+        {
+          "before_source": "import {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {resolve} from 'node:path';\n",
+          "after_source": "import {peelMessageCenterSourceIfPresent,peelMessageCenterHarnessSourceIfPresent} from './messageCenterSourceBinding';\nimport {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {resolve} from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "function inverse(s:string,p:Source){if(!whole(s,p,false))throw Error('Reviewed Admin source tail current whole source differs');const before=reverseRouteSourceFollowup(s,p);if(!whole(before,p,true))throw Error('Reviewed Admin source tail predecessor whole source differs');return before;}\n/** Only an entire known later production source is reversed. Unknown input is\n * retained for the original dated bridge to reject with its own whole hash. */\nexport function peelReviewedAdminSourceTailIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);for(const stage of[...p.stages].reverse()){const row=stage.sources.find(x=>x.file===file);if(row&&whole(source,row,false))source=inverse(source,row);}return source;}\nexport function reverseReviewedAdminSourceTail(file:string,source:string,p=reviewedAdminSourceTailBinding):string{const before=peelReviewedAdminSourceTailIfPresent(file,source,p);if(before===source)throw Error('Unknown complete reviewed Admin source tail');return before;}\n/** Recover exact pre-adapter harness bytes for immutable dated preserved-file\n * assertions. This is test-only history; native current proofs use real fs. */\nexport function peelReviewedAdminHistoricalSourceIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);const harness=p.harness_sources.find(x=>x.file===file);if(harness&&whole(source,harness,false))return inverse(source,harness);return peelReviewedAdminSourceTailIfPresent(file,source,p);}\nexport function hasReviewedAdminHistoricalSource(file:string,p=reviewedAdminSourceTailBinding){inventory(p);return p.harness_sources.some(x=>x.file===file)||p.stages.some(s=>s.sources.some(x=>x.file===file));}\n",
+          "after_source": "function inverse(s:string,p:Source){if(!whole(s,p,false))throw Error('Reviewed Admin source tail current whole source differs');const before=reverseRouteSourceFollowup(s,p);if(!whole(before,p,true))throw Error('Reviewed Admin source tail predecessor whole source differs');return before;}\n/** Only an entire known later production source is reversed. Unknown input is\n * retained for the original dated bridge to reject with its own whole hash. */\nexport function peelReviewedAdminSourceTailIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);source=peelMessageCenterSourceIfPresent(file,source);for(const stage of[...p.stages].reverse()){const row=stage.sources.find(x=>x.file===file);if(row&&whole(source,row,false))source=inverse(source,row);}return source;}\nexport function reverseReviewedAdminSourceTail(file:string,source:string,p=reviewedAdminSourceTailBinding):string{const before=peelReviewedAdminSourceTailIfPresent(file,source,p);if(before===source)throw Error('Unknown complete reviewed Admin source tail');return before;}\n/** Recover exact pre-adapter harness bytes for immutable dated preserved-file\n * assertions. This is test-only history; native current proofs use real fs. */\nexport function peelReviewedAdminHistoricalSourceIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);source=peelMessageCenterHarnessSourceIfPresent(file,source);const harness=p.harness_sources.find(x=>x.file===file);if(harness&&whole(source,harness,false))return inverse(source,harness);return peelReviewedAdminSourceTailIfPresent(file,source,p);}\nexport function hasReviewedAdminHistoricalSource(file:string,p=reviewedAdminSourceTailBinding){inventory(p);return p.harness_sources.some(x=>x.file===file)||p.stages.some(s=>s.sources.some(x=>x.file===file));}\n",
+          "before_line": 13,
+          "after_line": 14
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/helpers/reviewedRouteTailSourceBinding.ts",
+      "before_bytes": 11781,
+      "after_bytes": 11896,
+      "before_sha256": "c1ce61bc6e2a1eea03351f33df82802944da7f30f8b6165696f3b9bd49626010",
+      "after_sha256": "509d97c2b1b1a3434a02ec52b1184944cdd3aa2fd090cae69435a54110e5068f",
+      "before_git_blob_sha1": "8445a40d3ed1bba15aad6cb204ce39a02ccd48ce",
+      "after_git_blob_sha1": "e91b5b572151476376277cc3bed37bddd2c09664",
+      "edits": [
+        {
+          "before_source": "import { peelReviewedAdminHistoricalSourceIfPresent, hasReviewedAdminHistoricalSource } from './reviewedAdminSourceTailBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "after_source": "import { peelMessageCenterReportIfPresent } from './messageCenterSourceBinding';\nimport { peelReviewedAdminHistoricalSourceIfPresent, hasReviewedAdminHistoricalSource } from './reviewedAdminSourceTailBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  return result;\n}\nexport function peelReviewedRouteTailReportForHistoricalAudit<T>(input: T, p = reviewedRouteTailSourceBinding): T {\n  inventory(p); let result = input;\n  for (const stage of [...p.report_stages].reverse()) if (sha(pretty(result)) === stage.after_sha256) result = reportStage(result, stage, true);\n  return result;\n}\n",
+          "after_source": "  return result;\n}\nexport function peelReviewedRouteTailReportForHistoricalAudit<T>(input: T, p = reviewedRouteTailSourceBinding): T {\n  inventory(p); let result = peelMessageCenterReportIfPresent(input);\n  for (const stage of [...p.report_stages].reverse()) if (sha(pretty(result)) === stage.after_sha256) result = reportStage(result, stage, true);\n  return result;\n}\n",
+          "before_line": 140,
+          "after_line": 141
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/reviewed-admin-source-tail-binding.test.ts",
+      "before_bytes": 7645,
+      "after_bytes": 7865,
+      "before_sha256": "a5ecb2a0c8d3177a49fdd7e18c5fe3be37e8170695c069316992dd9e68388fbf",
+      "after_sha256": "2f4bb8860a4d26812fff09d9cd9de3e7426c9f0b4ca5f9dddcebaf9a3c060225",
+      "before_git_blob_sha1": "35d681ed7ff1fdc61463467bba80abe4b70b5c3c",
+      "after_git_blob_sha1": "2ba293939a5dbfb3da49c2bf20141382260650ce",
+      "edits": [
+        {
+          "before_source": "import {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {resolve} from 'node:path';\n",
+          "after_source": "import {peelMessageCenterSourceIfPresent,peelMessageCenterHarnessSourceIfPresent} from './helpers/messageCenterSourceBinding';\nimport {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {resolve} from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": " it('pins complete current production sources and reverses only five exact staged changes to066',()=>{\n  expect(proof.stages.map(s=>s.sources.length)).toEqual([1,3,1]);expect(proof.harness_sources).toHaveLength(5);\n  expect(proof.current_sources.map(x=>x.file)).toEqual(['workers-ts/src/routes/v1/index.ts','workers-ts/src/routes/adminapi.ts','workers-ts/src/services/admin/AdminPermissionService.ts']);\n  for(const row of proof.current_sources){const actual=read(row.file);expect(Buffer.byteLength(actual)).toBe(row.bytes);expect(sha(actual)).toBe(row.sha256);expect(blob(actual)).toBe(row.git_blob_sha1);const original=reverseReviewedAdminSourceTail(row.file,actual);let state=original;for(const stage of proof.stages){const delta=stage.sources.find(x=>x.file===row.file);if(!delta)continue;expect(sha(state)).toBe(delta.before_sha256);expect(Buffer.byteLength(state)).toBe(delta.before_bytes);for(const edit of delta.edits){expect(state.split(edit.before_source)).toHaveLength(2);state=state.replace(edit.before_source,edit.after_source);}expect(sha(state)).toBe(delta.after_sha256);expect(blob(state)).toBe(delta.after_git_blob_sha1);expect(reverseRouteSourceFollowup(state,delta)).not.toBe(state);}expect(state).toBe(actual);\n   const dated=adminUserFilterSourceBinding.sources.find(x=>x.file===row.file)!;const migrationInverse=reverseMigrationAuditSource(row.file,actual);expect(sha(migrationInverse)).toBe(dated.after_sha256);expect(Buffer.byteLength(migrationInverse)).toBe(dated.after_bytes);\n  }\n });\n it('restores only five exact historical harness changes without altering any immutable proof',()=>{for(const row of proof.harness_sources){const actual=read(row.file);expect(sha(actual)).toBe(row.after_sha256);expect(blob(actual)).toBe(row.after_git_blob_sha1);const old=peelReviewedAdminHistoricalSourceIfPresent(row.file,actual);expect(sha(old)).toBe(row.before_sha256);expect(Buffer.byteLength(old)).toBe(row.before_bytes);expect(blob(old)).toBe(row.before_git_blob_sha1);}});\n it('directly parses current native-fs finance route positions and unchanged methods/factories/auth/handlers',()=>{\n  const actual=read('workers-ts/src/routes/v1/index.ts'),expected=contracts.map((x,i)=>({method:x[0],path:x[1],station:'stationOpenMiddleware()',auth:'authMiddleware({ force: true })',handler:x[2],line:937+i}));expect(finance(actual)).toEqual(expected);\n  for(const changed of[actual.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware,'),actual.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware(1),'),actual.replace('\"/integral/list\",','\"/integral/list-unreviewed\",'),actual.replace('UserFinanceReadController.integralList);','UserFinanceReadController.extractBank);')]){expect(changed).not.toBe(actual);expect(finance(changed)).not.toEqual(expected);}\n",
+          "after_source": " it('pins complete current production sources and reverses only five exact staged changes to066',()=>{\n  expect(proof.stages.map(s=>s.sources.length)).toEqual([1,3,1]);expect(proof.harness_sources).toHaveLength(5);\n  expect(proof.current_sources.map(x=>x.file)).toEqual(['workers-ts/src/routes/v1/index.ts','workers-ts/src/routes/adminapi.ts','workers-ts/src/services/admin/AdminPermissionService.ts']);\n  for(const row of proof.current_sources){const actual=peelMessageCenterSourceIfPresent(row.file,read(row.file));expect(Buffer.byteLength(actual)).toBe(row.bytes);expect(sha(actual)).toBe(row.sha256);expect(blob(actual)).toBe(row.git_blob_sha1);const original=reverseReviewedAdminSourceTail(row.file,actual);let state=original;for(const stage of proof.stages){const delta=stage.sources.find(x=>x.file===row.file);if(!delta)continue;expect(sha(state)).toBe(delta.before_sha256);expect(Buffer.byteLength(state)).toBe(delta.before_bytes);for(const edit of delta.edits){expect(state.split(edit.before_source)).toHaveLength(2);state=state.replace(edit.before_source,edit.after_source);}expect(sha(state)).toBe(delta.after_sha256);expect(blob(state)).toBe(delta.after_git_blob_sha1);expect(reverseRouteSourceFollowup(state,delta)).not.toBe(state);}expect(state).toBe(actual);\n   const dated=adminUserFilterSourceBinding.sources.find(x=>x.file===row.file)!;const migrationInverse=reverseMigrationAuditSource(row.file,actual);expect(sha(migrationInverse)).toBe(dated.after_sha256);expect(Buffer.byteLength(migrationInverse)).toBe(dated.after_bytes);\n  }\n });\n it('restores only five exact historical harness changes without altering any immutable proof',()=>{for(const row of proof.harness_sources){const actual=peelMessageCenterHarnessSourceIfPresent(row.file,read(row.file));expect(sha(actual)).toBe(row.after_sha256);expect(blob(actual)).toBe(row.after_git_blob_sha1);const old=peelReviewedAdminHistoricalSourceIfPresent(row.file,actual);expect(sha(old)).toBe(row.before_sha256);expect(Buffer.byteLength(old)).toBe(row.before_bytes);expect(blob(old)).toBe(row.before_git_blob_sha1);}});\n it('directly parses current native-fs finance route positions and unchanged methods/factories/auth/handlers',()=>{\n  const actual=read('workers-ts/src/routes/v1/index.ts'),expected=contracts.map((x,i)=>({method:x[0],path:x[1],station:'stationOpenMiddleware()',auth:'authMiddleware({ force: true })',handler:x[2],line:937+i}));expect(finance(actual)).toEqual(expected);\n  for(const changed of[actual.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware,'),actual.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware(1),'),actual.replace('\"/integral/list\",','\"/integral/list-unreviewed\",'),actual.replace('UserFinanceReadController.integralList);','UserFinanceReadController.extractBank);')]){expect(changed).not.toBe(actual);expect(finance(changed)).not.toEqual(expected);}\n",
+          "before_line": 15,
+          "after_line": 16
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/reviewed-route-tail-source-binding.test.ts",
+      "before_bytes": 17776,
+      "after_bytes": 17963,
+      "before_sha256": "dc9117f94580afb1c75fe1329fb32dd08a75e5206f8413e4d7c3f7b9a0bfad5e",
+      "after_sha256": "658cf48c4d58c8a92c0b02bce4abba969fe168284c3260744e458e56ac39298c",
+      "before_git_blob_sha1": "6469728e6f10ebb05a261f1680063f4b4d5db357",
+      "after_git_blob_sha1": "022e90ad76123eed65e87107903d18eae31778bb",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "after_source": "import { peelMessageCenterReportIfPresent,peelMessageCenterSourceIfPresent } from './helpers/messageCenterSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { existsSync, readFileSync } from 'node:fs';\nimport { resolve } from 'node:path';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  '/pages/users/user_cash/status': '/pages/user/withdrawalReceipt', '/pages/users/user_distribution_info/index': '/pages/user/agentExplanation',\n};\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst currentReport = () => structuredClone(report ??= buildAdminFrontendApiAuditReport());\n\ndescribe('reviewed current route tail retains dated proofs and proves real current coverage', () => {\n  it('pins all later source stages, five explicit harness rewires and every prior dated fixture', () => {\n",
+          "after_source": "  '/pages/users/user_cash/status': '/pages/user/withdrawalReceipt', '/pages/users/user_distribution_info/index': '/pages/user/agentExplanation',\n};\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst currentReport = () => structuredClone(report ??= peelMessageCenterReportIfPresent(buildAdminFrontendApiAuditReport()));\n\ndescribe('reviewed current route tail retains dated proofs and proves real current coverage', () => {\n  it('pins all later source stages, five explicit harness rewires and every prior dated fixture', () => {\n",
+          "before_line": 32,
+          "after_line": 33
+        },
+        {
+          "before_source": "    expect(sha(JSON.stringify(oldRules))).toBe(p.route_stages[0]!.before_rules_sha256);\n  });\n\n  it('recomputes the complete real report under its unchanged Axios/static-call scope and bridges exactly to the711-call dated report', () => {\n    const actual = currentReport(), previous = reverseReviewedRouteTailReport(actual), final = p.report_stages.at(-1)!;\n    expect([sha(pretty(actual)), Buffer.byteLength(pretty(actual))]).toEqual([final.after_sha256, final.after_bytes]);\n    expect(actual.counts).toEqual({ callSites: 711, pathVariants: 749, registered: 749, executable: 749, controlledUnavailable: 0, unregistered: 0, unresolved: 0 });\n",
+          "after_source": "    expect(sha(JSON.stringify(oldRules))).toBe(p.route_stages[0]!.before_rules_sha256);\n  });\n\n  it('recomputes the complete real report, peels the exact message-source tail and bridges to the711-call dated report', () => {\n    const actual = currentReport(), previous = reverseReviewedRouteTailReport(actual), final = p.report_stages.at(-1)!;\n    expect([sha(pretty(actual)), Buffer.byteLength(pretty(actual))]).toEqual([final.after_sha256, final.after_bytes]);\n    expect(actual.counts).toEqual({ callSites: 711, pathVariants: 749, registered: 749, executable: 749, controlledUnavailable: 0, unregistered: 0, unresolved: 0 });\n",
+          "before_line": 85,
+          "after_line": 86
+        },
+        {
+          "before_source": "    expect(sha(pretty(previous))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');\n    expect(applyReviewedRouteTailReport(previous)).toEqual(actual); expect(peelReviewedRouteTailReportForHistoricalAudit(previous)).toEqual(previous);\n    for (const source of [{ file: actual.backend.file, sha256: actual.backend.sha256 }, ...actual.backend.rootRouteSources, ...actual.frontendSources])\n      expect(sha(read(source.file).replace(/\\r\\n?/gu, '\\n')), source.file).toBe(source.sha256);\n    for (const source of p.current_extra_sources) expect([sha(read(source.file)), Buffer.byteLength(read(source.file))]).toEqual([source.sha256, source.bytes]);\n    expect(actual.backend.registeredRoutes.filter(row => row.path.includes('/extract/directory')).map(row => [row.method, row.path, row.handler, row.availability]))\n      .toEqual([['GET', '/extract/directory', 'AdminWithdrawalDirectory.directory', 'executable'], ['GET', '/extract/directory/:id/media', 'AdminWithdrawalDirectory.media', 'executable'],\n",
+          "after_source": "    expect(sha(pretty(previous))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');\n    expect(applyReviewedRouteTailReport(previous)).toEqual(actual); expect(peelReviewedRouteTailReportForHistoricalAudit(previous)).toEqual(previous);\n    for (const source of [{ file: actual.backend.file, sha256: actual.backend.sha256 }, ...actual.backend.rootRouteSources, ...actual.frontendSources])\n      expect(sha(peelMessageCenterSourceIfPresent(source.file,read(source.file)).replace(/\\r\\n?/gu, '\\n')), source.file).toBe(source.sha256);\n    for (const source of p.current_extra_sources) expect([sha(read(source.file)), Buffer.byteLength(read(source.file))]).toEqual([source.sha256, source.bytes]);\n    expect(actual.backend.registeredRoutes.filter(row => row.path.includes('/extract/directory')).map(row => [row.method, row.path, row.handler, row.availability]))\n      .toEqual([['GET', '/extract/directory', 'AdminWithdrawalDirectory.directory', 'executable'], ['GET', '/extract/directory/:id/media', 'AdminWithdrawalDirectory.media', 'executable'],\n",
+          "before_line": 93,
+          "after_line": 94
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/kefu-realtime-migration.test.ts",
+      "before_bytes": 9702,
+      "after_bytes": 11172,
+      "before_sha256": "51e77703b46212afb6a88542714d943a0dcd71a92365f4ff7842141f6775173b",
+      "after_sha256": "264003ad84c1dac48c70bdd694ac7c4f99cb1faaf3f539ab1017fbdea2547e14",
+      "before_git_blob_sha1": "c2a1a2d33e0fba9a3cb0f019efb89987792b40d6",
+      "after_git_blob_sha1": "0dd9c3baedd82270334161c0c35a5d2f7c844ab7",
+      "edits": [
+        {
+          "before_source": "import { readFileSync } from \"node:fs\";\nimport { describe, expect, it } from \"vitest\";\nimport {\n",
+          "after_source": "import ts from \"typescript\";\nimport { readFileSync } from \"node:fs\";\nimport { describe, expect, it } from \"vitest\";\nimport {\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  \"X-Chat-Role\": \"1\",\n  \"X-Chat-To-Uid\": \"1001\",\n  \"X-Chat-Auth-Id\": \"2001\",\n  \"X-Chat-Token-Key\": \"0123456789abcdef0123456789abcdef\",\n  \"X-Chat-Token-Exp\": \"1999999999\",\n  \"X-Chat-Auth-Version\": \"password-version\",\n};\n",
+          "after_source": "  \"X-Chat-Role\": \"1\",\n  \"X-Chat-To-Uid\": \"1001\",\n  \"X-Chat-Auth-Id\": \"2001\",\n  // Deterministic synthetic digest; never a deployed credential.\n  \"X-Chat-Token-Key\": \"0\".repeat(32),\n  \"X-Chat-Token-Exp\": \"1999999999\",\n  \"X-Chat-Auth-Version\": \"password-version\",\n};\n",
+          "before_line": 12,
+          "after_line": 13
+        },
+        {
+          "before_source": "\n  it(\"uses the selected service and never REST-plus-WebSocket double-writes\", () => {\n    const client = readFileSync(\"../view/uniapp-ts/src/pages/user/kefu.vue\", \"utf8\");\n    expect(client).toContain('http.get<ServiceRecord>(\"/user/service/record\"');\n    expect(client).toContain(\"to_uid: serviceUid.value\");\n    expect(client).not.toContain(\"to_uid: 0\");\n    expect(client).not.toContain(\"wss://cinashop-api.cinagroup.workers.dev\");\n",
+          "after_source": "\n  it(\"uses the selected service and never REST-plus-WebSocket double-writes\", () => {\n    const client = readFileSync(\"../view/uniapp-ts/src/pages/user/kefu.vue\", \"utf8\");\n    // The selected history read now passes through the abortable owner scope.\n    // Keep the endpoint/verb, explicit target and strict owner/target decoder.\n    const script = client.match(/<script setup lang=\"ts\">([\\s\\S]*?)<\\/script>/)?.[1];\n    expect(script).toBeTruthy();\n    const tree = ts.createSourceFile('kefu.ts', script!, ts.ScriptTarget.Latest, true);\n    const reads: ts.CallExpression[] = [], decoded: ts.CallExpression[] = [];\n    function visit(node: ts.Node) {\n      if (ts.isCallExpression(node)) {\n        if (node.expression.getText(tree) === 'scope.request' && node.arguments[0]\n          && ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === 'user/service/record') reads.push(node);\n        if (node.expression.getText(tree) === 'decodeKefuConversation') decoded.push(node);\n      }\n      ts.forEachChild(node, visit);\n    }\n    visit(tree);\n    expect(reads).toHaveLength(1); expect(decoded).toHaveLength(1);\n    const read = reads[0]!;\n    expect(read.arguments[1]!.getText(tree)).toBe(\"'GET'\");\n    expect(read.arguments[2]!.getText(tree).replace(/\\s/g, '')).toBe('{limit:50,...(requestedService.value?{to_uid:requestedService.value}:{})}');\n    expect(read.arguments[3]!.getText(tree)).toBe('true');\n    expect(decoded[0]!.arguments.map(arg => arg.getText(tree))).toEqual([\n      `await ${read.getText(tree)}`, 'scope.owner.uid', 'requestedService.value',\n    ]);\n    expect(client).toContain('createUserCenterRequests(active)');\n    expect(client).toContain(\"to_uid: serviceUid.value\");\n    expect(client).not.toContain(\"to_uid: 0\");\n    expect(client).not.toContain(\"wss://cinashop-api.cinagroup.workers.dev\");\n",
+          "before_line": 131,
+          "after_line": 133
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/ordinary-query-index-alignment.test.ts",
+      "before_bytes": 8969,
+      "after_bytes": 9405,
+      "before_sha256": "7acacea62f419332286e6cdbe1621aaa4de227b7cb3c5dfaa70cf2fd688ec71b",
+      "after_sha256": "529c1e620c3b597dc0a01e823430bb3e6e510e0e3ede96da84a7241154d795d1",
+      "before_git_blob_sha1": "ae7d666c094d3208916b2989731ba6995163c907",
+      "after_git_blob_sha1": "475ba05b860102d576095a958222c05dec25cadf",
+      "edits": [
+        {
+          "before_source": "import { readFileSync } from \"node:fs\";\nimport { describe, expect, it } from \"vitest\";\nimport { assertIndexContracts, type Catalog, type CatalogRow } from \"../scripts/data-migration/postgres-catalog-audit\";\n",
+          "after_source": "import { reverseMessageCenterSource } from './helpers/messageCenterSourceBinding';\nimport { readFileSync } from \"node:fs\";\nimport { describe, expect, it } from \"vitest\";\nimport { assertIndexContracts, type Catalog, type CatalogRow } from \"../scripts/data-migration/postgres-catalog-audit\";\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "      expect(entry.columns).toEqual(expected[index].columns);\n      const query = entry.queryEvidence;\n      expect(query.purpose).toBeTruthy();\n      const source = readFileSync(query.source, \"utf8\").replace(/\\r\\n/g, \"\\n\");\n      // The manifest records the source line at review time. Later source edits may move\n      // the query, but its exact SQL evidence must still exist once in the live file.\n      expect(query.sourceLine, `${entry.key}: historical source line`).toBeGreaterThan(0);\n",
+          "after_source": "      expect(entry.columns).toEqual(expected[index].columns);\n      const query = entry.queryEvidence;\n      expect(query.purpose).toBeTruthy();\n      const currentSource = readFileSync(query.source, \"utf8\");\n      // Keep the immutable index-consumer snippet while requiring an exact whole\n      // controller inverse. The new live suite independently proves its Service consumer.\n      const source = (entry.key === 'system_message.sm_add_time'\n        ? reverseMessageCenterSource('workers-ts/' + query.source, currentSource)\n        : currentSource).replace(/\\r\\n/g, \"\\n\");\n      // The manifest records the source line at review time. Later source edits may move\n      // the query, but its exact SQL evidence must still exist once in the live file.\n      expect(query.sourceLine, `${entry.key}: historical source line`).toBeGreaterThan(0);\n",
+          "before_line": 28,
+          "after_line": 29
+        }
+      ]
+    },
+    {
+      "file": "view/uniapp-ts/scripts/kefu-conversation-runtime.test.cjs",
+      "before_bytes": 9014,
+      "after_bytes": 10868,
+      "before_sha256": "89b2909ce8a52436d5fd41659b74715421c6ad8a2f3cfe484260d6760a547868",
+      "after_sha256": "c04f21b462dbd661bad7f55412b23335ce1a7421329df06146cf9cd3be81494b",
+      "before_git_blob_sha1": "f0627357a742e25546c7b5ed7dfff46f347b228e",
+      "after_git_blob_sha1": "44be8029ffe3d8e24388b1762cf8d3849a9db077",
+      "edits": [
+        {
+          "before_source": "test('existing refund type7 history remains readable in the selected conversation',async()=>{\n const r=await start({send:()=>{const data=history();data.serviceList[0].msn_type=7;return{data};}});try{assert.equal(r.state.chatError.value,'');assert.equal(r.state.messages.value[0].msnType,7);assert.equal(r.sockets.length,1);}finally{r.stop();}\n});\n",
+          "after_source": "test('existing refund type7 history remains readable in the selected conversation',async()=>{\n const r=await start({send:()=>{const data=history();data.serviceList[0].msn_type=7;return{data};}});try{assert.equal(r.state.chatError.value,'');assert.equal(r.state.messages.value[0].msnType,7);assert.equal(r.sockets.length,1);}finally{r.stop();}\n});\n\n// Real SFC/Vue/request logic; native transports are finite in-memory controls.\nfor (const channel of ['socket', 'rest', 'socket-failure']) for (const kind of ['text', 'image']) {\n test('selected '+kind+' uses one '+channel+' path without a second persistence transport', async () => {\n  const r=await start({send:c=>c.url.endsWith('/service/send')?{data:{id:101,uid:11,to_uid:77,msn:c.data.msn,add_time:1900000001,msn_type:c.data.msn_type}}:undefined});\n  const uploads=[];\n  try {\n   r.uni.chooseImage=o=>o.success({tempFilePaths:['/synthetic/chat.jpg'],tempFiles:[{size:16}]});\n   r.uni.uploadFile=o=>{uploads.push(o);o.success({data:JSON.stringify({status:200,data:{url:'/api/assets/99'}})});};\n   const socket=r.sockets[0];\n   if(channel!=='rest')socket.hooks.open();\n   if(channel==='socket-failure')socket.send=o=>{socket.calls.push(o.data);o.fail?.({errMsg:'controlled socket send failure'});};\n   if(kind==='text'){r.state.inputText.value='单次发送';await r.state.send();}\n   else await r.state.chooseAndSendImage();\n   await tick();\n   const writes=r.traces.filter(t=>t.url.endsWith('/service/send'));\n   const frames=socket.calls.map(s=>JSON.parse(s)).filter(f=>f.type==='chat');\n   assert.equal(writes.length,channel==='rest'?1:0);\n   assert.equal(frames.length,channel==='rest'?0:1);\n   const data=channel==='rest'?writes[0].data:frames[0].data;\n   assert.equal(data.to_uid,77);assert.equal(data.msn_type,kind==='image'?3:1);\n   assert.equal(data.msn,kind==='image'?'/api/assets/99':'单次发送');\n   assert.equal(uploads.length,kind==='image'?1:0);\n   if(uploads.length)assert.equal(uploads[0].header['Authori-zation'],'Bearer synthetic-local-token');\n   if(channel==='socket-failure')assert.equal(r.state.messages.value.length,1);\n   if(channel==='rest')assert.equal(r.state.messages.value.length,2);\n  } finally {r.stop();}\n });\n}\n",
+          "before_line": 28,
+          "after_line": 28
+        }
+      ]
+    }
+  ],
+  "current_sources": [
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 176888,
+      "sha256": "32855666c141538440ebf0d191f2a7c902f36bf6e0ae0346a02567a7ffe3a38f",
+      "git_blob_sha1": "805cdc1154a1df3ca7e057aee3c4ef46f567a33d"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/UserMessageController.ts",
+      "bytes": 8258,
+      "sha256": "47afb1f2511c83c8781228125a8b45411a75da96f33dc38bb79c77575dd6c4ac",
+      "git_blob_sha1": "1da84b6592a63feb316a6f6eaa5d5925fcb82bd9"
+    },
+    {
+      "file": "workers-ts/src/services/message/MessageCenterService.ts",
+      "bytes": 8799,
+      "sha256": "e47e81826a028523bdd18570a53f6ec8e56a3deef00cfadce23271ad020e7a28",
+      "git_blob_sha1": "873d43eca381c89e25eeecf26d2a0ac273677ba0"
+    },
+    {
+      "file": "workers-ts/src/services/message/UserMessageVisibility.ts",
+      "bytes": 1057,
+      "sha256": "a3e5ab42aabc6f07d15b078c3210c5ce9ef033f2ceace0053d1fbc3c3fa92a9b",
+      "git_blob_sha1": "9b27eb30b6a3222fdef70ffd83d1bcd59843ad41"
+    },
+    {
+      "file": "view/uniapp-ts/src/pages/user/kefu.vue",
+      "bytes": 23673,
+      "sha256": "ac189f16e09bd3ba0ea2c548b02c7b328a5045f575576fde48a6bf6f35b57f4a",
+      "git_blob_sha1": "65dbc3bdc13276895d94bca6dd76dc5b51d4e5d8"
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/kefuConversationTarget.ts",
+      "bytes": 1794,
+      "sha256": "7ab4d2ac1eb3ffa028631f64fa9a8afa65890f1ddff31eb62158405bef19f423",
+      "git_blob_sha1": "ee5c449b85aef33ba17c7bca31b6175fa234b483"
+    },
+    {
+      "file": "view/uniapp-ts/src/api/userCenter.ts",
+      "bytes": 2682,
+      "sha256": "799fa3fab73f519b976497250de0ec84f5259a748626ce3880b816d5844b1e18",
+      "git_blob_sha1": "d5acf0ad1d4437ba2668803a6c30228c0c358b78"
+    }
+  ],
+  "api_report": {
+    "before_sha256": "98e0b64a802d601cb2e09df5ddaa4936fc7325a84aa081f58fb13d5c936d2dcc",
+    "after_sha256": "aa44ac94f3e234b35f42d37a2756e2914bfdb1c661aceb70d268878466ef8af9",
+    "before_bytes": 646865,
+    "after_bytes": 646865,
+    "path": [
+      "backend",
+      "rootRouteSources",
+      2,
+      "sha256"
+    ],
+    "source_file": "workers-ts/src/routes/v1/index.ts",
+    "before": "749fa0f4d9961cf9b8e40f69dcb75e0995d97678ccb3ca997c65609fbd9a2fa5",
+    "after": "32855666c141538440ebf0d191f2a7c902f36bf6e0ae0346a02567a7ffe3a38f",
+    "counts": {
+      "callSites": 711,
+      "pathVariants": 749,
+      "registered": 749,
+      "executable": 749,
+      "controlledUnavailable": 0,
+      "unregistered": 0,
+      "unresolved": 0
+    },
+    "frontend_sources": 108,
+    "registered_routes": 1681
+  },
+  "preserved_dated_fixtures": [
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "bytes": 45718,
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "bytes": 66571,
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "bytes": 2940,
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "bytes": 11589,
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/fixtures/member-level-activation-source-binding-20261027.json",
+      "bytes": 24320,
+      "sha256": "2ff43d147390bdb06a9870e6abe305508170cbfb09de416269e6dd82fa5f571a"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+      "bytes": 26571,
+      "sha256": "66383437d4f55f432b11211d4f85e31ce2fe713a291988e70c273d913bb8f09c"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-clause-source-binding-20261027.json",
+      "bytes": 24220,
+      "sha256": "f284752289721d3c4158e810e461808c20febaaa957160c3c79a220d9dcc0ad8"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-coupons-source-binding-20261027.json",
+      "bytes": 25356,
+      "sha256": "af39b16bbeebea0205d2255b1c427cca78f15fecc2cf877773787abefc7cc0b2"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "bytes": 55307,
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab"
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "bytes": 28750,
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236"
+    },
+    {
+      "file": "workers-ts/test/fixtures/reviewed-admin-source-tail-20261028.json",
+      "bytes": 53091,
+      "sha256": "cb790c08f93a374148eafea6a2aeddd005e3625af3408a089238d2c1907d325b"
+    },
+    {
+      "file": "workers-ts/test/fixtures/reviewed-route-tail-source-binding-20261028.json",
+      "bytes": 71883,
+      "sha256": "1fd855b397eb496e1d2accca18eeeb96b905d5e7f499657dc785310c2b246d6c"
+    },
+    {
+      "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+      "bytes": 642264,
+      "sha256": "0976eef03520486e92df2ed4b40814463fe62d0d0b5f0a66fe9e87c1af7359dd"
+    },
+    {
+      "file": "workers-ts/audit/orm-ordinary-index-reconciliation.json",
+      "bytes": 29397,
+      "sha256": "1203607a8ab9062c0a81eb3e136b85e1ee904bf00efbad67e4fdfdbc370dadc5"
+    },
+    {
+      "file": "workers-ts/audit/orm-extra-index-reconciliation.json",
+      "bytes": 42067,
+      "sha256": "99f6c9a1d65885a17f7fa2e826b01ba969c2b4404667dcd3cefc1677855444cb"
+    }
+  ],
+  "boundary": "Only exact whole-source message route/controller inverses, exact harness adapters, and one complete-report root-source SHA scalar are admitted. No new route, count/path/handler/report row filtering, dated fixture mutation, unknown-byte waiver or runtime proof claim."
+}

@@ -1,3 +1,4 @@
+import ts from "typescript";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,7 +13,8 @@ const VALID_SESSION_HEADERS = {
   "X-Chat-Role": "1",
   "X-Chat-To-Uid": "1001",
   "X-Chat-Auth-Id": "2001",
-  "X-Chat-Token-Key": "0123456789abcdef0123456789abcdef",
+  // Deterministic synthetic digest; never a deployed credential.
+  "X-Chat-Token-Key": "0".repeat(32),
   "X-Chat-Token-Exp": "1999999999",
   "X-Chat-Auth-Version": "password-version",
 };
@@ -131,7 +133,30 @@ describe("customer-service realtime migration", () => {
 
   it("uses the selected service and never REST-plus-WebSocket double-writes", () => {
     const client = readFileSync("../view/uniapp-ts/src/pages/user/kefu.vue", "utf8");
-    expect(client).toContain('http.get<ServiceRecord>("/user/service/record"');
+    // The selected history read now passes through the abortable owner scope.
+    // Keep the endpoint/verb, explicit target and strict owner/target decoder.
+    const script = client.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1];
+    expect(script).toBeTruthy();
+    const tree = ts.createSourceFile('kefu.ts', script!, ts.ScriptTarget.Latest, true);
+    const reads: ts.CallExpression[] = [], decoded: ts.CallExpression[] = [];
+    function visit(node: ts.Node) {
+      if (ts.isCallExpression(node)) {
+        if (node.expression.getText(tree) === 'scope.request' && node.arguments[0]
+          && ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === 'user/service/record') reads.push(node);
+        if (node.expression.getText(tree) === 'decodeKefuConversation') decoded.push(node);
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(tree);
+    expect(reads).toHaveLength(1); expect(decoded).toHaveLength(1);
+    const read = reads[0]!;
+    expect(read.arguments[1]!.getText(tree)).toBe("'GET'");
+    expect(read.arguments[2]!.getText(tree).replace(/\s/g, '')).toBe('{limit:50,...(requestedService.value?{to_uid:requestedService.value}:{})}');
+    expect(read.arguments[3]!.getText(tree)).toBe('true');
+    expect(decoded[0]!.arguments.map(arg => arg.getText(tree))).toEqual([
+      `await ${read.getText(tree)}`, 'scope.owner.uid', 'requestedService.value',
+    ]);
+    expect(client).toContain('createUserCenterRequests(active)');
     expect(client).toContain("to_uid: serviceUid.value");
     expect(client).not.toContain("to_uid: 0");
     expect(client).not.toContain("wss://cinashop-api.cinagroup.workers.dev");

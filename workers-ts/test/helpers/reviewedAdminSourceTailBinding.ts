@@ -1,3 +1,4 @@
+import {peelMessageCenterSourceIfPresent,peelMessageCenterHarnessSourceIfPresent} from './messageCenterSourceBinding';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
@@ -13,9 +14,9 @@ function whole(s:string,p:Source,before:boolean){return Buffer.byteLength(s)===(
 function inverse(s:string,p:Source){if(!whole(s,p,false))throw Error('Reviewed Admin source tail current whole source differs');const before=reverseRouteSourceFollowup(s,p);if(!whole(before,p,true))throw Error('Reviewed Admin source tail predecessor whole source differs');return before;}
 /** Only an entire known later production source is reversed. Unknown input is
  * retained for the original dated bridge to reject with its own whole hash. */
-export function peelReviewedAdminSourceTailIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);for(const stage of[...p.stages].reverse()){const row=stage.sources.find(x=>x.file===file);if(row&&whole(source,row,false))source=inverse(source,row);}return source;}
+export function peelReviewedAdminSourceTailIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);source=peelMessageCenterSourceIfPresent(file,source);for(const stage of[...p.stages].reverse()){const row=stage.sources.find(x=>x.file===file);if(row&&whole(source,row,false))source=inverse(source,row);}return source;}
 export function reverseReviewedAdminSourceTail(file:string,source:string,p=reviewedAdminSourceTailBinding):string{const before=peelReviewedAdminSourceTailIfPresent(file,source,p);if(before===source)throw Error('Unknown complete reviewed Admin source tail');return before;}
 /** Recover exact pre-adapter harness bytes for immutable dated preserved-file
  * assertions. This is test-only history; native current proofs use real fs. */
-export function peelReviewedAdminHistoricalSourceIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);const harness=p.harness_sources.find(x=>x.file===file);if(harness&&whole(source,harness,false))return inverse(source,harness);return peelReviewedAdminSourceTailIfPresent(file,source,p);}
+export function peelReviewedAdminHistoricalSourceIfPresent(file:string,source:string,p=reviewedAdminSourceTailBinding):string{inventory(p);source=peelMessageCenterHarnessSourceIfPresent(file,source);const harness=p.harness_sources.find(x=>x.file===file);if(harness&&whole(source,harness,false))return inverse(source,harness);return peelReviewedAdminSourceTailIfPresent(file,source,p);}
 export function hasReviewedAdminHistoricalSource(file:string,p=reviewedAdminSourceTailBinding){inventory(p);return p.harness_sources.some(x=>x.file===file)||p.stages.some(s=>s.sources.some(x=>x.file===file));}

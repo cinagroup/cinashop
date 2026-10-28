@@ -28,3 +28,32 @@ for(const event of ['onHide','owner'])test('late stored visitor failure after '+
 test('existing refund type7 history remains readable in the selected conversation',async()=>{
  const r=await start({send:()=>{const data=history();data.serviceList[0].msn_type=7;return{data};}});try{assert.equal(r.state.chatError.value,'');assert.equal(r.state.messages.value[0].msnType,7);assert.equal(r.sockets.length,1);}finally{r.stop();}
 });
+
+// Real SFC/Vue/request logic; native transports are finite in-memory controls.
+for (const channel of ['socket', 'rest', 'socket-failure']) for (const kind of ['text', 'image']) {
+ test('selected '+kind+' uses one '+channel+' path without a second persistence transport', async () => {
+  const r=await start({send:c=>c.url.endsWith('/service/send')?{data:{id:101,uid:11,to_uid:77,msn:c.data.msn,add_time:1900000001,msn_type:c.data.msn_type}}:undefined});
+  const uploads=[];
+  try {
+   r.uni.chooseImage=o=>o.success({tempFilePaths:['/synthetic/chat.jpg'],tempFiles:[{size:16}]});
+   r.uni.uploadFile=o=>{uploads.push(o);o.success({data:JSON.stringify({status:200,data:{url:'/api/assets/99'}})});};
+   const socket=r.sockets[0];
+   if(channel!=='rest')socket.hooks.open();
+   if(channel==='socket-failure')socket.send=o=>{socket.calls.push(o.data);o.fail?.({errMsg:'controlled socket send failure'});};
+   if(kind==='text'){r.state.inputText.value='单次发送';await r.state.send();}
+   else await r.state.chooseAndSendImage();
+   await tick();
+   const writes=r.traces.filter(t=>t.url.endsWith('/service/send'));
+   const frames=socket.calls.map(s=>JSON.parse(s)).filter(f=>f.type==='chat');
+   assert.equal(writes.length,channel==='rest'?1:0);
+   assert.equal(frames.length,channel==='rest'?0:1);
+   const data=channel==='rest'?writes[0].data:frames[0].data;
+   assert.equal(data.to_uid,77);assert.equal(data.msn_type,kind==='image'?3:1);
+   assert.equal(data.msn,kind==='image'?'/api/assets/99':'单次发送');
+   assert.equal(uploads.length,kind==='image'?1:0);
+   if(uploads.length)assert.equal(uploads[0].header['Authori-zation'],'Bearer synthetic-local-token');
+   if(channel==='socket-failure')assert.equal(r.state.messages.value.length,1);
+   if(channel==='rest')assert.equal(r.state.messages.value.length,2);
+  } finally {r.stop();}
+ });
+}

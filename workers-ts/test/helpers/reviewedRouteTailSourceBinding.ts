@@ -1,3 +1,4 @@
+import { peelMessageCenterReportIfPresent } from './messageCenterSourceBinding';
 import { peelReviewedAdminHistoricalSourceIfPresent, hasReviewedAdminHistoricalSource } from './reviewedAdminSourceTailBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -140,7 +141,7 @@ function reportStage<T>(input: T, stage: ReportStage, reverse: boolean): T {
   return result;
 }
 export function peelReviewedRouteTailReportForHistoricalAudit<T>(input: T, p = reviewedRouteTailSourceBinding): T {
-  inventory(p); let result = input;
+  inventory(p); let result = peelMessageCenterReportIfPresent(input);
   for (const stage of [...p.report_stages].reverse()) if (sha(pretty(result)) === stage.after_sha256) result = reportStage(result, stage, true);
   return result;
 }

@@ -1,3 +1,4 @@
+import { reverseMessageCenterSource } from './helpers/messageCenterSourceBinding';
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { assertIndexContracts, type Catalog, type CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
@@ -28,7 +29,12 @@ describe("DB-009D2b3b complete ordinary index disposition", () => {
       expect(entry.columns).toEqual(expected[index].columns);
       const query = entry.queryEvidence;
       expect(query.purpose).toBeTruthy();
-      const source = readFileSync(query.source, "utf8").replace(/\r\n/g, "\n");
+      const currentSource = readFileSync(query.source, "utf8");
+      // Keep the immutable index-consumer snippet while requiring an exact whole
+      // controller inverse. The new live suite independently proves its Service consumer.
+      const source = (entry.key === 'system_message.sm_add_time'
+        ? reverseMessageCenterSource('workers-ts/' + query.source, currentSource)
+        : currentSource).replace(/\r\n/g, "\n");
       // The manifest records the source line at review time. Later source edits may move
       // the query, but its exact SQL evidence must still exist once in the live file.
       expect(query.sourceLine, `${entry.key}: historical source line`).toBeGreaterThan(0);
