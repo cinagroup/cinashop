@@ -1395,3 +1395,23 @@ condition = "AND"
 regexTarget = "secret"
 paths = ['''(^|/)view/uniapp-ts/src/pages/annex/vip_active/index\.vue$''']
 regexes = ['''^cursor-spacing=$''']
+
+
+[[allowlists]]
+description = "Exact non-secret owned rejection receipt ID in the withdrawal Browser fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/test/browser/withdrawal-application\.acceptance\.ts$''']
+regexes = ['''^rejected-receipt-owned-001$''']
+
+[[allowlists]]
+description = "Exact non-secret owned and foreign receipt IDs in the withdrawal PostgreSQL fixture"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "secret"
+paths = ['''^workers-ts/test/withdrawal-application-postgres\.test\.ts$''']
+regexes = [
+  '''^owned-receipt-0001$''',
+  '''^foreign-receipt-001$''',
+]
