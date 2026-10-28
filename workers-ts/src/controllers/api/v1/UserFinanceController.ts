@@ -1,3 +1,4 @@
+import { readWithdrawalApplicationInput } from '@/services/user/UserWithdrawalApplicationInput';
 /**
  * 分销 + 发票控制器
  *
@@ -90,18 +91,20 @@ export async function extractCash(c: C) {
   c.header("Cache-Control", "private, no-store");
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
-  const raw: unknown = await c.req.json().catch(() => ({}));
+  const raw: unknown = new URL(c.req.url).searchParams.has("view") ? {} : await c.req.json().catch(() => ({}));
   const body = raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
   const svc = new UserFinanceService(c.get("container"));
   try {
-    const result = await svc.extractCash(uid, normalizeWithdrawalBody(body, c.req.header("Idempotency-Key")));
+    const modern = new URL(c.req.url).searchParams.has("view");
+    const input = modern ? await readWithdrawalApplicationInput(c.req.raw) : normalizeWithdrawalBody(body, c.req.header("Idempotency-Key"));
+    const result = await svc.extractCash(uid, input, modern);
     // The money transaction has already committed. Lost dispatches are recovered by the scanner.
     c.executionCtx.waitUntil(new OrderOutboxService(c.get("container"), c.env)
       .dispatchEventKey(`withdrawal.applied.notice:${result.id}`).catch((error: unknown) => {
         emitOperationalEvent("error", { event: "withdrawal_application_dispatch_failed", component: "queue",
           operation: "notification_outbox", outcome: "retry", errorCode: operationalErrorCode(error) });
       }));
-    return jsonOk(c, result, "提现申请已提交");
+    return jsonOk(c, modern ? { owner_uid: uid, request_id: input.requestKey, id: result.id } : result, "提现申请已提交");
   } catch (e) {
     if (e instanceof ValidateException) return jsonFail(c, e.message);
     throw e;

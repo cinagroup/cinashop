@@ -39,6 +39,8 @@ test("registered community pages bind their actual template components to compil
     ["pages/discover/workspace", ["theme-page"]],
     ["pages/user/promoterOrders", ["theme-page"]],
     ["pages/user/distributionLedgers", ["theme-page"]],
+    ["pages/user/withdrawalApplication", ["theme-page"]],
+    ["pages/user/withdrawalReceipt", ["theme-page"]],
     ["pages/user/promoterPeople", ["theme-page"]],
     ...["promoterRank", "commissionRank"].map(page => [`pages/user/${page}`, ["theme-page", "distribution-ranking"]]),
     ...["discoverUser", "discoverFollow", "discoverCreate"].map(page => [`pages/discover/${page}/index`, ["theme-page"]]),

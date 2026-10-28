@@ -73,6 +73,18 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it.each(['test/withdrawal-application-postgres.test.ts','audit:withdrawal-application-browser'])('admits exact withdrawal application command %s before native setup',mode=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each([['audit:withdrawal-application-browser-extra'],['test/withdrawal-application-postgres-extra.test.ts'],['audit:withdrawal-application-browser','test/withdrawal-application-postgres.test.ts']])('rejects unreviewed withdrawal application command %j',(...modes)=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',...modes],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
+  });
+  it('rejects literal cases for interactive withdrawal application Browser mode',()=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','--case','withdrawal','unused-bin','audit:withdrawal-application-browser'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.status).not.toBe(0);expect(r.stderr).toContain('Literal cases apply only to explicit test files');
+  });
   it.each(['test/distribution-ledgers-postgres.test.ts','audit:distribution-ledgers-browser'])('admits exact distribution ledgers command %s before native setup',mode=>{
     const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',mode],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');

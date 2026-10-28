@@ -1,3 +1,4 @@
+import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
 /**
  * API v1 路由
  *
@@ -941,6 +942,7 @@ v1Routes.get("/spread/commission/:type", stationOpenMiddleware(), authMiddleware
 v1Routes.get("/user/commission/list/:type", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.commissionItems);
 v1Routes.post("/extract/cash", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.extractCash);
 v1Routes.get("/user/extract/list", authMiddleware({ force: true }), UserFinanceController.extractList);
+v1Routes.get("/extract/records", authMiddleware({ force: true }), UserExtractController.records);
 // 事业部代理申请与代理商员工关系。删除接口改用 DELETE/POST，拒绝沿用 PHP 的状态变更 GET。
 for (const path of ['/division/agent/staff_list', '/division/agent/staff_percent', '/division/agent/staff/*', '/division/agent/del_staff/*', '/division/agent/spread', '/division/agent/spread/code', '/division/agent/spread/code/*', '/division/agent/bind_info']) {
   v1Routes.use(path, async (c, next) => { c.header('Cache-Control', 'private, no-store, max-age=0'); c.header('Pragma', 'no-cache'); c.header('Referrer-Policy', 'no-referrer'); await next(); });

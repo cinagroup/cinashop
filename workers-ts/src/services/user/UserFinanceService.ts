@@ -277,8 +277,9 @@ export class UserFinanceService {
   async extractCash(
     uid: number,
     params: WithdrawalInput,
+    modern = false,
   ): Promise<{ id: number }> {
-    return new UserWithdrawalService(this.container).apply(uid, params);
+    return new UserWithdrawalService(this.container).apply(uid, params, modern);
   }
 
   /** 我的提现记录 (M17) */

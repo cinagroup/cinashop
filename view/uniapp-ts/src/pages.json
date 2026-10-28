@@ -490,6 +490,14 @@
       }
     },
     {
+      "path": "pages/user/withdrawalApplication",
+      "style": { "navigationBarTitleText": "提现", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/user/withdrawalReceipt",
+      "style": { "navigationBarTitleText": "提现审核" }
+    },
+    {
       "path": "pages/user/distributionLedgers",
       "style": {"navigationBarTitleText": "佣金记录"}
     },

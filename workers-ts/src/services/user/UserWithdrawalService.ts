@@ -4,6 +4,7 @@ import { user, userBrokerage, userExtract, userMoney, userRecharge } from "@/mod
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { ApiException, NotFoundException, ValidateException } from "@/utils/errors";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
+import { authorizeWithdrawalApplication, readWithdrawalApplicationConfig } from "./UserWithdrawalApplicationPolicy";
 import { recordWithdrawalEffects } from "@/services/user/WithdrawalEffectsService";
 import { recordWithdrawalApplication } from "@/services/user/WithdrawalApplicationNoticeService";
 
@@ -128,11 +129,11 @@ async function transactionBounds(tx: DbClient) {
 export class UserWithdrawalService {
   constructor(private readonly container: Container) {}
 
-  async apply(uid: number, params: WithdrawalInput): Promise<{ id: number }> {
+  async apply(uid: number, params: WithdrawalInput, modern = false): Promise<{ id: number }> {
     const input = normalizedInput(params);
     const hash = input.requestKey ? await fingerprint(uid, input) : "";
     // Read authoritative DB settings, not potentially stale KV. No provider I/O while holding locks.
-    const config = await this.container.systemConfigDao.getValues([...WITHDRAWAL_CONFIG_KEYS]);
+    const legacyConfig = modern ? undefined : await this.container.systemConfigDao.getValues([...WITHDRAWAL_CONFIG_KEYS]);
     return withTx(this.container, async (tx) => {
       await transactionBounds(tx);
       const [account] = await tx.select().from(user).where(and(eq(user.uid, uid), eq(user.status, 1), eq(user.isDel, 0), isNull(user.deleteTime))).limit(1).for("update");
@@ -146,6 +147,8 @@ export class UserWithdrawalService {
           return { id: previous.id };
         }
       }
+      const config = modern ? await readWithdrawalApplicationConfig(tx) : legacyConfig!;
+      if (modern) await authorizeWithdrawalApplication(tx, uid, input, config);
       const { feeCents, netCents, automaticWechat } = withdrawalPolicy(config, input.amountCents, input.extractType);
       if (input.extractType === "weixin" && !automaticWechat && !input.wechat) throw new ValidateException("请填写微信账号");
       const [frozen] = await tx.select({ total: sql<string>`greatest(coalesce(sum(${userBrokerage.number}),0),0)::text` })

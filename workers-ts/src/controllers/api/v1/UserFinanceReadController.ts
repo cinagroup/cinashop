@@ -1,3 +1,4 @@
+import * as UserExtractController from './UserExtractController';
 import type { Context } from "hono";
 import type { AppVariables, Env } from "@/env";
 import { jsonFail, jsonOk } from "@/utils/json";
@@ -20,7 +21,7 @@ async function read(c: C, operation: Operation) {
 }
 
 export const integralList = (c: C) => read(c, (s, uid) => s.integralList(uid, c.req.query()));
-export const extractBank = (c: C) => read(c, (s, uid) => s.extractBank(uid));
+export const extractBank = (c: C) => new URL(c.req.url).searchParams.has('view') ? UserExtractController.bank(c) : read(c, (s, uid) => s.extractBank(uid));
 export const spreadCount = (c: C) => read(c, (s, uid) => s.spreadCount(uid, c.req.param("type") ?? ""));
 async function leaderboard(c: C, kind: 'promoter' | 'commission') {
   c.header('Cache-Control', 'private, no-store');

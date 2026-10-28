@@ -1,0 +1,18 @@
+<template><ThemePage><view class="receipt-page" data-withdrawal-receipt><view class="receipt-card">
+ <view v-if="!s.loggedIn" class="receipt-title">登录后查询提现申请</view><view v-else-if="s.loading" class="receipt-title" role="status">正在查询真实申请回执…</view>
+ <template v-else><view class="status-symbol" :class="s.receipt?.status===-1?'refused':s.receipt && s.receipt.status!==null?'confirmed':'unknown'">{{ s.receipt?.status===-1?'×':s.receipt && s.receipt.status!==null?'✓':'?' }}</view><view class="receipt-title">{{ s.title }}</view><view v-if="s.receipt" class="receipt-time">{{ s.receipt.time || '登记时间未提供' }}</view>
+  <view v-if="s.receipt" class="receipt-details"><view><text>申请编号</text><text>#{{ s.receipt.id }}</text></view><view><text>提现方式</text><text>{{ channelName(s.receipt.extract_type) }}</text></view><view><text>申请金额</text><text>￥{{ s.receipt.gross_amount }}</text></view><view><text>手续费</text><text>￥{{ s.receipt.fee_amount }}</text></view><view><text>{{ s.receipt.extract_type==='balance' && s.receipt.status===1?'入账金额':'申请净额' }}</text><text>￥{{ s.receipt.net_amount }}</text></view><view v-if="s.receipt.status===-1 && s.receipt.withdrawal_message" class="reason"><text>原因</text><text>{{ s.receipt.withdrawal_message }}</text></view></view>
+  <view v-else-if="!s.valid" class="receipt-note">缺少有效申请标识，请返回提现页核对原申请。</view><view v-else-if="s.loaded" class="receipt-note">尚未查到本人登记记录，请继续查询原申请。</view><view v-if="s.error" class="error" role="alert">{{ s.error }}</view>
+ </template>
+ <button v-if="!s.loggedIn" class="done-button" @tap="s.login">去登录</button><template v-else><button v-if="s.valid" class="refresh-button" :disabled="s.loading" @tap="s.load">重新查询回执</button><button class="done-button" @tap="s.back">好的</button></template>
+ </view></view></ThemePage></template>
+<script setup lang="ts">
+import {reactive} from 'vue';
+import ThemePage from '@/components/ThemePage.vue';
+import {useWithdrawalReceipt} from '@/composables/useWithdrawalReceipt';
+import {withdrawalChannelName as channelName} from '@/api/withdrawalApplication';
+const s=reactive(useWithdrawalReceipt());
+</script>
+<style scoped>
+.receipt-page{max-width:750rpx;min-height:100vh;box-sizing:border-box;padding:40rpx 20rpx;margin:auto;background:#f5f5f5}.receipt-card{background:#fff;border-radius:24rpx;text-align:center;padding:88rpx 30rpx 64rpx;box-sizing:border-box}.status-symbol{width:112rpx;height:112rpx;line-height:106rpx;border-radius:50%;margin:auto;font-size:80rpx;font-weight:500;box-sizing:border-box}.confirmed{color:white;background:#00b42a}.refused{background:#fff1f0;color:#b34428}.unknown{background:#f5f5f5;color:#999}.receipt-title{margin-top:64rpx;font-size:32rpx;line-height:44rpx;color:#333;overflow-wrap:anywhere}.receipt-time{margin-top:8rpx;font-size:26rpx;line-height:36rpx;color:#999}.receipt-details{margin:36rpx 10rpx;font-size:26rpx;line-height:40rpx;text-align:left}.receipt-details>view{display:flex;justify-content:space-between;gap:28rpx;margin-top:18rpx}.receipt-details text:first-child{flex-shrink:0;color:#999}.receipt-details text:last-child{text-align:right;overflow-wrap:anywhere;min-width:0}.receipt-note,.error{margin-top:24rpx;font-size:26rpx;line-height:40rpx;color:#999}.error,.receipt-details .reason{color:#b34428}.receipt-details .reason text:last-child{white-space:pre-wrap}.done-button{max-width:498rpx;width:100%;height:88rpx;line-height:88rpx;border-radius:44rpx;background:var(--view-theme,#e93323);color:white;font-size:28rpx;margin:30rpx auto 0;padding:0}.done-button::after,.refresh-button::after{border:0}.refresh-button{margin:24rpx auto 0;font-size:26rpx;line-height:42rpx;color:#777;background:transparent}
+</style>

@@ -1,0 +1,83 @@
+{
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "assets": [
+    {
+      "file": "cashBg.png",
+      "source": "view/uniapp/pages/users/static/cashBg.png",
+      "git_blob": "bec9213664393205229b784383252b28a93ecf81",
+      "bytes": 1893,
+      "sha256": "f07eda169bb0660b6a15734241351ff91098bca5cff1b9d0bd4e570e80872c6a"
+    },
+    {
+      "file": "tixian01.png",
+      "source": "view/uniapp/pages/users/static/tixian01.png",
+      "git_blob": "e8d56a40da1ada6696d3580d8006bcabdf43978b",
+      "bytes": 940,
+      "sha256": "f24cf6f96921060e52c8dab4ed0c9f27db9ccd730b6b9384cfd735f0c3693f74"
+    },
+    {
+      "file": "tixian02.png",
+      "source": "view/uniapp/pages/users/static/tixian02.png",
+      "git_blob": "020d517fb39a2e44e577e0dff02384d5adc560b9",
+      "bytes": 1776,
+      "sha256": "7bcaac5fee229c6d71919345e6b6643014f12cbf0ae62e9fa06f16841912786e"
+    },
+    {
+      "file": "tixian03.png",
+      "source": "view/uniapp/pages/users/static/tixian03.png",
+      "git_blob": "e2cbac25f4e3c9e580e8e50d898d394db49bad4c",
+      "bytes": 1015,
+      "sha256": "7900e9006d1ca990be983590d0f6ecbc832a2b281abf3e0ae3fe3a486c2d604b"
+    },
+    {
+      "file": "tixian04.png",
+      "source": "view/uniapp/pages/users/static/tixian04.png",
+      "git_blob": "72decbdfd433c3eff0c7eef52edd0451fe77dfb3",
+      "bytes": 1018,
+      "sha256": "3ea817ade79cec0ea43e4deb32285198a3afdb7b67f94d3ed5fd84e9364bd485"
+    },
+    {
+      "file": "tixian05.png",
+      "source": "view/uniapp/pages/users/static/tixian05.png",
+      "git_blob": "0438b3a5b7542423f916368d3105bb6b2ae60c14",
+      "bytes": 1051,
+      "sha256": "74e801cbd2e80b8384343b41f98adc42635b1e5a52473882609ffa658e4e56c8"
+    },
+    {
+      "file": "tixian06.png",
+      "source": "view/uniapp/pages/users/static/tixian06.png",
+      "git_blob": "f1ae243aa06391a52aed095967a22185e511c2db",
+      "bytes": 1270,
+      "sha256": "a1759566bcf563c2c4bab77ec42e3be76f8c94ac8bbe7803143917d5995d1afe"
+    },
+    {
+      "file": "tixian07.png",
+      "source": "view/uniapp/pages/users/static/tixian07.png",
+      "git_blob": "b3ff74726009c8e2f2b895c47bc4a40ea8ac0bc9",
+      "bytes": 1617,
+      "sha256": "db2d390872b13cc780c358c0200b7cf4d89afdc21d6768a701a19d45c12d4587"
+    },
+    {
+      "file": "tixian08.png",
+      "source": "view/uniapp/pages/users/static/tixian08.png",
+      "git_blob": "9b8a27b1acd58d4f231c2b0cd0118fb98fb4c306",
+      "bytes": 1593,
+      "sha256": "87e214b0a744fd59a6d9a02f425a28a2e4bfc3b9f025a71b15966efbaeb0d07d"
+    },
+    {
+      "file": "tixian09.png",
+      "source": "view/uniapp/pages/users/static/tixian09.png",
+      "git_blob": "58b51162619aa6226dd4c3490f2c20461f68fd6e",
+      "bytes": 1253,
+      "sha256": "095ba02b24d186d09d76078b556763c2fa8b6c02b028d95eebdc2f87e4ca8ff2"
+    },
+    {
+      "file": "D-DIN-PRO-400-Regular.ttf",
+      "source": "view/uniapp/static/fonts/D-DIN-PRO-400-Regular.ttf",
+      "git_blob": "446a1bfa134915886f167e983c93a6adee12a720",
+      "bytes": 40564,
+      "sha256": "360b632b5ecbedb940359afa8ee25a9fdf7cd1872e39f2aec72199ca5ef5ac3e"
+    }
+  ],
+  "icon_note": "Five small navigation/camera/remove/status icons use local CSS shapes. The PHP iconfont requires an external CDN font which is not copied or loaded."
+}

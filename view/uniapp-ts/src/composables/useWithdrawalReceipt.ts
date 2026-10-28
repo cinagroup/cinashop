@@ -1,0 +1,16 @@
+import {computed,onScopeDispose,ref,watch} from 'vue';
+import {onLoad,onShow,onHide,onUnload} from '@dcloudio/uni-app';
+import {useAuthStore} from '@/stores/auth';
+import {createWithdrawalApplicationRequests,withdrawalRequestKey,type WithdrawalReceipt,type WithdrawalApplicationRequests} from '@/api/withdrawalApplication';
+export function useWithdrawalReceipt(){const auth=useAuthStore(),key=ref(''),valid=ref(false),receipt=ref<WithdrawalReceipt|null>(null),loading=ref(false),loaded=ref(false),error=ref(''),visible=ref(false);let generation=0,disposed=false,scope:WithdrawalApplicationRequests|undefined;const loggedIn=computed(()=>auth.isLoggedIn&&auth.uid>0);function persisted(){try{return uni.getStorageSync('uni_token')===auth.token&&Number(uni.getStorageSync('uni_uid'))===auth.uid;}catch{return false;}}const current=()=>visible.value&&!disposed&&valid.value&&loggedIn.value&&persisted();function clear(){generation++;scope?.abort();scope=undefined;receipt.value=null;loading.value=loaded.value=false;error.value='';}async function load(){if(!current()||loading.value)return;const ticket=++generation,s=createWithdrawalApplicationRequests(()=>current()&&ticket===generation);scope?.abort();scope=s;receipt.value=null;loaded.value=false;loading.value=true;error.value='';try{const v=await s.lookup(key.value);if(!s.active())return;receipt.value=v.receipt;loaded.value=true;}catch(cause){if(s.active())error.value=cause instanceof Error?cause.message:'回执读取失败，请重试';}finally{if(ticket===generation)loading.value=false;s.abort();if(scope===s)scope=undefined;}}
+ const title=computed(()=>!receipt.value?'尚未确认提现申请':receipt.value.status===-1?'提现申请未通过':receipt.value.status===1?receipt.value.extract_type==='balance'?'佣金已转入余额':'提现申请已审核通过':receipt.value.status===0?'提现申请已提交，等待处理':'申请已登记，状态待核对');
+ onLoad(options=>{key.value=typeof options?.request_id==='string'?options.request_id:'';valid.value=withdrawalRequestKey(key.value);clear();});watch(()=>[auth.uid,auth.token,auth.sessionVersion],()=>{clear();void Promise.resolve().then(load);},{flush:'sync'});function syncPersisted(){let token:unknown,uid=0;try{token=uni.getStorageSync('uni_token')||'';uid=Number(uni.getStorageSync('uni_uid'))||0;}catch{clear();return;}if(typeof token!=='string'||!Number.isSafeInteger(uid)||uid<0||!!token!==(uid>0)){clear();return;}if(token!==auth.token||uid!==auth.uid)auth.$patch({token,uid,sessionVersion:auth.sessionVersion+1});}
+ const changed=()=>{syncPersisted();if(current()&&!receipt.value&&!loading.value)void load();};onShow(()=>{if(disposed)return;visible.value=true;syncPersisted();clear();void load();
+ // #ifdef H5
+ if(typeof window!=='undefined'){window.addEventListener('focus',changed);window.addEventListener('storage',changed);}
+ // #endif
+ });function leave(){visible.value=false;clear();
+ // #ifdef H5
+ if(typeof window!=='undefined'){window.removeEventListener('focus',changed);window.removeEventListener('storage',changed);}
+ // #endif
+ }onHide(leave);onUnload(()=>{leave();disposed=true;});onScopeDispose(()=>{leave();disposed=true;});return{key,valid,receipt,title,loading,loaded,error,loggedIn,load,back:()=>{if(visible.value&&!disposed)uni.redirectTo({url:'/pages/user/finance'});},login:()=>{if(visible.value&&!disposed&&!loggedIn.value)uni.navigateTo({url:'/pages/auth/login'});}};}
