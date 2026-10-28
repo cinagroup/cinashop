@@ -41,6 +41,8 @@
       </view>
     </view>
 
+    <view class="explanation-entry"><button @tap="openAgentExplanation"><image src="/static/php-agent-explanation/spread_sm.png" mode="aspectFit" aria-hidden="true" /><text>分销说明</text><text class="arrow">›</text></button></view>
+
     <view class="ranking-links ledger-links"><button @tap="openLedger(1)">佣金记录 <text>›</text></button><button @tap="openLedger(4)">提现记录 <text>›</text></button></view>
     <view class="order-entry"><button @tap="openPromoterOrders">分销订单 <text>›</text></button></view>
     <view class="ranking-links"><button @tap="openRanking('promoterRank')">推广人排行 <text>›</text></button><button @tap="openRanking('commissionRank')">佣金排行 <text>›</text></button></view>
@@ -116,6 +118,13 @@ async function switchTab(type:number){if(!current())return;activeTab.value=type;
 async function doBind(){if(!current())return;if(!/^[1-9]\d{0,9}$/.test(bindUid.value)||Number(bindUid.value)>2147483647){uni.showToast({title:'请输入推广人 UID',icon:'none'});return;}const s=request();try{await s.request('user/spread','POST',{spread_uid:Number(bindUid.value)},true);if(!s.active())return;uni.showToast({title:'绑定成功',icon:'success'});showBind.value=false;void loadInfo();}catch(cause){if(s.active())uni.showToast({title:cause instanceof Error?cause.message:'绑定失败',icon:'none'});}finally{finish(s);}}
 function openExtract(){if(!current()){if(visible&&!disposed&&!auth.isLoggedIn)uni.navigateTo({url:'/pages/auth/login'});return;}const url=resolveRegisteredPageRoute('/pages/users/user_cash/index');if(url)uni.navigateTo({url});}
 function openLedger(type:1|4){const url=resolveRegisteredPageRoute('/pages/users/user_spread_money/index','type='+type);if(current()&&url)uni.navigateTo({url});}
+function openAgentExplanation(){
+  if(!visible||disposed)return;
+  try{const token=uni.getStorageSync('uni_token')||'',uid=Number(uni.getStorageSync('uni_uid'))||0;
+    if(typeof token!=='string'||!Number.isSafeInteger(uid)||uid<0||!!token!==(uid>0)||token!==auth.token||uid!==auth.uid)return;
+  }catch{return;}
+  const url=resolveRegisteredPageRoute('/pages/users/user_distribution_info/index');if(url)uni.navigateTo({url});
+}
 function openPeople(){if(current())uni.navigateTo({url:'/pages/user/promoterPeople'});}
 function openDistributionLevel():void{if(current())uni.navigateTo({ url: '/pages/users/user_distribution_level/index' });}
 function openPromoterOrders(){if(current())uni.navigateTo({url:'/pages/user/promoterOrders'});}
@@ -179,6 +188,7 @@ if(typeof window!=='undefined'){window.removeEventListener('focus',changed);wind
   margin-top: 6rpx;
 }
 
+.explanation-entry{margin-bottom:20rpx}.explanation-entry button{display:flex;align-items:center;gap:20rpx;margin:0;padding:20rpx 26rpx;background:#fff;border-radius:16rpx;color:#333;font-size:28rpx;line-height:52rpx;text-align:left}.explanation-entry button::after{border:0}.explanation-entry image{width:52rpx;height:52rpx;flex:none}.explanation-entry .arrow{margin-left:auto;color:#aaa}
 .order-entry{margin-bottom:20rpx}.order-entry button{margin:0;background:#fff;border-radius:16rpx;text-align:left;font-size:28rpx;padding:0 24rpx;line-height:90rpx}.order-entry button::after{border:0}.order-entry text{float:right;color:#999}
 .ranking-links{display:flex;gap:20rpx;margin:0 0 24rpx}.ranking-links button{flex:1;margin:0;background:white;text-align:left;padding:0 24rpx;font-size:28rpx;line-height:90rpx;border-radius:16rpx}.ranking-links button::after{border:0}.ranking-links text{float:right;color:#999}
 .action-row {

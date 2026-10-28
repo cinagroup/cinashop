@@ -1,3 +1,4 @@
+import { peelReviewedAdminSourceTailIfPresent } from './reviewedAdminSourceTailBinding';
 import { peelAdminLevelDefinitionReport } from './adminLevelDefinitionSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -51,7 +52,7 @@ function reverseSource(file: string, source: string, entries: MigrationAuditSour
 /** Only the two reviewed production sources are peeled; every extra byte is rejected. */
 export function reverseMigrationAuditSource(file: string, source: string, binding = migrationAuditFollowupSourceBinding): string {
   inventory(binding);
-  return reverseSource(file, source, binding.sources);
+  return reverseSource(file, peelReviewedAdminSourceTailIfPresent(file, source), binding.sources);
 }
 /** Restore the exact older test-helper bytes without entering the production inverse recursively. */
 export function reverseMigrationAuditHarnessSource(file: string, source: string, binding = migrationAuditFollowupSourceBinding): string {

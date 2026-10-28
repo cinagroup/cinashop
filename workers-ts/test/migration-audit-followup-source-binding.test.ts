@@ -1,3 +1,4 @@
+import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSourceTailBinding';
 import { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -16,7 +17,7 @@ const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
 let builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
-const currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));
+const historicalMigrationReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));
 const historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));
 const routeContracts = [
  ['get','/integral/list','UserFinanceReadController.integralList'], ['get','/extract/bank','UserFinanceReadController.extractBank'],
@@ -45,7 +46,7 @@ describe('precise followup of reviewed station factories and membership catalogu
   expect(proof.sources.map(row => row.file)).toEqual(['workers-ts/src/routes/v1/index.ts','view/admin-ts/src/api/membership.ts']);
   expect(proof.sources.map(row => row.edits.length)).toEqual([10,3]);
   for (const entry of proof.sources) {
-   const actual = read(entry.file), before = reverseMigrationAuditSource(entry.file, actual);
+   const actual = peelReviewedAdminSourceTailIfPresent(entry.file,read(entry.file)), before = reverseMigrationAuditSource(entry.file, actual);
    expect(sha(actual)).toBe(entry.after_sha256);expect(Buffer.byteLength(actual)).toBe(entry.after_bytes);
    expect(sha(before)).toBe(entry.before_sha256);expect(Buffer.byteLength(before)).toBe(entry.before_bytes);
    let restored = before;for(const edit of entry.edits) restored = restored.replace(edit.before_source,edit.after_source);expect(restored).toBe(actual);
@@ -62,14 +63,14 @@ describe('precise followup of reviewed station factories and membership catalogu
   for(const row of original.preserved_files)expect(proof.preserved_files).toContainEqual(row);
   expect(reverseMigrationAuditHarnessSource('unrelated.ts','// opaque\n')).toBe('// opaque\n');
  });
- it('proves current real factory invocation and unchanged auth/handler/path/method contracts independently with AST controls', () => {
-  const source = read(proof.sources[0]!.file), expected = routeContracts.map((row,index)=>({method:row[0],path:row[1],station:true,auth:'authMiddleware({ force: true })',handler:row[2],line:933+index}));
+ it('preserves dated factory line locations and auth/handler/path/method contracts with independent AST controls', () => {
+  const source = peelReviewedAdminSourceTailIfPresent(proof.sources[0]!.file,read(proof.sources[0]!.file)), expected = routeContracts.map((row,index)=>({method:row[0],path:row[1],station:true,auth:'authMiddleware({ force: true })',handler:row[2],line:933+index}));
   expect(actualFinanceRoutes(source)).toEqual(expected);
   for(const changed of [source.replace('"/integral/list", stationOpenMiddleware(),','"/integral/list", stationOpenMiddleware,'),source.replace('"/integral/list", stationOpenMiddleware(),','"/integral/list", stationOpenMiddleware(1),'),source.replace('"/integral/list",','"/integral/list-unreviewed",'),source.replace('UserFinanceReadController.integralList);','UserFinanceReadController.extractBank);')]){expect(changed).not.toBe(source);expect(actualFinanceRoutes(changed)).not.toEqual(expected);}
   const api = read(proof.sources[1]!.file);expect(api).toContain('"/member/ship", { params, signal }');
  });
- it('recomputes the complete real report and bridges only eleven exact scalar changes without altering any API contract or old apply output', () => {
-  const before=historical(),actual=currentReport();
+ it('reconstructs the complete dated report through eleven exact scalar changes from the real current producer without altering its API contracts', () => {
+  const before=historical(),actual=historicalMigrationReport();
   expect(sha(pretty(before))).toBe('a99c42f5be30da197bc127a2489a67a3c13cc226246de3279160aa3f18362ab8');
   expect(sha(pretty(actual))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f');
   expect(pretty(before).length).toBeGreaterThan(0);expect(Buffer.byteLength(pretty(before))).toBe(644215);expect(Buffer.byteLength(pretty(actual))).toBe(644215);
@@ -85,20 +86,20 @@ describe('precise followup of reviewed station factories and membership catalogu
   expect(sha(pretty(historical()))).toBe(original.api_report.after_sha256);
  });
  for(const family of ['sources','harness_sources'] as const)for(const index of family==='sources'?[0,1]:[0])it.each(['extra','duplicate','missing','old','newline','same-length','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line','literal','file','order'] as const)('rejects '+family+'['+index+'] unreviewed %s',kind=>{
-  const binding=structuredClone(proof),entry=binding[family][index]!,live=read(entry.file);let source=live;
+  const binding=structuredClone(proof),entry=binding[family][index]!,live=family==='sources'?peelReviewedAdminSourceTailIfPresent(entry.file,read(entry.file)):read(entry.file);let source=live;
   if(kind==='extra')source+='\n// unrelated\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=(family==='sources'?reverseMigrationAuditSource:reverseMigrationAuditHarnessSource)(entry.file,source);if(kind==='newline')source=source.replace(/\n/u,'\r\n');if(kind==='same-length')source=source.replace(/a/u,'z');
   if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;if(kind==='literal')entry.edits[0]!.before_source+='// unreviewed';if(kind==='file')entry.file='unknown.ts';if(kind==='order')entry.edits.reverse();
   if(['extra','duplicate','missing','old','newline','same-length'].includes(kind))expect(source).not.toBe(live);
   expect(()=>(family==='sources'?reverseMigrationAuditSource:reverseMigrationAuditHarnessSource)(proof[family][index]!.file,source,binding)).toThrow();
  });
  it.each(['count','route','call','path','source','methodology','extra','line'] as const)('rejects unrelated complete report mutation in both directions %s',kind=>{
-  for(const direction of ['before','after']){const input=direction==='before'?historical():currentReport();
+  for(const direction of ['before','after']){const input=direction==='before'?historical():historicalMigrationReport();
    if(kind==='count')input.counts.registered++;if(kind==='route')input.backend.registeredRoutes[0]!.handler='unknown';if(kind==='call')input.calls[0]!.method='POST';if(kind==='path')input.calls[0]!.path='/unreviewed';if(kind==='source')input.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='methodology')input.methodology.scope='unreviewed';if(kind==='extra')Object.assign(input,{unreviewed:true});if(kind==='line')input.calls[316]!.line++;
    expect(()=>direction==='before'?applyMigrationAuditReport(input):reverseMigrationAuditReport(input)).toThrow();
   }
  });
  it.each(['missing','duplicate','order','path','scalar','input-hash','output-hash','bytes','base','current','preserved'] as const)('rejects forged whole inventory or report operation %s',kind=>{
   const binding=structuredClone(proof);if(kind==='missing')binding.api_report.operations.pop();if(kind==='duplicate')binding.api_report.operations.push(structuredClone(binding.api_report.operations[0]!));if(kind==='order')binding.api_report.operations.reverse();if(kind==='path')binding.api_report.operations[0]!.path=[];if(kind==='scalar')binding.api_report.operations[0]!.after='unknown';if(kind==='input-hash')binding.api_report.before_sha256='0'.repeat(64);if(kind==='output-hash')binding.api_report.after_sha256='0'.repeat(64);if(kind==='bytes')binding.api_report.before_bytes++;if(kind==='base')binding.base_ref='unknown';if(kind==='current')binding.current_ref='unknown';if(kind==='preserved')binding.preserved_files.pop();
-  expect(()=>applyMigrationAuditReport(historical(),binding)).toThrow();expect(()=>reverseMigrationAuditReport(currentReport(),binding)).toThrow();
+  expect(()=>applyMigrationAuditReport(historical(),binding)).toThrow();expect(()=>reverseMigrationAuditReport(historicalMigrationReport(),binding)).toThrow();
  });
 });

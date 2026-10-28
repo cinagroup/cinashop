@@ -13,6 +13,7 @@ import { memberWriteoffRateLimit } from "@/middleware/member-writeoff-rate-limit
 import * as LoginController from "@/controllers/api/v1/LoginController";
 import * as AppleAuthController from "@/controllers/api/v1/AppleAuthController";
 import * as PublicController from "@/controllers/api/v1/PublicController";
+import * as AgentExplanationController from '@/controllers/api/v1/AgentExplanationController';
 import * as PublicGeocodingController from "@/controllers/api/v1/PublicGeocodingController";
 import * as ProductController from "@/controllers/api/v1/ProductController";
 import * as ProductShareCode from '@/controllers/api/v1/ProductShareCodeController';
@@ -205,6 +206,7 @@ v1Routes.get("/search/hot_keyword", PublicController.hotKeywords);
 v1Routes.get("/search/keyword", PublicController.searchWords);
 v1Routes.get("/user_agreement/:type", PublicController.getUserAgreement);
 v1Routes.get("/agreement/:type", PublicController.getAgreement);
+v1Routes.get('/agent/explanation', AgentExplanationController.explanation);
 v1Routes.get("/get_open_adv", PublicController.getOpenAdv);
 v1Routes.get("/navigation", PublicController.navigation);
 v1Routes.get("/navigation/:template_name", PublicController.navigation);

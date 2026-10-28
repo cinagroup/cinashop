@@ -1,3 +1,4 @@
+import { peelReviewedRouteTailReportForHistoricalAudit } from './reviewedRouteTailSourceBinding';
 import { peelMembershipCouponsRegisteredRoutesIfPresent } from './membershipCouponsSourceBinding';
 import { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';
 import { createHash } from 'node:crypto';
@@ -56,7 +57,7 @@ function at(value:unknown,path:JsonPath):unknown {for(const key of path)value=me
 const pretty=(value:unknown)=>JSON.stringify(value,null,2)+'\n';
 const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 function reportBridge<T>(input:T,reverse:boolean,binding:MembershipRightsSourceBinding):T {
-  inventory(binding);const p=binding.api_report,incoming=pretty(input);
+  inventory(binding);if(reverse)input=peelReviewedRouteTailReportForHistoricalAudit(input);const p=binding.api_report,incoming=pretty(input);
   if(sha(incoming)!==(reverse?p.after_sha256:p.before_sha256)||Buffer.byteLength(incoming)!==(reverse?p.after_bytes:p.before_bytes))throw Error('Membership rights complete report input differs');
   const result=structuredClone(input),operations=reverse?[...p.operations].reverse():p.operations;
   for(const operation of operations){
@@ -79,7 +80,7 @@ export const applyMembershipRightsReport=<T>(historical:T,binding=membershipRigh
 export const reverseMembershipRightsReport=<T>(current:T,binding=membershipRightsSourceBinding):T=>reportBridge(current,true,binding);
 /** An old apply operation still emits its original exact result. Only these two complete states are accepted. */
 export function peelMembershipRightsReport<T>(input:T,binding=membershipRightsSourceBinding):T {
-  inventory(binding);const p=binding.api_report,incoming=pretty(input);
+  inventory(binding);input=peelReviewedRouteTailReportForHistoricalAudit(input);const p=binding.api_report,incoming=pretty(input);
   if(sha(incoming)===p.before_sha256&&Buffer.byteLength(incoming)===p.before_bytes)return input;
   return reverseMembershipRightsReport(input,binding);
 }

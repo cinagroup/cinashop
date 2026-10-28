@@ -1,12 +1,14 @@
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {readReviewedRouteTailHistoricalFile as readFileSync,peelReviewedRouteTailRegisteredRoutesIfPresent,peelReviewedRouteTailLegacyRulesIfPresent} from './helpers/reviewedRouteTailSourceBinding';
 import {resolve} from 'node:path';
 import ts from 'typescript';
 import {describe,it,expect} from 'vitest';
 import {memberLevelActivationSourceBinding as p,reverseMemberLevelActivationSource,peelMemberLevelActivationSource,peelMemberLevelActivationSourceIfPresent,reverseMemberLevelActivationRegisteredRoutes,peelMemberLevelActivationRegisteredRoutesIfPresent,reverseMemberLevelActivationLegacyRules,peelMemberLevelActivationLegacyRulesIfPresent,readMemberLevelActivationHistoricalFile,memberLevelActivationHistoricalResolvedRoute} from './helpers/memberLevelActivationSourceBinding';
 import {reverseMembershipClauseSource,reverseMembershipClauseRegisteredRoutes,reverseMembershipClauseLegacyRules} from './helpers/membershipClauseSourceBinding';
-import {REGISTERED_PAGE_ROUTES as clientRoutes,LEGACY_ROUTE_RULES as clientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';
-import {REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';
+import {REGISTERED_PAGE_ROUTES as actualClientRoutes,LEGACY_ROUTE_RULES as actualClientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';
+import {REGISTERED_PAGE_ROUTES as actualServerRoutes,LEGACY_ROUTE_RULES as actualServerRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';
+const clientRoutes=peelReviewedRouteTailRegisteredRoutesIfPresent(actualClientRoutes),serverRoutes=peelReviewedRouteTailRegisteredRoutesIfPresent(actualServerRoutes);
+const clientRules=peelReviewedRouteTailLegacyRulesIfPresent(actualClientRules),serverRules=peelReviewedRouteTailLegacyRulesIfPresent(actualServerRules);
 const root=resolve(import.meta.dirname,'../..'),read=(f:string)=>readFileSync(resolve(root,f),'utf8'),sha=(s:string)=>createHash('sha256').update(s).digest('hex'),blob=(s:string)=>createHash('sha1').update(`blob ${Buffer.byteLength(s)}\0`).update(s).digest('hex');
 const production=['view/uniapp-ts/src/pages.json','view/uniapp-ts/src/config/navigation.ts','workers-ts/src/services/content/FabRouteRegistry.ts','workers-ts/src/services/content/UserCenterPublicReadService.ts'];
 const harness=['workers-ts/test/helpers/membershipClauseSourceBinding.ts','workers-ts/test/membership-clause-source-binding.test.ts'];

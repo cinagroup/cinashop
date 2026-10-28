@@ -1,3 +1,4 @@
+import { peelReviewedRouteTailReportForHistoricalAudit } from './helpers/reviewedRouteTailSourceBinding';
 import { peelMembershipCouponsRegisteredRoutesIfPresent } from './helpers/membershipCouponsSourceBinding';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -39,7 +40,7 @@ const harnessFiles=['workers-ts/test/helpers/adminLevelDefinitionSourceBinding.t
 const beforeFilter=()=>applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(filterProof.api_report.base_file))))));
 const historical=()=>applyAdminLevelDefinitionReport(applyMigrationAuditReport(beforeFilter()));
 let report:ReturnType<typeof buildAdminFrontendApiAuditReport>|undefined;
-const current=()=>structuredClone(report??=buildAdminFrontendApiAuditReport());
+const historicalRightsReport=()=>structuredClone(report??=peelReviewedRouteTailReportForHistoricalAudit(buildAdminFrontendApiAuditReport()));
 
 /** Parse literal AST data without executing reconstructed source or requiring Git history in CI. */
 function literal(node:ts.Expression,bindings:ReadonlyMap<string,ts.Expression>,active:ReadonlySet<string>=new Set()):unknown {
@@ -112,14 +113,14 @@ describe('exact PHP membership-rights authoring, public page and historical audi
     expect(reverseMembershipRightsHarnessSource('unrelated.ts','// unchanged\n')).toBe('// unchanged\n');
   });
 
-  it('parses all four actual Admin requests and independently recomputes the complete 711-call report',()=>{
+  it('parses the four dated Admin requests and reconstructs their historical711-call report through the exact reviewed current tail',()=>{
     expect(apiCalls(read(apiFile))).toEqual([
       {method:'get',path:'/member/right',line:47,arguments:2},
       {method:'post',path:'`/member_right/save/${id}`',line:50,arguments:3},
       {method:'post',path:'`/member_right/save/${id}`',line:53,arguments:3},
       {method:'post',path:'`/member/save/content/${id}`',line:56,arguments:3},
     ]);
-    const before=historical(),actual=current(),p=proof.api_report;
+    const before=historical(),actual=historicalRightsReport(),p=proof.api_report;
     expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(Buffer.byteLength(pretty(before))).toBe(644498);
     expect(sha(pretty(actual))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');expect(Buffer.byteLength(pretty(actual))).toBe(645939);
     expect(p.operations.map(row=>[row.kind,row.path])).toEqual([
@@ -178,7 +179,7 @@ describe('exact PHP membership-rights authoring, public page and historical audi
   });
 
   it.each(['count','source','route','methodology','line','handler','missing','duplicate','extra'] as const)('rejects unrelated complete-report %s in both exact states',kind=>{
-    for(const direction of ['before','after'] as const){const value=direction==='before'?historical():current();
+    for(const direction of ['before','after'] as const){const value=direction==='before'?historical():historicalRightsReport();
       if(kind==='count')value.counts.registered++;if(kind==='source')value.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='route')value.backend.registeredRoutes[0]!.handler='unreviewed';
       if(kind==='methodology')value.methodology.scope='unreviewed';if(kind==='line')value.calls[326]!.line++;if(kind==='handler')value.calls[326]!.matchedHandler='unreviewed';
       if(kind==='missing')value.calls.splice(326,1);if(kind==='duplicate')value.calls.splice(326,0,structuredClone(value.calls[326]!));if(kind==='extra')Object.assign(value,{unreviewed:true});
@@ -196,7 +197,7 @@ describe('exact PHP membership-rights authoring, public page and historical audi
     if(kind==='report-hash')binding.api_report.after_sha256='0'.repeat(64);if(kind==='report-bytes')binding.api_report.before_bytes++;if(kind==='base')binding.base_ref='unknown';if(kind==='patch')binding.production_patch.unified_diff+='\n';
     if(kind==='preserved')binding.preserved_files.pop();if(kind==='navigation')binding.navigation.after_count++;if(kind==='extra')Object.assign(binding,{unknown:true});
     expect(()=>reverseMembershipRightsSource(apiFile,read(apiFile),binding)).toThrow();expect(()=>reverseMembershipRightsHarnessSource(harnessFiles[0]!,read(harnessFiles[0]!),binding)).toThrow();
-    expect(()=>reverseMembershipRightsReport(current(),binding)).toThrow();expect(()=>reverseMembershipRightsRegisteredRoutes(clientRoutes,binding)).toThrow();expect(()=>reverseMembershipRightsLegacyRules(clientRules,binding)).toThrow();
+    expect(()=>reverseMembershipRightsReport(historicalRightsReport(),binding)).toThrow();expect(()=>reverseMembershipRightsRegisteredRoutes(clientRoutes,binding)).toThrow();expect(()=>reverseMembershipRightsLegacyRules(clientRules,binding)).toThrow();
   });
 
   it.each(['extra','missing','alias','unknown-field','old'] as const)('rejects unknown complete navigation inventories: %s',kind=>{

@@ -1,3 +1,4 @@
+import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSourceTailBinding';
 import { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';
 import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
@@ -31,7 +32,7 @@ function apiRequests(source:string){const tree=ast(source);return nodes(tree,ts.
 describe('complete Admin user-directory additive source and API history boundary',()=>{
  it('pins five historical whole sources after the exact migration inverse and reconstructs their parent byte-for-byte',()=>{
   expect(sha(read('workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json'))).toBe('54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de');expect(proof.base_ref).toBe('330625d39b3988eb37ee73d19fde8e51e14cf625');expect(proof.sources.map(row=>row.file)).toEqual(files);expect(proof.sources.map(row=>row.edits.length)).toEqual([1,1,3,1,1]);
-  for(const row of proof.sources){const current=read(row.file),live=reverseMigrationAuditSource(row.file,current),before=reverseAdminUserFilterSource(row.file,current);expect(sha(live)).toBe(row.after_sha256);expect(Buffer.byteLength(live)).toBe(row.after_bytes);expect(sha(before)).toBe(row.before_sha256);expect(Buffer.byteLength(before)).toBe(row.before_bytes);let reconstructed=before;for(const edit of row.edits)reconstructed=reconstructed.replace(edit.before_source,edit.after_source);expect(reconstructed).toBe(live);}
+  for(const row of proof.sources){const current=peelReviewedAdminSourceTailIfPresent(row.file,read(row.file)),live=reverseMigrationAuditSource(row.file,current),before=reverseAdminUserFilterSource(row.file,current);expect(sha(live)).toBe(row.after_sha256);expect(Buffer.byteLength(live)).toBe(row.after_bytes);expect(sha(before)).toBe(row.before_sha256);expect(Buffer.byteLength(before)).toBe(row.before_bytes);let reconstructed=before;for(const edit of row.edits)reconstructed=reconstructed.replace(edit.before_source,edit.after_source);expect(reconstructed).toBe(live);}
   const untouched='// unchanged sibling bytes\n';expect(reverseAdminUserFilterSource('unrelated.ts',untouched)).toBe(untouched);
  });
  it('preserves every old dated proof/helper/report and binds all new source dependencies',()=>{
@@ -39,8 +40,8 @@ describe('complete Admin user-directory additive source and API history boundary
   for(const row of [...proof.preserved_files,...proof.new_consumer_sources,proof.api_report.builder]){const source=reverseAdminLevelDefinitionSource(row.file,read(row.file));expect(sha(source),row.file).toBe(row.sha256);expect(Buffer.byteLength(source),row.file).toBe(row.bytes);}
   expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);
  });
- for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed source or proof mutation %s in '+file,kind=>{
-  const binding=structuredClone(proof),entry=binding.sources.find(row=>row.file===file)!,live=read(file);let source=live;
+ for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed dated source or proof mutation %s in '+file,kind=>{
+  const binding=structuredClone(proof),entry=binding.sources.find(row=>row.file===file)!,live=peelReviewedAdminSourceTailIfPresent(file,read(file));let source=live;
   if(kind==='extra')source+='\n// unrelated\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=reverseAdminUserFilterSource(file,source);if(kind==='newline')source=source.replace(/\n/u,'\r\n');if(kind==='same-size')source=source.replace(/a/u,'z');
   if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;
   if(['extra','duplicate','missing','old','newline','same-size'].includes(kind))expect(source).not.toBe(live);expect(()=>reverseAdminUserFilterSource(file,source,binding)).toThrow();

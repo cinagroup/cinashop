@@ -1,0 +1,937 @@
+{
+  "schema": "cinashop.reviewed-route-tail-source-binding.v1",
+  "base_ref": "2d30c121fd4d7972ea02786409ec5b53b4dc264f",
+  "current_ref": "working-tree@c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+  "route_stages": [
+    {
+      "name": "promoter150",
+      "before_ref": "2d30c121fd4d7972ea02786409ec5b53b4dc264f",
+      "after_ref": "066424bc6cee91eee7b9a3ddd56ae6dc52eae56c",
+      "sources": [
+        {
+          "file": "view/uniapp-ts/src/pages.json",
+          "before_bytes": 21120,
+          "after_bytes": 21920,
+          "before_sha256": "24d1980e629882db79bb151776cdbc20540e4a63d03bbcb47b8cd96dc661f794",
+          "after_sha256": "b9e6f73118168aef57483b60a80b71229668cf6ff1658356f16ef874e2cece27",
+          "before_git_blob_sha1": "68c24e68904346021e5f53d7b7b37ed23b6c060b",
+          "after_git_blob_sha1": "d1b75e7766824dd31de9a98389f037023f410300",
+          "edits": [
+            {
+              "before_source": "    },\n    {\n      \"path\": \"pages/users/user_distribution_level/index\",\n      \"style\": {\n",
+              "after_source": "    },\n    {\n      \"path\": \"pages/user/distributionLedgers\",\n      \"style\": {\"navigationBarTitleText\": \"佣金记录\"}\n    },\n    {\n      \"path\": \"pages/user/promoterPeople\",\n      \"style\": { \"navigationBarTitleText\": \"我的推广\" }\n    },\n    {\n      \"path\": \"pages/user/promoterOrders\",\n      \"style\": { \"navigationBarTitleText\": \"分销订单\" }\n    },\n    {\n      \"path\": \"pages/user/promoterRank\",\n      \"style\": {\n        \"navigationBarTitleText\": \"推广人排行\",\n        \"navigationBarBackgroundColor\": \"#FCCEA4\",\n        \"navigationBarTextStyle\": \"black\"\n      }\n    },\n    {\n      \"path\": \"pages/user/commissionRank\",\n      \"style\": {\n        \"navigationBarTitleText\": \"佣金排行\",\n        \"navigationBarBackgroundColor\": \"#1B1311\",\n        \"navigationBarTextStyle\": \"white\"\n      }\n    },\n    {\n      \"path\": \"pages/users/user_distribution_level/index\",\n      \"style\": {\n",
+              "before_line": 491,
+              "after_line": 491
+            }
+          ]
+        },
+        {
+          "file": "view/uniapp-ts/src/config/navigation.ts",
+          "before_bytes": 23058,
+          "after_bytes": 23251,
+          "before_sha256": "e3bc9131ac07c9b89e5a48f8f48d9c32dcdb611ec4b2b2d2e0506a551da83872",
+          "after_sha256": "7e39cbf5b3c234b1ae176eea4ccac8fefad7e5952aec546bf517fc8a45233d69",
+          "before_git_blob_sha1": "7aeee7e7cfc6ccbc88cf1f02b5c1985be5ca7b45",
+          "after_git_blob_sha1": "a5c7b1b08956ab01b8f4ed6b1f7a37808e382354",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/users/user_distribution_level/index\",\n  \"/pages/user/spread\",\n",
+              "after_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n  \"/pages/user/promoterRank\",\n  \"/pages/user/commissionRank\",\n  \"/pages/users/user_distribution_level/index\",\n  \"/pages/user/spread\",\n",
+              "before_line": 117,
+              "after_line": 117
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_user/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_user/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n",
+              "before_line": 222,
+              "after_line": 227
+            },
+            {
+              "before_source": "  \"/pages/users/user_payment/index\": { target: \"/pages/user/recharge\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_pwd_edit/index\": { target: \"/pages/user/changePassword\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-list/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/promoter-order/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/promoter_rank/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/commission_rank/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_return_list/index\": { target: \"/pages/order/refundList\", coverage: \"candidate_covered\" },\n  \"/pages/users/login/index\": { target: \"/pages/auth/login\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_payment/index\": { target: \"/pages/user/recharge\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_pwd_edit/index\": { target: \"/pages/user/changePassword\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-list/index\": { target: \"/pages/user/promoterPeople\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-order/index\": { target: \"/pages/user/promoterOrders\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter_rank/index\": { target: \"/pages/user/promoterRank\", coverage: \"candidate_covered\" },\n  \"/pages/users/commission_rank/index\": { target: \"/pages/user/commissionRank\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_return_list/index\": { target: \"/pages/order/refundList\", coverage: \"candidate_covered\" },\n  \"/pages/users/login/index\": { target: \"/pages/auth/login\", coverage: \"candidate_covered\" },\n",
+              "before_line": 234,
+              "after_line": 239
+            }
+          ]
+        },
+        {
+          "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "before_bytes": 23083,
+          "after_bytes": 23276,
+          "before_sha256": "ba607d38c8b2860e8c9e433efa42f5c944d25c418261ad364e0b17161bd7da11",
+          "after_sha256": "e683adfccf6473a627ca0e50cedff237b6ce77427b8a021661f0281ff0dda0b5",
+          "before_git_blob_sha1": "c0450f29e66a5650d9348c6be9efe6ecd017cdea",
+          "after_git_blob_sha1": "5ca184b2e06b43a8a43bae59684f5e5bc083e3cf",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/users/user_distribution_level/index\",\n  \"/pages/user/spread\",\n",
+              "after_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n  \"/pages/user/promoterRank\",\n  \"/pages/user/commissionRank\",\n  \"/pages/users/user_distribution_level/index\",\n  \"/pages/user/spread\",\n",
+              "before_line": 118,
+              "after_line": 118
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_user/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_user/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n",
+              "before_line": 223,
+              "after_line": 228
+            },
+            {
+              "before_source": "  \"/pages/users/user_payment/index\": { target: \"/pages/user/recharge\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_pwd_edit/index\": { target: \"/pages/user/changePassword\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-list/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/promoter-order/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/promoter_rank/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/commission_rank/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_return_list/index\": { target: \"/pages/order/refundList\", coverage: \"candidate_covered\" },\n  \"/pages/users/login/index\": { target: \"/pages/auth/login\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_payment/index\": { target: \"/pages/user/recharge\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_pwd_edit/index\": { target: \"/pages/user/changePassword\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-list/index\": { target: \"/pages/user/promoterPeople\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter-order/index\": { target: \"/pages/user/promoterOrders\", coverage: \"candidate_covered\" },\n  \"/pages/users/promoter_rank/index\": { target: \"/pages/user/promoterRank\", coverage: \"candidate_covered\" },\n  \"/pages/users/commission_rank/index\": { target: \"/pages/user/commissionRank\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_return_list/index\": { target: \"/pages/order/refundList\", coverage: \"candidate_covered\" },\n  \"/pages/users/login/index\": { target: \"/pages/auth/login\", coverage: \"candidate_covered\" },\n",
+              "before_line": 235,
+              "after_line": 240
+            }
+          ]
+        }
+      ],
+      "before_count": 145,
+      "after_count": 150,
+      "before_routes_sha256": "5659122dfae9206db30bf9538f5007d2b674f3e48f4b6cccd7025d7e6090c3f6",
+      "after_routes_sha256": "423e35b9dd57496d3ba6c2d5f0442a9206563afaab590bba23086b82092bd3c3",
+      "before_rules_sha256": "d9a830992a27325e619eacb356c6b148c3b1ea5ecba4d75db67af5223a202bfd",
+      "after_rules_sha256": "6b1d756e938236f63e8072fac7555f0a7262fee6ba8cfe99af3438d0ebefb1fc",
+      "added_routes": [
+        "/pages/user/distributionLedgers",
+        "/pages/user/promoterPeople",
+        "/pages/user/promoterOrders",
+        "/pages/user/promoterRank",
+        "/pages/user/commissionRank"
+      ],
+      "added_pages": [
+        {
+          "path": "pages/user/distributionLedgers",
+          "style": {
+            "navigationBarTitleText": "佣金记录"
+          }
+        },
+        {
+          "path": "pages/user/promoterPeople",
+          "style": {
+            "navigationBarTitleText": "我的推广"
+          }
+        },
+        {
+          "path": "pages/user/promoterOrders",
+          "style": {
+            "navigationBarTitleText": "分销订单"
+          }
+        },
+        {
+          "path": "pages/user/promoterRank",
+          "style": {
+            "navigationBarTitleText": "推广人排行",
+            "navigationBarBackgroundColor": "#FCCEA4",
+            "navigationBarTextStyle": "black"
+          }
+        },
+        {
+          "path": "pages/user/commissionRank",
+          "style": {
+            "navigationBarTitleText": "佣金排行",
+            "navigationBarBackgroundColor": "#1B1311",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ],
+      "rule_edits": [
+        {
+          "key": "/pages/users/user_spread_money/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "candidate_covered"
+          },
+          "after": {
+            "target": "/pages/user/distributionLedgers",
+            "coverage": "candidate_covered"
+          }
+        },
+        {
+          "key": "/pages/users/promoter-list/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/promoterPeople",
+            "coverage": "candidate_covered"
+          }
+        },
+        {
+          "key": "/pages/users/promoter-order/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/promoterOrders",
+            "coverage": "candidate_covered"
+          }
+        },
+        {
+          "key": "/pages/users/promoter_rank/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/promoterRank",
+            "coverage": "candidate_covered"
+          }
+        },
+        {
+          "key": "/pages/users/commission_rank/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/commissionRank",
+            "coverage": "candidate_covered"
+          }
+        }
+      ]
+    },
+    {
+      "name": "withdrawal152",
+      "before_ref": "066424bc6cee91eee7b9a3ddd56ae6dc52eae56c",
+      "after_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "sources": [
+        {
+          "file": "view/uniapp-ts/src/pages.json",
+          "before_bytes": 21920,
+          "after_bytes": 22185,
+          "before_sha256": "b9e6f73118168aef57483b60a80b71229668cf6ff1658356f16ef874e2cece27",
+          "after_sha256": "1101fb8969d04e6999627951047456b001e8809087973ca9e42b64f6afa303d2",
+          "before_git_blob_sha1": "d1b75e7766824dd31de9a98389f037023f410300",
+          "after_git_blob_sha1": "7a668fca1e368afbf9ce276c872d7df935388e30",
+          "edits": [
+            {
+              "before_source": "    },\n    {\n      \"path\": \"pages/user/distributionLedgers\",\n      \"style\": {\"navigationBarTitleText\": \"佣金记录\"}\n",
+              "after_source": "    },\n    {\n      \"path\": \"pages/user/withdrawalApplication\",\n      \"style\": { \"navigationBarTitleText\": \"提现\", \"navigationStyle\": \"custom\" }\n    },\n    {\n      \"path\": \"pages/user/withdrawalReceipt\",\n      \"style\": { \"navigationBarTitleText\": \"提现审核\" }\n    },\n    {\n      \"path\": \"pages/user/distributionLedgers\",\n      \"style\": {\"navigationBarTitleText\": \"佣金记录\"}\n",
+              "before_line": 491,
+              "after_line": 491
+            }
+          ]
+        },
+        {
+          "file": "view/uniapp-ts/src/config/navigation.ts",
+          "before_bytes": 23251,
+          "after_bytes": 23347,
+          "before_sha256": "7e39cbf5b3c234b1ae176eea4ccac8fefad7e5952aec546bf517fc8a45233d69",
+          "after_sha256": "9a3940747dbb9bbfef914dadf9355ad4c31ba41607336c13a16e3600be9e9090",
+          "before_git_blob_sha1": "a5c7b1b08956ab01b8f4ed6b1f7a37808e382354",
+          "after_git_blob_sha1": "6ca0c413fc31879967eb4b53b167d78cc1d452eb",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n",
+              "after_source": "  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n  \"/pages/user/withdrawalReceipt\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n",
+              "before_line": 118,
+              "after_line": 118
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_vip/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_level/index\": { target: \"/pages/users/user_distribution_level/index\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_vip/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_level/index\": { target: \"/pages/users/user_distribution_level/index\", coverage: \"candidate_covered\" },\n",
+              "before_line": 229,
+              "after_line": 231
+            }
+          ]
+        },
+        {
+          "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "before_bytes": 23276,
+          "after_bytes": 23372,
+          "before_sha256": "e683adfccf6473a627ca0e50cedff237b6ce77427b8a021661f0281ff0dda0b5",
+          "after_sha256": "7759a7b6c76482949a4ea1799ea802942b64403da5c04d47a14aade9c06fe2af",
+          "before_git_blob_sha1": "5ca184b2e06b43a8a43bae59684f5e5bc083e3cf",
+          "after_git_blob_sha1": "e04ba77478e3eb96c6a2228cfc1e0953fd5b0f60",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n",
+              "after_source": "  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n  \"/pages/user/withdrawalReceipt\",\n  \"/pages/user/promoterPeople\",\n  \"/pages/user/promoterOrders\",\n",
+              "before_line": 119,
+              "after_line": 119
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/finance\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_vip/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_level/index\": { target: \"/pages/users/user_distribution_level/index\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_vip/index\": { target: \"/pages/user/level\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_level/index\": { target: \"/pages/users/user_distribution_level/index\", coverage: \"candidate_covered\" },\n",
+              "before_line": 230,
+              "after_line": 232
+            }
+          ]
+        }
+      ],
+      "before_count": 150,
+      "after_count": 152,
+      "before_routes_sha256": "423e35b9dd57496d3ba6c2d5f0442a9206563afaab590bba23086b82092bd3c3",
+      "after_routes_sha256": "8e78d409c23c874eea7afbdef4370aa1bba0581ef6fc9456f828f866941b5414",
+      "before_rules_sha256": "6b1d756e938236f63e8072fac7555f0a7262fee6ba8cfe99af3438d0ebefb1fc",
+      "after_rules_sha256": "967e48d951230955c45a839dc773cb3c6c5684fdd34d243c555d5f37d3a6e70d",
+      "added_routes": [
+        "/pages/user/withdrawalApplication",
+        "/pages/user/withdrawalReceipt"
+      ],
+      "added_pages": [
+        {
+          "path": "pages/user/withdrawalApplication",
+          "style": {
+            "navigationBarTitleText": "提现",
+            "navigationStyle": "custom"
+          }
+        },
+        {
+          "path": "pages/user/withdrawalReceipt",
+          "style": {
+            "navigationBarTitleText": "提现审核"
+          }
+        }
+      ],
+      "rule_edits": [
+        {
+          "key": "/pages/users/user_cash/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "candidate_covered"
+          },
+          "after": {
+            "target": "/pages/user/withdrawalApplication",
+            "coverage": "candidate_covered"
+          }
+        },
+        {
+          "key": "/pages/users/user_cash/status",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/withdrawalReceipt",
+            "coverage": "candidate_covered"
+          }
+        }
+      ]
+    },
+    {
+      "name": "agent153",
+      "before_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "after_ref": "working-tree@c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "sources": [
+        {
+          "file": "view/uniapp-ts/src/pages.json",
+          "before_bytes": 22185,
+          "after_bytes": 22303,
+          "before_sha256": "1101fb8969d04e6999627951047456b001e8809087973ca9e42b64f6afa303d2",
+          "after_sha256": "8d81d69457d1bb663b32296475c9fd535c618f39e13e952b855afb70feb001e7",
+          "before_git_blob_sha1": "7a668fca1e368afbf9ce276c872d7df935388e30",
+          "after_git_blob_sha1": "f409214052a352ba1fd23e1ad5c46fcc1035a5bf",
+          "edits": [
+            {
+              "before_source": "    },\n    {\n      \"path\": \"pages/user/finance\",\n      \"style\": {\n",
+              "after_source": "    },\n    {\n      \"path\": \"pages/user/agentExplanation\",\n      \"style\": { \"navigationBarTitleText\": \"分销说明\" }\n    },\n    {\n      \"path\": \"pages/user/finance\",\n      \"style\": {\n",
+              "before_line": 485,
+              "after_line": 485
+            }
+          ]
+        },
+        {
+          "file": "view/uniapp-ts/src/config/navigation.ts",
+          "before_bytes": 23347,
+          "after_bytes": 23388,
+          "before_sha256": "9a3940747dbb9bbfef914dadf9355ad4c31ba41607336c13a16e3600be9e9090",
+          "after_sha256": "ab00ab314297acaa48a2a63fd67b4f8cf6682da14481e916a5b24cf96e91f2a0",
+          "before_git_blob_sha1": "6ca0c413fc31879967eb4b53b167d78cc1d452eb",
+          "after_git_blob_sha1": "d12e769ac64a78e530435b28ace18b413c0c46b9",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n",
+              "after_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/agentExplanation\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n",
+              "before_line": 117,
+              "after_line": 117
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/agentExplanation\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n",
+              "before_line": 230,
+              "after_line": 231
+            }
+          ]
+        },
+        {
+          "file": "workers-ts/src/services/content/FabRouteRegistry.ts",
+          "before_bytes": 23372,
+          "after_bytes": 23413,
+          "before_sha256": "7759a7b6c76482949a4ea1799ea802942b64403da5c04d47a14aade9c06fe2af",
+          "after_sha256": "f1f462e1767ec99a0b5febc70e7578d418fea7f3253910303fc50789ce1b251e",
+          "before_git_blob_sha1": "e04ba77478e3eb96c6a2228cfc1e0953fd5b0f60",
+          "after_git_blob_sha1": "631c232e60a774cf9ff6294307cea243e2dfaf8a",
+          "edits": [
+            {
+              "before_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n",
+              "after_source": "  \"/pages/user/couponProducts\",\n  \"/pages/user/finance\",\n  \"/pages/user/agentExplanation\",\n  \"/pages/user/distributionLedgers\",\n  \"/pages/user/withdrawalApplication\",\n",
+              "before_line": 118,
+              "after_line": 118
+            },
+            {
+              "before_source": "  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/finance\", coverage: \"partial_replacement\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n",
+              "after_source": "  \"/pages/users/user_spread_code/index\": { target: \"/pages/user/spread\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_spread_money/index\": { target: \"/pages/user/distributionLedgers\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_distribution_info/index\": { target: \"/pages/user/agentExplanation\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/index\": { target: \"/pages/user/withdrawalApplication\", coverage: \"candidate_covered\" },\n  \"/pages/users/user_cash/status\": { target: \"/pages/user/withdrawalReceipt\", coverage: \"candidate_covered\" },\n",
+              "before_line": 231,
+              "after_line": 232
+            }
+          ]
+        }
+      ],
+      "before_count": 152,
+      "after_count": 153,
+      "before_routes_sha256": "8e78d409c23c874eea7afbdef4370aa1bba0581ef6fc9456f828f866941b5414",
+      "after_routes_sha256": "a8d191b7feac8ebcc09c57812bf6010c580372cf275abc1d7c24f257891ecaad",
+      "before_rules_sha256": "967e48d951230955c45a839dc773cb3c6c5684fdd34d243c555d5f37d3a6e70d",
+      "after_rules_sha256": "68e8c1a57f21e5d7f4098dbf26507999300280fc0c608d245acb05c13fadd0f3",
+      "added_routes": [
+        "/pages/user/agentExplanation"
+      ],
+      "added_pages": [
+        {
+          "path": "pages/user/agentExplanation",
+          "style": {
+            "navigationBarTitleText": "分销说明"
+          }
+        }
+      ],
+      "rule_edits": [
+        {
+          "key": "/pages/users/user_distribution_info/index",
+          "before": {
+            "target": "/pages/user/finance",
+            "coverage": "partial_replacement"
+          },
+          "after": {
+            "target": "/pages/user/agentExplanation",
+            "coverage": "candidate_covered"
+          }
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/helpers/memberLevelActivationSourceBinding.ts",
+      "before_bytes": 6308,
+      "after_bytes": 6915,
+      "before_sha256": "99123502811a3022940c2e50020ac653b56af5544a6e3891ad44a14875797476",
+      "after_sha256": "de18b8caeeb84d0f5cd3b097e3b223543076f3e5747be7afb02b64d8152c798f",
+      "before_git_blob_sha1": "cc17b17ad1a3a55237294c3c87af0efebb07f882",
+      "after_git_blob_sha1": "a5eace12fefa97c344a3172311807c29ea2eac6e",
+      "edits": [
+        {
+          "before_source": "import {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {relative,resolve,sep} from 'node:path';\nimport {reverseRouteSourceFollowup,type RouteSourceFollowup} from './routeSourceIncrement';\n",
+          "after_source": "import {createHash} from 'node:crypto';\nimport {readReviewedRouteTailHistoricalFile as readFileSync,peelReviewedRouteTailSourceIfPresent,peelReviewedRouteTailRegisteredRoutesIfPresent,peelReviewedRouteTailLegacyRulesIfPresent} from './reviewedRouteTailSourceBinding';\nimport {relative,resolve,sep} from 'node:path';\nimport {reverseRouteSourceFollowup,type RouteSourceFollowup} from './routeSourceIncrement';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "function entry(file:string,p:MemberLevelActivationBinding){return[...p.sources,...p.harness_sources].find(v=>v.file===file);}\nfunction whole(s:string,v:Source,before:boolean){return Buffer.byteLength(s)===(before?v.before_bytes:v.after_bytes)&&sha(s)===(before?v.before_sha256:v.after_sha256)&&blob(s)===(before?v.before_git_blob_sha1:v.after_git_blob_sha1);}\nexport function reverseMemberLevelActivationSource(file:string,source:string,p=memberLevelActivationSourceBinding):string{inventory(p);const v=entry(file,p);if(!v)return source;if(!whole(source,v,false))throw Error('Member level activation complete current source differs');const before=reverseRouteSourceFollowup(source,v);if(!whole(before,v,true))throw Error('Member level activation complete predecessor source differs');return before;}\nexport function peelMemberLevelActivationSource(file:string,source:string,p=memberLevelActivationSourceBinding):string{inventory(p);const v=entry(file,p);return v&&whole(source,v,true)?source:reverseMemberLevelActivationSource(file,source,p);}\n/** Only a hash-identical new state is peeled. Earlier adapters still validate\n * their own complete known states and reject every unknown source. */\nexport function peelMemberLevelActivationSourceIfPresent(file:string,source:string):string{const p=memberLevelActivationSourceBinding;inventory(p);const v=entry(file,p);return v&&whole(source,v,false)?reverseMemberLevelActivationSource(file,source,p):source;}\nexport function reverseMemberLevelActivationRegisteredRoutes(current:ReadonlySet<string>,p=memberLevelActivationSourceBinding):Set<string>{inventory(p);const n=p.navigation;if(current.size!==n.after_count||sha(JSON.stringify([...current].sort()))!==n.after_routes_sha256||!current.has(n.route))throw Error('Member level activation complete current routes differ');const before=new Set(current);before.delete(n.route);if(before.size!==n.before_count||sha(JSON.stringify([...before].sort()))!==n.before_routes_sha256)throw Error('Member level activation complete predecessor routes differ');return before;}\nexport function peelMemberLevelActivationRegisteredRoutesIfPresent(current:ReadonlySet<string>):Set<string>{const p=memberLevelActivationSourceBinding;inventory(p);return sha(JSON.stringify([...current].sort()))===p.navigation.after_routes_sha256?reverseMemberLevelActivationRegisteredRoutes(current,p):new Set(current);}\nexport function reverseMemberLevelActivationLegacyRules<T extends Readonly<Record<string,Rule>>>(current:T,p=memberLevelActivationSourceBinding):T{inventory(p);const n=p.navigation;if(sha(JSON.stringify(current))!==n.after_rules_sha256||JSON.stringify(current[n.key])!==JSON.stringify(n.after_rule))throw Error('Member level activation complete current rules differ');const before={...current,[n.key]:structuredClone(n.before_rule)} as T;if(sha(JSON.stringify(before))!==n.before_rules_sha256)throw Error('Member level activation complete predecessor rules differ');return before;}\nexport function peelMemberLevelActivationLegacyRulesIfPresent<T extends Readonly<Record<string,Rule>>>(current:T):T{const p=memberLevelActivationSourceBinding;inventory(p);return sha(JSON.stringify(current))===p.navigation.after_rules_sha256?reverseMemberLevelActivationLegacyRules(current,p):current;}\nexport const readMemberLevelActivationHistoricalFile:typeof readFileSync=((...args:unknown[])=>{const value=Reflect.apply(readFileSync,undefined,args) as string|Uint8Array,path=args[0];if(typeof path!=='string')return value;const file=relative(root,resolve(path)).split(sep).join('/');if(!entry(file,memberLevelActivationSourceBinding))return value;const encoding=typeof args[1]==='string'?args[1]:(args[1] as {encoding?:string}|undefined)?.encoding;if(encoding&&encoding!=='utf8'&&encoding!=='utf-8')throw Error('Member level activation reader requires exact UTF8 or Buffer');const before=peelMemberLevelActivationSource(file,typeof value==='string'?value:new TextDecoder().decode(value));return typeof value==='string'?before:Buffer.from(before,'utf8');}) as typeof readFileSync;\n\n",
+          "after_source": "function entry(file:string,p:MemberLevelActivationBinding){return[...p.sources,...p.harness_sources].find(v=>v.file===file);}\nfunction whole(s:string,v:Source,before:boolean){return Buffer.byteLength(s)===(before?v.before_bytes:v.after_bytes)&&sha(s)===(before?v.before_sha256:v.after_sha256)&&blob(s)===(before?v.before_git_blob_sha1:v.after_git_blob_sha1);}\nexport function reverseMemberLevelActivationSource(file:string,source:string,p=memberLevelActivationSourceBinding):string{inventory(p);source=peelReviewedRouteTailSourceIfPresent(file,source);const v=entry(file,p);if(!v)return source;if(!whole(source,v,false))throw Error('Member level activation complete current source differs');const before=reverseRouteSourceFollowup(source,v);if(!whole(before,v,true))throw Error('Member level activation complete predecessor source differs');return before;}\nexport function peelMemberLevelActivationSource(file:string,source:string,p=memberLevelActivationSourceBinding):string{inventory(p);source=peelReviewedRouteTailSourceIfPresent(file,source);const v=entry(file,p);return v&&whole(source,v,true)?source:reverseMemberLevelActivationSource(file,source,p);}\n/** Only a hash-identical new state is peeled. Earlier adapters still validate\n * their own complete known states and reject every unknown source. */\nexport function peelMemberLevelActivationSourceIfPresent(file:string,source:string):string{const p=memberLevelActivationSourceBinding;inventory(p);source=peelReviewedRouteTailSourceIfPresent(file,source);const v=entry(file,p);return v&&whole(source,v,false)?reverseMemberLevelActivationSource(file,source,p):source;}\nexport function reverseMemberLevelActivationRegisteredRoutes(current:ReadonlySet<string>,p=memberLevelActivationSourceBinding):Set<string>{inventory(p);current=peelReviewedRouteTailRegisteredRoutesIfPresent(current);const n=p.navigation;if(current.size!==n.after_count||sha(JSON.stringify([...current].sort()))!==n.after_routes_sha256||!current.has(n.route))throw Error('Member level activation complete current routes differ');const before=new Set(current);before.delete(n.route);if(before.size!==n.before_count||sha(JSON.stringify([...before].sort()))!==n.before_routes_sha256)throw Error('Member level activation complete predecessor routes differ');return before;}\nexport function peelMemberLevelActivationRegisteredRoutesIfPresent(current:ReadonlySet<string>):Set<string>{const p=memberLevelActivationSourceBinding;inventory(p);current=peelReviewedRouteTailRegisteredRoutesIfPresent(current);return sha(JSON.stringify([...current].sort()))===p.navigation.after_routes_sha256?reverseMemberLevelActivationRegisteredRoutes(current,p):new Set(current);}\nexport function reverseMemberLevelActivationLegacyRules<T extends Readonly<Record<string,Rule>>>(current:T,p=memberLevelActivationSourceBinding):T{inventory(p);current=peelReviewedRouteTailLegacyRulesIfPresent(current);const n=p.navigation;if(sha(JSON.stringify(current))!==n.after_rules_sha256||JSON.stringify(current[n.key])!==JSON.stringify(n.after_rule))throw Error('Member level activation complete current rules differ');const before={...current,[n.key]:structuredClone(n.before_rule)} as T;if(sha(JSON.stringify(before))!==n.before_rules_sha256)throw Error('Member level activation complete predecessor rules differ');return before;}\nexport function peelMemberLevelActivationLegacyRulesIfPresent<T extends Readonly<Record<string,Rule>>>(current:T):T{const p=memberLevelActivationSourceBinding;inventory(p);current=peelReviewedRouteTailLegacyRulesIfPresent(current);return sha(JSON.stringify(current))===p.navigation.after_rules_sha256?reverseMemberLevelActivationLegacyRules(current,p):current;}\nexport const readMemberLevelActivationHistoricalFile:typeof readFileSync=((...args:unknown[])=>{const value=Reflect.apply(readFileSync,undefined,args) as string|Uint8Array,path=args[0];if(typeof path!=='string')return value;const file=relative(root,resolve(path)).split(sep).join('/');if(!entry(file,memberLevelActivationSourceBinding))return value;const encoding=typeof args[1]==='string'?args[1]:(args[1] as {encoding?:string}|undefined)?.encoding;if(encoding&&encoding!=='utf8'&&encoding!=='utf-8')throw Error('Member level activation reader requires exact UTF8 or Buffer');const before=peelMemberLevelActivationSource(file,typeof value==='string'?value:new TextDecoder().decode(value));return typeof value==='string'?before:Buffer.from(before,'utf8');}) as typeof readFileSync;\n\n",
+          "before_line": 13,
+          "after_line": 13
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/helpers/membershipRightsSourceBinding.ts",
+      "before_bytes": 9179,
+      "after_bytes": 9406,
+      "before_sha256": "fef2ad05ac7b6d57a0b40053446cb735fa99c763bd00a0a03e9bc2a605e80f71",
+      "after_sha256": "c30ce95703e7e1576178547cf363579eb3ce63812aa803bf31741e7308cf6a6a",
+      "before_git_blob_sha1": "c92e96311285fed876b6acc405b87f4779ec8a84",
+      "after_git_blob_sha1": "9ce7d31cd7b3719a9c886ba800a0361a9499b951",
+      "edits": [
+        {
+          "before_source": "import { peelMembershipCouponsRegisteredRoutesIfPresent } from './membershipCouponsSourceBinding';\nimport { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';\n",
+          "after_source": "import { peelReviewedRouteTailReportForHistoricalAudit } from './reviewedRouteTailSourceBinding';\nimport { peelMembershipCouponsRegisteredRoutesIfPresent } from './membershipCouponsSourceBinding';\nimport { peelMembershipCardActivationSource, peelMembershipCardActivationLegacyRules } from './membershipCardActivationSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);\nfunction reportBridge<T>(input:T,reverse:boolean,binding:MembershipRightsSourceBinding):T {\n  inventory(binding);const p=binding.api_report,incoming=pretty(input);\n  if(sha(incoming)!==(reverse?p.after_sha256:p.before_sha256)||Buffer.byteLength(incoming)!==(reverse?p.after_bytes:p.before_bytes))throw Error('Membership rights complete report input differs');\n  const result=structuredClone(input),operations=reverse?[...p.operations].reverse():p.operations;\n",
+          "after_source": "const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);\nfunction reportBridge<T>(input:T,reverse:boolean,binding:MembershipRightsSourceBinding):T {\n  inventory(binding);if(reverse)input=peelReviewedRouteTailReportForHistoricalAudit(input);const p=binding.api_report,incoming=pretty(input);\n  if(sha(incoming)!==(reverse?p.after_sha256:p.before_sha256)||Buffer.byteLength(incoming)!==(reverse?p.after_bytes:p.before_bytes))throw Error('Membership rights complete report input differs');\n  const result=structuredClone(input),operations=reverse?[...p.operations].reverse():p.operations;\n",
+          "before_line": 57,
+          "after_line": 58
+        },
+        {
+          "before_source": "/** An old apply operation still emits its original exact result. Only these two complete states are accepted. */\nexport function peelMembershipRightsReport<T>(input:T,binding=membershipRightsSourceBinding):T {\n  inventory(binding);const p=binding.api_report,incoming=pretty(input);\n  if(sha(incoming)===p.before_sha256&&Buffer.byteLength(incoming)===p.before_bytes)return input;\n  return reverseMembershipRightsReport(input,binding);\n",
+          "after_source": "/** An old apply operation still emits its original exact result. Only these two complete states are accepted. */\nexport function peelMembershipRightsReport<T>(input:T,binding=membershipRightsSourceBinding):T {\n  inventory(binding);input=peelReviewedRouteTailReportForHistoricalAudit(input);const p=binding.api_report,incoming=pretty(input);\n  if(sha(incoming)===p.before_sha256&&Buffer.byteLength(incoming)===p.before_bytes)return input;\n  return reverseMembershipRightsReport(input,binding);\n",
+          "before_line": 80,
+          "after_line": 81
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/member-level-activation-source-binding.test.ts",
+      "before_bytes": 11451,
+      "after_bytes": 11956,
+      "before_sha256": "ddb52a1decfd97d48a8c28f4ad486a2533e19b6c620e08520f05b3108188da32",
+      "after_sha256": "9f851d60fd8a0de22bdb9ce94ceb76e9c8a8e31efe39cb685357ad4f00581f39",
+      "before_git_blob_sha1": "7f1cb448d266c13638111ed246dc2cd91af394ef",
+      "after_git_blob_sha1": "472a9f1da4510bf84f2f303bb53a09db2c2275fc",
+      "edits": [
+        {
+          "before_source": "import {createHash} from 'node:crypto';\nimport {readFileSync} from 'node:fs';\nimport {resolve} from 'node:path';\nimport ts from 'typescript';\n",
+          "after_source": "import {createHash} from 'node:crypto';\nimport {readReviewedRouteTailHistoricalFile as readFileSync,peelReviewedRouteTailRegisteredRoutesIfPresent,peelReviewedRouteTailLegacyRulesIfPresent} from './helpers/reviewedRouteTailSourceBinding';\nimport {resolve} from 'node:path';\nimport ts from 'typescript';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "import {memberLevelActivationSourceBinding as p,reverseMemberLevelActivationSource,peelMemberLevelActivationSource,peelMemberLevelActivationSourceIfPresent,reverseMemberLevelActivationRegisteredRoutes,peelMemberLevelActivationRegisteredRoutesIfPresent,reverseMemberLevelActivationLegacyRules,peelMemberLevelActivationLegacyRulesIfPresent,readMemberLevelActivationHistoricalFile,memberLevelActivationHistoricalResolvedRoute} from './helpers/memberLevelActivationSourceBinding';\nimport {reverseMembershipClauseSource,reverseMembershipClauseRegisteredRoutes,reverseMembershipClauseLegacyRules} from './helpers/membershipClauseSourceBinding';\nimport {REGISTERED_PAGE_ROUTES as clientRoutes,LEGACY_ROUTE_RULES as clientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';\nimport {REGISTERED_PAGE_ROUTES as serverRoutes,LEGACY_ROUTE_RULES as serverRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';\nconst root=resolve(import.meta.dirname,'../..'),read=(f:string)=>readFileSync(resolve(root,f),'utf8'),sha=(s:string)=>createHash('sha256').update(s).digest('hex'),blob=(s:string)=>createHash('sha1').update(`blob ${Buffer.byteLength(s)}\\0`).update(s).digest('hex');\nconst production=['view/uniapp-ts/src/pages.json','view/uniapp-ts/src/config/navigation.ts','workers-ts/src/services/content/FabRouteRegistry.ts','workers-ts/src/services/content/UserCenterPublicReadService.ts'];\n",
+          "after_source": "import {memberLevelActivationSourceBinding as p,reverseMemberLevelActivationSource,peelMemberLevelActivationSource,peelMemberLevelActivationSourceIfPresent,reverseMemberLevelActivationRegisteredRoutes,peelMemberLevelActivationRegisteredRoutesIfPresent,reverseMemberLevelActivationLegacyRules,peelMemberLevelActivationLegacyRulesIfPresent,readMemberLevelActivationHistoricalFile,memberLevelActivationHistoricalResolvedRoute} from './helpers/memberLevelActivationSourceBinding';\nimport {reverseMembershipClauseSource,reverseMembershipClauseRegisteredRoutes,reverseMembershipClauseLegacyRules} from './helpers/membershipClauseSourceBinding';\nimport {REGISTERED_PAGE_ROUTES as actualClientRoutes,LEGACY_ROUTE_RULES as actualClientRules,resolveRegisteredPageRoute as clientResolve} from '../../view/uniapp-ts/src/config/navigation';\nimport {REGISTERED_PAGE_ROUTES as actualServerRoutes,LEGACY_ROUTE_RULES as actualServerRules,resolveRegisteredPageRoute as serverResolve} from '../src/services/content/FabRouteRegistry';\nconst clientRoutes=peelReviewedRouteTailRegisteredRoutesIfPresent(actualClientRoutes),serverRoutes=peelReviewedRouteTailRegisteredRoutesIfPresent(actualServerRoutes);\nconst clientRules=peelReviewedRouteTailLegacyRulesIfPresent(actualClientRules),serverRules=peelReviewedRouteTailLegacyRulesIfPresent(actualServerRules);\nconst root=resolve(import.meta.dirname,'../..'),read=(f:string)=>readFileSync(resolve(root,f),'utf8'),sha=(s:string)=>createHash('sha256').update(s).digest('hex'),blob=(s:string)=>createHash('sha1').update(`blob ${Buffer.byteLength(s)}\\0`).update(s).digest('hex');\nconst production=['view/uniapp-ts/src/pages.json','view/uniapp-ts/src/config/navigation.ts','workers-ts/src/services/content/FabRouteRegistry.ts','workers-ts/src/services/content/UserCenterPublicReadService.ts'];\n",
+          "before_line": 6,
+          "after_line": 6
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-card-activation-source-binding.test.ts",
+      "before_bytes": 18821,
+      "after_bytes": 19068,
+      "before_sha256": "f64864a99c83a7833d61923c3f3f0711ffd3c35a4aca956f7c56e7bfc32bb52b",
+      "after_sha256": "785a62777ba12232f8b7784e6d5aea29ffa0a788550227e8437b33a67d943a15",
+      "before_git_blob_sha1": "9f8626595dd57c17357fe596f6309bdaf7840923",
+      "after_git_blob_sha1": "02ef781ceefa9a334abd39161c2f0da4d576ea0e",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsRegisteredRoutesIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './helpers/membershipCouponsSourceBinding';\n",
+          "after_source": "import { peelReviewedRouteTailReportForHistoricalAudit } from './helpers/reviewedRouteTailSourceBinding';\nimport { createHash } from 'node:crypto';\nimport { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsRegisteredRoutesIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './helpers/membershipCouponsSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "    for(const resolver of [clientResolve,serverResolve]){expect(resolver(proof.navigation.key)).toBe('/pages/annex/vip_active/index');expect(resolver(proof.navigation.key,'from=menu')).toBe('/pages/annex/vip_active/index?from=menu');expect(resolver('/pages/annex/vip_active/index')).toBe('/pages/annex/vip_active/index');expect(resolver('/pages/annex/vip_paid_rights/index')).toBe('/pages/user/vipRights');}\n  });\n  it('recomputes the unchanged711-call complete Admin report and retains original rights apply/reverse results',()=>{\n    const current=buildAdminFrontendApiAuditReport();expect(proof.admin_api_report).toEqual({sha256:'1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0',bytes:645939,calls:711,variants:749});\n    expect(sha(pretty(current))).toBe(proof.admin_api_report.sha256);expect(Buffer.byteLength(pretty(current))).toBe(proof.admin_api_report.bytes);expect(current.counts).toEqual({callSites:711,pathVariants:749,registered:749,executable:749,controlledUnavailable:0,unregistered:0,unresolved:0});\n    const before=reverseMembershipRightsReport(current);expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(applyMembershipRightsReport(before)).toEqual(current);\n  });\n  it('keeps exact UTF8/Buffer historical reader semantics and unrelated files unchanged',()=>{\n",
+          "after_source": "    for(const resolver of [clientResolve,serverResolve]){expect(resolver(proof.navigation.key)).toBe('/pages/annex/vip_active/index');expect(resolver(proof.navigation.key,'from=menu')).toBe('/pages/annex/vip_active/index?from=menu');expect(resolver('/pages/annex/vip_active/index')).toBe('/pages/annex/vip_active/index');expect(resolver('/pages/annex/vip_paid_rights/index')).toBe('/pages/user/vipRights');}\n  });\n  it('reconstructs the historical711-call complete Admin report from the exact reviewed current tail and retains original rights apply/reverse results',()=>{\n    const historicalReport=peelReviewedRouteTailReportForHistoricalAudit(buildAdminFrontendApiAuditReport());expect(proof.admin_api_report).toEqual({sha256:'1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0',bytes:645939,calls:711,variants:749});\n    expect(sha(pretty(historicalReport))).toBe(proof.admin_api_report.sha256);expect(Buffer.byteLength(pretty(historicalReport))).toBe(proof.admin_api_report.bytes);expect(historicalReport.counts).toEqual({callSites:711,pathVariants:749,registered:749,executable:749,controlledUnavailable:0,unregistered:0,unresolved:0});\n    const before=reverseMembershipRightsReport(historicalReport);expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(applyMembershipRightsReport(before)).toEqual(historicalReport);\n  });\n  it('keeps exact UTF8/Buffer historical reader semantics and unrelated files unchanged',()=>{\n",
+          "before_line": 106,
+          "after_line": 107
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-rights-source-binding.test.ts",
+      "before_bytes": 21779,
+      "after_bytes": 22022,
+      "before_sha256": "fd4ccc83b6a68bbd493f2fe05754ba3803326c318c7f4d22a6495730dec948ce",
+      "after_sha256": "b74fc41881257bf0309a14f97782a968acc1d6ec59ddd436641165c2ca065793",
+      "before_git_blob_sha1": "516202571fa008797b6843bb2da011f1c80e3582",
+      "after_git_blob_sha1": "7e4403dc8de08f799e96b61f2e2b04a168f8d604",
+      "edits": [
+        {
+          "before_source": "import { peelMembershipCouponsRegisteredRoutesIfPresent } from './helpers/membershipCouponsSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "after_source": "import { peelReviewedRouteTailReportForHistoricalAudit } from './helpers/reviewedRouteTailSourceBinding';\nimport { peelMembershipCouponsRegisteredRoutesIfPresent } from './helpers/membershipCouponsSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const historical=()=>applyAdminLevelDefinitionReport(applyMigrationAuditReport(beforeFilter()));\nlet report:ReturnType<typeof buildAdminFrontendApiAuditReport>|undefined;\nconst current=()=>structuredClone(report??=buildAdminFrontendApiAuditReport());\n\n/** Parse literal AST data without executing reconstructed source or requiring Git history in CI. */\n",
+          "after_source": "const historical=()=>applyAdminLevelDefinitionReport(applyMigrationAuditReport(beforeFilter()));\nlet report:ReturnType<typeof buildAdminFrontendApiAuditReport>|undefined;\nconst historicalRightsReport=()=>structuredClone(report??=peelReviewedRouteTailReportForHistoricalAudit(buildAdminFrontendApiAuditReport()));\n\n/** Parse literal AST data without executing reconstructed source or requiring Git history in CI. */\n",
+          "before_line": 40,
+          "after_line": 41
+        },
+        {
+          "before_source": "  });\n\n  it('parses all four actual Admin requests and independently recomputes the complete 711-call report',()=>{\n    expect(apiCalls(read(apiFile))).toEqual([\n      {method:'get',path:'/member/right',line:47,arguments:2},\n",
+          "after_source": "  });\n\n  it('parses the four dated Admin requests and reconstructs their historical711-call report through the exact reviewed current tail',()=>{\n    expect(apiCalls(read(apiFile))).toEqual([\n      {method:'get',path:'/member/right',line:47,arguments:2},\n",
+          "before_line": 113,
+          "after_line": 114
+        },
+        {
+          "before_source": "      {method:'post',path:'`/member/save/content/${id}`',line:56,arguments:3},\n    ]);\n    const before=historical(),actual=current(),p=proof.api_report;\n    expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(Buffer.byteLength(pretty(before))).toBe(644498);\n    expect(sha(pretty(actual))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');expect(Buffer.byteLength(pretty(actual))).toBe(645939);\n",
+          "after_source": "      {method:'post',path:'`/member/save/content/${id}`',line:56,arguments:3},\n    ]);\n    const before=historical(),actual=historicalRightsReport(),p=proof.api_report;\n    expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(Buffer.byteLength(pretty(before))).toBe(644498);\n    expect(sha(pretty(actual))).toBe('1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0');expect(Buffer.byteLength(pretty(actual))).toBe(645939);\n",
+          "before_line": 120,
+          "after_line": 121
+        },
+        {
+          "before_source": "\n  it.each(['count','source','route','methodology','line','handler','missing','duplicate','extra'] as const)('rejects unrelated complete-report %s in both exact states',kind=>{\n    for(const direction of ['before','after'] as const){const value=direction==='before'?historical():current();\n      if(kind==='count')value.counts.registered++;if(kind==='source')value.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='route')value.backend.registeredRoutes[0]!.handler='unreviewed';\n      if(kind==='methodology')value.methodology.scope='unreviewed';if(kind==='line')value.calls[326]!.line++;if(kind==='handler')value.calls[326]!.matchedHandler='unreviewed';\n",
+          "after_source": "\n  it.each(['count','source','route','methodology','line','handler','missing','duplicate','extra'] as const)('rejects unrelated complete-report %s in both exact states',kind=>{\n    for(const direction of ['before','after'] as const){const value=direction==='before'?historical():historicalRightsReport();\n      if(kind==='count')value.counts.registered++;if(kind==='source')value.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='route')value.backend.registeredRoutes[0]!.handler='unreviewed';\n      if(kind==='methodology')value.methodology.scope='unreviewed';if(kind==='line')value.calls[326]!.line++;if(kind==='handler')value.calls[326]!.matchedHandler='unreviewed';\n",
+          "before_line": 179,
+          "after_line": 180
+        },
+        {
+          "before_source": "    if(kind==='preserved')binding.preserved_files.pop();if(kind==='navigation')binding.navigation.after_count++;if(kind==='extra')Object.assign(binding,{unknown:true});\n    expect(()=>reverseMembershipRightsSource(apiFile,read(apiFile),binding)).toThrow();expect(()=>reverseMembershipRightsHarnessSource(harnessFiles[0]!,read(harnessFiles[0]!),binding)).toThrow();\n    expect(()=>reverseMembershipRightsReport(current(),binding)).toThrow();expect(()=>reverseMembershipRightsRegisteredRoutes(clientRoutes,binding)).toThrow();expect(()=>reverseMembershipRightsLegacyRules(clientRules,binding)).toThrow();\n  });\n\n",
+          "after_source": "    if(kind==='preserved')binding.preserved_files.pop();if(kind==='navigation')binding.navigation.after_count++;if(kind==='extra')Object.assign(binding,{unknown:true});\n    expect(()=>reverseMembershipRightsSource(apiFile,read(apiFile),binding)).toThrow();expect(()=>reverseMembershipRightsHarnessSource(harnessFiles[0]!,read(harnessFiles[0]!),binding)).toThrow();\n    expect(()=>reverseMembershipRightsReport(historicalRightsReport(),binding)).toThrow();expect(()=>reverseMembershipRightsRegisteredRoutes(clientRoutes,binding)).toThrow();expect(()=>reverseMembershipRightsLegacyRules(clientRules,binding)).toThrow();\n  });\n\n",
+          "before_line": 197,
+          "after_line": 198
+        }
+      ]
+    }
+  ],
+  "report_stages": [
+    {
+      "name": "withdrawal152",
+      "before_ref": "2d30c121fd4d7972ea02786409ec5b53b4dc264f",
+      "after_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "before_sha256": "1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0",
+      "after_sha256": "898dc22f08052f9561d569a12c6b98a1ffe71589ab7797182ff72d8a23b60204",
+      "before_bytes": 645939,
+      "after_bytes": 645939,
+      "operations": [
+        {
+          "kind": "splice",
+          "path": [
+            "backend",
+            "rootRouteSources"
+          ],
+          "index": 2,
+          "before": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "0c987f27673ab37bfc6c5338c046e6f85bee58f1762d619b6a3e9816da4faec0"
+            }
+          ],
+          "after": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "b3d5f85fc090f2ea20ec83c97ae1e851b7d1ef98635bad81aa283724e7e8cd2a"
+            }
+          ]
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 950,
+          "count": 727,
+          "delta": 2,
+          "before_sha256": "f4e47862cf16bc553b7b50debd992ac6503d2d24e79d6da53630fb602895aed6",
+          "after_sha256": "257e9a99bcff3a762b5ea95ccdbbedd43fe46de25237576a4ffa9b02dca1c871"
+        }
+      ],
+      "counts": {
+        "callSites": 711,
+        "pathVariants": 749,
+        "registered": 749,
+        "executable": 749,
+        "controlledUnavailable": 0,
+        "unregistered": 0,
+        "unresolved": 0
+      },
+      "frontend_sources": 108,
+      "registered_routes": 1677
+    },
+    {
+      "name": "admin152",
+      "before_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "after_ref": "c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "before_sha256": "898dc22f08052f9561d569a12c6b98a1ffe71589ab7797182ff72d8a23b60204",
+      "after_sha256": "c53d9a94ad96d61b06f11825c2dd58613ce764c6e4f8d2f7c83ed2df407343b4",
+      "before_bytes": 645939,
+      "after_bytes": 646865,
+      "operations": [
+        {
+          "kind": "replace",
+          "path": [
+            "backend",
+            "sha256"
+          ],
+          "before": "344b07f9f1e76948f3f534b186bf03617e8a66a43ae05798e4f666fc48e38135",
+          "after": "84d306bc7fd2f5a7b77314421de80e793dac9c8c84e97c9a2ab53ba74e1df4b1"
+        },
+        {
+          "kind": "splice",
+          "path": [
+            "backend",
+            "rootRouteSources"
+          ],
+          "index": 2,
+          "before": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "b3d5f85fc090f2ea20ec83c97ae1e851b7d1ef98635bad81aa283724e7e8cd2a"
+            }
+          ],
+          "after": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "ed7130449c7e82f40f1addb32be91be1912fd2a710b77f9c023aa379d9b9f079"
+            }
+          ]
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 0,
+          "count": 674,
+          "delta": 1,
+          "before_sha256": "b78d3e1187887adb94144480dc2d8db749905f2812327729b7e2499343b3af13",
+          "after_sha256": "f8c69f686f138ce0d8297414b7ee1748de816dd9eb5da889ee71c7c0784039b0"
+        },
+        {
+          "kind": "splice",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 674,
+          "before": [],
+          "after": [
+            {
+              "method": "GET",
+              "path": "/extract/directory",
+              "line": 1043,
+              "handler": "AdminWithdrawalDirectory.directory",
+              "availability": "executable"
+            },
+            {
+              "method": "GET",
+              "path": "/extract/directory/:id/media",
+              "line": 1044,
+              "handler": "AdminWithdrawalDirectory.media",
+              "availability": "executable"
+            }
+          ]
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 676,
+          "count": 276,
+          "delta": 3,
+          "before_sha256": "0cb21c7018c51fb5ac8f265476e29342bcfc28212ea8fd70a6414a00714b5192",
+          "after_sha256": "fad7479396e729c27934a0c6bddf8d1b037d91316d9fca3685ff0d8847e23188"
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 952,
+          "count": 449,
+          "delta": 1,
+          "before_sha256": "a96e35fb1de1a417bf440c898d8e14f16abf9b00f9e6f7a6ad0d8a0002cfd74c",
+          "after_sha256": "51535848800831c8233662e726844ceb91e951b9fd509c2981c55576129b24c1"
+        },
+        {
+          "kind": "splice",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 1401,
+          "before": [],
+          "after": [
+            {
+              "method": "GET",
+              "path": "/api/admin/extract/directory",
+              "line": 2161,
+              "handler": "AdminWithdrawalDirectory.directory",
+              "availability": "executable",
+              "source": "workers-ts/src/routes/v1/index.ts"
+            },
+            {
+              "method": "GET",
+              "path": "/api/admin/extract/directory/:id/media",
+              "line": 2162,
+              "handler": "AdminWithdrawalDirectory.media",
+              "availability": "executable",
+              "source": "workers-ts/src/routes/v1/index.ts"
+            }
+          ]
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 1403,
+          "count": 278,
+          "delta": 3,
+          "before_sha256": "2590de1a33797ec93084c86c0b2a296bfcdd2acc8b1b90e3021f26faa98be6ef",
+          "after_sha256": "25d6f7539ebdcdf0d1a051ebd34bc73fb2a2ef410accf2602c90088442272a7e"
+        }
+      ],
+      "counts": {
+        "callSites": 711,
+        "pathVariants": 749,
+        "registered": 749,
+        "executable": 749,
+        "controlledUnavailable": 0,
+        "unregistered": 0,
+        "unresolved": 0
+      },
+      "frontend_sources": 108,
+      "registered_routes": 1681
+    },
+    {
+      "name": "agent153",
+      "before_ref": "c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "after_ref": "working-tree@c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "before_sha256": "c53d9a94ad96d61b06f11825c2dd58613ce764c6e4f8d2f7c83ed2df407343b4",
+      "after_sha256": "98e0b64a802d601cb2e09df5ddaa4936fc7325a84aa081f58fb13d5c936d2dcc",
+      "before_bytes": 646865,
+      "after_bytes": 646865,
+      "operations": [
+        {
+          "kind": "splice",
+          "path": [
+            "backend",
+            "rootRouteSources"
+          ],
+          "index": 2,
+          "before": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "ed7130449c7e82f40f1addb32be91be1912fd2a710b77f9c023aa379d9b9f079"
+            }
+          ],
+          "after": [
+            {
+              "file": "workers-ts/src/routes/v1/index.ts",
+              "sha256": "749fa0f4d9961cf9b8e40f69dcb75e0995d97678ccb3ca997c65609fbd9a2fa5"
+            }
+          ]
+        },
+        {
+          "kind": "line-shift",
+          "path": [
+            "backend",
+            "registeredRoutes"
+          ],
+          "index": 952,
+          "count": 729,
+          "delta": 2,
+          "before_sha256": "e8a3440e65c939885d08d0d5b178ca0b48b04cc8797bf948b5e1105ab7566fcc",
+          "after_sha256": "c7c20cbd91d06d1ca240cb22a791e646b10ab9d2bbebc8d70a3cb0f2ce9a892d"
+        }
+      ],
+      "counts": {
+        "callSites": 711,
+        "pathVariants": 749,
+        "registered": 749,
+        "executable": 749,
+        "controlledUnavailable": 0,
+        "unregistered": 0,
+        "unresolved": 0
+      },
+      "frontend_sources": 108,
+      "registered_routes": 1681
+    }
+  ],
+  "current_extra_sources": [
+    {
+      "file": "workers-ts/scripts/admin-frontend-api-audit.ts",
+      "bytes": 17141,
+      "sha256": "6b15b5dde34cddd70dea5c30bf37e78d685a531ec43d65e4e9206178dda61472"
+    },
+    {
+      "file": "view/admin-ts/src/api/extractDirectory.ts",
+      "bytes": 14733,
+      "sha256": "409f83260be2caaf2a76575fd82e312364912a7d0df84fea974bab05a8182818"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 115168,
+      "sha256": "d8e271ff1bcb67677182dd3ca23cad8f5988fb1a621efd37a6836968158ccba7"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminWithdrawalDirectoryController.ts",
+      "bytes": 1569,
+      "sha256": "303a18924f8f79f71d27a2e9310dcca3c08e97da0f4aad083355ba94524d3389"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminWithdrawalDirectoryService.ts",
+      "bytes": 14458,
+      "sha256": "50f571704da73e35cedfda3bdcfb3982324f83a4764dfbd1d0163948bf9e9cef"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-runtime-auth.ts",
+      "bytes": 1000,
+      "sha256": "578e045846088e6f9185e27d02529df2bdc062fcfe4696f68a0761c4a2d487f2"
+    },
+    {
+      "file": "workers-ts/src/middleware/admin-auth.ts",
+      "bytes": 3254,
+      "sha256": "3206787605b76b0afedf7696fcf3d38f3d581d48a90ab97094e4987261ce21af"
+    }
+  ],
+  "preserved_dated_fixtures": [
+    {
+      "file": "workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json",
+      "bytes": 45718,
+      "sha256": "745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json",
+      "bytes": 66571,
+      "sha256": "54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de"
+    },
+    {
+      "file": "workers-ts/test/fixtures/admin-user-filter-test-harness-source-binding-20261025.json",
+      "bytes": 2940,
+      "sha256": "003db31800bcaec20f3ec571b64384e6173738860aa235a20c4087be3d7f9c2e"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-author-source-binding-20261025.json",
+      "bytes": 23388,
+      "sha256": "b471408b7cdf102b057f1d2f6614d3fe53767ce07062fc9e6de2cdf5bc047e50"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-image-preview-source-binding-20261025.json",
+      "bytes": 5851,
+      "sha256": "eda1c988387de9bec1d9cfde372388efd40f7a75f7b948f142d530c1eca4c693"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-commerce-preview-expiry-source-binding-20261025.json",
+      "bytes": 10746,
+      "sha256": "dab8be850b69f60557be4121786847f4910bad9ca82940863815500550424295"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json",
+      "bytes": 13813,
+      "sha256": "536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-community-preview-refresh-source-binding-20261025.json",
+      "bytes": 11589,
+      "sha256": "03a598b2543c08939b1d37b6f182de5573f27d62abf349a83f0222f33fe25d13"
+    },
+    {
+      "file": "workers-ts/test/fixtures/diy-editorial-author-source-binding-20261024.json",
+      "bytes": 6294,
+      "sha256": "0493954cc32eb582ba5944cc7e803ef7e043d030d0455b5ccb63999a2744d2e9"
+    },
+    {
+      "file": "workers-ts/test/fixtures/member-level-activation-source-binding-20261027.json",
+      "bytes": 24320,
+      "sha256": "2ff43d147390bdb06a9870e6abe305508170cbfb09de416269e6dd82fa5f571a"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+      "bytes": 26571,
+      "sha256": "66383437d4f55f432b11211d4f85e31ce2fe713a291988e70c273d913bb8f09c"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-clause-source-binding-20261027.json",
+      "bytes": 24220,
+      "sha256": "f284752289721d3c4158e810e461808c20febaaa957160c3c79a220d9dcc0ad8"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-coupons-source-binding-20261027.json",
+      "bytes": 25356,
+      "sha256": "af39b16bbeebea0205d2255b1c427cca78f15fecc2cf877773787abefc7cc0b2"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "bytes": 55307,
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab"
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-audit-followup-source-binding-20261026.json",
+      "bytes": 28750,
+      "sha256": "0ab82e48ec36dd39aaae6c00ee9ed7c4ae4a9850371e0d4d48c045846e6b1236"
+    }
+  ],
+  "boundary": "Only exact complete later route/source/report states inverse to the immutable145-page/711-call predecessor. New live tests read actual current153-page files, both resolvers, complete current1681-route audit and the separately scoped2GET native-fetch client. Unknown bytes, extra routes/rules/report fields and changes to dated fixtures still fail closed."
+}

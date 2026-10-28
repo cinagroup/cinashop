@@ -1,0 +1,12 @@
+{
+  "php_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "assets": [
+    {
+      "file": "spread_sm.png",
+      "source": "public/statics/images/spread_sm.png",
+      "bytes": 3597,
+      "sha256": "3da112701fb32a25f56568d0e10817a2de75a03591a52ac3a8566733e1a672a3",
+      "git_blob": "a3ae6fac0acdcfdbff2f325711782bde0012bc93"
+    }
+  ]
+}

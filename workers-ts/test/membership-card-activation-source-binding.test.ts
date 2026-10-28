@@ -1,3 +1,4 @@
+import { peelReviewedRouteTailReportForHistoricalAudit } from './helpers/reviewedRouteTailSourceBinding';
 import { createHash } from 'node:crypto';
 import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCouponsRegisteredRoutesIfPresent, peelMembershipCouponsLegacyRulesIfPresent } from './helpers/membershipCouponsSourceBinding';
 import { resolve } from 'node:path';
@@ -105,10 +106,10 @@ describe('exact PHP membership-card activation navigation increment and immutabl
     }
     for(const resolver of [clientResolve,serverResolve]){expect(resolver(proof.navigation.key)).toBe('/pages/annex/vip_active/index');expect(resolver(proof.navigation.key,'from=menu')).toBe('/pages/annex/vip_active/index?from=menu');expect(resolver('/pages/annex/vip_active/index')).toBe('/pages/annex/vip_active/index');expect(resolver('/pages/annex/vip_paid_rights/index')).toBe('/pages/user/vipRights');}
   });
-  it('recomputes the unchanged711-call complete Admin report and retains original rights apply/reverse results',()=>{
-    const current=buildAdminFrontendApiAuditReport();expect(proof.admin_api_report).toEqual({sha256:'1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0',bytes:645939,calls:711,variants:749});
-    expect(sha(pretty(current))).toBe(proof.admin_api_report.sha256);expect(Buffer.byteLength(pretty(current))).toBe(proof.admin_api_report.bytes);expect(current.counts).toEqual({callSites:711,pathVariants:749,registered:749,executable:749,controlledUnavailable:0,unregistered:0,unresolved:0});
-    const before=reverseMembershipRightsReport(current);expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(applyMembershipRightsReport(before)).toEqual(current);
+  it('reconstructs the historical711-call complete Admin report from the exact reviewed current tail and retains original rights apply/reverse results',()=>{
+    const historicalReport=peelReviewedRouteTailReportForHistoricalAudit(buildAdminFrontendApiAuditReport());expect(proof.admin_api_report).toEqual({sha256:'1ac108158879d83daae4f0d5a70e137db210e23a33040f10a577dada2419bff0',bytes:645939,calls:711,variants:749});
+    expect(sha(pretty(historicalReport))).toBe(proof.admin_api_report.sha256);expect(Buffer.byteLength(pretty(historicalReport))).toBe(proof.admin_api_report.bytes);expect(historicalReport.counts).toEqual({callSites:711,pathVariants:749,registered:749,executable:749,controlledUnavailable:0,unregistered:0,unresolved:0});
+    const before=reverseMembershipRightsReport(historicalReport);expect(sha(pretty(before))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7');expect(applyMembershipRightsReport(before)).toEqual(historicalReport);
   });
   it('keeps exact UTF8/Buffer historical reader semantics and unrelated files unchanged',()=>{
     for(const file of sourceFiles){const before=reverseMembershipCardActivationSource(file,read(file)),absolute=resolve(root,file);expect(readMembershipCardActivationHistoricalFile(absolute,'utf8')).toBe(before);expect(readMembershipCardActivationHistoricalFile(absolute)).toEqual(Buffer.from(before));expect(()=>readMembershipCardActivationHistoricalFile(absolute,'ascii')).toThrow();}

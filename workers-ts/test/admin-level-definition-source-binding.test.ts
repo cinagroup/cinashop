@@ -1,3 +1,4 @@
+import { peelReviewedAdminHistoricalSourceIfPresent } from './helpers/reviewedAdminSourceTailBinding';
 import { reverseMembershipRightsReport } from './helpers/membershipRightsSourceBinding';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -14,13 +15,13 @@ import { adminLevelDefinitionSourceBinding as proof, applyAdminLevelDefinitionRe
   peelAdminLevelDefinitionReport, reverseAdminLevelDefinitionSource, reverseAdminLevelDefinitionHarnessSource } from './helpers/adminLevelDefinitionSourceBinding';
 
 const root = resolve(import.meta.dirname, '../..');
-const read = (file: string) => readFileSync(resolve(root, file), 'utf8');
+const readHistorical = (file: string) => peelReviewedAdminHistoricalSourceIfPresent(file,readFileSync(resolve(root, file), 'utf8'));
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
 const blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\0`).update(value).digest('hex');
 let report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
-const current = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));
-const previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));
+const historicalLevelReport = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));
+const previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(readHistorical(original.api_report.base_file))))));
 const historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;
 const sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];
 const harnessFiles = ['workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts', 'workers-ts/test/migration-audit-followup-source-binding.test.ts', 'workers-ts/test/admin-user-filter-source-binding.test.ts'];
@@ -41,7 +42,7 @@ function apiCalls(source: string) {
 
 describe('exact ordinary-level authoring source and complete Admin API report increment', () => {
   it('pins the independently captured parent, real Git patch, whole sources and immutable predecessor fixtures', () => {
-    expect(sha(read('workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json'))).toBe('745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431');
+    expect(sha(readHistorical('workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json'))).toBe('745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431');
     expect(proof.base_ref).toBe('1846f34db81e90a661a41f53d56095509d5eeb92');
     expect(proof.level_ref).toBe('9969402715601d596dc4a310167b86d98655acc2');
     expect(proof.current_ref).toBe('677b60d86e11a78e57dcf3688ca476f3427f9579');
@@ -52,7 +53,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
       ['15a46c5ed194debb5dd24b814aa9cd2dcf805d6434caad64f0a0f8456421011d', '8f8aafa4a5c5c14cc288a040d66705d7e6dee9ff35b816624e174325b4435482', 112713, 111149],
     ]);
     for (const entry of proof.sources) {
-      const actual = read(entry.file), before = reverseAdminLevelDefinitionSource(entry.file, actual);
+      const actual = readHistorical(entry.file), before = reverseAdminLevelDefinitionSource(entry.file, actual);
       expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);
       expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);
       let reconstructed = before; for (const edit of entry.edits) reconstructed = reconstructed.replace(edit.before_source, edit.after_source);
@@ -65,7 +66,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
     expect(patch.unified_diff.match(/^diff --git /gm)).toHaveLength(2);
     for (const entry of proof.sources) expect(patch.unified_diff).toContain(`index ${entry.before_git_blob_sha1.slice(0, 8)}..${entry.after_git_blob_sha1.slice(0, 8)} 100644`);
     expect(proof.preserved_files).toHaveLength(11);
-    for (const entry of proof.preserved_files) { expect(sha(read(entry.file)), entry.file).toBe(entry.sha256); expect(Buffer.byteLength(read(entry.file)), entry.file).toBe(entry.bytes); }
+    for (const entry of proof.preserved_files) { expect(sha(readHistorical(entry.file)), entry.file).toBe(entry.sha256); expect(Buffer.byteLength(readHistorical(entry.file)), entry.file).toBe(entry.bytes); }
     const oldController = original.new_consumer_sources.find(row => row.file === sourceFiles[1])!;
     expect(proof.sources[1]!.before_sha256).toBe(oldController.sha256); expect(proof.sources[1]!.before_bytes).toBe(oldController.bytes);
   });
@@ -73,7 +74,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
   it('limits historical test adapters to three exact reversible whole-file changes', () => {
     expect(proof.harness_sources.map(row => row.file)).toEqual(harnessFiles); expect(proof.harness_sources.map(row => row.edits.length)).toEqual([2, 2, 2]);
     for (const entry of proof.harness_sources) {
-      const actual = read(entry.file), before = reverseAdminLevelDefinitionHarnessSource(entry.file, actual);
+      const actual = readHistorical(entry.file), before = reverseAdminLevelDefinitionHarnessSource(entry.file, actual);
       expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);
       expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);
       let reconstructed = before; for (const edit of entry.edits) reconstructed = reconstructed.replace(edit.before_source, edit.after_source); expect(reconstructed).toBe(actual);
@@ -83,7 +84,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
   });
 
   it('independently parses the real four requests and retains the existing three bare route/handler contracts', () => {
-    const actual = read(sourceFiles[0]!);
+    const actual = readHistorical(sourceFiles[0]!);
     expect(apiCalls(actual)).toEqual([
       { method: 'get', path: '/level/list', line: 79, argumentCount: 1 },
       { method: 'get', path: '/level/list', line: 82, argumentCount: 2 },
@@ -98,8 +99,8 @@ describe('exact ordinary-level authoring source and complete Admin API report in
     }
   });
 
-  it('recomputes the entire current report and bridges only the six reviewed operations before the original migration layer', () => {
-    const before = historical(), actual = current(), p = proof.api_report;
+  it('reconstructs the entire dated level report through six reviewed operations before the original migration layer', () => {
+    const before = historical(), actual = historicalLevelReport(), p = proof.api_report;
     expect(sha(pretty(before))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f'); expect(Buffer.byteLength(pretty(before))).toBe(644215);
     expect(sha(pretty(actual))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7'); expect(Buffer.byteLength(pretty(actual))).toBe(644498);
     expect(p.operations.map(row => [row.kind, row.path])).toEqual([
@@ -126,7 +127,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
 
   for (const file of [...sourceFiles, ...harnessFiles]) it.each(['extra', 'missing', 'duplicate', 'newline', 'same-length', 'old'] as const)('rejects unreviewed whole-source %s in ' + file, kind => {
     const harness = harnessFiles.includes(file), reverse = harness ? reverseAdminLevelDefinitionHarnessSource : reverseAdminLevelDefinitionSource;
-    const entry = (harness ? proof.harness_sources : proof.sources).find(row => row.file === file)!, originalSource = read(file);
+    const entry = (harness ? proof.harness_sources : proof.sources).find(row => row.file === file)!, originalSource = readHistorical(file);
     let changed = originalSource;
     if (kind === 'extra') changed += '\n// unrelated\n'; if (kind === 'missing') changed = changed.replace(entry.edits[0]!.after_source, '');
     if (kind === 'duplicate') changed += entry.edits[0]!.after_source; if (kind === 'newline') changed = changed.replace('\n', '\r\n');
@@ -136,7 +137,7 @@ describe('exact ordinary-level authoring source and complete Admin API report in
 
   it.each(['count', 'route', 'source', 'methodology', 'line', 'handler', 'missing-call', 'duplicate-call', 'new-call', 'extra'] as const)('rejects unrelated complete-report %s in either exact state', kind => {
     for (const direction of ['before', 'after'] as const) {
-      const value = direction === 'before' ? historical() : current();
+      const value = direction === 'before' ? historical() : historicalLevelReport();
       if (kind === 'count') value.counts.registered++; if (kind === 'route') value.backend.registeredRoutes[0]!.handler = 'unreviewed';
       if (kind === 'source') value.frontendSources[0]!.sha256 = '0'.repeat(64); if (kind === 'methodology') value.methodology.scope = 'unreviewed';
       if (kind === 'line') value.calls[295]!.line++; if (kind === 'handler') value.calls[295]!.matchedHandler = 'unreviewed';
@@ -158,8 +159,8 @@ describe('exact ordinary-level authoring source and complete Admin API report in
     if (kind === 'report-hash') binding.api_report.after_sha256 = '0'.repeat(64); if (kind === 'report-bytes') binding.api_report.before_bytes++;
     if (kind === 'base') binding.base_ref = 'unknown'; if (kind === 'patch') binding.production_patch.unified_diff += '\n';
     if (kind === 'preserved') binding.preserved_files.pop(); if (kind === 'extra') Object.assign(binding, { unknown: true });
-    expect(() => reverseAdminLevelDefinitionSource(sourceFiles[0]!, read(sourceFiles[0]!), binding)).toThrow();
-    expect(() => reverseAdminLevelDefinitionHarnessSource(harnessFiles[0]!, read(harnessFiles[0]!), binding)).toThrow();
-    expect(() => peelAdminLevelDefinitionReport(current(), binding)).toThrow(); expect(() => applyAdminLevelDefinitionReport(historical(), binding)).toThrow();
+    expect(() => reverseAdminLevelDefinitionSource(sourceFiles[0]!, readHistorical(sourceFiles[0]!), binding)).toThrow();
+    expect(() => reverseAdminLevelDefinitionHarnessSource(harnessFiles[0]!, readHistorical(harnessFiles[0]!), binding)).toThrow();
+    expect(() => peelAdminLevelDefinitionReport(historicalLevelReport(), binding)).toThrow(); expect(() => applyAdminLevelDefinitionReport(historical(), binding)).toThrow();
   });
 });

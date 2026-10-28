@@ -484,6 +484,10 @@
       }
     },
     {
+      "path": "pages/user/agentExplanation",
+      "style": { "navigationBarTitleText": "分销说明" }
+    },
+    {
       "path": "pages/user/finance",
       "style": {
         "navigationBarTitleText": "分销中心"

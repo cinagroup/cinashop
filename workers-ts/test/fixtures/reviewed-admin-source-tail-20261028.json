@@ -1,0 +1,368 @@
+{
+  "schema": "cinashop.reviewed-admin-source-tail.v1",
+  "base_ref": "066424bc6cee91eee7b9a3ddd56ae6dc52eae56c",
+  "current_ref": "current-agent-explanation",
+  "stages": [
+    {
+      "before_ref": "066424bc6cee91eee7b9a3ddd56ae6dc52eae56c",
+      "after_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "sources": [
+        {
+          "file": "workers-ts/src/routes/v1/index.ts",
+          "before_bytes": 176010,
+          "after_bytes": 176193,
+          "before_sha256": "0c987f27673ab37bfc6c5338c046e6f85bee58f1762d619b6a3e9816da4faec0",
+          "after_sha256": "b3d5f85fc090f2ea20ec83c97ae1e851b7d1ef98635bad81aa283724e7e8cd2a",
+          "before_git_blob_sha1": "e4e2db8655f410bd04b4aadca78405b8173878cd",
+          "after_git_blob_sha1": "6ff0da8877e110306ba526ff4032673d88b9b064",
+          "edits": [
+            {
+              "before_source": "/**\n * API v1 路由\n",
+              "after_source": "import * as UserExtractController from '@/controllers/api/v1/UserExtractController';\n/**\n * API v1 路由\n",
+              "before_line": 1,
+              "after_line": 1
+            },
+            {
+              "before_source": "v1Routes.post(\"/extract/cash\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.extractCash);\nv1Routes.get(\"/user/extract/list\", authMiddleware({ force: true }), UserFinanceController.extractList);\n// 事业部代理申请与代理商员工关系。删除接口改用 DELETE/POST，拒绝沿用 PHP 的状态变更 GET。\nfor (const path of ['/division/agent/staff_list', '/division/agent/staff_percent', '/division/agent/staff/*', '/division/agent/del_staff/*', '/division/agent/spread', '/division/agent/spread/code', '/division/agent/spread/code/*', '/division/agent/bind_info']) {\n",
+              "after_source": "v1Routes.post(\"/extract/cash\", stationOpenMiddleware(), authMiddleware({ force: true }), UserFinanceController.extractCash);\nv1Routes.get(\"/user/extract/list\", authMiddleware({ force: true }), UserFinanceController.extractList);\nv1Routes.get(\"/extract/records\", authMiddleware({ force: true }), UserExtractController.records);\n// 事业部代理申请与代理商员工关系。删除接口改用 DELETE/POST，拒绝沿用 PHP 的状态变更 GET。\nfor (const path of ['/division/agent/staff_list', '/division/agent/staff_percent', '/division/agent/staff/*', '/division/agent/del_staff/*', '/division/agent/spread', '/division/agent/spread/code', '/division/agent/spread/code/*', '/division/agent/bind_info']) {\n",
+              "before_line": 942,
+              "after_line": 943
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "before_ref": "17ef905194dd0ee565e62789c2a6c63cb33cfc39",
+      "after_ref": "c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "sources": [
+        {
+          "file": "workers-ts/src/routes/v1/index.ts",
+          "before_bytes": 176193,
+          "after_bytes": 176478,
+          "before_sha256": "b3d5f85fc090f2ea20ec83c97ae1e851b7d1ef98635bad81aa283724e7e8cd2a",
+          "after_sha256": "ed7130449c7e82f40f1addb32be91be1912fd2a710b77f9c023aa379d9b9f079",
+          "before_git_blob_sha1": "6ff0da8877e110306ba526ff4032673d88b9b064",
+          "after_git_blob_sha1": "b899ddc1d44cd87e75d84f789fec2e65ea22f4a2",
+          "edits": [
+            {
+              "before_source": "import * as AdminRechargeOrder from \"@/controllers/api/v1/AdminRechargeOrderController\";\nimport * as AdminCommissionRead from \"@/controllers/api/v1/AdminCommissionReadController\";\nimport * as AdminUserMoneyLedger from \"@/controllers/api/v1/AdminUserMoneyLedgerController\";\nimport * as AdminSeckillTime from \"@/controllers/api/v1/AdminSeckillTimeController\";\n",
+              "after_source": "import * as AdminRechargeOrder from \"@/controllers/api/v1/AdminRechargeOrderController\";\nimport * as AdminCommissionRead from \"@/controllers/api/v1/AdminCommissionReadController\";\nimport * as AdminWithdrawalDirectory from \"@/controllers/api/v1/AdminWithdrawalDirectoryController\";\nimport * as AdminUserMoneyLedger from \"@/controllers/api/v1/AdminUserMoneyLedgerController\";\nimport * as AdminSeckillTime from \"@/controllers/api/v1/AdminSeckillTimeController\";\n",
+              "before_line": 103,
+              "after_line": 103
+            },
+            {
+              "before_source": "// 提现审核 (M17)\nv1Routes.get(\"/admin/extract/list\", adminAuth, AdminCrud.adminExtractList);\nv1Routes.post(\"/admin/extract/status/:id\", adminAuth, AdminCrud.adminExtractStatus);\nv1Routes.get(\"/admin/supplier/extract/suppliers\", adminAuth, AdminSupplierFinance.supplierExtractSuppliers);\n",
+              "after_source": "// 提现审核 (M17)\nv1Routes.get(\"/admin/extract/list\", adminAuth, AdminCrud.adminExtractList);\nv1Routes.get(\"/admin/extract/directory\", adminAuth, AdminWithdrawalDirectory.directory);\nv1Routes.get(\"/admin/extract/directory/:id/media\", adminAuth, AdminWithdrawalDirectory.media);\nv1Routes.post(\"/admin/extract/status/:id\", adminAuth, AdminCrud.adminExtractStatus);\nv1Routes.get(\"/admin/supplier/extract/suppliers\", adminAuth, AdminSupplierFinance.supplierExtractSuppliers);\n",
+              "before_line": 2158,
+              "after_line": 2159
+            }
+          ]
+        },
+        {
+          "file": "workers-ts/src/routes/adminapi.ts",
+          "before_bytes": 109622,
+          "after_bytes": 109907,
+          "before_sha256": "344b07f9f1e76948f3f534b186bf03617e8a66a43ae05798e4f666fc48e38135",
+          "after_sha256": "84d306bc7fd2f5a7b77314421de80e793dac9c8c84e97c9a2ab53ba74e1df4b1",
+          "before_git_blob_sha1": "4c9d62b03aa6c75dfa9d3c6d243a93a4b31d8db5",
+          "after_git_blob_sha1": "8b06e9c3ce8d8bde160ee6a8286113c136996774",
+          "edits": [
+            {
+              "before_source": "import * as AdminRechargeOrder from \"@/controllers/api/v1/AdminRechargeOrderController\";\nimport * as AdminCommissionRead from \"@/controllers/api/v1/AdminCommissionReadController\";\nimport * as AdminUserMoneyLedger from \"@/controllers/api/v1/AdminUserMoneyLedgerController\";\nimport * as AdminSeckillTime from \"@/controllers/api/v1/AdminSeckillTimeController\";\n",
+              "after_source": "import * as AdminRechargeOrder from \"@/controllers/api/v1/AdminRechargeOrderController\";\nimport * as AdminCommissionRead from \"@/controllers/api/v1/AdminCommissionReadController\";\nimport * as AdminWithdrawalDirectory from \"@/controllers/api/v1/AdminWithdrawalDirectoryController\";\nimport * as AdminUserMoneyLedger from \"@/controllers/api/v1/AdminUserMoneyLedgerController\";\nimport * as AdminSeckillTime from \"@/controllers/api/v1/AdminSeckillTimeController\";\n",
+              "before_line": 91,
+              "after_line": 91
+            },
+            {
+              "before_source": "// ─── 提现审核 (M17) ─────────────────────────────────────────\nadminapiRoutes.get(\"/extract/list\", adminAuth, AdminCrud.adminExtractList);\nadminapiRoutes.post(\"/extract/status/:id\", adminAuth, AdminCrud.adminExtractStatus);\n\n",
+              "after_source": "// ─── 提现审核 (M17) ─────────────────────────────────────────\nadminapiRoutes.get(\"/extract/list\", adminAuth, AdminCrud.adminExtractList);\nadminapiRoutes.get(\"/extract/directory\", adminAuth, AdminWithdrawalDirectory.directory);\nadminapiRoutes.get(\"/extract/directory/:id/media\", adminAuth, AdminWithdrawalDirectory.media);\nadminapiRoutes.post(\"/extract/status/:id\", adminAuth, AdminCrud.adminExtractStatus);\n\n",
+              "before_line": 1040,
+              "after_line": 1041
+            }
+          ]
+        },
+        {
+          "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+          "before_bytes": 114659,
+          "after_bytes": 115168,
+          "before_sha256": "6985f637c91f88958a9eaa870d4be2d361ac8afc9cd103dfb3a661f5b03c3ede",
+          "after_sha256": "d8e271ff1bcb67677182dd3ca23cad8f5988fb1a621efd37a6836968158ccba7",
+          "before_git_blob_sha1": "d6df0a4bd770bf2d39a9ffd86ba1dde3dee284c0",
+          "after_git_blob_sha1": "7c3cb1ec867e3264c7a9803c4d36dc0cd5ce5a66",
+          "edits": [
+            {
+              "before_source": "  if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;\n  const route = normalizeAdminRoute(routePath);\n  if (['user/filter_options', 'user/filter_regions'].includes(route)) {\n    return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'user.view' : null;\n",
+              "after_source": "  if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;\n  const route = normalizeAdminRoute(routePath);\n  // This additive reader is a closed namespace: only the exact directory\n  // and one canonical record's opt-in media GET/HEAD require extract.view.\n  if (route === 'extract/directory' || route.startsWith('extract/directory/')) {\n    if (!['GET', 'HEAD'].includes(method.toUpperCase())) return null;\n    if (route === 'extract/directory') return 'extract.view';\n    const parts = route.split('/');\n    return parts.length === 4 && legacyAdminId(parts[2]) && parts[3] === 'media' ? 'extract.view' : null;\n  }\n  if (['user/filter_options', 'user/filter_regions'].includes(route)) {\n    return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'user.view' : null;\n",
+              "before_line": 494,
+              "after_line": 494
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "before_ref": "c5a9034034e996fb60c7b9ce0df5ef7c2bc52fd5",
+      "after_ref": "current-agent-explanation",
+      "sources": [
+        {
+          "file": "workers-ts/src/routes/v1/index.ts",
+          "before_bytes": 176478,
+          "after_bytes": 176649,
+          "before_sha256": "ed7130449c7e82f40f1addb32be91be1912fd2a710b77f9c023aa379d9b9f079",
+          "after_sha256": "749fa0f4d9961cf9b8e40f69dcb75e0995d97678ccb3ca997c65609fbd9a2fa5",
+          "before_git_blob_sha1": "b899ddc1d44cd87e75d84f789fec2e65ea22f4a2",
+          "after_git_blob_sha1": "3c04535756efea50af011977370efae979b5905c",
+          "edits": [
+            {
+              "before_source": "import * as AppleAuthController from \"@/controllers/api/v1/AppleAuthController\";\nimport * as PublicController from \"@/controllers/api/v1/PublicController\";\nimport * as PublicGeocodingController from \"@/controllers/api/v1/PublicGeocodingController\";\nimport * as ProductController from \"@/controllers/api/v1/ProductController\";\n",
+              "after_source": "import * as AppleAuthController from \"@/controllers/api/v1/AppleAuthController\";\nimport * as PublicController from \"@/controllers/api/v1/PublicController\";\nimport * as AgentExplanationController from '@/controllers/api/v1/AgentExplanationController';\nimport * as PublicGeocodingController from \"@/controllers/api/v1/PublicGeocodingController\";\nimport * as ProductController from \"@/controllers/api/v1/ProductController\";\n",
+              "before_line": 14,
+              "after_line": 14
+            },
+            {
+              "before_source": "v1Routes.get(\"/user_agreement/:type\", PublicController.getUserAgreement);\nv1Routes.get(\"/agreement/:type\", PublicController.getAgreement);\nv1Routes.get(\"/get_open_adv\", PublicController.getOpenAdv);\nv1Routes.get(\"/navigation\", PublicController.navigation);\n",
+              "after_source": "v1Routes.get(\"/user_agreement/:type\", PublicController.getUserAgreement);\nv1Routes.get(\"/agreement/:type\", PublicController.getAgreement);\nv1Routes.get('/agent/explanation', AgentExplanationController.explanation);\nv1Routes.get(\"/get_open_adv\", PublicController.getOpenAdv);\nv1Routes.get(\"/navigation\", PublicController.navigation);\n",
+              "before_line": 206,
+              "after_line": 207
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "harness_sources": [
+    {
+      "file": "workers-ts/test/admin-user-filter-source-binding.test.ts",
+      "before_bytes": 14653,
+      "after_bytes": 14846,
+      "before_sha256": "fa4e1b3efc5193c5f51435ba5e5409a46b57cafe12b46bd6d7645dbde392947e",
+      "after_sha256": "194c06b40bb1368e681787d8661681153b6cddd15be5f92aee12da7442da23fc",
+      "before_git_blob_sha1": "48d730c231e8bc764c7c9abbe9d55f505d4eff4d",
+      "after_git_blob_sha1": "e72883edd9d5f4c908c6dbd1464ab1f3995321c6",
+      "edits": [
+        {
+          "before_source": "import { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';\nimport { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';\n",
+          "after_source": "import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSourceTailBinding';\nimport { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';\nimport { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": " it('pins five historical whole sources after the exact migration inverse and reconstructs their parent byte-for-byte',()=>{\n  expect(sha(read('workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json'))).toBe('54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de');expect(proof.base_ref).toBe('330625d39b3988eb37ee73d19fde8e51e14cf625');expect(proof.sources.map(row=>row.file)).toEqual(files);expect(proof.sources.map(row=>row.edits.length)).toEqual([1,1,3,1,1]);\n  for(const row of proof.sources){const current=read(row.file),live=reverseMigrationAuditSource(row.file,current),before=reverseAdminUserFilterSource(row.file,current);expect(sha(live)).toBe(row.after_sha256);expect(Buffer.byteLength(live)).toBe(row.after_bytes);expect(sha(before)).toBe(row.before_sha256);expect(Buffer.byteLength(before)).toBe(row.before_bytes);let reconstructed=before;for(const edit of row.edits)reconstructed=reconstructed.replace(edit.before_source,edit.after_source);expect(reconstructed).toBe(live);}\n  const untouched='// unchanged sibling bytes\\n';expect(reverseAdminUserFilterSource('unrelated.ts',untouched)).toBe(untouched);\n });\n",
+          "after_source": " it('pins five historical whole sources after the exact migration inverse and reconstructs their parent byte-for-byte',()=>{\n  expect(sha(read('workers-ts/test/fixtures/admin-user-filter-source-binding-20261025.json'))).toBe('54cfe137c143387ef7f0d14f098a7738317ef409e4a45ed299c60c98e3cff3de');expect(proof.base_ref).toBe('330625d39b3988eb37ee73d19fde8e51e14cf625');expect(proof.sources.map(row=>row.file)).toEqual(files);expect(proof.sources.map(row=>row.edits.length)).toEqual([1,1,3,1,1]);\n  for(const row of proof.sources){const current=peelReviewedAdminSourceTailIfPresent(row.file,read(row.file)),live=reverseMigrationAuditSource(row.file,current),before=reverseAdminUserFilterSource(row.file,current);expect(sha(live)).toBe(row.after_sha256);expect(Buffer.byteLength(live)).toBe(row.after_bytes);expect(sha(before)).toBe(row.before_sha256);expect(Buffer.byteLength(before)).toBe(row.before_bytes);let reconstructed=before;for(const edit of row.edits)reconstructed=reconstructed.replace(edit.before_source,edit.after_source);expect(reconstructed).toBe(live);}\n  const untouched='// unchanged sibling bytes\\n';expect(reverseAdminUserFilterSource('unrelated.ts',untouched)).toBe(untouched);\n });\n",
+          "before_line": 32,
+          "after_line": 33
+        },
+        {
+          "before_source": "  expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);\n });\n for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed source or proof mutation %s in '+file,kind=>{\n  const binding=structuredClone(proof),entry=binding.sources.find(row=>row.file===file)!,live=read(file);let source=live;\n  if(kind==='extra')source+='\\n// unrelated\\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=reverseAdminUserFilterSource(file,source);if(kind==='newline')source=source.replace(/\\n/u,'\\r\\n');if(kind==='same-size')source=source.replace(/a/u,'z');\n  if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;\n",
+          "after_source": "  expect(sha(read(proof.api_report.base_file))).toBe(proof.api_report.base_sha256);for(const row of proof.api_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);\n });\n for(const file of files)it.each(['extra','duplicate','missing','old','newline','same-size','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line'] as const)('rejects unreviewed dated source or proof mutation %s in '+file,kind=>{\n  const binding=structuredClone(proof),entry=binding.sources.find(row=>row.file===file)!,live=peelReviewedAdminSourceTailIfPresent(file,read(file));let source=live;\n  if(kind==='extra')source+='\\n// unrelated\\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=reverseAdminUserFilterSource(file,source);if(kind==='newline')source=source.replace(/\\n/u,'\\r\\n');if(kind==='same-size')source=source.replace(/a/u,'z');\n  if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;\n",
+          "before_line": 40,
+          "after_line": 41
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationAuditFollowupSourceBinding.ts",
+      "before_bytes": 6302,
+      "after_bytes": 6435,
+      "before_sha256": "5f99252795f3c771953cf72b97f96181acdfc8700075f36691ceb006e960e50d",
+      "after_sha256": "f6df3a1030288ea3dbde5ee377105652db5fbfd140588e418dc6c8a615c43216",
+      "before_git_blob_sha1": "78c86a10891ce3d6e012b8e7d0d1ca162755880b",
+      "after_git_blob_sha1": "5288d7da20e2ab077cfa41b396125d182a8e74dd",
+      "edits": [
+        {
+          "before_source": "import { peelAdminLevelDefinitionReport } from './adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "after_source": "import { peelReviewedAdminSourceTailIfPresent } from './reviewedAdminSourceTailBinding';\nimport { peelAdminLevelDefinitionReport } from './adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "export function reverseMigrationAuditSource(file: string, source: string, binding = migrationAuditFollowupSourceBinding): string {\n  inventory(binding);\n  return reverseSource(file, source, binding.sources);\n}\n/** Restore the exact older test-helper bytes without entering the production inverse recursively. */\n",
+          "after_source": "export function reverseMigrationAuditSource(file: string, source: string, binding = migrationAuditFollowupSourceBinding): string {\n  inventory(binding);\n  return reverseSource(file, peelReviewedAdminSourceTailIfPresent(file, source), binding.sources);\n}\n/** Restore the exact older test-helper bytes without entering the production inverse recursively. */\n",
+          "before_line": 52,
+          "after_line": 53
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/helpers/reviewedRouteTailSourceBinding.ts",
+      "before_bytes": 11540,
+      "after_bytes": 11781,
+      "before_sha256": "d314b0f1680cbc02d3f26e00ab03d11b02b0868d450ae9fde3a83dff346cb870",
+      "after_sha256": "c1ce61bc6e2a1eea03351f33df82802944da7f30f8b6165696f3b9bd49626010",
+      "before_git_blob_sha1": "f9b222e210ae49ca1b024193f6b51a3d4f0e3ed3",
+      "after_git_blob_sha1": "8445a40d3ed1bba15aad6cb204ce39a02ccd48ce",
+      "edits": [
+        {
+          "before_source": "import { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "after_source": "import { peelReviewedAdminHistoricalSourceIfPresent, hasReviewedAdminHistoricalSource } from './reviewedAdminSourceTailBinding';\nimport { createHash } from 'node:crypto';\nimport { readFileSync } from 'node:fs';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "}\nfunction sourceIfPresent(file: string, source: string, p: ReviewedRouteTailBinding): string {\n  const harness = p.harness_sources.find(row => row.file === file);\n  if (harness && whole(source, harness, false)) return inverse(source, harness);\n",
+          "after_source": "}\nfunction sourceIfPresent(file: string, source: string, p: ReviewedRouteTailBinding): string {\n  source = peelReviewedAdminHistoricalSourceIfPresent(file, source);\n  const harness = p.harness_sources.find(row => row.file === file);\n  if (harness && whole(source, harness, false)) return inverse(source, harness);\n",
+          "before_line": 54,
+          "after_line": 55
+        },
+        {
+          "before_source": "  if (typeof path !== 'string') return value;\n  const file = relative(root, resolve(path)).split(sep).join('/'), p = reviewedRouteTailSourceBinding;\n  if (![...p.harness_sources, ...p.route_stages.flatMap(stage => stage.sources)].some(row => row.file === file)) return value;\n  const encoding = typeof args[1] === 'string' ? args[1] : (args[1] as { encoding?: string } | undefined)?.encoding;\n  if (encoding && encoding !== 'utf8' && encoding !== 'utf-8') throw Error('Reviewed route tail reader requires exact UTF8 or Buffer');\n",
+          "after_source": "  if (typeof path !== 'string') return value;\n  const file = relative(root, resolve(path)).split(sep).join('/'), p = reviewedRouteTailSourceBinding;\n  if (![...p.harness_sources, ...p.route_stages.flatMap(stage => stage.sources)].some(row => row.file === file) && !hasReviewedAdminHistoricalSource(file)) return value;\n  const encoding = typeof args[1] === 'string' ? args[1] : (args[1] as { encoding?: string } | undefined)?.encoding;\n  if (encoding && encoding !== 'utf8' && encoding !== 'utf-8') throw Error('Reviewed route tail reader requires exact UTF8 or Buffer');\n",
+          "before_line": 156,
+          "after_line": 158
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/migration-audit-followup-source-binding.test.ts",
+      "before_bytes": 13022,
+      "after_bytes": 13356,
+      "before_sha256": "cd87accebbed5fef7ad7b324797854e1e1ca35839b548590cf222a0abc7b1b96",
+      "after_sha256": "f00acbb14e7ce15121c7c680d63f4987d44cdabe1cdfaaf7bdbb05e4916b0284",
+      "before_git_blob_sha1": "ff0063f9e0329032376a7cade72fd4bebb79ba30",
+      "after_git_blob_sha1": "c4754da4a0a96636da68573d568dfbfa300dd707",
+      "edits": [
+        {
+          "before_source": "import { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "after_source": "import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSourceTailBinding';\nimport { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nlet builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst currentReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));\nconst historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst routeContracts = [\n",
+          "after_source": "const pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nlet builtReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst historicalMigrationReport = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => structuredClone(builtReport ??= reverseAdminLevelDefinitionReport(buildAdminFrontendApiAuditReport()));\nconst historical = (): ReturnType<typeof buildAdminFrontendApiAuditReport> => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst routeContracts = [\n",
+          "before_line": 17,
+          "after_line": 18
+        },
+        {
+          "before_source": "  expect(proof.sources.map(row => row.edits.length)).toEqual([10,3]);\n  for (const entry of proof.sources) {\n   const actual = read(entry.file), before = reverseMigrationAuditSource(entry.file, actual);\n   expect(sha(actual)).toBe(entry.after_sha256);expect(Buffer.byteLength(actual)).toBe(entry.after_bytes);\n   expect(sha(before)).toBe(entry.before_sha256);expect(Buffer.byteLength(before)).toBe(entry.before_bytes);\n",
+          "after_source": "  expect(proof.sources.map(row => row.edits.length)).toEqual([10,3]);\n  for (const entry of proof.sources) {\n   const actual = peelReviewedAdminSourceTailIfPresent(entry.file,read(entry.file)), before = reverseMigrationAuditSource(entry.file, actual);\n   expect(sha(actual)).toBe(entry.after_sha256);expect(Buffer.byteLength(actual)).toBe(entry.after_bytes);\n   expect(sha(before)).toBe(entry.before_sha256);expect(Buffer.byteLength(before)).toBe(entry.before_bytes);\n",
+          "before_line": 46,
+          "after_line": 47
+        },
+        {
+          "before_source": "  expect(reverseMigrationAuditHarnessSource('unrelated.ts','// opaque\\n')).toBe('// opaque\\n');\n });\n it('proves current real factory invocation and unchanged auth/handler/path/method contracts independently with AST controls', () => {\n  const source = read(proof.sources[0]!.file), expected = routeContracts.map((row,index)=>({method:row[0],path:row[1],station:true,auth:'authMiddleware({ force: true })',handler:row[2],line:933+index}));\n  expect(actualFinanceRoutes(source)).toEqual(expected);\n  for(const changed of [source.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware,'),source.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware(1),'),source.replace('\"/integral/list\",','\"/integral/list-unreviewed\",'),source.replace('UserFinanceReadController.integralList);','UserFinanceReadController.extractBank);')]){expect(changed).not.toBe(source);expect(actualFinanceRoutes(changed)).not.toEqual(expected);}\n  const api = read(proof.sources[1]!.file);expect(api).toContain('\"/member/ship\", { params, signal }');\n });\n it('recomputes the complete real report and bridges only eleven exact scalar changes without altering any API contract or old apply output', () => {\n  const before=historical(),actual=currentReport();\n  expect(sha(pretty(before))).toBe('a99c42f5be30da197bc127a2489a67a3c13cc226246de3279160aa3f18362ab8');\n  expect(sha(pretty(actual))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f');\n",
+          "after_source": "  expect(reverseMigrationAuditHarnessSource('unrelated.ts','// opaque\\n')).toBe('// opaque\\n');\n });\n it('preserves dated factory line locations and auth/handler/path/method contracts with independent AST controls', () => {\n  const source = peelReviewedAdminSourceTailIfPresent(proof.sources[0]!.file,read(proof.sources[0]!.file)), expected = routeContracts.map((row,index)=>({method:row[0],path:row[1],station:true,auth:'authMiddleware({ force: true })',handler:row[2],line:933+index}));\n  expect(actualFinanceRoutes(source)).toEqual(expected);\n  for(const changed of [source.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware,'),source.replace('\"/integral/list\", stationOpenMiddleware(),','\"/integral/list\", stationOpenMiddleware(1),'),source.replace('\"/integral/list\",','\"/integral/list-unreviewed\",'),source.replace('UserFinanceReadController.integralList);','UserFinanceReadController.extractBank);')]){expect(changed).not.toBe(source);expect(actualFinanceRoutes(changed)).not.toEqual(expected);}\n  const api = read(proof.sources[1]!.file);expect(api).toContain('\"/member/ship\", { params, signal }');\n });\n it('reconstructs the complete dated report through eleven exact scalar changes from the real current producer without altering its API contracts', () => {\n  const before=historical(),actual=historicalMigrationReport();\n  expect(sha(pretty(before))).toBe('a99c42f5be30da197bc127a2489a67a3c13cc226246de3279160aa3f18362ab8');\n  expect(sha(pretty(actual))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f');\n",
+          "before_line": 63,
+          "after_line": 64
+        },
+        {
+          "before_source": " });\n for(const family of ['sources','harness_sources'] as const)for(const index of family==='sources'?[0,1]:[0])it.each(['extra','duplicate','missing','old','newline','same-length','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line','literal','file','order'] as const)('rejects '+family+'['+index+'] unreviewed %s',kind=>{\n  const binding=structuredClone(proof),entry=binding[family][index]!,live=read(entry.file);let source=live;\n  if(kind==='extra')source+='\\n// unrelated\\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=(family==='sources'?reverseMigrationAuditSource:reverseMigrationAuditHarnessSource)(entry.file,source);if(kind==='newline')source=source.replace(/\\n/u,'\\r\\n');if(kind==='same-length')source=source.replace(/a/u,'z');\n  if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;if(kind==='literal')entry.edits[0]!.before_source+='// unreviewed';if(kind==='file')entry.file='unknown.ts';if(kind==='order')entry.edits.reverse();\n",
+          "after_source": " });\n for(const family of ['sources','harness_sources'] as const)for(const index of family==='sources'?[0,1]:[0])it.each(['extra','duplicate','missing','old','newline','same-length','before-hash','after-hash','before-bytes','after-bytes','before-line','after-line','literal','file','order'] as const)('rejects '+family+'['+index+'] unreviewed %s',kind=>{\n  const binding=structuredClone(proof),entry=binding[family][index]!,live=family==='sources'?peelReviewedAdminSourceTailIfPresent(entry.file,read(entry.file)):read(entry.file);let source=live;\n  if(kind==='extra')source+='\\n// unrelated\\n';if(kind==='duplicate')source+=entry.edits[0]!.after_source;if(kind==='missing')source=source.replace(entry.edits[0]!.after_source,'');if(kind==='old')source=(family==='sources'?reverseMigrationAuditSource:reverseMigrationAuditHarnessSource)(entry.file,source);if(kind==='newline')source=source.replace(/\\n/u,'\\r\\n');if(kind==='same-length')source=source.replace(/a/u,'z');\n  if(kind==='before-hash')entry.before_sha256='0'.repeat(64);if(kind==='after-hash')entry.after_sha256='0'.repeat(64);if(kind==='before-bytes')entry.before_bytes++;if(kind==='after-bytes')entry.after_bytes++;if(kind==='before-line')entry.edits[0]!.before_line!++;if(kind==='after-line')entry.edits[0]!.after_line++;if(kind==='literal')entry.edits[0]!.before_source+='// unreviewed';if(kind==='file')entry.file='unknown.ts';if(kind==='order')entry.edits.reverse();\n",
+          "before_line": 86,
+          "after_line": 87
+        },
+        {
+          "before_source": " });\n it.each(['count','route','call','path','source','methodology','extra','line'] as const)('rejects unrelated complete report mutation in both directions %s',kind=>{\n  for(const direction of ['before','after']){const input=direction==='before'?historical():currentReport();\n   if(kind==='count')input.counts.registered++;if(kind==='route')input.backend.registeredRoutes[0]!.handler='unknown';if(kind==='call')input.calls[0]!.method='POST';if(kind==='path')input.calls[0]!.path='/unreviewed';if(kind==='source')input.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='methodology')input.methodology.scope='unreviewed';if(kind==='extra')Object.assign(input,{unreviewed:true});if(kind==='line')input.calls[316]!.line++;\n   expect(()=>direction==='before'?applyMigrationAuditReport(input):reverseMigrationAuditReport(input)).toThrow();\n",
+          "after_source": " });\n it.each(['count','route','call','path','source','methodology','extra','line'] as const)('rejects unrelated complete report mutation in both directions %s',kind=>{\n  for(const direction of ['before','after']){const input=direction==='before'?historical():historicalMigrationReport();\n   if(kind==='count')input.counts.registered++;if(kind==='route')input.backend.registeredRoutes[0]!.handler='unknown';if(kind==='call')input.calls[0]!.method='POST';if(kind==='path')input.calls[0]!.path='/unreviewed';if(kind==='source')input.frontendSources[0]!.sha256='0'.repeat(64);if(kind==='methodology')input.methodology.scope='unreviewed';if(kind==='extra')Object.assign(input,{unreviewed:true});if(kind==='line')input.calls[316]!.line++;\n   expect(()=>direction==='before'?applyMigrationAuditReport(input):reverseMigrationAuditReport(input)).toThrow();\n",
+          "before_line": 93,
+          "after_line": 94
+        },
+        {
+          "before_source": " it.each(['missing','duplicate','order','path','scalar','input-hash','output-hash','bytes','base','current','preserved'] as const)('rejects forged whole inventory or report operation %s',kind=>{\n  const binding=structuredClone(proof);if(kind==='missing')binding.api_report.operations.pop();if(kind==='duplicate')binding.api_report.operations.push(structuredClone(binding.api_report.operations[0]!));if(kind==='order')binding.api_report.operations.reverse();if(kind==='path')binding.api_report.operations[0]!.path=[];if(kind==='scalar')binding.api_report.operations[0]!.after='unknown';if(kind==='input-hash')binding.api_report.before_sha256='0'.repeat(64);if(kind==='output-hash')binding.api_report.after_sha256='0'.repeat(64);if(kind==='bytes')binding.api_report.before_bytes++;if(kind==='base')binding.base_ref='unknown';if(kind==='current')binding.current_ref='unknown';if(kind==='preserved')binding.preserved_files.pop();\n  expect(()=>applyMigrationAuditReport(historical(),binding)).toThrow();expect(()=>reverseMigrationAuditReport(currentReport(),binding)).toThrow();\n });\n});\n",
+          "after_source": " it.each(['missing','duplicate','order','path','scalar','input-hash','output-hash','bytes','base','current','preserved'] as const)('rejects forged whole inventory or report operation %s',kind=>{\n  const binding=structuredClone(proof);if(kind==='missing')binding.api_report.operations.pop();if(kind==='duplicate')binding.api_report.operations.push(structuredClone(binding.api_report.operations[0]!));if(kind==='order')binding.api_report.operations.reverse();if(kind==='path')binding.api_report.operations[0]!.path=[];if(kind==='scalar')binding.api_report.operations[0]!.after='unknown';if(kind==='input-hash')binding.api_report.before_sha256='0'.repeat(64);if(kind==='output-hash')binding.api_report.after_sha256='0'.repeat(64);if(kind==='bytes')binding.api_report.before_bytes++;if(kind==='base')binding.base_ref='unknown';if(kind==='current')binding.current_ref='unknown';if(kind==='preserved')binding.preserved_files.pop();\n  expect(()=>applyMigrationAuditReport(historical(),binding)).toThrow();expect(()=>reverseMigrationAuditReport(historicalMigrationReport(),binding)).toThrow();\n });\n});\n",
+          "before_line": 100,
+          "after_line": 101
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/admin-level-definition-source-binding.test.ts",
+      "before_bytes": 15924,
+      "after_bytes": 16235,
+      "before_sha256": "aa15ce2ae11400d7a37ab0abd3bb5620bfa93097b3cb97465449ebd3d91c7861",
+      "after_sha256": "e925d6a04fb3917d9552f81b4b140ed6624d3f20193c6175d1dc3b345dcbeab7",
+      "before_git_blob_sha1": "f21dea941217d0719cf9dd3a4871cd670c5d82db",
+      "after_git_blob_sha1": "7eb71cac88f3f8e1304abc4730811e7402b44a83",
+      "edits": [
+        {
+          "before_source": "import { reverseMembershipRightsReport } from './helpers/membershipRightsSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "after_source": "import { peelReviewedAdminHistoricalSourceIfPresent } from './helpers/reviewedAdminSourceTailBinding';\nimport { reverseMembershipRightsReport } from './helpers/membershipRightsSourceBinding';\nimport { createHash } from 'node:crypto';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "\nconst root = resolve(import.meta.dirname, '../..');\nconst read = (file: string) => readFileSync(resolve(root, file), 'utf8');\nconst sha = (value: string) => createHash('sha256').update(value).digest('hex');\nconst pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nconst blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\\0`).update(value).digest('hex');\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst current = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));\nconst previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(original.api_report.base_file))))));\nconst historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;\nconst sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];\n",
+          "after_source": "\nconst root = resolve(import.meta.dirname, '../..');\nconst readHistorical = (file: string) => peelReviewedAdminHistoricalSourceIfPresent(file,readFileSync(resolve(root, file), 'utf8'));\nconst sha = (value: string) => createHash('sha256').update(value).digest('hex');\nconst pretty = (value: unknown) => JSON.stringify(value, null, 2) + '\\n';\nconst blob = (value: string) => createHash('sha1').update(`blob ${Buffer.byteLength(value)}\\0`).update(value).digest('hex');\nlet report: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;\nconst historicalLevelReport = () => structuredClone(report ??= reverseMembershipRightsReport(buildAdminFrontendApiAuditReport()));\nconst previousFilter = () => applyAdminUserFilterReport(applyCommunityAuthorReport(applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(readHistorical(original.api_report.base_file))))));\nconst historical = () => applyMigrationAuditReport(previousFilter()) as ReturnType<typeof buildAdminFrontendApiAuditReport>;\nconst sourceFiles = ['view/admin-ts/src/api/level.ts', 'workers-ts/src/controllers/api/v1/AdminCrudController.ts'];\n",
+          "before_line": 15,
+          "after_line": 16
+        },
+        {
+          "before_source": "describe('exact ordinary-level authoring source and complete Admin API report increment', () => {\n  it('pins the independently captured parent, real Git patch, whole sources and immutable predecessor fixtures', () => {\n    expect(sha(read('workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json'))).toBe('745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431');\n    expect(proof.base_ref).toBe('1846f34db81e90a661a41f53d56095509d5eeb92');\n    expect(proof.level_ref).toBe('9969402715601d596dc4a310167b86d98655acc2');\n",
+          "after_source": "describe('exact ordinary-level authoring source and complete Admin API report increment', () => {\n  it('pins the independently captured parent, real Git patch, whole sources and immutable predecessor fixtures', () => {\n    expect(sha(readHistorical('workers-ts/test/fixtures/admin-level-definition-source-binding-20261026.json'))).toBe('745e8dcb2a924a02d825bf0cc67e2db517a0ec181d343a3f6828c50c6869c431');\n    expect(proof.base_ref).toBe('1846f34db81e90a661a41f53d56095509d5eeb92');\n    expect(proof.level_ref).toBe('9969402715601d596dc4a310167b86d98655acc2');\n",
+          "before_line": 42,
+          "after_line": 43
+        },
+        {
+          "before_source": "    ]);\n    for (const entry of proof.sources) {\n      const actual = read(entry.file), before = reverseAdminLevelDefinitionSource(entry.file, actual);\n      expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);\n      expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);\n",
+          "after_source": "    ]);\n    for (const entry of proof.sources) {\n      const actual = readHistorical(entry.file), before = reverseAdminLevelDefinitionSource(entry.file, actual);\n      expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);\n      expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);\n",
+          "before_line": 53,
+          "after_line": 54
+        },
+        {
+          "before_source": "    for (const entry of proof.sources) expect(patch.unified_diff).toContain(`index ${entry.before_git_blob_sha1.slice(0, 8)}..${entry.after_git_blob_sha1.slice(0, 8)} 100644`);\n    expect(proof.preserved_files).toHaveLength(11);\n    for (const entry of proof.preserved_files) { expect(sha(read(entry.file)), entry.file).toBe(entry.sha256); expect(Buffer.byteLength(read(entry.file)), entry.file).toBe(entry.bytes); }\n    const oldController = original.new_consumer_sources.find(row => row.file === sourceFiles[1])!;\n    expect(proof.sources[1]!.before_sha256).toBe(oldController.sha256); expect(proof.sources[1]!.before_bytes).toBe(oldController.bytes);\n",
+          "after_source": "    for (const entry of proof.sources) expect(patch.unified_diff).toContain(`index ${entry.before_git_blob_sha1.slice(0, 8)}..${entry.after_git_blob_sha1.slice(0, 8)} 100644`);\n    expect(proof.preserved_files).toHaveLength(11);\n    for (const entry of proof.preserved_files) { expect(sha(readHistorical(entry.file)), entry.file).toBe(entry.sha256); expect(Buffer.byteLength(readHistorical(entry.file)), entry.file).toBe(entry.bytes); }\n    const oldController = original.new_consumer_sources.find(row => row.file === sourceFiles[1])!;\n    expect(proof.sources[1]!.before_sha256).toBe(oldController.sha256); expect(proof.sources[1]!.before_bytes).toBe(oldController.bytes);\n",
+          "before_line": 66,
+          "after_line": 67
+        },
+        {
+          "before_source": "    expect(proof.harness_sources.map(row => row.file)).toEqual(harnessFiles); expect(proof.harness_sources.map(row => row.edits.length)).toEqual([2, 2, 2]);\n    for (const entry of proof.harness_sources) {\n      const actual = read(entry.file), before = reverseAdminLevelDefinitionHarnessSource(entry.file, actual);\n      expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);\n      expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);\n",
+          "after_source": "    expect(proof.harness_sources.map(row => row.file)).toEqual(harnessFiles); expect(proof.harness_sources.map(row => row.edits.length)).toEqual([2, 2, 2]);\n    for (const entry of proof.harness_sources) {\n      const actual = readHistorical(entry.file), before = reverseAdminLevelDefinitionHarnessSource(entry.file, actual);\n      expect(sha(actual)).toBe(entry.after_sha256); expect(Buffer.byteLength(actual)).toBe(entry.after_bytes); expect(blob(actual)).toBe(entry.after_git_blob_sha1);\n      expect(sha(before)).toBe(entry.before_sha256); expect(Buffer.byteLength(before)).toBe(entry.before_bytes); expect(blob(before)).toBe(entry.before_git_blob_sha1);\n",
+          "before_line": 74,
+          "after_line": 75
+        },
+        {
+          "before_source": "\n  it('independently parses the real four requests and retains the existing three bare route/handler contracts', () => {\n    const actual = read(sourceFiles[0]!);\n    expect(apiCalls(actual)).toEqual([\n      { method: 'get', path: '/level/list', line: 79, argumentCount: 1 },\n",
+          "after_source": "\n  it('independently parses the real four requests and retains the existing three bare route/handler contracts', () => {\n    const actual = readHistorical(sourceFiles[0]!);\n    expect(apiCalls(actual)).toEqual([\n      { method: 'get', path: '/level/list', line: 79, argumentCount: 1 },\n",
+          "before_line": 84,
+          "after_line": 85
+        },
+        {
+          "before_source": "  });\n\n  it('recomputes the entire current report and bridges only the six reviewed operations before the original migration layer', () => {\n    const before = historical(), actual = current(), p = proof.api_report;\n    expect(sha(pretty(before))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f'); expect(Buffer.byteLength(pretty(before))).toBe(644215);\n    expect(sha(pretty(actual))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7'); expect(Buffer.byteLength(pretty(actual))).toBe(644498);\n",
+          "after_source": "  });\n\n  it('reconstructs the entire dated level report through six reviewed operations before the original migration layer', () => {\n    const before = historical(), actual = historicalLevelReport(), p = proof.api_report;\n    expect(sha(pretty(before))).toBe('0d9bc7d912efd02d8ff5efdafc8bb4b7d7a79962905684d861724d7273d6ea7f'); expect(Buffer.byteLength(pretty(before))).toBe(644215);\n    expect(sha(pretty(actual))).toBe('022080855cf8133954840763e47742110b84ef1800c0db64d5b59151a61fdab7'); expect(Buffer.byteLength(pretty(actual))).toBe(644498);\n",
+          "before_line": 99,
+          "after_line": 100
+        },
+        {
+          "before_source": "  for (const file of [...sourceFiles, ...harnessFiles]) it.each(['extra', 'missing', 'duplicate', 'newline', 'same-length', 'old'] as const)('rejects unreviewed whole-source %s in ' + file, kind => {\n    const harness = harnessFiles.includes(file), reverse = harness ? reverseAdminLevelDefinitionHarnessSource : reverseAdminLevelDefinitionSource;\n    const entry = (harness ? proof.harness_sources : proof.sources).find(row => row.file === file)!, originalSource = read(file);\n    let changed = originalSource;\n    if (kind === 'extra') changed += '\\n// unrelated\\n'; if (kind === 'missing') changed = changed.replace(entry.edits[0]!.after_source, '');\n",
+          "after_source": "  for (const file of [...sourceFiles, ...harnessFiles]) it.each(['extra', 'missing', 'duplicate', 'newline', 'same-length', 'old'] as const)('rejects unreviewed whole-source %s in ' + file, kind => {\n    const harness = harnessFiles.includes(file), reverse = harness ? reverseAdminLevelDefinitionHarnessSource : reverseAdminLevelDefinitionSource;\n    const entry = (harness ? proof.harness_sources : proof.sources).find(row => row.file === file)!, originalSource = readHistorical(file);\n    let changed = originalSource;\n    if (kind === 'extra') changed += '\\n// unrelated\\n'; if (kind === 'missing') changed = changed.replace(entry.edits[0]!.after_source, '');\n",
+          "before_line": 127,
+          "after_line": 128
+        },
+        {
+          "before_source": "  it.each(['count', 'route', 'source', 'methodology', 'line', 'handler', 'missing-call', 'duplicate-call', 'new-call', 'extra'] as const)('rejects unrelated complete-report %s in either exact state', kind => {\n    for (const direction of ['before', 'after'] as const) {\n      const value = direction === 'before' ? historical() : current();\n      if (kind === 'count') value.counts.registered++; if (kind === 'route') value.backend.registeredRoutes[0]!.handler = 'unreviewed';\n      if (kind === 'source') value.frontendSources[0]!.sha256 = '0'.repeat(64); if (kind === 'methodology') value.methodology.scope = 'unreviewed';\n",
+          "after_source": "  it.each(['count', 'route', 'source', 'methodology', 'line', 'handler', 'missing-call', 'duplicate-call', 'new-call', 'extra'] as const)('rejects unrelated complete-report %s in either exact state', kind => {\n    for (const direction of ['before', 'after'] as const) {\n      const value = direction === 'before' ? historical() : historicalLevelReport();\n      if (kind === 'count') value.counts.registered++; if (kind === 'route') value.backend.registeredRoutes[0]!.handler = 'unreviewed';\n      if (kind === 'source') value.frontendSources[0]!.sha256 = '0'.repeat(64); if (kind === 'methodology') value.methodology.scope = 'unreviewed';\n",
+          "before_line": 137,
+          "after_line": 138
+        },
+        {
+          "before_source": "    if (kind === 'base') binding.base_ref = 'unknown'; if (kind === 'patch') binding.production_patch.unified_diff += '\\n';\n    if (kind === 'preserved') binding.preserved_files.pop(); if (kind === 'extra') Object.assign(binding, { unknown: true });\n    expect(() => reverseAdminLevelDefinitionSource(sourceFiles[0]!, read(sourceFiles[0]!), binding)).toThrow();\n    expect(() => reverseAdminLevelDefinitionHarnessSource(harnessFiles[0]!, read(harnessFiles[0]!), binding)).toThrow();\n    expect(() => peelAdminLevelDefinitionReport(current(), binding)).toThrow(); expect(() => applyAdminLevelDefinitionReport(historical(), binding)).toThrow();\n  });\n});\n",
+          "after_source": "    if (kind === 'base') binding.base_ref = 'unknown'; if (kind === 'patch') binding.production_patch.unified_diff += '\\n';\n    if (kind === 'preserved') binding.preserved_files.pop(); if (kind === 'extra') Object.assign(binding, { unknown: true });\n    expect(() => reverseAdminLevelDefinitionSource(sourceFiles[0]!, readHistorical(sourceFiles[0]!), binding)).toThrow();\n    expect(() => reverseAdminLevelDefinitionHarnessSource(harnessFiles[0]!, readHistorical(harnessFiles[0]!), binding)).toThrow();\n    expect(() => peelAdminLevelDefinitionReport(historicalLevelReport(), binding)).toThrow(); expect(() => applyAdminLevelDefinitionReport(historical(), binding)).toThrow();\n  });\n});\n",
+          "before_line": 159,
+          "after_line": 160
+        }
+      ]
+    }
+  ],
+  "current_sources": [
+    {
+      "file": "workers-ts/src/routes/v1/index.ts",
+      "bytes": 176649,
+      "sha256": "749fa0f4d9961cf9b8e40f69dcb75e0995d97678ccb3ca997c65609fbd9a2fa5",
+      "git_blob_sha1": "3c04535756efea50af011977370efae979b5905c"
+    },
+    {
+      "file": "workers-ts/src/routes/adminapi.ts",
+      "bytes": 109907,
+      "sha256": "84d306bc7fd2f5a7b77314421de80e793dac9c8c84e97c9a2ab53ba74e1df4b1",
+      "git_blob_sha1": "8b06e9c3ce8d8bde160ee6a8286113c136996774"
+    },
+    {
+      "file": "workers-ts/src/services/admin/AdminPermissionService.ts",
+      "bytes": 115168,
+      "sha256": "d8e271ff1bcb67677182dd3ca23cad8f5988fb1a621efd37a6836968158ccba7",
+      "git_blob_sha1": "7c3cb1ec867e3264c7a9803c4d36dc0cd5ce5a66"
+    }
+  ],
+  "boundary": "Exact whole-source staged inverses only: withdrawal17ef,Admin directoryc5,agent explanation. Existing dated fixtures unchanged. Historical facades retain old contract and line locations; independent native-fs live proof pins every current source and finance endpoint. No unknown byte/path/permission/report exceptions."
+}

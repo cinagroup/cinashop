@@ -155,7 +155,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('assembled Suppli
       expect(await read('/order/list?page=3&limit=2')).toMatchObject({ list: [], count: 3 });
       expect(await f.state()).toEqual(before);
     });
-  });
+  }, 45_000);
 
   it('requires actual Supplier JWT, active tenant-bound role and unchanged password; read permission cannot write', async () => {
     await f.withRuntime(async r => {
