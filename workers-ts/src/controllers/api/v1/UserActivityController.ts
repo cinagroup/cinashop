@@ -247,6 +247,9 @@ export async function collectDel(c: C) {
   const uid = c.get("uid");
   if (!uid) return jsonFail(c, "请先登录");
   const body = await compatibilityParams(c);
+  if (Object.hasOwn(body, "category") && typeof body.category !== "string") {
+    throw new ValidateException("收藏分类错误");
+  }
   const svc = new UserCenterService(c.get("container"));
   await svc.collectDel(
     uid,

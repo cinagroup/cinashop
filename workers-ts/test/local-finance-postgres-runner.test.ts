@@ -1818,3 +1818,15 @@ describe('distribution level Browser literal admission',()=>{
     expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
   });
 });
+
+
+describe('collection management native literal admission',()=>{
+ it('admits the exact reviewed file before binary validation',()=>{
+  const result=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin','test/collection-management-postgres.test.ts'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+  expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');expect(result.stderr).toContain('ENOENT');expect(result.stderr).not.toContain('Only explicit');expect(result.stderr).not.toContain('Schema maintenance accepts only');
+ });
+ it.each([{file:'test/collection-management-postgres-extra.test.ts',error:'Test does not exist:'},{file:'test/collection-management-postgres.test.ts.extra',error:'Only explicit unit test paths are accepted'},{file:'test/user-center-compatibility.test.ts',error:'Schema maintenance accepts only the explicit schema/ACL suites'}])('rejects unreviewed admission $file before setup',({file,error})=>{
+  const result=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',file],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+  expect(result.error).toBeUndefined();expect(result.status).not.toBe(0);expect(result.stdout).toBe('');expect(result.stderr).toContain(error);expect(result.stderr).not.toContain('ENOENT');
+ });
+});

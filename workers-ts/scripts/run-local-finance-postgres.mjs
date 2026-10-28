@@ -713,6 +713,7 @@ if (schemaMaintenance) {
     'test/membership-coupons-postgres.test.ts',
     'test/member-coupon-app-role-postgres.test.ts',
     'test/member-level-recommendations-postgres.test.ts',
+    'test/collection-management-postgres.test.ts',
     'test/distribution-ledgers-postgres.test.ts',
     'test/withdrawal-application-postgres.test.ts',
     'test/admin-withdrawal-directory-postgres.test.ts',
@@ -1381,6 +1382,7 @@ try {
     'test/membership-coupons-postgres.test.ts',
     'test/member-coupon-app-role-postgres.test.ts',
     'test/member-level-recommendations-postgres.test.ts',
+    'test/collection-management-postgres.test.ts',
     'test/distribution-ledgers-postgres.test.ts',
     'test/withdrawal-application-postgres.test.ts',
     'test/admin-withdrawal-directory-postgres.test.ts',
@@ -1506,6 +1508,7 @@ try {
     'test/v2-public-diy-compatibility-migration.test.ts',
   ]).has(test)) || process.platform === 'linux' ? '--maxWorkers=1' : '--maxWorkers=2'];
   if (tests.includes('test/distribution-level-page-postgres.test.ts')) commandArgs.push('--fileParallelism=false');
+  if (tests.includes('test/collection-management-postgres.test.ts')) commandArgs.push('--fileParallelism=false');
   if (verboseTests) commandArgs.push('--reporter', 'verbose');
   if (caseNames.length) {
     const regexMeta = '\\^$.*+?()[]{}|';
