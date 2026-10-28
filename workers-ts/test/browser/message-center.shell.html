@@ -1,0 +1,64 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>消息中心实际验收</title><style>body{margin:8px;font:14px sans-serif;background:#f5f6f8}h1{font-size:18px}button{margin:3px;padding:6px}iframe{display:block;width:375px;height:1000px;background:#fff;border:1px solid #ddd}pre{white-space:pre-wrap;max-height:100px;overflow:auto}#instruction{padding:8px;background:#fff5dc}</style></head><body>
+<h1>消息中心 · 实际 H5 / Worker / JWT / PG16</h1><p>业务页面承担查看、分页、重试和导航。以下仅提供显式本地合成会话、有限夹具和真实响应传输控制；不发送聊天消息。</p>
+<div id="instruction"></div><div><button id="center">当前阶段会话 · 新文档消息中心</button><button id="messages">当前阶段会话 · 新文档站内信</button><button id="disabled">当前阶段会话 · 失效客服链接</button><button id="detail">当前阶段会话 · 指定消息链接</button><button id="fixture">应用当前阶段有限夹具</button><button id="lost">下次站内信 JSON 截首字节</button><button id="hold">暂存下次真实消息摘要</button><button id="release">释放旧文档响应</button><button data-width="375">手机375</button><button data-width="1000">桌面1000</button></div>
+<div id="phases"></div><pre id="result">等待装载</pre><iframe title="实际消息中心"></iframe>
+<script>
+const control=__CONTROL__,runId=__RUN_ID__,plans=__PLANS__,result=document.querySelector('#result');let frame=document.querySelector('iframe'),lastAck=null,index=0;
+const show=value=>result.textContent=typeof value==='string'?value:JSON.stringify(value);
+const instructions={
+ 'guest-center':'确认旧消息中心入口对游客显示登录提示，没有私有请求。',
+ 'owner-center':'点新文档消息中心进入A，确认系统未读点与20条客服摘要。',
+ 'system-first':'点实际系统通知卡，打开旧无id入口，读取首20条站内信。',
+ 'system-lost':'先点截JSON，再在实际页面点加载更多站内信或滚到底，确认保留20条并出现错误。',
+ 'system-retried':'在实际页面点重试当前页，确认补齐最后3条且不重复消费。',
+ 'system-terminal':'滚动实际页面到底，确认23条结束且不再请求。',
+ 'center-returned':'用真实页面左上返回消息中心，确认系统未读点清除。',
+ 'conversations-next':'在实际页面点加载更多会话，补齐20/3。',
+ 'offline-chat':'在实际页面点击离线客服34，读取仅A的两条历史；不发送。Node验收固定503拒绝WS，不宣称实时连接成功。',
+ 'chat-returned':'用真实页面返回消息中心，重新读取首20条。',
+ 'disabled-chat':'点失效客服链接，以A读取正整数56，确认指定客服不可用且不会分配在线33。',
+ 'detail-owned':'点指定消息链接，以A进入现代单条详情。',
+ 'detail-foreign':'点指定消息链接，以A读取B的ID，确认不可见。',
+ 'detail-invalid':'点指定消息链接，确认id0不发私有请求。',
+ 'empty-center':'先应用隐藏广播的唯一夹具，再点新文档消息中心以C读取真实空目录。',
+ 'empty-messages':'点新文档站内信，以C确认空分页。',
+ 'broadcast-restored':'先应用恢复广播夹具，再点新文档消息中心，以C确认真实广播未读；无客服记录。',
+ 'missing-image':'先应用缺对象夹具，再点新文档消息中心，以A确认头像回退。',
+ 'corrupt-image':'先应用损坏PNG夹具，再点新文档消息中心，确认头像解码失败回退。',
+ 'media-restored':'先恢复真实PNG，再点新文档消息中心，确认全部头像解码。',
+ 'passwd-revoked':'先撤销A密码版本，再点新文档消息中心，确认私有数据清空并提示登录。',
+ 'passwd-restored':'先恢复原合成密码，再点新文档消息中心，确认A恢复。',
+ 'status-revoked':'先停用A，再点新文档消息中心，确认清空并提示登录。',
+ 'status-restored':'先恢复A状态，再点新文档消息中心，确认正常。',
+ 'late-held':'先点暂存再点新文档消息中心A，等待实际加载中；ACK后立即切下一阶段B。',
+ 'new-owner':'点新文档消息中心B，保持A响应暂存，确认仅B消息与一条会话。',
+ 'new-owner-released':'点释放旧文档响应，确认B仍保持且不混入A。',
+ 'desktop':'设桌面1000并点新文档消息中心A，确认布局无溢出。',
+ 'mobile-final':'设手机375并点新文档消息中心A，最终手机截图。',
+ 'finished':'点新文档消息中心游客，确认无私有残留，最后验收后自动清理。'};
+function current(){document.querySelector('#instruction').textContent='阶段 '+(index+1)+'/'+plans.length+' '+(plans[index]?.name||'完成')+'：'+(instructions[plans[index]?.name]||'');}
+async function ctl(path,data){const response=await fetch(control+path,{method:'POST',...(data?{headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{})});if(!response.ok)throw Error(await response.text());return response.json();}
+function replace(path,width){const next=document.createElement('iframe');next.title='实际消息中心';next.style.width=width+'px';next.src='/__h5?qa_document='+crypto.randomUUID()+'#'+path;frame.replaceWith(next);frame=next;}
+async function session(path){const plan=plans[index];if(!plan)throw Error('验收已完成');const data=await ctl('/session?owner='+plan.owner);for(const key of['uni_token','uni_uid','admin_token','admin_session'])localStorage.removeItem(key);if(data.uid){localStorage.setItem('uni_token',JSON.stringify({type:'string',data:data.token}));localStorage.setItem('uni_uid',JSON.stringify({type:'number',data:data.uid}));}replace(path,plan.width);show('新文档已装载，请等待实际业务读取');}
+document.querySelector('#center').onclick=()=>session('/pages/users/message_center/index').catch(show);
+document.querySelector('#messages').onclick=()=>session('/pages/users/message_center/messageDetail').catch(show);
+document.querySelector('#disabled').onclick=()=>session('/pages/user/kefu?to_uid=56').catch(show);
+document.querySelector('#detail').onclick=()=>session('/pages/user/messageDetail?id='+plans[index].id).catch(show);
+document.querySelector('#fixture').onclick=async()=>{try{if(!plans[index]?.scenario)throw Error('本阶段没有有限夹具');show(await ctl('/fixture?name='+plans[index].scenario));}catch(error){show(String(error));}};
+for(const id of['lost','hold','release'])document.querySelector('#'+id).onclick=async()=>{try{show(await ctl('/'+id));}catch(error){show(String(error));}};
+for(const button of document.querySelectorAll('[data-width]'))button.onclick=()=>frame.style.width=button.dataset.width+'px';
+for(const plan of plans){const button=document.createElement('button');button.textContent='验收 '+plan.name;button.dataset.stage=plan.name;document.querySelector('#phases').append(button);button.onclick=async()=>{button.disabled=true;try{
+ if(plan.name!==plans[index]?.name)throw Error('必须按阶段顺序验收');
+ const d=frame.contentDocument,w=frame.contentWindow,visible=node=>{if(!node||node.getBoundingClientRect().width<=0||node.getBoundingClientRect().height<=0)return false;for(let p=node;p&&p.nodeType===1;p=p.parentElement){const s=w.getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;}return true;},page=[...d.querySelectorAll('uni-page')].filter(visible).at(-1)||d.body,center=page.querySelector('.message-center'),messages=page.querySelector('.system-messages'),chat=page.querySelector('.kefu-page'),qa=w.__messageQa||{errors:[{message:'Missing early observer'}],resourceErrors:[]};
+ const image=node=>({src:node.getAttribute('src')||'',currentSrc:node.currentSrc,complete:node.complete,naturalWidth:node.naturalWidth,naturalHeight:node.naturalHeight,width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height});
+ const data={run_id:runId,previous_ack:lastAck,captured_at_ms:Date.now(),href:w.location.href,width:frame.clientWidth,viewportWidth:w.innerWidth,clientWidth:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,text:page.innerText,
+ system_id:Number(center?.querySelector('[data-system-id]')?.getAttribute('data-system-id')||0),system_unread:!!center?.querySelector('.unread-dot'),system_time:center?.querySelector('[data-system-summary] .conversation-time')?.textContent||'',conversation_ids:[...(center?.querySelectorAll('[data-conversation-id]')||[])].map(n=>Number(n.getAttribute('data-conversation-id'))),service_uids:[...(center?.querySelectorAll('[data-service-uid]')||[])].map(n=>Number(n.getAttribute('data-service-uid'))),
+ message_ids:[...(messages?.querySelectorAll('.system-item[data-system-message-id]')||[])].map(n=>Number(n.getAttribute('data-system-message-id'))),message_mode:messages?.getAttribute('data-message-mode')||'',chat_messages:[...(chat?.querySelectorAll('.msg-item .bubble')||[])].map(n=>n.textContent),chat_service:chat?.querySelector('.service-name')?.textContent||'',
+ badges:[...(center?.querySelectorAll('.unread-badge')||[])].map(n=>n.textContent),alerts:[...page.querySelectorAll('[role="alert"]')].filter(visible).map(n=>n.textContent),loading:[...page.querySelectorAll('[role="status"]')].some(visible),
+ avatar_images:[...(center?.querySelectorAll('.conversation-avatar img')||[])].map(image),avatar_fallbacks:[...(center?.querySelectorAll('.conversation-avatar')||[])].filter(n=>!n.querySelector('uni-image,img')).length,
+ cards:[...(center?.querySelectorAll('.conversation-card')||[])].map(n=>{const r=n.getBoundingClientRect(),a=n.querySelector('.system-icon,.conversation-avatar');return{left:r.left,right:r.right,width:r.width,height:r.height,padding:parseFloat(w.getComputedStyle(n).paddingLeft),radius:parseFloat(w.getComputedStyle(n).borderRadius),avatar_width:a?.getBoundingClientRect().width||0};}),
+ images:[...page.querySelectorAll('img')].filter(visible).map(image),emojis:[...page.querySelectorAll('[data-message-emoji]')].map(n=>({name:n.getAttribute('data-message-emoji'),position:w.getComputedStyle(n).backgroundPosition,background:w.getComputedStyle(n).backgroundImage,width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})),unsafe_markup:!!w.__messageUnsafe||!!page.querySelector('.conversation-preview b,img[src=x]'),errors:qa.errors,resource_errors:qa.resourceErrors};
+ const ack=await ctl('/phase/'+plan.name,data);if(!ack.accepted){show(ack);return;}if(ack.run_id!==runId||ack.name!==plan.name)throw Error('Unbound ACK');lastAck=ack.ack;index++;current();show(ack);
+ }catch(error){show(String(error));}finally{button.disabled=false;}};}
+current();session('/pages/users/message_center/index').catch(show);
+</script></body></html>

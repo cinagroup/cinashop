@@ -1,3 +1,4 @@
+import { inspectUserMessageReadCapability } from './userMessageReadCapability';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { outRequestHash } from '../services/out/OutIdempotency';
@@ -185,6 +186,9 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if (!supplierMenuWrite.absent && !supplierMenuWrite.ready) failures.push('supplier_menu_capability');
     const reviewedSupplierMenu = kind === 'admin' && supplierMenuWrite.ready
       ? supplierMenuWrite.functionOid : null;
+    const messageRead=await inspectUserMessageReadCapability(tx,names.app);
+    if(!messageRead.absent && !messageRead.ready)failures.push('user_message_read_capability');
+    const reviewedMessageRead=kind==='app' && messageRead.ready?messageRead.functionOid:null;
     onStage?.('routines');
     const [routines]=await tx.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
       JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE p.prosecdef AND n.nspname NOT LIKE 'pg_%'
@@ -192,7 +196,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       AND p.oid::text IS DISTINCT FROM ${reviewed.checkout} AND p.oid::text IS DISTINCT FROM ${reviewed.offline}
       AND p.oid::text IS DISTINCT FROM ${reviewedSlotLock}
       AND p.oid::text IS DISTINCT FROM ${reviewedAuthorityMenuLock}
-      AND p.oid::text IS DISTINCT FROM ${reviewedSupplierMenu}) AS no_unreviewed_definer,
+      AND p.oid::text IS DISTINCT FROM ${reviewedSupplierMenu}
+      AND p.oid::text IS DISTINCT FROM ${reviewedMessageRead}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
         AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
     if(routines?.no_unreviewed_definer!==true || routines?.no_delegation!==true)failures.push('routine_authority');

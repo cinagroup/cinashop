@@ -1065,9 +1065,9 @@ v1Routes.get(
   authMiddleware({ force: true }),
   CustomerServiceCatalogController.feedbackInfo,
 );
-v1Routes.get("/user/message", authMiddleware({ force: true }), UserMessageController.messageList);
-v1Routes.get("/user/message_system/list", authMiddleware({ force: true }), UserMessageController.messageList);
-v1Routes.get("/user/message_system/detail/:id", authMiddleware({ force: true }), UserMessageController.messageDetail);
+v1Routes.get("/user/message", async (c,next)=>{c.header("Cache-Control","private, no-store");await next();}, authMiddleware({ force: true }), UserMessageController.messageCenter);
+v1Routes.get("/user/message_system/list", async (c,next)=>{c.header("Cache-Control","private, no-store");await next();}, authMiddleware({ force: true }), UserMessageController.messageList);
+v1Routes.get("/user/message_system/detail/:id", async (c,next)=>{c.header("Cache-Control","private, no-store");await next();}, authMiddleware({ force: true }), UserMessageController.messageDetail);
 
 // ─── 发票 (补全) ───────────────────────────────────────────────
 v1Routes.get("/invoice", authMiddleware({ force: true }), UserFinanceController.invoiceList);

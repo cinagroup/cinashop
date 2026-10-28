@@ -14,6 +14,10 @@
         <view class="service-presence">{{ serviceOnline ? "在线" : "暂时离线，消息会保留" }}</view>
       </view>
     </view>
+    <view v-if="chatLoading" class="chat-state" role="status">正在读取客服会话…</view>
+    <view v-if="chatError" class="chat-state chat-error" role="alert">{{ chatError }}</view>
+    <button v-if="requestedService && !authStore.isLoggedIn" class="feedback-link" @tap="loginConversation">登录后查看此会话</button>
+    <button v-else-if="chatError && targetValid" class="feedback-link" @tap="loadRecord">重新读取会话</button>
     <!-- 消息列表 -->
     <scroll-view scroll-y class="msg-scroll" :scroll-into-view="lastMsgId">
       <view v-if="messages.length" class="msg-list">
@@ -56,7 +60,10 @@
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
-import {onLoad,onShow,onHide} from '@dcloudio/uni-app';
+import {onLoad,onShow,onHide,onUnload} from '@dcloudio/uni-app';
+import {createUserCenterRequests,type UserCenterRequests} from '@/api/userCenter';
+import {kefuConversationTarget,decodeKefuConversation} from '@/utils/kefuConversationTarget';
+import {memberLevelImage} from '@/api/memberLevels';
 import {apiGoodsDetail} from '@/api/product';
 import type {GoodsDetail} from '@/types/product';
 import {productDetailId} from '../../../../common/productDetailRoute';
@@ -126,6 +133,19 @@ const VISITOR_TOKEN_STORAGE_KEY = "cinashop_kefu_visitor_token";
 let socket: UniApp.SocketTask | null = null;
 let socketReady = false;
 let disposed = false;
+const requestedService=ref(0),targetValid=ref(true),chatLoading=ref(false),chatError=ref('');
+let chatVisible=false,chatGeneration=0,chatRequest:UserCenterRequests|undefined,acceptedCurrent:()=>boolean=()=>false,chatPreviewOpen=false;
+const chatWrites=new Set<UserCenterRequests>();
+async function conversationPost<T>(data:Record<string,unknown>,current:()=>boolean):Promise<T>{const scope=createUserCenterRequests(current);chatWrites.add(scope);try{return await scope.request<T>('service/send','POST',data,true);}finally{scope.abort();chatWrites.delete(scope);}}
+function conversationOwner(){const owner={uid:authStore.uid,token:authStore.token,version:authStore.sessionVersion},generation=chatGeneration;return()=>{if(!chatVisible||disposed||generation!==chatGeneration||owner.uid!==authStore.uid||owner.token!==authStore.token||owner.version!==authStore.sessionVersion)return false;try{return String(uni.getStorageSync('uni_token')||'')===owner.token&&(Number(uni.getStorageSync('uni_uid'))||0)===owner.uid;}catch{return false;}};}
+function resetConversation(){chatGeneration++;acceptedCurrent=()=>false;chatRequest?.abort();chatRequest=undefined;for(const write of [...chatWrites])write.abort();chatWrites.clear();if(chatPreviewOpen){chatPreviewOpen=false;uni.closePreviewImage?.({success:()=>{},fail:()=>{}});}socketReady=false;const old=socket;socket=null;old?.close({success:()=>{},fail:()=>{}});messages.value=[];inputText.value='';serviceUid.value=0;serviceNickname.value='';serviceAvatar.value='';serviceOnline.value=false;visitorUid.value=0;visitorToken.value='';uploadingImage.value=false;chatLoading.value=false;chatError.value='';}
+function loginConversation(){if(chatVisible&&!disposed&&!authStore.isLoggedIn)uni.navigateTo({url:'/pages/auth/login'});}
+onLoad(query=>{try{requestedService.value=kefuConversationTarget(query?.to_uid);}catch(error){targetValid.value=false;chatError.value=(error as Error).message;}});
+onShow(()=>{if(disposed)return;let token='',uid=0;try{token=String(uni.getStorageSync('uni_token')||'');uid=Number(uni.getStorageSync('uni_uid'))||0;}catch{}if(token!==authStore.token||uid!==authStore.uid){if(token&&uid>0)authStore.setLogin(token,uid);else authStore.clear();}chatVisible=true;void loadRecord();});
+onHide(()=>{chatVisible=false;resetConversation();});
+onUnload(()=>{chatVisible=false;disposed=true;resetConversation();});
+watch(()=>[authStore.uid,authStore.token,authStore.sessionVersion],()=>{resetConversation();void Promise.resolve().then(()=>{if(chatVisible&&!disposed)void loadRecord();});},{flush:'sync'});
+
 
 const lastMsgId = computed(() => {
   const last = messages.value[messages.value.length - 1];
@@ -168,17 +188,19 @@ function kefuGet<T>(path: string, token = ""): Promise<T> {
   });
 }
 
-async function loadVisitorRecord() {
+async function loadVisitorRecord(active:()=>boolean) {
   let stored = String(uni.getStorageSync(VISITOR_TOKEN_STORAGE_KEY) || "");
   let bootstrap: VisitorBootstrap;
   try {
     bootstrap = await kefuGet<VisitorBootstrap>("tourist/user", stored);
   } catch (error) {
+    if(!active())return;
     if (!stored) throw error;
     uni.removeStorageSync(VISITOR_TOKEN_STORAGE_KEY);
     stored = "";
     bootstrap = await kefuGet<VisitorBootstrap>("tourist/user");
   }
+  if(!active())return;
   visitorToken.value = bootstrap.visitor_token;
   visitorUid.value = bootstrap.tourist_uid;
   uni.setStorageSync(VISITOR_TOKEN_STORAGE_KEY, bootstrap.visitor_token);
@@ -187,6 +209,7 @@ async function loadVisitorRecord() {
   serviceAvatar.value = bootstrap.avatar;
   serviceOnline.value = bootstrap.online === 1;
   const history = await kefuGet<ChatMessage[]>("tourist/chat?limit=50", bootstrap.visitor_token);
+  if(!active())return;
   messages.value = history.map((record) => ({
     id: record.id,
     msn: record.msn,
@@ -197,30 +220,24 @@ async function loadVisitorRecord() {
 }
 
 async function loadRecord() {
+  if(!chatVisible||disposed||chatLoading.value)return;
+  resetConversation();
+  if(!targetValid.value){chatError.value='客服会话链接无效，请从消息中心重新进入';return;}
+  const active=conversationOwner(),scope=createUserCenterRequests(active);chatRequest=scope;chatLoading.value=true;
   try {
     if (!authStore.uid || !authStore.token) {
-      await loadVisitorRecord();
-      return;
+      if(requestedService.value)throw Error('登录后查看此客服会话');
+      await loadVisitorRecord(active);
+    }else{
+      const result=decodeKefuConversation(await scope.request('user/service/record','GET',{limit:50,...(requestedService.value?{to_uid:requestedService.value}:{})},true),scope.owner.uid,requestedService.value);
+      if(!active())return;
+      serviceUid.value=result.uid;serviceNickname.value=result.nickname;serviceAvatar.value=memberLevelImage(result.avatar);serviceOnline.value=result.online===1;
+      messages.value=result.serviceList.map(r=>({id:r.id,msn:r.msn,addTime:r.add_time,mine:r.uid===scope.owner.uid,msnType:r.msn_type}));
     }
-    const result = await http.get<ServiceRecord>("/user/service/record", { limit: 50 });
-    serviceUid.value = result.uid;
-    serviceNickname.value = result.nickname;
-    serviceAvatar.value = result.avatar;
-    serviceOnline.value = result.online === 1;
-    messages.value = result.serviceList.map((r) => ({
-      id: r.id,
-      msn: r.msn,
-      addTime: r.add_time ?? r.addTime ?? 0,
-      mine: r.uid === authStore.uid,
-      msnType: r.msn_type ?? r.msnType ?? 1,
-    }));
+    if(active()){acceptedCurrent=active;connect();}
   } catch (error) {
-    messages.value = [];
-    uni.showToast({
-      title: error instanceof Error ? error.message : "客服暂不可用",
-      icon: "none",
-    });
-  }
+    if(active()){messages.value=[];serviceUid.value=0;serviceNickname.value='';serviceAvatar.value='';serviceOnline.value=false;visitorUid.value=0;visitorToken.value='';chatError.value=error instanceof Error?error.message:'客服暂不可用';}
+  }finally{if(active())chatLoading.value=false;scope.abort();if(chatRequest===scope)chatRequest=undefined;}
 }
 
 function websocketBase(): string {
@@ -232,6 +249,7 @@ function websocketBase(): string {
 }
 
 function connect() {
+  const active=acceptedCurrent;if(!active())return;
   const registered = Boolean(authStore.uid && authStore.token);
   if ((!registered && !visitorToken.value) || !serviceUid.value || socket) return;
   const base = websocketBase();
@@ -245,18 +263,21 @@ function connect() {
       : ["cinashop", `cinashop-visitor.${visitorToken.value}`],
     success: () => undefined,
     fail: () => {
+      if(!active())return;
       socketReady = false;
       socket = null;
     },
   });
   socket = task;
   task.onOpen(() => {
+    if(!active()||socket!==task){task.close({success:()=>{},fail:()=>{}});return;}
     socketReady = true;
     task.send({
       data: JSON.stringify({ type: "to_chat", data: { to_uid: serviceUid.value } }),
     });
   });
   task.onMessage((res) => {
+    if(!active()||socket!==task)return;
     try {
       const msg = JSON.parse(res.data as string) as {
         type?: string;
@@ -287,17 +308,19 @@ function connect() {
     }
   });
   task.onClose(() => {
+    if(!active()||socket!==task)return;
     socketReady = false;
     socket = null;
   });
   task.onError(() => {
+    if(!active()||socket!==task)return;
     socketReady = false;
   });
 }
 
 function sendOverSocket(text: string, messageType = 1): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (!socket || !socketReady) {
+    if (!acceptedCurrent() || !socket || !socketReady) {
       reject(new Error("socket unavailable"));
       return;
     }
@@ -323,10 +346,13 @@ function resolveAssetUrl(value: string): string {
 }
 
 function previewImage(current: string) {
+  if(!acceptedCurrent())return;
   const urls = messages.value
     .filter((message) => message.msnType === 3)
     .map((message) => resolveAssetUrl(message.msn));
-  uni.previewImage({ current: resolveAssetUrl(current), urls });
+  if(!urls.includes(resolveAssetUrl(current)))return;
+  const active=acceptedCurrent;chatPreviewOpen=true;
+  uni.previewImage({ current: resolveAssetUrl(current), urls,fail:()=>{if(active())chatPreviewOpen=false;} });
 }
 
 function uploadChatImage(filePath: string): Promise<{ url: string }> {
@@ -356,7 +382,8 @@ function uploadChatImage(filePath: string): Promise<{ url: string }> {
 }
 
 async function chooseAndSendImage() {
-  if (uploadingImage.value || !serviceUid.value) return;
+  const active=acceptedCurrent,target=serviceUid.value;
+  if (!active() || uploadingImage.value || !target) return;
   let selected: { tempFilePaths: string[]; tempFiles?: Array<{ size?: number }> };
   try {
     selected = await new Promise((resolve, reject) => uni.chooseImage({
@@ -372,6 +399,7 @@ async function chooseAndSendImage() {
   } catch {
     return;
   }
+  if(!active()||serviceUid.value!==target)return;
   if ((selected.tempFiles?.[0]?.size ?? 0) > 10 * 1024 * 1024) {
     uni.showToast({ title: "图片不能超过10 MiB", icon: "none" });
     return;
@@ -379,29 +407,32 @@ async function chooseAndSendImage() {
   uploadingImage.value = true;
   try {
     const attachment = await uploadChatImage(selected.tempFilePaths[0]);
+    if(!active()||serviceUid.value!==target)return;
     if (socketReady) {
       await sendOverSocket(attachment.url, 3);
     } else if (authStore.uid && authStore.token) {
-      const persisted = await http.post<ChatMessage>("/service/send", {
-        to_uid: serviceUid.value,
+      const persisted = await conversationPost<ChatMessage>({
+        to_uid: target,
         msn: attachment.url,
         msn_type: 3,
-      });
-      appendMessage(persisted);
+      },active);
+      if(active()&&serviceUid.value===target)appendMessage(persisted);
     } else {
       throw new Error("游客实时连接尚未就绪，请稍后重试");
     }
   } catch (error) {
+    if(!active()||serviceUid.value!==target)return;
     uni.showToast({
       title: error instanceof Error ? error.message : "图片发送失败",
       icon: "none",
     });
   } finally {
-    uploadingImage.value = false;
+    if(active())uploadingImage.value = false;
   }
 }
 
 async function send() {
+  const active=acceptedCurrent,target=serviceUid.value;if(!active())return;
   const text = inputText.value.trim();
   if (!text || !serviceUid.value) return;
   inputText.value = "";
@@ -413,13 +444,14 @@ async function send() {
     if (!authStore.uid || !authStore.token) {
       throw new Error("游客实时连接尚未就绪，请稍后重试");
     }
-    const persisted = await http.post<ChatMessage>("/service/send", {
-      to_uid: serviceUid.value,
+    const persisted = await conversationPost<ChatMessage>({
+      to_uid: target,
       msn: text,
       msn_type: 1,
-    });
-    appendMessage(persisted);
+    },active);
+    if(active()&&serviceUid.value===target)appendMessage(persisted);
   } catch (error) {
+    if(!active()||serviceUid.value!==target)return;
     inputText.value = text;
     uni.showToast({
       title: error instanceof Error ? error.message : "消息发送失败",
@@ -432,20 +464,17 @@ onMounted(async () => {
   void apiKfAdv().then((result) => {
     kfAdv.value = result.content;
   }).catch(() => {});
-  await loadRecord();
-  if (!disposed) connect();
+
 });
 
 onUnmounted(() => {
   contextVisible=false;contextGeneration++;productContext.value=null;
-  disposed = true;
-  socketReady = false;
-  if (socket) socket.close({});
-  socket = null;
+  chatVisible=false;disposed=true;resetConversation();
 });
 </script>
 
 <style scoped>
+.chat-state{padding:16rpx 24rpx;font-size:26rpx;line-height:40rpx;color:#999}.chat-error{color:#b34428}
 .product-context{display:flex;gap:16rpx;background:#fff;padding:20rpx;font-size:26rpx}.product-context image{width:120rpx;height:120rpx;flex-shrink:0}.product-context>view{flex:1}.context-error{color:#a72823;padding:20rpx;font-size:24rpx}
 .kefu-page {
   display: flex;

@@ -83,7 +83,8 @@
     "test:membership-coupons:browser": "vitest run --config vitest.membership-coupons-browser.config.ts --maxWorkers=1",
     "test:member-level-activation:browser": "vitest run --config vitest.member-level-activation-browser.config.ts --maxWorkers=1",
     "test:membership-clause:browser": "vitest run --config vitest.membership-clause-browser.config.ts --maxWorkers=1",
-    "test:distribution-level:browser": "vitest run --config vitest.distribution-level-browser.config.ts --maxWorkers=1"
+    "test:distribution-level:browser": "vitest run --config vitest.distribution-level-browser.config.ts --maxWorkers=1",
+    "test:message-center:browser": "vitest run --config vitest.message-center-browser.config.ts --maxWorkers=1"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.0",

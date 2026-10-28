@@ -9,7 +9,6 @@
  *   - GET  /api/user/message_system/detail/:id  消息详情
  */
 import type { Context } from "hono";
-import { and, desc, eq } from "drizzle-orm";
 import { jsonOk, jsonFail } from "@/utils/json";
 import { AuthException, ValidateException } from "@/utils/errors";
 import { UserFinanceService } from "@/services/user/UserFinanceService";
@@ -19,11 +18,11 @@ import {
 } from "@/services/kefu/KefuRealtimeService";
 import { chatPrincipalName } from "@/services/kefu/KefuSocketGateway";
 import type { AppVariables, Env } from "@/env";
-import { systemMessage } from "@/models/schema";
-import { visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 export { visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 import { readBoundedJsonObject } from "@/utils/request-body";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { MessageCenterService } from "@/services/message/MessageCenterService";
+import { messageActor, parseMessageId, parseMessageQuery, type MessageView } from "@/services/message/MessageCenterInput";
 
 type C = Context<{ Bindings: Env; Variables: AppVariables }>;
 const MAX_CHAT_BODY_BYTES = 8 * 1024;
@@ -98,41 +97,18 @@ export async function rechargeIndex(c: C) {
 
 // ═══ 站内信 ═════════════════════════════════════════════════
 
-/** GET /api/user/message — 站内信列表 */
-export async function messageList(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const container = c.get("container");
-  try {
-    const rows = await container.db
-      .select()
-      .from(systemMessage)
-      .where(visibleSystemMessageWhere(uid))
-      .orderBy(desc(systemMessage.addTime))
-      .limit(20);
-    return jsonOk(c, rows);
-  } catch {
-    return jsonOk(c, []);
-  }
+function messages(c:C,kind:MessageView){
+  c.header('Cache-Control','private, no-store');
+  const actor=messageActor(c.get('uid'),c.get('user'));
+  const query=parseMessageQuery(kind,new URL(c.req.url).searchParams);
+  return {actor,query,service:new MessageCenterService(c.get('container'),c.env)};
 }
-
-/** GET /api/user/message_system/detail/:id — 消息详情 */
-export async function messageDetail(c: C) {
-  const uid = c.get("uid");
-  if (!uid) return jsonFail(c, "请先登录");
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  try {
-    const rows = await container.db
-      .select()
-      .from(systemMessage)
-      .where(and(eq(systemMessage.id, id), visibleSystemMessageWhere(uid)))
-      .limit(1);
-    return jsonOk(c, rows[0] ?? null);
-  } catch {
-    return jsonOk(c, null);
-  }
-}
+/** PHP summary is distinct from the paginated consuming inbox. */
+export async function messageCenter(c:C){const {actor,query,service}=messages(c,'center');return jsonOk(c,await service.center(actor,query));}
+/** PHP-compatible GET intentionally consumes only this user's page read state. */
+export async function messageList(c:C){const {actor,query,service}=messages(c,'list');return jsonOk(c,await service.list(actor,query));}
+/** Modern id detail remains nullable for a hidden/foreign/missing record. */
+export async function messageDetail(c:C){const {actor,query,service}=messages(c,'detail');return jsonOk(c,await service.detail(actor,parseMessageId(c.req.param('id')),query));}
 
 /** Legacy DTO remains the default; profile=1 opts into versioned editable metadata. */
 export async function userInfo(c: C) {

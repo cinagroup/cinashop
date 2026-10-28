@@ -36,6 +36,8 @@ import {
 import { getTokenBucket } from "@/utils/cache";
 import { AuthException, NotFoundException, ValidateException } from "@/utils/errors";
 import { md5 } from "@/utils/jwt";
+import {resolvePublicUserAvatars} from '@/services/user/UserAvatarPolicy';
+import {renderProductPictures} from '@/services/activity/ProductAssetPolicy';
 
 const CHAT_LOCK_NAMESPACE = 91310002;
 const MAX_CHAT_MESSAGE_LENGTH = 2_000;
@@ -933,6 +935,7 @@ export class KefuRealtimeService {
       if (requestedToUid && !selected) {
         selected = (await listServices(tx, false)).find((item) => item.uid === requestedToUid);
       }
+      if (requestedToUid && !selected) throw new NotFoundException('指定客服不存在或已停用');
       if (!selected && active.length) {
         const latest = (
           await tx
@@ -968,14 +971,15 @@ export class KefuRealtimeService {
         serviceList: rows.reverse().map(mapMessage),
         uid: selected.uid,
         nickname: selected.nickname,
-        avatar: selected.avatar,
+        avatar: (await resolvePublicUserAvatars(tx,[{uid:selected.uid,image:selected.avatar}]))[0],
         online: selected.online,
       };
     });
     const imageIndexes = result.serviceList.flatMap((message, index) =>
       message.msn_type === 3 && parseCanonicalAttachmentId(message.msn) ? [index] : []
     );
-    if (!imageIndexes.length) return result;
+    const [avatar]=await renderProductPictures(this.env.APP_KEY,[result.avatar]);
+    if (!imageIndexes.length) return {...result,avatar};
     const signed = await signAttachmentReferences(
       this.env.APP_KEY,
       imageIndexes.map((index) => result.serviceList[index].msn),
@@ -983,7 +987,7 @@ export class KefuRealtimeService {
     );
     const signedByIndex = new Map(imageIndexes.map((index, offset) => [index, signed[offset]]));
     return {
-      ...result,
+      ...result,avatar,
       serviceList: result.serviceList.map((message, index) => ({
         ...message,
         msn: signedByIndex.get(index) ?? message.msn,

@@ -1818,3 +1818,41 @@ describe('distribution level Browser literal admission',()=>{
     expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
   });
 });
+
+describe('message center Browser literal admission',()=>{
+  it('admits only the exact message center Browser mode without external browser configuration', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:message-center-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:message-center-browser-extra', 'audit:message-center-browser.other'])('rejects malformed message center Browser mode %s before binary validation', mode => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:message-center-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:message-center-browser', 'test/message-center-postgres.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'directory', 'unused-bin', 'audit:message-center-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:message-center-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid message center Browser admission $args before filesystem/native setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
+  });
+});
+
+describe('message center native literal admission',()=>{
+ it.each(['test/message-center-postgres.test.ts','test/withdrawal-application-inbox-scenario.test.ts'])('admits the exact reviewed native suite %s before setup',file=>{
+  const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',file],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+  expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
+ });
+ it.each(['test/message-center-postgres-extra.test.ts','test/message-center-postgres.test.ts.extra','test/withdrawal-application-inbox-scenario-extra.test.ts','test/withdrawal-application-inbox-scenario.test.ts.extra'])('rejects unreviewed message center native spelling %s',file=>{
+  const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',file],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+  expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
+ });
+});

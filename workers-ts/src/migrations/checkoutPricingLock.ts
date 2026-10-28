@@ -104,7 +104,12 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   // default profile and every original owner predicate stay unchanged.
   const supplierManualOids=sharedScope&&schema==='public'
     ?await(await import('./supplierManualRefund')).reviewedSupplierManualRefundCapabilityOids(tx):[];
-  const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
+  // A separately installed message receipt writer shares only the explicit
+  // shop LOGIN. Exempt its actual OID only after exact body/owner/ACL/table
+  // review; the isolated pricing scope never accepts this additional writer.
+  const messageRead=sharedScope&&schema==='public'
+    ?await(await import('./userMessageReadCapability')).inspectUserMessageReadCapability(tx):null;
+  const reviewedOids = [...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[]),...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
     ...supplierManualOids,...ordinaryOids];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)

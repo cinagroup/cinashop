@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { eq, sql } from "drizzle-orm";
 import { user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
   storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery,
-  orderNotificationDeliveryAction, notificationTemplate } from "@/models/schema";
+  orderNotificationDeliveryAction, notificationTemplate, storeServiceRecord } from "@/models/schema";
 import { createContainerFromDb, type Container } from "@/lib/di";
 import type { Env, AppVariables, OrderMessage, OrderNotificationOutboxMessage } from "@/env";
 import { UserWithdrawalService } from "@/services/user/UserWithdrawalService";
@@ -17,7 +17,7 @@ import { runWithdrawalWecomRobotChannel } from "@/migrations/runWithdrawalWecomR
 import { KefuInboxService } from "@/services/kefu/KefuInboxService";
 import { userUnreadMessageCount, visibleSystemMessageWhere } from "@/services/message/UserMessageVisibility";
 import { kefuapiRoutes } from "@/routes/kefuapi";
-import { messageList, messageDetail } from "@/controllers/api/v1/UserMessageController";
+import { messageCenter, messageDetail } from "@/controllers/api/v1/UserMessageController";
 import { errorHandler } from "@/middleware/error";
 import { createToken, md5 } from "@/utils/jwt";
 import { WITHDRAWAL_APPLICATION_NOTICE_SQL } from "@/migrations/withdrawalApplicationNotice";
@@ -43,7 +43,7 @@ const input = (extractType = "alipay") => ({ extractType, extractPrice: "20.00",
 beforeAll(async () => {
   fixture = await financePostgres([user, userBrokerage, userExtract, userMoney, userRecharge, systemConfig, capitalFlow,
     storeOrderOutbox, systemMessage, userMessage, systemNotification, storeService, orderNotificationDelivery,
-    orderNotificationDeliveryAction, notificationTemplate], { namespace: "public" });
+    orderNotificationDeliveryAction, notificationTemplate, storeServiceRecord], { namespace: "public" });
   await fixture.exec(USER_WITHDRAWAL_REPLAY_SQL); await fixture.exec(WITHDRAWAL_EFFECTS_SQL);
   await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL); await fixture.exec(WITHDRAWAL_APPLICATION_NOTICE_SQL);
   await fixture.exec(STAFF_NOTIFICATION_REFRESH_SQL);
@@ -404,10 +404,13 @@ describe("withdrawal application events and isolated staff inbox", () => {
     ]).returning();
     expect(await fixture.db.select().from(systemMessage).where(visibleSystemMessageWhere(10))).toHaveLength(2);
     const app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
-    app.use("*", async (c, next) => { c.set("uid", 10); c.set("container", container); await next(); });
-    app.get("/messages", messageList); app.get("/messages/:id", messageDetail);
-    expect(await (await app.request(`/messages/${staffRow.id}`)).json()).toMatchObject({ data: null });
-    expect(JSON.stringify(await (await app.request("/messages")).json())).not.toContain("提现");
+    app.use("*", async (c, next) => { c.set("uid", 10); c.set("user", { uid: 10, pwd: "" } as AppVariables["user"]); c.set("container", container); await next(); });
+    app.get("/messages", messageCenter); app.get("/messages/:id", messageDetail);
+    const detail = await (await app.request(`/messages/${staffRow.id}`, undefined, env)).json();
+    expect(detail).toMatchObject({ status: 200, data: null });
+    const center = await (await app.request("/messages", undefined, env)).json();
+    expect(center).toMatchObject({ status: 200, data: { system: { message_num: 2 }, service: [] } });
+    expect(JSON.stringify(center)).not.toContain("提现");
     expect((await fixture.db.select({ total: userUnreadMessageCount(10) }).from(user).where(eq(user.uid, 10)))[0].total).toBe(2);
     await fixture.db.insert(userMessage).values({ uid: 10, messageId: ordinary[0].id, isRead: 1 });
     expect((await fixture.db.select({ total: userUnreadMessageCount(10) }).from(user).where(eq(user.uid, 10)))[0].total).toBe(1);
