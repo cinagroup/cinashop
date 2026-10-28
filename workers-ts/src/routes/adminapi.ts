@@ -90,6 +90,7 @@ import * as AdminShippingSettings from "@/controllers/api/v1/AdminShippingSettin
 import * as AdminCityDeliveryRecords from "@/controllers/api/v1/AdminCityDeliveryRecordController";
 import * as AdminRechargeOrder from "@/controllers/api/v1/AdminRechargeOrderController";
 import * as AdminCommissionRead from "@/controllers/api/v1/AdminCommissionReadController";
+import * as AdminWithdrawalDirectory from "@/controllers/api/v1/AdminWithdrawalDirectoryController";
 import * as AdminUserMoneyLedger from "@/controllers/api/v1/AdminUserMoneyLedgerController";
 import * as AdminSeckillTime from "@/controllers/api/v1/AdminSeckillTimeController";
 import * as AdminSeckillActivity from "@/controllers/api/v1/AdminSeckillActivityController";
@@ -1039,6 +1040,8 @@ adminapiRoutes.get("/system_menus/tree", adminAuth, AdminCrud.adminSystemPermiss
 
 // ─── 提现审核 (M17) ─────────────────────────────────────────
 adminapiRoutes.get("/extract/list", adminAuth, AdminCrud.adminExtractList);
+adminapiRoutes.get("/extract/directory", adminAuth, AdminWithdrawalDirectory.directory);
+adminapiRoutes.get("/extract/directory/:id/media", adminAuth, AdminWithdrawalDirectory.media);
 adminapiRoutes.post("/extract/status/:id", adminAuth, AdminCrud.adminExtractStatus);
 
 // ─── 供应商提现审核/转账 ────────────────────────────────────

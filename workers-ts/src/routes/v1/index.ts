@@ -102,6 +102,7 @@ import * as AdminShippingSettings from "@/controllers/api/v1/AdminShippingSettin
 import * as AdminCityDeliveryRecords from "@/controllers/api/v1/AdminCityDeliveryRecordController";
 import * as AdminRechargeOrder from "@/controllers/api/v1/AdminRechargeOrderController";
 import * as AdminCommissionRead from "@/controllers/api/v1/AdminCommissionReadController";
+import * as AdminWithdrawalDirectory from "@/controllers/api/v1/AdminWithdrawalDirectoryController";
 import * as AdminUserMoneyLedger from "@/controllers/api/v1/AdminUserMoneyLedgerController";
 import * as AdminSeckillTime from "@/controllers/api/v1/AdminSeckillTimeController";
 import * as AdminSeckillActivity from "@/controllers/api/v1/AdminSeckillActivityController";
@@ -2157,6 +2158,8 @@ v1Routes.post("/admin/waybill/jobs/:id/confirm-retry", adminAuth, WaybillJobCont
 v1Routes.post("/admin/waybill/jobs/:id/close", adminAuth, WaybillJobController.adminClose);
 // 提现审核 (M17)
 v1Routes.get("/admin/extract/list", adminAuth, AdminCrud.adminExtractList);
+v1Routes.get("/admin/extract/directory", adminAuth, AdminWithdrawalDirectory.directory);
+v1Routes.get("/admin/extract/directory/:id/media", adminAuth, AdminWithdrawalDirectory.media);
 v1Routes.post("/admin/extract/status/:id", adminAuth, AdminCrud.adminExtractStatus);
 v1Routes.get("/admin/supplier/extract/suppliers", adminAuth, AdminSupplierFinance.supplierExtractSuppliers);
 v1Routes.get("/admin/supplier/apply/list", adminAuth, SupplierApplicationController.adminList);

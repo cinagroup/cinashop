@@ -493,6 +493,14 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // The earlier mobile editor has a distinct /api/admin selection contract.
   if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  // This additive reader is a closed namespace: only the exact directory
+  // and one canonical record's opt-in media GET/HEAD require extract.view.
+  if (route === 'extract/directory' || route.startsWith('extract/directory/')) {
+    if (!['GET', 'HEAD'].includes(method.toUpperCase())) return null;
+    if (route === 'extract/directory') return 'extract.view';
+    const parts = route.split('/');
+    return parts.length === 4 && legacyAdminId(parts[2]) && parts[3] === 'media' ? 'extract.view' : null;
+  }
   if (['user/filter_options', 'user/filter_regions'].includes(route)) {
     return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'user.view' : null;
   }
