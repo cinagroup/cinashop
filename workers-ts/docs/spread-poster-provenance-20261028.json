@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "php_repository": "cinagroup/cinashop-php",
+  "immutable_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "sources": [
+    {
+      "path": "view/uniapp/pages/users/user_spread_code/index.vue",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "blob": "ef22d772f05d3471a0f5ed9325d0526b02d6deb6",
+      "bytes": 12261,
+      "sha256": "8b63dbb41bc3cc72f1d05bd61d992fbbacd4b4472486e74cb2f25d2eaa677bbf"
+    },
+    {
+      "path": "view/uniapp/utils/util.js",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "blob": "d3e4c716ae80d4cd4f6f314d72f07408412063e4",
+      "bytes": 34584,
+      "sha256": "8d8c5c89fe0848f950f3699086519c0ee00dbc6a539c98057601ec007c7d6622"
+    },
+    {
+      "path": "app/controller/api/v1/user/UserBill.php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "blob": "d0d76c95140c30fa979dae060d2f74394d4af15a",
+      "bytes": 5605,
+      "sha256": "de389c7720560dc20e00e606936adbcf86a0984c2877f290200da4d1f84bafad"
+    },
+    {
+      "path": "app/services/system/config/SystemConfigServices.php",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "blob": "bd190ed9971332874110edefe8a8ef9a8e1a64f2",
+      "bytes": 138779,
+      "sha256": "f4aeb9e68365b18a36ba6bcefacc29955ee487db822c2e8b4a1239dac7281efc"
+    }
+  ],
+  "assets": [
+    {
+      "source": "view/uniapp/pages/users/static/haibao.png",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "target": "view/uniapp-ts/src/static/php-spread-poster/haibao.png",
+      "sha256": "f75915f00fe3d49b4f32aa3a7e10664c6b4303362c4bf0aeb1ea540547b78b34",
+      "bytes": 5003,
+      "provenance": "immutable-git",
+      "source_blob": "3f5d1b3ff64b81f2cc04918801fc3b439be4a2e6",
+      "target_sha256": "f75915f00fe3d49b4f32aa3a7e10664c6b4303362c4bf0aeb1ea540547b78b34"
+    },
+    {
+      "source": "view/uniapp/pages/users/static/weixin.png",
+      "ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "target": "view/uniapp-ts/src/static/php-spread-poster/weixin.png",
+      "sha256": "379c01fedcccce2060616b1bbfcf736357957c71ed503bf51b7bfa2464ab8536",
+      "bytes": 5948,
+      "provenance": "immutable-git",
+      "source_blob": "5402e30be01a7b58a9b90fcc66f7f4415bcabaeb",
+      "target_sha256": "379c01fedcccce2060616b1bbfcf736357957c71ed503bf51b7bfa2464ab8536"
+    },
+    {
+      "source": "/home/cina/cinagroup/cinashop-php/public/uploads/system/756bc202104251709155325.jpg",
+      "configuration_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "configuration_path": "public/install/crmeb.sql",
+      "configuration_value": "/uploads/system/756bc202104251709155325.jpg",
+      "target": "view/uniapp-ts/src/static/php-spread-poster/template.jpg",
+      "sha256": "f87db1da52b726b502e172cfb61c6b4c396750359dafa58c796dce0300f609ce",
+      "bytes": 165730,
+      "provenance": "local-ignored-upload-not-git",
+      "configuration_blob": "e93c1a102da937e7507f5e31fe2b46ab12f883a9",
+      "dimensions": {
+        "width": 600,
+        "height": 1000
+      },
+      "immutable_image_object_exists": false,
+      "target_sha256": "f87db1da52b726b502e172cfb61c6b4c396750359dafa58c796dce0300f609ce"
+    }
+  ],
+  "boundary": "The installer SQL identifies the legacy template path. The JPEG bytes are from the local ignored upload and are not asserted to belong to the immutable Git tree. Only tracked action icons have immutable Git byte provenance. No arbitrary relative media mapping or owner avatar replacement was added."
+}
