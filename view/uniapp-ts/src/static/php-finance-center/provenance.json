@@ -1,0 +1,80 @@
+{
+  "repository": "cinashop-php (separate immutable PHP source repository)",
+  "immutable_ref": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "assets": [
+    {
+      "path": "spread_bg.png",
+      "source": "public/statics/images/spread_bg.png",
+      "git_blob": "06a480646eae843fe14b006974bf715266676a0d",
+      "bytes": 18725,
+      "sha256": "0b782af95447ce6378893e66534631600eed1409930a79e083f3cb7aa2b73b7b",
+      "width": 710,
+      "height": 370
+    },
+    {
+      "path": "spread_dd.png",
+      "source": "public/statics/images/spread_dd.png",
+      "git_blob": "b0ec55599b9f43a973e0083acd97685c117bbc37",
+      "bytes": 3176,
+      "sha256": "797602a40ca0f5cd0389c662c44b4edc89fc41404c9d2d04909935fa50f2a11d",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_td.png",
+      "source": "public/statics/images/spread_td.png",
+      "git_blob": "345c543b358c09045ba18a19d959c0104f55b0fb",
+      "bytes": 3967,
+      "sha256": "701668e4c4bb269b7752344ca4b93dd3b4658e146868e727d6df91ee15512288",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_ph.png",
+      "source": "public/statics/images/spread_ph.png",
+      "git_blob": "42340b3458690427bcae9ec43fc7466bf6db74d5",
+      "bytes": 3478,
+      "sha256": "e7ed3f13094d73cdd1e6142e9002726382b8aaf7112372ec6d79776bf2a731b5",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_yj.png",
+      "source": "public/statics/images/spread_yj.png",
+      "git_blob": "b038d4895e9b647c4a376b8574ede1ed57daf51e",
+      "bytes": 3823,
+      "sha256": "762deab9e2b5cbf1c387d597c1f54a80916eb9ec049601d3a32763e377e61f68",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_tgr.png",
+      "source": "public/statics/images/spread_tgr.png",
+      "git_blob": "872c12bc121d0a39de7c67525401742b4343b8e2",
+      "bytes": 3629,
+      "sha256": "851712aef60cbdceef3196c52278ef5e78033b20d2235e3663b40075ad1f6a16",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_yq.png",
+      "source": "public/statics/images/spread_yq.png",
+      "git_blob": "168449f39c7608b335dcd427ca7c5a0730a17ba6",
+      "bytes": 3215,
+      "sha256": "88d4ee176176c5b7ddec02ed4ba5ae4765d14856f9f423f4e894c4a705fd24be",
+      "width": 80,
+      "height": 80
+    },
+    {
+      "path": "spread_dj.png",
+      "source": "public/statics/images/spread_dj.png",
+      "git_blob": "ae265185a2cc83b555f7c89beb33806f34463d08",
+      "bytes": 3861,
+      "sha256": "5ddb83acbbf9acb01dc9c3f220fca841f75e79276399d646beadc9de0e0604a0",
+      "width": 80,
+      "height": 80
+    }
+  ],
+  "existing_reused_icon": "../php-agent-explanation/spread_sm.png; same immutable public/statics/images/spread_sm.png",
+  "note": "Git object bytes, no ignored uploads or remote font copied."
+}
