@@ -1,83 +1,80 @@
 <template>
   <ThemePage>
-  <view class="distribution-page">
-    <view class="page-heading"><text class="heading">分销等级</text><button size="mini" :disabled="loading || taskLoading || !auth.isLoggedIn" @tap="load">重新读取</button></view>
-    <view v-if="!auth.isLoggedIn" class="card"><text>请先登录后查看分销等级和任务进度。</text><button @tap="login">去登录</button></view>
-    <template v-else>
-      <view v-if="loading" class="notice">正在读取等级…</view>
-      <view v-if="error" class="notice error"><text>{{ error }}</text><text v-if="snapshot">下方保留上次数据，尚未确认最新状态。</text></view>
-      <view v-if="snapshot && !snapshot.enabled" class="card">分销等级尚未开启。</view>
-      <template v-if="snapshot?.enabled && snapshot.user">
-        <view class="current-card" :style="{ color: currentColor || '#263b3a' }">
-          <image v-if="currentImage" class="background-image" :src="currentImage" mode="aspectFill" />
-          <view class="current-content"><text class="label">当前已授予等级</text><text class="current-name">{{ snapshot.level_info?.name || (snapshot.user.agent_level ? `历史等级 #${snapshot.user.agent_level}` : '暂未获得等级') }}</text><text>等级 {{ snapshot.current_grade }} · {{ snapshot.user.nickname || '当前用户' }}</text>
-          <text v-if="snapshot.user.agent_level && !snapshot.level_info" class="history-note">原等级配置已删除，已授予等级记录保留，不会因此降级。</text>
-          <text v-if="snapshot.level_info?.status === 0" class="history-note">此等级目前已隐藏，已授予等级仍保留。</text>
-          <text>已邀请 {{ snapshot.user.spread_count }} 人 · 当前可用佣金 ¥{{ snapshot.user.brokerage_price }}</text></view>
-        </view>
-        <view class="card"><text class="name">{{ snapshot.next_level ? `下一可升级等级：${snapshot.next_level.name}` : '暂无下一可升级等级' }}</text><text class="hint">全部开启任务都完成后自动核对升级，历史 is_must 不表示任选任务。分销等级与购物会员等级分别计算。</text></view>
-        <view v-if="snapshot.level_list.length" class="card level-selector">
-          <text class="name">选择查看等级</text><picker :range="snapshot.level_list" range-key="name" :value="selectedIndex" :disabled="loading || taskLoading" @change="selectLevel"><view class="picker-value">{{ selectedLevel?.name || '请选择等级' }} · 等级 {{ selectedLevel?.grade ?? '—' }}　⌄</view></picker>
-          <view v-if="selectedLevel" class="selected-level-card" :style="{ color: selectedLevel.color || '#263b3a' }"><image v-if="selectedLevel.image" class="background-image" :src="selectedLevel.image" mode="aspectFill" /><view class="current-content level-benefit"><text class="name">{{ selectedLevel.name }} · 等级 {{ selectedLevel.grade }}</text><text>一级返佣上浮 {{ selectedLevel.one_brokerage }}% · 二级返佣上浮 {{ selectedLevel.two_brokerage }}%</text><text class="hint">实际返佣比例按平台基础比例计算：基础比例 × (1 + 上浮百分比 ÷ 100)。</text><text v-if="selectedLevel.grade <= snapshot.current_grade && snapshot.user.agent_level" class="complete">已授予达到此级别，任务按已完成展示。</text></view></view>
-        </view>
-        <view v-else class="card">暂无可查看等级，已授予等级仍保留。</view>
-        <view v-if="selectedLevel" class="card progress-summary"><text class="name">{{ selectedLevel.name }} · 全部任务进度</text><text>{{ taskLoading ? '正在读取…' : `${finishedCount} / ${tasks?.list.length ?? 0} 项已完成` }}</text><view class="progress-track"><view class="progress-fill" :style="{ width: `${tasks?.speedAll ?? 0}%` }" /></view><text>{{ tasks?.speedAll ?? 0 }}%</text></view>
-        <view v-if="taskError" class="notice error"><text>{{ taskError }}</text><text v-if="tasks">当前进度是上次读取的数据。</text><button size="mini" :disabled="taskLoading || loading" @tap="refreshTasks">重新读取任务</button></view>
-        <view v-if="tasks && !tasks.enabled" class="card">分销等级已关闭，请重新读取等级。</view>
-        <view v-if="tasks?.enabled && !tasks.list.length && !taskLoading" class="card">该等级没有开启任务，不能凭空完成升级。</view>
-        <view v-for="task in tasks?.list || []" :key="task.id" class="card task-card">
-          <view class="task-heading"><image v-if="task.image" :src="task.image" class="task-icon" mode="aspectFit" /><view><text class="name">{{ task.name }}</text><text class="hint">{{ distributionTaskName(task.type) }}</text></view><text :class="task.finish ? 'complete' : 'hint'">{{ task.finish ? '已完成' : '进行中' }}</text></view>
-          <text class="description">{{ task.desc }}</text><text>要求 {{ task.number }} {{ distributionTaskUnit(task.type) }} · 当前 {{ task.new_number }} {{ distributionTaskUnit(task.type) }}</text><view class="progress-track"><view class="progress-fill" :style="{ width: `${task.speed}%` }" /></view><text>{{ task.task_type_title }} · {{ task.speed }}%</text>
-          <button v-if="!task.finish && distributionTaskAction(task.type)" class="action" :disabled="loading || taskLoading || !!error || !!taskError" @tap="act(task)">{{ distributionTaskAction(task.type)?.label }}</button>
-        </view>
+    <view class="distribution-page" :data-distribution-owner="snapshot?.user?.uid || 0" :data-selected-level="selectedId" :style="{'--level-theme':theme}">
+      <view class="page-heading"><text class="heading">分销等级</text><button size="mini" :disabled="loading || taskLoading || !auth.isLoggedIn" @tap="load">重新读取</button></view>
+      <view v-if="!auth.isLoggedIn" class="notice"><text>请先登录后查看分销等级和任务进度。</text><button @tap="login">去登录</button></view>
+      <template v-else>
+        <view v-if="loading" class="notice" role="status">正在读取等级…</view>
+        <view v-if="error" class="notice error" role="alert"><text>{{ error }}</text><text v-if="snapshot">下方保留上次数据，尚未确认最新状态。</text></view>
+        <view v-if="snapshot && !snapshot.enabled" class="notice">分销等级尚未开启。</view>
+        <template v-if="snapshot?.enabled && snapshot.user">
+          <view class="background" :style="{backgroundImage:`linear-gradient(180deg, ${rgba(.1)} 0%, ${rgba(0)} 100%)`}" />
+          <view class="header">
+            <view class="avatar"><image v-if="avatar.src" :key="avatar.key" :src="avatar.src" mode="aspectFill" @error="avatar.error" /><view v-else class="avatar-placeholder" aria-label="头像暂不可用">{{ (snapshot.user.nickname || '用户').slice(0,1) }}</view></view>
+            <view class="user-copy"><view class="nickname">{{ snapshot.user.nickname || '当前用户' }}</view><view class="user-badge" :style="{background:`linear-gradient(90deg, #fff 0%, rgba(255,255,255,.3) 51%, ${rgba(.1)} 100%)`}"><text class="badge-symbol" aria-hidden="true">♛</text>{{ snapshot.user.agent_level ? `V${snapshot.current_grade}` : '未解锁' }}</view></view>
+          </view>
+          <view v-if="snapshot.user.agent_level && !snapshot.level_info" class="notice history-note">历史等级 #{{ snapshot.user.agent_level }} 的配置已删除，已授予等级仍保留。</view>
+          <view v-if="snapshot.level_info?.status === 0" class="notice history-note">{{ snapshot.level_info.name }} 目前已隐藏，已授予等级仍保留。</view>
+          <view v-if="selectedLevel" class="skill-section" :style="{borderColor:rgba(.6),backgroundImage:`linear-gradient(to right, ${rgba(.2)}, ${rgba(0)}, ${rgba(.2)})`}">
+            <image v-if="badge.src" :key="badge.key" class="level-badge" :src="badge.src" mode="aspectFit" @error="badge.error" />
+            <view v-else class="level-badge badge-placeholder">V{{ selectedLevel.grade }}</view>
+            <view class="section-hd"><view class="section-title">V{{ selectedLevel.grade }} <text>{{ !snapshot.user.agent_level ? '等级未解锁' : selectedLevel.grade > snapshot.current_grade ? '升级中' : '已解锁' }}</text></view><view class="level-name">{{ selectedLevel.name }}</view>
+              <view v-if="tasks?.list.length" class="task-count">以下任务全部达成即可升级 <text class="task-num">{{ finishedCount }}</text><text>/{{ tasks.list.length }}</text></view>
+              <view v-else-if="!snapshot.next_level" class="task-count">暂无下一可升级等级</view>
+            </view>
+            <view class="level-grow-wrap"><view class="level-benefit"><text>一级分佣上浮</text><view class="benefit-number">{{ selectedLevel.one_brokerage }}<text>%</text></view></view><view class="level-benefit"><text>二级分佣上浮</text><view class="benefit-number">{{ selectedLevel.two_brokerage }}<text>%</text></view></view></view>
+            <view class="level-selector"><picker :range="snapshot.level_list" range-key="name" :value="selectedIndex" :disabled="loading || taskLoading" @change="selectLevel"><view class="picker-value">选择查看等级：{{ selectedLevel.name }} <text>⌄</text></view></picker></view>
+            <view v-if="taskLoading" class="task-notice" role="status">正在读取任务…</view>
+            <view v-if="taskError" class="notice error" role="alert"><text>{{ taskError }}</text><text v-if="tasks">当前进度是上次读取的数据。</text><button size="mini" :disabled="taskLoading || loading" @tap="refreshTasks">重新读取任务</button></view>
+            <view v-if="tasks && !tasks.enabled" class="task-notice">分销等级已关闭，请重新读取等级。</view>
+            <view v-if="tasks?.enabled && !tasks.list.length && !taskLoading" class="task-notice">该等级没有开启任务。</view>
+            <view v-if="tasks?.enabled && tasks.list.length" class="section-bd">
+              <view v-for="task in tasks.list" :key="task.id" class="task-row distribution-task" :data-task-id="task.id" :data-distribution-task-id="task.id">
+                <view class="item-content"><view class="task-title">{{ task.name }}</view><view class="progress-wrap"><view class="progress"><view class="progress-back" /><view class="progress-inner" :style="{width:`${task.speed}%`}" /></view><view class="info-box"><text class="task-info">{{ task.finish ? '' : task.task_type_title }}</text><text class="task-numbers"><text>{{ task.new_number }}</text>/{{ task.number }}</text></view></view></view>
+                <view v-if="task.finish" class="task-button complete">已完成</view><button v-else-if="distributionTaskAction(task.type)" class="task-button" :disabled="loading || taskLoading || !!error || !!taskError" @tap="act(task)">{{ distributionTaskAction(task.type)?.url === '/pages/user/spread' ? '去邀请' : '去逛逛' }}</button><view v-else class="task-info">进行中</view>
+              </view>
+            </view>
+          </view>
+          <view v-else class="notice">暂无可查看等级，已授予等级仍保留。</view>
+          <view v-if="mediaExpired" class="notice">等级图片已过期，可点击“重新读取”刷新等级与任务。</view>
+            <view class="recommendations" aria-label="分销等级商品推荐" :data-level-recommendation-page="recommendations.page">
+              <template v-if="recommendations.items.length">
+                <view class="recommendation-heading"><image src="/static/php-assets/images/recommend_zs.png" mode="aspectFit" /><text>猜你喜欢</text><image src="/static/php-assets/images/recommend_zs.png" mode="aspectFit" /></view>
+                <view class="recommendation-grid">
+                  <view v-for="item in recommendations.items" :key="item.id" class="recommendation-card" role="button" :aria-label="'查看推荐商品：' + item.title" :aria-disabled="recommendations.navigating" :data-level-product-id="item.id" @tap="recommendations.openProduct(item.id)">
+                    <view class="recommendation-picture"><image v-if="item.image.src" :key="item.image.key" class="recommendation-image" :src="item.image.src" mode="aspectFill" @error="item.image.error" /><view v-else class="recommendation-image recommendation-placeholder">商品图片暂不可用</view><image v-if="item.frameImage.src" :key="item.frameImage.key" class="recommendation-frame" :src="item.frameImage.src" mode="scaleToFill" @error="item.frameImage.error" /></view>
+                    <view class="recommendation-copy">
+                      <view class="recommendation-name"><text v-if="item.brand" class="recommendation-brand">{{ item.brand }}</text>{{ item.title }}</view>
+                      <view v-if="item.labels.length" class="recommendation-labels"><view v-for="label in item.labels" :key="label.id" class="recommendation-label" :style="{color:label.color,backgroundColor:label.background,borderColor:label.border}"><image v-if="label.image.src" :key="label.image.key" :src="label.image.src" @error="label.image.error" />{{ label.name }}</view></view>
+                      <view class="recommendation-price-row"><text class="recommendation-price"><text class="recommendation-symbol">¥</text>{{ item.price }}</text><view v-if="item.vipOffer || item.levelOffer" class="recommendation-offer"><text>{{ item.vipOffer ? 'SVIP' : '等级价' }}</text><text>¥{{ item.vipPrice }}</text></view></view>
+                    </view>
+                  </view>
+                </view>
+              </template>
+              <view v-if="recommendations.loading" class="recommendation-state" role="status">正在加载商品推荐…</view>
+              <view v-if="recommendations.error" class="recommendation-state" role="alert">{{ recommendations.error }}<button :disabled="recommendations.loading" @tap="recommendations.retry">重试商品推荐</button></view>
+              <view v-if="recommendations.mediaExpired" class="recommendation-state">商品图片已过期，请刷新商品推荐</view>
+              <button v-if="recommendations.hasMore && !recommendations.error" class="recommendation-more" :disabled="recommendations.loading || recommendations.navigating" @tap="recommendations.load(true)">加载更多推荐</button>
+              <view v-if="recommendations.items.length && !recommendations.hasMore && !recommendations.loading" class="recommendation-state">没有更多推荐了</view>
+              <button v-if="recommendations.items.length || recommendations.error || recommendations.mediaExpired" class="recommendation-refresh" :disabled="recommendations.loading || recommendations.navigating" @tap="recommendations.refresh">刷新商品推荐</button>
+            </view>
+        </template>
       </template>
-    </template>
-  </view>
+    </view>
   </ThemePage>
 </template>
-
 <script setup lang="ts">
+import {reactive} from 'vue';
 import ThemePage from '@/components/ThemePage.vue';
-import { computed, ref, watch } from 'vue';
-import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
-import { useAuthStore } from '@/stores/auth';
-import { apiDistributionLevels, apiDistributionTasks, distributionTaskAction, distributionTaskName, distributionTaskUnit, type DistributionSnapshot, type DistributionTasks, type DistributionTask } from '@/api/distributorLevels';
-const auth = useAuthStore(), snapshot = ref<DistributionSnapshot | null>(null), tasks = ref<DistributionTasks | null>(null), selectedId = ref(0);
-const loading = ref(false), taskLoading = ref(false), error = ref(''), taskError = ref(''); let epoch = 0, taskEpoch = 0, visible = false;
-const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;
-const selectedLevel = computed(() => snapshot.value?.level_list.find(level => level.id === selectedId.value) ?? null);
-const selectedIndex = computed(() => Math.max(0, snapshot.value?.level_list.findIndex(level => level.id === selectedId.value) ?? 0));
-const finishedCount = computed(() => tasks.value?.list.filter(task => task.finish === 1).length ?? 0);
-const currentColor = computed(() => snapshot.value?.level_info?.color ?? ''), currentImage = computed(() => snapshot.value?.level_info?.image ?? '');
-function safeError(reason: unknown): string { const value = reason instanceof Error ? reason.message : '读取失败，请重试'; return value.length <= 1000 && !/[\u0000-\u001f\u007f]/u.test(value) ? value : '读取失败，请重试'; }
-async function load(): Promise<void> {
-  const generation = ++epoch, identity = owner(); ++taskEpoch; loading.value = true; taskLoading.value = false; error.value = '';
-  if (!auth.isLoggedIn) { loading.value = false; return; }
-  try {
-    const result = await apiDistributionLevels(auth.uid); if (!visible || generation !== epoch || identity !== owner()) return;
-    snapshot.value = result; taskError.value = ''; tasks.value = null;
-    const retained = result.level_list.some(level => level.id === selectedId.value) ? selectedId.value : 0;
-    selectedId.value = retained || result.next_level?.id || result.level_list.find(level => level.id === result.user?.agent_level)?.id || result.level_list[0]?.id || 0;
-  } catch (reason) { if (visible && generation === epoch && identity === owner()) error.value = safeError(reason); }
-  finally { if (visible && generation === epoch && identity === owner()) loading.value = false; }
-  if (visible && generation === epoch && identity === owner() && !error.value && selectedId.value) await refreshTasks();
-}
-async function refreshTasks(): Promise<void> {
-  if (!auth.isLoggedIn || !selectedLevel.value || loading.value) return; const generation = ++taskEpoch, parentEpoch = epoch, identity = owner(), id = selectedId.value;
-  taskLoading.value = true; taskError.value = '';
-  try { const result = await apiDistributionTasks(id); if (visible && generation === taskEpoch && parentEpoch === epoch && identity === owner() && id === selectedId.value) tasks.value = result; }
-  catch (reason) { if (visible && generation === taskEpoch && parentEpoch === epoch && identity === owner()) taskError.value = safeError(reason); }
-  finally { if (visible && generation === taskEpoch && parentEpoch === epoch && identity === owner()) taskLoading.value = false; }
-}
-function selectLevel(event: { detail: { value: string | number } }): void { if (loading.value || taskLoading.value || !snapshot.value) return; const index = Number(event.detail.value), level = Number.isInteger(index) ? snapshot.value.level_list[index] : undefined; if (!level || level.id === selectedId.value) return; selectedId.value = level.id; tasks.value = null; taskError.value = ''; void refreshTasks(); }
-function act(task: DistributionTask): void { if (!auth.isLoggedIn || loading.value || taskLoading.value || error.value || taskError.value || !tasks.value?.list.some(item => item.id === task.id && !item.finish)) return; const action = distributionTaskAction(task.type); if (action) uni.navigateTo({ url: action.url }); }
-function login(): void { uni.navigateTo({ url: '/pages/auth/login' }); }
-function suspend(): void { visible = false; ++epoch; ++taskEpoch; loading.value = taskLoading.value = false; }
-watch(() => [auth.uid, auth.token, auth.sessionVersion], () => { ++epoch; ++taskEpoch; snapshot.value = null; tasks.value = null; selectedId.value = 0; loading.value = taskLoading.value = false; error.value = taskError.value = ''; if (visible && auth.isLoggedIn) void load(); }, { flush: 'sync' });
-onShow(() => { visible = true; void load(); }); onHide(suspend); onUnload(suspend);
+import {useDistributorLevels} from '@/composables/useDistributorLevels';
+import {useMemberLevelRecommendations} from '@/composables/useMemberLevelRecommendations';
+import {distributionTaskAction} from '@/api/distributorLevels';
+const {auth,snapshot,tasks,selectedId,selectedLevel,selectedIndex,finishedCount,loading,taskLoading,error,taskError,theme,rgba,avatar,badge,mediaExpired,current,load,refreshTasks,selectLevel,act}=useDistributorLevels();
+const recommendations=reactive(useMemberLevelRecommendations(()=>!!snapshot.value?.enabled&&current()));
+function login(){uni.navigateTo({url:'/pages/auth/login'});}
 </script>
-
 <style scoped>
-.distribution-page{min-height:100vh;box-sizing:border-box;background:#f5f7f8;padding:28rpx;color:#263b3a;font-size:27rpx}.page-heading{display:flex;align-items:center;justify-content:space-between;gap:16rpx;margin-bottom:24rpx}.heading{font-size:38rpx;font-weight:700}.page-heading button{flex:none;margin:0;font-size:23rpx}.card{display:flex;flex-direction:column;gap:16rpx;background:#fff;padding:28rpx;border-radius:18rpx;margin-top:22rpx;box-sizing:border-box;min-width:0;overflow-wrap:anywhere}.current-card,.selected-level-card{position:relative;overflow:hidden;border-radius:20rpx;background:#dceae7}.background-image{position:absolute;width:100%;height:100%;left:0;top:0;opacity:.65}.current-content{position:relative;display:flex;flex-direction:column;gap:15rpx;padding:34rpx;background:linear-gradient(90deg,rgba(255,255,255,.9),rgba(255,255,255,.6));overflow-wrap:anywhere}.current-name{font-size:38rpx;font-weight:700}.name{font-size:30rpx;font-weight:600;display:block}.label,.hint{font-size:25rpx;line-height:1.65}.hint{color:#687d7b;display:block}.history-note{font-size:24rpx}.notice{display:flex;flex-direction:column;gap:12rpx;padding:20rpx;border-radius:12rpx;background:#fff6dc;margin:20rpx 0;overflow-wrap:anywhere}.error{color:#a43626}.picker-value{padding:20rpx;border:1rpx solid #bfd3cf;border-radius:10rpx;overflow-wrap:anywhere}.level-benefit{display:flex;flex-direction:column;gap:12rpx}.progress-track{height:14rpx;background:#e5eeeb;border-radius:8rpx;overflow:hidden}.progress-fill{height:100%;background:#278975}.task-heading{display:flex;align-items:center;gap:16rpx}.task-heading>view{flex:1;min-width:0}.task-icon{width:62rpx;height:62rpx;flex:none}.complete{color:#187761;font-weight:600;font-size:25rpx}.description{white-space:pre-wrap;overflow-wrap:anywhere}.action{font-size:27rpx;border:1rpx solid #278975;background:#f2faf7;color:#176f5d;margin:8rpx 0 0;width:100%}
-@media(min-width:800px){.distribution-page{max-width:900px;margin:auto;padding:28px;font-size:16px}.card{padding:24px}.heading{font-size:26px}}
+.distribution-page{position:relative;min-height:100vh;background:#f5f5f5;color:#333;font-size:28rpx;padding-bottom:32rpx;box-sizing:border-box}.page-heading{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:20rpx 24rpx;gap:20rpx;background:#fff}.heading{font-size:32rpx;font-weight:500}.page-heading button{margin:0;font-size:22rpx;line-height:52rpx;padding:0 20rpx;border-radius:26rpx;color:#666;background:#f7f7f7;flex:none}.page-heading button::after{border:0}.background{position:absolute;left:0;top:92rpx;width:100%;height:664rpx;pointer-events:none}.header{position:relative;display:flex;align-items:center;padding:40rpx 296rpx 36rpx 32rpx;min-height:88rpx}.avatar{width:88rpx;height:88rpx;flex:none}.avatar image,.avatar-placeholder{width:100%;height:100%;box-sizing:border-box;border:4rpx solid #fff;border-radius:50%}.avatar-placeholder{display:flex;align-items:center;justify-content:center;background:#fff6e9;color:var(--level-theme);font-size:40rpx}.user-copy{min-width:0;flex:1;padding-left:20rpx}.nickname{font-size:32rpx;line-height:44rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.user-badge{display:inline-flex;align-items:center;min-width:84rpx;height:32rpx;padding:0 10rpx;border-radius:16rpx;margin-top:8rpx;font-size:22rpx;font-weight:500;line-height:32rpx;color:var(--level-theme);white-space:nowrap}.badge-symbol{font-size:30rpx;margin-right:4rpx}.skill-section{position:relative;padding:32rpx 24rpx;border:2rpx solid transparent;border-radius:32rpx;margin:0 20rpx;box-sizing:border-box}.level-badge{position:absolute;top:-104rpx;right:38rpx;width:238rpx;height:192rpx}.badge-placeholder{display:flex;align-items:center;justify-content:center;font-size:52rpx;font-weight:600;color:var(--level-theme);pointer-events:none}.section-hd{position:relative;padding-right:190rpx;min-height:88rpx}.section-title{font-size:28rpx;font-weight:500;line-height:40rpx}.section-title text{margin-left:8rpx}.level-name{color:#777;font-size:24rpx;line-height:32rpx;overflow-wrap:anywhere}.task-count{margin-top:8rpx;color:#999;font-size:24rpx;line-height:36rpx}.task-num{margin-left:8rpx;color:var(--level-theme);font-size:28rpx}.level-grow-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24rpx;min-height:92rpx;align-items:center}.level-benefit{display:flex;align-items:center;flex-wrap:wrap;color:#999;font-size:24rpx;gap:12rpx}.benefit-number{font-size:36rpx;font-weight:600;color:var(--level-theme)}.benefit-number text{font-size:32rpx;font-weight:500}.level-selector{margin-bottom:24rpx}.picker-value{display:flex;justify-content:space-between;gap:12rpx;font-size:24rpx;line-height:40rpx;color:#777;overflow-wrap:anywhere}.picker-value text{flex:none}.section-bd{padding:32rpx;border-radius:24rpx;background:#fff}.task-row{display:flex;align-items:center;gap:0}.task-row+.task-row{margin-top:32rpx}.item-content{flex:1;min-width:0}.task-title{font-weight:500;font-size:28rpx;line-height:40rpx;overflow-wrap:anywhere}.progress-wrap{padding-right:32rpx;margin-top:14rpx}.progress{position:relative}.progress-back,.progress-inner{height:8rpx;border-radius:4rpx;background:var(--level-theme)}.progress-back{opacity:.1}.progress-inner{position:absolute;top:0;left:0}.info-box{display:flex;justify-content:space-between;gap:8rpx;flex-wrap:wrap;margin-top:12rpx}.task-info{font-size:22rpx;line-height:30rpx;color:#999;overflow-wrap:anywhere}.task-numbers{font-size:28rpx;line-height:30rpx;color:#999;overflow-wrap:anywhere}.task-numbers text{color:#333}.task-button{flex:none;height:64rpx;padding:0 26rpx;border-radius:32rpx;background:var(--level-theme);font-weight:500;font-size:24rpx;line-height:64rpx;color:#fff;margin:0;white-space:nowrap}.task-button::after{border:0}.task-button[disabled]{opacity:.5;color:#fff;background:var(--level-theme)}.task-notice{font-size:24rpx;line-height:36rpx;padding:24rpx 0;color:#888}.notice{position:relative;display:flex;flex-direction:column;gap:12rpx;margin:20rpx;padding:24rpx;border-radius:16rpx;background:#fff;line-height:1.6;overflow-wrap:anywhere;font-size:26rpx}.error{color:#a43626;background:#fff6dc}.history-note{font-size:24rpx;margin-top:0;margin-bottom:120rpx}.notice button{font-size:24rpx}.recommendations{margin-top:8rpx}
+.recommendations{position:relative;padding:0 20rpx 24rpx;background:#f3f4f7;color:#333}.recommendation-heading{display:flex;align-items:center;justify-content:center;gap:6rpx;padding:40rpx 0 24rpx;font-size:32rpx;font-weight:500;line-height:44rpx}.recommendation-heading image{width:42rpx;height:36rpx}.recommendation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20rpx;align-items:start}.recommendation-card{min-width:0;background:#fff;border-radius:20rpx;overflow:hidden;text-align:left}.recommendation-picture{position:relative;height:345rpx;overflow:hidden;border-radius:16rpx 16rpx 0 0}.recommendation-image{display:block;width:100%;height:100%}.recommendation-placeholder{display:flex;align-items:center;justify-content:center;background:#eaeaea;color:#999;font-size:22rpx}.recommendation-frame{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.recommendation-copy{padding:16rpx 20rpx}.recommendation-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:28rpx;line-height:40rpx}.recommendation-brand{display:inline;padding:0 6rpx;margin-right:6rpx;border-radius:4rpx;background:#333;color:#fff;font-size:20rpx;vertical-align:2rpx}.recommendation-labels{display:flex;align-items:center;flex-wrap:wrap;gap:6rpx;margin-top:12rpx}.recommendation-label{display:flex;align-items:center;max-width:100%;padding:0 6rpx;border:1rpx solid transparent;border-radius:6rpx;font-size:20rpx;line-height:28rpx;overflow-wrap:anywhere}.recommendation-label image{width:24rpx;height:24rpx;margin-right:4rpx;flex:none}.recommendation-price-row{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8rpx;margin-top:14rpx}.recommendation-price{font-family:'CinaShop DIN',sans-serif;font-size:40rpx;font-weight:600;line-height:44rpx;color:var(--view-priceColor,#e93323);overflow-wrap:anywhere}.recommendation-symbol{font-size:24rpx;margin-right:2rpx}.recommendation-offer{display:flex;align-items:center;background:#f9ecd3;border-radius:6rpx;font-size:20rpx;line-height:30rpx;color:#53402c;overflow-wrap:anywhere}.recommendation-offer text:first-child{padding:0 5rpx;background:#333;color:#f9ecd3;border-radius:6rpx 0 0 6rpx}.recommendation-offer text:last-child{padding:0 8rpx}.recommendation-state{padding:24rpx 12rpx;color:#888;text-align:center;font-size:24rpx;line-height:36rpx;overflow-wrap:anywhere}.recommendation-state button,.recommendation-more,.recommendation-refresh{width:max-content;max-width:100%;margin:16rpx auto 0;padding:0 24rpx;border-radius:32rpx;background:#fff;color:#78532d;font-size:24rpx;line-height:60rpx}.recommendation-state button::after,.recommendation-more::after,.recommendation-refresh::after{border:0}
+@media(min-width:800px){.distribution-page{max-width:750px;margin:auto}.recommendation-picture{height:auto;aspect-ratio:1}.header{padding-right:260rpx}}
 </style>

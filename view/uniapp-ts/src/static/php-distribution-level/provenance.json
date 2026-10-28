@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "source": "Local PHP distribution uploads package present on this host, ignored by /public/uploads; these PNG bytes are not Git objects at the PHP reference.",
+  "php_reference_for_template_and_installer_only": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+  "mapping": "Only exact /uploads/system/agent_level_[1-5].png display references map to these bundled files; configured asset previews and other URLs remain authoritative.",
+  "assets": [
+    {
+      "source_path": "public/uploads/system/agent_level_1.png",
+      "destination": "view/uniapp-ts/src/static/php-distribution-level/agent_level_1.png",
+      "bytes": 60988,
+      "sha256": "6d8b1602281086ad1851ae9fc4ce4c9326168d146699cab07ebdf537f79b821f",
+      "width": 244,
+      "height": 194,
+      "tracked_at_php_ref": false
+    },
+    {
+      "source_path": "public/uploads/system/agent_level_2.png",
+      "destination": "view/uniapp-ts/src/static/php-distribution-level/agent_level_2.png",
+      "bytes": 46085,
+      "sha256": "1a93b00fe30ec5623b45a5200dc3885ec5dc1858545d000d3893915373739ce0",
+      "width": 244,
+      "height": 194,
+      "tracked_at_php_ref": false
+    },
+    {
+      "source_path": "public/uploads/system/agent_level_3.png",
+      "destination": "view/uniapp-ts/src/static/php-distribution-level/agent_level_3.png",
+      "bytes": 40001,
+      "sha256": "250538d1fd3d8d381d28177651cb3f6bcabae4812246c95ef3d5ec81491b6f6a",
+      "width": 244,
+      "height": 194,
+      "tracked_at_php_ref": false
+    },
+    {
+      "source_path": "public/uploads/system/agent_level_4.png",
+      "destination": "view/uniapp-ts/src/static/php-distribution-level/agent_level_4.png",
+      "bytes": 41382,
+      "sha256": "9f43eb504d628fc11809a8135a7b0a36fd3a03b5312d51a9f256cfdc5d564696",
+      "width": 244,
+      "height": 194,
+      "tracked_at_php_ref": false
+    },
+    {
+      "source_path": "public/uploads/system/agent_level_5.png",
+      "destination": "view/uniapp-ts/src/static/php-distribution-level/agent_level_5.png",
+      "bytes": 56941,
+      "sha256": "4f20001ffa9204c2201f6b164aff6696d9ca88b8c5d98985d01cd32416b4dc00",
+      "width": 244,
+      "height": 194,
+      "tracked_at_php_ref": false
+    }
+  ]
+}

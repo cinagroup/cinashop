@@ -82,6 +82,15 @@ describe('local PostgreSQL runner command boundary', () => {
     expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
   });
 
+  it('admits the exact distribution level page native test before native setup',()=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin','test/distribution-level-page-postgres.test.ts'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/distribution-level-page-postgres-extra.test.ts','test/distribution-level-page-postgres.test.ts.extra'])('rejects unreviewed distribution native spelling %s',file=>{
+    const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin',file],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
+    expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).not.toContain('ENOENT');
+  });
+
   it('admits the exact additive Admin withdrawal directory native test before native setup',()=>{
     const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin','test/admin-withdrawal-directory-postgres.test.ts'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
@@ -1780,5 +1789,32 @@ describe('explicit category, Supplier label and employee isolated maintenance ad
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
     expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
     expect(result.stderr).not.toContain('Schema maintenance accepts only'); expect(result.stderr).toContain('ENOENT');
+  });
+});
+
+describe('distribution level Browser literal admission',()=>{
+  it('admits only the exact distribution level Browser mode without external browser configuration', () => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', 'audit:distribution-level-browser'],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+        env: { ...process.env, TEST_BROWSER_PACKAGE_JSON: '', TEST_BROWSER_EXECUTABLE: '', TEST_BROWSER_OUTPUT_DIR: '' } });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('ENOENT'); expect(result.stderr).not.toContain('TEST_BROWSER');
+    expect(result.stderr).not.toContain('Only explicit'); expect(result.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['audit:distribution-level-browser-extra', 'audit:distribution-level-browser.other'])('rejects malformed distribution level Browser mode %s before binary validation', mode => {
+    const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', mode],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('Only explicit unit test paths are accepted'); expect(result.stderr).not.toContain('ENOENT');
+  });
+  it.each([
+    { args: ['unused-bin', 'audit:distribution-level-browser'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', 'unused-bin', 'audit:distribution-level-browser', 'test/distribution-level-page-postgres.test.ts'], error: 'Only explicit unit test paths are accepted' },
+    { args: ['--schema-maintenance', '--case', 'directory', 'unused-bin', 'audit:distribution-level-browser'], error: 'Literal cases apply only to explicit test files' },
+    { args: ['--schema-maintenance', '--verbose-tests', 'unused-bin', 'audit:distribution-level-browser'], error: 'Verbose reporting applies only to explicit native test files' },
+  ])('rejects invalid distribution level Browser admission $args before filesystem/native setup', ({ args, error }) => {
+    const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(result.error).toBeUndefined(); expect(result.status).not.toBe(0); expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(error); expect(result.stderr).not.toContain('ENOENT');
   });
 });
