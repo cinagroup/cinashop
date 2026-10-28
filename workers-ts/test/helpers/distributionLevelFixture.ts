@@ -7,7 +7,7 @@ import type { Env } from '@/env';
 import { createContainerFromDb } from '@/lib/di';
 import { createToken, md5 } from '@/utils/jwt';
 import { agentLevel, agentLevelTask, agentLevelTaskRecord, storeOrder, storeProduct, storeProductAttrValue,
-  storeBargain, systemAttachment, systemConfig, user } from '@/models/schema';
+  storeBargain, storeBrand, storeProductLabel, systemAttachment, systemConfig, user } from '@/models/schema';
 import { installRuntimeAgentLevelCatalogBoundaryInTransaction } from '@/migrations/runtimeAgentLevelCatalogBoundary';
 import { refundRuntimeFixture } from './refundRuntimeFixture';
 import { sortedDiyState, type DiyStateSnapshot, type DiyStateRow as Row } from './diyStateFixture';
@@ -121,7 +121,17 @@ export async function distributionLevelFixture(){
   const cache=async()=>{configCache.clear();for(const r of(await f.db.select().from(systemConfig)).filter(r=>r.isStore===0).sort((a,b)=>b.sort-a.sort||b.id-a.id))if(!configCache.has(r.menuName))configCache.set(r.menuName,String(r.value??''));};
   for(const[menuName,value]of Object.entries(settings)){await f.db.update(systemConfig).set({value,sort:30000,isStore:0}).where(eq(systemConfig.menuName,menuName));const found=await f.db.select().from(systemConfig).where(eq(systemConfig.menuName,menuName));if(!found.length)await f.db.insert(systemConfig).values({menuName,value,sort:30000,isStore:0});}
   await f.db.update(storeProduct).set({isHot:0});
-  await f.db.insert(storeProduct).values(productIds.map((productId,i)=>({id:productId,type:0,relationId:0,storeName:'PHP分销推荐商品'+String(i+1).padStart(2,'0'),image,sliderImage:JSON.stringify([image]),price:'12.30',otPrice:'20.00',vipPrice:'0.00',isVip:0,stock:100,isShow:1,isDel:0,isVerify:1,sort:1000,isHot:1,activity:i===21?'2,0':'0'})));
+  // Deliberately unequal rendered cards expose shared grid-row gaps: the first
+  // hot card stays short; the next has a two-line title and wrapped labels.
+  await f.db.insert(storeBrand).values({id:660801,brandName:'原版品牌'});
+  await f.db.insert(storeProductLabel).values([
+   {id:660802,labelName:'原版推荐长标签',styleType:1,color:'#A74D16',bgColor:'#FFF3E6',borderColor:'#D97E1D'},
+   {id:660803,labelName:'分销好物精选标签',styleType:1,color:'#A74D16',bgColor:'#FFF3E6',borderColor:'#D97E1D'},
+  ]);
+  await f.db.insert(storeProduct).values(productIds.map((productId,i)=>({id:productId,type:0,relationId:0,
+   storeName:i===21?'PHP分销推荐商品22长标题展示两行与标签自然换行的独立瀑布列':'PHP分销推荐商品'+String(i+1).padStart(2,'0'),
+   brandId:i===21?660801:0,storeLabelId:i===21?'660802,660803':i%4===0?'660802':'',
+   image,sliderImage:JSON.stringify([image]),price:'12.30',otPrice:'20.00',vipPrice:'0.00',isVip:0,stock:100,isShow:1,isDel:0,isVerify:1,sort:1000,isHot:1,activity:i===21?'2,0':'0'})));
   await f.db.insert(storeProductAttrValue).values(productIds.map((productId,i)=>({id:660701+i,productId,unique:'dd'+productId,suk:'默认',type:0,price:'12.30',otPrice:'20.00',stock:100,image})));
   await f.db.insert(storeBargain).values({id:ids.bargain,productId:ids.product+21,type:0,relationId:0,status:1,isDel:0,storeName:'PHP分销推荐砍价',title:'PHP分销推荐砍价',image,images:JSON.stringify([image]),price:'12.30',minPrice:'1.00',stock:100,quota:100,people:1,
    startTime:new Date((now-86400)*1000),stopTime:new Date((now+86400)*1000)});

@@ -33,7 +33,7 @@ const instructions={
  'late-held':'先点暂存，再点新文档分销等级（ownerA），等待实际加载中。',
  'new-owner':'点新文档分销等级（ownerB），保持旧ownerA响应暂存。',
  'new-owner-released':'点释放旧文档响应；确认ownerB保持不变。',
- 'empty-recommendations':'应用当前阶段夹具，再点实际刷新商品推荐。',
+ 'empty-recommendations':'应用当前阶段夹具，再点当前阶段会话·新文档分销等级，以 ownerB 新文档读取空推荐。',
  'restored-recommendations':'应用当前阶段夹具后，点当前阶段会话·新文档分销等级，以 ownerB 新文档读取恢复推荐；不声称空态手动推荐刷新。',
  'desktop':'将iframe设1000px，检查双列与无横向溢出。',
  'finished':'将iframe设375px，最后验收后服务自动收尾。'};
@@ -50,16 +50,17 @@ for(const plan of plans){const button=document.createElement('button');button.te
  if(plan.name!==plans[index]?.name)throw Error('必须按阶段顺序验收');
  const d=frame.contentDocument,w=frame.contentWindow,visible=n=>{if(!n||n.getBoundingClientRect().width<=0||n.getBoundingClientRect().height<=0)return false;for(let p=n;p&&p.nodeType===1;p=p.parentElement){const s=w.getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;}return true;},page=[...d.querySelectorAll('uni-page')].filter(visible).at(-1)||d.body,root=page.querySelector('.distribution-page'),rec=root?.querySelector('.recommendations'),qa=w.__distributionQa||{errors:[{message:'Missing early observer'}],resourceErrors:[]};
  const grid=rec?.querySelector('.recommendation-grid'),commission=root?.querySelector('.level-grow-wrap'),rows=[...(root?.querySelectorAll('.distribution-task,.task-row')||[])],images=[...page.querySelectorAll('img')].filter(visible);
+ const rect=n=>{const r=n.getBoundingClientRect();return{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};};
+ const waterfall_columns=[...(grid?.querySelectorAll(':scope > .recommendation-column')||[])].map(n=>({column:Number(n.getAttribute('data-level-column')),gap:parseFloat(w.getComputedStyle(n).rowGap)||0,rect:rect(n),cards:[...n.querySelectorAll('.recommendation-card')].map(c=>({id:Number(c.getAttribute('data-level-product-id')),index:Number(c.getAttribute('data-level-product-index')),rect:rect(c),title:c.querySelector('.recommendation-name')?.textContent||'',labels:[...c.querySelectorAll('.recommendation-label')].map(l=>l.textContent)}))}));
  const data={run_id:runId,previous_ack:lastAck,captured_at_ms:Date.now(),href:w.location.href,width:frame.clientWidth,viewportWidth:w.innerWidth,clientWidth:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,text:page.innerText,
  owner:Number(root?.getAttribute('data-distribution-owner')||0),selected_level:Number(root?.getAttribute('data-selected-level')||0),nickname:root?.querySelector('.nickname')?.textContent||'',badge:root?.querySelector('.user-badge')?.textContent||'',
  tasks:rows.map(n=>({id:Number(n.getAttribute('data-task-id')||n.getAttribute('data-distribution-task-id')||0),text:n.textContent,progress:n.querySelector('.progress-inner')?.getAttribute('style')||'',button:n.querySelector('button')?.textContent||''})),task_text:rows.map(n=>n.textContent).join(' '),
  product_ids:[...(rec?.querySelectorAll('[data-level-product-id]')||[])].map(n=>Number(n.getAttribute('data-level-product-id'))),recommendation_page:Number(rec?.getAttribute('data-level-recommendation-page')||0),
  recommendation_error:rec?.querySelector('[role="alert"]')?.textContent||'',loading:[...page.querySelectorAll('[role="status"]')].some(visible),failed_placeholders:root?.querySelectorAll('.badge-placeholder,.recommendation-placeholder').length||0,
- grid_columns:grid?w.getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length:0,commission_columns:commission?w.getComputedStyle(commission).gridTemplateColumns.split(' ').filter(Boolean).length:0,
+ waterfall_columns,grid_columns:grid?w.getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length:0,commission_columns:commission?w.getComputedStyle(commission).gridTemplateColumns.split(' ').filter(Boolean).length:0,
  styles:root?{avatarWidth:root.querySelector('.avatar')?.getBoundingClientRect().width,badgeWidth:root.querySelector('.level-badge')?.getBoundingClientRect().width,badgeHeight:root.querySelector('.level-badge')?.getBoundingClientRect().height,background:root.querySelector('.skill-section')?w.getComputedStyle(root.querySelector('.skill-section')).backgroundImage:''}:null,
  images:images.map(n=>({src:n.getAttribute('src')||'',currentSrc:n.currentSrc,complete:n.complete,naturalWidth:n.naturalWidth,naturalHeight:n.naturalHeight,width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})),errors:qa.errors,resource_errors:qa.resourceErrors};
  const ack=await ctl('/phase/'+plan.name,data);if(!ack.accepted){show(ack);return;}if(ack.run_id!==runId||ack.name!==plan.name)throw Error('Unbound ACK');lastAck=ack.ack;index++;current();show(ack);
  }catch(e){show(String(e));}finally{button.disabled=false;}};}
 current();session('/pages/user/finance').catch(show);
 </script></body></html>
-

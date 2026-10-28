@@ -122,6 +122,29 @@ it('actual PHP distribution layout preserves evaluation writes while hot/media r
     else{
      expect(data.href).toContain('/pages/users/user_distribution_level/index');expect(data.owner).toBe(p!.owner);expect(data.nickname).toBe(p!.owner===ids.a?'PHP分销自然升级':'PHP历史赠予等级');
      expect(data.product_ids).toHaveLength('products'in p!?p!.products:0);expect(new Set(data.product_ids).size).toBe(data.product_ids.length);
+     if(data.product_ids.length){
+      // Real geometry must prove independent columns, not just two grid tracks.
+      expect(data.waterfall_columns.map((c:Row)=>c.column)).toEqual([0,1]);
+      const cards=data.waterfall_columns.flatMap((c:Row)=>c.cards).sort((a:Row,b:Row)=>a.index-b.index);
+      expect(cards.map((c:Row)=>c.index)).toEqual(Array.from({length:data.product_ids.length},(_,i)=>i));
+      const logical=expected.store_product.filter(r=>r.is_hot===1&&r.is_show===1&&r.is_del===0&&r.is_verify===1).sort((a,b)=>b.sort-a.sort||b.id-a.id).slice(0,cards.length).map(r=>r.id);
+      expect(cards.map((c:Row)=>c.id)).toEqual(logical);
+      for(const column of data.waterfall_columns){expect(column.gap).toBeGreaterThan(0);
+       column.cards.forEach((card:Row,i:number)=>{expect(card.rect.height).toBeGreaterThan(0);expect(Math.abs(card.rect.left-column.rect.left)).toBeLessThan(1);expect(Math.abs(card.rect.width-column.rect.width)).toBeLessThan(1);
+        expect(Math.abs(card.rect.top-(i?column.cards[i-1].rect.bottom+column.gap:column.rect.top))).toBeLessThan(1);});
+      }
+      expect(Math.abs(cards[0].rect.height-cards[1].rect.height)).toBeGreaterThan(8);
+      expect(cards[1].title).toContain('原版品牌');expect(cards[1].title).toContain('长标题');
+      expect(cards[1].labels).toEqual(['原版推荐长标签','分销好物精选标签']);
+      // Each final tail card is placed against the independently measured prefix.
+      for(const tail of cards.slice(-2)){
+       const heights=data.waterfall_columns.map((column:Row)=>{const prefix=column.cards.filter((c:Row)=>c.index<tail.index);return prefix.length?prefix.at(-1).rect.bottom-column.rect.top:0;});
+       const assigned=data.waterfall_columns.findIndex((column:Row)=>column.cards.some((c:Row)=>c.id===tail.id));
+       if(Math.abs(heights[0]-heights[1])>1)expect(assigned).toBe(heights[0]<heights[1]?0:1);
+      }
+
+     }
+
      if(p!.kind==='recommendation-error'){expect(data.recommendation_error).not.toBe('');expect(hot).toHaveLength(1);expect(hot[0].delivery).toBe('truncated-real-json-first-byte');expect(evaluations).toEqual([]);}
      else expect(data.recommendation_error).toBe('');
      if(name==='natural-upgrade'){expect(evaluations.map(t=>t.path)).toEqual(['/api/v2/agent/level_list','/api/v2/agent/level_task_list']);expect(evaluations[0].classification.new_records).toHaveLength(9);expect(data.badge).toContain('V1');expect(data.selected_level).toBe(ids.next);expect(data.tasks).toHaveLength(2);expect(data.task_text).toContain('1.00元');}
@@ -184,4 +207,3 @@ it('actual PHP distribution layout preserves evaluation writes while hot/media r
   try{await f.close();fixtureClosed=true;}catch(error){cleanupFailure??=error;}wiring.context=undefined;vi.restoreAllMocks();
   await writeFile(prefix+'cleanup.json',JSON.stringify({run_id:runId,server_closed:!server?.listening,fixture_closed:fixtureClosed,pending,queued,failure:failure?String(failure):null,cleanup_failure:cleanupFailure?String(cleanupFailure):null})+'\n',{mode:0o600});if(cleanupFailure)throw cleanupFailure;}
 },57*60000);
-

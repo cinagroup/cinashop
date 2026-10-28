@@ -41,7 +41,7 @@
     "test:distribution-ledgers": "node --test scripts/distribution-ledgers-runtime.test.cjs",
     "test:withdrawal-application": "node --test --test-concurrency=1 scripts/withdrawal-application-runtime.test.cjs",
     "test:agent-explanation": "node --test --test-concurrency=1 scripts/agent-explanation-runtime.test.cjs",
-    "test:distributor-levels": "node --test --test-concurrency=1 scripts/distributor-levels-runtime.test.cjs"
+    "test:distributor-levels": "node --test --test-concurrency=1 scripts/distributor-levels-runtime.test.cjs scripts/distribution-waterfall-runtime.test.cjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4020920240930001",

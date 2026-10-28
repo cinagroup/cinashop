@@ -41,7 +41,12 @@ native('distribution-level full283tables229sequences actual registered JWT GET',
     expect(result.body.data).toMatchObject({owner_uid:ids.a,page,limit:10});expect(result.body.data.list.map((r:any)=>r.id)).toEqual(expected);
     expect(result.body.data.list.map((r:any)=>r.price)).toEqual(expected.map(()=>'12.30'));expect(result.body.data.list.every((r:any)=>/^\/api\/assets\/660201\?expires=\d+&signature=/.test(r.image))).toBe(true);
     expect(await f.snapshot()).toEqual(before);expect(f.resources()).toEqual(resources);expect(f.assetReads).toHaveLength(reads);
-    if(page===1)expect(result.body.data.list.find((r:any)=>r.id===ids.product+21).recommendation_target).toMatchObject({kind:'bargain',id:ids.bargain,product_id:ids.product+21});
+    if(page===1){const varied=result.body.data.list.find((r:any)=>r.id===ids.product+21);
+     expect(varied.recommendation_target).toMatchObject({kind:'bargain',id:ids.bargain,product_id:ids.product+21});
+     expect(varied.brand_name).toBe('原版品牌');expect(varied.store_name).toContain('长标题');
+     expect(varied.store_label.map((r:any)=>r.label_name)).toEqual(['原版推荐长标签','分销好物精选标签']);
+     expect(result.body.data.list[0].store_label).toEqual([]);
+    }
    }
    {
     const before=await f.snapshot(),resources=f.resources(),start=Date.now(),detail=await request('/api/product/detail/'+(ids.product+22)),end=Date.now();
