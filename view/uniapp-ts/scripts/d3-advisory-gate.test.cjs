@@ -44,7 +44,7 @@ function rejected(fixture, fragment) {
 }
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 50);
+  assert.equal(Object.keys(baseline.entries).length, 49);
   assert.equal(Object.keys(baseline.advisories).length, 27);
   assert.equal(Object.keys(baseline.resolvedAdvisories).length, 15);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
@@ -209,7 +209,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /50 affected package entries/);
+    assert.match(accepted.stdout, /49 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -438,7 +438,10 @@ for (const kind of ['source','url','severity','range','missing','old-source']) t
 
 const preQsCommaBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-qs-comma-20261027.baseline.json"));
 const preQsCommaBaseline = JSON.parse(preQsCommaBaselineBytes.toString("utf8"));
+const preExpressBaselineBytes = readFileSync(resolve(__dirname, 'd3-advisory-gate.pre-express-propagation-20261027.baseline.json'));
+const preExpressBaseline = JSON.parse(preExpressBaselineBytes.toString('utf8'));
 test('new qs comma advisory preserves every previously reviewed tuple and installed forward path', () => {
+  const baseline = preExpressBaseline;
   assert.equal(createHash('sha256').update(preQsCommaBaselineBytes).digest('hex'), 'f62308efc2f92f0424407851024a2915f9bfa21741bacb15ca77ff1fdb80341d');
   const expected = structuredClone(preQsCommaBaseline);
   expected.advisories['1243452'] = { package:'qs', url:'https://github.com/advisories/GHSA-6pq8-jhm2-2vcw', severity:'moderate', range:'>=6.7.0 <=6.16.0', chain:'h5-ssr' };
@@ -464,4 +467,13 @@ for (const kind of ['source','url','severity','range','missing','new-node','old-
   const fragment = kind === 'source' ? 'unknown direct advisory 9999999' : kind === 'new-node' ? 'affected package entry changed: qs'
     : ['missing','old-source-disappeared'].includes(kind) ? 'direct advisory disappeared without baseline review' : 'direct advisory changed: 1243452';
   assert.ok(result.issues.some(v => v.includes(fragment)), JSON.stringify(result.issues));
+});
+
+test('reviewed Express propagation removal preserves all advisories, remaining forward paths and the lock',()=>{
+ const review=JSON.parse(readFileSync(resolve(__dirname,'../../../workers-ts/audit/uni-d3-express-propagation-review-20261027.json')));
+ assert.equal(createHash('sha256').update(preExpressBaselineBytes).digest('hex'),review.historical_baseline.sha256);
+ const expected=structuredClone(preExpressBaseline);delete expected.entries.express;expected.entries.qs.effects=[];expected.reviewedReceipt=baseline.reviewedReceipt;
+ assert.deepEqual(baseline,expected);assert.deepEqual(baseline.advisories,preExpressBaseline.advisories);assert.equal(Object.keys(baseline.advisories).length,27);
+ const returned=reviewedFixture();returned.vulnerabilities.express=reviewedFixture(preExpressBaseline).vulnerabilities.express;refreshMetadata(returned);rejected(returned,'unknown affected package entry: express');
+ assert.deepEqual(baseline.entries.qs.advisorySources,[1158506,1158507,1243452]);assert.deepEqual(baseline.entries.qs.nodes,['node_modules/qs']);
 });

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
-  "reviewedReceipt": "2026-10-27 actual npm receipt adds source1243452/GHSA-6pq8-jhm2-2vcw, moderate, >=6.7.0 <=6.16.0, on the existing optional H5 SSR root qs6.15.3 node. This is a new advisory, not a numeric replacement or a fixed vulnerability. Existing scripts leave SSR disabled and the runtime graph audit rejects server packages; the actual installed root serializer remains affected, independently contrasted with body-parser nested qs6.16.1. Exact tuple, full prior baseline, actual receipt SHA and boundary are in workers-ts/audit/uni-d3-qs-comma-review-20261027.json. Only this direct object and qs source list/range change; all 50 entries, nodes, forward paths, severities, other26 direct objects, eight chains,15 resolved records, lock and vendor bytes remain fixed. Earlier Vite/body-parser history uses immutable earlier baselines.",
+  "reviewedReceipt": "2026-10-27 official npm receipt has49 affected entries: only the propagated Express4.22.2 entry disappears and qs reverse effects becomes empty. All27 direct advisory objects,26 advisory URLs, root qs6.15.3 affected node, remaining forward paths, severities, installed lock, vendor bytes and15 resolved records are unchanged. This is propagation metadata drift, not a fixed or withdrawn advisory. Express still resolves affected qs; SSR exclusion remains. Gate code is unchanged; every unreviewed source, installed node, path and reintroduction still fails. See workers-ts/audit/uni-d3-express-propagation-review-20261027.json.",
   "chains": {
     "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -920,22 +920,6 @@
         "encrypted-zip"
       ]
     },
-    "express": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "4.22.2",
-      "nodes": [
-        "node_modules/express"
-      ],
-      "viaPackages": [
-        "qs"
-      ],
-      "advisorySources": [],
-      "effects": [],
-      "chains": [
-        "h5-ssr"
-      ]
-    },
     "http-proxy-agent": {
       "severity": "low",
       "isDirect": false,
@@ -1137,9 +1121,7 @@
         1158507,
         1243452
       ],
-      "effects": [
-        "express"
-      ],
+      "effects": [],
       "chains": [
         "h5-ssr"
       ]

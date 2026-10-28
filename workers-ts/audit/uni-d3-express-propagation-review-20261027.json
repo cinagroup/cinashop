@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "kind": "reviewed-upstream-propagation-removal",
+  "npm_receipt": {
+    "registry": "https://registry.npmjs.org",
+    "file": "/tmp/cinashop-promoter-orders-20261027/npm-audit-live-v1.json",
+    "sha256": "d5166f522149fe0b3e1df030e05de4070a5aaa6893bd2e294fbb9217c9fc2abc",
+    "bytes": 36656,
+    "actual_exit_code": 1,
+    "affected_package_entries": 49,
+    "direct_advisory_objects": 27
+  },
+  "historical_baseline": {
+    "file": "view/uniapp-ts/scripts/d3-advisory-gate.pre-express-propagation-20261027.baseline.json",
+    "sha256": "778662a60ae0eb6874b9705a98effe2ce39ec337a41ce0b853a77a3bdbbf20f4",
+    "bytes": 31693,
+    "base_ref": "8c24b054b7082606cd36f7b1b7cb32334aa847b1"
+  },
+  "delta": {
+    "removed_entry": {
+      "name": "express",
+      "previous": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "4.22.2",
+        "nodes": [
+          "node_modules/express"
+        ],
+        "viaPackages": [
+          "qs"
+        ],
+        "advisorySources": [],
+        "effects": [],
+        "chains": [
+          "h5-ssr"
+        ]
+      }
+    },
+    "qs_effects_before": [
+      "express"
+    ],
+    "qs_effects_after": [],
+    "all_direct_advisories_unchanged": true,
+    "all_remaining_forward_paths_unchanged": true,
+    "lock_and_vendor_unchanged": true
+  },
+  "boundary": "No advisory is fixed or withdrawn. Express4.22.2 still resolves affected root qs6.15.3. Only npm propagation metadata changes; all three qs sources remain under the prior SSR exclusion. Gate implementation remains unchanged."
+}
