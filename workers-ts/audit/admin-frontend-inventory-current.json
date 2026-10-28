@@ -3640,10 +3640,12 @@
       "src/pages/content/WechatQrcode.vue",
       "src/pages/coupon/CouponList.vue",
       "src/pages/express/ExpressList.vue",
+      "src/pages/finance/AdminExtractList.vue",
       "src/pages/finance/BillList.vue",
       "src/pages/finance/CapitalFlowList.vue",
       "src/pages/finance/CommissionRecords.vue",
       "src/pages/finance/ExtractList.vue",
+      "src/pages/finance/ExtractReview.vue",
       "src/pages/finance/RechargeOrders.vue",
       "src/pages/finance/SupplierExtractList.vue",
       "src/pages/kefu/Feedback.vue",
@@ -4922,6 +4924,8 @@
       "src/pages/activity/CombinationMembers.vue",
       "src/pages/activity/DiscountPackageManager.vue",
       "src/pages/activity/SeckillActivityImagePicker.vue",
+      "src/pages/finance/AdminExtractList.vue",
+      "src/pages/finance/ExtractReview.vue",
       "src/pages/operations/QueueDeadLetterPanel.vue",
       "src/pages/product/ProductModerationDialog.vue",
       "src/pages/product/ProductRecycleDialog.vue",
@@ -4983,7 +4987,7 @@
       "user": 2
     },
     "counts": {
-      "pageVueFiles": 140,
+      "pageVueFiles": 142,
       "routeRecords": 117,
       "businessPageRouteRecords": 116,
       "distinctRoutedPageComponents": 115,
@@ -4991,7 +4995,7 @@
       "layoutRouteRecords": 1,
       "otherRouteRecords": 0,
       "unresolvedComponents": 0,
-      "unroutedPageFiles": 25
+      "unroutedPageFiles": 27
     }
   }
 }
