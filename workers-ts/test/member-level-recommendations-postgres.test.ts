@@ -27,6 +27,7 @@ const rows = (body: Row): Row[] => (body.data as Row).list as Row[];
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary membership hot recommendations real JWT/App LOGIN and RR readonly PG16', () => {
   let f: Awaited<ReturnType<typeof refundRuntimeFixture>>, tables: string[], sequences: string[], now: number;
   let fixtureOpen = false;
+  let activeProfile: Promise<void> | undefined;
   const app = createApp(), tokens = new Map<number, string>();
   const writes = { put: vi.fn(), delete: vi.fn(), head: vi.fn(), list: vi.fn(), queue: vi.fn(), sequence: vi.fn() };
   const objects = new Map<string, Uint8Array>([['attachments/admin/1/member-hot.png', png], ['attachments/admin/1/member-frame.png', png], ['attachments/supplier/7/member-hot.png', png]]);
@@ -77,6 +78,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary members
   });
   afterEach(async () => {
     try {
+      await activeProfile;
       if (vi.isMockFunction(fetch)) expect(fetch).not.toHaveBeenCalled();
       for (const fn of Object.values(writes)) expect(fn).not.toHaveBeenCalled();
     } finally {
@@ -86,7 +88,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary members
   }, 30000);
   type Peer = Parameters<NonNullable<typeof f.withRuntimeRole>>[0] extends (role: infer T) => unknown ? T : never;
   async function profile(run: (env: Env, application: Peer) => Promise<void>) {
-    await f.withRuntimeRole!(application => f.withRuntimeRole!(async admin => {
+    const running = f.withRuntimeRole!(application => f.withRuntimeRole!(async admin => {
       const [identity] = await f.exec('SELECT current_database() AS name');
       const names = { app: application.role, admin: admin.role, maintenance: 'finance_test', database: String(identity.name), pricingOwner: f.pricingOwner };
       await runRuntimeBusinessCommissioning(f.db, names);
@@ -97,6 +99,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary members
         ORDER_QUEUE: { send: writes.queue, sendBatch: writes.queue }, SEQUENCE: { idFromName: writes.sequence, get: writes.sequence } } as unknown as Env;
       Object.assign(env, { NODE_ENV: 'test' }); await run(env, application);
     }));
+    activeProfile = running;
+    try { await running; } finally { if (activeProfile === running) activeProfile = undefined; }
   }
   async function snapshot(): Promise<DiyStateSnapshot> {
     const state: DiyStateSnapshot = {};
@@ -182,7 +186,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary members
           await f.db.update(storePromotions).set({ image: '/api/assets/' + (base + 2) }).where(eq(storePromotions.id, base)); }
       }
     });
-  });
+  }, 30_000);
   it('uses the real persisted supplier tuple and never authorizes a frame through that supplier', async () => {
     await profile(async (env, peer) => {
       await f.db.update(storeProduct).set({ type: 2, relationId: 7, image: '/api/assets/' + (base + 3) }).where(eq(storeProduct.id, top));
@@ -210,7 +214,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('ordinary members
         finally { await f.db.update(storeProduct).set({ isHot: 1, isShow: 1, isDel: 0, isVerify: 1 }).where(eq(storeProduct.id, top)); }
       }
     });
-  });
+  }, 30_000);
   it('uses actual activity IDs and excludes foreign-owner activity associations only in the strict modern target', async () => {
     await profile(async (env, peer) => {
       await f.db.update(storeProduct).set({ activity: '2,0' }).where(eq(storeProduct.id, top));
