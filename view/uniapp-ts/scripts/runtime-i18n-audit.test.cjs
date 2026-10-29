@@ -173,7 +173,7 @@ for (const type of ["renderjs", "wxs"]) {
       input: entry,
       plugins: [{ name: "inert-separate-script-input", resolveId: (id) => [entry, separate].includes(id) ? id : null,
         load: (id) => id === entry ? `import install from ${JSON.stringify(separate)}; export default install;`
-          : id === separate ? "import { createI18n } from 'vue-i18n'; window.__auditCreateI18n = createI18n; export default {};" : null },
+          : id === separate ? "import { createI18n } from '@dcloudio/uni-cli-shared/lib/vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'; window.__auditCreateI18n = createI18n; export default {};" : null },
         compiler,
         { name: "observe-real-separate-asset", generateBundle(_options, bundle) {
           observed = inspectRuntimeGraph(this, bundle, process.cwd());

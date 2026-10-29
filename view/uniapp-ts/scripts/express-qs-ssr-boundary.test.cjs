@@ -16,8 +16,8 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   for (const name of ["@dcloudio/vite-plugin-uni", "express", "qs", "body-parser", "proxy-addr"]) {
     const expected = {
       "@dcloudio/vite-plugin-uni": DCLOUD,
-      express: "4.22.2",
-      qs: "6.15.3",
+      express: "4.22.3",
+      qs: "6.16.2",
       "body-parser": "1.20.9",
       "proxy-addr": "2.0.8",
     }[name];
@@ -25,7 +25,10 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
     assert.equal(require(`${name}/package.json`).version, expected, name);
   }
   assert.equal(locked("@dcloudio/vite-plugin-uni").dependencies.express, "^4.17.1");
-  assert.equal(locked("express").dependencies.qs, "~6.15.1");
+  assert.equal(locked("express").resolved, "https://registry.npmjs.org/express/-/express-4.22.3.tgz");
+  assert.equal(locked("express").integrity,
+    "sha512-Bdcs4+3qlpVlx2NRn6fgX2Ue2/gGRaPeawebgclM0ERSCqDpA+owF1fdPwjJUTAJWMTuAaxjDf+hzb0/4eKvvw==");
+  assert.equal(locked("express").dependencies.qs, "~6.16.0");
   assert.equal(locked("express").dependencies["proxy-addr"], "~2.0.7");
   assert.equal(locked("body-parser").dependencies.qs, "~6.16.0");
 
@@ -33,24 +36,25 @@ test("locked DCloud H5 CLI selects Express only for SSR and keeps the audited de
   // the later DCloud test still proves its original require-cache boundary.
   const fromBodyParser = createRequire(require.resolve("body-parser"));
   const parserQsPackage = fromBodyParser.resolve("qs/package.json");
-  assert.equal(parserQsPackage, resolve(__dirname, "../node_modules/body-parser/node_modules/qs/package.json"));
-  assert.equal(fromBodyParser("qs/package.json").version, "6.16.1");
-  assert.equal(locked("body-parser/node_modules/qs").version, "6.16.1");
-  assert.deepEqual(fromBodyParser("qs/package.json").dependencies, locked("body-parser/node_modules/qs").dependencies);
-  assert.deepEqual(locked("body-parser/node_modules/qs").dependencies, {
+  assert.equal(parserQsPackage, resolve(__dirname, "../node_modules/qs/package.json"));
+  assert.equal(locked("body-parser/node_modules/qs"), undefined);
+  assert.equal(fromBodyParser("qs/package.json").version, "6.16.2");
+  assert.equal(locked("qs").version, "6.16.2");
+  assert.deepEqual(fromBodyParser("qs/package.json").dependencies, locked("qs").dependencies);
+  assert.deepEqual(locked("qs").dependencies, {
     "es-define-property": "^1.0.1", "side-channel": "^1.1.1",
   });
-  assert.equal(locked("body-parser/node_modules/qs").resolved, "https://registry.npmjs.org/qs/-/qs-6.16.1.tgz");
-  assert.equal(locked("body-parser/node_modules/qs").integrity,
-    "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==");
+  assert.equal(locked("qs").resolved, "https://registry.npmjs.org/qs/-/qs-6.16.2.tgz");
+  assert.equal(locked("qs").integrity,
+    "sha512-VYdnB5S7/0IeXzBacUtwNAaM6d7Y/PgYnNC7bJCI6meqA/OgnsQbZMtVW8Dt2D1PHgbHGtYmhSoEIgvt7xZ2ZA==");
   assert.equal(locked("body-parser").resolved, "https://registry.npmjs.org/body-parser/-/body-parser-1.20.9.tgz");
   assert.equal(locked("body-parser").integrity,
     "sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw==");
   assert.deepEqual(require("body-parser/package.json").dependencies, locked("body-parser").dependencies);
   const fromExpress = createRequire(require.resolve("express"));
   assert.equal(fromExpress.resolve("qs/package.json"), require.resolve("qs/package.json"));
-  assert.equal(fromExpress("qs/package.json").version, "6.15.3");
-  assert.notEqual(parserQsPackage, fromExpress.resolve("qs/package.json"));
+  assert.equal(fromExpress("qs/package.json").version, "6.16.2");
+  assert.equal(parserQsPackage, fromExpress.resolve("qs/package.json"));
 
   const cli = readFileSync(require.resolve("@dcloudio/vite-plugin-uni/dist/cli/index.js"), "utf8");
   const action = readFileSync(require.resolve("@dcloudio/vite-plugin-uni/dist/cli/action.js"), "utf8");
@@ -259,11 +263,12 @@ test("real DCloud server entrypoints defer Express and pass undefined host in SS
   }
 });
 
-test("new qs comma advisory still affects the optional root serializer, while nested body-parser qs is patched", () => {
+test("formal qs6.16.2 handles comma payloads through the shared Express/body-parser serializer", () => {
   const root = require("qs");
   const nested = createRequire(require.resolve("body-parser"))("qs");
-  assert.equal(require("qs/package.json").version, "6.15.3");
-  assert.equal(createRequire(require.resolve("body-parser"))("qs/package.json").version, "6.16.1");
+  assert.equal(nested, root); // Body-parser scoped resolution now hoists to the reviewed root module.
+  assert.equal(require("qs/package.json").version, "6.16.2");
+  assert.equal(createRequire(require.resolve("body-parser"))("qs/package.json").version, "6.16.2");
   for (const encodeValuesOnly of [false, true]) {
     const options = { arrayFormat:"comma", encodeValuesOnly };
     for (const payload of [
@@ -271,7 +276,7 @@ test("new qs comma advisory still affects the optional root serializer, while ne
       () => root.parse('a[0][toString]=x', { allowPrototypes:true }),
       () => root.parse('a[][b]=c', { plainObjects:true }),
     ]) {
-      assert.throws(() => root.stringify(payload(), options), TypeError);
+      assert.doesNotThrow(() => root.stringify(payload(), options));
       let result;
       assert.doesNotThrow(() => { result = nested.stringify(payload(), options); });
       assert.equal(typeof result, "string");
