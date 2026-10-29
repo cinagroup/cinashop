@@ -1,56 +1,41 @@
 <template>
   <ThemePage>
   <view class="finance-page">
-    <!-- 佣金总览 -->
-    <view class="balance-card">
-      <view class="balance-label">可提现佣金 (元)</view>
-      <view class="balance-num">{{ info.withdrawable ?? "0.00" }}</view>
-      <view class="balance-sub">
-        <view class="sub-item">
-          <text class="sub-val">{{ info.totalCommission ?? "0.00" }}</text>
-          <text class="sub-label">累计佣金</text>
+    <view class="header-glow" aria-hidden="true"></view>
+    <view class="price-wrapper">
+      <button class="level-entry" @tap="openDistributionLevel">查看分销等级 <text>›</text></button>
+      <view class="balance-card">
+        <button class="balance-label" @tap="openExtract">可提现</button>
+        <button class="balance-num" @tap="openLedger(1)">{{ info.withdrawable ?? "0.00" }}</button>
+        <view class="balance-sub">
+          <view class="sub-item"><text class="sub-label">累计佣金(元)</text><text class="sub-val">{{ info.totalCommission ?? "0.00" }}</text></view>
+          <view class="sub-item"><text class="sub-label">冻结佣金(元)</text><text class="sub-val">{{ info.frozenCommission ?? "0.00" }}</text></view>
         </view>
-        <view class="sub-item">
-          <text class="sub-val">{{ info.frozenCommission ?? "0.00" }}</text>
-          <text class="sub-label">冻结佣金</text>
-        </view>
-        <view class="sub-item">
-          <text class="sub-val">{{ info.spreadCount ?? 0 }}</text>
-          <text class="sub-label">推广人数</text>
-        </view>
+        <view class="withdraw-wrap"><button class="withdraw-button" @tap="openExtract">立即提现</button></view>
       </view>
     </view>
 
-    <!-- 操作 -->
-    <view class="action-row">
-      <view class="action-btn" @tap="openExtract">
-        <text class="action-icon">💸</text>
-        <text class="action-text">提现</text>
-      </view>
-      <view class="action-btn" @tap="showBind = true">
-        <text class="action-icon">🔗</text>
-        <text class="action-text">绑定推广人</text>
-      </view>
-      <view class="action-btn" @tap="openPeople">
-        <text class="action-icon">👥</text>
-        <text class="action-text">我的推广</text>
-      </view>
-      <view class="action-btn" @tap="openDistributionLevel">
-        <text class="action-icon">🏅</text>
-        <text class="action-text">分销等级</text>
-      </view>
+    <view class="statistics">
+      <button class="menu-item" @tap="openPromoterOrders"><image v-if="!iconFailed('spread_dd')" src="/static/php-finance-center/spread_dd.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_dd')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>分销订单</text></button>
+      <button class="menu-item" @tap="openPeople"><image v-if="!iconFailed('spread_td')" src="/static/php-finance-center/spread_td.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_td')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>我的团队</text></button>
+      <button class="menu-item" @tap="openRanking('commissionRank')"><image v-if="!iconFailed('spread_ph')" src="/static/php-finance-center/spread_ph.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_ph')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>佣金排行</text></button>
+      <button class="menu-item" @tap="openLedger(1)"><image v-if="!iconFailed('spread_yj')" src="/static/php-finance-center/spread_yj.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_yj')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>佣金记录</text></button>
+      <button class="menu-item" @tap="openRanking('promoterRank')"><image v-if="!iconFailed('spread_tgr')" src="/static/php-finance-center/spread_tgr.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_tgr')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>推广人排行</text></button>
+      <button class="menu-item" @tap="openSpread"><image v-if="!iconFailed('spread_yq')" src="/static/php-finance-center/spread_yq.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_yq')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>邀请好友</text></button>
+      <button class="menu-item" @tap="openDistributionLevel"><image v-if="!iconFailed('spread_dj')" src="/static/php-finance-center/spread_dj.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_dj')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>分销等级</text></button>
+      <button class="menu-item" @tap="openAgentExplanation"><image v-if="!iconFailed('spread_sm')" src="/static/php-agent-explanation/spread_sm.png" mode="aspectFit" aria-hidden="true" @error="failIcon('spread_sm')" /><view v-else class="menu-icon-placeholder" aria-hidden="true"></view><text>分销说明</text></button>
     </view>
 
-    <view class="explanation-entry"><button @tap="openAgentExplanation"><image src="/static/php-agent-explanation/spread_sm.png" mode="aspectFit" aria-hidden="true" /><text>分销说明</text><text class="arrow">›</text></button></view>
-
-    <view class="ranking-links ledger-links"><button @tap="openLedger(1)">佣金记录 <text>›</text></button><button @tap="openLedger(4)">提现记录 <text>›</text></button></view>
-    <view class="order-entry"><button @tap="openPromoterOrders">分销订单 <text>›</text></button></view>
-    <view class="ranking-links"><button @tap="openRanking('promoterRank')">推广人排行 <text>›</text></button><button @tap="openRanking('commissionRank')">佣金排行 <text>›</text></button></view>
-
+    <button v-if="failedIcons.length" class="icon-retry" @tap="retryIcons">重新加载菜单图标</button>
+    <view class="account-tools">
+      <button @tap="openBind">绑定推广人 <text>›</text></button>
+      <button @tap="openLedger(4)">提现记录 <text>›</text></button>
+      <view class="spread-count">推广人数 <text>{{ info.spreadCount ?? 0 }}</text></view>
+    </view>
     <view v-if="uncertain" class="notice" @tap="openExtract">上一笔提现结果待确认，点击查询或重试同一申请。请勿重复发起新申请。</view>
-    <view v-if="pageError" class="notice">{{ pageError }}</view>
+    <view v-if="summaryError || pageError" class="notice" role="alert">{{ summaryError || pageError }}<button @tap="retryInfo">重新读取</button></view>
 
-    <!-- 明细 tab -->
+    <!-- Preserve the existing modern ledger preview below the PHP menu. -->
     <view class="list-card">
       <view class="tabs">
         <view
@@ -81,7 +66,7 @@
     <!-- 绑定推广人弹窗 -->
     <view v-if="showBind" class="mask" @tap="showBind = false">
       <view class="sheet" @tap.stop>
-        <view class="sheet-title">绑定推广人</view>
+        <view class="sheet-heading"><text class="sheet-title">绑定推广人</text><button @tap="showBind = false">关闭</button></view>
         <input v-model="bindUid" class="sheet-input" type="number" placeholder="推广人 UID" />
         <view class="sheet-btn" @tap="doBind">确认绑定</view>
       </view>
@@ -104,18 +89,25 @@ import {useAuthStore} from '@/stores/auth';
 import {withdrawalStorageKey} from '@/utils/withdrawal';
 const auth=useAuthStore(),emptyInfo=():CommissionInfo=>({yesterdayCommission:'0.00',totalCommission:'0.00',frozenCommission:'0.00',withdrawable:'0.00',spreadCount:0});
 const info=ref(emptyInfo()),list=ref<CommissionItem[]>([]),showBind=ref(false),bindUid=ref(''),activeTab=ref(1),uncertain=ref(false),pageError=ref(''),listLoading=ref(false),listMore=ref(false);
+const failedIcons=ref<string[]>([]),summaryError=ref('');
+function retryIcons(){if(visible&&!disposed)failedIcons.value=[];}
+function iconFailed(name:string){return failedIcons.value.includes(name);}
+function failIcon(name:string){if(!iconFailed(name))failedIcons.value.push(name);}
 const tabs=[{type:1,name:'一级佣金'},{type:2,name:'二级佣金'},{type:3,name:'提现记录'}];
 let visible=false,disposed=false,generation=0,listGeneration=0,listPage=1,infoLoading=false;const requests=new Set<UserCenterRequests>();
 function persisted(){try{return uni.getStorageSync('uni_token')===auth.token&&Number(uni.getStorageSync('uni_uid'))===auth.uid;}catch{return false;}}
 const current=()=>visible&&!disposed&&auth.isLoggedIn&&persisted();
 function request(currentRead=()=>true){const ticket=generation,s=createUserCenterRequests(()=>current()&&ticket===generation&&currentRead());requests.add(s);return s;}
 function finish(s:UserCenterRequests){s.abort();requests.delete(s);}
-function clear(){generation++;listGeneration++;for(const s of requests)s.abort();requests.clear();info.value=emptyInfo();list.value=[];showBind.value=false;bindUid.value='';uncertain.value=false;pageError.value='';listLoading.value=false;listMore.value=false;infoLoading=false;listPage=1;}
+function clear(){generation++;listGeneration++;for(const s of requests)s.abort();requests.clear();info.value=emptyInfo();failedIcons.value=[];list.value=[];showBind.value=false;bindUid.value='';uncertain.value=false;pageError.value='';summaryError.value='';listLoading.value=false;listMore.value=false;infoLoading=false;listPage=1;}
 function formatTime(ts:number){if(!ts)return '';const d=new Date(ts*1000),p=(n:number)=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
-async function loadInfo(){if(!current()||infoLoading)return;const s=request();infoLoading=true;try{const value=await s.request<CommissionInfo>('commission','GET',{},true);if(s.active())info.value=value;}catch(cause){if(s.active())pageError.value=cause instanceof Error?cause.message:'财务概览读取失败';}finally{if(s.active())infoLoading=false;finish(s);}}
+async function loadInfo(){if(!current()||infoLoading)return;const s=request();infoLoading=true;try{const value=await s.request<CommissionInfo>('commission','GET',{},true);if(s.active()){info.value=value;summaryError.value='';}}catch(cause){if(s.active())summaryError.value=cause instanceof Error?cause.message:'财务概览读取失败';}finally{if(s.active())infoLoading=false;finish(s);}}
 async function loadList(more:boolean){if(!current()||more&&listLoading.value)return;const ticket=++listGeneration,page=more?listPage+1:1,s=request(()=>ticket===listGeneration);listLoading.value=true;pageError.value='';try{const rows=await s.request<CommissionItem[]>('user/commission/list/'+activeTab.value,'GET',{page,limit:20},true);if(!s.active())return;if(!Array.isArray(rows))throw Error('佣金明细响应无效');list.value=more?[...list.value,...rows]:rows;listPage=page;listMore.value=rows.length===20;}catch(cause){if(s.active())pageError.value=cause instanceof Error?cause.message:'明细读取失败';}finally{if(s.active())listLoading.value=false;finish(s);}}
 async function switchTab(type:number){if(!current())return;activeTab.value=type;list.value=[];await loadList(false);}
 async function doBind(){if(!current())return;if(!/^[1-9]\d{0,9}$/.test(bindUid.value)||Number(bindUid.value)>2147483647){uni.showToast({title:'请输入推广人 UID',icon:'none'});return;}const s=request();try{await s.request('user/spread','POST',{spread_uid:Number(bindUid.value)},true);if(!s.active())return;uni.showToast({title:'绑定成功',icon:'success'});showBind.value=false;void loadInfo();}catch(cause){if(s.active())uni.showToast({title:cause instanceof Error?cause.message:'绑定失败',icon:'none'});}finally{finish(s);}}
+function openBind(){if(current())showBind.value=true;}
+function openSpread(){const url=resolveRegisteredPageRoute('/pages/users/user_spread_code/index');if(current()&&url)uni.navigateTo({url});}
+function retryInfo(){if(!current())return;pageError.value='';summaryError.value='';failedIcons.value=[];void loadInfo();void loadList(false);}
 function openExtract(){if(!current()){if(visible&&!disposed&&!auth.isLoggedIn)uni.navigateTo({url:'/pages/auth/login'});return;}const url=resolveRegisteredPageRoute('/pages/users/user_cash/index');if(url)uni.navigateTo({url});}
 function openLedger(type:1|4){const url=resolveRegisteredPageRoute('/pages/users/user_spread_money/index','type='+type);if(current()&&url)uni.navigateTo({url});}
 function openAgentExplanation(){
@@ -144,79 +136,33 @@ if(typeof window!=='undefined'){window.removeEventListener('focus',changed);wind
 </script>
 
 <style scoped>
-.finance-page {
-  padding: 20rpx;
-}
-
-.balance-card {
-  background: linear-gradient(135deg, var(--view-theme, #e93323), var(--view-gradient, #FF7931));
-  border-radius: 16rpx;
-  padding: 40rpx 30rpx;
-  color: #fff;
-}
-
-.balance-label {
-  font-size: 24rpx;
-  opacity: 0.9;
-}
-
-.balance-num {
-  font-size: 64rpx;
-  font-weight: 700;
-  margin: 12rpx 0 30rpx;
-}
-
-.balance-sub {
-  display: flex;
-  justify-content: space-between;
-}
-
-.sub-item {
-  text-align: center;
-}
-
-.sub-val {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-}
-
-.sub-label {
-  display: block;
-  font-size: 22rpx;
-  opacity: 0.85;
-  margin-top: 6rpx;
-}
-
-.explanation-entry{margin-bottom:20rpx}.explanation-entry button{display:flex;align-items:center;gap:20rpx;margin:0;padding:20rpx 26rpx;background:#fff;border-radius:16rpx;color:#333;font-size:28rpx;line-height:52rpx;text-align:left}.explanation-entry button::after{border:0}.explanation-entry image{width:52rpx;height:52rpx;flex:none}.explanation-entry .arrow{margin-left:auto;color:#aaa}
-.order-entry{margin-bottom:20rpx}.order-entry button{margin:0;background:#fff;border-radius:16rpx;text-align:left;font-size:28rpx;padding:0 24rpx;line-height:90rpx}.order-entry button::after{border:0}.order-entry text{float:right;color:#999}
-.ranking-links{display:flex;gap:20rpx;margin:0 0 24rpx}.ranking-links button{flex:1;margin:0;background:white;text-align:left;padding:0 24rpx;font-size:28rpx;line-height:90rpx;border-radius:16rpx}.ranking-links button::after{border:0}.ranking-links text{float:right;color:#999}
-.action-row {
-  display: flex;
-  gap: 20rpx;
-  margin: 24rpx 0;
-}
-
-.action-btn {
-  flex: 1;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx 0;
-  text-align: center;
-}
-
-.action-icon {
-  display: block;
-  font-size: 40rpx;
-}
-
-.action-text {
-  display: block;
-  font-size: 24rpx;
-  color: #555;
-  margin-top: 8rpx;
-}
-
+.finance-page{position:relative;min-height:100vh;padding:24rpx 20rpx 40rpx;background:#f5f5f5;box-sizing:border-box}
+.finance-page button::after{border:0}
+.header-glow{position:absolute;inset:0 0 auto;height:428rpx;background:linear-gradient(360deg,rgba(233,51,35,0),rgba(233,51,35,.2));pointer-events:none}
+.price-wrapper{position:relative}
+.level-entry{position:absolute;z-index:1;top:8rpx;right:6rpx;max-width:70%;margin:0;padding:0 22rpx;line-height:50rpx;border-radius:0 28rpx 0 28rpx;background:linear-gradient(270deg,#f6c363,#fef8e2);color:#b33f1b;font-size:22rpx}
+.level-entry text{margin-left:12rpx}
+.balance-card{position:relative;min-height:370rpx;padding:70rpx 0 70rpx;box-sizing:border-box;background:#222431 url('/static/php-finance-center/spread_bg.png') center/100% 100% no-repeat;border-radius:32rpx;color:white}
+.balance-label,.balance-num{display:block;width:100%;padding:0;margin:0;border:0;border-radius:0;background:transparent;text-align:center;color:white}
+.balance-label{font-size:30rpx;line-height:42rpx;color:rgba(255,255,255,.6)}
+.balance-num{margin-top:16rpx;font-size:76rpx;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.balance-sub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:42rpx}
+.sub-item{text-align:center;padding:0 12rpx;min-width:0}
+.sub-label,.sub-val{display:block}.sub-label{font-size:24rpx;line-height:34rpx;color:rgba(255,255,255,.6)}
+.sub-val{font-size:34rpx;line-height:40rpx;font-weight:600;overflow-wrap:anywhere}
+.withdraw-wrap{position:absolute;top:100%;left:50%;padding:16rpx;background:#f5f5f5;border-radius:60rpx;transform:translate(-50%,-50%)}
+.withdraw-button{width:256rpx;margin:0;padding:0;line-height:72rpx;border-radius:44rpx;background:var(--view-theme,#e93323);color:white;font-size:30rpx}
+.statistics{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20rpx;margin:66rpx 0 20rpx}
+.menu-item{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:224rpx;min-width:0;margin:0;padding:20rpx 10rpx;background:white;border-radius:24rpx;box-sizing:border-box;line-height:36rpx;color:#333;font-size:26rpx}
+.menu-item image,.menu-icon-placeholder{display:block;width:80rpx;height:80rpx;flex:none}
+.menu-icon-placeholder{border-radius:50%;background:linear-gradient(135deg,#fff0df,#ffd8bc)}
+.menu-item text{margin-top:20rpx}
+.icon-retry{margin:0 0 20rpx;background:white;color:#805000;font-size:24rpx;line-height:64rpx}
+.account-tools{position:relative;display:flex;flex-wrap:wrap;gap:1rpx;margin:0 0 20rpx;border-radius:16rpx;background:white;overflow:hidden}
+.account-tools button,.spread-count{flex:1 1 200rpx;margin:0;padding:20rpx;font-size:24rpx;line-height:44rpx;background:white;text-align:center;color:#555}
+.account-tools button text{margin-left:12rpx;color:#999}.spread-count text{margin-left:10rpx;color:#333}
+.sheet-heading{display:flex;align-items:center;justify-content:space-between;gap:20rpx}.sheet-heading button{margin:0;padding:0 20rpx;line-height:56rpx;background:transparent;color:#777;font-size:26rpx}
+.notice button{display:block;margin:12rpx 0 0;padding:0 20rpx;line-height:60rpx;font-size:26rpx;color:#a33;background:white}
 .list-card {
   background: #fff;
   border-radius: 16rpx;
