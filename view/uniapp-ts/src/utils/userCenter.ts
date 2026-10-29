@@ -104,7 +104,8 @@ export function userCenterProperties(snapshot:UserCenterSnapshot|null){
   return USER_CENTER_PROPERTY_OPTIONS.filter(item=>diy_data.member.property.includes(item.id)&&(item.id!==0||capabilities.balance)&&(item.id!==4||capabilities.video)&&(item.id<6||capabilities.promotion&&!!profile.is_promoter))
     .map(item=>({...item,value:String(profile[item.field as keyof typeof profile]),target:userCenterDestination(item.url)}));
 }
-export function collectionKind(value:unknown):'product'|'video'{if(value===undefined||value==='0'||value===0)return 'product';if(value==='1'||value===1)return 'video';throw Error('收藏分类参数无效');}
+/** Preserve the PHP Vue page's truthiness of the value delivered to onLoad. */
+export function collectionKind(value:unknown):'product'|'video'{if(value)return 'video';return 'product';}
 export function parseCollectionProducts(value:unknown):CollectionPage<CollectionProduct>{
   assert(record(value)&&Array.isArray(value.list)&&integer(value.count),'商品收藏响应无效');
   const ids=new Set<number>();assert(value.list.every(x=>record(x)&&integer(x.id)&&x.id>0&&!ids.has(x.id)&&(ids.add(x.id),true)&&text(x.store_name,256)&&text(x.image,8192)&&money(x.price)),'商品收藏记录无效');

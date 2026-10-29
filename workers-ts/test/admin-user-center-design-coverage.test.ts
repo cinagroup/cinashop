@@ -117,9 +117,19 @@ const mutants: Mutant[] = [
   ['actual both menu blocks','mobile',':block="design.merMenu"',':block="design.menu"','menuThreeStyles'],
   ['actual menu row picture','menus',':src="media(item.pic)"',':src="fixedIcon"','menuThreeStyles'],
   ['video real category query','collectionConsumer',"scope.request<unknown>('/collect/user','GET',{page:next,limit:LIMIT,category},true)","scope.request<unknown>('/collect/user','GET',{page:next,limit:LIMIT,category:'product'},true)",'videoCollections'],
-  ['video real delete category','collectionConsumer',"scope.request<unknown>('/collect/del','POST',{id:[id],category},true)","scope.request<unknown>('/collect/del','POST',{id:[id]},true)",'videoCollections'],
+  ['video real delete category','collectionConsumer',"scope.request<unknown>('/collect/del','POST',{id:[...ids],category},true)","scope.request<unknown>('/collect/del','POST',{id:[...ids]},true)",'videoCollections'],
+  ['video single delete actual delegate','collectionConsumer','await cancelRows([id],false);','await fakeCancelRows([id],false);','videoCollections'],
+  ['video selected delete actual delegate','collectionConsumer','await cancelRows([...selected.value],true);','await fakeCancelRows([...selected.value],true);','videoCollections'],
+  ['video selected delete actual renderer action','collection','@tap="removeSelected"','@tap="previewSelected"','videoCollections'],
+  ['video delete captures actual current category','collectionConsumer','const scope=ensure(),category=kind.value;bulkDeleting.value=bulk;',"const scope=ensure(),category='product';bulkDeleting.value=bulk;",'videoCollections'],
   ['video actual renderer source','collection',':src="media(playing.video_url)"',':src="fixedMovie"','videoCollections'],
   ['backend actual video relation list','collectionService','this.videoCollection(uid,page,limit)','this.productCollection(uid,page,limit)','videoCollections'],
+  ["video null receipt check removed","collectionConsumer","if(result!==null)throw Error('取消收藏响应无效');","","videoCollections"],
+  ["video uncertainty replay fence removed","collectionConsumer","return ownsPage()&&!busy.value&&ready.value&&!error.value&&!mutationError.value;","return ownsPage()&&!busy.value&&ready.value&&!error.value;","videoCollections"],
+  ["video management authorization/busy guards removed","collectionConsumer","return ownsPage()&&!busy.value&&ready.value&&!error.value&&!mutationError.value;","return true;","videoCollections"],
+  ["video uncertain catch removed","collectionConsumer","}catch(e){if(scope.active())mutationError.value=`取消结果未确认，请刷新核对。${e instanceof Error?e.message:''}`;}","}catch(e){}","videoCollections"],
+  ["video cancelRows entry guard removed","collectionConsumer","if(!canManage()||bulk&&!managing.value)return;","","videoCollections"],
+  ["video returned selected action removed","collectionConsumer","toggleManage,toggleSelection,toggleAll,removeSelected,emptyForRecommendations","toggleManage,toggleSelection,toggleAll,emptyForRecommendations","videoCollections"],
   ['member-code real QR data','mobileConsumer','qr.addData(code.value)','qr.addData("000000")','memberCode'],
   ['member-code strict actual actor','mobileConsumer','row.actor_uid!==scope.owner.uid','false','memberCode'],
   ['member-code real expiry','mobileConsumer','row.expires_at<=now','false','memberCode'],
@@ -183,5 +193,10 @@ describe('complete personal-centre connected source gates',()=>{
     expect(original.includes(needle)).toBe(true);
     const unrelated=original.replace(needle,'await fakeAssets(')+'\nfunction unrelated(){return apiUserCenterAssets({page:1,limit:20});}\n';
     expect(inspectUserCenterDesignCoverage(screens,{...sources,picker:unrelated}).assetLinkPicker).toBe(false);
+    const cancellation="scope.request<unknown>('/collect/del','POST',{id:[...ids],category},true)";
+    expect(sources.collectionConsumer!.includes(cancellation)).toBe(true);
+    const disconnected=sources.collectionConsumer!.replace(cancellation,'fakeCancellation()')
+      +`\nfunction unrelatedCollectionWrite(){return ${cancellation};}\n`;
+    expect(inspectUserCenterDesignCoverage(screens,{...sources,collectionConsumer:disconnected}).videoCollections).toBe(false);
   });
 });

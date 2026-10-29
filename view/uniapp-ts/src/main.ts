@@ -7,7 +7,9 @@ import { prepareWorkOAuthRoute } from "@/composables/workContext";
 
 // #ifdef H5
 import {prepareMessageCenterEntry} from '@/utils/messageCenterEntry';
+import { prepareCollectionEntry } from '@/utils/collectionEntry';
 prepareMessageCenterEntry();
+prepareCollectionEntry();
 // #endif
 
 prepareWorkOAuthRoute();

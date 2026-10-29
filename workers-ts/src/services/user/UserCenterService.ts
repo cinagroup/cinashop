@@ -126,7 +126,7 @@ function collectIds(values: readonly unknown[]): number[] {
   if (
     ids.length === 0
     || ids.length > MAX_COLLECT_IDS
-    || ids.some((id) => !Number.isSafeInteger(id) || id <= 0)
+    || ids.some((id) => !Number.isSafeInteger(id) || id <= 0 || id > POSTGRES_INT_MAX)
   ) {
     throw new ValidateException("请选择有效商品");
   }

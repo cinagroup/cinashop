@@ -186,6 +186,52 @@ export function hasUserCenterDesignContract(source: string): boolean {
     && s.call('userCenterDesignPayload', 'cloneUserCenterDesign', 'value') && s.in('cloneUserCenterDesign', 'per_show_type:value.member.per_show_type', 'value.poster.list.map(copyPoster)', 'value.merMenu.list.map(copyMenu)');
 }
 
+/** Bind this version's actual single/bulk cancellation control flow. This is
+ * connected source evidence; behavioral/runtime receipts remain independent. */
+function collectionCancellationConnected(consumer: Source, component: Source): boolean {
+  const body = (name: string): ts.Block | undefined => {
+    const nodes=consumer.nodes(name),node=nodes[0];return nodes.length===1&&node&&ts.isBlock(node)?node:undefined;
+  };
+  const render = (node: ts.Node): string => compact(printer.printNode(ts.EmitHint.Unspecified,node,consumer.tree));
+  const bareReturn = (node: ts.Statement): boolean => ts.isReturnStatement(node)&&!node.expression;
+  const awaits = (node: ts.Statement | undefined,callee: string,args: readonly string[]): boolean => {
+    if(!node||!ts.isExpressionStatement(node)||!ts.isAwaitExpression(node.expression)||!ts.isCallExpression(node.expression.expression))return false;
+    const call=node.expression.expression;return render(call.expression)===callee&&call.arguments.length===args.length&&args.every((arg,index)=>render(call.arguments[index]!)===compact(arg));
+  };
+  const factory=body('useUserCollections'),cancel=body('cancelRows'),manage=body('canManage'),single=body('remove'),selected=body('removeSelected');
+  if(!factory||!cancel||!manage||!single||!selected)return false;
+  const entry=cancel.statements[0],management=manage.statements[0],singleEntry=single.statements[0];
+  const entryGuard=!!entry&&ts.isIfStatement(entry)&&render(entry.expression)==='!canManage()||bulk&&!managing.value'&&bareReturn(entry.thenStatement)&&!entry.elseStatement;
+  const replayFence=manage.statements.length===1&&!!management&&ts.isReturnStatement(management)&&!!management.expression
+    &&render(management.expression)==='ownsPage()&&!busy.value&&ready.value&&!error.value&&!mutationError.value';
+  const singleGuard=single.statements.length===2&&!!singleEntry&&ts.isIfStatement(singleEntry)&&render(singleEntry.expression)==='managing.value'&&bareReturn(singleEntry.thenStatement)&&!singleEntry.elseStatement
+    &&awaits(single.statements[1],'cancelRows',['[id]','false']);
+  const selectedDelegate=selected.statements.length===1&&awaits(selected.statements[0],'cancelRows',['[...selected.value]','true']);
+  const tries=cancel.statements.filter(ts.isTryStatement);if(tries.length!==1)return false;
+  const attempt=tries[0]!,confirmed=attempt.tryBlock.statements,first=confirmed[0],receipt=confirmed[1],active=confirmed[2];
+  const declaration=first&&ts.isVariableStatement(first)&&first.declarationList.flags&ts.NodeFlags.Const&&first.declarationList.declarations.length===1?first.declarationList.declarations[0]:undefined;
+  const request=declaration&&ts.isIdentifier(declaration.name)&&declaration.name.text==='result'&&declaration.initializer&&ts.isAwaitExpression(declaration.initializer)&&ts.isCallExpression(declaration.initializer.expression)?declaration.initializer.expression:undefined;
+  const actualRequest=!!request&&render(request.expression)==='scope.request'&&request.arguments.length===4
+    &&["'/collect/del'","'POST'",'{id:[...ids],category}','true'].every((arg,index)=>render(request.arguments[index]!)===compact(arg));
+  const nullReceipt=!!receipt&&ts.isIfStatement(receipt)&&render(receipt.expression)==='result!==null'&&!receipt.elseStatement&&ts.isThrowStatement(receipt.thenStatement)
+    &&ts.isCallExpression(receipt.thenStatement.expression)&&render(receipt.thenStatement.expression)===compact("Error('取消收藏响应无效')");
+  const activeReceipt=!!active&&ts.isIfStatement(active)&&render(active.expression)==='!scope.active()'&&bareReturn(active.thenStatement)&&!active.elseStatement;
+  const confirmedCleanup=['playing.value=null;','selected.value=[];','managing.value=false;','removing.value=0;','bulkDeleting.value=false;']
+    .every((statement,index)=>!!confirmed[index+3]&&render(confirmed[index+3]!)===statement);
+  const freshRead=awaits(confirmed.at(-1),'load',['true']);
+  const uncertainCatch=!!attempt.catchClause&&render(attempt.catchClause)===compact("catch(e){if(scope.active())mutationError.value=`取消结果未确认，请刷新核对。${e instanceof Error?e.message:''}`;}");
+  const releaseBusy=!!attempt.finallyBlock&&render(attempt.finallyBlock)===compact('{if(scope.active()){removing.value=0;bulkDeleting.value=false;}}');
+  const returns=factory.statements.filter(ts.isReturnStatement),returned=returns.length===1?returns[0]!.expression:undefined;
+  const actionsReturned=!!returned&&ts.isObjectLiteralExpression(returned)&&['remove','removeSelected'].every(name=>returned.properties.some(property=>ts.isShorthandPropertyAssignment(property)&&property.name.text===name));
+  const bindings=component.tree.statements.filter(ts.isVariableStatement).flatMap(statement=>[...statement.declarationList.declarations])
+    .filter(declaration=>ts.isObjectBindingPattern(declaration.name)&&!!declaration.initializer&&ts.isCallExpression(declaration.initializer)&&declaration.initializer.expression.getText(component.tree)==='useUserCollections');
+  const uiActions=bindings.length===1&&ts.isObjectBindingPattern(bindings[0]!.name)&&['remove','removeSelected'].every(name=>(bindings[0]!.name as ts.ObjectBindingPattern).elements.some(element=>!element.propertyName&&ts.isIdentifier(element.name)&&element.name.text===name))
+    &&component.imported('@/composables/useUserCollections','useUserCollections');
+  return entryGuard&&replayFence&&singleGuard&&selectedDelegate&&actualRequest&&nullReceipt&&activeReceipt&&confirmedCleanup&&freshRead&&uncertainCatch&&releaseBusy&&actionsReturned&&uiActions
+    &&consumer.in('busy','loading.value||removing.value>0||bulkDeleting.value')
+    &&consumer.ordered('cancelRows','if(!canManage()||bulk&&!managing.value)return;',"mutationError.value='';",'const result=await scope.request<unknown>');
+}
+
 /** Each positive checks calls inside its producer/consumer and live template
  * attributes. A comment, import, same word elsewhere or a fake call string
  * cannot replace the required AST CallExpression. */
@@ -296,7 +342,19 @@ export function inspectUserCenterDesignCoverage(screens: string[], sources: Reco
     posterCarousel: m!.binding('swiper',':indicator-dots','design.poster.list.length>1') && m!.binding('swiper',':autoplay','true') && m!.binding('swiper',':circular','true') && m!.binding('swiper',':interval','3000') && m!.binding('swiper',':duration','500') && m!.binding('swiper-item','v-for','(item,index) in design.poster.list') && m!.binding('view','@tap',"openMenu('poster',index)") && u!.call('openMenu','go','item.url',"group!=='poster'"),
     menuThreeStyles: m!.binding('UserCenterMenus',':block','design.menu') && m!.binding('UserCenterMenus',':block','design.merMenu') && m!.binding('UserCenterMenus','@open',"index=>openMenu('menu',index)") && m!.binding('UserCenterMenus','@open',"index=>openMenu('merMenu',index)") && menus!.binding('view',':class','`menu-style-${block.style}`') && menus!.binding('template','v-for','(item,index) in block.list') && menus!.html('{{ block.title }}','{{ item.name }}') && menus!.binding('image',':src','media(item.pic)') && menus!.binding('button','open-type','contact') && menus!.styles('repeat(4,minmax(0,1fr))','.menu-style-2','grid-template-columns:1fr','.menu-style-3','repeat(3,minmax(0,1fr))'),
     menuRoleGates: pub!.in('snapshot', 'balance_func_status','member_func_status','member_card_status','brokerage_func_status','division_open','division_apply_open','store_brokerage_apply','invoice_func_status','account.isPromoter','divisionValid','operatorProfile(uid)') && pub!.in('snapshot', "original==='/pages/users/agent/apply'", "original==='/pages/users/distributor/apply'", "path==='/pages/user/invoice'", "path==='/pages/operator/writeoff'") && pub!.in('snapshot','capabilities.promotion','capabilities.paid_member','capabilities.writeoff') && u!.in('openMenu',"group==='merMenu'",'menu.capabilities.merchant','menu.capabilities.writeoff') && operator!.in('operatorProfile','storeStaff','storeDelivery') && u!.call('openOperator','go') && nav!.rule('/pages/admin/work/index','candidate_covered') && nav!.rule('/kefu/mobile_list','candidate_covered') && nav!.rule('/pages/admin/distribution/index','candidate_covered'),
-    videoCollections: collect!.call('$root','useUserCollections') && uc!.call('load','scope.request',"'/collect/user'", "'GET'", '{page:next,limit:LIMIT,category}', 'true') && uc!.call('load','parseCollectionVideos','response','scope.owner.uid') && uc!.call('load','parseCollectionProducts','response') && uc!.call('remove','scope.request',"'/collect/del'", "'POST'", '{id:[id],category}', 'true') && uc!.call('$root','onLoad') && uc!.call('$root','onReachBottom') && uc!.in('load','page.value=next','count.value=data.count','if(!scope.active())return') && uc!.in('remove','await load(true)','mutationError.value=') && collect!.binding('video',':src','media(playing.video_url)') && collect!.binding('button','@tap','remove(item.id)') && uc!.in('openVideo','!row.available','row.is_fail','userCenterMedia(row.video_url)') && d!.in('collectionKind',"return'video'", "return'product'") && cs!.call('list','this.videoCollection','uid','page','limit') && cs!.in('videoCollection','userRelation.uid','userRelation.category','video','READ ONLY','renderProductPictures') && cc!.call('collectDel','svc.collectDel') && cc!.in('collectDel','stringField(body.category)') && vr!.call('$root','v1Routes.get',"'/collect/user'",'authMiddleware({ force: true })','UserActivityController.collectList'),
+    videoCollections: collect!.call('$root','useUserCollections')
+      && uc!.call('load','scope.request',"'/collect/user'", "'GET'", '{page:next,limit:LIMIT,category}', 'true')
+      && uc!.in('load','category=kind.value') && uc!.call('load','parseCollectionVideos','response','scope.owner.uid') && uc!.call('load','parseCollectionProducts','response')
+      // Both actual UI actions delegate to the same category-preserving cancellation path.
+      && uc!.call('remove','cancelRows','[id]','false') && uc!.call('removeSelected','cancelRows','[...selected.value]','true')
+      && uc!.call('cancelRows','scope.request',"'/collect/del'", "'POST'", '{id:[...ids],category}', 'true')
+      && uc!.in('cancelRows','category=kind.value','await load(true)','mutationError.value=')
+      && collectionCancellationConnected(uc!,collect!)
+      && uc!.call('$root','onLoad') && uc!.call('$root','onReachBottom') && uc!.in('load','page.value=next','count.value=data.count','if(!scope.active())return')
+      && collect!.binding('video',':src','media(playing.video_url)') && collect!.binding('button','@tap','remove(item.id)') && collect!.binding('button','@tap','removeSelected')
+      && uc!.in('openVideo','!row.available','row.is_fail','userCenterMedia(row.video_url)') && d!.in('collectionKind',"return'video'", "return'product'")
+      && cs!.call('list','this.videoCollection','uid','page','limit') && cs!.in('videoCollection','userRelation.uid','userRelation.category','video','READ ONLY','renderProductPictures')
+      && cc!.call('collectDel','svc.collectDel') && cc!.in('collectDel','stringField(body.category)') && vr!.call('$root','v1Routes.get',"'/collect/user'",'authMiddleware({ force: true })','UserActivityController.collectList'),
     memberCode: m!.binding('view','@tap',"go('/pages/user/memberCode')") && code!.call('$root','useUserCenter','{autoMemberCode:true}') && code!.binding('view','v-for','(row,r) in qrRows') && code!.binding('view','v-for','(dark,c) in row') && code!.binding('button','@tap','getMemberCode') && code!.html('snapshot.menu.profile.now_money','snapshot.menu.profile.couponCount','snapshot.menu.profile.integral','codeDeadline') && u!.call('getMemberCode','scope.request',"'/user/rand_code'", "'GET'", '{}', 'true') && u!.in('getMemberCode','row.actor_uid!==scope.owner.uid','row.expires_at<=now','codeDeadline.value=row.expires_at') && u!.call('qrRows','qr.addData','code.value') && u!.in('load','codeDeadline.value*1000', "code.value=''" ) && profileController!.call('randCode','service(c).paymentCodeSnapshot','uid(c)') && profile!.in('paymentCodeSnapshot','expires_at','actor_uid','current!==code','await validActor()') && vr!.call('$root','v1Routes.get',"'/user/rand_code'", 'authMiddleware({ force: true })', 'UserProfileController.randCode'),
     userLifecycle: u!.call('$root','watch') && u!.call('$root','onShow') && u!.callbackCall('$root','onHide','clear') && u!.callbackCall('$root','onUnload','clear') && u!.call('clear','requests?.abort') && u!.call('clear','closeCode') && u!.in('clear','snapshot.value=null','generation++') && u!.call('login','uni.navigateTo',"{url:'/pages/auth/login'}") && u!.call('logout','scope.request',"'/logout'", "'GET'", '{}', 'true') && u!.ordered('logout','scope.owner','clear()','scope.active()','auth.clear()') && ma!.in('active','auth.uid===owner.uid','auth.token===owner.token','auth.sessionVersion===owner.version') && m!.binding('button','@tap','logout'),
     requestDeadline: ma!.parameter('createUserCenterRequests','deadlineMs',12000) && ma!.call('request','setTimeout') && ma!.call('request','uni.request') && ma!.in('request','timeout:deadlineMs','finish(undefined,new RequestError','task?.abort()','if(done)return','if(!active()){cancel();return;}') && ma!.call('abort','cancel') && ma!.in('finish','clearTimeout(timer)','pending.delete(cancel)'),
