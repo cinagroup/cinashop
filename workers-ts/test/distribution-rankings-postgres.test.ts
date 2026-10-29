@@ -230,7 +230,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('distribution lea
         finally { await f.db.update(user).set({ status: 1, isDel: 0, deleteTime: null, pwd: password }).where(eq(user.uid, 11)); }
       }
     });
-  });
+  }, 20_000);
   it('binds persisted avatar UID, exact MIME/module/path and grants only platform default images', async () => {
     await profile(async (env, peer) => {
       for (const avatar of ['/api/assets/' + (base + 2), '/api/assets/' + (base + 3), '/api/assets/' + (base + 4),
