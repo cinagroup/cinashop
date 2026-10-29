@@ -1,0 +1,55 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>推广海报实际验收</title><style>body{margin:8px;font:14px sans-serif;background:#f5f6f8}h1{font-size:18px}button{margin:3px;padding:6px}iframe{display:block;width:375px;height:1100px;background:#fff;border:1px solid #ddd}pre{white-space:pre-wrap;max-height:90px;overflow:auto}#instruction{padding:8px;background:#fff5dc}</style></head><body>
+<h1>推广海报 · 实际 H5 / Worker / JWT / PG16</h1><p>页面实际控件负责生成、预览、重读、模板选择与导航。下面只提供有限本地 QA 会话、夹具和响应暂存控制。</p>
+<div id="instruction"></div><div><button id="spread">当前阶段会话 · 新文档推广海报</button><button id="fixture">应用当前阶段有限夹具</button><button id="hold">暂存下次实际海报资料响应</button><button id="release">释放旧文档响应</button><button data-width="375">手机375</button><button data-width="1000">桌面1000</button></div>
+<div id="phases"></div><pre id="result">等待装载</pre><iframe title="实际推广海报"></iframe>
+<script>
+const control=__CONTROL__,runId=__RUN_ID__,plans=__PLANS__,result=document.querySelector('#result');let frame=document.querySelector('iframe'),lastAck=__INITIAL_ACK__,index=__INITIAL_INDEX__;
+const show=value=>result.textContent=typeof value==='string'?value:JSON.stringify(value);
+const instructions={
+ 'guest':'确认推广页登录提示，没有本人海报或读取业务请求。',
+ 'owner-a-ready':'点当前阶段新文档推广海报，以合成 ownerA 读取实际本人资料、签名素材、真实本地二维码并生成PNG。',
+ 'template-two':'在实际业务页点下一张，等待当前模板2生成并解码。',
+ 'preview-open':'在实际业务页点预览海报，确认原生H5预览层打开。',
+ 'preview-closed':'点实际预览层右上关闭，确认仍是模板2。',
+ 'reread':'点实际重新读取推广资料，等待模板1重新生成；缓存二维码不重复写入。',
+ 'empty-templates':'应用当前阶段夹具，再点实际重新读取，显示模板未配置错误。',
+ 'templates-reconfigured':'应用当前阶段夹具，再点实际生成推广海报，恢复商家模板。',
+ 'missing-template':'应用夹具移除模板2对象，显式重新读取资料取得新签名后点实际下一张；显示真实读取错误。',
+ 'corrupt-template':'应用夹具放入损坏模板2图片，点实际重新生成当前海报；等待真实解码失败。',
+ 'template-restored':'应用夹具恢复模板2，再点实际重新读取推广资料，等待模板1成功。',
+ 'missing-avatar':'应用夹具移除本人头像对象，再点实际重新读取，显示读取错误。',
+ 'corrupt-avatar':'应用夹具放入损坏头像，再点实际重新生成当前海报，等待实际解码失败。',
+ 'avatar-restored':'应用夹具恢复头像，再点实际重新读取，等待生成成功。',
+ 'password-revoked':'应用夹具撤销密码版本，点实际重新读取；确认本人海报消失并提示失效。',
+ 'account-restored':'应用夹具恢复账号，再点当前阶段新文档推广海报（恢复原合成JWT会话）。',
+ 'status-revoked':'应用夹具禁用账号，点实际重新读取；确认本人海报消失并提示失效。',
+ 'status-restored':'应用夹具恢复账号，再点当前阶段新文档推广海报。',
+ 'late-held':'先点暂存响应，再点当前阶段新文档推广海报（ownerA）；看到加载中后立即验收。',
+ 'new-owner':'点当前阶段新文档推广海报（ownerB），旧ownerA响应继续暂存；等待本人乙生成。',
+ 'new-owner-released':'点释放旧文档响应；确认ownerB仍显示本人乙海报。',
+ 'finance-navigation':'点实际查看分销记录与佣金；到达原有财务页并完成真实读取。',
+ 'desktop':'点当前阶段新文档推广海报（ownerB），iframe宽1000；检查完整海报与无横向溢出。',
+ 'logout':'点当前阶段新文档推广海报（访客），清理合成会话，确认无旧账号海报。',
+ 'finished':'保持访客页最后验收，服务自动关闭并清理夹具。'};
+function current(){document.querySelector('#instruction').textContent='阶段 '+(index+1)+'/'+plans.length+' '+(plans[index]?.name||'完成')+'：'+(instructions[plans[index]?.name]||'');}
+async function ctl(path,data){const response=await fetch(control+path,{method:'POST',...(data?{headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{})});if(!response.ok)throw Error(await response.text());return response.json();}
+async function session(){const plan=plans[index];if(!plan)throw Error('验收已完成');const data=await ctl('/session?owner='+plan.owner);for(const key of['uni_token','uni_uid','admin_token','admin_session'])localStorage.removeItem(key);if(data.uid){localStorage.setItem('uni_token',JSON.stringify({type:'string',data:data.token}));localStorage.setItem('uni_uid',JSON.stringify({type:'number',data:data.uid}));}const next=document.createElement('iframe');next.title='实际推广海报';next.style.width=plan.width+'px';next.src='/__h5?qa_document='+crypto.randomUUID()+'#/pages/user/spread';frame.replaceWith(next);frame=next;show('新文档已装载，请使用实际页面控件并等待请求完成');}
+document.querySelector('#spread').onclick=()=>session().catch(error=>show(String(error)));
+document.querySelector('#fixture').onclick=async()=>{try{if(!plans[index]?.scenario)throw Error('本阶段没有有限夹具');show(await ctl('/fixture?name='+plans[index].scenario));}catch(error){show(String(error));}};
+for(const id of['hold','release'])document.querySelector('#'+id).onclick=async()=>{try{show(await ctl('/'+id));}catch(error){show(String(error));}};
+for(const button of document.querySelectorAll('[data-width]'))button.onclick=()=>frame.style.width=button.dataset.width+'px';
+for(const plan of plans){const button=document.createElement('button');button.textContent='验收 '+plan.name;button.dataset.stage=plan.name;document.querySelector('#phases').append(button);button.onclick=async()=>{button.disabled=true;try{
+ if(plan.name!==plans[index]?.name)throw Error('必须按阶段顺序验收');
+ const document=frame.contentDocument,window=frame.contentWindow,visible=node=>{if(!node||node.getBoundingClientRect().width<=0||node.getBoundingClientRect().height<=0)return false;for(let p=node;p&&p.nodeType===1;p=p.parentElement){const s=window.getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;}return true;};
+ const page=[...document.querySelectorAll('uni-page')].filter(visible).at(-1)||document.body,root=page.querySelector('.spread-page'),selected=root?.querySelector('[data-poster-selected="true"]'),qa=window.__spreadQa||{errors:[{message:'Missing early observer'}],resourceErrors:[]};
+ const generated=[...(selected?.querySelectorAll('.poster-image img')||[])].filter(node=>node.getAttribute('src')?.startsWith('data:image/png;base64,'));
+ const image=node=>({src:node.getAttribute('src')||'',complete:node.complete,naturalWidth:node.naturalWidth,naturalHeight:node.naturalHeight,width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height});
+ const preview=document.querySelector('#u-a-p'),bounds=node=>{if(!node)return null;const r=node.getBoundingClientRect();return{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};};
+ const data={run_id:runId,previous_ack:lastAck,captured_at_ms:Date.now(),href:window.location.href,width:frame.clientWidth,viewportWidth:window.innerWidth,clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,text:page.innerText,
+ owner:Number(root?.getAttribute('data-spread-owner')||0),selected:Number(root?.getAttribute('data-selected-template')||0),loading:[...page.querySelectorAll('[role="status"]')].some(visible),alerts:[...page.querySelectorAll('[role="alert"]')].filter(visible).map(node=>node.textContent),
+ poster_controls:{swiper:bounds(root?.querySelector('.poster-swiper')),tip:bounds(selected?.querySelector('.tip')),retry:bounds(selected?.querySelector('.retry')),actions:bounds(selected?.querySelector('.pic-list'))},generated_images:generated.map(image),preview_open:!!preview?.childElementCount&&visible(preview.firstElementChild),images:[...page.querySelectorAll('img')].filter(visible).map(image),
+ controls:[...page.querySelectorAll('button,uni-button')].filter(visible).map(node=>({text:node.textContent,disabled:node.disabled||node.getAttribute('disabled')!==null})),errors:qa.errors,resource_errors:qa.resourceErrors};
+ const ack=await ctl('/phase/'+plan.name,data);if(!ack.accepted){show(ack);return;}if(ack.run_id!==runId||ack.name!==plan.name)throw Error('Unbound ACK');lastAck=ack.ack;index++;current();show(ack);
+ }catch(error){show(String(error));}finally{button.disabled=false;}};}
+current();if(index===0)session().catch(error=>show(String(error)));
+</script></body></html>
