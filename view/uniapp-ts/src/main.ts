@@ -5,6 +5,11 @@ import DiySuspendedNavigation from "@/components/diy/DiySuspendedNavigation.vue"
 import { bindAuthStores } from '@/stores/session';
 import { prepareWorkOAuthRoute } from "@/composables/workContext";
 
+// #ifdef H5
+import { prepareCollectionEntry } from '@/utils/collectionEntry';
+prepareCollectionEntry();
+// #endif
+
 prepareWorkOAuthRoute();
 
 export function createApp() {

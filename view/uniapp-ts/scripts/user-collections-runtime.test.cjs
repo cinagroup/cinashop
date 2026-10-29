@@ -7,7 +7,36 @@ test('legacy active 1 reads video collections, plays the actual video id and can
 test('default product collection retains actual presale and activity destination authority',async()=>{const rows=[product(31),{...product(32),is_presale_product:1,recommendation_target:{version:1,product_id:32,kind:'presale',id:32,ends_at:null}},{...product(33),activity:'1,2,3,0',recommendation_target:{version:1,product_id:33,kind:'seckill',id:901,ends_at:'2099-09-24T01:00:00.000Z'}}];const r=setup(()=>({data:{list:rows,count:3}}));try{await r.start();r.page.openProduct(31);r.page.openProduct(32);r.page.openProduct(33);assert.deepEqual(r.navigations,['/pages/goods/detail?id=31','/pages/activity/presaleDetail?id=32','/pages/activity/seckillDetail?id=901']);}finally{r.stop();}});
 test('unavailable video and physically missing relation can be cancelled but cannot open media',async()=>{let removed=false;const r=setup(c=>c.url.endsWith('/collect/del')?(removed=true,{data:null}):{data:{actor_uid:11,list:removed?[]:[video(71,false)],count:removed?0:1}});try{await r.start({active:'1'});r.page.openVideo(71);assert.equal(r.page.playing.value,null);await r.page.remove(71);assert.equal(r.calls.filter(c=>c.url.endsWith('/collect/del')).length,1);}finally{r.stop();}});
 test('collection pagination follows relation count even when objects are missing and cannot repeat a busy page',async()=>{const wait=deferred(),r=setup(c=>c.data.page===2?wait.promise:{data:{actor_uid:11,list:[video(1)],count:25}});try{await r.start({active:'1'});assert.equal(r.page.hasMore.value,true);r.hooks.onReachBottom();r.hooks.onReachBottom();await tick();assert.equal(r.calls.length,2);wait.resolve({data:{actor_uid:11,list:[video(21)],count:25}});await tick();assert.equal(r.page.videos.value.length,2);assert.equal(r.page.hasMore.value,false);r.hooks.onReachBottom();await tick();assert.equal(r.calls.length,2);}finally{r.stop();}});
-test('malformed active parameter makes no collection request and remains diagnosed on a reshow',async()=>{const r=setup(()=>{throw Error('must not request');});try{await r.start({active:'yes'});assert.equal(r.calls.length,0);assert.match(r.page.error.value,/分类参数/);r.hooks.onHide();r.hooks.onShow();await tick();assert.equal(r.calls.length,0);assert.match(r.page.error.value,/分类参数/);}finally{r.stop();}});
+test('delivered active values preserve the PHP Vue truthiness for reads, actual rows and bulk cancellation',async()=>{
+ const cases=[[undefined,'product'],[null,'product'],['','product'],[0,'product'],[false,'product'],['0','video'],['1','video'],['false','video'],['yes','video'],[' ','video'],['0,1','video'],['1,0','video'],['%30','video']];
+ for(const [active,category] of cases){
+  let removed=false;const row=category==='video'?video(71):product(31);
+  const r=setup(c=>c.url.endsWith('/collect/del')?(removed=true,{data:null}):c.url.endsWith('/collect/user')?{data:{actor_uid:11,list:removed?[]:[row],count:removed?0:1}}:{data:{owner_uid:11,page:c.data.page,limit:10,list:[]}});
+  try{
+   await r.start({active});assert.equal(r.page.kind.value,category,JSON.stringify(active));
+   assert.deepEqual(r.calls[0].data,{page:1,limit:20,category});assert.equal(r.page.error.value,'');
+   assert.deepEqual((category==='video'?r.page.videos.value:r.page.products.value).map(x=>x.id),[row.id]);
+   r.hooks.onHide();r.hooks.onShow();await tick();assert.equal(r.page.kind.value,category);
+   r.page.toggleManage();r.page.toggleAll();await r.page.removeSelected();
+   assert.deepEqual(r.calls.filter(c=>c.method==='POST').map(c=>c.data),[{id:[row.id],category}]);
+   assert.equal(r.page.count.value,0);assert.equal(r.page.mutationError.value,'');
+   assert.ok(r.calls.filter(c=>c.url.endsWith('/collect/user')).every(c=>c.data.category===category));
+  }finally{r.stop();}
+ }
+});
+test('legacy H5 collection entry preserves raw queries and leaves other routes and OAuth entries untouched',()=>{
+ const r=setup(()=>{throw Error('must not request');});
+ try{
+  const {normalizeCollectionEntryHash,prepareCollectionEntry}=r.load(require('node:path').resolve(__dirname,'../src/utils/collectionEntry.ts'));
+  const old='#/pages/users/user_goods_collection/index',next='#/pages/user/collect';
+  for(const suffix of ['', '?active=1','?active=0','?active=','?active=false&x=%252F%2f+%20','?active=0&active=1&x=a=b','?%61ctive=%2530'])assert.equal(normalizeCollectionEntryHash(old+suffix),next+suffix);
+  for(const hash of [next+'?active=1',old+'/extra',old+'ish',old+'/', '#/pages/users/user_goods_collection/index%3Factive=1','#/pages/user/index','#/pages/users/message_center/index'])assert.equal(normalizeCollectionEntryHash(hash),hash);
+  const calls=[],host={location:{hash:old+'?active=0&active=1&x=%252F+%20',pathname:'/shop/',search:'?campaign=abc'},history:{replaceState:(...args)=>calls.push(args)}};
+  prepareCollectionEntry(host);assert.deepEqual(calls,[[null,'','/shop/?campaign=abc'+next+'?active=0&active=1&x=%252F+%20']]);
+  calls.length=0;prepareCollectionEntry({...host,location:{...host.location,search:'?work_oauth=1&campaign=abc'}});assert.deepEqual(calls,[]);
+  prepareCollectionEntry({...host,location:{...host.location,hash:next}});assert.deepEqual(calls,[]);prepareCollectionEntry(undefined);assert.equal(r.calls.length,0);
+ }finally{r.stop();}
+});
 test('anonymous collection sends no reads, no deletion and offers only the login action',async()=>{const r=runtime({component:'pages/user/collect.vue',anonymous:true,send:()=>{throw Error('must not request');}});try{await r.start({active:'1'});assert.equal(r.calls.length,0);await r.page.remove(1);assert.equal(r.calls.length,0);assert.match(r.page.error.value,/登录/);r.page.login();assert.equal(r.navigations.at(-1),'/pages/auth/login');}finally{r.stop();}});
 test('account swap aborts old collection and late old video cannot restore state or playback',async()=>{const first=deferred();let n=0;const r=setup(c=>n++===0?first.promise:{data:{actor_uid:12,list:[video(2)],count:1}});try{r.hooks.onLoad({active:'1'});r.hooks.onShow();await tick();r.auth.setLogin('new-collection-session',12);await tick();first.resolve({data:{actor_uid:11,list:[video(1)],count:1}});await tick();assert.deepEqual(r.page.videos.value.map(x=>x.id),[2]);assert.ok(r.aborts.length);r.page.openVideo(1);assert.equal(r.page.playing.value,null);}finally{r.stop();}});
 test('category switch, hide and unload invalidate playback and old pending native collection reads',async()=>{const r=setup(c=>({data:c.data.category==='video'?{actor_uid:11,list:[video(1)],count:1}:{list:[product(3)],count:1}}));try{await r.start({active:'1'});r.page.openVideo(1);assert.ok(r.page.playing.value);r.page.select('product');await tick();assert.equal(r.page.playing.value,null);assert.equal(r.page.videos.value.length,0);assert.equal(r.page.products.value[0].id,3);r.hooks.onHide();assert.equal(r.page.products.value.length,0);r.page.openProduct(3);assert.deepEqual(r.navigations,[]);}finally{r.stop();}});
