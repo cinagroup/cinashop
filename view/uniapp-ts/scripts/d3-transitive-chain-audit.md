@@ -1,3 +1,21 @@
+# Current source/backport review — 2026-10-28
+
+The current locked review is documented in
+`workers-ts/docs/uni-d3-security-backports-20261028.md` with complete machine and
+raw npm receipts alongside it. Official Express4.22.3/shared qs6.16.2, the
+verified Jest-config local merge helper and the seven-format Intlify9.1.9 mixed
+escaping backport replace the old layout below. The active inventory is
+48 entries /25 direct sources /24 URLs /8 chain definitions (6 active), with
+23 resolved-source return guards. These are not independent vulnerability counts.
+The prior50 baseline is preserved. Current source1243629 remains a version
+advisory bound to the shipped backport; other old Intlify advisories retain their
+reviewed scope. The strict gate implementation and CI workflow are unchanged.
+
+The dated material below is retained as historical evidence; its older version
+and inventory statements are not the current dependency layout.
+
+---
+
 # TEST-004D3 dependency boundary
 
 ## 2026-10-23 withdrawn braces advisory review

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "lockSemanticSha256": "3de353514e811f3549219bc5691ab398f75cd853d1f4dc6c128b9bb1345d542a",
-  "reviewedReceipt": "2026-10-27 actual npm receipt adds source1243452/GHSA-6pq8-jhm2-2vcw, moderate, >=6.7.0 <=6.16.0, on the existing optional H5 SSR root qs6.15.3 node. This is a new advisory, not a numeric replacement or a fixed vulnerability. Existing scripts leave SSR disabled and the runtime graph audit rejects server packages; the actual installed root serializer remains affected, independently contrasted with body-parser nested qs6.16.1. Exact tuple, full prior baseline, actual receipt SHA and boundary are in workers-ts/audit/uni-d3-qs-comma-review-20261027.json. Only this direct object and qs source list/range change; all 50 entries, nodes, forward paths, severities, other26 direct objects, eight chains,15 resolved records, lock and vendor bytes remain fixed. Earlier Vite/body-parser history uses immutable earlier baselines.",
+  "lockSemanticSha256": "9636a49bcc355d00c59e83a19f4b8b87cd4ddcdc00d2beb8e94af4e80480cfea",
+  "reviewedReceipt": "2026-10-28 actual C3 official bulk POST200/lock-only raw SHA82e18c448356d03b524ea24d453186f612ba97d2ab0a603393b564cfaa84ebc4 reports48 entries/25 direct objects/24 GHSA URLs across8 preserved chain definitions (6 active). Raw lockdb4757d2896d2381d83fba74133992db8a02df8f1ade279c68c52e538cbd97cf uses official Express4.22.3 and the shared qs6.16.2. Only new direct source1243629/GHSA-8rc2-428q-7ww3 is reviewed as an exact seven-distribution local mixed-escaping source backport on retained core-base9.1.9, still in the advisory version range; not an official fixed9.x release and not a fix for other old Intlify advisories. Formal12 files/all7 distributions/installed source/native DCloud and actual security-backport29/runtime13 are bound by workers-ts/audit/uni-d3-security-backports-20261028.json and D3 regressions. The three fixed qs sources, external deepmerge1243505 and four removed root Intlify sources are forbidden to return. Old15 resolved notes remain byte-structurally preserved historical observations; their prior Express/root/nested qs layouts do not describe C3. Unknown sources, tuples, installed paths, forward edges and resolved returns remain fail-closed. Full original raw delta and earlier failed audits are retained; no gate implementation change or blanket exception is made.",
   "chains": {
-    "intlify": "DCloud-pinned Intlify and unused root vue-i18n; excluded from configured client graphs",
+    "intlify": "DCloud-retained Intlify9.1.9 with a project-maintained mixed-argument escaping source backport; other existing Intlify advisories and configured client-graph exclusions remain separately scoped",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
     "vite-toolchain": "Vite development/build toolchain with verified local safety backport",
     "encrypted-zip": "DCloud encrypted uni_modules extraction; no configured encrypted modules",
@@ -82,20 +82,6 @@
       "severity": "high",
       "range": ">=9.1.0 <9.1.11",
       "chain": "intlify"
-    },
-    "1158506": {
-      "package": "qs",
-      "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
-      "severity": "moderate",
-      "range": ">=6.14.2 <=6.15.3",
-      "chain": "h5-ssr"
-    },
-    "1158507": {
-      "package": "qs",
-      "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
-      "severity": "moderate",
-      "range": ">=2.2.5 <6.16.0",
-      "chain": "h5-ssr"
     },
     "1193734": {
       "package": "adm-zip",
@@ -195,12 +181,12 @@
       "range": "<=6.4.2",
       "chain": "vite-toolchain"
     },
-    "1243452": {
-      "package": "qs",
-      "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
-      "severity": "moderate",
-      "range": ">=6.7.0 <=6.16.0",
-      "chain": "h5-ssr"
+    "1243629": {
+      "package": "@intlify/core-base",
+      "url": "https://github.com/advisories/GHSA-8rc2-428q-7ww3",
+      "severity": "low",
+      "range": ">=9.0.0-beta.12 <11.4.14",
+      "chain": "intlify"
     }
   },
   "entries": {
@@ -352,9 +338,7 @@
         "@dcloudio/uni-cli-shared"
       ],
       "advisorySources": [],
-      "effects": [
-        "@dcloudio/uni-app"
-      ],
+      "effects": [],
       "chains": [
         "encrypted-zip",
         "intlify",
@@ -373,7 +357,9 @@
         "@dcloudio/uni-h5"
       ],
       "advisorySources": [],
-      "effects": [],
+      "effects": [
+        "@dcloudio/uni-app"
+      ],
       "chains": [
         "encrypted-zip",
         "intlify",
@@ -622,8 +608,8 @@
     },
     "@intlify/core-base": {
       "severity": "high",
-      "isDirect": false,
-      "range": "9.0.0 - 9.14.4",
+      "isDirect": true,
+      "range": "<=11.4.13",
       "nodes": [
         "node_modules/@intlify/core-base"
       ],
@@ -635,7 +621,8 @@
       ],
       "advisorySources": [
         1106453,
-        1146054
+        1146054,
+        1243629
       ],
       "effects": [
         "@dcloudio/uni-cli-shared"
@@ -727,7 +714,10 @@
         "jest-runner"
       ],
       "advisorySources": [],
-      "effects": [],
+      "effects": [
+        "jest",
+        "jest-cli"
+      ],
       "chains": [
         "jest-toolchain"
       ]
@@ -920,22 +910,6 @@
         "encrypted-zip"
       ]
     },
-    "express": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "4.22.2",
-      "nodes": [
-        "node_modules/express"
-      ],
-      "viaPackages": [
-        "qs"
-      ],
-      "advisorySources": [],
-      "effects": [],
-      "chains": [
-        "h5-ssr"
-      ]
-    },
     "http-proxy-agent": {
       "severity": "low",
       "isDirect": false,
@@ -994,7 +968,7 @@
     },
     "jest-config": {
       "severity": "low",
-      "isDirect": false,
+      "isDirect": true,
       "range": "27.0.1 - 27.5.1",
       "nodes": [
         "node_modules/jest-config"
@@ -1124,26 +1098,6 @@
         "automator-qr"
       ]
     },
-    "qs": {
-      "severity": "moderate",
-      "isDirect": false,
-      "range": "2.2.5 - 6.16.0",
-      "nodes": [
-        "node_modules/qs"
-      ],
-      "viaPackages": [],
-      "advisorySources": [
-        1158506,
-        1158507,
-        1243452
-      ],
-      "effects": [
-        "express"
-      ],
-      "chains": [
-        "h5-ssr"
-      ]
-    },
     "vite": {
       "severity": "high",
       "isDirect": true,
@@ -1203,6 +1157,22 @@
       "replacementSource": 1243432,
       "affectedRange": "<=6.4.2",
       "note": "Retired numeric npm source, not a newly resolved vulnerability. The identical GHSA remains reviewed only under source1243432/moderate; existing source backport is unchanged."
+    },
+    "1158506": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+      "resolution": "patched",
+      "fixedVersion": "6.16.2",
+      "affectedRange": ">=6.14.2 <=6.15.3",
+      "reason": "Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."
+    },
+    "1158507": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+      "resolution": "patched",
+      "fixedVersion": "6.16.2",
+      "affectedRange": ">=2.2.5 <6.16.0",
+      "reason": "Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."
     },
     "1193726": {
       "package": "js-yaml",
@@ -1265,6 +1235,55 @@
       "fixedVersion": "1.20.9",
       "affectedRange": "<1.20.9",
       "reason": "Official body-parser1.20.9 fixes trailing compressed-body bytes. Actual npm resolver and clean npm ci retain Express4.22.2/root qs6.15.3, with patched qs6.16.1 owned only by body-parser."
+    },
+    "1243452": {
+      "package": "qs",
+      "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
+      "resolution": "patched",
+      "fixedVersion": "6.16.2",
+      "affectedRange": ">=6.7.0 <=6.16.0",
+      "reason": "Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."
+    },
+    "1243505": {
+      "package": "deepmerge",
+      "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+      "resolution": "external-dependency-removed-with-verified-local-source-fork",
+      "reason": "Actual jest-config27.5.1 retains identity/API, embeds source-patched deepmerge4.3.1 CJS with complete MIT license, and removes its external deepmerge dependency. The installed full graph contains no external deepmerge node. This is not an official fixed upstream Jest/deepmerge release.",
+      "sourceContract": "view/uniapp-ts/vendor/jest-config-27.5.1-source.json",
+      "derivedArchiveSha256": "6baf951142521c91b421f3ed56f79b37dcd3270ca90691a29d12aa810d455114",
+      "officialFixedRelease": false
+    },
+    "1243633": {
+      "package": "vue-i18n",
+      "url": "https://github.com/advisories/GHSA-8rc2-428q-7ww3",
+      "resolution": "unused-root-package-copies-removed",
+      "removedVersion": "9.14.5",
+      "affectedRange": ">=9.0.0-beta.5 <11.4.14",
+      "reason": "The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."
+    },
+    "1243637": {
+      "package": "@intlify/shared",
+      "url": "https://github.com/advisories/GHSA-83rm-6c8r-g728",
+      "resolution": "unused-root-package-copies-removed",
+      "removedVersion": "9.14.5",
+      "affectedRange": "=9.14.5",
+      "reason": "The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."
+    },
+    "1243649": {
+      "package": "@intlify/core-base",
+      "url": "https://github.com/advisories/GHSA-83rm-6c8r-g728",
+      "resolution": "unused-root-package-copies-removed",
+      "removedVersion": "9.14.5",
+      "affectedRange": "=9.14.5",
+      "reason": "The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."
+    },
+    "1243657": {
+      "package": "vue-i18n",
+      "url": "https://github.com/advisories/GHSA-83rm-6c8r-g728",
+      "resolution": "unused-root-package-copies-removed",
+      "removedVersion": "9.14.5",
+      "affectedRange": "=9.14.5",
+      "reason": "The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."
     }
   }
 }

@@ -1,3 +1,20 @@
+# Current Express/qs boundary — 2026-10-28
+
+The current lock resolves official Express4.22.3 and a single root qs6.16.2 for
+both Express and body-parser1.20.9; path-to-regexp0.1.13 and proxy-addr2.0.8 remain
+pinned. All official installed Express/qs files and modes were compared with the
+genuine archives. Actual parser/compression/bounded-HTTP/default-SSR-off checks
+passed, including ordinary comma inputs and three poison properties. Optional
+SSR deployment is not covered. Full evidence and the exact source/baseline delta
+are in `workers-ts/docs/uni-d3-security-backports-20261028.md` and its machine
+review. The removed qs sources have return guards. Earlier npm advisory-order
+behavior is retained as a diagnostic and is not treated as remediation evidence.
+
+The original record below is historical; in particular its old root/nested qs
+and Express version statements describe that earlier run.
+
+---
+
 # UniApp H5 SSR Express and qs boundary
 
 Scope: locked `@dcloudio/vite-plugin-uni` `3.0.0-4020920240930001` → `express` `4.22.2` → `qs` `6.15.3` and `proxy-addr` `2.0.7`. Express also loads `body-parser` `1.20.6`, which resolves the same `qs` version. This audit changes no dependency or runtime code.

@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "kind": "exact-official-source-derivation-contract",
+  "source": {
+    "name": "@intlify/core-base",
+    "version": "9.1.9",
+    "url": "https://registry.npmjs.org/@intlify/core-base/-/core-base-9.1.9.tgz",
+    "integrity": "sha512-x5T0p/Ja0S8hs5xs+ImKyYckVkL4CzcEXykVYYV6rcbXxJTe2o58IquSqX9bdncVKbRZP7GlBU1EcRaQEEJ+vw==",
+    "sha256": "7c08bb9021e7024d64c96aa661ac956c34cd4079a9306fb6259da71acf645578",
+    "fileCount": 12,
+    "files": [
+      {
+        "name": "LICENSE",
+        "mode": 420,
+        "bytes": 1083,
+        "sha256": "403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568",
+        "sourceHeaderSha256": "378eecf1357d511fbb99df605f021f9bb918fdcf2dae62510d1396aac1d7ea66",
+        "canonicalHeaderSha256": "a957a68ff0ece0648c36cebbc0cb26b7eab00921a7d89dbddeda04e41b132761",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "README.md",
+        "mode": 420,
+        "bytes": 118,
+        "sha256": "14e61390c5684b02ddb4e0ee62e9f21c85c66bac78856bdff8f88803db4c3492",
+        "sourceHeaderSha256": "64a96bf5dae9dfbcc2f630882e5845757ca305bf7db06e2afc00563b9ed21014",
+        "canonicalHeaderSha256": "7a732832fb1b02b6dcb9b5a3477e6225e7d69c22a88b08e41a512f2a89730e86",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.cjs.js",
+        "mode": 420,
+        "bytes": 36220,
+        "sha256": "290b52a9b1b4e7b38511d99bf719551ab68d7096a1891bcb9e571a85c518e629",
+        "sourceHeaderSha256": "e237c97040f27155e9bc15c7b47518461d39b75af6292549a775a24ec9a6d1f1",
+        "canonicalHeaderSha256": "3ac806456f2fc2a69665ca752af76155f7e10ba20054ff27cd26adc522dc3084",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.cjs.prod.js",
+        "mode": 420,
+        "bytes": 26615,
+        "sha256": "0c3e54e17e8f2de196cb7176594509011f237b1fcdf12039e3c79335c75048e2",
+        "sourceHeaderSha256": "18fa287a80e94ae888a6a0e462d32a66758a593226218d02205925edc1001f76",
+        "canonicalHeaderSha256": "e3ea32a25ff88a7078b5241faf8a4b6dbbfa2c4d9791669ea1eae06cd58a293f",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.d.ts",
+        "mode": 420,
+        "bytes": 23278,
+        "sha256": "8b4833d9185ac4ad63776eb31dbe4c34d3f916e5c554e1e27d15709a70a305da",
+        "sourceHeaderSha256": "f2547d90cd0b1ac4d6a99fddecd087a90d780090643623585799fd3797970adb",
+        "canonicalHeaderSha256": "31f7fd62104ef7282a2914b04ecb07a7a79c2e401a8da3ebf45d97e5f6266f10",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-browser.js",
+        "mode": 420,
+        "bytes": 99111,
+        "sha256": "2253e6456438322c5b0c872de6e1dd540edfef0a7022fd6de88db8b0df82178f",
+        "sourceHeaderSha256": "ececf36fbe694f2ab1aeb1845ebfe18f67d114158633232512be606c0fea600e",
+        "canonicalHeaderSha256": "ef5131649e7dc71d4fb77c0314fb9498412dfb465e432a67f4efffe710cc1893",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-browser.prod.js",
+        "mode": 420,
+        "bytes": 24720,
+        "sha256": "b8000e6d19f28b4f1e6fe7df02975c78842c6e88c98749f03529ae15279c14c8",
+        "sourceHeaderSha256": "22f38dad4b398bd36ee88aab5190656bbe1cba9aedb767b27a2dae73e4b788d8",
+        "canonicalHeaderSha256": "81dee767baed7bcb1f9d9ed36d481ad8af24af63305731fd023a5a413e8be458",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-bundler.js",
+        "mode": 420,
+        "bytes": 35699,
+        "sha256": "2ba3a4e15acfc991675ff5a1747a844f71d83295a0eb26fdc36ff7f8fb83b032",
+        "sourceHeaderSha256": "4435655fbe492dae7c5deeb9fcc5600cbfc5307fb3efdf1922b74ce57f852881",
+        "canonicalHeaderSha256": "2c37f5fe1b39951d054cb3c1b65e839a7e1e8f400e40466fe3d4698932243b02",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.global.js",
+        "mode": 420,
+        "bytes": 105740,
+        "sha256": "fbd8e50683782588205a21cc9e86a3413062cc8f564890e1439989fc44973426",
+        "sourceHeaderSha256": "466e1a197c04e1936f3d4a5be5e69788ffbf66cef21c3635a01bb3245bbcb112",
+        "canonicalHeaderSha256": "096d26affe8e9edfed5f18a8fcee6100d257108889c21d467d3a5ba813a2c58f",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.global.prod.js",
+        "mode": 420,
+        "bytes": 24615,
+        "sha256": "b4e9e2b587d60bc9f5dfbb4080b8e7080276fe853c90662b3d7a51464fba8991",
+        "sourceHeaderSha256": "1b8f35fd71ac544477e788fcd29318010a7cb9444c6eb4bee8dbac69fb244061",
+        "canonicalHeaderSha256": "a1f7475c6cf8336ed2acc6e946fae3118452ead5a135cd413e5b68c38c108765",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "index.js",
+        "mode": 420,
+        "bytes": 183,
+        "sha256": "2d0a296f281bb490d063061370f8f93ae5f9d40be987fb188ef70b3d16e77e88",
+        "sourceHeaderSha256": "33704e056234c529b4077823272b97a43f27a9dae010cb0f15699c55b155e966",
+        "canonicalHeaderSha256": "6d3b703ff110cb10dccb740e3a8c0e227a7dae602de626891cecda8967ab3b44",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "package.json",
+        "mode": 420,
+        "bytes": 1358,
+        "sha256": "966c5b9fd2b010a5064bf5758ed71ae8e711bec7e305d4fcb94dcf5490759cee",
+        "sourceHeaderSha256": "ae4fb903c48b641871399c9ca93ee54df2df2a5993bc835f5ff6dd7fa5d5c2d0",
+        "canonicalHeaderSha256": "d0b05413c4f8e932fa0c0ef02b9991f3e62eee3f602eef7ac1107f6f30093ccb",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 499162500,
+        "uname": "",
+        "gname": ""
+      }
+    ]
+  },
+  "derived": {
+    "archiveSha256": "ad1f2afe8f76ec37e2e6124a1b0ce6c20035600b35d3796ed6c56f06487c3951",
+    "integrity": "sha512-4uCD4J7JUjWFWdO5emp19SX8/HkEIq5stYJlR5m6CGYddcY58hW4dv7z7uuy4EnzI/wq7FwR8FJxymf7ADVy9Q==",
+    "bytes": 399413,
+    "fileCount": 12,
+    "files": [
+      {
+        "name": "LICENSE",
+        "mode": 420,
+        "bytes": 1083,
+        "sha256": "403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568",
+        "sourceHeaderSha256": "a957a68ff0ece0648c36cebbc0cb26b7eab00921a7d89dbddeda04e41b132761",
+        "canonicalHeaderSha256": "a957a68ff0ece0648c36cebbc0cb26b7eab00921a7d89dbddeda04e41b132761",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "README.md",
+        "mode": 420,
+        "bytes": 118,
+        "sha256": "14e61390c5684b02ddb4e0ee62e9f21c85c66bac78856bdff8f88803db4c3492",
+        "sourceHeaderSha256": "7a732832fb1b02b6dcb9b5a3477e6225e7d69c22a88b08e41a512f2a89730e86",
+        "canonicalHeaderSha256": "7a732832fb1b02b6dcb9b5a3477e6225e7d69c22a88b08e41a512f2a89730e86",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.cjs.js",
+        "mode": 420,
+        "bytes": 36302,
+        "sha256": "9a3a9031eeb4a4b28087a1a12cfe976fafc0f3a5fae50e77097d28c3852769a1",
+        "sourceHeaderSha256": "2b342d4364d4dc396672f95bb66beb1b3b1ad1a14fd924b3358783ef316781e2",
+        "canonicalHeaderSha256": "2b342d4364d4dc396672f95bb66beb1b3b1ad1a14fd924b3358783ef316781e2",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.cjs.prod.js",
+        "mode": 420,
+        "bytes": 26697,
+        "sha256": "5e7d9c0cbf2a82a9ede82e738150a257449a6da00bf7632e64621ea47a6292b1",
+        "sourceHeaderSha256": "754fdf0855964a3606d7e7c2d68637620d745501cd7234a16b5333d1dac47661",
+        "canonicalHeaderSha256": "754fdf0855964a3606d7e7c2d68637620d745501cd7234a16b5333d1dac47661",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.d.ts",
+        "mode": 420,
+        "bytes": 23278,
+        "sha256": "8b4833d9185ac4ad63776eb31dbe4c34d3f916e5c554e1e27d15709a70a305da",
+        "sourceHeaderSha256": "31f7fd62104ef7282a2914b04ecb07a7a79c2e401a8da3ebf45d97e5f6266f10",
+        "canonicalHeaderSha256": "31f7fd62104ef7282a2914b04ecb07a7a79c2e401a8da3ebf45d97e5f6266f10",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-browser.js",
+        "mode": 420,
+        "bytes": 99193,
+        "sha256": "c59df6c8b2e871d8631b762d450175bd23349366d0b32b015a0f59c5d36c4058",
+        "sourceHeaderSha256": "cb01bdc01de103c35543ecfc1552977d7a67f6100333b540c5eb2d0bf5f472ad",
+        "canonicalHeaderSha256": "cb01bdc01de103c35543ecfc1552977d7a67f6100333b540c5eb2d0bf5f472ad",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-browser.prod.js",
+        "mode": 420,
+        "bytes": 24836,
+        "sha256": "b383599a2a79744b207e74ff082d205b8fdd3b544f73311f07931506dad968e1",
+        "sourceHeaderSha256": "bc7df63401fc474c42ca3396482e31af1c70d994c7302e81d98a0df1bdce06a3",
+        "canonicalHeaderSha256": "bc7df63401fc474c42ca3396482e31af1c70d994c7302e81d98a0df1bdce06a3",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.esm-bundler.js",
+        "mode": 420,
+        "bytes": 35781,
+        "sha256": "55192c8e06f1152f4774cd6858169ffa35a86c32288fd0a1465871eb05e8fe5b",
+        "sourceHeaderSha256": "1488643418fe922866a43d97143419ef56cb1924ea64d9e90847c6c0450267cd",
+        "canonicalHeaderSha256": "1488643418fe922866a43d97143419ef56cb1924ea64d9e90847c6c0450267cd",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.global.js",
+        "mode": 420,
+        "bytes": 105826,
+        "sha256": "2bebeaa652310ca903925d595cea9844e7e0e12524b0fb3c23a59a45df50fbb8",
+        "sourceHeaderSha256": "1c36711af3108f30266408dc7c6a7038f766767309169271b824719a3a6d2a35",
+        "canonicalHeaderSha256": "1c36711af3108f30266408dc7c6a7038f766767309169271b824719a3a6d2a35",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "dist/core-base.global.prod.js",
+        "mode": 420,
+        "bytes": 24731,
+        "sha256": "64e1637cdf5aefeab36ce54acb808a42d1ddd078843d03b2237d6cd8b6da031f",
+        "sourceHeaderSha256": "8f75dd483ac966e5cbf01574cd02a5cf55d1b1f658ca132579970bd7cee830c1",
+        "canonicalHeaderSha256": "8f75dd483ac966e5cbf01574cd02a5cf55d1b1f658ca132579970bd7cee830c1",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "index.js",
+        "mode": 420,
+        "bytes": 183,
+        "sha256": "2d0a296f281bb490d063061370f8f93ae5f9d40be987fb188ef70b3d16e77e88",
+        "sourceHeaderSha256": "6d3b703ff110cb10dccb740e3a8c0e227a7dae602de626891cecda8967ab3b44",
+        "canonicalHeaderSha256": "6d3b703ff110cb10dccb740e3a8c0e227a7dae602de626891cecda8967ab3b44",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      },
+      {
+        "name": "package.json",
+        "mode": 420,
+        "bytes": 1358,
+        "sha256": "966c5b9fd2b010a5064bf5758ed71ae8e711bec7e305d4fcb94dcf5490759cee",
+        "sourceHeaderSha256": "d0b05413c4f8e932fa0c0ef02b9991f3e62eee3f602eef7ac1107f6f30093ccb",
+        "canonicalHeaderSha256": "d0b05413c4f8e932fa0c0ef02b9991f3e62eee3f602eef7ac1107f6f30093ccb",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 0,
+        "uname": "",
+        "gname": ""
+      }
+    ]
+  },
+  "advisory": "GHSA-8rc2-428q-7ww3",
+  "npmSourceId": 1243629,
+  "officialFixCommit": "d657ce8f4b3b6b198a8f6e3d09e2b57a5d019fb8",
+  "patches": [
+    {
+      "file": "dist/core-base.cjs.js",
+      "before": "function escapeParams(options) {\r\n    if (shared.isArray(options.list)) {\r\n        options.list = options.list.map(item => shared.isString(item) ? shared.escapeHtml(item) : item);\r\n    }\r\n    else if (shared.isObject(options.named)) {\r\n        Object.keys(options.named).forEach(key => {\r\n            if (shared.isString(options.named[key])) {\r\n                options.named[key] = shared.escapeHtml(options.named[key]);\r\n            }\r\n        });\r\n    }\r\n}",
+      "after": "function escapeParams(options) {\r\n    if (shared.isArray(options.list)) {\r\n        options.list = options.list.map(item => shared.isString(item) ? shared.escapeHtml(item) : item);\r\n    }\r\n    if (shared.isObject(options.named)) {\r\n        const source = options.named;\r\n        const named = Object.create(null);\r\n        for (const key of Object.keys(source)) {\r\n            const value = source[key];\r\n            named[key] = shared.isString(value) ? shared.escapeHtml(value) : value;\r\n        }\r\n        options.named = named;\r\n    }\r\n}"
+    },
+    {
+      "file": "dist/core-base.cjs.prod.js",
+      "before": "function escapeParams(options) {\r\n    if (shared.isArray(options.list)) {\r\n        options.list = options.list.map(item => shared.isString(item) ? shared.escapeHtml(item) : item);\r\n    }\r\n    else if (shared.isObject(options.named)) {\r\n        Object.keys(options.named).forEach(key => {\r\n            if (shared.isString(options.named[key])) {\r\n                options.named[key] = shared.escapeHtml(options.named[key]);\r\n            }\r\n        });\r\n    }\r\n}",
+      "after": "function escapeParams(options) {\r\n    if (shared.isArray(options.list)) {\r\n        options.list = options.list.map(item => shared.isString(item) ? shared.escapeHtml(item) : item);\r\n    }\r\n    if (shared.isObject(options.named)) {\r\n        const source = options.named;\r\n        const named = Object.create(null);\r\n        for (const key of Object.keys(source)) {\r\n            const value = source[key];\r\n            named[key] = shared.isString(value) ? shared.escapeHtml(value) : value;\r\n        }\r\n        options.named = named;\r\n    }\r\n}"
+    },
+    {
+      "file": "dist/core-base.esm-browser.js",
+      "before": "function escapeParams(options) {\r\n    if (isArray(options.list)) {\r\n        options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n    }\r\n    else if (isObject(options.named)) {\r\n        Object.keys(options.named).forEach(key => {\r\n            if (isString(options.named[key])) {\r\n                options.named[key] = escapeHtml(options.named[key]);\r\n            }\r\n        });\r\n    }\r\n}",
+      "after": "function escapeParams(options) {\r\n    if (isArray(options.list)) {\r\n        options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n    }\r\n    if (isObject(options.named)) {\r\n        const source = options.named;\r\n        const named = Object.create(null);\r\n        for (const key of Object.keys(source)) {\r\n            const value = source[key];\r\n            named[key] = isString(value) ? escapeHtml(value) : value;\r\n        }\r\n        options.named = named;\r\n    }\r\n}"
+    },
+    {
+      "file": "dist/core-base.esm-browser.prod.js",
+      "before": "function(e){i(e.list)?e.list=e.list.map((e=>p(e)?a(e):e)):d(e.named)&&Object.keys(e.named).forEach((t=>{p(e.named[t])&&(e.named[t]=a(e.named[t]))}))}",
+      "after": "function(e){if(i(e.list)){e.list=e.list.map(function(item){return p(item)?a(item):item;});}if(d(e.named)){var source=e.named;var named=Object.create(null);for(var key of Object.keys(source)){var value=source[key];named[key]=p(value)?a(value):value;}e.named=named;}}"
+    },
+    {
+      "file": "dist/core-base.esm-bundler.js",
+      "before": "function escapeParams(options) {\r\n    if (isArray(options.list)) {\r\n        options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n    }\r\n    else if (isObject(options.named)) {\r\n        Object.keys(options.named).forEach(key => {\r\n            if (isString(options.named[key])) {\r\n                options.named[key] = escapeHtml(options.named[key]);\r\n            }\r\n        });\r\n    }\r\n}",
+      "after": "function escapeParams(options) {\r\n    if (isArray(options.list)) {\r\n        options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n    }\r\n    if (isObject(options.named)) {\r\n        const source = options.named;\r\n        const named = Object.create(null);\r\n        for (const key of Object.keys(source)) {\r\n            const value = source[key];\r\n            named[key] = isString(value) ? escapeHtml(value) : value;\r\n        }\r\n        options.named = named;\r\n    }\r\n}"
+    },
+    {
+      "file": "dist/core-base.global.js",
+      "before": "function escapeParams(options) {\r\n      if (isArray(options.list)) {\r\n          options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n      }\r\n      else if (isObject(options.named)) {\r\n          Object.keys(options.named).forEach(key => {\r\n              if (isString(options.named[key])) {\r\n                  options.named[key] = escapeHtml(options.named[key]);\r\n              }\r\n          });\r\n      }\r\n  }",
+      "after": "function escapeParams(options) {\r\n      if (isArray(options.list)) {\r\n          options.list = options.list.map(item => isString(item) ? escapeHtml(item) : item);\r\n      }\r\n      if (isObject(options.named)) {\r\n          const source = options.named;\r\n          const named = Object.create(null);\r\n          for (const key of Object.keys(source)) {\r\n              const value = source[key];\r\n              named[key] = isString(value) ? escapeHtml(value) : value;\r\n          }\r\n          options.named = named;\r\n      }\r\n  }"
+    },
+    {
+      "file": "dist/core-base.global.prod.js",
+      "before": "function(e){f(e.list)?e.list=e.list.map((e=>m(e)?u(e):e)):k(e.named)&&Object.keys(e.named).forEach((t=>{m(e.named[t])&&(e.named[t]=u(e.named[t]))}))}",
+      "after": "function(e){if(f(e.list)){e.list=e.list.map(function(item){return m(item)?u(item):item;});}if(k(e.named)){var source=e.named;var named=Object.create(null);for(var key of Object.keys(source)){var value=source[key];named[key]=m(value)?u(value):value;}e.named=named;}}"
+    }
+  ],
+  "allowedChangedOriginalFiles": [
+    "dist/core-base.cjs.js",
+    "dist/core-base.cjs.prod.js",
+    "dist/core-base.esm-browser.js",
+    "dist/core-base.esm-browser.prod.js",
+    "dist/core-base.esm-bundler.js",
+    "dist/core-base.global.js",
+    "dist/core-base.global.prod.js"
+  ],
+  "allowedNewFiles": [],
+  "support": "Project maintained exact mixed-argument escaping backport; version9.1.9 still matches the advisory range. This is not an official fixed9.x release. No9145 srcdoc patch is claimed.",
+  "sourceBackportAdaptation": "Use existing v9 NamedValue type and Object.create(null), equivalent to v11 shared.create(), without adding an import/dependency. Escape helpers and all other v9 semantics remain unchanged.",
+  "all7PublishedDistributionsPatchedDirectlyNotRebuiltFromTS": true,
+  "sourceReference": {
+    "tag": "v9.1.9",
+    "blobSha": "a98c6f9cfdd2b2362f8ac3dea5f301d2d1f57884",
+    "beforeSha256": "305434735c01c3c98f29d9e262bbf435e52f2fd86e00768eadeb46ff4d7fbc71",
+    "afterSha256": "166274e03d147e462b65a3e9182e040ef9b3b7818609f20aef07086db5243710",
+    "before": "function escapeParams(options: TranslateOptions) {\n  if (isArray(options.list)) {\n    options.list = options.list.map(item =>\n      isString(item) ? escapeHtml(item) : item\n    )\n  } else if (isObject(options.named)) {\n    Object.keys(options.named).forEach(key => {\n      if (isString(options.named![key])) {\n        options.named![key] = escapeHtml(options.named![key] as string)\n      }\n    })\n  }\n}",
+    "after": "function escapeParams(options: TranslateOptions) {\n  if (isArray(options.list)) {\n    options.list = options.list.map(item =>\n      isString(item) ? escapeHtml(item) : item\n    )\n  }\n  if (isObject(options.named)) {\n    const source = options.named\n    const named = Object.create(null) as NamedValue\n    for (const key of Object.keys(source)) {\n      const value = source[key]\n      named[key] = isString(value) ? escapeHtml(value) : value\n    }\n    options.named = named\n  }\n}"
+  },
+  "tarNormalization": "Sorted regular USTAR entries; mode retained; uid/gid/mtime0, empty uname/gname; two zero blocks then record padded to10240; stored DEFLATE65535 blocks/fixed gzip header/CRC32+ISIZE"
+}

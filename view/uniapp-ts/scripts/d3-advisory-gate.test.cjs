@@ -10,6 +10,8 @@ const test = require("node:test");
 const { evaluateAudit } = require("./d3-advisory-gate.cjs");
 
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "d3-advisory-gate.baseline.json"), "utf8"));
+const preSecurityBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-security-backports-20261028.baseline.json"));
+const preSecurityBaseline = JSON.parse(preSecurityBaselineBytes.toString("utf8"));
 
 function reviewedFixture(reviewed = baseline) {
   const vulnerabilities = Object.create(null);
@@ -44,17 +46,17 @@ function rejected(fixture, fragment) {
 }
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 50);
-  assert.equal(Object.keys(baseline.advisories).length, 27);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 15);
+  assert.equal(Object.keys(baseline.entries).length, 48);
+  assert.equal(Object.keys(baseline.advisories).length, 25);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 23);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 27);
-  assert.equal(result.distinctAdvisoryUrls, 26);
+  assert.equal(result.directAdvisoryObjects, 25);
+  assert.equal(result.distinctAdvisoryUrls, 24);
   assert.equal(Object.keys(baseline.chains).length, 8);
-  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);
+  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);
 });
 
 test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
@@ -99,13 +101,13 @@ test("reviewed lock fingerprint is stable across Git checkout line endings", () 
 
 test("unknown direct advisory and a changed existing advisory fail closed", () => {
   const added = reviewedFixture();
-  added.vulnerabilities.qs.via.push({ source: 9999999, name: "qs", dependency: "qs",
+  added.vulnerabilities.vite.via.push({ source: 9999999, name: "vite", dependency: "vite",
     url: "https://github.com/advisories/GHSA-aaaa-bbbb-cccc", severity: "high", range: "*" });
   rejected(added, "unknown direct advisory 9999999");
 
   const changed = reviewedFixture();
-  const record = changed.vulnerabilities.qs.via.find((via) => typeof via === "object");
-  record.range = "<6.15.3";
+  const record = changed.vulnerabilities.vite.via.find((via) => typeof via === "object");
+  record.range = "*";
   rejected(changed, "direct advisory changed");
 });
 
@@ -113,13 +115,13 @@ test("new propagated package, new node path, and changed propagation are rejecte
   const added = reviewedFixture();
   added.vulnerabilities["new-glob-wrapper"] = { name: "new-glob-wrapper", severity: "high",
     isDirect: false, range: "*", nodes: ["node_modules/new-glob-wrapper"],
-    effects: [], via: ["qs"] };
+    effects: [], via: ["vite"] };
   refreshMetadata(added);
   rejected(added, "unknown affected package entry: new-glob-wrapper");
 
   const path = reviewedFixture();
-  path.vulnerabilities.qs.nodes.push("node_modules/other/node_modules/qs");
-  rejected(path, "affected package entry changed: qs");
+  path.vulnerabilities.vite.nodes.push("node_modules/other/node_modules/vite");
+  rejected(path, "affected package entry changed: vite");
 
   const edge = reviewedFixture();
   edge.vulnerabilities['@jest/core'].via = ["jest-config"];
@@ -133,7 +135,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all fifteen resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
+test("all twenty-three resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -161,12 +163,12 @@ test("offline CLI accepts the reviewed fixture and rejects a new path without ru
     assert.match(accepted.stdout, /not counts of independent vulnerabilities/);
 
     const changed = reviewedFixture();
-    changed.vulnerabilities.qs.nodes.push("node_modules/new-path/node_modules/qs");
+    changed.vulnerabilities.vite.nodes.push("node_modules/new-path/node_modules/vite");
     writeFileSync(file, JSON.stringify(changed));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--fixture", file],
       { encoding: "utf8", timeout: 10000 });
     assert.equal(denied.status, 1);
-    assert.match(denied.stderr, /affected package entry changed: qs/);
+    assert.match(denied.stderr, /affected package entry changed: vite/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -209,7 +211,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /50 affected package entries/);
+    assert.match(accepted.stdout, /48 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -231,7 +233,7 @@ test("withdrawn sprintf-js source and its exclusive propagated entries remain fo
   for (const name of ['@istanbuljs/load-nyc-config', 'argparse', 'babel-plugin-istanbul', 'js-yaml', 'sprintf-js']) {
     assert.equal(baseline.entries[name], undefined);
     const returned = reviewedFixture();
-    returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['qs']};
+    returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['vite']};
     refreshMetadata(returned);
     rejected(returned, `unknown affected package entry: ${name}`);
   }
@@ -280,7 +282,7 @@ test('withdrawn braces source and all 26 exclusive package entries remain forbid
     assert.equal(baseline.entries[name], undefined);
     const returned = reviewedFixture();
     returned.vulnerabilities[name] = { name, severity: 'high', isDirect: false, range: '*',
-      nodes: [`node_modules/${name}`], effects: [], via: ['qs'] };
+      nodes: [`node_modules/${name}`], effects: [], via: ['vite'] };
     refreshMetadata(returned);
     rejected(returned, `unknown affected package entry: ${name}`);
   }
@@ -393,14 +395,20 @@ test('reverting the patched body-parser lock is rejected before the audit receip
   rejectsPatchedLockMutation(packages => { packages['node_modules/body-parser'].version = '1.20.6'; });
 });
 
-test('redirecting body-parser to the old qs version is rejected before the audit receipt', () => {
-  rejectsPatchedLockMutation(packages => { packages['node_modules/body-parser/node_modules/qs'].version = '6.15.3'; });
+test('reverting shared Express/body-parser root qs is rejected before the audit receipt', () => {
+  rejectsPatchedLockMutation(packages => { packages['node_modules/qs'].version = '6.15.3'; });
 });
 
-test('a newly vulnerable qs node under body-parser is not accepted with the existing root qs', () => {
+test('historical nested qs node mutation stays rejected and fixed qs cannot return now', () => {
+  const historical = reviewedFixture(preSecurityBaseline);
+  historical.vulnerabilities.qs.nodes.push('node_modules/body-parser/node_modules/qs');
+  const oldResult = evaluateAudit(historical, preSecurityBaseline);
+  assert.equal(oldResult.ok, false);
+  assert.ok(oldResult.issues.some(x => x.includes('affected package entry changed: qs')));
   const returned = reviewedFixture();
-  returned.vulnerabilities.qs.nodes.push('node_modules/body-parser/node_modules/qs');
-  rejected(returned, 'affected package entry changed: qs');
+  returned.vulnerabilities.qs = {name:'qs',severity:'moderate',isDirect:false,range:'<=6.16.0',nodes:['node_modules/qs','node_modules/body-parser/node_modules/qs'],effects:[],via:[{source:1158506,name:'qs',dependency:'qs',severity:'moderate',range:'>=6.14.2 <=6.15.3',url:baseline.resolvedAdvisories['1158506'].url}]};
+  refreshMetadata(returned);
+  rejected(returned, 'resolved advisory reappeared: 1158506');
 });
 
 // This exact snapshot predates the reviewed npm numeric-source replacement.
@@ -438,7 +446,8 @@ for (const kind of ['source','url','severity','range','missing','old-source']) t
 
 const preQsCommaBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-qs-comma-20261027.baseline.json"));
 const preQsCommaBaseline = JSON.parse(preQsCommaBaselineBytes.toString("utf8"));
-test('new qs comma advisory preserves every previously reviewed tuple and installed forward path', () => {
+test('historical qs comma advisory preserves every previously reviewed tuple and installed forward path', () => {
+  const baseline = preSecurityBaseline;
   assert.equal(createHash('sha256').update(preQsCommaBaselineBytes).digest('hex'), 'f62308efc2f92f0424407851024a2915f9bfa21741bacb15ca77ff1fdb80341d');
   const expected = structuredClone(preQsCommaBaseline);
   expected.advisories['1243452'] = { package:'qs', url:'https://github.com/advisories/GHSA-6pq8-jhm2-2vcw', severity:'moderate', range:'>=6.7.0 <=6.16.0', chain:'h5-ssr' };
@@ -450,8 +459,9 @@ test('new qs comma advisory preserves every previously reviewed tuple and instal
   assert.deepEqual(baseline.entries.qs.nodes, ['node_modules/qs']);
   assert.equal(baseline.advisories['1243452'].chain, 'h5-ssr');
 });
-for (const kind of ['source','url','severity','range','missing','new-node','old-source-disappeared']) test('qs comma review rejects changed ' + kind, () => {
-  const report = reviewedFixture(), via = report.vulnerabilities.qs.via;
+for (const kind of ['source','url','severity','range','missing','new-node','old-source-disappeared']) test('historical qs comma review rejects changed ' + kind, () => {
+  const baseline = preSecurityBaseline;
+  const report = reviewedFixture(baseline), via = report.vulnerabilities.qs.via;
   const entry = via.find(v => v && typeof v === 'object' && v.source === 1243452);
   if (kind === 'source') entry.source = 9999999;
   if (kind === 'url') entry.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
@@ -464,4 +474,56 @@ for (const kind of ['source','url','severity','range','missing','new-node','old-
   const fragment = kind === 'source' ? 'unknown direct advisory 9999999' : kind === 'new-node' ? 'affected package entry changed: qs'
     : ['missing','old-source-disappeared'].includes(kind) ? 'direct advisory disappeared without baseline review' : 'direct advisory changed: 1243452';
   assert.ok(result.issues.some(v => v.includes(fragment)), JSON.stringify(result.issues));
+});
+
+
+// Exact2026-10-28 C3 inventory delta. Older history is pinned separately above.
+test('C3 preserves all old50 tuples except the complete reviewed exact delta', () => {
+  assert.equal(createHash('sha256').update(preSecurityBaselineBytes).digest('hex'), '778662a60ae0eb6874b9705a98effe2ce39ec337a41ce0b853a77a3bdbbf20f4');
+  assert.equal(Object.keys(preSecurityBaseline.entries).length,50);
+  assert.equal(Object.keys(preSecurityBaseline.advisories).length,27);
+  assert.equal(Object.keys(preSecurityBaseline.resolvedAdvisories).length,15);
+  for(const [id,record] of Object.entries(preSecurityBaseline.resolvedAdvisories)) assert.deepEqual(baseline.resolvedAdvisories[id],record,id);
+  assert.deepEqual(Object.keys(baseline.resolvedAdvisories).filter(id=>!Object.hasOwn(preSecurityBaseline.resolvedAdvisories,id)).map(Number).sort((a,b)=>a-b),[1158506,1158507,1243452,1243505,1243633,1243637,1243649,1243657]);
+  const {intlify:oldIntlify,...oldChains}=preSecurityBaseline.chains,{intlify:newIntlify,...newChains}=baseline.chains;
+  assert.deepEqual(newChains,oldChains); assert.notEqual(newIntlify,oldIntlify);
+  const advisories=structuredClone(preSecurityBaseline.advisories);
+  for(const id of ['1158506','1158507','1243452'])delete advisories[id];
+  advisories['1243629']={"package":"@intlify/core-base","url":"https://github.com/advisories/GHSA-8rc2-428q-7ww3","severity":"low","range":">=9.0.0-beta.12 <11.4.14","chain":"intlify"}; assert.deepEqual(baseline.advisories,advisories);
+  const expected=structuredClone(preSecurityBaseline.entries);delete expected.express;delete expected.qs;
+  expected['@intlify/core-base'].advisorySources=[1106453,1146054,1243629];expected['@intlify/core-base'].isDirect=true;expected['@intlify/core-base'].range='<=11.4.13';
+  expected['jest-config'].isDirect=true;expected['@dcloudio/uni-cloud'].effects=[];expected['@dcloudio/uni-components'].effects=['@dcloudio/uni-app'];expected['@jest/core'].effects=['jest','jest-cli'];
+  assert.deepEqual(baseline.entries,expected);
+});
+
+const c3NewResolved={"1158506":{"package":"qs","url":"https://github.com/advisories/GHSA-x5fp-wj9c-mxmx","resolution":"patched","fixedVersion":"6.16.2","affectedRange":">=6.14.2 <=6.15.3","reason":"Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."},"1158507":{"package":"qs","url":"https://github.com/advisories/GHSA-4mjr-xmp4-gh2g","resolution":"patched","fixedVersion":"6.16.2","affectedRange":">=2.2.5 <6.16.0","reason":"Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."},"1243452":{"package":"qs","url":"https://github.com/advisories/GHSA-6pq8-jhm2-2vcw","resolution":"patched","fixedVersion":"6.16.2","affectedRange":">=6.7.0 <=6.16.0","reason":"Adopted official qs6.16.2, shared by actual Express4.22.3 and body-parser1.20.9 consumers; fixedVersion is the verified adopted version, not a claim about the earliest upstream fixed release. Full official tar SRI/installed bytes and actual SSR/parser controls are reviewed."},"1243505":{"package":"deepmerge","url":"https://github.com/advisories/GHSA-gcqx-w48m-w2h4","resolution":"external-dependency-removed-with-verified-local-source-fork","reason":"Actual jest-config27.5.1 retains identity/API, embeds source-patched deepmerge4.3.1 CJS with complete MIT license, and removes its external deepmerge dependency. The installed full graph contains no external deepmerge node. This is not an official fixed upstream Jest/deepmerge release.","sourceContract":"view/uniapp-ts/vendor/jest-config-27.5.1-source.json","derivedArchiveSha256":"6baf951142521c91b421f3ed56f79b37dcd3270ca90691a29d12aa810d455114","officialFixedRelease":false},"1243633":{"package":"vue-i18n","url":"https://github.com/advisories/GHSA-8rc2-428q-7ww3","resolution":"unused-root-package-copies-removed","removedVersion":"9.14.5","affectedRange":">=9.0.0-beta.5 <11.4.14","reason":"The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."},"1243637":{"package":"@intlify/shared","url":"https://github.com/advisories/GHSA-83rm-6c8r-g728","resolution":"unused-root-package-copies-removed","removedVersion":"9.14.5","affectedRange":"=9.14.5","reason":"The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."},"1243649":{"package":"@intlify/core-base","url":"https://github.com/advisories/GHSA-83rm-6c8r-g728","resolution":"unused-root-package-copies-removed","removedVersion":"9.14.5","affectedRange":"=9.14.5","reason":"The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."},"1243657":{"package":"vue-i18n","url":"https://github.com/advisories/GHSA-83rm-6c8r-g728","resolution":"unused-root-package-copies-removed","removedVersion":"9.14.5","affectedRange":"=9.14.5","reason":"The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."}};
+for(const [id,expected] of Object.entries(c3NewResolved))test('reviewed C3 resolved source '+id+' cannot reappear',()=>{
+  assert.deepEqual(baseline.resolvedAdvisories[id],expected); assert.equal(baseline.advisories[id],undefined);
+  const fixture=reviewedFixture(),name=expected.package;
+  if(!fixture.vulnerabilities[name])fixture.vulnerabilities[name]={name,severity:'moderate',isDirect:false,range:'*',nodes:['node_modules/'+name],effects:[],via:[]};
+  fixture.vulnerabilities[name].via.push({source:Number(id),name,dependency:name,url:expected.url,severity:'moderate',range:'*'});
+  refreshMetadata(fixture);rejected(fixture,'resolved advisory reappeared: '+id);
+});
+
+test('source1243629 is exact and linked to all7 published source patches and real consumer/runtime evidence',()=>{
+  const expected={"rawAuditSha256":"82e18c448356d03b524ea24d453186f612ba97d2ab0a603393b564cfaa84ebc4","lockSemanticSha256":"9636a49bcc355d00c59e83a19f4b8b87cd4ddcdc00d2beb8e94af4e80480cfea","intlify":{"npmSourceId":1243629,"advisory":"GHSA-8rc2-428q-7ww3","officialFixCommit":"d657ce8f4b3b6b198a8f6e3d09e2b57a5d019fb8","contractSha256":"3cfa77d693f397239771b90307bb92d63a897a48d51c889c75e689f4d4033131","derivedArchiveSha256":"ad1f2afe8f76ec37e2e6124a1b0ce6c20035600b35d3796ed6c56f06487c3951","patchedDistributions":["dist/core-base.cjs.js","dist/core-base.cjs.prod.js","dist/core-base.esm-browser.js","dist/core-base.esm-browser.prod.js","dist/core-base.esm-bundler.js","dist/core-base.global.js","dist/core-base.global.prod.js"],"archiveFileCount":12,"securityBackportTests":29,"runtimeGraphTests":13}};
+  const review=JSON.parse(readFileSync(resolve(__dirname,'../../../workers-ts/audit/uni-d3-security-backports-20261028.json'),'utf8'));
+  assert.deepEqual(review.regressionContract,expected);
+  const formal12={"scripts/build-intlify-core-safety-backport.cjs":"f0f9f3fdcb695beec2d714685c29a1752f7b31d531a47ddfbae8bfd03c4cd229","scripts/build-jest-deepmerge-safety-backport.cjs":"b125432c63b0d24412cc61a00cdc020975fe4052a2ecd6494b62e50d87795763","scripts/intlify-core-safety-backport.test.cjs":"ae6fc0f2ea28f597378187b9872a5200a314cddabdaa8a3194b1c549adcb96fd","scripts/jest-deepmerge-safety-backport.test.cjs":"a811e5963ce72f03d9774eb6edc978ef871e90248caab5ca14d4e8e37c89e88a","scripts/security-archive-tools.cjs":"821cdda56984920883aad0ef7dbbc6ebbc753d333d2a7e7da38dfc36f4501bd6","scripts/security-consumer-test-helpers.cjs":"b074c8382df2b98399e8b17b9733b6aeaab143d2eb554c9887ed73f12282dfdd","scripts/security-source-archive.test.cjs":"ca6c7a1dcde10eca1e6505ddc845d85d302c835392cfcb9d69b76b0c9aa5d9b6","vendor/intlify-core-base-9.1.9-mixed-escape-backport.tgz":"ad1f2afe8f76ec37e2e6124a1b0ce6c20035600b35d3796ed6c56f06487c3951","vendor/intlify-core-base-9.1.9-source.json":"3cfa77d693f397239771b90307bb92d63a897a48d51c889c75e689f4d4033131","vendor/intlify-dcloud-runtime-source.json":"4d35346cc02214617a6f4bc7953fb397ea4a2e1106f87f51b7a23d810274dd80","vendor/jest-config-27.5.1-deepmerge-safety-backport.tgz":"6baf951142521c91b421f3ed56f79b37dcd3270ca90691a29d12aa810d455114","vendor/jest-config-27.5.1-source.json":"a37b25669c2b5a39da0a6485a3dd82dc5d85e1ccb204c3d547bf8588e17a2d15"};assert.equal(Object.keys(formal12).length,12);
+  for(const [rel,hash] of Object.entries(formal12))assert.equal(createHash('sha256').update(readFileSync(resolve(__dirname,'..',rel))).digest('hex'),hash,rel);
+  const B=require('./build-intlify-core-safety-backport.cjs'),contract=B.CONTRACT;
+  assert.equal(B.CONTRACT_SHA256,expected.intlify.contractSha256);assert.equal(contract.npmSourceId,1243629);assert.equal(contract.advisory,expected.intlify.advisory);assert.equal(contract.officialFixCommit,expected.intlify.officialFixCommit);assert.equal(contract.source.version,'9.1.9');
+  assert.equal(contract.all7PublishedDistributionsPatchedDirectlyNotRebuiltFromTS,true);assert.equal(contract.source.fileCount,12);assert.equal(contract.derived.fileCount,12);
+  assert.deepEqual(contract.allowedNewFiles,[]);assert.deepEqual(contract.allowedChangedOriginalFiles,expected.intlify.patchedDistributions);assert.deepEqual(contract.patches.map(p=>p.file),expected.intlify.patchedDistributions);
+  const verified=B.verifyDerived(readFileSync(resolve(__dirname,'../vendor/intlify-core-base-9.1.9-mixed-escape-backport.tgz')));
+  assert.equal(verified.sha256,expected.intlify.derivedArchiveSha256);assert.equal(verified.fileCount,12);assert.deepEqual(verified.patchedPublishedDistributions,expected.intlify.patchedDistributions);
+  const pkg=JSON.parse(readFileSync(resolve(__dirname,'../package.json'),'utf8'));
+  assert.equal(pkg.scripts['test:security-backports'],'node --test --test-concurrency=1 scripts/security-source-archive.test.cjs scripts/jest-deepmerge-safety-backport.test.cjs scripts/intlify-core-safety-backport.test.cjs');assert.ok(pkg.scripts['test:toolchain'].endsWith(' && npm run test:security-backports'));
+  assert.equal(createHash('sha256').update(readFileSync(resolve(__dirname,'runtime-i18n-audit.test.cjs'))).digest('hex'),'45361a067027ac17842d6f0e180f8d3bff2e857b9ff4ef56d9c2e4c98ccff931');
+});
+for(const kind of ['source','url','severity','range','missing','new-node'])test('reviewed mixed source rejects '+kind,()=>{
+  const fixture=reviewedFixture(),entry=fixture.vulnerabilities['@intlify/core-base'],record=entry.via.find(v=>v&&typeof v==='object'&&v.source===1243629);
+  if(kind==='source')record.source=9999999;if(kind==='url')record.url='https://github.com/advisories/GHSA-aaaa-bbbb-cccc';if(kind==='severity')record.severity='high';if(kind==='range')record.range='*';if(kind==='missing')entry.via=entry.via.filter(v=>v!==record);if(kind==='new-node')entry.nodes.push('node_modules/other/node_modules/@intlify/core-base');
+  const result=evaluateAudit(fixture,baseline);assert.equal(result.ok,false);
+  const fragment=kind==='source'?'unknown direct advisory 9999999':kind==='missing'?'direct advisory disappeared without baseline review':kind==='new-node'?'affected package entry changed: @intlify/core-base':'direct advisory changed: 1243629';assert.ok(result.issues.some(x=>x.includes(fragment)),JSON.stringify(result.issues));
 });
