@@ -48,6 +48,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('durable real-mem
   beforeEach(async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External network forbidden'));
     queue.sendBatch.mockClear(); queue.send.mockClear(); await f.reset();
+    await f.db.insert(systemConfig).values({ menuName: 'routine_appId', value: '"routine-local-app"' });
     await f.db.insert(user).values([{ uid: 11, nickname: '真实团长', phone: '10000000001' }, { uid: 22, nickname: '真实团员', phone: '10000000002' }]);
     await f.db.insert(storeOrder).values([1, 2].map(id => ({ id, orderId: `PINK-${id}`, unique: `pink-key-${id}`,
       uid: id * 11, type: 3, activityId: 30, pinkId: 400, paid: 1, payTime: 1_700_000_000 + id,
@@ -68,10 +69,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('durable real-mem
   });
   afterEach(() => { try { expect(globalThis.fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); } });
 
-  it('persists one immutable five-scalar event per real paid member and no virtual UID or financial write', async () => {
+  it('persists one immutable business event with captured Mini intent per real paid member and no virtual UID or financial write', async () => {
     const before = await source(); await enqueue(); const first = await effects();
     expect(first.events).toHaveLength(2); expect(first.messages).toEqual([]); expect(first.deliveries).toEqual([]);
-    expect(first.events.map(event => event.payload)).toEqual([1, 2].map(id => ({ orderId: id, orderNo: `PINK-${id}`, userId: id * 11, pinkId: 400, people: 3 })));
+    expect(first.events.map(event => event.payload)).toEqual([1, 2].map(id => ({ orderId: id, orderNo: `PINK-${id}`, userId: id * 11, pinkId: 400, people: 3, routineAppId: 'routine-local-app' })));
     expect(first.events.every(event => event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT && event.status === 'PENDING')).toBe(true);
     await enqueue(); expect(await effects()).toEqual(first); expect(await source()).toEqual(before);
     expect(queue.sendBatch).not.toHaveBeenCalled();

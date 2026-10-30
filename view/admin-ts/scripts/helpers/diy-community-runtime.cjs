@@ -61,7 +61,7 @@ const phpDefaults=JSON.parse(fs.readFileSync(path.resolve(root,'../../../workers
 const block=(kind,timestamp=10)=>({...clone(phpDefaults[kind]),timestamp});
 const ticketExpires=Math.floor(Date.now()/1000)+900;
 const ticket=(id,expires=ticketExpires)=>`/api/assets/${id}?expires=${expires}&signature=${'A'.repeat(43)}`;
-const response=data=>({ok:true,json:async()=>({status:200,data})});
+const response=data=>({ok:true,json:async()=>({status:200,msg:'',data})});
 function harness(value=[block('community')],options={}){
  const l=loader(options),props=vue.reactive({modelValue:JSON.stringify(value),editorKey:'community:2',disabled:false,pageId:2,pagePublished:true,...options.props}),writes=[],tree=node('root'),component=l.load(editorFile).default;
  const app=renderer.createApp({setup:()=>()=>vue.h(component,{...props,'onUpdate:modelValue':value=>{writes.push(value);if(!options.deferEcho)props.modelValue=value;}})});

@@ -5,7 +5,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as checkoutConfirmation from '../src/services/order/CheckoutConfirmation';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainer, createContainerFromDb, withTx } from '../src/lib/di';
 import { adminRuntimeAuthMiddleware } from '../src/middleware/admin-runtime-auth';
@@ -30,7 +30,7 @@ import { persistVerifiedPaymentCallbackTx, type VerifiedPaymentCallback } from '
 import { PaymentCallbackEventService } from '../src/services/payment/PaymentCallbackEventService';
 import { PaymentReconciliationService } from '../src/services/payment/PaymentReconciliationService';
 import type { SystemConfigEnv } from '../src/services/system/SystemConfigService';
-import { systemForm, systemAttachment, storeOrder, systemStore } from '../src/models/schema';
+import { systemConfig, systemForm, systemAttachment, storeOrder, systemStore } from '../src/models/schema';
 import { AttachmentService, R2_IMAGE_TYPE, adminAttachmentScope, userAttachmentScope } from '../src/services/system/AttachmentService';
 import { assistedFormAttachmentScope, belongsToAssistedFormScope } from '../src/services/system/AssistedFormAttachmentScope';
 import * as orderForms from '../src/services/order/OrderSystemFormService';
@@ -205,12 +205,16 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
       orderNo,transactionId:`local_${provider}_verified_trade`,
       tradeState:provider==='wechat'?'SUCCESS':'TRADE_SUCCESS',amountCents,currency:'CNY',providerEventTime:1234};
   }
-  function enableLocalWechatReadiness(){
+  async function enableLocalWechatReadiness(){
+    // Only maintenance mutates this actual fixture; runtime App/Admin roles keep
+    // their commissioned SELECT-only system_config grant.
+    await f.db.delete(systemConfig).where(and(eq(systemConfig.isStore,0),eq(systemConfig.menuName,'wechat_appid')));
+    await f.db.insert(systemConfig).values({menuName:'wechat_appid',value:'"wx_local_assisted"',isStore:0});
     const original=f.env.CONFIG_KV;
     const settings:Record<string,string>={
       cfg_pay_weixin_open:'1',cfg_pay_weixin_mchid:'1900000109',
       cfg_pay_weixin_serial_no:'5157F09EFDC096DE15EBE81A47057A7232F1B8E1',
-      cfg_site_url:'https://shop.example.test',cfg_wechat_appid:'wx_local_assisted',
+      cfg_site_url:'https://shop.example.test',cfg_wechat_appid:'stale-official-account',
     };
     f.env.CONFIG_KV=({ ...original,
       get:(key:string)=>Object.hasOwn(settings,key)?Promise.resolve(settings[key]):original.get(key),
@@ -791,7 +795,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   it('does not call a provider when a concurrent repricing commits after the first assisted read',async()=>{
     await profiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo,'weixin');
-      enableLocalWechatReadiness();
+      await enableLocalWechatReadiness();
       let externalCalls=0;
       vi.spyOn(WechatPayService.prototype,'createOrder').mockImplementation(async params=>{
         await params.beforeProviderRequest?.();externalCalls++;return {code_url:'weixin://local'};
@@ -823,7 +827,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   it('claims one assisted provider initiation before external I/O and rejects an identical retry',async()=>{
     await profiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo,'weixin');
-      enableLocalWechatReadiness();
+      await enableLocalWechatReadiness();
       let enteredResolve:()=>void=()=>undefined,releaseResolve:()=>void=()=>undefined;
       const entered=new Promise<void>(resolve=>{enteredResolve=resolve;});
       const release=new Promise<void>(resolve=>{releaseResolve=resolve;});
@@ -860,7 +864,7 @@ describe('assisted member/guest purchase with actual Admin authentication and tw
   it('rejects malformed merchant signing keys before persisting an assisted provider claim',async()=>{
     await profiles(async(app,admin)=>{
       const client=await http(app,admin),orderNo=await unpaid(client,11),input=await payBody(orderNo,'weixin');
-      enableLocalWechatReadiness();
+      await enableLocalWechatReadiness();
       const failed=await client.post('pay/11',input);
       expect(failed.status).toBe(400);
       expect(await app.exec('SELECT count(*)::integer AS n FROM payment_reconciliation_case')).toEqual([{n:0}]);

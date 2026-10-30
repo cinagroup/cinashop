@@ -1,0 +1,169 @@
+import { sql } from 'drizzle-orm';
+import type { DbClient } from '@/lib/di';
+import { ServiceUnavailableException } from '@/utils/errors';
+
+type Query = Pick<DbClient, 'execute'>;
+export const ADMIN_WECHAT_MENU_OPERATION_RUNTIME_PRIVILEGES = { app: [], admin: ['SELECT', 'INSERT'] } as const;
+export const ADMIN_WECHAT_MENU_OPERATION_GATE = [731656, 0] as const;
+export const ADMIN_WECHAT_MENU_OPERATION_IMMUTABLE_BODY = `BEGIN
+  RAISE EXCEPTION 'Wechat menu operation evidence is immutable' USING ERRCODE='42501';
+END`;
+
+/** Explicit maintenance addon only. No foreign key, sequence,
+ * expiry, mutable receipt, request-time installation or catalog DML capability. */
+export const ADMIN_WECHAT_MENU_OPERATION_SQL = `
+CREATE TABLE public.admin_wechat_menu_operation (
+  operation_id uuid NOT NULL,
+  phase smallint NOT NULL,
+  actor_id integer NOT NULL,
+  resolver_id integer NOT NULL,
+  app_id varchar(18) NOT NULL,
+  account_stamp varchar(64) NOT NULL,
+  request_hash varchar(64) NOT NULL,
+  base_revision varchar(64) NOT NULL,
+  button jsonb NOT NULL,
+  state varchar(24) NOT NULL,
+  provider_code integer,
+  created_at bigint NOT NULL,
+  prior_cache jsonb NOT NULL,
+  CONSTRAINT awmo_pk PRIMARY KEY(operation_id,phase),
+  CONSTRAINT awmo_id_ck CHECK(operation_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'),
+  CONSTRAINT awmo_actor_ck CHECK(actor_id > 0 AND resolver_id > 0),
+  CONSTRAINT awmo_phase_ck CHECK(phase IN (0,1)),
+  CONSTRAINT awmo_account_stamp_ck CHECK(account_stamp ~ '^[a-f0-9]{64}$'),
+  CONSTRAINT awmo_request_hash_ck CHECK(request_hash ~ '^[a-f0-9]{64}$'),
+  CONSTRAINT awmo_base_revision_ck CHECK(base_revision ~ '^[a-f0-9]{64}$'),
+  CONSTRAINT awmo_state_ck CHECK((phase=0 AND state='admitted' AND actor_id=resolver_id AND provider_code IS NULL)
+    OR (phase=1 AND state IN ('accepted','accepted_unstored','rejected','not_dispatched','observed_match'))),
+  CONSTRAINT awmo_button_ck CHECK(jsonb_typeof(button)='array'),
+  CONSTRAINT awmo_created_ck CHECK(created_at > 0)
+);
+CREATE INDEX awmo_account_idx ON public.admin_wechat_menu_operation(app_id,phase);
+CREATE FUNCTION public.admin_wechat_menu_operation_immutable_v1() RETURNS trigger
+LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog AS $awmo_immutable$${ADMIN_WECHAT_MENU_OPERATION_IMMUTABLE_BODY}$awmo_immutable$;
+CREATE TRIGGER awmo_immutable_rows BEFORE UPDATE OR DELETE ON public.admin_wechat_menu_operation
+FOR EACH ROW EXECUTE FUNCTION public.admin_wechat_menu_operation_immutable_v1();
+CREATE TRIGGER awmo_immutable_truncate BEFORE TRUNCATE ON public.admin_wechat_menu_operation
+FOR EACH STATEMENT EXECUTE FUNCTION public.admin_wechat_menu_operation_immutable_v1();
+REVOKE ALL ON TABLE public.admin_wechat_menu_operation FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_wechat_menu_operation_immutable_v1() FROM PUBLIC;
+`;
+const receiptColumns = [[1,'operation_id','uuid',true,null],[2,'phase','smallint',true,null],
+  [3,'actor_id','integer',true,null],[4,'resolver_id','integer',true,null],
+  [5,'app_id','character varying(18)',true,'"default"'],[6,'account_stamp','character varying(64)',true,'"default"'],
+  [7,'request_hash','character varying(64)',true,'"default"'],[8,'base_revision','character varying(64)',true,'"default"'],
+  [9,'button','jsonb',true,null],[10,'state','character varying(24)',true,'"default"'],
+  [11,'provider_code','integer',false,null],[12,'created_at','bigint',true,null],[13,'prior_cache','jsonb',true,null]];
+export const ADMIN_WECHAT_MENU_OPERATION_EXPECTED_CONSTRAINTS: Record<string,string> = {
+  awmo_pk:'PRIMARY KEY (operation_id, phase)',
+  awmo_id_ck:"CHECK (((operation_id)::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'::text))",
+  awmo_actor_ck:'CHECK (((actor_id > 0) AND (resolver_id > 0)))',
+  awmo_phase_ck:'CHECK ((phase = ANY (ARRAY[0, 1])))',
+  awmo_account_stamp_ck:"CHECK (((account_stamp)::text ~ '^[a-f0-9]{64}$'::text))",
+  awmo_request_hash_ck:"CHECK (((request_hash)::text ~ '^[a-f0-9]{64}$'::text))",
+  awmo_base_revision_ck:"CHECK (((base_revision)::text ~ '^[a-f0-9]{64}$'::text))",
+  awmo_state_ck:"CHECK ((((phase = 0) AND ((state)::text = 'admitted'::text) AND (actor_id = resolver_id) AND (provider_code IS NULL)) OR ((phase = 1) AND ((state)::text = ANY ((ARRAY['accepted'::character varying, 'accepted_unstored'::character varying, 'rejected'::character varying, 'not_dispatched'::character varying, 'observed_match'::character varying])::text[])))))",
+  awmo_button_ck:"CHECK ((jsonb_typeof(button) = 'array'::text))",
+  awmo_created_ck:'CHECK ((created_at > 0))',
+};
+
+/** Exact schema, immutable trigger/function, maintenance owner and sole
+ * SELECT/INSERT grantee. This does not establish a live HTTP actor. */
+export async function inspectAdminWechatMenuOperation(tx: Query, names?: { maintenance: string; admin: string }): Promise<boolean> {
+  const [row] = await tx.execute(sql`SELECT
+    c.relkind='r' AND c.relpersistence='p' AND NOT c.relispartition AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
+    AND c.relnatts=13 AND c.relchecks=9 AND c.reloptions IS NULL AND c.relreplident='d'
+    AND c.relam=(SELECT oid FROM pg_catalog.pg_am WHERE amname='heap')
+    AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles r WHERE r.oid=c.relowner AND r.rolsuper
+      AND (${names?.maintenance ?? null}::text IS NULL OR r.rolname=${names?.maintenance ?? null}::text))
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite WHERE ev_class=c.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_policy WHERE polrelid=c.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint WHERE confrelid=c.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint WHERE conrelid=c.oid AND contype NOT IN ('p','c','n'))
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute WHERE attrelid=c.oid AND attnum>0
+      AND (attisdropped OR atthasdef OR attidentity<>'' OR attgenerated<>'')) AS safe,
+    (SELECT jsonb_agg(jsonb_build_array(attnum,attname,format_type(atttypid,atttypmod),attnotnull,
+      CASE WHEN attcollation=0 THEN NULL ELSE attcollation::regcollation::text END) ORDER BY attnum)
+      FROM pg_catalog.pg_attribute WHERE attrelid=c.oid AND attnum>0) AS columns,
+    (SELECT count(*)=10 AND bool_and(convalidated AND NOT condeferrable AND NOT condeferred AND conislocal
+      AND coninhcount=0 AND conparentid=0) FROM pg_catalog.pg_constraint WHERE conrelid=c.oid AND contype IN ('p','c')) AS constraint_count,
+    (SELECT jsonb_object_agg(conname,pg_get_constraintdef(oid,false)) FROM pg_catalog.pg_constraint WHERE conrelid=c.oid AND contype IN ('p','c')) AS constraints,
+    (SELECT count(*)=1 AND bool_and(indisprimary AND indisunique AND indisvalid AND indisready AND indislive
+      AND indimmediate AND NOT indisexclusion AND indkey::text='1 2' AND indnatts=2 AND indnkeyatts=2
+      AND indoption::text='0 0' AND indcollation::text='0 0' AND NOT indnullsnotdistinct AND indexprs IS NULL AND indpred IS NULL
+      AND indclass::text=(SELECT u.oid::text||' '||s.oid::text FROM pg_catalog.pg_opclass u CROSS JOIN pg_catalog.pg_opclass s WHERE u.opcname='uuid_ops' AND s.opcname='int2_ops' AND u.opcnamespace='pg_catalog'::regnamespace AND s.opcnamespace='pg_catalog'::regnamespace AND u.opcmethod=(SELECT oid FROM pg_catalog.pg_am WHERE amname='btree') AND s.opcmethod=u.opcmethod)
+      AND EXISTS(SELECT 1 FROM pg_catalog.pg_class i WHERE i.oid=indexrelid AND i.relkind='i' AND i.relpersistence='p'
+        AND i.reloptions IS NULL AND i.relowner=c.relowner AND i.relam=(SELECT oid FROM pg_catalog.pg_am WHERE amname='btree')))
+      FROM pg_catalog.pg_index WHERE indrelid=c.oid AND indisprimary)
+    AND (SELECT count(*)=2 FROM pg_catalog.pg_index WHERE indrelid=c.oid)
+    AND EXISTS(SELECT 1 FROM pg_catalog.pg_index ix JOIN pg_catalog.pg_class ic ON ic.oid=ix.indexrelid
+      WHERE ix.indrelid=c.oid AND ic.relname='awmo_account_idx' AND ic.relkind='i' AND ic.relpersistence='p'
+      AND ic.relowner=c.relowner AND ic.reloptions IS NULL AND ic.relam=(SELECT oid FROM pg_catalog.pg_am WHERE amname='btree')
+      AND NOT ix.indisprimary AND NOT ix.indisunique AND NOT ix.indisexclusion AND ix.indisvalid AND ix.indisready AND ix.indislive
+      AND ix.indimmediate AND NOT ix.indnullsnotdistinct AND ix.indexprs IS NULL AND ix.indpred IS NULL
+      AND ix.indnatts=2 AND ix.indnkeyatts=2 AND ix.indkey::text='5 2' AND ix.indoption::text='0 0'
+      AND ix.indcollation::text=(SELECT oid::text||' 0' FROM pg_catalog.pg_collation WHERE collname='default' AND collnamespace='pg_catalog'::regnamespace)
+      AND ix.indclass::text=(SELECT t.oid::text||' '||s.oid::text FROM pg_catalog.pg_opclass t CROSS JOIN pg_catalog.pg_opclass s
+        WHERE t.opcname='text_ops' AND s.opcname='int2_ops' AND t.opcnamespace='pg_catalog'::regnamespace AND s.opcnamespace='pg_catalog'::regnamespace
+          AND t.opcmethod=(SELECT oid FROM pg_catalog.pg_am WHERE amname='btree') AND s.opcmethod=t.opcmethod)) AS indexes,
+    (SELECT count(*)=2 AND bool_and(NOT t.tgisinternal AND t.tgenabled='O' AND t.tgnargs=0 AND t.tgqual IS NULL
+      AND t.tgconstraint=0 AND t.tgfoid=f.oid AND t.tgattr::text='' AND t.tgoldtable IS NULL AND t.tgnewtable IS NULL
+      AND ((t.tgname='awmo_immutable_rows' AND t.tgtype=27) OR (t.tgname='awmo_immutable_truncate' AND t.tgtype=34)))
+      FROM pg_catalog.pg_trigger t WHERE t.tgrelid=c.oid) AS triggers,
+    f.proowner=c.relowner AND f.prosrc=${ADMIN_WECHAT_MENU_OPERATION_IMMUTABLE_BODY} AND f.prorettype='pg_catalog.trigger'::regtype
+    AND f.pronargs=0 AND f.proargtypes::text='' AND NOT f.prosecdef AND NOT f.proleakproof AND f.provolatile='v'
+    AND f.prokind='f' AND f.proconfig=ARRAY['search_path=pg_catalog'] AND NOT f.proisstrict AND NOT f.proretset
+    AND f.proparallel='u' AND f.prosupport=0 AND f.provariadic=0 AND f.pronargdefaults=0 AND f.proargdefaults IS NULL
+    AND f.proallargtypes IS NULL AND f.proargmodes IS NULL AND f.proargnames IS NULL AND f.probin IS NULL AND f.prosqlbody IS NULL
+    AND f.prolang=(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc other WHERE other.pronamespace=f.pronamespace AND other.proname=f.proname AND other.oid<>f.oid)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(f.proacl,pg_catalog.acldefault('f',f.proowner))) a
+      WHERE a.grantee<>f.proowner) AS function,
+    NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+      WHERE a.grantee<>c.relowner AND (a.grantee=0 OR a.is_grantable OR a.privilege_type NOT IN ('SELECT','INSERT')
+        OR (${names?.admin ?? null}::text IS NOT NULL AND a.grantee<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text))))
+    AND (SELECT count(DISTINCT a.grantee)<=1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a WHERE a.grantee<>c.relowner)
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute col CROSS JOIN LATERAL pg_catalog.aclexplode(col.attacl) a
+      WHERE col.attrelid=c.oid AND a.grantee<>c.relowner)
+    AND (${names?.admin ?? null}::text IS NULL OR
+      (EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+        WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text) AND a.privilege_type='SELECT')
+      AND EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+        WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text) AND a.privilege_type='INSERT'))) AS acl
+    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_proc f ON f.oid=to_regprocedure('public.admin_wechat_menu_operation_immutable_v1()')
+    WHERE c.oid=to_regclass('public.admin_wechat_menu_operation')`);
+  if (!row || ['safe', 'constraint_count', 'indexes', 'triggers', 'function', 'acl'].some(key => row[key] !== true)) return false;
+  if (JSON.stringify(row.columns) !== JSON.stringify(receiptColumns)) return false;
+  const actual = row.constraints as Record<string, string> | undefined;
+  return !!actual && Object.keys(actual).length === Object.keys(ADMIN_WECHAT_MENU_OPERATION_EXPECTED_CONSTRAINTS).length
+    && Object.entries(ADMIN_WECHAT_MENU_OPERATION_EXPECTED_CONSTRAINTS).every(([key, value]) => actual[key] === value);
+}
+
+/** Caller-owned transaction only: the shared gate survives through the same
+ * business commit. Runtime must be a real restricted LOGIN, never an owner,
+ * inherited role or maintenance identity. No repair or DDL is performed. */
+export async function assertAdminWechatMenuOperationReady(tx: Query): Promise<void> {
+  try {
+    if (Object.hasOwn(tx, '$client')) throw Error('Wechat menu readiness requires a caller-owned transaction');
+    const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock_shared(731656,0) AS locked`);
+    if (gate?.locked !== true) throw Error('Wechat menu operation maintenance is busy');
+    if (!await inspectAdminWechatMenuOperation(tx)) throw Error('Wechat menu operation catalog is absent or drifted');
+    const [row] = await tx.execute(sql`SELECT current_user=session_user
+      AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
+      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)
+      AND NOT pg_catalog.has_database_privilege(r.oid,current_database(),'CREATE')
+      AND NOT pg_catalog.has_schema_privilege(r.oid,'public','CREATE')
+      AND NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM')
+      AND c.relowner<>r.oid AND pg_catalog.has_table_privilege(r.oid,c.oid,'SELECT')
+      AND pg_catalog.has_table_privilege(r.oid,c.oid,'INSERT')
+      AND NOT pg_catalog.has_table_privilege(r.oid,c.oid,'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+        WHERE a.grantee<>c.relowner AND a.grantee<>r.oid) AS ready
+      FROM pg_catalog.pg_roles r CROSS JOIN pg_catalog.pg_class c
+      WHERE r.rolname=current_user AND c.oid=to_regclass('public.admin_wechat_menu_operation')`);
+    if (row?.ready !== true) throw Error('Wechat menu operation runtime privileges are unsafe');
+  } catch (cause) {
+    throw Object.assign(new ServiceUnavailableException('公众号菜单操作回执或运行权限尚未就绪'), { cause });
+  }
+}

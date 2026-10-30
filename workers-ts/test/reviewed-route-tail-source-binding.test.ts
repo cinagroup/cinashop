@@ -1,10 +1,11 @@
 import { peelMessageCenterReportIfPresent,peelMessageCenterSourceIfPresent } from './helpers/messageCenterSourceBinding';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import {existsSync} from 'node:fs';
+import {readMainMergePredecessor as readFileSync} from './helpers/migrationMergeSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
 import { requiredAdminPermission } from '../src/services/admin/AdminPermissionService';
 import { REGISTERED_PAGE_ROUTES as clientRoutes, LEGACY_ROUTE_RULES as clientRules, resolveRegisteredPageRoute as clientResolve } from '../../view/uniapp-ts/src/config/navigation';
 import { REGISTERED_PAGE_ROUTES as serverRoutes, LEGACY_ROUTE_RULES as serverRules, resolveRegisteredPageRoute as serverResolve } from '../src/services/content/FabRouteRegistry';

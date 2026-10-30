@@ -32,7 +32,7 @@ function imageBackend(options={}){
     }
     const imageRoute=route.match(/\/form-images\/([a-f0-9-]{36})$/);if(imageRoute)return{data:imageEnvelope(imageRoute[1],uploads.get(imageRoute[1]))};
     const response=financial.dispatch(call);
-    if(route==='/api/mobile/work/context'){response.data.data.capabilities.cashier_form_images=options.imagesCapability!==false;response.data.data.cashier_form_images_readiness={writes:options.imagesCapability!==false,reason:options.imagesCapability===false?'cashier_form_images_not_ready':''};}
+    if(route===base+'/capabilities')return{data:previous.capability({...options,images:options.imagesCapability!==false})};
     if(route===base+'/catalog/70'){response.data.data.system_form=clone(template);response.data.data.readiness={writes:options.imagesCapability!==false||options.required===false,reason:options.imagesCapability===false&&options.required!==false?'cashier_form_upload_scope_unavailable':''};}
     if(route===base+'/drafts'&&sessions.has(key)){const session=sessions.get(key);assert.ok(['active','frozen'].includes(session.state));if(session.frozen_request_hash)assert.equal(session.frozen_request_hash,hash(call.data));session.state='frozen';session.frozen_request_hash=hash(call.data);}
     if(route===base+'/orders'&&sessions.has(key)){const session=sessions.get(key);assert.equal(session.frozen_request_hash,hash(call.data.intent));session.state='consumed';session.order_id=7;session.order_no='CASHIER_7';}
@@ -77,6 +77,66 @@ test('unknown creation reopens and restores original canonical image answers wit
 test('actual native chooser hide preserves local visible values through a lease while all POSTs wait for onShow',async()=>{const {r}=make();let chooser;try{await choose(r);r.uni.chooseImage=call=>{chooser=call;r.hooks.onHide();};const mounted=mountedForm(r);try{const pending=mounted.controls.chooseImages(1);await tick();assert.ok(chooser);assert.equal(r.page.manager.current(),false);assert.equal(r.page.manager.suspendLeaseActive(),true);assert.equal(r.page.contact.value.name,'实际姓名');const before=writes(r).length;await r.page.operations.prepare({});assert.equal(writes(r).length,before);chooser.success({tempFilePaths:['local-1.png']});await tick();assert.equal(uploads(r).length,0);assert.equal(r.page.contact.value.name,'实际姓名');r.hooks.onShow();await pending;assert.equal(uploads(r).length,1);assert.deepEqual(r.page.customForm.value[1].value,['/api/assets/41']);assert.equal(r.page.manager.current(),true);assert.equal(r.page.manager.suspendLeaseActive(),false);}finally{mounted.stop();}}finally{r.stop();}});
 test('ordinary hide after chooser completion aborts an unsettled multipart upload and clears PII/busy while preserving original UUID recovery',async()=>{const late=deferred();const {r}=make({},(call,server)=>call.upload?late.promise:server.dispatch(call));try{await choose(r);const dispatched=multipartDispatched(r),running=upload(r);await dispatched;assert.equal(uploads(r).length,1);assert.equal(r.page.manager.suspendLeaseActive(),false);const original=clone(stages(r));r.hooks.onHide();assert.equal(r.page.contact.value.name,'');assert.equal(r.page.selection.value,null);assert.equal(r.page.images.busy.value,false);assert.deepEqual(r.page.images.previews.value,{});assert.equal(canonical(stages(r)),canonical(original));r.hooks.onShow();await tick();assert.equal(r.page.locked.value,false);assert.equal(r.page.images.pending.value.length,2);late.resolve({transport:'late original upload failure'});await running;assert.equal(r.page.contact.value.name,'');assert.equal(r.page.images.pending.value.length,2);assert.equal(uploads(r).length,1);}finally{r.stop();}});
 for(const boundary of ['second-hide','unload','account-aba','expiry'])test('native chooser '+boundary+' clears PII/previews, retains durable original session and prevents a late upload',async()=>{const {r}=make();let chooser;try{await choose(r);r.uni.chooseImage=call=>{chooser=call;r.hooks.onHide();};const mounted=mountedForm(r);try{if(boundary==='expiry'){const begin=r.page.manager.beginSuspendLease;r.page.manager.beginSuspendLease=()=>begin(25);}const pending=mounted.controls.chooseImages(1);await tick();assert.ok(chooser);if(boundary==='second-hide')r.hooks.onHide();if(boundary==='unload')r.hooks.onUnload();if(boundary==='account-aba'){r.auth.setLogin('other',12);r.auth.setLogin('synthetic-local-token',11);}if(boundary==='expiry')await new Promise(resolve=>setTimeout(resolve,40));assert.equal(r.page.contact.value.name,'');assert.equal(r.page.selection.value,null);assert.deepEqual(r.page.images.previews.value,{});assert.equal(stages(r).filter(stage=>stage.kind==='session').length,1);chooser.success({tempFilePaths:['local-1.png']});if(boundary!=='unload')r.hooks.onShow();await pending;assert.equal(uploads(r).length,0);}finally{mounted.stop();}}finally{r.stop();}});
+test('actual manager invalidation retains visible own image recovery rows before original owner queries',async()=>{
+  const {r,server}=make();
+  try{
+    await choose(r);await upload(r);
+    assert.ok(r.page.manager.context.value);
+    assert.equal(r.page.images.pending.value.length,2);
+    assert.equal(server.sessions.size,1);assert.equal(server.uploads.size,1);
+    const durable=canonical(stages(r)),beforeUploads=uploads(r).length,beforeWrites=writes(r).length;
+    const beforeFacts=canonical({sessions:[...server.sessions],uploads:[...server.uploads]});
+    // Invoke the actual manager while its context is still non-null. This uses
+    // fail -> page clear/refresh -> context watch, rather than faking that order.
+    r.page.manager.invalidate(Error('当前图片收银资格已变化，请保留原编号核对'));
+    await tick();
+    assert.equal(r.auth.uid,11);assert.equal(r.auth.token,'synthetic-local-token');
+    assert.equal(r.page.manager.context.value,null);assert.equal(r.page.selection.value,null);
+    assert.equal(r.page.contact.value.name,'');assert.deepEqual(r.page.customForm.value,[]);
+    assert.equal(r.page.images.session.value,null);assert.equal(r.page.images.sessionIntent.value,null);
+    assert.deepEqual(r.page.images.images.value,{});assert.deepEqual(r.page.images.previews.value,{});
+    assert.equal(canonical(stages(r)),durable);
+    assert.equal(r.page.images.pending.value.length,2);
+    assert.equal(canonical(r.page.images.pending.value),durable);
+    const html=await rendered(r);
+    assert.ok(html.includes('data-cashier-image-recovery'));
+    assert.equal((html.match(/data-cashier-image-pending="/g)??[]).length,2);
+    assert.equal((html.match(/>查询原图片编号</g)??[]).length,2);
+    for(const intent of r.page.images.pending.value){
+      assert.equal(intent.actor_uid,r.auth.uid);
+      assert.ok(html.includes('data-cashier-image-pending="'+intent.request_key+'"'));
+    }
+    assert.equal(html.includes('实际姓名'),false);assert.equal(html.includes('原补充答案'),false);
+    assert.equal(html.includes('>上传图片<'),false);
+    // Select only from rows that were just proved visible. No saved intent can
+    // bypass a missing recovery list and make this regression falsely pass.
+    const session=r.page.images.pending.value.find(intent=>intent.kind==='session');
+    const image=r.page.images.pending.value.find(intent=>intent.kind==='image');
+    assert.ok(session);assert.ok(image);
+    const beforeQueries=r.calls.length;
+    await r.page.checkImage(session);
+    assert.equal(r.page.images.session.value.state,'active');
+    assert.equal(r.page.images.images.value[image.request_key].state,'stored');
+    const queries=r.calls.slice(beforeQueries);
+    assert.ok(queries.some(call=>call.method==='GET'&&call.url===base+'/form-sessions/'+session.request_key));
+    assert.ok(queries.some(call=>call.method==='GET'&&call.url===base+'/form-images/'+image.request_key));
+    assert.equal(queries.every(call=>call.method==='GET'),true);
+    assert.equal(uploads(r).length,beforeUploads);assert.equal(writes(r).length,beforeWrites);
+    assert.equal(canonical({sessions:[...server.sessions],uploads:[...server.uploads]}),beforeFacts);
+    assert.deepEqual(r.page.images.previews.value,{});assert.equal(r.page.contact.value.name,'');
+    assert.equal(r.page.customForm.value.length,0);
+    r.auth.setLogin('different-owner',12);await tick();
+    assert.equal(r.page.images.pending.value.length,0);
+    assert.equal((await rendered(r)).includes('data-cashier-image-pending='),false);
+    assert.equal(canonical(stages(r)),durable);
+    r.auth.setLogin('same-owner-rotated-token',11);await tick();
+    assert.equal(r.page.images.pending.value.length,2);
+    assert.equal(r.page.images.pending.value.every(intent=>intent.actor_uid===r.auth.uid),true);
+    assert.equal(canonical(r.page.images.pending.value),durable);
+    assert.equal(r.page.images.session.value,null);assert.deepEqual(r.page.images.previews.value,{});
+    assert.equal(r.page.contact.value.name,'');assert.equal(uploads(r).length,beforeUploads);
+  }finally{r.stop();}
+});
 test('role loss keeps owner image receipt queries available but hides restored form and prevents new upload/draft/payment',async()=>{let revoked=false;const {r}=make({},(call,server)=>revoked&&call.url.endsWith('/context')?{httpStatus:403,status:403,msg:'当前经营角色已撤回'}:server.dispatch(call));try{await choose(r);await upload(r);const original=clone(stages(r)[0]);revoked=true;await r.page.manager.load();assert.equal(r.page.manager.context.value,null);assert.equal(r.page.selection.value,null);assert.equal(r.page.contact.value.name,'');assert.deepEqual(r.page.images.previews.value,{});const before=writes(r).length;await r.page.checkImage(original);assert.equal(r.page.images.session.value.state,'active');await r.page.prepare();await assert.rejects(r.page.images.upload('local-1.png',1),/资格|核对/);await r.page.operations.pay();assert.equal(writes(r).length,before);const html=await rendered(r);assert.equal(html.includes('原补充答案'),false);assert.equal(html.includes('实际姓名'),false);assert.equal(html.includes('>上传图片<'),false);}finally{r.stop();}});
 test('late multipart 403 after ABA cannot clear fresh login or repopulate old preview/form state',async()=>{const late=deferred();let first=true;const {r}=make({},(call,server)=>call.upload&&first?(first=false,late.promise):server.dispatch(call));try{await choose(r);const dispatched=multipartDispatched(r),pending=upload(r);await dispatched;assert.equal(uploads(r).length,1);const original=clone(stages(r));r.auth.setLogin('other',12);r.auth.setLogin('synthetic-local-token',11);await tick();late.resolve({httpStatus:403,status:410001,msg:'late expired token'});await pending;assert.equal(r.auth.uid,11);assert.equal(r.auth.token,'synthetic-local-token');assert.equal(r.page.contact.value.name,'');assert.deepEqual(r.page.customForm.value,[]);assert.deepEqual(r.page.images.previews.value,{});assert.equal(canonical(stages(r)),canonical(original));assert.ok(r.aborts.length);}finally{r.stop();}});
 test('financial storage failure after verified uploads cannot mark/freeze the server session or send a draft',async()=>{const {r,server}=make();try{await choose(r);await upload(r);const parent=r.page.images.parentKey.value,write=r.uni.setStorageSync;r.uni.setStorageSync=(key,value)=>{if(key!=='customer_cashier_pending_v1')write(key,value);};await r.page.prepare();assert.equal(server.sessions.get(parent).state,'active');assert.equal(r.calls.filter(call=>call.url.endsWith('/drafts')).length,0);assert.equal(stages(r).length,2);r.uni.setStorageSync=write;await r.page.prepare();assert.equal(r.page.operations.pending.value[0].request_key,parent);assert.equal(server.sessions.get(parent).state,'frozen');}finally{r.stop();}});

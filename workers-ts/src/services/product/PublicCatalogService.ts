@@ -16,7 +16,7 @@ import {
   sql,
 } from "drizzle-orm";
 import type { Env } from "@/env";
-import { withTx,createContainerFromDb,type Container } from "@/lib/di";
+import { withTx,createContainerFromDb,type Container, type DbClient } from "@/lib/di";
 import {
   storeBrand,
   storeCouponIssue,
@@ -32,9 +32,8 @@ import {
   systemGroupData,
   wechatUser,
 } from "@/models/schema";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { StoreProductService, type GoodsListParams } from "./StoreProductService";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { NotFoundException, ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { readProductDetailDesignSnapshot,publicProductDetailDesign } from '@/services/content/ProductDetailDesignReadService';
 import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { UserCenterPublicReadService } from '@/services/content/UserCenterPublicReadService';
@@ -48,6 +47,18 @@ import { decoratePublicProductActivities } from './PublicProductActivityData';
 import { publicProductLabelIds, readPublicProductLabelMap } from './PublicProductLabelData';
 import { parseLegacyDiyJson } from '@/services/content/V2PublicCompatibilityService';
 import { renderDiyEditorialMedia } from '@/services/content/DiyEditorialMediaPolicy';
+
+import { HomepageReadBudget } from './HomepageReadBudget';
+import { readPcBaseRuntimeInTx, type PcBaseRuntimeSnapshot } from '@/services/pc/PcBaseRuntimeConfig';
+
+/** A failed chunk must quiesce sibling reads before the enclosing transaction
+ * rolls back/releases its connection. The shared budget retires their loops. */
+async function homepageReads<T extends readonly unknown[] | []>(values: T): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }> {
+  const results = await Promise.allSettled(values);
+  const failure = results.find(row => row.status === 'rejected');
+  if (failure?.status === 'rejected') throw failure.reason;
+  return results.map(row => (row as PromiseFulfilledResult<unknown>).value) as { -readonly [K in keyof T]: Awaited<T[K]> };
+}
 
 const MAX_LIMIT = 100;
 const GROUP_KEYS = [
@@ -176,22 +187,24 @@ function productListRow(item: typeof storeProduct.$inferSelect): Record<string, 
 
 export class PublicCatalogService {
   private readonly products: StoreProductService;
-  private readonly config: SystemConfigService;
 
   constructor(
     private readonly container: Container,
     private readonly env: Env,
+    private readonly homepageBudget?: HomepageReadBudget,
   ) {
     this.products = new StoreProductService(container, env);
-    this.config = new SystemConfigService(container, env);
   }
 
   async groupDataMany(names: readonly string[]): Promise<Record<string, Record<string, unknown>[]>> {
+    return this.groupDataManyWithinSnapshot(names, false);
+  }
+
+  private async groupDataManyWithinSnapshot(names: readonly string[], inSnapshot: boolean): Promise<Record<string, Record<string, unknown>[]>> {
     const unique = [...new Set(names)].filter(Boolean).slice(0, 100);
     const result = Object.fromEntries(unique.map((name) => [name, []])) as Record<string, Record<string, unknown>[]>;
     if (!unique.length) return result;
-    const snapshot = await withTx(this.container, async (tx) => {
-    await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+    const readSnapshot = async (tx: DbClient) => {
     const rows = await tx
       .select({
         configName: systemGroup.configName,
@@ -213,6 +226,10 @@ export class PublicCatalogService {
     const operational = parsedRows.filter(row => isOperationalGroupName(row.configName));
     const references = await operationalGroupPublicPictures(tx, operational.map(row => ({ config_name: row.configName, img: row.parsed.img })));
     return { rows: parsedRows, operationalIds: operational.map(row => row.id), references };
+    };
+    const snapshot = inSnapshot ? await readSnapshot(this.container.db) : await withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      return readSnapshot(tx);
     });
     const rendered = await renderOperationalGroupPictures(this.env.APP_KEY, snapshot.references);
     const images = new Map(snapshot.operationalIds.map((id, index) => [id, rendered[index]]));
@@ -263,13 +280,43 @@ export class PublicCatalogService {
     return footer;
   }
 
+  private async withHomepageSnapshot<T>(work: (scoped: PublicCatalogService, pc: PcBaseRuntimeSnapshot) => Promise<T>): Promise<T> {
+    const budget = this.homepageBudget ?? new HomepageReadBudget();
+    budget.check();
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+      await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+      const pc = await readPcBaseRuntimeInTx(tx);
+      budget.check();
+      const result = await work(new PublicCatalogService(createContainerFromDb(tx), this.env, budget), pc);
+      budget.assertResponse(result);
+      const [deadline] = await tx.execute<{ valid: boolean }>(sql`SELECT clock_timestamp() <= transaction_timestamp() + interval '5 seconds' AS valid`);
+      if (deadline?.valid !== true) throw new ServiceUnavailableException('首页完整读取超时，请重新加载');
+      budget.check();
+      return result;
+    });
+  }
+
+  private async decorateCompleteHomepage(list: Record<string, unknown>[]) {
+    const result: Record<string, unknown>[] = [];
+    for (let offset = 0; offset < list.length; offset += MAX_LIMIT) {
+      this.homepageBudget?.check();
+      const chunk = list.slice(offset, offset + MAX_LIMIT), decorated = await this.decorateProducts(chunk);
+      this.homepageBudget?.consume(decorated);
+      if (decorated.length !== chunk.length) throw new ServiceUnavailableException('首页完整展示数据不可用');
+      result.push(...decorated);
+    }
+    return result;
+  }
+
   async home(uid: number): Promise<Record<string, unknown>> {
-    const [groups, configs, categories, bastList, firstList, benefit, likeInfo, subscribeRows] = await Promise.all([
-      this.groupDataMany(GROUP_KEYS),
-      this.config.getMany([
-        "site_name", "routine_index_logo", "site_url", "fast_number", "bast_number",
-        "first_number", "promotion_number", "new_goods_bananr", "tengxun_map_key",
-      ]),
+    return this.withHomepageSnapshot((scoped, pc) => scoped.homeFromSnapshot(uid, pc));
+  }
+
+  private async homeFromSnapshot(uid: number, pc: PcBaseRuntimeSnapshot): Promise<Record<string, unknown>> {
+    const configs = pc.extras, groups = await this.groupDataManyWithinSnapshot(GROUP_KEYS, true);
+    const [categories, bastList, firstList, benefit, likeInfo, subscribeRows] = await homepageReads([
       this.container.db.select({
         id: storeProductCategory.id,
         cate_name: storeProductCategory.cateName,
@@ -279,8 +326,8 @@ export class PublicCatalogService {
         eq(storeProductCategory.isShow, 1),
         gt(storeProductCategory.pid, 0),
       )).orderBy(desc(storeProductCategory.sort), desc(storeProductCategory.id)).limit(100),
-      this.products.getRecommendProducts(uid, { isBest: true, productTypes: [0, 1, 2, 3], limit: 100 }),
-      this.products.getRecommendProducts(uid, { isNew: true, productTypes: [0, 1, 2, 3], limit: 100 }),
+      this.products.getHomeRecommendProductsInTx(uid, pc.values.bast_number ?? 0, { isBest: true, productTypes: [0, 1, 2, 3] }, this.homepageBudget),
+      this.products.getHomeRecommendProductsInTx(uid, pc.values.first_number ?? 0, { isNew: true, productTypes: [0, 1, 2, 3] }, this.homepageBudget),
       this.products.getRecommendProducts(uid, { isBenefit: true, productTypes: [0, 1, 2, 3], limit: 100 }),
       this.products.getRecommendProducts(uid, { isHot: true, productTypes: [0, 1, 2, 3], limit: 3 }),
       uid
@@ -289,8 +336,6 @@ export class PublicCatalogService {
     ]);
     const indexPage = groups.routine_index_page[0] ?? {};
     const fastNumber = Math.max(0, int(configs.fast_number));
-    const bastNumber = Math.max(0, int(configs.bast_number));
-    const firstNumber = Math.max(0, int(configs.first_number));
     const promotionNumber = Math.max(0, int(configs.promotion_number));
     let logoUrl = configs.routine_index_logo ?? "";
     if (logoUrl && !/^https?:\/\//i.test(logoUrl)) logoUrl = `${configs.site_url ?? ""}${logoUrl}`;
@@ -304,8 +349,8 @@ export class PublicCatalogService {
         firstInfo: indexPage.first_info ?? "",
         salesInfo: indexPage.sales_info ?? "",
         fastList: fastNumber ? categories.slice(0, fastNumber) : [],
-        bastList: bastNumber ? await this.decorateProducts(bastList.slice(0, bastNumber)) : [],
-        firstList: firstNumber ? await this.decorateProducts(firstList.slice(0, firstNumber)) : [],
+        bastList: await this.decorateCompleteHomepage(bastList),
+        firstList: await this.decorateCompleteHomepage(firstList),
         bastBanner: groups.routine_home_bast_banner,
       },
       activity: groups.routine_home_activity.slice(0, 3),
@@ -323,22 +368,17 @@ export class PublicCatalogService {
 
   /** PHP v2 homepage: deliberately narrower than the v1 homepage payload. */
   async homeV2(uid: number): Promise<Record<string, unknown>> {
-    const [configs, subscribe] = await Promise.all([
-      this.config.getMany([
-        "fast_number",
-        "bast_number",
-        "first_number",
-        "promotion_number",
-        "tengxun_map_key",
-        "site_name",
-      ]),
-      this.subscribe(uid, { anonymousDefault: true, userType: "wechat" }),
-    ]);
+    return this.withHomepageSnapshot((scoped, pc) => scoped.homeV2FromSnapshot(uid, pc));
+  }
+
+  private async homeV2FromSnapshot(uid: number, pc: PcBaseRuntimeSnapshot): Promise<Record<string, unknown>> {
+    const configs = pc.extras;
+    const subscribe = await this.subscribe(uid, { anonymousDefault: true, userType: 'wechat' });
     const fastNumber = legacyHomeLimit(configs.fast_number);
-    const bastNumber = legacyHomeLimit(configs.bast_number);
-    const firstNumber = legacyHomeLimit(configs.first_number);
+    const bastNumber = pc.values.bast_number ?? 0;
+    const firstNumber = pc.values.first_number ?? 0;
     const promotionNumber = legacyHomeLimit(configs.promotion_number);
-    const [fastList, bastList, firstList, benefit, likeInfo] = await Promise.all([
+    const [fastList, bastList, firstList, benefit, likeInfo] = await homepageReads([
       fastNumber
         ? this.container.db.select({
           id: storeProductCategory.id,
@@ -351,10 +391,10 @@ export class PublicCatalogService {
         )).orderBy(desc(storeProductCategory.sort), desc(storeProductCategory.id)).limit(fastNumber)
         : Promise.resolve([]),
       bastNumber
-        ? this.products.getRecommendProducts(uid, { isBest: true, limit: bastNumber })
+        ? this.products.getHomeRecommendProductsInTx(uid, bastNumber, { isBest: true }, this.homepageBudget)
         : Promise.resolve([]),
       firstNumber
-        ? this.products.getRecommendProducts(uid, { isNew: true, limit: firstNumber })
+        ? this.products.getHomeRecommendProductsInTx(uid, firstNumber, { isNew: true }, this.homepageBudget)
         : Promise.resolve([]),
       promotionNumber
         ? this.products.getRecommendProducts(uid, { isBenefit: true, limit: promotionNumber })
@@ -364,8 +404,8 @@ export class PublicCatalogService {
     return {
       info: {
         fastList,
-        bastList: await this.decorateProducts(bastList),
-        firstList: await this.decorateProducts(firstList),
+        bastList: await this.decorateCompleteHomepage(bastList),
+        firstList: await this.decorateCompleteHomepage(firstList),
       },
       benefit: await this.decorateProducts(benefit),
       likeInfo: await this.decorateProducts(likeInfo),

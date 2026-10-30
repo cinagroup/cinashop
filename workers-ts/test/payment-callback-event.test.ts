@@ -117,9 +117,9 @@ describe("CORE-001-B durable payment callback pipeline", () => {
     expect(persistence).toContain("pg_advisory_xact_lock");
     expect(service).toContain('persistVerifiedPaymentCallbackTx(tx, callback)');
     expect(service).toContain('.for("update", { skipLocked: true })');
-    expect(service).toContain("applyStoreOrderPayment");
+    expect(service).toContain("applyProviderStoreOrderPayment");
     expect(service).toContain("applyRechargePayment");
-    expect(service).toContain("applyMembershipPayment");
+    expect(service).toContain("applyProviderMembershipPayment");
     expect(entry).toContain('action: "dispatchPaymentCallbackOutbox"');
     expect(entry).toContain("consumePaymentCallbackMessage");
   });

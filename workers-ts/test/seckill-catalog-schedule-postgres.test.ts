@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { financePostgres } from "./helpers/financePostgres";
-import { storeActivity, storeSeckill, storeSeckillTime } from "../src/models/schema";
+import { storeActivity, storeSeckill, storeSeckillTime, storeProduct } from "../src/models/schema";
 import { StoreSeckillDao, StoreSeckillTimeDao } from "../src/dao/activity/ActivityDaos";
 import { ActivityService } from "../src/services/activity/ActivityService";
 import { createContainerFromDb } from "../src/lib/di";
@@ -11,10 +11,11 @@ const day = (date: string) => Date.parse(`${date}T00:00:00+08:00`) / 1000;
 const time = (clock = "09:00:00", date = "2026-09-07") => new Date(`${date}T${clock}+08:00`);
 describe("seckill catalogue SQL matches purchase schedule before pagination", () => {
   let f: Awaited<ReturnType<typeof financePostgres>>, dao: StoreSeckillDao;
-  beforeAll(async () => { f = await financePostgres([storeActivity, storeSeckill, storeSeckillTime]); dao = new StoreSeckillDao(f.db); }, 30_000);
+  beforeAll(async () => { f = await financePostgres([storeActivity, storeSeckill, storeSeckillTime, storeProduct]); dao = new StoreSeckillDao(f.db); }, 30_000);
   afterAll(async () => { await f?.close(); });
   beforeEach(async () => {
     await f.reset();
+    await f.db.insert(storeProduct).values({ id: 70, storeName: "排期关联基础商品", isDel: 0 });
     await f.db.insert(storeActivity).values({ id: 9, type: 1, status: 1, startDay: day("2026-09-07"), endDay: day("2026-09-08"), timeId: "4,8" });
     await f.db.insert(storeSeckill).values({ id: 20, productId: 70, activityId: 9, timeId: "4,8", storeName: "排期样本" });
     await f.db.insert(storeSeckillTime).values([{ id: 4, status: 1, startTime: "0800", endTime: "10:00" },

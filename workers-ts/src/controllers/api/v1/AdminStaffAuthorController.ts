@@ -1,0 +1,22 @@
+import type {Context} from 'hono';
+import type {AppVariables,Env} from '@/env';
+import {jsonOk} from '@/utils/json';
+import {readBoundedJsonObject} from '@/utils/request-body';
+import {ValidateException} from '@/utils/errors';
+import {AdminStaffAuthorService} from '@/services/admin/AdminStaffAuthorService';
+import {AdminStaffSupportService} from '@/services/admin/AdminStaffSupportService';
+import {staffQuery,staffId} from '@/services/admin/AdminStaffAuthorInput';
+type C=Context<{Bindings:Env;Variables:AppVariables}>;
+function context(c:C){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');return {s:new AdminStaffAuthorService(c.get('container'),c.env),support:new AdminStaffSupportService(c.get('container'),c.env),a:{id:c.get('adminId')??0,authVersion:c.get('socketAuthVersion')??'',expiresAt:c.get('socketTokenExp')??0},q:new URL(c.req.url).searchParams};}
+export const catalog=(c:C)=>{const x=context(c);return x.s.catalog(x.q,x.a).then(r=>jsonOk(c,r));};
+export const receipt=(c:C)=>{const x=context(c);return x.s.receipt(c.req.param('operationId'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const commit=async(c:C)=>{const x=context(c);staffQuery(x.q);return jsonOk(c,await x.s.mutate(await readBoundedJsonObject(c.req.raw,64*1024),x.a));};
+export const resolve=async(c:C)=>{const x=context(c);staffQuery(x.q);return jsonOk(c,await x.s.resolve(await readBoundedJsonObject(c.req.raw,64*1024),x.a));};
+export const attachmentCategories=(c:C)=>{const x=context(c);return x.support.categories(x.q,x.a).then(r=>jsonOk(c,r));};
+export const attachmentOptions=(c:C)=>{const x=context(c);return x.support.options(x.q,x.a).then(r=>jsonOk(c,r));};
+export const users=(c:C)=>{const x=context(c);return x.support.users(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyList=(c:C)=>{const x=context(c);return x.s.legacyList(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyForm=(c:C)=>{const x=context(c);return x.s.form(c.req.param('id')??'0',x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacySave=async(c:C)=>{const x=context(c);staffQuery(x.q);const id=staffId(c.req.param('id'),true),r=await x.s.legacy(id?'update':'create',id,await readBoundedJsonObject(c.req.raw,64*1024),x.a);return jsonOk(c,{id:r.result.id},id?'编辑成功':'店员添加成功');};
+export const legacyStatus=async(c:C)=>{const x=context(c);staffQuery(x.q);const status=c.req.param('status');if(status!=='0'&&status!=='1')throw new ValidateException('店员状态无效');const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('状态正文须为空');const r=await x.s.legacy('status',c.req.param('id'),{status:Number(status)},x.a);return jsonOk(c,{id:r.result.id,status:Number(status)},status==='1'?'开启成功':'关闭成功');};
+export const legacyDelete=async(c:C)=>{const x=context(c);staffQuery(x.q);const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('删除正文须为空');await x.s.legacy('delete',c.req.param('id'),{},x.a);return jsonOk(c,null,'删除成功');};

@@ -55,14 +55,13 @@ const ROOT_JOBS: readonly ScheduledMaintenanceJob[] = [
   "pink_timeout",
   "auto_receipt",
   "auto_comment",
-  "live_room_sync",
-  "live_goods_sync",
-  "live_anchor_sync",
+  "live_sync_dispatch",
   "refund_reconciliation",
   "pink_cancellation_recovery",
   "reminder_unverified_remind",
   "sign_remind_time",
 ];
+const LIVE_PAGE_JOBS = ["live_room_sync", "live_goods_sync", "live_anchor_sync"] as const;
 
 const ORDER_JOBS = ["auto_receipt", "auto_comment", "unpaid_order_cancel"] as const;
 type ScheduledOrderJob = (typeof ORDER_JOBS)[number];
@@ -96,7 +95,8 @@ function isScheduledOrderJob(value: unknown): value is ScheduledOrderJob {
 }
 
 function isScheduledMaintenanceJob(value: unknown): value is ScheduledMaintenanceJob {
-  return value === "product_auto_shelf" || ROOT_JOBS.includes(value as ScheduledMaintenanceJob);
+  return value === "product_auto_shelf" || ROOT_JOBS.includes(value as ScheduledMaintenanceJob)
+    || LIVE_PAGE_JOBS.includes(value as typeof LIVE_PAGE_JOBS[number]);
 }
 
 export function scheduledRunId(scheduledAt: number): string {
@@ -210,6 +210,8 @@ export class ScheduledMaintenanceService {
       case "auto_receipt":
       case "auto_comment":
         return this.scanOrders(message);
+      case "live_sync_dispatch":
+        return new WechatLiveService(this.container, this.env).dispatchSync(message);
       case "live_room_sync":
         return new WechatLiveService(this.container, this.env).syncRooms(message);
       case "live_goods_sync":

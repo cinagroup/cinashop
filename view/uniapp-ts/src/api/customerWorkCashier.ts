@@ -10,7 +10,7 @@ function numericPath(path: string, expression: RegExp): boolean {
   return !!match && Number(match[1]) <= 2_147_483_647;
 }
 export function customerCashierEndpoint(path: string, method: 'GET' | 'POST'): boolean {
-  if (method === 'GET') return path === `${base}/catalog` || path === `${base}/records` || path === '/mobile/work/users'
+  if (method === 'GET') return path === `${base}/capabilities` || path === `${base}/catalog` || path === `${base}/records` || path === '/mobile/work/users'
     || numericPath(path, /^\/mobile\/work\/cashier\/second-card\/(?:catalog|records)\/([1-9]\d{0,9})$/u)
     || numericPath(path, /^\/mobile\/work\/users\/([1-9]\d{0,9})$/u)
     || new RegExp(`^${base}/(?:creations|payments)/${uuid}$`, 'u').test(path);
@@ -36,6 +36,7 @@ export function createCustomerCashierRequests(current: () => boolean, deadlineMs
     if (abandonment && key !== abandonment[1]) return Promise.reject(new RequestError('放弃请求必须使用完整原收银编号，尚未提交'));
     try { data = JSON.parse(customerWorkCanonicalJson(data)); }
     catch { return Promise.reject(new RequestError('收银原内容不是有效 JSON，尚未提交')); }
+    if (path === `${base}/capabilities` && Object.keys(data).length) return Promise.reject(new RequestError('次卡能力请求不接受查询参数'));
     return new Promise((resolve, reject) => {
       let done = false, task: UniApp.RequestTask | undefined, timer: ReturnType<typeof setTimeout> | undefined;
       function finish(value: T | undefined, failure?: Error) {

@@ -4,7 +4,7 @@ import { useThemeStore } from '@/stores/theme';
 import { normalizeDiyEditorial } from '@/utils/diyEditorialConfig';
 import { apiFollowPoster } from '@/api/legacyShare';
 import { readableShareImage } from '@/utils/shareImage';
-import { openDiyLink } from '@/utils/diy';
+import { userCenterDestination, openUserCenterDestination } from '@/utils/userCenter';
 import { diyEditorialMediaCacheUsable } from '@/utils/diyEditorialMediaLease';
 
 export function useDiyEditorialWidget(block: () => unknown, active: () => boolean) {
@@ -27,7 +27,7 @@ export function useDiyEditorialWidget(block: () => unknown, active: () => boolea
     epoch.value++; dialogEpoch++; mediaAdmittedAt=Date.now(); followCodeOpen.value = false; followDismissed.value = false; followPosterLoading.value = false; followPosterError.value = '';
     for (const release of [...releases]) release();
   }
-  function open(value: string) { if (ready() && value) openDiyLink(value); }
+  function open(value: string) { if (ready() && value) { const current = lease(), target = userCenterDestination(value); if (target) openUserCenterDestination(target, current); } }
   function showFollowCode() {
     if (!followReady()) return;
     if (!config.value.followCode) { uni.showToast({ title: '暂未配置公众号二维码', icon: 'none' }); return; }

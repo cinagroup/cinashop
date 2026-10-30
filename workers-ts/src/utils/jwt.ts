@@ -40,6 +40,8 @@ export interface CrmebJWTPayload {
   jti: { id: number; type: TokenType };
   /** md5(pwd) —— 用于校验改密后旧 token 失效 */
   auth?: string;
+  /** Optional per-issuance isolation; ordinary legacy tokens omit this claim. */
+  nonce?: string;
 }
 
 /**
@@ -67,9 +69,13 @@ export async function createToken(
   secret: string,
   iss = "cinashop",
   issuedAtSeconds?: number,
+  issuanceNonce?: string,
 ): Promise<{ token: string; exp: number }> {
   const now = issuedAtSeconds ?? Math.floor(Date.now() / 1000);
   if (!Number.isSafeInteger(now) || now <= 0) throw new Error("invalid token issuance time");
+  if (issuanceNonce !== undefined && !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(issuanceNonce)) {
+    throw new Error("invalid token issuance nonce");
+  }
   const exp = now + EXP_SECONDS[type];
   // jti 是对象 (与 PHP 一致), jose 类型不认, 用 unknown 断言
   const payload: CrmebJWTPayload = {
@@ -80,6 +86,7 @@ export async function createToken(
     exp,
     jti: { id, type },
     auth: authDigest,
+    ...(issuanceNonce === undefined ? {} : { nonce: issuanceNonce }),
   };
   const token = await new SignJWT(
     payload as unknown as import("jose").JWTPayload,

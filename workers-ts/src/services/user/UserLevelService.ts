@@ -24,6 +24,7 @@ import {assertMemberLevelActivationFields,readMemberLevelActivationPolicy,member
 import { detectUserLevel } from "@/services/order/OrderRewardService";
 import { userGrowthRecordsPagination } from "./UserGrowthRecordsInput";
 import { readUserLevelOverview, renderUserLevelOverview, type UserLevelOverview } from "./UserLevelOverviewService";
+import { publicLevelImageReferences, renderLevelImageReferences } from "@/services/user/LevelAssetPolicy";
 import {
   configFlag,
   parseConfigIds,
@@ -304,15 +305,17 @@ export class UserLevelService {
       .from(systemUserLevel)
       .where(sql`${systemUserLevel.isShow} = 1 AND ${systemUserLevel.isDel} = 0`)
       .orderBy(sql`${systemUserLevel.grade} ASC`);
-    return rows.map((r) => ({
+    const references = await publicLevelImageReferences(this.container.db, rows);
+    const images = await renderLevelImageReferences(this.env.APP_KEY, references);
+    return rows.map((r, index) => ({
       id: r.id,
       name: r.name,
       discount: Number(r.discount) || 100,
       grade: r.grade,
       money: r.money,
       expNum: r.expNum,
-      icon: r.icon,
-      image: r.image,
+      icon: images[index]!.icon,
+      image: images[index]!.image,
       isForever: r.isForever,
       color: r.color,
     }));

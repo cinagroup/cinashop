@@ -319,6 +319,13 @@ export class ActivityService {
   async seckillList(timeId: string, pageValue?: unknown, limitValue?: unknown) {
     const { page, limit } = normalizeListPage(pageValue, limitValue);
     const rows = await this.container.storeSeckillDao.getByTimeId(timeId, page, limit);
+    const activityIds = [...new Set(rows.map(item => item.activityId).filter(id => id > 0))];
+    const activities = activityIds.length ? await this.container.db.select({ id: storeActivity.id, image: storeActivity.image })
+      .from(storeActivity).where(and(inArray(storeActivity.id, activityIds), eq(storeActivity.type, 1),
+        eq(storeActivity.status, 1), eq(storeActivity.isDel, 0))) : [];
+    const activityPictures = await renderSeckillTimePictures(this.env?.APP_KEY,
+      await publicSeckillTimePictures(this.container.db, activities.map(item => item.image)));
+    const activityImages = new Map(activities.map((item, index) => [item.id, activityPictures[index] ?? '']));
     const images = await renderProductPictures(this.env?.APP_KEY,
       await publicProductPictures(this.container.db, rows.map(item => ({ image: item.image, type: item.type, relationId: item.relationId }))));
     return rows.map((item, index) => ({
@@ -340,7 +347,7 @@ export class ActivityService {
       discount_num: Number(item.otPrice) > 0
         ? Math.round((Number(item.price) / Number(item.otPrice)) * 100) / 10
         : 10,
-      activity_image: "",
+      activity_image: activityImages.get(item.activityId) ?? '',
     }));
   }
 
@@ -427,7 +434,7 @@ export class ActivityService {
       product_type: item.productType,
       price: Number(item.price),
       min_price: Number(item.minPrice),
-      ot_price: Number(item.price),
+      ot_price: Number(item.otPrice),
       image: images[index] ?? '',
       title: item.title || item.storeName,
       info: item.info,

@@ -42,6 +42,23 @@
       </view>
 
       <view class="login-btn" @tap="handleLogin">{{ mode === "mobile" ? "登录/注册" : "登录" }}</view>
+      <!-- #ifdef APP-PLUS -->
+      <view v-if="!nativePhoneRequired" class="native-login-btn" :class="{ disabled: nativeBusy || nativeManualBusy }" @tap="handleNativeLogin">
+        {{ nativeBusy ? '等待微信授权…' : '微信登录' }}
+      </view>
+      <view v-if="nativeBusy || nativePhoneRequired" class="native-auth-panel">
+        <template v-if="nativePhoneRequired">
+          <view class="native-auth-title">绑定手机号后完成微信登录</view>
+          <input class="input form-item" v-model="nativePhone" :disabled="nativeBusy || nativeCodeSending" type="number" maxlength="11" placeholder="请输入手机号" />
+          <view class="form-item code-row">
+            <input class="input code-input" v-model="nativeCaptcha" :disabled="nativeBusy" type="number" maxlength="6" placeholder="请输入 6 位验证码" />
+            <view class="code-button" @tap="sendNativePhoneCode">{{ nativeCountdown > 0 ? `${nativeCountdown}s` : (nativeCodeSending ? '提交中' : '获取验证码') }}</view>
+          </view>
+          <view class="login-btn" :class="{ disabled: nativeBusy || nativeCodeSending }" @tap="completeNativePhoneLogin">{{ nativeBusy ? '正在登录…' : '确认绑定并登录' }}</view>
+        </template>
+        <view class="native-auth-cancel" @tap="cancelNativeLogin">取消本次微信登录</view>
+      </view>
+      <!-- #endif -->
       <view class="auth-links">
         <view @tap="goRegister">没有账号? 立即注册</view>
         <view @tap="goReset">忘记密码</view>
@@ -53,6 +70,9 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+// #ifdef APP-PLUS
+import { useNativeWechatLogin } from '@/composables/useNativeWechatLogin';
+// #endif
 import { onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiLogin, apiMobileLogin, apiRequestCode } from "@/api/auth";
@@ -68,8 +88,20 @@ const countdown = ref(0);
 const codeSending = ref(false);
 let countdownTimer: ReturnType<typeof setInterval> | undefined;
 const authStore = useAuthStore();
+// #ifdef APP-PLUS
+const { nativeBusy, nativePhoneRequired, nativePhone, nativeCaptcha, nativeCodeSending, nativeCountdown,
+  beginNativeLogin, cancelNativeLogin, sendNativePhoneCode, completeNativePhoneLogin } = useNativeWechatLogin();
+const nativeManualBusy = ref(false);
+function handleNativeLogin() {
+  if (nativeManualBusy.value) return;
+  return beginNativeLogin();
+}
+// #endif
 
 async function handleLogin() {
+  // #ifdef APP-PLUS
+  if (nativeManualBusy.value || nativeBusy.value || nativePhoneRequired.value) return;
+  // #endif
   if (!/^1\d{10}$/.test(account.value)) {
     return uni.showToast({ title: "请输入正确的手机号", icon: "none" });
   }
@@ -79,6 +111,9 @@ async function handleLogin() {
   if (mode.value === "mobile" && !/^\d{6}$/.test(captcha.value)) {
     return uni.showToast({ title: "请输入 6 位验证码", icon: "none" });
   }
+  // #ifdef APP-PLUS
+  nativeManualBusy.value = true;
+  // #endif
   try {
     const result = mode.value === "mobile"
       ? await apiMobileLogin(account.value, captcha.value)
@@ -99,6 +134,10 @@ async function handleLogin() {
       title: e instanceof Error ? e.message : "登录失败",
       icon: "none",
     });
+  } finally {
+    // #ifdef APP-PLUS
+    nativeManualBusy.value = false;
+    // #endif
   }
 }
 
@@ -238,4 +277,12 @@ function goReset() {
   font-size: 26rpx;
   margin-top: 30rpx;
 }
+</style>
+
+<style scoped>
+.native-login-btn { margin-top: 24rpx; padding: 24rpx; text-align: center; color: #148c45; border: 2rpx solid #148c45; border-radius: 40rpx; }
+.native-login-btn.disabled { opacity: .5; }
+.native-auth-panel { margin-top: 28rpx; padding-top: 28rpx; border-top: 2rpx solid #eee; }
+.native-auth-title { margin-bottom: 24rpx; font-size: 28rpx; }
+.native-auth-cancel { margin-top: 24rpx; text-align: center; font-size: 26rpx; color: #777; }
 </style>

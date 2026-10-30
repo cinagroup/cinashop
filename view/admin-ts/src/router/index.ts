@@ -24,6 +24,13 @@ const routes: RouteRecordRaw[] = [
         redirect: "/dashboard",
       },
       {
+        path: "system/profile",
+        alias: "/admin/system/user",
+        name: "systemUser",
+        component: () => import("@/pages/system/Profile.vue"),
+        meta: { title: "个人中心" },
+      },
+      {
         path: "dashboard",
         name: "dashboard",
         component: () => import("@/pages/Dashboard.vue"),
@@ -48,6 +55,41 @@ const routes: RouteRecordRaw[] = [
       {
         path: "/admin/product/add_product/:id?",
         redirect: to => ({ path: to.params.id === undefined || to.params.id === "" || to.params.id === "0" ? "/product/create" : `/product/edit/${encodeURIComponent(String(to.params.id))}`, query: to.query, hash: to.hash }),
+      },
+      {
+        path: "product/units",
+        alias: "/admin/product/unitList",
+        name: "product-units",
+        component: () => import("@/pages/product/ProductUnitAuthor.vue"),
+        meta: { title: "商品单位" },
+      },
+      {
+        path: "product/ensures",
+        alias: "/admin/product/ensure",
+        name: "product-ensures",
+        component: () => import("@/pages/product/ProductEnsureAuthor.vue"),
+        meta: { title: "保障服务", permission: "product.view" },
+      },
+      {
+        path: "product/rules",
+        alias: "/admin/product/product_attr",
+        name: "product-rules",
+        component: () => import("@/pages/product/ProductRuleAuthor.vue"),
+        meta: { title: "SKU 规格模板", permission: "product.view" },
+      },
+      {
+        path: "product/parameters",
+        alias: "/admin/product/specs",
+        name: "product-parameters",
+        component: () => import("@/pages/product/ProductParameterAuthor.vue"),
+        meta: { title: "商品参数模板", permission: "product.view" },
+      },
+      {
+        path: "product/hotwords",
+        alias: "/admin/product/hotWords",
+        name: "product-hotwords",
+        component: () => import("@/pages/product/ProductHotwordAuthor.vue"),
+        meta: { title: "搜索热词", permission: "product.view" },
       },
       {
         path: "product/metadata",
@@ -112,6 +154,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "user/groups",
+        alias: "/admin/user/group",
         name: "user-groups",
         component: () => import("@/pages/user/UserGroups.vue"),
         meta: { title: "商城用户分组" },
@@ -183,7 +226,15 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "企业微信" },
       },
       {
+        path: "order/delivery-people",
+        alias: "/admin/setting/delivery_service/index",
+        name: "order-delivery-people",
+        component: () => import("@/pages/operations/DeliveryPeople.vue"),
+        meta: { title: "平台配送员" },
+      },
+      {
         path: "operations/store",
+        alias: ["/admin/setting/merchant/system_store/list", "/admin/setting/merchant/system_store_staff/index"],
         name: "operations-store",
         component: () => import("@/pages/operations/StoreOperations.vue"),
         meta: { title: "门店与配送" },
@@ -296,6 +347,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "悬浮按钮" },
       },
       {
+        path: "config/classes",
+        alias: "/admin/system/config/system_config_tab/index",
+        name: "config-classes",
+        component: () => import("@/pages/config/ConfigClasses.vue"),
+        meta: { title: "配置分类" },
+      },
+      {
         path: "config/forms",
         name: "config-forms",
         component: () => import("@/pages/config/SystemForms.vue"),
@@ -361,6 +419,20 @@ const routes: RouteRecordRaw[] = [
         name: "combinations",
         component: () => import("@/pages/activity/Combinations.vue"),
         meta: { title: "拼团商品" },
+      },
+      {
+        path: "activity/bargain-records",
+        alias: "/admin/marketing/store_bargain/bargain_list",
+        name: "bargain-records",
+        component: () => import("@/pages/activity/BargainRecords.vue"),
+        meta: { title: "砍价运营记录" },
+      },
+      {
+        path: "activity/bargain-statistics/:id?",
+        alias: "/admin/marketing/store_bargain/statistics/:id?",
+        name: "bargain-statistics",
+        component: () => import("@/pages/activity/BargainStatistics.vue"),
+        meta: { title: "砍价统计" },
       },
       {
         path: "activity/combination-groups",
@@ -512,6 +584,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "系统管理" },
       },
       {
+        path: "system/menu-rules",
+        alias: "/admin/setting/system_menus/index",
+        name: "platform-menu-rules",
+        component: () => import("@/pages/system/PlatformMenuRules.vue"),
+        meta: { title: "平台权限规则" },
+      },
+      {
         path: "system/legacy-staff",
         name: "legacy-staff",
         component: () => import("@/pages/system/LegacyStaff.vue"),
@@ -567,6 +646,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "level",
+        alias: "/admin/vipuser/level/list",
         name: "level",
         component: () => import("@/pages/level/LevelList.vue"),
         meta: { title: "会员等级" },
@@ -579,6 +659,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "express",
+        alias: "/admin/setting/freight/express/index",
         name: "express",
         component: () => import("@/pages/express/ExpressList.vue"),
         meta: { title: "快递公司" },
@@ -593,14 +674,15 @@ const routes: RouteRecordRaw[] = [
         path: "label/products",
         name: "product-label-catalog",
         alias: "/admin/product/label",
-        component: () => import("@/pages/label/ProductLabelCatalog.vue"),
+        component: () => import("@/pages/label/ProductLabelAuthor.vue"),
         meta: { title: "商品标签管理" },
       },
       {
         path: "label",
         name: "label",
         component: () => import("@/pages/label/LabelList.vue"),
-        meta: { title: "标签管理" },
+        alias: "/admin/user/label/",
+        meta: { title: "用户标签" },
       },
       {
         path: "content/article",
@@ -613,6 +695,41 @@ const routes: RouteRecordRaw[] = [
         name: "content-wechat-card",
         component: () => import("@/pages/content/WechatMemberCard.vue"),
         meta: { title: "公众号会员卡" },
+      },
+      {
+        path: "config/pc",
+        alias: "/admin/app/pc",
+        name: "config-pc",
+        component: () => import("@/pages/settings/PcBaseAuthor.vue"),
+        meta: { title: "PC基础配置", permission: "pc_base.view" },
+      },
+      {
+        path: "content/wechat-open",
+        alias: "/admin/app/wechat_open",
+        name: "content-wechat-open",
+        component: () => import("@/pages/content/WechatOpenAuthor.vue"),
+        meta: { title: "微信开放平台", permission: "wechat_open.view" },
+      },
+      {
+        path: "content/wechat-app",
+        alias: "/admin/app/app",
+        name: "content-wechat-app",
+        component: () => import("@/pages/content/WechatAppAuthor.vue"),
+        meta: { title: "原生App微信配置", permission: "wechat_app.view" },
+      },
+      {
+        path: "content/wechat-base",
+        alias: "/admin/app/wechat/base",
+        name: "content-wechat-base",
+        component: () => import("@/pages/content/WechatBaseAuthor.vue"),
+        meta: { title: "公众号基础设置" },
+      },
+      {
+        path: "content/wechat-menu",
+        alias: "/admin/app/wechat/setting/menus/index",
+        name: "content-wechat-menu",
+        component: () => import("@/pages/content/WechatMenuAuthor.vue"),
+        meta: { title: "公众号自定义菜单", permission: "wechat_menu.view" },
       },
       {
         path: "content/wechat",
@@ -631,6 +748,13 @@ const routes: RouteRecordRaw[] = [
         name: "content-dise",
         component: () => import("@/pages/content/DiseList.vue"),
         meta: { title: "DIY 装修" },
+      },
+      {
+        path: "system/frontend-log",
+        alias: "/admin/system/log",
+        name: "browser-log",
+        component: () => import("@/pages/system/BrowserLog.vue"),
+        meta: { title: "本浏览器日志" },
       },
       {
         path: "system/log",
@@ -736,7 +860,40 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-  { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
+  {
+    path: "/403",
+    alias: "/admin/403",
+    name: "403",
+    component: () => import("@/pages/system/ExceptionPage.vue"),
+    meta: { title: "403", exceptionPage: true, exceptionKind: "403" },
+  },
+  {
+    path: "/404",
+    alias: "/admin/404",
+    name: "404",
+    component: () => import("@/pages/system/ExceptionPage.vue"),
+    meta: { title: "404", exceptionPage: true, exceptionKind: "404" },
+  },
+  {
+    path: "/500",
+    alias: "/admin/500",
+    name: "500",
+    component: () => import("@/pages/system/ExceptionPage.vue"),
+    meta: { title: "500", exceptionPage: true, exceptionKind: "500" },
+  },
+  {
+    path: "/other",
+    alias: "/admin/other",
+    name: "other",
+    component: () => import("@/pages/system/ExceptionPage.vue"),
+    meta: { title: "浏览器兼容提示", exceptionPage: true, exceptionKind: "other" },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: () => import("@/pages/system/ExceptionPage.vue"),
+    meta: { title: "404", exceptionPage: true, exceptionKind: "404" },
+  },
 ];
 
 const router = createRouter({
@@ -747,7 +904,7 @@ const router = createRouter({
 // 路由守卫: 未登录跳登录页
 router.beforeEach((to) => {
   document.title = to.meta.title ? `${to.meta.title} - CinaShop 管理后台` : "CinaShop 管理后台";
-  if (previewMode) return true;
+  if (to.meta.exceptionPage === true || previewMode) return true;
   if (to.path !== "/login" && !isLoggedIn()) {
     return { path: "/login" };
   }

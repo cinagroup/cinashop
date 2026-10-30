@@ -53,6 +53,7 @@ export interface MembershipOrderResult {
 
 export interface MembershipPayResult {
   order_id: string;
+  pay_mode?: "jsapi" | "native" | "h5" | "app";
   paid: boolean;
   overdue_time?: number | null;
   pay_type?: string;

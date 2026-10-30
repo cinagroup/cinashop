@@ -1,11 +1,15 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { eq } from "drizzle-orm";
+import { createContainerFromDb } from "@/lib/di";
+import { orderNotificationDelivery, systemConfig } from "@/models/schema";
+import { financeMemoryPostgres } from "./helpers/financePostgres";
 import type { Env, OrderMessage } from "@/env";
 import { sendAliyunTemplateSms } from "@/services/message/SmsVerificationService";
 import {
   consumeOrderNotificationDeliveryMessage,
   isOrderNotificationDeliveryMessage,
-  type OrderNotificationDeliveryService,
+  OrderNotificationDeliveryService,
 } from "@/services/order/OrderNotificationDeliveryService";
 import { WechatNotificationProvider } from "@/services/wechat/WechatNotificationProvider";
 
@@ -95,18 +99,40 @@ describe("外部通知投递账本", () => {
 });
 
 describe("微信模板提供商请求", () => {
-  it("公众号模板数据使用 value 包装且不把 AppSecret 写入消息体", async () => {
-    const config = new Map([
-      ["cfg_wechat_appid", "official-app"],
-      ["cfg_wechat_appsecret", "official-secret"],
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>;
+  beforeAll(async () => { fixture = await financeMemoryPostgres([systemConfig, orderNotificationDelivery]); });
+  afterAll(async () => { await fixture.close(); });
+  beforeEach(async () => {
+    await fixture.reset();
+    await fixture.db.insert(systemConfig).values([
+      { menuName: "wechat_appid", value: '"official-app"' },
+      { menuName: "wechat_appsecret", value: '"official-secret"' },
     ]);
-    const env = {
+  });
+  function runtimeEnv() {
+    const config = new Map([
+      ["cfg_wechat_appid", "stale-official-app"],
+      ["cfg_wechat_appsecret", "stale-official-secret"],
+    ]);
+    return {
+      APP_KEY: "owned-notification-delivery-key",
+      UPSTASH_REDIS_URL: "", UPSTASH_REDIS_TOKEN: "",
       CONFIG_KV: {
         get: async (key: string) => config.get(key) ?? null,
-        put: async () => undefined,
-        delete: async () => undefined,
+        put: async (key: string, value: string) => { config.set(key, value); },
+        delete: async (key: string) => { config.delete(key); },
       },
     } as unknown as Env;
+  }
+  const officialPayload = () => ({ kind: "wechat_official" as const, data: { thing1: "商品" }, url: "" });
+  async function queuedOfficial() {
+    await fixture.db.insert(orderNotificationDelivery).values({ id: 17, outboxId: 1, eventKey: "order.delivery.notice:9",
+      orderId: 9, userId: 1, noticeMark: "order_postage_success", channel: "wechat_official",
+      target: "openid", templateCode: "template-id", payload: officialPayload(), status: "ENQUEUED" });
+    return { ...message(), channel: "wechat_official" as const };
+  }
+  it("公众号模板数据使用 value 包装且不把 AppSecret 写入消息体", async () => {
+    const env = runtimeEnv();
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const fetcher = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input);
@@ -116,7 +142,7 @@ describe("微信模板提供商请求", () => {
       }
       return Response.json({ errcode: 0, errmsg: "ok", msgid: 123 });
     }) as unknown as typeof fetch;
-    const provider = new WechatNotificationProvider({} as never, env, fetcher);
+    const provider = new WechatNotificationProvider(createContainerFromDb(fixture.db), env, fetcher);
     await expect(provider.sendOfficial("openid", "template-id", {
       kind: "wechat_official",
       data: { thing1: "商品" },
@@ -131,6 +157,47 @@ describe("微信模板提供商请求", () => {
       data: { thing1: { value: "商品" } },
     });
     expect(String(sent?.init?.body)).not.toContain("official-secret");
+    const tokenUrl = new URL(calls.find(call => call.url.includes("/cgi-bin/token"))!.url);
+    expect(tokenUrl.searchParams.get("appid")).toBe("official-app");
+    expect(tokenUrl.searchParams.get("secret")).toBe("official-secret");
+  });
+
+  it.each(["missing-secret", "missing-signature", "oversized-config"])("确定的配置错误 %s 无 HTTP 且投递为 DEAD", async fault => {
+    const env = runtimeEnv(), queued = await queuedOfficial();
+    if (fault === "missing-secret") await fixture.db.delete(systemConfig).where(eq(systemConfig.menuName, "wechat_appsecret"));
+    if (fault === "missing-signature") env.APP_KEY = "";
+    if (fault === "oversized-config") await fixture.db.insert(systemConfig).values(Array.from({ length: 63 }, () => ({ menuName: "wechat_appsecret", value: "shadow", sort: -1 })));
+    const fetcher = vi.fn().mockRejectedValue(Error("No provider I/O allowed"));
+    const service = new OrderNotificationDeliveryService(createContainerFromDb(fixture.db), env);
+    await expect(service.processMessage(queued, fetcher)).resolves.toBe("dead");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0]).toMatchObject({ status: "DEAD", attemptCount: 1, leaseUntil: 0 });
+    await expect(service.processMessage(queued, fetcher)).resolves.toBe("dead");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("SQL 故障保留 UNKNOWN 分类，不被误认为已知配置错误", async () => {
+    const queued = await queuedOfficial(), fetcher = vi.fn().mockRejectedValue(Error("No provider I/O allowed"));
+    await fixture.exec("ALTER TABLE system_config RENAME COLUMN menu_name TO unavailable_menu_name");
+    try {
+      await expect(new OrderNotificationDeliveryService(createContainerFromDb(fixture.db), runtimeEnv()).processMessage(queued, fetcher)).resolves.toBe("unknown");
+      expect(fetcher).not.toHaveBeenCalled();
+      expect((await fixture.db.select().from(orderNotificationDelivery))[0].status).toBe("UNKNOWN");
+    } finally { await fixture.exec("ALTER TABLE system_config RENAME COLUMN unavailable_menu_name TO menu_name"); }
+  });
+
+  it("明确 invalid-token 拒绝后密钥被清空，不再次发送且投递为 DEAD", async () => {
+    const queued = await queuedOfficial();
+    let posts = 0, tokens = 0;
+    const fetcher: typeof fetch = async input => {
+      if (new URL(String(input)).pathname.endsWith("/token")) { tokens++; return Response.json({ access_token: "owned-token", expires_in: 7200 }); }
+      posts++;
+      await fixture.db.delete(systemConfig).where(eq(systemConfig.menuName, "wechat_appsecret"));
+      return Response.json({ errcode: 40014 });
+    };
+    await expect(new OrderNotificationDeliveryService(createContainerFromDb(fixture.db), runtimeEnv()).processMessage(queued, fetcher)).resolves.toBe("dead");
+    expect({ posts, tokens }).toEqual({ posts: 1, tokens: 1 });
+    expect((await fixture.db.select().from(orderNotificationDelivery))[0].status).toBe("DEAD");
   });
 });
 

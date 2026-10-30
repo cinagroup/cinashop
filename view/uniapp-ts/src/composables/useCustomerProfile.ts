@@ -1,4 +1,5 @@
-import { computed, ref, watch } from 'vue';
+import { computed, getCurrentInstance, ref, watch } from 'vue';
+import { createProfileAvatarPreparation, PROFILE_AVATAR_CANVAS_ID } from '@/utils/profileAvatarImage';
 import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import { useAuthStore } from '@/stores/auth';
 import { RequestError } from '@/utils/request';
@@ -15,6 +16,8 @@ export function useCustomerProfile() {
   const backup=ref<Backup|null>(null),preview=ref(''),failedImage=ref(''),clock=ref(0),ownerClock=ref(0);
   let generation=0,disposed=false,adopted='',readScope:CustomerProfileRequests|undefined,actionScope:CustomerProfileRequests|undefined;
   let timer:ReturnType<typeof setTimeout>|undefined,uncertainOwner='';
+  const instance=getCurrentInstance()?.proxy,avatarCanvas=ref({width:1,height:1}),nativeAvatarAvailable=ref(false),nativeAvatarEpoch=ref(0);
+  let preparation:ReturnType<typeof createProfileAvatarPreparation>|undefined;
   const identity=()=>`${auth.uid}:${auth.sessionVersion}:${auth.token}`;
   function persisted(){try{return uni.getStorageSync('uni_token')===auth.token&&Number(uni.getStorageSync('uni_uid'))===auth.uid;}catch{return false;}}
   const loggedIn=computed(()=>{void ownerClock.value;return auth.isLoggedIn&&auth.uid>0&&persisted();});
@@ -35,7 +38,7 @@ export function useCustomerProfile() {
   const canRestore=computed(()=>editable.value&&backup.value?.revision===snapshot.value?.revision);
   function clear(){
     if(busy.value==='save'&&actionScope){const owner=actionScope.owner;uncertainOwner=`${owner.uid}:${owner.version}:${owner.token}`;}
-    generation++;readScope?.abort();actionScope?.abort();readScope=actionScope=undefined;clearTimeout(timer);timer=undefined;
+    generation++;nativeAvatarEpoch.value++;preparation?.abort();preparation=undefined;avatarCanvas.value={width:1,height:1};readScope?.abort();actionScope?.abort();readScope=actionScope=undefined;clearTimeout(timer);timer=undefined;
     snapshot.value=null;draft.value=emptyDraft();backup.value=null;preview.value='';failedImage.value='';adopted='';loading.value=false;busy.value='';error.value=notice.value='';needsReview.value=uploadReview.value=false;clock.value++;
   }
   function scheduleMedia(renew=true){
@@ -50,6 +53,7 @@ export function useCustomerProfile() {
     if(!current()||busy.value||loading.value)return;
     const before=snapshot.value,retained=!mediaOnly&&!confirmedSave&&before&&(dirty.value||needsReview.value)
       ?{revision:before.revision,draft:cloneDraft(draft.value)}:null;
+    nativeAvatarEpoch.value++;
     const ticket=++generation,scope=createCustomerProfileRequests(()=>current()&&ticket===generation);readScope?.abort();readScope=scope;
     loading.value=true;error.value='';clearTimeout(timer);timer=undefined;
     try{
@@ -73,20 +77,34 @@ export function useCustomerProfile() {
   function setNickname(event:unknown){if(!editable.value)return;const value=(event as {detail?:{value?:unknown}})?.detail?.value;if(typeof value==='string')draft.value.nickname=value;}
   function setField(info:string,event:unknown){if(!editable.value||!fields.value.some(f=>f.info===info))return;const value=(event as {detail?:{value?:unknown}})?.detail?.value;if(typeof value==='string'||typeof value==='number'&&Number.isFinite(value))draft.value.fields[info]=String(value);}
   function keepAvatar(){if(!owns()||locked.value)return;draft.value.avatar=snapshot.value!.profile.avatar;preview.value=snapshot.value!.profile.avatar_preview;failedImage.value='';uploadReview.value=false;notice.value='已保留当前保存的头像';scheduleMedia();}
-  async function chooseAvatar(){
-    if(!editable.value)return;const ticket=generation,stamp=identity(),scope=createCustomerProfileRequests(()=>current()&&ticket===generation&&stamp===identity());actionScope=scope;busy.value='choose';error.value='';
+  async function uploadAvatar(native=false,event?:unknown){
+    if(!editable.value)return;const ticket=generation,stamp=identity(),scope=createCustomerProfileRequests(()=>current()&&ticket===generation&&stamp===identity());
+    const image=createProfileAvatarPreparation(()=>scope.active(),size=>{avatarCanvas.value=size;},instance);preparation=image;
+    actionScope=scope;busy.value=native?'prepare':'choose';error.value='';
     try{
-      const file=await new Promise<{path:string;size:number}|null>((resolve,reject)=>uni.chooseImage({count:1,sizeType:['compressed'],sourceType:['album','camera'],
-        success:value=>{if(!Array.isArray(value.tempFilePaths)||value.tempFilePaths.length!==1||typeof value.tempFilePaths[0]!=='string'||!Array.isArray(value.tempFiles)||value.tempFiles.length!==1){reject(Error('请选择一张头像图片'));return;}resolve({path:value.tempFilePaths[0],size:value.tempFiles[0]!.size});},
-        fail:value=>{if(value.errMsg?.includes('cancel'))resolve(null);else reject(Error('头像选择未完成，请重新选择'));},
-      }));
-      if(!scope.active()||!file)return;
-      if(!Number.isFinite(file.size)||file.size<=0||file.size>10*1024*1024)throw Error('请选择10 MiB以内的头像图片');
-      busy.value='upload';const result=await scope.upload(file.path);if(!scope.active())return;
+      let filePath:string;
+      if(!native){const file=await image.choose();if(!scope.active()||!file)return;busy.value='prepare';filePath=await image.prepare(file);}
+      else filePath=await image.native(event);
+      if(!scope.active())return;
+      busy.value='upload';const result=await scope.upload(filePath);if(!scope.active())return;
       draft.value.avatar=result.url;preview.value=result.src;failedImage.value='';uploadReview.value=false;notice.value='头像已上传，保存修改后生效';scheduleMedia();
     }catch(reason){if(scope.active()){uploadReview.value=busy.value==='upload';error.value=uploadReview.value?`头像上传未确认：${message(reason)}。可保留原头像后继续编辑。`:message(reason);}}
-    finally{if(scope.active()){busy.value='';if(actionScope===scope)actionScope=undefined;}scope.abort();}
+    finally{if(scope.active()){busy.value='';nativeAvatarEpoch.value++;if(actionScope===scope)actionScope=undefined;avatarCanvas.value={width:1,height:1};}if(preparation===image)preparation=undefined;image.abort();scope.abort();}
   }
+  const chooseAvatar=()=>uploadAvatar();
+  function cancelAvatarChoice(){
+    if(busy.value!=='choose'||!owns())return;
+    const image=preparation,scope=actionScope;preparation=undefined;actionScope=undefined;
+    image?.abort();scope?.abort();busy.value='';nativeAvatarEpoch.value++;
+    error.value='';notice.value='已取消头像选择，可重新选择';scheduleMedia();
+  }
+  const nativeAvatarButton=computed(()=>{
+    const epoch=nativeAvatarEpoch.value,ticket=generation,stamp=identity();let used=false;
+    return{key:epoch,choose:(event:unknown)=>{
+      if(used||epoch!==nativeAvatarEpoch.value||ticket!==generation||stamp!==identity()||!editable.value)return Promise.resolve();
+      used=true;return uploadAvatar(true,event);
+    }};
+  });
   async function save(){
     if(!editable.value||!snapshot.value)return;let payload:ReturnType<typeof encodeProfileSave>;
     try{payload=encodeProfileSave(snapshot.value,draft.value);}catch(reason){error.value=message(reason);return;}
@@ -110,6 +128,9 @@ export function useCustomerProfile() {
   watch(()=>[auth.uid,auth.token,auth.sessionVersion],()=>{clear();void Promise.resolve().then(()=>{if(current())void load(false,false);});},{flush:'sync'});
   function changed(){syncPersisted();}
   onShow(()=>{visible.value=true;syncPersisted();clear();void load(false,false);
+    // #ifdef MP-WEIXIN
+    try{nativeAvatarAvailable.value=typeof uni.canIUse==='function'&&uni.canIUse('button.open-type.chooseAvatar');}catch{nativeAvatarAvailable.value=false;}
+    // #endif
     // #ifdef H5
     if(typeof window!=='undefined'){window.addEventListener('focus',changed);window.addEventListener('storage',changed);}
     // #endif
@@ -121,6 +142,7 @@ export function useCustomerProfile() {
   }
   onHide(leave);onUnload(()=>{leave();disposed=true;uncertainOwner='';});
   return{passwordAvailable,snapshot,draft,fields,loading,busy,locked,editable,loggedIn,error,notice,needsReview,uploadReview,backup,canRestore,avatar,avatarView,
-    load:()=>load(false,true),save,chooseAvatar,keepAvatar,restore,discardBackup,setNickname,setField,login,
+    avatarCanvas,avatarCanvasId:PROFILE_AVATAR_CANVAS_ID,nativeAvatarAvailable,nativeAvatarButton,
+    load:()=>load(false,true),save,chooseAvatar,cancelAvatarChoice,keepAvatar,restore,discardBackup,setNickname,setField,login,
     phone:()=>navigate('/pages/user/phone'),password:()=>navigate('/pages/user/changePassword')};
 }

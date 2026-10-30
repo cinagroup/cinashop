@@ -32,7 +32,7 @@ test('grouping preserves inherited order/user/config gates without exposing unre
 test('permission replacement and revocation immediately remove child entries and empty groups',async()=>{
   const m=mount(['/order']);
   try {
-    assert.deepEqual(items(m),['/order','/order/offline']);
+    assert.deepEqual(items(m),['/order','/order/offline','/order/delivery-people']);
     m.gates.allowed=new Set(['/supplier/directory']);await tick();
     assert.deepEqual(items(m),['/supplier/directory']);
     assert.deepEqual(sections(m),['nav:supplier']);

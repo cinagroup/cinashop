@@ -2,14 +2,14 @@ import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSou
 import { reverseAdminLevelDefinitionSource } from './helpers/adminLevelDefinitionSourceBinding';
 import { reverseMigrationAuditSource, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import {readMainMergePredecessor as readFileSync} from './helpers/migrationMergeSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe,expect,it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
-import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
+import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBindingMain';
 import { applyCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
-import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
+import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBindingMain';
 import { assertCommerceImagePreviewReport } from './helpers/diyCommerceImagePreviewSourceBinding';
 import { assertCommercePreviewExpiryReport } from './helpers/diyCommercePreviewExpirySourceBinding';
 import { assertCommunityPreviewRefreshReport } from './helpers/diyCommunityPreviewRefreshSourceBinding';

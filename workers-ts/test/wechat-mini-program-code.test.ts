@@ -1,15 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   createAgentInviteSignature,
   WechatMiniProgramCodeService,
   verifyAgentInviteSignature,
 } from "@/services/wechat/WechatMiniProgramCodeService";
-import type { Container } from "@/lib/di";
+import { createContainerFromDb } from "@/lib/di";
+import { systemConfig } from "@/models/schema";
 import type { Env } from "@/env";
+import { financeMemoryPostgres } from './helpers/financePostgres';
 
 describe("mini-program agent invite signatures", () => {
   const secret = "test-app-key-with-enough-entropy";
   const now = 1_800_000_000;
+  let f: Awaited<ReturnType<typeof financeMemoryPostgres>>;
+  beforeAll(async () => {
+    f = await financeMemoryPostgres([systemConfig]);
+    await f.db.insert(systemConfig).values([
+      { menuName: 'routine_appId', value: '"test-app-id"' },
+      { menuName: 'routine_appsecret', value: '"test-app-secret"' },
+    ]);
+  }, 30_000);
+  afterAll(async () => { await f?.close(); }, 30_000);
 
   it("accepts an untampered short-lived signature", async () => {
     const expires = now + 600;
@@ -41,18 +52,15 @@ describe("mini-program agent invite signatures", () => {
   });
 
   it("creates the legacy user spread page code without requiring an agent role", async () => {
-    const cache = new Map<string, string>([
-      ["cfg_routine_appId", "test-app-id"],
-      ["cfg_routine_appsecret", "test-app-secret"],
-    ]);
+    const get = vi.fn(async () => { throw Error('Mini credentials must come from fresh SQL'); });
     const env = {
       APP_KEY: secret,
       UPSTASH_REDIS_URL: "",
       UPSTASH_REDIS_TOKEN: "",
       CONFIG_KV: {
-        get: async (key: string) => cache.get(key) ?? null,
-        put: async (key: string, value: string) => { cache.set(key, value); },
-        delete: async (key: string) => { cache.delete(key); },
+        get,
+        put: async () => {},
+        delete: async () => {},
       },
     } as unknown as Env;
     const requests: Array<{ url: string; init?: RequestInit }> = [];
@@ -61,15 +69,18 @@ describe("mini-program agent invite signatures", () => {
       if (requests.length === 1) {
         return Response.json({ access_token: "token", expires_in: 7200 });
       }
-      return new Response(new Uint8Array([137, 80, 78, 71]), {
+      return new Response(new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), {
         headers: { "Content-Type": "image/png" },
       });
     };
-    const service = new WechatMiniProgramCodeService({} as Container, env, fetcher);
+    const service = new WechatMiniProgramCodeService(createContainerFromDb(f.db), env, fetcher);
     const result = await service.createUserSpreadDataUrl(42);
 
-    expect(result).toBe("data:image/png;base64,iVBORw==");
+    expect(result).toBe("data:image/png;base64,iVBORw0KGgo=");
     expect(requests).toHaveLength(2);
+    expect(new URL(requests[0].url).searchParams.get('appid')).toBe('test-app-id');
+    expect(new URL(requests[0].url).searchParams.get('secret')).toBe('test-app-secret');
+    expect(get).not.toHaveBeenCalled();
     const payload = JSON.parse(String(requests[1]?.init?.body)) as Record<string, unknown>;
     expect(payload).toMatchObject({
       scene: "42",

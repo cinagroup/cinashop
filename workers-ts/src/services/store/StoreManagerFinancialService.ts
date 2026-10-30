@@ -11,7 +11,7 @@ import { PayType, applyStoreOrderPayment } from '@/services/order/StoreOrderPayS
 import { hasInitiatedAssistedProviderPayment } from '@/services/payment/AssistedProviderPaymentClaim';
 import { assertPinkOrderPayable } from '@/services/activity/PinkLifecycleService';
 import { assertMarketingOfflinePaymentAllowed } from '@/services/payment/OrderPaymentPolicy';
-import { evaluatePaymentReadiness } from '@/services/payment/PaymentReadinessService';
+import { evaluatePaymentReadiness, evaluateWechatRefundReadiness } from '@/services/payment/PaymentReadinessService';
 import { normalizeConfigScalar } from '@/utils/config';
 import { storeOrderRefundSplit } from '@/models/schema/order_refund_split';
 import { refundOrderSplitFingerprint } from '@/services/order/RefundOrderSplitIdentity';
@@ -78,7 +78,7 @@ async function assertManagerGiftRefundReady(db:Pick<DbClient,'execute'>,order:Or
  const state=await managerGiftRefundReadiness(db,order);if(!state.ready)throw new HttpApiException(state.reason,503,503);
 }
 const managerPaymentKeys=['ali_pay_status','balance_func_status','offline_pay_status','pay_weixin_mchid','pay_weixin_open','pay_weixin_serial_no','routine_appId','site_url','wechat_app_appid','wechat_appid','yue_pay_status'];
-async function managerPaymentMethods(db:DbClient,env:Env){const rows=await db.select({name:systemConfig.menuName,value:systemConfig.value}).from(systemConfig).where(and(eq(systemConfig.isStore,0),inArray(systemConfig.menuName,managerPaymentKeys))).orderBy(desc(systemConfig.sort),desc(systemConfig.id));const config:Record<string,string>={};for(const row of rows)if(!Object.hasOwn(config,row.name))config[row.name]=normalizeConfigScalar(row.value);return evaluatePaymentReadiness(config,env).methods;}
+async function managerPaymentMethods(db:DbClient,env:Env){const rows=await db.select({name:systemConfig.menuName,value:systemConfig.value}).from(systemConfig).where(and(eq(systemConfig.isStore,0),inArray(systemConfig.menuName,managerPaymentKeys))).orderBy(desc(systemConfig.sort),desc(systemConfig.id));const config:Record<string,string>={};for(const row of rows)if(!Object.hasOwn(config,row.name))config[row.name]=normalizeConfigScalar(row.value);return {...evaluatePaymentReadiness(config,env).methods,weixin:evaluateWechatRefundReadiness(config,env)};}
 async function managerRefundProviderReadiness(db:DbClient,order:Order,env:Env){if(order.payType==='yue')return{enabled:true,reason:''};if(!['weixin','alipay'].includes(order.payType))return{enabled:false,reason:'当前支付方式不支持安全资金退款'};const methods=await managerPaymentMethods(db,env);return methods[order.payType as 'weixin'|'alipay'];}
 /** Actual current SQL config and append-only runtime profile. */
 export async function managerFinancialActionAvailability(db:DbClient,scope:StoreManagerScope,order:Order,env:Env){

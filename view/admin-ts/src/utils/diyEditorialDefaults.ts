@@ -1,5 +1,6 @@
-// Full literal defaults from PHP ref 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5.
-// Only newly added components use these defaults; imports are never merged.
+/** Complete static PHP defaults at 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5.
+ * Only this.num → 0 and the exact news2 require → /static/images/diy/news2.png
+ * are bound. Imported components are never merged with these new-block defaults. */
 export const DIY_EDITORIAL_DEFAULTS = {
   "news": {
     "cname": "新闻公告",
@@ -516,4 +517,4 @@ export const DIY_EDITORIAL_DEFAULTS = {
       "min": 0
     }
   }
-} as const;
+};

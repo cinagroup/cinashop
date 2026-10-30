@@ -4,6 +4,7 @@
       <h2>营销活动</h2>
       <div v-if="activeTab !== 'discounts' && canView" class="head-actions">
         <el-tag type="success">{{ loading ? '加载中' : listError ? '加载失败' : `共 ${count} 个活动` }}</el-tag>
+        <el-button v-if="activeTab === 'bargain' && canBargainRecords" size="small" @click="openBargainRecords">砍价运营记录</el-button>
         <el-button v-if="canManage" :disabled="saving" type="primary" size="small" @click="openForm()">＋ 新增活动</el-button>
         <el-button v-if="activeTab === 'integral' && canIntegralBatch" type="primary" plain size="small" @click="router.push('/activity/integral-batch')">批量添加积分商品</el-button>
       </div>
@@ -80,12 +81,12 @@
             团列表
           </el-button>
           <el-button
-            v-if="activeTab === 'bargain'"
+            v-if="activeTab === 'bargain' && canBargainStatistics"
             link
             type="primary"
-            @click="showBargainUsers(row)"
+            @click="openBargainStatistics(row)"
           >
-            明细
+            统计
           </el-button>
           <el-button v-if="canManage" :disabled="loading || saving" link type="primary" @click="openForm(row)">编辑</el-button>
           <el-button v-if="canManage" link :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
@@ -259,7 +260,7 @@
       <el-table :data="bargainUsers" border>
         <el-table-column prop="id" label="记录ID" width="80" />
         <el-table-column prop="uid" label="用户UID" width="90" />
-        <el-table-column label="当前价" width="110">
+        <el-table-column label="起价" width="110">
           <template #default="{ row }">¥{{ row.bargainPrice }}</template>
         </el-table-column>
         <el-table-column label="底价" width="110">
@@ -327,6 +328,10 @@ const canView = computed(() => !!auth.token && auth.token === getToken() && !!au
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes("activity.view")));
 const canManage = computed(() => activeTab.value !== 'combination' && canView.value && !!auth.userInfo &&
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes("activity.manage")));
+const canBargainRecords = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('bargain_record.view')));
+const canBargainStatistics = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
+  (auth.userInfo.level === 0 || auth.uniqueAuth.includes('bargain_statistics.view')));
 const canSeckillStatistics = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes("seckill_statistics.view")));
 const canSeckillTimes = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
@@ -400,6 +405,13 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+function openBargainRecords() {
+  if (mounted && activeTab.value === 'bargain' && canBargainRecords.value) void router.push('/activity/bargain-records');
+}
+function openBargainStatistics(row: ActivityItem) {
+  if (!mounted || !canBargainStatistics.value || activeTab.value !== 'bargain' || loading.value || !list.value.includes(row) || !Number.isSafeInteger(row.id) || row.id <= 0) return;
+  void router.push('/activity/bargain-statistics/' + row.id);
+}
 function openSeckillStatistics(row: ActivityItem) {
   if (!Number.isSafeInteger(row.id) || row.id <= 0) return;
   void router.push({ name: "seckill-statistics", params: { id: String(row.id) } });
@@ -414,6 +426,8 @@ async function showPinks(row: ActivityItem) {
     ElMessage.error((e as Error).message || "加载失败");
   }
 }
+
+defineExpose({ showBargainUsers });
 
 async function showBargainUsers(row: ActivityItem) {
   bargainVisible.value = true;

@@ -54,7 +54,11 @@ describe("paid membership core migration", () => {
     expect(normalizeMemberChannel("wechat")).toBe("wechat");
     expect(normalizeMemberChannel("weixinh5")).toBe("weixinh5");
     expect(normalizeMemberChannel("routine")).toBe("routine");
-    expect(normalizeMemberChannel("app")).toBeNull();
+    // PHP distinguishes native requests through isApp(); the TS client carries
+    // that supported native realm explicitly instead of borrowing JSAPI.
+    expect(normalizeMemberChannel("app")).toBe("app");
+    expect(normalizeMemberChannel("pc")).toBeNull();
+    expect(normalizeMemberChannel("supplier")).toBeNull();
   });
 
   it("extends an active membership but starts expired membership from now", () => {

@@ -6,10 +6,10 @@ import { readMembershipCardActivationHistoricalFile as readFileSync, peelMembers
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
-import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
+import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBindingMain';
 import { applyCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
-import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
+import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBindingMain';
 import { applyAdminUserFilterReport, adminUserFilterSourceBinding as filterProof } from './helpers/adminUserFilterSourceBinding';
 import { applyMigrationAuditReport, reverseMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';
 import { applyAdminLevelDefinitionReport, reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';

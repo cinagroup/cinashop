@@ -1,0 +1,481 @@
+{
+  "schema": "cinashop.promotion-author.source-and-report-adapter.v1",
+  "boundary": "Exact promotion-only author increment after community/editorial/follow/state. No new audited Axios call or registered route. Explicit anonymous GET previews reuse existing /api/products and /api/diy/get_diy routes outside the Axios-only inventory. Prior dated proof/helper/fixture bytes and all old negative definitions remain intact. This source manifest is not a runtime, browser, native, deployment or whole-migration completion claim.",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_sha256": "ef0678b8176ab5826e792845950a9f108b535bb67d709d60e902fe0364e00ceb",
+      "after_sha256": "56c4a660b868f7079afcc053e5705b9e4088dcf5aadae017a5075dfa9d1e4a5e",
+      "edits": [
+        {
+          "before_source": "    <el-dialog v-model=\"formVisible\" :title=\"form.id ? '编辑页面' : '新增 DIY 页面'\" width=\"760px\">\n",
+          "after_source": "    <el-dialog v-model=\"formVisible\" :title=\"form.id ? '编辑页面' : '新增 DIY 页面'\" width=\"min(760px, calc(100vw - 24px))\">\n",
+          "before_line": 72,
+          "after_line": 72
+        },
+        {
+          "before_source": "",
+          "after_source": "        <el-form-item label=\"商品选项卡\"><DiyPromotionEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+          "before_line": 103,
+          "after_line": 103
+        },
+        {
+          "before_source": "",
+          "after_source": "import DiyPromotionEditor from \"@/components/content/DiyPromotionEditor.vue\";\nimport { canonicalPromotionValue } from \"@/utils/diyPromotionEditor\";\n",
+          "before_line": 173,
+          "after_line": 174
+        },
+        {
+          "before_source": "    return canonicalCommunityValue(canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))))));\n",
+          "after_source": "    return canonicalPromotionValue(canonicalCommunityValue(canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))))));\n",
+          "before_line": 305,
+          "after_line": 308
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyHomeRenderer.vue",
+      "before_sha256": "ab9714e0457229327ed609997df7821ec24a69a5456038e4cacf9a8df11dabef",
+      "after_sha256": "5e7956d660979dbb8132b5250a5f89fc259db38ff50bd325f81393bca034a31c",
+      "edits": [
+        {
+          "before_source": "<template>\n  <view class=\"diy-renderer\">\n    <template v-for=\"(block, index) in components\" :key=\"blockKey(block, index)\">\n      <view v-if=\"block.name!=='pageFoot' && (block.name==='homeComb' || block.name==='headerSerch' || block.name==='tabNav' || !combinationSelection)\" class=\"diy-theme-block\" :style=\"blockThemeStyle(block)\">\n      <DiyNavigationWidget\n        v-if=\"block.name === 'headerSerch' || block.name === 'tabNav' || block.name === 'menus' || block.name === 'pictureCube'\"\n        :block=\"block\" :active=\"pageActive\" :scroll-top=\"scrollTop\" :selected-tab=\"combinationTabs.selected(block)\" :header-top=\"headerOffset(index)\"\n        @select=\"combinationTabs.select(block,$event.index)\" @layout=\"recordHeaderHeight(block,index,$event)\"\n      />\n\n      <DiyMediaCarousel\n        v-else-if=\"block.name === 'homeComb' || block.name === 'swipers' || block.name === 'swiperBg'\"\n        :block=\"block\"\n        :active=\"pageActive\"\n        :scroll-top=\"scrollTop\"\n        :selected-tab=\"combinationTabs.selected(block)\"\n        @select=\"combinationTabs.select(block, $event.index)\"\n      />\n\n      <DiyPresentationWidget v-else-if=\"isPresentationWidget(block)\" :block=\"block\" :active=\"pageActive\" :refreshing=\"pageRefreshing\" />\n\n      <DiyListWidget v-else-if=\"block.name === 'goodList' || block.name === 'articleList'\" :block=\"block\" :active=\"pageActive\" />\n\n      <DiyStateWidget v-else-if=\"isStateWidget(block)\" :block=\"block\" :active=\"pageActive\" @closed=\"emit('closed', $event)\" />\n\n      <DiyCommunityWidget v-else-if=\"block.name === 'community'\" :block=\"block\" :active=\"pageActive\" />\n\n      <DiyEditorialWidget\n        v-else-if=\"isEditorialWidget(block)\"\n        :block=\"block\"\n        :active=\"pageActive\"\n      />\n\n      <DiyCommerceWidget\n        v-else-if=\"isCommerceWidget(block)\"\n        :block=\"block\"\n        :active=\"pageActive\"\n      />\n\n      <DiyCustomerService v-else-if=\"block.name === 'customerService'\" :block=\"block\" :active=\"pageActive\" />\n\n      </view>\n    </template>\n    <template v-if=\"combinationSelection\">\n      <DiyCombinationCategory v-if=\"combinationSelection.kind==='category'\" :key=\"`${combinationSelection.host}:${combinationSelection.id}`\" :id=\"combinationSelection.id\" :activity=\"categoryActivity\" :load-more-signal=\"loadMoreSignal\" />\n      <template v-else>\n        <view v-if=\"combinationLoading\" class=\"diy-combination-status\" role=\"status\">正在读取微页面…</view>\n        <view v-if=\"combinationError\" class=\"diy-combination-status\" role=\"alert\">{{combinationError}}<button @tap=\"combinationTabs.micro.reload(true)\">重试微页面</button></view>\n        <DiyHomeRenderer v-else-if=\"combinationRenderable\" :components=\"combinationComponents\" :page-active=\"pageActive && combinationAvailable\" :page-refreshing=\"pageRefreshing || combinationRefreshing\" :scroll-top=\"scrollTop\" :load-more-signal=\"loadMoreSignal\" :micro-page=\"false\" @closed=\"emit('closed', $event)\" />\n        <view v-else-if=\"!combinationLoading\" class=\"diy-combination-status\">微页面暂未开放</view>\n      </template>\n    </template>\n    <DiyPageFooter v-if=\"microPage\" :block=\"hostFooter\" :active=\"pageActive || pageRefreshing\" :ready=\"pageActive && !pageRefreshing\" />\n  </view>\n</template>\n\n<script setup lang=\"ts\">\nimport { computed, ref, watch } from \"vue\";\nimport DiyPageFooter from './DiyPageFooter.vue';\nimport type { DiyComponent } from '@/api/diy';\nimport { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';\nimport DiyStateWidget from './DiyStateWidget.vue';\nimport DiyCustomerService from './DiyCustomerService.vue';\nimport DiyPresentationWidget from './DiyPresentationWidget.vue';\nimport { DIY_PRESENTATION_NAMES } from '@/utils/diyPresentationConfig';\nimport {\n  isDiyEnabled,\n} from \"@/utils/diy\";\nimport DiyMediaCarousel from \"./DiyMediaCarousel.vue\";\nimport DiyNavigationWidget from './DiyNavigationWidget.vue';\nimport { normalizeDiyNavigation } from '@/utils/diyNavigationConfig';\nimport { diyAuthoredPageFingerprint } from '@/utils/diyEditorialMediaLease';\nimport DiyCombinationCategory from './DiyCombinationCategory.vue';\nimport { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';\nimport type { DiyCombinationActivity } from '@/composables/useDiyCombinationCategory';\nimport DiyEditorialWidget from \"./DiyEditorialWidget.vue\";\nimport DiyListWidget from \"./DiyListWidget.vue\";\nimport DiyCommerceWidget from \"./DiyCommerceWidget.vue\";\nimport DiyCommunityWidget from \"./DiyCommunityWidget.vue\";\nimport { useThemeStore } from '@/stores/theme';\nimport { diyThemeVariables } from '@/utils/diyTheme';\n\nconst props = withDefaults(defineProps<{\n  components: DiyComponent[];\n  microPage?: boolean;\n  pageActive?: boolean;\n  pageRefreshing?: boolean;\n  scrollTop?: number;\n  loadMoreSignal?: number;\n}>(), {\n  microPage: false,\n  pageActive: true,\n  pageRefreshing: false,\n  scrollTop: 0,\n  loadMoreSignal: 0,\n});\nconst emit = defineEmits<{ closed: [message: string] }>();\nconst combinationTabs=useDiyCombinationTabs(()=>props.components,()=>props.pageActive);\nconst {selection:combinationSelection,components:combinationComponents}=combinationTabs;\nconst {loading:combinationLoading,error:combinationError,available:combinationAvailable,refreshing:combinationRefreshing,page:combinationPage}=combinationTabs.micro;\nconst categoryActivity=computed<DiyCombinationActivity>(()=>props.pageRefreshing?'refreshing':props.pageActive?'ready':'inactive');\nconst combinationRenderable=computed(()=>(props.pageActive||props.pageRefreshing)&&!!combinationPage.value&&isDiyEnabled(combinationPage.value.is_show)&&!combinationError.value);\nconst hostFooter=computed(()=>props.microPage?[...props.components].reverse().find(block=>block.name==='pageFoot') ?? null:null);\nwatch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)emit('closed',combinationError.value);});\nfunction isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }\nconst theme = useThemeStore();\nfunction blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }\nconst headerHeights=ref<Record<string,number>>({});\nwatch(()=>diyAuthoredPageFingerprint(props.components),()=>{headerHeights.value={};},{flush:'sync'});\nfunction recordHeaderHeight(block:DiyComponent,index:number,height:number){if(props.components[index]===block&&block.name==='headerSerch'&&Number.isFinite(height)&&height>0&&height<2000)headerHeights.value[blockKey(block,index)]=height;}\nfunction headerOffset(index:number){let width=375,status=0,native=false;try{const info=uni.getSystemInfoSync();if(Number.isFinite(info.windowWidth)&&info.windowWidth>0)width=info.windowWidth;\n// #ifndef H5\nnative=true;\nif(Number.isFinite(info.statusBarHeight)&&Number(info.statusBarHeight)>0)status=Number(info.statusBarHeight);\n// #endif\n}catch{}let total=0,hasHeader=false;const stackTabs=props.components[index]?.name==='tabNav';for(const [i,block] of props.components.slice(0,index).entries()){if(block.name!=='headerSerch'&&block.name!=='tabNav')continue;const config=normalizeDiyNavigation(block,theme.preset);if(!config.enabled)continue;if(block.name==='headerSerch'){hasHeader=true;total+=headerHeights.value[blockKey(block,i)]??config.headerLogicalHeight*width/750+status;}else if(stackTabs&&config.sticky&&(native||hasHeader&&props.scrollTop>50))total+=config.tabLogicalHeight*width/750;}return total;}\n\nconst EDITORIAL_WIDGET_NAMES = new Set([\"news\", \"hotspot\", \"follow\", \"activeParty\"]);\nconst COMMERCE_WIDGET_NAMES = new Set([\n  \"bargain\",\n  \"combination\",\n  \"coupon\",\n  \"liveBroadcast\",\n  \"promotionList\",\n  \"seckill\",\n  \"presale\",\n  \"pointsMall\",\n]);\n\nfunction isEditorialWidget(block: DiyComponent): boolean {\n  return EDITORIAL_WIDGET_NAMES.has(block.name);\n}\n\nfunction isCommerceWidget(block: DiyComponent): boolean {\n  return COMMERCE_WIDGET_NAMES.has(block.name);\n}\n\nfunction blockKey(block: DiyComponent, index: number): string {\n  return `${block.name}-${String(block.timestamp ?? index)}-${index}`;\n}\n\nfunction isPresentationWidget(block:DiyComponent){return DIY_PRESENTATION_NAMES.some(name=>name===block.name);}\n\n</script>\n\n<style scoped>\n.diy-renderer { width: 100%; box-sizing: border-box; }\n.diy-search { display: flex; align-items: center; gap: 18rpx; margin: 20rpx; padding: 18rpx 26rpx; border-radius: 40rpx; background: #fff; box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, .05); }\n.diy-search.compact { margin-bottom: 12rpx; }\n.search-logo { width: 130rpx; height: 52rpx; }\n.search-copy { flex: 1; color: #999; font-size: 26rpx; }\n.diy-title, .diy-service { display: flex; align-items: center; justify-content: space-between; margin: 20rpx; padding: 24rpx; border-radius: 16rpx; background: #fff; font-size: 30rpx; font-weight: 600; }\n.diy-more { color: #999; font-size: 24rpx; font-weight: 400; }\n.diy-spacer { margin: 0 20rpx; border-radius: 12rpx; }\n.diy-guide { margin: 24rpx 20rpx; border-top: 2rpx solid #e5e5e5; }\n.diy-rich-text, .diy-video-card, .diy-section, .diy-user-card { margin: 20rpx; padding: 24rpx; border-radius: 18rpx; background: #fff; box-sizing: border-box; }\n.diy-video { width: 100%; height: 380rpx; border-radius: 12rpx; overflow: hidden; }\n.diy-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20rpx 12rpx; margin: 20rpx; padding: 24rpx 16rpx; border-radius: 18rpx; background: #fff; }\n.diy-menu-item { display: flex; flex-direction: column; align-items: center; min-width: 0; }\n.diy-menu-image { width: 92rpx; height: 92rpx; border-radius: 20rpx; background: #f5f5f5; }\n.diy-menu-label { width: 100%; margin-top: 10rpx; overflow: hidden; color: #555; font-size: 23rpx; text-align: center; text-overflow: ellipsis; white-space: nowrap; }\n.diy-section-title { display: block; margin-bottom: 20rpx; font-size: 31rpx; font-weight: 600; color: #222; }\n.diy-rank-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12rpx; }\n.diy-rank-heading .diy-section-title { min-width: 0; }\n.diy-rank-more { flex-shrink: 0; color: var(--view-theme, #e93323); font-size: 23rpx; padding: 6rpx 0; }\n.diy-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }\n.diy-product-card { min-width: 0; overflow: hidden; border: 1rpx solid #eee; border-radius: 14rpx; }\n.diy-product-image { width: 100%; height: 280rpx; background: #f5f5f5; }\n.diy-product-name { display: -webkit-box; height: 72rpx; margin: 14rpx 14rpx 4rpx; overflow: hidden; font-size: 25rpx; line-height: 36rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }\n.diy-price-row { display: flex; align-items: center; justify-content: space-between; padding: 8rpx 14rpx 16rpx; }\n.diy-price { color: var(--view-priceColor, #e93323); font-size: 27rpx; font-weight: 600; }\n.diy-sales, .diy-article-meta, .diy-user-meta, .diy-sign-copy { color: #999; font-size: 21rpx; }\n.diy-article { display: flex; gap: 18rpx; padding: 18rpx 0; border-bottom: 1rpx solid #eee; }\n.diy-article:last-child { border-bottom: 0; }\n.diy-article-image { width: 180rpx; height: 126rpx; flex: none; border-radius: 10rpx; background: #f5f5f5; }\n.diy-article-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: space-between; }\n.diy-article-title { display: -webkit-box; overflow: hidden; font-size: 27rpx; line-height: 38rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }\n.diy-rank-group + .diy-rank-group { margin-top: 22rpx; }\n.diy-rank-label { display: block; margin-bottom: 12rpx; color: #666; font-size: 25rpx; }\n.diy-horizontal-scroll { width: 100%; white-space: nowrap; }\n.diy-rank-product, .diy-video-preview { position: relative; display: inline-flex; width: 210rpx; margin-right: 18rpx; vertical-align: top; flex-direction: column; }\n.diy-rank-image, .diy-video-poster { width: 210rpx; height: 210rpx; border-radius: 12rpx; background: #f5f5f5; }\n.diy-rank-name { margin: 10rpx 0 6rpx; overflow: hidden; font-size: 23rpx; text-overflow: ellipsis; white-space: nowrap; }\n.diy-rank-number { position: absolute; z-index: 1; top: 8rpx; left: 8rpx; width: 40rpx; height: 40rpx; border-radius: 50%; color: #fff; background: var(--view-theme, #e93323); font-size: 22rpx; line-height: 40rpx; text-align: center; }\n.diy-newcomer { background: linear-gradient(135deg, #fff7f1, #fff); }\n.diy-newcomer-points, .diy-newcomer-coupon { display: block; margin-bottom: 18rpx; color: var(--view-priceColor, #e93323); font-size: 25rpx; }\n.diy-sign { display: flex; flex-direction: column; gap: 18rpx; }\n.diy-sign-days { display: flex; gap: 8rpx; }\n.diy-sign-day { flex: 1; padding: 10rpx 0; border-radius: 10rpx; color: #888; background: #f5f5f5; font-size: 18rpx; text-align: center; }\n.diy-sign-day.signed { color: #fff; background: var(--view-theme, #e93323); }\n.diy-sign-day.today { box-shadow: inset 0 0 0 2rpx var(--view-theme, #e93323); }\n.diy-user-card { display: flex; align-items: center; gap: 18rpx; }\n.diy-avatar { display: flex; width: 92rpx; height: 92rpx; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: #f2f2f2; }\n.diy-avatar-placeholder { color: #aaa; font-size: 30rpx; }\n.diy-user-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 8rpx; }\n.diy-user-name { font-size: 28rpx; font-weight: 600; }\n.diy-user-counts { display: flex; flex-direction: column; gap: 8rpx; color: #777; font-size: 21rpx; text-align: right; }\n.diy-video-poster { height: 270rpx; }\n</style>\n",
+          "after_source": "<template>\n  <view class=\"diy-renderer\">\n    <template v-for=\"(block, index) in components\" :key=\"blockKey(block, index)\">\n      <view v-if=\"block.name!=='pageFoot' && (block.name==='homeComb' || block.name==='headerSerch' || block.name==='tabNav' || !combinationSelection)\" class=\"diy-theme-block\" :style=\"blockThemeStyle(block)\">\n      <DiyNavigationWidget\n        v-if=\"block.name === 'headerSerch' || block.name === 'tabNav' || block.name === 'menus' || block.name === 'pictureCube'\"\n        :block=\"block\" :active=\"pageActive\" :scroll-top=\"scrollTop\" :selected-tab=\"combinationTabs.selected(block)\" :header-top=\"headerOffset(index)\"\n        @select=\"combinationTabs.select(block,$event.index)\" @layout=\"recordHeaderHeight(block,index,$event)\"\n      />\n\n      <DiyMediaCarousel\n        v-else-if=\"block.name === 'homeComb' || block.name === 'swipers' || block.name === 'swiperBg'\"\n        :block=\"block\"\n        :active=\"pageActive\"\n        :scroll-top=\"scrollTop\"\n        :selected-tab=\"combinationTabs.selected(block)\"\n        @select=\"combinationTabs.select(block, $event.index)\"\n      />\n\n      <DiyPresentationWidget v-else-if=\"isPresentationWidget(block)\" :block=\"block\" :active=\"pageActive\" :refreshing=\"pageRefreshing\" />\n\n      <DiyListWidget v-else-if=\"block.name === 'goodList' || block.name === 'articleList'\" :block=\"block\" :active=\"pageActive\" />\n\n      <DiyPromotionWidget v-else-if=\"block.name === 'promotionList'\" :block=\"block\" :active=\"pageActive\" :header-top=\"headerOffset(index)\" />\n\n      <DiyStateWidget v-else-if=\"isStateWidget(block)\" :block=\"block\" :active=\"pageActive\" @closed=\"emit('closed', $event)\" />\n\n      <DiyCommunityWidget v-else-if=\"block.name === 'community'\" :block=\"block\" :active=\"pageActive\" />\n\n      <DiyEditorialWidget\n        v-else-if=\"isEditorialWidget(block)\"\n        :block=\"block\"\n        :active=\"pageActive\"\n      />\n\n      <DiyCommerceWidget\n        v-else-if=\"isCommerceWidget(block)\"\n        :block=\"block\"\n        :active=\"pageActive\"\n      />\n\n      <DiyCustomerService v-else-if=\"block.name === 'customerService'\" :block=\"block\" :active=\"pageActive\" />\n\n      </view>\n    </template>\n    <template v-if=\"combinationSelection\">\n      <DiyCombinationCategory v-if=\"combinationSelection.kind==='category'\" :key=\"`${combinationSelection.host}:${combinationSelection.id}`\" :id=\"combinationSelection.id\" :activity=\"categoryActivity\" :load-more-signal=\"loadMoreSignal\" />\n      <template v-else>\n        <view v-if=\"combinationLoading\" class=\"diy-combination-status\" role=\"status\">正在读取微页面…</view>\n        <view v-if=\"combinationError\" class=\"diy-combination-status\" role=\"alert\">{{combinationError}}<button @tap=\"combinationTabs.micro.reload(true)\">重试微页面</button></view>\n        <DiyHomeRenderer v-else-if=\"combinationRenderable\" :components=\"combinationComponents\" :page-active=\"pageActive && combinationAvailable\" :page-refreshing=\"pageRefreshing || combinationRefreshing\" :scroll-top=\"scrollTop\" :load-more-signal=\"loadMoreSignal\" :micro-page=\"false\" @closed=\"emit('closed', $event)\" />\n        <view v-else-if=\"!combinationLoading\" class=\"diy-combination-status\">微页面暂未开放</view>\n      </template>\n    </template>\n    <DiyPageFooter v-if=\"microPage\" :block=\"hostFooter\" :active=\"pageActive || pageRefreshing\" :ready=\"pageActive && !pageRefreshing\" />\n  </view>\n</template>\n\n<script setup lang=\"ts\">\nimport { computed, ref, watch } from \"vue\";\nimport DiyPageFooter from './DiyPageFooter.vue';\nimport type { DiyComponent } from '@/api/diy';\nimport { DIY_STATE_WIDGET_NAMES } from '@/utils/diyStateWidget';\nimport DiyStateWidget from './DiyStateWidget.vue';\nimport DiyCustomerService from './DiyCustomerService.vue';\nimport DiyPresentationWidget from './DiyPresentationWidget.vue';\nimport { DIY_PRESENTATION_NAMES } from '@/utils/diyPresentationConfig';\nimport {\n  isDiyEnabled,\n} from \"@/utils/diy\";\nimport DiyMediaCarousel from \"./DiyMediaCarousel.vue\";\nimport DiyNavigationWidget from './DiyNavigationWidget.vue';\nimport { normalizeDiyNavigation } from '@/utils/diyNavigationConfig';\nimport { diyAuthoredPageFingerprint } from '@/utils/diyEditorialMediaLease';\nimport DiyCombinationCategory from './DiyCombinationCategory.vue';\nimport { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';\nimport type { DiyCombinationActivity } from '@/composables/useDiyCombinationCategory';\nimport DiyEditorialWidget from \"./DiyEditorialWidget.vue\";\nimport DiyListWidget from \"./DiyListWidget.vue\";\nimport DiyPromotionWidget from './DiyPromotionWidget.vue';\nimport DiyCommerceWidget from \"./DiyCommerceWidget.vue\";\nimport DiyCommunityWidget from \"./DiyCommunityWidget.vue\";\nimport { useThemeStore } from '@/stores/theme';\nimport { diyThemeVariables } from '@/utils/diyTheme';\n\nconst props = withDefaults(defineProps<{\n  components: DiyComponent[];\n  microPage?: boolean;\n  pageActive?: boolean;\n  pageRefreshing?: boolean;\n  scrollTop?: number;\n  loadMoreSignal?: number;\n}>(), {\n  microPage: false,\n  pageActive: true,\n  pageRefreshing: false,\n  scrollTop: 0,\n  loadMoreSignal: 0,\n});\nconst emit = defineEmits<{ closed: [message: string] }>();\nconst combinationTabs=useDiyCombinationTabs(()=>props.components,()=>props.pageActive);\nconst {selection:combinationSelection,components:combinationComponents}=combinationTabs;\nconst {loading:combinationLoading,error:combinationError,available:combinationAvailable,refreshing:combinationRefreshing,page:combinationPage}=combinationTabs.micro;\nconst categoryActivity=computed<DiyCombinationActivity>(()=>props.pageRefreshing?'refreshing':props.pageActive?'ready':'inactive');\nconst combinationRenderable=computed(()=>(props.pageActive||props.pageRefreshing)&&!!combinationPage.value&&isDiyEnabled(combinationPage.value.is_show)&&!combinationError.value);\nconst hostFooter=computed(()=>props.microPage?[...props.components].reverse().find(block=>block.name==='pageFoot') ?? null:null);\nwatch(combinationTabs.micro.phase,phase=>{if(phase==='closed'&&props.pageActive)emit('closed',combinationError.value);});\nfunction isStateWidget(block: DiyComponent) { return DIY_STATE_WIDGET_NAMES.some(name => name === block.name); }\nconst theme = useThemeStore();\nfunction blockThemeStyle(block: DiyComponent) { return diyThemeVariables(block, theme.preset); }\nconst headerHeights=ref<Record<string,number>>({});\nwatch(()=>diyAuthoredPageFingerprint(props.components),()=>{headerHeights.value={};},{flush:'sync'});\nfunction recordHeaderHeight(block:DiyComponent,index:number,height:number){if(props.components[index]===block&&block.name==='headerSerch'&&Number.isFinite(height)&&height>0&&height<2000)headerHeights.value[blockKey(block,index)]=height;}\nfunction headerOffset(index:number){let width=375,status=0,native=false;try{const info=uni.getSystemInfoSync();if(Number.isFinite(info.windowWidth)&&info.windowWidth>0)width=info.windowWidth;\n// #ifndef H5\nnative=true;\nif(Number.isFinite(info.statusBarHeight)&&Number(info.statusBarHeight)>0)status=Number(info.statusBarHeight);\n// #endif\n}catch{}let total=0,hasHeader=false;const stackTabs=props.components[index]?.name==='tabNav';for(const [i,block] of props.components.slice(0,index).entries()){if(block.name!=='headerSerch'&&block.name!=='tabNav')continue;const config=normalizeDiyNavigation(block,theme.preset);if(!config.enabled)continue;if(block.name==='headerSerch'){hasHeader=true;total+=headerHeights.value[blockKey(block,i)]??config.headerLogicalHeight*width/750+status;}else if(stackTabs&&config.sticky&&(native||hasHeader&&props.scrollTop>50))total+=config.tabLogicalHeight*width/750;}return total;}\n\nconst EDITORIAL_WIDGET_NAMES = new Set([\"news\", \"hotspot\", \"follow\", \"activeParty\"]);\nconst COMMERCE_WIDGET_NAMES = new Set([\n  \"bargain\",\n  \"combination\",\n  \"coupon\",\n  \"liveBroadcast\",\n  \"seckill\",\n  \"presale\",\n  \"pointsMall\",\n]);\n\nfunction isEditorialWidget(block: DiyComponent): boolean {\n  return EDITORIAL_WIDGET_NAMES.has(block.name);\n}\n\nfunction isCommerceWidget(block: DiyComponent): boolean {\n  return COMMERCE_WIDGET_NAMES.has(block.name);\n}\n\nfunction blockKey(block: DiyComponent, index: number): string {\n  return `${block.name}-${String(block.timestamp ?? index)}-${index}`;\n}\n\nfunction isPresentationWidget(block:DiyComponent){return DIY_PRESENTATION_NAMES.some(name=>name===block.name);}\n\n</script>\n\n<style scoped>\n.diy-renderer { width: 100%; box-sizing: border-box; }\n.diy-search { display: flex; align-items: center; gap: 18rpx; margin: 20rpx; padding: 18rpx 26rpx; border-radius: 40rpx; background: #fff; box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, .05); }\n.diy-search.compact { margin-bottom: 12rpx; }\n.search-logo { width: 130rpx; height: 52rpx; }\n.search-copy { flex: 1; color: #999; font-size: 26rpx; }\n.diy-title, .diy-service { display: flex; align-items: center; justify-content: space-between; margin: 20rpx; padding: 24rpx; border-radius: 16rpx; background: #fff; font-size: 30rpx; font-weight: 600; }\n.diy-more { color: #999; font-size: 24rpx; font-weight: 400; }\n.diy-spacer { margin: 0 20rpx; border-radius: 12rpx; }\n.diy-guide { margin: 24rpx 20rpx; border-top: 2rpx solid #e5e5e5; }\n.diy-rich-text, .diy-video-card, .diy-section, .diy-user-card { margin: 20rpx; padding: 24rpx; border-radius: 18rpx; background: #fff; box-sizing: border-box; }\n.diy-video { width: 100%; height: 380rpx; border-radius: 12rpx; overflow: hidden; }\n.diy-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20rpx 12rpx; margin: 20rpx; padding: 24rpx 16rpx; border-radius: 18rpx; background: #fff; }\n.diy-menu-item { display: flex; flex-direction: column; align-items: center; min-width: 0; }\n.diy-menu-image { width: 92rpx; height: 92rpx; border-radius: 20rpx; background: #f5f5f5; }\n.diy-menu-label { width: 100%; margin-top: 10rpx; overflow: hidden; color: #555; font-size: 23rpx; text-align: center; text-overflow: ellipsis; white-space: nowrap; }\n.diy-section-title { display: block; margin-bottom: 20rpx; font-size: 31rpx; font-weight: 600; color: #222; }\n.diy-rank-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12rpx; }\n.diy-rank-heading .diy-section-title { min-width: 0; }\n.diy-rank-more { flex-shrink: 0; color: var(--view-theme, #e93323); font-size: 23rpx; padding: 6rpx 0; }\n.diy-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }\n.diy-product-card { min-width: 0; overflow: hidden; border: 1rpx solid #eee; border-radius: 14rpx; }\n.diy-product-image { width: 100%; height: 280rpx; background: #f5f5f5; }\n.diy-product-name { display: -webkit-box; height: 72rpx; margin: 14rpx 14rpx 4rpx; overflow: hidden; font-size: 25rpx; line-height: 36rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }\n.diy-price-row { display: flex; align-items: center; justify-content: space-between; padding: 8rpx 14rpx 16rpx; }\n.diy-price { color: var(--view-priceColor, #e93323); font-size: 27rpx; font-weight: 600; }\n.diy-sales, .diy-article-meta, .diy-user-meta, .diy-sign-copy { color: #999; font-size: 21rpx; }\n.diy-article { display: flex; gap: 18rpx; padding: 18rpx 0; border-bottom: 1rpx solid #eee; }\n.diy-article:last-child { border-bottom: 0; }\n.diy-article-image { width: 180rpx; height: 126rpx; flex: none; border-radius: 10rpx; background: #f5f5f5; }\n.diy-article-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: space-between; }\n.diy-article-title { display: -webkit-box; overflow: hidden; font-size: 27rpx; line-height: 38rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }\n.diy-rank-group + .diy-rank-group { margin-top: 22rpx; }\n.diy-rank-label { display: block; margin-bottom: 12rpx; color: #666; font-size: 25rpx; }\n.diy-horizontal-scroll { width: 100%; white-space: nowrap; }\n.diy-rank-product, .diy-video-preview { position: relative; display: inline-flex; width: 210rpx; margin-right: 18rpx; vertical-align: top; flex-direction: column; }\n.diy-rank-image, .diy-video-poster { width: 210rpx; height: 210rpx; border-radius: 12rpx; background: #f5f5f5; }\n.diy-rank-name { margin: 10rpx 0 6rpx; overflow: hidden; font-size: 23rpx; text-overflow: ellipsis; white-space: nowrap; }\n.diy-rank-number { position: absolute; z-index: 1; top: 8rpx; left: 8rpx; width: 40rpx; height: 40rpx; border-radius: 50%; color: #fff; background: var(--view-theme, #e93323); font-size: 22rpx; line-height: 40rpx; text-align: center; }\n.diy-newcomer { background: linear-gradient(135deg, #fff7f1, #fff); }\n.diy-newcomer-points, .diy-newcomer-coupon { display: block; margin-bottom: 18rpx; color: var(--view-priceColor, #e93323); font-size: 25rpx; }\n.diy-sign { display: flex; flex-direction: column; gap: 18rpx; }\n.diy-sign-days { display: flex; gap: 8rpx; }\n.diy-sign-day { flex: 1; padding: 10rpx 0; border-radius: 10rpx; color: #888; background: #f5f5f5; font-size: 18rpx; text-align: center; }\n.diy-sign-day.signed { color: #fff; background: var(--view-theme, #e93323); }\n.diy-sign-day.today { box-shadow: inset 0 0 0 2rpx var(--view-theme, #e93323); }\n.diy-user-card { display: flex; align-items: center; gap: 18rpx; }\n.diy-avatar { display: flex; width: 92rpx; height: 92rpx; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: #f2f2f2; }\n.diy-avatar-placeholder { color: #aaa; font-size: 30rpx; }\n.diy-user-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 8rpx; }\n.diy-user-name { font-size: 28rpx; font-weight: 600; }\n.diy-user-counts { display: flex; flex-direction: column; gap: 8rpx; color: #777; font-size: 21rpx; text-align: right; }\n.diy-video-poster { height: 270rpx; }\n</style>\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ],
+      "inverse_boundary": "Exact whole-source replacement from complete captured predecessor; no regex/filter inverse.",
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "before_sha256": "5b7cc7407e8097514d88572654a36cc57df92eef8934e3027ba730353b051f96",
+      "after_sha256": "b39826a1092fa8183d45e1dc1008c63cd19331adbab10fc5ad5e092a84433212",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    if (block.name === 'promotionList') { const items=record(block.tabConfig).list; return Array.isArray(items)?items.map(item=>({holder:record(item),key:'image'})):[]; }\n",
+          "before_line": 32,
+          "after_line": 32
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "before_sha256": "5be856adb96531a66f501e01e4f5c259e040410904d6e98b58882ec7c2293e0c",
+      "after_sha256": "ab72b0a921a63dc56f7dadbf820762c473ba8e443f3eeb6c2838658616479751",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "      }\n    }\n    else if (component.name === 'promotionList') {\n      const tabs = record(component.tabConfig)?.list;\n      if (Array.isArray(tabs)) for (const value of tabs) {\n        const owner = record(value);\n        if (owner && typeof owner.image === 'string') {\n          slots.push({ value: owner.image, kind: 'image', set: value => { owner.image = value; } });\n          counts.ordinary++;\n        }\n",
+          "before_line": 71,
+          "after_line": 71
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "view/admin-ts/package.json",
+      "before_sha256": "3dcce090f00ba7d126df26cd280bd1fcdd461e68acb900c61b238d5f2e6c7f06",
+      "after_sha256": "2acdf9ec25e4f9499fbf4248dca2468603d81940a2ec650926e854cc0cba3fc5",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-promotion\": \"node --test --test-concurrency=1 scripts/diy-promotion-editor-model-runtime.test.cjs scripts/diy-promotion-editor-runtime.test.cjs\",\n",
+          "before_line": 7,
+          "after_line": 7
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "view/uniapp-ts/package.json",
+      "before_sha256": "319ca057e6632bb0bf5464837992bf324fe05fbae50ae80bf689d8b9326fb5dc",
+      "after_sha256": "4eb61837034f65f7c768d3eb8f2e5a1eaf6c3aabf37ef4259b951de0f7bb3ef3",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-promotion-author\": \"node --test --test-concurrency=1 scripts/diy-promotion-author-runtime.test.cjs\",\n",
+          "before_line": 5,
+          "after_line": 5
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "workers-ts/package.json",
+      "before_sha256": "99ab63667d425ef9e2d728d8aac65623a44019e1cda377df0e1e203f49723fae",
+      "after_sha256": "a05bfb080581c51e86c3e6efb56d726888d37ee1a9b39075ccccc2e8a46100c3",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-promotion-author\": \"vitest run --maxWorkers=1 test/diy-promotion-author-media.test.ts test/diy-promotion-author-source-binding.test.ts\",\n",
+          "before_line": 9,
+          "after_line": 9
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "before_sha256": "041c2acbdd19f4f30b7d2e09a5e0c8bb0d7aa061fa9f46723b0ecca60aa6725c",
+      "after_sha256": "a97131a5224f78e0d3ed6add93fc52a025bd47aecaaff431caa629d3c999a403",
+      "edits": [
+        {
+          "before_source": "        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-follow && npm run test:diy-editorial && npm run test:diy-community\n",
+          "after_source": "        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-follow && npm run test:diy-editorial && npm run test:diy-community && npm run test:diy-promotion\n",
+          "before_line": 333,
+          "after_line": 333
+        },
+        {
+          "before_source": "        run: npm run test:diy-editorial-author && npm run test:diy-community-author\n",
+          "after_source": "        run: npm run test:diy-editorial-author && npm run test:diy-community-author && npm run test:diy-promotion-author\n",
+          "before_line": 338,
+          "after_line": 338
+        }
+      ],
+      "predecessor_evidence": "Complete original pre-edit snapshot captured by the parent for this batch. No Git HEAD reconstruction."
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "before_sha256": "861f1ed2ab75cc7d5795201ff4d7ed469bcdeee650fb8bfc2c739c6c4b1abe64",
+      "after_sha256": "190461fb4e077fd25e08ce401def083cabe1c13c15c8d2029b06a1eb2de5cb2f",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, source))));\n",
+          "before_line": 27,
+          "after_line": 28
+        },
+        {
+          "before_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "after_source": "  return applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T))));\n",
+          "before_line": 39,
+          "after_line": 40
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-carousel-author-source-binding.test.ts",
+      "before_sha256": "3c5e63f9e163fe5ad6d9d14de6a61557c5528f06e433875fce723437b829c16d",
+      "after_sha256": "cfc4cf0b4256dcf128eaa5c14a88e8273075eb02a7bd22744e99cc0026bf5590",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, source))));\n",
+          "before_line": 24,
+          "after_line": 25
+        },
+        {
+          "before_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "after_source": "  return applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T))));\n",
+          "before_line": 36,
+          "after_line": 37
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-list-author-source-binding.test.ts",
+      "before_sha256": "1cd4921da7b89db47280c60c6ac1e083e816c08d2389807386bb5c63a2735531",
+      "after_sha256": "a4b6e164412511d38224636877e03731350a4f15f47b1ef705b340b4d39763ce",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, source))));\n",
+          "before_line": 23,
+          "after_line": 24
+        },
+        {
+          "before_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "after_source": "  return applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T))));\n",
+          "before_line": 35,
+          "after_line": 36
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-navigation-author-source-binding.test.ts",
+      "before_sha256": "1c20d4f043ff4288359121958021926cfe05dd422e1d4a6a74fdc6b5fbbc5362",
+      "after_sha256": "f21e24f51d2d102771c1caf9d1e7038095fa2aee57370c70d2d7ca6e30709a80",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, source))));\n",
+          "before_line": 25,
+          "after_line": 26
+        },
+        {
+          "before_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "after_source": "  return applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T))));\n",
+          "before_line": 37,
+          "after_line": 38
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-follow-author-source-binding.test.ts",
+      "before_sha256": "b5cdb425231db599755e55f560798e781dbd33ab496b66c392f0eb1b96c0a14a",
+      "after_sha256": "0e7a37bc058270f2dffab5d82de1721d1e8d6106fa91d8470ed80f55bef60815",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read = (file: string) => reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, readFileSync(resolve(root, file === proof.current_report.file ? editorialAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n')));\n",
+          "after_source": "const read = (file: string) => reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, readFileSync(resolve(root, file === proof.current_report.file ? editorialAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n'))));\n",
+          "before_line": 12,
+          "after_line": 13
+        },
+        {
+          "before_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyCommunityAuthorReport(applyEditorialAuthorReport(current)));\n",
+          "after_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(current))));\n",
+          "before_line": 34,
+          "after_line": 35
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-editorial-author-source-binding.test.ts",
+      "before_sha256": "97b5ede388f719c096c18a68a50767a080e607982c18e98be63dc2c3c54339fa",
+      "after_sha256": "d894268c4b1c91e1f8d9817df665caa3e30b8a151f588b94216b38ffecf3e9fa",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read = (file: string) => reverseCommunityAuthorSource(file, readFileSync(resolve(root, file === 'workers-ts/audit/admin-frontend-api-contracts.json' ? communityAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n'));\n",
+          "after_source": "const read = (file: string) => reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, readFileSync(resolve(root, file === 'workers-ts/audit/admin-frontend-api-contracts.json' ? communityAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n')));\n",
+          "before_line": 12,
+          "after_line": 13
+        },
+        {
+          "before_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyCommunityAuthorReport(current));\n",
+          "after_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyPromotionAuthorReport(applyCommunityAuthorReport(current)));\n",
+          "before_line": 35,
+          "after_line": 36
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-community-author-source-binding.test.ts",
+      "before_sha256": "7a00591c92672aab78822a52137cebb104aebed88814bf8804f6ed954ed53bd4",
+      "after_sha256": "1b7b174793231e8ebb64287e11ec61c3c894b129bf9cb68aa18c790ca4d30f5e",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reversePromotionAuthorSource, applyPromotionAuthorReport, promotionAuthorSourceBinding } from './helpers/diyPromotionAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read = (file: string) => readFileSync(resolve(root, file), 'utf8').replace(/\\r\\n?/gu, '\\n');\n",
+          "after_source": "const read = (file: string) => reversePromotionAuthorSource(file, readFileSync(resolve(root, file === proof.current_report.file ? promotionAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n'));\n",
+          "before_line": 11,
+          "after_line": 12
+        },
+        {
+          "before_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(current);\n",
+          "after_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyPromotionAuthorReport(current));\n",
+          "before_line": 58,
+          "after_line": 59
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured before adding only promotion source/report read-entry wrappers. Prior dated hash literals, fixture bytes, assertions and negative mutants remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-home-frontend-migration.test.ts",
+      "before_sha256": "d73e6261b0267ae297eb02b677dce22a7f4019607c8ed775f7e4a5eb82b21be4",
+      "after_sha256": "b412e462e4159e9aa08aaac4d5d45212f18a72ff24782f0d298d4e8fcdfea51c",
+      "edits": [
+        {
+          "before_source": "  it(\"statically mounts all eight business-data widgets through typed clients\", () => {\n    for (const name of [\n      \"bargain\",\n      \"combination\",\n      \"coupon\",\n      \"liveBroadcast\",\n      \"promotionList\",\n      \"seckill\",\n      \"presale\",\n      \"pointsMall\",\n    ]) {\n      expect(renderer).toContain(`\"${name}\"`);\n    }\n",
+          "after_source": "  it(\"mounts promotion through its delegated list and keeps precisely seven typed Commerce families\", () => {\n    const registry = /const COMMERCE_WIDGET_NAMES = new Set\\(\\[([\\s\\S]*?)\\]\\)/u.exec(renderer);\n    expect(registry).not.toBeNull();\n    const commerceNames = [...registry![1]!.matchAll(/[\"']([^\"']+)[\"']/gu)].map(match => match[1]);\n    expect(commerceNames).toEqual([\"bargain\", \"combination\", \"coupon\", \"liveBroadcast\", \"seckill\", \"presale\", \"pointsMall\"]);\n    expect(commerceNames).not.toContain(\"promotionList\");\n    expect(renderer).toMatch(/<DiyPromotionWidget\\s+v-else-if=\"block\\.name === 'promotionList'\"\\s+:block=\"block\"\\s+:active=\"pageActive\"\\s+:header-top=\"headerOffset\\(index\\)\"\\s*\\/>/u);\n    expect(renderer).toContain(\"import DiyPromotionWidget from './DiyPromotionWidget.vue'\");\n    expect(renderer).toMatch(/<DiyCommerceWidget\\s+v-else-if=\"isCommerceWidget\\(block\\)\"\\s+:block=\"block\"\\s+:active=\"pageActive\"/u);\n    const promotion = readFileSync(resolve(root, \"../view/uniapp-ts/src/components/diy/DiyPromotionWidget.vue\"), \"utf8\");\n    const promotionController = readFileSync(resolve(root, \"../view/uniapp-ts/src/composables/useDiyPromotion.ts\"), \"utf8\");\n    const projection = readFileSync(resolve(root, \"../view/common/diyPromotion.ts\"), \"utf8\");\n    expect(promotion).toContain('<DiyListWidget v-if=\"state.productBlock.value\"');\n    expect(promotion).toContain(':block=\"state.productBlock.value\" :active=\"state.ready()\"');\n    expect(promotionController).toContain('promotionProductBlock(block(), selectedTab.value)');\n    expect(projection).toContain(\"name: 'goodList'\");\n    expect(projection).toContain('styleConfig: { tabVal: 1 }');\n",
+          "before_line": 259,
+          "after_line": 259
+        }
+      ],
+      "predecessor_evidence": "Complete original captured before replacing only the obsolete eight-family shared-Commerce assertion with explicit promotion delegation plus exact remaining seven-family registry checks. Existing route and unsafe-render negatives remain unchanged."
+    }
+  ],
+  "observed_unchanged_sources": [
+    {
+      "file": "view/admin-ts/src/api/diyListAuthor.ts",
+      "sha256": "01b3135f5d56d82e6bf343e03dec4987ac73049fdd9388749fa4871692cd2e3f",
+      "boundary": "Observed unchanged before/after source; no inverse is applied."
+    },
+    {
+      "file": "view/admin-ts/src/components/content/DiyListSelectionPicker.vue",
+      "sha256": "16ec9cb828d4a08477461f084e21aad10b8bdbe777e50a354fac54a6d14de09a",
+      "boundary": "Observed unchanged before/after source; no inverse is applied."
+    },
+    {
+      "file": "view/admin-ts/scripts/helpers/diy-navigation-runtime.cjs",
+      "sha256": "5cad0a86d6027205cfe790c835d2e2ed9483b6386514d5ad3e0e95652f21c1b9",
+      "boundary": "Observed unchanged before/after source; no inverse is applied."
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyCommerceConfig.ts",
+      "sha256": "af1c004ece93713a234ea8f9721ceac4b50dac2441686a3561fc2b601a51f328",
+      "boundary": "Legacy eight-family direct module retained verbatim; actual promotion renderer is delegated separately."
+    },
+    {
+      "file": "view/uniapp-ts/src/composables/useDiyCommerceWidget.ts",
+      "sha256": "65c3ae2a9a5250b52a41da563f66b8f2d54b51bca77bd0f7abc651381acbd1f0",
+      "boundary": "Legacy eight-family direct module retained verbatim; actual promotion renderer is delegated separately."
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommerceWidget.vue",
+      "sha256": "7feb561ead43b2c7203a721febe599df5a12e1c29ad76b8d78097479205d979a",
+      "boundary": "Legacy eight-family direct module retained verbatim; actual promotion renderer is delegated separately."
+    },
+    {
+      "file": "view/uniapp-ts/src/api/diyCommerce.ts",
+      "sha256": "3f15876dded4fc88db27ee95b123d9e77fb37e9ce92e199cd77cf03fcf8cee6d",
+      "boundary": "Legacy eight-family direct module retained verbatim; actual promotion renderer is delegated separately."
+    }
+  ],
+  "previous_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts-before-diy-promotion-author-20261025.json",
+    "sha256": "4f44be0f8b0a4e7bfc45f2989cf1837d9bff29b7ecc25b52782fbaef42f29bab"
+  },
+  "current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "f526b393bdbdc2fb80304a49cfe5d45bec11a79eeaef80a71e01cb8100235162"
+  },
+  "counts_unchanged": {
+    "callSites": 703,
+    "pathVariants": 741,
+    "registered": 741,
+    "executable": 741,
+    "controlledUnavailable": 0,
+    "unregistered": 0,
+    "unresolved": 0
+  },
+  "backend_unchanged": true,
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "ef0678b8176ab5826e792845950a9f108b535bb67d709d60e902fe0364e00ceb"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "56c4a660b868f7079afcc053e5705b9e4088dcf5aadae017a5075dfa9d1e4a5e"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 246,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 249,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 362,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 365,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 385,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 388,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ],
+  "call_line_shift": 3
+}

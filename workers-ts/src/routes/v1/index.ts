@@ -1,4 +1,15 @@
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
+import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
+import * as AdminWechatApp from '@/controllers/api/v1/AdminWechatAppController';
+import * as AdminPcBase from '@/controllers/api/v1/AdminPcBaseController';
+import * as AdminWechatBasics from "@/controllers/api/v1/AdminWechatBasicsController";
+import * as AdminWechatBase from "@/controllers/api/v1/AdminWechatBaseController";
+import * as AdminWechatMenu from "@/controllers/api/v1/AdminWechatMenuController";
+import * as ProductLabelAuthor from '@/controllers/api/v1/AdminProductLabelAuthorController';
+import * as UserLabelAuthor from '@/controllers/api/v1/AdminUserLabelAuthorController';
+import * as LevelAuthor from '@/controllers/api/v1/AdminLevelAuthorController';
+import * as LevelAttachment from '@/controllers/api/v1/AdminLevelAttachmentController';
+import * as ExpressAuthor from '@/controllers/api/v1/AdminExpressController';
 /**
  * API v1 路由
  *
@@ -35,6 +46,7 @@ import * as CustomerWorkUser from '@/controllers/api/v1/CustomerWorkUserControll
 import * as CustomerWorkFinancial from '@/controllers/api/v1/CustomerWorkFinancialController';
 import * as CustomerWorkWriteoff from '@/controllers/api/v1/CustomerWorkWriteoffController';
 import * as CustomerWorkCashier from '@/controllers/api/v1/CustomerWorkCashierController';
+import * as CustomerCashierCapabilities from '@/controllers/api/v1/CustomerCashierCapabilitiesController';
 import * as CustomerWorkOrdinaryCashier from '@/controllers/api/v1/CustomerWorkOrdinaryCashierController';
 import * as CustomerCashierFormImages from '@/controllers/api/v1/CustomerCashierFormImagesController';
 import * as PayController from "@/controllers/api/v1/PayController";
@@ -55,25 +67,38 @@ import * as AdminLegacyRuntimeController from "@/controllers/api/v1/AdminLegacyR
 import * as WechatLiveController from "@/controllers/api/v1/WechatLiveController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as WechatController from "@/controllers/api/v1/WechatController";
+import * as NativeAppAuthController from "@/controllers/api/v1/NativeAppAuthController";
 import { merchantShipmentCallback } from "@/controllers/api/v1/MerchantShipmentCallbackController";
 import { cityDeliveryCallback } from "@/controllers/api/v1/CityDeliveryCallbackController";
 import * as EnterpriseWechatController from "@/controllers/api/v1/EnterpriseWechatController";
 import * as ReplyController from "@/controllers/api/v1/ReplyController";
 import * as AdminController from "@/controllers/api/v1/AdminController";
 import * as AdminCrud from "@/controllers/api/v1/AdminCrudController";
+import * as AdminConfigClass from "@/controllers/api/v1/AdminConfigClassController";
 import * as AdminProductUnits from '@/controllers/api/v1/AdminProductUnitController';
 import * as AdminProductSpecs from '@/controllers/api/v1/AdminProductSpecsController';
 import * as AdminProductEnsures from '@/controllers/api/v1/AdminProductEnsureController';
 import * as AdminProductRules from '@/controllers/api/v1/AdminProductRuleController';
 import * as AdminProductReplies from '@/controllers/api/v1/AdminProductReplyController';
 import * as AdminUserGroups from '@/controllers/api/v1/AdminUserGroupController';
+import * as AdminGroupAuthor from '@/controllers/api/v1/AdminGroupAuthorController';
+import * as AdminUnitAuthor from '@/controllers/api/v1/AdminUnitAuthorController';
+import * as AdminEnsureAuthor from '@/controllers/api/v1/AdminEnsureAuthorController';
+import * as AdminRuleAuthor from '@/controllers/api/v1/AdminRuleAuthorController';
+import * as AdminParameterAuthor from '@/controllers/api/v1/AdminParameterAuthorController';
+import * as AdminHotwordAuthor from '@/controllers/api/v1/AdminHotwordAuthorController';
 import * as AdminAuthorityOperation from "@/controllers/api/v1/AdminAuthorityOperationController";
+import * as AdminPlatformMenu from '@/controllers/api/v1/AdminPlatformMenuController';
+import * as AdminProfile from "@/controllers/api/v1/AdminProfileController";
 import * as AdminLegacyRole from "@/controllers/api/v1/AdminLegacyRoleController";
 import * as AdminLegacyRoleOperation from "@/controllers/api/v1/AdminLegacyRoleOperationController";
 import * as AdminLegacyAdmin from "@/controllers/api/v1/AdminLegacyAdminController";
 import * as AdminDistributorLevels from "@/controllers/api/v1/AdminDistributorLevelController";
 import * as AdminArticle from "@/controllers/api/v1/AdminArticleController";
 import * as AdminStore from "@/controllers/api/v1/AdminStoreController";
+import * as StoreAuthor from "@/controllers/api/v1/AdminStoreAuthorController";
+import * as StaffAuthor from '@/controllers/api/v1/AdminStaffAuthorController';
+import * as DeliveryAuthor from '@/controllers/api/v1/AdminDeliveryAuthorController';
 import * as AdminWriteoffOrderRead from "@/controllers/api/v1/AdminWriteoffOrderReadController";
 import * as AdminSupplierFinance from "@/controllers/api/v1/AdminSupplierFinanceController";
 import * as AdminSupplierBillScreen from "@/controllers/api/v1/AdminSupplierBillScreenController";
@@ -115,6 +140,7 @@ import * as AdminInvoiceRedNote from "@/controllers/api/v1/AdminInvoiceRedNoteCo
 import * as AdminLevelActivation from '@/controllers/api/v1/AdminLevelActivationController';
 import * as AdminPaidMembershipConfig from '@/controllers/api/v1/AdminPaidMembershipConfigController';
 import * as AdminCombinationStatistics from "@/controllers/api/v1/AdminCombinationStatisticsController";
+import * as AdminBargainRecords from "@/controllers/api/v1/AdminBargainRecordsController";
 import * as DivisionController from "@/controllers/api/v1/DivisionController";
 import * as DivisionStaff from '@/controllers/api/v1/DivisionStaffController';
 import * as AgentLevelController from "@/controllers/api/v1/AgentLevelController";
@@ -146,6 +172,8 @@ import * as WaybillJobController from "@/controllers/system/WaybillJobController
 import * as AttachmentController from "@/controllers/system/AttachmentController";
 import { adminRuntimeAuthMiddleware } from "@/middleware/admin-runtime-auth";
 import { managerRuntimeAuthMiddleware } from "@/middleware/manager-runtime-auth";
+import { customerFinancialRuntimeAuthMiddleware } from "@/middleware/customer-financial-runtime-auth";
+import { customerCashierRuntimeAuthMiddleware } from "@/middleware/customer-cashier-runtime-auth";
 import { operationsAuthMiddleware } from "@/middleware/operations-auth";
 import { stationOpenMiddleware } from "@/middleware/station-open";
 import { communityOpenMiddleware } from "@/middleware/community-open";
@@ -158,7 +186,8 @@ export const v1Routes = new Hono<{
 
 // Apply the private response boundary before station and optional identity
 // checks, so rejected requests cannot be cached as public share data.
-for (const path of ['/get_qrcode/*', '/share/scene/*', '/share/code/image/*', '/wechat/follow', '/wechat/follow/image/*', '/admin/brand/*', '/admin/category/*', '/cart/compute']) {
+for (const path of ['/get_qrcode/*', '/share/scene/*', '/share/code/image/*', '/wechat/follow', '/wechat/follow/image/*', '/admin/brand/*', '/admin/category/*', '/cart/compute',
+  '/admin/config_class', '/admin/config_class/*', '/admin/setting/config_class', '/admin/setting/config_class/*']) {
   v1Routes.use(path, async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
     c.header('Pragma', 'no-cache');
@@ -606,26 +635,30 @@ v1Routes.get('/mobile/work/operations/:key',authMiddleware({force:true}),Custome
 v1Routes.post('/mobile/work/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkFulfillment.abandonOperation);
 v1Routes.get('/mobile/work/operations/city-jobs/:id',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobOutcome);
 v1Routes.post('/mobile/work/operations/city-jobs/:id/recover',authMiddleware({force:true}),CustomerWorkFulfillment.cityJobRecover);
-v1Routes.get('/mobile/work/financial/orders/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialOrder);
-v1Routes.get('/mobile/work/financial/orders/:id/supplier-refund-settlement',authMiddleware({force:true}),CustomerWorkFinancial.supplierRefundSettlement);
-v1Routes.get('/mobile/work/financial/refunds/:id',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundReview);
-v1Routes.post('/mobile/work/financial/refund-quote',authMiddleware({force:true}),CustomerWorkFinancial.financialRefundQuote);
-v1Routes.post('/mobile/work/financial/change-price',authMiddleware({force:true}),CustomerWorkFinancial.changePrice);
-v1Routes.post('/mobile/work/financial/confirm-offline',authMiddleware({force:true}),CustomerWorkFinancial.confirmOffline);
-v1Routes.post('/mobile/work/financial/refund-create',authMiddleware({force:true}),CustomerWorkFinancial.refundCreate);
-v1Routes.post('/mobile/work/financial/refund-return',authMiddleware({force:true}),CustomerWorkFinancial.refundReturn);
-v1Routes.post('/mobile/work/financial/refund-refuse',authMiddleware({force:true}),CustomerWorkFinancial.refundRefuse);
-v1Routes.post('/mobile/work/financial/refund-execute',authMiddleware({force:true}),CustomerWorkFinancial.refundExecute);
-v1Routes.post('/mobile/work/financial/refund-remark',authMiddleware({force:true}),CustomerWorkFinancial.refundRemark);
-v1Routes.get('/mobile/work/financial/operations/:key',authMiddleware({force:true}),CustomerWorkFinancial.financialOperationStatus);
-v1Routes.post('/mobile/work/financial/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkFinancial.abandonFinancialOperation);
+const customerFinancialAuth = customerFinancialRuntimeAuthMiddleware();
+v1Routes.get('/mobile/work/financial/orders/:id',customerFinancialAuth,CustomerWorkFinancial.financialOrder);
+v1Routes.get('/mobile/work/financial/orders/:id/supplier-refund-settlement',customerFinancialAuth,CustomerWorkFinancial.supplierRefundSettlement);
+v1Routes.get('/mobile/work/financial/refunds/:id',customerFinancialAuth,CustomerWorkFinancial.financialRefundReview);
+v1Routes.post('/mobile/work/financial/refund-quote',customerFinancialAuth,CustomerWorkFinancial.financialRefundQuote);
+v1Routes.post('/mobile/work/financial/change-price',customerFinancialAuth,CustomerWorkFinancial.changePrice);
+v1Routes.post('/mobile/work/financial/confirm-offline',customerFinancialAuth,CustomerWorkFinancial.confirmOffline);
+v1Routes.post('/mobile/work/financial/refund-create',customerFinancialAuth,CustomerWorkFinancial.refundCreate);
+v1Routes.post('/mobile/work/financial/refund-return',customerFinancialAuth,CustomerWorkFinancial.refundReturn);
+v1Routes.post('/mobile/work/financial/refund-refuse',customerFinancialAuth,CustomerWorkFinancial.refundRefuse);
+v1Routes.post('/mobile/work/financial/refund-execute',customerFinancialAuth,CustomerWorkFinancial.refundExecute);
+v1Routes.post('/mobile/work/financial/refund-remark',customerFinancialAuth,CustomerWorkFinancial.refundRemark);
+v1Routes.get('/mobile/work/financial/operations/:key',customerFinancialAuth,CustomerWorkFinancial.financialOperationStatus);
+v1Routes.post('/mobile/work/financial/operations/:key/abandon',customerFinancialAuth,CustomerWorkFinancial.abandonFinancialOperation);
 v1Routes.post('/mobile/work/writeoff/lookup',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffLookup);
 v1Routes.get('/mobile/work/writeoff/orders/:id',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffOrder);
 v1Routes.get('/mobile/work/writeoff/orders/:id/records',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffRecords);
 v1Routes.post('/mobile/work/writeoff/execute',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffExecute);
 v1Routes.get('/mobile/work/writeoff/operations/:key',authMiddleware({force:true}),CustomerWorkWriteoff.writeoffOperationStatus);
 v1Routes.post('/mobile/work/writeoff/operations/:key/abandon',authMiddleware({force:true}),CustomerWorkWriteoff.abandonWriteoffOperation);
-v1Routes.post('/mobile/work/cashier/second-card/drafts',authMiddleware({force:true}),CustomerWorkCashier.cashierDraft);
+const customerCashierAuth = customerCashierRuntimeAuthMiddleware();
+const customerCashierCapabilitiesAuth = customerCashierRuntimeAuthMiddleware({ capabilities: true });
+v1Routes.get('/mobile/work/cashier/second-card/capabilities',customerCashierCapabilitiesAuth,CustomerCashierCapabilities.cashierCapabilities);
+v1Routes.post('/mobile/work/cashier/second-card/drafts',customerCashierAuth,CustomerWorkCashier.cashierDraft);
 v1Routes.post('/mobile/work/cashier/ordinary/drafts',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.draft);
 v1Routes.get('/mobile/work/cashier/ordinary/drafts/:key',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.draftRead);
 v1Routes.post('/mobile/work/cashier/ordinary/drafts/:key/rows',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.rows);
@@ -642,23 +675,23 @@ v1Routes.get('/mobile/work/cashier/ordinary/catalog/:id',authMiddleware({force:t
 v1Routes.get('/mobile/work/cashier/ordinary/users',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.users);
 v1Routes.get('/mobile/work/cashier/ordinary/users/:uid/addresses',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.addresses);
 v1Routes.get('/mobile/work/cashier/ordinary/quotes/:token/coupons',authMiddleware({force:true}),CustomerWorkOrdinaryCashier.coupons);
-v1Routes.post('/mobile/work/cashier/second-card/quote',authMiddleware({force:true}),CustomerWorkCashier.cashierQuote);
-v1Routes.post('/mobile/work/cashier/second-card/orders',authMiddleware({force:true}),CustomerWorkCashier.cashierCreate);
-v1Routes.post('/mobile/work/cashier/second-card/orders/:id/cash',authMiddleware({force:true}),CustomerWorkCashier.cashierCash);
-v1Routes.get('/mobile/work/cashier/second-card/creations/:key',authMiddleware({force:true}),CustomerWorkCashier.cashierCreationStatus);
-v1Routes.get('/mobile/work/cashier/second-card/payments/:key',authMiddleware({force:true}),CustomerWorkCashier.cashierPaymentStatus);
-v1Routes.post('/mobile/work/cashier/second-card/creations/:key/abandon',authMiddleware({force:true}),CustomerWorkCashier.cashierCreationAbandon);
-v1Routes.post('/mobile/work/cashier/second-card/payments/:key/abandon',authMiddleware({force:true}),CustomerWorkCashier.cashierPaymentAbandon);
-v1Routes.get('/mobile/work/cashier/second-card/records',authMiddleware({force:true}),CustomerWorkCashier.cashierRecords);
-v1Routes.get('/mobile/work/cashier/second-card/records/:id',authMiddleware({force:true}),CustomerWorkCashier.cashierRecord);
-v1Routes.get('/mobile/work/cashier/second-card/catalog',authMiddleware({force:true}),CustomerWorkCashier.cashierCatalog);
-v1Routes.get('/mobile/work/cashier/second-card/catalog/:id',authMiddleware({force:true}),CustomerWorkCashier.cashierSelection);
-v1Routes.post('/mobile/work/cashier/second-card/form-sessions',authMiddleware({force:true}),CustomerCashierFormImages.formSessionCreate);
-v1Routes.get('/mobile/work/cashier/second-card/form-sessions/:key',authMiddleware({force:true}),CustomerCashierFormImages.formSessionRead);
-v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/cancel',authMiddleware({force:true}),CustomerCashierFormImages.formSessionCancel);
-v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/images',authMiddleware({force:true}),CustomerCashierFormImages.formImageUpload);
-v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/previews',authMiddleware({force:true}),CustomerCashierFormImages.formSessionPreviews);
-v1Routes.get('/mobile/work/cashier/second-card/form-images/:key',authMiddleware({force:true}),CustomerCashierFormImages.formImageRead);
+v1Routes.post('/mobile/work/cashier/second-card/quote',customerCashierAuth,CustomerWorkCashier.cashierQuote);
+v1Routes.post('/mobile/work/cashier/second-card/orders',customerCashierAuth,CustomerWorkCashier.cashierCreate);
+v1Routes.post('/mobile/work/cashier/second-card/orders/:id/cash',customerCashierAuth,CustomerWorkCashier.cashierCash);
+v1Routes.get('/mobile/work/cashier/second-card/creations/:key',customerCashierAuth,CustomerWorkCashier.cashierCreationStatus);
+v1Routes.get('/mobile/work/cashier/second-card/payments/:key',customerCashierAuth,CustomerWorkCashier.cashierPaymentStatus);
+v1Routes.post('/mobile/work/cashier/second-card/creations/:key/abandon',customerCashierAuth,CustomerWorkCashier.cashierCreationAbandon);
+v1Routes.post('/mobile/work/cashier/second-card/payments/:key/abandon',customerCashierAuth,CustomerWorkCashier.cashierPaymentAbandon);
+v1Routes.get('/mobile/work/cashier/second-card/records',customerCashierAuth,CustomerWorkCashier.cashierRecords);
+v1Routes.get('/mobile/work/cashier/second-card/records/:id',customerCashierAuth,CustomerWorkCashier.cashierRecord);
+v1Routes.get('/mobile/work/cashier/second-card/catalog',customerCashierAuth,CustomerWorkCashier.cashierCatalog);
+v1Routes.get('/mobile/work/cashier/second-card/catalog/:id',customerCashierAuth,CustomerWorkCashier.cashierSelection);
+v1Routes.post('/mobile/work/cashier/second-card/form-sessions',customerCashierAuth,CustomerCashierFormImages.formSessionCreate);
+v1Routes.get('/mobile/work/cashier/second-card/form-sessions/:key',customerCashierAuth,CustomerCashierFormImages.formSessionRead);
+v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/cancel',customerCashierAuth,CustomerCashierFormImages.formSessionCancel);
+v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/images',customerCashierAuth,CustomerCashierFormImages.formImageUpload);
+v1Routes.post('/mobile/work/cashier/second-card/form-sessions/:key/previews',customerCashierAuth,CustomerCashierFormImages.formSessionPreviews);
+v1Routes.get('/mobile/work/cashier/second-card/form-images/:key',customerCashierAuth,CustomerCashierFormImages.formImageRead);
 // Independent UserJWT/customer capability; product receipts never use Admin IDs.
 v1Routes.get('/mobile/work/products',authMiddleware({force:true}),CustomerWorkProduct.productList);
 v1Routes.get('/mobile/work/products/categories',authMiddleware({force:true}),CustomerWorkProduct.productCategories);
@@ -1557,6 +1590,10 @@ async function provisionInitialAdmin(
 // ─── 微信生态 (M6) ─────────────────────────────────────────────
 // 小程序登录 (无需 auth)
 v1Routes.post("/wechat/mp_auth", WechatController.mpAuth);
+// Native App OAuth has its own state/verifier and credential realm.
+v1Routes.post("/wechat/app_auth/state", NativeAppAuthController.state);
+v1Routes.post("/wechat/app_auth", NativeAppAuthController.complete);
+v1Routes.post("/wechat/app_auth/phone", NativeAppAuthController.phone);
 // 公众号 OAuth (无需 auth)
 v1Routes.post("/wechat/oauth_state", WechatController.wechatOauthState);
 v1Routes.get("/wechat/auth", WechatController.wechatAuth);
@@ -1645,6 +1682,39 @@ v1Routes.get("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogC
 v1Routes.put("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftUpdate);
 v1Routes.delete("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftDelete);
 v1Routes.get("/admin/marketing/user-point/export", adminAuth, AdminIntegralLog.exportManifest);
+v1Routes.get("/admin/wechat/open", adminAuth, AdminWechatOpen.read);
+v1Routes.get('/admin/wechat/app', adminAuth, AdminWechatApp.read);
+v1Routes.post('/admin/wechat/app', adminAuth, AdminWechatApp.save);
+v1Routes.get('/admin/setting/config/edit_new_build/app', adminAuth, AdminWechatApp.read);
+v1Routes.get('/admin/wechat/app/operations/:operationId', adminAuth, AdminWechatApp.receipt);
+v1Routes.post('/admin/wechat/app/operations/:operationId/resolve', adminAuth, AdminWechatApp.resolve);
+v1Routes.get('/admin/config/pc/attachment-categories', adminAuth, AdminPcBase.categories);
+v1Routes.get('/admin/config/pc/attachment-options', adminAuth, AdminPcBase.options);
+v1Routes.get('/admin/config/pc', adminAuth, AdminPcBase.read);
+v1Routes.post('/admin/config/pc', adminAuth, AdminPcBase.save);
+v1Routes.get('/admin/setting/config/edit_new_build/pc', adminAuth, AdminPcBase.read);
+v1Routes.get('/admin/config/pc/operations/:operationId', adminAuth, AdminPcBase.receipt);
+v1Routes.post('/admin/config/pc/operations/:operationId/resolve', adminAuth, AdminPcBase.resolve);
+v1Routes.post("/admin/wechat/open", adminAuth, AdminWechatOpen.save);
+v1Routes.get("/admin/setting/config/edit_new_build/wxopen", adminAuth, AdminWechatOpen.read);
+v1Routes.get("/admin/wechat/open/operations/:operationId", adminAuth, AdminWechatOpen.receipt);
+v1Routes.post("/admin/wechat/open/operations/:operationId/resolve", adminAuth, AdminWechatOpen.resolve);
+v1Routes.get("/admin/wechat/base", adminAuth, AdminWechatBase.read);
+v1Routes.post("/admin/wechat/base", adminAuth, AdminWechatBase.save);
+v1Routes.get("/admin/setting/config/edit_new_build/wechat", adminAuth, AdminWechatBase.read);
+v1Routes.post("/admin/setting/config/save_basics", adminAuth, AdminWechatBasics.save);
+v1Routes.get("/admin/wechat/base/operations/:operationId", adminAuth, AdminWechatBase.receipt);
+v1Routes.post("/admin/wechat/base/operations/:operationId/resolve", adminAuth, AdminWechatBase.resolve);
+v1Routes.get("/admin/wechat/base/attachment-categories", adminAuth, AdminWechatBase.categories);
+v1Routes.get("/admin/wechat/base/attachment-options", adminAuth, AdminWechatBase.options);
+v1Routes.get("/admin/wechat/menu", adminAuth, AdminWechatMenu.read);
+v1Routes.post("/admin/wechat/menu", adminAuth, AdminWechatMenu.publish);
+v1Routes.get("/admin/app/wechat/menu", adminAuth, AdminWechatMenu.read);
+v1Routes.post("/admin/app/wechat/menu", adminAuth, AdminWechatMenu.legacyPublish);
+v1Routes.get("/admin/wechat/menu/operations/:operationId", adminAuth, AdminWechatMenu.receipt);
+v1Routes.post("/admin/wechat/menu/operations/:operationId/observe", adminAuth, AdminWechatMenu.observe);
+v1Routes.post("/admin/wechat/menu/operations/:operationId/confirm-observation", adminAuth, AdminWechatMenu.confirmObservation);
+v1Routes.post("/admin/wechat/menu/operations/:operationId/resolve-missing", adminAuth, AdminWechatMenu.resolveMissing);
 v1Routes.get("/admin/wechat/reply", adminAuth, AdminWechatContentController.reservedReply);
 v1Routes.get("/admin/wechat/code_reply/:id", adminAuth, AdminWechatQrcodeController.replyCodeStatus);
 v1Routes.post("/admin/wechat/code_reply/:id/provision", adminAuth, AdminWechatQrcodeController.provisionReplyCode);
@@ -1708,12 +1778,27 @@ v1Routes.put(
 v1Routes.get("/admin/product/ensure/:id", adminAuth, AdminProductEnsures.modernDetail);
 v1Routes.put("/admin/product/ensure/:id", adminAuth, AdminProductEnsures.modernUpdate);
 v1Routes.delete("/admin/product/ensure/:id", adminAuth, AdminProductEnsures.modernRemove);
+v1Routes.get("/admin/product/unit/author/catalog", adminAuth, AdminUnitAuthor.catalog);
+v1Routes.post("/admin/product/unit/author/commit", adminAuth, AdminUnitAuthor.commit);
+v1Routes.get("/admin/product/unit/author/receipt/:operationId", adminAuth, AdminUnitAuthor.receipt);
+v1Routes.post("/admin/product/unit/author/resolve", adminAuth, AdminUnitAuthor.resolve);
+
+v1Routes.get("/admin/product/ensure/author/catalog", adminAuth, AdminEnsureAuthor.catalog);
+v1Routes.post("/admin/product/ensure/author/commit", adminAuth, AdminEnsureAuthor.commit);
+v1Routes.get("/admin/product/ensure/author/receipt/:operationId", adminAuth, AdminEnsureAuthor.receipt);
+v1Routes.post("/admin/product/ensure/author/resolve", adminAuth, AdminEnsureAuthor.resolve);
+v1Routes.get("/admin/product/ensure/author/attachments/categories", adminAuth, AdminEnsureAuthor.categories);
+v1Routes.get("/admin/product/ensure/author/attachments/options", adminAuth, AdminEnsureAuthor.options);
 v1Routes.get("/admin/get_all_unit", adminAuth, AdminProductUnits.all);
 v1Routes.get("/admin/unit", adminAuth, AdminProductUnits.list);
 v1Routes.post("/admin/unit", adminAuth, AdminProductUnits.create);
 v1Routes.get("/admin/unit/:id", adminAuth, AdminProductUnits.detail);
 v1Routes.put("/admin/unit/:id", adminAuth, AdminProductUnits.update);
 v1Routes.delete("/admin/unit/:id", adminAuth, AdminProductUnits.remove);
+v1Routes.get("/admin/product/rule/author/catalog", adminAuth, AdminRuleAuthor.catalog);
+v1Routes.post("/admin/product/rule/author/commit", adminAuth, AdminRuleAuthor.commit);
+v1Routes.get("/admin/product/rule/author/receipt/:operationId", adminAuth, AdminRuleAuthor.receipt);
+v1Routes.post("/admin/product/rule/author/resolve", adminAuth, AdminRuleAuthor.resolve);
 v1Routes.get("/admin/product/get_rule", adminAuth, AdminProductRules.modernTemplates);
 v1Routes.get("/admin/product/rule", adminAuth, AdminProductRules.modernList);
 v1Routes.post("/admin/product/rule/:id", adminAuth, AdminProductRules.modernSave);
@@ -1723,11 +1808,27 @@ v1Routes.delete(
   adminAuth,
   AdminProductRules.modernRemove,
 );
+v1Routes.get("/admin/product/specs/author/catalog", adminAuth, AdminParameterAuthor.catalog);
+v1Routes.post("/admin/product/specs/author/commit", adminAuth, AdminParameterAuthor.commit);
+v1Routes.get("/admin/product/specs/author/receipt/:operationId", adminAuth, AdminParameterAuthor.receipt);
+v1Routes.post("/admin/product/specs/author/resolve", adminAuth, AdminParameterAuthor.resolve);
 v1Routes.get('/admin/all_specs', adminAuth, AdminProductSpecs.modernAll);
 v1Routes.get('/admin/specs', adminAuth, AdminProductSpecs.modernList);
 v1Routes.get('/admin/specs/:id', adminAuth, AdminProductSpecs.modernDetail);
 v1Routes.post('/admin/specs/:id', adminAuth, AdminProductSpecs.modernSave);
 v1Routes.delete('/admin/specs/:id', adminAuth, AdminProductSpecs.modernRemove);
+v1Routes.get("/admin/product/label/author/catalog", adminAuth, ProductLabelAuthor.catalog);
+v1Routes.post("/admin/product/label/author/commit", adminAuth, ProductLabelAuthor.commit);
+v1Routes.get("/admin/product/label/author/receipt/:operationId", adminAuth, ProductLabelAuthor.receipt);
+v1Routes.post("/admin/product/label/author/resolve", adminAuth, ProductLabelAuthor.resolve);
+v1Routes.get("/admin/product/label/author/attachments/categories", adminAuth, ProductLabelAuthor.categories);
+v1Routes.get("/admin/product/label/author/attachments/options", adminAuth, ProductLabelAuthor.options);
+v1Routes.get("/admin/product/words/author/catalog", adminAuth, AdminHotwordAuthor.catalog);
+v1Routes.post("/admin/product/words/author/commit", adminAuth, AdminHotwordAuthor.commit);
+v1Routes.get("/admin/product/words/author/receipt/:operationId", adminAuth, AdminHotwordAuthor.receipt);
+v1Routes.post("/admin/product/words/author/resolve", adminAuth, AdminHotwordAuthor.resolve);
+v1Routes.get("/admin/product/words/author/attachments/categories", adminAuth, AdminHotwordAuthor.categories);
+v1Routes.get("/admin/product/words/author/attachments/options", adminAuth, AdminHotwordAuthor.options);
 v1Routes.get("/admin/product/words", adminAuth, AdminProductWords.list);
 v1Routes.get("/admin/product/words/get_all", adminAuth, AdminProductWords.all);
 v1Routes.get("/admin/product/words/:id", adminAuth, AdminProductWords.detail);
@@ -1782,6 +1883,15 @@ v1Routes.post("/admin/order/remark/:orderId", adminAuth, AdminController.adminMo
 v1Routes.post("/admin/order/wirteoff/records/:id", adminAuth, AdminController.adminMobileOrderWriteoffRecords);
 v1Routes.post("/admin/order/print/:id", adminAuth, PrintJobController.adminManual);
 v1Routes.post("/admin/order/waybill/:id", adminAuth, WaybillJobController.adminCreate);
+v1Routes.get("/admin/order/delivery/author/catalog", adminAuth, DeliveryAuthor.catalog);
+v1Routes.post("/admin/order/delivery/author/commit", adminAuth, DeliveryAuthor.commit);
+v1Routes.get("/admin/order/delivery/author/receipt/:operationId", adminAuth, DeliveryAuthor.receipt);
+v1Routes.post("/admin/order/delivery/author/resolve", adminAuth, DeliveryAuthor.resolve);
+v1Routes.get("/admin/order/delivery/author/users", adminAuth, DeliveryAuthor.users);
+v1Routes.get("/admin/order/delivery/author/attachment-categories", adminAuth, DeliveryAuthor.attachmentCategories);
+v1Routes.get("/admin/order/delivery/author/attachment-options", adminAuth, DeliveryAuthor.attachmentOptions);
+v1Routes.get("/admin/order/delivery/add", adminAuth, DeliveryAuthor.legacyForm);
+v1Routes.get("/admin/order/delivery/set_status/:id/:status", adminAuth, DeliveryAuthor.legacyStatus);
 v1Routes.get("/admin/order/delivery/index", adminAuth, AdminStore.deliveryList);
 v1Routes.get("/admin/order/delivery/create", adminAuth, AdminStore.deliveryCandidates);
 v1Routes.post("/admin/order/delivery/save", adminAuth, AdminStore.deliverySave);
@@ -1826,6 +1936,15 @@ v1Routes.post(
 );
 v1Routes.get("/admin/integral/order/list", adminAuth, AdminCrud.adminIntegralOrderList);
 v1Routes.get("/admin/integral/order/chart", adminAuth, AdminCrud.adminIntegralOrderChart);
+v1Routes.get("/admin/merchant/store/author/catalog", adminAuth, StoreAuthor.catalog);
+v1Routes.post("/admin/merchant/store/author/commit", adminAuth, StoreAuthor.commit);
+v1Routes.get("/admin/merchant/store/author/receipt/:operationId", adminAuth, StoreAuthor.receipt);
+v1Routes.post("/admin/merchant/store/author/resolve", adminAuth, StoreAuthor.resolve);
+v1Routes.get("/admin/merchant/store/author/attachment-categories", adminAuth, StoreAuthor.attachmentCategories);
+v1Routes.get("/admin/merchant/store/author/attachment-options", adminAuth, StoreAuthor.attachmentOptions);
+v1Routes.get("/admin/merchant/store/author/regions", adminAuth, StoreAuthor.regions);
+v1Routes.get("/admin/merchant/store/author/map-config", adminAuth, StoreAuthor.mapConfig);
+v1Routes.get("/admin/merchant/store/address", adminAuth, StoreAuthor.legacyAddress);
 v1Routes.get("/admin/merchant/store", adminAuth, AdminStore.storeList);
 v1Routes.get("/admin/merchant/store/get_header", adminAuth, AdminStore.storeHeader);
 v1Routes.get("/admin/merchant/store/get_info/:id", adminAuth, AdminStore.storeDetail);
@@ -1841,6 +1960,13 @@ v1Routes.get("/admin/merchant/verify_order", adminAuth, AdminWriteoffOrderRead.l
 v1Routes.get("/admin/merchant/verify_order/stores", adminAuth, AdminWriteoffOrderRead.stores);
 v1Routes.get("/admin/merchant/verify/spread_info/:uid", adminAuth, AdminWriteoffOrderRead.spreadInfo);
 v1Routes.get("/admin/merchant/verify_badge", adminAuth, AdminWriteoffOrderRead.badge);
+v1Routes.get("/admin/merchant/store_staff/author/catalog", adminAuth, StaffAuthor.catalog);
+v1Routes.post("/admin/merchant/store_staff/author/commit", adminAuth, StaffAuthor.commit);
+v1Routes.get("/admin/merchant/store_staff/author/receipt/:operationId", adminAuth, StaffAuthor.receipt);
+v1Routes.post("/admin/merchant/store_staff/author/resolve", adminAuth, StaffAuthor.resolve);
+v1Routes.get("/admin/merchant/store_staff/author/users", adminAuth, StaffAuthor.users);
+v1Routes.get("/admin/merchant/store_staff/author/attachment-categories", adminAuth, StaffAuthor.attachmentCategories);
+v1Routes.get("/admin/merchant/store_staff/author/attachment-options", adminAuth, StaffAuthor.attachmentOptions);
 v1Routes.get("/admin/merchant/store_staff", adminAuth, AdminStore.staffList);
 v1Routes.get("/admin/merchant/store_staff/create", adminAuth, AdminStore.staffForm);
 v1Routes.get("/admin/merchant/store_staff/:id/edit", adminAuth, AdminStore.staffForm);
@@ -1871,6 +1997,10 @@ v1Routes.get(
 v1Routes.get("/admin/user/info/:id", adminAuth, AdminCrud.adminUserInfo);
 v1Routes.post("/admin/user/update/:id", adminAuth, AdminCrud.adminUserUpdate);
 v1Routes.post("/admin/user/money/:id", adminAuth, AdminCrud.adminUserMoney);
+v1Routes.get("/admin/user/group/author/catalog", adminAuth, AdminGroupAuthor.catalog);
+v1Routes.post("/admin/user/group/author/commit", adminAuth, AdminGroupAuthor.commit);
+v1Routes.get("/admin/user/group/author/receipt/:operationId", adminAuth, AdminGroupAuthor.receipt);
+v1Routes.post("/admin/user/group/author/resolve", adminAuth, AdminGroupAuthor.resolve);
 v1Routes.get("/admin/user_group/list", adminAuth, AdminUserGroups.modernList);
 v1Routes.post("/admin/user_group/save", adminAuth, AdminUserGroups.modernSave);
 v1Routes.delete("/admin/user_group/del/:id", adminAuth, AdminUserGroups.modernRemove);
@@ -1924,6 +2054,16 @@ v1Routes.get('/admin/config/user-center-design/link-targets', adminAuth, AdminUs
 v1Routes.post('/admin/config/product-category-style/save', adminAuth, AdminProductCategoryStyle.save);
 v1Routes.get('/admin/config/product-category-style/receipt/:operationId', adminAuth, AdminProductCategoryStyle.receipt);
 v1Routes.get("/admin/config/:menuName", adminAuth, AdminCrud.adminConfigGet);
+v1Routes.get('/admin/config_class/catalog', adminAuth, AdminConfigClass.catalog);
+v1Routes.get('/admin/config_class/receipt/:requestId', adminAuth, AdminConfigClass.receipt);
+v1Routes.get('/admin/config_class/:id/detail', adminAuth, AdminConfigClass.detail);
+v1Routes.get('/admin/setting/config_class/create', adminAuth, AdminConfigClass.createForm);
+v1Routes.get('/admin/setting/config_class/:id/edit', adminAuth, AdminConfigClass.editForm);
+v1Routes.get('/admin/setting/config_class', adminAuth, AdminCrud.adminConfigTabList);
+v1Routes.post('/admin/setting/config_class', adminAuth, AdminCrud.adminConfigTabSave);
+v1Routes.put('/admin/setting/config_class/set_status/:id/:status', adminAuth, AdminCrud.adminConfigTabStatus);
+v1Routes.put('/admin/setting/config_class/:id', adminAuth, AdminCrud.adminConfigTabUpdate);
+v1Routes.delete('/admin/setting/config_class/:id', adminAuth, AdminCrud.adminConfigTabDelete);
 v1Routes.get("/admin/config_class", adminAuth, AdminCrud.adminConfigTabList);
 v1Routes.get("/admin/config_class/list", adminAuth, AdminCrud.adminConfigTabList);
 v1Routes.post("/admin/config_class", adminAuth, AdminCrud.adminConfigTabSave);
@@ -2118,6 +2258,19 @@ v1Routes.post("/admin/setting/role-authority/resolve", adminAuth, AdminLegacyRol
 v1Routes.get("/admin/system_admin/list", adminAuth, AdminCrud.adminSystemAdminList);
 v1Routes.get("/admin/system_admin/directory", adminAuth, AdminCrud.adminSystemAdminDirectory);
 v1Routes.post("/admin/system_admin/save", adminAuth, AdminCrud.adminSystemAdminSave);
+
+// Admin self profile: exact actor-only routes, no staff-management capability.
+v1Routes.get("/admin/setting/info", adminAuth, AdminProfile.adminProfileInfo);
+v1Routes.put("/admin/setting/update_admin", adminAuth, AdminProfile.adminProfileLegacy);
+v1Routes.post("/admin/system/profile/commit", adminAuth, AdminProfile.adminProfileCommit);
+v1Routes.get("/admin/system/profile/receipt/:operationId", adminAuth, AdminProfile.adminProfileReceipt);
+v1Routes.post("/admin/system/profile/resolve", adminAuth, AdminProfile.adminProfileResolve);
+v1Routes.put("/admin/system/profile/avatar/:avatarId", adminAuth, AdminProfile.adminProfileUpload);
+v1Routes.get("/admin/system/profile/avatar/:avatarId", adminAuth, AdminProfile.adminProfileAvatar);
+v1Routes.post("/admin/system/profile/challenge", adminAuth, AdminProfile.adminProfileChallenge);
+v1Routes.get("/admin/system/profile/challenge/status", adminAuth, AdminProfile.adminProfileChallengeStatus);
+v1Routes.post("/admin/system/profile/sms", adminAuth, AdminProfile.adminProfileSend);
+
 v1Routes.post("/admin/system/authority/preview", adminAuth, AdminAuthorityOperation.adminAuthorityPreview);
 v1Routes.post("/admin/system/authority/commit", adminAuth, AdminAuthorityOperation.adminAuthorityCommit);
 v1Routes.get("/admin/system/authority/receipt/:operationId", adminAuth, AdminAuthorityOperation.adminAuthorityReceipt);
@@ -2126,6 +2279,18 @@ v1Routes.get("/admin/system_role/list", adminAuth, AdminCrud.adminSystemRoleList
 v1Routes.get("/admin/system_role/directory", adminAuth, AdminCrud.adminSystemRoleDirectory);
 v1Routes.post("/admin/system_role/save", adminAuth, AdminCrud.adminSystemRoleSave);
 v1Routes.delete("/admin/system_role/del/:id", adminAuth, AdminCrud.adminSystemRoleDel);
+// Platform type=1 author; fixed navigation remains independent.
+v1Routes.get("/admin/system/menu-rules/catalog", adminAuth, AdminPlatformMenu.catalog);
+v1Routes.get("/admin/system/menu-rules/receipt/:requestId", adminAuth, AdminPlatformMenu.receipt);
+v1Routes.get("/admin/setting/ruleList", adminAuth, AdminPlatformMenu.ruleList);
+v1Routes.get("/admin/setting/menus", adminAuth, AdminPlatformMenu.list);
+v1Routes.get("/admin/setting/menus/create", adminAuth, AdminPlatformMenu.createForm);
+v1Routes.get("/admin/setting/menus/:id/edit", adminAuth, AdminPlatformMenu.editForm);
+v1Routes.get("/admin/setting/menus/:id", adminAuth, AdminPlatformMenu.detail);
+v1Routes.post("/admin/setting/menus", adminAuth, AdminPlatformMenu.create);
+v1Routes.put("/admin/setting/menus/show/:id", adminAuth, AdminPlatformMenu.show);
+v1Routes.put("/admin/setting/menus/:id", adminAuth, AdminPlatformMenu.update);
+v1Routes.delete("/admin/setting/menus/:id", adminAuth, AdminPlatformMenu.remove);
 v1Routes.get("/admin/system_menus/tree", adminAuth, AdminCrud.adminSystemPermissionTree);
 v1Routes.get("/admin/print/list", adminAuth, PrintDocumentController.adminList);
 v1Routes.get("/admin/print/form/:id", adminAuth, PrintDocumentController.adminDetail);
@@ -2221,6 +2386,17 @@ v1Routes.delete("/admin/activity/seckill-times/:id", adminAuth, AdminSeckillTime
 v1Routes.get("/admin/activity/seckill-activities", adminAuth, AdminSeckillActivity.list);
 v1Routes.get("/admin/activity/combinations", adminAuth, AdminCombination.list);
 v1Routes.get("/admin/activity/combinations/export", adminAuth, AdminCombinationStatistics.exportManifest);
+v1Routes.get("/admin/activity/bargain-records", adminAuth, AdminBargainRecords.records);
+v1Routes.get("/admin/activity/bargain-records/:recordId/helpers", adminAuth, AdminBargainRecords.helpers);
+v1Routes.get("/admin/activity/bargain-statistics/:id/head", adminAuth, AdminBargainRecords.head);
+v1Routes.get("/admin/activity/bargain-statistics/:id/records", adminAuth, AdminBargainRecords.activityRecords);
+v1Routes.get("/admin/activity/bargain-statistics/:id/records/:recordId/helpers", adminAuth, AdminBargainRecords.activityHelpers);
+v1Routes.get("/admin/activity/bargain-statistics/:id/orders", adminAuth, AdminBargainRecords.orders);
+v1Routes.get("/admin/marketing/bargain_list", adminAuth, AdminBargainRecords.legacyRecords);
+v1Routes.get("/admin/marketing/bargain_list_info/:id", adminAuth, AdminBargainRecords.legacyHelpers);
+v1Routes.get("/admin/marketing/bargain/statistics/head/:id", adminAuth, AdminBargainRecords.head);
+v1Routes.get("/admin/marketing/bargain/statistics/list/:id", adminAuth, AdminBargainRecords.legacyActivityRecords);
+v1Routes.get("/admin/marketing/bargain/statistics/order/:id", adminAuth, AdminBargainRecords.legacyOrders);
 v1Routes.get("/admin/activity/combination-groups/head", adminAuth, AdminCombinationStatistics.globalHead);
 v1Routes.get("/admin/activity/combination-groups", adminAuth, AdminCombinationStatistics.groups);
 v1Routes.get("/admin/activity/combination-groups/:groupId/members", adminAuth, AdminCombinationStatistics.members);
@@ -2363,6 +2539,18 @@ v1Routes.post("/admin/flow/set_mark/:id", adminAuth, AdminCapitalFlow.setMark);
 v1Routes.get("/admin/level/list", adminAuth, AdminCrud.adminLevelList);
 v1Routes.post("/admin/level/save", adminAuth, AdminCrud.adminLevelSave);
 v1Routes.delete("/admin/level/del/:id", adminAuth, AdminCrud.adminLevelDel);
+v1Routes.get("/admin/level/catalog", adminAuth, LevelAuthor.catalog);
+v1Routes.get("/admin/level/:id/edit", adminAuth, LevelAuthor.detail);
+v1Routes.post("/admin/level/author/commit", adminAuth, LevelAuthor.commit);
+v1Routes.post("/admin/level/author/resolve", adminAuth, LevelAuthor.resolve);
+v1Routes.get("/admin/level/author/receipt/:operationId", adminAuth, LevelAuthor.receipt);
+v1Routes.get("/admin/level/attachment-options", adminAuth, LevelAttachment.options);
+v1Routes.get("/admin/level/attachment-categories", adminAuth, LevelAttachment.categories);
+v1Routes.get("/admin/user/user_level/create", adminAuth, LevelAuthor.form);
+v1Routes.get("/admin/user/user_level/vip_list", adminAuth, LevelAuthor.legacyList);
+v1Routes.post("/admin/user/user_level", adminAuth, LevelAuthor.save);
+v1Routes.put("/admin/user/user_level/delete/:id", adminAuth, LevelAuthor.remove);
+v1Routes.put("/admin/user/user_level/set_show/:id/:is_show", adminAuth, LevelAuthor.show);
 
 // 运费模板 + 快递公司 (M19)
 v1Routes.get("/admin/shipping_template/list", adminAuth, AdminCrud.adminShippingTemplateList);
@@ -2374,6 +2562,19 @@ v1Routes.delete("/admin/shipping_template/del/:id", adminAuth, AdminCrud.adminSh
 v1Routes.get("/admin/express/list", adminAuth, AdminCrud.adminExpressList);
 v1Routes.post("/admin/express/save", adminAuth, AdminCrud.adminExpressSave);
 v1Routes.delete("/admin/express/del/:id", adminAuth, AdminCrud.adminExpressDel);
+v1Routes.get("/admin/express/catalog", adminAuth, ExpressAuthor.catalog);
+v1Routes.get("/admin/express/:id/edit", adminAuth, ExpressAuthor.detail);
+v1Routes.post("/admin/express/author/prepare", adminAuth, ExpressAuthor.prepare);
+v1Routes.post("/admin/express/author/commit", adminAuth, ExpressAuthor.commit);
+v1Routes.post("/admin/express/author/resolve", adminAuth, ExpressAuthor.resolve);
+v1Routes.get("/admin/express/author/receipt/:operationId", adminAuth, ExpressAuthor.receipt);
+v1Routes.get("/admin/freight/express", adminAuth, ExpressAuthor.legacyList);
+v1Routes.get("/admin/freight/express/sync_express", adminAuth, ExpressAuthor.sync);
+v1Routes.get("/admin/freight/express/:id/edit", adminAuth, ExpressAuthor.form);
+v1Routes.put("/admin/freight/express/set_status/:id/:status", adminAuth, ExpressAuthor.show);
+v1Routes.post("/admin/freight/express", adminAuth, ExpressAuthor.save);
+v1Routes.put("/admin/freight/express/:id", adminAuth, ExpressAuthor.save);
+v1Routes.delete("/admin/freight/express/:id", adminAuth, ExpressAuthor.remove);
 
 
 // 营销活动创建/编辑/删除 (M20)
@@ -2389,6 +2590,24 @@ v1Routes.delete("/admin/product_label/del/:id", adminAuth, AdminCrud.adminProduc
 v1Routes.get("/admin/user_label/list", adminAuth, AdminCrud.adminUserLabelList);
 v1Routes.post("/admin/user_label/save", adminAuth, AdminCrud.adminUserLabelSave);
 v1Routes.delete("/admin/user_label/del/:id", adminAuth, AdminCrud.adminUserLabelDel);
+
+v1Routes.get("/admin/user_label/catalog", adminAuth, UserLabelAuthor.catalog);
+v1Routes.post("/admin/user_label/author/commit", adminAuth, UserLabelAuthor.commit);
+v1Routes.get("/admin/user_label/author/receipt/:operationId", adminAuth, UserLabelAuthor.receipt);
+v1Routes.post("/admin/user_label/author/resolve", adminAuth, UserLabelAuthor.resolve);
+v1Routes.post("/admin/user_label/sync/advance", adminAuth, UserLabelAuthor.advance);
+v1Routes.get("/admin/user/user_label", adminAuth, UserLabelAuthor.legacyList);
+v1Routes.get("/admin/user/user_label/add/:id", adminAuth, UserLabelAuthor.form);
+v1Routes.post("/admin/user/user_label/save", adminAuth, UserLabelAuthor.save);
+v1Routes.delete("/admin/user/user_label/del/:id", adminAuth, UserLabelAuthor.remove);
+v1Routes.get("/admin/user/user_label_cate/all", adminAuth, UserLabelAuthor.categoryAll);
+v1Routes.get("/admin/user/user_label_cate/create", adminAuth, UserLabelAuthor.form);
+v1Routes.get("/admin/user/user_label_cate/:id/edit", adminAuth, UserLabelAuthor.form);
+v1Routes.get("/admin/user/user_label_cate", adminAuth, UserLabelAuthor.categoryList);
+v1Routes.post("/admin/user/user_label_cate", adminAuth, UserLabelAuthor.categorySave);
+v1Routes.put("/admin/user/user_label_cate/:id", adminAuth, UserLabelAuthor.categorySave);
+v1Routes.delete("/admin/user/user_label_cate/:id", adminAuth, UserLabelAuthor.categoryRemove);
+v1Routes.get("/admin/user/synchro/work/label", adminAuth, UserLabelAuthor.legacySync);
 
 // DIY + CMS + 系统工具 (M22)
 v1Routes.get("/admin/dise/author-options/hot-words", adminAuth, AdminDiyAuthorOptions.hotWords);
@@ -2486,3 +2705,7 @@ v1Routes.post("/admin/notification/deliveries/:id/confirm-retry", adminAuth, Adm
 v1Routes.post("/admin/notification/deliveries/:id/close", adminAuth, AdminNotification.deliveryClose);
 v1Routes.get("/admin/sms/config", adminAuth, AdminNotification.smsConfig);
 v1Routes.post("/admin/sms/config", adminAuth, AdminNotification.smsConfigSave);
+
+// Opaque, credential-bound Turnstile host and completion; no profile mutation.
+v1Routes.get("/admin-profile/challenge", AdminProfile.adminProfileChallengeHost);
+v1Routes.post("/admin-profile/challenge/complete", AdminProfile.adminProfileChallengeComplete);

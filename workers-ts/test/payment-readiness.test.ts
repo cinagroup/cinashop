@@ -92,7 +92,7 @@ describe("payment readiness profiles", () => {
       const source = readFileSync(path, "utf8");
       const resolveAt = source.indexOf("resolveWechatPaymentIdentity(");
       const assertAt = source.indexOf("assertWechatPaymentProfileAvailable(", resolveAt);
-      const registerAt = source.indexOf("registerPaymentReconciliationIntent(", assertAt);
+      const registerAt = source.indexOf("admitExternalPaymentInitiation(", assertAt);
       expect(resolveAt, path).toBeGreaterThan(-1);
       expect(assertAt, path).toBeGreaterThan(resolveAt);
       expect(registerAt, path).toBeGreaterThan(assertAt);

@@ -1,0 +1,11 @@
+import {createHash} from 'node:crypto';
+import {ValidateException} from '@/utils/errors';
+import {PLATFORM_MENU_FIELDS,platformMenuCanonical,platformMenuValues,type PlatformMenuRow,type PlatformMenuOperation} from '../../../../view/common/platformMenuRules';
+export {type PlatformMenuOperation,type PlatformMenuRow,type PlatformMenuValues,type PlatformMenuReceipt} from '../../../../view/common/platformMenuRules';
+export const platformMenuHash=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
+export const platformMenuActionHash=(operation:PlatformMenuOperation,id:number,input:Record<string,unknown>)=>createHash('sha256').update(platformMenuCanonical({operation,id,input:input as never})).digest('hex');
+export function menuId(v:unknown,zero=false){const n=typeof v==='number'?v:typeof v==='string'&&/^(?:0|[1-9]\d*)$/.test(v)?Number(v):NaN;if(!Number.isSafeInteger(n)||n<(zero?0:1)||n>2147483647)throw new ValidateException('权限规则ID无效');return n;}
+export function menuRequest(v:unknown){if(typeof v!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(v))throw new ValidateException('权限规则请求标识无效');return v;}
+export function menuQuery(q:URLSearchParams,allowed:string[]){const r:Record<string,string>={};for(const[k,v]of q){if(![...allowed,'type'].includes(k)||Object.hasOwn(r,k))throw new ValidateException('权限规则查询字段未知或重复');r[k]=v;}if(r.type!==undefined&&r.type!=='1')throw new ValidateException('只接受平台type=1');return r;}
+export function menuBody(v:unknown,operation:PlatformMenuOperation){if(!v||typeof v!=='object'||Array.isArray(v))throw new ValidateException('权限规则正文须为对象');const body=v as Record<string,unknown>,fields=operation==='create'||operation==='update'?PLATFORM_MENU_FIELDS:operation==='show'?['is_show']:[];const allowed=[...fields,'request_id','expected_revision'];if(Object.keys(body).length!==allowed.length||allowed.some(k=>!Object.hasOwn(body,k)))throw new ValidateException('权限规则作者请求字段不完整或未知');menuRequest(body.request_id);if(typeof body.expected_revision!=='string'||!/^[a-f0-9]{64}$/.test(body.expected_revision))throw new ValidateException('权限规则目录版本无效');return body;}
+export function menuValues(v:unknown,prior:PlatformMenuRow|null){try{return platformMenuValues(v,prior);}catch(e){throw new ValidateException(e instanceof Error?e.message:'权限规则无效');}}

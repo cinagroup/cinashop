@@ -126,7 +126,7 @@ export async function oauthState(c: C) {
   const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
     .createOauthState("kefu_agent", clientIp(c), client.origin);
   setOauthBrowserVerifier(c, "kefu_agent", result.state, result.verifier, result.expiresIn);
-  return jsonOk(c, { state: result.state, expires_in: result.expiresIn });
+  return jsonOk(c, { state: result.state, expires_in: result.expiresIn, appid: result.appId });
 }
 
 export async function wechatLogin(c: C) {
@@ -196,6 +196,7 @@ export async function touristWebsocket(c: C): Promise<Response> {
 }
 
 export async function config(c: C) {
+  c.header('Cache-Control', 'no-store, max-age=0');
   return jsonOk(c, await core(c).clientConfig());
 }
 

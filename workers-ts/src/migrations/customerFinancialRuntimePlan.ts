@@ -2,6 +2,8 @@ import type { RuntimePrivilegePlan } from './runtimeBusinessPrivilegePlan';
 import { customerUserRuntimePrivilegePlan } from './customerUserRuntimePlan';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 
+export const CUSTOMER_FINANCIAL_RUNTIME_ROLE='cinashop_customer_financial_v1';
+export const CUSTOMER_FINANCIAL_RUNTIME_CONNECTION_LIMIT=15;
 export const CUSTOMER_FINANCIAL_RUNTIME_OPERATION='customer-work-financial-runtime-v1';
 export const CUSTOMER_FINANCIAL_FUNCTIONS=[
  'customer_financial_intent_valid_v1(text, jsonb)',

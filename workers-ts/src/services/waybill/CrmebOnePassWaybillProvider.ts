@@ -2,6 +2,9 @@ const API_ROOT = "https://sms.crmeb.net/api/";
 const LOGIN_PATH = "v2/user/login";
 const TEMPLATE_PATH = "v2/expr_dump/temp";
 const ISSUE_PATH = "v2/expr/dump";
+const EXPRESS_CATALOG_PATH = "v2/expr/express";
+const MAX_CATALOG_RESPONSE_BYTES = 1_024 * 1_024;
+const MAX_CATALOG_ROWS = 5_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BYTES = 32 * 1_024;
 
@@ -97,7 +100,7 @@ async function sha256(value: string): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function boundedResponseText(response: Response): Promise<string> {
+async function boundedResponseText(response: Response, maximum = MAX_RESPONSE_BYTES): Promise<string> {
   if (!response.body) return "";
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -107,7 +110,7 @@ async function boundedResponseText(response: Response): Promise<string> {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_RESPONSE_BYTES) {
+      if (size > maximum) {
         await reader.cancel("provider_response_too_large").catch(() => undefined);
         throw new Error("provider_response_too_large");
       }
@@ -152,6 +155,7 @@ async function getProviderJson(
   query: URLSearchParams,
   headers: HeadersInit,
   fetcher: typeof fetch,
+  maximum = MAX_RESPONSE_BYTES,
 ): Promise<{ response: Response; text: string }> {
   const url = new URL(path, API_ROOT);
   url.search = query.toString();
@@ -164,7 +168,7 @@ async function getProviderJson(
       signal: controller.signal,
       redirect: "error",
     });
-    return { response, text: await boundedResponseText(response) };
+    return { response, text: await boundedResponseText(response, maximum) };
   } finally {
     clearTimeout(timer);
   }
@@ -315,4 +319,122 @@ export async function issueCrmebOnePassWaybill(
     providerReference: safeText(data?.task_id ?? data?.order_id ?? trackingNumber, 255),
     responseCode: String(status),
   };
+}
+
+
+/** Provider-owned requirements, never carrier account values or arbitrary metadata. */
+export interface CrmebExpressCatalogRow {
+  code: string;
+  name: string;
+  partner_id: 0 | 1;
+  partner_key: 0 | 1;
+  net: 0 | 1;
+  check_man: 0 | 1;
+  partner_name: 0 | 1;
+  is_code: 0 | 1;
+}
+
+const EXPRESS_FLAGS = ['partner_id', 'partner_key', 'net', 'check_man', 'partner_name', 'is_code'] as const;
+const catalogInvalid = () => new WaybillPreflightError('一号通快递目录响应不完整或包含无效数据');
+function catalogRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw catalogInvalid();
+  return value as Record<string, unknown>;
+}
+function catalogOwn(value: Record<string, unknown>, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (!descriptor || !('value' in descriptor)) throw catalogInvalid();
+  return descriptor.value;
+}
+function catalogInteger(value: unknown, maximum = MAX_CATALOG_ROWS): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= maximum;
+}
+/** The fixed PHP source proves data.data, but does not prove a total-count
+ * field. No metadata means only this response's snapshot, never an assertion
+ * that the complete remote provider directory was returned. Explicit totals
+ * must match; ambiguous/pending pagination is never silently truncated. */
+function checkedCatalogMetadata(value: Record<string, unknown>, length: number): void {
+  const keys = Object.getOwnPropertyNames(value);
+  let complete = false;
+  for (const key of ['count', 'total']) {
+    if (!keys.includes(key)) continue;
+    const count = catalogOwn(value, key);
+    if (!catalogInteger(count) || count !== length) throw catalogInvalid();
+    complete = true;
+  }
+  for (const key of ['last_page', 'total_pages', 'pages']) {
+    if (!keys.includes(key)) continue;
+    const pages = catalogOwn(value, key);
+    if (pages !== 1 && !(length === 0 && pages === 0)) throw catalogInvalid();
+    complete = true;
+  }
+  const known = new Set(['count', 'total', 'last_page', 'total_pages', 'pages',
+    'has_more', 'hasMore', 'more', 'next', 'next_page', 'next_page_url', 'next_cursor',
+    'page', 'current_page', 'limit', 'per_page', 'page_size', 'offset']);
+  for (const key of keys) {
+    const field = catalogOwn(value, key);
+    if (['has_more', 'hasMore', 'more'].includes(key) && field !== false && field !== 0) throw catalogInvalid();
+    if (['next', 'next_page', 'next_page_url', 'next_cursor'].includes(key)
+      && field !== null && field !== '' && field !== 0 && field !== false) throw catalogInvalid();
+    if (['page', 'current_page'].includes(key) && (field !== 1 || !complete)) throw catalogInvalid();
+    if (['limit', 'per_page', 'page_size'].includes(key)
+      && (!catalogInteger(field) || field < length || field === 0 && length !== 0 || !complete)) throw catalogInvalid();
+    if (key === 'offset' && (field !== 0 || !complete)) throw catalogInvalid();
+    if (!known.has(key) && /(?:page|paginat|cursor|offset|limit|^next|^has[_A-Z]|^meta$|^links$)/i.test(key)) throw catalogInvalid();
+  }
+}
+
+/** Validate every row before projecting; never return a valid prefix. */
+export function checkedCrmebExpressCatalog(raw: unknown): CrmebExpressCatalogRow[] {
+  try {
+    const envelope = catalogRecord(raw), status = catalogOwn(envelope, 'status');
+    if (status !== 200 && status !== '200') throw catalogInvalid();
+    const data = catalogRecord(catalogOwn(envelope, 'data'));
+    const rows = catalogOwn(data, 'data');
+    if (!Array.isArray(rows) || rows.length > MAX_CATALOG_ROWS) throw catalogInvalid();
+    checkedCatalogMetadata(envelope, rows.length);
+    checkedCatalogMetadata(data, rows.length);
+    const codes = new Set<string>();
+    return Array.from(rows, value => {
+      const row = catalogRecord(value), code = catalogOwn(row, 'code'), name = catalogOwn(row, 'name');
+      if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{1,50}$/.test(code) || codes.has(code)
+        || typeof name !== 'string' || !name || name.trim() !== name || [...name].length > 64
+        || /[\u0000-\u001f\u007f-\u009f]/u.test(name)) throw catalogInvalid();
+      codes.add(code);
+      const result = { code, name } as CrmebExpressCatalogRow;
+      for (const key of EXPRESS_FLAGS) {
+        const flag = catalogOwn(row, key);
+        if (flag !== 0 && flag !== 1 && flag !== '0' && flag !== '1') throw catalogInvalid();
+        result[key] = flag === 1 || flag === '1' ? 1 : 0;
+      }
+      return result;
+    });
+  } catch {
+    // Do not echo provider-controlled text, account data or thrown getters.
+    throw catalogInvalid();
+  }
+}
+
+/** Read-only provider request; local synchronization is a separate authorized
+ * database operation. No issue/open/shipment endpoint or retry is invoked. */
+export async function listCrmebOnePassExpressCatalog(
+  credentials: CrmebOnePassCredentials,
+  fetcher: typeof fetch = fetch,
+): Promise<CrmebExpressCatalogRow[]> {
+  let token: string;
+  try { token = await accessToken(credentials, fetcher); } catch (error) {
+    if (error instanceof WaybillConfigurationError) throw error;
+    throw new WaybillPreflightError('一号通快递目录认证失败');
+  }
+  let result: { response: Response; text: string };
+  try {
+    result = await getProviderJson(EXPRESS_CATALOG_PATH, new URLSearchParams(),
+      { Authorization: `Bearer-${token}`, Accept: 'application/json' }, fetcher, MAX_CATALOG_RESPONSE_BYTES);
+  } catch {
+    throw new WaybillPreflightError('一号通快递目录读取失败');
+  }
+  if (!result.response.ok) throw new WaybillPreflightError('一号通快递目录读取失败');
+  let raw: unknown;
+  try { raw = JSON.parse(result.text); } catch { throw catalogInvalid(); }
+  return checkedCrmebExpressCatalog(raw);
 }

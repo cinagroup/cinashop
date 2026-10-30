@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { inspectRuntimeAgentLevelCatalogBoundary, type AgentLevelRuntimeNames } from './runtimeAgentLevelCatalogBoundary';
+import type { CashierRuntimeConditionalBinding } from './cashierRuntimeConditionalBinding';
 
 /** Existing 0011/0051 tables only. This inspector never creates or repairs objects. */
 export const AGENT_LEVEL_RUNTIME_TABLES = ['agent_level', 'agent_level_task', 'agent_level_task_record'] as const;
@@ -290,7 +291,7 @@ ${indexes.map(row => '(' + row.map(literal).join(',') + ')').join(',\n')}
 
 /** Fixed owned-by serial identities and maintenance owner are prerequisites to
  * both the narrow forward and fresh commissioning. No last_value resets. */
-export async function inspectAgentLevelRuntimeCatalog(tx: Pick<DbClient, 'execute'>, maintenance: string, names: AgentLevelRuntimeNames) {
+export async function inspectAgentLevelRuntimeCatalog(tx: Pick<DbClient, 'execute'>, maintenance: string, names: AgentLevelRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
   if(names.maintenance!==maintenance)throw Error('Distributor catalog owner identity requires review');
   const [catalog] = await tx.execute(sql.raw(AGENT_LEVEL_RUNTIME_CATALOG_SQL));
   const [owner] = await tx.execute(sql`SELECT count(*)=6 AND bool_and(c.relowner=r.oid) AS ready
@@ -312,7 +313,7 @@ export async function inspectAgentLevelRuntimeCatalog(tx: Pick<DbClient, 'execut
         THEN pg_catalog.pg_get_serial_sequence('public.'||e.table_name,'id') END='public.'||e.sequence_name) AS ready
     FROM expected e JOIN pg_catalog.pg_class s ON s.relnamespace='public'::regnamespace AND s.relname=e.sequence_name
       JOIN pg_catalog.pg_sequence q ON q.seqrelid=s.oid`);
-  const guard=await inspectRuntimeAgentLevelCatalogBoundary(tx,names);
+  const guard=await inspectRuntimeAgentLevelCatalogBoundary(tx,names,cashier);
   return { ready: catalog?.ready === true && owner?.ready === true && sequences?.ready === true
       && guard.tablesSafe && (guard.absent || guard.ready),
     catalogReady: catalog?.ready === true, ownerReady: owner?.ready === true, sequenceReady: sequences?.ready === true,

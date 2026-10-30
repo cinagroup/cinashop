@@ -14,7 +14,7 @@ import {
 describe("可分页定时维护工作流", () => {
   const scheduledAt = Date.parse("2026-08-09T02:25:00.000Z");
 
-  it("Cron 一次投递十五个可重放根任务", async () => {
+  it("Cron 一次投递十三个可重放根任务，直播仅投递无远端结果的 dispatch", async () => {
     const messages = createScheduledRunMessages(scheduledAt);
     expect(messages.map((message) => message.job)).toEqual([
       "payment_outbox_dispatch",
@@ -25,15 +25,16 @@ describe("可分页定时维护工作流", () => {
       "pink_timeout",
       "auto_receipt",
       "auto_comment",
-      "live_room_sync",
-      "live_goods_sync",
-      "live_anchor_sync",
+      "live_sync_dispatch",
       "refund_reconciliation",
       "pink_cancellation_recovery",
       "reminder_unverified_remind",
       "sign_remind_time",
     ]);
-    expect(messages).toHaveLength(15);
+    expect(messages).toHaveLength(13);
+    expect(messages.filter(message => message.job === 'live_sync_dispatch')).toHaveLength(1);
+    expect(messages.some(message => ['live_room_sync', 'live_goods_sync', 'live_anchor_sync'].includes(message.job))).toBe(false);
+    expect(messages.every(message => message.routineStamp === undefined)).toBe(true);
     expect(messages.every((message) => message.runId === `scheduled:${scheduledAt}`)).toBe(true);
     expect(messages.every((message) => message.cursor === 0 && message.threshold === null)).toBe(
       true,
@@ -51,7 +52,7 @@ describe("可分页定时维护工作流", () => {
 
   it("非上海 10:25 不产生签到扫描根任务", () => {
     const outside = createScheduledRunMessages(Date.parse("2026-08-09T02:20:00.000Z"));
-    expect(outside).toHaveLength(14);
+    expect(outside).toHaveLength(12);
     expect(outside.some((message) => message.job === "sign_remind_time")).toBe(false);
   });
 
@@ -62,6 +63,12 @@ describe("可分页定时维护工作流", () => {
     expect(isScheduledMaintenanceMessage({ ...root, threshold: 1.5 })).toBe(false);
     expect(isScheduledMaintenanceMessage({ ...root, runId: "scheduled:other" })).toBe(false);
     expect(isScheduledMaintenanceMessage({ ...root, job: "unknown" })).toBe(false);
+    // Old page jobs remain decodable so the live service can explicitly ACK
+    // them as unbound; validation must not turn them into a different job.
+    for (const job of ['live_room_sync', 'live_goods_sync', 'live_anchor_sync']) {
+      expect(isScheduledMaintenanceMessage({ ...root, job })).toBe(true);
+      expect(isScheduledMaintenanceMessage({ ...root, job, routineStamp: 'a'.repeat(64) })).toBe(true);
+    }
 
     const work = {
       action: "processScheduledOrder",

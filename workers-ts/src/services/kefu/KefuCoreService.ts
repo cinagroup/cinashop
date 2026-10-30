@@ -24,6 +24,7 @@ import {
   userGroup,
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { readOpenPlatformAppId } from '@/services/wechat/OpenPlatformRuntimeConfig';
 import { ErpCapabilityService } from "@/services/system/ErpCapabilityService";
 import {
   parseCanonicalAttachmentId,
@@ -152,12 +153,9 @@ export class KefuCoreService {
   }
 
   async clientConfig() {
-    const values = await this.configService().getMany([
-      "wechat_open_app_id",
-      "site_name",
-    ]);
+    const [appid, values] = await Promise.all([readOpenPlatformAppId(this.container), this.configService().getMany(['site_name'])]);
     return {
-      appid: values.wechat_open_app_id ?? "",
+      appid,
       site_name: values.site_name ?? "",
       version: "CRMEB-PRO-TS v0.1.0",
     };

@@ -125,7 +125,7 @@ export const CUSTOMER_WRITEOFF_OPERATION_SQL = `
  service_id integer NOT NULL,order_id integer NOT NULL,kind varchar(32) NOT NULL,outcome varchar(32) NOT NULL,
  scope_key varchar(64) NOT NULL,expected_revision varchar(64) NOT NULL,expected_writeoff_revision varchar(64) NOT NULL,
  intent jsonb NOT NULL,evidence jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
- CONSTRAINT cwo_pk PRIMARY KEY(actor_uid,request_key),
+ CONSTRAINT customer_writeoff_operation_request_pkey PRIMARY KEY(actor_uid,request_key),
  CONSTRAINT cwo_identity_ck CHECK(actor_uid>0 AND order_id>0 AND service_id>=0 AND ((outcome IN('abandoned','rollback-rejected') AND service_id=0) OR (outcome IN('partial-writtenoff','written-off') AND service_id>0))),
  CONSTRAINT cwo_key_ck CHECK(request_key::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'),
  CONSTRAINT cwo_hash_ck CHECK(request_hash ~ '^[a-f0-9]{64}$' AND scope_key ~ '^[a-f0-9]{64}$' AND expected_revision ~ '^[a-f0-9]{64}$' AND expected_writeoff_revision ~ '^[a-f0-9]{64}$'),

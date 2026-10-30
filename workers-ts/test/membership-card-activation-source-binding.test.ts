@@ -4,7 +4,7 @@ import { readMembershipCouponsHistoricalFile as readFileSync, peelMembershipCoup
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
 import { membershipCardActivationSourceBinding as proof, reverseMembershipCardActivationSource,
   reverseMembershipCardActivationHarnessSource, peelMembershipCardActivationSource,
   reverseMembershipCardActivationLegacyRules, peelMembershipCardActivationLegacyRules,

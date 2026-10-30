@@ -19,7 +19,7 @@ function plainIo(value) {
 // Real Vue reactivity, Pinia stores, request layer, API adapters and the selected composable.
 // Only native lifecycle/I/O is replaced. An explicit platform selects source
 // guards for adapter tests; the three real builds still verify Uni compilation.
-function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {}, platform } = {}) {
+function runtime({ storage = new Map(), send, navigationFails = false, modal, feature = 'useCheckout', component, props = {}, authenticated = true, emit = () => {}, platform, manifest, nativeEntry } = {}) {
   const hooks = {}, calls = [], navigations = [], toasts = [], modals = [], scrolls = [], titles = [], cache = new Map();
   const uni = {
     getStorageSync: key => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: key => storage.delete(key),
@@ -40,6 +40,9 @@ function runtime({ storage = new Map(), send, navigationFails = false, modal, fe
   function load(file) {
     file = path.resolve(file); if (!path.extname(file)) file += '.ts';
     if (cache.has(file)) return cache.get(file);
+    if (nativeEntry && file === path.join(root, 'src/utils/nativeWechatPaymentEntry.ts')) return nativeEntry;
+    if (file === path.join(root, 'src/manifest.json') && manifest !== undefined) return {default:manifest};
+    if (file.endsWith('.json')) return {default:JSON.parse(readFileSync(file,'utf8'))};
     assert.ok(existsSync(file), file);
     const exports = {}; cache.set(file, exports);
     let source = readFileSync(file, 'utf8');

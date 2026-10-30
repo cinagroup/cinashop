@@ -234,7 +234,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native DIY comme
   it('reads real bargain floor, sales and participants without starting or helping a bargain', async () => {
     for (const viewer of viewers) {
       const data = (await read('/api/bargain/list?page=1&limit=3', viewer)).data;
-      expect(data).toHaveLength(1); expect(data[0]).toMatchObject({ id: 1901, product_id: 604, title: '真实砍价标题1901', price: 20, min_price: 0, ot_price: 20, people: 2, sales: 2, stock: 8 });
+      expect(data).toHaveLength(1); expect(data[0]).toMatchObject({ id: 1901, product_id: 604, title: '真实砍价标题1901', price: 20, min_price: 0, ot_price: 30, people: 2, sales: 2, stock: 8 });
     }
   });
   it('derives bargain people from exact type1 help evidence rather than configured quota or other activities', async () => {

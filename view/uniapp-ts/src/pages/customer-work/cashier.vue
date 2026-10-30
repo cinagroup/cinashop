@@ -30,7 +30,8 @@
       </view>
     </template>
     <text v-if="message" class="cw-error" role="alert">{{ message }}</text>
-    <view v-if="manager.context.value?.data.capabilities.cashier_second_card !== true" class="cw-empty">当前经营账号暂不能创建次卡收银订单。原编号仍可在上方核对。</view>
+    <text v-if="cashierCapabilities.error.value" class="cw-error" role="alert">{{ cashierCapabilities.error.value }}</text>
+    <view v-if="!cashierCapabilities.ready.value" class="cw-empty">当前经营账号暂不能创建次卡收银订单。原编号仍可在上方核对。</view>
     <template v-else>
       <view class="cw-card"><text class="cw-subtitle">1. 选择次卡与规格</text><text class="cw-scope">选择一项次卡规格。目录为参考价，实际金额以本次服务器报价为准。</text>
         <template v-if="editing"><label class="cw-form-field"><text>次卡关键词</text><input :value="keyword" @input="keyword=inputValue($event)" aria-label="次卡关键词" :maxlength="100" :disabled="contextLocked" placeholder="搜索次卡名称" @confirm="searchProducts" /></label>
@@ -94,10 +95,11 @@
   </CustomerWorkShell>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import CustomerWorkShell from '@/components/customerWork/CustomerWorkShell.vue';
 import SystemFormFields from '@/components/SystemFormFields.vue';
 import { useCustomerWork } from '@/composables/useCustomerWork';
+import { useCustomerCashierCapabilities } from '@/composables/useCustomerCashierCapabilities';
 import { useCustomerWorkCashier } from '@/composables/useCustomerWorkCashier';
 import { useCustomerCashierImages } from '@/composables/useCustomerCashierImages';
 import { useCustomerCashierCatalog } from '@/composables/useCustomerCashierCatalog';
@@ -119,11 +121,13 @@ const sessionForm=ref<SystemFormInfo|null>(null);
 const removedImageRefs=ref<Record<string,string[]>>({});
 let pickerLease: ReturnType<ReturnType<typeof useCustomerWork>['beginSuspendLease']> | null = null;
 let epoch=0,productSearch='',buyerSearch='';
-const manager=useCustomerWork({page:'cashier',clear(){clearSelection();catalog.clear();operations.clearDomain();images.clear();images.refreshPending();},async load(controller){
-  if(controller.context.value?.data.capabilities.cashier_second_card!==true)return;
+const manager=useCustomerWork({page:'cashier',clear(){clearSelection();catalog.clear();operations.clearDomain();images.clear();images.refreshPending();cashierCapabilities.clear();},async load(controller){
+  if(!await cashierCapabilities.load())return;
   const valid=controller.fence(),result=await catalog.read(`${base}/catalog`,isCustomerCashierCatalogList,{page:1,limit:20});if(valid())catalogList.value=result.data;
 }});
-const images=useCustomerCashierImages(manager),operations=useCustomerWorkCashier(manager,images),catalog=useCustomerCashierCatalog(manager);
+const cashierCapabilities=useCustomerCashierCapabilities(manager);
+const images=useCustomerCashierImages(manager,cashierCapabilities),operations=useCustomerWorkCashier(manager,cashierCapabilities,images),catalog=useCustomerCashierCatalog(manager,cashierCapabilities);
+watch(()=>cashierCapabilities.state.value,(value,previous)=>{if(previous&&value!==previous){clearSelection();catalog.clear();}},{flush:'sync'});
 const locked=computed(()=>selectionBusy.value||operations.busy.value||images.busy.value||formPending.value>0||formChoosing.value);
 const contextLocked=computed(()=>locked.value||images.pending.value.length>0||operations.pending.value.length>0);
 const editing=computed(()=>!operations.activeIntent.value&&!operations.detail.value&&!['frozen','consumed'].includes(images.session.value?.state??''));
@@ -139,8 +143,7 @@ const formPreviews=computed(()=>({...images.previews.value,...savedFormPreviews.
 const imageUploadUnavailable=computed(()=> {
   if(!editing.value)return undefined;
   if(selection.value&&!selection.value.readiness.writes)return readinessText(selection.value.readiness.reason);
-  const current=manager.context.value;
-  return current?.data.capabilities.cashier_form_images===true&&current.data.cashier_form_images_readiness?.writes===true?undefined:'当前经营账号暂不能上传表单图片。可选图片可留空，必填图片请稍后重新核对。';
+  return cashierCapabilities.imagesReady.value?undefined:'当前经营账号暂不能上传表单图片。可选图片可留空，必填图片请稍后重新核对。';
 });
 const amountLines=computed(()=>{const q=operations.quote.value?.quote;return q?[{name:'商品金额',cents:q.rawTotalCents,discount:false},{name:'会员优惠',cents:q.memberDiscountCents,discount:true},{name:'活动优惠',cents:q.promotionSavingsCents,discount:true},{name:'首单优惠',cents:q.firstOrderPriceCents,discount:true},{name:'优惠券优惠',cents:q.couponPriceCents,discount:true},{name:'积分抵扣',cents:q.deductionCents,discount:true}].filter(line=>!line.discount||line.cents>0):[];});
 function clearSelection(){epoch++;pickerLease=null;sessionForm.value=null;removedImageRefs.value={};catalogList.value=null;selection.value=null;skuUnique.value='';quantity.value='1';keyword.value='';selectionBusy.value=false;message.value='';buyers.value=null;buyer.value=null;buyerKeyword.value='';buyerMode.value='member';touristKey.value='';contact.value={name:'',phone:''};mark.value='';customForm.value=[];formRevision.value++;formPending.value=0;formChoosing.value=false;quotedForm.value=null;formChanged.value=false;quoteFormReady.value=false;productSearch='';buyerSearch='';}
@@ -158,7 +161,7 @@ async function selectGuest(){await selectionAction(async()=>{const valid=manager
 async function searchBuyers(){await selectionAction(async()=>{const search=queryText(buyerKeyword.value),valid=manager.fence(),response=await catalog.users({page:1,limit:20,...(search?{nickname:search}:{})});if(valid()){buyers.value=response.data;buyerSearch=search;}});}
 async function moreBuyers(){await selectionAction(async()=>{if(!buyers.value?.has_more)return;const original=buyers.value,valid=manager.fence(),response=await catalog.users({page:original.page+1,limit:20,...(buyerSearch?{nickname:buyerSearch}:{})});if(!valid())return;if(response.data.page!==original.page+1||response.data.limit!==20||response.data.list.some(row=>original.list.some(prior=>prior.uid===row.uid)))invalidRead('会员目录分页已变化，请重新查询');buyers.value={...response.data,list:[...original.list,...response.data.list]};});}
 async function chooseBuyer(uid:number){await selectionAction(async()=>{const available=buyers.value?.list.find(row=>row.uid===uid);if(!available||available.deleted||available.status!==1)throw Error('请从当前有效会员目录选择');const valid=manager.fence(),response=await catalog.user(uid);if(!valid())return;if(response.data.user.uid!==uid||response.data.user.deleted||response.data.user.status!==1)invalidRead('购买会员已变化，请重新查询');buyer.value=response.data.user;buyerMode.value='member';touristKey.value='';const name=buyer.value.real_name||buyer.value.nickname;contact.value={name:name.length<=32?name:'',phone:buyer.value.phone};});}
-function updateForm(value:SystemFormComponent[]){if(selectionBusy.value||operations.busy.value||!editing.value||manager.context.value?.data.capabilities.cashier_second_card!==true)return;
+function updateForm(value:SystemFormComponent[]){if(selectionBusy.value||operations.busy.value||!editing.value||!cashierCapabilities.ready.value)return;
   const removed={...removedImageRefs.value};
   for(const [index,component] of value.entries())if(component.name==='uploadPicture'&&Array.isArray(component.value)){
     const references=component.value;
@@ -171,10 +174,10 @@ function updateForm(value:SystemFormComponent[]){if(selectionBusy.value||operati
 function setFormPending(value:number){formPending.value=value;if(value===0){pickerLease?.release();pickerLease=null;}}
 function setFormChoosing(value:boolean){formChoosing.value=value;if(!value&&manager.current()){pickerLease?.release();pickerLease=null;}}
 function selectedImageContext():CustomerCashierFormContext {
-  const context=manager.context.value,sku=chosenSku.value;
+  const context=cashierCapabilities.authority(),sku=chosenSku.value;
   if(!context||context.data.capabilities.cashier_second_card!==true||!selection.value||!sku)throw Error('请从目录选择次卡和规格');
   if(!selection.value.readiness.writes||!catalogList.value?.readiness.writes)throw Error(readinessText(selection.value.readiness.reason));
-  if(!manager.current()||context.data.capabilities.cashier_form_images!==true||context.data.cashier_form_images_readiness?.writes!==true)throw Error('当前经营账号暂不能上传表单图片，请重新核对');
+  if(!manager.current()||!cashierCapabilities.imagesReady.value)throw Error('当前经营账号暂不能上传表单图片，请重新核对');
   if(!/^[1-9]\d{0,4}$/u.test(quantity.value)||Number(quantity.value)>Math.min(32767,sku.stock))throw Error('购买份数需为有效正整数，且不能超过当前库存');
   if(buyerMode.value==='member'&&!buyer.value)throw Error('请从会员目录选择购买人');
   const result:CustomerCashierFormContext={version:'customer-cashier-form-session-v1',scope_key:context.scope_key,buyer_uid:buyerMode.value==='guest'?0:buyer.value!.uid,tourist_key:buyerMode.value==='guest'?touristKey.value:'',product_id:selection.value.product.id,sku_unique:sku.sku_unique,quantity:Number(quantity.value)};
@@ -199,14 +202,14 @@ async function beforeChooseImages(index:number) {
   pickerLease=manager.beginSuspendLease();
 }
 function applyRecoveredImages() {
-  if(!editing.value||!manager.current()||manager.context.value?.data.capabilities.cashier_second_card!==true||!images.session.value)return;
+  if(!editing.value||!manager.current()||!cashierCapabilities.ready.value||!images.session.value)return;
   const original=images.session.value.system_form;
   customForm.value=formWithAnswers(original,customForm.value).map((component,index)=>{if(component.name!=='uploadPicture')return component;const field=customerCashierImageFieldId(component,index);return {...component,value:[...new Set([...(Array.isArray(component.value)?component.value as string[]:[]),...(images.recoveredImages.value[field]??[])])].filter(reference=>!removedImageRefs.value[field]?.includes(reference))};});
   sessionForm.value=original;formRevision.value++;
 }
 async function restoreImageSelection() {
   const original=images.session.value;
-  if(!original||original.state!=='active'||!manager.current()||manager.context.value?.data.capabilities.cashier_second_card!==true||operations.activeIntent.value||operations.detail.value)return;
+  if(!original||original.state!=='active'||!manager.current()||!cashierCapabilities.ready.value||operations.activeIntent.value||operations.detail.value)return;
   const valid=manager.fence(),version=epoch;selectionBusy.value=true;
   try {
     const body=original.intent,retain=selection.value?.product.id===body.product_id&&skuUnique.value===body.sku_unique&&Number(quantity.value)===body.quantity&&(buyerMode.value==='guest'?0:buyer.value?.uid)===body.buyer_uid&&touristKey.value===body.tourist_key;
@@ -252,7 +255,7 @@ function applyQuotedForm(){const q=operations.quote.value as (typeof operations.
   quotedForm.value=q.system_form;formChanged.value=customerWorkCanonicalJson(selection.value?.system_form??null)!==customerWorkCanonicalJson(q.system_form);const raw=operations.activeIntent.value?.body.custom_form;
   customForm.value=formWithAnswers(q.system_form,raw);formRevision.value++;quoteFormReady.value=true;
 }
-async function prepare(){if(locked.value||!editing.value)return;try{const context=manager.context.value,sku=chosenSku.value;if(!context||!selection.value||!sku)throw Error('请从目录选择次卡和规格');if(!selection.value.readiness.writes||!catalogList.value?.readiness.writes)throw Error(readinessText(selection.value.readiness.reason));
+async function prepare(){if(locked.value||!editing.value)return;try{const context=cashierCapabilities.authority(),sku=chosenSku.value;if(!context||!selection.value||!sku)throw Error('请从目录选择次卡和规格');if(!selection.value.readiness.writes||!catalogList.value?.readiness.writes)throw Error(readinessText(selection.value.readiness.reason));
   if(!/^[1-9]\d{0,4}$/u.test(quantity.value)||Number(quantity.value)>Math.min(32767,sku.stock))throw Error('购买份数需为有效正整数，且不能超过当前库存');if(buyerMode.value==='member'&&!buyer.value)throw Error('请从会员目录选择购买人');if(buyerMode.value==='guest'&&!touristKey.value)throw Error('请重新选择游客购买');
   if(!imageReady.value)throw Error('原图片准备或上传结果尚未确认，请先查询原编号');
   message.value='';const result=await operations.prepare({version:'customer-cashier-second-card-v1',scope_key:context.scope_key,buyer_uid:buyerMode.value==='guest'?0:buyer.value!.uid,tourist_key:buyerMode.value==='guest'?touristKey.value:'',product_id:selection.value.product.id,sku_unique:sku.sku_unique,quantity:Number(quantity.value),real_name:contact.value.name.trim(),user_phone:contact.value.phone.trim(),mark:mark.value.trim(),custom_form:customerCashierFormAnswers(displayForm.value,customForm.value),coupon_id:0,use_integral:false},images.pending.value.length?images.parentKey.value:undefined);if(result)applyQuotedForm();

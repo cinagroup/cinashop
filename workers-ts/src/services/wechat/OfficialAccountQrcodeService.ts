@@ -1,11 +1,11 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { Env, OfficialAccountQrcodeMessage } from "@/env";
-import type { Container } from "@/lib/di";
+import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import { qrcode, wechatQrcode } from "@/models/schema";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { readOfficialAccountCredentials, readOfficialAccountCredentialsInTx, officialCredentialCacheKey, type OfficialAccountCredentials } from "./OfficialAccountRuntimeConfig";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
-import { ValidateException } from "@/utils/errors";
+import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { boundedProductShareFetch } from './ProductShareProviderPolicy';
 
@@ -110,12 +110,14 @@ export class OfficialAccountQrcodeService {
       }
       return { ticket, url: `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(ticket)}` };
     };
-    let token = await bounded.getAccessToken(false,expectedAppId);
+    const credentials = await readOfficialAccountCredentials(this.container, this.env);
+    let token = await bounded.getAccessToken(false, expectedAppId, credentials);
     try { return await create(token); }
     catch (error) {
       if (!(error instanceof OfficialAccountApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`official_access_token:${expectedAppId}`, this.env);
-      token = await bounded.getAccessToken(true,expectedAppId); return create(token);
+      await bounded.assertCurrentCredentials(credentials);
+      await cacheDelete(officialCredentialCacheKey(credentials, 'access-token'), this.env);
+      token = await bounded.getAccessToken(true, expectedAppId, credentials); return create(token);
     }
   }
 
@@ -130,8 +132,9 @@ export class OfficialAccountQrcodeService {
       if(!response.ok||!ticket||ticket.length>255||/[\u0000-\u001f\u007f]/.test(ticket))throw new OfficialAccountApiError(Number(data.errcode??response.status),'生成商品公众号分享码失败');
       return `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(ticket)}`;
     };
-    let token=await bounded.getAccessToken();
-    try{return await create(token);}catch(error){if(!(error instanceof OfficialAccountApiError)||!INVALID_TOKEN_CODES.has(error.code))throw error;await cacheDelete(`official_access_token:${await bounded.getAppId()}`,this.env);token=await bounded.getAccessToken(true);return create(token);}
+    const credentials = await readOfficialAccountCredentials(this.container, this.env);
+    let token=await bounded.getAccessToken(false, undefined, credentials);
+    try{return await create(token);}catch(error){if(!(error instanceof OfficialAccountApiError)||!INVALID_TOKEN_CODES.has(error.code))throw error;await bounded.assertCurrentCredentials(credentials);await cacheDelete(officialCredentialCacheKey(credentials,'access-token'),this.env);token=await bounded.getAccessToken(true,undefined,credentials);return create(token);}
   }
 
   async status(thirdType: string, thirdId: number) {
@@ -152,9 +155,9 @@ export class OfficialAccountQrcodeService {
 
   async requestPermanent(thirdType: string, thirdId: number) {
     assertTarget(thirdType, thirdId);
-    const current = await this.ensurePlaceholder(thirdType, thirdId);
-    if (current.ticket && current.url && current.status === 1) {
-      await this.synchronizeTarget(thirdType, thirdId, current.url);
+    await this.ensurePlaceholder(thirdType, thirdId);
+    const current = await this.readyTarget(thirdType, thirdId);
+    if (current) {
       return { status: "ready" as const, queued: false, url: current.url };
     }
     const message: OfficialAccountQrcodeMessage = {
@@ -180,13 +183,14 @@ export class OfficialAccountQrcodeService {
 
   async processProvision(message: OfficialAccountQrcodeMessage) {
     assertTarget(message.thirdType, message.thirdId);
-    const current = await this.ensurePlaceholder(message.thirdType, message.thirdId);
-    if (current.ticket && current.url && current.status === 1) {
-      await this.synchronizeTarget(message.thirdType, message.thirdId, current.url);
+    await this.ensurePlaceholder(message.thirdType, message.thirdId);
+    const current = await this.readyTarget(message.thirdType, message.thirdId);
+    if (current) {
       return { status: "ready" as const, reused: true };
     }
 
-    let accessToken = await this.getAccessToken();
+    const credentials = await readOfficialAccountCredentials(this.container, this.env);
+    let accessToken = await this.getAccessToken(false, undefined, credentials);
     let provisioned: { ticket: string; url: string; qrcodeUrl: string; expireSeconds: number };
     try {
       provisioned = await this.createPermanent(accessToken, message.thirdType, message.thirdId);
@@ -194,13 +198,16 @@ export class OfficialAccountQrcodeService {
       if (!(error instanceof OfficialAccountApiError) || !INVALID_TOKEN_CODES.has(error.code)) {
         throw error;
       }
-      const appId = await this.getAppId();
-      await cacheDelete(`official_access_token:${appId}`, this.env);
-      accessToken = await this.getAccessToken(true);
+      await this.assertCurrentCredentials(credentials);
+      await cacheDelete(officialCredentialCacheKey(credentials, 'access-token'), this.env);
+      accessToken = await this.getAccessToken(true, undefined, credentials);
       provisioned = await this.createPermanent(accessToken, message.thirdType, message.thirdId);
     }
 
     const result = await withTx(this.container, async (tx) => {
+      await this.provisionBarrier(tx);
+      const currentCredentials = await readOfficialAccountCredentialsInTx(tx, this.env);
+      if (currentCredentials.stamp !== credentials.stamp) throw new ValidateException('公众号账户配置已变化，旧二维码结果不能保存');
       await tx.execute(catalogLock(message.thirdType, message.thirdId));
       const latest = await tx
         .select()
@@ -212,6 +219,7 @@ export class OfficialAccountQrcodeService {
         .for("update")
         .limit(1);
       if (latest[0]?.ticket && latest[0].url && latest[0].status === 1) {
+        await this.synchronizeTarget(tx, message.thirdType, message.thirdId, latest[0].url);
         return { url: latest[0].url, reused: true };
       }
       const now = String(Math.floor(Date.now() / 1000));
@@ -241,9 +249,9 @@ export class OfficialAccountQrcodeService {
             type: 2,
           },
         });
+      await this.synchronizeTarget(tx, message.thirdType, message.thirdId, provisioned.url);
       return { url: provisioned.url, reused: false };
     });
-    await this.synchronizeTarget(message.thirdType, message.thirdId, result.url);
     return { status: "ready" as const, reused: result.reused };
   }
 
@@ -275,28 +283,46 @@ export class OfficialAccountQrcodeService {
     });
   }
 
-  private async synchronizeTarget(thirdType: string, thirdId: number, url: string): Promise<void> {
+  private async provisionBarrier(tx: DbClient): Promise<void> {
+    await tx.execute(sql`SET LOCAL statement_timeout='5s'`);
+    await tx.execute(sql`SET LOCAL lock_timeout='2s'`);
+    // Coordinate only the reviewed base author and permanent provisioner.
+    // App's SELECT-only config privilege cannot acquire a SHARE table lock;
+    // maintenance/raw SQL writers are outside this advisory protocol.
+    // All remote I/O finishes before the short gate -> qrcode publication fence.
+    const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock_shared(731659,0) AS locked`);
+    if (gate?.locked !== true) throw new ServiceUnavailableException('公众号账户配置正在更新，请稍后重试');
+    await tx.execute(sql`LOCK TABLE ${qrcode} IN ROW EXCLUSIVE MODE NOWAIT`);
+  }
+
+  private async readyTarget(thirdType: string, thirdId: number) {
+    return withTx(this.container, async tx => {
+      await this.provisionBarrier(tx);
+      await tx.execute(catalogLock(thirdType, thirdId));
+      const [row] = await tx.select().from(qrcode).where(and(eq(qrcode.thirdType, thirdType), eq(qrcode.thirdId, thirdId)))
+        .for('update', { noWait: true }).limit(1);
+      if (!row?.ticket || !row.url || row.status !== 1) return null;
+      await this.synchronizeTarget(tx, thirdType, thirdId, row.url);
+      return row;
+    });
+  }
+
+  private async synchronizeTarget(tx: DbClient, thirdType: string, thirdId: number, url: string): Promise<void> {
     if (thirdType !== "wechatqrcode") return;
-    await this.container.db
-      .update(wechatQrcode)
-      .set({ image: url })
+    await tx.update(wechatQrcode).set({ image: url })
       .where(and(eq(wechatQrcode.id, thirdId), eq(wechatQrcode.isDel, 0)));
   }
 
-  private async getAppId(): Promise<string> {
-    const value = (await new SystemConfigService(this.container, this.env).get("wechat_appid"))?.trim() ?? "";
-    if (!value) throw new ValidateException("公众号 AppID 未配置");
-    return value;
+  private async assertCurrentCredentials(expected: OfficialAccountCredentials): Promise<void> {
+    const current = await readOfficialAccountCredentials(this.container, this.env);
+    if (current.stamp !== expected.stamp) throw new ValidateException('公众号账户配置已变化，请稍后重试');
   }
 
-  private async getAccessToken(forceRefresh = false, expectedAppId?: string): Promise<string> {
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["wechat_appid", "wechat_appsecret"]);
-    const appId = values.wechat_appid?.trim() ?? "";
-    const secret = values.wechat_appsecret?.trim() ?? "";
+  private async getAccessToken(forceRefresh = false, expectedAppId?: string, snapshot?: OfficialAccountCredentials): Promise<string> {
+    const credentials = snapshot ?? await readOfficialAccountCredentials(this.container, this.env);
+    const { appId, secret } = credentials;
     if (expectedAppId !== undefined && appId !== expectedAppId) throw new ValidateException('分享公众号账户配置已变化，请稍后重试');
-    if (!appId || !secret) throw new ValidateException("公众号 AppID 或 AppSecret 未配置");
-    const cacheKey = `official_access_token:${appId}`;
+    const cacheKey = officialCredentialCacheKey(credentials, 'access-token');
     if (!forceRefresh) {
       const cached = await cacheGet<string>(cacheKey, this.env);
       if (cached) return cached;

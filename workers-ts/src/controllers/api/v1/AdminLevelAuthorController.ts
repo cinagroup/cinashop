@@ -1,0 +1,21 @@
+import type {Context} from 'hono';
+import type {AppVariables,Env} from '@/env';
+import {jsonOk} from '@/utils/json';
+import {readBoundedJsonObject} from '@/utils/request-body';
+import {ValidateException} from '@/utils/errors';
+import {AdminLevelAuthorService} from '@/services/admin/AdminLevelAuthorService';
+import {levelQuery,levelId} from '@/services/admin/AdminLevelAuthorInput';
+import {LEVEL_FIELDS,newLevelValues} from '../../../../../view/common/levelAuthor';
+type C=Context<{Bindings:Env;Variables:AppVariables}>;
+function context(c:C){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');return {s:new AdminLevelAuthorService(c.get('container'),c.env),a:{id:c.get('adminId')??0,authVersion:c.get('socketAuthVersion')??'',expiresAt:c.get('socketTokenExp')??0},q:new URL(c.req.url).searchParams};}
+export const catalog=(c:C)=>{const x=context(c);return x.s.catalog(x.q,x.a).then(r=>jsonOk(c,r));};
+export const list=(c:C)=>{const x=context(c);return x.s.list(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyList=(c:C)=>{const x=context(c);return x.s.list(x.q,x.a,true).then(r=>jsonOk(c,r));};
+export const detail=(c:C)=>{const x=context(c);return x.s.detail(c.req.param('id'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const form=async(c:C)=>{const x=context(c),q=levelQuery(x.q,['id']),id=levelId(q.id??0,true),r=await x.s.detail(id,new URLSearchParams(),x.a),v=newLevelValues(r.item??undefined),labels={name:'等级名称',grade:'等级',discount:'享受折扣',exp_num:'解锁需经验值达到',icon:'图标(656×300)',image:'会员背景(750×990)',color:'字体颜色',is_show:'是否显示',explain:'等级说明'};return jsonOk(c,{title:id?'编辑会员等级':'添加会员等级',action:'user/user_level',method:'POST',rules:[...(id?[{field:'id',type:'hidden',value:id}]:[]),...LEVEL_FIELDS.map(field=>({field,title:labels[field],value:v[field],type:['grade','discount','exp_num'].includes(field)?'inputNumber':field==='is_show'?'radio':['icon','image'].includes(field)?'frameImage':field==='color'?'color':field==='explain'?'textarea':'input',...(field==='is_show'?{options:[{label:'显示',value:1},{label:'隐藏',value:0}]}:{}),...(field==='icon'||field==='image'?{props:{preview:r.item?.[field==='icon'?'icon_preview':'image_preview']??''}}:{})}))]});};
+export const receipt=(c:C)=>{const x=context(c);return x.s.receipt(c.req.param('operationId'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const commit=async(c:C)=>{const x=context(c);levelQuery(x.q);return jsonOk(c,await x.s.mutate(await readBoundedJsonObject(c.req.raw,512*1024),x.a));};
+export const resolve=async(c:C)=>{const x=context(c);levelQuery(x.q);return jsonOk(c,await x.s.resolve(await readBoundedJsonObject(c.req.raw,512*1024),x.a));};
+export const save=async(c:C)=>{const x=context(c);levelQuery(x.q);const b=await readBoundedJsonObject(c.req.raw,512*1024),id=levelId(b.id??0,true),r=await x.s.legacy(id?'update':'create',id,b,x.a);return jsonOk(c,{id:r.result.id},'等级已保存');};
+export const remove=async(c:C)=>{const x=context(c);levelQuery(x.q);await x.s.legacy('delete',c.req.param('id'),await readBoundedJsonObject(c.req.raw,1024),x.a);return jsonOk(c,null,'等级已删除');};
+export const show=async(c:C)=>{const x=context(c);levelQuery(x.q);const status=c.req.param('is_show');if(status!=='0'&&status!=='1')throw new ValidateException('显示状态无效');const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('显隐正文须为空');await x.s.legacy('show',c.req.param('id'),{is_show:Number(status)},x.a);return jsonOk(c,null,'显示状态已更新');};

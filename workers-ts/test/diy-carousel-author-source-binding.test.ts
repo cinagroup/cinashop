@@ -1,14 +1,24 @@
-import { reverseAdminUserFilterSource, reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
-import { reverseCommunityAuthorSource, reverseCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
-import { reverseCommerceAuthorSource, reverseCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
+import { beforeConfigClassReport } from './helpers/configClassSourceBinding';
+import { reverseSearchHotwordsSource } from './helpers/searchHotwordsSourceBinding';
+import { reverseLiveBroadcastAuthorSource, applyLiveBroadcastAuthorReport } from './helpers/diyLiveBroadcastAuthorSourceBinding';
+import { reverseSeckillAuthorSource, applySeckillAuthorReport } from './helpers/diySeckillAuthorSourceBinding';
+import { reverseBargainAuthorSource, applyBargainAuthorReport } from './helpers/diyBargainAuthorSourceBinding';
+import { reverseCombinationAuthorSource, applyCombinationAuthorReport } from './helpers/diyCombinationAuthorSourceBinding';
+import { reversePresaleAuthorSource, applyPresaleAuthorReport } from './helpers/diyPresaleAuthorSourceBinding';
+import { reversePointsAuthorSource, applyPointsAuthorReport } from './helpers/diyPointsAuthorSourceBinding';
+import { reverseCouponAuthorSource, applyCouponAuthorReport } from './helpers/diyCouponAuthorSourceBinding';
+import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';
+import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
 import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { reverseFollowAuthorSource, applyFollowAuthorReport } from './helpers/diyFollowAuthorSourceBinding';
 import { reverseListAuthorSource, applyListAuthorReport, listAuthorSourceBinding as listProof } from './helpers/diyListAuthorSourceBinding';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './helpers/routeSourceIncrement';
-import { readFileSync } from 'node:fs';
+import { readAdminProfileThenErrorPagesThenBrowserLogThenConfigClassPredecessor as readFileSync } from './helpers/wechatAppAuthorSourceBinding';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
+import { buildAdminProfilePredecessorApiAuditReport as buildCurrentAdminFrontendApiAuditReport } from './helpers/wechatAppAuthorSourceBinding';
+const buildAdminFrontendApiAuditReport=()=>beforeConfigClassReport(buildCurrentAdminFrontendApiAuditReport());
 import { reverseCarouselAuthorSource, applyCarouselAuthorReport, carouselAuthorSourceBinding as proof } from './helpers/diyCarouselAuthorSourceBinding';
 // Exact additive state-author adapter; original definitions and dated proofs below remain intact.
 const stateAuthorHistoricalRaw = readFileSync(resolve(import.meta.dirname, 'fixtures/diy-state-author-historical-bindings-20261024.json'), 'utf8');
@@ -22,11 +32,8 @@ const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
 };
 if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
 function beforeStateAuthorSource(file: string, source: string): string {
-  source = reverseAdminUserFilterSource(file, source);
-  source = reverseCommunityAuthorSource(file, source);
-  source = reverseCommerceAuthorSource(file, source);
-  source = reverseEditorialAuthorSource(file, source);
-  return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(source, stateAuthorHistorical.source) : source;
+  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, reverseCouponAuthorSource(file, reversePointsAuthorSource(file, reversePresaleAuthorSource(file, reverseCombinationAuthorSource(file, reverseBargainAuthorSource(file, reverseSeckillAuthorSource(file, reverseLiveBroadcastAuthorSource(file, reverseSearchHotwordsSource(file, source))))))))))));
+  return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(previous, stateAuthorHistorical.source) : previous;
 }
 function applyStateAuthorReport<T>(before: T): T {
   if (stateAuthorHash(JSON.stringify(before, null, 2) + '\n') !== stateAuthorHistorical.previous_report.sha256) throw Error('State report complete predecessor differs');
@@ -37,7 +44,7 @@ function applyStateAuthorReport<T>(before: T): T {
     values[change.index] = structuredClone(change.after);
   }
   if (stateAuthorHash(JSON.stringify(updated, null, 2) + '\n') !== stateAuthorHistorical.current_report.sha256) throw Error('State report complete result differs');
-  return updated as unknown as T;
+  return applyLiveBroadcastAuthorReport(applySeckillAuthorReport(applyBargainAuthorReport(applyCombinationAuthorReport(applyPresaleAuthorReport(applyPointsAuthorReport(applyCouponAuthorReport(applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)))))))))));
 }
 
 const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>beforeStateAuthorSource(file,readFileSync(resolve(root,file),'utf8').replace(/\r\n?/gu,'\n')),sha=(s:string)=>createHash('sha256').update(s).digest('hex');
@@ -50,7 +57,7 @@ describe('whole-source-bound carousel author integration preserves complete hist
     for(const row of proof.sources){expect(sha(reverseListAuthorSource(row.file,read(row.file)))).toBe(row.after_sha256);expect(sha(reverseCarouselAuthorSource(row.file,reverseListAuthorSource(row.file,read(row.file))))).toBe(row.before_sha256);}
   });
   it('reconstructs every old route/call/resource using only one exact source hash and three shifted call lines',()=>{
-    expect(applyCarouselAuthorReport(before)).toEqual(current);expect(reverseCommerceAuthorReport(reverseCommunityAuthorReport(reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport())))).toEqual(applyEditorialAuthorReport(applyStateAuthorReport(applyListAuthorReport(current))));expect(current.counts).toEqual(before.counts);expect(current.backend).toEqual(before.backend);expect(current.counts).toMatchObject({callSites:699,pathVariants:737,registered:737,unregistered:0,unresolved:0});
+    expect(applyCarouselAuthorReport(before)).toEqual(current);expect(buildAdminFrontendApiAuditReport()).toEqual(applyStateAuthorReport(applyListAuthorReport(current)));expect(current.counts).toEqual(before.counts);expect(current.backend).toEqual(before.backend);expect(current.counts).toMatchObject({callSites:699,pathVariants:737,registered:737,unregistered:0,unresolved:0});
     expect(proof.report_changes.filter(c=>c.array==='frontendSources')).toHaveLength(1);expect(proof.report_changes.filter(c=>c.array==='calls')).toHaveLength(3);
     for(const change of proof.report_changes){expect(change.after.file??change.after.source).toBe('view/admin-ts/src/pages/content/DiseList.vue');const old={...change.before},next={...change.after};if(change.array==='calls'){delete old.line;delete next.line;}else{delete old.sha256;delete next.sha256;}expect(next).toEqual(old);}
   });

@@ -1,3 +1,7 @@
+import { isWechatOpenConfigKey } from '../../../../view/common/wechatOpen';
+import { isWechatAppConfigKey } from '../../../../view/common/wechatApp';
+import { isPcBaseConfigKey } from '../../../../view/common/pcBase';
+import { isWechatBaseConfigKey } from '../../../../view/common/wechatBase';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { systemConfig } from '@/models/schema';
@@ -47,7 +51,7 @@ export function normalizeAdminConfigBatch(input: unknown): Array<[string, string
     // A generic string batch cannot carry these domains' revision, UUID,
     // option proofs or atomic audit. Reject the whole request before SQL/KV,
     // including when a superadmin submits it alongside unrelated settings.
-    const endpoint = isCityConfigKey(key) ? '/config/city-delivery' : CONTROLLED_CONFIG_ENDPOINTS.get(key);
+    const endpoint = isWechatAppConfigKey(key) ? '/wechat/app' : isPcBaseConfigKey(key) ? '/config/pc' : isCityConfigKey(key) ? '/config/city-delivery' : isWechatOpenConfigKey(key) ? '/wechat/open' : isWechatBaseConfigKey(key) ? '/wechat/base' : CONTROLLED_CONFIG_ENDPOINTS.get(key);
     if (endpoint) throw new ValidateException(`配置${key}只能通过${endpoint}专用接口保存`);
     if (typeof value !== 'string' || !validText(value, 5000)) {
       throw new ValidateException('配置值必须是最多5000字符的有效字符串');
@@ -80,6 +84,10 @@ export class AdminConfigBatchService {
       // an in-flight type=7 order sees either the complete old or new policy.
       if (entries.some(([key]) => NEWCOMER_CHECKOUT_KEYS.has(key))) {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('admin-newcomer-register-config'))`);
+      }
+      if (entries.some(([key]) => key === 'pay_weixin_mchid')) {
+        const [gate] = await tx.execute<{ locked: boolean }>(sql`SELECT pg_try_advisory_xact_lock(731664,0) AS locked`);
+        if (gate?.locked !== true) throw new ValidateException('原生App支付身份正在提交，请稍后核对商户配置');
       }
       // First table lock; no order/product/rights locks or external I/O held.
       // Checkout readers may finish, but another writer must not change winners.

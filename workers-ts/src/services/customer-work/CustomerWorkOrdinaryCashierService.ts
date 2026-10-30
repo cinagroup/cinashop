@@ -1,3 +1,4 @@
+import { lockLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 import { and, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
 import type { Env } from '@/env';
@@ -177,6 +178,7 @@ export class CustomerWorkOrdinaryCashierService {
       await lockOrdinaryCashierRequest(tx, actor.uid, key);
       const prior = await priorOrdinaryCashierOperation(tx, actor.uid, key, 'payment', intent);
       if (prior) { await authorizeOrdinaryCashierWrite(tx, actor, intent.scope_key); return { receipt: prior, replayed: true, outbox: null }; }
+      await lockLocalPaymentAdmissionTx(tx);
       await lockOrderSettlement(tx, intent.order_id);
       const [order] = await tx.select().from(storeOrder).where(eq(storeOrder.id, intent.order_id)).limit(1).for('update');
       await authorizeOrdinaryCashierWrite(tx, actor, intent.scope_key);

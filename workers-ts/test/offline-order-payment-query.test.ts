@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { offlinePredecessorSchemaSql } from './helpers/offlinePredecessorSchema';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
 import { otherOrder, systemConfig, user, userRecharge, wechatUser } from '../src/models/schema';
 import { OFFLINE_ORDER_ADMISSION_SQL } from '../src/migrations/offlineOrderAdmission';
@@ -29,7 +29,13 @@ describe('offline original-identity query preflight on isolated native PG16', ()
       }
     });
     await f.db.insert(user).values({ uid: 11, account: 'original-query-buyer', nowMoney: '100.00', integral: 50 });
-    await f.db.insert(systemConfig).values({ menuName: 'member_card_status', value: '0' });
+    await f.db.insert(systemConfig).values([{ menuName: 'member_card_status', value: '0' },
+      { menuName: 'wechat_appid', value: '"wx-local-query"' },
+      { menuName: 'routine_appId', value: '"wx-local-query"' },
+      { menuName: 'pay_weixin_mchid', value: '"1234567890"' },
+      { menuName: 'pay_weixin_serial_no', value: '"ABCDEF123456"' },
+      { menuName: 'site_url', value: '"https://query.example"' },
+      { menuName: 'pay_weixin_open', value: '0' }]);
   }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
   const runtime = <T>(work: (r: Runtime) => Promise<T>) => f.withRuntimeRole!(async r => {
@@ -118,7 +124,15 @@ describe('offline original-identity query preflight on isolated native PG16', ()
   it.each(['merchant', 'app'] as const)('rejects rotated %s after authoritative preflight but before provider I/O', async field => {
     await runtime(async r => {
       const test = await create(r), before = await state();
-      test.api.config[field === 'merchant' ? 'cfg_pay_weixin_mchid' : 'cfg_wechat_appid'] = field === 'merchant' ? '9999999999' : 'new-app';
+      if (field === 'merchant') {
+        await f.db.update(systemConfig).set({ value: '"9999999999"' }).where(eq(systemConfig.menuName, 'pay_weixin_mchid'));
+        expect(await test.api.env.CONFIG_KV.get('cfg_pay_weixin_mchid')).toBe(test.api.identity().merchantId);
+      }
+      else {
+        // A committed SQL rotation must win even while the old AppID survives in KV.
+        await f.db.update(systemConfig).set({ value: '"new-app"' }).where(eq(systemConfig.menuName, 'wechat_appid'));
+        expect(await test.api.env.CONFIG_KV.get('cfg_wechat_appid')).toBe(test.api.identity().appId);
+      }
       await expect(test.query()).rejects.toThrow('原支付商户');
       expect(fetch).not.toHaveBeenCalled(); expect(await state()).toEqual(before);
     });

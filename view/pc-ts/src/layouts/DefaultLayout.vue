@@ -4,7 +4,7 @@
     <header class="header">
       <div class="container header-inner">
         <router-link to="/" class="logo" aria-label="返回商城首页">
-          <img :src="siteLogo" :alt="siteName" class="logo-img" />
+          <img v-if="siteLogo" :src="siteLogo" :alt="siteName" class="logo-img" /><span v-else>{{ siteName }}</span>
         </router-link>
         <nav class="nav" aria-label="商城导航">
           <router-link to="/" class="nav-link">首页</router-link>
@@ -52,7 +52,11 @@
     <!-- 页脚 -->
     <footer class="footer">
       <div class="container footer-inner">
-        <span>© 2026 {{ siteName }}</span>
+        <span v-if="company?.copyright">{{ company.copyright }}</span>
+        <span v-if="company?.phone">联系电话：{{ company.phone }}</span>
+        <span v-if="company?.address">{{ company.address }}</span>
+        <nav v-if="company?.links.length" aria-label="友情链接"><a v-for="(link, index) in company.links" :key="index" :href="link.url" rel="noopener noreferrer">{{ link.name }}</a></nav>
+        <div v-for="(filing, index) in company?.filings ?? []" :key="index" class="filing"><a v-if="filing.url" :href="filing.url" rel="noopener noreferrer"><img v-if="filing.icon" :src="filing.icon" alt="" />{{ filing.name }}</a><span v-else><img v-if="filing.icon" :src="filing.icon" alt="" />{{ filing.name }}</span></div>
         <span v-if="recordNo">{{ recordNo }}</span>
       </div>
     </footer>
@@ -60,31 +64,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onBeforeUnmount, onUnmounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/stores/auth";
 import { useCartStore } from "@/stores/cart";
-import { getShareConfig, getSiteConfig } from "@/api/public";
+import type { ShareConfig, SiteConfig } from "@/api/public";
+import request, { getData } from '@/utils/request';
+import { captureAuthSession, isCurrentAuthSession, onAuthChange } from '@/utils/auth';
 
-const router = useRouter();
+import { apiPcCompany, type PcCompany } from '@/api/pcBase';
+import { pcBaseMetadataLease } from '@/utils/pcBaseMetadata';
+const router = useRouter(), route = useRoute();
+const company = ref<PcCompany | null>(null);
+let alive = false, metadataActive = true, routeEpoch = 0, readEpoch = 0, controller: AbortController | undefined, ownedTitle: string | undefined;
+// A route ABA must never revive the initial global metadata writer. Public
+// header/footer data can refresh across child routes; their metadata cannot.
+watch(() => route.fullPath, () => { routeEpoch++; metadataActive = false; }, { flush: 'sync' });
+const initialRoute = route.fullPath, initialTitle = document.title, metadata = pcBaseMetadataLease(document.head);
+function retirePublicRead() { readEpoch++; controller?.abort(); }
+const stopAuth = onAuthChange(() => { if (alive) void loadPublicData(); });
+onBeforeUnmount(() => {
+  alive = false; retirePublicRead(); stopAuth();
+});
+// Child route owners may restore our previous values during their own
+// teardown. Release our still-owned values after those child hooks finish.
+onUnmounted(() => {
+  metadata.close();
+  if (ownedTitle !== undefined && document.title === ownedTitle) document.title = initialTitle;
+});
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const searchWord = ref("");
 const recordNo = ref("");
 const siteName = ref("CinaShop");
-const siteLogo = ref("/logo.png");
-
-function setMeta(selector: string, attribute: "name" | "property", key: string, content: string) {
-  if (!content) return;
-  let element = document.head.querySelector<HTMLMetaElement>(selector);
-  if (!element) {
-    element = document.createElement("meta");
-    element.setAttribute(attribute, key);
-    document.head.append(element);
-  }
-  element.content = content;
-}
+const siteLogo = ref("");
 
 function setFavicon(url: string) {
   if (!url) return;
@@ -109,26 +123,47 @@ async function handleLogout() {
   router.push("/");
 }
 
-onMounted(async () => {
+async function loadPublicData() {
+  if (!alive) return;
+  retirePublicRead(); controller = new AbortController();
+  const own = readEpoch, ownRoute = routeEpoch, session = captureAuthSession(), signal = controller.signal;
+  const current = () => alive && own === readEpoch && !signal.aborted && isCurrentAuthSession(session);
+  const metadataCurrent = () => current() && metadataActive && ownRoute === routeEpoch && route.fullPath === initialRoute;
+  const [site, share, pc] = await Promise.allSettled([
+    getData<SiteConfig>(request.get('/site_config', { signal })),
+    getData<ShareConfig>(request.get('/share', { signal })),
+    apiPcCompany(signal),
+  ]);
+  if (!current()) return;
+  if (site.status === "fulfilled") {
+    siteName.value = site.value.site_name || "CinaShop";
+    setFavicon(site.value.ico_path);
+  }
+  if (pc.status === "fulfilled") {
+    company.value = pc.value; siteLogo.value = pc.value.logo; recordNo.value = pc.value.recordNo;
+    siteName.value = pc.value.siteName || siteName.value;
+    if (metadataCurrent()) {
+      metadata.set('name', 'description', pc.value.description);
+      metadata.set('name', 'keywords', pc.value.keywords);
+    }
+  }
+  if (site.status === "fulfilled" && metadataCurrent() && document.title === (ownedTitle ?? initialTitle)) {
+    document.title = siteName.value; ownedTitle = siteName.value;
+  }
+  if (share.status === "fulfilled" && metadataCurrent()) {
+    metadata.set('property', 'og:title', share.value.title || siteName.value);
+    metadata.set('property', 'og:description', share.value.synopsis);
+    metadata.set('property', 'og:image', share.value.img);
+    if (pc.status !== "fulfilled") metadata.set('name', 'description', share.value.synopsis);
+  }
+}
+onMounted(() => {
+  alive = true;
   if (authStore.isLoggedIn) {
     cartStore.fetchCount();
     void cartStore.fetchList().catch(() => {});
   }
-  const [site, share] = await Promise.allSettled([getSiteConfig(), getShareConfig()]);
-  if (site.status === "fulfilled") {
-    recordNo.value = site.value.record_No;
-    siteName.value = site.value.site_name || "CinaShop";
-    siteLogo.value = site.value.site_logo || "/logo.png";
-    document.title = siteName.value;
-    setFavicon(site.value.ico_path);
-  }
-  if (share.status === "fulfilled") {
-    const title = share.value.title || siteName.value;
-    setMeta('meta[property="og:title"]', "property", "og:title", title);
-    setMeta('meta[property="og:description"]', "property", "og:description", share.value.synopsis);
-    setMeta('meta[property="og:image"]', "property", "og:image", share.value.img);
-    setMeta('meta[name="description"]', "name", "description", share.value.synopsis);
-  }
+  void loadPublicData();
 });
 </script>
 
@@ -266,7 +301,7 @@ onMounted(async () => {
   margin-top: 40px;
 }
 
-.footer-inner {
+.footer-inner nav{display:flex;gap:16px;flex-wrap:wrap}.filing img{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:5px}.footer-inner a{color:inherit}.footer-inner {
   display: flex;
   flex-wrap: wrap;
   overflow-wrap: anywhere;

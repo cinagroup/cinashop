@@ -11,6 +11,7 @@ import {
   type SystemQueueDeadLetter,
 } from "@/models/schema";
 import { isSmsVerificationMessage } from "@/services/message/SmsVerificationService";
+import { isAdminProfileSmsMessage } from '@/services/admin/AdminProfileSmsService';
 import { isSignReminderMessage } from "@/services/message/SignReminderService";
 import {
   isOrderNotificationOutboxMessage,
@@ -305,6 +306,14 @@ export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueD
       replayPolicy: "ALLOW",
       body: sanitizeUnknownQueueBody(value),
       replayMessage: value,
+    };
+  }
+  if (isAdminProfileSmsMessage(value)) {
+    return {
+      messageType: value.action,
+      replayPolicy: 'BLOCK_SENSITIVE',
+      body: { action: value.action, purpose: value.purpose, recordId: value.recordId, adminId: value.adminId,
+        phone: '[redacted]', code: '[redacted]' },
     };
   }
   if (isSmsVerificationMessage(value)) {

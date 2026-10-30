@@ -88,9 +88,10 @@ export class StoreSeckillDao extends BaseDao<typeof storeSeckill> {
   /** Apply the full parent/child/slot policy before stable legacy pagination. */
   async getByTimeId(timeId: string, page = 1, limit = 10, now = new Date()) {
     return this.db
-      .select()
+      .select(getTableColumns(storeSeckill))
       .from(storeSeckill)
-      .where(seckillCatalogSchedulePredicate(timeId, now))
+      .innerJoin(storeProduct, eq(storeProduct.id, storeSeckill.productId))
+      .where(and(eq(storeProduct.isDel, 0), seckillCatalogSchedulePredicate(timeId, now)))
       .orderBy(desc(storeSeckill.sort), desc(storeSeckill.id))
       .limit(limit)
       .offset((page - 1) * limit);
@@ -163,17 +164,19 @@ export class StoreBargainDao extends BaseDao<typeof storeBargain> {
   }
 
   async list(page = 1, limit = 10) {
-    const now = new Date().toISOString();
+    const now = new Date();
     return this.db
-      .select()
+      // PHP's product relation binds the base-product old price into each
+      // otherwise unchanged flat activity row. It also excludes deleted or
+      // missing base products before pagination, without an extra visibility gate.
+      .select({ ...getTableColumns(storeBargain), otPrice: storeProduct.otPrice })
       .from(storeBargain)
-      .where(
-        sql`${storeBargain.status} = 1
-          AND ${storeBargain.isDel} = 0
-          AND (${storeBargain.startTime} IS NULL OR ${storeBargain.startTime} <= ${now})
-          AND (${storeBargain.stopTime} IS NULL OR ${storeBargain.stopTime} >= ${now})`,
-      )
-      .orderBy(sql`${storeBargain.sort} DESC`)
+      .innerJoin(storeProduct, eq(storeProduct.id, storeBargain.productId))
+      // The original <= / >= comparisons include both endpoints and exclude
+      // NULL dates; NULL must not silently turn into an unbounded activity.
+      .where(and(eq(storeBargain.status, 1), eq(storeBargain.isDel, 0),
+        eq(storeProduct.isDel, 0), lte(storeBargain.startTime, now), gte(storeBargain.stopTime, now)))
+      .orderBy(desc(storeBargain.sort), desc(storeBargain.id))
       .limit(limit)
       .offset((page - 1) * limit);
   }

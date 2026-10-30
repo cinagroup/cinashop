@@ -74,6 +74,7 @@ describe("PC and customer-service scan/OAuth migration", () => {
 
   it("uses one-time audience-bound OAuth state and bounded provider reads", () => {
     const oauth = readFileSync("src/services/wechat/WechatOpenWebAuthService.ts", "utf8");
+    const credentials = readFileSync("src/services/wechat/OpenPlatformRuntimeConfig.ts", "utf8");
     expect(oauth).toContain('purpose: "open_web_oauth_login"');
     expect(oauth).toContain("record.audience !== audience");
     expect(oauth).toContain("verifierHash");
@@ -83,9 +84,21 @@ describe("PC and customer-service scan/OAuth migration", () => {
     expect(oauth).toContain("PROVIDER_CODE_TTL_SECONDS");
     expect(oauth).toContain("RESPONSE_MAX_BYTES");
     expect(oauth).toContain("FETCH_TIMEOUT_MS");
-    expect(oauth).toContain("WECHAT_OPEN_APP_SECRET");
+    expect(oauth).toContain("from './OpenPlatformRuntimeConfig'");
+    expect(oauth).toContain("readOpenPlatformCredentials(this.container, this.env)");
+    expect(credentials).toContain("const deployment = env.WECHAT_OPEN_APP_SECRET");
+    expect(credentials).toContain("const deployed = deployment !== undefined && deployment !== ''");
+    expect(credentials).toContain("deployed ? 'deployment' : raw(WECHAT_OPEN_AUTHORITY_KEY) === 'database' ? 'database' : null");
+    expect(credentials).toContain("const secret = deployed ? deployment : normalizeConfigScalar(raw('wechat_open_app_secret'))");
+    expect(credentials).toContain("!authority || !validWechatOpenSecret(secret)");
     expect(oauth).not.toContain('"wechat_open_app_secret"');
-    expect(oauth).toContain("systemConfigDao.getValues");
+    expect(credentials).toContain("...getTableColumns(systemConfig), version: sql<string>`xmin::text`");
+    expect(credentials).toContain("eq(systemConfig.isStore, 0), inArray(systemConfig.menuName, keys)");
+    expect(credentials).toContain("orderBy(desc(systemConfig.sort), desc(systemConfig.id)).limit(65)");
+    expect(credentials).toContain("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY");
+    expect(credentials).not.toContain("CONFIG_KV.get");
+    expect(credentials).not.toContain("CONFIG_KV.put");
+    expect(credentials).not.toContain("new SystemConfigService");
     expect(oauth).toContain("|| !unionid || unionid.length > 30");
     expect(oauth).not.toContain("new SystemConfigService");
   });
@@ -108,7 +121,21 @@ describe("PC and customer-service scan/OAuth migration", () => {
     expect(pc).toContain("delete cleanQuery.code");
     expect(kefuApi).toContain('apiRequest<KefuScanChallenge>("/kefuapi/key"');
     expect(kefu).toContain("QRCode.toDataURL(scanApprovalUrl(challenge.key)");
-    expect(kefu).toContain("auth.applyLogin(await kefuApi.wechatLogin(code, state))");
+    for (const [page, exchange, publication] of [
+      [pc, "const result = await apiPcWechatAuth(code, state)", "authStore.applyLogin({ token: result.token, expires_time: result.exp_time })"],
+      [kefu, "const result = await kefuApi.wechatLogin(code, state)", "auth.applyLogin(result)"],
+    ]) {
+      const callbackStart = page.indexOf("async function handleOauthCallback()"), callbackEnd = page.indexOf("\nwatch(", callbackStart);
+      expect(callbackStart).toBeGreaterThanOrEqual(0); expect(callbackEnd).toBeGreaterThan(callbackStart);
+      const callback = page.slice(callbackStart, callbackEnd);
+      const cleanup = callback.indexOf("await router.replace("), exchangeAt = callback.indexOf(exchange);
+      const cleanupGuard = callback.indexOf("if (!current()) return", cleanup);
+      const publicationGuard = callback.indexOf("if (!current()) return", exchangeAt), publicationAt = callback.indexOf(publication);
+      expect(cleanup).toBeGreaterThanOrEqual(0); expect(cleanupGuard).toBeGreaterThan(cleanup);
+      expect(exchangeAt).toBeGreaterThan(cleanupGuard); expect(publicationGuard).toBeGreaterThan(exchangeAt);
+      expect(publicationAt).toBeGreaterThan(publicationGuard);
+      expect(callback).toContain("const current = oauthLease()");
+    }
     expect(mobileApi).toContain('http.get<ScanLoginApproval>("/user/code", { key })');
     expect(mobileApi).toContain('{ key, action: "approve" }');
     expect(mobileApi).toContain('{ key, action: "reject" }');

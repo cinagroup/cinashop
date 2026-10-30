@@ -19,9 +19,10 @@ export default defineConfig({
         test: {
           name: "regular-unit",
           include: ["test/*.test.ts"],
-          exclude: ["test/admin-authority-maintenance-native.test.ts",
+          exclude: ["test/admin-authority-maintenance-native.test.ts", "test/admin-profile-native.test.ts", "test/admin-platform-menu-native.test.ts", "test/admin-express-native.test.ts", "test/admin-level-native.test.ts", "test/admin-label-native.test.ts", "test/admin-store-native.test.ts", "test/admin-staff-native.test.ts",
             "test/admin-guest-invoice-manual-red-note-postgres.test.ts",
             "test/manager-runtime-privileges-native.test.ts", "test/manager-runtime-provision-postgres.test.ts",
+            "test/manager-routine-payment-runtime-native.test.ts", "test/manager-routine-payment-provision-native.test.ts",
             "test/manager-runtime-bootstrap-postgres.test.ts", "test/manager-runtime-capabilities-bootstrap-postgres.test.ts"],
           sequence: { groupOrder: 0 },
         },
@@ -37,8 +38,79 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: "admin-profile-native",
+          include: ["test/admin-profile-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 4 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-platform-menu-native",
+          include: ["test/admin-platform-menu-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 5 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-express-native",
+          include: ["test/admin-express-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 6 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-level-native",
+          include: ["test/admin-level-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 7 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-label-native",
+          include: ["test/admin-label-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 8 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-store-native",
+          include: ["test/admin-store-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 9 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "admin-staff-native",
+          include: ["test/admin-staff-native.test.ts"],
+          maxWorkers: 1,
+          fileParallelism: false,
+          sequence: { groupOrder: 9 },
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: "manager-runtime-commissioning-native",
           include: ["test/manager-runtime-privileges-native.test.ts", "test/manager-runtime-provision-postgres.test.ts",
+            "test/manager-routine-payment-runtime-native.test.ts", "test/manager-routine-payment-provision-native.test.ts",
             "test/manager-runtime-bootstrap-postgres.test.ts", "test/manager-runtime-capabilities-bootstrap-postgres.test.ts"],
           maxWorkers: 1,
           fileParallelism: false,

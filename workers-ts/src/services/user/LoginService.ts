@@ -61,7 +61,7 @@ export class LoginService {
     return rows[0] ?? null;
   }
 
-  private async issueToken(user: { uid: number; pwd: string }, issuedAtSeconds?: number) {
+  private async issueToken(user: { uid: number; pwd: string }, issuedAtSeconds?: number, onIssued?: (token: string) => void, issuanceNonce?: string) {
     const { token, exp } = await createToken(
       user.uid,
       "api",
@@ -69,7 +69,11 @@ export class LoginService {
       this.env.APP_KEY,
       "cinashop",
       issuedAtSeconds,
+      issuanceNonce,
     );
+    // A caller-owned SQL transaction can revoke this exact bearer even when a
+    // later login side effect or outer COMMIT fails. Never publish it here.
+    onIssued?.(token);
     const bucket: TokenBucket = {
       uid: user.uid,
       type: "api",
@@ -90,6 +94,9 @@ export class LoginService {
     uid: number,
     ip = "",
     issuedAtSeconds?: number,
+    onIssued?: (token: string) => void,
+    issuanceNonce?: string,
+    deferAgentLevelEvaluation = false,
   ): Promise<{ token: string; expires_time: number }> {
     if (!Number.isSafeInteger(uid) || uid <= 0) {
       throw new ValidateException("登录身份无效");
@@ -97,9 +104,11 @@ export class LoginService {
     const user = await this.container.userDao.findForAuth(uid);
     if (!user) throw new ValidateException("登录身份不存在或已失效");
     if (!user.status) throw new ValidateException("已被禁止,请联系管理员");
-    const result = await this.issueToken(user, issuedAtSeconds);
+    const result = await this.issueToken(user, issuedAtSeconds, onIssued, issuanceNonce);
     await this.container.userDao.touchLogin(uid, ip);
-    await evaluateAgentLevelsAfterRegistration(this.container,uid);
+    // Caller-owned identity transactions defer the standalone best-effort
+    // evaluator until their outer COMMIT. Ordinary login keeps its old path.
+    if (!deferAgentLevelEvaluation) await evaluateAgentLevelsAfterRegistration(this.container,uid);
     return result;
   }
 

@@ -75,6 +75,12 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+// #ifdef APP-PLUS
+import { onUnmounted } from 'vue';
+import { onHide, onUnload } from '@dcloudio/uni-app';
+import { useAuthStore } from '@/stores/auth';
+import { reserveNativeWechatPayment } from '@/utils/nativeWechatPaymentEntry';
+// #endif
 import { ref, onMounted } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { apiOrderCashier, apiPaymentReadiness, apiRechargePay } from "@/api/order";
@@ -93,13 +99,35 @@ const paymentReason = ref("");
 const quotaIds = ref<Record<string, number>>({});
 const quotaGifts = ref<Record<string, string>>({});
 const PENDING_RECHARGE_KEY = "cinashop_pending_recharge";
+// #ifdef APP-PLUS
+const nativeAuth = useAuthStore();
+let nativeLifetime = 0, nativeDisposed = false;
+onHide(() => { nativeLifetime++; });
+const retireNativePaymentView = () => { nativeDisposed = true; nativeLifetime++; };
+onUnload(retireNativePaymentView);
+onUnmounted(retireNativePaymentView);
+function captureNativePaymentView(): () => boolean {
+  const owner = { uid: nativeAuth.uid, token: nativeAuth.token, version: nativeAuth.sessionVersion, lifetime: nativeLifetime };
+  return () => !nativeDisposed && owner.lifetime === nativeLifetime && owner.uid > 0 && !!owner.token
+    && nativeAuth.uid === owner.uid && nativeAuth.token === owner.token && nativeAuth.sessionVersion === owner.version;
+}
+function assertNativeRechargeCashier(value: unknown, orderId: string): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('充值核对响应无效');
+  const row = value as Record<string, unknown>;
+  if (row.order_id !== orderId || row.type !== 'recharge' || typeof row.paid !== 'boolean'
+    || typeof row.now_money !== 'string' || !/^\d+\.\d{2}$/u.test(row.now_money)
+    || !Number.isSafeInteger(Number(row.now_money.replace('.', '')))) throw Error('充值核对响应与本次订单不一致');
+}
+// #endif
 
-async function loadBalance() {
+async function loadBalance(current: () => boolean = () => true) {
   try {
     const info = await http.get<Record<string, unknown>>("/user/info");
+    if (!current()) return;
     balance.value = String(info.now_money ?? "0.00");
     brokerageBalance.value = String(info.brokerage_price ?? "0.00");
   } catch {
+    if (!current()) return;
     // 静默
   }
 }
@@ -134,6 +162,11 @@ async function loadPackages() {
 }
 
 async function submit() {
+  let current = () => true;
+  // #ifdef APP-PLUS
+  current = captureNativePaymentView();
+  if (!current()) return;
+  // #endif
   if (submitting.value || !wechatReady.value) {
     if (!wechatReady.value) {
       uni.showToast({ title: paymentReason.value || "微信支付不可用", icon: "none" });
@@ -141,7 +174,13 @@ async function submit() {
     return;
   }
   submitting.value = true;
+  // #ifdef APP-PLUS
+  let nativeAttempt: ReturnType<typeof reserveNativeWechatPayment> | undefined;
+  // #endif
   try {
+    // #ifdef APP-PLUS
+    nativeAttempt = reserveNativeWechatPayment(current);
+    // #endif
     const channel = paymentChannel();
     const res = await http.post<{ orderId: string; price: string }>("/recharge/recharge", {
       price: selected.value,
@@ -149,19 +188,43 @@ async function submit() {
       rechar_id: quotaIds.value[String(selected.value)] ?? 0,
       type: 0,
     });
+    if (!current()) return;
+    // #ifdef APP-PLUS
+    if (typeof res.orderId !== 'string' || !res.orderId || res.orderId.length > 128) throw Error('充值订单标识无效，请刷新核对');
+    // #endif
     uni.setStorageSync(PENDING_RECHARGE_KEY, res.orderId);
     const payment = await apiRechargePay(res.orderId, channel);
-    if (await continueWechatPayment(payment.jsConfig ?? {})) return;
-    if (await waitForRecharge(res.orderId)) {
+    if (!current()) return;
+    // #ifdef APP-PLUS
+    if (payment.order_id !== res.orderId || payment.pay_type !== 'weixin' || typeof payment.paid !== 'boolean' || !payment.paid && payment.pay_mode !== 'app')
+      throw Error('支付结果与本次充值订单或原生渠道不一致，请刷新核对');
+    // #endif
+    // #ifdef APP-PLUS
+    if (!payment.paid) await nativeAttempt.request(payment.jsConfig ?? {});
+    // #endif
+    // #ifndef APP-PLUS
+    if (await continueWechatPayment(payment.jsConfig ?? {}, current)) return;
+    // #endif
+    if (!current()) return;
+    if (await waitForRecharge(res.orderId, current)) {
+      if (!current()) return;
+      // #ifdef APP-PLUS
+      if (uni.getStorageSync(PENDING_RECHARGE_KEY) === res.orderId) uni.removeStorageSync(PENDING_RECHARGE_KEY);
+      // #endif
+      // #ifndef APP-PLUS
       uni.removeStorageSync(PENDING_RECHARGE_KEY);
+      // #endif
       uni.showToast({ title: "充值到账", icon: "success" });
-      await loadBalance();
-    } else {
+      await loadBalance(current);
+    } else if (current()) {
       uni.showToast({ title: "充值结果确认中，请稍后刷新", icon: "none" });
     }
   } catch (e) {
-    uni.showToast({ title: (e as Error).message || "充值失败", icon: "none" });
+    if (current()) uni.showToast({ title: (e as Error).message || "充值失败", icon: "none" });
   } finally {
+    // #ifdef APP-PLUS
+    nativeAttempt?.release();
+    // #endif
     submitting.value = false;
   }
 }
@@ -208,7 +271,7 @@ function paymentChannel(): string {
   return platform;
 }
 
-async function continueWechatPayment(config: Record<string, unknown>): Promise<boolean> {
+async function continueWechatPayment(config: Record<string, unknown>, current: () => boolean = () => true): Promise<boolean> {
   const h5Url = typeof config.h5_url === "string" ? config.h5_url : "";
   if (h5Url) {
     // #ifdef H5
@@ -252,9 +315,14 @@ async function continueWechatPayment(config: Record<string, unknown>): Promise<b
   return false;
 }
 
-async function waitForRecharge(orderId: string): Promise<boolean> {
+async function waitForRecharge(orderId: string, current: () => boolean = () => true): Promise<boolean> {
   for (let attempt = 0; attempt < 6; attempt += 1) {
+    if (!current()) return false;
     const cashier = await apiOrderCashier(orderId, "recharge");
+    if (!current()) return false;
+    // #ifdef APP-PLUS
+    assertNativeRechargeCashier(cashier, orderId);
+    // #endif
     if (cashier.paid) return true;
     await new Promise((resolve) => setTimeout(resolve, 800));
   }
@@ -272,16 +340,27 @@ async function loadPaymentReadiness() {
 }
 
 async function checkPendingRecharge() {
+  let current = () => true;
+  // #ifdef APP-PLUS
+  current = captureNativePaymentView();
+  if (!current()) return;
+  // #endif
   const orderId = String(uni.getStorageSync(PENDING_RECHARGE_KEY) ?? "");
   if (!orderId) return;
   try {
     const cashier = await apiOrderCashier(orderId, "recharge");
+    if (!current()) return;
+    // #ifdef APP-PLUS
+    assertNativeRechargeCashier(cashier, orderId);
+    if (uni.getStorageSync(PENDING_RECHARGE_KEY) !== orderId) return;
+    // #endif
     if (cashier.paid) {
       uni.removeStorageSync(PENDING_RECHARGE_KEY);
       balance.value = cashier.now_money;
       uni.showToast({ title: "充值到账", icon: "success" });
     }
   } catch {
+    if (!current()) return;
     // 保留待确认单号，供下次回到页面继续确认。
   }
 }
@@ -292,7 +371,12 @@ function goLogs() {
 
 onMounted(() => {
   loadPackages();
+  // #ifdef APP-PLUS
+  void loadBalance(captureNativePaymentView());
+  // #endif
+  // #ifndef APP-PLUS
   loadBalance();
+  // #endif
   loadPaymentReadiness();
 });
 

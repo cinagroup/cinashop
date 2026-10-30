@@ -57,7 +57,9 @@ describe("platform search-word migration", () => {
     expect(service).not.toContain(".delete(storeProductWords)");
     expect(controller).toContain("readBoundedJsonObject(c.req.raw, MAX_BODY_BYTES)");
     expect(controller).toContain('c.header("Cache-Control", "private, no-store")');
-    expect(publicController).toContain("ProductWordsService(c.get(\"container\")).publicKeywords()");
+    expect(publicController).toContain("PublicHotwordService(c.get(\"container\"), c.env).publicKeywords()");
+    const publicFacade = readFileSync("src/services/product/PublicHotwordService.ts", "utf8");
+    expect(publicFacade).toContain("new ProductWordsService({...this.container,db:tx}).publicKeywords()");
     expect(publicController).not.toContain("storeProductWords.isHot");
   });
 

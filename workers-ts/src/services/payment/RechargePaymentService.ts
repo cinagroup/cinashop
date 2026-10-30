@@ -5,7 +5,7 @@ import { user as userTable, userBill, userRecharge } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import { assertWechatPaymentProfileAvailable } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
-import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
+import { admitExternalPaymentInitiation } from '@/services/payment/PaymentInitiationAdmission';
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
@@ -159,15 +159,33 @@ export class RechargePaymentService {
       from,
       payerClientIp,
     );
-    await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
-    await registerPaymentReconciliationIntent(this.container, {
-      provider: "wechat",
-      profile: identity.profile,
-      orderDomain: "recharge",
-      orderNo: order.orderId,
-      expectedAmountCents: priceCents,
-      initiated: true,
+    const snapshot = Object.freeze({
+      id: order.id,
+      orderId: order.orderId,
+      givePrice: order.givePrice,
     });
+    const admission = {
+      uid,
+      orderId: snapshot.id,
+      orderDomain: "recharge" as const,
+      lockOrder: async (bound: Container): Promise<void> => {
+        const rows = await bound.db.select().from(userRecharge)
+          .where(eq(userRecharge.orderId, snapshot.orderId)).limit(2).for("update");
+        if (rows.length !== 1 || rows[0].id !== snapshot.id || rows[0].uid !== uid) {
+          throw new NotFoundException("充值订单不存在或已变化");
+        }
+        const current = rows[0];
+        if (current.paid !== 0) throw new ValidateException("充值订单已支付");
+        const giveCents = decimalToCents(current.givePrice);
+        if (decimalToCents(current.price) !== priceCents || priceCents <= 0
+          || giveCents !== decimalToCents(snapshot.givePrice) || giveCents < 0
+          || !Number.isSafeInteger(priceCents + giveCents)) {
+          throw new ValidateException("充值订单金额已变化，请刷新后重新确认支付");
+        }
+      },
+    };
+    const routinePayer = identity.profile === 'routine' ? admission : undefined;
+    if (!routinePayer) await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
     const jsConfig = await new WechatPayService(this.container, this.env).createOrder({
       profile: identity.profile,
       type: identity.type,
@@ -177,6 +195,10 @@ export class RechargePaymentService {
       ...(identity.openid ? { openid: identity.openid } : {}),
       ...(identity.payerClientIp ? { payerClientIp: identity.payerClientIp } : {}),
       attach: "user_recharge",
+      ...(routinePayer ? { routinePayer } : { beforeProviderRequest: async () => {
+        await admitExternalPaymentInitiation(this.container, { provider: 'wechat', profile: identity.profile as 'wechat' | 'app',
+          orderNo: order.orderId, expectedAmountCents: priceCents, admission });
+      } }),
     });
     return {
       order_id: order.orderId,

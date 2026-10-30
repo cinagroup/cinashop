@@ -9,6 +9,8 @@ import {
 } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
+import { readPcBaseRuntime, renderPcBaseRuntimeImages } from './PcBaseRuntimeConfig';
+import { readOpenPlatformAppId } from '@/services/wechat/OpenPlatformRuntimeConfig';
 import {
   cityArea,
   storeOrder,
@@ -28,33 +30,9 @@ import { createQrSvgDataUrl } from "@/services/user/MembershipScanService";
 import { V2UserCompatibilityService } from "@/services/user/V2UserCompatibilityService";
 import { WechatMiniProgramCodeService } from "@/services/wechat/WechatMiniProgramCodeService";
 import { PcBannerReadService } from "@/services/pc/PcBannerReadService";
+import { sortedPcFooterRows } from './PcFooterOrder';
 
 const PC_PRODUCT_TYPES = [0, 1, 2, 3];
-
-function safeJsonArray(value: unknown): Record<string, unknown>[] {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is Record<string, unknown> =>
-      item !== null && typeof item === "object" && !Array.isArray(item));
-  }
-  const source = String(value ?? "").trim();
-  if (!source || source.length > 1_000_000) return [];
-  try {
-    return safeJsonArray(JSON.parse(source));
-  } catch {
-    return [];
-  }
-}
-
-function sortedLinks(value: unknown): Record<string, unknown>[] {
-  return safeJsonArray(value).sort((left, right) => {
-    const bySort = Number(right.sort ?? 0) - Number(left.sort ?? 0);
-    return bySort || String(left.url ?? "").localeCompare(String(right.url ?? ""));
-  });
-}
-
-function truthyConfig(value: unknown): boolean {
-  return value === true || value === 1 || value === "1" || value === "true";
-}
 
 function toSnakeKey(value: string): string {
   return value.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
@@ -93,14 +71,16 @@ export class PcCompatibilityService {
 
   async appId() {
     return {
-      appid: await this.config.get("wechat_open_app_id"),
+      appid: await readOpenPlatformAppId(this.container),
       version: "CinaShop Workers 0.1.0",
     };
   }
 
   async payVipCode(): Promise<{ url: string }> {
-    const values = await this.config.getMany(["product_phone_buy_url", "site_url"]);
-    if (Number(values.product_phone_buy_url || 1) === 2) {
+    const snapshot = await readPcBaseRuntime(this.container);
+    const values = { product_phone_buy_url: snapshot.values.product_phone_buy_url, site_url: snapshot.extras.site_url };
+    if (values.product_phone_buy_url !== 1 && values.product_phone_buy_url !== 2) return { url: '' };
+    if (values.product_phone_buy_url === 2) {
       try {
         return {
           url: await new WechatMiniProgramCodeService(this.container, this.env)
@@ -119,9 +99,10 @@ export class PcCompatibilityService {
   }
 
   async productPhoneBuy() {
-    const values = await this.config.getMany(["product_phone_buy_url", "site_url"]);
+    const snapshot = await readPcBaseRuntime(this.container);
+    const values = { product_phone_buy_url: snapshot.values.product_phone_buy_url, site_url: snapshot.extras.site_url };
     return {
-      phone_buy: values.product_phone_buy_url || "1",
+      phone_buy: values.product_phone_buy_url === null ? "" : String(values.product_phone_buy_url),
       sit_url: values.site_url ?? "",
     };
   }
@@ -170,7 +151,8 @@ export class PcCompatibilityService {
   }
 
   async productCode(productId: number) {
-    const values = await this.config.getMany(["product_phone_buy_url", "site_url"]);
+    const snapshot = await readPcBaseRuntime(this.container);
+    const values = { product_phone_buy_url: snapshot.values.product_phone_buy_url, site_url: snapshot.extras.site_url };
     let routineCode = "";
     if (Number(values.product_phone_buy_url) === 2 && productId > 0) {
       try {
@@ -219,27 +201,24 @@ export class PcCompatibilityService {
   }
 
   async companyInfo() {
-    const names = [
-      "contact_number", "links_open", "links_list", "company_address", "copyright",
-      "record_No", "site_name", "site_keywords", "site_description", "pc_logo",
-      "filing_list", "site_url",
-    ];
-    const values = await this.config.getMany(names);
-    let logoUrl = values.pc_logo ?? "";
-    if (logoUrl && !/^https?:\/\//i.test(logoUrl)) logoUrl = `${values.site_url ?? ""}${logoUrl}`;
+    const snapshot = await readPcBaseRuntime(this.container);
+    // PHP orders the independently safe stable references, before response-only
+    // signatures can change an icon prefix comparison (/1 versus /10).
+    const values = await renderPcBaseRuntimeImages({ ...snapshot, values: { ...snapshot.values,
+      links_list: snapshot.values.links_open === 1 ? sortedPcFooterRows(snapshot.values.links_list ?? []) : [],
+      filing_list: sortedPcFooterRows(snapshot.values.filing_list ?? []),
+    } }, this.env.APP_KEY), extras = snapshot.extras;
+    let logoUrl = values.pc_logo;
+    if (logoUrl && extras.site_url) {
+      try { logoUrl = new URL(logoUrl, extras.site_url).toString(); } catch { logoUrl = ''; }
+    }
     return {
-      contact_number: values.contact_number ?? "",
-      links_open: values.links_open ?? "",
-      links_list: truthyConfig(values.links_open) ? sortedLinks(values.links_list) : [],
-      company_address: values.company_address ?? "",
-      copyright: values.copyright ?? "",
-      record_No: values.record_No ?? "",
-      site_name: values.site_name ?? "",
-      site_keywords: values.site_keywords ?? "",
-      site_description: values.site_description ?? "",
-      pc_logo: values.pc_logo ?? "",
-      filing_list: sortedLinks(values.filing_list),
-      logoUrl: logoUrl.replaceAll("\\", "/"),
+      contact_number: values.contact_number ?? '', links_open: values.links_open ?? '',
+      links_list: values.links_open === 1 ? values.links_list ?? [] : [],
+      company_address: values.company_address ?? '', copyright: values.copyright ?? '',
+      record_No: extras.record_No, site_name: extras.site_name,
+      site_keywords: values.site_keywords ?? '', site_description: values.site_description ?? '',
+      pc_logo: values.pc_logo, filing_list: values.filing_list, logoUrl,
     };
   }
 

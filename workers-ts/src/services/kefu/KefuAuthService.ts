@@ -53,7 +53,7 @@ export class KefuAuthService {
     private readonly env: KefuAuthEnv,
   ) {}
 
-  private async issue(kefu: typeof storeService.$inferSelect, issuedAtSeconds?: number) {
+  private async issue(kefu: typeof storeService.$inferSelect, issuedAtSeconds?: number, onIssued?: (token: string) => void, issuanceNonce?: string) {
     if (!kefu.status || !kefu.accountStatus || kefu.isDel) {
       throw new ValidateException("您已被禁止登录");
     }
@@ -72,7 +72,9 @@ export class KefuAuthService {
       this.env.APP_KEY,
       "cinashop",
       issuedAtSeconds,
+      issuanceNonce,
     );
+    onIssued?.(token);
     const stored = await setTokenBucket(
       md5(token),
       {
@@ -112,7 +114,7 @@ export class KefuAuthService {
   }
 
   /** Re-read and issue for an identity already proven by scan/OAuth. */
-  async loginByVerifiedIdentity(kefuId: number, uid: number, issuedAtSeconds?: number) {
+  async loginByVerifiedIdentity(kefuId: number, uid: number, issuedAtSeconds?: number, onIssued?: (token: string) => void, issuanceNonce?: string) {
     if (!Number.isSafeInteger(kefuId) || kefuId <= 0 || !Number.isSafeInteger(uid) || uid <= 0) {
       throw new ValidateException("客服登录身份无效");
     }
@@ -127,7 +129,7 @@ export class KefuAuthService {
       .limit(1);
     const kefu = rows[0];
     if (!kefu) throw new ValidateException("客服登录身份不存在或已失效");
-    return this.issue(kefu, issuedAtSeconds);
+    return this.issue(kefu, issuedAtSeconds, onIssued, issuanceNonce);
   }
 
   async logout(token: string, kefuId: number) {

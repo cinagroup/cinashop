@@ -28,7 +28,7 @@ import {
 } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import {
-  applyStoreOrderPayment,
+  applyProviderStoreOrderPayment,
   type StoreOrderPaymentOutcome,
 } from "@/services/order/StoreOrderPayService";
 import { OrderOutboxService } from "@/services/order/OrderOutboxService";
@@ -40,11 +40,13 @@ import {
   resolvePaymentReconciliationFromCallbackTx,
 } from "@/services/payment/PaymentReconciliationRegistry";
 import {
-  applyMembershipPayment,
+  applyProviderMembershipPayment,
   findMembershipOrderByOrderId,
 } from "@/services/user/PaidMembershipService";
 import { ApiException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import { assertNativeAppCallbackWitnessInTx } from './NativeAppPaymentAuthority';
+import { lockStoreOrderPaymentBoundary } from './StoreOrderPaymentBoundary';
 
 const DISPATCH_LEASE_SECONDS = 120;
 const DELIVERY_LEASE_SECONDS = 600;
@@ -63,6 +65,7 @@ export type PaymentCallbackProcessResult =
 
 interface PaymentCallbackEnvironment {
   ORDER_QUEUE: Queue<OrderMessage>;
+  APP_KEY?: string;
 }
 
 interface ClaimedPaymentCallback extends VerifiedPaymentCallback {
@@ -162,6 +165,10 @@ export class PaymentCallbackEventService {
     if (offline && !identity) throw new Error("offline_callback_verified_identity_required");
     return withTx(this.container, async tx => {
       if (offline) await prepareOfflinePaymentTransaction(tx);
+      if (callback.provider === 'wechat' && callback.profile === 'app') {
+        await lockStoreOrderPaymentBoundary(tx, callback.orderNo);
+        await assertNativeAppCallbackWitnessInTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, callback);
+      }
       const received = await persistVerifiedPaymentCallbackTx(tx, callback);
       if (offline && identity && !received.terminalConflict) {
         const [recovery] = await tx.select({ status: paymentReconciliationCase.status }).from(paymentReconciliationCase)
@@ -406,7 +413,7 @@ export class PaymentCallbackEventService {
     }
     const payType = callback.provider === "wechat" ? "weixin" : "alipay";
     if (storeOrder) {
-      const result = await applyStoreOrderPayment(this.container, {
+      const result = await applyProviderStoreOrderPayment(this.container, {
         orderId: storeOrder.id,
         payType,
         tradeNo: callback.transactionId,
@@ -435,7 +442,7 @@ export class PaymentCallbackEventService {
       });
       return domainOutcome("recharge", result.outcome);
     }
-    const result = await applyMembershipPayment(this.container, {
+    const result = await applyProviderMembershipPayment(this.container, {
       orderId: callback.orderNo,
       payType,
       tradeNo: callback.transactionId,

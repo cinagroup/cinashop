@@ -1,14 +1,14 @@
 import { peelReviewedAdminSourceTailIfPresent } from './helpers/reviewedAdminSourceTailBinding';
 import { reverseAdminLevelDefinitionReport } from './helpers/adminLevelDefinitionSourceBinding';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import {readMainMergePredecessor as readFileSync} from './helpers/migrationMergeSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
-import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
+import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBindingMain';
 import { applyCommerceAuthorReport } from './helpers/diyCommerceAuthorSourceBinding';
-import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
+import { applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBindingMain';
 import { adminUserFilterSourceBinding as original, applyAdminUserFilterReport, reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { adminUserFilterTestHarnessSourceBinding as originalHarness } from './helpers/adminUserFilterTestHarnessSourceBinding';
 import { migrationAuditFollowupSourceBinding as proof, reverseMigrationAuditSource, reverseMigrationAuditHarnessSource, reverseMigrationAuditReport, applyMigrationAuditReport } from './helpers/migrationAuditFollowupSourceBinding';

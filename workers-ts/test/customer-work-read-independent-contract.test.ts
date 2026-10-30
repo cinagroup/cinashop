@@ -65,7 +65,7 @@ function scriptedDatabase(selectResults: Row[][], executeResults: Row[][] = []) 
 }
 const auth = 'a'.repeat(32);
 const identity = (service_id = 81, mer_id = 0): Row => ({ service_id, uid: 42, mer_id });
-const account = (value = auth): Row => ({ auth: value });
+const account = (value = auth): Row => ({ auth: value, status: 1, isDel: 0, deleteTime: null });
 const actor = (): CustomerWorkActor => ({ uid: 42, auth_version: auth, expires_at: Math.floor(Date.now() / 1000) + 3600 });
 function readFixture(freshRows: Row[][] = [[account()], [identity()]], businessRows: Row[][] = []) {
   const transaction = scriptedDatabase([[account()], [identity()]], [[], [], ...businessRows, [{ value: [['orders', '2', '3', '4', '5']] }]]);
@@ -78,11 +78,11 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('independent actual customer scope and read publication', () => {
   it('fails closed for missing and duplicate current customer identities', async () => {
-    const missing = scriptedDatabase([[]]);
+    const missing = scriptedDatabase([[account()], []]);
     await expect(readCustomerWorkScope(missing.db, 42)).rejects.toThrow('手机订单管理权限');
     const optional = scriptedDatabase([[]]);
     await expect(readCustomerWorkScope(optional.db, 42, false)).resolves.toBeNull();
-    const duplicate = scriptedDatabase([[identity(), identity(82)]]);
+    const duplicate = scriptedDatabase([[account()], [identity(), identity(82)]]);
     await expect(readCustomerWorkScope(duplicate.db, 42)).rejects.toThrow('身份重复');
   });
 
@@ -425,6 +425,11 @@ describe('independent actual customer SFC and UserJWT request lifecycle', () => 
       expect(f.pending[1].options.data).toEqual({ scope_key: 'c'.repeat(64) });
       f.respond(1, envelope(overview())); await settle();
       expect(f.state.overview.value.today.after_price).toBe('12.00'); expect(f.state.manager.loading.value).toBe(false);
+      expect(f.pending[2].options.url).toBe('https://shop.example.test/api/mobile/work/cashier/second-card/capabilities');
+      expect(f.pending[2].options.method).toBe('GET'); expect(f.pending[2].options.data).toEqual({});
+      f.respond(2,null,503); await settle();
+      expect(f.state.overview.value.today.after_price).toBe('12.00'); expect(f.state.manager.error.value).toBe('');
+      expect(f.state.manager.loading.value).toBe(false); expect(f.auth.clear).not.toHaveBeenCalled();
       f.state.manager.go('orders', { types: 0 }); expect(f.navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/customer-work/orders?status=0' }));
       f.hooks.onHide.forEach(fn => fn()); expect(f.state.overview.value).toBeNull(); expect(f.state.manager.context.value).toBeNull();
     } finally { f.cleanup(); }

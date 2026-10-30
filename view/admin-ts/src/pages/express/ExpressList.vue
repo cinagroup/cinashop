@@ -1,151 +1,61 @@
 <template>
-  <div class="express-list">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>快递公司</span>
-          <el-button type="primary" size="small" @click="openForm()">＋ 新增快递</el-button>
-        </div>
+  <main class="express-page">
+    <section v-for="screen in screens" :key="screen.key">
+      <header class="heading"><div><h1>快递公司</h1><p>管理快递目录、显示状态与电子面单账号。</p></div><div class="actions"><el-button :disabled="!canView || state.busy || state.loading" @click="screen.refresh">重新读取</el-button><el-button v-if="canManage" :disabled="!model.writable() || !!state.editor" @click="screen.sync">同步物流公司</el-button><el-button v-if="canManage" type="primary" :disabled="!model.writable()" @click="screen.create">新增快递</el-button></div></header>
+      <el-alert v-if="state.pending" title="原操作结果尚未确认，新的提交已暂停" type="warning" :closable="false"><p>请先查回执。封存会确认已完成的结果，或终止尚未应用的原请求。刷新后需要重新输入账号，系统不会自动重发。</p><div class="actions"><el-button :disabled="state.busy" @click="screen.receipt">读取原回执</el-button><el-button :disabled="state.busy" @click="screen.resolve">核对并封存原请求</el-button><el-button v-if="state.retryReady && canManage" :disabled="state.busy" @click="screen.retry">原样重试</el-button></div></el-alert>
+      <el-alert v-if="!canView" title="当前没有快递公司查看权限" type="warning" :closable="false" />
+      <el-alert v-if="state.error || state.pendingError" :title="state.error || state.pendingError" type="error" :closable="false" />
+      <el-alert v-if="state.notice" :title="state.notice" type="success" :closable="false" />
+      <template v-if="canView">
+        <el-alert v-if="state.snapshot && !state.snapshot.write_ready" title="此环境尚未安装快递安全写入能力，目录可查看" type="warning" :closable="false" />
+        <div class="filters"><label>名称或编码<input :value="filters.keyword" aria-label="名称或编码" placeholder="输入名称或编码" :disabled="viewLocked" @input="screen.keyword" /></label><label>显示状态<select :value="filters.show" aria-label="显示状态筛选" :disabled="viewLocked" @change="screen.show"><option :value="-1">全部状态</option><option :value="1">显示</option><option :value="0">隐藏</option></select></label><el-button :disabled="viewLocked" @click="screen.reset">重置查询</el-button></div>
+        <p class="hint">共 {{ state.snapshot?.count ?? 0 }} 家，筛选后 {{ visible.length }} 家。面单账号仅显示配置状态。停用不会取消已受理的面单任务。</p>
+        <p v-if="state.loading" role="status">正在读取快递目录…</p>
+        <div v-if="state.snapshot && !state.loading" class="rows" aria-label="快递公司列表"><article v-for="item in rows" :key="item.key" class="express-row"><div class="carrier-info"><strong>{{ item.row.name || '未命名历史快递' }}</strong><span class="code">{{ item.row.code || '无编码' }}</span><p>#{{ item.row.id }} · 排序 {{ item.row.sort }} · {{ item.row.isShow ? '显示' : '隐藏' }}</p><el-tag :type="item.row.status ? 'success' : 'warning'" size="small">{{ item.row.status ? '面单资料完整' : '面单资料待配置' }}</el-tag><p>{{ requirements(item.row) }}</p></div><div v-if="canManage" class="actions"><el-button :disabled="!model.writable() || !!state.editor" @click="item.edit">编辑</el-button><el-button :disabled="!model.writable() || !!state.editor" @click="item.show">{{ item.row.isShow ? '隐藏' : '显示' }}</el-button><el-button type="danger" plain :disabled="!model.writable() || !!state.editor" @click="item.remove">删除</el-button></div></article><p v-if="!visible.length" class="empty">没有符合条件的快递公司</p></div>
+        <nav class="actions pagination" aria-label="快递分页"><span>第 {{ filters.page }} / {{ pageCount }} 页，每页20家</span><el-button :disabled="viewLocked || filters.page <= 1" @click="screen.previous">上一页</el-button><el-button :disabled="viewLocked || filters.page >= pageCount" @click="screen.next">下一页</el-button></nav>
       </template>
-
-      <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="name" label="公司名称" min-width="160" />
-        <el-table-column prop="code" label="编码" width="140" />
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column label="状态" width="110">
-          <template #default="{ row }">
-            <el-tag :type="row.isShow ? 'success' : 'info'">
-              {{ row.isShow ? "显示" : "隐藏" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openForm(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="del(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
-    <!-- 表单弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑快递' : '新增快递'" width="460px">
-      <el-form :model="form" label-width="90px">
-        <el-form-item label="公司名称" required>
-          <el-input v-model="form.name" placeholder="如: 顺丰速运" />
-        </el-form-item>
-        <el-form-item label="编码">
-          <el-input v-model="form.code" placeholder="如: SF" />
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number v-model="form.sort" :min="0" />
-        </el-form-item>
-        <el-form-item label="是否显示">
-          <el-switch v-model="form.is_show" :active-value="1" :inactive-value="0" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
-      </template>
+    </section>
+    <el-dialog class="express-editor-dialog" top="16px" v-for="editor in editors" :key="editor.key" :model-value="true" :title="state.editor?.row ? '编辑快递公司' : '新增快递公司'" width="min(600px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true">
+      <el-alert v-if="state.error" :title="state.error" type="error" :closable="false" />
+      <div class="editor-fields"><label>公司名称<input :value="editor.draft.name" aria-label="公司名称" maxlength="64" :disabled="!model.writable()" @input="editor.setName(($event.target as HTMLInputElement).value)" /></label><label>快递编码<input :value="editor.draft.code" aria-label="快递编码" maxlength="50" :disabled="!model.writable()" @input="editor.setCode(($event.target as HTMLInputElement).value)" /></label><label>排序<input type="number" :value="editor.draft.sort" aria-label="排序" min="-2147483648" max="2147483647" step="1" :disabled="!model.writable()" @input="editor.setSort(Number(($event.target as HTMLInputElement).value))" /></label><label>显示状态<select :value="editor.draft.isShow" aria-label="显示状态" :disabled="!model.writable()" @change="editor.setShow(Number(($event.target as HTMLSelectElement).value))"><option :value="1">显示</option><option :value="0">隐藏</option></select></label>
+        <fieldset v-for="field in editor.fields" :key="field.key"><legend>{{ field.label }} · {{ field.configured ? '已配置' : '未配置' }}</legend><select :value="field.mode" :aria-label="`${field.label}操作`" :disabled="!model.writable()" @change="field.setMode(($event.target as HTMLSelectElement).value)"><option value="keep">保留原值</option><option value="replace">替换为新值</option><option value="clear">明确清空</option></select><input v-if="field.mode === 'replace'" type="password" :value="field.value" :aria-label="field.label" autocomplete="new-password" maxlength="100" :disabled="!model.writable()" @input="field.setValue(($event.target as HTMLInputElement).value)" /><p v-if="field.mode === 'clear'" class="hint">该项为面单必需资料，清空后将不能新建电子面单。</p></fieldset>
+      </div><p class="hint">账号不会回显。未显示的账号保持原值；目录同步决定面单所需资料。</p><template #footer><el-button :disabled="state.busy" @click="editor.cancel">取消</el-button><el-button type="primary" :loading="state.busy" :disabled="!model.writable()" @click="editor.submit">核对保存</el-button></template>
     </el-dialog>
-  </div>
+    <el-dialog v-for="confirmation in confirmations" :key="confirmation.key" :model-value="true" title="确认快递操作" width="min(540px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false"><p>{{ operationLabels[confirmation.operation] }}</p><p>{{ confirmation.summary }}</p><p v-if="confirmation.operation === 'sync'" class="hint">同步采用本次服务商响应；未声明分页总数时，不能据此确认服务商的全部目录。任何资料错误会整批拒绝。</p><p v-if="confirmation.operation === 'delete'" class="hint">已有面单、默认配置或相同编码发货历史的快递无法删除，建议改为隐藏。</p><template #footer><el-button :disabled="state.busy" @click="confirmation.cancel">取消</el-button><el-button type="primary" :disabled="state.busy" @click="confirmation.confirm">确认提交</el-button></template></el-dialog>
+  </main>
 </template>
-
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import {
-  apiAdminExpressList,
-  apiAdminExpressSave,
-  apiAdminExpressDel,
-  type ExpressItem,
-} from "@/api/shipping";
-
-const list = ref<ExpressItem[]>([]);
-const loading = ref(false);
-const formVisible = ref(false);
-const saving = ref(false);
-const form = reactive({
-  id: 0,
-  name: "",
-  code: "",
-  sort: 0,
-  is_show: 1,
-});
-
-async function load() {
-  loading.value = true;
-  try {
-    list.value = await apiAdminExpressList();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
-  } finally {
-    loading.value = false;
-  }
-}
-
-function openForm(row?: ExpressItem) {
-  if (row) {
-    form.id = row.id;
-    form.name = row.name;
-    form.code = row.code || "";
-    form.sort = row.sort;
-    form.is_show = row.isShow;
-  } else {
-    form.id = 0;
-    form.name = "";
-    form.code = "";
-    form.sort = 0;
-    form.is_show = 1;
-  }
-  formVisible.value = true;
-}
-
-async function save() {
-  if (!form.name) return ElMessage.error("请输入快递公司名称");
-  saving.value = true;
-  try {
-    await apiAdminExpressSave({
-      id: form.id || undefined,
-      name: form.name,
-      code: form.code,
-      sort: form.sort,
-      is_show: form.is_show,
-    });
-    ElMessage.success("保存成功");
-    formVisible.value = false;
-    load();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "保存失败");
-  } finally {
-    saving.value = false;
-  }
-}
-
-async function del(row: ExpressItem) {
-  try {
-    await ElMessageBox.confirm(`确认删除快递公司「${row.name}」?`, "删除确认", { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await apiAdminExpressDel(row.id);
-    ElMessage.success("已删除");
-    load();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
-  }
-}
-
-onMounted(load);
+import {computed,reactive,watch,onMounted,onBeforeUnmount} from 'vue';
+import {useRoute} from 'vue-router';
+import {useAuthStore} from '@/stores/auth';
+import {getAdminSession,getToken} from '@/utils/auth';
+import {apiExpressCatalog,apiExpressPrepare,apiExpressCommit,apiExpressReceipt,apiExpressResolve} from '@/api/expressAuthor';
+import {expressState} from '@/utils/expressState';
+import {EXPRESS_FIELDS,type ExpressTicket,type ExpressRow,type ExpressOperation} from '../../../../common/expressAuthor';
+const auth=useAuthStore(),route=useRoute();let alive=false,generation=0,syncing=false,queued=false;
+const canView=computed(()=>!!auth.token&&auth.token===getToken()&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.some(p=>['express.view','express.manage'].includes(p))));
+const canManage=computed(()=>canView.value&&(auth.userInfo?.level===0||auth.uniqueAuth.includes('express.manage')));
+const prefix=(actor:number)=>`cinashop_express_pending_v1_${actor}_`;
+function keys(actor:number){const out:string[]=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(prefix(actor)))out.push(k);}return out.sort();}
+const model=expressState({identity:()=>`${generation}:${auth.token}:${auth.userInfo?.id}`,actor:()=>auth.userInfo?.id??0,view:()=>canView.value,manage:()=>canManage.value,read:apiExpressCatalog,prepare:apiExpressPrepare,commit:apiExpressCommit,receipt:apiExpressReceipt,resolve:apiExpressResolve,
+ readPending:actor=>{const found=keys(actor);if(!found.length)return null;const raw=localStorage.getItem(found[0]);if(!raw||raw.length>4096)throw Error('原快递操作记录异常，请保留核对');const t=JSON.parse(raw);if(found[0]!==prefix(actor)+t?.operation_id)throw Error('原快递操作标识不一致');return t;},
+ persist:(actor:number,ticket:ExpressTicket|null,expected?:ExpressTicket)=>{const t=ticket??expected;if(!t)throw Error('缺少原快递操作');const key=prefix(actor)+t.operation_id,raw=localStorage.getItem(key);if(ticket){if(keys(actor).some(k=>k!==key)||raw&&raw!==JSON.stringify(ticket))throw Error('本账号已有其他未确认快递操作');localStorage.setItem(key,JSON.stringify(ticket));}else{if(raw&&raw!==JSON.stringify(expected))throw Error('原快递操作记录已变化，无法清除');localStorage.removeItem(key);}},
+},v=>reactive(v) as typeof v);
+const state=model.state,filters=reactive({keyword:'',show:-1,page:1});
+const viewLocked=computed(()=>state.busy||state.loading||!!state.pending||!!state.pendingError||!!state.editor||!!state.confirmation||!state.snapshot);
+const visible=computed(()=>{const keyword=filters.keyword.toLocaleLowerCase(),pattern=new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replaceAll('%','.*').replaceAll('_','.'),'iu');return (state.snapshot?.list??[]).filter(r=>(filters.show<0||r.isShow===filters.show)&&(!keyword||pattern.test(r.name)||pattern.test(r.code)));});
+const pageCount=computed(()=>Math.max(1,Math.ceil(visible.value.length/20))),rows=computed(()=>visible.value.slice((filters.page-1)*20,filters.page*20).map(model.rowControls));
+const screens=computed(()=>{const control=model.screen(),epoch=state.epoch,source=state.source,snapshot=state.snapshot;const valid=()=>epoch===state.epoch&&source===state.source&&!viewLocked.value;return [{...control,keyword:(e:Event)=>{if(epoch===state.epoch&&snapshot===state.snapshot&&!viewLocked.value&&model.retireView()){filters.keyword=(e.target as HTMLInputElement).value.slice(0,80);filters.page=1;}},show:(e:Event)=>{if(valid()&&model.retireView()){filters.show=Number((e.target as HTMLSelectElement).value);filters.page=1;}},reset:()=>{if(valid()&&model.retireView()){filters.keyword='';filters.show=-1;filters.page=1;}},previous:()=>{if(valid()&&model.retireView())filters.page=Math.max(1,filters.page-1);},next:()=>{if(valid()&&model.retireView())filters.page=Math.min(pageCount.value,filters.page+1);}}];});
+const editors=computed(()=>model.editorControls()),confirmations=computed(()=>model.confirmationControls());
+const operationLabels:Record<ExpressOperation,string>={create:'新增快递公司',update:'保存快递资料与账号变更',show:'调整显示状态',delete:'删除未引用的快递公司',sync:'同步物流目录'};
+const requirements=(row:ExpressRow)=>EXPRESS_FIELDS.filter(f=>row.required[f.field]).map(f=>`${f.label}：${row.configured[f.field]?'已配置':'未配置'}`).join(' · ')||'此快递无额外账号要求';
+function schedule(){if(!alive||syncing)return;generation++;model.dispose();if(queued)return;queued=true;queueMicrotask(()=>{queued=false;if(alive)void model.activate();});}
+function syncStored(event?:Event){if(syncing||event instanceof StorageEvent&&event.key!==null&&!['admin_token','admin_session'].includes(event.key)&&!event.key.startsWith('cinashop_express_pending_v1_'))return;syncing=true;generation++;model.dispose();const session=getAdminSession();auth.$patch({token:getToken()??'',userInfo:session?.userInfo??null,menus:(session?.menus as typeof auth.menus)??[],uniqueAuth:session?.uniqueAuth??[]});syncing=false;schedule();}
+watch(()=>[auth.token,auth.userInfo,auth.uniqueAuth,auth.menus],schedule,{deep:true,flush:'sync'});watch(()=>route.fullPath,schedule,{flush:'sync'});
+const stopAction=auth.$onAction(({name,after})=>{if(name==='login'||name==='logout')after(schedule);});
+onMounted(()=>{alive=true;window.addEventListener('storage',syncStored);window.addEventListener('admin-session-changed',syncStored);window.addEventListener('admin-auth-expired',syncStored);syncStored();});
+onBeforeUnmount(()=>{alive=false;generation++;stopAction();model.dispose();window.removeEventListener('storage',syncStored);window.removeEventListener('admin-session-changed',syncStored);window.removeEventListener('admin-auth-expired',syncStored);});
 </script>
-
 <style scoped>
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.express-page,.express-page>section{display:grid;gap:16px;min-width:0}.heading,.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.heading{justify-content:space-between}.heading h1{font-size:22px;margin:0}.heading p,.hint,.carrier-info p{color:var(--el-text-color-secondary);font-size:13px;line-height:1.7;margin:6px 0}.filters{display:grid;grid-template-columns:minmax(180px,1fr) 160px auto;gap:12px;align-items:end}.filters label,.editor-fields label{display:grid;gap:8px;font-size:14px}.editor-fields{display:grid;gap:16px;margin-top:12px}input,select{box-sizing:border-box;max-width:100%;width:100%;min-width:0;border:1px solid var(--el-border-color);border-radius:4px;background:var(--el-bg-color);color:var(--el-text-color-primary);font:inherit;padding:9px 12px}input:focus,select:focus{outline:2px solid var(--el-color-primary);outline-offset:1px}input:disabled,select:disabled{opacity:.6}fieldset{border:1px solid var(--el-border-color);border-radius:6px;padding:12px;min-width:0}fieldset input{margin-top:10px}legend{font-size:14px;padding:0 6px}.rows{border:1px solid var(--el-border-color);border-radius:6px}.express-row{display:flex;justify-content:space-between;gap:16px;padding:18px}.express-row+.express-row{border-top:1px solid var(--el-border-color-lighter)}.carrier-info{min-width:0;overflow-wrap:anywhere}.code{font-size:13px;color:var(--el-text-color-secondary);margin-left:12px}.actions .el-button+.el-button{margin-left:0}.pagination{justify-content:flex-end;font-size:13px}.empty{padding:20px}.express-page :deep(.express-editor-dialog){max-height:calc(100dvh - 32px);display:flex;flex-direction:column}.express-page :deep(.express-editor-dialog .el-dialog__body){min-height:0;overflow-y:auto}.express-page :deep(.express-editor-dialog .el-dialog__header),.express-page :deep(.express-editor-dialog .el-dialog__footer){flex-shrink:0}.express-page :deep(.el-alert__content){min-width:0;overflow-wrap:anywhere}@media(max-width:760px){.express-row{flex-direction:column}.filters{grid-template-columns:1fr 160px}.filters>.el-button{justify-self:start}}@media(max-width:480px){.filters{grid-template-columns:1fr}.heading>.actions{width:100%}.express-row{padding:12px}.pagination{justify-content:flex-start}}
 </style>

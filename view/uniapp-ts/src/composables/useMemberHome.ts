@@ -1,11 +1,14 @@
-import {computed,ref,watch} from 'vue';
+import {computed,ref,watch,onScopeDispose} from 'vue';
 import {onShow,onHide,onUnload,onReachBottom} from '@dcloudio/uni-app';
 import {useAuthStore} from '@/stores/auth';
 import {RequestError} from '@/utils/request';
 import {memberLevelImage} from '@/api/memberLevels';
 import {memberRightResolvedMedia,memberRightMediaDeadline} from '../../../common/memberRightMedia';
 import {createMemberHomeRequests,memberRequestId,memberCents,memberMoney,memberPlatform,memberPurchaseChannel,type MemberHomeRequests,type MemberHomeData,type MemberHomeCoupon,type MemberHomeProduct,type MemberPurchaseOrder,type MemberPayMethod,type MemberCashier} from '@/api/memberHome';
-import {launchMemberPayment} from '@/utils/membershipPayment';
+import {launchMemberPayment,type MemberNativePaymentAttempt} from '@/utils/membershipPayment';
+// #ifdef APP-PLUS
+import {reserveNativeWechatPayment} from '@/utils/nativeWechatPaymentEntry';
+// #endif
 
 type Phase='idle'|'creating'|'choosing'|'paying'|'uncertain'|'success';
 interface Journal{version:1;uid:number;requestId:string;planId:number;orderId:string;stage:'create'|'created'|'pay'|'external';platform:string;channel:string;method?:MemberPayMethod}
@@ -93,9 +96,12 @@ export function useMemberHome(){
   if(!canPay.value||!order.value)return;const chosen=method.value;await runWrite(async r=>{let j=journal(auth.uid);if(!j||j.orderId!==order.value?.orderId)throw Error('原会员订单记录已变化');if(j.platform!==memberPlatform()||j.channel!==memberPurchaseChannel())throw Error('请在原支付环境继续处理会员订单');if((j.stage==='pay'||j.stage==='external')&&j.method!==chosen)throw Error('请先确认原支付结果');
    const status=await r.receipt(j.requestId);if(!r.active())return;if(!status.order||status.order.orderId!==j.orderId||status.order.planId!==j.planId)throw Error('原会员订单尚未确认');if(status.order.paid){await acceptReceipt(j,r,false);return;}
    const checkout=await r.cashier(j.orderId);if(!r.active())return;cashier.value=checkout;if(checkout.paid){await acceptReceipt(j,r,false);return;}if(!checkout.payable||!checkout.methods[chosen].enabled)throw Error(checkout.methods[chosen].reason||checkout.reason||'原订单暂不可支付');
-   j={...ownedJournal(j),stage:'pay',method:chosen};saveJournal(j);phase.value='paying';
-   let paymentReturned=false;try{const result=await r.pay(j.orderId,chosen);paymentReturned=true;if(!r.active())return;if(!result.paid){j={...ownedJournal(j),stage:'external'};saveJournal(j);await launchMemberPayment(result,()=>r.active());if(!r.active())return;}await acceptReceipt(j,r,false);if(r.active()&&order.value?.paid!==true){phase.value='uncertain';error.value='支付结果尚未确认，请查看原订单状态。';}}
-   catch(reason){if(!r.active())return;if(!paymentReturned&&chosen==='yue'&&knownRejection(reason)){const safe={...ownedJournal(j),stage:'created' as const};delete safe.method;saveJournal(safe);phase.value='choosing';error.value=errorText(reason);}else{phase.value='uncertain';error.value='支付结果尚未确认，请查看原订单状态。';}}
+   let nativeAttempt:MemberNativePaymentAttempt|undefined;
+   // #ifdef APP-PLUS
+   if(chosen==='weixin')nativeAttempt=reserveNativeWechatPayment(()=>r.active());
+   // #endif
+   let paymentReturned=false;try{j={...ownedJournal(j),stage:'pay',method:chosen};saveJournal(j);phase.value='paying';const result=await r.pay(j.orderId,chosen);paymentReturned=true;if(!r.active())return;if(!result.paid){j={...ownedJournal(j),stage:'external'};saveJournal(j);await launchMemberPayment(result,()=>r.active(),nativeAttempt);if(!r.active())return;}await acceptReceipt(j,r,false);if(r.active()&&order.value?.paid!==true){phase.value='uncertain';error.value='支付结果尚未确认，请查看原订单状态。';}}
+   catch(reason){if(!r.active())return;if(!paymentReturned&&chosen==='yue'&&knownRejection(reason)){const safe={...ownedJournal(j),stage:'created' as const};delete safe.method;saveJournal(safe);phase.value='choosing';error.value=errorText(reason);}else{phase.value='uncertain';error.value='支付结果尚未确认，请查看原订单状态。';}}finally{nativeAttempt?.release();}
   });
  }
  async function changePlan(){if(!current()||busy.value)return;await runWrite(async r=>{const j=journal(auth.uid);if(!j||j.stage!=='created')throw Error('请先确认原支付结果');const receipt=await r.receipt(j.requestId);if(!r.active())return;if(!receipt.order||receipt.order.orderId!==j.orderId)throw Error('原订单尚未确认');if(receipt.order.paid){await acceptReceipt(j,r,false);return;}remove(j);phase.value='idle';order.value=null;cashier.value=null;agreed.value=false;home.value=await r.home();if(r.active()){selectedId.value=plans.value[0]?.id??0;scheduleMedia();}});}
@@ -123,7 +129,8 @@ export function useMemberHome(){
   if(typeof window!=='undefined'){window.removeEventListener('focus',changed);window.removeEventListener('storage',changed);}
   // #endif
  }
- onHide(leave);onUnload(()=>{leave();disposed=true;});onReachBottom(()=>{if(current())void moreProducts();});
+ function retire(){leave();disposed=true;}
+ onHide(leave);onUnload(retire);onScopeDispose(retire);onReachBottom(()=>{if(current())void moreProducts();});
  const avatarPreview=computed(()=>preview(home.value?.avatar??''));
  const rightItems=computed(()=>(home.value?.rights??[]).map(v=>({...v,preview:preview(v.image)})));
  const productItems=computed(()=>products.value.map(v=>({...v,preview:preview(v.image)})));

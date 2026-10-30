@@ -298,6 +298,15 @@ export class UserFinanceService {
   /** 绑定推广关系 (user/spread, 永久绑定并写入历史审计) */
   async bindSpread(uid: number, spreadUid: number): Promise<void> {
     if (!spreadUid) return;
+    await this.bindSpreadRelation(uid, spreadUid);
+    await evaluateAgentLevelsAfterRegistration(this.container,uid);
+  }
+
+  /** SQL-only relationship mutation. A caller using a transaction-bound
+   * container must evaluate agent levels with its root container after the
+   * outer COMMIT; that evaluator requires a standalone transaction. */
+  async bindSpreadRelation(uid: number, spreadUid: number): Promise<void> {
+    if (!spreadUid) return;
     if (!Number.isSafeInteger(uid) || uid <= 0 || !Number.isSafeInteger(spreadUid) || spreadUid <= 0) {
       throw new ValidateException("推广关系参数错误");
     }
@@ -367,7 +376,6 @@ export class UserFinanceService {
       }
       await grantReferralLotteryChance(tx, spreadUid, now);
     });
-    await evaluateAgentLevelsAfterRegistration(this.container,uid);
   }
 
   // ═══════════════════════════════════════════════════════════

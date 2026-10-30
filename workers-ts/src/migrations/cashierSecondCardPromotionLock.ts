@@ -177,6 +177,20 @@ export async function inspectCashierSecondCardPromotionLock(db: Query, runtimeRo
     const {customerManualRefundReadiness}=await import('./runCustomerManualRefund');
     if((await customerManualRefundReadiness(db)).ready){const [proof]=await db.execute<{owner:number}>(sql`SELECT proowner::integer AS owner FROM pg_catalog.pg_proc WHERE oid='public.customer_manual_refund_promotion_delete_v1(integer,integer)'::regprocedure`);if(Number.isSafeInteger(proof?.owner)&&proof.owner>0)manualOwner=proof.owner;}
     if(manualOwner===null){
+      // A distinct cashier need not execute refunds to coexist with their
+      // owner. Discovery supplies no exception: the full named manual source,
+      // owner/ACL/ownership and guarded-id proof must precede this OID use.
+      const rows=await db.execute<{owner:string}>(sql`SELECT r.rolname AS owner FROM pg_catalog.pg_proc p
+        JOIN pg_catalog.pg_roles r ON r.oid=p.proowner WHERE p.pronamespace='public'::regnamespace
+          AND p.proname='customer_manual_refund_promotion_delete_v1'`);
+      if(rows.length===1){
+        const {inspectCustomerFinancialManualRefundRuntime}=await import('./customerFinancialManualRefundRuntime');
+        const proof=await inspectCustomerFinancialManualRefundRuntime(db,{role:runtimeRole,promotionOwner:rows[0].owner,requirePrivileges:false});
+        const owner=Number(proof.promotionOwnerOid);
+        if(proof.ready&&proof.catalogReady&&Number.isSafeInteger(owner)&&owner>0)manualOwner=owner;
+      }
+    }
+    if(manualOwner===null){
       const {reviewedSupplierManualRefundCapabilityOids}=await import('./supplierManualRefund');
       if((await reviewedSupplierManualRefundCapabilityOids(db)).length===3){
         const [proof]=await db.execute<{owner:number}>(sql`SELECT proowner::integer AS owner FROM pg_catalog.pg_proc

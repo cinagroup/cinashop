@@ -29,6 +29,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                 <el-dropdown-item command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -71,6 +72,7 @@ const previewMode =
 const allowedMenuPaths = computed(() => new Set(authStore.menus.map((menu) => menu.path)));
 
 function canMenu(path: string): boolean {
+  if (path === "/system/frontend-log") return authStore.isLoggedIn;
   if (previewMode || !authStore.userInfo || authStore.userInfo.level === 0) return true;
   return allowedMenuPaths.value.has(path);
 }
@@ -183,6 +185,7 @@ const activeMenu = computed(() => {
 const currentTitle = computed(() => (route.meta.title as string) ?? "控制台");
 
 function handleCommand(cmd: string) {
+  if (cmd === 'profile') { void router.push('/system/profile'); return; }
   if (cmd === "logout") {
     authStore.logout();
     ElMessage.success("已退出登录");

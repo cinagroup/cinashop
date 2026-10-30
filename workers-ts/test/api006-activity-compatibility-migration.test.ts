@@ -64,10 +64,11 @@ describe("API-006 legacy activity compatibility", () => {
   it("builds legacy activity mini-program scenes in memory without public attachments", () => {
     expect(codeService).toContain('scene: `id=${id}&spid=${uid}&type=1`');
     expect(codeService).toContain('scene: `id=${id}&spid=${uid}&type=3`');
-    expect(codeService).toContain('page: "pages/activity/goods_bargain_details/index"');
-    expect(codeService).toContain('page: "pages/activity/goods_combination_status/index"');
+    expect(codeService).toContain("page: 'pages/activity/goods_bargain_details/index'");
+    expect(codeService).toContain("page: 'pages/activity/goods_combination_status/index'");
     expect(codeService).toContain("descriptor.scene).byteLength > 32");
-    expect(codeService).toContain("routine_code:activity:");
+    expect(codeService).toContain('`routine_code:v2:${credentials.stamp}:${suffix}`');
+    expect(codeService).toContain('`activity:${type}:${id}:${uid}`');
     const method = codeService.slice(
       codeService.indexOf("async createActivityDataUrl"),
       codeService.indexOf("async createUserSpreadDataUrl"),

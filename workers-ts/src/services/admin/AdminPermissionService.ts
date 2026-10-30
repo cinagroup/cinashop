@@ -3,6 +3,8 @@ import type { AppVariables } from "@/env";
 import type { Container } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
 import { ApiErrorCode, AuthException, ValidateException } from "@/utils/errors";
+import { pcBaseMenuBinding, pcBasePermissionsFromMenus } from './AdminPcBasePermissionBinding';
+import { wechatAppMenuBinding, wechatAppPermissionsFromMenus } from './AdminWechatAppPermissionBinding';
 
 export interface AdminPermissionGroup {
   key: string;
@@ -108,6 +110,8 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "seckill_time", label: "秒杀时段", path: "/activity/seckill-times", matches: ["activity/seckill-times"], manage: true },
   { key: "seckill_activity", label: "秒杀父活动", path: "/activity/seckill-activities", matches: ["activity/seckill-activities"], manage: true },
   { key: "combination_export", label: "拼团商品导出", path: "/activity/combinations", matches: ["activity/combinations/export"], manage: false },
+  { key: "bargain_record", label: "全局砍价记录", path: "/activity/bargain-records", matches: ["activity/bargain-records", "marketing/bargain_list", "marketing/bargain_list_info/"], manage: false },
+  { key: "bargain_statistics", label: "砍价统计", path: "/activity/bargain-statistics", matches: ["activity/bargain-statistics/", "marketing/bargain/statistics/"], manage: false },
   { key: "combination_group", label: "全局拼团记录", path: "/activity/combination-groups", matches: ["activity/combination-groups"], manage: false },
   { key: "combination_statistics", label: "拼团统计", path: "/activity/combination-statistics", matches: ["activity/combination-statistics"], manage: false },
   { key: "combination", label: "拼团商品", path: "/activity/combinations", matches: ["activity/combinations"], manage: true },
@@ -175,6 +179,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   { key: "supplier_bill", label: "供应商账单", path: "/supplier/bills",
     matches: ["supplier/bill-screen/"], manage: false },
   { key: "system", label: "管理员与角色", path: "/system", matches: ["system_admin/", "system_role/", "system_menus/"], manage: true },
+  { key: "system_menu_rules", label: "平台权限规则", path: "/system/menu-rules", matches: ["system/menu-rules"], manage: true },
   { key: "extract", label: "提现审核", path: "/finance/extract", matches: ["extract/"], manage: true },
   { key: "supplier_extract", label: "供应商提现", path: "/finance/supplier-extract", matches: ["supplier/extract/"], manage: true },
   { key: "bill", label: "资金记录", path: "/finance/bill", matches: ["bill/", "finance/user-money-ledger"], manage: false },
@@ -206,6 +211,11 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
     matches: ["wechat/card"],
     manage: true,
   },
+  { key: "wechat_open", label: "微信开放平台", path: "/content/wechat-open", matches: ["wechat/open"], manage: true },
+  { key: "wechat_app", label: "原生App微信配置", path: "/content/wechat-app", matches: ["wechat/app"], manage: true },
+  { key: 'pc_base', label: 'PC基础配置', path: '/config/pc', matches: ['config/pc'], manage: true },
+  { key: "wechat_base", label: "公众号基础设置", path: "/content/wechat-base", matches: ["wechat/base"], manage: true },
+  { key: "wechat_menu", label: "公众号自定义菜单", path: "/content/wechat-menu", matches: ["wechat/menu", "app/wechat/menu"], manage: true },
   {
     key: "wechat_content",
     label: "公众号内容",
@@ -365,10 +375,66 @@ function isAssistedOrderRoute(route: string): boolean {
     /^order\/(?:cart\/[^/]+|cart\/(?:add|del|num)\/[^/]+|confirm\/[^/]+|computed\/[^/]+\/[^/]+|coupons\/[^/]+|create\/[^/]+\/[^/]+|pay\/[^/]+)$/.test(route);
 }
 
+/** Self-only services repeat live identity checks and never accept a target ID. */
+export function isAdminProfileRoute(method:string,routePath:string):boolean {
+  const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && (route==='setting/info' || route==='system/profile/challenge/status'
+    || /^system\/profile\/(?:receipt|avatar)\/[^/]+$/.test(route)))
+    || verb==='PUT' && (route==='setting/update_admin' || /^system\/profile\/avatar\/[^/]+$/.test(route))
+    || verb==='POST' && ['system/profile/commit','system/profile/resolve','system/profile/challenge','system/profile/sms'].includes(route);
+}
+
 export function isAdminAuthorityRecoveryRoute(method:string,routePath:string):boolean {
   const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
   return (['GET','HEAD'].includes(verb) && /^(?:system\/authority|setting\/(?:admin|role)-authority)\/receipt\/[^/]+$/.test(route))
     || (verb==='POST' && ['system/authority/resolve','setting/admin-authority/resolve','setting/role-authority/resolve'].includes(route));
+}
+
+export function isAdminPlatformMenuRecoveryRoute(method:string,routePath:string):boolean {
+  return ['GET','HEAD'].includes(method.toUpperCase()) && /^system\/menu-rules\/receipt\/[^/]+$/.test(normalizeAdminRoute(routePath));
+}
+
+export function isAdminStoreRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^merchant\/store\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='merchant/store/author/resolve';}
+export function isAdminGroupRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^user\/group\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='user/group/author/resolve';}
+export function isAdminUnitRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/unit\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/unit/author/resolve';}
+export function isAdminEnsureRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/ensure\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/ensure/author/resolve';}
+export function isAdminRuleRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/rule\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/rule/author/resolve';}
+export function isAdminParameterRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/specs\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/specs/author/resolve';}
+export function isAdminProductLabelRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/label\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/label/author/resolve';}
+export function isAdminPcBaseRecoveryRoute(method: string, routePath: string): boolean {
+  const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^config\/pc\/operations\/[^/]+$/u.test(route))
+    || (verb === 'POST' && /^config\/pc\/operations\/[^/]+\/resolve$/u.test(route));
+}
+export function isAdminWechatAppRecoveryRoute(method: string, routePath: string): boolean {
+  const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^wechat\/app\/operations\/[^/]+$/u.test(route))
+    || (verb === 'POST' && /^wechat\/app\/operations\/[^/]+\/resolve$/u.test(route));
+}
+export function isAdminWechatOpenRecoveryRoute(method: string, routePath: string): boolean {
+  const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^wechat\/open\/operations\/[^/]+$/u.test(route))
+    || (verb === 'POST' && /^wechat\/open\/operations\/[^/]+\/resolve$/u.test(route));
+}
+export function isAdminWechatBaseRecoveryRoute(method: string, routePath: string): boolean {
+  const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^wechat\/base\/operations\/[^/]+$/u.test(route))
+    || (verb === 'POST' && /^wechat\/base\/operations\/[^/]+\/resolve$/u.test(route));
+}
+export function isAdminHotwordRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/words\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/words/author/resolve';}
+export function isAdminDeliveryRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^order\/delivery\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='order/delivery/author/resolve';}
+export function isAdminStaffRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^merchant\/store_staff\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='merchant/store_staff/author/resolve';}
+export function isAdminUserLabelRecoveryRoute(method:string,routePath:string):boolean {
+ const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^user_label\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='user_label/author/resolve';
+}
+export function isAdminLevelRecoveryRoute(method:string,routePath:string):boolean {
+ const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+ return ['GET','HEAD'].includes(verb)&&/^level\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='level/author/resolve';
+}
+
+export function isAdminExpressRecoveryRoute(method:string,routePath:string):boolean {
+ const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();
+ return ['GET','HEAD'].includes(verb)&&/^express\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='express/author/resolve';
 }
 
 export function isAdminProductEditorRecoveryRoute(method:string,routePath:string):boolean {
@@ -504,6 +570,155 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   if (['user/filter_options', 'user/filter_regions'].includes(route)) {
     return ['GET', 'HEAD'].includes(method.toUpperCase()) ? 'user.view' : null;
   }
+  if (route === 'setting/menus' || route.startsWith('setting/menus/') || route === 'setting/rulelist' || route === 'system/menu-rules' || route.startsWith('system/menu-rules/')) {
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if (isAdminPlatformMenuRecoveryRoute(method,routePath)) return null;
+    if (read && (['setting/menus','setting/menus/create','setting/rulelist','system/menu-rules/catalog'].includes(route)
+      || new RegExp(`^setting/menus/${id}(?:/edit)?$`).test(route))) return 'system_menu_rules.view';
+    if (verb==='POST' && route==='setting/menus' || ['PUT','DELETE'].includes(verb) && new RegExp(`^setting/menus/${id}$`).test(route)
+      || verb==='PUT' && new RegExp(`^setting/menus/show/${id}$`).test(route)) return 'system_menu_rules.manage';
+    return null;
+  }
+  if (route === 'config/pc' || route.startsWith('config/pc/') || route === 'setting/config/edit_new_build/pc') {
+    const verb = method.toUpperCase();
+    if (isAdminPcBaseRecoveryRoute(method, routePath)) return null;
+    if (['GET','HEAD'].includes(verb) && ['config/pc','setting/config/edit_new_build/pc'].includes(route)) return 'pc_base.view';
+    if (['GET','HEAD'].includes(verb) && ['config/pc/attachment-categories','config/pc/attachment-options'].includes(route)) return 'pc_base.manage';
+    return verb === 'POST' && route === 'config/pc' ? 'pc_base.manage' : null;
+  }
+  if (route === 'wechat/app' || route.startsWith('wechat/app/') || route === 'setting/config/edit_new_build/app') {
+    const verb = method.toUpperCase();
+    if (isAdminWechatAppRecoveryRoute(method, routePath)) return null;
+    if (['GET','HEAD'].includes(verb) && ['wechat/app','setting/config/edit_new_build/app'].includes(route)) return 'wechat_app.view';
+    return verb === 'POST' && route === 'wechat/app' ? 'wechat_app.manage' : null;
+  }
+  if (route === 'wechat/open' || route.startsWith('wechat/open/') || route === 'setting/config/edit_new_build/wxopen') {
+    const verb = method.toUpperCase();
+    if (isAdminWechatOpenRecoveryRoute(method, routePath)) return null;
+    if (['GET','HEAD'].includes(verb) && ['wechat/open','setting/config/edit_new_build/wxopen'].includes(route)) return 'wechat_open.view';
+    return verb === 'POST' && route === 'wechat/open' ? 'wechat_open.manage' : null;
+  }
+  if (route === 'wechat/base' || route.startsWith('wechat/base/') || route === 'setting/config/edit_new_build/wechat' || route === 'setting/config/save_basics') {
+    const verb = method.toUpperCase();
+    if (isAdminWechatBaseRecoveryRoute(method, routePath)) return null;
+    if (['GET','HEAD'].includes(verb) && ['wechat/base','setting/config/edit_new_build/wechat'].includes(route)) return 'wechat_base.view';
+    if (verb === 'POST' && ['wechat/base','setting/config/save_basics'].includes(route)) return 'wechat_base.manage';
+    if (['GET','HEAD'].includes(verb) && ['wechat/base/attachment-categories','wechat/base/attachment-options'].includes(route)) return 'wechat_base.manage';
+    return null;
+  }
+  if (route === 'wechat/menu' || route.startsWith('wechat/menu/') || route === 'app/wechat/menu' || route.startsWith('app/wechat/menu/')) {
+    const verb = method.toUpperCase(), root = route === 'wechat/menu' || route === 'app/wechat/menu';
+    if (root && ['GET','HEAD'].includes(verb)) return 'wechat_menu.view';
+    if (root && verb === 'POST') return 'wechat_menu.manage';
+    if (/^wechat\/menu\/operations\/[^/]+$/u.test(route) && ['GET','HEAD'].includes(verb)) return 'wechat_menu.manage';
+    if (/^wechat\/menu\/operations\/[^/]+\/(?:observe|confirm-observation|resolve-missing)$/u.test(route) && verb === 'POST') return 'wechat_menu.manage';
+    return null;
+  }
+  if(route==='product/unit/author'||route.startsWith('product/unit/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminUnitRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/unit/author/catalog')return 'product.view';
+    if(verb==='POST'&&route==='product/unit/author/commit')return 'product.manage';
+    return null;
+  }
+  if(route==='product/ensure/author'||route.startsWith('product/ensure/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminEnsureRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/ensure/author/catalog')return 'product.view';
+    if(['GET','HEAD'].includes(verb)&&['product/ensure/author/attachments/categories','product/ensure/author/attachments/options'].includes(route))return 'product.manage';
+    if(verb==='POST'&&route==='product/ensure/author/commit')return 'product.manage';
+    return null;
+  }
+  if(route==='product/rule/author'||route.startsWith('product/rule/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminRuleRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/rule/author/catalog')return 'product.view';
+    if(verb==='POST'&&route==='product/rule/author/commit')return 'product.manage';
+    return null;
+  }
+  if(route==='product/label/author'||route.startsWith('product/label/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminProductLabelRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/label/author/catalog')return 'label.view';
+    if(['GET','HEAD'].includes(verb)&&['product/label/author/attachments/categories','product/label/author/attachments/options'].includes(route))return 'label.manage';
+    if(verb==='POST'&&route==='product/label/author/commit')return 'label.manage';
+    return null;
+  }
+  if(route==='product/words/author'||route.startsWith('product/words/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminHotwordRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/words/author/catalog')return 'product.view';
+    if(['GET','HEAD'].includes(verb)&&['product/words/author/attachments/categories','product/words/author/attachments/options'].includes(route))return 'product.manage';
+    if(verb==='POST'&&route==='product/words/author/commit')return 'product.manage';
+    return null;
+  }
+  if(route==='product/specs/author'||route.startsWith('product/specs/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminParameterRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='product/specs/author/catalog')return 'product.view';
+    if(verb==='POST'&&route==='product/specs/author/commit')return 'product.manage';
+    return null;
+  }
+  if(route==='user/group/author'||route.startsWith('user/group/author/')){
+    const verb=method.toUpperCase();
+    if(isAdminGroupRecoveryRoute(method,routePath))return null;
+    if(['GET','HEAD'].includes(verb)&&route==='user/group/author/catalog')return 'user.view';
+    if(verb==='POST'&&route==='user/group/author/commit')return 'user.manage';
+    return null;
+  }
+  if(route==='order/delivery/author'||route.startsWith('order/delivery/author/')){
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb);
+    if(isAdminDeliveryRecoveryRoute(method,routePath))return null;
+    if(read&&['order/delivery/author/users','order/delivery/author/attachment-options','order/delivery/author/attachment-categories'].includes(route))return 'order.manage';
+    if(read&&route==='order/delivery/author/catalog')return 'order.view';
+    if(verb==='POST'&&route==='order/delivery/author/commit')return 'order.manage';
+    return null;
+  }
+  // Original PHP uses GET for this mutation. HEAD must never change state.
+  if(/^order\/delivery\/set_status\/(?:[1-9]\d{0,9}|:id|<id>)\/(?:[01]|:status|<status>)$/.test(route))return ['GET','PUT'].includes(method.toUpperCase())?'order.manage':null;
+  if(route==='order/delivery/create')return ['GET','HEAD'].includes(method.toUpperCase())?'order.manage':null;
+  if(route==='merchant/store_staff'||route.startsWith('merchant/store_staff/')){
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if(isAdminStaffRecoveryRoute(method,routePath))return null;
+    if(read&&['merchant/store_staff/author/users','merchant/store_staff/author/attachment-options','merchant/store_staff/author/attachment-categories'].includes(route))return 'store.manage';
+    if(read&&(['merchant/store_staff','merchant/store_staff/create','merchant/store_staff/author/catalog'].includes(route)||new RegExp(`^merchant/store_staff/${id}/edit$`).test(route)))return 'store.view';
+    if(verb==='POST'&&(route==='merchant/store_staff/author/commit'||/^merchant\/store_staff\/save\/(?:0|[1-9]\d{0,9}|:id|<id>)$/.test(route))||verb==='PUT'&&new RegExp(`^merchant/store_staff/set_show/${id}/(?:[01]|:status|<status>)$`).test(route)||verb==='DELETE'&&new RegExp(`^merchant/store_staff/del/${id}$`).test(route))return 'store.manage';
+    return null;
+  }
+  if(route==='merchant/store'||route.startsWith('merchant/store/')){
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if(isAdminStoreRecoveryRoute(method,routePath))return null;
+    if(read&&['merchant/store/address','merchant/store/author/attachment-options','merchant/store/author/attachment-categories','merchant/store/author/regions','merchant/store/author/map-config'].includes(route))return 'store.manage';
+    if(read&&(['merchant/store','merchant/store/get_header','merchant/store/author/catalog'].includes(route)||new RegExp(`^merchant/store/get_info/${id}$`).test(route)))return 'store.view';
+    if(verb==='POST'&&(route==='merchant/store/author/commit'||/^merchant\/store\/(?:0|[1-9]\d{0,9}|:id|<id>)$/.test(route))||verb==='PUT'&&new RegExp(`^merchant/store/set_show/${id}/(?:[01]|:isshow|<isshow>)$`).test(route)||verb==='DELETE'&&new RegExp(`^merchant/store/del/${id}$`).test(route))return 'store.manage';
+    return null;
+  }
+  if(route==='user_label'||route.startsWith('user_label/')||route==='user/user_label'||route.startsWith('user/user_label/')||route==='user/user_label_cate'||route.startsWith('user/user_label_cate/')||route==='user/synchro/work/label'){
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if(isAdminUserLabelRecoveryRoute(method,routePath))return null;
+    if(read&&(['user_label/list','user_label/catalog','user/user_label','user/user_label_cate','user/user_label_cate/all','user/user_label_cate/create'].includes(route)||/^user\/user_label\/add\/(?:0|[1-9]\d{0,9}|:id|<id>)$/.test(route)||new RegExp(`^user/user_label_cate/${id}/edit$`).test(route)))return 'label.view';
+    if(verb==='GET'&&route==='user/synchro/work/label'||verb==='POST'&&['user_label/save','user_label/author/commit','user_label/sync/advance','user/user_label/save','user/user_label_cate'].includes(route)||verb==='DELETE'&&new RegExp(`^(?:user_label/del|user/user_label/del|user/user_label_cate)/${id}$`).test(route)||verb==='PUT'&&new RegExp(`^user/user_label_cate/${id}$`).test(route))return 'label.manage';
+    return null;
+  }
+  if(route==='level'||route.startsWith('level/')||route==='user/user_level'||route.startsWith('user/user_level/')) {
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if(isAdminLevelRecoveryRoute(method,routePath))return null;
+    if(read&&['level/attachment-options','level/attachment-categories'].includes(route))return 'level.manage';
+    if(read&&(['level/list','level/catalog','user/user_level/create','user/user_level/vip_list'].includes(route)||new RegExp(`^level/${id}/edit$`).test(route)))return 'level.view';
+    if(verb==='POST'&&['level/save','level/author/commit','user/user_level'].includes(route)||verb==='DELETE'&&new RegExp(`^level/del/${id}$`).test(route)||verb==='PUT'&&(new RegExp(`^user/user_level/delete/${id}$`).test(route)||new RegExp(`^user/user_level/set_show/${id}/(?:[01]|:is_show|<is_show>)$`).test(route)))return 'level.manage';
+    return null;
+  }
+  if(route==='express'||route.startsWith('express/')||route==='freight/express'||route.startsWith('freight/express/')) {
+    const verb=method.toUpperCase(),read=['GET','HEAD'].includes(verb),id='(?:[1-9]\\d{0,9}|:id|<id>)';
+    if(isAdminExpressRecoveryRoute(method,routePath)) return null;
+    if(read&&(['express/list','express/catalog','freight/express'].includes(route)||new RegExp(`^(?:express|freight/express)/${id}/edit$`).test(route))) return 'express.view';
+    if(verb==='POST'&&['express/save','express/author/prepare','express/author/commit','freight/express'].includes(route)
+      ||verb==='DELETE'&&new RegExp(`^(?:express/del|freight/express)/${id}$`).test(route)
+      ||verb==='PUT'&&new RegExp(`^freight/express/${id}$`).test(route)
+      ||verb==='PUT'&&new RegExp(`^freight/express/set_status/${id}/(?:[01]|:status|<status>)$`).test(route)
+      ||read&&route==='freight/express/sync_express') return 'express.manage';
+    return null;
+  }
   // No generic dise.view fallback for this author-only namespace. Unknown
   // children and every write verb stay unregistered, even if added by mistake.
   if (route === 'dise/author-options' || route.startsWith('dise/author-options/')) {
@@ -561,7 +776,7 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // Only authenticated owners may recover their own immutable operation key.
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
-  if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return null;
+  if (isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return null;
   if (route === 'file/video_upload' || route === 'file/video_attachment') return method.toUpperCase() === 'POST' ? 'attachment.manage' : null;
   if (route === 'file/video_uploads' || route.startsWith('file/video_uploads/')) {
     const verb=method.toUpperCase();
@@ -701,6 +916,7 @@ export function requiredAdminPermission(method: string, routePath: string): stri
 export function normalizeRoleRules(value: string | readonly string[] | undefined): string {
   const tokens = splitRuleTokens(value);
   for (const token of tokens) {
+    if (token.startsWith('wechat_app.')) throw new ValidateException('原生App权限须通过完整的旧菜单组合授予');
     if (!permissionKeys.has(token) && !isNumericToken(token)) {
       throw new ValidateException(`未知权限规则: ${token}`);
     }
@@ -795,6 +1011,13 @@ function menuPathPermission(menuPath: string): string | null {
   return group ? `${group.key}.view` : null;
 }
 
+/** Author choices must name a fixed page exactly; the historical resolver's
+ * substring fallback remains unchanged for existing numeric role rules. */
+export function adminPlatformMenuPagePermission(path:string):string|null {
+  const group=ADMIN_PERMISSION_GROUPS.find(g=>g.path===path);
+  return group ? `${group.key}.view` : path==='/admin/setting/system_menus/index' ? 'system_menu_rules.view' : null;
+}
+
 /** These identities have an audited binding. A rejected binding cannot become
  * an opaque grant merely because it resolves to no current permission keys. */
 const auditedLegacyMenuIds = new Set([1035, 1075, 1338, 1380, 1490, 1592, 1593, 1594]);
@@ -820,7 +1043,7 @@ const auditedLegacyPageAuth = new Set([
 ]);
 
 type LegacyAdminMenuMetadata = Pick<typeof systemMenus.$inferSelect,
-  'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>;
+  'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'> & Partial<Pick<typeof systemMenus.$inferSelect, 'pid' | 'type' | 'module' | 'controller' | 'action'>>;
 
 /** Installer has NO numeric API seeds for these one-id stock contracts or
  * the new scoped notification stream. Never manufacture a writer from a
@@ -1043,6 +1266,74 @@ const legacyAdminActionIds = new Set([20,331,332,333,334,335,336,337,610,635]);
 const legacyAdminCapabilities = new Set(['system.legacy_admin_view','system.legacy_admin_form_view','system.legacy_admin_manage']);
 /** A protected identity/path/auth/API claim must match its complete proved
  * tuple. It cannot fall back to generic system/config or opaque membership. */
+/** Fixed PHP read menu identities; copied paths or drifted seeds do not
+ * acquire record/statistics access through the generic menu fallback. */
+/** Only the fixed page plus fixed generic-save seed together prove a base
+ * writer. Neither the generic endpoint nor copied modern claims confer it. */
+function pcBaseBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  // Shared315 remains owned by the existing shared-save binding. A PC page
+  // identity supplies view only; its composition with315 is handled separately.
+  if (menu.id === 315) return { protected: false, permission: null };
+  const bound = pcBaseMenuBinding(menu);
+  return { protected: bound.protected, permission: bound.view ? 'pc_base.view' : null };
+}
+function wechatOpenBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const compact = (value: string) => value.toLowerCase().replace(/\s+/gu, '');
+  const route = normalizeAdminRoute(menu.apiUrl);
+  const claimed = menu.id === 1360 || ['/admin/app/wechat_open','/content/wechat-open'].includes(compact(menu.menuPath))
+    || compact(menu.uniqueAuth) === 'app-wechat-open' || compact(menu.uniqueAuth).startsWith('wechat_open.')
+    || /^wechat\/open(?:\/|$)/u.test(route) || route === 'setting/config/edit_new_build/wxopen';
+  if (!claimed) return { protected: false, permission: null };
+  const exact = menu.id === 1360 && menu.pid === 135 && menu.type === 1 && menu.module === 'admin' && menu.controller === '' && menu.action === ''
+    && menu.authType === 1 && menu.menuPath === '/admin/app/wechat_open' && menu.uniqueAuth === 'app-wechat-open' && menu.apiUrl === '' && menu.methods === '';
+  return { protected: true, permission: exact ? 'wechat_open.view' : null };
+}
+function wechatBaseBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null; save: boolean } {
+  const route = normalizeAdminRoute(menu.apiUrl), compact = (value: string) => value.toLowerCase().replace(/\s+/gu, '');
+  const claimed = [1362,315].includes(menu.id) || compact(menu.menuPath) === '/admin/app/wechat/base'
+    || compact(menu.menuPath) === '/content/wechat-base' || compact(menu.uniqueAuth) === 'app-wechat-base'
+    || compact(menu.uniqueAuth).startsWith('wechat_base.') || /^wechat\/base(?:\/|$)/u.test(route)
+    || /^setting\/config\/(?:save_basics(?:\/|$)|edit_new_build(?:\/|$))/u.test(route);
+  if (!claimed) return { protected: false, permission: null, save: false };
+  const common = menu.type === 1 && menu.module === 'admin' && menu.controller === '' && menu.action === '';
+  if (common && menu.id === 1362 && menu.pid === 69 && menu.authType === 1 && menu.menuPath === '/admin/app/wechat/base'
+    && menu.uniqueAuth === 'app-wechat-base' && menu.apiUrl === '' && menu.methods === '') return { protected: true, permission: 'wechat_base.view', save: false };
+  const save = common && menu.id === 315 && menu.pid === 23 && menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === ''
+    && menu.apiUrl === 'setting/config/save_basics' && menu.methods === 'POST';
+  return { protected: true, permission: save ? 'config.manage' : null, save };
+}
+
+function wechatMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const route = normalizeAdminRoute(menu.apiUrl);
+  const claimed = [92,507,508].includes(menu.id) || menu.menuPath.toLowerCase().replace(/\s+/gu,'') === '/admin/app/wechat/setting/menus/index'
+    || menu.uniqueAuth.toLowerCase().replace(/\s+/gu,'') === 'application-wechat-menus'
+    || /^(?:app\/)?wechat\/menu(?:\/|$)/u.test(route);
+  if (!claimed) return { protected: false, permission: null };
+  if (menu.id === 92 && menu.pid === 69 && menu.type === 1 && menu.module === 'admin'
+    && menu.controller === 'application.wechat_menus' && menu.action === 'index' && menu.authType === 1 && menu.menuPath === '/admin/app/wechat/setting/menus/index'
+    && menu.uniqueAuth === 'application-wechat-menus' && menu.apiUrl === '' && menu.methods === '') return { protected: true, permission: 'wechat_menu.view' };
+  const api = menu.pid === 92 && menu.type === 1 && menu.module === 'admin' && menu.controller === '' && menu.action === ''
+    && menu.authType === 2 && menu.menuPath === '' && menu.uniqueAuth === '' && menu.apiUrl === 'app/wechat/menu';
+  if (api && menu.id === 507 && menu.methods === 'GET') return { protected: true, permission: 'wechat_menu.view' };
+  if (api && menu.id === 508 && menu.methods === 'POST') return { protected: true, permission: 'wechat_menu.manage' };
+  return { protected: true, permission: null };
+}
+
+function bargainReadMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
+  const globalPath='/admin/marketing/store_bargain/bargain_list', statisticsPath='/admin/marketing/store_bargain/statistics';
+  const route=normalizeAdminRoute(menu.apiUrl), legacyRoute=/^marketing\/(?:bargain_list(?:_info)?(?:\/|$)|bargain\/statistics\/)/u.test(route);
+  const claims=[755,807,833,1551].includes(menu.id) || [globalPath,statisticsPath].includes(menu.menuPath)
+    || menu.uniqueAuth==='marketing-store_bargain-bargain_list' || legacyRoute;
+  if(!claims)return {protected:false,permission:null};
+  const page=menu.authType===1 && menu.apiUrl==='' && menu.methods==='';
+  if(menu.id===755 && page && menu.menuPath===globalPath && menu.uniqueAuth==='marketing-store_bargain-bargain_list')return {protected:true,permission:'bargain_record.view'};
+  if(menu.id===1551 && page && menu.menuPath===statisticsPath && menu.uniqueAuth==='')return {protected:true,permission:'bargain_statistics.view'};
+  const api=menu.authType===2 && menu.methods==='GET' && menu.menuPath==='' && menu.uniqueAuth==='';
+  if(api && ((menu.id===807 && menu.apiUrl==='marketing/bargain_list') || (menu.id===833 && menu.apiUrl==='marketing/bargain_list_info/<id>')))
+    return {protected:true,permission:'bargain_record.view'};
+  return {protected:true,permission:null};
+}
+
 function legacyAdminMenuBinding(menu: LegacyAdminMenuMetadata): { protected: boolean; permission: string | null } {
   const path = menu.menuPath.trim(), auth = menu.uniqueAuth.trim(), route = normalizeAdminRoute(menu.apiUrl);
   const adminApi = /^(?:setting\/(?:admin(?:\/|$)|set_status(?:\/|$)|admin-authority(?:\/|$))|system\/legacy-staff(?:\/|$))/.test(route);
@@ -1125,7 +1416,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productGenerationMenuBinding(menu).protected || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (wechatAppMenuBinding(menu).protected || pcBaseBinding(menu).protected || wechatOpenBinding(menu).protected || wechatBaseBinding(menu).protected || wechatMenuBinding(menu).protected || bargainReadMenuBinding(menu).protected || unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productGenerationMenuBinding(menu).protected || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1144,7 +1435,7 @@ export class AdminPermissionService {
   constructor(private readonly container: Container) {}
 
   permissionTree(): AdminPermissionTreeNode[] {
-    return ADMIN_PERMISSION_GROUPS.map((group) => ({
+    return ADMIN_PERMISSION_GROUPS.filter(group => group.key !== 'wechat_app').map((group) => ({
       key: group.key,
       label: group.label,
       path: group.path,
@@ -1229,6 +1520,7 @@ export class AdminPermissionService {
       ? await this.container.db
           .select({
             id: systemMenus.id,
+            pid: systemMenus.pid, type: systemMenus.type, module: systemMenus.module, controller: systemMenus.controller, action: systemMenus.action,
             authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
@@ -1241,6 +1533,12 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.id,1361),eq(systemMenus.uniqueAuth,'app-pc'),eq(systemMenus.menuPath,'/admin/app/pc')),
+                and(eq(systemMenus.id,1379),eq(systemMenus.uniqueAuth,'app-app'),eq(systemMenus.menuPath,'/admin/app/app')),
+                and(eq(systemMenus.id,1360),eq(systemMenus.uniqueAuth,'app-wechat-open'),eq(systemMenus.menuPath,'/admin/app/wechat_open')),
+                and(eq(systemMenus.id,1362),eq(systemMenus.uniqueAuth,'app-wechat-base'),eq(systemMenus.menuPath,'/admin/app/wechat/base')),
+                and(eq(systemMenus.id,755),eq(systemMenus.uniqueAuth,'marketing-store_bargain-bargain_list'),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/bargain_list')),
+                and(eq(systemMenus.id,1551),eq(systemMenus.uniqueAuth,''),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/statistics')),
                 and(eq(systemMenus.id, 227), eq(systemMenus.uniqueAuth, 'user-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
                 and(eq(systemMenus.id, 263), eq(systemMenus.uniqueAuth, 'admin-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
                 and(eq(systemMenus.id, 6), eq(systemMenus.uniqueAuth, 'product-product-reply'),
@@ -1301,6 +1599,9 @@ export class AdminPermissionService {
                   eq(systemMenus.menuPath, "/admin/setting/pages/fab")),
                 and(eq(systemMenus.uniqueAuth, "system-maintain-system-log"),
                   eq(systemMenus.menuPath, "/admin/system/maintain/system_log/index")),
+                and(eq(systemMenus.id, 720), eq(systemMenus.uniqueAuth, 'setting-delivery-service'),
+                  eq(systemMenus.menuPath, '/admin/setting/delivery_service/index'),
+                  eq(systemMenus.apiUrl, ''), eq(systemMenus.methods, '')),
                 and(eq(systemMenus.id, 1380), eq(systemMenus.uniqueAuth, "admin-storeProduct-label"),
                   eq(systemMenus.menuPath, "/admin/product/label")),
                 and(eq(systemMenus.id, 3), eq(systemMenus.uniqueAuth, 'admin-store-storeCategory-index'), eq(systemMenus.menuPath, '/admin/product/product_classify')),
@@ -1361,7 +1662,8 @@ export class AdminPermissionService {
     // Auth middleware has authenticated the account. The recovery service
     // repeats live realm/status/password checks and binds the receipt owner;
     // these two exact endpoints never perform a staff/role mutation.
-    if (isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return;
+    if (isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return;
+    if (isAdminProfileRoute(method,routePath) || isAdminPlatformMenuRecoveryRoute(method,routePath) || isAdminExpressRecoveryRoute(method,routePath) || isAdminLevelRecoveryRoute(method,routePath) || isAdminUserLabelRecoveryRoute(method,routePath) || isAdminStoreRecoveryRoute(method,routePath) || isAdminStaffRecoveryRoute(method,routePath) || isAdminDeliveryRecoveryRoute(method,routePath) || isAdminGroupRecoveryRoute(method,routePath) || isAdminUnitRecoveryRoute(method,routePath) || isAdminEnsureRecoveryRoute(method,routePath) || isAdminRuleRecoveryRoute(method,routePath) || isAdminParameterRecoveryRoute(method,routePath) || isAdminHotwordRecoveryRoute(method,routePath) || isAdminProductLabelRecoveryRoute(method,routePath)) return;
     if (admin.level === 0) return;
     // Common header: authenticated financial/product-only roles need not hold
     // dashboard access. The controller independently filters EVERY count by role.
@@ -1371,6 +1673,11 @@ export class AdminPermissionService {
       throw new AuthException("该管理接口尚未登记权限规则", ApiErrorCode.ERR_AUTH);
     }
     const granted = await this.resolveAdminPermissionKeys(admin);
+    // Shared legacy URL admission only. Strict complete-body dispatch repeats
+    // fresh authority inside the corresponding domain transaction. The default
+    // route permission remains Base for existing permission/introspection callers.
+    if (method.toUpperCase() === 'POST' && normalizeAdminRoute(routePath) === 'setting/config/save_basics'
+      && (hasAdminPermission(granted, 'wechat_open.manage') || hasAdminPermission(granted, 'pc_base.manage') || hasAdminPermission(granted, 'wechat_app.manage'))) return;
     if (!hasAdminPermission(granted, required)) {
       throw new AuthException("暂时没有权限访问", ApiErrorCode.ERR_AUTH);
     }
@@ -1414,6 +1721,7 @@ export class AdminPermissionService {
     const menuQuery = this.container.db
           .select({
             id: systemMenus.id,
+            pid: systemMenus.pid, type: systemMenus.type, module: systemMenus.module, controller: systemMenus.controller, action: systemMenus.action,
             authType: systemMenus.authType,
             apiUrl: systemMenus.apiUrl,
             methods: systemMenus.methods,
@@ -1426,6 +1734,12 @@ export class AdminPermissionService {
               inArray(systemMenus.id, legacyIds),
               eq(systemMenus.type, 1),
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
+                and(eq(systemMenus.id,1361),eq(systemMenus.uniqueAuth,'app-pc'),eq(systemMenus.menuPath,'/admin/app/pc')),
+                and(eq(systemMenus.id,1379),eq(systemMenus.uniqueAuth,'app-app'),eq(systemMenus.menuPath,'/admin/app/app')),
+                and(eq(systemMenus.id,1360),eq(systemMenus.uniqueAuth,'app-wechat-open'),eq(systemMenus.menuPath,'/admin/app/wechat_open')),
+                and(eq(systemMenus.id,1362),eq(systemMenus.uniqueAuth,'app-wechat-base'),eq(systemMenus.menuPath,'/admin/app/wechat/base')),
+                and(eq(systemMenus.id,755),eq(systemMenus.uniqueAuth,'marketing-store_bargain-bargain_list'),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/bargain_list')),
+                and(eq(systemMenus.id,1551),eq(systemMenus.uniqueAuth,''),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/statistics')),
                 and(eq(systemMenus.id, 227), eq(systemMenus.uniqueAuth, 'user-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
                 and(eq(systemMenus.id, 263), eq(systemMenus.uniqueAuth, 'admin-user-group'), eq(systemMenus.menuPath, '/admin/user/group')),
                 and(eq(systemMenus.id, 6), eq(systemMenus.uniqueAuth, 'product-product-reply'),
@@ -1486,6 +1800,9 @@ export class AdminPermissionService {
                   eq(systemMenus.menuPath, "/admin/setting/pages/fab")),
                 and(eq(systemMenus.uniqueAuth, "system-maintain-system-log"),
                   eq(systemMenus.menuPath, "/admin/system/maintain/system_log/index")),
+                and(eq(systemMenus.id, 720), eq(systemMenus.uniqueAuth, 'setting-delivery-service'),
+                  eq(systemMenus.menuPath, '/admin/setting/delivery_service/index'),
+                  eq(systemMenus.apiUrl, ''), eq(systemMenus.methods, '')),
                 and(eq(systemMenus.id, 1380), eq(systemMenus.uniqueAuth, "admin-storeProduct-label"),
                   eq(systemMenus.menuPath, "/admin/product/label")),
                 and(eq(systemMenus.id, 3), eq(systemMenus.uniqueAuth, 'admin-store-storeCategory-index'), eq(systemMenus.menuPath, '/admin/product/product_classify')),
@@ -1549,11 +1866,22 @@ export class AdminPermissionService {
       methods: string;
       menuPath: string;
       uniqueAuth: string;
+      pid?: number; type?: number; module?: string; controller?: string; action?: string;
     }>,
   ): Set<string> {
-    const resolved = new Set(tokens.filter((token) => permissionKeys.has(token)));
+    // App view/manage are derived only from the whole fixed legacy selection.
+    // The module keys remain available for computed grants and level0, but an
+    // opaque role string cannot manufacture the current 1379/315 authority.
+    const resolved = new Set(tokens.filter((token) => permissionKeys.has(token) && !token.startsWith('wechat_app.')));
     const allowedLegacyIds = new Set(tokens.filter(isNumericToken).map(Number));
     if (allowedLegacyIds.size) {
+      const selected = menus.filter(menu => allowedLegacyIds.has(menu.id));
+      for (const key of pcBasePermissionsFromMenus(selected)) resolved.add(key);
+      for (const key of wechatAppPermissionsFromMenus(selected)) resolved.add(key);
+      if (selected.some(menu => wechatOpenBinding(menu).permission === 'wechat_open.view')
+        && selected.some(menu => wechatBaseBinding(menu).save)) resolved.add('wechat_open.manage');
+      if (selected.some(menu => wechatBaseBinding(menu).permission === 'wechat_base.view')
+        && selected.some(menu => wechatBaseBinding(menu).save)) resolved.add('wechat_base.manage');
       for (const menu of menus) {
         if (!allowedLegacyIds.has(menu.id)) continue;
         // Wildcard attachment rows cannot acquire a grant by rewriting their
@@ -1650,6 +1978,29 @@ export class AdminPermissionService {
           if (labelBinding.permission) resolved.add(labelBinding.permission);
           continue;
         }
+        const pcBinding = pcBaseBinding(menu);
+        if (pcBinding.protected) { if (pcBinding.permission) resolved.add(pcBinding.permission); continue; }
+        const openBinding = wechatOpenBinding(menu);
+        if (openBinding.protected) { if (openBinding.permission) resolved.add(openBinding.permission); continue; }
+        const baseBinding = wechatBaseBinding(menu);
+        if (baseBinding.protected) {
+          if (baseBinding.permission) resolved.add(baseBinding.permission);
+          continue;
+        }
+        // Shared315 must keep its existing Base/Open/PC meaning above. The
+        // independent App view/manage composition uses the whole selected set.
+        const appBinding = wechatAppMenuBinding(menu);
+        if (appBinding.protected) { if (appBinding.view) resolved.add('wechat_app.view'); continue; }
+        const wechatBinding = wechatMenuBinding(menu);
+        if (wechatBinding.protected) {
+          if (wechatBinding.permission) resolved.add(wechatBinding.permission);
+          continue;
+        }
+        const bargainBinding = bargainReadMenuBinding(menu);
+        if (bargainBinding.protected) {
+          if (bargainBinding.permission) resolved.add(bargainBinding.permission);
+          continue;
+        }
         const legacyAdmin = legacyAdminMenuBinding(menu);
         if (legacyAdmin.protected) {
           if (legacyAdmin.permission) resolved.add(legacyAdmin.permission);
@@ -1658,6 +2009,16 @@ export class AdminPermissionService {
         const legacyRole = legacyRoleMenuBinding(menu);
         if (legacyRole.protected) {
           if (legacyRole.permission) resolved.add(legacyRole.permission);
+          continue;
+        }
+        // Fixed PHP page 720 is a read grant, never an order writer. A row
+        // claiming its identity cannot fall through to generic API rules.
+        if (menu.id === 720 || menu.menuPath === '/admin/setting/delivery_service/index'
+          || menu.uniqueAuth === 'setting-delivery-service') {
+          if (menu.id === 720 && menu.authType === 1 && menu.menuPath === '/admin/setting/delivery_service/index'
+            && menu.uniqueAuth === 'setting-delivery-service' && menu.apiUrl === '' && menu.methods === '') {
+            resolved.add('order.view');
+          }
           continue;
         }
         // This is the server operation-log page, separate from Vuex's local

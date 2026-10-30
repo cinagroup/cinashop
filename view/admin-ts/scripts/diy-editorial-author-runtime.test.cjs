@@ -630,7 +630,7 @@ test('actual parent duplicates/removes/moves complete imports with dormant data,
 });
 test('unrelated parent visibility edit retains malformed/imported overflow and does not fill missing defaults', async () => {
   const sparse = { name: 'news', timestamp: '10', isHide: ' 0 ', listConfig: { max: 999, list: [...Array.from({ length: 12 }, (_, i) => ({ show: i === 11, chiild: [{ val: '导入' + i }, { val: '' }], extra: i })), 0] }, untouched: { keep: [] } }, r = harness([sparse]);
-  try { await tick(); assert.deepEqual(r.writes, []); r.state.visible(false); await tick(); const expected = clone(sparse); expected.isHide = true; assert.deepEqual(r.value(), [expected]); assert.equal(Object.hasOwn(r.value()[0], 'styleConfig'), false); }
+  try { await tick(); assert.deepEqual(r.writes, []); r.state.setVisible(false); await tick(); const expected = clone(sparse); expected.isHide = true; assert.deepEqual(r.value(), [expected]); assert.equal(Object.hasOwn(r.value()[0], 'styleConfig'), false); }
   finally { r.unmount(); }
 });
 test('parent rejects malformed documents and move boundary without replacing original JSON', async () => {
@@ -672,7 +672,7 @@ test('different selected hotspot image clears regions but preserves full picture
 });
 test('explicit hotspot image removal clears only URL and retains complete raw regions as original PHP does', async () => {
   const b = hotspot(), before = clone(b), r = harness([b]);
-  try { r.state.setImage(['picStyle', 'url'], ''); await tick(); const expected = clone(before); expected.picStyle.url = ''; assert.deepEqual(r.value(), [expected]); assert.equal(r.writes.length, 1); }
+  try { r.state.clearImage(); await tick(); const expected = clone(before); expected.picStyle.url = ''; assert.deepEqual(r.value(), [expected]); assert.equal(r.writes.length, 1); }
   finally { r.unmount(); }
 });
 test('fifth activity image and mismatched/expired signatures confer no media write or preview authority', async () => {
@@ -718,21 +718,21 @@ for (const [name, transition] of Object.entries(transitions)) test(`actual paren
 test('manage-only image-denied and view-only actors cannot select gallery media; view-only cannot edit at all', async () => {
   for (const permissions of [['dise.manage'], ['dise.view']]) {
     const b = hotspot(), actor = vue.reactive({ token: 'A', userInfo: { id: 11, level: 1 }, uniqueAuth: permissions }), r = harness([b], { actor });
-    try { assert.equal(r.state.canChooseMedia, false); await r.state.mediaSession(['picStyle', 'url']).choose('/api/assets/8', ticket(8)); assert.deepEqual(r.writes, []); if (permissions[0] === 'dise.view') { r.state.setLeaf(['mbConfig', 'val'], 9); r.state.add(); r.state.visible(false); assert.deepEqual(r.writes, []); } }
+    try { assert.equal(r.state.canChooseMedia, false); await r.state.mediaSession(['picStyle', 'url']).choose('/api/assets/8', ticket(8)); assert.deepEqual(r.writes, []); if (permissions[0] === 'dise.view') { r.state.leaf(['mbConfig', 'val'], 9); r.state.add(); r.state.setVisible(false); assert.deepEqual(r.writes, []); } }
     finally { r.unmount(); }
   }
 });
 async function actualNumber(props) { const app = vue.createSSRApp({ render: () => vue.h(ElInputNumber, props) }); app.provide(ID_INJECTION_KEY, { prefix: 164, current: 0 }); app.provide(ZINDEX_INJECTION_KEY, { current: 0 }); return renderToString(app); }
 test('installed number component control proves a fixed max normalizes an imported coordinate and reaches the real parent handler', async () => {
-  const b = hotspot(); b.picStyle.list[0].starX = '1e30'; const r = harness([b]);
-  try { const input = control(r, '热区 1 左侧坐标'), updates = [], handler = input.props['onUpdate:modelValue']; const props = { ...input.props, max: 1000000, 'onUpdate:modelValue': value => { updates.push(value); handler(value); } }; for (const key of ['data-element', 'data-label', 'data-title']) delete props[key];
-    await actualNumber(props); await tick(); assert.deepEqual(updates, [1000000]); assert.equal(r.writes.length, 1); assert.equal(r.value()[0].picStyle.list[0].starX, 1000000);
+  const b = hotspot(); b.picStyle.url = '/static/canvas.png'; b.picStyle.list[0].starX = '1e30'; const r = harness([b]);
+  try { await parentImageLoaded(r); const input = control(r, '左侧位置（750 设计坐标）'), updates = [], handler = input.props['onUpdate:modelValue']; const props = { ...input.props, max: 600, 'onUpdate:modelValue': value => { updates.push(value); handler(value); } }; for (const key of ['data-element', 'data-label', 'data-title']) delete props[key];
+    await actualNumber(props); await tick(); assert.deepEqual(updates, [600]); assert.equal(r.writes.length, 1); assert.equal(r.value()[0].picStyle.list[0].starX, 600);
   } finally { r.unmount(); }
 });
 test('actual parent coordinate and tiny/exponent/radius controls do not rewrite imported JSON during installed input mount', async () => {
   const b = hotspot(); b.picStyle.list[0].starX = '1e30'; b.picStyle.list[0].areaWidth = '0.0005'; b.topConfig.val = '1e30'; b.mbConfig.val = '0.0005'; b.fillet.type = true; b.fillet.valList = [{ val: '5e-4' }, { val: ' 2.25 ' }, { val: '3e0' }, { val: 4.75 }];
   const r = harness([b]); try { await tick(); const raw = r.props.modelValue;
-    for (const [label, expected] of [['热区 1 左侧坐标', 1e30], ['热区 1 宽度', 0.0005], ['热区上边距', 1e30], ['热区组件间距', 0.0005], ['左上圆角', 0.0005], ['右上圆角', 2.25], ['左下圆角', 3], ['右下圆角', 4.75]]) {
+    for (const [label, expected] of [['左侧位置（750 设计坐标）', 1e30], ['区域宽度（750 设计坐标）', 0.0005], ['上边距（设计 px）', 1e30], ['组件上间距（设计 px）', 0.0005], ['公告与热区左上圆角', 0.0005], ['公告与热区右上圆角', 2.25], ['公告与热区左下圆角', 3], ['公告与热区右下圆角', 4.75]]) {
       const input = control(r, label); assert.equal(input.props.modelValue, expected); const updates = [], handler = input.props['onUpdate:modelValue'], props = { ...input.props, 'onUpdate:modelValue': value => { updates.push(value); handler(value); } }; for (const key of ['data-element', 'data-label', 'data-title']) delete props[key]; await actualNumber(props); await tick(); assert.deepEqual(updates, [], label); assert.equal(r.props.modelValue, raw); assert.deepEqual(r.writes, []);
     }
   } finally { r.unmount(); }
@@ -815,28 +815,40 @@ test('actual canvas rejects a same-key foreign image load before its own image i
     await loaded(r); assert.equal(r.state.ready, true); assert.equal(r.state.height, 375);
   } finally { r.unmount(); }
 });
+
+async function parentImageLoaded(r, width = 750, height = 750) {
+  const file = path.join(root, 'components/content/DiyHotspotEditorCanvas.vue');
+  const actual = r.instances.get(file)?.at(-1);
+  assert.ok(actual, 'the real detailed canvas must be mounted');
+  actual.imageSession.load({ currentTarget: { naturalWidth: width, naturalHeight: height } });
+  await tick(); assert.equal(r.state.imageSize.width, width); assert.equal(r.state.imageSize.height, height);
+}
+async function chooseParentBackground(r, reference, signed) {
+  await r.state.mediaSession(['picStyle', 'url']).choose(reference, signed);
+  await tick(); await parentImageLoaded(r);
+}
 test('actual parent canvas session appends complete PHP region shape after every imported area without trimming or mutating metadata', async () => {
   const b = hotspot(); b.picStyle.list = Array.from({ length: 33 }, (_, i) => region({ number: 100 + i, extra: { i } })); const r = harness([b]);
-  try { await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7)); await tick(); const rect = { starX: 10, starY: 20, areaWidth: 30, areaHeight: 40 };
+  try { await chooseParentBackground(r, '/api/assets/7', ticket(7)); const rect = { starX: 10, starY: 20, areaWidth: 30, areaHeight: 40 };
     const session = r.state.canvasSession; assert.equal(session.allowed(), true); session.create(rect); await tick();
     const expected = clone(b); expected.picStyle.list.push({ number: 34, ...rect, nowImgWidth: 750, link: '' }); assert.deepEqual(r.value(), [expected]); assert.equal(r.writes.length, 1);
   } finally { r.unmount(); }
 });
 test('actual parent canvas rect changes only four coordinates and preserves complete region metadata', async () => {
-  const b = hotspot(), r = harness([b]); try { await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7)); await tick();
+  const b = hotspot(), r = harness([b]); try { await chooseParentBackground(r, '/api/assets/7', ticket(7));
     const rect = { starX: 10, starY: 20, areaWidth: 30, areaHeight: 40 }; r.state.canvasSession.rect(0, rect); await tick(); const expected = clone(b); Object.assign(expected.picStyle.list[0], rect); assert.deepEqual(r.value(), [expected]); assert.equal(r.writes.length, 1);
   } finally { r.unmount(); }
 });
 for (const reason of ['disabled', 'revoked', 'page']) test(`actual parent canvas session rejects captured geometry after ${reason}`, async () => {
   const b = hotspot(), actor = vue.reactive({ token: 'A', userInfo: { id: 11, level: 1 }, uniqueAuth: ['dise.manage','attachment.view'] }), r = harness([b], { actor });
-  try { await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7)); await tick(); const session = r.state.canvasSession; assert.equal(session.allowed(), true);
+  try { await chooseParentBackground(r, '/api/assets/7', ticket(7)); const session = r.state.canvasSession; assert.equal(session.allowed(), true);
     if (reason === 'disabled') r.props.disabled = true; else if (reason === 'revoked') r.actor.uniqueAuth.splice(0); else r.props.pageId = 3; await tick();
     const rect = { starX: 10, starY: 20, areaWidth: 30, areaHeight: 40 }; session.create(rect); session.rect(0, rect); await tick(); assert.deepEqual(r.writes, []); assert.deepEqual(r.value(), [b]); assert.equal(session.allowed(), false);
   } finally { r.unmount(); }
 });
 test('actual parent lease timer expires signed preview and captured canvas authority without a stored-config write', async t => {
   const now = 1800000000000; t.mock.timers.enable({ apis: ['Date','setTimeout'], now }); const b = hotspot(), r = harness([b]);
-  try { await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7, Math.floor(now/1000)+2)); await tick(); const session = r.state.canvasSession; assert.equal(session.allowed(), true); assert.equal(r.state.previewImage(['picStyle','url']).includes('signature='), true);
+  try { await chooseParentBackground(r, '/api/assets/7', ticket(7, Math.floor(now/1000)+2)); const session = r.state.canvasSession; assert.equal(session.allowed(), true); assert.equal(r.state.previewImage(['picStyle','url']).includes('signature='), true);
     t.mock.timers.tick(2002); await tick(); assert.equal(session.allowed(), false); assert.equal(r.state.previewImage(['picStyle','url']), ''); assert.deepEqual(r.state.previews, {});
     session.create({ starX: 10, starY: 20, areaWidth: 30, areaHeight: 40 }); await tick(); assert.deepEqual(r.writes, []); assert.deepEqual(r.value(), [b]);
   } finally { r.unmount(); t.mock.timers.reset(); }
@@ -846,7 +858,7 @@ test('actual parent lease timer expires signed preview and captured canvas autho
 test('actual parent own commit echo keeps one valid background across consecutive create move resize without choosing media again', async () => {
   const r = harness([hotspot()]);
   try {
-    const signed = ticket(7); await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', signed); await tick();
+    const signed = ticket(7); await chooseParentBackground(r, '/api/assets/7', signed);
     const initial = clone(r.value()), first = r.state.canvasSession;
     first.create({ starX: 200, starY: 100, areaWidth: 100, areaHeight: 80 }); await tick();
     assert.equal(r.state.previewImage(['picStyle','url']), signed); assert.equal(r.state.canvasSession.allowed(), true); assert.equal(first.allowed(), false);
@@ -863,7 +875,7 @@ test('actual parent accepts only its exact immediate own prop echo and preserves
   try {
     for (let i = 0; i < 4; i++) await r.state.mediaSession(['menuConfig','list',i,'img']).choose(`/api/assets/${i+1}`, ticket(i+1));
     await tick(); const leases = clone(r.state.previews); assert.equal(Object.keys(leases).length, 4);
-    r.state.setText(['titleConfig','value'], '改标题', 10); assert.deepEqual(r.state.previews, {});
+    r.state.setText('titleConfig', '改标题'); assert.deepEqual(r.state.previews, {});
     r.props.modelValue = r.writes.at(-1); await tick(); assert.deepEqual(r.state.previews, leases);
   } finally { r.unmount(); }
 });
@@ -871,7 +883,7 @@ for (const reason of ['raw','revoked','selection','page','editor','disabled','to
   const actor = vue.reactive({ token: 'A', userInfo: { id: 11, level: 1 }, uniqueAuth: ['dise.manage','attachment.view'] });
   const r = harness([hotspot(), block('news', 20)], { actor, deferEcho: true });
   try {
-    await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7)); await tick(); assert.notEqual(r.state.previewImage(['picStyle','url']), '');
+    await chooseParentBackground(r, '/api/assets/7', ticket(7)); assert.notEqual(r.state.previewImage(['picStyle','url']), '');
     r.state.canvasSession.create({ starX: 200, starY: 100, areaWidth: 100, areaHeight: 80 }); const expected = r.writes.at(-1); assert.equal(typeof expected, 'string');
     if (reason === 'raw') { const changed = r.value(); changed[0].external = true; r.props.modelValue = JSON.stringify(changed); await tick(); }
     else if (reason === 'revoked') r.actor.uniqueAuth.splice(0);
@@ -889,7 +901,7 @@ for (const reason of ['raw','revoked','selection','page','editor','disabled','to
 test('actual parent never restores a lease that expires before its exact own prop echo', async t => {
   const now = 1800000000000; t.mock.timers.enable({ apis: ['Date','setTimeout'], now }); const r = harness([hotspot()], { deferEcho: true });
   try {
-    await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7, Math.floor(now/1000)+2)); await tick();
+    await chooseParentBackground(r, '/api/assets/7', ticket(7, Math.floor(now/1000)+2));
     r.state.canvasSession.create({ starX: 200, starY: 100, areaWidth: 100, areaHeight: 80 }); t.mock.timers.tick(2002);
     r.props.modelValue = r.writes.at(-1); await tick(); assert.deepEqual(r.state.previews, {}); assert.equal(r.state.previewImage(['picStyle','url']), ''); assert.equal(r.state.canvasSession.allowed(), false);
   } finally { r.unmount(); t.mock.timers.reset(); }
@@ -897,7 +909,7 @@ test('actual parent never restores a lease that expires before its exact own pro
 test('actual parent external raw edits clear an installed preview instead of borrowing the own-echo allowance', async () => {
   const r = harness([hotspot()]);
   try {
-    await r.state.mediaSession(['picStyle','url']).choose('/api/assets/7', ticket(7)); await tick();
+    await chooseParentBackground(r, '/api/assets/7', ticket(7));
     r.state.canvasSession.create({ starX: 200, starY: 100, areaWidth: 100, areaHeight: 80 }); await tick(); assert.notEqual(r.state.previewImage(['picStyle','url']), '');
     const external = r.value(); external[0].topConfig.val = 6; r.props.modelValue = JSON.stringify(external); await tick();
     assert.deepEqual(r.state.previews, {}); assert.equal(r.state.canvasSession.allowed(), false); assert.equal(r.writes.length, 1);

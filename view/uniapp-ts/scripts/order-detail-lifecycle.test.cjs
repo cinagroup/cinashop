@@ -122,7 +122,7 @@ const cashier = id => ({ type: 'order', order_id: id, paid: false, payable: true
   pay_price: '10.00', now_money: '20.00', integral: 0, pay_integral: 0,
   methods: Object.fromEntries(['yue','weixin','alipay','offline'].map(key => [key, { enabled: key === 'yue', reason: '' }])) });
 function setup(override = () => undefined) {
-  return runtime({ component: 'pages/order/detail.vue', send: c => override(c) ?? { data: c.url.includes('/order/detail/')
+  return runtime({ component: 'pages/order/detail.vue', platform: 'H5', send: c => override(c) ?? { data: c.url.includes('/order/detail/')
     ? detail(c.url.split('/').at(-1)) : cashier(c.url.split('/').at(-2)) } });
 }
 test('UniApp detail failed refresh clears old private data and offers an explicit retry', async () => {

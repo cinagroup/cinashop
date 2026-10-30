@@ -1,112 +1,165 @@
-import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
-import { reverseCommunityPreviewRefreshSource } from './helpers/diyCommunityPreviewRefreshSourceBinding';
-import { readFileSync } from 'node:fs';
+import { beforeConfigClassReport } from './helpers/configClassSourceBinding';
+import { reverseSearchHotwordsSource } from './helpers/searchHotwordsSourceBinding';
+import { reverseLiveBroadcastAuthorSource, applyLiveBroadcastAuthorReport } from './helpers/diyLiveBroadcastAuthorSourceBinding';
+import { reverseSeckillAuthorSource, applySeckillAuthorReport } from './helpers/diySeckillAuthorSourceBinding';
+import { reverseBargainAuthorSource, applyBargainAuthorReport } from './helpers/diyBargainAuthorSourceBinding';
+import { reverseCombinationAuthorSource, applyCombinationAuthorReport } from './helpers/diyCombinationAuthorSourceBinding';
+import { reversePresaleAuthorSource, applyPresaleAuthorReport } from './helpers/diyPresaleAuthorSourceBinding';
+import { reversePointsAuthorSource, applyPointsAuthorReport } from './helpers/diyPointsAuthorSourceBinding';
+import { reverseCouponAuthorSource, applyCouponAuthorReport } from './helpers/diyCouponAuthorSourceBinding';
+import { reversePromotionAuthorSource, applyPromotionAuthorReport, promotionAuthorSourceBinding } from './helpers/diyPromotionAuthorSourceBinding';
 import { createHash } from 'node:crypto';
-import { createRequire } from 'node:module';
+import { readAdminProfileThenErrorPagesThenBrowserLogThenConfigClassPredecessor as readFileSync } from './helpers/wechatAppAuthorSourceBinding';
 import { resolve } from 'node:path';
-import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
-import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
-import { applyCommerceAuthorReport, commerceAuthorSourceBinding } from './helpers/diyCommerceAuthorSourceBinding';
-import { applyCommunityAuthorReport, reverseCommunityAuthorReport, reverseCommunityAuthorSource, communityAuthorSourceBinding as proof } from './helpers/diyCommunityAuthorSourceBinding';
-const root=resolve(import.meta.dirname,'../..'),read=(file:string)=>reverseCommunityPreviewRefreshSource(file,readFileSync(resolve(root,file),'utf8')),sha=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
-const reportHash=(value:unknown)=>sha(JSON.stringify(value,null,2)+'\n');
-const previous=applyCommerceAuthorReport(applyEditorialAuthorReport(JSON.parse(read(proof.previous_report.base_file))));
-const {parse}=createRequire(import.meta.url)('../../view/admin-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/admin-ts/node_modules/@vue/compiler-sfc');
-const ast=(source:string)=>ts.createSourceFile('live.ts',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
-function nodes<T extends ts.Node>(root:ts.Node,predicate:(node:ts.Node)=>node is T){const result:T[]=[];function walk(node:ts.Node){if(predicate(node))result.push(node);ts.forEachChild(node,walk);}walk(root);return result;}
-function literal(file:string,name:string){const tree=ast(read(file)),declaration=nodes(tree,ts.isVariableDeclaration).find(node=>node.name.getText(tree)===name);let value=declaration?.initializer;while(value&&(ts.isAsExpression(value)||ts.isParenthesizedExpression(value)||ts.isSatisfiesExpression(value)))value=value.expression;if(!value||!ts.isObjectLiteralExpression(value))throw Error('Expected complete JSON-compatible object');return JSON.parse(value.getText(tree));}
-function pageBound(input:string){
- const parsed=parse(input),descriptor=parsed.descriptor;if(parsed.errors.length||!descriptor.template?.ast||!descriptor.scriptSetup)return false;
- const file=ast(descriptor.scriptSetup.content),imports=file.statements.filter(ts.isImportDeclaration);
- const imported=(module:string,name:string)=>imports.some(node=>ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module&&!node.importClause?.isTypeOnly&&(node.importClause?.name?.text===name||node.importClause?.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(item=>!item.isTypeOnly&&item.name.text===name)));
- if(!imported('@/components/content/DiyCommunityEditor.vue','DiyCommunityEditor')||!imported('@/utils/diyCommunityEditor','canonicalCommunityValue'))return false;
- const elements:any[]=[];function visit(node:any){if(node.type===1)elements.push(node);for(const child of node.children??[])visit(child);}visit(descriptor.template.ast);
- const editors=elements.filter(node=>node.tag==='DiyCommunityEditor');if(editors.length!==1)return false;const editor=editors[0];
- if(!editor.props.some((p:any)=>p.type===7&&p.name==='model'&&p.exp?.content==='form.value'))return false;
- for(const[key,value]of[['editor-key','`${editorIdentity}:${form.id}:${editorEpoch}`'],['page-id','form.id'],['page-published','persistedPublished'],['disabled','submitting || !formVisible || !sessionReady']])if(!editor.props.some((p:any)=>p.type===7&&p.name==='bind'&&p.arg?.content===key&&p.exp?.content===value))return false;
- const canonical=nodes(file,ts.isFunctionDeclaration).find(node=>node.name?.text==='canonicalJson'),save=nodes(file,ts.isFunctionDeclaration).find(node=>node.name?.text==='save');if(!canonical||!save)return false;
- const wrappers=nodes(canonical,ts.isCallExpression).filter(node=>ts.isIdentifier(node.expression)&&node.expression.text==='canonicalCommunityValue');
- if(wrappers.length!==1||wrappers[0]!.arguments.length!==1||!ts.isCallExpression(wrappers[0]!.arguments[0]!)||wrappers[0]!.arguments[0]!.expression.getText(file)!=='canonicalCommerceValue')return false;
- if(!nodes(canonical,ts.isReturnStatement).some(node=>node.expression===wrappers[0]))return false;
- const value=nodes(save,ts.isVariableDeclaration).find(node=>ts.isIdentifier(node.name)&&node.name.text==='value');
- if(!value?.initializer||!ts.isCallExpression(value.initializer)||value.initializer.expression.getText(file)!=='canonicalJson'||value.initializer.arguments.length!==1||value.initializer.arguments[0]!.getText(file)!=='form.value')return false;
- const payload=nodes(save,ts.isVariableDeclaration).find(node=>ts.isIdentifier(node.name)&&node.name.text==='payload');
- if(!payload||nodes(payload,ts.isShorthandPropertyAssignment).filter(node=>node.name.text==='value').length!==2)return false;
- return nodes(save,ts.isCallExpression).filter(node=>node.expression.getText(file)==='request.post'&&node.arguments[0]&&ts.isStringLiteral(node.arguments[0])&&node.arguments[0].text==='/dise/save'&&node.arguments[1]?.getText(file)==='payload').length===1;
-}
-function actualControls(source:string,when:Record<string,number>,panel:number):unknown{
- const tree=ast(read('view/admin-ts/src/utils/diyNavigationEditor.ts')),declaration=nodes(tree,ts.isVariableDeclaration).find(node=>node.name.getText(tree)==='navRead');
- if(!declaration||!ts.isVariableDeclarationList(declaration.parent)||!ts.isVariableStatement(declaration.parent.parent)||declaration.parent.declarations.length!==1)throw Error('Actual navRead declaration missing');
- const compile=(value:string)=>ts.transpileModule(value,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
- const navigation:Record<string,unknown>={},exports:Record<string,unknown>={};
- runInNewContext(compile(declaration.parent.parent.getText(tree)),{exports:navigation});
- runInNewContext(compile(source),{exports,require:(name:string)=>{if(name!=='./diyNavigationEditor')throw Error('Unexpected community control dependency');return navigation;}});
- if(typeof exports.communityControlKeys!=='function')throw Error('Actual community controls export missing');
- const block=structuredClone(JSON.parse(read(proof.defaults_fixture.file)).community) as Record<string,unknown>;
- (block.setUp as Record<string,unknown>).tabVal=panel;
- for(const[path,value]of Object.entries(when)){const[owner,key]=path.split('.');(block[owner!] as Record<string,unknown>)[key!]=value;}
- return Reflect.apply(exports.communityControlKeys,undefined,[block]);
-}
-function allCasesMatch(source:string){try{const matrix=JSON.parse(read(proof.condition_fixture.file));return matrix.families[0].methods.every((method:any)=>method.cases.every((row:any)=>JSON.stringify(actualControls(source,row.when,Number(method.name==='getRComStyle')))===JSON.stringify(row.controls)));}catch{return false;}}
+import { buildAdminProfilePredecessorApiAuditReport as buildCurrentAdminFrontendApiAuditReport } from './helpers/wechatAppAuthorSourceBinding';
+const buildAdminFrontendApiAuditReport=()=>beforeConfigClassReport(buildCurrentAdminFrontendApiAuditReport());
+import { applyCommunityAuthorReport, reverseCommunityAuthorSource, communityAuthorSourceBinding as proof } from './helpers/diyCommunityAuthorSourceBinding';
+import { editorialAuthorSourceBinding, reverseEditorialAuthorSource } from './helpers/diyEditorialAuthorSourceBinding';
+import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './helpers/routeSourceIncrement';
 
-describe('complete community author source and additive dated-history binding',()=>{
- it('pins all three exact source boundaries before any older inverse and preserves all old fixtures',()=>{
-  expect(sha(read('workers-ts/test/fixtures/diy-community-author-source-binding-20261025.json'))).toBe('536ddbfcf36f8860717b226712311fc6ff41a2feb95b753097a576e15cfdcb86');
-  expect(proof.php_ref).toBe('8ed2a5b139f9170dd11b0dff91803f2fd59e40a5');expect(proof.sources.map(row=>[row.file,row.edits.length])).toEqual([['view/admin-ts/src/pages/content/DiseList.vue',3],['workers-ts/src/services/content/DiyEditorialMediaPolicy.ts',4],['view/uniapp-ts/src/utils/diyEditorialMediaLease.ts',1]]);
-  for(const row of proof.sources){expect(sha(read(row.file))).toBe(row.after_sha256);expect(sha(reverseCommunityAuthorSource(row.file,read(row.file)))).toBe(row.before_sha256);}
-  expect(proof.sources[0]!.before_sha256).toBe(commerceAuthorSourceBinding.source.after_sha256);
-  for(const row of proof.sources.slice(1))expect(commerceAuthorSourceBinding.consumer_sources.find(item=>item.file===row.file)?.sha256).toBe(row.before_sha256);
-  expect(sha(read(proof.previous_report.base_file))).toBe(proof.previous_report.base_sha256);for(const row of proof.previous_report.binding_chain)expect(sha(read(row.file))).toBe(row.sha256);
-  expect(reportHash(previous)).toBe(proof.previous_report.sha256);expect(Object.hasOwn(proof.previous_report,'raw_utf8')).toBe(false);
- });
- for(const entry of proof.sources)it.each(['extra','duplicate','missing','before-hash','after-hash','before-line','after-line'] as const)('rejects exact source boundary mutation %s at '+entry.file,kind=>{
-  const changed=structuredClone(proof),row=changed.sources.find(item=>item.file===entry.file)!;let source=read(entry.file);
-  if(kind==='extra')source+='\n// unrelated source\n';if(kind==='duplicate')source+=row.edits[0]!.after_source;if(kind==='missing')source=source.replace(row.edits[0]!.after_source,'');
-  if(kind==='before-hash')row.before_sha256='0'.repeat(64);if(kind==='after-hash')row.after_sha256='0'.repeat(64);if(kind==='after-line')row.edits[0]!.after_line++;
-  if(kind==='before-line'){const edit=row.edits.find(item=>item.before_source)!;expect(edit).toBeDefined();edit.before_line!++;}
-  expect(()=>reverseCommunityAuthorSource(entry.file,source,changed)).toThrow();
- });
- it('rejects forged source inventories and leaves every unrelated file exact',()=>{
-  const opaque='// unchanged sibling\n';expect(reverseCommunityAuthorSource('view/admin-ts/src/utils/unrelated.ts',opaque)).toBe(opaque);
-  for(const kind of ['missing','duplicate','other']){const changed=structuredClone(proof);if(kind==='missing')changed.sources.pop();if(kind==='duplicate')changed.sources[1]=structuredClone(changed.sources[0]!);if(kind==='other')changed.sources[0]!.file='view/admin-ts/src/utils/unrelated.ts';expect(()=>reverseCommunityAuthorSource(proof.sources[0]!.file,read(proof.sources[0]!.file),changed)).toThrow();}
- });
- it('binds the entire14-source current producer/consumer manifest without exempting any source body',()=>{
-  expect(proof.consumer_sources).toHaveLength(14);expect(new Set(proof.consumer_sources.map(row=>row.file)).size).toBe(14);
-  for(const row of proof.consumer_sources){expect(sha(read(row.file)),row.file).toBe(row.sha256);expect(sha(read(row.file)+'\n// unreviewed\n')).not.toBe(row.sha256);}
- });
- it('reconstructs the complete report with exactly one parent hash and three existing call-line shifts',()=>{
-  const actual=reverseAdminUserFilterReport(buildAdminFrontendApiAuditReport());expect(applyCommunityAuthorReport(previous)).toEqual(actual);expect(reverseCommunityAuthorReport(actual)).toEqual(previous);expect(reportHash(actual)).toBe(proof.current_report.sha256);
-  const captured=proof.current_report.raw_capture.serialization==='JSON.stringify(report, null, 2) + newline'?JSON.stringify(actual,null,2)+'\n':JSON.stringify(actual)+'\n';expect(sha(captured)).toBe(proof.current_report.raw_capture.sha256);expect(Buffer.byteLength(captured)).toBe(proof.current_report.raw_capture.bytes);
-  expect(sha(JSON.stringify(actual)+'\n')).toBe(proof.current_report.compact.sha256);expect(Buffer.byteLength(JSON.stringify(actual)+'\n')).toBe(proof.current_report.compact.bytes);
-  expect(proof.report_changes).toHaveLength(4);for(const row of proof.report_changes){const before={...row.before},after={...row.after};if(row.array==='calls'){expect(after.line).toBe(Number(before.line)+3);delete before.line;delete after.line;}else{delete before.sha256;delete after.sha256;}expect(after).toEqual(before);}
-  expect(actual.counts).toMatchObject({callSites:703,pathVariants:741,registered:741,unregistered:0,unresolved:0});expect(actual.frontendSources).toHaveLength(106);
- });
- it.each(['missing','duplicate','index','array','before-row','after-row','before-hash','after-hash'] as const)('rejects forged report delta %s',kind=>{
-  const changed=structuredClone(proof);if(kind==='missing')changed.report_changes.pop();if(kind==='duplicate')changed.report_changes.push(structuredClone(changed.report_changes[0]!));if(kind==='index')changed.report_changes[0]!.index=-1;if(kind==='array')changed.report_changes[0]!.array='unreviewed' as 'calls';if(kind==='before-row')changed.report_changes[1]!.before.line=0;if(kind==='after-row')changed.report_changes[1]!.after.line=0;if(kind==='before-hash')changed.previous_report.sha256='0'.repeat(64);if(kind==='after-hash')changed.current_report.sha256='0'.repeat(64);expect(()=>applyCommunityAuthorReport(previous,changed)).toThrow();
- });
- it.each(['counts','backend','methodology','call','source'] as const)('rejects unrelated complete report mutation %s',kind=>{const input=structuredClone(previous);if(kind==='counts')input.counts.registered++;if(kind==='backend')input.backend.sha256='0'.repeat(64);if(kind==='methodology')input.methodology.scope='unreviewed';if(kind==='call')input.calls[0].line++;if(kind==='source')input.frontendSources[0].sha256='0'.repeat(64);expect(()=>applyCommunityAuthorReport(input)).toThrow();const current=applyCommunityAuthorReport(previous);current.calls[0].line++;expect(()=>reverseCommunityAuthorReport(current)).toThrow();});
- it('binds all36 nested default fields and the actual fresh-block producer to the fixed PHP source',()=>{
-  expect(sha(read(proof.defaults_fixture.file))).toBe(proof.defaults_fixture.sha256);expect(proof.defaults_fixture.top_level_keys).toBe(36);
-  const expected=JSON.parse(read(proof.defaults_fixture.file)),actual=literal('view/admin-ts/src/utils/diyCommunityDefaults.ts','DIY_COMMUNITY_DEFAULTS');expect(actual).toEqual(expected);expect(Object.keys(actual.community)).toHaveLength(36);
-  expect(proof.php_sources.find(row=>row.path==='view/admin/src/components/mobilePage/home_community.vue')?.sha256).toBe('748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc');
-  const file=ast(read('view/admin-ts/src/utils/diyCommunityEditor.ts')),producer=nodes(file,ts.isFunctionDeclaration).find(node=>node.name?.text==='newCommunityBlock');expect(producer).toBeDefined();expect(nodes(producer!,ts.isCallExpression).some(call=>call.expression.getText(file)==='structuredClone'&&call.arguments[0]?.getText(file)==='DIY_COMMUNITY_DEFAULTS[kind]')).toBe(true);
-  expect(proof.default_bindings).toHaveLength(2);for(const binding of proof.default_bindings){let value:any=expected;for(const key of binding.path)value=value[key];expect(value).toBe(binding.literal);}
- });
- it('executes all12 original PHP conditional branches with exact axes/order using the actual control module and navRead',()=>{
-  expect(sha(read(proof.condition_fixture.file))).toBe(proof.condition_fixture.sha256);expect(proof.condition_fixture.php_method_cases).toBe(12);
-  const matrix=JSON.parse(read(proof.condition_fixture.file));expect(matrix.source.sha256).toBe('6e4250dc590e71a4d0d4137a7924406fca8b3af5791bcfe560cffeef8b5174b6');let count=0;
-  for(const method of matrix.families[0].methods)for(const row of method.cases){expect(actualControls(read('view/admin-ts/src/utils/diyCommunityControls.ts'),row.when,Number(method.name==='getRComStyle'))).toEqual(row.controls);count++;}expect(count).toBe(12);
- });
- it('rejects missing topic/custom control and inverted layout/title conditions through all actual PHP cases',()=>{
-  const source=read('view/admin-ts/src/utils/diyCommunityControls.ts');expect(allCasesMatch(source)).toBe(true);
-  for(const changed of [source.replace("['selectConfig']","['unrelated']"),source.replace("['likeSuccessColor']","[]"),source.replace("['styleConfig', 'tabVal']","['titleConfig', 'tabVal']"),source.replace("title ? 'titleTxtConfig' : 'imgConfig'","title ? 'imgConfig' : 'titleTxtConfig'")]){expect(changed).not.toBe(source);expect(allCasesMatch(changed)).toBe(false);}
- });
- it('binds the exact original PHP header PNG at both real local asset paths',()=>{expect(proof.assets).toHaveLength(1);const asset=proof.assets[0]!;expect(asset.php_ref).toBe(proof.php_ref);expect(asset.public_path).toBe('/static/images/diy/community.png');expect(asset.php_path).toBe('view/admin/src/assets/images/community.png');expect(asset.sha256).toBe('48785691c5387e98d65dc662913a3fdd3d146db9152b042d51f1f2647c8d8b4c');for(const file of[asset.admin_file,asset.uni_file]){const bytes=readFileSync(resolve(root,file));expect(bytes.length).toBe(1886);expect(sha(bytes)).toBe(asset.sha256);const dimensions=new DataView(Uint8Array.from(bytes).buffer);expect([dimensions.getUint32(16),dimensions.getUint32(20)]).toEqual([128,32]);}});
- it('requires the real mounted v-model/owner/page/permissions and canonical result in actual save payloads',()=>{
-  const source=read(proof.sources[0]!.file),render=proof.sources[0]!.edits[0]!.after_source;expect(pageBound(source)).toBe(true);
-  for(const changed of[source.replace(render,render.replace('v-model="form.value"','v-model="form.content"')),source.replace(render,render.replace(':disabled="submitting || !formVisible || !sessionReady"',':disabled="false"')),source.replace(render,render.replace(':editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`"',':editor-key="`fixed`"')),source.replace(render,render.replace(':page-published="persistedPublished"',':page-published="true"')),source.replace("import DiyCommunityEditor from", "import type DiyCommunityEditor from"),source.replace('return canonicalCommunityValue(canonicalCommerceValue','return canonicalCommerceValue'),source.replace('const value = canonicalJson(form.value);','const value = form.value;'),source.replace('        value,','        value: form.content,')]){expect(changed).not.toBe(source);expect(pageBound(changed)).toBe(false);}
- });
+const root = resolve(import.meta.dirname, '../..');
+const read = (file: string) => reversePromotionAuthorSource(file, reverseCouponAuthorSource(file, reversePointsAuthorSource(file, reversePresaleAuthorSource(file, reverseCombinationAuthorSource(file, reverseBargainAuthorSource(file, reverseSeckillAuthorSource(file, reverseLiveBroadcastAuthorSource(file,reverseSearchHotwordsSource(file,readFileSync(resolve(root, file === proof.current_report.file ? promotionAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\r\n?/gu, '\n'))))))))));
+const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
+const before = JSON.parse(read(proof.previous_report.file));
+const current = JSON.parse(read(proof.current_report.file));
+const sourceFiles = [
+  'view/admin-ts/src/pages/content/DiseList.vue', 'view/admin-ts/src/api/community.ts',
+  'view/uniapp-ts/src/utils/diyCommunity.ts', 'view/uniapp-ts/src/composables/useDiyCommunity.ts',
+  'view/uniapp-ts/src/components/diy/DiyCommunityWidget.vue', 'workers-ts/src/services/content/DiyEditorialMediaPolicy.ts',
+  'view/uniapp-ts/src/utils/diyEditorialMediaLease.ts', 'view/admin-ts/scripts/helpers/diy-navigation-runtime.cjs',
+  'view/uniapp-ts/scripts/diy-community-runtime.test.cjs',
+  'workers-ts/test/admin-frontend-api-audit.test.ts', 'workers-ts/test/diy-carousel-author-source-binding.test.ts',
+  'workers-ts/test/diy-list-author-source-binding.test.ts', 'workers-ts/test/diy-navigation-author-source-binding.test.ts',
+  'workers-ts/test/diy-follow-author-source-binding.test.ts', 'workers-ts/test/diy-editorial-author-source-binding.test.ts',
+  'workers-ts/test/diy-community-frontend.test.ts',
+  'view/admin-ts/package.json', 'view/uniapp-ts/package.json', 'workers-ts/package.json', '.github/workflows/workers-runtime-linux.yml',
+];
+
+describe('exact community author increment preserves all dated source and API inventories', () => {
+  it('pins unchanged editorial/follow/state proofs, the complete prior report and every reviewed source path', () => {
+    expect(sha(read('workers-ts/audit/diy-editorial-author-source-binding-20261024.json'))).toBe('8b43939285cfee0f58a464e2757ea335f116c53cfa42210c02e08681d6ad8579');
+    expect(sha(read('workers-ts/audit/diy-editorial-author-php-parity-20261024.json'))).toBe('d9f450b1c3ca0f108fda2d059fa414f66f308e290d2e4afb84ab9028fd0ad950');
+    expect(sha(read('workers-ts/audit/diy-follow-author-source-binding-20261024.json'))).toBe('7fac6edbe6b856c737f758c6d6952f449974e685098b065ac4c19dae0712a7d8');
+    expect(sha(read('workers-ts/test/fixtures/diy-state-author-historical-bindings-20261024.json'))).toBe('8ddc626ef49c2ada520940518c99a3b3bb803df5b1047308af9d4241ff96a7d9');
+    expect(proof.previous_report.sha256).toBe(editorialAuthorSourceBinding.current_report.sha256);
+    expect(sha(read(proof.previous_report.file))).toBe(proof.previous_report.sha256);
+    expect(proof.sources.map(row => row.file)).toEqual(sourceFiles);
+    expect(proof.sources[0]!.before_sha256).toBe(editorialAuthorSourceBinding.source.after_sha256);
+    const dice = reverseCommunityAuthorSource(sourceFiles[0]!, read(sourceFiles[0]!));
+    expect(sha(reverseEditorialAuthorSource(sourceFiles[0]!, dice))).toBe(editorialAuthorSourceBinding.source.before_sha256);
+    expect(reverseCommunityAuthorSource('unrelated/file.ts', 'unchanged exact bytes')).toBe('unchanged exact bytes');
+  });
+
+  it.each(sourceFiles)('reconstructs the complete captured predecessor at %s', file => {
+    const row = proof.sources.find(row => row.file === file)!;
+    expect(sha(read(file))).toBe(row.after_sha256);
+    expect(sha(reverseCommunityAuthorSource(file, read(file)))).toBe(row.before_sha256);
+  });
+
+  it.each(sourceFiles)('rejects extra source or changed exact inverse location at %s', file => {
+    expect(() => reverseCommunityAuthorSource(file, read(file) + '\n// unreviewed drift\n')).toThrow();
+    const binding = structuredClone(proof), row = binding.sources.find(row => row.file === file)!;
+    row.edits[0]!.after_line++;
+    expect(() => reverseCommunityAuthorSource(file, read(file), binding)).toThrow();
+  });
+
+  it('reconstructs only two source hashes and three line shifts with every endpoint and count retained', () => {
+    expect(applyCommunityAuthorReport(before)).toEqual(current);
+    expect(buildAdminFrontendApiAuditReport()).toEqual(applyLiveBroadcastAuthorReport(applySeckillAuthorReport(applyBargainAuthorReport(applyCombinationAuthorReport(applyPresaleAuthorReport(applyPointsAuthorReport(applyCouponAuthorReport(applyPromotionAuthorReport(current)))))))));
+    expect(sha(read(proof.current_report.file))).toBe(proof.current_report.sha256);
+    expect(current.counts).toEqual(before.counts);
+    expect(current.backend).toEqual(before.backend);
+    expect(current.counts).toEqual({ callSites: 703, pathVariants: 741, registered: 741, executable: 741, controlledUnavailable: 0, unregistered: 0, unresolved: 0 });
+    expect(proof.report_changes.map(row => [row.array, row.index])).toEqual([['frontendSources', 15], ['frontendSources', 104], ['calls', 732], ['calls', 733], ['calls', 734]]);
+    for (const row of proof.report_changes) {
+      const a = { ...row.before }, b = { ...row.after };
+      if (row.array === 'calls') { expect(Number(b.line) - Number(a.line)).toBe(3); delete a.line; delete b.line; }
+      else { delete a.sha256; delete b.sha256; }
+      expect(a).toEqual(b);
+    }
+  });
+
+  it.each(['counts', 'route', 'call', 'source', 'methodology'] as const)('rejects complete predecessor %s drift without hiding any historical rows', kind => {
+    const changed = structuredClone(before);
+    if (kind === 'counts') changed.counts.registered++;
+    if (kind === 'route') changed.backend.registeredRoutes[0].handler = 'unreviewed';
+    if (kind === 'call') changed.calls[0].line++;
+    if (kind === 'source') changed.frontendSources[0].sha256 = '0'.repeat(64);
+    if (kind === 'methodology') changed.methodology.scope = 'unreviewed';
+    expect(() => applyCommunityAuthorReport(changed)).toThrow();
+  });
+
+  it.each(['counts', 'backend', 'before-row', 'after-row', 'before-hash', 'after-hash'] as const)('rejects report proof %s drift instead of accepting a broader increment', kind => {
+    const changed = structuredClone(proof);
+    if (kind === 'counts') (changed.counts_unchanged as Record<string, number>).registered++;
+    if (kind === 'backend') changed.backend_unchanged = false;
+    if (kind === 'before-row') changed.report_changes[0]!.before.sha256 = '0'.repeat(64);
+    if (kind === 'after-row') changed.report_changes[0]!.after.sha256 = '0'.repeat(64);
+    if (kind === 'before-hash') changed.previous_report.sha256 = '0'.repeat(64);
+    if (kind === 'after-hash') changed.current_report.sha256 = '0'.repeat(64);
+    expect(() => applyCommunityAuthorReport(before, changed)).toThrow();
+  });
+
+  it.each(['duplicate-edit', 'before-hash', 'after-hash', 'edit-body', 'canonical-bypass'] as const)('rejects source proof %s drift', kind => {
+    const binding = structuredClone(proof), row = binding.sources[0]!;
+    let source = read(row.file);
+    if (kind === 'duplicate-edit') source += row.edits[0]!.after_source;
+    if (kind === 'before-hash') row.before_sha256 = '0'.repeat(64);
+    if (kind === 'after-hash') row.after_sha256 = '0'.repeat(64);
+    if (kind === 'edit-body') row.edits[0]!.after_source += '// unreviewed';
+    if (kind === 'canonical-bypass') source = source.replace('canonicalCommunityValue(canonicalEditorialValue', 'canonicalEditorialValue');
+    expect(() => reverseCommunityAuthorSource(row.file, source, binding)).toThrow();
+  });
+});
+
+const parityRaw = read('workers-ts/audit/diy-community-author-php-parity-20261024.json');
+const parity = JSON.parse(parityRaw) as {
+  PHP_ref: string;
+  PHP_sources: Array<{ file: string; raw_sha256: string }>;
+  PHP_flow_evidence: Array<{ file: string; start_line: number; end_line: number; source: string }>;
+  sources: Array<RouteSourceFollowup & { file: string }>;
+  assets: Array<{ file: string; before_exists: boolean; after_sha256: string; bytes: number; width: number; height: number }>;
+  default_binding: { top_level_keys: number; compact_json_sha256: string };
+};
+
+describe('independent community complete additions and exact fixed-PHP authority', () => {
+  it('pins the separate manifest, three original sources, 36 default keys and both original PNG copies', () => {
+    expect(sha(parityRaw)).toBe('96b35eaa70e0ff46260b5677f5e0078d277d310af978a940a879384f05f2bb67');
+    expect(parity.PHP_ref).toBe('8ed2a5b139f9170dd11b0dff91803f2fd59e40a5');
+    expect(parity.PHP_sources.map(row => [row.file, row.raw_sha256])).toEqual([
+      ['view/admin/src/components/mobilePage/home_community.vue', '748f9410bee33dc16f2e59e5a7a7bd4cc67e6f9434d9af789dfcb03d44f97bcc'],
+      ['view/admin/src/components/mobileConfig/c_community.vue', '6e4250dc590e71a4d0d4137a7924406fca8b3af5791bcfe560cffeef8b5174b6'],
+      ['view/uniapp/pages/index/components/community.vue', 'b23c714d7e72d377d23ada3c26d2c49b73fe6a2741de3280ca74ae6ff7605671'],
+    ]);
+    expect(parity.PHP_flow_evidence.map(row => row.start_line)).toEqual([278, 337, 354]);
+    expect(parity.PHP_flow_evidence[0]!.source).toContain('this.boxHeight = []');
+    expect(parity.PHP_flow_evidence[0]!.source).toContain('this.waterFall()');
+    expect(parity.PHP_flow_evidence[1]!.source).toContain('this.rightList.length < this.leftList.length');
+    expect(parity.PHP_flow_evidence[1]!.source).toContain('this.boxHeight[0] > this.boxHeight[1]');
+    expect(parity.PHP_flow_evidence[2]!.source).toContain('this.$nextTick');
+    expect(parity.default_binding).toMatchObject({ top_level_keys: 36, compact_json_sha256: '02be08a3bd63da9147cf65db1a1c56ae474be297b7b1971ea46b28efc8e32b6d' });
+    expect(parity.assets.map(row => row.file)).toEqual(['view/admin-ts/public/static/images/diy/community.png', 'view/uniapp-ts/src/static/images/diy/community.png']);
+    for (const asset of parity.assets) {
+      expect(asset.before_exists).toBe(false);
+      expect(asset).toMatchObject({ after_sha256: '48785691c5387e98d65dc662913a3fdd3d146db9152b042d51f1f2647c8d8b4c', bytes: 1886, width: 128, height: 32 });
+      expect(sha(readFileSync(resolve(root, asset.file)))).toBe(asset.after_sha256);
+    }
+    expect(parity.sources).toHaveLength(13);
+  });
+
+  it.each(Array.from({ length: 13 }, (_, index) => index))('pins and exactly reverses only complete new source %s', index => {
+    const binding = parity.sources[index]!, source = read(binding.file);
+    expect(sha(source)).toBe(binding.after_sha256);
+    expect(binding.before_sha256).toBe(sha(''));
+    expect(binding.edits).toEqual([{ before_source: '', after_source: source, before_line: 1, after_line: 1 }]);
+    expect(reverseRouteSourceFollowup(source, binding)).toBe('');
+  });
+
+  it.each(Array.from({ length: 13 }, (_, index) => index))('rejects unrelated addition or misplaced inverse in complete new source %s', index => {
+    const binding = parity.sources[index]!;
+    expect(() => reverseRouteSourceFollowup(read(binding.file) + '\n// unreviewed\n', binding)).toThrow();
+    const changed = structuredClone(binding); changed.edits[0]!.after_line++;
+    expect(() => reverseRouteSourceFollowup(read(binding.file), changed)).toThrow();
+  });
 });

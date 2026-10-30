@@ -1,39 +1,61 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
 import { verify } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { createContainerFromDb } from '../src/lib/di';
+import { systemConfig } from '../src/models/schema';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 import { prepareOfflinePaymentProvider } from '../src/services/payment/OfflinePaymentProvider';
 import { assertOfflineProviderRequest, validateOfflinePaymentTicket } from '../src/services/payment/OfflinePaymentProviderContract';
 import { paymentQueryFixture, paymentQueryKeys } from './helpers/paymentQueryFixture';
 import { decodeOfflineDetail } from '../../view/common/offlineCashier';
 
-describe('offline entrance contracts with actual local RSA and no provider/database I/O', () => {
-  const client = postgres('postgres://unused:unused@127.0.0.1:1/unused', { max: 1, connect_timeout: 1 });
-  const container = createContainerFromDb(drizzle(client));
+describe('offline entrance contracts with actual local RSA, SQL configuration and controlled provider I/O', () => {
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: ReturnType<typeof createContainerFromDb>;
   let keys: ReturnType<typeof paymentQueryKeys>, f: Awaited<ReturnType<typeof paymentQueryFixture>>;
-  beforeAll(() => { keys = paymentQueryKeys(); });
+  const cacheGet = vi.fn(async (_key: string): Promise<string | null> => null);
+  const cachePut = vi.fn(async () => {}), cacheDelete = vi.fn(async () => {});
+  beforeAll(async () => {
+    keys = paymentQueryKeys(); fixture = await financeMemoryPostgres([systemConfig]);
+    container = createContainerFromDb(fixture.db);
+  });
   beforeEach(async () => {
-    vi.spyOn(container.systemConfigDao, 'getValues').mockRejectedValue(Error('Database I/O forbidden'));
+    await fixture.reset(); cacheGet.mockReset(); cachePut.mockReset(); cacheDelete.mockClear();
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Unstubbed external I/O forbidden'));
     f = await paymentQueryFixture(container, keys);
     f.config.cfg_pay_weixin_open = '1'; f.config.cfg_ali_pay_status = '1';
+    await fixture.db.insert(systemConfig).values(Object.entries(f.config).map(([key, value], index) => ({
+      id: index + 1, menuName: key.slice(4), value: JSON.stringify(value), isStore: 0,
+    })));
+    cacheGet.mockImplementation(async key => key === 'cfg_wechat_appid' ? 'stale-official-account'
+      : key === 'cfg_routine_appId' ? 'stale-mini-account' : f.config[key] ?? null);
+    Object.assign(f.bindings.CONFIG_KV, { get: cacheGet, put: cachePut, delete: cacheDelete });
     f.env.ALIPAY_NOTIFY_URL = 'https://api.example/notify'; f.env.ALIPAY_RETURN_URL = 'https://shop.example/result';
   });
-  afterEach(() => { expect(container.systemConfigDao.getValues).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
-  afterAll(async () => { await client.end(); });
+  afterEach(() => {
+    try {
+      // Only the unchanged Alipay switch reader may use KV; WeChat public
+      // configuration must come from the complete SQL fixture.
+      for (const [key] of cacheGet.mock.calls) expect(key).toBe('cfg_ali_pay_status');
+      expect(cachePut).not.toHaveBeenCalled(); expect(cacheDelete).not.toHaveBeenCalled();
+    } finally { vi.restoreAllMocks(); }
+  });
+  afterAll(async () => { if (fixture) await fixture.close(); });
   const request = () => ({ orderNo: 'xx' + 'a'.repeat(30), amountCents: 1000, transactionType: 'h5' as const, payerId: '', clientIp: '203.0.113.42' });
   const identity = () => ({ provider: 'wechat' as const, profile: 'wechat' as const, appId: f.identity().appId, merchantId: f.identity().merchantId });
   it.each(['invalid appid','app\nidentity'])('rejects invalid offline app identity %j during preflight',async appId=>{
-    f.config.cfg_wechat_appid=appId;await expect(prepareOfflinePaymentProvider(container,f.env,'wechat','wechat')).rejects.toThrow();expect(fetch).not.toHaveBeenCalled();
+    await fixture.db.update(systemConfig).set({value:JSON.stringify(appId)}).where(eq(systemConfig.menuName,'wechat_appid'));
+    await expect(prepareOfflinePaymentProvider(container,f.env,'wechat','wechat')).rejects.toThrow();expect(fetch).not.toHaveBeenCalled();
+    expect(cacheGet).not.toHaveBeenCalled();
   });
   it('an explicitly supplied current config bypasses stale KV without cache reads or writes',async()=>{
     const current=Object.fromEntries(Object.entries(f.config).map(([key,value])=>[key.slice(4),value]));
-    f.env.CONFIG_KV.get=async()=>{throw Error('Unexpected cache read');};f.env.CONFIG_KV.put=async()=>{throw Error('Unexpected cache write');};
+    await fixture.db.update(systemConfig).set({value:'"stale-sql-account"'}).where(eq(systemConfig.menuName,'wechat_appid'));
+    const sourceRead=vi.spyOn(fixture.db,'transaction');
+    cacheGet.mockImplementation(async()=>{throw Error('Unexpected cache read');});cachePut.mockImplementation(async()=>{throw Error('Unexpected cache write');});
     expect((await prepareOfflinePaymentProvider(container,f.env,'wechat','wechat',current)).identity.appId).toBe('wx-local-query');
     await expect(prepareOfflinePaymentProvider(container,f.env,'wechat','wechat',{...current,pay_weixin_open:'0'})).rejects.toThrow();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(sourceRead).not.toHaveBeenCalled();expect(cacheGet).not.toHaveBeenCalled();expect(cachePut).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
   });
   it.each(['127.0.0.1', '0.0.0.0', '::', '::1', '0:0:0:0:0:0:0:1', '::ffff:127.0.0.1', '::ffff:0.0.0.0', 'not-ip', '1.2.3.4\n'])('rejects unsafe H5 IP %s', clientIp => {
     expect(() => assertOfflineProviderRequest({ ...request(), clientIp })).toThrow(); expect(fetch).not.toHaveBeenCalled();
@@ -56,6 +78,7 @@ describe('offline entrance contracts with actual local RSA and no provider/datab
     vi.mocked(fetch).mockResolvedValue(f.wechatResponse({ h5_url: url, ignored: 'not-public' }));
     const provider = await prepareOfflinePaymentProvider(container, f.env, 'wechat', 'wechat');
     expect(await provider.initiate(request())).toEqual({ kind: 'wechat-h5', url: url + '&redirect_url=' + encodeURIComponent('https://shop.example/offline-payment-return?orderId='+request().orderNo) });
+    expect(cacheGet).not.toHaveBeenCalled();
   });
   it.each(['wechat','alipay'] as const)('%s binds the H5 return to the original order and freezes it before config edits',async name=>{
     const raw='https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=wx123&package=a%2fb%2Bc';
@@ -115,6 +138,7 @@ describe('offline entrance contracts with actual local RSA and no provider/datab
   });
   it('freezes Alipay key, application and URLs before later config edits, with exact max int32 cents', async () => {
     const provider = await prepareOfflinePaymentProvider(container, f.env, 'alipay', 'alipay');
+    expect(cacheGet).toHaveBeenCalledOnce(); expect(cacheGet).toHaveBeenCalledWith('cfg_ali_pay_status');
     f.env.ALIPAY_PRIVATE_KEY = 'invalid'; f.env.ALIPAY_APP_ID = 'new-app'; f.env.OFFLINE_PC_RETURN_ORIGIN = 'https://changed.example';
     const ticket = await provider.initiate({ ...request(), transactionType: 'wap', amountCents: 2_147_483_647 });
     if (ticket.kind !== 'alipay-wap') throw Error('Expected WAP');

@@ -1,104 +1,198 @@
 <template>
-<section class="community-author-editor" aria-label="社区组件作者编辑器">
-<h3>种草社区</h3><p class="hint">切换风格保留已有配置，保存页面后生效。</p>
-<el-alert v-if="parsed.error" :title="parsed.error" type="warning" :closable="false" />
-<template v-else-if="document">
-<div class="toolbar"><el-select v-model="addKind" aria-label="新增社区组件类型" :disabled="!canEdit"><el-option v-for="name in names" :key="name" :label="labels[name]" :value="name" /></el-select><el-button :disabled="!canEdit" @click="add()">添加社区组件</el-button></div>
-<template v-if="entries.length"><el-select :model-value="selected" aria-label="选择社区组件" @update:model-value="select"><el-option v-for="entry in entries" :key="entry.index" :value="entry.index" :label="`第 ${entry.index+1} 项 · ${labels[entry.kind]}`" /></el-select>
-<div class="toolbar"><el-button :disabled="!canEdit" @click="move(-1)">上移社区组件</el-button><el-button :disabled="!canEdit" @click="move(1)">下移社区组件</el-button><el-button :disabled="!canEdit" @click="add(true)">复制社区组件</el-button><el-button type="danger" :disabled="!canEdit" @click="remove">删除当前社区组件</el-button></div>
-<template v-if="block&&kind"><el-form label-position="top" :disabled="!canEdit">
-<el-form-item label="社区组件显示"><el-select :model-value="!flag(block.isHide)" @update:model-value="visible"><el-option label="显示" :value="true" /><el-option label="隐藏并保留配置" :value="false" /></el-select></el-form-item>
-<el-form-item label="社区编辑面板"><el-radio-group :model-value="number(read(block,['setUp','tabVal']))" @update:model-value="setLeaf(['setUp','tabVal'],$event)"><el-radio-button :value="0">内容设置</el-radio-button><el-radio-button :value="1">样式设置</el-radio-button></el-radio-group></el-form-item>
-<DiyCommunityFields :block="block" @change="setLeaf">
-<template #image="slot"><div class="image-slot"><img v-if="previewImage(slot.path)" :src="previewImage(slot.path)" alt="社区作者图片" /><span class="stored">{{text(read(block,slot.path))||'未选择图片'}}</span><SeckillActivityImagePicker :disabled="!canChooseMedia" :editor-key="mediaSession(slot.path).key" :title="`选择${slot.field.label}`" @choose="mediaSession(slot.path).choose" /><el-button :disabled="!canEdit" @click="setImage(slot.path,'')">清空图片</el-button></div></template>
-<template #topic="slot"><el-button :disabled="!canReadTopics||topicsLoading" :loading="topicsLoading" @click="loadTopics">读取可用社区话题</el-button><el-select :model-value="text(read(block,slot.path))" aria-label="社区话题" :disabled="!canEdit" @update:model-value="chooseTopic"><el-option label="未选择话题" value="" /><el-option v-if="topicValue&&!topics.some(row=>String(row.id)===topicValue)" :label="`保留已存话题 ${topicValue}`" :value="topicValue" /><el-option v-for="row in topics" :key="row.id" :label="row.name" :value="String(row.id)" /></el-select><p class="hint">保留原版话题配置；用户端展示公开社区列表。</p></template>
-</DiyCommunityFields></el-form>
-<el-alert v-if="error" :title="error" type="error" :closable="false" />
-<div class="toolbar"><el-button :disabled="!canEdit||!pageId||!pagePublished||mediaLoading" :loading="mediaLoading" @click="loadSavedMedia">读取已发布社区图片预览</el-button><el-button :disabled="!canEdit||previewLoading" :loading="previewLoading" @click="loadContent">读取公开社区预览</el-button></div>
-<DiyCommunityPreview :block="previewBlock" :data="previewData" :loading="previewLoading" :loaded="previewLoaded" :error="error" />
-</template></template><p v-else class="hint">此页面暂无社区组件。</p></template>
-</section>
+  <section class="community-editor" aria-label="社区作者编辑器">
+    <strong>种草社区</strong><p class="hint">编辑社区组件的标题、布局与样式，保存页面后生效。</p>
+    <el-alert v-if="parsed.error" :title="parsed.error" type="warning" :closable="false" />
+    <template v-else>
+      <div class="toolbar"><el-button :disabled="!canEdit" @click="add">添加社区组件</el-button></div>
+      <template v-if="entries.length">
+        <el-select :model-value="selected" aria-label="选择社区组件" @update:model-value="select"><el-option v-for="entry in entries" :key="entry.index" :value="entry.index" :label="`第 ${entry.index + 1} 项 · 种草社区`" /></el-select>
+        <div class="toolbar"><el-button :disabled="!canEdit" @click="move(-1)">上移社区组件</el-button><el-button :disabled="!canEdit" @click="move(1)">下移社区组件</el-button><el-button :disabled="!canEdit" @click="add(true)">复制社区组件</el-button><el-button :disabled="!canEdit" type="danger" @click="remove">删除社区组件</el-button></div>
+        <template v-if="block">
+          <el-form label-position="top" :disabled="!canEdit">
+            <div class="fields">
+              <el-form-item label="社区组件显示"><el-switch :model-value="!flag(block.isHide)" @update:model-value="setVisible" /></el-form-item>
+              <el-form-item label="社区编辑分组"><el-select :model-value="Number(read(block, ['setUp', 'tabVal']) || 0)" @update:model-value="setChoice('setUp', $event)"><el-option label="内容" :value="0" /><el-option label="样式" :value="1" /></el-select></el-form-item>
+              <el-form-item label="社区布局"><el-select :model-value="config.layout === 'columns' ? 1 : 0" @update:model-value="setChoice('styleConfig', $event)"><el-option label="左右滑动展示" :value="0" /><el-option label="两列展示（纵向）" :value="1" /></el-select></el-form-item>
+              <el-form-item label="社区标题类型"><el-select :model-value="config.titleMode === 'image' ? 0 : 1" @update:model-value="setChoice('titleConfig', $event)"><el-option label="图片标题" :value="0" /><el-option label="文字标题" :value="1" /></el-select></el-form-item>
+              <el-form-item v-for="field in [{ key: 'titleTxtConfig', label: '社区标题文字' }, { key: 'rightBntConfig', label: '社区右侧文字' }]" :key="field.key" :label="field.label"><el-input :model-value="text(read(block, [field.key, 'value']))" :maxlength="Math.max(6, text(read(block, [field.key, 'value'])).length)" :aria-label="field.label" @update:model-value="setText(field.key, $event)" /></el-form-item>
+              <el-form-item label="社区标题字形"><el-select :model-value="Number(read(block, ['titleText', 'tabVal']) || 0)" @update:model-value="setChoice('titleText', $event)"><el-option label="加粗" :value="0" /><el-option label="正常" :value="1" /><el-option label="倾斜" :value="2" /></el-select></el-form-item>
+              <el-form-item v-for="field in lengths" :key="field.key" :label="field.label + (field.key === 'numberConfig' ? '' : '（设计 px）')"><el-input-number :model-value="number(read(block, [field.key, 'val']))" :min="Math.min(field.min, number(read(block, [field.key, 'val'])))" :max="Math.max(field.max, number(read(block, [field.key, 'val'])))" :aria-label="field.label" @update:model-value="setLength(field.key, $event)" /></el-form-item>
+            </div>
+            <el-form-item label="社区图片标题"><div class="media-field"><img v-if="previewImage(['imgConfig','url'])" :src="previewImage(['imgConfig','url'])" alt="社区标题图片预览" style="max-width:160px;max-height:80px;object-fit:contain" /><p class="stored">{{ text(read(block, ['imgConfig', 'url'])) || '未选择图片' }}</p><SeckillActivityImagePicker :disabled="!canChooseMedia" :editor-key="mediaSessions.imgConfig.key" title="社区图片标题" @choose="mediaSessions.imgConfig.choose" /><el-button :disabled="!canEdit" @click="clearImage('imgConfig')">清空社区图片标题</el-button></div></el-form-item>
+            <div class="fields">
+              <el-form-item v-for="field in colours" :key="field.key + field.index" :label="field.label"><el-color-picker :model-value="colour(field)" show-alpha @update:model-value="setColour(field, $event)" /><el-input :model-value="colour(field)" :aria-label="field.label" @update:model-value="setColour(field, $event)" /></el-form-item>
+              <template v-for="radius in [{ key: 'fillet', label: '社区背景', corners: ['左上', '右上', '左下', '右下'] }, { key: 'filletImg', label: '社区横向图片', corners }]" :key="radius.key">
+                <el-form-item :label="radius.label + '圆角方式'"><el-select :model-value="flag(read(block, [radius.key, 'type'])) ? 1 : 0" @update:model-value="setRadiusType(radius.key, $event)"><el-option label="全部圆角" :value="0" /><el-option label="独立四角" :value="1" /></el-select></el-form-item>
+                <el-form-item v-if="!flag(read(block, [radius.key, 'type']))" :label="radius.label + '圆角'"><el-input-number :model-value="number(read(block, [radius.key, 'val']))" :min="0" :max="Math.max(100, number(read(block, [radius.key, 'val'])))" @update:model-value="setRadius(radius.key, -1, $event)" /></el-form-item>
+                <template v-else><el-form-item v-for="(corner, index) in radius.corners" :key="corner" :label="radius.label + corner + '圆角'"><el-input-number :model-value="number(read(block, [radius.key, 'valList', index, 'val']))" :min="0" :max="Math.max(100, number(read(block, [radius.key, 'valList', index, 'val'])))" @update:model-value="setRadius(radius.key, index, $event)" /></el-form-item></template>
+              </template>
+              <el-form-item label="社区点赞色调元数据"><el-select :model-value="Number(read(block, ['toneConfig', 'tabVal']) || 0)" @update:model-value="setChoice('toneConfig', $event)"><el-option label="跟随主题风格" :value="0" /><el-option label="自定义" :value="1" /></el-select></el-form-item>
+            </div>
+            <p class="hint">双列按图片与文字的实际高度分列，使用固定白底、间距和图片上圆角。双列间距、色调与点赞颜色保留为原配置元数据；公开页遵循原组件的展示规则。</p>
+            <el-form-item label="社区话题值（配置元数据）"><el-input :model-value="String(read(block, ['selectConfig', 'activeValue']) ?? '')" aria-label="社区话题值" @update:model-value="setTopicValue" /></el-form-item>
+            <el-form-item label="社区话题列表（完整 JSON 元数据）"><el-input :model-value="topicDraft" type="textarea" @update:model-value="topicSession.change" :rows="4" aria-label="社区话题列表" /><el-button :disabled="!canEdit" @click="applyTopicDraft">应用话题列表 JSON</el-button></el-form-item>
+            <div class="toolbar"><el-button :disabled="!canReadTopics || topicLoading" :loading="topicLoading" @click="loadTopics">读取社区话题目录</el-button><el-button :disabled="!canEdit || !topics.length" @click="applyTopics">将读取的话题目录写入配置</el-button></div>
+            <el-select v-if="topics.length" :model-value="String(read(block, ['selectConfig', 'activeValue']) ?? '')" aria-label="从目录选择社区话题" @update:model-value="setTopicValue"><el-option v-for="topic in topics" :key="topic.id" :value="String(topic.id)" :label="topic.name" /></el-select>
+            <p class="hint">话题值与选项列表仅作配置保存；此组件的公开列表沿用全社区内容。右侧文字固定进入社区发现页。</p>
+          </el-form>
+          <el-alert v-if="error" :title="error" type="warning" :closable="false" />
+          <div class="toolbar"><el-button :disabled="!canEdit || !pageId || !pagePublished || mediaLoading" :loading="mediaLoading" @click="loadSavedMedia">读取已发布社区标题图片</el-button><el-button :disabled="!canEdit || !config.enabled || dataLoading" :loading="dataLoading" @click="loadData">{{ dataState === 'error' ? '重试社区公开内容' : '读取社区公开内容' }}</el-button></div>
+          <p v-if="dataLoading" class="hint" role="status">正在读取社区公开内容…</p><p v-else-if="dataState === 'closed' || dataState === 'error'" class="hint" :role="dataState === 'error' ? 'alert' : 'status'">{{ dataMessage }}</p><p v-else-if="dataState === 'open' && !rows.length" class="hint">暂无社区公开内容</p><p v-else-if="dataState === 'idle'" class="hint">读取公开内容后可预览帖子排布。</p>
+          <DiyCommunityPreview :block="block" :rows="rows" :previews="previews" :editor-key="`${editorKey}:${revision}:${selected}`" />
+        </template>
+      </template>
+      <p v-else class="hint">此页面暂无社区组件。</p>
+    </template>
+  </section>
 </template>
+
 <script setup lang="ts">
 
-import { computed,nextTick,onBeforeUnmount,ref,watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { getToken } from '@/utils/auth';
 import SeckillActivityImagePicker from '@/pages/activity/SeckillActivityImagePicker.vue';
-import DiyCommunityFields from './DiyCommunityFields.vue';
-import DiyCommunityPreview from './DiyCommunityPreview.vue';
-import { COMMUNITY_NAMES as names,communityLabels as labels,communityKind,communityEntries,communityDocument,communityRecord as record,communityRead as read,addCommunityBlock,moveCommunityBlock,communityImageIdentity as imageIdentity,communityMediaPaths,canonicalCommunityBlock,communityPreviewUrl,communityFieldPatch,type CommunityKind,type CommunityPath,type CommunityRecord } from '@/utils/diyCommunityEditor';
-import { navFlag as flag,navText as text,navSet } from '@/utils/diyNavigationEditor';
-import { listRawNumber as number } from '@/utils/diyListEditor';
-import { normalizeDiyCommunity } from '@/utils/diyCommunityProjection';
-import { readCommunityPreview,communityPreviewDeadline,type CommunityPreview } from '@/api/diyCommunityAuthor';
+import DiyCommunityPreview from '@/components/content/DiyCommunityPreview.vue';
 import { apiCommunityAllTopics } from '@/api/community';
-const props=withDefaults(defineProps<{modelValue:string;editorKey:string;disabled?:boolean;pageId?:number;pagePublished?:boolean}>(),{disabled:false,pageId:0,pagePublished:false}),emit=defineEmits<{'update:modelValue':[value:string]}>(),auth=useAuthStore();
-const selected=ref(-1),addKind=ref<CommunityKind>('community'),revision=ref(0),error=ref(''),previews=ref<Record<string,string>>({}),mediaLoading=ref(false),leaseTick=ref(0);
-let alive=true,lastCommitted='',mediaAbort:AbortController|null=null,leaseTimer:ReturnType<typeof setTimeout>|undefined;
-type OwnEcho={beforeRaw:string;expectedRaw:string;owner:string;editor:string;index:number;disabled:boolean;pageId:number;pagePublished:boolean;leases:Record<string,string>;echo:boolean};
-let pendingOwnEcho:OwnEcho|null=null;
-function ownEchoCurrent(own:OwnEcho){return editable()&&own.owner===actor()&&own.editor===props.editorKey&&own.index===selected.value&&own.disabled===props.disabled&&own.pageId===props.pageId&&own.pagePublished===props.pagePublished&&own.expectedRaw===props.modelValue;}
-const actor=()=>`${auth.token}:${auth.userInfo?.id}:${auth.userInfo?.level}:${auth.uniqueAuth.join(',')}:${getToken()}:${localStorage.getItem('admin_session')}`;
-function editable(){return alive&&!props.disabled&&!!auth.token&&auth.token===getToken()&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.includes('dise.manage'));}
-const canReadTopics=computed(()=>canEdit.value&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.includes('community.view')));
-const canEdit=computed(()=>{void revision.value;return editable();}),canChooseMedia=computed(()=>canEdit.value&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.includes('attachment.view')));
-const parsed=computed(()=>{try{return{value:communityDocument(props.modelValue),error:''};}catch(reason){return{value:null,error:reason instanceof Error?reason.message:'装修 JSON 无效'};}}),document=computed(()=>parsed.value.value),entries=computed(()=>communityEntries(document.value??[])),block=computed(()=>record(document.value?.[selected.value])),kind=computed(()=>communityKind(block.value?.name));
+import { apiDiyCommunityPreview, communityPreviewDeadline, type CommunityAuthorPost } from '@/api/diyCommunityAuthor';
+import { createDiyAuthorMediaLeases } from '@/utils/diyAuthorMediaLeases';
+import { communityImageIdentity, communityPreviewUrl } from '@/utils/diyCommunityEditor';
+import { normalizeDiyCommunityPreview } from '@/utils/diyCommunityProjection';
+import { communityEntries, addCommunityBlock, moveCommunityBlock, removeCommunityBlock, canonicalCommunityBlock, communitySet, setCommunityNumber, setCommunityTopicMetadata } from '@/utils/diyCommunityEditor';
+import { navigationDocument, navigationRecord as record, navRead as read, navFlag as flag, navText as text } from '@/utils/diyNavigationEditor';
+import { communityNumber as number, canonicalCommunityImage } from '@/utils/diyCommunityEditor';
+import { listSafeColor } from '@/utils/diyListProjection';
+import { canonicalPresentationReference, presentationPreviewForReference } from '@/utils/diyPresentationEditor';
 
-const previewData=ref<CommunityPreview|null>(null),previewLoading=ref(false),previewLoaded=ref(false);
-const topics=ref<Array<{id:number;name:string}>>([]),topicsLoading=ref(false),topicValue=computed(()=>text(read(block.value,['selectConfig','activeValue'])));
-let previewAbort:AbortController|null=null,contentTimer:ReturnType<typeof setTimeout>|undefined,topicGeneration=0;
-async function loadTopics(){
- if(!canReadTopics.value)return;const issued=stamp(),generation=++topicGeneration;topicsLoading.value=true;topics.value=[];error.value='';
- try{const result=await apiCommunityAllTopics();if(!current(issued)||generation!==topicGeneration)return;const seen=new Set<number>();if(!Array.isArray(result)||result.length>1000||result.some(row=>!row||!Number.isSafeInteger(row.id)||row.id<=0||row.id>2147483647||seen.has(row.id)||!seen.add(row.id)||typeof row.name!=='string'||!row.name||row.name.length>512))throw Error('社区话题目录格式错误');topics.value=result.map(({id,name})=>({id,name}));}
- catch(reason){if(current(issued)&&generation===topicGeneration)error.value=reason instanceof Error?reason.message:'社区话题读取失败';}finally{if(generation===topicGeneration)topicsLoading.value=false;}
+type ImageKey = 'imgConfig';
+interface Colour { key: string; index: number; label: string; fallback: string }
+const props = withDefaults(defineProps<{ modelValue: string; editorKey: string; disabled?: boolean; pageId?: number; pagePublished?: boolean }>(), { disabled: false, pageId: 0, pagePublished: false });
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>(), auth = useAuthStore();
+const selected = ref(-1), revision = ref(0), error = ref(''), previews = ref<Record<string, string>>({}), mediaLoading = ref(false);
+const lengths = [{ key: 'numberConfig', label: '内容数量', min: 1, max: 100 }, { key: 'titleNumber', label: '标题字号', min: 0, max: 40 }, { key: 'bntNumber', label: '右侧字号', min: 0, max: 32 }, ...['videoSpace', 'videoSpace2', 'topConfig', 'bottomConfig', 'prConfig', 'mbConfig'].map((key, index) => ({ key, label: ['双列间距元数据', '横向内容间距', '上边距', '下边距', '左右边距', '页面上间距'][index]!, min: 0, max: 100 }))];
+const images: Array<{ key: ImageKey; label: string }> = [{ key: 'imgConfig', label: '社区图片标题' }];
+const colours: Colour[] = [{ key: 'headerBgColor', index: 0, label: '头部背景起始色', fallback: '#E93323' }, { key: 'headerBgColor', index: 1, label: '头部背景结束色', fallback: '#FF7931' }, { key: 'titleColor', index: 0, label: '标题颜色', fallback: '#fff' }, { key: 'headerBntColor', index: 0, label: '右侧文字颜色', fallback: '#fff' }, { key: 'moduleColor', index: 0, label: '横向内容背景起始色', fallback: '#fff' }, { key: 'moduleColor', index: 1, label: '横向内容背景结束色', fallback: '#fff' }, { key: 'bottomBgColor', index: 0, label: '外部背景颜色', fallback: '#f5f5f5' }, { key: 'likeSuccessColor', index: 0, label: '点赞颜色元数据', fallback: '#E93323' }];
+const corners = ['左上', '右上', '右下', '左下'];
+let alive = true, receiptEpoch = 0, mediaAbort: AbortController | null = null;
+const actor = () => `${auth.token}:${auth.userInfo?.id}:${auth.userInfo?.level}:${auth.uniqueAuth.join(',')}:${getToken()}:${localStorage.getItem('admin_session')}`;
+function editable() { return alive && !props.disabled && !!auth.token && auth.token === getToken() && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('dise.manage')); }
+const canEdit = computed(() => { void revision.value; return editable(); });
+const canChooseMedia = computed(() => canEdit.value && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('attachment.view')));
+const parsed = computed(() => { try { return { value: navigationDocument(props.modelValue), error: '' }; } catch (reason) { return { value: null, error: reason instanceof Error ? reason.message : '装修 JSON 无效' }; } });
+const document = computed(() => parsed.value.value), entries = computed(() => communityEntries(document.value ?? []));
+const block = computed(() => { const row = record(document.value?.[selected.value]); return row?.name === 'community' ? row : null; });
+const config = computed(() => normalizeDiyCommunityPreview(block.value));
+const canReadTopics = computed(() => canEdit.value && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.some(key => ['community.view', 'community.manage'].includes(key))));
+const rows = ref<CommunityAuthorPost[]>([]), dataLoading = ref(false), dataState = ref('idle'), dataMessage = ref(''), topics = ref<Array<{ id: number; name: string; is_recommend: number }>>([]), topicLoading = ref(false), topicDraft = ref('[]'), draftContext = ref(0);
+let dataAbort: AbortController | null = null, topicAbort: AbortController | null = null, preserveReceipt = false;
+function stamp() { return { actor: actor(), editor: props.editorKey, index: selected.value, revision: revision.value, raw: props.modelValue }; }
+function current(issued: ReturnType<typeof stamp>) { return editable() && issued.actor === actor() && issued.editor === props.editorKey && issued.index === selected.value && issued.revision === revision.value && issued.raw === props.modelValue; }
+let contentTimer: ReturnType<typeof setTimeout> | undefined;
+const mediaIdentity = () => JSON.stringify([actor(), props.editorKey, selected.value, props.disabled, props.pageId, props.pagePublished]);
+const leases = createDiyAuthorMediaLeases({ current: editable, identity: mediaIdentity, raw: () => props.modelValue,
+  references: () => [read(block.value, ['imgConfig', 'url'])], stable: communityImageIdentity, resolve: communityPreviewUrl,
+  read: () => previews.value, write: value => { previews.value = value; } });
+function clearFeed() { clearTimeout(contentTimer); contentTimer = undefined; rows.value = []; dataState.value = 'idle'; dataMessage.value = ''; }
+function invalidate(preserveRows = false, preserveEcho = false) { revision.value++; mediaAbort?.abort(); dataAbort?.abort(); topicAbort?.abort(); mediaAbort = dataAbort = topicAbort = null; mediaLoading.value = dataLoading.value = topicLoading.value = false; leases.clear(preserveEcho); topics.value = []; error.value = ''; if (!preserveRows) clearFeed(); }
+function invalidateContext() { receiptEpoch++; draftContext.value++; invalidate(); }
+watch(entries, () => { if (!entries.value.some(row => row.index === selected.value)) selected.value = entries.value[0]?.index ?? -1; }, { immediate: true });
+watch(() => props.modelValue, (value, before) => {
+  const own = leases.pending(), echo = leases.adopt(value, before);
+  if (!echo) { receiptEpoch++; draftContext.value++; }
+  invalidate(echo && preserveReceipt, echo);
+  if (echo && own) leases.settle(own);
+}, { flush: 'sync' });
+watch(selected, invalidateContext, { flush: 'sync' });
+watch([() => JSON.stringify(read(block.value, ['selectConfig', 'list']) ?? []), selected, () => props.editorKey, draftContext], () => { topicDraft.value = JSON.stringify(read(block.value, ['selectConfig', 'list']) ?? []); }, { immediate: true, flush: 'sync' });
+const topicSession = computed(() => { const issued = stamp(); return { change: (value: unknown) => { if (current(issued) && typeof value === 'string') topicDraft.value = value; } }; });
+watch(() => [props.editorKey, props.disabled, props.pageId, props.pagePublished, actor()], invalidateContext, { flush: 'sync' });
+for (const event of ['admin-session-changed', 'admin-auth-expired', 'storage']) window.addEventListener(event, invalidateContext);
+onBeforeUnmount(() => { alive = false; invalidateContext(); for (const event of ['admin-session-changed', 'admin-auth-expired', 'storage']) window.removeEventListener(event, invalidateContext); });
+function commit(value: unknown[], preserveRows = false) { if (!editable()) return false; try {
+  const raw = JSON.stringify(value, null, 2); navigationDocument(raw);
+  const own = leases.capture(props.modelValue, raw); receiptEpoch++; invalidate(preserveRows);
+  preserveReceipt = preserveRows; leases.expect(own); emit('update:modelValue', raw);
+  void nextTick(() => leases.settle(own)); return true;
+} catch (reason) { error.value = reason instanceof Error ? reason.message : '当前内容无法完整编辑'; return false; } }
+function edit(change: (row: Record<string, unknown>) => void) { if (!editable() || !document.value || !block.value) return false; try { const copy = structuredClone(document.value); change(record(copy[selected.value])!); if (JSON.stringify(copy) === JSON.stringify(document.value)) return false; return commit(copy, normalizeDiyCommunityPreview(record(copy[selected.value])).limit === config.value.limit); } catch (reason) { error.value = reason instanceof Error ? reason.message : '无法修改当前字段'; return false; } }
+function setLeaf(path: Array<string | number>, value: unknown) { if (read(block.value, path) === value) return false; return edit(row => communitySet(row, path, value)); }
+function select(value: unknown) { if (typeof value === 'number' && entries.value.some(row => row.index === value)) { invalidateContext(); selected.value = value; } }
+function add(duplicate: unknown = false) { if (!editable() || !document.value) return; try { const result = addCommunityBlock(document.value, 'community', duplicate === true && block.value ? block.value : undefined); if (commit(result.value)) selected.value = result.selected; } catch (reason) { error.value = reason instanceof Error ? reason.message : '无法添加组件'; } }
+function remove() { if (!editable() || !document.value || !block.value) return; try { const result = removeCommunityBlock(document.value, selected.value); if (commit(result.value)) selected.value = result.selected; } catch (reason) { error.value = reason instanceof Error ? reason.message : '无法删除组件'; } }
+function move(direction: -1 | 1) { if (!editable() || !document.value || !block.value) return; try { const result = moveCommunityBlock(document.value, selected.value, direction); if (commit(result.value)) selected.value = result.selected; } catch (reason) { error.value = reason instanceof Error ? reason.message : '无法移动组件'; } }
+function setVisible(value: unknown) { if (typeof value === 'boolean' && flag(block.value?.isHide) !== !value) setLeaf(['isHide'], !value); }
+function setText(key: string, value: unknown) { if (['titleTxtConfig', 'rightBntConfig'].includes(key) && typeof value === 'string' && value.length <= Math.max(6, text(read(block.value, [key, 'value'])).length) && !/[\u0000-\u001f\u007f]/u.test(value)) setLeaf([key, 'value'], value); }
+function setChoice(key: string, value: unknown) { const maximum = key === 'titleText' ? 2 : 1; if (['styleConfig', 'titleConfig', 'titleText', 'toneConfig', 'setUp'].includes(key) && typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum && Number(read(block.value, [key, 'tabVal'])) !== value) setLeaf([key, 'tabVal'], value); }
+function setLength(key: string, value: unknown) { const field = lengths.find(row => row.key === key); if (field && typeof value === 'number' && Number.isFinite(value) && value >= field.min && value <= Math.max(field.max, number(read(block.value, [key, 'val']))) && number(read(block.value, [key, 'val'])) !== value) edit(row => { setCommunityNumber(row, [key, 'val'], value, field.min, Math.max(field.max, number(read(row, [key, 'val'])))); }); }
+function colour(field: Colour) { return listSafeColor(read(block.value, [field.key, 'color', field.index, 'item']), field.fallback); }
+function setColour(field: Colour, value: unknown) { if (colours.some(row => row.key === field.key && row.index === field.index) && typeof value === 'string' && listSafeColor(value, '') === value.trim()) setLeaf([field.key, 'color', field.index, 'item'], value.trim()); }
+function setRadiusType(key: string, value: unknown) { if (['fillet', 'filletImg'].includes(key) && (value === 0 || value === 1) && flag(read(block.value, [key, 'type'])) !== !!value) setLeaf([key, 'type'], value); }
+function setRadius(key: string, index: number, value: unknown) { if (!['fillet', 'filletImg'].includes(key) || !Number.isInteger(index) || index < -1 || index > 3 || typeof value !== 'number' || !Number.isFinite(value) || value < 0) return; const path = index < 0 ? [key, 'val'] : [key, 'valList', index, 'val']; if (value <= Math.max(100, number(read(block.value, path))) && number(read(block.value, path)) !== value) setLeaf(path, value); }
+function clearImage(key: ImageKey) { if (images.some(row => row.key === key)) setLeaf([key, 'url'], ''); }
+function mediaSession(path: Array<string | number>) {
+  const issued = stamp(), allowed = path.length === 2 && path[0] === 'imgConfig' && path[1] === 'url';
+  return { key: `${props.editorKey}:${revision.value}:${selected.value}:${JSON.stringify(path)}`, choose: async (reference: string, signed: string) => {
+    if (!allowed || !current(issued) || !canChooseMedia.value || !block.value) return;
+    const approved = communityPreviewUrl(reference, signed); if (!approved) return;
+    let stable: string; try { stable = canonicalCommunityImage(reference); } catch { return; }
+    if (communityImageIdentity(read(block.value, path)) === stable) { leases.renew({ ...previews.value, [stable]: approved }); return; }
+    if (!setLeaf(path, stable)) return;
+    const own = leases.pending(); await nextTick();
+    if (leases.current(own) && canChooseMedia.value && communityImageIdentity(read(block.value, path)) === stable)
+      leases.renew({ ...previews.value, [stable]: approved });
+  } };
 }
-function chooseTopic(value:unknown){if(typeof value!=='string'||value!==''&&!topics.value.some(row=>String(row.id)===value))return;setLeaf(['selectConfig','activeValue'],value);}
-async function loadContent(){
- if(!editable()||!block.value)return;previewAbort?.abort();clearTimeout(contentTimer);contentTimer=undefined;const issued=stamp(),controller=new AbortController();previewAbort=controller;previewLoading.value=true;previewLoaded.value=false;previewData.value=null;error.value='';
- try{const result=await readCommunityPreview(normalizeDiyCommunity(block.value).limit,controller.signal);if(!current(issued)||previewAbort!==controller||controller.signal.aborted)return;const deadline=communityPreviewDeadline(result);previewData.value=result;previewLoaded.value=true;const adopted=previewData.value;
- const expireContent=()=>{if(current(issued)&&previewData.value===adopted){contentTimer=undefined;previewData.value=null;previewLoaded.value=false;error.value='公开素材预览已过期，请重新读取';}};if(Number.isFinite(deadline))contentTimer=setTimeout(expireContent,Math.min(2147483647,Math.max(1,deadline-Date.now()+1)));
- }catch(reason){if(current(issued)&&previewAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'社区预览读取失败';}finally{if(previewAbort===controller){previewAbort=null;previewLoading.value=false;}}
-}
-function stamp(){return{revision:revision.value,actor:actor(),editor:props.editorKey,index:selected.value,raw:props.modelValue};}
-function current(s:ReturnType<typeof stamp>){return editable()&&s.revision===revision.value&&s.actor===actor()&&s.editor===props.editorKey&&s.index===selected.value&&s.raw===props.modelValue;}
-function invalidate(preserveOwnEcho:unknown=false){if(preserveOwnEcho!==true)pendingOwnEcho=null;revision.value++;topicGeneration++;topics.value=[];topicsLoading.value=false;error.value='';mediaAbort?.abort();mediaAbort=null;mediaLoading.value=false;previewAbort?.abort();previewAbort=null;previewLoading.value=false;previewLoaded.value=false;previewData.value=null;clearTimeout(contentTimer);previews.value={};clearTimeout(leaseTimer);leaseTimer=undefined;leaseTick.value++;}
-watch(entries,()=>{if(!entries.value.some(row=>row.index===selected.value))selected.value=entries.value[0]?.index??-1;},{immediate:true});
-watch(selected,()=>{invalidate();},{flush:'sync'});
-watch(()=>[props.modelValue,props.editorKey,props.disabled,props.pageId,props.pagePublished,actor()],(next,previous)=>{
-  const own=pendingOwnEcho,echo=!!own&&!own.echo&&!!previous&&previous[0]===own.beforeRaw&&next[0]===own.expectedRaw&&next.slice(1).every((value,index)=>value===previous[index+1])&&ownEchoCurrent(own);
-  invalidate(echo);if(echo&&own)own.echo=true;
-},{flush:'sync'});
-window.addEventListener('admin-session-changed',invalidate);window.addEventListener('admin-auth-expired',invalidate);window.addEventListener('storage',invalidate);
-onBeforeUnmount(()=>{alive=false;invalidate();window.removeEventListener('admin-session-changed',invalidate);window.removeEventListener('admin-auth-expired',invalidate);window.removeEventListener('storage',invalidate);});
-function commit(value:unknown[]){if(!editable())return false;try{
-  const raw=JSON.stringify(value,null,2);communityDocument(raw);
-  const own:OwnEcho={beforeRaw:props.modelValue,expectedRaw:raw,owner:actor(),editor:props.editorKey,index:selected.value,disabled:props.disabled,pageId:props.pageId,pagePublished:props.pagePublished,leases:{...previews.value},echo:false};
-  invalidate();pendingOwnEcho=own;lastCommitted=raw;emit('update:modelValue',raw);
-  void nextTick(()=>{
-    if(pendingOwnEcho!==own)return;
-    if(!own.echo||!ownEchoCurrent(own)){pendingOwnEcho=null;return;}
-    const next:Record<string,string>={};
-    if(block.value)for(const path of communityMediaPaths(block.value)){const raw=read(block.value,path),identity=imageIdentity(raw),lease=own.leases[identity];if(lease&&communityPreviewUrl(raw,lease))next[identity]=lease;}
-    renewLeases(next);
-  });return true;
-}catch(reason){error.value=reason instanceof Error?reason.message:'无法完整保存';return false;}}
-function edit(change:(row:CommunityRecord)=>boolean|void){if(!editable()||!document.value||!block.value||!kind.value)return false;try{const value=structuredClone(document.value),row=record(value[selected.value]);if(!row||change(row)===false)return false;return commit(value);}catch(reason){error.value=reason instanceof Error?reason.message:'当前字段无法修改';return false;}}
-function setLeaf(path:CommunityPath,value:unknown){if(read(block.value,path)===value)return false;return edit(row=>communityFieldPatch(row,path,value));}
-function select(value:unknown){if(typeof value==='number'&&entries.value.some(entry=>entry.index===value)){invalidate();selected.value=value;}}
-function add(duplicate=false){if(!editable()||!document.value)return;try{const k=duplicate?kind.value:addKind.value;if(!k)return;const result=addCommunityBlock(document.value,k,duplicate&&block.value?block.value:undefined);if(commit(result.value))selected.value=result.selected;}catch(reason){error.value=reason instanceof Error?reason.message:'无法添加组件';}}
-function remove(){if(!document.value||!kind.value)return;const value=structuredClone(document.value);value.splice(selected.value,1);if(commit(value))selected.value=-1;}
-function move(direction:-1|1){if(!document.value)return;try{const result=moveCommunityBlock(document.value,selected.value,direction);if(commit(result.value))selected.value=result.selected;}catch(reason){error.value=reason instanceof Error?reason.message:'不能移动组件';}}
-function visible(value:unknown){if(typeof value==='boolean'&&flag(block.value?.isHide)!==!value)setLeaf(['isHide'],!value);}
-function mediaPathAllowed(path:CommunityPath){return !!block.value&&communityMediaPaths(block.value).some(p=>JSON.stringify(p)===JSON.stringify(path));}
-function setImage(path:CommunityPath,value:string){if(!mediaPathAllowed(path))return false;const canonical=imageIdentity(value);if(canonical&&!(canonical.startsWith('https://')||/^\/(?!\/)/u.test(canonical))||/[\u0000-\u0020\u007f\\]/u.test(canonical))return false;if(imageIdentity(read(block.value,path))===canonical)return false;return edit(row=>{navSet(row,path,canonical);});}
-function previewImage(path:CommunityPath){void leaseTick.value;if(!editable()||!block.value||!mediaPathAllowed(path))return '';const raw=read(block.value,path);return communityPreviewUrl(raw,previews.value[imageIdentity(raw)]);}
-function renewLeases(next:Record<string,string>){previews.value=next;clearTimeout(leaseTimer);leaseTick.value++;const expires=Object.values(next).flatMap(url=>{const match=/[?&]expires=(\d+)/u.exec(url);return match?[Number(match[1])*1000]:[];});if(expires.length)leaseTimer=setTimeout(()=>{const retained=Object.fromEntries(Object.entries(previews.value).filter(([,url])=>!!communityPreviewUrl(url,url)));renewLeases(retained);},Math.min(2147483647,Math.max(1,Math.min(...expires)-Date.now()+1)));}
-function mediaSession(path:CommunityPath){const issued=stamp(),owner=actor(),editor=props.editorKey,index=selected.value;return{key:`${props.editorKey}:${revision.value}:${index}:${JSON.stringify(path)}`,choose:async(reference:string,signed:string)=>{if(!current(issued)||!canChooseMedia.value||!mediaPathAllowed(path))return;const approved=communityPreviewUrl(reference,signed);if(!approved)return;const canonical=imageIdentity(reference);if(imageIdentity(read(block.value,path))===canonical){renewLeases({...previews.value,[canonical]:approved});return;}if(!setImage(path,reference))return;const expected=lastCommitted,own=pendingOwnEcho;await nextTick();if(own&&pendingOwnEcho===own&&own.echo&&ownEchoCurrent(own)&&alive&&editable()&&canChooseMedia.value&&actor()===owner&&props.editorKey===editor&&selected.value===index&&props.modelValue===expected&&mediaPathAllowed(path)&&imageIdentity(read(block.value,path))===canonical&&communityPreviewUrl(reference,approved))renewLeases({...previews.value,[canonical]:approved});}};}
-const previewBlock=computed(()=>{const copy=structuredClone(block.value??{});for(const path of communityMediaPaths(copy))navSet(copy,path,previewImage(path));return copy;});
-async function loadSavedMedia(){if(!editable()||!block.value||!props.pageId||!props.pagePublished)return;mediaAbort?.abort();const issued=stamp(),id=props.pageId,expected=JSON.stringify(canonicalCommunityBlock(block.value,true)),paths=communityMediaPaths(block.value),controller=new AbortController();mediaAbort=controller;mediaLoading.value=true;renewLeases({});error.value='';try{const response=await fetch(`/api/diy/get_diy/${id}`,{method:'GET',credentials:'omit',cache:'no-store',signal:controller.signal}),body=record(await response.json()),data=record(body?.data);if(!current(issued)||props.pageId!==id||!props.pagePublished||controller.signal.aborted)return;if(!response.ok||body?.status!==200||!Array.isArray(data?.value))throw Error('公开社区图片暂不可用');const found=data.value.map(record).find(row=>row&&JSON.stringify(canonicalCommunityBlock(row,true))===expected);if(!found)throw Error('当前组件与已发布内容不同，请保存后再读取');const next:Record<string,string>={};for(const path of paths){const raw=read(block.value,path),approved=communityPreviewUrl(raw,read(found,path));if(approved)next[imageIdentity(raw)]=approved;}renewLeases(next);}catch(reason){if(current(issued)&&mediaAbort===controller&&!controller.signal.aborted)error.value=reason instanceof Error?reason.message:'组件图片预览失败';}finally{if(mediaAbort===controller){mediaAbort=null;mediaLoading.value=false;}}}
+const mediaSessions = computed(() => ({ imgConfig: mediaSession(['imgConfig', 'url']) }));
+function previewImage(path: Array<string | number>) { const raw = read(block.value, path); return editable() ? communityPreviewUrl(raw, previews.value[communityImageIdentity(raw)]) : ''; }
 
+async function loadSavedMedia() {
+  if (!editable() || !block.value || !props.pageId || !props.pagePublished) return;
+  mediaAbort?.abort(); const controller = new AbortController(), issued = stamp(), id = props.pageId, expected = JSON.stringify(canonicalCommunityBlock(block.value));
+  mediaAbort = controller; mediaLoading.value = true; leases.renew({}); error.value = '';
+  try {
+    const response = await fetch(`/api/diy/get_diy/${id}`, { method: 'GET', credentials: 'omit', cache: 'no-store', signal: controller.signal });
+    const body = record(await response.json()), data = record(body?.data);
+    if (!current(issued) || controller.signal.aborted || props.pageId !== id || !props.pagePublished) return;
+    if (!response.ok || body?.status !== 200 || !Array.isArray(data?.value)) throw Error('公开社区组件暂不可用');
+    const found = data.value.map(record).find(row => row?.name === 'community' && JSON.stringify(canonicalCommunityBlock(row)) === expected);
+    if (!found) throw Error('当前社区组件与已发布内容不同，请保存后再读取');
+    const next: Record<string, string> = {};
+    for (const { key } of images) { const reference = text(read(block.value, [key, 'url'])), approved = presentationPreviewForReference(reference, read(found, [key, 'url'])); if (approved) next[canonicalPresentationReference(reference)] = approved; }
+    leases.renew(next);
+  } catch (reason) { if (current(issued) && mediaAbort === controller && !controller.signal.aborted) error.value = reason instanceof Error ? reason.message : '社区图片预览失败'; }
+  finally { if (mediaAbort === controller) { mediaAbort = null; mediaLoading.value = false; } }
+}
+async function loadData() {
+  if (!editable() || !block.value || !config.value.enabled || dataLoading.value) return;
+  const controller = new AbortController(), issued = stamp();
+  dataAbort?.abort(); dataAbort = controller; dataLoading.value = true; clearFeed(); error.value = '';
+  try {
+    const result = await apiDiyCommunityPreview(config.value.limit, controller.signal);
+    if (!current(issued) || dataAbort !== controller || controller.signal.aborted || !config.value.enabled) return;
+    rows.value = result.rows; dataState.value = result.open ? 'open' : 'closed'; dataMessage.value = result.message;
+    const deadline = communityPreviewDeadline({ closed: !result.open, rows: result.rows }), adopted = rows.value, feedContext = mediaIdentity();
+    if (Number.isFinite(deadline)) contentTimer = setTimeout(() => {
+      if (editable() && mediaIdentity() === feedContext && rows.value === adopted) { clearFeed(); dataState.value = 'error'; dataMessage.value = error.value = '公开素材预览已过期，请重新读取'; }
+    }, Math.min(2147483647, Math.max(1, deadline - Date.now() + 1)));
+  } catch (reason) { if (current(issued) && dataAbort === controller && !controller.signal.aborted) { dataState.value = 'error'; dataMessage.value = reason instanceof Error ? reason.message : '社区公开内容读取失败'; } }
+  finally { if (dataAbort === controller) { dataAbort = null; dataLoading.value = false; } }
+}
+async function loadTopics() {
+  if (!canReadTopics.value || !editable() || !block.value || topicLoading.value) return;
+  const controller = new AbortController(), issued = stamp(); topicAbort?.abort(); topicAbort = controller; topicLoading.value = true; topics.value = []; error.value = '';
+  try {
+    const result = await apiCommunityAllTopics(controller.signal, true);
+    if (!current(issued) || topicAbort !== controller || controller.signal.aborted || !canReadTopics.value) return;
+    const ids = new Set<number>();
+    if (!Array.isArray(result) || result.length > 1000 || result.some(row => !record(row) || !Number.isSafeInteger(row.id) || row.id < 1 || row.id > 2147483647 || ids.has(row.id) || !ids.add(row.id) || typeof row.name !== 'string' || !row.name.trim() || /[\u0000-\u001f\u007f]/u.test(row.name) || ![0, 1].includes(row.is_recommend))) throw Error('社区话题目录格式错误');
+    topics.value = structuredClone(result);
+  } catch (reason) { if (current(issued) && topicAbort === controller && !controller.signal.aborted) error.value = reason instanceof Error ? reason.message : '社区话题目录读取失败'; }
+  finally { if (topicAbort === controller) { topicAbort = null; topicLoading.value = false; } }
+}
+function setTopicValue(value: unknown) { const raw = read(block.value, ['selectConfig', 'activeValue']); if (typeof value === 'string' && String(raw ?? '') !== value && !/[\u0000-\u001f\u007f]/u.test(value)) edit(row => { setCommunityTopicMetadata(row, { activeValue: value }); }); }
+function applyTopicDraft() { if (!editable()) return; try { const list: unknown = JSON.parse(topicDraft.value); if (!Array.isArray(list)) throw Error('话题列表必须是完整 JSON 数组'); error.value = ''; edit(row => { setCommunityTopicMetadata(row, { list }); }); } catch (reason) { error.value = reason instanceof Error ? reason.message : '社区话题列表 JSON 无效'; } }
+function applyTopics() { if (editable() && topics.value.length) edit(row => { setCommunityTopicMetadata(row, { list: topics.value.map(topic => ({ title: topic.name, activeValue: String(topic.id) })) }); }); }
 </script>
 <style scoped>
-.community-author-editor{width:100%;min-width:0}.hint{font-size:12px;line-height:1.6;color:var(--el-text-color-secondary);margin:6px 0 10px}.toolbar,.selection-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.stored{overflow-wrap:anywhere;min-width:0}.image-slot{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.image-slot img{width:90px;height:50px;object-fit:contain}.community-author-editor :deep(.el-select){width:100%;max-width:100%}.community-author-editor :deep(.el-form){min-width:0}
+.community-editor{width:100%;min-width:0}.hint{margin:6px 0 10px;color:var(--el-text-color-secondary);font-size:12px;line-height:1.6}.toolbar,.media-field{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}.stored{flex-basis:100%;max-width:100%;margin:0;font-size:12px;overflow-wrap:anywhere}.community-editor :deep(.el-select){max-width:100%}.community-editor :deep(.el-input-number){width:100%}@media(max-width:620px){.fields{grid-template-columns:1fr}}
 </style>

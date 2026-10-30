@@ -13,7 +13,7 @@ import type {
   WechatCallbackOutboxMessage,
 } from "@/env";
 import type { Container } from "@/lib/di";
-import { createContainerFromDb, withTx } from "@/lib/di";
+import { createContainerFromDb, withTx, type DbClient } from "@/lib/di";
 import {
   qrcode,
   storeOrder,
@@ -43,6 +43,8 @@ import { LegacyShareCodeService } from '@/services/other/LegacyShareCodeService'
 import { findMembershipOrderByOrderId } from "@/services/user/PaidMembershipService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { WechatAuthService, type OfficialSubscriberProfile } from "./WechatAuthService";
+import { readOfficialAccountCallbackConfig } from './OfficialAccountRuntimeConfig';
+import { readRoutineAppIdSource, withRoutineAppId, type RoutineAppIdSource } from './RoutineRuntimeConfig';
 import {
   buildWechatReplyXml,
   decryptWechatCallback,
@@ -51,8 +53,10 @@ import {
   validateWechatCallbackSecret,
   verifyWechatEncryptedSignature,
   verifyWechatPlainChallenge,
+  verifyWechatPlainSignature,
   wechatCallbackSha,
   wechatEncryptedXmlValue,
+  wechatXmlText,
   type NormalizedWechatCallback,
   type WechatCallbackQuery,
   type WechatCallbackSource,
@@ -69,6 +73,8 @@ interface CallbackConfig {
   appId: string;
   token: string;
   aesKey: string;
+  mode: 0 | 1 | 2;
+  routineSource?: RoutineAppIdSource;
 }
 
 interface ReceiveResult {
@@ -127,6 +133,9 @@ export function isWechatCallbackDispatchMessage(value: unknown): value is Wechat
 
 function projectionType(event: Pick<WechatCallbackEvent, "source" | "msgType" | "eventType">): ProjectionType {
   if (event.msgType !== "event") return event.source === "official" ? "message" : "ignored";
+  // Mini subscribe/card/scan-shaped input grants no authority over the
+  // official-account global user/card tables.
+  if (event.source === "mini" && !["funds_order_pay", "trade_manage_order_settlement"].includes(event.eventType)) return "ignored";
   if (["subscribe", "unsubscribe"].includes(event.eventType)) return "follow";
   if (event.eventType === "scan") return "scan";
   if (["user_get_card", "submit_membercard_user_info", "user_del_card"].includes(event.eventType)) return "card";
@@ -212,17 +221,14 @@ export class WechatCallbackService {
   ) {}
 
   private async config(source: WechatCallbackSource): Promise<CallbackConfig> {
-    const appIdKey = source === "official" ? "wechat_appid" : "routine_appId";
-    const appId = await new SystemConfigService(this.container, this.env).get(appIdKey);
-    const token = source === "official"
-      ? this.env.WECHAT_OFFICIAL_CALLBACK_TOKEN ?? ""
-      : this.env.WECHAT_MINI_CALLBACK_TOKEN ?? "";
-    const aesKey = source === "official"
-      ? this.env.WECHAT_OFFICIAL_CALLBACK_AES_KEY ?? ""
-      : this.env.WECHAT_MINI_CALLBACK_AES_KEY ?? "";
+    if (source === 'official') return readOfficialAccountCallbackConfig(this.container, this.env);
+    const routineSource = await readRoutineAppIdSource(this.container);
+    const { appId } = routineSource;
+    const token = this.env.WECHAT_MINI_CALLBACK_TOKEN ?? '';
+    const aesKey = this.env.WECHAT_MINI_CALLBACK_AES_KEY ?? '';
     if (!appId || appId.length > 64) throw new Error("wechat_callback_app_id_invalid");
     validateWechatCallbackSecret(token, aesKey);
-    return { appId, token, aesKey };
+    return { appId, token, aesKey, mode: 2, routineSource };
   }
 
   async verifyChallenge(
@@ -231,12 +237,16 @@ export class WechatCallbackService {
     echo: string,
   ): Promise<string> {
     const config = await this.config(source);
+    let response: string;
     if (query.msgSignature) {
       await verifyWechatEncryptedSignature(query, echo, config.token);
-      return decryptWechatCallback(echo, config.aesKey, config.appId);
+      response = decryptWechatCallback(echo, config.aesKey, config.appId);
+    } else {
+      await verifyWechatPlainChallenge(query, echo, config.token);
+      response = echo;
     }
-    await verifyWechatPlainChallenge(query, echo, config.token);
-    return echo;
+    if (config.routineSource) await withRoutineAppId(this.container, config.routineSource, async () => undefined);
+    return response;
   }
 
   async receiveEncrypted(
@@ -249,9 +259,29 @@ export class WechatCallbackService {
     const encrypted = wechatEncryptedXmlValue(outerXml);
     await verifyWechatEncryptedSignature(query, encrypted, config.token);
     const plaintext = decryptWechatCallback(encrypted, config.aesKey, config.appId);
+    return this.receiveNormalized(source, plaintext, config, true);
+  }
+
+  /** Official-account opt-in database modes. Mini callbacks continue through
+   * receiveEncrypted and their independent deployment-only credentials. */
+  async receiveOfficial(query: WechatCallbackQuery, outerXml: string): Promise<ReceiveResult> {
+    const config = await this.config('official');
+    const hasEncrypted = wechatXmlText(outerXml, 'Encrypt') !== null || Boolean(query.msgSignature);
+    if (config.mode === 2 || hasEncrypted) {
+      if (config.mode === 0) throw new Error('wechat_callback_plain_mode_required');
+      if (!query.msgSignature) throw new Error('wechat_callback_encrypted_mode_required');
+      const encrypted = wechatEncryptedXmlValue(outerXml);
+      await verifyWechatEncryptedSignature(query, encrypted, config.token);
+      return this.receiveNormalized('official', decryptWechatCallback(encrypted, config.aesKey, config.appId), config, true);
+    }
+    await verifyWechatPlainSignature(query, config.token);
+    return this.receiveNormalized('official', outerXml, config, false);
+  }
+
+  private async receiveNormalized(source: WechatCallbackSource, plaintext: string, config: CallbackConfig, encryptedReply: boolean): Promise<ReceiveResult> {
     const normalized = await normalizeWechatCallback(plaintext, source, config.appId);
     const reply = await this.resolveReply(normalized);
-    const persisted = await this.persist(normalized, reply);
+    const persisted = await this.persist(normalized, reply, config.routineSource);
     const replyXml = buildWechatReplyXml({
       toUser: normalized.payload.fromUser,
       fromUser: normalized.payload.toUser,
@@ -260,9 +290,9 @@ export class WechatCallbackService {
     });
     return {
       ...persisted,
-      responseBody: replyXml
+      responseBody: replyXml ? encryptedReply
         ? await encryptWechatReply(replyXml, config.token, config.aesKey, config.appId)
-        : "success",
+        : replyXml : "success",
     };
   }
 
@@ -317,6 +347,7 @@ export class WechatCallbackService {
   private async persist(
     callback: NormalizedWechatCallback,
     reply: Record<string, unknown>,
+    routineSource?: RoutineAppIdSource,
   ): Promise<{
     eventId: number;
     outboxId: number;
@@ -337,7 +368,7 @@ export class WechatCallbackService {
     ]);
     const now = Math.floor(Date.now() / 1000);
     const replayKey = crypto.randomUUID();
-    return withTx(this.container, async (tx) => {
+    const save = async (tx: DbClient) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${callback.source}:${eventKey}`}, 0))`);
       const inserted = await tx.insert(wechatCallbackEvent).values({
         source: callback.source,
@@ -396,7 +427,10 @@ export class WechatCallbackService {
         duplicate: inserted.length === 0,
         reply: event.replyPayload,
       };
-    });
+    };
+    return routineSource
+      ? withRoutineAppId(this.container, routineSource, bound => save(bound.db))
+      : withTx(this.container, save);
   }
 
   async dispatchPending(limit = 20, onlyOutboxId?: number): Promise<{ claimed: number; enqueued: number }> {
@@ -470,6 +504,12 @@ export class WechatCallbackService {
     if (typeof claim === "string" || "kind" in claim) return claim;
     try {
       const type = projectionType(claim.event);
+      // A legacy watermark is ordering evidence, not proof that this account
+      // initiated the order. Preserve unresolved Mini financial events as
+      // failures even when an older implementation published a newer mark.
+      if (claim.event.source === "mini" && (type === "payment" || type === "receipt")) {
+        throw new Error("wechat_callback_original_account_evidence_required");
+      }
       if (type !== "scan" && await this.isSuperseded(claim.event, type)) {
         await this.finish(claim, type, {}, "SUPERSEDED");
         return "completed";
@@ -515,9 +555,10 @@ export class WechatCallbackService {
       if (outbox.status === "DEAD" || event.status === "DEAD") return "dead";
       if (outbox.status === "PROCESSING" && outbox.leaseUntil > now) return "busy";
       if (outbox.availableTime > now) return { kind: "deferred" as const, delaySeconds: outbox.availableTime - now };
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${event.source}:${event.subjectKeyHash}`}, 0))`);
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${JSON.stringify([event.source, event.appId, event.subjectKeyHash])}, 0))`);
       const active = await tx.select({ id: wechatCallbackEvent.id }).from(wechatCallbackEvent).where(and(
         eq(wechatCallbackEvent.source, event.source),
+        eq(wechatCallbackEvent.appId, event.appId),
         eq(wechatCallbackEvent.subjectKeyHash, event.subjectKeyHash),
         eq(wechatCallbackEvent.status, "PROCESSING"),
         sql`${wechatCallbackEvent.id} <> ${event.id}`,
@@ -541,12 +582,30 @@ export class WechatCallbackService {
   }
 
   private async isSuperseded(event: WechatCallbackEvent, type: ProjectionType): Promise<boolean> {
-    const rows = await withTx(this.container, (tx) => tx.select().from(wechatCallbackWatermark).where(and(
+    const scope = await this.watermarkScope(event);
+    const watermark = await withTx(this.container, tx => this.watermarkInTx(tx, event, type, scope));
+    return !!watermark && !newerThanWatermark(event, watermark);
+  }
+
+  private watermarkScope(event: WechatCallbackEvent): Promise<string> {
+    return wechatCallbackSha("SHA-256", JSON.stringify(["wechat-callback-account-v1", event.appId, event.subjectKeyHash]));
+  }
+
+  private async watermarkInTx(tx: DbClient, event: WechatCallbackEvent, type: ProjectionType, scope: string) {
+    // Old verified events and watermarks stay immutable. A legacy unscoped
+    // watermark applies only when its actual last event proves this AppID;
+    // new writes use the account-scoped key. Never infer from current config.
+    const rows = await tx.select({ watermark: wechatCallbackWatermark }).from(wechatCallbackWatermark)
+      .innerJoin(wechatCallbackEvent, eq(wechatCallbackEvent.id, wechatCallbackWatermark.lastEventId))
+      .where(and(
         eq(wechatCallbackWatermark.source, event.source),
         eq(wechatCallbackWatermark.projectionType, type),
-        eq(wechatCallbackWatermark.subjectKeyHash, event.subjectKeyHash),
-      )).limit(1));
-    return !!rows[0] && !newerThanWatermark(event, rows[0]);
+        inArray(wechatCallbackWatermark.subjectKeyHash, [scope, event.subjectKeyHash]),
+        eq(wechatCallbackEvent.source, event.source),
+        eq(wechatCallbackEvent.appId, event.appId),
+      )).for("update");
+    return rows.map(row => row.watermark).sort((left, right) =>
+      right.lastEventTime - left.lastEventTime || right.lastSequenceRank - left.lastSequenceRank || right.lastEventId - left.lastEventId)[0];
   }
 
   private async prepareProjection(event: WechatCallbackEvent, type: ProjectionType): Promise<PreparedProjection> {
@@ -591,7 +650,7 @@ export class WechatCallbackService {
       return { uid: users[0]?.uid };
     }
     if (type === "payment") return { payment: await this.bridgePayment(event) };
-    if (type === "receipt") return { receiptApplied: await this.applyReceipt(String(payload.orderNo ?? "")) };
+    if (type === "receipt") return { receiptApplied: await this.applyReceipt(event) };
     return {};
   }
 
@@ -618,6 +677,10 @@ export class WechatCallbackService {
   }
 
   private async bridgePayment(event: WechatCallbackEvent): Promise<{ outboxId: number; terminalConflict: boolean }> {
+    // A verified callback AppID proves the sender account, not which account
+    // initiated an existing store/recharge/membership order. Those domains
+    // currently expose no exact Mini original-account witness here.
+    if (event.source === "mini") throw new Error("wechat_callback_original_account_evidence_required");
     const orderNo = String(event.payload.orderNo ?? "");
     const transactionId = String(event.payload.transactionId ?? "");
     const [store, recharge, membership] = await withTx(this.container, async (tx) => {
@@ -634,7 +697,7 @@ export class WechatCallbackService {
     const amountCents = decimalToCents(String(store?.payPrice ?? recharge?.price ?? membership?.payPrice));
     const callback: VerifiedPaymentCallback = {
       provider: "wechat",
-      profile: event.source === "mini" ? "routine" : "wechat",
+      profile: "wechat",
       providerEventId: `social:${event.eventKey}`,
       orderNo,
       transactionId,
@@ -647,7 +710,9 @@ export class WechatCallbackService {
     return { outboxId: result.outboxId, terminalConflict: result.terminalConflict };
   }
 
-  private async applyReceipt(providerOrderNo: string): Promise<boolean> {
+  private async applyReceipt(event: WechatCallbackEvent): Promise<boolean> {
+    if (event.source === "mini") throw new Error("wechat_callback_original_account_evidence_required");
+    const providerOrderNo = String(event.payload.orderNo ?? "");
     const candidates = [providerOrderNo];
     const parts = providerOrderNo.split("_");
     if (parts.length === 2 && parts[1]) candidates.push(parts[1]);
@@ -683,13 +748,9 @@ export class WechatCallbackService {
     forcedStatus?: "SUPERSEDED",
   ): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
+    const scope = await this.watermarkScope(claim.event);
     await withTx(this.container, async (tx) => {
-      const watermarks = await tx.select().from(wechatCallbackWatermark).where(and(
-        eq(wechatCallbackWatermark.source, claim.event.source),
-        eq(wechatCallbackWatermark.projectionType, type),
-        eq(wechatCallbackWatermark.subjectKeyHash, claim.event.subjectKeyHash),
-      )).limit(1).for("update");
-      const watermark = watermarks[0];
+      const watermark = await this.watermarkInTx(tx, claim.event, type, scope);
       const additive = type === "scan";
       const superseded = forcedStatus === "SUPERSEDED"
         || (!additive && !!watermark && !newerThanWatermark(claim.event, watermark));
@@ -707,7 +768,7 @@ export class WechatCallbackService {
         await tx.insert(wechatCallbackWatermark).values({
           source: claim.event.source,
           projectionType: type,
-          subjectKeyHash: claim.event.subjectKeyHash,
+          subjectKeyHash: scope,
           lastEventId: claim.event.id,
           lastEventKey: claim.event.eventKey,
           lastEventTime: claim.event.eventTime,

@@ -330,7 +330,7 @@ jobs:
       - name: Verify actual DIY author editors
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
-        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-editorial-author && npm run test:diy-commerce-author && npm run test:diy-community-author
+        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-editorial-author && npm run test:diy-commerce-author && npm run test:diy-community-author && npm run test:diy-follow && npm run test:diy-editorial && npm run test:diy-community && npm run test:diy-promotion && npm run test:diy-coupon && npm run test:diy-points && npm run test:diy-presale && npm run test:diy-combination && npm run test:diy-bargain && npm run test:diy-seckill && npm run test:diy-live-broadcast && npm run test:config-classes && npm run test:browser-log && npm run test:exceptions && npm run test:profile && npm run test:platform-menu-rules && npm run test:express-author && npm run test:level-author && npm run test:user-label-author && npm run test:store-author && npm run test:staff-author && npm run test:delivery-author && npm run test:group-author && npm run test:unit-author
 
       - name: Verify grouped Admin navigation
         if: matrix.directory == 'admin-ts'
@@ -346,6 +346,16 @@ jobs:
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
         run: npm run test:extract-directory
+
+      - name: Verify complete product-label author and recovery
+        if: matrix.directory == 'admin-ts'
+        working-directory: view/admin-ts
+        run: npm run test:product-label-author
+
+      - name: Verify editorial author navigation and immutable PHP styles
+        if: matrix.directory == 'uniapp-ts'
+        working-directory: view/uniapp-ts
+        run: npm run test:diy-editorial-author && npm run test:diy-community-author && npm run test:diy-promotion-author && npm run test:diy-coupon-author && npm run test:diy-points-author && npm run test:diy-presale-author && npm run test:diy-combination-author && npm run test:diy-bargain-author && npm run test:diy-seckill-author && npm run test:diy-live-broadcast-author
 
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'

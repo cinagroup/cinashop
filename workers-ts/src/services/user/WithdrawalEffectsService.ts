@@ -6,7 +6,7 @@ import {
   type OrderNotificationDeliveryPayload, type WithdrawalNoticeOutboxPayload,
 } from "@/models/schema";
 import { centsToDecimal, decimalToCents } from "@/services/order/OrderBrokerageService";
-import { createImmutableDelivery, type OrderNotificationOutboxEvent } from "@/services/order/OrderNotificationOutboxService";
+import { captureRoutineNotificationAccount, createImmutableDelivery, type OrderNotificationOutboxEvent } from "@/services/order/OrderNotificationOutboxService";
 
 export const WITHDRAWAL_APPROVED_EVENT = "withdrawal.approved.notice";
 export const WITHDRAWAL_REFUSED_EVENT = "withdrawal.refused.notice";
@@ -32,11 +32,11 @@ export async function recordWithdrawalEffects(
 ): Promise<void> {
   const eventType = rejected ? WITHDRAWAL_REFUSED_EVENT : WITHDRAWAL_APPROVED_EVENT;
   const eventKey = `${eventType}:${request.id}`;
-  const payload: WithdrawalNoticeOutboxPayload = {
+  const payload: WithdrawalNoticeOutboxPayload = await captureRoutineNotificationAccount(tx, eventKey, {
     withdrawalId: request.id, userId: request.uid, netAmount: request.extractPrice,
     grossAmount: centsToDecimal(decimalToCents(request.extractPrice) + decimalToCents(request.extractFee)),
     nickname: account.nickname, reason: rejected ? reason : "", occurredAt: now,
-  };
+  });
   const [inserted] = await tx.insert(storeOrderOutbox).values({
     eventKey, aggregateType: "withdrawal", aggregateId: request.id, eventType, payload,
     status: "PENDING", availableTime: now, addTime: now, updateTime: now,

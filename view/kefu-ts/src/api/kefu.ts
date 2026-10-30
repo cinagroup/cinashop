@@ -46,7 +46,7 @@ export const kefuApi = {
     apiRequest<KefuScanPollResult>(`/kefuapi/scan/${encodeURIComponent(key)}`, {
       headers: { "X-Scan-Poll-Token": pollToken },
     }),
-  createOauthState: () => apiRequest<{ state: string; expires_in: number }>("/kefuapi/oauth_state", {
+  createOauthState: () => apiRequest<{ state: string; expires_in: number; appid: string }>("/kefuapi/oauth_state", {
     method: "POST",
   }),
   wechatLogin: (code: string, state: string) =>

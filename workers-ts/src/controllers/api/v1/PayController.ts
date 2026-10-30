@@ -240,9 +240,7 @@ export async function aliPay(c: C) {
   try {
     const compatibility = new LegacyOrderCompatibilityService(c.get("container"), c.env);
     const payment = await compatibility.consumeAlipayKey(key);
-    const payContent = payment.payUrl ?? await new StoreOrderPayService(c.get("container"), c.env)
-      .alipayPay(payment.uid, payment.orderId);
-    return jsonOk(c, { pay_content: payContent });
+    return jsonOk(c, { pay_content: payment.payUrl });
   } catch (error) {
     if (error instanceof ValidateException) return jsonFail(c, error.message);
     throw error;

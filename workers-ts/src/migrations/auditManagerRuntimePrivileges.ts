@@ -11,6 +11,8 @@ import { pricingCatalogReady } from './checkoutPricingLockCatalog';
 import { refundEntityAcceptedPairSql } from './guestRefundEntityCatalog';
 import { inspectManagerRuntimeCapabilities } from './managerRuntimeCapabilities';
 import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
+import { inspectRoutinePaymentRuntime, routinePaymentRuntimeTablePrivileges, type RoutinePaymentRuntimeTarget } from './routinePaymentRuntime';
+import { inspectLocalPaymentCaseLock } from './localPaymentCaseLock';
 
 type Query = Pick<DbClient, 'execute'>;
 const modelColumns=new Map(Object.values(models).filter(value=>is(value,PgTable)).map(table=>{
@@ -106,12 +108,38 @@ export async function inspectManagerRuntimeCatalogPrerequisites(db: Query) {
 /** Named-role inspection over a maintenance connection, never SET ROLE.
  * false requires NOLOGIN while staged; true requires the commissioned LOGIN.
  * A complete ACL result does not replace actual manager business/HTTP tests. */
-export async function inspectManagerRuntimePrivileges(db: Query, options: { requireLogin: boolean }) {
+export interface ManagerRuntimeInspectionOptions {
+  requireLogin: boolean;
+  /** before-manager validates the complete old profile for an explicit forward;
+   * it never reports a commissioned runtime as ready. */
+  routine?: { target: RoutinePaymentRuntimeTarget; stage: 'before-manager' | 'ready' };
+}
+export async function inspectManagerRuntimePrivileges(db: Query, options: ManagerRuntimeInspectionOptions) {
   if (typeof options?.requireLogin !== 'boolean') throw Error('Explicit manager LOGIN stage required');
   const role = MANAGER_RUNTIME_ROLE, failures: string[] = [];
   const catalogs = await inspectManagerRuntimeCatalogPrerequisites(db);
   const plan=managerRuntimePrivilegePlan(catalogs.profile);
   failures.push(...catalogs.failures);
+  const [rawPresence] = await db.execute(sql`SELECT to_regclass('public.routine_identity_witness') IS NOT NULL
+    OR to_regclass('public.routine_payment_attempt') IS NOT NULL AS present`);
+  let routineLockOid: string | null = null;
+  const routine = options.routine;
+  if (routine) {
+    if (!['before-manager', 'ready'].includes(routine.stage)) throw Error('Explicit manager routine stage required');
+    const [binding] = await db.execute(sql`SELECT current_database()=${routine.target.database} AS ready`);
+    const state = await inspectRoutinePaymentRuntime(db, routine.target);
+    const included = routine.target.local?.includes(role) === true;
+    const lock = await inspectLocalPaymentCaseLock(db, role);
+    const bindingReady = routine.stage === 'ready'
+      ? included && routine.target.caseLock?.runtimeRoles.includes(role) === true && lock.runtimeReady
+      : !included && routine.target.caseLock?.runtimeRoles.includes(role) !== true;
+    if (binding?.ready !== true || !state.ready || !bindingReady) failures.push('manager_routine_payment_binding');
+    if (routine.stage === 'ready' && state.ready && bindingReady && binding?.ready === true) {
+      Object.assign(plan.tables, routinePaymentRuntimeTablePrivileges('local'));
+      plan.tables.payment_reconciliation_action = ['SELECT'];
+      routineLockOid = lock.functionOid;
+    }
+  } else if (rawPresence?.present === true) failures.push('manager_routine_payment_unbound');
   const [identity] = await db.execute(sql`SELECT
     current_setting('server_version_num')::int/10000=16 AS pg16,
     r.rolcanlogin=${options.requireLogin} AS login_stage,
@@ -130,7 +158,7 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: { requ
     FROM pg_catalog.pg_roles r WHERE r.rolname=${role}`);
   for (const key of ['pg16', 'login_stage', 'restricted', 'no_memberships', 'no_ownership', 'connected', 'no_ddl', 'no_replication_bypass', 'no_other_schema_data'])
     if (identity?.[key] !== true) failures.push(key);
-  if (!identity) return { ready: false, readOnly: true as const, completeServiceCoverageVerified: false as const,
+  if (!identity) return { ready: false, profileReady: false, readOnly: true as const, completeServiceCoverageVerified: false as const,
     failures: [...new Set([...failures, 'manager_role_missing'])].sort(), tableCount: 0, sequenceCount: 0 };
 
   const tables = await db.execute(sql`SELECT c.relname AS name,c.relkind,c.relpersistence,
@@ -183,6 +211,7 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: { requ
     pg_catalog.has_function_privilege(${role},p.oid,'EXECUTE WITH GRANT OPTION') AS delegate
     FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace`);
   const reviewed = [...catalogs.scope.functionOids, ...(catalogs.pricing.functionOid ? [catalogs.pricing.functionOid] : []),
+    ...(routineLockOid ? [routineLockOid] : []),
     ...[catalogs.capabilities.waybill,catalogs.capabilities.delivery,catalogs.capabilities.promotion].filter(c=>c.ready&&c.functionOid).map(c=>c.functionOid!)];
   const [routines] = await db.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
     WHERE p.prosecdef AND n.nspname NOT LIKE 'pg_%' AND n.nspname<>'information_schema'
@@ -198,12 +227,14 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: { requ
       OR(a.grantee=0 AND d.defaclobjtype IN('r','S'))) AS safe`);
   if (defaults?.safe !== true) failures.push('default_grants');
   const unique = [...new Set(failures)].sort();
-  return { ready: unique.length === 0 && catalogs.ready, profile:catalogs.profile,readOnly: true as const, completeServiceCoverageVerified: false as const,
+  const profileReady = unique.length === 0 && catalogs.ready;
+  return { ready: profileReady && routine?.stage !== 'before-manager', profileReady,
+    routineStage: routine?.stage ?? 'absent', profile:catalogs.profile,readOnly: true as const, completeServiceCoverageVerified: false as const,
     failures: unique, tableCount: present.size, sequenceCount: sequences.length };
 }
 
 /** Actual independently authenticated connection, not role impersonation. */
-export async function auditManagerRuntimePrivileges(db: DbClient) {
+export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget) {
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root manager connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
@@ -211,8 +242,10 @@ export async function auditManagerRuntimePrivileges(db: DbClient) {
     const [identity] = await tx.execute(sql`SELECT current_database() AS database,current_user AS role,session_user AS session,
       (SELECT r.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend_role,
       current_setting('session_replication_role')='origin' AS origin`);
-    const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true });
-    if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true) return { ...result, identity };
+    const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
+      ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}) });
+    if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true
+      && (!routine || identity.database === routine.database)) return { ...result, identity };
     return { ...result, identity, ready: false, failures: [...new Set([...result.failures, 'connection_identity'])].sort() };
   }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
 }

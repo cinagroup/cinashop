@@ -1,14 +1,14 @@
 import { reverseAdminUserFilterReport } from './helpers/adminUserFilterSourceBinding';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import {readMainMergePredecessor as readFileSync} from './helpers/migrationMergeSourceBinding';
 import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { buildAdminFrontendApiAuditReport } from '../scripts/admin-frontend-api-audit';
-import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { buildAdminFrontendApiAuditReport } from './helpers/migrationMergeMainReport';
+import { applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBindingMain';
 import { applyCommerceAuthorReport, commerceAuthorSourceBinding } from './helpers/diyCommerceAuthorSourceBinding';
-import { applyCommunityAuthorReport, communityAuthorSourceBinding } from './helpers/diyCommunityAuthorSourceBinding';
+import { applyCommunityAuthorReport, communityAuthorSourceBinding } from './helpers/diyCommunityAuthorSourceBindingMain';
 import { assertCommerceImagePreviewReport, reverseCommerceImagePreviewSource, commerceImagePreviewSourceBinding as proof } from './helpers/diyCommerceImagePreviewSourceBinding';
 
 const root = resolve(import.meta.dirname, '../..');

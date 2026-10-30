@@ -6,7 +6,7 @@
  */
 import { withTx, createContainerFromDb, type Container } from "@/lib/di";
 import type { Env } from "@/env";
-import { NotFoundException, ValidateException } from "@/utils/errors";
+import { NotFoundException, ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { UserLevelService } from "@/services/user/UserLevelService";
 import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
 import { calculateMemberUnitPriceCents, isPaidMembershipActive } from "@/services/order/StoreOrderCreateService";
@@ -26,6 +26,7 @@ import { themeDeadlines } from '@/services/content/ThemeReadService';
 import { renderProductPictures } from '@/services/activity/ProductAssetPolicy';
 import { decoratePublicProductActivities } from './PublicProductActivityData';
 import { detailDisplayPrice,readProductDetailExtras,renderProductDetailExtras,readDetailVideo } from './ProductDetailDesignData';
+import { HomepageReadBudget } from './HomepageReadBudget';
 import { parseSystemFormDefinition } from "@/services/system/SystemMetadataService";
 
 /** 默认分页大小 (对应 PHP database.page.defaultLimit) */
@@ -269,11 +270,7 @@ export class StoreProductService {
     return { list: await this.decorateLegacyPromotions(await decoratePublicProductCards(this.container.db, list, _uid, this.env)), count };
   }
 
-  /** 公共首页、推荐和榜单共用的可售商品读取路径。 */
-  async getRecommendProducts(
-    uid: number,
-    params: RecommendProductParams = {},
-  ): Promise<Record<string, unknown>[]> {
+  private async recommendationWhere(uid: number, params: RecommendProductParams): Promise<Record<string, unknown>> {
     const where: Record<string, unknown> = {
       publicCatalog: true,
       status: 1,
@@ -298,11 +295,59 @@ export class StoreProductService {
     if (params.isVip) where.isVip = 1;
     if (params.rankOrder) where.rankOrder = params.rankOrder;
 
+    return where;
+  }
+
+  /** 公共首页、推荐和榜单共用的可售商品读取路径。 */
+  async getRecommendProducts(
+    uid: number,
+    params: RecommendProductParams = {},
+  ): Promise<Record<string, unknown>[]> {
+    const where = await this.recommendationWhere(uid, params);
     const [page, limit] = this.getPageValue(params.page, params.limit);
     const list = await this.container.storeProductDao.getSearchList({ where, page, limit });
     const { discount, levelName, paidMemberPriceEnabled } = await this.getUserDiscount(uid);
     for (const item of list) this.postProcessRow(item, discount, levelName, paidMemberPriceEnabled);
     return this.decorateLegacyPromotions(list);
+  }
+
+  /** Internal configured homepage only. The caller must bind config, account
+   * and products to one repeatable-read read-only transaction. Ordinary
+   * user-controlled page/limit/offset bounds above remain unchanged. Query and
+   * decorate bounded100-row chunks until the full configured eligible set is
+   * complete; no successful partial array or new total-count clamp is returned. */
+  async getHomeRecommendProductsInTx(uid: number, target: number,
+    params: Omit<RecommendProductParams, 'page' | 'limit'>, budget = new HomepageReadBudget()): Promise<Record<string, unknown>[]> {
+    budget.check();
+    if (!Number.isSafeInteger(target) || target < 0) throw new ValidateException('首页推荐数量无效');
+    if (!target) return [];
+    const [snapshot] = await this.container.db.execute<{ ready: boolean }>(sql`SELECT
+      current_setting('transaction_isolation')='repeatable read'
+      AND current_setting('transaction_read_only')::boolean AS ready`);
+    if (snapshot?.ready !== true) throw new ServiceUnavailableException('首页商品需要完整一致的只读快照');
+    const where = await this.recommendationWhere(uid, params);
+    const eligible = await this.container.storeProductDao.countSearch(where);
+    if (!Number.isSafeInteger(eligible) || eligible < 0) throw new ServiceUnavailableException('首页商品完整数量不可用');
+    const count = Math.min(target, eligible), result: Record<string, unknown>[] = [];
+    const { discount, levelName, paidMemberPriceEnabled } = await this.getUserDiscount(uid);
+    budget.check();
+    for (let page = 1; result.length < count; page++) {
+      budget.check();
+      const rows = await this.container.storeProductDao.getSearchList({ where, page, limit: MAX_LIMIT });
+      budget.check();
+      budget.consume(rows);
+      const chunk = rows.slice(0, count - result.length);
+      if (!chunk.length) throw new ServiceUnavailableException('首页商品完整读取未完成，请重新加载');
+      for (const item of chunk) this.postProcessRow(item, discount, levelName, paidMemberPriceEnabled);
+      const { decoratePublicProductCards } = await import('./PublicProductCardData');
+      const cards = await decoratePublicProductCards(this.container.db, chunk, uid, this.env);
+      budget.check();
+      const decorated = await this.decorateLegacyPromotions(cards);
+      budget.consume(decorated);
+      if (decorated.length !== chunk.length) throw new ServiceUnavailableException('首页商品完整处理未完成');
+      result.push(...decorated);
+    }
+    return result;
   }
 
   /**

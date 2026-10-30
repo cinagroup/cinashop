@@ -27,7 +27,7 @@ import {
 } from "@/models/schema";
 import { decimalToCents } from "@/services/order/OrderBrokerageService";
 import {
-  applyStoreOrderPayment,
+  applyProviderStoreOrderPayment,
   type StoreOrderPaymentOutcome,
 } from "@/services/order/StoreOrderPayService";
 import { OrderOutboxService } from "@/services/order/OrderOutboxService";
@@ -36,7 +36,7 @@ import {
   findRechargeOrderByOrderId,
 } from "@/services/payment/RechargePaymentService";
 import {
-  applyMembershipPayment,
+  applyProviderMembershipPayment,
   findMembershipOrderByOrderId,
 } from "@/services/user/PaidMembershipService";
 import { AlipayTradeQueryService } from "@/services/payment/AlipayTradeQueryService";
@@ -47,6 +47,7 @@ import {
 } from "@/services/payment/PaymentProviderQuery";
 import { lockPaymentReconciliationRegistrationTx, registerPaymentReconciliationTx } from "@/services/payment/PaymentReconciliationRegistry";
 import { lockStoreOrderPaymentBoundary } from "@/services/payment/StoreOrderPaymentBoundary";
+import { assertNativeAppQueryWitnessInTx } from './NativeAppPaymentAuthority';
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { settleOfflineOrderExternalPayment, settleOfflineOrderQueryPayment } from "@/services/order/OfflineOrderExternalPaymentService";
 import { queryOfflineOrderPayment } from '@/services/order/OfflineOrderPaymentQueryService';
@@ -394,6 +395,7 @@ export class PaymentReconciliationService {
       // This case already exists. Reuse the registration lock order without an
       // INSERT privilege or an unnecessary speculative INSERT on every query.
       await lockPaymentReconciliationRegistrationTx(tx, claim.provider, claim.orderNo, result.transactionId);
+      if (claim.provider === 'wechat' && claim.profile === 'app') await assertNativeAppQueryWitnessInTx(tx, this.env, claim, result);
       const [current] = await tx.select().from(paymentReconciliationCase)
         .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
       if (!current || current.replayKey !== claim.replayKey
@@ -878,7 +880,7 @@ export class PaymentReconciliationService {
     }
     const payType = request.provider === "wechat" ? "weixin" : "alipay";
     if (store) {
-      const settled = await applyStoreOrderPayment(this.container, {
+      const settled = await applyProviderStoreOrderPayment(this.container, {
         orderId: store.id,
         payType,
         tradeNo: result.transactionId,
@@ -909,7 +911,7 @@ export class PaymentReconciliationService {
       });
       return settlementOutcome("recharge", settled.outcome);
     }
-    const settled = await applyMembershipPayment(this.container, {
+    const settled = await applyProviderMembershipPayment(this.container, {
       orderId: request.orderNo,
       payType,
       tradeNo: result.transactionId,

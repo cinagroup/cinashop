@@ -86,7 +86,13 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('modern manager and Admi
   async function rejectedWithoutWrites(action: () => Promise<unknown>) {
     const before = await facts();
     const result = await action().catch(error => {
-      expect(error.code, 'Predictable source/ACL rejection must be local, not raw SQL permission failure').not.toBe('42501');
+      const seen = new Set<object>();
+      for (let cause: unknown = error; cause && typeof cause === 'object' && !seen.has(cause);) {
+        seen.add(cause);
+        expect('code' in cause ? String(cause.code) : undefined,
+          'Predictable source/ACL rejection must be local, not raw SQL permission failure').not.toBe('42501');
+        cause = 'cause' in cause ? cause.cause : undefined;
+      }
       return null;
     });
     if (result && typeof result === 'object' && 'receipt' in result) {

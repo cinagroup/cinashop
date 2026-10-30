@@ -12,7 +12,7 @@ import {
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import { cityArea, storeUser, systemCity, systemStore } from "@/models/schema";
-import { signAttachmentReferences } from "@/services/system/AttachmentService";
+import { publicStoreImageReferences, renderStoreImageReferences } from "@/services/store/StoreAssetPolicy";
 import { PublicBrandingService } from "@/services/system/PublicBrandingService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { parseConfigInteger } from "@/utils/config";
@@ -387,10 +387,11 @@ export class PublicLocationStoreService {
         .where(where),
     ]);
 
-    const rawAssets = rows.flatMap((row) => [safePublicAsset(row.image), safePublicAsset(row.oblongImage)]);
-    const signedAssets = rawAssets.length
-      ? await signAttachmentReferences(this.env.APP_KEY, rawAssets)
-      : [];
+    // Both existing public image fields require present platform metadata before
+    // signing canonical references. This adds no second author image slot.
+    const references = await publicStoreImageReferences(this.container.db,
+      rows.flatMap(row => [{ image: row.image }, { image: row.oblongImage }]));
+    const signedAssets = (await renderStoreImageReferences(this.env.APP_KEY, references)).map(row => row.image);
     return {
       list: rows.map((row, index) => toLegacyPublicStore(
         row,

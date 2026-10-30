@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ActivityService } from "../src/services/activity/ActivityService";
 import { PgDialect } from 'drizzle-orm/pg-core';
+import { storeActivity } from '../src/models/schema';
 
 describe("legacy activity-list compatibility", () => {
   it("returns the PHP seckill-index envelope using the Shanghai clock", async () => {
@@ -76,6 +77,7 @@ describe("legacy activity-list compatibility", () => {
       title: "",
       image: "/bargain.png",
       price: "20.00",
+      otPrice: "20.00", // Actual DAO joins the base-product old price.
       minPrice: "5.00",
       info: "",
       sales: 2,
@@ -94,7 +96,9 @@ describe("legacy activity-list compatibility", () => {
     }]);
     const groupBy = vi.fn().mockResolvedValue([{ id: 13, count: 2 }]);
     const where = vi.fn().mockReturnValue({ groupBy });
-    const from = vi.fn().mockReturnValue({ where });
+    const from = vi.fn((table: unknown) => table === storeActivity
+      ? { where: vi.fn().mockResolvedValue([{ id: 201, image: '' }]) }
+      : { where });
     const service = new ActivityService({
       db: { select: vi.fn().mockReturnValue({ from }) },
       storeSeckillDao: { getByTimeId },

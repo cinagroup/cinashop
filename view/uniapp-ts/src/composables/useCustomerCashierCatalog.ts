@@ -2,13 +2,14 @@ import { createCustomerCashierRequests, type CustomerCashierRequests } from '@/a
 import { parseCustomerCashierCatalogEnvelope } from '@/utils/customerWorkCashierCatalog';
 import { parseCustomerWorkUserEnvelope, isCustomerWorkUserList, isCustomerWorkUserDetailData } from '@/utils/customerWorkUsersContract';
 import type { CustomerWorkController } from './useCustomerWork';
-export function useCustomerCashierCatalog(manager: CustomerWorkController) {
+import type { CustomerCashierCapabilityController } from './useCustomerCashierCapabilities';
+export function useCustomerCashierCatalog(manager: CustomerWorkController, domain: CustomerCashierCapabilityController) {
   const requests = new Set<CustomerCashierRequests>(); let epoch = 0;
   function clear() { epoch++; for (const scope of requests) scope.abort(); requests.clear(); }
   async function run<T>(path: string, parse: (value: unknown, uid: number, authority: NonNullable<typeof manager.context.value>) => T, data: Record<string, unknown> = {}): Promise<T> {
-    const authority = manager.context.value, fence = manager.fence(), version = epoch;
-    if (!manager.current() || !authority || authority.data.capabilities.cashier_second_card !== true) throw Error('当前账号没有次卡收银选品权限');
-    const scope = createCustomerCashierRequests(() => manager.current() && fence() && version === epoch); requests.add(scope);
+    const authority = manager.context.value, fence = manager.fence(), domainFence = domain.fence(), version = epoch;
+    if (!manager.current() || !authority || !domain.ready.value) throw Error('当前账号没有次卡收银选品权限');
+    const scope = createCustomerCashierRequests(() => manager.current() && fence() && domainFence() && version === epoch); requests.add(scope);
     try {
       const result = parse(await scope.request(path, 'GET', { ...data, scope_key: authority.scope_key }), scope.owner.uid, authority);
       if (!scope.active()) throw Error('次卡选品页面或账号已变化'); return result;

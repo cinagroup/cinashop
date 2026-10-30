@@ -23,6 +23,11 @@ export const ADMIN_NAVIGATION_SECTIONS: readonly AdminNavigationSection[] = [
     {"path": "/brand", "permissionPath": "/brand", "icon": "Collection", "label": "品牌管理"},
     {"path": "/label", "permissionPath": "/label", "icon": "PriceTag", "label": "标签管理"},
     {"path": "/label/products", "permissionPath": "/label", "icon": "PriceTag", "label": "商品标签管理"},
+    {"path": "/product/units", "permissionPath": "/product", "icon": "Goods", "label": "商品单位"},
+    {"path": "/product/ensures", "permissionPath": "/product", "icon": "Goods", "label": "保障服务"},
+    {"path": "/product/rules", "permissionPath": "/product", "icon": "Goods", "label": "SKU 规格模板"},
+    {"path": "/product/parameters", "permissionPath": "/product", "icon": "Goods", "label": "商品参数模板"},
+    {"path": "/product/hotwords", "permissionPath": "/product", "icon": "Goods", "label": "搜索热词"},
   ] },
   { id: "nav:orders", label: "订单与配送", icon: "Tickets", items: [
     {"path": "/order", "permissionPath": "/order", "icon": "Tickets", "label": "订单管理"},
@@ -35,6 +40,7 @@ export const ADMIN_NAVIGATION_SECTIONS: readonly AdminNavigationSection[] = [
     {"path": "/setting/city-delivery-settings", "permissionPath": "/setting/city-delivery-settings", "icon": "Tickets", "label": "同城配送设置"},
     {"path": "/setting/city-delivery-records", "permissionPath": "/setting/city-delivery-records", "icon": "Tickets", "label": "同城配送记录"},
     {"path": "/setting/waybill", "permissionPath": "/setting/waybill", "icon": "Tickets", "label": "电子面单"},
+    {"path": "/order/delivery-people", "permissionPath": "/order", "icon": "User", "label": "平台配送员"},
   ] },
   { id: "nav:users", label: "用户与会员", icon: "User", items: [
     {"path": "/user", "permissionPath": "/user", "icon": "User", "label": "用户管理"},
@@ -72,6 +78,8 @@ export const ADMIN_NAVIGATION_SECTIONS: readonly AdminNavigationSection[] = [
     {"path": "/activity/integral-batch", "permissionPath": "/activity/integral-batch", "icon": "Present", "label": "批量添加积分商品"},
     {"path": "/marketing/sign-rewards", "permissionPath": "/config", "icon": "Present", "label": "签到奖励"},
     {"path": "/marketing/sign-day-config", "permissionPath": "/marketing/sign-day-config", "icon": "Present", "label": "签到天数组"},
+    {"path": "/activity/bargain-records", "permissionPath": "/activity/bargain-records", "icon": "Present", "label": "砍价运营记录"},
+    {"path": "/activity/bargain-statistics", "permissionPath": "/activity/bargain-statistics", "icon": "Present", "label": "砍价统计"},
   ] },
   { id: "nav:content", label: "内容与装修", icon: "Brush", items: [
     {"path": "/community", "permissionPath": "/community", "icon": "ChatLineRound", "label": "社区运营"},
@@ -88,6 +96,10 @@ export const ADMIN_NAVIGATION_SECTIONS: readonly AdminNavigationSection[] = [
     {"path": "/setting/user-center-design", "permissionPath": "/setting/user-center-design", "icon": "Tickets", "label": "个人中心设计"},
     {"path": "/setting/theme-style", "permissionPath": "/setting/theme-style", "icon": "Tickets", "label": "主题风格"},
     {"path": "/setting/fab", "permissionPath": "/setting/fab", "icon": "Tickets", "label": "悬浮按钮"},
+    {"path": "/content/wechat-open", "permissionPath": "/content/wechat-open", "icon": "Setting", "label": "微信开放平台"},
+    {"path": "/content/wechat-app", "permissionPath": "/content/wechat-app", "icon": "Setting", "label": "原生App微信配置"},
+    {"path": "/content/wechat-base", "permissionPath": "/content/wechat-base", "icon": "Setting", "label": "公众号基础设置"},
+    {"path": "/content/wechat-menu", "permissionPath": "/content/wechat-menu", "icon": "ChatLineRound", "label": "公众号自定义菜单"},
   ] },
   { id: "nav:service", label: "客服与评价", icon: "ChatDotRound", items: [
     {"path": "/kefu", "permissionPath": "/kefu", "icon": "ChatDotRound", "label": "客服会话"},
@@ -135,6 +147,10 @@ export const ADMIN_NAVIGATION_SECTIONS: readonly AdminNavigationSection[] = [
     {"path": "/system/log", "permissionPath": "/system/log", "icon": "Tickets", "label": "操作日志"},
     {"path": "/setting/notification", "permissionPath": "/setting/notification", "icon": "Bell", "label": "通知配置"},
     {"path": "/setting/print", "permissionPath": "/setting/print", "icon": "Printer", "label": "小票打印"},
+    {"path": "/config/classes", "permissionPath": "/config", "icon": "Setting", "label": "配置分类"},
+    {"path": "/system/menu-rules", "permissionPath": "/system/menu-rules", "icon": "Setting", "label": "平台权限规则"},
+    {"path": "/config/pc", "permissionPath": "/config/pc", "icon": "Setting", "label": "PC基础配置"},
+    {"path": "/system/frontend-log", "permissionPath": "/system/frontend-log", "icon": "Document", "label": "本浏览器日志"},
   ] },
 ];
 

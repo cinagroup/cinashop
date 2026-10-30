@@ -7,9 +7,11 @@ import {
   type DbClient,
 } from "@/lib/di";
 import type { Env } from "@/env";
-import { user, wechatUser } from "@/models/schema";
+import { systemConfig, user, wechatUser } from "@/models/schema";
 import { LoginService } from "@/services/user/LoginService";
 import { WechatAuthService } from "@/services/wechat/WechatAuthService";
+import { readRoutineCredentials } from "@/services/wechat/RoutineRuntimeConfig";
+import { issueRoutineIdentityObservation } from "@/services/wechat/RoutineIdentityObservation";
 import { ValidateException } from "@/utils/errors";
 import { md5, verifyToken } from "@/utils/jwt";
 
@@ -181,6 +183,10 @@ async function withSchema<T>(
 
 async function seed(container: Container): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
+  await container.db.insert(systemConfig).values([
+    { id: 1, menuName: 'routine_appId', value: '"audit-routine-fixture"' },
+    { id: 2, menuName: 'routine_appsecret', value: '"audit-routine-secret"' },
+  ]);
   const rows = [
     { uid: IDS.disabled, account: "13910000002", phone: "13910000002", status: 0 },
     { uid: IDS.duplicateA, account: "dup-a", phone: "13910000003", status: 1 },
@@ -414,13 +420,23 @@ async function runCore(dbA: DbClient, dbB: DbClient, name: string): Promise<Omit
     && concurrentRows.users[0]?.pwd !== md5("123456");
   assertCondition(randomPasswordPreserved, "social binding inherited the legacy default password");
 
-  const unionUid = await withSchema(dbA, name, (container) =>
-    new WechatAuthService(container, envA).reconcileVerifiedIdentity({
+  // Unrun external fixture adaptation: the observation below uses real HMAC.
+  // dbA owns this temporary search_path; reads/fences open their own short
+  // transactions. The new witness catalog is fixed to public, so this legacy
+  // schema-only scenario needs an owned isolated database before its routine
+  // branch can be exercised. Never install a public witness table in the
+  // supplied external database or weaken the public-state fingerprint.
+  const routineContainer = createContainerFromDb(dbA);
+  const routineCredentials = await readRoutineCredentials(routineContainer, envA);
+  const unionUid = await new WechatAuthService(routineContainer, envA).reconcileVerifiedIdentity({
       openid: "audit-union-second-openid",
       unionid: "audit-union-1",
       userType: "routine",
+      routineStamp: routineCredentials.stamp,
+      routineObservation: issueRoutineIdentityObservation(envA, { appId: routineCredentials.appId,
+        openid: "audit-union-second-openid", unionid: "audit-union-1", sourceStamp: routineCredentials.stamp }),
       phone: "13910000017",
-    }));
+    });
   const unionState = await withSchema(dbA, name, async (container) => ({
     user: await oneUser(container, IDS.socialExisting),
     identities: await container.db.select({ uid: wechatUser.uid }).from(wechatUser)

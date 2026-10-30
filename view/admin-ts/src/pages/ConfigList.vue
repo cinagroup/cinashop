@@ -14,6 +14,11 @@
 
     <div class="safe-links">
       <el-card shadow="never">
+        <h3>配置分类</h3>
+        <p>系统与门店后台的配置目录、父级分类和显示状态。</p>
+        <router-link to="/config/classes"><el-button type="primary">进入设置</el-button></router-link>
+      </el-card>
+      <el-card shadow="never">
         <h3>系统表单</h3>
         <p>下单补充信息模板、受控组件编辑及用户提交数据。</p>
         <router-link to="/config/forms"><el-button type="primary">进入设置</el-button></router-link>

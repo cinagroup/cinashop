@@ -1,3 +1,4 @@
+import { reverseCommunityAuthorSource } from './helpers/diyCommunityAuthorSourceBinding';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -5,7 +6,7 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 const { parse, compileTemplate } = createRequire(import.meta.url)('../../view/uniapp-ts/node_modules/@vue/compiler-sfc') as typeof import('../../view/uniapp-ts/node_modules/@vue/compiler-sfc');
 const root=resolve(import.meta.dirname,'../../view/uniapp-ts/src');
-const read=(name:string)=>readFileSync(resolve(root,name),'utf8');
+const read=(name:string)=>reverseCommunityAuthorSource('view/uniapp-ts/src/'+name,readFileSync(resolve(root,name),'utf8'));
 function all<T extends ts.Node>(node:ts.Node,guard:(node:ts.Node)=>node is T):T[]{const out:T[]=[];const visit=(next:ts.Node)=>{if(guard(next))out.push(next);ts.forEachChild(next,visit);};visit(node);return out;}
 function tree(source:string){return ts.createSourceFile('actual.ts',source,ts.ScriptTarget.Latest,true);}
 function valueImport(script:ts.SourceFile,module:string,name:string){return script.statements.some(node=>ts.isImportDeclaration(node)&&ts.isStringLiteral(node.moduleSpecifier)&&node.moduleSpecifier.text===module&&node.importClause&&!node.importClause.isTypeOnly&&(node.importClause.name?.text===name||node.importClause.namedBindings&&ts.isNamedImports(node.importClause.namedBindings)&&node.importClause.namedBindings.elements.some(element=>!element.isTypeOnly&&element.name.text===name)));}

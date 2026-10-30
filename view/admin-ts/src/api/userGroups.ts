@@ -41,7 +41,7 @@ export function parseUserGroupPage(value: unknown): UserGroupPage {
 export function normalizedUserGroupName(value: string): string {
   const name = value.trim();
   if (!name) throw new Error("请输入分组名称");
-  if (name.length > 64) throw new Error("分组名称不能超过64个字符");
+  if ([...name].length > 64) throw new Error("分组名称不能超过64个字符");
   return name;
 }
 

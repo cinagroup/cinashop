@@ -1,0 +1,4 @@
+/* Reuse the already bundled full original-version font bytes.
+ * Its old retrieval provenance is not a fixed-Git binary or new network fetch.
+ * Fixed iconfont.css maps the live video glyph to U+E6A4. No authored media slot. */
+@import './diyBargainFire.css';

@@ -69,7 +69,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑页面' : '新增 DIY 页面'" width="760px">
+    <el-dialog v-model="formVisible" :title="form.id ? '编辑页面' : '新增 DIY 页面'" width="min(760px, calc(100vw - 24px))">
       <el-alert
         v-if="!form.id"
         title="新增页固定创建为停用的 DIY 首页合同（type=1、is_diy=1），请先检查内容再另行启用。"
@@ -100,10 +100,19 @@
         <el-form-item label="导航组件"><DiyNavigationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="轮播组件"><DiyCarouselEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="列表组件"><DiyListEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
-        <el-form-item label="会员权益组件"><DiyStateEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="商城组件"><DiyCommerceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
-        <el-form-item label="社区组件"><DiyCommunityEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
-        <el-form-item label="新闻热区活动"><DiyEditorialEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="商品选项卡"><DiyPromotionEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="优惠券"><DiyCouponEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="积分商城"><DiyPointsEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="直播"><DiyLiveBroadcastEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="秒杀"><DiySeckillEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="砍价"><DiyBargainEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="拼团"><DiyCombinationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="预售"><DiyPresaleEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="会员权益组件"><DiyStateEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="种草社区"><DiyCommunityEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="公告与活动"><DiyEditorialEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
+        <el-form-item label="公众号关注"><DiyFollowEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="内容排版"><DiyPresentationEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="页面悬浮按钮"><DiyCustomerServiceEditor v-model="form.value" :editor-key="`${editorIdentity}:${form.id}:${editorEpoch}`" :page-id="form.id" :page-published="persistedPublished" :disabled="submitting || !formVisible || !sessionReady" /></el-form-item>
         <el-form-item label="装修 value" required>
@@ -166,10 +175,26 @@ import DiyStateEditor from "@/components/content/DiyStateEditor.vue";
 import { canonicalStateValue } from "@/utils/diyStateEditor";
 import DiyCommerceEditor from '@/components/content/DiyCommerceEditor.vue';
 import { canonicalCommerceValue } from '@/utils/diyCommerceEditor';
-import DiyCommunityEditor from '@/components/content/DiyCommunityEditor.vue';
-import { canonicalCommunityValue } from '@/utils/diyCommunityEditor';
+import DiyFollowEditor from "@/components/content/DiyFollowEditor.vue";
+import { canonicalFollowValue } from "@/utils/diyFollowEditor";
 import DiyEditorialEditor from "@/components/content/DiyEditorialEditor.vue";
 import { canonicalEditorialValue } from "@/utils/diyEditorialEditor";
+import DiyCommunityEditor from "@/components/content/DiyCommunityEditor.vue";
+import { canonicalCommunityValue } from "@/utils/diyCommunityEditor";
+import DiyPromotionEditor from "@/components/content/DiyPromotionEditor.vue";
+import DiyCouponEditor from "@/components/content/DiyCouponEditor.vue";
+import DiyLiveBroadcastEditor from "@/components/content/DiyLiveBroadcastEditor.vue";
+import DiySeckillEditor from "@/components/content/DiySeckillEditor.vue";
+import { canonicalSeckillValue } from "@/utils/diySeckillEditor";
+import DiyBargainEditor from "@/components/content/DiyBargainEditor.vue";
+import { canonicalBargainValue } from "@/utils/diyBargainEditor";
+import DiyCombinationEditor from "@/components/content/DiyCombinationEditor.vue";
+import { canonicalCombinationValue } from "@/utils/diyCombinationEditor";
+import DiyPresaleEditor from "@/components/content/DiyPresaleEditor.vue";
+import { canonicalPresaleValue } from "@/utils/diyPresaleEditor";
+import DiyPointsEditor from "@/components/content/DiyPointsEditor.vue";
+import { canonicalPointsValue } from "@/utils/diyPointsEditor";
+import { canonicalPromotionValue } from "@/utils/diyPromotionEditor";
 import { canonicalCarouselValue } from "@/utils/diyCarouselEditor";
 
 import DiyPageSettingsEditor from "@/components/content/DiyPageSettingsEditor.vue";
@@ -302,7 +327,7 @@ function canonicalJson(value: string): string | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (parsed === null) return null;
-    return canonicalCommunityValue(canonicalCommerceValue(canonicalEditorialValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))))));
+    return canonicalCommerceValue(canonicalSeckillValue(canonicalBargainValue(canonicalCombinationValue(canonicalPresaleValue(canonicalPointsValue(canonicalPromotionValue(canonicalCommunityValue(canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))))))))))));
   } catch {
     return null;
   }

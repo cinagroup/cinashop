@@ -4,6 +4,9 @@ import { createContainerFromDb } from '../src/lib/di';
 import type { Env } from '../src/env';
 import { LoginService } from '../src/services/user/LoginService';
 import { WechatAuthService, type SocialUserType } from '../src/services/wechat/WechatAuthService';
+import { readRoutineCredentials } from '../src/services/wechat/RoutineRuntimeConfig';
+import { issueRoutineIdentityObservation } from '../src/services/wechat/RoutineIdentityObservation';
+import { ROUTINE_IDENTITY_WITNESS_SQL } from '../src/migrations/routineIdentityWitness';
 import { OutUserService } from '../src/services/out/OutUserService';
 import { readRegistrationLevelStatus } from '../src/services/user/RegistrationLevelActivation';
 import { setTokenBucket } from '../src/utils/cache';
@@ -46,9 +49,12 @@ describe('new accounts initialize level activation from current SQL policy', () 
   beforeAll(async () => {
     f = await financePostgres([user, systemConfig, wechatUser, systemUserLevel,
       userLevel, communityUser, outUserWriteReplay, userLabelRelation,
-      userBill, userMoney, storeCouponIssue, storeCouponUser, storeCouponIssueUser]);
+      userBill, userMoney, storeCouponIssue, storeCouponUser, storeCouponIssueUser], { namespace: 'public' });
     await f.exec('CREATE UNIQUE INDEX fixture_openid_uq ON wechat_user (openid)');
     await f.exec(`CREATE UNIQUE INDEX fixture_phone_uq ON "user" (phone) WHERE phone <> '' AND is_del = 0`);
+    // Explicit installation by the disposable fixture owner. Do not add this
+    // immutable ledger to reset() or count its rows across registration cases.
+    await f.exec(ROUTINE_IDENTITY_WITNESS_SQL);
   }, 60_000);
   afterAll(async () => { await f?.close(); }, 60_000);
   beforeEach(async () => {
@@ -56,6 +62,8 @@ describe('new accounts initialize level activation from current SQL policy', () 
     await f.db.insert(systemConfig).values([
       { id: 1, menuName: 'member_func_status', value: '1' },
       { id: 2, menuName: 'level_activate_status', value: '0' },
+      { id: 90001, menuName: 'routine_appId', value: '"registration-routine-fixture"' },
+      { id: 90002, menuName: 'routine_appsecret', value: '"registration-routine-secret"' },
     ]);
   });
 
@@ -74,8 +82,11 @@ describe('new accounts initialize level activation from current SQL policy', () 
       return (await new OutUserService(container, env).create(outAccount, { phone }, outKey)).uid;
     }
     if (flow !== 'password' && flow !== 'mobile') {
+      const credentials = flow === 'routine' ? await readRoutineCredentials(container, env) : null;
       return new WechatAuthService(container, env).reconcileVerifiedIdentity({
         openid, userType: flow === 'social-phone' ? 'wechat' : flow as SocialUserType,
+        ...(credentials ? { routineStamp: credentials.stamp,
+          routineObservation: issueRoutineIdentityObservation(env, { appId: credentials.appId, openid, sourceStamp: credentials.stamp }) } : {}),
         ...(flow === 'social-phone' ? { phone } : {}),
       });
     }

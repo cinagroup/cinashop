@@ -1,6 +1,6 @@
 import { reverseMigrationAuditHarnessSource } from './helpers/migrationAuditFollowupSourceBinding';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import {readMainMergePredecessor as readFileSync} from './helpers/migrationMergeSourceBinding';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { describe,expect,it } from 'vitest';

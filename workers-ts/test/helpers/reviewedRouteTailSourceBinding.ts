@@ -1,7 +1,7 @@
 import { peelMessageCenterReportIfPresent } from './messageCenterSourceBinding';
 import { peelReviewedAdminHistoricalSourceIfPresent, hasReviewedAdminHistoricalSource } from './reviewedAdminSourceTailBinding';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readMainMergePredecessor as readFileSync } from './migrationMergeSourceBinding';
 import { relative, resolve, sep } from 'node:path';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './routeSourceIncrement';
 

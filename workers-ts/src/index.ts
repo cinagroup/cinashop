@@ -138,6 +138,7 @@ export default {
     const { SmsVerificationService, isSmsVerificationMessage } = await import(
       "./services/message/SmsVerificationService"
     );
+    const { AdminProfileSmsService, isAdminProfileSmsMessage } = await import('./services/admin/AdminProfileSmsService');
     const { hasExhaustedOrderQueueRetries } = await import(
       "./services/order/OrderQueuePolicy"
     );
@@ -179,14 +180,23 @@ export default {
     const signReminders = new SignReminderService(container, env);
     const secondCardReminders = new SecondCardReminderService(container, env);
     const sms = new SmsVerificationService(container, env);
+    const adminProfileSms = new AdminProfileSmsService(container, env);
     const attachments = new AttachmentService(container, env);
     const officialQrcodes = new OfficialAccountQrcodeService(container, env);
     const notificationDeliveries = new OrderNotificationDeliveryService(container, env);
     const printJobs = new ReceiptPrintJobService(container, env);
     const waybillJobs = new OrderWaybillJobService(container, env);
 
+    const {isUserLabelSyncMessage,dispatchQueuedUserLabelSync}=await import('./services/admin/AdminUserLabelSyncQueue');
+
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if(isUserLabelSyncMessage(msg.body)){
+        try{const result=await dispatchQueuedUserLabelSync(msg.body,env);if(result.done||hasExhaustedOrderQueueRetries(msg.attempts))msg.ack();else msg.retry({delaySeconds:30});}
+        catch(error){emitOperationalEvent('error',{event:'user_label_sync_dispatch_failed',component:'queue',operation:'user_label_sync',outcome:'retry',queueAttempt:msg.attempts,errorCode:operationalErrorCode(error,'user_label_sync_dispatch_failed')});if(hasExhaustedOrderQueueRetries(msg.attempts))msg.ack();else msg.retry({delaySeconds:60});}
+        continue;
+      }
+
       if (isCityDeliveryCallbackDispatchMessage(msg.body)) {
         try {
           const customerDispatched = await customerCityDeliveries.dispatchPending(20);
@@ -632,6 +642,29 @@ export default {
 
       if (isSignReminderMessage(msg.body)) {
         await consumeSignReminderQueueMessage(msg, signReminders);
+        continue;
+      }
+
+      if (isAdminProfileSmsMessage(msg.body)) {
+        try {
+          const result = await adminProfileSms.processMessage(msg.body);
+          emitOperationalEvent('info', { event: 'admin_profile_sms_consumed', component: 'queue', operation: 'sms_verification',
+            outcome: 'success', result, durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts });
+          msg.ack();
+        } catch (error) {
+          if (hasExhaustedOrderQueueRetries(msg.attempts)) {
+            await adminProfileSms.abandon(msg.body);
+            emitOperationalEvent('error', { event: 'admin_profile_sms_abandoned', component: 'queue', operation: 'sms_verification',
+              outcome: 'failure', durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts, errorCode: operationalErrorCode(error) });
+            msg.ack();
+          } else {
+            const delaySeconds = Math.min(30 * 2 ** Math.max(msg.attempts - 1, 0), 900);
+            emitOperationalEvent('error', { event: 'admin_profile_sms_failed', component: 'queue', operation: 'sms_verification',
+              outcome: 'retry', durationMs: Date.now() - messageStartedAt, queueAttempt: msg.attempts,
+              retryDelaySeconds: delaySeconds, errorCode: operationalErrorCode(error) });
+            msg.retry({ delaySeconds });
+          }
+        }
         continue;
       }
 

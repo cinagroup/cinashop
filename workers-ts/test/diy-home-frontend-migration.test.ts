@@ -333,19 +333,95 @@ describe("DIY-home frontend migration", () => {
     expect(editorial).toContain('<DiyHotspotCanvas');
   });
 
-  it("statically mounts all eight business-data widgets through typed clients", () => {
-    for (const name of [
-      "bargain",
-      "combination",
-      "coupon",
-      "liveBroadcast",
-      "promotionList",
-      "seckill",
-      "presale",
-      "pointsMall",
-    ]) {
-      expect(renderer).toContain(`"${name}"`);
-    }
+  it("mounts promotion through its delegated list, coupon points presale combination bargain seckill liveBroadcast independently with no remaining Commerce families", () => {
+    const registry = /const COMMERCE_WIDGET_NAMES = new Set(?:<string>)?\(\[?([\s\S]*?)\]?\)/u.exec(renderer);
+    expect(registry).not.toBeNull();
+    const commerceNames = [...registry![1]!.matchAll(/["']([^"']+)["']/gu)].map(match => match[1]);
+    expect(commerceNames).toEqual([]);
+    expect(commerceNames).not.toContain("promotionList");
+    expect(commerceNames).not.toContain("coupon");
+    expect(commerceNames).not.toContain("pointsMall");
+    expect(commerceNames).not.toContain("presale");
+    expect(commerceNames).not.toContain("combination");
+    expect(commerceNames).not.toContain("bargain");
+    expect(commerceNames).not.toContain("seckill");
+    expect(commerceNames).not.toContain("liveBroadcast");
+    expect(renderer).toMatch(/<DiyLiveBroadcastWidget\s+v-else-if="block\.name === 'liveBroadcast'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyLiveBroadcastWidget from './DiyLiveBroadcastWidget.vue'");
+    const live = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyLiveBroadcastWidget.vue"), "utf8");
+    const liveController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyLiveBroadcast.ts"), "utf8");
+    expect(live).toContain('<DiyLiveBroadcastCard v-for="entry in entries"');
+    expect(live).toContain(':media="entry.media"');
+    expect(liveController).toContain('apiDiyLiveBroadcastRooms(limit)');
+    expect(liveController).not.toContain('useDiyCommerceWidget');
+    expect(renderer).toMatch(/<DiySeckillWidget\s+v-else-if="block\.name === 'seckill'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiySeckillWidget from './DiySeckillWidget.vue'");
+    const seckill = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiySeckillWidget.vue"), "utf8");
+    const seckillController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiySeckill.ts"), "utf8");
+    expect(seckill).toContain('<DiySeckillCard v-for="entry in entries"');
+    expect(seckill).toContain(':media="entry.media"');
+    expect(seckillController).toContain('apiDiySeckillIndex()');
+    expect(seckillController).toContain('apiDiySeckillProducts(slot.id,count)');
+    expect(renderer).toMatch(/<DiyBargainWidget\s+v-else-if="block\.name === 'bargain'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyBargainWidget from './DiyBargainWidget.vue'");
+    const bargain = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyBargainWidget.vue"), "utf8");
+    const bargainController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyBargain.ts"), "utf8");
+    expect(bargain).toContain('<DiyBargainCard v-for="entry in entries"');
+    expect(bargain).toContain(':tap="entry.tap"');
+    expect(bargainController).toContain('useDiyCommerceWidget(()=>commerceBlock.value,controllerActive)');
+    expect(bargainController).toContain('requestBargainSubscription(templateId.value,eligible,');
+    expect(renderer).toMatch(/<DiyCombinationWidget\s+v-else-if="block\.name === 'combination'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyCombinationWidget from './DiyCombinationWidget.vue'");
+    const combination = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyCombinationWidget.vue"), "utf8");
+    const combinationController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyCombination.ts"), "utf8");
+    expect(combination).toContain('<DiyCombinationCard v-for="entry in entries"');
+    expect(combination).toContain(':tap="entry.tap"');
+    expect(combinationController).toContain('useDiyCommerceWidget(()=>commerceBlock.value,controllerActive)');
+    expect(combinationController).toContain('requestCombinationSubscription(templateIds.value,eligible,');
+    expect(renderer).toMatch(/<DiyPresaleWidget\s+v-else-if="block\.name === 'presale'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyPresaleWidget from './DiyPresaleWidget.vue'");
+    const presale = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyPresaleWidget.vue"), "utf8");
+    const presaleController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyPresale.ts"), "utf8");
+    const presalePresentation = readFileSync(resolve(root, "../view/common/diyPresale.ts"), "utf8");
+    expect(presale).toContain('<DiyPresaleCard v-for="entry in entries"');
+    expect(presale).toContain(':tap="entry.tap"');
+    expect(presale).toContain('useDiyPresale(()=>props.block,()=>props.active)');
+    expect(presaleController).toContain('useDiyCommerceWidget(()=>commerceBlock.value,controllerActive)');
+    expect(presaleController).toContain('diyAuthoredPageFingerprint([block()])');
+    expect(presalePresentation).toContain('export function presalePresentation');
+    expect(renderer).toMatch(/<DiyPointsWidget\s+v-else-if="block\.name === 'pointsMall'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyPointsWidget from './DiyPointsWidget.vue'");
+    const points = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyPointsWidget.vue"), "utf8");
+    const pointsController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyPoints.ts"), "utf8");
+    const pointsPresentation = readFileSync(resolve(root, "../view/common/diyPoints.ts"), "utf8");
+    expect(points).toContain('<DiyPointsCard v-for="entry in entries"');
+    expect(points).toContain(':tap="entry.tap"');
+    expect(points).toContain('useDiyPoints(()=>props.block,()=>props.active)');
+    expect(pointsController).toContain('useDiyCommerceWidget(()=>commerceBlock.value,controllerActive)');
+    expect(pointsController).toContain('diyAuthoredPageFingerprint([block()])');
+    expect(pointsPresentation).toContain('export function pointsPresentation');
+    expect(renderer).toMatch(/<DiyCouponWidget\s+v-else-if="block\.name === 'coupon'"\s+:block="block"\s+:active="pageActive"\s*\/>/u);
+    expect(renderer).toContain("import DiyCouponWidget from './DiyCouponWidget.vue'");
+    const coupon = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyCouponWidget.vue"), "utf8");
+    const couponController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyCoupon.ts"), "utf8");
+    const couponPresentation = readFileSync(resolve(root, "../view/common/diyCoupon.ts"), "utf8");
+    expect(coupon).toContain('<DiyCouponCard v-for="entry in entries"');
+    expect(coupon).toContain(':tap="entry.tap"');
+    expect(coupon).toContain('useDiyCoupon(()=>props.block,()=>props.active)');
+    expect(couponController).toContain('useDiyCommerceWidget(block,()=>active()&&view.value.enabled)');
+    expect(couponController).toContain('couponPresentation(block(),theme.preset,safeDiyColor)');
+    expect(couponPresentation).toContain('export function couponPresentation');
+    expect(renderer).toMatch(/<DiyPromotionWidget\s+v-else-if="block\.name === 'promotionList'"\s+:block="block"\s+:active="pageActive"\s+:header-top="headerOffset\(index\)"\s*\/>/u);
+    expect(renderer).toContain("import DiyPromotionWidget from './DiyPromotionWidget.vue'");
+    expect(renderer).toMatch(/<DiyCommerceWidget\s+v-else-if="isCommerceWidget\(block\)"\s+:block="block"\s+:active="pageActive"/u);
+    const promotion = readFileSync(resolve(root, "../view/uniapp-ts/src/components/diy/DiyPromotionWidget.vue"), "utf8");
+    const promotionController = readFileSync(resolve(root, "../view/uniapp-ts/src/composables/useDiyPromotion.ts"), "utf8");
+    const projection = readFileSync(resolve(root, "../view/common/diyPromotion.ts"), "utf8");
+    expect(promotion).toContain('<DiyListWidget v-if="state.productBlock.value"');
+    expect(promotion).toContain(':block="state.productBlock.value" :active="state.ready()"');
+    expect(promotionController).toContain('promotionProductBlock(block(), selectedTab.value)');
+    expect(projection).toContain("name: 'goodList'");
+    expect(projection).toContain('styleConfig: { tabVal: 1 }');
     for (const route of [
       "/seckill/index",
       "/seckill/list/",
