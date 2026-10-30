@@ -9,8 +9,10 @@ function profile(extra={}){return{actor_uid:11,revision:hash,version:vhash,profi
 const signed=(id=101,expires=Math.floor(Date.now()/1000)+900)=>'/api/assets/'+id+'?expires='+expires+'&signature='+'a'.repeat(43);
 async function start(options={}){
  const traces=[],uploads=[],r=runtime({feature:'useCustomerProfile',platform:options.platform??'H5',component:options.component,authenticated:options.authenticated??true,
- send:c=>{const t={url:c.url,method:c.method,data:structuredClone(c.data),auth:c.header['Authori-zation']};traces.push(t);assert.ok(['/api/user/info','/api/user/edit'].includes(c.url));assert.deepEqual(c.method==='GET'?c.data.profile:1,1);const result=options.send?.(c);if(result!==undefined)return result;return{data:c.method==='GET'?(options.data??profile()):null};}});
+ send:c=>{const t={url:c.url,method:c.method,data:structuredClone(c.data),auth:c.header['Authori-zation']};traces.push(t);const base=['MP-WEIXIN','APP-PLUS'].includes(options.platform)?'https://cinashop-api.cinagroup.workers.dev':'';assert.ok([base+'/api/user/info',base+'/api/user/edit'].includes(c.url));assert.deepEqual(c.method==='GET'?c.data.profile:1,1);const result=options.send?.(c);if(result!==undefined)return result;return{data:c.method==='GET'?(options.data??profile()):null};}});
  r.uni.chooseImage=c=>c.success({tempFilePaths:['/local/avatar.png'],tempFiles:[{path:'/local/avatar.png',size:100}]});
+ r.uni.getImageInfo=c=>c.success({path:c.src,width:100,height:100});
+ r.uni.getFileInfo=c=>c.success({size:100});
  r.uni.uploadFile=c=>{uploads.push(c);const custom=options.upload?.(c);if(custom!==undefined)return custom;queueMicrotask(()=>c.success({statusCode:200,data:JSON.stringify({status:200,data:{url:'/api/assets/101',src:signed()}})}));return{abort(){}};};
  options.configure?.(r);await r.start();return{...r,traces,uploads};
 }
@@ -66,4 +68,115 @@ test('real request deadline locks an unknown save result and late success cannot
 
 test('historical whitespace and long nicknames are preserved exactly while changed names are trimmed and limited to16',async()=>{
  for(const name of [' 旧昵称 ','旧'.repeat(20)]){const data=profile();data.profile.nickname=name;const r=await start({data}),api=r.load(path.resolve(__dirname,'../src/api/customerProfile.ts')),draft=api.profileDraft(data);assert.equal(api.encodeProfileSave(data,draft).nickname,name);draft.fields['数值']='0012.50';assert.equal(api.encodeProfileSave(data,draft).extend_info.find(v=>v.info==='数值').value,'0012.50');draft.nickname=' 新昵称 ';assert.equal(api.encodeProfileSave(data,draft).nickname,'新昵称');draft.nickname='新'.repeat(17);assert.throws(()=>api.encodeProfileSave(data,draft),/16/);r.stop();}
+});
+
+// Exercise actual preparation and the composable together; only native I/O is
+// replaced, so owner fences, draft adoption and the existing uploader all run.
+function imageIo(r,{bytes=2097153,width=1600,height=1200,output='/local/prepared.jpg',outputBytes=140000}={}){
+ const calls={choose:[],info:[],canvas:[],export:[],file:[]};
+ r.uni.chooseImage=c=>{calls.choose.push(c);c.success({tempFilePaths:['/local/large.png'],tempFiles:[{size:bytes}]});};
+ r.uni.getImageInfo=c=>{calls.info.push(c);c.success({path:'/local/decoded.png',width,height});};
+ r.uni.createCanvasContext=id=>({clearRect(...args){calls.canvas.push(['clear',id,...args]);},drawImage(...args){calls.canvas.push(['draw',...args]);},draw(reserve,done){calls.canvas.push(['flush',reserve]);done();}});
+ r.uni.canvasToTempFilePath=c=>{calls.export.push(c);c.success({tempFilePath:output});};
+ r.uni.getFileInfo=c=>{calls.file.push(c);c.success({size:outputBytes});};
+ return calls;
+}
+for(const bytes of [2097151,2097152,2097153])test('PHP ordinary avatar threshold uses actual chooser bytes '+bytes+' and waits for explicit Save',async()=>{
+ let io;const r=await start({configure:r=>{io=imageIo(r,{bytes});}}),s=r.checkout;await s.chooseAvatar();
+ assert.equal(r.uploads.length,1);assert.equal(r.uploads[0].filePath,bytes<=2097152?'/local/decoded.png':'/local/prepared.jpg');
+ assert.equal(io.info.length,1);assert.equal(io.export.length,bytes<=2097152?0:1);assert.deepEqual(io.choose[0].sizeType,['compressed']);
+ assert.deepEqual(r.traces.map(t=>t.method),['GET']);assert.equal(s.draft.value.avatar,'/api/assets/101');assert.equal(s.avatarCanvas.value.width,1);r.stop();
+});
+for(const [width,height,w,h]of [[1600,1200,750,562.5],[600,1200,600,1200],[3000,1000,750,250]])test('large ordinary avatar retains aspect ratio and only caps width '+width+'x'+height,async()=>{
+ let io;const r=await start({configure:r=>{io=imageIo(r,{width,height});}});await r.checkout.chooseAvatar();
+ assert.deepEqual(io.canvas,[['clear','customer-profile-avatar-canvas',0,0,w,h],['draw','/local/decoded.png',0,0,w,h],['flush',false]]);
+ const e=io.export[0];assert.deepEqual([e.x,e.y,e.width,e.height,e.destWidth,e.destHeight,e.fileType,e.quality],[0,0,w,h,w,h,'jpg',0.7]);
+ assert.equal(io.file[0].filePath,'/local/prepared.jpg');assert.equal(r.uploads.length,1);r.stop();
+});
+test('canvas export starts only after the real draw completion and accepts the H5 JPEG data URL',async()=>{
+ let drawDone,io;const data='data:image/jpeg;base64,'+'a'.repeat(20000);const r=await start({configure:r=>{
+  io=imageIo(r,{output:data});r.uni.createCanvasContext=()=>({clearRect(){},drawImage(){},draw(reserve,done){drawDone=done;}});
+ }}),pending=r.checkout.chooseAvatar();await tick();assert.equal(r.checkout.busy.value,'prepare');assert.equal(io.export.length,0);assert.equal(r.uploads.length,0);
+ r.checkout.cancelAvatarChoice();assert.equal(r.checkout.busy.value,'prepare');drawDone();await pending;assert.equal(io.export.length,1);assert.equal(r.uploads[0].filePath,data);assert.equal(r.checkout.uploadReview.value,false);r.stop();
+});
+for(const fault of ['info','dimensions','canvas','export','output-size','file-info'])test('avatar preparation failure '+fault+' never uploads or adopts a draft',async()=>{
+ const r=await start({configure:r=>{
+  imageIo(r);if(fault==='info')r.uni.getImageInfo=c=>c.fail({});
+  if(fault==='dimensions')r.uni.getImageInfo=c=>c.success({path:'x',width:0,height:1200});
+  if(fault==='canvas')r.uni.createCanvasContext=()=>{throw Error('canvas unavailable');};
+  if(fault==='export')r.uni.canvasToTempFilePath=c=>c.fail({});
+  if(fault==='output-size')r.uni.getFileInfo=c=>c.success({size:10485761});
+  if(fault==='file-info')r.uni.getFileInfo=c=>c.fail({});
+ }});nickname(r.checkout,'保留昵称');await r.checkout.chooseAvatar();assert.equal(r.uploads.length,0);assert.equal(r.checkout.draft.value.avatar,'/static/logo.png');assert.equal(r.checkout.draft.value.nickname,'保留昵称');assert.equal(r.checkout.uploadReview.value,false);assert.equal(r.checkout.editable.value,true);assert.ok(r.checkout.error.value);r.stop();
+});
+for(const stage of ['choose','info','draw','export','file'])for(const event of ['onHide','onUnload','owner','renew'])test('late '+stage+' preparation callback after '+event+' cannot export, upload or overwrite a fresh owner',async()=>{
+ let callback,io;const r=await start({configure:r=>{
+  io=imageIo(r);if(stage==='choose')r.uni.chooseImage=c=>{callback=()=>c.success({tempFilePaths:['/local/large.png'],tempFiles:[{size:2097153}]});};
+  if(stage==='info')r.uni.getImageInfo=c=>{callback=()=>c.success({path:'old-owner',width:1600,height:1200});};
+  if(stage==='draw')r.uni.createCanvasContext=()=>({clearRect(){},drawImage(){},draw(reserve,done){callback=done;}});
+  if(stage==='export')r.uni.canvasToTempFilePath=c=>{callback=()=>c.success({tempFilePath:'old-owner'});};
+  if(stage==='file')r.uni.getFileInfo=c=>{callback=()=>c.success({size:100});};
+ }}),s=r.checkout,pending=s.chooseAvatar();await tick();assert.equal(typeof callback,'function');const exported=io.export.length;
+ if(event==='owner')r.auth.setLogin('other-owner',22);else if(event==='renew')r.auth.setLogin(r.auth.token,11);else r.hooks[event]();
+ await pending;callback();await tick();assert.equal(r.uploads.length,0);assert.equal(io.export.length,exported);assert.notEqual(s.draft.value.avatar,'/api/assets/101');assert.deepEqual(s.avatarCanvas.value,{width:1,height:1});assert.equal(r.traces.filter(t=>t.method==='POST').length,0);r.stop();
+});
+test('an expired preparation callback is ignored after the 60 second deadline without entering unknown-upload state',async()=>{
+ const native=global.setTimeout,timers=[];global.setTimeout=(fn,ms,...args)=>ms===60000?(timers.push(fn),{preparationDeadline:true}):native(fn,ms,...args);let r,callback;
+ try{r=await start({configure:r=>{imageIo(r);r.uni.getImageInfo=c=>{callback=c;};}});const pending=r.checkout.chooseAvatar();await tick();timers.at(-1)();await pending;
+  assert.match(r.checkout.error.value,/超时/);assert.equal(r.checkout.uploadReview.value,false);assert.equal(r.checkout.editable.value,true);callback.success({path:'late',width:1600,height:1200});await tick();assert.equal(r.uploads.length,0);
+ }finally{r?.stop();global.setTimeout=native;}
+});
+test('MP chooseAvatar capability and event use native temporary avatar directly, once, without canvas or automatic profile write',async()=>{
+ let io;const r=await start({platform:'MP-WEIXIN',configure:r=>{io=imageIo(r);r.uni.canIUse=schema=>{assert.equal(schema,'button.open-type.chooseAvatar');return true;};}}),s=r.checkout;
+ assert.equal(s.nativeAvatarAvailable.value,true);assert.equal(s.busy.value,''); // cancellation/no event changes no state
+ const choose=s.nativeAvatarButton.value.choose;const pending=choose({detail:{avatarUrl:'wxfile://tmp/avatar.png'}});await choose({detail:{avatarUrl:'duplicate'}});await pending;
+ assert.equal(io.choose.length,0);assert.equal(io.info.length,0);assert.equal(io.canvas.length,0);assert.equal(r.uploads.length,1);assert.equal(r.uploads[0].filePath,'wxfile://tmp/avatar.png');assert.equal(r.uploads[0].header['Form-type'],'routine');assert.deepEqual(r.traces.map(t=>t.method),['GET']);
+ await choose({detail:{avatarUrl:'late-duplicate'}});assert.equal(r.uploads.length,1);assert.notEqual(s.nativeAvatarButton.value.choose,choose);r.stop();
+});
+for(const event of ['onHide','onUnload','owner','renew','reload'])test('old native chooser handler after '+event+' cannot read or upload a temporary image',async()=>{
+ let io;const r=await start({platform:'MP-WEIXIN',configure:r=>{io=imageIo(r);r.uni.canIUse=()=>true;}}),s=r.checkout,choose=s.nativeAvatarButton.value.choose;
+ if(event==='owner')r.auth.setLogin('other-owner',22);else if(event==='renew')r.auth.setLogin(r.auth.token,11);else if(event==='reload')await s.load();else r.hooks[event]();
+ await choose({detail:{avatarUrl:'wxfile://tmp/old-owner'}});assert.equal(io.file.length,0);assert.equal(r.uploads.length,0);r.stop();
+});
+for(const event of [undefined,{}, {detail:{}},{detail:{avatarUrl:''}},{detail:{avatarUrl:123}}])test('malformed MP avatar event never falls back to another chooser or uploads '+JSON.stringify(event),async()=>{
+ let io;const r=await start({platform:'MP-WEIXIN',configure:r=>{io=imageIo(r);r.uni.canIUse=()=>true;}});await r.checkout.nativeAvatarButton.value.choose(event);
+ assert.equal(io.choose.length,0);assert.equal(io.file.length,0);assert.equal(r.uploads.length,0);assert.equal(r.checkout.editable.value,true);assert.equal(r.checkout.uploadReview.value,false);r.stop();
+});
+test('native avatar file metadata failure/oversize keeps the old avatar, and unsupported MP uses the ordinary chooser',async()=>{
+ for(const result of ['fail','large']){const r=await start({platform:'MP-WEIXIN',configure:r=>{imageIo(r);r.uni.canIUse=()=>true;r.uni.getFileInfo=c=>result==='fail'?c.fail({}):c.success({size:10485761});}});
+  await r.checkout.nativeAvatarButton.value.choose({detail:{avatarUrl:'wxfile://tmp/avatar'}});assert.equal(r.uploads.length,0);assert.equal(r.checkout.draft.value.avatar,'/static/logo.png');assert.equal(r.checkout.editable.value,true);r.stop();}
+ for(const platform of ['H5','APP-PLUS','MP-WEIXIN']){let io;const r=await start({platform,configure:r=>{io=imageIo(r);r.uni.canIUse=()=>platform!=='MP-WEIXIN';}});assert.equal(r.checkout.nativeAvatarAvailable.value,false);await r.checkout.chooseAvatar();assert.equal(io.choose.length,1);assert.equal(r.uploads.length,1);r.stop();}
+});
+test('real page platform preprocessing retains only the MP native button and preserves the offscreen sized canvas',()=>{
+ const {parse,compileTemplate}=require('@vue/compiler-sfc'),file=path.resolve(__dirname,'../src/pages/user/profile.vue'),source=fs.readFileSync(file,'utf8');
+ for(const platform of ['H5','APP-PLUS','MP-WEIXIN']){let keep=true;const selected=source.split('\n').filter(line=>{if(line.includes('<!-- #ifdef MP-WEIXIN -->')){keep=platform==='MP-WEIXIN';return false;}if(line.includes('<!-- #endif -->')){keep=true;return false;}return keep;}).join('\n');
+  assert.equal(selected.includes('open-type="chooseAvatar"'),platform==='MP-WEIXIN');assert.equal(selected.includes('@chooseavatar="s.nativeAvatarButton.choose"'),platform==='MP-WEIXIN');assert.deepEqual(compileTemplate({source:parse(selected).descriptor.template.content,filename:file,id:'avatar-'+platform}).errors,[]);assert.ok(selected.includes(':canvas-id="s.avatarCanvasId"'));assert.match(selected,/avatar-canvas\{position:fixed;left:-100000px/);
+ }
+});
+
+test('user image selection remains pending after61 seconds and can then complete normally',async()=>{
+ const originalSet=global.setTimeout,originalClear=global.clearTimeout,originalNow=Date.now,timers=[];let now=originalNow(),r,selected;
+ global.setTimeout=(fn,ms,...args)=>{if(ms!==60000)return originalSet(fn,ms,...args);const timer={fn,at:now+ms,cancelled:false};timers.push(timer);return timer;};
+ global.clearTimeout=handle=>{const timer=timers.find(t=>t===handle);if(timer)timer.cancelled=true;else originalClear(handle);};Date.now=()=>now;
+ try{
+  r=await start({configure:r=>{r.uni.chooseImage=c=>{selected=c;};}});const s=r.checkout,pending=s.chooseAvatar();await tick();const started=now;now+=61001;
+  for(const timer of [...timers])if(!timer.cancelled&&timer.at<=now)timer.fn();await tick();
+  assert.ok(now-started>60000);assert.equal(s.busy.value,'choose');assert.equal(s.error.value,'');assert.equal(s.uploadReview.value,false);assert.equal(r.uploads.length,0);
+  selected.success({tempFilePaths:['/local/slow-choice.png'],tempFiles:[{size:100}]});await pending;
+  assert.equal(r.uploads.length,1);assert.equal(r.uploads[0].filePath,'/local/slow-choice.png');assert.equal(s.draft.value.avatar,'/api/assets/101');assert.equal(s.busy.value,'');assert.deepEqual(r.traces.map(t=>t.method),['GET']);
+ }finally{r?.stop();global.setTimeout=originalSet;global.clearTimeout=originalClear;Date.now=originalNow;}
+});
+test('explicit chooser cancellation preserves the draft and ignores a late native selection without upload',async()=>{
+ let selected;const r=await start({configure:r=>{r.uni.chooseImage=c=>{selected=c;};}}),s=r.checkout;nickname(s,'取消时保留的昵称');const before={nickname:s.draft.value.nickname,avatar:s.draft.value.avatar,fields:{...s.draft.value.fields}};
+ const pending=s.chooseAvatar();await tick();assert.equal(s.busy.value,'choose');s.cancelAvatarChoice();await pending;
+ assert.equal(s.busy.value,'');assert.equal(s.editable.value,true);assert.equal(s.uploadReview.value,false);assert.equal(s.needsReview.value,false);assert.deepEqual(s.draft.value,before);assert.match(s.notice.value,/已取消/);
+ selected.success({tempFilePaths:['/local/late.png'],tempFiles:[{size:100}]});await tick();assert.equal(r.uploads.length,0);assert.deepEqual(s.draft.value,before);assert.deepEqual(r.traces.map(t=>t.method),['GET']);
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/pages/user/profile.vue'),'utf8');assert.match(source,/<button v-if="s\.busy==='choose'"[^>]*@tap="s\.cancelAvatarChoice"/);r.stop();
+});
+test('a new selection works after explicit cancellation while the old callback and finally cannot clear it',async()=>{
+ const choices=[];const r=await start({configure:r=>{r.uni.chooseImage=c=>{choices.push(c);};}}),s=r.checkout;nickname(s,'继续选择的草稿');const first=s.chooseAvatar();await tick();s.cancelAvatarChoice();
+ const second=s.chooseAvatar();await tick();await first;assert.equal(choices.length,2);assert.equal(s.busy.value,'choose');
+ choices[0].success({tempFilePaths:['/local/stale.png'],tempFiles:[{size:100}]});choices[0].fail({errMsg:'chooseImage:fail cancel'});await tick();assert.equal(s.busy.value,'choose');assert.equal(r.uploads.length,0);
+ choices[1].success({tempFilePaths:['/local/current.png'],tempFiles:[{size:100}]});await second;
+ assert.equal(r.uploads.length,1);assert.equal(r.uploads[0].filePath,'/local/current.png');assert.equal(s.draft.value.avatar,'/api/assets/101');assert.equal(s.draft.value.nickname,'继续选择的草稿');assert.equal(s.busy.value,'');assert.equal(s.uploadReview.value,false);assert.equal(s.editable.value,true);assert.deepEqual(r.traces.map(t=>t.method),['GET']);r.stop();
 });
