@@ -1,189 +1,63 @@
 <template>
-  <div class="level-list">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>会员等级</span>
-          <el-button type="primary" size="small" @click="openForm()">＋ 新增等级</el-button>
-        </div>
+  <main class="level-page">
+    <section v-for="screen in screens" :key="screen.key">
+      <header class="heading"><div><h1>会员等级</h1><p>设置等级、解锁经验、会员折扣与展示素材。</p></div><div class="actions"><el-button :disabled="!canView || state.busy || state.loading" @click="screen.refresh">重新读取</el-button><el-button v-if="canManage" type="primary" :disabled="!model.writable()" @click="screen.create">新增等级</el-button></div></header>
+      <el-alert v-if="state.pending" title="原等级操作结果尚未确认，新的提交已暂停" type="warning" :closable="false"><p>请查原回执；未找到回执仍表示结果未知。封存会确认已完成结果，或终止尚未应用的原请求。</p><div class="actions"><el-button :disabled="state.busy" @click="screen.receipt">读取原回执</el-button><el-button :disabled="state.busy" @click="screen.resolve">核对并封存原请求</el-button><el-button v-if="state.retryReady && canManage" :disabled="state.busy" @click="screen.retry">原样重试</el-button></div></el-alert>
+      <el-alert v-if="!canView" title="当前没有会员等级查看权限" type="warning" :closable="false" />
+      <el-alert v-if="state.error || state.pendingError" :title="state.error || state.pendingError" type="error" :closable="false" />
+      <el-alert v-if="state.notice" :title="state.notice" type="success" :closable="false" />
+      <template v-if="canView">
+        <el-alert v-if="state.snapshot && !state.snapshot.write_ready" title="此环境尚未安装等级安全写入能力，目录可查看" type="warning" :closable="false" />
+        <div class="filters"><label>等级名称<input :value="filters.keyword" aria-label="等级名称查询" :disabled="viewLocked" @input="screen.keyword" placeholder="输入等级名称" /></label><label>显示状态<select :value="filters.show" aria-label="显示状态筛选" :disabled="viewLocked" @change="screen.show"><option :value="-1">全部状态</option><option :value="1">显示</option><option :value="0">隐藏</option></select></label><el-button :disabled="viewLocked" @click="screen.reset">重置查询</el-button></div>
+        <p class="hint">共 {{ state.snapshot?.count ?? 0 }} 个等级，筛选后 {{ visible.length }} 个。经验须随等级严格递增；已有用户使用的等级不能删除。</p>
+        <p v-if="state.loading" role="status">正在读取等级目录…</p>
+        <div v-if="state.snapshot && !state.loading" class="rows" aria-label="会员等级列表"><article v-for="item in rows" :key="item.key" class="level-row"><div class="level-info"><div class="identity"><img v-if="levelPreview(item.row.icon_preview)" class="level-icon" :src="levelPreview(item.row.icon_preview)" :alt="`${item.row.name}图标`" /><div><strong :style="{color:levelColor(item.row.color)}">{{ item.row.name || '未命名历史等级' }}</strong><p>#{{ item.row.id }} · 级别 {{ item.row.grade }} · {{ item.row.isShow ? '显示' : '隐藏' }}</p></div></div><p>会员折扣 {{ discountLabel(item.row.discount) }} · 解锁经验 {{ item.row.expNum }}</p><p>正在使用：{{ item.row.in_use }} 位用户</p><p class="explain">{{ item.row.explain || '未填写等级说明' }}</p><el-tag v-if="item.row.merId !== 0" type="info" size="small">非平台历史等级 #{{ item.row.merId }} · 只读</el-tag></div><div v-if="canManage && item.row.merId === 0" class="actions"><el-button :disabled="!model.writable() || !!state.editor" @click="item.edit">编辑</el-button><el-button :disabled="!model.writable() || !!state.editor" @click="item.show">{{ item.row.isShow ? '隐藏' : '显示' }}</el-button><el-button type="danger" plain :disabled="!model.writable() || !!state.editor" @click="item.remove">删除</el-button></div></article><p v-if="!visible.length" class="empty">没有符合条件的等级</p></div>
+        <nav class="actions pagination" aria-label="等级分页"><span>第 {{ filters.page }} / {{ pageCount }} 页，每页20项</span><el-button :disabled="viewLocked || filters.page <= 1" @click="screen.previous">上一页</el-button><el-button :disabled="viewLocked || filters.page >= pageCount" @click="screen.next">下一页</el-button></nav>
       </template>
-
-      <el-table :data="list" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column label="等级名称" min-width="140">
-          <template #default="{ row }">
-            <span :style="{ color: row.color || '#333', fontWeight: 600 }">
-              {{ row.name }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="grade" label="级别" width="80" />
-        <el-table-column label="会员折扣" width="100">
-          <template #default="{ row }">{{ Number(row.discount) / 10 }} 折</template>
-        </el-table-column>
-        <el-table-column prop="expNum" label="升级经验" width="100" />
-        <el-table-column label="状态" width="90">
-          <template #default="{ row }">
-            <el-tag :type="row.isShow ? 'success' : 'info'">
-              {{ row.isShow ? "启用" : "停用" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="explain" label="说明" min-width="180" show-overflow-tooltip />
-        <el-table-column label="操作" width="140" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openForm(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="del(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑等级' : '新增等级'" width="480px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="等级名称" required>
-          <el-input v-model="form.name" placeholder="如: 白银会员" />
-        </el-form-item>
-        <el-form-item label="级别" required>
-          <el-input-number v-model="form.grade" :min="0" />
-        </el-form-item>
-        <el-form-item label="会员折扣">
-          <el-input-number v-model="form.discount" :min="0" :max="100" />
-          <span class="hint">% (如 95 = 9.5 折)</span>
-        </el-form-item>
-        <el-form-item label="升级经验">
-          <el-input-number v-model="form.exp_num" :min="0" />
-        </el-form-item>
-        <el-form-item label="颜色">
-          <el-color-picker v-model="form.color" />
-        </el-form-item>
-        <el-form-item label="是否启用">
-          <el-switch v-model="form.is_show" :active-value="1" :inactive-value="0" />
-        </el-form-item>
-        <el-form-item label="说明">
-          <el-input v-model="form.explain" type="textarea" :rows="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
-      </template>
+    </section>
+    <el-dialog v-for="editor in editors" :key="editor.key" class="level-editor-dialog" top="16px" :model-value="true" :title="state.editor?.row ? '编辑会员等级' : '新增会员等级'" width="min(660px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true">
+      <el-alert v-if="state.error" :title="state.error" type="error" :closable="false" />
+      <div class="editor-fields"><label v-for="field in editor.fields" :key="field.key">{{ labels[field.field] }}<select v-if="field.field === 'is_show'" :value="field.value" aria-label="是否显示" :disabled="!model.writable() || !!state.picker" @change="field.set(Number(($event.target as HTMLSelectElement).value))"><option :value="0">隐藏</option><option :value="1">显示</option><option v-if="![0,1].includes(Number(field.value))" :value="field.value">保留历史状态 {{ field.value }}</option></select><textarea v-else-if="field.field === 'explain'" :value="field.value ?? ''" aria-label="等级说明" rows="3" :disabled="!model.writable() || !!state.picker" @input="field.set(($event.target as HTMLTextAreaElement).value)" /><input v-else-if="field.field === 'grade' || field.field === 'exp_num'" type="number" :value="field.value" :aria-label="labels[field.field]" min="0" max="2147483647" step="1" :disabled="!model.writable() || !!state.picker" @input="field.set(Number(($event.target as HTMLInputElement).value))" /><span v-else-if="field.field === 'color'" class="color-controls"><input type="color" :value="levelColor(String(field.value))" aria-label="选择字体颜色" :disabled="!model.writable() || !!state.picker" @input="field.set(($event.target as HTMLInputElement).value)" /><input :value="field.value" aria-label="字体颜色" placeholder="#RRGGBB" :disabled="!model.writable() || !!state.picker" @input="field.set(($event.target as HTMLInputElement).value)" /></span><input v-else :value="field.value" :aria-label="labels[field.field]" :inputmode="field.field === 'discount' ? 'decimal' : 'text'" :disabled="!model.writable() || !!state.picker" @input="field.set(($event.target as HTMLInputElement).value)" /><small v-if="field.field === 'discount'">100为原价、90为9折；0沿用当前原价计价规则。</small></label>
+        <fieldset v-for="image in editor.images" :key="image.key"><legend>{{ image.slot === 'icon' ? '图标（建议656×300）' : '背景（建议750×990）' }}</legend><img v-if="image.preview" :src="image.preview" :class="image.slot === 'icon' ? 'icon-preview' : 'background-preview'" :alt="image.slot === 'icon' ? '等级图标预览' : '等级背景预览'" /><p v-else class="hint">当前图片不可预览，可保留原值或重新选择。</p><p class="reference">{{ image.reference || '未选择图片' }}</p><el-button :disabled="!model.writable() || !!state.picker" @click="image.open">{{ image.slot === 'icon' ? '选择等级图标' : '选择等级背景' }}</el-button></fieldset>
+      </div><p class="hint">新增等级与经验须为正整数。历史收费和有效期设置将保留原值。</p><template #footer><el-button :disabled="state.busy || !!state.picker" @click="editor.cancel">取消</el-button><el-button type="primary" :disabled="!model.writable() || !!state.picker" @click="editor.submit">核对保存</el-button></template>
     </el-dialog>
-  </div>
+    <el-dialog v-for="picker in pickers" :key="picker.key" class="level-editor-dialog" top="16px" :model-value="true" :title="picker.slot === 'icon' ? '选择等级图标' : '选择等级背景'" width="min(820px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false"><el-alert v-if="picker.error" :title="picker.error" type="error" :closable="false" /><div class="picker-filters"><label>图片分类<select :value="picker.pid" aria-label="图片分类" @change="picker.category(Number(($event.target as HTMLSelectElement).value))"><option :value="0">未分类</option><option v-for="category in picker.categories" :key="category.id" :value="category.id">{{ category.name }} #{{ category.id }}</option></select></label><label>图片名称<input :value="picker.name" aria-label="图片名称" @input="picker.nameChange(($event.target as HTMLInputElement).value)" /></label><el-button @click="picker.search">查询图片</el-button></div><p v-if="picker.loading" role="status">正在读取图片…</p><div class="image-options"><button v-for="item in picker.items" :key="item.key" type="button" class="image-option" :aria-label="`选择图片 ${item.real_name}`" :disabled="picker.loading" @click="item.choose"><img :src="item.preview" :alt="item.real_name" /><span>{{ item.real_name }}</span></button><p v-if="!picker.loading && !picker.items.length">没有可选图片</p></div><template #footer><div class="actions"><span>共 {{ picker.count }} 项 · 第 {{ picker.page }} 页</span><el-button :disabled="picker.loading || picker.page <= 1" @click="picker.previous">上一页图片</el-button><el-button :disabled="picker.loading || picker.page * 20 >= picker.count" @click="picker.next">下一页图片</el-button><el-button @click="picker.close">返回等级编辑</el-button></div></template></el-dialog>
+    <el-dialog v-for="confirmation in confirmations" :key="confirmation.key" :model-value="true" title="确认等级操作" width="min(540px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false"><p>{{ operationLabels[confirmation.operation] }}<span v-if="confirmation.id"> #{{ confirmation.id }}</span></p><p v-if="confirmation.operation === 'create' || confirmation.operation === 'update'">{{ confirmation.payload.name }} · 等级 {{ confirmation.payload.grade }} · 经验 {{ confirmation.payload.exp_num }}</p><p v-if="confirmation.operation === 'delete'">已有用户使用时无法删除。未引用等级的历史记录会一并标记删除，并保留原始资料。</p><template #footer><el-button :disabled="state.busy" @click="confirmation.cancel">取消</el-button><el-button type="primary" :disabled="state.busy" @click="confirmation.confirm">确认提交</el-button></template></el-dialog>
+  </main>
 </template>
-
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import {
-  apiAdminLevelList,
-  apiAdminLevelSave,
-  apiAdminLevelDel,
-  type LevelItem,
-} from "@/api/level";
-
-const list = ref<LevelItem[]>([]);
-const loading = ref(false);
-const formVisible = ref(false);
-const saving = ref(false);
-const form = reactive({
-  id: 0,
-  name: "",
-  grade: 0,
-  discount: 100,
-  exp_num: 0,
-  color: "",
-  is_show: 1,
-  explain: "",
-});
-
-async function load() {
-  loading.value = true;
-  try {
-    list.value = await apiAdminLevelList();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
-  } finally {
-    loading.value = false;
-  }
-}
-
-function openForm(row?: LevelItem) {
-  if (row) {
-    form.id = row.id;
-    form.name = row.name;
-    form.grade = row.grade;
-    form.discount = Number(row.discount);
-    form.exp_num = row.expNum;
-    form.color = row.color || "";
-    form.is_show = row.isShow;
-    form.explain = row.explain || "";
-  } else {
-    form.id = 0;
-    form.name = "";
-    form.grade = list.value.length;
-    form.discount = 100;
-    form.exp_num = 0;
-    form.color = "";
-    form.is_show = 1;
-    form.explain = "";
-  }
-  formVisible.value = true;
-}
-
-async function save() {
-  if (!form.name) return ElMessage.error("请输入等级名称");
-  saving.value = true;
-  try {
-    await apiAdminLevelSave({
-      id: form.id || undefined,
-      name: form.name,
-      grade: form.grade,
-      discount: form.discount,
-      exp_num: form.exp_num,
-      is_show: form.is_show,
-      color: form.color,
-      explain: form.explain,
-    });
-    ElMessage.success("保存成功");
-    formVisible.value = false;
-    load();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "保存失败");
-  } finally {
-    saving.value = false;
-  }
-}
-
-async function del(row: LevelItem) {
-  try {
-    await ElMessageBox.confirm(`确认删除等级「${row.name}」?`, "删除确认", { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await apiAdminLevelDel(row.id);
-    ElMessage.success("已删除");
-    load();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
-  }
-}
-
-onMounted(load);
+import {computed,reactive,watch,onMounted,onBeforeUnmount} from 'vue';
+import {useRoute} from 'vue-router';
+import {useAuthStore} from '@/stores/auth';
+import {getAdminSession,getToken} from '@/utils/auth';
+import {apiLevelCatalog,apiLevelWrite,apiLevelReceipt,apiLevelResolve,apiLevelImageOptions,apiLevelImageCategories} from '@/api/levelAuthor';
+import {levelState} from '@/utils/levelState';
+import {levelColor,levelPreview,type LevelAction,type LevelOperation,type LevelValues} from '../../../../common/levelAuthor';
+const auth=useAuthStore(),route=useRoute();let alive=false,generation=0,syncing=false,queued=false;
+const canView=computed(()=>!!auth.token&&auth.token===getToken()&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.some(p=>['level.view','level.manage'].includes(p))));
+const canManage=computed(()=>canView.value&&(auth.userInfo?.level===0||auth.uniqueAuth.includes('level.manage')));
+const prefix=(actor:number)=>`cinashop_level_pending_v1_${actor}_`;
+function keys(actor:number){const out:string[]=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(prefix(actor)))out.push(k);}return out.sort();}
+const model=levelState({identity:()=>`${generation}:${auth.token}:${auth.userInfo?.id}`,actor:()=>auth.userInfo?.id??0,view:()=>canView.value,manage:()=>canManage.value,read:apiLevelCatalog,write:apiLevelWrite,receipt:apiLevelReceipt,resolve:apiLevelResolve,options:apiLevelImageOptions,categories:apiLevelImageCategories,
+ readPending:actor=>{const key=keys(actor)[0];if(!key)return null;const raw=localStorage.getItem(key);if(!raw||raw.length>512*1024)throw Error('原等级操作记录异常，请保留核对');const a=JSON.parse(raw);if(key!==prefix(actor)+a?.operation_id)throw Error('原等级操作标识不一致');return a;},
+ persist:(actor:number,a:LevelAction|null,expected?:LevelAction)=>{const value=a??expected;if(!value)throw Error('缺少原等级操作');const key=prefix(actor)+value.operation_id,raw=localStorage.getItem(key);if(a){if(keys(actor).some(k=>k!==key)||raw&&raw!==JSON.stringify(a))throw Error('本账号已有其它未确认等级操作');localStorage.setItem(key,JSON.stringify(a));}else{if(raw&&raw!==JSON.stringify(expected))throw Error('原等级操作记录已变化，无法清除');localStorage.removeItem(key);}},
+},v=>reactive(v) as typeof v);
+const state=model.state,filters=reactive({keyword:'',show:-1,page:1});
+const viewLocked=computed(()=>state.busy||state.loading||!!state.pending||!!state.pendingError||!!state.editor||!!state.confirmation||!state.snapshot);
+const visible=computed(()=>{const key=filters.keyword.toLocaleLowerCase(),pattern=new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replaceAll('%','.*').replaceAll('_','.'),'iu');return(state.snapshot?.list??[]).filter(r=>(filters.show<0||r.isShow===filters.show)&&(!key||pattern.test(r.name)));});
+const pageCount=computed(()=>Math.max(1,Math.ceil(visible.value.length/20))),rows=computed(()=>visible.value.slice((filters.page-1)*20,filters.page*20).map(model.rowControls));
+const screens=computed(()=>{const c=model.screen(),epoch=state.epoch,source=state.source,snapshot=state.snapshot,valid=()=>epoch===state.epoch&&source===state.source&&!viewLocked.value;return[{...c,keyword:(e:Event)=>{if(epoch===state.epoch&&snapshot===state.snapshot&&!viewLocked.value&&model.retireView()){filters.keyword=(e.target as HTMLInputElement).value.slice(0,80);filters.page=1;}},show:(e:Event)=>{if(valid()&&model.retireView()){filters.show=Number((e.target as HTMLSelectElement).value);filters.page=1;}},reset:()=>{if(valid()&&model.retireView()){filters.keyword='';filters.show=-1;filters.page=1;}},previous:()=>{if(valid()&&model.retireView())filters.page=Math.max(1,filters.page-1);},next:()=>{if(valid()&&model.retireView())filters.page=Math.min(pageCount.value,filters.page+1);}}];});
+const editors=computed(()=>model.editorControls()),pickers=computed(()=>model.pickerControls()),confirmations=computed(()=>model.confirmationControls());
+const labels:Record<keyof LevelValues,string>={name:'等级名称',grade:'级别',discount:'会员折扣',exp_num:'升级经验',icon:'等级图标',image:'等级背景',color:'字体颜色',is_show:'是否显示',explain:'等级说明'};
+const operationLabels:Record<LevelOperation,string>={create:'新增会员等级',update:'保存会员等级',show:'调整等级显示状态',delete:'删除未引用等级'};
+const discountLabel=(v:string)=>Number(v)===0?'0%（沿用原价）':Number.isFinite(Number(v))?`${v}%`:`历史值 ${v}`;
+function schedule(){if(!alive||syncing)return;generation++;model.dispose();if(queued)return;queued=true;queueMicrotask(()=>{queued=false;if(alive)void model.activate();});}
+function syncStored(event?:Event){if(syncing||event instanceof StorageEvent&&event.key!==null&&!['admin_token','admin_session'].includes(event.key)&&!event.key.startsWith('cinashop_level_pending_v1_'))return;syncing=true;generation++;model.dispose();const session=getAdminSession();auth.$patch({token:getToken()??'',userInfo:session?.userInfo??null,menus:(session?.menus as typeof auth.menus)??[],uniqueAuth:session?.uniqueAuth??[]});syncing=false;schedule();}
+watch(()=>[auth.token,auth.userInfo,auth.uniqueAuth,auth.menus],schedule,{deep:true,flush:'sync'});watch(()=>route.fullPath,schedule,{flush:'sync'});
+const stopAction=auth.$onAction(({name,after})=>{if(name==='login'||name==='logout')after(schedule);});
+onMounted(()=>{alive=true;window.addEventListener('storage',syncStored);window.addEventListener('admin-session-changed',syncStored);window.addEventListener('admin-auth-expired',syncStored);syncStored();});
+onBeforeUnmount(()=>{alive=false;generation++;stopAction();model.dispose();window.removeEventListener('storage',syncStored);window.removeEventListener('admin-session-changed',syncStored);window.removeEventListener('admin-auth-expired',syncStored);});
 </script>
-
 <style scoped>
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.hint {
-  color: #999;
-  font-size: 12px;
-  margin-left: 8px;
-}
+.level-page,.level-page>section{display:grid;gap:16px;min-width:0}.heading,.actions,.identity{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.heading{justify-content:space-between}.heading h1{font-size:22px;margin:0}.heading p,.hint,.level-info p{color:var(--el-text-color-secondary);font-size:13px;line-height:1.7;margin:6px 0}.filters{display:grid;grid-template-columns:minmax(180px,1fr) 160px auto;gap:12px;align-items:end}.filters label,.editor-fields label,.picker-filters label{display:grid;gap:8px;font-size:14px}.editor-fields{display:grid;gap:16px;margin-top:12px}input,select,textarea{box-sizing:border-box;max-width:100%;width:100%;min-width:0;border:1px solid var(--el-border-color);border-radius:4px;background:var(--el-bg-color);color:var(--el-text-color-primary);font:inherit;padding:9px 12px}input:focus,select:focus,textarea:focus{outline:2px solid var(--el-color-primary);outline-offset:1px}input:disabled,select:disabled,textarea:disabled{opacity:.6}.editor-fields small{font-size:12px;color:var(--el-text-color-secondary);font-weight:normal}.color-controls{display:flex;gap:12px}.color-controls input[type=color]{width:56px;padding:3px;flex-shrink:0}fieldset{border:1px solid var(--el-border-color);border-radius:6px;padding:12px;min-width:0}legend{font-size:14px;padding:0 6px}.reference{font-size:12px;overflow-wrap:anywhere}.icon-preview{width:164px;max-width:100%;height:75px;object-fit:contain}.background-preview{width:75px;height:99px;object-fit:cover}.level-icon{width:100px;height:46px;object-fit:contain}.rows{border:1px solid var(--el-border-color);border-radius:6px}.level-row{display:flex;justify-content:space-between;gap:16px;padding:18px}.level-row+.level-row{border-top:1px solid var(--el-border-color-lighter)}.level-info{min-width:0;overflow-wrap:anywhere}.explain{white-space:pre-wrap}.actions .el-button+.el-button{margin-left:0}.pagination{justify-content:flex-end;font-size:13px}.empty{padding:20px}.picker-filters{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.image-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.image-option{display:grid;gap:8px;min-width:0;padding:8px;border:1px solid var(--el-border-color);border-radius:6px;background:var(--el-bg-color);cursor:pointer;overflow-wrap:anywhere}.image-option img{width:100%;height:80px;object-fit:contain}.image-option:focus{outline:2px solid var(--el-color-primary)}.level-page :deep(.el-overlay-dialog){overflow:clip}.level-page :deep(.level-editor-dialog){max-height:calc(100dvh - 32px);display:flex;flex-direction:column}.level-page :deep(.level-editor-dialog .el-dialog__body){min-height:0;overflow-y:auto}.level-page :deep(.level-editor-dialog .el-dialog__header),.level-page :deep(.level-editor-dialog .el-dialog__footer){flex-shrink:0}.level-page :deep(.el-alert__content){min-width:0;overflow-wrap:anywhere}@media(max-width:760px){.level-row{flex-direction:column}.filters{grid-template-columns:1fr 160px}.filters>.el-button{justify-self:start}.image-options{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:480px){.filters,.picker-filters{grid-template-columns:1fr}.heading>.actions{width:100%}.level-row{padding:12px}.pagination{justify-content:flex-start}.image-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>

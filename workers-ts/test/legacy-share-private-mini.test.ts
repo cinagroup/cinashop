@@ -4,6 +4,8 @@ import type { Env } from '@/env';
 import { createContainerFromDb } from '@/lib/di';
 import { legacyCache, systemConfig } from '@/models/schema';
 import { LegacyShareCodeService, parseLegacyShareInput } from '@/services/other/LegacyShareCodeService';
+import { OfficialAccountQrcodeService } from '@/services/wechat/OfficialAccountQrcodeService';
+import { WechatMiniProgramCodeService } from '@/services/wechat/WechatMiniProgramCodeService';
 import { md5 } from '@/utils/jwt';
 import { financePostgres } from './helpers/financePostgres';
 import { PRIVATE_SCAN_TABLES, MEMBER_CODE, ORDER_CODE, seedPrivateScan, type PrivateScanFixture } from './helpers/legacyPrivateScanFixture';
@@ -51,11 +53,45 @@ describe('private legacy share uses real published mini images and protected off
     expect(JSON.stringify(reply)).not.toContain(MEMBER_CODE);expect(await service.referrer(scene,'owned-private-image-ticket')).toBe(0);
     expect(await service.news(scene,'another-private-ticket')).toBeNull();
   });
-  it.each(['routine_appId','wechat_appid'])('rejects stale cached %s before contacting either provider',async key=>{
+  it.each(['routine_appId','wechat_appid'] as const)('rejects committed %s rotation at the real provider method boundary before contacting either provider',async key=>{
     config.set(`cfg_${key}`,'foreign-stale-provider-app');
     const service=new LegacyShareCodeService(createContainerFromDb(f.db),env,fetcher);
-    await expect(service.code(input(90),actor(),key==='wechat_appid')).rejects.toThrow('账户配置已变化');
-    expect(requests).toEqual([]);
+    const originalOfficial=OfficialAccountQrcodeService.prototype.requestLegacyShare;
+    const originalMini=WechatMiniProgramCodeService.prototype.createLegacyShareLandingDataUrl;
+    // Commit a real account change after the descriptor snapshot and before
+    // the provider's fresh credential snapshot. Both spies invoke the actual
+    // implementation; stale KV is deliberately irrelevant to this boundary.
+    const rotation=key==='wechat_appid'?vi.spyOn(OfficialAccountQrcodeService.prototype,'requestLegacyShare').mockImplementation(async function(this:OfficialAccountQrcodeService,...args:Parameters<typeof originalOfficial>){
+      await f.db.update(systemConfig).set({value:'"rotated-private-official"'}).where(eq(systemConfig.menuName,'wechat_appid'));
+      return originalOfficial.apply(this,args);
+    }):vi.spyOn(WechatMiniProgramCodeService.prototype,'createLegacyShareLandingDataUrl').mockImplementation(async function(this:WechatMiniProgramCodeService,...args:Parameters<typeof originalMini>){
+      await f.db.update(systemConfig).set({value:'"rotated-private-mini"'}).where(eq(systemConfig.menuName,'routine_appId'));
+      return originalMini.apply(this,args);
+    });
+    try{
+      await expect(service.code(input(90),actor(),key==='wechat_appid')).rejects.toThrow('账户配置已变化');
+      expect(rotation).toHaveBeenCalledOnce();expect(requests).toEqual([]);
+      expect((await f.db.select({value:systemConfig.value}).from(systemConfig).where(eq(systemConfig.menuName,key)))[0].value)
+        .toBe(JSON.stringify(key==='wechat_appid'?'rotated-private-official':'rotated-private-mini'));
+    }finally{rotation.mockRestore();}
+  });
+  it('ignores stale official and routine KV and generates both images with their current SQL accounts',async()=>{
+    config.set('cfg_wechat_appid','foreign-stale-provider-app');config.set('cfg_wechat_appsecret','foreign-stale-provider-secret');
+    config.set('cfg_routine_appId','foreign-stale-mini-app');config.set('cfg_routine_appsecret','foreign-stale-mini-secret');
+    const get=vi.spyOn(env.CONFIG_KV,'get');
+    try{
+      const service=new LegacyShareCodeService(createContainerFromDb(f.db),env,fetcher),result=await service.code(input(90),actor(),true);
+      expect(result.wechatUrl).not.toBe('');expect(result.routineUrl).not.toBe('');
+      const official=requests.find(value=>new URL(value.url).pathname==='/cgi-bin/token'&&new URL(value.url).searchParams.get('appid')==='owned-private-official');
+      expect(official).toBeDefined();expect(new URL(official!.url).searchParams.get('secret')).toBe('private-official-secret');
+      const mini=requests.find(value=>new URL(value.url).pathname==='/cgi-bin/token'&&new URL(value.url).searchParams.get('appid')==='owned-private-mini');
+      expect(mini).toBeDefined();expect(new URL(mini!.url).searchParams.get('secret')).toBe('private-mini-secret');
+      expect(JSON.stringify(requests)).not.toContain('foreign-stale-provider');
+      expect(JSON.stringify(requests)).not.toContain('foreign-stale-mini');
+      expect(get.mock.calls.map(call=>call[0])).not.toContain('cfg_wechat_appid');expect(get.mock.calls.map(call=>call[0])).not.toContain('cfg_wechat_appsecret');
+      expect(get.mock.calls.map(call=>call[0])).not.toContain('cfg_routine_appId');expect(get.mock.calls.map(call=>call[0])).not.toContain('cfg_routine_appsecret');
+      expect(requests.some(value=>new URL(value.url).pathname==='/wxa/getwxacodeunlimit')).toBe(true);
+    }finally{get.mockRestore();}
   });
   it('keeps configured-but-incomplete mini generation pending and recovers with its known ticket and saved official image',async()=>{
     await f.db.update(systemConfig).set({value:'""'}).where(eq(systemConfig.menuName,'routine_appsecret'));

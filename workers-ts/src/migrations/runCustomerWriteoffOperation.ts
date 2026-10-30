@@ -26,7 +26,11 @@ export const CUSTOMER_WRITEOFF_OPERATION_CATALOG_SQL = `SELECT jsonb_build_objec
  WHERE to_regclass('public.customer_writeoff_operation_request') IS NOT NULL`;
 
 /** Commission only from a genuine PG16 canonical measurement. */
-export const CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256 = '8739570c3ee5b16b201150fc89d117fb0b9c8632ef1162230d4b40f749715238';
+export const CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256 = 'aed6ade4c5f87babbb38ac39d8fc507e3a6a9f8e7b9625c0b71f2a09fccfe1f7';
+/** Previously measured isolated installations remain exact read-only peers.
+ * New installations use a primary key name that can coexist with Work's cwo_pk.
+ * No runtime or commissioning audit renames or repairs an existing catalog. */
+export const CUSTOMER_WRITEOFF_OPERATION_LEGACY_CATALOG_SHA256 = '8739570c3ee5b16b201150fc89d117fb0b9c8632ef1162230d4b40f749715238';
 type Query = Pick<DbClient, 'execute'>;
 
 export async function inspectCustomerWriteoffOperation(db: Query) {
@@ -35,7 +39,7 @@ export async function inspectCustomerWriteoffOperation(db: Query) {
   if (rows.length !== 1) throw Error('Customer writeoff operation catalog ambiguous');
   const fingerprint = await outRequestHash(rows[0].shape);
   return { present: true, complete: Math.floor(rows[0].server_version_num / 10000) === 16
-    && fingerprint === CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256, fingerprint };
+    && [CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256, CUSTOMER_WRITEOFF_OPERATION_LEGACY_CATALOG_SHA256].includes(fingerprint), fingerprint };
 }
 
 export async function assertCustomerWriteoffOperationCatalog(db: Query) {

@@ -59,6 +59,12 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+// #ifdef APP-PLUS
+import { onUnmounted } from 'vue';
+import { onHide, onUnload } from '@dcloudio/uni-app';
+import { useAuthStore } from '@/stores/auth';
+import { reserveNativeWechatPayment } from '@/utils/nativeWechatPaymentEntry';
+// #endif
 import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import {
@@ -71,6 +77,20 @@ import {
 import { apiPaymentReadiness } from "@/api/order";
 import type { PaymentReadiness } from "@/types/order";
 import { getFormType } from "@/utils/request";
+
+// #ifdef APP-PLUS
+const nativeAuth = useAuthStore();
+let nativeLifetime = 0, nativeDisposed = false;
+onHide(() => { nativeLifetime++; });
+const retireNativePaymentView = () => { nativeDisposed = true; nativeLifetime++; };
+onUnload(retireNativePaymentView);
+onUnmounted(retireNativePaymentView);
+function captureNativePaymentView(): () => boolean {
+  const owner = { uid: nativeAuth.uid, token: nativeAuth.token, version: nativeAuth.sessionVersion, lifetime: nativeLifetime };
+  return () => !nativeDisposed && owner.lifetime === nativeLifetime && owner.uid > 0 && !!owner.token
+    && nativeAuth.uid === owner.uid && nativeAuth.token === owner.token && nativeAuth.sessionVersion === owner.version;
+}
+// #endif
 
 const channel = getFormType();
 const loading = ref(false);
@@ -95,14 +115,19 @@ const canSubmit = computed(() => {
   return readiness.value?.[payType.value].enabled === true;
 });
 
-async function load() {
+async function load(current: () => boolean = () => true) {
   loading.value = true;
   try {
-    home.value = await apiMembershipHome();
+    const loaded = await apiMembershipHome();
+    if (!current()) return;
+    home.value = loaded;
     try {
-      readiness.value = await apiPaymentReadiness();
+      const methods = await apiPaymentReadiness();
+      if (!current()) return;
+      readiness.value = methods;
     } catch {
       // Free membership must remain usable when payment-readiness lookup fails.
+      if (!current()) return;
       readiness.value = null;
     }
     selectedPlan.value = home.value.member_type.find((plan) => plan.is_label === 1)
@@ -112,9 +137,9 @@ async function load() {
       .find((method) => readiness.value?.[method].enabled);
     if (firstEnabled) payType.value = firstEnabled;
   } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "会员信息加载失败", icon: "none" });
+    if (current()) uni.showToast({ title: error instanceof Error ? error.message : "会员信息加载失败", icon: "none" });
   } finally {
-    loading.value = false;
+    if (current()) loading.value = false;
   }
 }
 
@@ -128,7 +153,13 @@ function selectPlan(plan: MembershipPlan) {
 }
 
 async function submit() {
+  let current = () => true;
+  // #ifdef APP-PLUS
+  current = captureNativePaymentView();
+  if (!current()) return;
+  // #endif
   const plan = selectedPlan.value;
+  const method = payType.value;
   if (!plan || submitting.value || !canSubmit.value) {
     if (plan?.type !== "free") {
       uni.showToast({ title: readiness.value?.[payType.value].reason || "支付方式不可用", icon: "none" });
@@ -136,17 +167,33 @@ async function submit() {
     return;
   }
   submitting.value = true;
+  // #ifdef APP-PLUS
+  let nativeAttempt: ReturnType<typeof reserveNativeWechatPayment> | undefined;
+  // #endif
   try {
+    // #ifdef APP-PLUS
+    if (plan.type !== 'free' && method === 'weixin') nativeAttempt = reserveNativeWechatPayment(current);
+    // #endif
     const order = await apiCreateMembershipOrder(plan.id);
+    if (!current()) return;
+    // #ifdef APP-PLUS
+    if (typeof order.order_id !== 'string' || !order.order_id || order.order_id.length > 128 || typeof order.paid !== 'boolean')
+      throw Error('会员订单标识无效，请刷新核对');
+    // #endif
     if (order.paid) {
       uni.showToast({ title: "会员领取成功", icon: "success" });
-      await load();
+      await load(current);
       return;
     }
-    const result = await apiPayMembershipOrder(order.order_id, payType.value);
+    const result = await apiPayMembershipOrder(order.order_id, method);
+    if (!current()) return;
+    // #ifdef APP-PLUS
+    if (result.order_id !== order.order_id || typeof result.paid !== 'boolean' || !result.paid && result.pay_type !== method)
+      throw Error('支付结果与本次会员订单不一致，请刷新核对');
+    // #endif
     if (result.paid) {
       uni.showToast({ title: "会员开通成功", icon: "success" });
-      await load();
+      await load(current);
       return;
     }
     if (result.pay_type === "alipay" && result.payUrl) {
@@ -156,6 +203,17 @@ async function submit() {
       return;
     }
     if (result.pay_type === "weixin" && result.jsConfig) {
+      // #ifdef APP-PLUS
+      if (getFormType() === 'app') {
+        if (result.pay_mode !== 'app') throw Error('会员支付结果不是本次原生 App 渠道，请刷新核对');
+        if (!nativeAttempt) throw Error('原生微信支付尚未预约，请刷新核对');
+        await nativeAttempt.request(result.jsConfig);
+        if (!current()) return;
+        uni.showToast({ title: '支付已提交，请以会员状态为准', icon: 'none' });
+        await load(current);
+        return;
+      }
+      // #endif
       const h5Url = typeof result.jsConfig.h5_url === "string" ? result.jsConfig.h5_url : "";
       if (h5Url) {
         // #ifdef H5
@@ -183,8 +241,11 @@ async function submit() {
     }
     throw new Error("支付下单结果无效");
   } catch (error) {
-    uni.showToast({ title: error instanceof Error ? error.message : "会员开通失败", icon: "none" });
+    if (current()) uni.showToast({ title: error instanceof Error ? error.message : "会员开通失败", icon: "none" });
   } finally {
+    // #ifdef APP-PLUS
+    nativeAttempt?.release();
+    // #endif
     submitting.value = false;
   }
 }
@@ -193,7 +254,14 @@ function goActivation() {
   uni.navigateTo({ url: "/pages/annex/vip_active/index" });
 }
 
-onShow(load);
+onShow(() => {
+  // #ifdef APP-PLUS
+  void load(captureNativePaymentView());
+  // #endif
+  // #ifndef APP-PLUS
+  void load();
+  // #endif
+});
 </script>
 
 <style scoped>

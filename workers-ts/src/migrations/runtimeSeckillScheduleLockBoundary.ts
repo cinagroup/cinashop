@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { cashierConditionalAppPredicate, cashierConditionalIdentityAssertion, type CashierRuntimeConditionalBinding } from './cashierRuntimeConditionalBinding';
 
 type Query = Pick<DbClient, 'execute'>;
 export const SECKILL_SCHEDULE_LOCK_TABLES = ['store_activity', 'store_seckill_time'] as const;
@@ -12,18 +13,18 @@ function validate(names: SeckillScheduleRuntimeNames) {
   identities.forEach(pricingIdentifier);
   if (new Set(identities).size !== 3) throw Error('Distinct schedule runtime identities required');
 }
-function body(names: SeckillScheduleRuntimeNames) {
+export function runtimeSeckillScheduleLockBoundaryBody(names: SeckillScheduleRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
   validate(names);
   // UPDATE(id) is necessary for SELECT FOR SHARE. It must not permit changing
   // even that identity. This invoker trigger does not grant authority and does
   // not restrict the independently authenticated Admin or maintenance role.
-  return `BEGIN\nIF current_user='${names.app}' THEN\nIF TG_TABLE_SCHEMA<>'public' OR TG_TABLE_NAME NOT IN ('store_activity','store_seckill_time') OR EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid=TG_RELID AND NOT t.tgisinternal AND (t.tgtype::integer & 16)<>0 AND (t.tgname<>'${SECKILL_SCHEDULE_LOCK_BOUNDARY}' OR t.tgfoid<>pg_catalog.to_regprocedure('public.${SECKILL_SCHEDULE_LOCK_BOUNDARY}()')::oid)) THEN\nRAISE EXCEPTION 'Runtime schedule lock boundary requires reviewed update triggers' USING ERRCODE='42501';\nEND IF;\nIF pg_catalog.to_jsonb(NEW) IS DISTINCT FROM pg_catalog.to_jsonb(OLD) THEN\nRAISE EXCEPTION 'Runtime schedule lock privilege cannot edit catalog rows' USING ERRCODE='42501';\nEND IF;\nEND IF;\nRETURN NEW;\nEND`;
+  return `BEGIN\nIF ${cashierConditionalAppPredicate(names.app,cashier)} THEN${cashierConditionalIdentityAssertion(cashier)}\nIF TG_TABLE_SCHEMA<>'public' OR TG_TABLE_NAME NOT IN ('store_activity','store_seckill_time') OR EXISTS(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid=TG_RELID AND NOT t.tgisinternal AND (t.tgtype::integer & 16)<>0 AND (t.tgname<>'${SECKILL_SCHEDULE_LOCK_BOUNDARY}' OR t.tgfoid<>pg_catalog.to_regprocedure('public.${SECKILL_SCHEDULE_LOCK_BOUNDARY}()')::oid)) THEN\nRAISE EXCEPTION 'Runtime schedule lock boundary requires reviewed update triggers' USING ERRCODE='42501';\nEND IF;\nIF pg_catalog.to_jsonb(NEW) IS DISTINCT FROM pg_catalog.to_jsonb(OLD) THEN\nRAISE EXCEPTION 'Runtime schedule lock privilege cannot edit catalog rows' USING ERRCODE='42501';\nEND IF;\nEND IF;\nRETURN NEW;\nEND`;
 }
 
 /** Exact independent protocol: do not append these tables to the installed
  * cinashop_runtime_lock_only_v1 definition. No catalog repair or ACL writes. */
-export async function inspectRuntimeSeckillScheduleLockBoundary(tx: Query, names: SeckillScheduleRuntimeNames) {
-  const definition = body(names);
+export async function inspectRuntimeSeckillScheduleLockBoundary(tx: Query, names: SeckillScheduleRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
+  const definition = runtimeSeckillScheduleLockBoundaryBody(names,cashier);
   const [r] = await tx.execute(sql`WITH routines AS (
     SELECT p.* FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname=${SECKILL_SCHEDULE_LOCK_BOUNDARY}
   ), targets AS (
@@ -95,7 +96,7 @@ export async function installRuntimeSeckillScheduleLockBoundaryInTransaction(tx:
   if (before.ready) return {applied:false,...before};
   if (!before.absent || !before.tablesSafe) throw Error('Schedule boundary catalog drift');
   await tx.execute(sql.raw(`CREATE FUNCTION public.${SECKILL_SCHEDULE_LOCK_BOUNDARY}() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER
-    SET search_path=pg_catalog,pg_temp AS $schedule_boundary$${body(names)}$schedule_boundary$`));
+    SET search_path=pg_catalog,pg_temp AS $schedule_boundary$${runtimeSeckillScheduleLockBoundaryBody(names)}$schedule_boundary$`));
   await tx.execute(sql.raw(`REVOKE ALL ON FUNCTION public.${SECKILL_SCHEDULE_LOCK_BOUNDARY}() FROM PUBLIC`));
   for (const table of SECKILL_SCHEDULE_LOCK_TABLES)
     await tx.execute(sql.raw(`CREATE TRIGGER ${SECKILL_SCHEDULE_LOCK_BOUNDARY} BEFORE UPDATE ON public.${table}

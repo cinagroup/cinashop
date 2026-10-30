@@ -139,6 +139,15 @@ export async function verifyWechatPlainChallenge(
   }
 }
 
+/** Plain POST signature shares the URL proof, not the challenge's 512-byte
+ * echo budget. The XML body is separately bounded and normalized below. */
+export async function verifyWechatPlainSignature(query: WechatCallbackQuery, token: string): Promise<void> {
+  validateWechatCallbackQuery(query);
+  if (!/^[0-9a-f]{40}$/i.test(query.signature)) throw new Error('wechat_callback_signature_invalid');
+  const expected = await wechatCallbackSha('SHA-1', [token, query.timestamp, query.nonce].sort().join(''));
+  if (!constantTimeEqual(expected, query.signature.toLowerCase())) throw new Error('wechat_callback_signature_invalid');
+}
+
 /** AES-256-CBC with the WeChat protocol's 32-byte PKCS#7 block. */
 export function decryptWechatCallback(
   encrypted: string,

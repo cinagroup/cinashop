@@ -28,6 +28,7 @@ import {
 import { normalizeConfigScalar } from "@/utils/config";
 import { assertCustomerCityDeliveryReady } from '@/migrations/customerCityDelivery';
 import {assertGuestRefundRefusedNoticeSource} from './GuestRefundRefusedNoticeSource';
+import { readRoutineNotificationAppIdInTx, RoutineConfigurationError } from '@/services/wechat/RoutineRuntimeConfig';
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
@@ -187,6 +188,31 @@ function payloadEquals(left: OrderOutboxPayload, right: OrderOutboxPayload): boo
   return canonicalJson(left) === canonicalJson(right);
 }
 
+/** Record delivery intent in the original business transaction, before Queue
+ * delay. Existing events retain their exact pin or historical absence. This
+ * account is not a witness for ownership of an old UID or payment. */
+export async function captureRoutineNotificationAccount<T extends OrderOutboxPayload>(
+  tx: DbClient, eventKey: string, payload: T,
+): Promise<T & { routineAppId?: string }> {
+  const output = { ...payload } as T & { routineAppId?: string };
+  delete output.routineAppId;
+  const [existing] = await tx.select({ payload: storeOrderOutbox.payload }).from(storeOrderOutbox)
+    .where(eq(storeOrderOutbox.eventKey, eventKey)).limit(1);
+  if (existing) {
+    if (Object.hasOwn(existing.payload, 'routineAppId'))
+      output.routineAppId = (existing.payload as { routineAppId?: string }).routineAppId;
+  } else {
+    try { output.routineAppId = await readRoutineNotificationAppIdInTx(tx); }
+    catch (error) {
+      // Invalid optional Mini configuration must not roll back money, SMS or
+      // inbox effects. SQL faults still propagate; no cache supplies history.
+      if (!(error instanceof RoutineConfigurationError)) throw error;
+      output.routineAppId = '';
+    }
+  }
+  return output;
+}
+
 async function insertImmutableNotificationEvent(
   db: DbClient,
   input: {
@@ -201,6 +227,8 @@ async function insertImmutableNotificationEvent(
     now: number;
   },
 ): Promise<{ id: number; eventKey: string }> {
+  const payload = input.payload.userId > 0 && ![ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT, ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT].includes(input.eventType)
+    ? await captureRoutineNotificationAccount(db, input.eventKey, input.payload) : input.payload;
   const inserted = await db
     .insert(storeOrderOutbox)
     .values({
@@ -208,7 +236,7 @@ async function insertImmutableNotificationEvent(
       aggregateType: "order",
       aggregateId: input.aggregateId,
       eventType: input.eventType,
-      payload: input.payload,
+      payload,
       status: "PENDING",
       availableTime: input.now,
       addTime: input.now,
@@ -234,7 +262,7 @@ async function insertImmutableNotificationEvent(
   if (
     event.aggregateId !== input.aggregateId ||
     event.eventType !== input.eventType ||
-    !payloadEquals(event.payload, input.payload)
+    !payloadEquals(event.payload, payload)
   ) {
     throw new Error("通知 outbox 不可变字段冲突");
   }
@@ -739,7 +767,36 @@ export async function createImmutableDelivery(
     now: number;
   },
 ): Promise<void> {
-  const status = input.skipReason ? "SKIPPED" : "PENDING";
+  // Pin only at creation. Consumption never fills a historical missing account
+  // with today's AppID. Immutable-conflict checks also cover this new field.
+  let deliveryPayload = input.deliveryPayload;
+  let routineAppId: string | undefined;
+  if (input.deliveryPayload.kind === 'wechat_routine') {
+    const [existing] = await tx.select({ payload: orderNotificationDelivery.payload }).from(orderNotificationDelivery)
+      .where(and(eq(orderNotificationDelivery.eventKey, input.event.eventKey), eq(orderNotificationDelivery.channel, input.channel))).limit(1);
+    const { routineAppId: _untrusted, ...unbound } = input.deliveryPayload;
+    if (existing?.payload.kind === 'wechat_routine') {
+      const source = input.event.payload as { routineAppId?: unknown };
+      if (typeof source.routineAppId === 'string' && existing.payload.routineAppId !== source.routineAppId)
+        throw new Error('外部通知原事件与投递账号不可变字段冲突');
+      // Replays retain the original account, including historical absence. They
+      // never repin a committed intent after configuration changes.
+      deliveryPayload = Object.hasOwn(existing.payload, 'routineAppId')
+        ? { ...unbound, routineAppId: existing.payload.routineAppId } : unbound;
+    } else {
+      // An old business outbox without an account must not adopt today's
+      // configuration while rendering a new delivery after a Queue delay.
+      const source = input.event.payload as { routineAppId?: unknown };
+      if (typeof source.routineAppId === 'string') {
+        routineAppId = source.routineAppId;
+        deliveryPayload = { ...unbound, routineAppId };
+      } else deliveryPayload = unbound;
+    }
+  }
+  const skipReason = input.skipReason ?? (input.deliveryPayload.kind === 'wechat_routine'
+    && !Object.hasOwn(deliveryPayload, 'routineAppId') ? 'routine_account_evidence_required'
+    : routineAppId === '' ? 'routine_account_not_configured' : undefined);
+  const status = skipReason ? "SKIPPED" : "PENDING";
   const inserted = await tx
     .insert(orderNotificationDelivery)
     .values({
@@ -752,10 +809,10 @@ export async function createImmutableDelivery(
       channel: input.channel,
       target: input.target,
       templateCode: input.templateCode,
-      payload: input.deliveryPayload,
+      payload: deliveryPayload,
       status,
       availableTime: input.now,
-      lastError: input.skipReason ?? "",
+      lastError: skipReason ?? "",
       addTime: input.now,
       updateTime: input.now,
     })
@@ -788,7 +845,7 @@ export async function createImmutableDelivery(
     row.withdrawalId !== (input.payload.withdrawalId ?? null) ||
     row.userId !== input.payload.userId || row.noticeMark !== input.mark ||
     row.target !== input.target || row.templateCode !== input.templateCode ||
-    canonicalJson(row.payload) !== canonicalJson(input.deliveryPayload)
+    canonicalJson(row.payload) !== canonicalJson(deliveryPayload)
   ) {
     throw new Error(`外部通知 ${input.event.eventKey}:${input.channel} 不可变字段冲突`);
   }

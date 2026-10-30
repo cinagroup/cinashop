@@ -50,7 +50,7 @@ export function customerCashierFormDraft(info: SystemFormInfo | null): SystemFor
   return JSON.parse(customerWorkCanonicalJson(info.value)).map((item: SystemFormComponent) => ({ ...item, value: ['checkboxs','dateranges','uploadPicture'].includes(item.name) ? [] : item.defaultValConfig?.value ?? '' }));
 }
 export function customerCashierFormAnswers(info: SystemFormInfo | null, answers: SystemFormComponent[]): unknown {
-  if (!info) { if (answers.length) throw Error('次卡系统表单已变化，请重新选品'); return null; }
+  if (!info) { if (answers.length) throw Error('次卡系统表单已变化，请重新选品'); return []; }
   if (answers.some(item => item.name === 'uploadPicture' && (!Array.isArray(item.value) || item.value.some(reference => typeof reference !== 'string'
     || !/^\/api\/assets\/[1-9]\d{0,9}$/u.test(reference) || Number(reference.slice('/api/assets/'.length)) > 2_147_483_647)))) throw Error('图片表单只能使用本次已核对的上传图片');
   const prepared = prepareOrderSystemFormSubmission(parseOrderSystemFormTemplate(info.value), answers, info.id);

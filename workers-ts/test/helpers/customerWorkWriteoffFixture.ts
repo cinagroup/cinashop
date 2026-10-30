@@ -54,6 +54,9 @@ export async function customerWorkWriteoffFixture(extraTables:PgTable[]=[]){
   const manual=await customerManualRefundReadiness(f.db);if(!manual.ready){console.log('CUSTOMER_MANUAL_REFUND_COMMISSION '+JSON.stringify({manual:await inspectCustomerManualRefund(f.maintenanceDb),financial:await inspectCustomerFinancialOperation(f.maintenanceDb),readiness:manual}));throw Error('Actual cash/manual ordinary runtime was not commissioned: '+JSON.stringify(manual));}
   for(const status of [await customerWriteoffOperationReadiness(f.db),await cashierSecondCardOriginReadiness(f.db),await cashierSecondCardAbandonReadiness(f.db)])if(!status.ready)throw Error('Actual customer writeoff/cashier ordinary runtime was not commissioned: '+JSON.stringify(status));
   const pricing=await auditCheckoutPricingLockRuntime(f.db,'public','customer-work');if(!pricing.ready)throw Error('Actual customer writeoff promotion pricing runtime was not commissioned: '+JSON.stringify(pricing));
+  // Keep the inherited exact named-role binding. Reinstalling with a newly
+  // inferred local role list would be an unsafe ACL expansion, not a replay.
+  if(!(await f.routineRuntime.auditLocal(f.db)).ready)throw Error('Inherited customer routine addon binding changed');
   const env={...f.env,CONFIG_KV:{get:async(key:string)=>quoteCache.get(key)??null,put:async(key:string,value:string)=>{quoteCache.set(key,value);},delete:async(key:string)=>{quoteCache.delete(key);}} as KVNamespace};
   const runtime:StoreOrderCreationRuntime={...env,nextOrderId:async()=>`native-writeoff-${++sequence}`};
   const service=()=>new CustomerWorkWriteoffService(f.container,env),scope=async(uid=101)=>authorizeCustomerWorkActor(f.db,f.actor(uid));

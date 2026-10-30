@@ -6,6 +6,7 @@ import { checkoutPricingLockInstallationSql } from './checkoutPricingLockInstall
 import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 import { managerScopeLockReadiness } from './runManagerScopeLock';
 import { customerWorkScopeLockReadiness } from './runCustomerWorkScopeLock';
+import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
 
 const installationErrors = new Set([
   'Pricing installation requires an explicit safe NOLOGIN owner setting',
@@ -79,15 +80,30 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   pricingIdentifier(schema);
   const state=await inspectCheckoutPricingLock(tx,schema);
   const ordinaryScope=scope==='customer-work-ordinary',customerScopeSelected=scope==='customer-work'||ordinaryScope;
+  // The complete fixed financial LOGIN also carries the two mature taxonomy
+  // locks. Only its actual session/backend identity selects this envelope;
+  // names still cannot exempt a function without its full catalog/ACL proof.
+  let financialLogin=false;
+  if(scope==='customer-work'&&schema==='public'){
+    const [identity]=await tx.execute(sql`SELECT current_user=${CUSTOMER_FINANCIAL_RUNTIME_ROLE}
+      AND session_user=current_user AND current_setting('server_version_num')::integer/10000=16
+      AND EXISTS(SELECT 1 FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid
+        WHERE a.pid=pg_catalog.pg_backend_pid() AND r.rolname=current_user) AS ready`);
+    financialLogin=identity?.ready===true;
+  }
+  const taxonomyScope=ordinaryScope||financialLogin;
   const sharedScope = scope === 'shared-shop' || customerScopeSelected;
   const offlineOid = sharedScope ? await reviewedOfflinePricingOid(tx, schema) : null;
   const managerScope = sharedScope ? await managerScopeLockReadiness(tx,schema) : null;
   const customerScope = customerScopeSelected ? await customerWorkScopeLockReadiness(tx,schema) : null;
-  // An explicit new scope alone can admit these two mature NOLOGIN routines.
+  // The customer-work envelope may compose each mature capability after its
+  // complete proof, including a separately commissioned cashier principal.
+  // The ordinary/fixed-Financial pair remains mandatory exactly as before.
   // Their actual full definition/owner/ACL, taxonomy SELECT-only authority and
   // this independent LOGIN's EXECUTE must verify before any OID exemption.
-  const productCatalog=ordinaryScope?await(await import('./runCustomerProductCatalogLock')).customerProductCatalogLockReadiness(tx,schema):null;
-  const userCatalog=ordinaryScope?await(await import('./runCustomerUserCatalogLock')).customerUserCatalogLockReadiness(tx,schema):null;
+  const inspectTaxonomy=taxonomyScope||(scope==='customer-work'&&schema==='public');
+  const productCatalog=inspectTaxonomy?await(await import('./runCustomerProductCatalogLock')).customerProductCatalogLockReadiness(tx,schema):null;
+  const userCatalog=inspectTaxonomy?await(await import('./runCustomerUserCatalogLock')).customerUserCatalogLockReadiness(tx,schema):null;
   const ordinaryOids=[...(productCatalog?.ready?productCatalog.catalog.functionOids:[]),...(userCatalog?.ready?userCatalog.catalog.functionOids:[])];
   // Exact catalog, NOLOGIN owner and caller ACL verification precedes OID use.
   // A matching function name cannot exempt an unknown definer routine.
@@ -104,8 +120,14 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   // default profile and every original owner predicate stay unchanged.
   const supplierManualOids=sharedScope&&schema==='public'
     ?await(await import('./supplierManualRefund')).reviewedSupplierManualRefundCapabilityOids(tx):[];
+  // Only the shared whole-shop App may also execute this separately installed
+  // Supplier label port. Its exact function, dedicated owner, ACL and runtime
+  // denials must verify; its owner has no pricing/configuration write rights.
+  const supplierLabel=scope==='shared-shop'&&schema==='public'
+    ?await(await import('./supplierProductLabelCapability')).inspectSupplierProductLabelCapability(tx):null;
+  const supplierLabelOids=supplierLabel?.ready&&supplierLabel.functionOid?[supplierLabel.functionOid]:[];
   const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
-    ...supplierManualOids,...ordinaryOids];
+    ...supplierManualOids,...ordinaryOids,...supplierLabelOids];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
@@ -136,7 +158,7 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
         AND pg_catalog.has_function_privilege(current_user,oid,'EXECUTE')) AS "requiredPrivileges"`);
   return { ready: pricingCatalogReady(state) && row?.callerSafe===true && row?.requiredPrivileges===true && row?.noUnreviewedDefinerRoutine===true
       && (!customerScopeSelected || customerScope?.ready===true)
-      && (!ordinaryScope || (productCatalog?.ready===true&&userCatalog?.ready===true)),
+      && (!taxonomyScope || (productCatalog?.ready===true&&userCatalog?.ready===true)),
     catalogReady: pricingCatalogReady(state), callerSafe: row?.callerSafe===true, requiredPrivileges: row?.requiredPrivileges===true,
     noUnreviewedDefinerRoutine: row?.noUnreviewedDefinerRoutine===true };
 }

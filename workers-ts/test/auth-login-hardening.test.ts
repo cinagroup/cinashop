@@ -96,6 +96,7 @@ describe("scan/OAuth browser boundary hardening", () => {
 
   it("keeps browser verifier, delivery lease, and secrets in server-only boundaries", () => {
     const oauth = readFileSync("src/services/wechat/WechatOpenWebAuthService.ts", "utf8");
+    const credentials = readFileSync("src/services/wechat/OpenPlatformRuntimeConfig.ts", "utf8");
     const cookie = readFileSync("src/services/auth/OauthBrowserCookie.ts", "utf8");
     const durable = readFileSync("src/do/TokenBucketDO.ts", "utf8");
     const cache = readFileSync("src/utils/cache.ts", "utf8");
@@ -113,7 +114,21 @@ describe("scan/OAuth browser boundary hardening", () => {
     expect(cookie).toContain("secure: true");
     expect(cookie).toContain('sameSite: "Lax"');
     expect(oauth).toContain("`${STATE_PREFIX}${state}:${verifierHash}`");
-    expect(oauth).toContain("WECHAT_OPEN_APP_SECRET");
+    expect(oauth).toContain("from './OpenPlatformRuntimeConfig'");
+    expect(oauth).toContain("readOpenPlatformCredentials(this.container, this.env)");
+    expect(credentials).toContain("const deployment = env.WECHAT_OPEN_APP_SECRET");
+    expect(credentials).toContain("const deployed = deployment !== undefined && deployment !== ''");
+    expect(credentials).toContain("deployed ? 'deployment' : raw(WECHAT_OPEN_AUTHORITY_KEY) === 'database' ? 'database' : null");
+    expect(credentials).toContain("!authority || !validWechatOpenSecret(secret)");
+    expect(credentials).toContain("createHmac('sha256', env.APP_KEY)");
+    expect(credentials).toContain("JSON.stringify({ rows, deployment, authority })");
+    expect(credentials).toContain("pg_try_advisory_xact_lock_shared(731661,0)");
+    expect(credentials).toContain("action(createContainerFromDb(tx), credentials)");
+    expect(oauth).toContain("withOpenPlatformCredentials(this.container, this.env, stamp");
+    expect(oauth).toContain("credentialsStamp: credentials.stamp");
+    expect(credentials).not.toContain("CONFIG_KV.get");
+    expect(credentials).not.toContain("CONFIG_KV.put");
+    expect(credentials).not.toContain("new SystemConfigService");
     expect(oauth).not.toContain('"wechat_open_app_secret"');
     expect(durable).toContain('state.stage = "issuing"');
     expect(durable).toContain('state.stage = "delivered"');

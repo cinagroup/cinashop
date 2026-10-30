@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { cashierConditionalAppPredicate, cashierConditionalIdentityAssertion, cashierConditionalRoleMatch, type CashierRuntimeConditionalBinding } from './cashierRuntimeConditionalBinding';
 
 type Query = Pick<DbClient, 'execute'>;
 export interface AgentLevelRuntimeNames { maintenance: string; app: string; admin: string }
@@ -12,10 +13,10 @@ function validate(names: AgentLevelRuntimeNames) {
   identities.forEach(pricingIdentifier);
   if (new Set(identities).size !== 3) throw Error('Distinct distributor runtime identities required');
 }
-export function runtimeAgentLevelCatalogFenceBody(names: AgentLevelRuntimeNames) {
+export function runtimeAgentLevelCatalogFenceBody(names: AgentLevelRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
   validate(names);
   return `BEGIN
-IF current_user IN ('${names.app}','${names.admin}') THEN
+IF current_user IN ('${names.app}','${names.admin}')${cashier?` OR ${cashierConditionalRoleMatch(cashier)}`:''} THEN${cashierConditionalIdentityAssertion(cashier)}
 IF TG_TABLE_SCHEMA<>'public' OR TG_LEVEL<>'STATEMENT' OR TG_TABLE_NAME NOT IN ('agent_level','agent_level_task','agent_level_task_record') THEN
 RAISE EXCEPTION 'Invalid distributor catalog fence' USING ERRCODE='42501';
 END IF;
@@ -28,18 +29,18 @@ END IF;
 RETURN NULL;
 END`;
 }
-export function runtimeAgentLevelRowGuardBody(names: AgentLevelRuntimeNames) {
+export function runtimeAgentLevelRowGuardBody(names: AgentLevelRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
   validate(names);
   return `BEGIN
-IF current_user IN ('${names.app}','${names.admin}') THEN
+IF current_user IN ('${names.app}','${names.admin}')${cashier?` OR ${cashierConditionalRoleMatch(cashier)}`:''} THEN${cashierConditionalIdentityAssertion(cashier)}
 IF TG_TABLE_SCHEMA<>'public' OR TG_TABLE_NAME<>'agent_level' OR TG_LEVEL<>'ROW' THEN
 RAISE EXCEPTION 'Invalid distributor row guard' USING ERRCODE='42501';
 END IF;
-IF TG_OP='DELETE' OR (current_user='${names.app}' AND TG_OP<>'UPDATE') THEN
+IF TG_OP='DELETE' OR (${cashierConditionalAppPredicate(names.app,cashier)} AND TG_OP<>'UPDATE') THEN
 RAISE EXCEPTION 'Distributor catalog requires soft deletion and Admin authority' USING ERRCODE='42501';
 END IF;
 IF TG_OP='UPDATE' THEN
-IF current_user='${names.app}' AND pg_catalog.to_jsonb(NEW) IS DISTINCT FROM pg_catalog.to_jsonb(OLD) THEN
+IF ${cashierConditionalAppPredicate(names.app,cashier)} AND pg_catalog.to_jsonb(NEW) IS DISTINCT FROM pg_catalog.to_jsonb(OLD) THEN
 RAISE EXCEPTION 'Application distributor privilege is lock only' USING ERRCODE='42501';
 END IF;
 IF (pg_catalog.to_jsonb(NEW)-ARRAY['name','image','color','one_brokerage','two_brokerage','grade','status','is_del']::text[]) IS DISTINCT FROM
@@ -58,11 +59,11 @@ END`;
  * upgrade that could deadlock with a writer waiting for the advisory fence.
  * The separate row guard narrows the Admin column grants; neither invoker
  * function conveys SQL authority. Historical completion rows remain intact. */
-export async function inspectRuntimeAgentLevelCatalogBoundary(tx: Query, names: AgentLevelRuntimeNames) {
+export async function inspectRuntimeAgentLevelCatalogBoundary(tx: Query, names: AgentLevelRuntimeNames, cashier?:CashierRuntimeConditionalBinding) {
   validate(names);
   const [row] = await tx.execute(sql`WITH expected(name,body) AS (VALUES
-    (${AGENT_LEVEL_CATALOG_FENCE},${runtimeAgentLevelCatalogFenceBody(names)}),
-    (${AGENT_LEVEL_ROW_GUARD},${runtimeAgentLevelRowGuardBody(names)})
+    (${AGENT_LEVEL_CATALOG_FENCE},${runtimeAgentLevelCatalogFenceBody(names,cashier)}),
+    (${AGENT_LEVEL_ROW_GUARD},${runtimeAgentLevelRowGuardBody(names,cashier)})
   ), routines AS (SELECT p.* FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
       AND p.proname IN (${AGENT_LEVEL_CATALOG_FENCE},${AGENT_LEVEL_ROW_GUARD})),
   targets AS (SELECT * FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace
@@ -98,7 +99,7 @@ export async function inspectRuntimeAgentLevelCatalogBoundary(tx: Query, names: 
       AND g.tgenabled='O' AND NOT g.tgisinternal AND g.tgnargs=0 AND g.tgargs=''::bytea
       AND g.tgattr=''::int2vector AND g.tgqual IS NULL AND NOT g.tgdeferrable AND NOT g.tginitdeferred
       AND g.tgconstraint=0 AND g.tgparentid=0 AND g.tgoldtable IS NULL AND g.tgnewtable IS NULL
-      AND g.tgfoid=(SELECT oid FROM routines WHERE proname=e.name))
+      AND g.tgfoid=(SELECT oid FROM routines WHERE proname=e.name AND pronargs=0 AND proargtypes=''::oidvector))
       FROM actual_triggers g FULL JOIN expected_triggers e ON g.table_name=e.table_name AND g.tgname=e.name)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger g WHERE g.tgfoid IN(SELECT oid FROM routines)
         AND g.tgrelid NOT IN(SELECT oid FROM targets)) AS triggers_safe`);

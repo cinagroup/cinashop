@@ -63,6 +63,7 @@ function loader(options = {}) {
     if (cache.has(file)) return cache.get(file);
     const exports = {}; cache.set(file, exports);
     let source = fs.readFileSync(file, 'utf8'), descriptor, script;
+    source = options.sourceTransform ? options.sourceTransform(source, file) : source.replace(/\bimport\.meta\.env\.DEV\b/gu, 'false');
     if (file.endsWith('.vue')) { descriptor = sfc.parse(source, { filename: file }).descriptor; script = sfc.compileScript(descriptor, { id: 'navigation-editor-runtime' }); source = script.content; }
     const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
     new Function('require', 'exports', 'window', 'localStorage', output)(name => {

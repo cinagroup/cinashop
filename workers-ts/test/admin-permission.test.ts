@@ -10,6 +10,25 @@ import {
   isAdminAuthorityRecoveryRoute,
   isAdminProductEditorRecoveryRoute,
   isAdminProductVideoRecoveryRoute,
+  isAdminProfileRoute,
+  isAdminPlatformMenuRecoveryRoute,
+  isAdminExpressRecoveryRoute,
+  isAdminLevelRecoveryRoute,
+  isAdminUserLabelRecoveryRoute,
+  isAdminStoreRecoveryRoute,
+  isAdminStaffRecoveryRoute,
+  isAdminDeliveryRecoveryRoute,
+  isAdminGroupRecoveryRoute,
+  isAdminUnitRecoveryRoute,
+  isAdminEnsureRecoveryRoute,
+  isAdminRuleRecoveryRoute,
+  isAdminParameterRecoveryRoute,
+  isAdminHotwordRecoveryRoute,
+  isAdminPcBaseRecoveryRoute,
+  isAdminWechatOpenRecoveryRoute,
+  isAdminWechatAppRecoveryRoute,
+  isAdminWechatBaseRecoveryRoute,
+  isAdminProductLabelRecoveryRoute,
 } from "@/services/admin/AdminPermissionService";
 import { createContainerFromDb } from "@/lib/di";
 import { systemMenus, systemRole } from "@/models/schema";
@@ -53,34 +72,123 @@ describe("admin permission catalog", () => {
       { method: "GET", path: "/api/ws/kefu" },
     ];
     expect(routes.length).toBeGreaterThan(200);
-    const recovery = routes.filter(route => isAdminAuthorityRecoveryRoute(route.method,route.path));
-    expect(recovery).toEqual([
-      { method:'GET',path:'/adminapi/setting/admin-authority/receipt/:operationId' },
-      { method:'POST',path:'/adminapi/setting/admin-authority/resolve' },
-      { method:'GET',path:'/adminapi/setting/role-authority/receipt/:operationId' },
-      { method:'POST',path:'/adminapi/setting/role-authority/resolve' },
-      { method:'GET',path:'/adminapi/system/authority/receipt/:operationId' },
-      { method:'POST',path:'/adminapi/system/authority/resolve' },
-      { method:'GET',path:'/api/admin/setting/admin-authority/receipt/:operationId' },
-      { method:'POST',path:'/api/admin/setting/admin-authority/resolve' },
-      { method:'GET',path:'/api/admin/setting/role-authority/receipt/:operationId' },
-      { method:'POST',path:'/api/admin/setting/role-authority/resolve' },
-      { method:'GET',path:'/api/admin/system/authority/receipt/:operationId' },
-      { method:'POST',path:'/api/admin/system/authority/resolve' },
+    const prefixes = ["/adminapi", "/api/admin"];
+    const pair = (method: string, path: string) => ({ method, path });
+    const ordered = (entries: typeof routes) => [...entries].sort((a, b) => `${a.method} ${a.path}`.localeCompare(`${b.method} ${b.path}`));
+    // These are explicit registered owner-recovery contracts, not a blanket
+    // exemption for any URL containing receipt/resolve or a namespace prefix.
+    const recoveryContracts = [
+      { matches: isAdminAuthorityRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/setting/admin-authority/receipt/:operationId`),
+        pair("POST", `${prefix}/setting/admin-authority/resolve`),
+        pair("GET", `${prefix}/setting/role-authority/receipt/:operationId`),
+        pair("POST", `${prefix}/setting/role-authority/resolve`),
+        pair("GET", `${prefix}/system/authority/receipt/:operationId`),
+        pair("POST", `${prefix}/system/authority/resolve`),
+      ]) },
+      { matches: isAdminProductEditorRecoveryRoute, expected: [
+        pair("GET", "/adminapi/product/editor/operations/:operationId"),
+        pair("POST", "/adminapi/product/editor/operations/:operationId/resolve"),
+      ] },
+      { matches: isAdminProductVideoRecoveryRoute, expected: [
+        pair("GET", "/adminapi/file/video_uploads/:uploadId"),
+        pair("POST", "/adminapi/file/video_uploads/:uploadId/cancel"),
+      ] },
+      { matches: isAdminPlatformMenuRecoveryRoute, expected: prefixes.map(prefix =>
+        pair("GET", `${prefix}/system/menu-rules/receipt/:requestId`)) },
+      { matches: isAdminExpressRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("POST", `${prefix}/express/author/resolve`), pair("GET", `${prefix}/express/author/receipt/:operationId`),
+      ]) },
+      { matches: isAdminLevelRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("POST", `${prefix}/level/author/resolve`), pair("GET", `${prefix}/level/author/receipt/:operationId`),
+      ]) },
+      { matches: isAdminUserLabelRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/user_label/author/receipt/:operationId`), pair("POST", `${prefix}/user_label/author/resolve`),
+      ]) },
+      { matches: isAdminStoreRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/merchant/store/author/receipt/:operationId`), pair("POST", `${prefix}/merchant/store/author/resolve`),
+      ]) },
+      { matches: isAdminStaffRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/merchant/store_staff/author/receipt/:operationId`), pair("POST", `${prefix}/merchant/store_staff/author/resolve`),
+      ]) },
+      { matches: isAdminGroupRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/user/group/author/receipt/:operationId`), pair("POST", `${prefix}/user/group/author/resolve`),
+      ]) },
+      { matches: isAdminUnitRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/unit/author/receipt/:operationId`), pair("POST", `${prefix}/product/unit/author/resolve`),
+      ]) },
+      { matches: isAdminEnsureRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/ensure/author/receipt/:operationId`), pair("POST", `${prefix}/product/ensure/author/resolve`),
+      ]) },
+      { matches: isAdminRuleRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/rule/author/receipt/:operationId`), pair("POST", `${prefix}/product/rule/author/resolve`),
+      ]) },
+      { matches: isAdminParameterRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/specs/author/receipt/:operationId`), pair("POST", `${prefix}/product/specs/author/resolve`),
+      ]) },
+      { matches: isAdminPcBaseRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/config/pc/operations/:operationId`), pair("POST", `${prefix}/config/pc/operations/:operationId/resolve`),
+      ]) },
+      { matches: isAdminWechatOpenRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/wechat/open/operations/:operationId`), pair("POST", `${prefix}/wechat/open/operations/:operationId/resolve`),
+      ]) },
+      { matches: isAdminWechatAppRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/wechat/app/operations/:operationId`), pair("POST", `${prefix}/wechat/app/operations/:operationId/resolve`),
+      ]) },
+      { matches: isAdminWechatBaseRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/wechat/base/operations/:operationId`), pair("POST", `${prefix}/wechat/base/operations/:operationId/resolve`),
+      ]) },
+      { matches: isAdminHotwordRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/words/author/receipt/:operationId`), pair("POST", `${prefix}/product/words/author/resolve`),
+      ]) },
+      { matches: isAdminProductLabelRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/product/label/author/receipt/:operationId`), pair("POST", `${prefix}/product/label/author/resolve`),
+      ]) },
+      { matches: isAdminDeliveryRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/order/delivery/author/receipt/:operationId`), pair("POST", `${prefix}/order/delivery/author/resolve`),
+      ]) },
+    ];
+    for (const contract of recoveryContracts) {
+      const owned = routes.filter(route => contract.matches(route.method, route.path));
+      expect(ordered(owned)).toEqual(ordered(contract.expected));
+      for (const route of owned) expect(requiredAdminPermission(route.method, route.path)).toBeNull();
+    }
+    // The service authorizes self profile independently of management grants.
+    // Its two old setting URLs retain their classifier values; modern profile
+    // URLs have no generic role permission. None accepts an arbitrary target.
+    const profile = prefixes.flatMap(prefix => [
+      pair("GET", `${prefix}/setting/info`), pair("PUT", `${prefix}/setting/update_admin`),
+      pair("POST", `${prefix}/system/profile/commit`), pair("GET", `${prefix}/system/profile/receipt/:operationId`),
+      pair("POST", `${prefix}/system/profile/resolve`), pair("PUT", `${prefix}/system/profile/avatar/:avatarId`),
+      pair("GET", `${prefix}/system/profile/avatar/:avatarId`), pair("POST", `${prefix}/system/profile/challenge`),
+      pair("GET", `${prefix}/system/profile/challenge/status`), pair("POST", `${prefix}/system/profile/sms`),
     ]);
-    const missing = routes.filter((route) => !isAdminAuthorityRecoveryRoute(route.method,route.path)
-      && !isAdminProductEditorRecoveryRoute(route.method,route.path)
-      && !isAdminProductVideoRecoveryRoute(route.method,route.path)
+    expect(ordered(routes.filter(route => isAdminProfileRoute(route.method, route.path)))).toEqual(ordered(profile));
+    for (const route of profile) {
+      const normalized = normalizeAdminRoute(route.path);
+      expect(requiredAdminPermission(route.method, route.path)).toBe(normalized === "setting/info" ? "config.view"
+        : normalized === "setting/update_admin" ? "config.manage" : null);
+    }
+    const missing = routes.filter(route => !isAdminProfileRoute(route.method, route.path)
+      && !recoveryContracts.some(contract => contract.matches(route.method, route.path))
       && !requiredAdminPermission(route.method, route.path));
     expect(missing).toEqual([]);
-    expect(routes.filter(route => isAdminProductEditorRecoveryRoute(route.method,route.path))).toEqual([
-      { method:'GET',path:'/adminapi/product/editor/operations/:operationId' },
-      { method:'POST',path:'/adminapi/product/editor/operations/:operationId/resolve' },
-    ]);
-    expect(routes.filter(route => isAdminProductVideoRecoveryRoute(route.method,route.path))).toEqual([
-      { method:'GET',path:'/adminapi/file/video_uploads/:uploadId' },
-      { method:'POST',path:'/adminapi/file/video_uploads/:uploadId/cancel' },
-    ]);
+  });
+
+  it('keeps App grants bound to legacy menu composition and separates owner recovery from fresh view and save permissions', () => {
+    for (const permission of ['wechat_app.view', 'wechat_app.manage'])
+      expect(() => normalizeRoleRules(permission)).toThrow('原生App权限须通过完整的旧菜单组合授予');
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      expect(requiredAdminPermission('GET', `${prefix}/wechat/app`)).toBe('wechat_app.view');
+      expect(requiredAdminPermission('POST', `${prefix}/wechat/app`)).toBe('wechat_app.manage');
+      const receipt = `${prefix}/wechat/app/operations/:operationId`;
+      expect(isAdminWechatAppRecoveryRoute('GET', receipt)).toBe(true);
+      expect(isAdminWechatAppRecoveryRoute('POST', receipt)).toBe(false);
+      expect(isAdminWechatAppRecoveryRoute('POST', receipt + '/resolve')).toBe(true);
+      expect(isAdminWechatAppRecoveryRoute('GET', receipt + '/resolve')).toBe(false);
+      expect(requiredAdminPermission('GET', receipt)).toBeNull();
+      expect(requiredAdminPermission('POST', receipt + '/resolve')).toBeNull();
+    }
   });
 
   it('limits video recovery to owned query and cancellation while keeping publication and previews capability gated', () => {
@@ -659,10 +767,138 @@ describe("admin permission catalog", () => {
   it("publishes a unique view permission for every menu group", () => {
     const keys = ADMIN_PERMISSION_GROUPS.map((group) => group.key);
     expect(new Set(keys).size).toBe(keys.length);
+    const routes = [
+      ...registeredAdminRoutes("src/routes/adminapi.ts", "adminapiRoutes", "/adminapi"),
+      ...registeredAdminRoutes("src/routes/v1/index.ts", "v1Routes", "/api"),
+      { method: "GET", path: "/api/ws/kefu" },
+    ];
+    // Literal witnesses come from registered routes, not matches[0] + list.
+    // Coupon publication intentionally has only a POST management producer.
+    const witnesses: Record<string, { method: string; path: string }> = {
+      "dashboard": { method: "GET", path: "/adminapi/home/header" },
+      "outbox": { method: "GET", path: "/adminapi/order/outbox" },
+      "legacy_runtime": { method: "GET", path: "/adminapi/system/timer/task" },
+      "enterprise_wechat": { method: "GET", path: "/adminapi/work/summary" },
+      "live_broadcast": { method: "GET", path: "/adminapi/live/room/list" },
+      "external_api": { method: "GET", path: "/adminapi/system_out/index" },
+      "product": { method: "GET", path: "/adminapi/product/list" },
+      "category": { method: "GET", path: "/adminapi/product/category" },
+      "brand": { method: "GET", path: "/adminapi/product/brand" },
+      "store": { method: "GET", path: "/adminapi/merchant/store/author/catalog" },
+      "writeoff_order": { method: "GET", path: "/adminapi/merchant/verify_order" },
+      "invoice": { method: "GET", path: "/adminapi/order/invoices" },
+      "recharge_order": { method: "GET", path: "/adminapi/finance/recharge-orders" },
+      "commission": { method: "GET", path: "/adminapi/finance/commissions" },
+      "order": { method: "GET", path: "/adminapi/order/chart" },
+      "refund": { method: "GET", path: "/adminapi/refund/list" },
+      "user": { method: "GET", path: "/adminapi/user/list" },
+      "paid_membership": { method: "GET", path: "/adminapi/member_batch/index" },
+      "level": { method: "GET", path: "/adminapi/level/list" },
+      "coupon": { method: "GET", path: "/adminapi/coupon/list" },
+      "coupon_template": { method: "GET", path: "/adminapi/marketing/coupon-templates" },
+      "coupon_template_issue": { method: "POST", path: "/adminapi/marketing/coupon-template-issues" },
+      "coupon_record": { method: "GET", path: "/adminapi/marketing/coupon-records/list" },
+      "seckill_statistics": { method: "GET", path: "/adminapi/activity/seckill-statistics/:id/head" },
+      "seckill_time": { method: "GET", path: "/adminapi/activity/seckill-times" },
+      "seckill_activity": { method: "GET", path: "/adminapi/activity/seckill-activities" },
+      "bargain_record": { method: "GET", path: "/adminapi/activity/bargain-records" },
+      "bargain_statistics": { method: "GET", path: "/adminapi/activity/bargain-statistics/:id/head" },
+      "combination_export": { method: "GET", path: "/adminapi/activity/combinations/export" },
+      "combination_group": { method: "GET", path: "/adminapi/activity/combination-groups/head" },
+      "combination_statistics": { method: "GET", path: "/adminapi/activity/combination-statistics/:id/head" },
+      "combination": { method: "GET", path: "/adminapi/activity/combinations" },
+      "integral_category": { method: "GET", path: "/adminapi/marketing/integral-categories" },
+      "integral_batch": { method: "GET", path: "/adminapi/activity/integral-batch/products" },
+      "recharge_quota": { method: "GET", path: "/adminapi/marketing/recharge-quotas" },
+      "sign_day_config": { method: "GET", path: "/adminapi/marketing/sign-day-config" },
+      "activity_frame": { method: "GET", path: "/adminapi/marketing/activity-frame/products" },
+      "activity_background": { method: "GET", path: "/adminapi/marketing/activity-background/products" },
+      "time_discount": { method: "GET", path: "/adminapi/marketing/time-discounts/products" },
+      "full_discount": { method: "GET", path: "/adminapi/marketing/full-discounts/products" },
+      "nth_discount": { method: "GET", path: "/adminapi/marketing/nth-discounts/products" },
+      "full_gift": { method: "GET", path: "/adminapi/marketing/full-gifts/products" },
+      "activity": { method: "GET", path: "/adminapi/activity/seckill" },
+      "feedback": { method: "GET", path: "/adminapi/feedback" },
+      "speechcraft": { method: "GET", path: "/adminapi/wechat/speechcraft" },
+      "service": { method: "GET", path: "/adminapi/service/sessions" },
+      "reply": { method: "GET", path: "/adminapi/product/reply" },
+      "community": { method: "GET", path: "/adminapi/community/settings" },
+      "attachment": { method: "GET", path: "/adminapi/file/file" },
+      "shipping_settings": { method: "GET", path: "/adminapi/config/shipping" },
+      "city_delivery_settings": { method: "GET", path: "/adminapi/config/city-delivery" },
+      "city_delivery_record": { method: "GET", path: "/adminapi/city_delivery/records" },
+      "pc_home_banner": { method: "GET", path: "/adminapi/setting/pc-banners" },
+      "operational_group": { method: "GET", path: "/adminapi/setting/group_data/header" },
+      "erp.connection": { method: "GET", path: "/adminapi/erp/connections" },
+      "fab_settings": { method: "GET", path: "/adminapi/setting/fab" },
+      "theme_settings": { method: "GET", path: "/adminapi/setting/theme-style" },
+      "product_category_style": { method: "GET", path: "/adminapi/config/product-category-style" },
+      "product_detail_design": { method: "GET", path: "/adminapi/config/product-detail-design" },
+      "user_center_design": { method: "GET", path: "/adminapi/config/user-center-design" },
+      "config": { method: "GET", path: "/adminapi/config/user/register/products" },
+      "print": { method: "GET", path: "/adminapi/print/list" },
+      "waybill": { method: "GET", path: "/adminapi/waybill/jobs" },
+      "supplier_application": { method: "GET", path: "/adminapi/supplier/apply/list" },
+      "supplier_menu_rules": { method: "GET", path: "/adminapi/supplier/menu-rules" },
+      "supplier_directory": { method: "GET", path: "/adminapi/supplier/supplier" },
+      "supplier_order_statistics": { method: "GET", path: "/adminapi/supplier/order-statistics-screen/suppliers" },
+      "supplier_capital": { method: "GET", path: "/adminapi/supplier/capital-screen/suppliers" },
+      "supplier_bill": { method: "GET", path: "/adminapi/supplier/bill-screen/suppliers" },
+      "system": { method: "GET", path: "/adminapi/system_admin/list" },
+      "system_menu_rules": { method: "GET", path: "/adminapi/system/menu-rules/catalog" },
+      "extract": { method: "GET", path: "/adminapi/extract/notifications/socket" },
+      "supplier_extract": { method: "GET", path: "/adminapi/supplier/extract/suppliers" },
+      "bill": { method: "GET", path: "/adminapi/bill/list" },
+      "integral_log": { method: "GET", path: "/adminapi/marketing/user-point/logs" },
+      "point_statistic": { method: "GET", path: "/adminapi/marketing/point/get_basic" },
+      "capital_flow": { method: "GET", path: "/adminapi/flow/get_list" },
+      "shipping": { method: "GET", path: "/adminapi/shipping_template/list" },
+      "express": { method: "GET", path: "/adminapi/express/list" },
+      "statistic": { method: "GET", path: "/adminapi/statistic/overview" },
+      "label": { method: "GET", path: "/adminapi/product/label_cate" },
+      "article": { method: "GET", path: "/adminapi/article/list" },
+      "wechat_member_card": { method: "GET", path: "/adminapi/wechat/card" },
+      "pc_base": { method: "GET", path: "/adminapi/config/pc" },
+      "wechat_open": { method: "GET", path: "/adminapi/wechat/open" },
+      "wechat_app": { method: "GET", path: "/adminapi/wechat/app" },
+      "wechat_base": { method: "GET", path: "/adminapi/wechat/base" },
+      "wechat_menu": { method: "GET", path: "/adminapi/wechat/menu" },
+      "wechat_content": { method: "GET", path: "/adminapi/wechat/reply" },
+      "wechat_qrcode": { method: "GET", path: "/adminapi/wechat_qrcode/cate/list" },
+      "dise": { method: "GET", path: "/adminapi/dise/list" },
+      "lottery_record": { method: "GET", path: "/adminapi/lottery/record/list" },
+      "lottery": { method: "GET", path: "/adminapi/lottery/list" },
+      "log": { method: "GET", path: "/adminapi/log/list" },
+      "agent_level": { method: "GET", path: "/adminapi/agent/levels" },
+      "agent_level_task": { method: "GET", path: "/adminapi/agent/level-tasks" },
+      "distribution": { method: "GET", path: "/adminapi/spread/list" },
+      "agent_agreement": { method: "GET", path: "/adminapi/agent/get_agent_agreement" },
+      "division_statistics": { method: "GET", path: "/adminapi/agent/division/statistics-screen/summary" },
+      "division": { method: "GET", path: "/adminapi/agent/division/list" },
+      "notification": { method: "GET", path: "/adminapi/notification/list" },
+    };
+    expect(Object.keys(witnesses).sort()).toEqual([...keys].sort());
     for (const group of ADMIN_PERMISSION_GROUPS) {
-      const matcher = group.matches[0];
-      const sampleRoute = matcher.endsWith("/") ? `${matcher}list` : matcher;
-      expect(requiredAdminPermission("GET", `/adminapi/${sampleRoute}`)).toBe(`${group.key}.view`);
+      const witness = witnesses[group.key];
+      expect(witness, group.key).toBeDefined();
+      if (!witness) throw Error(`Missing registered permission witness: ${group.key}`);
+      expect(routes, group.key).toContainEqual(witness);
+      if (group.key === "coupon_template_issue") {
+        expect(witness.method).toBe("POST");
+        expect(requiredAdminPermission(witness.method, witness.path)).toBe("coupon_template_issue.manage");
+        expect(routes).not.toContainEqual({ method: "GET", path: witness.path });
+        expect(routes.filter(route => route.method === "GET"
+          && requiredAdminPermission(route.method, route.path) === "coupon_template_issue.view")).toEqual([]);
+      } else {
+        expect(witness.method, group.key).toBe("GET");
+        expect(requiredAdminPermission(witness.method, witness.path), group.key).toBe(`${group.key}.view`);
+      }
+    }
+    for (const prefix of ["/adminapi", "/api/admin"]) {
+      expect(requiredAdminPermission("POST", `${prefix}/wechat/menu/operations/123/resolve-missing`)).toBe("wechat_menu.manage");
+      expect(requiredAdminPermission("GET", `${prefix}/wechat/menu/operations/123/resolve-missing`)).toBeNull();
+      expect(requiredAdminPermission("GET", `${prefix}/system/menu-rules`)).toBeNull();
+      expect(routes).not.toContainEqual({ method: "GET", path: `${prefix}/system/menu-rules` });
     }
   });
 });

@@ -41,6 +41,7 @@ export type ScanLoginPollResult =
 export interface OauthStateResult {
   state: string;
   expires_in: number;
+  appid: string;
 }
 
 /** 账号密码登录 (POST /api/login) */

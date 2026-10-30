@@ -27,6 +27,7 @@ export interface OrderPaidOutboxPayload {
 }
 
 export interface OrderPinkSuccessNoticeOutboxPayload {
+  routineAppId?: string;
   orderId: number;
   orderNo: string;
   userId: number;
@@ -35,6 +36,7 @@ export interface OrderPinkSuccessNoticeOutboxPayload {
 }
 
 export interface OrderDeliveryNoticeOutboxPayload {
+  routineAppId?: string;
   orderId: number;
   orderNo: string;
   userId: number;
@@ -46,6 +48,7 @@ export interface OrderDeliveryNoticeOutboxPayload {
 }
 
 export interface OrderRefundRefusedNoticeOutboxPayload {
+  routineAppId?: string;
   orderId: number;
   orderNo: string;
   refundId: number;
@@ -65,6 +68,7 @@ export interface OrderSecondCardNoticeOutboxPayload {
 }
 
 export interface WithdrawalNoticeOutboxPayload {
+  routineAppId?: string;
   withdrawalId: number;
   userId: number;
   netAmount: string;

@@ -20,9 +20,33 @@
           <el-icon><Goods /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/product')" index="/product/units" aria-label="商品单位">
+          <el-icon><Goods /></el-icon>
+          <span>商品单位</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/product')" index="/product/ensures" aria-label="保障服务">
+          <el-icon><Goods /></el-icon>
+          <span>保障服务</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/product')" index="/product/rules" aria-label="SKU 规格模板">
+          <el-icon><Goods /></el-icon>
+          <span>SKU 规格模板</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/product')" index="/product/parameters" aria-label="商品参数模板">
+          <el-icon><Goods /></el-icon>
+          <span>商品参数模板</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/product')" index="/product/hotwords" aria-label="搜索热词">
+          <el-icon><Goods /></el-icon>
+          <span>搜索热词</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/order')" index="/order">
           <el-icon><Tickets /></el-icon>
           <span>订单管理</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/order')" index="/order/delivery-people" aria-label="平台配送员">
+          <el-icon><User /></el-icon>
+          <span>平台配送员</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/order')" index="/order/offline" aria-label="线下消费">
           <el-icon><CreditCard /></el-icon>
@@ -112,6 +136,10 @@
           <el-icon><Monitor /></el-icon>
           <span>客户端内容</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/config')" index="/config/classes">
+          <el-icon><Setting /></el-icon>
+          <span>配置分类</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/config')" index="/config">
           <el-icon><Setting /></el-icon>
           <span>系统配置</span>
@@ -151,6 +179,12 @@
         <el-menu-item v-if="canMenu('/activity/combinations')" index="/activity/combinations" aria-label="拼团商品">
           <el-icon><Present /></el-icon>
           <span>拼团商品</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/activity/bargain-records')" index="/activity/bargain-records" aria-label="砍价运营记录">
+          <el-icon><Present /></el-icon><span>砍价运营记录</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/activity/bargain-statistics')" index="/activity/bargain-statistics" aria-label="砍价统计">
+          <el-icon><Present /></el-icon><span>砍价统计</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/activity/combination-groups')" index="/activity/combination-groups" aria-label="全局拼团记录">
           <el-icon><Present /></el-icon>
@@ -252,6 +286,9 @@
           <el-icon><UserFilled /></el-icon>
           <span>系统管理</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/system/menu-rules')" index="/system/menu-rules">
+          <span>平台权限规则</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/system/legacy-staff')" index="/system/legacy-staff">
           <el-icon><UserFilled /></el-icon>
           <span>下级管理员</span>
@@ -320,6 +357,16 @@
           <el-icon><CreditCard /></el-icon>
           <span>公众号会员卡</span>
         </el-menu-item>
+        <el-menu-item v-if="canMenu('/config/pc')" index="/config/pc" aria-label="PC基础配置"><span>PC基础配置</span></el-menu-item>
+        <el-menu-item v-if="canMenu('/content/wechat-open')" index="/content/wechat-open" aria-label="微信开放平台"><span>微信开放平台</span></el-menu-item>
+        <el-menu-item v-if="canMenu('/content/wechat-app')" index="/content/wechat-app" aria-label="原生App微信配置"><span>原生App微信配置</span></el-menu-item>
+        <el-menu-item v-if="canMenu('/content/wechat-base')" index="/content/wechat-base" aria-label="公众号基础设置">
+          <span>公众号基础设置</span>
+        </el-menu-item>
+        <el-menu-item v-if="canMenu('/content/wechat-menu')" index="/content/wechat-menu" aria-label="公众号自定义菜单">
+          <el-icon><ChatLineRound /></el-icon>
+          <span>公众号自定义菜单</span>
+        </el-menu-item>
         <el-menu-item v-if="canMenu('/content/wechat')" index="/content/wechat">
           <el-icon><ChatLineRound /></el-icon>
           <span>公众号内容</span>
@@ -335,6 +382,10 @@
         <el-menu-item v-if="canMenu('/system/log')" index="/system/log">
           <el-icon><Tickets /></el-icon>
           <span>操作日志</span>
+        </el-menu-item>
+        <el-menu-item v-if="authStore.isLoggedIn" index="/system/frontend-log" aria-label="本浏览器日志">
+          <el-icon><Document /></el-icon>
+          <span>本浏览器日志</span>
         </el-menu-item>
         <el-menu-item v-if="canMenu('/agent')" index="/agent">
           <el-icon><Share /></el-icon>
@@ -433,7 +484,8 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -470,15 +522,23 @@ function canMenu(path: string): boolean {
 
 const activeMenu = computed(() => {
   const path = route.path;
+  if (path === "/system/frontend-log" || path === "/admin/system/log") return "/system/frontend-log";
   if (path === "/label/products" || path === "/admin/product/label") return "/label/products";
+  if (path === "/admin/product/unitList" || path === "/product/units") return "/product/units";
+  if (path === "/admin/product/product_attr" || path === "/product/rules") return "/product/rules";
+  if (path === "/admin/product/ensure" || path === "/product/ensures") return "/product/ensures";
+  if (path === "/admin/product/specs" || path === "/product/parameters") return "/product/parameters";
+  if (path === "/admin/product/hotWords" || path === "/product/hotwords") return "/product/hotwords";
   if (path.startsWith("/product")) return "/product";
   if (path === "/order/offline") return "/order/offline";
   if (path === "/order/invoice") return "/order/invoice";
+  if (path === "/order/delivery-people" || path === "/admin/setting/delivery_service/index") return "/order/delivery-people";
   if (path.startsWith("/order")) return "/order";
-  if (path.startsWith("/user/groups")) return "/user/groups";
+  if (path === "/admin/user/group" || path.startsWith("/user/groups")) return "/user/groups";
   if (path.startsWith("/user")) return "/user";
   if (path.startsWith("/community")) return "/community";
   if (path.startsWith("/member")) return "/member";
+  if (path === "/system/menu-rules" || path === "/admin/setting/system_menus/index") return "/system/menu-rules";
   if (path.startsWith("/supplier/applications")) return "/supplier/applications";
   if (path.startsWith("/supplier/menu-rules")) return "/supplier/menu-rules";
   if (path.startsWith("/supplier/bills")) return "/supplier/bills";
@@ -494,6 +554,7 @@ const activeMenu = computed(() => {
   if (path.startsWith("/config/level-activation")) return "/config/level-activation";
   if (path.startsWith("/config/paid-membership")) return "/config/paid-membership";
   if (path.startsWith("/config/runtime-content")) return "/config/runtime-content";
+  if (path.startsWith("/config/classes") || path === "/admin/system/config/system_config_tab/index") return "/config/classes";
   if (path.startsWith("/config")) return "/config";
   if (path.startsWith("/assets")) return "/assets";
   if (path.startsWith("/category")) return "/category";
@@ -507,6 +568,8 @@ const activeMenu = computed(() => {
   if (path.startsWith("/activity/combination-groups")) return "/activity/combination-groups";
   if (path.startsWith("/activity/combination-statistics")) return "/activity/combination-statistics";
   if (path.startsWith("/activity/integral-batch")) return "/activity/integral-batch";
+  if (path.startsWith("/activity/bargain-records") || path === "/admin/marketing/store_bargain/bargain_list") return "/activity/bargain-records";
+  if (path.startsWith("/activity/bargain-statistics") || path.startsWith("/admin/marketing/store_bargain/statistics")) return "/activity/bargain-statistics";
   if (path.startsWith("/activity")) return "/activity";
   if (path.startsWith("/marketing/lottery-records")) return "/marketing/lottery-records";
   if (path.startsWith("/marketing/lottery")) return "/marketing/lottery";
@@ -547,6 +610,10 @@ const activeMenu = computed(() => {
   if (path.startsWith("/content/article")) return "/content/article";
   if (path.startsWith("/content/wechat-card")) return "/content/wechat-card";
   if (path.startsWith("/content/wechat-qrcode")) return "/content/wechat-qrcode";
+  if (path === "/admin/app/wechat_open" || path === "/content/wechat-open") return "/content/wechat-open";
+  if (path === "/admin/app/app" || path === "/content/wechat-app") return "/content/wechat-app";
+  if (path === "/admin/app/wechat/base" || path === "/content/wechat-base") return "/content/wechat-base";
+  if (path.startsWith("/content/wechat-menu") || path === "/admin/app/wechat/setting/menus/index") return "/content/wechat-menu";
   if (path.startsWith("/content/wechat")) return "/content/wechat";
   if (path.startsWith("/content/dise")) return "/content/dise";
   if (path.startsWith("/agent/promoter-applications")) return "/agent/promoter-applications";
@@ -574,6 +641,7 @@ const activeMenu = computed(() => {
 const currentTitle = computed(() => (route.meta.title as string) ?? "控制台");
 
 function handleCommand(cmd: string) {
+  if (cmd === 'profile') { void router.push('/system/profile'); return; }
   if (cmd === "logout") {
     authStore.logout();
     ElMessage.success("已退出登录");

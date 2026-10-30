@@ -1,3 +1,4 @@
+import { lockLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderOutbox, storeOrderInvoice, storePink, user, userBill } from '@/models/schema';
@@ -100,6 +101,7 @@ export class SupplierOfflinePaymentService {
       await tx.execute(sql.raw(write ? 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED' : 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY'));
       await tx.execute(sql`SELECT set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),2000)::text||'ms',true),
         set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true)`);
+      if (write) await lockLocalPaymentAdmissionTx(tx);
       if (write) await tx.execute(sql`LOCK TABLE ONLY public.system_admin, ONLY public.system_supplier, ONLY public.system_role, ONLY public.system_menus IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
       await assertSupplierVideoAuthority(tx, actor, null);
       const result = await run(tx);

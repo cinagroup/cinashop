@@ -400,9 +400,11 @@ describe("UniApp manifest and legacy-navigation parity", () => {
   });
 
   it("restores legacy searchVal deep-link behavior", () => {
-    expect(search).toContain('import { onLoad } from "@dcloudio/uni-app"');
-    expect(search).toContain("options?.keyword ?? options?.searchVal");
-    expect(search).toContain("void doSearch()");
+    expect(search).toContain("useGoodsSearch()");
+    const controller = readFileSync('../view/uniapp-ts/src/composables/useGoodsSearch.ts', 'utf8');
+    expect(controller).toContain("options?.keyword ?? options?.searchVal");
+    expect(controller).toContain("initialPending = false");
+    expect(controller).toContain("void search()");
   });
 
   it("registers the three community deep links and the old App route without losing their query state", () => {

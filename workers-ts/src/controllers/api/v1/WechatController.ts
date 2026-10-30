@@ -61,7 +61,9 @@ async function callbackServe(c: C, source: WechatCallbackSource): Promise<Respon
       return c.text("unsupported media type", 415);
     }
     const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_WECHAT_CALLBACK_BODY_BYTES);
-    const received = await service.receiveEncrypted(source, callbackQuery(c), rawBody);
+    const received = source === 'official'
+      ? await service.receiveOfficial(callbackQuery(c), rawBody)
+      : await service.receiveEncrypted(source, callbackQuery(c), rawBody);
     c.executionCtx.waitUntil(service.dispatchById(received.outboxId).catch((error) => {
       emitOperationalEvent("error", {
         event: "wechat_callback_outbox_dispatch_failed",

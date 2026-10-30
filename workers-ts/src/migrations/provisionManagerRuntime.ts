@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { MANAGER_RUNTIME_ROLE, managerRuntimeGrantSql } from './managerRuntimePrivilegePlan';
 import { inspectManagerRuntimeCatalogPrerequisites, inspectManagerRuntimePrivileges } from './auditManagerRuntimePrivileges';
+import { installManagerRoutinePaymentInTransaction, managerRoutinePaymentSuccessor, type ManagerRoutinePaymentForward } from './managerRoutinePaymentRuntime';
 
 type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 type Query = Pick<DbClient, 'execute'>;
@@ -48,15 +49,37 @@ export async function inspectManagerProvisionState(db: Root, target: ManagerProv
 /** Single atomic create-and-commission. Existing roles are never modified,
  * passwords are never rotated, and missing catalogs never get repaired.
  * Maintenance target options are for isolated native fixtures; the HTTP Worker
- * always supplies the fixed production target and fixed role name. */
-export async function provisionManagerRuntime(db: Root, managerPassword: string, target: ManagerProvisionTarget = MANAGER_PROVISION_TARGET) {
+ * always supplies the fixed production target and fixed role name. An explicit
+ * routine binding commissions the fixed successor in this same transaction;
+ * an installed addon is never inferred from server grants. */
+export async function provisionManagerRuntime(db: Root, managerPassword: string, target: ManagerProvisionTarget = MANAGER_PROVISION_TARGET,
+  routine?: ManagerRoutinePaymentForward) {
+  target = { ...target };
   rootOnly(db); validateTarget(target);
   if (!/^[a-f0-9]{64}$/.test(managerPassword)) throw Error('A generated Manager credential is required');
+  // Capture caller-owned arrays before the first await. The exact reviewed
+  // prior and derived successor must remain one binding throughout commission.
+  const forward = routine ? { previous: { ...routine.previous,
+    local: routine.previous.local ? [...routine.previous.local] : undefined,
+    caseLock: routine.previous.caseLock ? { ...routine.previous.caseLock, runtimeRoles: [...routine.previous.caseLock.runtimeRoles] } : undefined },
+    caseLockOwner: routine.caseLockOwner } : undefined;
+  const successor = forward ? managerRoutinePaymentSuccessor(forward) : undefined;
+  if (forward && (forward.previous.database !== target.database || forward.previous.maintenance !== target.maintenanceRole))
+    throw Error('Explicit routine binding must match the Manager maintenance target');
   try {
     return await db.transaction(async tx => {
-      await tx.execute(sql`SELECT set_config('statement_timeout','10000',true),set_config('lock_timeout','1500',true),
-        set_config('idle_in_transaction_session_timeout','10000',true),set_config('password_encryption','scram-sha-256',true)`);
+      await tx.execute(sql`SELECT
+        set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),10000)::text||'ms',true),
+        set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),1500)::text||'ms',true),
+        set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),10000)::text||'ms',true),
+        set_config('password_encryption','scram-sha-256',true)`);
       const current = await identity(tx, target);
+      // Before the manager gate and all role/table resources, matching the
+      // standalone routine forward and storage maintenance lock order.
+      if (forward) for (const key of [731669, 731670]) {
+        const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(${key},0) AS locked`);
+        if (gate?.locked !== true) throw Error('Manager routine maintenance is busy');
+      }
       const [lock] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731812,1) AS locked`);
       if (current?.supported !== true || lock?.locked !== true || await roleState(tx)) throw Error('Fixed role collision or maintenance target refused');
       const prerequisites = await inspectManagerRuntimeCatalogPrerequisites(tx);
@@ -65,11 +88,17 @@ export async function provisionManagerRuntime(db: Root, managerPassword: string,
       await tx.execute(sql`GRANT CONNECT ON DATABASE ${sql.identifier(target.database)} TO ${sql.identifier(MANAGER_RUNTIME_ROLE)}`);
       await tx.execute(sql`GRANT USAGE ON SCHEMA public TO ${sql.identifier(MANAGER_RUNTIME_ROLE)}`);
       for (const grant of managerRuntimeGrantSql(prerequisites.profile)) await tx.execute(sql.raw(grant));
-      if (!(await inspectManagerRuntimePrivileges(tx, { requireLogin: false })).ready) throw Error('NOLOGIN Manager profile failed exact commissioning');
+      const staged = await inspectManagerRuntimePrivileges(tx, { requireLogin: false,
+        ...(forward ? { routine: { target: forward.previous, stage: 'before-manager' as const } } : {}) });
+      if (forward ? !staged.profileReady || staged.ready : !staged.ready) throw Error('NOLOGIN Manager profile failed exact commissioning');
       // Constrained utility PASSWORD cannot be a bind parameter. The driver
       // cause is discarded below, and neither this statement nor its input logs.
       await tx.execute(sql.raw(`ALTER ROLE "${MANAGER_RUNTIME_ROLE}" PASSWORD '${managerPassword}' LOGIN`));
-      const role = await roleState(tx), privileges = await inspectManagerRuntimePrivileges(tx, { requireLogin: true });
+      // LOGIN is visible to this transaction's catalog audit, but no external
+      // backend can authenticate the newly created role until the whole commit.
+      if (forward) await installManagerRoutinePaymentInTransaction(tx, forward);
+      const role = await roleState(tx), privileges = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
+        ...(successor ? { routine: { target: successor, stage: 'ready' as const } } : {}) });
       if (!privileges.ready || role?.login !== true || role.connection_limit !== MANAGER_PROVISION_CONNECTION_LIMIT || role.restricted !== true || role.no_memberships !== true)
         throw Error('Final fixed Manager role profile differs');
       return { created: true as const, commissioned: true as const, role, privileges };

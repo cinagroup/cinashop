@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { cashierConditionalAppPredicate, cashierConditionalIdentityAssertion, type CashierRuntimeConditionalBinding } from './cashierRuntimeConditionalBinding';
 
 type Query = Pick<DbClient, 'execute'>;
 const tables = ['system_admin', 'system_role', 'system_menus'] as const;
@@ -11,11 +12,11 @@ const triggerName = 'cinashop_runtime_admin_boundary_v1';
  * this trigger. Supplier type=4 remains writable; platform identity, role and
  * menu authority cannot be rewritten through the shared application LOGIN.
  * This is NOT tenant isolation between suppliers (enforced by services). */
-export function runtimeAdminBoundaryBody(appRole: string) {
+export function runtimeAdminBoundaryBody(appRole: string, cashier?: CashierRuntimeConditionalBinding) {
   pricingIdentifier(appRole);
   return `
 BEGIN
-  IF current_user = '${appRole}' THEN
+  IF ${cashierConditionalAppPredicate(appRole, cashier, true)} THEN${cashierConditionalIdentityAssertion(cashier)}
     IF TG_OP = 'DELETE' THEN
       RAISE EXCEPTION 'Application identity cannot remove staff authority' USING ERRCODE='42501';
     ELSIF TG_TABLE_NAME = 'system_admin' THEN
@@ -48,9 +49,9 @@ END
 
 /** Read-only exact trigger/function boundary check. It deliberately does not
  * certify the role's remaining table grants, memberships or other routines. */
-export async function inspectRuntimeAdminBoundary(tx: Query, appRole: string, maintenanceRole: string) {
+export async function inspectRuntimeAdminBoundary(tx: Query, appRole: string, maintenanceRole: string, cashier?: CashierRuntimeConditionalBinding) {
   pricingIdentifier(maintenanceRole);
-  const body = runtimeAdminBoundaryBody(appRole);
+  const body = runtimeAdminBoundaryBody(appRole, cashier);
   const [row] = await tx.execute(sql`WITH routine AS (
     SELECT p.* FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname=${functionName}
   ), targets AS (

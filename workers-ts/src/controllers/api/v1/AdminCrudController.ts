@@ -1,3 +1,7 @@
+import { isWechatOpenConfigKey } from '../../../../../view/common/wechatOpen';
+import { isWechatAppConfigKey } from '../../../../../view/common/wechatApp';
+import { isPcBaseConfigKey } from '../../../../../view/common/pcBase';
+import { isWechatBaseConfigKey } from '../../../../../view/common/wechatBase';
 /**
  * Admin 管理接口控制器 (M7+)
  *
@@ -11,6 +15,7 @@
  */
 import type { Context } from "hono";
 import * as AdminProductCategories from './AdminProductCategoryController';
+import * as AdminConfigClass from './AdminConfigClassController';
 import { jsonOk, jsonFail } from "@/utils/json";
 import type { AppVariables, Env } from "@/env";
 import { AdminPermissionService } from "@/services/admin/AdminPermissionService";
@@ -743,11 +748,12 @@ export async function adminUserMoney(c: C) {
 
 /** GET /api/admin/config/list — 配置列表 (按 tab 分组) */
 export async function adminConfigList(c: C) {
+  privateNoStore(c);
   const container = c.get("container");
   const list = await container.systemConfigDao.selectList({
     where: { isStore: 0 },
   });
-  return jsonOk(c, list.filter(row => !isCityCredentialKey(row.menuName)));
+  return jsonOk(c, list.filter(row => !isWechatAppConfigKey(row.menuName) && !isPcBaseConfigKey(row.menuName) && !isCityCredentialKey(row.menuName) && !isWechatBaseConfigKey(row.menuName) && !isWechatOpenConfigKey(row.menuName)));
 }
 
 /** POST /api/admin/config/save — 保存配置 (批量) */
@@ -776,33 +782,23 @@ function systemFormActor(c: C): SystemFormAdminActor {
 }
 
 export async function adminConfigTabList(c: C) {
-  return jsonOk(c, await systemMetadata(c).configTabList(c.req.query()));
+  return AdminConfigClass.list(c);
 }
 
 export async function adminConfigTabSave(c: C) {
-  return jsonOk(
-    c,
-    await systemMetadata(c).saveConfigTab(0, await metadataBody(c)),
-    "添加配置分类成功",
-  );
+  return AdminConfigClass.create(c);
 }
 
 export async function adminConfigTabUpdate(c: C) {
-  return jsonOk(
-    c,
-    await systemMetadata(c).saveConfigTab(metadataId(c), await metadataBody(c)),
-    "修改成功",
-  );
+  return AdminConfigClass.update(c);
 }
 
 export async function adminConfigTabDelete(c: C) {
-  await systemMetadata(c).deleteConfigTab(metadataId(c));
-  return jsonOk(c, null, "删除成功");
+  return AdminConfigClass.remove(c);
 }
 
 export async function adminConfigTabStatus(c: C) {
-  await systemMetadata(c).setConfigTabStatus(metadataId(c), c.req.param("status"));
-  return jsonOk(c, null, "设置成功");
+  return AdminConfigClass.setStatus(c);
 }
 
 export async function adminSystemFormList(c: C) {
@@ -972,7 +968,12 @@ export { retiredAdminRefundMutation as adminRefundAgree,
 
 /** GET /api/admin/config/:menuName — 取单个配置 */
 export async function adminConfigGet(c: C) {
+  privateNoStore(c);
   const menuName = c.req.param("menuName") ?? "";
+  if (isWechatAppConfigKey(menuName)) throw new ValidateException('原生App配置只能通过专用接口读取，密钥不回显');
+  if (isPcBaseConfigKey(menuName)) throw new ValidateException('PC配置仅可通过专用接口读取');
+  if (isWechatOpenConfigKey(menuName)) throw new ValidateException('开放平台配置仅可通过专用接口读取，密钥不回显');
+  if (isWechatBaseConfigKey(menuName)) throw new ValidateException('公众号基础配置仅可通过专用接口读取，密钥不回显');
   const configSvc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
     c.get("container"),
     c.env,
@@ -1654,78 +1655,10 @@ export async function adminBillList(c: C) {
 // 会员等级管理 (M18)
 // ═══════════════════════════════════════════════════════════
 
-/** GET /api/admin/level/list — 会员等级列表 */
-export async function adminLevelList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(systemUserLevel)
-    .where(sql`${systemUserLevel.isDel} = 0`)
-    .orderBy(sql`${systemUserLevel.grade} ASC`);
-  return jsonOk(c, rows);
-}
-
-/** POST /api/admin/level/save — 新增/编辑会员等级 */
-export async function adminLevelSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    name?: string;
-    grade?: number;
-    discount?: number;
-    exp_num?: number;
-    is_show?: number;
-    image?: string;
-    color?: string;
-    explain?: string;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-
-  if (body.id) {
-    const updates: Record<string, unknown> = {};
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.grade !== undefined) updates.grade = body.grade;
-    if (body.discount !== undefined) updates.discount = body.discount;
-    if (body.exp_num !== undefined) updates.expNum = body.exp_num;
-    if (body.is_show !== undefined) updates.isShow = body.is_show;
-    if (body.image !== undefined) updates.image = body.image;
-    if (body.color !== undefined) updates.color = body.color;
-    if (body.explain !== undefined) updates.explain = body.explain;
-    await container.db.update(systemUserLevel).set(updates).where(eq(systemUserLevel.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const row = await container.db
-    .insert(systemUserLevel)
-    .values({
-      name: body.name ?? "新等级",
-      grade: body.grade ?? 0,
-      discount: (body.discount ?? 100).toFixed(2),
-      expNum: body.exp_num ?? 0,
-      isShow: body.is_show ?? 1,
-      image: body.image ?? "",
-      color: body.color ?? "",
-      explain: body.explain ?? "",
-      isDel: 0,
-      addTime: now,
-    })
-    .returning({ id: systemUserLevel.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
-}
-
-/** DELETE /api/admin/level/del/:id — 删除会员等级 */
-export async function adminLevelDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { systemUserLevel } = await import("@/models/schema");
-  await container.db.update(systemUserLevel).set({ isDel: 1 }).where(eq(systemUserLevel.id, id));
-  return jsonOk(c, null, "删除成功");
-}
+/** Existing member-level URLs share the complete author and live authority. */
+export async function adminLevelList(c: C) { return (await import('./AdminLevelAuthorController')).list(c); }
+export async function adminLevelSave(c: C) { return (await import('./AdminLevelAuthorController')).save(c); }
+export async function adminLevelDel(c: C) { return (await import('./AdminLevelAuthorController')).remove(c); }
 
 // ═══════════════════════════════════════════════════════════
 // 运费模板 + 快递公司 (M19)
@@ -1771,69 +1704,10 @@ export async function adminShippingTemplateDel(c: C) {
   return jsonOk(c, null, "删除成功");
 }
 
-/** GET /api/admin/express/list — 快递公司列表 */
-export async function adminExpressList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { expressCompany } = await import("@/models/schema");
-  const rows = await container.db
-    .select()
-    .from(expressCompany)
-    .orderBy(sql`${expressCompany.sort} DESC, ${expressCompany.id} ASC`);
-  return jsonOk(c, rows);
-}
-
-/** POST /api/admin/express/save — 新增/编辑快递公司 */
-export async function adminExpressSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number;
-    code?: string;
-    name?: string;
-    is_show?: number;
-    sort?: number;
-    status?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { expressCompany } = await import("@/models/schema");
-
-  if (body.id) {
-    await container.db
-      .update(expressCompany)
-      .set({
-        code: body.code ?? "",
-        name: body.name ?? "",
-        isShow: body.is_show ?? 1,
-        sort: body.sort ?? 0,
-        status: body.status ?? 1,
-      })
-      .where(eq(expressCompany.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  if (!body.name) return jsonFail(c, "请输入快递公司名称");
-  const row = await container.db
-    .insert(expressCompany)
-    .values({
-      code: body.code ?? "",
-      name: body.name,
-      isShow: body.is_show ?? 1,
-      sort: body.sort ?? 0,
-      status: body.status ?? 1,
-      addTime: Math.floor(Date.now() / 1000),
-    })
-    .returning({ id: expressCompany.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
-}
-
-/** DELETE /api/admin/express/del/:id — 删除快递公司 */
-export async function adminExpressDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { expressCompany } = await import("@/models/schema");
-  await container.db.delete(expressCompany).where(eq(expressCompany.id, id));
-  return jsonOk(c, null, "删除成功");
-}
+/** Compatibility delegates share the complete carrier author and secret-safe DTO. */
+export async function adminExpressList(c: C) { return (await import('./AdminExpressController')).list(c); }
+export async function adminExpressSave(c: C) { return (await import('./AdminExpressController')).save(c); }
+export async function adminExpressDel(c: C) { return (await import('./AdminExpressController')).remove(c); }
 
 // ═══════════════════════════════════════════════════════════
 // 营销活动创建/编辑/删除 (M20)
@@ -2016,50 +1890,9 @@ export async function adminProductLabelDel(c: C) {
 }
 
 /** GET /api/admin/user_label/list — 用户标签列表 */
-export async function adminUserLabelList(c: C) {
-  const container = c.get("container");
-  const { sql } = await import("drizzle-orm");
-  const { userLabel } = await import("@/models/schema");
-  const rows = await container.db.select().from(userLabel).orderBy(sql`${userLabel.sort} DESC`);
-  return jsonOk(c, rows);
-}
-
-/** POST /api/admin/user_label/save */
-export async function adminUserLabelSave(c: C) {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    id?: number; name?: string; color?: string; sort?: number; status?: number;
-  };
-  const container = c.get("container");
-  const { eq } = await import("drizzle-orm");
-  const { userLabel } = await import("@/models/schema");
-  const now = Math.floor(Date.now() / 1000);
-  if (body.id) {
-    await container.db.update(userLabel).set({
-      name: body.name ?? "", color: body.color ?? "", sort: body.sort ?? 0, status: body.status ?? 1,
-    }).where(eq(userLabel.id, body.id));
-    return jsonOk(c, { id: body.id }, "更新成功");
-  }
-  if (!body.name) return jsonFail(c, "请输入标签名");
-  const row = await container.db.insert(userLabel).values({
-    type: 0,
-    relationId: 0,
-    labelCate: 0,
-    name: body.name,
-    tagId: "",
-    color: body.color ?? "#e93323",
-    sort: body.sort ?? 0,
-    status: body.status ?? 1,
-    addTime: now,
-  }).returning({ id: userLabel.id });
-  return jsonOk(c, { id: row[0].id }, "创建成功");
-}
-
-/** DELETE /api/admin/user_label/del/:id */
-export async function adminUserLabelDel(c: C) {
-  const id = Number(c.req.param("id") ?? "0");
-  await userSegmentation(c).deletePlatformLabel(id);
-  return jsonOk(c, null, "删除成功");
-}
+export async function adminUserLabelList(c:C) {return (await import('./AdminUserLabelAuthorController')).modernList(c);}
+export async function adminUserLabelSave(c:C) {return (await import('./AdminUserLabelAuthorController')).save(c);}
+export async function adminUserLabelDel(c:C) {return (await import('./AdminUserLabelAuthorController')).remove(c);}
 
 // ═══════════════════════════════════════════════════════════
 // DIY 装修/自定义页面 (M22)
@@ -2632,6 +2465,11 @@ export async function adminSmsConfigSave(c: C) {
   // This legacy handler accepts arbitrary keys. Reject the entire controlled
   // domain before its first SQL write, including a mixed ordinary batch.
   if (Object.keys(body ?? {}).some(isCityConfigKey)) throw new ValidateException('同城配送配置只能通过专用版本化接口保存');
+  if (Object.keys(body ?? {}).some(isWechatAppConfigKey)) throw new ValidateException('原生App配置只能通过专用版本化接口保存');
+  if (Object.hasOwn(body ?? {}, 'pay_weixin_mchid')) throw new ValidateException('微信支付商户配置请使用通用批量或支付配置专用接口');
+  if (Object.keys(body ?? {}).some(isPcBaseConfigKey)) throw new ValidateException('PC配置只能通过专用版本化接口保存');
+  if (Object.keys(body ?? {}).some(isWechatOpenConfigKey)) throw new ValidateException('开放平台配置只能通过专用版本化接口保存');
+  if (Object.keys(body ?? {}).some(isWechatBaseConfigKey)) throw new ValidateException('公众号基础配置只能通过专用版本化接口保存');
   const container = c.get("container");
   const { eq } = await import("drizzle-orm");
   const { systemConfig } = await import("@/models/schema");

@@ -87,6 +87,37 @@ describe('actual employee invite routes, real QR identity and isolated provider 
     calls.length = 0; expect((await (await app.request(created.body.data.url, {}, f.env)).json<{ status: number }>()).status).not.toBe(200); expect(calls).toEqual([]);
     await expect(new WechatMiniProgramCodeService(f.container, f.env).createDivisionStaffInviteDataUrl(901, 'wx0000000000000001')).rejects.toThrow('账户已变化');
   });
+  it('rejects the old actual signed image URL after Secret A-B-A even when its AppID and final secret bytes are unchanged', async () => {
+    const before = await f.snapshot(), created = await create(); expect(created.body.status, created.body.msg).toBe(200);
+    const [original] = await f.db.select({ value: systemConfig.value }).from(systemConfig).where(eq(systemConfig.menuName, 'routine_appsecret'));
+    await f.db.update(systemConfig).set({ value: 'owned-intermediate-employee-secret' }).where(eq(systemConfig.menuName, 'routine_appsecret'));
+    await f.db.update(systemConfig).set({ value: original.value }).where(eq(systemConfig.menuName, 'routine_appsecret'));
+    expect((await f.db.select({ value: systemConfig.value }).from(systemConfig).where(eq(systemConfig.menuName, 'routine_appsecret')))[0].value).toBe(original.value);
+    calls.length = 0;
+    const response = await app.request(created.body.data.url, {}, f.env);
+    expect((await response.json<{ status: number }>()).status).not.toBe(200);
+    expect(calls).toEqual([]); expect(await f.snapshot()).toEqual(before);
+  });
+  it('keeps credential shadows usable, revokes an old URL on shadow metadata change, and creates a current winner image without changing rights', async () => {
+    const [shadow] = await f.db.insert(systemConfig).values({ menuName: 'routine_appsecret', value: 'unselected-employee-shadow', sort: -1, info: 'Original shadow metadata' })
+      .returning({ id: systemConfig.id });
+    const before = await f.snapshot(), created = await create(); expect(created.body.status, created.body.msg).toBe(200);
+    await f.db.update(systemConfig).set({ info: 'Updated shadow metadata' }).where(eq(systemConfig.id, shadow.id));
+    calls.length = 0;
+    const old = await app.request(created.body.data.url, {}, f.env);
+    expect((await old.json<{ status: number }>()).status).not.toBe(200); expect(calls).toEqual([]);
+    const renewed = await create(); expect(renewed.body.status, renewed.body.msg).toBe(200);
+    expect(renewed.body.data.url).not.toBe(created.body.data.url);
+    const provider = calls.find(call => call.url.pathname === '/cgi-bin/token')!;
+    expect(provider).toBeDefined(); expect(provider.url.searchParams.get('appid')).toBe('wx0000000000000001');
+    expect(provider.url.searchParams.get('secret')).toBe('synthetic-employee-secret');
+    expect(calls.find(call => call.url.pathname === '/wxa/getwxacodeunlimit')!.body).toMatchObject({ scene: 'a=901', page: DIVISION_STAFF_INVITE_PAGE });
+    const callCount = calls.length, image = await app.request(renewed.body.data.url, {}, f.env);
+    expect(image.status).toBe(200); expect(new Uint8Array(await image.arrayBuffer())).toEqual(png); expect(calls).toHaveLength(callCount);
+    expect((await f.db.select().from(systemConfig).where(eq(systemConfig.id, shadow.id)))[0])
+      .toMatchObject({ value: 'unselected-employee-shadow', sort: -1, info: 'Updated shadow metadata' });
+    expect(await f.snapshot()).toEqual(before);
+  });
   it('does not hold any SQL transaction during provider I/O and refuses provider success after real authority withdrawal', async () => {
     let inside = 0; const original = f.db.transaction.bind(f.db);
     vi.spyOn(f.db, 'transaction').mockImplementation((fn, ...options) => original(async tx => { inside++; try { return await fn(tx); } finally { inside--; } }, ...options));

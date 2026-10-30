@@ -3,18 +3,19 @@ import { eq } from 'drizzle-orm';
 import { createHmac } from 'node:crypto';
 import type { Env } from '../src/env';
 import { createContainerFromDb } from '../src/lib/di';
-import { storeActivity, storeSeckill, storeSeckillTime, systemAttachment, systemSupplier } from '../src/models/schema';
+import { storeActivity, storeSeckill, storeSeckillTime, storeProduct, systemAttachment, systemSupplier } from '../src/models/schema';
 import { ActivityService } from '../src/services/activity/ActivityService';
 import { financePostgres } from './helpers/financePostgres';
 
 const appKey = 'local-seckill-product-media-key';
 describe('public seckill list issues owned image signatures and preserves stored references', () => {
   let f: Awaited<ReturnType<typeof financePostgres>>;
-  beforeAll(async () => { f = await financePostgres([storeActivity, storeSeckill, storeSeckillTime, systemAttachment, systemSupplier]); }, 30_000);
+  beforeAll(async () => { f = await financePostgres([storeActivity, storeSeckill, storeSeckillTime, storeProduct, systemAttachment, systemSupplier]); }, 30_000);
   afterAll(async () => { vi.restoreAllMocks(); await f?.close(); });
   beforeEach(async () => {
     vi.restoreAllMocks(); await f.reset();
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Image URLs must never be fetched by a list request'));
+    await f.db.insert(storeProduct).values({ id: 70, storeName: '媒体关联基础商品', isDel: 0 });
     await f.db.insert(storeSeckillTime).values({ id: 101, startTime: '00:00', endTime: '24:00', status: 1 });
     await f.db.insert(systemSupplier).values([7,8].map(id=>({id,supplierName:`本机供应商${id}`,isShow:1,isDel:0})));
     await f.db.insert(systemAttachment).values([

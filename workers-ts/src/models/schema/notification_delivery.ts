@@ -40,6 +40,9 @@ export interface SmsNotificationPayload {
 
 export interface WechatTemplateNotificationPayload {
   kind: "wechat_official" | "wechat_routine";
+  /** Immutable intended Mini delivery account; absent on historical payloads.
+   * This does not establish ownership of an old UID or payment. */
+  routineAppId?: string;
   data: Record<string, string>;
   url: string;
 }

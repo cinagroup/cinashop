@@ -1,18 +1,19 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { financePostgres } from './helpers/financePostgres';
+import { createAdminLevelFixture } from './helpers/adminLevelFixture';
+import { md5 } from '../src/utils/jwt';
 import { createContainerFromDb } from '../src/lib/di';
 import type { AppVariables, Env } from '../src/env';
 import { UserLevelService } from '../src/services/user/UserLevelService';
 import { StoreProductService } from '../src/services/product/StoreProductService';
 import { adminLevelSave, adminLevelDel } from '../src/controllers/api/v1/AdminCrudController';
 import { storeProduct, storeProductAttrValue, storeProductRelation, storeProductEnsure,
-  systemUserLevel, user, userRelation, systemConfig, memberRight, storePromotions,
+  systemUserLevel, systemAdmin, user, userRelation, systemConfig, memberRight, storePromotions,
   storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts } from '../src/models/schema';
 
 describe('level definitions follow database authority after admin edits', () => {
-  let f: Awaited<ReturnType<typeof financePostgres>>;
+  let f: Awaited<ReturnType<typeof createAdminLevelFixture>>;
   let container: ReturnType<typeof createContainerFromDb>;
   let levels: UserLevelService;
   let products: StoreProductService;
@@ -24,22 +25,22 @@ describe('level definitions follow database authority after admin edits', () => 
   // Test-only subset: only these KV operations are exercised. Plain callable
   // adapters avoid claiming that a platform binding has Vitest Mock members.
   // No host bindings, network caches or production environment are loaded.
-  const env = { CONFIG_KV: {
+  const env = { APP_KEY: 'level-cache-authority-local-key', CONFIG_KV: {
     get: (key: string) => get(key),
     put: (key: string, value: string) => put(key, value),
     delete: (key: string) => remove(key),
   } } as Env;
   beforeAll(async () => {
-    f = await financePostgres([systemUserLevel, user, userRelation, storeProduct,
+    f = await createAdminLevelFixture([systemUserLevel, user, userRelation, storeProduct,
       storeProductAttrValue, storeProductRelation, storeProductEnsure, systemConfig, memberRight,
       storePromotions, storePromotionsAuxiliary,storeProductAttr,storeCart,storeBrand,systemStore,systemSupplier,systemAttachment,systemDise,storeProductDescription,storeProductReply,community,communityRelevance,storeDiscounts,storeDiscountsProducts]);
     container = createContainerFromDb(f.db);
     levels = new UserLevelService(container, env);
     products = new StoreProductService(container, env);
-    // Real admin controllers/SQL, deliberately no production authentication.
-    // Authorization and complete route-registration coverage are separate gates.
+    // Real controllers, live actor checks and restricted Admin SQL; this fixture
+    // provides authenticated context. Actual JWT admission is a separate suite.
     app = new Hono();
-    app.use('*', async (c, next) => { c.set('container', container); await next(); });
+    app.use('*', async (c, next) => { await f.asAdmin(async () => { c.set('container', container); c.set('adminId',1); c.set('socketAuthVersion',md5('level-cache-owner')); c.set('socketTokenExp',Math.floor(Date.now()/1000)+3600); await next(); }); });
     app.post('/adminapi/level/save', adminLevelSave);
     app.post('/api/admin/level/save', adminLevelSave);
     app.delete('/adminapi/level/del/:id', adminLevelDel);
@@ -48,6 +49,7 @@ describe('level definitions follow database authority after admin edits', () => 
   afterAll(async () => { await f?.close(); }, 60_000);
   beforeEach(async () => {
     await f.reset(); kv.clear(); vi.clearAllMocks();
+    await f.db.insert(systemAdmin).values({id:1,account:'level-cache-owner',pwd:'level-cache-owner',level:0});
     await f.db.insert(memberRight).values({ id: 1, rightType: 'vip_price', status: 1, number: 1 });
     await f.db.insert(systemUserLevel).values([
       { id: 1, name: 'Original level', grade: 1, discount: '80', isShow: 1 },
@@ -95,6 +97,9 @@ describe('level definitions follow database authority after admin edits', () => 
 
   it.each(['/adminapi/level/del/1', '/api/admin/level/del/1'])('rejects an old cached definition after %s', async (path) => {
     await levels.getLevel(1);
+    // The cache regression concerns an unreferenced deletion. A separate
+    // author suite proves that current user.level references reject deletion.
+    await f.db.update(user).set({level:0}).where(eq(user.uid,11));
     const response = await app.request(path, { method: 'DELETE' }, env);
     expect(await response.json()).toMatchObject({ status: 200 });
     expect(await levels.getLevel(1)).toBeNull();

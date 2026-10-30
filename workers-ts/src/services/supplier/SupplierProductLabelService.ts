@@ -1,12 +1,13 @@
 import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { timingSafeEqual } from 'node:crypto';
 import { withTx, type Container, type DbClient } from '@/lib/di';
-import { legacyCategory, storeProductLabel, storeProductLabelAuxiliary, storeProductRelation, storeProduct,
-  systemAdmin, systemSupplier, systemRole, systemMenus, systemLog } from '@/models/schema';
+import { legacyCategory, storeProductLabel,
+  systemAdmin, systemSupplier, systemRole, systemMenus } from '@/models/schema';
 import { ApiErrorCode, AuthException, HttpApiException, NotFoundException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
 import { SupplierPermissionService } from './SupplierPermissionService';
 import { parseSupplierProductLabelDelete, parseSupplierProductLabelInput, supplierLabelId, supplierLabelNoQuery } from './SupplierProductLabelInput';
+import { mutateSupplierProductLabel } from './SupplierProductLabelWriteCapability';
 
 export interface SupplierProductLabelActor { id: number; authVersion: string; expiresAt: number; ip?: string }
 type Label = typeof storeProductLabel.$inferSelect;
@@ -158,18 +159,8 @@ export class SupplierProductLabelService {
     ] as const }));
   }
 
-  private async audit(db: DbClient, supplierId: number, actor: SupplierProductLabelActor, operation: 'create' | 'update' | 'delete', id: number) {
-    const action = JSON.stringify({ operation, ids: [id] }), method = operation === 'delete' ? 'DELETE' : 'POST';
-    const receipts = await db.insert(systemLog).values({ adminId: actor.id, merchantId: supplierId, path: `product/label/${id}`,
-      page: '供应商商品标签管理', method, action, type: 'supplier_product_label', addTime: Math.floor(Date.now() / 1000) })
-      .returning({ id: systemLog.id, adminId: systemLog.adminId, merchantId: systemLog.merchantId, path: systemLog.path, method: systemLog.method, action: systemLog.action, type: systemLog.type });
-    const receipt = receipts[0];
-    if (receipts.length !== 1 || !receipt || receipt.id <= 0 || receipt.adminId !== actor.id || receipt.merchantId !== supplierId || receipt.path !== `product/label/${id}` ||
-      receipt.method !== method || receipt.action !== action || receipt.type !== 'supplier_product_label') throw Error('商品标签审计回执不完整');
-  }
-
   async save(supplierId: number, id: number, body: unknown, actor: SupplierProductLabelActor) {
-    id = supplierLabelId(id, true); const input = parseSupplierProductLabelInput(body);
+    actor = { ...actor }; id = supplierLabelId(id, true); const input = parseSupplierProductLabelInput(body);
     return this.transaction(supplierId, actor, 'POST', `/supplierapi/product/label/${id}`, async db => {
       const previous = id ? await this.label(db, supplierId, id, true) : undefined;
       if (!previous && (await this.labels(db, supplierId)).length >= MAX_LABELS) throw new ServiceUnavailableException('商品标签已达2000项，请先整理');
@@ -180,13 +171,11 @@ export class SupplierProductLabelService {
         eq(storeProductLabel.labelCate, input.labelCate), eq(storeProductLabel.labelName, input.labelName))).limit(2);
       if (duplicates.some(row => row.id !== id)) throw new ValidateException('标签已经存在');
       const values = { labelCate: input.labelCate, labelName: input.labelName };
-      const initial = { ...values, type: 2, relationId: supplierId, styleType: 1, color: '', bgColor: '', borderColor: '', icon: '',
-        isShow: 1, status: 1, sort: 0, addTime: Math.floor(Date.now() / 1000) };
-      const rows = previous ? await db.update(storeProductLabel).set(values).where(and(own(supplierId), eq(storeProductLabel.id, id))).returning()
-        : await db.insert(storeProductLabel).values(initial).returning();
-      const saved = rows[0], expected = previous ? { ...previous, ...values } : { id: saved?.id, ...initial };
-      if (rows.length !== 1 || !saved || saved.id <= 0 || !sameRow(expected as Label, saved)) throw Error('商品标签保存回执不完整');
-      await this.audit(db, supplierId, actor, previous ? 'update' : 'create', saved.id);
+      const saved = await mutateSupplierProductLabel(db, supplierId, actor, previous ? 'update' : 'create', id, previous,
+        { label_cate: input.labelCate, label_name: input.labelName });
+      const expected = previous ? { ...previous, ...values } : { id: saved.id, ...values, type: 2, relationId: supplierId,
+        styleType: 1, color: '', bgColor: '', borderColor: '', icon: '', isShow: 1, status: 1, sort: 0, addTime: saved.addTime };
+      if (!sameRow(expected as Label, saved)) throw Error('商品标签保存回执不完整');
       const actual = await this.label(db, supplierId, saved.id);
       if (!sameRow(expected as Label, actual)) throw Error('商品标签提交前事实已变化');
       const [actualGroup] = await db.select().from(legacyCategory).where(and(groupScope(supplierId), eq(legacyCategory.id, group.id))).limit(1);
@@ -197,28 +186,13 @@ export class SupplierProductLabelService {
     });
   }
 
-  private async assertUnreferenced(db: DbClient, id: number) {
-      const [reference] = await db.execute(sql`SELECT (
-        EXISTS(SELECT 1 FROM ${storeProductRelation} WHERE type=3 AND relation_id=${id}) OR
-        EXISTS(SELECT 1 FROM ${storeProductLabelAuxiliary} WHERE label_id=${id}) OR
-        EXISTS(SELECT 1 FROM ${storeProduct} p WHERE p.is_del=0 AND btrim(coalesce(p.store_label_id,''))<>'' AND
-          EXISTS(SELECT 1 FROM unnest(string_to_array(coalesce(p.store_label_id,''),',')) AS token(value)
-            WHERE btrim(token.value)<>'' AND CASE WHEN btrim(token.value) ~ '^[+-]?[0-9]+$'
-              THEN ltrim(btrim(token.value),'+0')=${String(id)} ELSE true END))
-      ) AS linked`) as unknown as Array<{ linked: boolean }>;
-      if (reference?.linked !== false) throw new ValidateException('标签仍被商品或历史辅助引用使用，不能删除');
-  }
-
   async delete(supplierId: number, id: number, body: unknown, actor: SupplierProductLabelActor) {
-    id = supplierLabelId(id); const input = parseSupplierProductLabelDelete(body);
+    actor = { ...actor }; id = supplierLabelId(id); const input = parseSupplierProductLabelDelete(body);
     return this.transaction(supplierId, actor, 'DELETE', `/supplierapi/product/label/${id}`, async db => {
       const row = await this.label(db, supplierId, id, true);
       if (input.expectedRevision && input.expectedRevision !== await hash(row)) throw conflict();
-      await this.assertUnreferenced(db, id);
-      const removed = await db.delete(storeProductLabel).where(and(own(supplierId), eq(storeProductLabel.id, id))).returning();
-      if (removed.length !== 1 || !sameRow(row, removed[0])) throw Error('商品标签删除回执不完整');
-      await this.audit(db, supplierId, actor, 'delete', id);
-      await this.assertUnreferenced(db, id);
+      const removed = await mutateSupplierProductLabel(db, supplierId, actor, 'delete', id, row, {});
+      if (!sameRow(row, removed)) throw Error('商品标签删除回执不完整');
       const remaining = await db.select({ id: storeProductLabel.id }).from(storeProductLabel).where(eq(storeProductLabel.id, id)).limit(1);
       if (remaining.length) throw Error('商品标签删除后仍存在');
       return null;

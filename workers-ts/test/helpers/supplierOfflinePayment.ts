@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import type { Env } from '@/env';
 import { eq, sql } from 'drizzle-orm';
-import { createContainerFromDb } from '@/lib/di';
+import { createContainerFromDb, type DbClient } from '@/lib/di';
 import { storeOrder, storeOrderOutbox, systemRole } from '@/models/schema';
 import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
 import { StoreOrderPayService } from '@/services/order/StoreOrderPayService';
@@ -10,6 +12,7 @@ import { SupplierOfflinePaymentService } from '@/services/supplier/SupplierOffli
 import { installSupplierOfflinePaymentOperation } from '@/migrations/supplierOfflinePaymentOperation';
 import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
 import { supplierUnpaidOrderEditFixture, supplierOrderEditActor, supplierOrderEditAppKey } from './supplierUnpaidOrderEdit';
+import { routinePaymentRuntimeFixture } from './routinePaymentRuntimeFixture';
 
 // Reviewed existing worker capabilities, applied only to a separate, newly
 // authenticated owned paid-consumer LOGIN. The Supplier writer is not given
@@ -22,18 +25,67 @@ export const supplierPaidConsumerExtraTables = ['store_order_outbox', 'store_ord
   'order_notification_delivery', 'store_product_log', 'store_order_writeoff', 'luck_lottery', 'luck_lottery_entitlement'] as const;
 export async function supplierOfflinePaymentFixture() {
   const f = await supplierUnpaidOrderEditFixture();
+  type PaymentRuntime = Parameters<Parameters<typeof f.withEditRuntime>[0]>[0];
+  let releasePayment = () => {}, paymentLifetime: Promise<void> | undefined;
+  let routineRuntime: Awaited<ReturnType<typeof routinePaymentRuntimeFixture>> | undefined;
+  const requestClients = new Set<ReturnType<typeof postgres>>();
+  let closed = false;
+  const close = async () => {
+    if (closed) return; closed = true;
+    try {
+      try { await Promise.all([...requestClients].map(client => client.end({ timeout: 1 }))); }
+      finally { requestClients.clear(); await routineRuntime?.close(); }
+    }
+    finally {
+      releasePayment();
+      try { await paymentLifetime; } finally { await f.close(); }
+    }
+  };
   try {
     await f.db.transaction(tx => installSupplierOfflinePaymentOperation(tx));
     await f.db.update(systemRole).set({ rules: 'supplier.order.manage,supplier.refund.manage' }).where(eq(systemRole.id, 21));
     const environment = { ...f.env, APP_KEY: supplierOrderEditAppKey, UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '',
       ORDER_QUEUE: { send: async () => {}, sendBatch: async () => {} } } as unknown as Env;
     const service = new SupplierOfflinePaymentService(f.container, supplierOrderEditAppKey);
-    const withPaymentRuntime = <T>(work: (runtime: Parameters<Parameters<typeof f.withEditRuntime>[0]>[0], payment: SupplierOfflinePaymentService) => Promise<T>) =>
-      f.withEditRuntime(async runtime => {
+    // The scoped base fixture normally creates a new LOGIN for each callback.
+    // Keep one such already reviewed writer alive for this database lifetime,
+    // without holding a SQL transaction. The exact raw-ledger ACL cannot be
+    // incrementally expanded to every later temporary consumer role.
+    let resolveRuntime!: (runtime: PaymentRuntime) => void, rejectRuntime!: (error: unknown) => void;
+    const ready = new Promise<PaymentRuntime>((resolve, reject) => { resolveRuntime = resolve; rejectRuntime = reject; });
+    const untilClose = new Promise<void>(resolve => { releasePayment = resolve; });
+    paymentLifetime = f.withEditRuntime(async runtime => {
         await f.exec(`GRANT SELECT,INSERT ON public.supplier_offline_payment_operation_v1 TO "${runtime.role}"`);
         await f.exec(`GRANT UPDATE ON public.store_order_outbox TO "${runtime.role}"`);
-        return work(runtime, new SupplierOfflinePaymentService(runtime.container, supplierOrderEditAppKey));
+        routineRuntime = await routinePaymentRuntimeFixture(f.db, runtime.role);
+        const audit = await routineRuntime.auditLocal(runtime.db);
+        if (!audit.ready || !audit.realLogin) throw Error('Actual Supplier writer routine addon audit failed');
+        resolveRuntime(runtime);
+        await untilClose;
       });
+    void paymentLifetime.catch(rejectRuntime);
+    const paymentRuntime = await ready;
+    const withPaymentRuntime = async <T>(work: (runtime: PaymentRuntime, payment: SupplierOfflinePaymentService) => Promise<T>) => {
+      if (closed) throw Error('Supplier payment fixture is closed');
+      // One bound role, independent actual sessions per request. Sharing one
+      // max1 pool would serialize/strand nested lock-contention callbacks.
+      const client = postgres(paymentRuntime.connectionString, { max: 1, prepare: false, connect_timeout: 5,
+        idle_timeout: 0, max_lifetime: 0, connection: { options: '-c search_path=public,pg_temp -c statement_timeout=10000 -c lock_timeout=3000' } });
+      requestClients.add(client);
+      try {
+        const [identity] = await client`SELECT current_database() AS database,current_user AS role,session_user AS session,pg_backend_pid() AS pid`;
+        if (identity.database !== routineRuntime!.target.database || identity.role !== paymentRuntime.role
+          || identity.session !== paymentRuntime.role || identity.pid === paymentRuntime.pid)
+          throw Error('Supplier same-role independent request connection changed');
+        const runtime = f.operationsFor({ role: paymentRuntime.role, connectionString: paymentRuntime.connectionString,
+          db: drizzle(client) as unknown as DbClient, pid: Number(identity.pid),
+          exec: async statement => Array.from(await client.unsafe(statement)) });
+        const result = await work(runtime, new SupplierOfflinePaymentService(runtime.container, supplierOrderEditAppKey));
+        const [after] = await client`SELECT current_database() AS database,current_user AS role,session_user AS session,pg_backend_pid() AS pid`;
+        if (JSON.stringify(after) !== JSON.stringify(identity)) throw Error('Supplier request connection reconnected or changed identity');
+        return result;
+      } finally { if (requestClients.delete(client)) await client.end({ timeout: 5 }); }
+    };
     const createOffline = async () => withPaymentRuntime(async runtime => {
       const created = await StoreOrderCreateService.createWithRuntime(runtime.container,
         { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'wx' + randomUUID().replaceAll('-', '').slice(0, 28) },
@@ -80,6 +132,6 @@ export async function supplierOfflinePaymentFixture() {
       consumer_tables: Object.fromEntries(await Promise.all(supplierPaidConsumerExtraTables.map(async name => [name,
         [...await f.db.execute(sql.raw(`SELECT to_jsonb(t) row FROM public."${name}" t ORDER BY to_jsonb(t)::text`))]]))),
     });
-    return { ...f, paymentEnvironment: environment, paymentService: service, withPaymentRuntime, withPaidConsumer, createOffline, paymentBody: body, consumePaid: consume, paymentState };
-  } catch (error) { await f.close(); throw error; }
+    return { ...f, close, routineRuntime: routineRuntime!, paymentEnvironment: environment, paymentService: service, withPaymentRuntime, withPaidConsumer, createOffline, paymentBody: body, consumePaid: consume, paymentState };
+  } catch (error) { await close(); throw error; }
 }

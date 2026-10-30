@@ -330,9 +330,9 @@ export async function apiCommunityTopics(params: Record<string, unknown> = {}) {
   return getData<PageResult<CommunityTopic>>(request.get("/community/topic/list", { params }));
 }
 
-export async function apiCommunityAllTopics() {
-  if (previewMode) return clone(previewTopics.filter((row) => row.status === 1).map(({ id, name, is_recommend }) => ({ id, name, is_recommend })));
-  return getData<Array<{ id: number; name: string; is_recommend: number }>>(request.get("/community/all_topic"));
+export async function apiCommunityAllTopics(signal?: AbortSignal, live = false) {
+  if (previewMode && !live) return clone(previewTopics.filter((row) => row.status === 1).map(({ id, name, is_recommend }) => ({ id, name, is_recommend })));
+  return getData<Array<{ id: number; name: string; is_recommend: number }>>(request.get("/community/all_topic", { signal }));
 }
 
 export async function apiCommunityTopicSave(id: number, body: Record<string, unknown>) {

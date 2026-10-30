@@ -317,6 +317,17 @@ export async function buildJsapiPaySign(
   return { timeStamp, nonceStr, package: pkg, signType: "RSA", paySign };
 }
 
+/** APIv3 APP signs the raw prepay ID as line4 (no JSAPI prefix).
+ * Lowercase wire names match uni.requestPayment's wxpay orderInfo contract. */
+export async function buildNativeAppPaySign(privateKeyPem: string, appId: string, merchantId: string, prepayId: string) {
+  if (!/^[A-Za-z0-9_-]{1,32}$/u.test(appId) || !/^\d{1,32}$/u.test(merchantId)
+    || !/^[A-Za-z0-9_-]{1,64}$/u.test(prepayId)) throw new Error('Invalid native App payment parameters');
+  const timestamp = String(Math.floor(Date.now() / 1000)), noncestr = generateNonceStr();
+  const sign = await rsaSign(privateKeyPem, `${appId}\n${timestamp}\n${noncestr}\n${prepayId}\n`);
+  return { appid: appId, partnerid: merchantId, prepayid: prepayId, package: 'Sign=WXPay' as const,
+    noncestr, timestamp, sign, signType: 'RSA' as const };
+}
+
 // ─── 辅助 ────────────────────────────────────────────────────
 
 /** 生成随机字符串 (对应 PHP uniqid) */

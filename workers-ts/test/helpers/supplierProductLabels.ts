@@ -2,7 +2,7 @@ import { createContainerFromDb } from '@/lib/di';
 import { legacyCategory, storeProductLabel, storeProductLabelAuxiliary, storeProductRelation, storeProduct,
   systemAdmin, systemSupplier, systemRole, systemMenus, systemLog } from '@/models/schema';
 import { md5 } from '@/utils/jwt';
-import { financePostgres } from './financePostgres';
+import { createSupplierProductLabelCapabilityFixture } from './supplierProductLabelCapabilityFixture';
 
 export const supplierLabelTables = [legacyCategory, storeProductLabel, storeProductLabelAuxiliary, storeProductRelation,
   storeProduct, systemAdmin, systemSupplier, systemRole, systemMenus, systemLog];
@@ -48,7 +48,12 @@ export async function seedSupplierLabels(db: ReturnType<typeof createContainerFr
 }
 
 export async function supplierProductLabelFixture() {
-  const f = await financePostgres(supplierLabelTables, { namespace: 'public' });
-  await seedSupplierLabels(f.db); await f.exec("SELECT setval(pg_get_serial_sequence('store_product_label','id'),400,false)");
-  return { ...f, container: createContainerFromDb(f.db) };
+  const f = await createSupplierProductLabelCapabilityFixture(supplierLabelTables);
+  try {
+    await seedSupplierLabels(f.db); await f.exec("SELECT setval(pg_get_serial_sequence('store_product_label','id'),400,false)");
+    return f;
+  } catch (error) {
+    try { await f.close(); } catch (cleanup) { throw new AggregateError([error, cleanup], 'Supplier label seed and cleanup failed'); }
+    throw error;
+  }
 }

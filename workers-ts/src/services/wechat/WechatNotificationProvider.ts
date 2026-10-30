@@ -4,8 +4,11 @@ import type {
   WechatShippingNotificationPayload,
   WechatTemplateNotificationPayload,
 } from "@/models/schema";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { readOfficialAccountCredentials, officialCredentialCacheKey, type OfficialAccountCredentials } from "./OfficialAccountRuntimeConfig";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
+import { ValidateException } from "@/utils/errors";
+import { readRoutineCredentials, withRoutineCredentials, RoutineConfigurationError, type RoutineCredentials } from './RoutineRuntimeConfig';
+import { getRoutineAccessToken, invalidateRoutineAccessToken } from './RoutineAccessTokenService';
 
 const MAX_RESPONSE_BYTES = 64 * 1024;
 const INVALID_TOKEN_CODES = new Set([40001, 40014, 42001]);
@@ -76,10 +79,6 @@ function assertWechatSuccess(response: Response, data: WechatResponse): void {
   }
 }
 
-function maskedContact(value: string): string {
-  return value.length >= 7 ? `${value.slice(0, 3)}****${value.slice(7)}` : value;
-}
-
 export class WechatNotificationProvider {
   constructor(
     private readonly container: Container,
@@ -92,7 +91,7 @@ export class WechatNotificationProvider {
     templateCode: string,
     payload: WechatTemplateNotificationPayload,
   ): Promise<{ providerReference: string; requestId: string; responseCode: string }> {
-    const data = await this.postWithToken("official", "cgi-bin/message/template/send", {
+    const data = await this.postWithToken("cgi-bin/message/template/send", {
       touser: openid,
       template_id: templateCode,
       url: payload.url,
@@ -112,7 +111,13 @@ export class WechatNotificationProvider {
     templateCode: string,
     payload: WechatTemplateNotificationPayload,
   ): Promise<{ providerReference: string; requestId: string; responseCode: string }> {
-    await this.postWithToken("routine", "cgi-bin/message/subscribe/send", {
+    if (payload.kind !== 'wechat_routine' || typeof payload.routineAppId !== 'string'
+      || !payload.routineAppId || payload.routineAppId.length > 64 || /[\u0000-\u001f\u007f]/u.test(payload.routineAppId))
+      throw new WechatProviderConfigurationError('小程序通知缺少原目标账号记录，请完成归属维护');
+    const credentials = await this.routineCredentials();
+    if (credentials.appId !== payload.routineAppId)
+      throw new WechatProviderConfigurationError('小程序通知目标账号与当前配置不符，请完成归属维护');
+    await this.postRoutineWithToken(credentials, "cgi-bin/message/subscribe/send", {
       touser: openid,
       template_id: templateCode,
       page: payload.url,
@@ -124,74 +129,137 @@ export class WechatNotificationProvider {
   }
 
   async uploadShipping(
-    openid: string,
-    payload: WechatShippingNotificationPayload,
+    _openid: string,
+    _payload: WechatShippingNotificationPayload,
   ): Promise<{ providerReference: string; requestId: string; responseCode: string }> {
-    const merchantId = (await new SystemConfigService(this.container, this.env)
-      .get("pay_weixin_mchid")).trim();
-    if (!merchantId) throw new WechatProviderConfigurationError("微信商户号尚未配置");
-    const expressCompany = payload.logisticsType === 1
-      ? await this.deliveryId(payload.expressCompanyName)
-      : "";
-    const body: Record<string, unknown> = {
-      order_key: {
-        order_number_type: 2,
-        mchid: merchantId,
-        transaction_id: payload.transactionId,
-      },
-      logistics_type: payload.logisticsType,
-      delivery_mode: payload.deliveryMode,
-      upload_time: new Date().toISOString(),
-      payer: { openid },
-      shipping_list: [{
-        tracking_no: payload.trackingNumber,
-        express_company: expressCompany,
-        item_desc: payload.itemDescription,
-        contact: payload.receiverContact
-          ? { receiver_contact: maskedContact(payload.receiverContact) }
-          : {},
-      }],
-    };
-    if (payload.deliveryMode === 2) body.is_all_delivered = payload.isAllDelivered;
-    await this.postWithToken("routine", "wxa/sec/order/upload_shipping_info", body);
-    return { providerReference: "", requestId: "", responseCode: "0" };
+    // The legacy payload has transactionId but no durable original Mini AppID,
+    // merchant and payer witness. Current configuration cannot supply history.
+    // Preserve the delivery as DEAD for audited maintenance; never submit it
+    // under today's account or merchant. Original-payment recovery is pending.
+    throw new WechatProviderConfigurationError('wechat_shipping_original_account_evidence_required');
   }
 
-  private async deliveryId(companyName: string): Promise<string> {
-    const { appId } = await this.credentials("routine");
-    const cacheKey = `wechat_shipping_delivery_list:${appId}`;
-    let mapping = await cacheGet<Record<string, string>>(cacheKey, this.env);
-    if (!mapping) {
-      const data = await this.postWithToken(
-        "routine",
-        "cgi-bin/express/delivery/open_msg/get_delivery_list",
-        {},
-      );
-      mapping = {};
-      for (const item of data.delivery_list ?? []) {
-        const name = item.delivery_name?.trim() ?? "";
-        const id = item.delivery_id?.trim() ?? "";
-        if (name && id) mapping[name] = id;
-      }
-      await cacheSet(cacheKey, mapping, this.env, 6 * 3_600);
+  private async routineCredentials(): Promise<RoutineCredentials> {
+    try { return await readRoutineCredentials(this.container, this.env); }
+    catch (error) {
+      if (error instanceof RoutineConfigurationError)
+        throw new WechatProviderConfigurationError(error.message);
+      throw error;
     }
-    return mapping[companyName] ?? "ZTO";
+  }
+
+  private async assertRoutineCurrent(credentials: RoutineCredentials): Promise<void> {
+    try {
+      await withRoutineCredentials(this.container, this.env, credentials.stamp, async (_bound, current) => {
+        if (current.appId !== credentials.appId || current.secret !== credentials.secret)
+          throw new ValidateException('小程序通知账户配置已变化');
+      });
+    } catch (error) {
+      if (error instanceof RoutineConfigurationError || error instanceof ValidateException)
+        throw new WechatProviderConfigurationError(error.message);
+      throw error;
+    }
+  }
+
+  private async postRoutineWithToken(credentials: RoutineCredentials, path: string,
+    body: Record<string, unknown>): Promise<WechatResponse> {
+    const accessToken = async (forceRefresh = false) => {
+      try { return await getRoutineAccessToken(this.container, this.env, credentials, { fetcher: this.fetcher, forceRefresh }); }
+      catch (error) {
+        // Token GET is not a notification send. Map only deterministic source
+        // and configuration failures; SQL/Redis/provider faults stay UNKNOWN.
+        if (error instanceof RoutineConfigurationError || error instanceof ValidateException)
+          throw new WechatProviderConfigurationError(error.message);
+        throw error;
+      }
+    };
+    let token = await accessToken();
+    await this.assertRoutineCurrent(credentials);
+    try { return await this.postRoutine(path, token, body); }
+    catch (error) {
+      // Only an explicit invalid-token rejection permits one retry. An unknown
+      // outcome never takes this branch, even if configuration changed meanwhile.
+      if (!(error instanceof WechatProviderRejectedError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
+      await this.assertRoutineCurrent(credentials);
+      await invalidateRoutineAccessToken(this.env, credentials);
+      token = await accessToken(true);
+      await this.assertRoutineCurrent(credentials);
+      return this.postRoutine(path, token, body);
+    }
+  }
+
+  /** Hard deadline covers fetch and streamed body, including ignore-abort
+   * transports. A parsed errcode=0 is the send result: no post-send source check
+   * may turn that known success into a retry after a credential rotation. */
+  private async postRoutine(path: string, token: string, body: Record<string, unknown>): Promise<WechatResponse> {
+    const url = new URL(`https://api.weixin.qq.com/${path}`); url.searchParams.set('access_token', token);
+    const controller = new AbortController();
+    let response: Response | undefined, reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    let stopped = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const unknown = () => new Error('WeChat notification outcome unknown');
+    const cancel = () => {
+      try { void (reader ? reader.cancel() : response?.body?.cancel())?.catch(() => undefined); }
+      catch { /* Cleanup cannot replace the outcome or expose a token URL. */ }
+    };
+    const deadline = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => { stopped = true; controller.abort(); cancel(); reject(unknown()); }, 8_000);
+    });
+    const receive = async () => {
+      response = await this.fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), signal: controller.signal, redirect: 'error' });
+      if (stopped) { cancel(); throw unknown(); }
+      const declared = response.headers.get('content-length');
+      if (response.redirected || !response.body || declared !== null &&
+        (!/^\d+$/u.test(declared) || !Number.isSafeInteger(Number(declared)) || Number(declared) > MAX_RESPONSE_BYTES)) throw unknown();
+      reader = response.body.getReader();
+      let complete = false, size = 0; const chunks: Uint8Array[] = [];
+      try {
+        while (true) {
+          const next = await reader.read(); if (stopped) throw unknown();
+          if (next.done) { complete = true; break; }
+          size += next.value.byteLength; if (size > MAX_RESPONSE_BYTES) throw unknown();
+          chunks.push(next.value);
+        }
+        const bytes = new Uint8Array(size); let offset = 0;
+        for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+        const data: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes));
+        if (!data || typeof data !== 'object' || Array.isArray(data)) throw unknown();
+        const code = (data as Record<string, unknown>).errcode;
+        if (typeof code !== 'number' || !Number.isSafeInteger(code)) throw unknown();
+        if (code !== 0) throw new WechatProviderRejectedError(code,
+          RETRYABLE_CODES.has(code) || response.status === 429 || response.status >= 500);
+        if (!response.ok) throw unknown();
+        return data as WechatResponse;
+      } finally {
+        if (!complete) cancel();
+        try { reader.releaseLock(); } catch { /* A pending read still owns it. */ }
+      }
+    };
+    try { return await Promise.race([receive(), deadline]); }
+    catch (error) {
+      stopped = true; controller.abort(); cancel();
+      if (error instanceof WechatProviderRejectedError) throw error;
+      throw unknown();
+    } finally { if (timer !== undefined) clearTimeout(timer); }
   }
 
   private async postWithToken(
-    type: "official" | "routine",
     path: string,
     body: Record<string, unknown>,
   ): Promise<WechatResponse> {
-    let token = await this.accessToken(type);
+    const official = await this.officialCredentials();
+    let token = await this.accessToken(false, official);
     try {
       return await this.post(path, token, body);
     } catch (error) {
       if (!(error instanceof WechatProviderRejectedError) || !INVALID_TOKEN_CODES.has(error.code)) {
         throw error;
       }
-      await cacheDelete(await this.tokenCacheKey(type), this.env);
-      token = await this.accessToken(type, true);
+      if ((await this.officialCredentials()).stamp !== official.stamp) {
+        throw new WechatProviderConfigurationError('公众号账户配置已变化，请稍后重试');
+      }
+      await cacheDelete(officialCredentialCacheKey(official, 'access-token'), this.env);
+      token = await this.accessToken(true, official);
       return this.post(path, token, body);
     }
   }
@@ -220,9 +288,9 @@ export class WechatNotificationProvider {
     }
   }
 
-  private async accessToken(type: "official" | "routine", force = false): Promise<string> {
-    const credentials = await this.credentials(type);
-    const cacheKey = await this.tokenCacheKey(type, credentials.appId);
+  private async accessToken(force = false, snapshot?: OfficialAccountCredentials): Promise<string> {
+    const credentials = snapshot ?? await this.officialCredentials();
+    const cacheKey = officialCredentialCacheKey(credentials, 'access-token');
     if (!force) {
       const cached = await cacheGet<string>(cacheKey, this.env);
       if (cached) return cached;
@@ -248,24 +316,18 @@ export class WechatNotificationProvider {
     return data.access_token;
   }
 
-  private async credentials(type: "official" | "routine") {
-    const config = new SystemConfigService(this.container, this.env);
-    const appIdKey = type === "official" ? "wechat_appid" : "routine_appId";
-    const secretKey = type === "official" ? "wechat_appsecret" : "routine_appsecret";
-    const values = await config.getMany([appIdKey, secretKey]);
-    const appId = values[appIdKey]?.trim() ?? "";
-    const secret = values[secretKey]?.trim() ?? "";
-    if (!appId || !secret) {
-      throw new WechatProviderConfigurationError(
-        type === "official" ? "公众号 AppID 或 AppSecret 尚未配置" : "小程序 AppID 或 AppSecret 尚未配置",
-      );
+  private async officialCredentials(): Promise<OfficialAccountCredentials> {
+    try {
+      return await readOfficialAccountCredentials(this.container, this.env);
+    } catch (error) {
+      // This validation occurs before HTTP (or after an explicit invalid-token
+      // rejection). Missing/oversized configuration is a known failure; SQL
+      // and transport faults retain the delivery ledger's conservative handling.
+      if (error instanceof ValidateException) {
+        throw new WechatProviderConfigurationError(error.message);
+      }
+      throw error;
     }
-    return { appId, secret };
   }
 
-  private async tokenCacheKey(type: "official" | "routine", appId?: string): Promise<string> {
-    if (type === "official") return "wechat_access_token";
-    const resolved = appId ?? (await this.credentials(type)).appId;
-    return `routine_access_token:${resolved}`;
-  }
 }

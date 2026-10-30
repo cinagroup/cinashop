@@ -12,7 +12,7 @@ import { V2PublicCompatibilityService } from "@/services/content/V2PublicCompati
 import { jsonFail } from "@/utils/json";
 import { ValidateException } from "@/utils/errors";
 import type { AppVariables, Env } from "@/env";
-import { ProductWordsService } from "@/services/product/ProductWordsService";
+import { PublicHotwordService } from "@/services/product/PublicHotwordService";
 import { PublicBrandingService } from "@/services/system/PublicBrandingService";
 import { PublicBootstrapCompatibilityService } from "@/services/system/PublicBootstrapCompatibilityService";
 import { PublicLocationStoreService } from "@/services/system/PublicLocationStoreService";
@@ -72,7 +72,7 @@ export async function getCopyright(c: C) {
 
 /** GET /api/search/hot_keyword — 热门搜索词 */
 export async function hotKeywords(c: C) {
-  return jsonOk(c, await new ProductWordsService(c.get("container")).publicKeywords());
+  return jsonOk(c, await new PublicHotwordService(c.get("container"), c.env).publicKeywords());
 }
 
 /** GET /api/search/keyword — 关键词联想 (商品名模糊匹配) */

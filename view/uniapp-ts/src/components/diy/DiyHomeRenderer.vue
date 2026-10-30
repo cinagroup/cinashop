@@ -21,6 +21,17 @@
 
       <DiyListWidget v-else-if="block.name === 'goodList' || block.name === 'articleList'" :block="block" :active="pageActive" />
 
+      <DiyPromotionWidget v-else-if="block.name === 'promotionList'" :block="block" :active="pageActive" :header-top="headerOffset(index)" />
+
+      <DiyCouponWidget v-else-if="block.name === 'coupon'" :block="block" :active="pageActive" />
+
+      <DiyPointsWidget v-else-if="block.name === 'pointsMall'" :block="block" :active="pageActive" />
+      <DiyLiveBroadcastWidget v-else-if="block.name === 'liveBroadcast'" :block="block" :active="pageActive" />
+      <DiySeckillWidget v-else-if="block.name === 'seckill'" :block="block" :active="pageActive" />
+      <DiyBargainWidget v-else-if="block.name === 'bargain'" :block="block" :active="pageActive" />
+      <DiyCombinationWidget v-else-if="block.name === 'combination'" :block="block" :active="pageActive" />
+      <DiyPresaleWidget v-else-if="block.name === 'presale'" :block="block" :active="pageActive" />
+
       <DiyStateWidget v-else-if="isStateWidget(block)" :block="block" :active="pageActive" @closed="emit('closed', $event)" />
 
       <DiyCommunityWidget v-else-if="block.name === 'community'" :block="block" :active="pageActive" />
@@ -75,6 +86,14 @@ import { useDiyCombinationTabs } from '@/composables/useDiyCombinationTabs';
 import type { DiyCombinationActivity } from '@/composables/useDiyCombinationCategory';
 import DiyEditorialWidget from "./DiyEditorialWidget.vue";
 import DiyListWidget from "./DiyListWidget.vue";
+import DiyPromotionWidget from './DiyPromotionWidget.vue';
+import DiyCouponWidget from './DiyCouponWidget.vue';
+import DiyLiveBroadcastWidget from './DiyLiveBroadcastWidget.vue';
+import DiySeckillWidget from './DiySeckillWidget.vue';
+import DiyBargainWidget from './DiyBargainWidget.vue';
+import DiyCombinationWidget from './DiyCombinationWidget.vue';
+import DiyPresaleWidget from './DiyPresaleWidget.vue';
+import DiyPointsWidget from './DiyPointsWidget.vue';
 import DiyCommerceWidget from "./DiyCommerceWidget.vue";
 import DiyCommunityWidget from "./DiyCommunityWidget.vue";
 import { useThemeStore } from '@/stores/theme';
@@ -116,16 +135,7 @@ if(Number.isFinite(info.statusBarHeight)&&Number(info.statusBarHeight)>0)status=
 }catch{}let total=0,hasHeader=false;const stackTabs=props.components[index]?.name==='tabNav';for(const [i,block] of props.components.slice(0,index).entries()){if(block.name!=='headerSerch'&&block.name!=='tabNav')continue;const config=normalizeDiyNavigation(block,theme.preset);if(!config.enabled)continue;if(block.name==='headerSerch'){hasHeader=true;total+=headerHeights.value[blockKey(block,i)]??config.headerLogicalHeight*width/750+status;}else if(stackTabs&&config.sticky&&(native||hasHeader&&props.scrollTop>50))total+=config.tabLogicalHeight*width/750;}return total;}
 
 const EDITORIAL_WIDGET_NAMES = new Set(["news", "hotspot", "follow", "activeParty"]);
-const COMMERCE_WIDGET_NAMES = new Set([
-  "bargain",
-  "combination",
-  "coupon",
-  "liveBroadcast",
-  "promotionList",
-  "seckill",
-  "presale",
-  "pointsMall",
-]);
+const COMMERCE_WIDGET_NAMES = new Set<string>();
 
 function isEditorialWidget(block: DiyComponent): boolean {
   return EDITORIAL_WIDGET_NAMES.has(block.name);

@@ -42,6 +42,19 @@ export async function customerManualManagerOriginReadiness(db:Query){
  const ready=rows.length===1&&[...required,'read'].every(key=>p?.[key]===true);
  return{ready,reason:ready?'':'customer_manual_manager_origin_read_privileges_unreviewed',catalog,privileges:p??null};
 }
+/** Named-role maintenance inspection. It never claims that the caller is the
+ * target LOGIN. The pre-grant stage permits only the missing SELECT; every
+ * published catalog, ownership and read-only authority predicate still holds. */
+export async function inspectCustomerManualManagerOriginReadiness(db:Query,role:string,requireRead=true){
+ pricingIdentifier(role);if(typeof requireRead!=='boolean')throw Error('Explicit manager-origin read stage required');
+ const catalog=await inspectManagerOrderOperation(db);
+ if(!catalog.complete)return{ready:false,reason:catalog.present?'customer_manual_manager_origin_catalog_incompatible':'customer_manual_manager_origin_not_installed',catalog,privileges:null};
+ const versions=await db.execute<{pg16:boolean}>(sql`SELECT current_setting('server_version_num')::integer/10000=16 AS pg16`);
+ if(versions.length!==1||versions[0].pg16!==true)return{ready:false,reason:'customer_manual_manager_origin_requires_pg16',catalog,privileges:null};
+ const rows=await db.execute<Record<string,boolean>>(privileges(role)),p=rows[0];
+ const ready=rows.length===1&&required.every(key=>p?.[key]===true)&&(!requireRead||p?.read===true);
+ return{ready,reason:ready?'':'customer_manual_manager_origin_read_privileges_unreviewed',catalog,privileges:p??null};
+}
 /** Explicit SELECT only. No startup call, manager scope EXECUTE, writes,
  * table installation, ownership transfer or automatic privilege repair. */
 export function customerManualManagerOriginReadGrantSql(role:string){return `GRANT SELECT ON TABLE public.manager_order_operation_request TO ${pricingIdentifier(role)};`;}

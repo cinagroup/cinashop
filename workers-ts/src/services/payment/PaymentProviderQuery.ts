@@ -32,6 +32,8 @@ export interface PaymentProviderQueryResult {
   providerEventTime: number;
   errorCode: string;
   identityEvidence?: PaymentQueryIdentityEvidence;
+  /** Immutable App-only signed-query provenance; never an original-order claim. */
+  nativeAppEvidenceId?: string;
 }
 
 export type PaymentProviderQuery = (

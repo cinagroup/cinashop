@@ -93,6 +93,7 @@ const diyPageSettingsBrowser = schemaMaintenance && tests.length === 1 && tests[
 const diyMediaReferenceBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-media-reference-browser';
 const diyNavigationAuthorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-navigation-author-browser';
 const diyCarouselAuthorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-carousel-author-browser';
+const diyStateAuthorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-state-author-browser';
 const diyListAuthorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-list-author-browser';
 const diyCommerceBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-commerce-browser';
 const diyStateBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:diy-state-browser';
@@ -115,7 +116,7 @@ const seckillShortSkuBrowser = schemaMaintenance && tests.length === 1 && tests[
 const newcomerShortSkuBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:newcomer-short-sku-browser';
 const presaleShortSkuBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:presale-short-sku-browser';
 const ordinaryShortSkuBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:ordinary-short-sku-browser';
-const productPurchaseAdmissionBrowser = diyListAuthorBrowser || diyCarouselAuthorBrowser || diyNavigationAuthorBrowser || diyMediaReferenceBrowser || diyPageSettingsBrowser || diyFooterBrowser || diyCustomerServiceBrowser || diyPresentationBrowser || diyNavigationBrowser || diyCarouselBrowser || diyEditorialBrowser || diyCommerceBrowser || diyStateBrowser || diyCommunityBrowser || communityMainFeedBrowser || communityAvailabilityBrowser || communityPublishEntryBrowser || communityEngagementBrowser || communityCommentsBrowser || communityPeopleBrowser || communityAuthorBrowser || communityRelationsBrowser || communityImageBrowser || communityVideoBrowser || bargainParticipationCancelBrowser || pcBargainInvitationsBrowser || bargainFriendHelpBrowser || bargainShortSkuBrowser || seckillShortSkuBrowser || newcomerShortSkuBrowser || presaleShortSkuBrowser || ordinaryShortSkuBrowser || purchasePhysicalOriginBrowser || schemaMaintenance && tests.length === 1 && tests[0] === 'audit:product-purchase-admission-browser';
+const productPurchaseAdmissionBrowser = diyStateAuthorBrowser || diyListAuthorBrowser || diyCarouselAuthorBrowser || diyNavigationAuthorBrowser || diyMediaReferenceBrowser || diyPageSettingsBrowser || diyFooterBrowser || diyCustomerServiceBrowser || diyPresentationBrowser || diyNavigationBrowser || diyCarouselBrowser || diyEditorialBrowser || diyCommerceBrowser || diyStateBrowser || diyCommunityBrowser || communityMainFeedBrowser || communityAvailabilityBrowser || communityPublishEntryBrowser || communityEngagementBrowser || communityCommentsBrowser || communityPeopleBrowser || communityAuthorBrowser || communityRelationsBrowser || communityImageBrowser || communityVideoBrowser || bargainParticipationCancelBrowser || pcBargainInvitationsBrowser || bargainFriendHelpBrowser || bargainShortSkuBrowser || seckillShortSkuBrowser || newcomerShortSkuBrowser || presaleShortSkuBrowser || ordinaryShortSkuBrowser || purchasePhysicalOriginBrowser || schemaMaintenance && tests.length === 1 && tests[0] === 'audit:product-purchase-admission-browser';
 const refundApplicationEvidenceBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:refund-application-evidence-browser';
 const supplierRuleInlineBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-product-rule-inline-browser';
 const supplierShippingEditorBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:supplier-product-shipping-editor-browser';
@@ -125,7 +126,9 @@ const productEditorBrowser = schemaMaintenance && tests.length === 1 && tests[0]
 const adminBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-refund-browser';
 const customerBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-order-browser';
 const adminOrderBrowserAcceptance = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:admin-order-browser';
-const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance;
+const customerCashierCapabilitiesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-capabilities-browser';
+const customerCashierImagesBrowser = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:customer-cashier-images-browser';
+const browserAcceptance = adminBrowserAcceptance || customerBrowserAcceptance || adminOrderBrowserAcceptance || customerCashierCapabilitiesBrowser || customerCashierImagesBrowser;
 if (verboseTests) assert.ok(!catalogAudit && !unitShard && !browserAcceptance && !offlineAdminBrowser && !productEditorBrowser && !supplierVideoBrowser && !supplierRecycleBrowser && !supplierCopyBrowser && !supplierReviewBrowser && !supplierDetailBrowser && !supplierScheduleBrowser && !supplierBrandBrowser && !supplierEnsuresBrowser && !supplierParametersBrowser && !supplierSystemFormBrowser && !supplierSkuBatchBrowser && !supplierRecommendImageBrowser && !supplierUnitBrowser && !supplierShippingEditorBrowser && !supplierOrderTrackingBrowser && !supplierOrderDistributionBrowser && !supplierOrderFiltersBrowser && !supplierOrderReviewBrowser && !supplierOrderInvoiceReviewBrowser && !supplierOrderPromotionsReviewBrowser && !supplierOrderGiftIdentityBrowser && !supplierOrderVirtualReviewBrowser && !supplierRefundApplicationReviewBrowser && !refundApplicationEvidenceBrowser && !customerOrderRepurchaseBrowser && !integralPurchaseOriginBrowser && !integralPurchaseLimitsBrowser && !productPurchaseAdmissionBrowser && !supplierRuleInlineBrowser && !supplierOrderEditBrowser && !supplierCashBrowser && !supplierProactiveRefundBrowser && !supplierRefundSettlementBrowser && !supplierBillBrowser && !supplierBillExportBrowser && !supplierFlowBrowser && !supplierExtractBrowser && !supplierExtractApplicationBrowser && !supplierFinanceAccountsBrowser && !supplierExtractMediaBrowser && !supplierExtractApplicationMediaBrowser,
   'Verbose reporting applies only to explicit native test files');
 if (browserAcceptance) {
@@ -297,6 +300,53 @@ if (schemaMaintenance) {
     'test/supplier-product-label-http.test.ts',
     'test/supplier-product-label-binding-http.test.ts',
     'test/supplier-product-label-native.test.ts',
+    'test/supplier-product-label-runtime-native.test.ts',
+    'test/admin-bargain-records-native.test.ts',
+    'test/admin-wechat-menu-native.test.ts',
+    'test/admin-wechat-open-native.test.ts',
+    'test/admin-wechat-app-native.test.ts',
+    'test/admin-wechat-app-manager-coexist-native.test.ts',
+    'test/native-app-runtime-config.test.ts',
+    'test/routine-runtime-config.test.ts',
+    'test/routine-auth-source.test.ts',
+    'test/routine-auth-session.test.ts',
+    'test/routine-identity-witness.test.ts',
+    'test/routine-code-source.test.ts',
+    'test/routine-live-source.test.ts',
+    'test/routine-callback-source.test.ts',
+    'test/routine-notification-source.test.ts',
+    'test/routine-payment-public-source.test.ts',
+    'test/routine-payment-initiation.test.ts',
+    'test/routine-payment-callers.test.ts',
+    'test/routine-payment-cross-channel.test.ts',
+    'test/routine-payment-key-replay.test.ts',
+    'test/routine-payment-local-admission.test.ts',
+    'test/routine-payment-runtime-install.test.ts',
+    'test/routine-payment-runtime-login.test.ts',
+    'test/manager-routine-payment-runtime-native.test.ts',
+    'test/manager-routine-payment-provision-native.test.ts',
+    'test/customer-routine-payment-runtime-native.test.ts',
+    'test/customer-routine-notification-compat-native.test.ts',
+    'test/customer-financial-runtime-native.test.ts',
+    'test/customer-financial-manual-runtime-native.test.ts',
+    'test/customer-financial-original-payment-readers-native.test.ts',
+    'test/customer-original-payment-coexist-native.test.ts',
+    'test/customer-cashier-conditional-runtime-native.test.ts',
+    'test/customer-cashier-form-images-runtime-native.test.ts',
+    'test/customer-cashier-runtime-http-native.test.ts',
+    'test/customer-cashier-capabilities-native.test.ts',
+    'test/local-payment-case-lock.test.ts',
+    'test/withdrawal-effects-scenario.test.ts',
+    'test/withdrawal-application-inbox-scenario.test.ts',
+    'test/native-app-auth-native.test.ts',
+    'test/native-app-payment-authority-native.test.ts',
+    'test/admin-wechat-app-http-native.test.ts',
+    'test/native-app-refund-authority-native.test.ts',
+    'test/native-app-refund-provider-authority-native.test.ts',
+    'test/admin-pc-base-native.test.ts',
+    'test/pc-base-consumer-native.test.ts',
+    'test/admin-wechat-base-native.test.ts',
+    'test/supplier-product-label-capability-native.test.ts',
     'test/supplier-product-rule-http.test.ts',
     'test/supplier-product-rule-native.test.ts',
     'test/admin-operational-group-data.test.ts',
@@ -465,6 +515,21 @@ if (schemaMaintenance) {
     'test/admin-legacy-role-operation-native.test.ts',
     'test/admin-legacy-role-operation-upgrade-native.test.ts',
     'test/admin-authority-maintenance-native.test.ts',
+    'test/admin-profile-native.test.ts',
+    'test/admin-platform-menu-native.test.ts',
+    'test/admin-express-native.test.ts',
+    'test/admin-level-native.test.ts',
+    'test/admin-label-native.test.ts',
+    'test/admin-store-native.test.ts',
+    'test/admin-staff-native.test.ts',
+    'test/admin-delivery-native.test.ts',
+    'test/admin-group-author-native.test.ts',
+    'test/admin-unit-author-native.test.ts',
+    'test/admin-ensure-author-native.test.ts',
+    'test/admin-rule-author-native.test.ts',
+    'test/admin-parameter-author-native.test.ts',
+    'test/admin-hotword-author-native.test.ts',
+    'test/admin-product-label-author-native.test.ts',
     'test/agent-application-postgres.test.ts',
     // These HTTP fixtures now install the real checkout NOLOGIN capability.
     'test/admin-refund-operation-http.test.ts',
@@ -700,6 +765,9 @@ if (schemaMaintenance) {
     'test/admin-diy-list-author-options-http.test.ts',
     'test/diy-list-author-postgres.test.ts',
     'test/diy-list-author-runner.test.ts',
+    'test/diy-state-author-media.test.ts',
+    'test/diy-state-author-postgres.test.ts',
+    'test/diy-state-author-runner.test.ts',
     'test/admin-fab-integral-catalog-postgres.test.ts',
     'test/admin-fab-integral-catalog-http.test.ts',
     'test/integral-product-detail.test.ts',
@@ -786,6 +854,8 @@ if (schemaMaintenance) {
     'test/checkout-coupon-relations-authority.test.ts',
     'test/customer-order-deletion.test.ts',
     'audit:customer-order-browser',
+    'audit:customer-cashier-capabilities-browser',
+    'audit:customer-cashier-images-browser',
     'audit:admin-refund-browser',
     'audit:admin-order-browser',
     'audit:admin-offline-browser',
@@ -856,6 +926,7 @@ if (schemaMaintenance) {
     'audit:diy-navigation-author-browser',
     'audit:diy-carousel-author-browser',
     'audit:diy-list-author-browser',
+    'audit:diy-state-author-browser',
     'audit:community-publish-entry-browser',
     'audit:community-people-browser',
     'audit:community-author-browser',
@@ -1025,6 +1096,7 @@ try {
     : diyPageSettingsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-page-settings-browser.config.ts', '--maxWorkers=1']
     : diyNavigationAuthorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-navigation-author-browser.config.ts', '--maxWorkers=1']
     : diyCarouselAuthorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-carousel-author-browser.config.ts', '--maxWorkers=1']
+    : diyStateAuthorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-state-author-browser.config.ts', '--maxWorkers=1']
     : diyListAuthorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-list-author-browser.config.ts', '--maxWorkers=1']
     : diyMediaReferenceBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-media-reference-browser.config.ts', '--maxWorkers=1']
     : diyNavigationBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.diy-navigation-browser.config.ts', '--maxWorkers=1']
@@ -1065,7 +1137,7 @@ try {
     : productEditorBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.product-editor-browser.config.ts', '--maxWorkers=1']
     : offlineAdminBrowser ? ['node_modules/tsx/dist/cli.mjs', 'scripts/admin-offline-browser.ts']
     : browserAcceptance ? ['node_modules/vitest/vitest.mjs', 'run', '--config',
-    adminOrderBrowserAcceptance ? 'vitest.admin-order-browser.config.ts' : customerBrowserAcceptance ? 'vitest.customer-order-browser.config.ts' : 'vitest.admin-refund-browser.config.ts', '--maxWorkers=1']
+    customerCashierImagesBrowser ? 'vitest.customer-cashier-images-browser.config.ts' : customerCashierCapabilitiesBrowser ? 'vitest.customer-cashier-capabilities-browser.config.ts' : adminOrderBrowserAcceptance ? 'vitest.admin-order-browser.config.ts' : customerBrowserAcceptance ? 'vitest.customer-order-browser.config.ts' : 'vitest.admin-refund-browser.config.ts', '--maxWorkers=1']
     : catalogAudit ? ['node_modules/tsx/dist/cli.mjs', 'scripts/orm-ddl-audit.ts']
     // These complete-schema LOGIN fixtures perform their concurrency proofs
     // with independent DB sessions. Running two fixture builders at once can
@@ -1207,6 +1279,53 @@ try {
         'test/supplier-product-label-http.test.ts',
         'test/supplier-product-label-binding-http.test.ts',
         'test/supplier-product-label-native.test.ts',
+    'test/supplier-product-label-runtime-native.test.ts',
+    'test/admin-bargain-records-native.test.ts',
+    'test/admin-wechat-menu-native.test.ts',
+    'test/admin-wechat-open-native.test.ts',
+    'test/admin-wechat-app-native.test.ts',
+    'test/admin-wechat-app-manager-coexist-native.test.ts',
+    'test/native-app-runtime-config.test.ts',
+    'test/routine-runtime-config.test.ts',
+    'test/routine-auth-source.test.ts',
+    'test/routine-auth-session.test.ts',
+    'test/routine-identity-witness.test.ts',
+    'test/routine-code-source.test.ts',
+    'test/routine-live-source.test.ts',
+    'test/routine-callback-source.test.ts',
+    'test/routine-notification-source.test.ts',
+    'test/routine-payment-public-source.test.ts',
+    'test/routine-payment-initiation.test.ts',
+    'test/routine-payment-callers.test.ts',
+    'test/routine-payment-cross-channel.test.ts',
+    'test/routine-payment-key-replay.test.ts',
+    'test/routine-payment-local-admission.test.ts',
+    'test/routine-payment-runtime-install.test.ts',
+    'test/routine-payment-runtime-login.test.ts',
+    'test/manager-routine-payment-runtime-native.test.ts',
+    'test/manager-routine-payment-provision-native.test.ts',
+    'test/customer-routine-payment-runtime-native.test.ts',
+    'test/customer-routine-notification-compat-native.test.ts',
+    'test/customer-financial-runtime-native.test.ts',
+    'test/customer-financial-manual-runtime-native.test.ts',
+    'test/customer-financial-original-payment-readers-native.test.ts',
+    'test/customer-original-payment-coexist-native.test.ts',
+    'test/customer-cashier-conditional-runtime-native.test.ts',
+    'test/customer-cashier-form-images-runtime-native.test.ts',
+    'test/customer-cashier-runtime-http-native.test.ts',
+    'test/customer-cashier-capabilities-native.test.ts',
+    'test/local-payment-case-lock.test.ts',
+    'test/withdrawal-effects-scenario.test.ts',
+    'test/withdrawal-application-inbox-scenario.test.ts',
+    'test/native-app-auth-native.test.ts',
+    'test/native-app-payment-authority-native.test.ts',
+    'test/admin-wechat-app-http-native.test.ts',
+    'test/native-app-refund-authority-native.test.ts',
+    'test/native-app-refund-provider-authority-native.test.ts',
+    'test/admin-pc-base-native.test.ts',
+    'test/pc-base-consumer-native.test.ts',
+    'test/admin-wechat-base-native.test.ts',
+    'test/supplier-product-label-capability-native.test.ts',
         'test/supplier-product-rule-http.test.ts',
         'test/supplier-product-rule-native.test.ts',
         'test/admin-operational-group-data.test.ts',
@@ -1281,6 +1400,9 @@ try {
     'test/admin-diy-list-author-options-http.test.ts',
     'test/diy-list-author-postgres.test.ts',
     'test/diy-list-author-runner.test.ts',
+    'test/diy-state-author-media.test.ts',
+    'test/diy-state-author-postgres.test.ts',
+    'test/diy-state-author-runner.test.ts',
         'test/admin-fab-integral-catalog-postgres.test.ts',
         'test/admin-fab-integral-catalog-http.test.ts',
         'test/integral-product-detail.test.ts',
@@ -1368,13 +1490,15 @@ try {
     cwd: workerRoot, windowsHide: true, stdio: catalogAudit ? 'pipe' : 'inherit', encoding: 'utf8',
     // These complete-schema assisted suites create two independent LOGIN
     // profiles for every case. Retain every original case and allow their full
-    // files to finish; the individual SQL/HTTP lock deadlines remain bounded.
-    timeout: (diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([
+    // files to finish within a bounded 25-minute batch deadline; the individual
+    // SQL/HTTP lock deadlines remain unchanged. The full Open regression reached
+    // its final three cases at the former 20-minute cutoff.
+    timeout: (diyStateAuthorBrowser ? 70 : diyListAuthorBrowser ? 70 : diyCarouselAuthorBrowser ? 70 : diyNavigationAuthorBrowser ? 70 : diyCarouselBrowser ? 70 : diyFooterBrowser ? 40 : diyCustomerServiceBrowser ? 40 : diyPageSettingsBrowser ? 50 : diyMediaReferenceBrowser ? 40 : diyPresentationBrowser ? 40 : diyNavigationBrowser ? 40 : unitShard ? 40 : (supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser) ? 25 : (productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser) ? 20 : tests.some(test => new Set([
       'test/assisted-purchase-flow-postgres.test.ts',
       'test/assisted-purchase-runtime-postgres.test.ts',
-    ]).has(test)) ? 20 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,
+    ]).has(test)) ? 25 : 10) * 60_000, maxBuffer: 32 * 1024 * 1024,
     env: unitGate ? unitGate.unitGateEnvironment(process.env, testConnection, taskRoot)
-      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },
+      : { ...process.env, TEST_FINANCE_POSTGRES_URL: testConnection, ...(customerCashierImagesBrowser ? { TEST_CUSTOMER_CASHIER_IMAGES_BROWSER: '1' } : {}), ...(customerCashierCapabilitiesBrowser ? { TEST_CUSTOMER_CASHIER_CAPABILITIES_BROWSER: '1' } : {}), ...(productEditorBrowser ? { TEST_PRODUCT_EDITOR_BROWSER: '1' } : {}), ...(supplierVideoBrowser ? { TEST_SUPPLIER_VIDEO_BROWSER: '1' } : {}), ...(supplierRecycleBrowser ? { TEST_SUPPLIER_RECYCLE_BROWSER: '1' } : {}), ...(supplierCopyBrowser ? { TEST_SUPPLIER_COPY_BROWSER: '1' } : {}), ...(supplierReviewBrowser ? { TEST_SUPPLIER_REVIEW_BROWSER: '1' } : {}), ...(supplierDetailBrowser ? { TEST_SUPPLIER_DETAIL_BROWSER: '1' } : {}), ...(supplierScheduleBrowser ? { TEST_SUPPLIER_SCHEDULE_BROWSER: '1' } : {}), ...(supplierBrandBrowser ? { TEST_SUPPLIER_BRAND_BROWSER: '1' } : {}), ...(supplierEnsuresBrowser ? { TEST_SUPPLIER_ENSURES_BROWSER: '1' } : {}), ...(supplierParametersBrowser ? { TEST_SUPPLIER_PARAMETERS_BROWSER: '1' } : {}), ...(supplierSystemFormBrowser ? { TEST_SUPPLIER_SYSTEM_FORM_BROWSER: '1' } : {}), ...(supplierSkuBatchBrowser ? { TEST_SUPPLIER_SKU_BATCH_BROWSER: '1' } : {}), ...(supplierRecommendImageBrowser ? { TEST_SUPPLIER_PRODUCT_RECOMMEND_IMAGE_BROWSER: '1' } : {}), ...(supplierUnitBrowser ? { TEST_SUPPLIER_PRODUCT_UNIT_BROWSER: '1' } : {}), ...(supplierOrderTrackingBrowser ? { TEST_SUPPLIER_ORDER_TRACKING_BROWSER: '1' } : {}), ...(supplierOrderDistributionBrowser ? { TEST_SUPPLIER_ORDER_DISTRIBUTION_BROWSER: '1' } : {}), ...(supplierOrderFiltersBrowser ? { TEST_SUPPLIER_ORDER_FILTERS_BROWSER: '1' } : {}), ...(supplierOrderReviewBrowser ? { TEST_SUPPLIER_ORDER_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderInvoiceReviewBrowser ? { TEST_SUPPLIER_ORDER_INVOICE_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderPromotionsReviewBrowser ? { TEST_SUPPLIER_ORDER_PROMOTIONS_REVIEW_BROWSER: '1' } : {}), ...(supplierOrderGiftIdentityBrowser ? { TEST_SUPPLIER_ORDER_GIFT_IDENTITY_BROWSER: '1' } : {}), ...(supplierOrderVirtualReviewBrowser ? { TEST_SUPPLIER_ORDER_VIRTUAL_REVIEW_BROWSER: '1' } : {}), ...(supplierRefundApplicationReviewBrowser ? { TEST_SUPPLIER_REFUND_APPLICATION_REVIEW_BROWSER: '1' } : {}), ...(refundApplicationEvidenceBrowser ? { TEST_REFUND_APPLICATION_EVIDENCE_BROWSER: '1' } : {}), ...(customerOrderRepurchaseBrowser ? { TEST_CUSTOMER_ORDER_REPURCHASE_BROWSER: '1' } : {}), ...(repurchaseShortSkuBrowser ? { TEST_REPURCHASE_SHORT_SKU_BROWSER: '1' } : {}), ...(integralPurchaseOriginBrowser ? { TEST_INTEGRAL_PURCHASE_ORIGIN_BROWSER: '1' } : {}), ...(integralPurchaseLimitsBrowser ? { TEST_INTEGRAL_PURCHASE_LIMITS_BROWSER: '1' } : {}), ...(productPurchaseAdmissionBrowser ? { TEST_PRODUCT_PURCHASE_ADMISSION_BROWSER: '1' } : {}), ...(purchasePhysicalOriginBrowser ? { TEST_PURCHASE_PHYSICAL_ORIGIN_BROWSER: '1' } : {}), ...(ordinaryShortSkuBrowser ? { TEST_ORDINARY_SHORT_SKU_BROWSER: '1' } : {}), ...(diyFooterBrowser ? { TEST_DIY_FOOTER_BROWSER: '1' } : {}), ...(diyPresentationBrowser ? { TEST_DIY_PRESENTATION_BROWSER: '1' } : {}), ...(diyCustomerServiceBrowser ? { TEST_DIY_CUSTOMER_SERVICE_BROWSER: '1' } : {}), ...(diyPageSettingsBrowser ? { TEST_DIY_PAGE_SETTINGS_BROWSER: '1' } : {}), ...(diyMediaReferenceBrowser ? { TEST_DIY_MEDIA_REFERENCE_BROWSER: '1' } : {}), ...(diyNavigationAuthorBrowser ? { TEST_DIY_NAVIGATION_AUTHOR_BROWSER: '1' } : {}), ...(diyCarouselAuthorBrowser ? { TEST_DIY_CAROUSEL_AUTHOR_BROWSER: '1' } : {}), ...(diyListAuthorBrowser ? { TEST_DIY_LIST_AUTHOR_BROWSER: '1' } : {}), ...(diyStateAuthorBrowser ? { TEST_DIY_STATE_AUTHOR_BROWSER: '1' } : {}), ...(diyNavigationBrowser ? { TEST_DIY_NAVIGATION_BROWSER: '1' } : {}), ...(diyCarouselBrowser ? { TEST_DIY_CAROUSEL_BROWSER: '1' } : {}), ...(diyEditorialBrowser ? { TEST_DIY_EDITORIAL_BROWSER: '1' } : {}), ...(diyCommerceBrowser ? { TEST_DIY_COMMERCE_BROWSER: '1' } : {}), ...(diyStateBrowser ? { TEST_DIY_STATE_BROWSER: '1' } : {}), ...(diyCommunityBrowser ? { TEST_DIY_COMMUNITY_BROWSER: '1' } : {}), ...(communityMainFeedBrowser ? { TEST_COMMUNITY_MAIN_FEED_BROWSER: '1' } : {}), ...(communityAvailabilityBrowser ? { TEST_COMMUNITY_AVAILABILITY_BROWSER: '1' } : {}), ...(communityPublishEntryBrowser ? { TEST_COMMUNITY_PUBLISH_ENTRY_BROWSER: '1' } : {}), ...(communityEngagementBrowser ? { TEST_COMMUNITY_ENGAGEMENT_BROWSER: '1' } : {}), ...(communityCommentsBrowser ? { TEST_COMMUNITY_COMMENTS_BROWSER: '1' } : {}), ...(communityPeopleBrowser ? { TEST_COMMUNITY_PEOPLE_BROWSER: '1' } : {}), ...(communityAuthorBrowser ? { TEST_COMMUNITY_AUTHOR_BROWSER: '1' } : {}), ...(communityRelationsBrowser ? { TEST_COMMUNITY_RELATIONS_BROWSER: '1' } : {}), ...(communityImageBrowser ? { TEST_COMMUNITY_IMAGE_BROWSER: '1' } : {}), ...(communityVideoBrowser ? { TEST_COMMUNITY_VIDEO_BROWSER: '1' } : {}), ...(bargainParticipationCancelBrowser ? { TEST_BARGAIN_PARTICIPATION_CANCEL_BROWSER: '1' } : {}), ...(pcBargainInvitationsBrowser ? { TEST_PC_BARGAIN_INVITATIONS_BROWSER: '1' } : {}), ...(bargainFriendHelpBrowser ? { TEST_BARGAIN_FRIEND_HELP_BROWSER: '1' } : {}), ...(bargainShortSkuBrowser ? { TEST_BARGAIN_SHORT_SKU_BROWSER: '1' } : {}), ...(seckillShortSkuBrowser ? { TEST_SECKILL_SHORT_SKU_BROWSER: '1' } : {}), ...(newcomerShortSkuBrowser ? { TEST_NEWCOMER_SHORT_SKU_BROWSER: '1' } : {}), ...(presaleShortSkuBrowser ? { TEST_PRESALE_SHORT_SKU_BROWSER: '1' } : {}), ...(supplierRuleInlineBrowser ? { TEST_SUPPLIER_PRODUCT_RULE_INLINE_BROWSER: '1' } : {}), ...(supplierShippingEditorBrowser ? { TEST_SUPPLIER_PRODUCT_SHIPPING_EDITOR_BROWSER: '1' } : {}), ...(supplierOrderEditBrowser ? { TEST_SUPPLIER_ORDER_EDIT_BROWSER: '1' } : {}), ...(supplierCashBrowser ? { TEST_SUPPLIER_CASH_BROWSER: '1' } : {}), ...(supplierProactiveRefundBrowser ? { TEST_SUPPLIER_PROACTIVE_REFUND_BROWSER: '1' } : {}), ...(supplierRefundSettlementBrowser ? { TEST_SUPPLIER_REFUND_SETTLEMENT_BROWSER: '1' } : {}), ...(supplierBillBrowser ? { TEST_SUPPLIER_BILL_BROWSER: '1' } : {}), ...(supplierBillExportBrowser ? { TEST_SUPPLIER_BILL_EXPORT_BROWSER: '1' } : {}), ...(supplierFlowBrowser ? { TEST_SUPPLIER_FLOW_BROWSER: '1' } : {}), ...(supplierExtractBrowser ? { TEST_SUPPLIER_EXTRACT_BROWSER: '1' } : {}), ...(supplierExtractApplicationBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_BROWSER: '1' } : {}), ...(supplierFinanceAccountsBrowser ? { TEST_SUPPLIER_FINANCE_ACCOUNTS_BROWSER: '1' } : {}), ...(supplierExtractMediaBrowser ? { TEST_SUPPLIER_EXTRACT_MEDIA_BROWSER: '1' } : {}), ...(supplierExtractApplicationMediaBrowser ? { TEST_SUPPLIER_EXTRACT_APPLICATION_MEDIA_BROWSER: '1' } : {}) },
   });
   if (unitGate) {
     const result = await unitGate.finishUnitGate(workerRoot, taskRoot, preparedUnitGate, testRun);

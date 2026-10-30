@@ -9,8 +9,10 @@ import { CUSTOMER_WORK_LOCK_FUNCTIONS } from '../src/migrations/customerWorkRunt
 import { CUSTOMER_WRITEOFF_FUNCTIONS, customerWriteoffRuntimePrivilegePlan } from '../src/migrations/customerWriteoffRuntimePlan';
 import { CUSTOMER_WRITEOFF_MAINTENANCE_LOCK_KEY, CUSTOMER_WRITEOFF_MAX_JSON_BYTES, CUSTOMER_WRITEOFF_OPERATION_INSTALLATION_SQL } from '../src/migrations/customerWriteoffOperation';
 import { CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256, CUSTOMER_WRITEOFF_OPERATION_CATALOG_SQL,
+  CUSTOMER_WRITEOFF_OPERATION_LEGACY_CATALOG_SHA256,
   inspectCustomerWriteoffOperation, assertCustomerWriteoffOperationCatalog,
   customerWriteoffOperationReadiness, runCustomerWriteoffOperation } from '../src/migrations/runCustomerWriteoffOperation';
+import { runCustomerWorkOperation } from '../src/migrations/runCustomerWorkOperation';
 
 type Native = Extract<Awaited<ReturnType<typeof sequenceRunnerDatabase>>, { format: 'pg16' }>;
 type Peer = SequenceRunnerPeer & { role: string; connectionString: string };
@@ -134,6 +136,23 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('customer writeoff opera
       if (CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256.startsWith('NOT_MEASURED')) {
         expect(state.complete).toBe(false); await expect(assertCustomerWriteoffOperationCatalog(f.db)).rejects.toThrow();
       } else { expect(state.fingerprint).toBe(CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256); expect(state.complete).toBe(true); }
+    });
+  }, 60000);
+  it.each([true, false])('installs alongside the genuine Work ledger in either order, writeoff first=%s', async writeoffFirst => {
+    await withFixture(async f => {
+      await runCustomerWorkOperation(f.db);
+      if (!writeoffFirst) await runCustomerWriteoffOperation(f.db);
+      const [keys] = await f.exec("SELECT count(*) AS n FROM pg_constraint WHERE contype='p' AND conrelid IN('public.customer_work_operation_request'::regclass,'public.customer_writeoff_operation_request'::regclass)");
+      expect(Number(keys.n)).toBe(2);
+      expect(await inspectCustomerWriteoffOperation(f.db)).toMatchObject({ complete: true, fingerprint: CUSTOMER_WRITEOFF_OPERATION_CATALOG_SHA256 });
+    }, writeoffFirst);
+  }, 60000);
+  it('recognizes the exact previously measured isolated key without rewriting it', async () => {
+    await withFixture(async f => {
+      await f.exec('ALTER TABLE public.customer_writeoff_operation_request RENAME CONSTRAINT customer_writeoff_operation_request_pkey TO cwo_pk');
+      const before = await f.exec("SELECT pg_current_xact_id_if_assigned()::text AS xid,(SELECT oid FROM pg_class WHERE oid='public.cwo_pk'::regclass)::text AS oid");
+      expect(await inspectCustomerWriteoffOperation(f.db)).toEqual({ present: true, complete: true, fingerprint: CUSTOMER_WRITEOFF_OPERATION_LEGACY_CATALOG_SHA256 });
+      expect(await f.exec("SELECT pg_current_xact_id_if_assigned()::text AS xid,(SELECT oid FROM pg_class WHERE oid='public.cwo_pk'::regclass)::text AS oid")).toEqual(before);
     });
   }, 60000);
   it('reports missing installation from runtime reads without DDL or privilege repair', async () => {

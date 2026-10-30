@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
+import type { RuntimeGiftPeerDeclarations } from './customerRuntimeGiftPeers';
 /** Explicit fixed gift catalog. No runtime DDL, grants or drift repair. */
 export const ORDER_PROMOTION_GIFT_RECEIPT_DDL = `
 CREATE TABLE public.store_order_promotion_gift_coupon_reward (
@@ -88,12 +89,35 @@ SELECT (SELECT count(*)=1 AND bool_and(relkind='r' AND relpersistence='p' AND NO
  AND pg_catalog.pg_get_indexdef(i.indexrelid)='CREATE UNIQUE INDEX ub_order_promotion_gift_uq ON public.user_bill USING btree (uid, link_id, event_key) WHERE ((event_key)::text = ''order_promotions_give_integral''::text)') AS points_ready`;
 
 export async function inspectOrderPromotionGiftReceiptCatalog(tx:Pick<DbClient,'execute'>,maintenance?:string,
- runtime?:{app:string;admin:string}) {
+ runtime?:{app:string;admin:string}, peers?:RuntimeGiftPeerDeclarations) {
  const [r]=await tx.execute(sql.raw(ORDER_PROMOTION_GIFT_CATALOG_INSPECTION_SQL));
  const [owner]=maintenance===undefined?[{ready:true}]:await tx.execute(sql`SELECT count(*)=4 AND bool_and(c.relowner=r.oid) AS ready
  FROM pg_catalog.pg_class c CROSS JOIN pg_catalog.pg_roles r WHERE c.relnamespace='public'::regnamespace
  AND r.rolname=${maintenance} AND c.relname IN ('store_order_promotion_gift_coupon_reward',
  'store_order_promotion_gift_coupon_reward_id_seq','user_bill','ub_order_promotion_gift_uq')`);
+ // A separately commissioned fixed Manager profile legitimately reads this
+ // shared receipt. Do not recognize a role name/prefix or a bare SELECT grant:
+ // all existing manager catalogs and its exact effective ACLs must pass.
+ // Its catalog inspection calls this helper without runtime, ending recursion.
+ let reviewedManager: string | null = null;
+ const peerProof=peers&&runtime&&maintenance
+   ?await(await import('./customerRuntimeGiftPeers')).inspectReviewedRuntimeGiftPeers(tx,runtime,maintenance,peers):null;
+ if(peers&&(!runtime||!maintenance))throw Error('Gift peers require explicit App/Admin and maintenance identities');
+ if(runtime!==undefined&&!peers) {
+   const { MANAGER_RUNTIME_ROLE } = await import('./managerRuntimePrivilegePlan');
+   // A fixed role can exist for another database. Inspect its full profile
+   // only if this database actually assigns it authority on these objects.
+   const [present] = await tx.execute(sql`SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+     CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,
+       pg_catalog.acldefault(CASE WHEN c.relkind='S' THEN 'S'::"char" ELSE 'r'::"char" END,c.relowner))) a
+     JOIN pg_catalog.pg_roles r ON r.oid=a.grantee AND r.rolname=${MANAGER_RUNTIME_ROLE}
+     WHERE c.relnamespace='public'::regnamespace AND c.relname IN
+       ('store_order_promotion_gift_coupon_reward','store_order_promotion_gift_coupon_reward_id_seq')) AS present`);
+   if(present?.present===true) {
+     const { inspectManagerRuntimePrivileges } = await import('./auditManagerRuntimePrivileges');
+     if((await inspectManagerRuntimePrivileges(tx,{requireLogin:true})).ready) reviewedManager=MANAGER_RUNTIME_ROLE;
+   }
+ }
  const [authority]=runtime===undefined?[{ready:true}]:await tx.execute(sql`SELECT NOT EXISTS(
    SELECT 1 FROM pg_catalog.pg_class c CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,
      pg_catalog.acldefault(CASE WHEN c.relkind='S' THEN 'S'::"char" ELSE 'r'::"char" END,c.relowner))) a
@@ -104,9 +128,15 @@ export async function inspectOrderPromotionGiftReceiptCatalog(tx:Pick<DbClient,'
        AND NOT a.is_grantable AND ((c.relkind='S' AND a.privilege_type='USAGE')
          OR (c.relkind='r' AND a.privilege_type IN ('SELECT','INSERT')))
      OR a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${runtime.admin})
-       AND NOT a.is_grantable AND c.relkind='r' AND a.privilege_type='SELECT'),false)) AS ready`);
- return {ready:r?.catalog_ready===true && r?.sequence_ready===true && r?.points_ready===true && owner?.ready===true && authority?.ready===true,
- catalogReady:r?.catalog_ready===true,sequenceReady:r?.sequence_ready===true,pointsReady:r?.points_ready===true};
+       AND NOT a.is_grantable AND c.relkind='r' AND a.privilege_type='SELECT'
+     OR a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${reviewedManager}::text)
+       AND NOT a.is_grantable AND c.relkind='r' AND a.privilege_type='SELECT'
+     OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(${JSON.stringify(peerProof?.ready?peerProof.grants:[])}::jsonb) p
+       WHERE a.grantee=(p->>'oid')::oid AND NOT a.is_grantable
+       AND a.privilege_type IN(SELECT pg_catalog.jsonb_array_elements_text(CASE WHEN c.relkind='S' THEN p->'sequence' ELSE p->'table' END)))),false)) AS ready`);
+ return {ready:r?.catalog_ready===true && r?.sequence_ready===true && r?.points_ready===true && owner?.ready===true && authority?.ready===true&&(!peers||peerProof?.ready===true),
+ catalogReady:r?.catalog_ready===true,sequenceReady:r?.sequence_ready===true,pointsReady:r?.points_ready===true,
+ ...(peers?{peerProof}: {})};
 }
 export const ORDER_PROMOTION_GIFT_RECEIPT_SQL = `
 DO $gift_preflight$

@@ -24,14 +24,15 @@
     </div>
 
     <!-- 推荐商品 -->
-    <section class="section">
-      <h2 class="section-title">为你推荐</h2>
+    <p v-if="homeError" role="alert">首页商品暂时无法完整读取，请重新加载。</p>
+    <section v-for="collection in collections" :key="collection.key" class="section" :aria-label="collection.title">
+      <h2 class="section-title">{{ collection.title }} <small v-if="!loading">共 {{ collection.rows.length }} 件</small></h2>
       <div v-if="loading" class="loading">
         <el-skeleton :rows="6" animated />
       </div>
       <div v-else class="goods-grid">
         <div
-          v-for="item in goods"
+          v-for="item in collection.rows"
           :key="item.id"
           class="goods-card"
           @click="$router.push(`/goods/${item.id}`)"
@@ -42,7 +43,8 @@
           <div class="goods-info">
             <div class="goods-name">{{ item.store_name }}</div>
             <div class="goods-bottom">
-              <span class="price">¥{{ item.price }}</span>
+              <span class="price">¥{{ item.price_type && item.vip_price ? item.vip_price : item.price }}</span>
+              <span v-if="item.price_type" class="member-price">{{ item.level_name || '会员价' }}</span>
               <span class="sales">已售 {{ item.sales }}</span>
             </div>
           </div>
@@ -70,12 +72,25 @@
 
 <script setup lang="ts">
 import ProductImage from "@/components/ProductImage.vue";
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import { apiGoodsList, apiCategory } from "@/api/product";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
+import { apiCategory } from "@/api/product";
 import type { GoodsItem, CategoryNode } from "@/types/product";
+import { apiPcHomepage } from '@/api/pcBase';
+import { captureAuthSession, isCurrentAuthSession, onAuthChange } from '@/utils/auth';
 import { apiPcHomeBanners, resolvePcBannerLink, type PcHomeBanner } from '@/api/pcBanner';
 
-const goods = ref<GoodsItem[]>([]);
+const best = ref<GoodsItem[]>([]), fresh = ref<GoodsItem[]>([]), homeError = ref(false);
+const collections = computed(() => [{ key: 'best', title: '精品推荐', rows: best.value }, { key: 'new', title: '首发新品', rows: fresh.value }]);
+let homeEpoch = 0, homeAbort: AbortController | undefined;
+async function loadHome() {
+  homeAbort?.abort(); homeAbort = new AbortController(); const controller = homeAbort, epoch = ++homeEpoch, session = captureAuthSession();
+  const current = () => alive && epoch === homeEpoch && !controller.signal.aborted && isCurrentAuthSession(session);
+  best.value = []; fresh.value = []; loading.value = true; homeError.value = false;
+  try { const result = await apiPcHomepage(controller.signal); if (current()) { best.value = result.best; fresh.value = result.fresh; } }
+  catch { if (current()) homeError.value = true; }
+  finally { if (current()) loading.value = false; }
+}
+const stopAuth = onAuthChange(() => { if (alive) void loadHome(); });
 const categories = ref<CategoryNode[]>([]);
 const loading = ref(true);
 const banners = ref<PcHomeBanner[]>([]), bannerLoading = ref(true), bannerError = ref(false);
@@ -88,22 +103,14 @@ onMounted(async () => {
   catch { if (alive) bannerError.value = true; }
   finally { if (alive) bannerLoading.value = false; }
 });
-onBeforeUnmount(() => { alive = false; bannerAbort.abort(); });
+onBeforeUnmount(() => { alive = false; bannerAbort.abort(); homeAbort?.abort(); homeEpoch++; stopAuth(); });
 
+onMounted(() => { void loadHome(); });
 onMounted(async () => {
-  try {
-    const [goodsRes, cateRes] = await Promise.all([
-      apiGoodsList({ page: 1, limit: 8 }),
-      apiCategory(),
-    ]);
-    goods.value = goodsRes.list;
-    categories.value = cateRes.slice(0, 8);
-  } catch (e) {
-    console.error("首页加载失败", e);
-  } finally {
-    loading.value = false;
-  }
+  try { const result = await apiCategory(); if (alive) categories.value = result.slice(0, 8); }
+  catch { /* Product categories have an independent public read. */ }
 });
+
 </script>
 
 <style scoped>

@@ -154,8 +154,9 @@ describe("phone authentication migration", () => {
   it("binds Mini Program phones to the authenticated server-side identity", () => {
     const service = readFileSync("src/services/wechat/WechatAuthService.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/WechatController.ts", "utf8");
-    expect(service).toContain("session_key_uid:${uid}");
-    expect(service).toContain("session_key_uid:${params.uid}");
+    expect(service).toContain('routine_session:v2:${stamp}:${uid}');
+    expect(service).toContain('routineSessionKey(params.uid, credentials.stamp)');
+    expect(service).not.toContain('`session_key_uid:${');
     expect(service).toContain("eq(wechatUser.uid, params.uid)");
     expect(service).toContain("login.bindPhone(params.uid, phone)");
     expect(service).toContain("login.updatePhone(params.uid, phone)");

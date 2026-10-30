@@ -20,7 +20,7 @@ import type { AppVariables, Env } from "../../src/env";
 
 // An explicit test-owned factory can supply a complete ORM database. The default
 // remains the existing disposable column fixture; no environment/production fallback.
-type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'db' | 'exec' | 'close'>;
+type QuoteFixtureDatabase = Pick<Awaited<ReturnType<typeof financePostgres>>, 'db' | 'exec' | 'close'> & { canonicalOrm?: true };
 export async function createPcCheckoutQuoteFixture(extraTables: PgTable[] = [],
   createDatabase: (tables: PgTable[]) => Promise<QuoteFixtureDatabase> = tables => financePostgres(tables, { namespace: 'public' })) {
   let fixture = await createDatabase([...new Set([user, userAddress, userBill, storeCart, storeOrder, storeProduct, storeProductAttrValue,

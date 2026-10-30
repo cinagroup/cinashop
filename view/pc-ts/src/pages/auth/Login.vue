@@ -104,6 +104,7 @@ import {
 import { requestSmsChallenge } from "@/composables/smsChallenge";
 import { useAuthStore } from "@/stores/auth";
 import { safeLoginRedirect } from "@/utils/authNavigation";
+import { captureAuthSession, isCurrentAuthSession, onAuthChange } from '@/utils/auth';
 
 type LoginTab = "account" | "mobile" | "scan";
 type ScanStage = "idle" | "pending" | "scanned" | "expired";
@@ -135,6 +136,13 @@ let scanGeneration = 0;
 let scanKey = "";
 let scanPollToken = "";
 let scanExpiresAt = 0;
+let alive = true, oauthGeneration = 0;
+function invalidateOauth() { oauthGeneration++; oauthStarting.value = false; oauthCallbackLoading.value = false; }
+const unbindOauthSession = onAuthChange(invalidateOauth);
+function oauthLease() {
+  const generation = ++oauthGeneration, session = captureAuthSession();
+  return () => alive && generation === oauthGeneration && isCurrentAuthSession(session);
+}
 
 const form = reactive({ account: "", password: "", phone: "", captcha: "" });
 
@@ -315,13 +323,16 @@ async function loadPcConfig() {
 
 async function startWechatLogin() {
   if (!wechatAvailable.value || oauthStarting.value) return;
+  const current = oauthLease();
   oauthStarting.value = true;
   try {
-    const { state } = await apiCreatePcOauthState();
+    const { state, appid: currentAppId } = await apiCreatePcOauthState();
+    if (!current()) return;
+    if (!/^wx[a-zA-Z0-9]{16}$/.test(currentAppId)) throw new Error('微信开放平台登录尚未配置');
     sessionStorage.setItem(OAUTH_REDIRECT_KEY, requestedRedirect.value);
     const callback = new URL("/login", window.location.origin).toString();
     const authorization = new URL("https://open.weixin.qq.com/connect/qrconnect");
-    authorization.searchParams.set("appid", appid.value);
+    authorization.searchParams.set("appid", currentAppId);
     authorization.searchParams.set("redirect_uri", callback);
     authorization.searchParams.set("response_type", "code");
     authorization.searchParams.set("scope", "snsapi_login");
@@ -329,8 +340,7 @@ async function startWechatLogin() {
     authorization.hash = "wechat_redirect";
     window.location.assign(authorization.toString());
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "微信授权启动失败");
-    oauthStarting.value = false;
+    if (current()) { ElMessage.error(error instanceof Error ? error.message : "微信授权启动失败"); oauthStarting.value = false; }
   }
 }
 
@@ -338,10 +348,12 @@ async function handleOauthCallback() {
   const code = queryText(route.query.code);
   const state = queryText(route.query.state);
   if (!code && !state) return;
+  const current = oauthLease();
   const cleanQuery = { ...route.query };
   delete cleanQuery.code;
   delete cleanQuery.state;
   await router.replace({ path: route.path, query: cleanQuery, hash: route.hash });
+  if (!current()) return;
   if (!code || !state) {
     ElMessage.error("微信授权回调缺少安全参数，请重新发起登录");
     return;
@@ -349,13 +361,14 @@ async function handleOauthCallback() {
   oauthCallbackLoading.value = true;
   try {
     const result = await apiPcWechatAuth(code, state);
+    if (!current()) return;
     authStore.applyLogin({ token: result.token, expires_time: result.exp_time });
     ElMessage.success("微信登录成功");
     await redirectAfterLogin(true);
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : "微信登录失败");
+    if (current()) ElMessage.error(error instanceof Error ? error.message : "微信登录失败");
   } finally {
-    oauthCallbackLoading.value = false;
+    if (current()) oauthCallbackLoading.value = false;
   }
 }
 
@@ -370,6 +383,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  alive = false; invalidateOauth(); unbindOauthSession();
   if (countdownTimer) clearInterval(countdownTimer);
   stopScan();
 });

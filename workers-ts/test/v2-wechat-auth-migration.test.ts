@@ -32,10 +32,16 @@ describe("API-004-AUTH / CORE-004 migration", () => {
     expect(service).toContain("WECHAT_AUTH_LIMIT_PER_MINUTE = 30");
     expect(service).toContain("WECHAT_RESPONSE_MAX_BYTES = 32 * 1024");
     expect(service).toContain("WECHAT_FETCH_TIMEOUT_MS = 8_000");
-    expect(service).toContain('getAppId("routine")');
-    expect(service).toContain('getAppSecret("routine")');
-    expect(service).toContain('getAppId("wechat")');
-    expect(service).toContain('getAppSecret("wechat")');
+    expect(service).not.toContain('getAppId("routine")');
+    expect(service).toContain('readRoutineCredentials(this.container, this.env)');
+    expect(service).toContain('withRoutineCredentials(this.container, this.env, credentials.stamp');
+    expect(service).toContain('getRoutineAccessToken(this.container, this.env, credentials)');
+    expect(service).not.toContain('cacheGet<string>("routine_access_token"');
+    expect(service).toContain('const { appId, secret } = await readOfficialAccountCredentials(this.container, this.env)');
+    expect(service).toContain("officialCredentialCacheKey(credentials, 'access-token')");
+    expect(service).toContain("officialCredentialCacheKey(credentials, 'jsapi-ticket')");
+    expect(service).not.toContain('getAppId("wechat")');
+    expect(service).not.toContain('getAppSecret("wechat")');
     expect(service).not.toContain("Math.random(");
   });
 

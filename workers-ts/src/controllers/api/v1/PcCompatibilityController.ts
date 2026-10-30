@@ -65,7 +65,7 @@ export async function oauthState(c: C) {
   const result = await new WechatOpenWebAuthService(c.get("container"), c.env)
     .createOauthState("pc_user", clientIp(c), client.origin);
   setOauthBrowserVerifier(c, "pc_user", result.state, result.verifier, result.expiresIn);
-  return jsonOk(c, { state: result.state, expires_in: result.expiresIn });
+  return jsonOk(c, { state: result.state, expires_in: result.expiresIn, appid: result.appId });
 }
 
 /** Open-platform callback requires a one-time, audience/browser-bound state. */
@@ -86,6 +86,7 @@ export async function wechatAuth(c: C) {
 }
 
 export async function getAppid(c: C) {
+  c.header('Cache-Control', 'no-store, max-age=0');
   return jsonOk(c, await service(c).appId());
 }
 

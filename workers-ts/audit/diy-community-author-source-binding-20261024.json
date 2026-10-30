@@ -1,0 +1,512 @@
+{
+  "schema": "cinashop.community-author.source-and-report-adapter.v1",
+  "boundary": "Exact community author increment applied after editorial/follow/state. Prior dated proofs, complete archives, hash literals and negative definitions remain unchanged. No new audited Axios call or registered route; the existing authenticated all-topic Axios call gains AbortSignal options. Explicit anonymous GET previews reuse existing /api/community/config, /api/community/list and /api/diy/get_diy/:id routes, and therefore are not included in the Axios-only inventory.",
+  "sources": [
+    {
+      "file": "view/admin-ts/src/pages/content/DiseList.vue",
+      "before_sha256": "f0408d7eefa7694e1ae9560e842bff45d1511ce3a0fc04234ad1c99b29f4a5d0",
+      "after_sha256": "ef0678b8176ab5826e792845950a9f108b535bb67d709d60e902fe0364e00ceb",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "        <el-form-item label=\"种草社区\"><DiyCommunityEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+          "before_line": 104,
+          "after_line": 104
+        },
+        {
+          "before_source": "",
+          "after_source": "import DiyCommunityEditor from \"@/components/content/DiyCommunityEditor.vue\";\nimport { canonicalCommunityValue } from \"@/utils/diyCommunityEditor\";\n",
+          "before_line": 170,
+          "after_line": 171
+        },
+        {
+          "before_source": "    return canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))));\n",
+          "after_source": "    return canonicalCommunityValue(canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))))));\n",
+          "before_line": 302,
+          "after_line": 305
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/admin-ts/src/api/community.ts",
+      "before_sha256": "202622384b920ce59ec4f3b3de15bb0b1ec8a0a0029dbe84ac4ccd4b22556acd",
+      "after_sha256": "ccf66cc81b4da6de7bb7820315d464a7bab6afc0eae1ff3feaa2113af50cda31",
+      "edits": [
+        {
+          "before_source": "export async function apiCommunityAllTopics() {\n  if (previewMode) return clone(previewTopics.filter((row) => row.status === 1).map(({ id, name, is_recommend }) => ({ id, name, is_recommend })));\n  return getData<Array<{ id: number; name: string; is_recommend: number }>>(request.get(\"/community/all_topic\"));\n",
+          "after_source": "export async function apiCommunityAllTopics(signal?: AbortSignal, live = false) {\n  if (previewMode && !live) return clone(previewTopics.filter((row) => row.status === 1).map(({ id, name, is_recommend }) => ({ id, name, is_recommend })));\n  return getData<Array<{ id: number; name: string; is_recommend: number }>>(request.get(\"/community/all_topic\", { signal }));\n",
+          "before_line": 333,
+          "after_line": 333
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyCommunity.ts",
+      "before_sha256": "d9871907b599a365ef82895c4eca098740803d1e0d6c54a654e07d3bcdb8cafb",
+      "after_sha256": "449c0bd2392e9b49bf0915b674f852129176cde5270d8d1bcb23298b98cdc0b1",
+      "edits": [
+        {
+          "before_source": "    fontWeight: titleType === 0 || titleType === 2 ? 'bold' : 'normal', fontStyle: titleType === 2 ? 'italic' : 'normal' };\n",
+          "after_source": "    fontWeight: titleType === 0 ? 'bold' : 'normal', fontStyle: titleType === 2 ? 'italic' : 'normal' };\n",
+          "before_line": 35,
+          "after_line": 35
+        },
+        {
+          "before_source": "  const listStyle: Style = { background: `linear-gradient(90deg, ${color(block,'moduleColor',0,'#ffffff')} 0%, ${color(block,'moduleColor',1,'#ffffff')} 100%)`,\n    ...(layout === 'columns' ? { rowGap: size(block,'videoSpace',10), columnGap: size(block,'videoSpace2',10) }\n      : { gap: size(block,'videoSpace2',10) }) };\n",
+          "after_source": "  const listStyle: Style = layout === 'columns' ? { background: '#ffffff', columnGap: '20rpx' }\n    : { background: `linear-gradient(90deg, ${color(block,'moduleColor',0,'#ffffff')} 0%, ${color(block,'moduleColor',1,'#ffffff')} 100%)`, gap: size(block,'videoSpace2',10), paddingRight: size(block,'videoSpace2',10) };\n",
+          "before_line": 37,
+          "after_line": 37
+        },
+        {
+          "before_source": "    panelStyle: { borderRadius: radius(block,'fillet',8) } as Style, imageStyle: { borderRadius: imageRadius } as Style };\n",
+          "after_source": "    panelStyle: { borderRadius: radius(block,'fillet',8) } as Style,\n    imageStyle: { borderRadius: layout === 'columns' ? '16rpx 16rpx 0 0' : imageRadius } as Style };\n",
+          "before_line": 45,
+          "after_line": 44
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/uniapp-ts/src/composables/useDiyCommunity.ts",
+      "before_sha256": "8f21797d8d7a7aa2fb429593fb3f95335751174034994ab6644c3f8deb3cd821",
+      "after_sha256": "933228f8ae2ff256457f93072b9b9abfac1500ecf6cbb4a1041a14a890610661",
+      "edits": [
+        {
+          "before_source": "import { computed, onScopeDispose, ref, watch } from 'vue';\nimport { apiCommunityCommentConfig, apiCommunityList, checkedCommunityPost, communityPreviewMode, type CommunityPost } from '@/api/community';\nimport { useAuthStore } from '@/stores/auth';\nimport { useCommunityAvailability } from '@/utils/communityAvailability';\nimport { normalizeDiyCommunity } from '@/utils/diyCommunity';\nimport { communitySharePath } from '@/utils/communityShare';\nimport { openDiyLink, safeDiyImageUrl } from '@/utils/diy';\nimport { communityVideoSource } from '@/utils/communityMedia';\n\n/** Read-only, per-instance state. The two actual page roots supply visibility;\n * dynamic child instances never register UniApp page lifecycle callbacks. */\nexport function useDiyCommunity(block: () => unknown, active: () => boolean) {\n  const auth = useAuthStore(), availability = useCommunityAvailability();\n  const config = computed(() => normalizeDiyCommunity(block()));\n  const fingerprint = computed(() => JSON.stringify(config.value));\n  const rows = ref<CommunityPost[]>([]), loading = ref(false), loaded = ref(false), error = ref('');\n  let generation = 0, disposed = false;\n  const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;\n  const visible = () => !disposed && active() && config.value.enabled;\n  const ready = () => visible() && availability.allowed.value;\n  const current = (revision: number, actor: string, key: string) => ready() && revision === generation && actor === owner() && key === fingerprint.value;\n  function invalidate() { generation++; rows.value = []; loading.value = false; loaded.value = false; error.value = ''; }\n  async function load() {\n    if (!ready() || loading.value) return;\n    const revision = ++generation, actor = owner(), key = fingerprint.value, limit = config.value.limit;\n    rows.value = []; loading.value = true; loaded.value = false; error.value = '';\n    try {\n      const flags = await apiCommunityCommentConfig();\n      if (!current(revision, actor, key) || flags.community_status !== 1) return;\n      const result = await apiCommunityList(1, limit, { is_follow: 0 });\n      if (!current(revision, actor, key)) return;\n      if (!Array.isArray(result) || result.length > limit) throw Error('社区预览格式错误');\n      const checked = result.map(post => {\n        checkedCommunityPost(post, post?.id);\n        if (post.status !== 1 || !communityPreviewMode && post.is_verify !== 1\n          || post.author !== undefined && typeof post.author !== 'string' || post.author_image !== undefined && typeof post.author_image !== 'string') throw Error('社区预览包含不可公开内容');\n        return { ...post };\n      });\n      const ids = new Set<number>(); rows.value = checked.filter(post => !ids.has(post.id) && Boolean(ids.add(post.id))); loaded.value = true;\n    } catch (reason) { if (current(revision, actor, key)) error.value = reason instanceof Error ? reason.message : '社区预览加载失败，请重试'; }\n    finally { if (current(revision, actor, key)) loading.value = false; }\n  }\n  async function recover() {\n    if (!visible() || loading.value || availability.checking.value) return;\n    // Shared checking/closed transitions reload every still-visible widget once.\n    await availability.refresh(communityPreviewMode);\n  }\n  function openPost(post: CommunityPost) {\n    if (!ready() || loading.value || error.value || !rows.value.some(row => row.id === post.id && row.contentType === post.contentType)) return;\n    const path = communitySharePath(post.id, post.contentType, 0); if (path) openDiyLink(path);\n  }\n  function openMore() { if (ready() && !loading.value && !error.value) openDiyLink('/pages/discover/index'); }\n  const media = (value: unknown) => communityVideoSource(safeDiyImageUrl(value));\n  const stop = watch([fingerprint, owner, active, availability.closed, availability.checking], () => {\n    invalidate(); if (ready()) void load();\n  }, { immediate: true, flush: 'sync' });\n  function dispose() { if (disposed) return; disposed = true; stop(); invalidate(); }\n  onScopeDispose(dispose);\n  return { config, availability, rows, loading, loaded, error, load, recover, openPost, openMore, media, dispose };\n}\n",
+          "after_source": "import { computed, onScopeDispose, ref, watch } from 'vue';\nimport { apiCommunityCommentConfig, apiCommunityList, checkedCommunityPost, communityPreviewMode, type CommunityPost } from '@/api/community';\nimport { useAuthStore } from '@/stores/auth';\nimport { useCommunityAvailability } from '@/utils/communityAvailability';\nimport { normalizeDiyCommunity } from '@/utils/diyCommunity';\nimport { communitySharePath } from '@/utils/communityShare';\nimport { openDiyLink, safeDiyImageUrl } from '@/utils/diy';\nimport { communityVideoSource } from '@/utils/communityMedia';\nimport { diyAuthoredPageFingerprint, diyEditorialMediaCacheUsable, diyEditorialMediaDeadline } from '@/utils/diyEditorialMediaLease';\nimport { diyCommunityColumns } from '../../../common/diyCommunityColumns';\n\n/** Per-instance public reads. Page roots own visibility; native callbacks own leases. */\nexport function useDiyCommunity(block: () => unknown, active: () => boolean) {\n  const auth = useAuthStore(), availability = useCommunityAvailability();\n  const config = computed(() => normalizeDiyCommunity(block()));\n  // The normalizer omits dormant topic metadata. Only the explicit title-image\n  // transport ticket is removed; a different asset or actual visual change stays significant.\n  const fingerprint = computed(() => {\n    const { titleImage, ...visual } = config.value;\n    return diyAuthoredPageFingerprint([{ ...visual, name: 'community', imgConfig: { url: titleImage } }]);\n  });\n  const rows = ref<CommunityPost[]>([]), loading = ref(false), loaded = ref(false), error = ref('');\n  const heights = ref<Map<number, number>>(new Map()), nativeEpoch = ref(0), mediaDeadline = ref(0), clock = ref(Date.now());\n  const columns = computed(() => diyCommunityColumns(rows.value, heights.value));\n  let generation = 0, disposed = false, mediaAdmittedAt = Date.now(), timer: ReturnType<typeof setTimeout> | undefined;\n  const owner = () => `${auth.uid}:${auth.token}:${auth.sessionVersion}`;\n  const visible = () => !disposed && active() && config.value.enabled;\n  const ready = () => visible() && availability.allowed.value && mediaDeadline.value > clock.value\n    && diyEditorialMediaCacheUsable({ value: [block()] }, mediaAdmittedAt);\n  const current = (revision: number, actor: string, key: string) => ready() && revision === generation && actor === owner() && key === fingerprint.value;\n  function lease(source?: () => string) {\n    const revision = generation, native = nativeEpoch.value, actor = owner(), key = fingerprint.value, original = source?.();\n    return () => current(revision, actor, key) && native === nativeEpoch.value && (!source || source() === original);\n  }\n  function invalidate() { generation++; nativeEpoch.value++; rows.value = []; heights.value = new Map(); loading.value = false; loaded.value = false; error.value = ''; }\n  async function load() {\n    if (!ready() || loading.value) return;\n    const revision = ++generation, actor = owner(), key = fingerprint.value, limit = config.value.limit;\n    nativeEpoch.value++; rows.value = []; heights.value = new Map(); loading.value = true; loaded.value = false; error.value = '';\n    try {\n      const flags = await apiCommunityCommentConfig();\n      if (!current(revision, actor, key) || flags.community_status !== 1) return;\n      const result = await apiCommunityList(1, limit, { is_follow: 0 });\n      if (!current(revision, actor, key)) return;\n      if (!Array.isArray(result) || result.length > limit) throw Error('社区预览格式错误');\n      const checked = Array.from(result, post => {\n        checkedCommunityPost(post, post?.id);\n        if (post.status !== 1 || !communityPreviewMode && post.is_verify !== 1\n          || !(post.sliderImage === null || Array.isArray(post.sliderImage) && Array.from(post.sliderImage).every(value => typeof value === 'string'))\n          || post.author !== undefined && typeof post.author !== 'string' || post.author_image !== undefined && typeof post.author_image !== 'string') throw Error('社区预览包含不可公开内容');\n        return { ...post, sliderImage: post.sliderImage === null ? null : [...post.sliderImage] };\n      });\n      const ids = new Set<number>(); rows.value = checked.filter(post => !ids.has(post.id) && Boolean(ids.add(post.id))); loaded.value = true;\n    } catch (reason) { if (current(revision, actor, key)) error.value = reason instanceof Error ? reason.message : '社区预览加载失败，请重试'; }\n    finally { if (current(revision, actor, key)) loading.value = false; }\n  }\n  function scheduleLoad() {\n    const revision = generation, actor = owner(), key = fingerprint.value;\n    void Promise.resolve().then(() => { if (current(revision, actor, key) && !loaded.value && !loading.value) void load(); });\n  }\n  function expireMedia() {\n    if (disposed) return;\n    clock.value = Date.now();\n    if (mediaDeadline.value > clock.value) { timer = setTimeout(expireMedia, Math.max(1, mediaDeadline.value - clock.value)); return; }\n    generation++; nativeEpoch.value++; loading.value = false; error.value = '';\n  }\n  function renewMedia() {\n    nativeEpoch.value++;\n    if (timer !== undefined) clearTimeout(timer);\n    timer = undefined; mediaAdmittedAt = Date.now(); clock.value = mediaAdmittedAt;\n    mediaDeadline.value = diyEditorialMediaDeadline({ value: [block()] }, mediaAdmittedAt);\n    if (Number.isFinite(mediaDeadline.value) && mediaDeadline.value > clock.value) timer = setTimeout(expireMedia, mediaDeadline.value - clock.value);\n    if (ready()) scheduleLoad();\n  }\n  async function recover() {\n    if (!visible() || loading.value || availability.checking.value) return;\n    await availability.refresh(communityPreviewMode);\n  }\n  function openPost(post: CommunityPost) {\n    if (!ready() || loading.value || error.value || !rows.value.some(row => row.id === post.id && row.contentType === post.contentType)) return;\n    const path = communitySharePath(post.id, post.contentType, 0); if (path) openDiyLink(path);\n  }\n  function openMore() { if (ready() && !loading.value && !error.value) openDiyLink('/pages/discover/index'); }\n  const media = (value: unknown) => ready() ? communityVideoSource(safeDiyImageUrl(value)) : '';\n  // Bundled /static title images stay local on App/MP. Managed assets are\n  // already mapped to API_BASE by the existing safe image normalizer.\n  const mediaTitle = () => ready() ? safeDiyImageUrl(config.value.titleImage) : '';\n  function adoptMeasurement(row: { id: number; height: number; current: () => boolean }) {\n    if (!row.current() || !ready() || config.value.layout !== 'columns' || !rows.value.some(post => post.id === row.id)\n      || !Number.isFinite(row.height) || row.height <= 0 || row.height > 1_000_000) return;\n    if (Math.abs((heights.value.get(row.id) ?? 0) - row.height) <= 0.5) return;\n    const next = new Map(heights.value); next.set(row.id, row.height); heights.value = next;\n  }\n  const stop = watch([fingerprint, owner, active, availability.closed, availability.checking], () => {\n    invalidate(); if (ready()) scheduleLoad();\n  }, { immediate: true, flush: 'sync' });\n  // Ticket-only replacement renews native media handlers without refetching a loaded feed.\n  const stopMedia = watch(block, renewMedia, { immediate: true, deep: true, flush: 'sync' });\n  function dispose() { if (disposed) return; disposed = true; stop(); stopMedia(); if (timer !== undefined) clearTimeout(timer); invalidate(); }\n  onScopeDispose(dispose);\n  return { config, fingerprint, availability, rows, columns, heights, nativeEpoch, mediaDeadline, ready, lease, adoptMeasurement,\n    loading, loaded, error, load, recover, openPost, openMore, media, mediaTitle, dispose };\n}\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits.",
+      "inverse_boundary": "Exact whole-source replacement from the complete captured predecessor, not a regex or filtered reconstruction."
+    },
+    {
+      "file": "view/uniapp-ts/src/components/diy/DiyCommunityWidget.vue",
+      "before_sha256": "ba5a97a1ca89bb2d2828103805083e7829bc9ba28998942e09c5a30dbbc32729",
+      "after_sha256": "b8911c91eaeb20085b724f196dac054a6c5de719952df3f2820d9be56751324a",
+      "edits": [
+        {
+          "before_source": "<template>\n  <view v-if=\"controller.config.value.enabled && active\" class=\"diy-community-widget\" :data-component-key=\"controller.config.value.key\"\n    :data-layout=\"controller.config.value.layout\" :style=\"controller.config.value.wrapperStyle\">\n    <CommunityAvailability :closed=\"controller.availability.closed.value\" :checking=\"controller.availability.checking.value\"\n      :message=\"controller.availability.message.value\" @retry=\"controller.recover\" />\n    <view v-if=\"controller.availability.allowed.value\" class=\"diy-community-panel\" :style=\"controller.config.value.panelStyle\">\n      <view class=\"diy-community-header\" :style=\"controller.config.value.headerStyle\">\n        <text v-if=\"controller.config.value.titleMode === 'text'\" class=\"diy-community-title\" :style=\"controller.config.value.titleStyle\">{{ controller.config.value.title }}</text>\n        <image v-else-if=\"controller.config.value.titleImage\" class=\"diy-community-title-image\" :src=\"controller.config.value.titleImage\" mode=\"aspectFit\" />\n        <button class=\"diy-community-more\" :style=\"controller.config.value.buttonStyle\" :disabled=\"controller.loading.value || !!controller.error.value\" @tap=\"controller.openMore\">{{ controller.config.value.more }} ›</button>\n      </view>\n      <view v-if=\"controller.loading.value\" class=\"diy-community-state\" role=\"status\">正在加载社区内容…</view>\n      <view v-else-if=\"controller.error.value\" class=\"diy-community-error\" role=\"alert\">{{ controller.error.value }}</view>\n      <view v-else-if=\"controller.loaded.value && !controller.rows.value.length\" class=\"diy-community-state\">暂无社区内容</view>\n      <scroll-view v-if=\"controller.rows.value.length\" :scroll-x=\"controller.config.value.layout === 'horizontal'\" :show-scrollbar=\"false\">\n        <view class=\"diy-community-list\" :class=\"controller.config.value.layout\" :style=\"controller.config.value.listStyle\">\n          <view v-for=\"post in controller.rows.value\" :key=\"post.id\" class=\"diy-community-card\" :data-post-id=\"post.id\" :style=\"controller.config.value.imageStyle\" @tap=\"controller.openPost(post)\">\n            <view class=\"diy-community-picture\">\n              <image v-if=\"controller.media(post.image || post.sliderImage?.[0])\" class=\"diy-community-image\" :src=\"controller.media(post.image || post.sliderImage?.[0])\"\n                :style=\"controller.config.value.imageStyle\" :mode=\"controller.config.value.layout === 'columns' ? 'widthFix' : 'aspectFill'\" />\n              <view v-else class=\"diy-community-placeholder\">{{ post.contentType === 2 ? '视频' : '图文' }}</view>\n              <text class=\"diy-community-media-type\">{{ post.contentType === 2 ? '▶ 视频' : `${post.sliderImage?.length || 1} 张` }}</text>\n            </view>\n            <view class=\"diy-community-copy\">\n              <text class=\"diy-community-post-title\">{{ post.title || '分享' }}</text>\n              <view class=\"diy-community-byline\">\n                <image v-if=\"controller.media(post.author_image)\" class=\"diy-community-avatar\" :src=\"controller.media(post.author_image)\" mode=\"aspectFill\" />\n                <text class=\"diy-community-author\">{{ post.author || (post.type === 0 ? '平台' : '社区内容') }}</text>\n                <text class=\"diy-community-likes\">♡ {{ post.likeNum }}</text>\n              </view>\n            </view>\n          </view>\n        </view>\n      </scroll-view>\n      <button class=\"diy-community-refresh\" :disabled=\"controller.loading.value\" @tap=\"controller.load\">{{ controller.error.value ? '重试社区内容' : '刷新社区内容' }}</button>\n    </view>\n  </view>\n</template>\n<script setup lang=\"ts\">\nimport CommunityAvailability from '@/components/community/CommunityAvailability.vue';\nimport { useDiyCommunity } from '@/composables/useDiyCommunity';\nimport type { DiyComponent } from '@/api/diy';\nconst props = defineProps<{ block: DiyComponent; active: boolean }>();\nconst controller = useDiyCommunity(() => props.block, () => props.active);\n</script>\n<style scoped>\n.diy-community-widget { box-sizing: border-box; min-width: 0; overflow-wrap: anywhere; }\n.diy-community-panel { overflow: hidden; background: #fff; }\n.diy-community-header { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; padding: 20rpx 24rpx; }\n.diy-community-title { min-width: 0; }\n.diy-community-title-image { width: 134rpx; height: 34rpx; flex-shrink: 0; }\n.diy-community-more { flex-shrink: 0; padding: 0 4rpx; margin: 0; background: transparent; line-height: 1.8; }\n.diy-community-more::after { border: 0; }\n.diy-community-list { box-sizing: border-box; padding: 20rpx; }\n.diy-community-list.horizontal { display: flex; width: max-content; min-width: 100%; }\n.diy-community-list.columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }\n.diy-community-card { min-width: 0; overflow: hidden; background: #fff; }\n.horizontal .diy-community-card { width: 296rpx; flex-shrink: 0; position: relative; }\n.diy-community-picture { position: relative; }\n.diy-community-image { display: block; width: 100%; height: 369rpx; background: #f5f5f5; }\n.columns .diy-community-image { height: auto; }\n.diy-community-placeholder { display: flex; align-items: center; justify-content: center; height: 240rpx; background: #f2f2f2; color: #888; }\n.diy-community-media-type { position: absolute; right: 12rpx; bottom: 12rpx; color: #fff; background: #555a; padding: 4rpx 8rpx; font-size: 22rpx; border-radius: 6rpx; }\n.diy-community-copy { padding: 16rpx; }\n.horizontal .diy-community-copy { position: absolute; bottom: 0; left: 0; right: 0; color: #fff; background: linear-gradient(transparent,#000b); padding-top: 40rpx; }\n.diy-community-post-title { display: block; font-size: 26rpx; line-height: 1.6; }\n.horizontal .diy-community-post-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n.diy-community-byline { display: flex; align-items: center; gap: 8rpx; font-size: 21rpx; padding-top: 10rpx; min-width: 0; }\n.diy-community-avatar { width: 34rpx; height: 34rpx; border-radius: 50%; flex-shrink: 0; }\n.diy-community-author { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }\n.diy-community-likes { white-space: nowrap; }\n.diy-community-state, .diy-community-error { padding: 24rpx; font-size: 25rpx; }\n.diy-community-error { color: #a32920; }\n.diy-community-refresh { margin: 12rpx 20rpx; font-size: 24rpx; }\n</style>\n",
+          "after_source": "<template>\n  <view v-if=\"controller.config.value.enabled && active\" class=\"diy-community-widget\" :data-component-key=\"controller.config.value.key\"\n    :data-layout=\"controller.config.value.layout\" :style=\"controller.config.value.wrapperStyle\">\n    <CommunityAvailability :closed=\"controller.availability.closed.value\" :checking=\"controller.availability.checking.value\"\n      :message=\"controller.availability.message.value\" @retry=\"controller.recover\" />\n    <view v-if=\"controller.ready()\" class=\"diy-community-panel\" :style=\"controller.config.value.panelStyle\">\n      <view class=\"diy-community-header\" :style=\"controller.config.value.headerStyle\">\n        <text v-if=\"controller.config.value.titleMode === 'text'\" class=\"diy-community-title\" :style=\"controller.config.value.titleStyle\">{{ controller.config.value.title }}</text>\n        <image v-else-if=\"header.image && !headerFailed\" :key=\"header.key\" class=\"diy-community-title-image\" :src=\"header.image\" mode=\"aspectFit\" @load=\"header.loaded\" @error=\"header.failed\" />\n        <button class=\"diy-community-more\" :style=\"controller.config.value.buttonStyle\" :disabled=\"controller.loading.value || !!controller.error.value\" @tap=\"header.more\">{{ controller.config.value.more }} ›</button>\n      </view>\n      <view v-if=\"controller.loading.value\" class=\"diy-community-state\" role=\"status\">正在加载社区内容…</view>\n      <view v-else-if=\"controller.error.value\" class=\"diy-community-error\" role=\"alert\">{{ controller.error.value }}</view>\n      <view v-else-if=\"controller.loaded.value && !controller.rows.value.length\" class=\"diy-community-state\">暂无社区内容</view>\n      <template v-if=\"controller.rows.value.length\">\n        <scroll-view v-if=\"controller.config.value.layout === 'horizontal'\" scroll-x :show-scrollbar=\"false\">\n          <view class=\"diy-community-list horizontal\" :style=\"controller.config.value.listStyle\">\n            <DiyCommunityCard v-for=\"slot in slots\" :key=\"slot.key\" :post=\"slot.post\" layout=\"horizontal\" :image-style=\"controller.config.value.imageStyle\"\n              :image=\"slot.image\" :avatar=\"slot.avatar\" :allowed=\"slot.allowed\" @open=\"controller.openPost\" />\n          </view>\n        </scroll-view>\n        <view v-else class=\"diy-community-list columns\" :style=\"controller.config.value.listStyle\">\n          <view v-for=\"(column,index) in columns\" :key=\"index\" class=\"diy-community-column\">\n            <DiyCommunityCard v-for=\"slot in column\" :key=\"slot.key\" :post=\"slot.post\" layout=\"columns\" :image-style=\"controller.config.value.imageStyle\"\n              :image=\"slot.image\" :avatar=\"slot.avatar\" :allowed=\"slot.allowed\" @open=\"controller.openPost\" @measured=\"controller.adoptMeasurement\" />\n          </view>\n        </view>\n      </template>\n      <button class=\"diy-community-refresh\" :disabled=\"controller.loading.value\" @tap=\"header.refresh\">{{ controller.error.value ? '重试社区内容' : '刷新社区内容' }}</button>\n    </view>\n    <view v-else-if=\"controller.availability.allowed.value\" class=\"diy-community-state\" role=\"status\">社区标题图片授权已失效，请刷新页面</view>\n  </view>\n</template>\n<script setup lang=\"ts\">\nimport { computed, ref, watch } from 'vue';\nimport CommunityAvailability from '@/components/community/CommunityAvailability.vue';\nimport DiyCommunityCard from './DiyCommunityCard.vue';\nimport { useDiyCommunity } from '@/composables/useDiyCommunity';\nimport type { DiyComponent } from '@/api/diy';\nconst props = defineProps<{ block: DiyComponent; active: boolean }>();\nconst controller = useDiyCommunity(() => props.block, () => props.active), headerFailed = ref(false);\nconst header = computed(() => {\n  const image = controller.mediaTitle(), epoch = controller.nativeEpoch.value;\n  const current = controller.lease(() => controller.mediaTitle());\n  return { image, key: `${epoch}:${image}`, current,\n    loaded: () => { if (current()) headerFailed.value = false; },\n    failed: () => { if (current()) headerFailed.value = true; },\n    more: () => { if (current()) controller.openMore(); },\n    refresh: () => { if (current()) void controller.load(); },\n  };\n});\nwatch(() => header.value.key, () => { headerFailed.value = false; }, { flush: 'sync' });\nconst slots = computed(() => controller.rows.value.map(post => {\n  const image = controller.media(post.image || post.sliderImage?.[0]), avatar = controller.media(post.author_image), epoch = controller.nativeEpoch.value;\n  const allowed = controller.lease(() => `${controller.media(post.image || post.sliderImage?.[0])}\\0${controller.media(post.author_image)}`);\n  return { post, image, avatar, allowed, key: `${post.id}:${epoch}:${image}:${avatar}` };\n}));\nconst columns = computed(() => {\n  const byId = new Map(slots.value.map(slot => [slot.post.id, slot]));\n  return controller.columns.value.map(column => column.flatMap(post => { const slot = byId.get(post.id); return slot ? [slot] : []; }));\n});\n</script>\n<style scoped>\n.diy-community-widget{box-sizing:border-box;min-width:0;overflow-wrap:anywhere;}.diy-community-panel{overflow:hidden;background:#fff;}.diy-community-header{display:flex;align-items:center;justify-content:space-between;gap:12rpx;padding:0 24rpx;height:96rpx;box-sizing:border-box;}.diy-community-title{min-width:0;}.diy-community-title-image{width:134rpx;height:34rpx;flex-shrink:0;}.diy-community-more{flex-shrink:0;padding:0 4rpx;margin:0;background:transparent;line-height:1.8;}.diy-community-more::after{border:0;}.diy-community-list{box-sizing:border-box;}.diy-community-list.horizontal{display:flex;width:max-content;min-width:100%;padding:24rpx 0 24rpx 20rpx;}.diy-community-list.columns{display:flex;align-items:flex-start;padding:20rpx;}.diy-community-column{flex:1;min-width:0;}.diy-community-state,.diy-community-error{padding:24rpx;font-size:25rpx;}.diy-community-error{color:#a32920;}.diy-community-refresh{margin:12rpx 20rpx;font-size:24rpx;}\n</style>\n",
+          "before_line": 1,
+          "after_line": 1
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits.",
+      "inverse_boundary": "Exact whole-source replacement from the complete captured predecessor, not a regex or filtered reconstruction."
+    },
+    {
+      "file": "workers-ts/src/services/content/DiyEditorialMediaPolicy.ts",
+      "before_sha256": "5abd0c5f9a74221988bd7647ceaeb0fd6b94e3af099f60fe25473b4f813e898a",
+      "after_sha256": "5be856adb96531a66f501e01e4f5c259e040410904d6e98b58882ec7c2293e0c",
+      "edits": [
+        {
+          "before_source": "    else if (component.name === 'userInfor' || component.name === 'ranking') {\n",
+          "after_source": "    else if (component.name === 'userInfor' || component.name === 'ranking' || component.name === 'community') {\n",
+          "before_line": 63,
+          "after_line": 63
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/uniapp-ts/src/utils/diyEditorialMediaLease.ts",
+      "before_sha256": "f5b7122bf77f2d938bd41f685929a4d84fbc9b105d59451b262649a815ce89bc",
+      "after_sha256": "5b7cc7407e8097514d88572654a36cc57df92eef8934e3027ba730353b051f96",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    if (block.name === 'community') return [field('imgConfig')];\n",
+          "before_line": 31,
+          "after_line": 31
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/admin-ts/scripts/helpers/diy-navigation-runtime.cjs",
+      "before_sha256": "a9bb75bfd73fcba850364cd3dba89c7217f105c6cbb35a28c0c7f7b2e0b08b9e",
+      "after_sha256": "5cad0a86d6027205cfe790c835d2e2ed9483b6386514d5ad3e0e95652f21c1b9",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    source = options.sourceTransform ? options.sourceTransform(source, file) : source.replace(/\\bimport\\.meta\\.env\\.DEV\\b/gu, 'false');\n",
+          "before_line": 66,
+          "after_line": 66
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "view/uniapp-ts/scripts/diy-community-runtime.test.cjs",
+      "before_sha256": "aa5b5a3ff1f9d21d000c0698177ace7a9d6cc6b098ce07a638ddcf5d20fe90e9",
+      "after_sha256": "9200d4500418313aeb3f60911af00a1ee40703bfa2c6a0a52fe41d9c46ba38a1",
+      "edits": [
+        {
+          "before_source": "test('the config normalizer applies authored visual fields, four corners, fonts, colours and bounded dimensions',options,async()=>{const r=setup();try{const normalize=r.load(path.join(root,'src/utils/diyCommunity.ts')).normalizeDiyCommunity;const cfg=normalize(block('7',{titleText:{tabVal:2},titleNumber:{val:19},titleColor:{color:[{item:'#123456'}]},headerBgColor:{color:[{item:'#112233'},{item:'#445566'}]},filletImg:{type:1,valList:[{val:1},{val:2},{val:3},{val:4}]},fillet:{type:1,valList:[{val:5},{val:6},{val:7},{val:8}]},topConfig:{val:4},prConfig:{val:8},bottomConfig:{val:6},mbConfig:{val:9},videoSpace2:{val:13},rightBntConfig:{value:'看全部'}}));assert.equal(cfg.limit,7);assert.equal(cfg.titleStyle.fontWeight,'bold');assert.equal(cfg.titleStyle.fontStyle,'italic');assert.equal(cfg.titleStyle.fontSize,'38rpx');assert.equal(cfg.titleStyle.color,'#123456');assert.equal(cfg.imageStyle.borderRadius,'2rpx 4rpx 6rpx 8rpx');assert.equal(cfg.panelStyle.borderRadius,'10rpx 12rpx 16rpx 14rpx');assert.equal(cfg.wrapperStyle.padding,'8rpx 16rpx 12rpx');assert.equal(cfg.wrapperStyle.marginTop,'18rpx');assert.equal(cfg.listStyle.gap,'26rpx');const columns=normalize(block(7,{styleConfig:{tabVal:1},videoSpace:{val:9},videoSpace2:{val:13}}));assert.equal(columns.listStyle.rowGap,'18rpx');assert.equal(columns.listStyle.columnGap,'26rpx');assert.equal(columns.listStyle.gap,undefined);assert.match(cfg.headerStyle.background,/#112233.*#445566/);assert.equal(cfg.more,'看全部');}finally{r.stop();}});\n",
+          "after_source": "test('the config normalizer applies authored visual fields, four corners, fonts, colours and bounded dimensions',options,async()=>{const r=setup();try{const normalize=r.load(path.join(root,'src/utils/diyCommunity.ts')).normalizeDiyCommunity;const cfg=normalize(block('7',{titleText:{tabVal:2},titleNumber:{val:19},titleColor:{color:[{item:'#123456'}]},headerBgColor:{color:[{item:'#112233'},{item:'#445566'}]},filletImg:{type:1,valList:[{val:1},{val:2},{val:3},{val:4}]},fillet:{type:1,valList:[{val:5},{val:6},{val:7},{val:8}]},topConfig:{val:4},prConfig:{val:8},bottomConfig:{val:6},mbConfig:{val:9},videoSpace2:{val:13},rightBntConfig:{value:'看全部'}}));assert.equal(cfg.limit,7);assert.equal(cfg.titleStyle.fontWeight,'normal');assert.equal(cfg.titleStyle.fontStyle,'italic');assert.equal(cfg.titleStyle.fontSize,'38rpx');assert.equal(cfg.titleStyle.color,'#123456');assert.equal(cfg.imageStyle.borderRadius,'2rpx 4rpx 6rpx 8rpx');assert.equal(cfg.panelStyle.borderRadius,'10rpx 12rpx 16rpx 14rpx');assert.equal(cfg.wrapperStyle.padding,'8rpx 16rpx 12rpx');assert.equal(cfg.wrapperStyle.marginTop,'18rpx');assert.equal(cfg.listStyle.gap,'26rpx');const columns=normalize(block(7,{styleConfig:{tabVal:1},videoSpace:{val:9},videoSpace2:{val:13}}));assert.equal(columns.listStyle.rowGap,undefined);assert.equal(columns.listStyle.columnGap,'20rpx');assert.equal(columns.listStyle.gap,undefined);assert.match(cfg.headerStyle.background,/#112233.*#445566/);assert.equal(cfg.more,'看全部');}finally{r.stop();}});\n",
+          "before_line": 16,
+          "after_line": 16
+        }
+      ],
+      "predecessor_evidence": "Complete pre-batch snapshot supplied by parent before edits."
+    },
+    {
+      "file": "workers-ts/test/admin-frontend-api-audit.test.ts",
+      "before_sha256": "37bedbcdd93fdffb3fe32a2bfc43086720f79cdca5f510cb95d034246071871d",
+      "after_sha256": "861f1ed2ab75cc7d5795201ff4d7ed469bcdeee650fb8bfc2c739c6c4b1abe64",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, source));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "before_line": 26,
+          "after_line": 27
+        },
+        {
+          "before_source": "  return applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T));\n",
+          "after_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "before_line": 38,
+          "after_line": 39
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-carousel-author-source-binding.test.ts",
+      "before_sha256": "8d04eee02e0b3d47c6d9b51d65f244ec427020a2d61eaf74fda500166ede0c31",
+      "after_sha256": "3c5e63f9e163fe5ad6d9d14de6a61557c5528f06e433875fce723437b829c16d",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, source));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "before_line": 23,
+          "after_line": 24
+        },
+        {
+          "before_source": "  return applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T));\n",
+          "after_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "before_line": 35,
+          "after_line": 36
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-list-author-source-binding.test.ts",
+      "before_sha256": "2be148414fa9a1c1db9215f9859265a65a521030dd4ed6f9b3c225bd110f8585",
+      "after_sha256": "1cd4921da7b89db47280c60c6ac1e083e816c08d2389807386bb5c63a2735531",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, source));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "before_line": 22,
+          "after_line": 23
+        },
+        {
+          "before_source": "  return applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T));\n",
+          "after_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "before_line": 34,
+          "after_line": 35
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-navigation-author-source-binding.test.ts",
+      "before_sha256": "1f925bdb2b58c5669db5ebdf5f0a4a7d26558fe405e06da5937b79dfb1b348df",
+      "after_sha256": "1c20d4f043ff4288359121958021926cfe05dd422e1d4a6a74fdc6b5fbbc5362",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, source));\n",
+          "after_source": "  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, source)));\n",
+          "before_line": 24,
+          "after_line": 25
+        },
+        {
+          "before_source": "  return applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T));\n",
+          "after_source": "  return applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)));\n",
+          "before_line": 36,
+          "after_line": 37
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-follow-author-source-binding.test.ts",
+      "before_sha256": "c4de957c77738ca1a52811e1940bbe99253abaea4d8afef8806c820c2365c94c",
+      "after_sha256": "b5cdb425231db599755e55f560798e781dbd33ab496b66c392f0eb1b96c0a14a",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read = (file: string) => reverseEditorialAuthorSource(file, readFileSync(resolve(root, file === proof.current_report.file ? editorialAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n'));\n",
+          "after_source": "const read = (file: string) => reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, readFileSync(resolve(root, file === proof.current_report.file ? editorialAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n')));\n",
+          "before_line": 11,
+          "after_line": 12
+        },
+        {
+          "before_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyEditorialAuthorReport(current));\n",
+          "after_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyCommunityAuthorReport(applyEditorialAuthorReport(current)));\n",
+          "before_line": 33,
+          "after_line": 34
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-editorial-author-source-binding.test.ts",
+      "before_sha256": "6407306652dfaf4fd656755bb8aee76b91d9230e2f23194f984414a7fe075342",
+      "after_sha256": "97b5ede388f719c096c18a68a50767a080e607982c18e98be63dc2c3c54339fa",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource, applyCommunityAuthorReport, communityAuthorSourceBinding } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read = (file: string) => readFileSync(resolve(root, file), 'utf8').replace(/\\r\\n?/gu, '\\n');\n",
+          "after_source": "const read = (file: string) => reverseCommunityAuthorSource(file, readFileSync(resolve(root, file === 'workers-ts/audit/admin-frontend-api-contracts.json' ? communityAuthorSourceBinding.previous_report.file : file), 'utf8').replace(/\\r\\n?/gu, '\\n'));\n",
+          "before_line": 11,
+          "after_line": 12
+        },
+        {
+          "before_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(current);\n",
+          "after_source": "    expect(buildAdminFrontendApiAuditReport()).toEqual(applyCommunityAuthorReport(current));\n",
+          "before_line": 34,
+          "after_line": 35
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "workers-ts/test/diy-community-frontend.test.ts",
+      "before_sha256": "f96785dcd773f99849e4fc9b8d02f3ae406e5f1223ab8e8a3fbb5588a63149d9",
+      "after_sha256": "29709f7c81fa8c7c9aef1d5a6c38eccc6602b12631b72e8a1e46342edf8aaf00",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "import { reverseCommunityAuthorSource } from './helpers/diyCommunityAuthorSourceBinding';\n",
+          "before_line": 1,
+          "after_line": 1
+        },
+        {
+          "before_source": "const read=(name:string)=>readFileSync(resolve(root,name),'utf8');\n",
+          "after_source": "const read=(name:string)=>reverseCommunityAuthorSource('view/uniapp-ts/src/'+name,readFileSync(resolve(root,name),'utf8'));\n",
+          "before_line": 8,
+          "after_line": 9
+        }
+      ],
+      "predecessor_evidence": "Complete exact source captured immediately before adding only the community compatibility wrapper; dated hashes/assertions/negative definitions remain intact."
+    },
+    {
+      "file": "view/admin-ts/package.json",
+      "before_sha256": "9a17d71b313bb3209f4af09f5b05e10f1b41ffe5501666a2bf62734fef2a6f3e",
+      "after_sha256": "3dcce090f00ba7d126df26cd280bd1fcdd461e68acb900c61b238d5f2e6c7f06",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-community\": \"node --test --test-concurrency=1 scripts/diy-community-editor-model-runtime.test.cjs scripts/diy-community-author-data-runtime.test.cjs scripts/diy-community-editor-runtime.test.cjs\",\n",
+          "before_line": 19,
+          "after_line": 19
+        }
+      ],
+      "predecessor_evidence": "Trusted parent confirmed this precise predecessor was inverse-derived by removing only the community script or CI suffix from current, retaining all prior state/follow/editorial increments. It is not claimed as an independently captured pre-edit snapshot."
+    },
+    {
+      "file": "view/uniapp-ts/package.json",
+      "before_sha256": "0fb47fc50132e849b90c99bcd92748e1144037997c4e9c0049e84fab0c4eea23",
+      "after_sha256": "319ca057e6632bb0bf5464837992bf324fe05fbae50ae80bf689d8b9326fb5dc",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-community-author\": \"node --test --test-concurrency=1 scripts/diy-community-author-consumer-runtime.test.cjs scripts/diy-community-runtime.test.cjs\",\n",
+          "before_line": 26,
+          "after_line": 26
+        }
+      ],
+      "predecessor_evidence": "Trusted parent confirmed this precise predecessor was inverse-derived by removing only the community script or CI suffix from current, retaining all prior state/follow/editorial increments. It is not claimed as an independently captured pre-edit snapshot."
+    },
+    {
+      "file": "workers-ts/package.json",
+      "before_sha256": "8a7b2678f2f7c495a3cd38fa8137ab2177ea21e4d07fb2cb16404bbf6c931d27",
+      "after_sha256": "99ab63667d425ef9e2d728d8aac65623a44019e1cda377df0e1e203f49723fae",
+      "edits": [
+        {
+          "before_source": "",
+          "after_source": "    \"test:diy-community-author\": \"vitest run --maxWorkers=1 test/diy-community-author-media.test.ts test/diy-community-author-source-binding.test.ts\",\n",
+          "before_line": 9,
+          "after_line": 9
+        }
+      ],
+      "predecessor_evidence": "Trusted parent confirmed this precise predecessor was inverse-derived by removing only the community script or CI suffix from current, retaining all prior state/follow/editorial increments. It is not claimed as an independently captured pre-edit snapshot."
+    },
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "before_sha256": "d600022356054f38ed815681261feb964b595f803ab0002d73a4ac1b829c8d5c",
+      "after_sha256": "041c2acbdd19f4f30b7d2e09a5e0c8bb0d7aa061fa9f46723b0ecca60aa6725c",
+      "edits": [
+        {
+          "before_source": "        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-follow && npm run test:diy-editorial\n",
+          "after_source": "        run: npm run test:diy-footer && npm run test:diy-presentation && npm run test:diy-customer-service && npm run test:diy-page-settings && npm run test:diy-navigation && npm run test:diy-carousel && npm run test:diy-list && npm run test:diy-state-author && npm run test:diy-follow && npm run test:diy-editorial && npm run test:diy-community\n",
+          "before_line": 333,
+          "after_line": 333
+        },
+        {
+          "before_source": "        run: npm run test:diy-editorial-author\n",
+          "after_source": "        run: npm run test:diy-editorial-author && npm run test:diy-community-author\n",
+          "before_line": 338,
+          "after_line": 338
+        }
+      ],
+      "predecessor_evidence": "Trusted parent confirmed this precise predecessor was inverse-derived by removing only the community script or CI suffix from current, retaining all prior state/follow/editorial increments. It is not claimed as an independently captured pre-edit snapshot."
+    }
+  ],
+  "previous_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts-before-diy-community-author-20261024.json",
+    "sha256": "324aceac05ffc6a6d32c53bd92d34ca9b71b9103b517a178f1c878153fa0f21a"
+  },
+  "current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "4f44be0f8b0a4e7bfc45f2989cf1837d9bff29b7ecc25b52782fbaef42f29bab"
+  },
+  "counts_unchanged": {
+    "callSites": 703,
+    "pathVariants": 741,
+    "registered": 741,
+    "executable": 741,
+    "controlledUnavailable": 0,
+    "unregistered": 0,
+    "unresolved": 0
+  },
+  "backend_unchanged": true,
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 15,
+      "before": {
+        "file": "view/admin-ts/src/api/community.ts",
+        "sha256": "202622384b920ce59ec4f3b3de15bb0b1ec8a0a0029dbe84ac4ccd4b22556acd"
+      },
+      "after": {
+        "file": "view/admin-ts/src/api/community.ts",
+        "sha256": "ccf66cc81b4da6de7bb7820315d464a7bab6afc0eae1ff3feaa2113af50cda31"
+      }
+    },
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "f0408d7eefa7694e1ae9560e842bff45d1511ce3a0fc04234ad1c99b29f4a5d0"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "ef0678b8176ab5826e792845950a9f108b535bb67d709d60e902fe0364e00ceb"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 243,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 246,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 359,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 362,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 382,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 385,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ]
+}

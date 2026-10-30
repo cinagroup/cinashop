@@ -20,6 +20,7 @@ import {
   systemNotification,
   user,
   wechatUser,
+  type WechatShippingNotificationPayload,
 } from "@/models/schema";
 import {
   enqueueOrderDeliveryNoticeEvent,
@@ -34,6 +35,9 @@ import {
 import { OrderNotificationAdminService } from "@/services/order/OrderNotificationAdminService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { SupplierFulfillmentService } from "@/services/supplier/SupplierFulfillmentService";
+
+// Preparation note (2026-10-29): this external Worker fixture adaptation is
+// unrun in the current Mini consumer validation; it is not execution evidence.
 
 const TABLES = [
   "user",
@@ -263,12 +267,15 @@ async function seed(container: Container, base: number): Promise<{
     { id: base + 704, title: "official refund", type: "wechat", mark: "46232",
       legacyType: 1, tempid: "official-refund-audit", status: 1, addTime: now },
   ]);
-  await container.db.insert(systemConfig).values({
+  await container.db.insert(systemConfig).values([{
     id: base + 800,
     menuName: "order_shipping_open",
     value: JSON.stringify("1"),
     status: 1,
-  });
+  }, { id: base + 801, menuName: "wechat_appid", value: '"official-audit-app"', status: 1 },
+  { id: base + 802, menuName: "wechat_appsecret", value: '"official-audit-secret"', status: 1 },
+  { id: base + 803, menuName: "routine_appId", value: '"routine-audit-app"', status: 1 },
+  { id: base + 804, menuName: "routine_appsecret", value: '"routine-audit-secret"', status: 1 }]);
   await container.db.insert(wechatUser).values([
     { id: base + 900, uid, openid: `official-audit-${base}`, userType: "wechat",
       subscribe: 1, isDel: 0, addTime: now },
@@ -298,12 +305,13 @@ function fakeEnv(): { env: Env; queued: OrderMessage[] } {
   const config = new Map<string, string>([
     ["cfg_wechat_appid", "official-audit-app"],
     ["cfg_wechat_appsecret", "official-audit-secret"],
-    ["cfg_routine_appId", "routine-audit-app"],
-    ["cfg_routine_appsecret", "routine-audit-secret"],
+    ["cfg_routine_appId", "stale-routine-audit-app"],
+    ["cfg_routine_appsecret", "stale-routine-audit-secret"],
     ["cfg_pay_weixin_mchid", "merchant-audit"],
   ]);
   return {
     env: {
+      APP_KEY: "owned-notification-outbox-audit-key",
       ORDER_QUEUE: queue,
       CONFIG_KV: {
         get: async (key: string) => config.get(key) ?? null,
@@ -476,9 +484,30 @@ async function runScenario(container: Container, name: string, base: number) {
   });
 
   const deliveryService = new OrderNotificationDeliveryService(container, env);
+  const stagedShipping = await scoped((scopedContainer) => scopedContainer.db.select()
+    .from(orderNotificationDelivery).where(eq(orderNotificationDelivery.channel, 'wechat_shipping')));
+  const expectedShipping = new Map<number, WechatShippingNotificationPayload>([
+    [fixtures.delivery, { kind: 'wechat_shipping', transactionId: `WX${fixtures.delivery}`, logisticsType: 1,
+      deliveryMode: 1, isAllDelivered: true, itemDescription: '审计商品1', trackingNumber: 'TRACK-001',
+      expressCompanyName: 'Audit Express', receiverContact: '13800000000', path: `pages/goods/order_details/index?order_id=NOD${fixtures.delivery}` }],
+    [fixtures.deliveryRollback, { kind: 'wechat_shipping', transactionId: `WX${fixtures.deliveryRollback}`, logisticsType: 1,
+      deliveryMode: 1, isAllDelivered: true, itemDescription: '审计商品2', trackingNumber: 'TRACK-ROLLBACK',
+      expressCompanyName: 'Audit Express', receiverContact: '13800000000', path: `pages/goods/order_details/index?order_id=NOD${fixtures.deliveryRollback}` }],
+    [fixtures.disabled, { kind: 'wechat_shipping', transactionId: `WX${fixtures.disabled}`, logisticsType: 2,
+      deliveryMode: 1, isAllDelivered: true, itemDescription: '审计商品5', trackingNumber: '',
+      expressCompanyName: '', receiverContact: '', path: `pages/goods/order_details/index?order_id=NOD${fixtures.disabled}` }],
+  ]);
+  const shippingSnapshot = (row: typeof orderNotificationDelivery.$inferSelect) => ({
+    id: row.id, outboxId: row.outboxId, eventKey: row.eventKey, orderId: row.orderId, withdrawalId: row.withdrawalId,
+    userId: row.userId, noticeMark: row.noticeMark, channel: row.channel, target: row.target,
+    templateCode: row.templateCode, payload: row.payload,
+  });
+  const originalShipping = new Map(stagedShipping.map(row => [row.id, shippingSnapshot(row)]));
   const dispatch = await deliveryService.dispatchPending(100);
   const providerMessages = queued.filter(isOrderNotificationDeliveryMessage);
   let firstSmsAmbiguous = true;
+  let shippingHttpCalls = 0;
+  const tokenAccounts = new Set<string>();
   const providerFetch = (async (input: URL | RequestInfo) => {
     const url = String(input);
     if (url.includes("dysmsapi.aliyuncs.com")) {
@@ -489,14 +518,16 @@ async function runScenario(container: Container, name: string, base: number) {
       return Response.json({ Code: "OK", BizId: "audit-biz", RequestId: "audit-request" });
     }
     if (url.includes("/cgi-bin/token")) {
+      const params = new URL(url).searchParams;
+      const appId = params.get('appid'), secret = params.get('secret');
+      assertCondition(appId === 'official-audit-app' && secret === 'official-audit-secret'
+        || appId === 'routine-audit-app' && secret === 'routine-audit-secret', 'token request did not use a complete SQL account pair');
+      tokenAccounts.add(appId!);
       return Response.json({ access_token: "audit-token", expires_in: 7_200 });
     }
-    if (url.includes("get_delivery_list")) {
-      return Response.json({
-        errcode: 0,
-        errmsg: "ok",
-        delivery_list: [{ delivery_name: "Audit Express", delivery_id: "AUDIT" }],
-      });
+    if (url.includes('get_delivery_list') || url.includes('upload_shipping_info')) {
+      shippingHttpCalls++;
+      throw new Error('Shipping without original-account evidence must not reach HTTP');
     }
     return Response.json({ errcode: 0, errmsg: "ok", msgid: "audit-msg" });
   }) as typeof fetch;
@@ -521,6 +552,14 @@ async function runScenario(container: Container, name: string, base: number) {
   const enabledEventKeys = new Set(outboxes
     .filter((event) => event.aggregateId !== fixtures.disabled)
     .map((event) => event.eventKey));
+  const shippingDeliveries = deliveries.filter(row => row.channel === 'wechat_shipping');
+  const shippingPayloadsExact = shippingDeliveries.length === 3 && shippingDeliveries.every(row => {
+    const expected = expectedShipping.get(row.orderId ?? 0);
+    return expected && row.target === `routine-audit-${base}` && row.payload.kind === 'wechat_shipping'
+      && Object.keys(row.payload).length === Object.keys(expected).length
+      && Object.entries(expected).every(([key, value]) => Reflect.get(row.payload, key) === value)
+      && JSON.stringify(shippingSnapshot(row)) === JSON.stringify(originalShipping.get(row.id));
+  });
   const rendered = messages.map((message) => `${message.title}|${message.content}`).join("\n");
   const unknownDelivery = deliveries.find((delivery) => delivery.status === "UNKNOWN");
   assertCondition(unknownDelivery, "ambiguous delivery fixture missing");
@@ -660,6 +699,18 @@ async function runScenario(container: Container, name: string, base: number) {
         delivery.channel === "wechat_shipping" && delivery.status === "SENT").length,
       external_shipping_unknown: deliveries.filter((delivery) =>
         delivery.channel === "wechat_shipping" && delivery.status === "UNKNOWN").length,
+      external_shipping_dead: shippingDeliveries.filter(delivery => delivery.status === 'DEAD').length,
+      shipping_original_account_proof_required: shippingDeliveries.length === 3 && shippingDeliveries.every(delivery =>
+        delivery.status === 'DEAD' && delivery.lastError === 'wechat_shipping_original_account_evidence_required'),
+      shipping_payloads_and_targets_preserved: stagedShipping.length === 3 && shippingPayloadsExact,
+      shipping_without_account_backfill_or_http: shippingHttpCalls === 0 && shippingDeliveries.every(delivery =>
+        !Object.hasOwn(delivery.payload, 'routineAppId') && !Object.hasOwn(delivery.payload, 'appId')
+        && !Object.hasOwn(delivery.payload, 'merchantId') && !Object.hasOwn(delivery.payload, 'payerId')),
+      routine_payload_account_pinned: deliveries.filter(delivery => delivery.channel === 'wechat_routine').length === 5
+        && deliveries.filter(delivery => delivery.channel === 'wechat_routine').every(delivery =>
+          delivery.payload.kind === 'wechat_routine' && delivery.payload.routineAppId === 'routine-audit-app'),
+      complete_sql_token_accounts_used: tokenAccounts.size === 2 && tokenAccounts.has('official-audit-app')
+        && tokenAccounts.has('routine-audit-app'),
       external_channel_counts_exact: [
         ["sms", 5],
         ["wechat_official", 4],
@@ -675,8 +726,10 @@ async function runScenario(container: Container, name: string, base: number) {
         !("target" in message) && !("payload" in message)),
       ambiguous_result_not_retried: providerResults.filter((result) => result === "unknown").length === 1
         && providerReplays.filter((result) => result === "unknown").length === 1,
-      sent_replays_idempotent: providerResults.filter((result) => result === "sent").length === 16
-        && providerReplays.filter((result) => result === "already-sent").length === 16,
+      sent_replays_idempotent: providerResults.filter((result) => result === "sent").length === 13
+        && providerReplays.filter((result) => result === "already-sent").length === 13,
+      dead_shipping_replays_idempotent: providerResults.filter(result => result === 'dead').length === 3
+        && providerReplays.filter(result => result === 'dead').length === 3 && shippingHttpCalls === 0,
       provider_result_sent: providerResults.filter((result) => result === "sent").length,
       provider_result_unknown: providerResults.filter((result) => result === "unknown").length,
       provider_result_dead: providerResults.filter((result) => result === "dead").length,
@@ -796,15 +849,23 @@ export async function runOrderNotificationOutboxPostgresScenario(
         && consumption.templates_rendered
         && consumption.external_delivery_rows === 17
         && consumption.external_delivery_pending === 0
-        && consumption.external_delivery_sent === 16
+        && consumption.external_delivery_sent === 13
         && consumption.external_delivery_unknown === 1
         && consumption.external_delivery_skipped === 0
+        && consumption.external_delivery_dead === 3
+        && consumption.external_shipping_sent === 0 && consumption.external_shipping_unknown === 0
+        && consumption.external_shipping_dead === 3
+        && consumption.shipping_original_account_proof_required
+        && consumption.shipping_payloads_and_targets_preserved
+        && consumption.shipping_without_account_backfill_or_http
+        && consumption.routine_payload_account_pinned && consumption.complete_sql_token_accounts_used
         && consumption.external_channel_counts_exact
         && consumption.provider_payloads_stay_in_database
         && consumption.provider_dispatch_exact
         && consumption.queue_payloads_are_references_only
         && consumption.ambiguous_result_not_retried
         && consumption.sent_replays_idempotent
+        && consumption.dead_shipping_replays_idempotent
         && JSON.stringify(consumption.attempts) === JSON.stringify([1, 1, 1, 1, 2]),
       `notification consumption contract diverged: ${JSON.stringify(consumption)}`,
     );

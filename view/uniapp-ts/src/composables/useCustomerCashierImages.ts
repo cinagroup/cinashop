@@ -14,6 +14,8 @@ import type { CustomerCashierFormContext, CustomerCashierFormSession, CustomerCa
   CustomerCashierSessionIntent, CustomerCashierImageIntent, CustomerCashierImageStageIntent } from '@/types/customerWorkCashierImages';
 import type { CustomerWorkController } from './useCustomerWork';
 
+import type { CustomerCashierCapabilityController } from './useCustomerCashierCapabilities';
+
 const confirm = (title: string, content: string) => new Promise<boolean>(resolve => uni.showModal({ title, content, success: r => resolve(r.confirm), fail: () => resolve(false) }));
 const copy = <T>(value: T): T => JSON.parse(customerWorkCanonicalJson(value));
 function assert(value: unknown, message: string): asserts value { if (!value) throw Error(message); }
@@ -57,12 +59,12 @@ export async function readCustomerCashierImageFile(path: string): Promise<{ sha2
   return { sha256, size: bytes.length };
 }
 
-export function useCustomerCashierImages(manager: CustomerWorkController) {
+export function useCustomerCashierImages(manager: CustomerWorkController, domain: CustomerCashierCapabilityController) {
   const busy = ref(false), error = ref(''), pending = ref<CustomerCashierImageStageIntent[]>([]);
   const sessionIntent = ref<CustomerCashierSessionIntent | null>(null), session = ref<CustomerCashierFormSession | null>(null);
   const images = ref<Record<string, CustomerCashierFormImage>>({}), previews = ref<Record<string, string>>({});
   const checkedImages = ref<Record<string, boolean>>({});
-  const requests = new Set<CustomerCashierImageRequests>(); let epoch = 0, disposed = false;
+  const requests = new Set<CustomerCashierImageRequests>(); let busyOwner: CustomerCashierImageRequests | null = null; let epoch = 0, disposed = false;
   const current = () => !disposed && manager.current() && manager.auth.isLoggedIn;
   const lease = () => manager.suspendLeaseActive();
   const parentKey = computed(() => sessionIntent.value?.request_key ?? '');
@@ -78,18 +80,19 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
     try { pending.value = customerCashierImagePending().filter(v => v.actor_uid === manager.auth.uid); }
     catch (failure) { pending.value = []; error.value = failure instanceof Error ? failure.message : '请保留原图片编号核对'; }
   }
-  function clear() { epoch++; for (const r of requests) r.abort(); requests.clear(); busy.value = false; error.value = ''; session.value = null; sessionIntent.value = null; images.value = {}; checkedImages.value = {}; previews.value = {}; pending.value = []; }
-  function scope(fenced = false) { const version = epoch, fence = fenced ? manager.fence() : () => true;
-    const r = createCustomerCashierImageRequests(() => current() && epoch === version && fence()); requests.add(r); return r; }
+  function clear() { epoch++; busyOwner = null; for (const r of requests) r.abort(); requests.clear(); busy.value = false; error.value = ''; session.value = null; sessionIntent.value = null; images.value = {}; checkedImages.value = {}; previews.value = {}; pending.value = []; }
+  function scope(fenced = false) { const version = epoch, fence = fenced ? manager.fence() : () => true, capability = fenced ? domain.fence() : () => true;
+    const r = createCustomerCashierImageRequests(() => current() && epoch === version && fence() && capability()); requests.add(r); return r; }
+  function beginBusy(r: CustomerCashierImageRequests) { busyOwner = r; busy.value = true; }
+  function finishBusy(r: CustomerCashierImageRequests) { if (busyOwner === r) { busyOwner = null; busy.value = false; } }
   function close(r: CustomerCashierImageRequests) { r.abort(); requests.delete(r); }
   function known(intent: CustomerCashierImageStageIntent) {
     assert(current() && intent.actor_uid === manager.auth.uid && isCustomerCashierImageStage(intent)
       && customerCashierImagePending().some(v => v.request_key === intent.request_key && customerWorkCanonicalJson(v) === customerWorkCanonicalJson(intent)), '本机原图片内容或当前账号已变化');
   }
   function writable(intent: CustomerCashierSessionIntent) {
-    known(intent); const context = manager.context.value;
-    assert(context?.data.capabilities.cashier_second_card === true && context.data.capabilities.cashier_form_images === true
-      && context.data.cashier_form_images_readiness?.writes === true && context.scope_key === intent.body.scope_key
+    known(intent); const context = domain.authority();
+    assert(context?.data.capabilities.cashier_second_card === true && domain.imagesReady.value && context.scope_key === intent.body.scope_key
       && context.principal.service_id === intent.service_id, '原图片经营资格已变化，只能核对原编号或取消创建前准备');
   }
   function failed(r: CustomerCashierImageRequests, failure: unknown) {
@@ -124,15 +127,15 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
     return response;
   }
   async function ensureSession(contextValue: CustomerCashierFormContext): Promise<CustomerCashierFormSession | null> {
-    if (!current() || busy.value) return null; const r = scope(true); busy.value = true; error.value = '';
+    if (!current() || busy.value) return null; const r = scope(true); beginBusy(r); error.value = '';
     try {
       const context = copy(contextValue); assert(isCustomerCashierFormContext(context), '图片购买人与选品无效'); refreshPending();
       let intent = pending.value.find((v): v is CustomerCashierSessionIntent => v.kind === 'session' && customerWorkCanonicalJson(v.body) === customerWorkCanonicalJson(context));
       if (!intent) {
         assert(!pending.value.length, '还有原图片准备未核对，请先查询或取消');
         assert(!customerCashierPending().some(v => v.actor_uid === r.owner.uid), '还有原下单或付款请求，请先核对');
-        const permission = manager.context.value; assert(permission?.data.capabilities.cashier_second_card === true
-          && permission.data.capabilities.cashier_form_images === true && permission.data.cashier_form_images_readiness?.writes === true
+        const permission = domain.authority(); assert(permission?.data.capabilities.cashier_second_card === true
+          && domain.imagesReady.value
           && permission.scope_key === context.scope_key, '当前经营账号不能准备图片');
         intent = { version: 'customer-cashier-image-pending-v1', kind: 'session', actor_uid: r.owner.uid,
           service_id: permission.principal.service_id, request_key: await customerWorkRequestKey(), request_hash: cashierIntentHash(context), created_at: Math.floor(Date.now()/1000), body: context };
@@ -140,13 +143,14 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
       }
       writable(intent); let receipt = await querySession(r, intent);
       if (!receipt.receipt) {
+        writable(intent); assert(r.active(), '原图片能力已变化，请重新读取');
         const raw = await r.request(`${base}/form-sessions`, 'POST', context as unknown as Record<string, unknown>, intent.request_key);
         assert(r.active(), '原图片准备页面已变化'); known(intent); acceptSession(raw, intent); receipt = await querySession(r, intent);
       }
       assert(receipt.receipt?.state === 'active', '原图片准备已取消或已冻结，请查询原下单编号');
       for (const image of customerCashierImagePending().filter((v): v is CustomerCashierImageIntent => v.kind === 'image' && v.actor_uid === intent!.actor_uid && v.body.session_key === intent!.request_key)) await queryImage(r, image);
       return session.value;
-    } catch (failure) { failed(r, failure); return null; } finally { if (r.active()) busy.value = false; close(r); }
+    } catch (failure) { failed(r, failure); return null; } finally { finishBusy(r); close(r); }
   }
   async function visibleAfterChoice(version: number, owner: { uid: number; token: string; version: number }) {
     const end = Date.now() + 2000;
@@ -160,7 +164,7 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
     const owner = { uid: manager.auth.uid, token: manager.auth.token, version: manager.auth.sessionVersion };
     await visibleAfterChoice(version, owner);
     assert(!busy.value, '图片正在处理，请等待');
-    const r = scope(true); busy.value = true; error.value = '';
+    const r = scope(true); beginBusy(r); error.value = '';
     try {
       const intent = sessionIntent.value, original = session.value; assert(intent && original?.state === 'active', '请先核对真实图片准备'); writable(intent);
       assert(!outstanding.value, '原图片结果未确认，请先查询原图片编号');
@@ -174,7 +178,7 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
       try { parseCustomerCashierImageReceipt(raw, image, original); } catch { invalid('原上传响应与图片内容不匹配'); }
       const result = await queryImage(r, image); assert(result.receipt?.state === 'stored' && result.receipt.reference, '原图片尚未核对保存，请查询原编号');
       await previewsFor(r, [result.receipt.reference]); return { url: result.receipt.reference, src: previews.value[result.receipt.reference] };
-    } catch (failure) { failed(r, failure); throw failure; } finally { if (r.active()) busy.value = false; close(r); }
+    } catch (failure) { failed(r, failure); throw failure; } finally { finishBusy(r); close(r); }
   }
   async function previewsFor(r: CustomerCashierImageRequests, references: string[]) {
     const intent = sessionIntent.value; assert(intent && session.value && session.value.state !== 'cancelled', '请先核对原图片准备');
@@ -192,7 +196,7 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
     const owner = { uid: manager.auth.uid, token: manager.auth.token, version: manager.auth.sessionVersion };
     await visibleAfterChoice(version, owner);
     assert(!busy.value, '图片正在处理，请等待');
-    const r = scope(true); busy.value = true; error.value = '';
+    const r = scope(true); beginBusy(r); error.value = '';
     try {
       const parent = sessionIntent.value; assert(parent && parent.request_key === intent.body.session_key, '请先核对原图片准备');
       const original = await querySession(r, parent); assert(original.receipt?.state === 'active', '原图片准备已取消或冻结');
@@ -207,15 +211,15 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
       }
       assert(receipt.receipt?.state === 'stored' && receipt.receipt.reference, '原图片尚未核对保存，请保留原编号');
       await previewsFor(r, [receipt.receipt.reference]); return { url: receipt.receipt.reference, src: previews.value[receipt.receipt.reference] };
-    } catch (failure) { failed(r, failure); throw failure; } finally { if (r.active()) busy.value = false; close(r); }
+    } catch (failure) { failed(r, failure); throw failure; } finally { finishBusy(r); close(r); }
   }
   async function refreshPreviews(references?: string[]) {
-    if (!current() || busy.value) return; const r = scope(); busy.value = true;
+    if (!current() || busy.value) return; const r = scope(); beginBusy(r);
     try { const refs = references ?? Object.values(images.value).flatMap(v => v.state === 'stored' && v.reference ? [v.reference] : []);
-      if (refs.length) await previewsFor(r, [...new Set(refs)]); } catch (failure) { failed(r, failure); } finally { if (r.active()) busy.value = false; close(r); }
+      if (refs.length) await previewsFor(r, [...new Set(refs)]); } catch (failure) { failed(r, failure); } finally { finishBusy(r); close(r); }
   }
   async function check(intent: CustomerCashierImageStageIntent) {
-    if (!current() || busy.value) return; const r = scope(); busy.value = true; error.value = '';
+    if (!current() || busy.value) return; const r = scope(); beginBusy(r); error.value = '';
     try { if (intent.kind === 'session') {
       const result = await querySession(r, intent);
       if (result.receipt && result.receipt.state !== 'cancelled' && result.receipt.state !== 'consumed') for (const image of customerCashierImagePending().filter((v): v is CustomerCashierImageIntent => v.kind === 'image' && v.actor_uid === intent.actor_uid && v.body.session_key === intent.request_key)) await queryImage(r, image);
@@ -224,10 +228,10 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
       assert(parent, '原图片准备内容需要核对'); await querySession(r, parent);
       if (session.value?.state !== 'cancelled' && session.value?.state !== 'consumed') await queryImage(r, intent);
     }
-    } catch (failure) { failed(r, failure); } finally { if (r.active()) busy.value = false; close(r); }
+    } catch (failure) { failed(r, failure); } finally { finishBusy(r); close(r); }
   }
   async function cancelSession() {
-    if (!current() || busy.value || !sessionIntent.value) return; const r = scope(); busy.value = true;
+    if (!current() || busy.value || !sessionIntent.value) return; const r = scope(); beginBusy(r);
     try { const intent = sessionIntent.value; const receipt = await querySession(r, intent);
       assert(receipt.receipt?.state === 'active', '原准备未确认或已冻结，不能取消下单原意图');
       assert(!customerCashierPending().some(v => v.kind === 'creation' && v.request_key === intent.request_key), '原下单内容已保存，不能取消图片准备');
@@ -235,7 +239,7 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
       known(intent); const raw = await r.request(`${base}/form-sessions/${intent.request_key}/cancel`, 'POST', { version: 'customer-cashier-form-session-v1', scope_key: intent.body.scope_key }, intent.request_key);
       assert(r.active(), '原取消页面已变化'); const result = acceptSession(raw, intent); assert(result.receipt?.state === 'cancelled', '原取消结果尚未确认，请查询原编号');
       images.value = {}; previews.value = {}; error.value = '创建前图片准备已取消，可以重新选择。';
-    } catch (failure) { failed(r, failure); } finally { if (r.active()) busy.value = false; close(r); }
+    } catch (failure) { failed(r, failure); } finally { finishBusy(r); close(r); }
   }
   async function assertReadyForFreeze(body: CustomerCashierInput, key: string) {
     assert(!busy.value && cashierUuid(key), '图片尚未完成核对'); const intent = sessionIntent.value, original = session.value;
@@ -292,7 +296,7 @@ export function useCustomerCashierImages(manager: CustomerWorkController) {
   onUnload(() => { disposed = true; clear(); });
   watch(() => [manager.auth.uid, manager.auth.token, manager.auth.sessionVersion], () => { clear(); refreshPending(); }, { flush: 'sync' });
   watch(() => manager.context.value, (next, prior) => {
-    if (prior && (!next || prior.scope_key !== next.scope_key || prior.principal.service_id !== next.principal.service_id || prior.consistency_key !== next.consistency_key)) clear();
+    if (prior && (!next || prior.scope_key !== next.scope_key || prior.principal.service_id !== next.principal.service_id || prior.consistency_key !== next.consistency_key)) { clear(); refreshPending(); }
     if (next) refreshPending();
   }, { flush: 'sync' });
   return { busy, error, pending, session, sessionIntent, images, checkedImages, previews, parentKey, recoveredImages, outstanding, current,

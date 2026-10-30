@@ -2,13 +2,14 @@ import { and, eq } from "drizzle-orm";
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import { user } from "@/models/schema";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
-import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
+import { cacheGet, cacheSet } from "@/utils/cache";
 import { ServiceUnavailableException, ValidateException } from "@/utils/errors";
-import { boundedProductShareFetch } from './ProductShareProviderPolicy';
 import { OFFLINE_MINI_PAGE, offlineMiniScanImage } from '@/services/order/OfflineScanCode';
 import { DIVISION_STAFF_INVITE_PAGE, readDivisionStaffWechatCredentials } from '@/services/division/DivisionStaffInvitePolicy';
 import { legacyShareDataImage } from '@/services/other/LegacyShareCodeProtocol';
+import { readLegacyShareProvider } from '@/services/other/LegacyShareProviderRead';
+import { readRoutineCredentials, readRoutineCredentialsIfConfigured, withRoutineCredentials, type RoutineCredentials } from './RoutineRuntimeConfig';
+import { getRoutineAccessToken, invalidateRoutineAccessToken } from './RoutineAccessTokenService';
 
 const INVITE_SIGNATURE_TTL_SECONDS = 10 * 60;
 const CODE_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -16,15 +17,10 @@ const MAX_CODE_BYTES = 1024 * 1024;
 const INVALID_TOKEN_CODES = new Set([40001, 40014, 42001]);
 
 interface CachedMiniProgramCode {
+  version: 2;
+  stamp: string;
   contentType: string;
   base64: string;
-}
-
-interface WechatTokenResponse {
-  access_token?: string;
-  expires_in?: number;
-  errcode?: number;
-  errmsg?: string;
 }
 
 interface WechatErrorResponse {
@@ -130,74 +126,35 @@ export class WechatMiniProgramCodeService {
     private readonly fetcher: typeof fetch = fetch,
   ) {}
 
-  /** Employee-only provider adapter: the scene is a real qrcode record ID.
-   * Existing generic, product and invitation methods keep their behavior. */
   async createDivisionStaffInviteDataUrl(qrcodeId: number, expectedAppId: string): Promise<string> {
     if (!Number.isSafeInteger(qrcodeId) || qrcodeId <= 0 || qrcodeId > 2147483647) throw new ValidateException('员工二维码ID错误');
-    const { appId, secret } = await readDivisionStaffWechatCredentials(this.container.db);
-    if (appId !== expectedAppId) throw new ServiceUnavailableException('员工邀请小程序账户已变化，请重新读取');
-    const scene = `a=${qrcodeId}`;
-    const bounded = new WechatMiniProgramCodeService(this.container, this.env, boundedProductShareFetch(this.fetcher));
+    const credentials = await readRoutineCredentials(this.container, this.env);
+    // Preserve the employee-specific admission rules as well as the common
+    // complete source stamp. Both reads must describe this exact operation.
+    const employee = await readDivisionStaffWechatCredentials(this.container.db, this.env);
+    if (credentials.stamp !== employee.stamp || credentials.appId !== expectedAppId)
+      throw new ServiceUnavailableException('员工邀请小程序账户已变化，请重新读取');
     try {
-      const code = await bounded.fetchWithTokenRefresh(appId, secret,
-        token => bounded.fetchUnlimitedCode(token, scene, DIVISION_STAFF_INVITE_PAGE, '员工邀请'));
-      const result = `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
-      legacyShareDataImage(result);
-      return result;
+      return await this.codeDataUrl(credentials, null,
+        token => this.fetchUnlimitedCode(token, `a=${qrcodeId}`, DIVISION_STAFF_INVITE_PAGE, '员工邀请'));
     } catch {
       throw new ServiceUnavailableException('员工邀请码暂时无法生成，请稍后重试');
     }
   }
 
-  async createAgentInviteUrl(
-    uid: number,
-    requestUrl: string,
-  ): Promise<{ url: string; expires: number }> {
+  async createAgentInviteUrl(uid: number, requestUrl: string): Promise<{ url: string; expires: number }> {
     await this.assertActiveAgent(uid);
     const expires = Math.floor(Date.now() / 1000) + INVITE_SIGNATURE_TTL_SECONDS;
     const signature = await createAgentInviteSignature(uid, expires, this.env.APP_KEY);
-    const url = new URL(requestUrl);
-    const marker = "/division/agent/spread/code";
-    const markerIndex = url.pathname.lastIndexOf(marker);
-    const prefix = markerIndex >= 0 ? url.pathname.slice(0, markerIndex) : "/api";
+    const url = new URL(requestUrl), marker = '/division/agent/spread/code';
+    const markerIndex = url.pathname.lastIndexOf(marker), prefix = markerIndex >= 0 ? url.pathname.slice(0, markerIndex) : '/api';
     url.pathname = `${prefix}${marker}/image/${uid}`;
-    url.search = new URLSearchParams({ expires: String(expires), signature }).toString();
-    url.hash = "";
+    url.search = new URLSearchParams({ expires: String(expires), signature }).toString(); url.hash = '';
     return { url: url.toString(), expires };
   }
 
-  /** Build the fixed membership-activation mini-program code for Admin. */
   async createMembershipActivationDataUrl(): Promise<string | null> {
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) return null;
-
-    const cacheKey = `routine_code:membership_activation:${appId}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      return `data:${cached.contentType};base64,${cached.base64}`;
-    }
-
-    let accessToken = await this.getAccessToken(appId, appSecret);
-    let code: { bytes: Uint8Array; contentType: string };
-    try {
-      code = await this.fetchMembershipActivationCode(accessToken);
-    } catch (error) {
-      if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`routine_access_token:${appId}`, this.env);
-      accessToken = await this.getAccessToken(appId, appSecret, true);
-      code = await this.fetchMembershipActivationCode(accessToken);
-    }
-    const base64 = bytesToBase64(code.bytes);
-    await cacheSet(
-      cacheKey,
-      { contentType: code.contentType, base64 } satisfies CachedMiniProgramCode,
-      this.env,
-      CODE_CACHE_TTL_SECONDS,
-    );
-    return `data:${code.contentType};base64,${base64}`;
+    return this.createFixedPathDataUrl('membership_activation', 'pages/annex/vip_active/index', '会员激活');
   }
 
   /** Navigation only: no customer, amount, order or payment capability. */
@@ -205,399 +162,162 @@ export class WechatMiniProgramCodeService {
     return this.createFixedPathDataUrl('offline_cashier_v1', OFFLINE_MINI_PAGE, '线下收银', image => { offlineMiniScanImage(image, 0); });
   }
 
-  /** Build the fixed paid-membership page code used by the legacy PC shop. */
   async createPaidMembershipDataUrl(): Promise<string | null> {
-    return this.createFixedPathDataUrl(
-      "paid_membership",
-      "pages/annex/vip_paid/index",
-      "付费会员",
-    );
+    return this.createFixedPathDataUrl('paid_membership', 'pages/annex/vip_paid/index', '付费会员');
   }
 
-  /** Build a product-detail unlimited code with the same scene as CRMEB. */
   async createProductDetailDataUrl(productId: number): Promise<string | null> {
-    if (!Number.isSafeInteger(productId) || productId <= 0) {
-      throw new ValidateException("商品ID错误");
-    }
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) return null;
-
-    const cacheKey = `routine_code:product_detail:${appId}:${productId}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      return `data:${cached.contentType};base64,${cached.base64}`;
-    }
-    const load = (token: string) => this.fetchUnlimitedCode(
-      token,
-      `id=${productId}&spid=0`,
-      "pages/goods_details/index",
-      "商品详情",
-    );
-    const code = await this.fetchWithTokenRefresh(appId, appSecret, load);
-    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
-    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
-    return `data:${encoded.contentType};base64,${encoded.base64}`;
+    if (!Number.isSafeInteger(productId) || productId <= 0) throw new ValidateException('商品ID错误');
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    if (!credentials) return null;
+    return this.codeDataUrl(credentials, `product_detail:${productId}`,
+      token => this.fetchUnlimitedCode(token, `id=${productId}&spid=0`, 'pages/goods_details/index', '商品详情'));
   }
 
-  /** The released opaque landing page, bound to the authoritative SQL AppID. */
+  /** Historical share documents already own an exact public AppID. A new
+   * provider request may not silently create their image for a different app. */
   async createLegacyShareLandingDataUrl(token: string, expectedAppId: string): Promise<string | null> {
     if (!/^[a-f0-9]{24}$/.test(token)) throw new ValidateException('分享小程序场景错误');
-    const values = await new SystemConfigService(this.container, this.env).getMany(['routine_appId', 'routine_appsecret']);
-    const appId = values.routine_appId?.trim() ?? '', secret = values.routine_appsecret?.trim() ?? '';
-    if (appId !== expectedAppId) throw new ValidateException('分享小程序账户配置已变化，请稍后重试');
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
     if (!expectedAppId) return null;
-    if (!secret) throw new ServiceUnavailableException('分享小程序凭据暂不可用，请稍后重试');
-    const bounded = new WechatMiniProgramCodeService(this.container, this.env, boundedProductShareFetch(this.fetcher));
-    const code = await bounded.fetchWithTokenRefresh(appId, secret,
-      accessToken => bounded.fetchUnlimitedCode(accessToken, `q=${token}`, 'pages/share/landing', '分享落地'));
-    return `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
+    if (!credentials) throw new ServiceUnavailableException('分享小程序凭据暂不可用，请稍后重试');
+    if (credentials.appId !== expectedAppId) throw new ValidateException('分享小程序账户配置已变化，请稍后重试');
+    return this.codeDataUrl(credentials, null,
+      accessToken => this.fetchUnlimitedCode(accessToken, `q=${token}`, 'pages/share/landing', '分享落地'));
   }
 
-  /** Current registered ordinary detail page, with the authenticated referrer. */
-  async createOrdinaryProductDataUrl(productId:number,uid:number):Promise<string|null>{
-    if(!Number.isSafeInteger(productId)||productId<=0||productId>2147483647||!Number.isSafeInteger(uid)||uid<=0||uid>2147483647)throw new ValidateException('商品分享参数错误');
-    const scene=`id=${productId}&spid=${uid}`;
-    if(new TextEncoder().encode(scene).byteLength>32)throw new ValidateException('商品分享场景过长');
-    const values=await new SystemConfigService(this.container,this.env).getMany(['routine_appId','routine_appsecret']);
-    const appId=values.routine_appId?.trim()??'',secret=values.routine_appsecret?.trim()??'';
-    if(!appId||!secret)return null;
-    const bounded=new WechatMiniProgramCodeService(this.container,this.env,boundedProductShareFetch(this.fetcher));
-    const code=await bounded.fetchWithTokenRefresh(appId,secret,token=>bounded.fetchUnlimitedCode(token,scene,'pages/goods/detail','商品详情'));
-    return `data:${code.contentType};base64,${bytesToBase64(code.bytes)}`;
+  async createOrdinaryProductDataUrl(productId: number, uid: number): Promise<string | null> {
+    if (!Number.isSafeInteger(productId) || productId <= 0 || productId > 2147483647 || !Number.isSafeInteger(uid) || uid <= 0 || uid > 2147483647)
+      throw new ValidateException('商品分享参数错误');
+    const scene = `id=${productId}&spid=${uid}`;
+    if (new TextEncoder().encode(scene).byteLength > 32) throw new ValidateException('商品分享场景过长');
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    if (!credentials) return null;
+    return this.codeDataUrl(credentials, null, token => this.fetchUnlimitedCode(token, scene, 'pages/goods/detail', '商品详情'));
   }
 
-  /** Build the legacy UniApp activity code without persisting a public attachment. */
-  async createActivityDataUrl(
-    type: LegacyActivityCodeType,
-    id: number,
-    uid: number,
-  ): Promise<string | null> {
-    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(uid) || uid < 0) {
-      throw new ValidateException("活动码参数错误");
-    }
-    const descriptor = type === 1
-      ? { page: "pages/activity/goods_details/index", scene: `id=${id}&spid=${uid}&type=1`, label: "秒杀" }
-      : type === 3
-        ? { page: "pages/activity/goods_details/index", scene: `id=${id}&spid=${uid}&type=3`, label: "拼团" }
-        : type === 2
-          ? { page: "pages/activity/goods_bargain_details/index", scene: `id=${id}&spid=${uid}`, label: "砍价" }
-          : { page: "pages/activity/goods_combination_status/index", scene: `id=${id}&spid=${uid}`, label: "拼团状态" };
-    if (new TextEncoder().encode(descriptor.scene).byteLength > 32) {
-      throw new ValidateException("活动码场景参数过长");
-    }
-
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) return null;
-
-    const cacheKey = `routine_code:activity:${appId}:${type}:${id}:${uid}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      return `data:${cached.contentType};base64,${cached.base64}`;
-    }
-    const code = await this.fetchWithTokenRefresh(
-      appId,
-      appSecret,
-      (token) => this.fetchUnlimitedCode(token, descriptor.scene, descriptor.page, descriptor.label),
-    );
-    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
-    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
-    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  async createActivityDataUrl(type: LegacyActivityCodeType, id: number, uid: number): Promise<string | null> {
+    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(uid) || uid < 0) throw new ValidateException('活动码参数错误');
+    const descriptor = type === 1 ? { page: 'pages/activity/goods_details/index', scene: `id=${id}&spid=${uid}&type=1`, label: '秒杀' }
+      : type === 3 ? { page: 'pages/activity/goods_details/index', scene: `id=${id}&spid=${uid}&type=3`, label: '拼团' }
+        : type === 2 ? { page: 'pages/activity/goods_bargain_details/index', scene: `id=${id}&spid=${uid}`, label: '砍价' }
+          : { page: 'pages/activity/goods_combination_status/index', scene: `id=${id}&spid=${uid}`, label: '拼团状态' };
+    if (new TextEncoder().encode(descriptor.scene).byteLength > 32) throw new ValidateException('活动码场景参数过长');
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    if (!credentials) return null;
+    return this.codeDataUrl(credentials, `activity:${type}:${id}:${uid}`,
+      token => this.fetchUnlimitedCode(token, descriptor.scene, descriptor.page, descriptor.label));
   }
 
-  /** Build the authenticated user's distributor mini-program code. */
   async createUserSpreadDataUrl(uid: number): Promise<string | null> {
-    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("用户ID错误");
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) return null;
-
-    const cacheKey = `routine_code:user_spread:${appId}:${uid}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      return `data:${cached.contentType};base64,${cached.base64}`;
-    }
-
-    let accessToken = await this.getAccessToken(appId, appSecret);
-    let code: { bytes: Uint8Array; contentType: string };
-    try {
-      code = await this.fetchInviteCode(accessToken, uid);
-    } catch (error) {
-      if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`routine_access_token:${appId}`, this.env);
-      accessToken = await this.getAccessToken(appId, appSecret, true);
-      code = await this.fetchInviteCode(accessToken, uid);
-    }
-    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
-    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
-    return `data:${encoded.contentType};base64,${encoded.base64}`;
+    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException('用户ID错误');
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    if (!credentials) return null;
+    return this.codeDataUrl(credentials, `user_spread:${uid}`, token => this.fetchInviteCode(token, uid));
   }
 
-  async renderAgentInviteCode(
-    uid: number,
-    expires: number,
-    signature: string,
-  ): Promise<Response> {
-    const valid = await verifyAgentInviteSignature(uid, expires, signature, this.env.APP_KEY);
-    if (!valid) throw new ValidateException("员工邀请码已失效，请重新生成");
+  async renderAgentInviteCode(uid: number, expires: number, signature: string): Promise<Response> {
+    if (!await verifyAgentInviteSignature(uid, expires, signature, this.env.APP_KEY)) throw new ValidateException('员工邀请码已失效，请重新生成');
     await this.assertActiveAgent(uid);
-
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
-
-    const cacheKey = `routine_code:division_agent:${appId}:${uid}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      return this.imageResponse(base64ToBytes(cached.base64), cached.contentType);
-    }
-
-    let accessToken = await this.getAccessToken(appId, appSecret);
-    let code: { bytes: Uint8Array; contentType: string };
-    try {
-      code = await this.fetchInviteCode(accessToken, uid);
-    } catch (error) {
-      if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`routine_access_token:${appId}`, this.env);
-      accessToken = await this.getAccessToken(appId, appSecret, true);
-      code = await this.fetchInviteCode(accessToken, uid);
-    }
-
-    await cacheSet(
-      cacheKey,
-      { contentType: code.contentType, base64: bytesToBase64(code.bytes) } satisfies CachedMiniProgramCode,
-      this.env,
-      CODE_CACHE_TTL_SECONDS,
-    );
-    return this.imageResponse(code.bytes, code.contentType);
+    const credentials = await readRoutineCredentials(this.container, this.env);
+    const image = await this.codeDataUrl(credentials, `division_agent:${uid}`, token => this.fetchInviteCode(token, uid));
+    await this.assertActiveAgent(uid);
+    await this.assertSource(credentials);
+    const data = legacyShareDataImage(image);
+    return this.imageResponse(base64ToBytes(data.base64), data.mime);
   }
 
   private async assertActiveAgent(uid: number): Promise<void> {
-    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException("代理商不存在");
-    const rows = await this.container.db
-      .select({
-        uid: user.uid,
-        divisionType: user.divisionType,
-        divisionStatus: user.divisionStatus,
-        divisionEndTime: user.divisionEndTime,
-      })
-      .from(user)
-      .where(and(eq(user.uid, uid), eq(user.status, 1), eq(user.isDel, 0)))
-      .limit(1);
-    const agent = rows[0];
-    const now = Math.floor(Date.now() / 1000);
-    if (!agent || agent.divisionType !== 2 || !agent.divisionStatus) {
-      throw new ValidateException("代理商不存在或已停用");
-    }
-    if (agent.divisionEndTime > 0 && agent.divisionEndTime < now) {
-      throw new ValidateException("代理商已到期");
-    }
+    if (!Number.isSafeInteger(uid) || uid <= 0) throw new ValidateException('代理商不存在');
+    const [agent] = await this.container.db.select({ uid: user.uid, divisionType: user.divisionType,
+      divisionStatus: user.divisionStatus, divisionEndTime: user.divisionEndTime }).from(user)
+      .where(and(eq(user.uid, uid), eq(user.status, 1), eq(user.isDel, 0))).limit(1);
+    if (!agent || agent.divisionType !== 2 || !agent.divisionStatus) throw new ValidateException('代理商不存在或已停用');
+    if (agent.divisionEndTime > 0 && agent.divisionEndTime < Math.floor(Date.now() / 1000)) throw new ValidateException('代理商已到期');
   }
 
-  private async createFixedPathDataUrl(
-    cacheSuffix: string,
-    path: string,
-    label: string,
-    validate?: (image: string) => void,
-  ): Promise<string | null> {
-    const config = new SystemConfigService(this.container, this.env);
-    const values = await config.getMany(["routine_appId", "routine_appsecret"]);
-    const appId = values.routine_appId?.trim() ?? "";
-    const appSecret = values.routine_appsecret?.trim() ?? "";
-    if (!appId || !appSecret) return null;
-    const cacheKey = `routine_code:${cacheSuffix}:${appId}`;
-    const cached = await cacheGet<CachedMiniProgramCode>(cacheKey, this.env);
-    if (cached?.base64 && cached.contentType) {
-      const image = `data:${cached.contentType};base64,${cached.base64}`;
-      try { validate?.(image); return image; }
-      catch { await cacheDelete(cacheKey, this.env); }
-    }
-    const code = await this.fetchWithTokenRefresh(
-      appId,
-      appSecret,
-      (token) => this.fetchPathCode(token, path, label),
-    );
-    const encoded = { contentType: code.contentType, base64: bytesToBase64(code.bytes) };
-    validate?.(`data:${encoded.contentType};base64,${encoded.base64}`);
-    await cacheSet(cacheKey, encoded, this.env, CODE_CACHE_TTL_SECONDS);
-    return `data:${encoded.contentType};base64,${encoded.base64}`;
+  private assertSource(credentials: RoutineCredentials): Promise<void> {
+    return withRoutineCredentials(this.container, this.env, credentials.stamp, async () => undefined);
   }
 
-  private async fetchWithTokenRefresh(
-    appId: string,
-    appSecret: string,
-    load: (accessToken: string) => Promise<{ bytes: Uint8Array; contentType: string }>,
-  ): Promise<{ bytes: Uint8Array; contentType: string }> {
-    let accessToken = await this.getAccessToken(appId, appSecret);
-    try {
-      return await load(accessToken);
-    } catch (error) {
+  private async createFixedPathDataUrl(suffix: string, path: string, label: string, validate?: (image: string) => void): Promise<string | null> {
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    if (!credentials) return null;
+    return this.codeDataUrl(credentials, suffix, token => this.fetchPathCode(token, path, label), validate);
+  }
+
+  /** All provider/cache work finishes outside the short source transactions.
+   * Late cache writes stay in the old stamp key; no shared key is bare-deleted. */
+  private async codeDataUrl(credentials: RoutineCredentials, suffix: string | null,
+    load: (token: string) => Promise<{ bytes: Uint8Array; contentType: string }>, validate?: (image: string) => void): Promise<string> {
+    const key = suffix === null ? null : `routine_code:v2:${credentials.stamp}:${suffix}`;
+    if (key) {
+      const cached = await cacheGet<CachedMiniProgramCode>(key, this.env);
+      await this.assertSource(credentials);
+      if (cached?.version === 2 && cached.stamp === credentials.stamp) {
+        try {
+          const image = `data:${cached.contentType};base64,${cached.base64}`;
+          legacyShareDataImage(image); validate?.(image);
+          return image;
+        } catch { /* Invalid cached data is a miss, never adopted or restamped. */ }
+      }
+    }
+    const code = await this.fetchWithTokenRefresh(credentials, load);
+    const record: CachedMiniProgramCode = { version: 2, stamp: credentials.stamp, contentType: code.contentType, base64: bytesToBase64(code.bytes) };
+    const image = `data:${record.contentType};base64,${record.base64}`;
+    legacyShareDataImage(image); validate?.(image);
+    if (key) await cacheSet(key, record, this.env, CODE_CACHE_TTL_SECONDS);
+    await this.assertSource(credentials);
+    return image;
+  }
+
+  private async fetchWithTokenRefresh(credentials: RoutineCredentials,
+    load: (accessToken: string) => Promise<{ bytes: Uint8Array; contentType: string }>): Promise<{ bytes: Uint8Array; contentType: string }> {
+    let accessToken = await getRoutineAccessToken(this.container, this.env, credentials, { fetcher: this.fetcher });
+    let code: { bytes: Uint8Array; contentType: string };
+    try { code = await load(accessToken); }
+    catch (error) {
+      await this.assertSource(credentials);
       if (!(error instanceof WechatMiniProgramApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`routine_access_token:${appId}`, this.env);
-      accessToken = await this.getAccessToken(appId, appSecret, true);
-      return load(accessToken);
+      await invalidateRoutineAccessToken(this.env, credentials);
+      accessToken = await getRoutineAccessToken(this.container, this.env, credentials, { fetcher: this.fetcher, forceRefresh: true });
+      code = await load(accessToken);
     }
+    await this.assertSource(credentials);
+    return code;
   }
 
-  private async getAccessToken(appId: string, appSecret: string, forceRefresh = false): Promise<string> {
-    const cacheKey = `routine_access_token:${appId}`;
-    if (!forceRefresh) {
-      const cached = await cacheGet<string>(cacheKey, this.env);
-      if (cached) return cached;
-    }
-    const url = new URL("https://api.weixin.qq.com/cgi-bin/token");
-    url.search = new URLSearchParams({
-      grant_type: "client_credential",
-      appid: appId,
-      secret: appSecret,
-    }).toString();
-    const response = await this.fetcher(url, { method: "GET" });
-    const data = (await response.json()) as WechatTokenResponse;
-    if (!response.ok || !data.access_token) {
-      throw new WechatMiniProgramApiError(
-        Number(data.errcode ?? response.status),
-        `获取小程序 access_token 失败: ${data.errmsg ?? response.statusText}`,
-      );
-    }
-    const ttl = Math.max(60, Number(data.expires_in ?? 7200) - 200);
-    await cacheSet(cacheKey, data.access_token, this.env, ttl);
-    return data.access_token;
+  private fetchInviteCode(token: string, uid: number) {
+    return this.fetchUnlimitedCode(token, String(uid), 'pages/users/user_spread_user/index', '员工邀请');
   }
 
-  private async fetchInviteCode(
-    accessToken: string,
-    uid: number,
-  ): Promise<{ bytes: Uint8Array; contentType: string }> {
-    const url = new URL("https://api.weixin.qq.com/wxa/getwxacodeunlimit");
-    url.searchParams.set("access_token", accessToken);
-    const response = await this.fetcher(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        scene: String(uid),
-        page: "pages/users/user_spread_user/index",
-        check_path: true,
-        env_version: "release",
-        width: 430,
-      }),
-    });
-    const contentType = response.headers.get("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() ?? "";
-    if (contentType === "application/json" || contentType === "text/plain") {
-      const data = (await response.json()) as WechatErrorResponse;
-      throw new WechatMiniProgramApiError(
-        Number(data.errcode ?? response.status),
-        `生成小程序员工邀请码失败: ${data.errmsg ?? response.statusText}`,
-      );
+  private fetchPathCode(token: string, path: string, label: string) {
+    return this.fetchCode('getwxacode', token, { path, check_path: true, env_version: 'release', width: 430 }, label);
+  }
+
+  private fetchUnlimitedCode(token: string, scene: string, page: string, label: string) {
+    return this.fetchCode('getwxacodeunlimit', token, { scene, page, check_path: true, env_version: 'release', width: 430 }, label);
+  }
+
+  private async fetchCode(endpoint: 'getwxacode' | 'getwxacodeunlimit', token: string, body: Record<string, unknown>, label: string) {
+    const url = new URL(`https://api.weixin.qq.com/wxa/${endpoint}`); url.searchParams.set('access_token', token);
+    const response = await readLegacyShareProvider(this.fetcher, url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }, { json: 32 * 1024, image: MAX_CODE_BYTES, timeout: 8_000 });
+    const contentType = response.headers.get('Content-Type')?.split(';', 1)[0]?.trim().toLowerCase() ?? '';
+    if (contentType === 'application/json' || contentType === 'text/plain') {
+      const data = await response.json() as WechatErrorResponse;
+      const code = Number(data.errcode ?? response.status);
+      throw new WechatMiniProgramApiError(Number.isSafeInteger(code) ? code : response.status, `生成小程序${label}码失败`);
     }
-    const contentLength = Number(response.headers.get("Content-Length") ?? 0);
-    if (!response.ok || (contentLength > 0 && contentLength > MAX_CODE_BYTES)) {
-      throw new ValidateException("微信返回的小程序码无效或过大");
-    }
+    if (!response.ok) throw new ValidateException(`微信返回的小程序${label}码无效`);
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (!bytes.byteLength || bytes.byteLength > MAX_CODE_BYTES) {
-      throw new ValidateException("微信返回的小程序码无效或过大");
-    }
-    return {
-      bytes,
-      contentType: contentType.startsWith("image/") ? contentType : "image/png",
-    };
-  }
-
-  private async fetchMembershipActivationCode(
-    accessToken: string,
-  ): Promise<{ bytes: Uint8Array; contentType: string }> {
-    return this.fetchPathCode(accessToken, "pages/annex/vip_active/index", "会员激活");
-  }
-
-  private async fetchPathCode(
-    accessToken: string,
-    path: string,
-    label: string,
-  ): Promise<{ bytes: Uint8Array; contentType: string }> {
-    const url = new URL("https://api.weixin.qq.com/wxa/getwxacode");
-    url.searchParams.set("access_token", accessToken);
-    const response = await this.fetcher(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path,
-        check_path: true,
-        env_version: "release",
-        width: 430,
-      }),
-    });
-    const contentType = response.headers.get("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() ?? "";
-    if (contentType === "application/json" || contentType === "text/plain") {
-      const data = (await response.json()) as WechatErrorResponse;
-      throw new WechatMiniProgramApiError(
-        Number(data.errcode ?? response.status),
-        `生成小程序${label}码失败: ${data.errmsg ?? response.statusText}`,
-      );
-    }
-    const contentLength = Number(response.headers.get("Content-Length") ?? 0);
-    if (!response.ok || (contentLength > 0 && contentLength > MAX_CODE_BYTES)) {
-      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
-    }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (!bytes.byteLength || bytes.byteLength > MAX_CODE_BYTES) {
-      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
-    }
-    return {
-      bytes,
-      contentType: contentType.startsWith("image/") ? contentType : "image/png",
-    };
-  }
-
-  private async fetchUnlimitedCode(
-    accessToken: string,
-    scene: string,
-    page: string,
-    label: string,
-  ): Promise<{ bytes: Uint8Array; contentType: string }> {
-    const url = new URL("https://api.weixin.qq.com/wxa/getwxacodeunlimit");
-    url.searchParams.set("access_token", accessToken);
-    const response = await this.fetcher(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scene, page, check_path: true, env_version: "release", width: 430 }),
-    });
-    const contentType = response.headers.get("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() ?? "";
-    if (contentType === "application/json" || contentType === "text/plain") {
-      const data = (await response.json()) as WechatErrorResponse;
-      throw new WechatMiniProgramApiError(
-        Number(data.errcode ?? response.status),
-        `生成小程序${label}码失败: ${data.errmsg ?? response.statusText}`,
-      );
-    }
-    const contentLength = Number(response.headers.get("Content-Length") ?? 0);
-    if (!response.ok || (contentLength > 0 && contentLength > MAX_CODE_BYTES)) {
-      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
-    }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (!bytes.byteLength || bytes.byteLength > MAX_CODE_BYTES) {
-      throw new ValidateException(`微信返回的小程序${label}码无效或过大`);
-    }
-    return { bytes, contentType: contentType.startsWith("image/") ? contentType : "image/png" };
+    legacyShareDataImage(`data:${contentType};base64,${bytesToBase64(bytes)}`);
+    return { bytes, contentType };
   }
 
   private imageResponse(bytes: Uint8Array, contentType: string): Response {
-    return new Response(bytes, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Content-Length": String(bytes.byteLength),
-        "Cache-Control": "private, max-age=300",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
+    return new Response(bytes, { status: 200, headers: { 'Content-Type': contentType, 'Content-Length': String(bytes.byteLength),
+      'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' } });
   }
 }

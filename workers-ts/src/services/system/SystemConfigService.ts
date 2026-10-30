@@ -1,3 +1,6 @@
+import { isWechatOpenConfigKey } from '../../../../view/common/wechatOpen';
+import { isWechatAppConfigKey } from '../../../../view/common/wechatApp';
+import { isPcBaseConfigKey } from '../../../../view/common/pcBase';
 /**
  * 系统配置 Service
  *
@@ -13,6 +16,10 @@ import { isCityCredentialKey } from '@/services/delivery/CityDeliverySettingsRes
 import { ValidateException } from '@/utils/errors';
 
 const CACHE_TTL = 30 * 60; // 30 分钟
+// Official-account credentials can now be rotated by the dedicated author.
+// Neither an old KV hit nor a delayed cache fill may select a previous account,
+// and replacement secrets must not be copied into a general configuration KV.
+const freshOfficialCredential = (name: string) => name === 'wechat_appid' || name === 'wechat_appsecret';
 
 /** Narrow binding contract used by config readers and integration harnesses. */
 export interface SystemConfigEnv {
@@ -34,7 +41,11 @@ export class SystemConfigService {
    * 优先读 KV 缓存, 未命中读 DB 并回填。
    */
   async get(menuName: string): Promise<string> {
+    if (isWechatAppConfigKey(menuName)) throw new ValidateException('原生App配置只能由专用新鲜快照读取');
+    if (isPcBaseConfigKey(menuName)) throw new ValidateException('PC配置只能由新鲜快照解析器读取');
+    if (isWechatOpenConfigKey(menuName)) throw new ValidateException('开放平台配置只能由专用运行时解析器读取');
     if (isCityCredentialKey(menuName)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
+    if (freshOfficialCredential(menuName)) return normalizeConfigScalar(await this.container.systemConfigDao.getValue(menuName));
     const cacheKey = `cfg_${menuName}`;
 
     // KV 命中
@@ -56,9 +67,12 @@ export class SystemConfigService {
 
     // 先批量查 KV (KV 不支持批量 get, 循环; 但 KV 读便宜)
     const names = [...new Set(menuNames)];
+    if (names.some(isWechatAppConfigKey)) throw new ValidateException('原生App配置只能由专用新鲜快照读取');
+    if (names.some(isPcBaseConfigKey)) throw new ValidateException('PC配置只能由新鲜快照解析器读取');
+    if (names.some(isWechatOpenConfigKey)) throw new ValidateException('开放平台配置只能由专用运行时解析器读取');
     if (names.some(isCityCredentialKey)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
     const cachedValues = await Promise.all(
-      names.map((name) => this.env.CONFIG_KV.get(`cfg_${name}`)),
+      names.map((name) => freshOfficialCredential(name) ? Promise.resolve(null) : this.env.CONFIG_KV.get(`cfg_${name}`)),
     );
     const miss: string[] = [];
     for (const [index, name] of names.entries()) {
@@ -76,7 +90,7 @@ export class SystemConfigService {
       for (const name of miss) {
         const v = normalizeConfigScalar(values[name]);
         out[name] = v;
-        writes.push(this.env.CONFIG_KV.put(`cfg_${name}`, v, { expirationTtl: CACHE_TTL }));
+        if (!freshOfficialCredential(name)) writes.push(this.env.CONFIG_KV.put(`cfg_${name}`, v, { expirationTtl: CACHE_TTL }));
       }
       await Promise.all(writes);
     }

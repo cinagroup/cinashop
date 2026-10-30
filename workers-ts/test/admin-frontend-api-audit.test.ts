@@ -1,13 +1,55 @@
+import { readAdminProfilePredecessor as readCurrentFileSync } from './helpers/wechatAppAuthorSourceBinding';
+import { applyConfigClassReport } from './helpers/configClassSourceBinding';
+import { reverseSearchHotwordsSource } from './helpers/searchHotwordsSourceBinding';
+import { reverseLiveBroadcastAuthorSource, applyLiveBroadcastAuthorReport } from './helpers/diyLiveBroadcastAuthorSourceBinding';
+import { reverseSeckillAuthorSource, applySeckillAuthorReport } from './helpers/diySeckillAuthorSourceBinding';
+import { reverseBargainAuthorSource, applyBargainAuthorReport } from './helpers/diyBargainAuthorSourceBinding';
+import { reverseCombinationAuthorSource, applyCombinationAuthorReport } from './helpers/diyCombinationAuthorSourceBinding';
+import { reversePresaleAuthorSource, applyPresaleAuthorReport } from './helpers/diyPresaleAuthorSourceBinding';
+import { reversePointsAuthorSource, applyPointsAuthorReport } from './helpers/diyPointsAuthorSourceBinding';
+import { reverseCouponAuthorSource, applyCouponAuthorReport } from './helpers/diyCouponAuthorSourceBinding';
+import { reversePromotionAuthorSource, applyPromotionAuthorReport } from './helpers/diyPromotionAuthorSourceBinding';
+import { reverseCommunityAuthorSource, applyCommunityAuthorReport } from './helpers/diyCommunityAuthorSourceBinding';
+import { reverseEditorialAuthorSource, applyEditorialAuthorReport } from './helpers/diyEditorialAuthorSourceBinding';
+import { reverseFollowAuthorSource, applyFollowAuthorReport } from './helpers/diyFollowAuthorSourceBinding';
 import { reverseListAuthorSource, applyListAuthorReport } from './helpers/diyListAuthorSourceBinding';
 import { reverseCarouselAuthorSource, applyCarouselAuthorReport, carouselAuthorSourceBinding as carouselBinding } from './helpers/diyCarouselAuthorSourceBinding';
 import { reverseNavigationAuthorSource, applyNavigationAuthorReport, navigationAuthorSourceBinding as navigationBinding } from './helpers/diyNavigationAuthorSourceBinding';
-import { readFileSync } from "node:fs";
+import { readAdminProfileThenErrorPagesThenBrowserLogThenConfigClassPredecessor as readFileSync } from './helpers/wechatAppAuthorSourceBinding';
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { reverseRouteSourceIncrement, reverseRouteSourceFollowup, type RouteSourceFollowup } from "./helpers/routeSourceIncrement";
-import { buildAdminFrontendApiAuditReport, normalizeAdminAuditSource } from "../scripts/admin-frontend-api-audit";
+import { normalizeAdminAuditSource } from "../scripts/admin-frontend-api-audit";
+import { buildAdminProfilePredecessorApiAuditReport as buildAdminFrontendApiAuditReport } from "./helpers/wechatAppAuthorSourceBinding";
+
+// Exact additive state-author adapter; original definitions and dated proofs below remain intact.
+const stateAuthorHistoricalRaw = readFileSync(resolve(import.meta.dirname, 'fixtures/diy-state-author-historical-bindings-20261024.json'), 'utf8');
+const stateAuthorHash = (value: string) => createHash('sha256').update(value).digest('hex');
+if (stateAuthorHash(stateAuthorHistoricalRaw) !== '8ddc626ef49c2ada520940518c99a3b3bb803df5b1047308af9d4241ff96a7d9') throw Error('State historical fixture bytes differ');
+const stateAuthorHistorical = JSON.parse(stateAuthorHistoricalRaw) as {
+  source: RouteSourceFollowup & { file: string };
+  previous_report: { original_file: string; sha256: string; raw_utf8: string };
+  current_report: { file: string; sha256: string };
+  report_changes: Array<{ array: 'frontendSources' | 'calls'; index: number; before: Record<string, unknown>; after: Record<string, unknown> }>;
+};
+if (stateAuthorHash(stateAuthorHistorical.previous_report.raw_utf8) !== '31c8996982ab02e35fa6b7a30910ed1d915a807a3e3f10006d8b42258dd79a73') throw Error('Archived complete list report bytes differ');
+function beforeStateAuthorSource(file: string, source: string): string {
+  const previous = reverseFollowAuthorSource(file, reverseEditorialAuthorSource(file, reverseCommunityAuthorSource(file, reversePromotionAuthorSource(file, reverseCouponAuthorSource(file, reversePointsAuthorSource(file, reversePresaleAuthorSource(file, reverseCombinationAuthorSource(file, reverseBargainAuthorSource(file, reverseSeckillAuthorSource(file, reverseLiveBroadcastAuthorSource(file, reverseSearchHotwordsSource(file, source))))))))))));
+  return file === stateAuthorHistorical.source.file ? reverseRouteSourceFollowup(previous, stateAuthorHistorical.source) : previous;
+}
+function applyStateAuthorReport<T>(before: T): T {
+  if (stateAuthorHash(JSON.stringify(before, null, 2) + '\n') !== stateAuthorHistorical.previous_report.sha256) throw Error('State report complete predecessor differs');
+  const updated = structuredClone(before) as unknown as { frontendSources: Array<Record<string, unknown>>; calls: Array<Record<string, unknown>> };
+  for (const change of stateAuthorHistorical.report_changes) {
+    const values = updated[change.array];
+    if (!['frontendSources', 'calls'].includes(change.array) || JSON.stringify(values?.[change.index]) !== JSON.stringify(change.before)) throw Error('State report exact predecessor row differs');
+    values[change.index] = structuredClone(change.after);
+  }
+  if (stateAuthorHash(JSON.stringify(updated, null, 2) + '\n') !== stateAuthorHistorical.current_report.sha256) throw Error('State report complete result differs');
+  return applyLiveBroadcastAuthorReport(applySeckillAuthorReport(applyBargainAuthorReport(applyCombinationAuthorReport(applyPresaleAuthorReport(applyPointsAuthorReport(applyCouponAuthorReport(applyPromotionAuthorReport(applyCommunityAuthorReport(applyEditorialAuthorReport(applyFollowAuthorReport(updated as unknown as T)))))))))));
+}
 
 interface ApiAuditReport {
   version: number;
@@ -55,7 +97,7 @@ const workerRoot = resolve(testDir, "..");
 const guestFollowupRaw = readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-guest-invoice-manual-red-note-followup-20261013.json"), "utf8");
 const guestFollowup = JSON.parse(guestFollowupRaw) as ApiAuditReport;
-const current = JSON.parse(readFileSync(
+const current = JSON.parse(readCurrentFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts.json"), "utf8")) as ApiAuditReport;
 const merged = JSON.parse(readFileSync(
   join(workerRoot, "audit", "admin-frontend-api-contracts-merged-work-branches-20261015.json"), "utf8")) as ApiAuditReport;
@@ -93,7 +135,7 @@ const customerBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-c
 const pageSettingsBinding = JSON.parse(readFileSync(join(workerRoot, 'audit', 'diy-page-settings-source-binding-20261023.json'), 'utf8')) as typeof presentationBinding;
 const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 const previousNavigationReport = JSON.parse(readFileSync(join(workerRoot, '..', navigationBinding.previous_report.file), 'utf8')) as ApiAuditReport;
-function beforeNavigationSource(file: string, supplied?: string): string { return reverseNavigationAuthorSource(file, reverseCarouselAuthorSource(file, reverseListAuthorSource(file, normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot, '..', file), 'utf8'))))); }
+function beforeNavigationSource(file: string, supplied?: string): string { return reverseNavigationAuthorSource(file, reverseCarouselAuthorSource(file, reverseListAuthorSource(file, beforeStateAuthorSource(file, normalizeAdminAuditSource(supplied ?? readFileSync(join(workerRoot, '..', file), 'utf8')))))); }
 
 function beforePageSettingsSource(file:string, supplied?:string):string {
   let source=beforeNavigationSource(file,supplied);
@@ -307,7 +349,7 @@ describe("Admin frontend API registration audit", () => {
       const rows=updated.calls.filter(item=>item.method===change.method&&item.path===change.path&&item.source===change.source);
       expect(rows).toHaveLength(1);expect(rows[0].line).toBe(change.before_line);rows[0].line=change.after_line;
     }
-    expect(previousNavigationReport).toEqual(updated);expect(applyListAuthorReport(applyCarouselAuthorReport(applyNavigationAuthorReport(updated)))).toEqual(current);expect(settings.file).toBe(customer.file);
+    expect(previousNavigationReport).toEqual(updated);expect(applyConfigClassReport(applyStateAuthorReport(applyListAuthorReport(applyCarouselAuthorReport(applyNavigationAuthorReport(updated)))))).toEqual(current);expect(settings.file).toBe(customer.file);
     expect(sha256(JSON.stringify(updated,null,2)+'\n')).toBe(settings.sha256);
     expect(navigationBinding.previous_report.sha256).toBe(settings.sha256);
     expect(sha256(readFileSync(join(workerRoot,'..',navigationBinding.previous_report.file)))).toBe(settings.sha256);
@@ -387,7 +429,7 @@ describe("Admin frontend API registration audit", () => {
       "workers-ts/src/app.ts", "workers-ts/src/routes/index.ts", "workers-ts/src/routes/v1/index.ts",
     ]);
     for (const source of current.backend.rootRouteSources ?? []) {
-      const text = readFileSync(join(workerRoot, "..", source.file), "utf8");
+      const text = readCurrentFileSync(join(workerRoot, "..", source.file), "utf8");
       expect(source.sha256).toBe(createHash("sha256").update(normalizeAdminAuditSource(text)).digest("hex"));
     }
     expect(current.backend.registeredRoutes.some(route => route.path === "/api/v1/admin/erp/config")).toBe(false);

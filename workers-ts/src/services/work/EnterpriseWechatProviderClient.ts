@@ -1,4 +1,11 @@
 import type { Env } from "@/env";
+import {
+  copyCorpTagCreateRequest,
+  isCorpTagCreateResponse,
+  type CorpTagCreateRequest,
+} from "./EnterpriseWechatCorpTagProtocol";
+
+export type { CorpTagCreateRequest } from "./EnterpriseWechatCorpTagProtocol";
 
 const PROVIDER_ORIGIN = "https://qyapi.weixin.qq.com";
 const ACCESS_TOKEN_PATH = "/cgi-bin/gettoken";
@@ -22,6 +29,24 @@ const NOT_FOUND_PROVIDER_CODES: Readonly<Record<string, ReadonlySet<number>>> = 
 };
 
 type JsonRecord = Record<string, unknown>;
+
+const CORP_TAG_CREATE_OPERATION = "external_corp_tag_create";
+
+export function checkedCorpTagCreateRequest(value: unknown): CorpTagCreateRequest {
+  return copyCorpTagCreateRequest(value, () => {
+    throw new EnterpriseWechatProviderError("terminal", CORP_TAG_CREATE_OPERATION, -1, 0);
+  });
+}
+
+/** A success ACK is not a complete directory or an idempotency receipt. A
+ * malformed/partial ACK remains UNKNOWN and requires a fresh directory read. */
+export function checkedCorpTagCreateResponse(value: unknown, request: CorpTagCreateRequest): JsonRecord {
+  const expected = checkedCorpTagCreateRequest(request);
+  if (!isCorpTagCreateResponse(value, expected)) {
+    throw new EnterpriseWechatProviderError("unknown", CORP_TAG_CREATE_OPERATION, UNAVAILABLE_PROVIDER_CODE, 200);
+  }
+  return value;
+}
 
 export type EnterpriseWechatCredentialScope =
   | "company-jssdk"
@@ -290,7 +315,7 @@ const EMPLOYEE_IDENTITY: ProviderOperation = {
   maxResponseBytes: 16 * 1024,
 };
 
-/** Reusable, read-only Enterprise WeChat provider boundary for C2-C7 projections. */
+/** Existing C2-C7 reads and explicit journal-owned contact/directory writes. */
 export class EnterpriseWechatProviderClient {
   private readonly corpId: string;
   private readonly agentId: number;
@@ -415,6 +440,49 @@ export class EnterpriseWechatProviderClient {
         group_id: groupIds.map((id) => requiredIdentifier(id, "external_corp_tag_list")),
       },
     });
+  }
+
+  /** Unfiltered standard corporate directory, independent of C7 targeted reads.
+   * Both empty arrays are intentional; no strategy or pagination is inferred. */
+  async corpTagDirectory(): Promise<JsonRecord> {
+    return this.authorized({
+      name: "external_corp_tag_directory",
+      path: "/cgi-bin/externalcontact/get_corp_tag_list",
+      method: "POST",
+      scope: "external-contact",
+      maxResponseBytes: MAX_RESPONSE_BYTES,
+    }, { body: { tag_id: [], group_id: [] } });
+  }
+
+  /** One explicitly journaled directory creation. Never retry an ambiguous
+   * write: the caller may only reconcile it with corpTagDirectory(). */
+  async corpTagCreate(value: CorpTagCreateRequest): Promise<JsonRecord> {
+    const request = checkedCorpTagCreateRequest(value), body = JSON.stringify(request);
+    if (utf8Bytes(body) > MAX_REQUEST_BYTES) throw new EnterpriseWechatProviderError("terminal", CORP_TAG_CREATE_OPERATION, -1, 0);
+    let staleToken: string | undefined;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const credential = await this.accessToken("external-contact", CORP_TAG_CREATE_OPERATION, attempt > 0, staleToken);
+      const url = new URL("/cgi-bin/externalcontact/add_corp_tag", PROVIDER_ORIGIN);
+      url.searchParams.set("access_token", credential.token);
+      const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      let response: Response, data: JsonRecord;
+      try {
+        response = await this.fetcher(url, { method: "POST", redirect: "error", headers: { Accept: "application/json", "Content-Type": "application/json" }, body, signal: controller.signal });
+        // Any decode/size/stream failure after sending a write is UNKNOWN.
+        data = await readBoundedJson(response, CORP_TAG_CREATE_OPERATION, MAX_RESPONSE_BYTES);
+      } catch {
+        throw new EnterpriseWechatProviderError("unknown", CORP_TAG_CREATE_OPERATION, UNAVAILABLE_PROVIDER_CODE, 0);
+      } finally { clearTimeout(timeout); }
+      const code = providerCode(data);
+      if (response.ok && code === 0) return checkedCorpTagCreateResponse(data, request);
+      // An explicit rejected token is the only safe re-dispatch in this call.
+      if (attempt === 0 && response.ok && INVALID_ACCESS_TOKEN_CODES.has(code)) { staleToken = credential.token; continue; }
+      if (response.status === 408 || response.status === 425 || response.status >= 500 || code === UNAVAILABLE_PROVIDER_CODE) {
+        throw new EnterpriseWechatProviderError("unknown", CORP_TAG_CREATE_OPERATION, code, response.status);
+      }
+      throw responseFailure(CORP_TAG_CREATE_OPERATION, response, code);
+    }
+    throw new EnterpriseWechatProviderError("configuration", CORP_TAG_CREATE_OPERATION, -1, 0);
   }
 
   async strategyTagList(

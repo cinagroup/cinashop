@@ -1,0 +1,131 @@
+{
+  "schema": "cinashop.editorial-author.source-and-report-adapter.v1",
+  "boundary": "Exact news/hotspot/activeParty author increment applied after the existing state-author and follow-author layers. All prior source proofs, complete archives, hash literals and negative definitions remain intact. No new audited Axios call or registered route; explicit component media preview reuses the existing anonymous GET /api/diy/get_diy/:id.",
+  "source": {
+    "file": "view/admin-ts/src/pages/content/DiseList.vue",
+    "before_sha256": "b857013f5244b2dee169f4a90648350010a482a3384291de7553452cba7a533e",
+    "after_sha256": "f0408d7eefa7694e1ae9560e842bff45d1511ce3a0fc04234ad1c99b29f4a5d0",
+    "edits": [
+      {
+        "before_source": "",
+        "after_source": "        <el-form-item label=\"公告与活动\"><DiyEditorialEditor v-model=\"form.value\" :editor-key=\"`${editorIdentity}:${form.id}:${editorEpoch}`\" :page-id=\"form.id\" :page-published=\"persistedPublished\" :disabled=\"submitting || !formVisible || !sessionReady\" /></el-form-item>\n",
+        "after_line": 104
+      },
+      {
+        "before_source": "",
+        "after_source": "import DiyEditorialEditor from \"@/components/content/DiyEditorialEditor.vue\";\nimport { canonicalEditorialValue } from \"@/utils/diyEditorialEditor\";\n",
+        "after_line": 168
+      },
+      {
+        "before_source": "    return canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value)))))));\n",
+        "after_source": "    return canonicalEditorialValue(canonicalFollowValue(canonicalStateValue(canonicalCarouselValue(canonicalNavigationValue(canonicalCustomerServiceValue(canonicalPresentationValue(canonicalFooterValue(value))))))));\n",
+        "after_line": 302,
+        "before_line": 299
+      }
+    ]
+  },
+  "previous_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts-before-diy-editorial-author-20261024.json",
+    "sha256": "4269a2f18fa362ea40e2e1397b6fc5d89518b0407381987006bbfba741eaceec"
+  },
+  "current_report": {
+    "file": "workers-ts/audit/admin-frontend-api-contracts.json",
+    "sha256": "324aceac05ffc6a6d32c53bd92d34ca9b71b9103b517a178f1c878153fa0f21a"
+  },
+  "counts_unchanged": {
+    "callSites": 703,
+    "pathVariants": 741,
+    "registered": 741,
+    "executable": 741,
+    "controlledUnavailable": 0,
+    "unregistered": 0,
+    "unresolved": 0
+  },
+  "backend_unchanged": true,
+  "report_changes": [
+    {
+      "array": "frontendSources",
+      "index": 104,
+      "before": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "b857013f5244b2dee169f4a90648350010a482a3384291de7553452cba7a533e"
+      },
+      "after": {
+        "file": "view/admin-ts/src/pages/content/DiseList.vue",
+        "sha256": "f0408d7eefa7694e1ae9560e842bff45d1511ce3a0fc04234ad1c99b29f4a5d0"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 732,
+      "before": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 240,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "GET",
+        "path": "/dise/list",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 243,
+        "registered": true,
+        "matchedRoute": "/dise/list",
+        "matchedHandler": "AdminCrud.adminDiseList",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 733,
+      "before": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 356,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "POST",
+        "path": "/dise/save",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 359,
+        "registered": true,
+        "matchedRoute": "/dise/save",
+        "matchedHandler": "AdminCrud.adminDiseSave",
+        "availability": "executable"
+      }
+    },
+    {
+      "array": "calls",
+      "index": 734,
+      "before": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 379,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      },
+      "after": {
+        "method": "DELETE",
+        "path": "/dise/del/:param",
+        "source": "view/admin-ts/src/pages/content/DiseList.vue",
+        "line": 382,
+        "registered": true,
+        "matchedRoute": "/dise/del/:id",
+        "matchedHandler": "AdminCrud.adminDiseDel",
+        "availability": "executable"
+      }
+    }
+  ]
+}

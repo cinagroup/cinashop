@@ -1,6 +1,21 @@
 const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs'),R=require('./delivery-workbench-runtime.cjs');
 const query={scope_kind:'store',store_id:'3',delivery_id:'7'},start=async(options={},params=query)=>{const r=R.runtime(options);await r.start(params);return r;},writes=r=>r.calls.filter(call=>call.method==='POST'&&call.url.endsWith('/writeoff'));
-test('delivery registration preserves all original 104 pages and startup page',()=>{const current=JSON.parse(fs.readFileSync(path.join(R.root,'src/pages.json'))),before=JSON.parse(fs.readFileSync(path.resolve(R.root,'../../.cache/delivery-workbench-uniapp-20261003/before/view/uniapp-ts/src/pages.json')));assert.equal(before.pages.length,104);assert.equal(current.pages.length,108);assert.equal(current.pages[0].path,'pages/index/index');assert.equal(new Set(current.pages.map(row=>row.path)).size,108);for(const row of before.pages)assert.ok(current.pages.some(page=>page.path===row.path));});
+test('delivery registration preserves all original 104 pages and startup page',()=>{
+  // These two immutable complete ledgers preserve registered route names.
+  // The missing historical pages.json bytes are not reconstructed or claimed.
+  const ledger=(file,expected)=>{const raw=fs.readFileSync(path.resolve(R.root,'../../workers-ts/audit',file));assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),expected);return JSON.parse(raw.toString('utf8'));};
+  const original=ledger('uniapp-frontend-parity-merchant-management-followup-final6-20261003.json','0b541af003b35ee88513071dd15d3b028cfab1c63c1304b3625eb996a110e1de');
+  const delivery=ledger('uniapp-frontend-parity-delivery-workbench-followup-final-20261003.json','1ac819150086840a3ee58a7d0d64e92cd6aad8543d7876106f371f17f8e3bf12');
+  const paths=entry=>entry.currentThemeHosts.hosts.map(row=>row.route.replace(/^\//,'')),before=paths(original),after=paths(delivery);
+  assert.equal(original.counting.target.logicalManifestRouteRecords,104);assert.equal(before.length,104);assert.equal(new Set(before).size,104);assert.equal(before[0],'pages/index/index');
+  for(const platform of ['H5','MP-WEIXIN','APP-PLUS'])assert.equal(original.counting.target.platformActiveRouteRecords[platform],104);
+  assert.equal(after.length,108);assert.equal(new Set(after).size,108);for(const route of before)assert.ok(after.includes(route),route);
+  const added=['pages/delivery/index','pages/delivery/orderDetail','pages/delivery/scanning','pages/delivery/scanDetail'];
+  assert.deepEqual(after.filter(route=>!before.includes(route)).sort(),[...added].sort());
+  const current=JSON.parse(fs.readFileSync(path.join(R.root,'src/pages.json'),'utf8')),registered=current.pages.map(row=>row.path);
+  assert.ok(registered.length>=108);assert.equal(new Set(registered).size,registered.length);assert.equal(registered[0],'pages/index/index');
+  for(const route of [...before,...added])assert.ok(registered.includes(route),route);
+});
 test('anonymous sends no authenticated delivery request',async()=>{const r=await start({anonymous:true});try{assert.equal(r.calls.length,0);assert.match(r.page.controller.error.value,/登录/);}finally{r.stop();}});
 test('single or multiple identities require an explicit selection',async()=>{for(const contexts of [[R.scope()],[R.scope(),R.scope('platform',0,8)]]){const r=await start({contexts},{});try{assert.equal(r.calls.length,1);assert.equal(r.page.controller.selected.value,null);assert.equal(r.page.orders.value.length,0);r.page.controller.chooseScope({detail:{value:0}});await R.tick();assert.equal(r.page.orders.value.length,1);assert.ok(r.calls.slice(1).filter(call=>!call.url.endsWith('/context')).every(call=>call.data.store_id===3&&call.data.delivery_id===7&&call.data.scope_kind==='store'&&call.data.scope_key===R.hash));}finally{r.stop();}}});
 test('selected platform remains platform and never inherits store scope',async()=>{const r=await start({contexts:[R.scope('platform',0,8)]},{scope_kind:'platform',store_id:'0',delivery_id:'8'});try{assert.equal(r.page.controller.selected.value.store_id,0);assert.ok(r.calls.every(call=>call.data.store_id===0));assert.equal(r.page.statistics.value.send_price,'50.25');}finally{r.stop();}});
@@ -38,4 +53,23 @@ test('explicit abandon preserves original UUID and rejection is acknowledged sep
 test('failed durable storage write prevents submission instead of losing recovery body',async()=>{const r=await start();try{r.uni.setStorageSync=()=>{throw Error('quota exceeded');};await assert.rejects(r.page.controller.execute(R.operation(),{available:true,reason:''}),/quota/);assert.equal(writes(r).length,0);}finally{r.stop();}});
 test('window deadline clears selected quantity and triggers a real read without allocating a write',async()=>{const r=await start({component:'pages/delivery/scanDetail.vue'},{...query,orderId:'101'}),preview=R.preview();preview.cart_info[0].write_end=Math.floor(Date.now()/1000)+60;const mounted=R.mountedPanel(r,{controller:r.page.controller,preview,freshRequired:false});try{mounted.panel.toggle(preview.cart_info[0]);assert.equal(mounted.panel.total.value,1);mounted.panel.clock.value=preview.cart_info[0].write_end+1;assert.equal(mounted.panel.total.value,0);assert.ok(mounted.events.some(event=>event[0]==='expired'));const before=r.calls.filter(call=>call.url.endsWith('/writeoff/info')).length;r.page.windowChanged();await R.tick();assert.equal(r.calls.filter(call=>call.url.endsWith('/writeoff/info')).length,before+1);assert.equal(writes(r).length,0);}finally{mounted.stop();r.stop();}});
 test('legacy requested delivery skips platform-only operator profile and enters scoped scanner',async()=>{const r=await start({component:'pages/operator/writeoff.vue'},{role:'delivery',code:'001234567890'});try{assert.equal(r.calls.length,0);assert.deepEqual(r.navigations,['/pages/delivery/scanning']);assert.equal(r.page.previewOrder.value,null);await r.page.preview();await r.page.execute();r.page.scan();assert.equal(r.calls.length,0);assert.ok(r.navigations.every(url=>url==='/pages/delivery/scanning'));}finally{r.stop();}});
-test('legacy staff branch retains genuine staff API while late confirmation cannot execute delivery legacy body',async()=>{let confirm;const r=await start({component:'pages/operator/writeoff.vue',send(call,p){if(p==='/order/writeoff_operator_profile')return{data:{can_writeoff:true,staff_stores:[{id:1,store_id:3,store_name:'门店3',identity_conflict:false}],delivery:null,delivery_identity_conflict:false}};if(p==='/store/order/writeoff_info')return{data:{order_id:'ORDER_101',real_name:'客户',user_phone:'123',cart_info:[{id:1,write_times:3,write_surplus_times:3,cart_info:{productInfo:{store_name:'商品'}}}]}};}},{role:'staff'});try{r.page.code.value='001234567890';await r.page.preview();assert.ok(r.calls.some(call=>call.url.endsWith('/store/order/writeoff_info')));r.uni.showModal=call=>{confirm=()=>call.success({confirm:true});};const task=r.page.execute();await R.tick();r.page.selectRole('delivery');confirm();await task;assert.ok(!r.calls.some(call=>call.url.endsWith('/delivery/order/writeoff')||call.url.endsWith('/store/order/writeoff')));assert.equal(r.navigations.at(-1),'/pages/delivery/scanning');}finally{r.stop();}});
+test('legacy staff branch retains genuine staff API while late confirmation cannot execute delivery legacy body',async()=>{
+  let confirm;
+  const r=await start({component:'pages/operator/writeoff.vue',send(call,p){
+    if(p==='/store/operator/profile')return{data:{can_writeoff:true,staff_stores:[{id:1,store_id:3,store_name:'门店3',identity_conflict:false}],delivery:{id:7,nickname:'平台配送'},delivery_identity_conflict:false}};
+    if(p==='/store/order/writeoff_info')return{data:{id:101,order_id:'ORDER_101',store_id:3,shipping_type:2,delivery_type:'',actor_kind:'staff',real_name:'客户',user_phone:'138****8000',status:0,total_num:3,cart_info:[{id:1,cart_id:'cart-1',product_id:7,product_type:0,write_times:3,write_surplus_times:3,is_writeoff:0,write_start:0,write_end:0,cart_info:{productInfo:{store_name:'商品'}}}]}};
+  }},{role:'staff'});
+  try{
+    assert.ok(r.calls.some(call=>call.method==='GET'&&call.url.endsWith('/store/operator/profile')));
+    assert.equal(r.page.profile.value.can_writeoff,true);assert.equal(r.page.role.value,'staff');
+    r.page.code.value='001234567890';await r.page.preview();
+    const info=r.calls.find(call=>call.url.endsWith('/store/order/writeoff_info'));assert.ok(info);assert.equal(info.method,'POST');assert.deepEqual(info.data,{code:'001234567890'});
+    assert.equal(r.page.previewOrder.value.id,101);assert.equal(r.page.previewOrder.value.actor_kind,'staff');assert.equal(r.page.selectedQuantity.value,3);
+    r.uni.showModal=call=>{confirm=()=>call.success({confirm:true});};
+    const task=r.page.execute();await R.tick();assert.equal(typeof confirm,'function');assert.equal(r.page.confirming.value,true);assert.deepEqual(writes(r),[]);
+    r.page.selectRole('delivery');assert.equal(r.navigations.at(-1),'/pages/delivery/scanning');
+    confirm();await task;
+    assert.ok(!r.calls.some(call=>call.method==='POST'&&/\/(?:writeoff|member_writeoff)$/.test(call.url)));
+    assert.equal(r.page.previewOrder.value,null);assert.equal(r.navigations.at(-1),'/pages/delivery/scanning');
+  }finally{r.stop();}
+});

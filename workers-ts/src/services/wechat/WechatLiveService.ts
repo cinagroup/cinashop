@@ -11,7 +11,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
-import type { Env, OrderMessage, ScheduledMaintenanceMessage } from "@/env";
+import type { Env, ScheduledMaintenanceMessage } from "@/env";
 import type { Container, DbClient } from "@/lib/di";
 import { withTx } from "@/lib/di";
 import {
@@ -22,8 +22,8 @@ import {
 } from "@/models/schema";
 import { systemLog } from "@/models/schema/admin";
 import { normalizePublishedArticleMediaReference } from "@/services/content/ArticleContentPolicy";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
-import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
+import { getRoutineAccessToken, invalidateRoutineAccessToken } from "./RoutineAccessTokenService";
+import { readRoutineCredentialsIfConfigured, withRoutineCredentials, type RoutineCredentials } from "./RoutineRuntimeConfig";
 import { ValidateException } from "@/utils/errors";
 
 const INVALID_TOKEN_CODES = new Set([40001, 40014, 42001]);
@@ -306,24 +306,29 @@ async function readBoundedJson(response: Response): Promise<JsonRecord> {
 }
 
 class WechatLiveApiClient {
-  private configPromise?: Promise<{ appId: string; appSecret: string }>;
-
   constructor(
     private readonly container: Container,
     private readonly env: Env,
     private readonly fetcher: typeof fetch,
   ) {}
 
-  async configured(): Promise<boolean> {
-    const config = await this.config();
-    return Boolean(config.appId && config.appSecret);
+  async credentials(): Promise<RoutineCredentials | null> {
+    const credentials = await readRoutineCredentialsIfConfigured(this.container, this.env);
+    return credentials ? Object.freeze(credentials) : null;
   }
 
-  async rooms(start: number, limit: number): Promise<RemoteLiveRoomPage> {
+  async assertCurrent(credentials: RoutineCredentials): Promise<void> {
+    await withRoutineCredentials(this.container, this.env, credentials.stamp, async (_bound, current) => {
+      if (current.appId !== credentials.appId || current.secret !== credentials.secret)
+        throw new ValidateException('小程序微信配置已变化，请重新授权');
+    });
+  }
+
+  async rooms(start: number, limit: number, credentials: RoutineCredentials): Promise<RemoteLiveRoomPage> {
     const data = await this.request("wxa/business/getliveinfo", {
       method: "POST",
       body: { start, limit },
-    });
+    }, credentials);
     const raw = Array.isArray(data.room_info) ? data.room_info : [];
     const rooms = raw.flatMap((value): RemoteLiveRoom[] => {
       if (!isRecord(value)) return [];
@@ -344,21 +349,21 @@ class WechatLiveApiClient {
     return { rooms, rawCount: raw.length, total: total >= 0 ? total : null };
   }
 
-  async playbacks(roomId: number, start: number, limit: number): Promise<JsonRecord> {
+  async playbacks(roomId: number, start: number, limit: number, credentials: RoutineCredentials): Promise<JsonRecord> {
     return this.request("wxa/business/getliveinfo", {
       method: "POST",
       body: { action: "get_replay", room_id: roomId, start, limit },
-    });
+    }, credentials);
   }
 
-  async goodsStatuses(goodsIds: number[]): Promise<RemoteLiveGoodsStatus[]> {
+  async goodsStatuses(goodsIds: number[], credentials: RoutineCredentials): Promise<RemoteLiveGoodsStatus[]> {
     if (!goodsIds.length) return [];
     const query = new URLSearchParams();
     for (const goodsId of goodsIds) query.append("goods_ids[]", String(goodsId));
     const data = await this.request("wxa/business/getgoodswarehouse", {
       method: "GET",
       query,
-    });
+    }, credentials);
     const raw = Array.isArray(data.goods)
       ? data.goods
       : Array.isArray(data.goods_list)
@@ -373,7 +378,7 @@ class WechatLiveApiClient {
     });
   }
 
-  async anchors(offset: number, limit: number, keyword = ""): Promise<RemoteLiveAnchorPage> {
+  async anchors(offset: number, limit: number, keyword: string, credentials: RoutineCredentials): Promise<RemoteLiveAnchorPage> {
     const query = new URLSearchParams({
       role: "2",
       offset: String(Math.max(0, Math.trunc(offset))),
@@ -383,7 +388,7 @@ class WechatLiveApiClient {
     const data = await this.request("wxaapi/broadcast/role/getrolelist", {
       method: "GET",
       query,
-    });
+    }, credentials);
     const raw = Array.isArray(data.list) ? data.list : [];
     const anchors = raw.flatMap((value): RemoteLiveAnchor[] => {
       if (!isRecord(value)) return [];
@@ -399,74 +404,30 @@ class WechatLiveApiClient {
     return { anchors, rawCount: raw.length };
   }
 
-  async hasAnchorRole(wechat: string): Promise<boolean> {
-    const page = await this.anchors(0, ANCHOR_SYNC_PAGE_SIZE, wechat);
+  async hasAnchorRole(wechat: string, credentials: RoutineCredentials): Promise<boolean> {
+    const page = await this.anchors(0, ANCHOR_SYNC_PAGE_SIZE, wechat, credentials);
     return page.anchors.some((anchor) => anchor.username === wechat);
-  }
-
-  private async config(): Promise<{ appId: string; appSecret: string }> {
-    this.configPromise ??= (async () => {
-      const values = await new SystemConfigService(this.container, this.env).getMany([
-        "routine_appId",
-        "routine_appsecret",
-      ]);
-      return {
-        appId: values.routine_appId?.trim() ?? "",
-        appSecret: values.routine_appsecret?.trim() ?? "",
-      };
-    })();
-    return this.configPromise;
   }
 
   private async request(
     path: string,
     options: { method: "GET" | "POST"; body?: JsonRecord; query?: URLSearchParams },
+    credentials: RoutineCredentials,
   ): Promise<JsonRecord> {
     if (!/^[a-z0-9_/-]+$/i.test(path)) throw new Error("Invalid WeChat API path");
-    const { appId, appSecret } = await this.config();
-    if (!appId || !appSecret) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
-    let token = await this.accessToken(appId, appSecret);
+    let token = await getRoutineAccessToken(this.container, this.env, credentials, { fetcher: this.fetcher });
+    let data: JsonRecord;
     try {
-      return await this.requestWithToken(path, token, options);
+      data = await this.requestWithToken(path, token, options);
     } catch (error) {
       if (!(error instanceof WechatLiveApiError) || !INVALID_TOKEN_CODES.has(error.code)) throw error;
-      await cacheDelete(`routine_access_token:${appId}`, this.env);
-      token = await this.accessToken(appId, appSecret, true);
-      return this.requestWithToken(path, token, options);
+      await this.assertCurrent(credentials);
+      await invalidateRoutineAccessToken(this.env, credentials);
+      token = await getRoutineAccessToken(this.container, this.env, credentials, { fetcher: this.fetcher, forceRefresh: true });
+      data = await this.requestWithToken(path, token, options);
     }
-  }
-
-  private async accessToken(appId: string, appSecret: string, force = false): Promise<string> {
-    const cacheKey = `routine_access_token:${appId}`;
-    if (!force) {
-      const cached = await cacheGet<string>(cacheKey, this.env);
-      if (cached) return cached;
-    }
-    const url = new URL("https://api.weixin.qq.com/cgi-bin/token");
-    url.search = new URLSearchParams({
-      grant_type: "client_credential",
-      appid: appId,
-      secret: appSecret,
-    }).toString();
-    const response = await this.fetcher(url, {
-      method: "GET",
-      signal: AbortSignal.timeout(WECHAT_FETCH_TIMEOUT_MS),
-    });
-    const data = await readBoundedJson(response);
-    const token = typeof data.access_token === "string" ? data.access_token : "";
-    if (!response.ok || !token) {
-      throw new WechatLiveApiError(
-        safeInteger(data.errcode, response.status),
-        `获取小程序 access_token 失败: ${boundedString(data.errmsg, 200) || response.statusText}`,
-      );
-    }
-    await cacheSet(
-      cacheKey,
-      token,
-      this.env,
-      Math.max(60, safeInteger(data.expires_in, 7200) - 200),
-    );
-    return token;
+    await this.assertCurrent(credentials);
+    return data;
   }
 
   private async requestWithToken(
@@ -604,7 +565,9 @@ export class WechatLiveService {
     if (!rows[0]) throw new ValidateException("直播间不存在");
     if (rows.length > 1) throw new ValidateException("直播间 ID 在源复合主键下不唯一");
     if (rows[0].roomId <= 0) throw new ValidateException("直播间尚未关联微信 room_id");
-    const data = await this.remote.playbacks(rows[0].roomId, (page - 1) * limit, limit);
+    const credentials = await this.source();
+    if (!credentials) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
+    const data = await this.remote.playbacks(rows[0].roomId, (page - 1) * limit, limit, credentials);
     return {
       list: Array.isArray(data.live_replay) ? data.live_replay : [],
       total: safeInteger(data.total),
@@ -838,10 +801,12 @@ export class WechatLiveService {
 
   async saveAnchor(rawInput: Record<string, unknown>, actor: AdminLiveActor) {
     const input = normalizeAdminLiveAnchorInput(rawInput);
-    if (!(await this.remote.hasAnchorRole(input.wechat))) {
+    const credentials = await this.source();
+    if (!credentials) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
+    if (!(await this.remote.hasAnchorRole(input.wechat, credentials))) {
       throw new ValidateException("该微信号尚未通过小程序主播身份认证");
     }
-    return withTx(this.container, async (tx) => {
+    return withRoutineCredentials(this.container, this.env, credentials.stamp, async ({ db: tx }) => {
       await configureAdminWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
       let id = input.id;
@@ -970,32 +935,49 @@ export class WechatLiveService {
   }
 
   async enqueueSync(scheduledAt = Date.now()): Promise<{ run_id: string; jobs: WechatLiveSyncJob[] }> {
-    if (!(await this.remote.configured())) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
+    const credentials = await this.source();
+    if (!credentials) throw new ValidateException("小程序 AppID 或 AppSecret 未配置");
+    return this.enqueueFromSource(scheduledAt, credentials);
+  }
+
+  /** A dispatch starts a new current-source request; it never adopts an old
+   * page's remote result. Cron itself remains entirely off the database. */
+  async dispatchSync(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
+    const credentials = await this.source();
+    if (!credentials) return { event: 'wechat_live_sync_dispatch_disabled', job: message.job, runId: message.runId };
+    const result = await this.enqueueFromSource(message.scheduledAt, credentials);
+    return { event: 'wechat_live_sync_dispatched', job: message.job, runId: message.runId, ...result };
+  }
+
+  private async enqueueFromSource(scheduledAt: number, credentials: RoutineCredentials): Promise<{ run_id: string; jobs: WechatLiveSyncJob[] }> {
     const normalized = Math.max(1, Math.trunc(scheduledAt));
     const runId = `scheduled:${normalized}`;
     const jobs: WechatLiveSyncJob[] = ["live_room_sync", "live_goods_sync", "live_anchor_sync"];
-    const messages: OrderMessage[] = jobs.map((job) => ({
+    const messages: ScheduledMaintenanceMessage[] = jobs.map((job) => ({
       action: "runScheduledMaintenance",
       job,
       runId,
       scheduledAt: normalized,
       cursor: 0,
       threshold: null,
+      routineStamp: credentials.stamp,
     }));
     await this.env.ORDER_QUEUE.sendBatch(
       messages.map((body) => ({ body, contentType: "json" as const })),
     );
+    await this.remote.assertCurrent(credentials);
     return { run_id: runId, jobs };
   }
 
   async syncRooms(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
-    if (!(await this.remote.configured())) {
-      return { event: "wechat_live_room_sync_disabled", job: message.job, runId: message.runId };
-    }
-    const remotePage = await this.remote.rooms(message.cursor, ROOM_SYNC_PAGE_SIZE);
+    return this.runSync(message, 'room', credentials => this.syncRoomsFromSource(message, credentials));
+  }
+
+  private async syncRoomsFromSource(message: ScheduledMaintenanceMessage, credentials: RoutineCredentials): Promise<Record<string, unknown>> {
+    const remotePage = await this.remote.rooms(message.cursor, ROOM_SYNC_PAGE_SIZE, credentials);
     let inserted = 0;
     let updated = 0;
-    await withTx(this.container, async (tx) => {
+    await withRoutineCredentials(this.container, this.env, credentials.stamp, async ({ db: tx }) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_SYNC_LOCK}, 1)`);
       for (const room of remotePage.rooms) {
         const changed = await tx
@@ -1033,7 +1015,7 @@ export class WechatLiveService {
     const hasMore = remotePage.total === null
       ? remotePage.rawCount === ROOM_SYNC_PAGE_SIZE
       : nextCursor < remotePage.total;
-    if (hasMore && remotePage.rawCount > 0) await this.sendContinuation(message, nextCursor);
+    if (hasMore && remotePage.rawCount > 0) await this.sendContinuation(message, nextCursor, credentials);
     return {
       event: "wechat_live_room_sync",
       job: message.job,
@@ -1050,9 +1032,10 @@ export class WechatLiveService {
   }
 
   async syncGoods(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
-    if (!(await this.remote.configured())) {
-      return { event: "wechat_live_goods_sync_disabled", job: message.job, runId: message.runId };
-    }
+    return this.runSync(message, 'goods', credentials => this.syncGoodsFromSource(message, credentials));
+  }
+
+  private async syncGoodsFromSource(message: ScheduledMaintenanceMessage, credentials: RoutineCredentials): Promise<Record<string, unknown>> {
     const candidates = await this.container.db
       .select({ id: liveGoods.id, goodsId: liveGoods.goodsId })
       .from(liveGoods)
@@ -1063,9 +1046,9 @@ export class WechatLiveService {
       ))
       .orderBy(asc(liveGoods.id))
       .limit(GOODS_SYNC_PAGE_SIZE);
-    const statuses = await this.remote.goodsStatuses(candidates.map((row) => row.goodsId));
+    const statuses = await this.remote.goodsStatuses(candidates.map((row) => row.goodsId), credentials);
     let updated = 0;
-    await withTx(this.container, async (tx) => {
+    await withRoutineCredentials(this.container, this.env, credentials.stamp, async ({ db: tx }) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_SYNC_LOCK}, 2)`);
       for (const status of statuses) {
         const changed = await tx
@@ -1078,7 +1061,7 @@ export class WechatLiveService {
     });
     const nextCursor = candidates.at(-1)?.id ?? message.cursor;
     const hasMore = candidates.length === GOODS_SYNC_PAGE_SIZE;
-    if (hasMore) await this.sendContinuation(message, nextCursor);
+    if (hasMore) await this.sendContinuation(message, nextCursor, credentials);
     return {
       event: "wechat_live_goods_sync",
       job: message.job,
@@ -1093,13 +1076,14 @@ export class WechatLiveService {
   }
 
   async syncAnchors(message: ScheduledMaintenanceMessage): Promise<Record<string, unknown>> {
-    if (!(await this.remote.configured())) {
-      return { event: "wechat_live_anchor_sync_disabled", job: message.job, runId: message.runId };
-    }
-    const remotePage = await this.remote.anchors(message.cursor, ANCHOR_SYNC_PAGE_SIZE);
+    return this.runSync(message, 'anchor', credentials => this.syncAnchorsFromSource(message, credentials));
+  }
+
+  private async syncAnchorsFromSource(message: ScheduledMaintenanceMessage, credentials: RoutineCredentials): Promise<Record<string, unknown>> {
+    const remotePage = await this.remote.anchors(message.cursor, ANCHOR_SYNC_PAGE_SIZE, "", credentials);
     let inserted = 0;
     let updated = 0;
-    await withTx(this.container, async (tx) => {
+    await withRoutineCredentials(this.container, this.env, credentials.stamp, async ({ db: tx }) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_SYNC_LOCK}, 3)`);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${LIVE_ADMIN_LOCK}, 1)`);
       for (const anchor of remotePage.anchors) {
@@ -1127,7 +1111,7 @@ export class WechatLiveService {
     });
     const nextCursor = message.cursor + remotePage.rawCount;
     const hasMore = remotePage.rawCount === ANCHOR_SYNC_PAGE_SIZE;
-    if (hasMore && remotePage.rawCount > 0) await this.sendContinuation(message, nextCursor);
+    if (hasMore && remotePage.rawCount > 0) await this.sendContinuation(message, nextCursor, credentials);
     return {
       event: "wechat_live_anchor_sync",
       job: message.job,
@@ -1153,10 +1137,38 @@ export class WechatLiveService {
   private async sendContinuation(
     message: ScheduledMaintenanceMessage,
     cursor: number,
+    credentials: RoutineCredentials,
   ): Promise<void> {
+    await this.remote.assertCurrent(credentials);
+    const continuation: ScheduledMaintenanceMessage = { ...message, cursor, routineStamp: credentials.stamp };
     await this.env.ORDER_QUEUE.send(
-      { ...message, cursor },
+      continuation,
       { contentType: "json" },
     );
+    await this.remote.assertCurrent(credentials);
+  }
+
+  private source(): Promise<RoutineCredentials | null> {
+    return this.remote.credentials();
+  }
+
+  private async runSync(message: ScheduledMaintenanceMessage, kind: 'room' | 'goods' | 'anchor',
+    apply: (credentials: RoutineCredentials) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
+    const ignored = (reason: 'source_missing' | 'source_changed') => ({ event: `wechat_live_${kind}_sync_ignored`,
+      job: message.job, runId: message.runId, ignored: true, reauthorization_required: true, reason });
+    // Returning an explicit terminal result lets the existing queue consumer
+    // ACK old/rotated work. It must never adopt today's pair on a retry.
+    if (typeof message.routineStamp !== 'string' || !/^[a-f0-9]{64}$/u.test(message.routineStamp)) return ignored('source_missing');
+    const credentials = await this.source();
+    if (!credentials) return { event: `wechat_live_${kind}_sync_disabled`, job: message.job, runId: message.runId };
+    if (credentials.stamp !== message.routineStamp) return ignored('source_changed');
+    try { return await apply(credentials); }
+    catch (error) {
+      // A page may have committed before a continuation send. That committed
+      // page stays valid for its own source; no retry may switch the next page.
+      const current = await this.source();
+      if (!current || current.stamp !== credentials.stamp) return ignored('source_changed');
+      throw error;
+    }
   }
 }

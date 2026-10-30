@@ -1,3 +1,6 @@
+import type {UserLabelSyncMessage} from './services/admin/AdminUserLabelSyncQueue';
+import type { CashierRuntimeConditionalBinding } from './migrations/cashierRuntimeConditionalBinding';
+import type { RoutinePaymentRuntimeTarget } from './migrations/routinePaymentRuntime';
 /**
  * Workers 环境绑定类型
  *
@@ -8,6 +11,18 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   /** Independently commissioned manager application LOGIN. Selected only
    * after complete UserJWT authentication; ordinary customer keeps HYPERDRIVE. */
   HYPERDRIVE_MANAGER?: WorkerBindings["HYPERDRIVE"];
+  /** Fixed Customer financial LOGIN; selected only after complete UserJWT
+   * authentication for /mobile/work/financial. Never shares App/Admin/Manager. */
+  HYPERDRIVE_CUSTOMER_FINANCIAL?: WorkerBindings["HYPERDRIVE"];
+  /** Separately commissioned second-card Cashier LOGIN. Selected only after
+   * complete App UserJWT authentication for the exact second-card HTTP domain. */
+  HYPERDRIVE_CUSTOMER_CASHIER?: WorkerBindings["HYPERDRIVE"];
+  /** Trusted maintenance receipt for that exact database and LOGIN. Never
+   * derive these names/OIDs from request data, a DSN username or role grants. */
+  CUSTOMER_CASHIER_RUNTIME_IDENTITY?: CashierRuntimeConditionalBinding;
+  /** Same trusted full target returned by formal Cashier commissioning. Only
+   * the dedicated read-only capability entry requires this additional receipt. */
+  CUSTOMER_CASHIER_RUNTIME_TARGET?: RoutinePaymentRuntimeTarget;
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;
@@ -143,9 +158,11 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   WECHAT_WORK_CALLBACK_TOKEN?: string;
   /** Enterprise WeChat 43-character callback EncodingAESKey. */
   WECHAT_WORK_CALLBACK_AES_KEY?: string;
-  /** Official-account callback token; never read from system_config. */
+  /** Official callback deployment authority. Any nonempty token/AES binding
+   * takes priority; database fallback is official-only and explicitly enabled. */
   WECHAT_OFFICIAL_CALLBACK_TOKEN?: string;
-  /** Official-account 43-character callback EncodingAESKey. */
+  /** Official-account 43-character deployment EncodingAESKey. Partial or
+   * invalid deployment bindings never fall back to database credentials. */
   WECHAT_OFFICIAL_CALLBACK_AES_KEY?: string;
   /** Mini Program callback token; intentionally separate from the official account. */
   WECHAT_MINI_CALLBACK_TOKEN?: string;
@@ -220,6 +237,7 @@ export type ScheduledMaintenanceJob =
   | "pink_timeout"
   | "auto_receipt"
   | "auto_comment"
+  | "live_sync_dispatch"
   | "live_room_sync"
   | "live_goods_sync"
   | "live_anchor_sync"
@@ -237,6 +255,9 @@ export interface ScheduledMaintenanceMessage {
   scheduledAt: number;
   cursor: number;
   threshold: number | null;
+  /** Source binding for live_room_sync/live_goods_sync/live_anchor_sync only.
+   * Historical unbound live jobs are acknowledged without remote/local work. */
+  routineStamp?: string;
 }
 
 /** Product scans use a timestamp/ID keyset, not an unbounded product-table scan. */
@@ -330,6 +351,20 @@ export interface SmsVerificationMessage {
     | "user_phone_binding"
     | "user_social_binding"
     | "user_phone_update";
+  templateCode: string;
+}
+
+/** Admin phone verification has its own identity realm and absolute deadline. */
+export interface AdminProfileSmsMessage {
+  action: "sendAdminProfileSmsVerification";
+  purpose: "admin_phone_update";
+  recordId: number;
+  adminId: number;
+  credentialTag: string;
+  sessionExpiresAt: number;
+  expiresAt: number;
+  phone: string;
+  code: string;
   templateCode: string;
 }
 
@@ -461,6 +496,7 @@ export interface PaymentReconciliationDispatchMessage {
 }
 
 export type OrderMessage =
+  | UserLabelSyncMessage
   | OrderPaidOutboxMessage
   | PresaleDeliveryOutboxMessage
   | OrderNotificationOutboxMessage
@@ -475,6 +511,7 @@ export type OrderMessage =
   | SecondCardReminderMessage
   | SignReminderMessage
   | SmsVerificationMessage
+  | AdminProfileSmsMessage
   | AttachmentObjectCleanupMessage
   | ProductVideoCleanupMessage
   | SupplierVideoCleanupMessage
@@ -521,6 +558,9 @@ export interface AppVariables {
   /** Original least-privileged request connection, retained for assisted checkout.
    * Only the authenticated Admin runtime boundary sets this server-side value. */
   applicationContainer?: import("@/lib/di").Container;
+  /** Server-only, scoped by the dedicated authenticated Cashier capability
+   * middleware. Never accepted from request parameters or ordinary App context. */
+  cashierCapabilityContext?: import("@/services/customer-work/CustomerCashierCapabilities").CustomerCashierCapabilityContext;
   /** 当前登录管理员 ID (adminAuthMiddleware 注入) */
   adminId?: number;
   /** 当前登录管理员信息 (adminAuthMiddleware 注入) */

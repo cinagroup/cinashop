@@ -50,8 +50,8 @@ export class DivisionStaffInviteService {
       const rows = await tx.select({ id: qrcode.id }).from(qrcode).where(and(eq(qrcode.thirdType, 'division_agent'),
         eq(qrcode.thirdId, uid), eq(qrcode.status, 1))).limit(2);
       if (rows.length !== 1) throw new ValidateException('员工邀请二维码不存在、已停用或重复');
-      const credentials = await readDivisionStaffWechatCredentials(tx);
-      const revision = await hash([uid, rows[0].id, DIVISION_STAFF_INVITE_PAGE, credentials.appId, await hash(credentials.secret),
+      const credentials = await readDivisionStaffWechatCredentials(tx, this.env);
+      const revision = await hash([uid, rows[0].id, DIVISION_STAFF_INVITE_PAGE, credentials.appId, credentials.stamp,
         agent.pwd, agent.status, agent.isDel, agent.deleteTime, agent.divisionType, agent.divisionStatus, agent.divisionId,
         agent.agentId, agent.divisionEndTime]);
       return { uid, qrId: rows[0].id, appId: credentials.appId, revision };
@@ -66,7 +66,7 @@ export class DivisionStaffInviteService {
       if (acquired[0]?.acquired !== true) throw new ValidateException('代理商关系正在更新，请稍后重试');
       const [agent] = await tx.select(getTableColumns(user)).from(user).where(eq(user.uid, actor.uid)).for('share', { noWait: true }).limit(1);
       assertDivisionStaffActor(actor, agent); assertDivisionStaffAgent(agent);
-      await readDivisionStaffWechatCredentials(tx);
+      await readDivisionStaffWechatCredentials(tx, this.env);
       const rows = await tx.select().from(qrcode)
         .where(and(eq(qrcode.thirdType, 'division_agent'), eq(qrcode.thirdId, actor.uid))).limit(2);
       if (rows.length > 1 || rows[0] && rows[0].status !== 1) throw new ValidateException('员工邀请二维码已停用或重复，请联系平台管理员');

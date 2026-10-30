@@ -218,6 +218,10 @@
 
 <script setup lang="ts">
 import ThemePage from '@/components/ThemePage.vue';
+// #ifdef APP-PLUS
+import { onUnmounted } from 'vue';
+import { reserveNativeWechatPayment } from '@/utils/nativeWechatPaymentEntry';
+// #endif
 import LegacyShareCode from '@/components/LegacyShareCode.vue';
 import { ref, reactive, computed, watch } from "vue";
 import { onLoad, onShow, onHide, onUnload } from "@dcloudio/uni-app";
@@ -452,7 +456,13 @@ async function pay() {
   }
   paying.value = true;
   const attempt = ++paymentAttempt;
+  // #ifdef APP-PLUS
+  let nativeAttempt: ReturnType<typeof reserveNativeWechatPayment> | undefined;
+  // #endif
   try {
+    // #ifdef APP-PLUS
+    if (method === 'weixin') nativeAttempt = reserveNativeWechatPayment(scope.current);
+    // #endif
     const result = await apiOrderPay(
       scope.id,
       method,
@@ -461,6 +471,13 @@ async function pay() {
     if (!scope.current()) return;
     assertOrderPaymentIdentity(result, scope.id, method);
     if (result.paid) return showPaidResult(scope);
+    // #ifdef APP-PLUS
+    if (nativeAttempt) {
+      if (result.pay_type !== 'weixin' || result.pay_mode !== 'app' || !result.jsConfig)
+        throw Error('支付结果不是本次原生 App 渠道，请刷新订单核对');
+      await nativeAttempt.request(result.jsConfig);
+    } else
+    // #endif
     if (await continueExternalPayment(result, scope)) return;
     if (!scope.current()) return;
     if (result.offline) {
@@ -473,6 +490,9 @@ async function pay() {
   } catch (e) {
     if (scope.current()) actionError.value = `支付结果尚未确认，请刷新订单核对后再操作。${errorText(e)}`;
   } finally {
+    // #ifdef APP-PLUS
+    nativeAttempt?.release();
+    // #endif
     // Native payment can hide this page. Keep its lock until that attempt settles,
     // without letting an older account's callback unlock a newer attempt.
     if (attempt === paymentAttempt) paying.value = false;
@@ -649,6 +669,9 @@ onShow(() => { if (disposed) return; visible = true; if (!readHashRoute()) void 
 onHide(() => { visible = false; clearView(); });
 // #ifdef H5
 if (typeof window !== 'undefined') window.addEventListener('hashchange', hashChanged);
+// #endif
+// #ifdef APP-PLUS
+onUnmounted(() => { disposed = true; visible = false; clearView(); });
 // #endif
 onUnload(() => {
   disposed = true; visible = false; clearView();

@@ -65,6 +65,7 @@ beforeEach(async () => {
 async function configure(mark = "user_extract", all = false) {
   await admin.saveOrderConfig(mark, { isSystem: true, systemTitle: "提现结果", systemText: "{nickname}|{extract_number}|{date}|{message}", isSms: true, smsId: "SMS_fixture", isWechat: all && mark === "user_extract", isRoutine: all });
   if (all) {
+    await fixture.db.insert(systemConfig).values({ menuName: 'routine_appId', value: '"routine-withdrawal-app"' });
     if (mark === "user_extract") await admin.saveTemplate({ title: "提现成功", type: "wechat", mark, tempid: "official-fixture" });
     await admin.saveTemplate({ title: "提现结果", type: "routine", mark, tempid: "routine-fixture" });
     await fixture.db.insert(wechatUser).values([{ uid: 7, userType: "wechat", openid: "official-user" }, { uid: 7, userType: "routine", openid: "routine-user" }]);
@@ -152,7 +153,7 @@ describe("API-014F withdrawal effects on actual SQL", () => {
     expect(rows).toHaveLength(3);
     expect(rows.find((r) => r.channel === "sms")?.payload).toEqual({ kind: "sms", params: { extract_number: "19.50" } });
     expect(rows.find((r) => r.channel === "wechat_official")?.payload).toMatchObject({ data: { amount3: "19.50" } });
-    expect(rows.find((r) => r.channel === "wechat_routine")?.payload).toMatchObject({ url: "pages/user/finance", data: { thing1: "提现成功", amount2: "19.50元", thing3: "申请用户" } });
+    expect(rows.find((r) => r.channel === "wechat_routine")).toMatchObject({ status: 'PENDING', payload: { routineAppId: 'routine-withdrawal-app', url: "pages/user/finance", data: { thing1: "提现成功", amount2: "19.50元", thing3: "申请用户" } } });
     expect(rows.every((r) => r.withdrawalId === request.id && r.orderId === null)).toBe(true);
     expect(await fixture.db.select().from(systemMessage)).toHaveLength(1);
     const listing = await admin.listDeliveries({ eventKey: message.eventKey });

@@ -536,6 +536,10 @@ export class AdminCommerceSettingsService {
     await withTx(this.container, async (tx) => {
       await configureWriteTx(tx);
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('admin-commerce-settings'))`);
+      // The complete settings envelope owns the merchant field too. Serialize
+      // it with Native App account publication before taking config row locks.
+      const [appAccountGate] = await tx.execute<{ locked: boolean }>(sql`SELECT pg_try_advisory_xact_lock(731664,0) AS locked`);
+      if (appAccountGate?.locked !== true) throw new ValidateException('原生App支付身份正在提交，请稍后核对商户配置');
       const rows = await tx
         .select({
           id: systemConfig.id,

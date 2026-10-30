@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { cashierConditionalAppPredicate, cashierConditionalIdentityAssertion, type CashierRuntimeConditionalBinding } from './cashierRuntimeConditionalBinding';
 
 type Query = Pick<DbClient, 'execute'>;
 const names = (value: string) => value.trim().split(/\s+/);
@@ -26,10 +27,11 @@ const functionName = 'cinashop_runtime_lock_only_v1';
 const triggerName = functionName;
 
 export type RuntimeLockBoundaryVersion='legacy'|'promotion-gifts'|'agent-levels';
-export function runtimeLockOnlyBoundaryBody(app: string, admin: string,version:RuntimeLockBoundaryVersion='legacy') {
+export function runtimeLockOnlyBoundaryBody(app: string, admin: string,version:RuntimeLockBoundaryVersion='legacy',cashier?:CashierRuntimeConditionalBinding) {
   pricingIdentifier(app); pricingIdentifier(admin);
   if (app === admin) throw Error('Distinct runtime identities required');
   if(!['legacy','promotion-gifts','agent-levels'].includes(version))throw Error('Fixed lock boundary version required');
+  if(cashier && (version!=='agent-levels' || cashier.role===admin))throw Error('Cashier requires the exact current App lock contract');
   const branches = (['app','admin'] as const).map(kind => {
     const role = kind==='app'?app:admin;
     const cases = Object.entries(RUNTIME_LOCK_ONLY_RULES[kind])
@@ -43,14 +45,14 @@ export function runtimeLockOnlyBoundaryBody(app: string, admin: string,version:R
           RAISE EXCEPTION 'Runtime lock privilege cannot edit catalog rows' USING ERRCODE='42501';
         END IF;`;
     }).join('\n');
-    return `IF current_user='${role}' THEN CASE TG_TABLE_NAME ${cases} ELSE NULL; END CASE; END IF;`;
+    return `IF ${kind==='app'?cashierConditionalAppPredicate(role,cashier):`current_user='${role}'`} THEN${kind==='app'?cashierConditionalIdentityAssertion(cashier):''} CASE TG_TABLE_NAME ${cases} ELSE NULL; END CASE; END IF;`;
   }).join('\n');
   return `BEGIN\n${branches}\nRETURN NEW;\nEND`;
 }
 
-export async function inspectRuntimeLockOnlyBoundary(tx: Query, app: string, admin: string, maintenance: string,version:RuntimeLockBoundaryVersion='legacy') {
+export async function inspectRuntimeLockOnlyBoundary(tx: Query, app: string, admin: string, maintenance: string,version:RuntimeLockBoundaryVersion='legacy',cashier?:CashierRuntimeConditionalBinding) {
   pricingIdentifier(maintenance);
-  const definition=runtimeLockOnlyBoundaryBody(app,admin,version);
+  const definition=runtimeLockOnlyBoundaryBody(app,admin,version,cashier);
   const [r]=await tx.execute(sql`WITH routines AS (
     SELECT p.* FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname=${functionName}
   ), targets AS (SELECT c.* FROM pg_catalog.pg_class c WHERE c.relnamespace='public'::regnamespace

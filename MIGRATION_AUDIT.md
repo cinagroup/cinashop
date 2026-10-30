@@ -8560,3 +8560,341 @@ PR160@8bbee7c9/run39998594954的UniApp在原D3门禁处拒绝source1240992及51�
 修复PR163新source1243073高危门禁：真实npm resolver将body-parser升级1.20.9并独立解析qs6.16.1，仅两个锁节点变化，Express/root qs及其他五锁保持。新高危只记patched并禁止重现；完整原始前后报告支持50/26/25/14（包条目/直接source/URL/已解决来源），其余forward图精确保留。旧51完整归档，77→51/52条历史断言和旧audit不改写。13个隔离真实HTTP回归验证微小压缩正文/延迟尾部/完整raw消费者与drain，原SSR保护保持。
 
 最终13个Uni CI步骤、三端构建与后台浏览器两个新只读阶段通过，源/依赖闭包无漂移；0新GUI保存/业务POST，真实GET核76表71序列与资源零写，PG清零停止。NODE_OPTIONS拒绝和collector600秒超时原失败留存，最终全量重验通过。详见workers-ts/docs/uni-body-parser-remediation-20261024.md及同名机器审计。原get_script恢复合同、全部旧checkbox及JSON节点保留；17作者族/整体迁移仍开放，新head远端CI另核，仅draft不合并部署。
+
+
+## 2026-10-24 公众号关注组件的后台作者迁移
+
+补齐 follow 的完整 PHP 默认值、标题／位置、头像／二维码、按钮与渐变颜色、边距和圆角控件，接通新增、排序、删除、只读预览及原页面保存。图片只保存稳定引用，双图票据受当前组件、账号、会话和页面代次约束；导入配置及未知邻居保持，旧位置选项仅持久化，不虚构固定布局。
+
+本机定向 190 项通过（新增 62 项，零失败／跳过），最终构建的桌面 Admin 浏览器完成编辑、两次图库选择、排序与一次本地夹具保存，0 error／warning。Admin／Worker 主类型检查及 Admin 构建均通过，全部重型检查经共享串行包装器执行。浏览器证据限本地拦截 API／图片／通知通道，不代表 PostgreSQL、微信或生产验收。原有会员权益工作与历史审计保留，旧 API 清单逐字归档并经精确源码逆变换重构；原复选行不改，整体迁移继续开放。详见[迁移说明](workers-ts/docs/php-ts-diy-follow-author-20261024.md)。
+
+
+## 2026-10-24 新闻公告、图片热区与活动四卡作者迁移
+
+本批完成 `news/hotspot/activeParty` 的后台作者代码候选：固定 PHP 完整默认共 56 个顶层字段，新增／删除／排序、全部实际内容与样式控件、图库／链接选择及原保存入口均接通。超量导入与未知字段完整保留，普通 10／4／30 容量与当前公开消费者一致；30 不是原 PHP 上限。热区采用实际图片比例、750 设计坐标及原生框选／移动／缩放，并补齐独立只读样式预览和同一公开图片下 JSON／会话变化的尺寸重取与旧回调失效。
+
+本批独立回查 PHP，纠正 Follow 原始 `[0,1,2,3]` 圆角及公告主题色调的白字／纯主题背景；上批 dated 报告保持当时状态。三族公开链接承接现有受校验的平台跳转；activeParty 对齐原 Admin 四卡合同，原 PHP Uni 没有该渲染器，不宣称原 Uni 视觉等价。没有新增服务端路由、权限或 DDL；已审计 Axios 调用点／变体仍为 703／741，显式图片预览 fetch 复用既有匿名 GET。
+
+最终定向 592 项全部通过（Admin 203、Uni 218、源码／API 152、既有前端合同 19），其中本批新增独立 247 项；Admin／Uni／Worker 类型及 Admin、H5、MP、App 构建通过，四端旧公告 PNG 原字节 SHA 一致。CI 仅增加对应测试命令，本批未执行精确头 GitHub CI、未提交或部署。所有历史基线与旧清单勾选保持；会员权益作者的既有未提交改动保留。详见 [本批合同与验证](workers-ts/docs/php-ts-diy-editorial-author-20261024.md)。
+
+FE-001、FE-003 和整个 PHP 迁移保持未完成；仍缺 community 及八类商城作者，下一批优先社区，已准备固定 PHP 原件、完整 36 键默认与控件消费对照。
+
+最终生产构建浏览器补验通过：三族各一次真实表单夹具保存、热区框选／移动／缩放及同图 JSON 后重新测量尺寸生效；28 次业务／媒体请求、错误与警告均为 0，稳定引用与独立 content 保留。仅本地拦截夹具，未据此关闭生产、PG／R2 或真机验收；自有浏览器及预览均已关闭。
+
+
+## 2026-10-25 种草社区 DIY 作者及公开消费者迁移
+
+补齐 community 的完整 PHP 36 键默认与后台作者：新增／选择／排序／删除、内容与样式、话题元数据、图库与已发布标题预览接入原保存入口。显式匿名公开内容预览不携带后台凭证；完整导入、数字字符串、未知字段及独立 content 保留，帖子与图片签名不写入装修 JSON。相同话题列表的草稿仍按组件隔离，旧异步／原生回调不能跨账号、页面、配置或图片授权代次生效。
+
+公开端校正斜体字重、横向蒙层、双列白底／固定间距／图片圆角及 PHP 首尾项分列顺序；MP/App 标题静态图使用包内路径，托管标题纳入既有当前平台素材校验和续签。话题仅存元数据，不新增过滤、点赞写入、业务路由、权限或 DDL；2500 普通素材预算保持。Axios 原清单完整归档、历史源码证据精确逆变换保留，当前调用点／变体仍 703／741，新增匿名 fetch 读取另列说明。
+
+最终定向唯一用例 575 项通过（Admin 171、Uni 115、Worker 289；新增 205），重跑不重复计数；Admin／Uni／Worker 类型及 Admin、H5、MP、App 构建通过，40 个本批源码／证据文件无漂移。生产产物的本地 Admin 完成两次 GUI 夹具保存、24 次请求、0 error／warning；实际 Uni H5 消费保存结果并验证两种布局、只读区域与刷新，21 次 GET、0 error，仅现有 Uni 内置 vue-router 弃用 warning 一条已明确记录。初轮失败与修正后的通过收据均保留。
+
+验收边界为本地拦截 API／素材，不据此关闭真实 PostgreSQL/R2、生产、真机或远端精确头 CI；本批未提交、推送、合并或部署。原台账字节前缀及全部 88／405 条复选记录保留。FE-001、FE-003 和整个 PHP→TS 迁移继续未完成，尚余 promotionList、seckill、combination、bargain、presale、pointsMall、coupon、liveBroadcast 八类商城作者；已准备固定原件和完整 319 键默认，下一族优先 promotionList。详见 [本批合同与验证](workers-ts/docs/php-ts-diy-community-author-20261024.md)。
+
+
+## 2026-10-25 商品选项卡 DIY 作者及真实列表委托迁移
+
+完成 promotionList 的 PHP 完整30键默认、组件／分组新增排序删除、四类真实目录、五种导航样式、图库与已发布图片预览及原页面保存。完整导入、隐藏／超量项、数值原拼写和独立 content 保留，商品资料与签名不持久化；普通控件、父级异步回执、目录和原生事件受完整编辑上下文与代次约束。
+
+公开页按实际 PHP 委托原 goodList 双列及其真实读／购买控制器，另七族 Commerce 实现保持。只有 tabConfig.list[*].image 纳入原2500普通媒体校验及续签，隐藏／非图片风格／前12项外亦受约束，不授予商品／标签／未知字段媒体能力。修复真实新增默认分组未选中、遗漏控件旧回调、非置顶导航偏移与原760px弹窗在手机裁切；实际媒体、颜色、范围和旧危险渲染负例保留。没有新增业务路由、DDL、GRANT、ACL或依赖。
+
+最终定向唯一772项通过（Admin196、Uni192、Worker384，新增240），Admin／Uni／Worker严格类型及Admin、H5、MP、App生产构建通过；源码／证据34文件冻结检查无漂移。实际本地生产Admin两次GUI夹具保存、27次业务请求、0 error／warning；H5消费保存结果验证四类范围、独立组件、刷新及置顶／非置顶几何，20次GET、0 error，仅现有Uni内置vue-router导入弃用warning一条精确记录。桌面与390px截图已检查；本地拦截数据不提升为真实PostgreSQL/R2、真机、生产或远端CI验收，本批未提交、推送、合并或部署。
+
+API前序报告逐字归档，当前仍703调用点／741已注册可执行变体，新增匿名fetch另列。16源精确逆变换与13新文件全文固定，历史dated证据和原台账字节／88与405条复选行保持。FE-001／FE-003和整个PHP→TS迁移继续未完成，尚余coupon、pointsMall、presale、combination、bargain、seckill、liveBroadcast七类商城作者；coupon的固定24键默认和真实来源已准备，准备不计作完成。详见 [本批合同与验证](workers-ts/docs/php-ts-diy-promotion-author-20261025.md)。
+
+
+## 2026-10-25 优惠券 DIY 作者及五种公开布局迁移
+
+完成coupon完整24键默认、组件新增选择排序删除、显隐／数量／五风格／色调／全部真实颜色、间距和圆角作者，接入原保存入口。完整导入与数值原拼写、隐藏元数据和独立content保持；仅显式匿名GET读取公开券，完整校验4项count与全批DTO，坏尾项／伪造持有／迟到响应拒绝，预览领取与中心按钮只读，不写领取流水或装修JSON。原作者没有选券目录或图片槽，本批不造管理权限、媒体授权、路由、DDL、GRANT或依赖。
+
+公开采用原五模板的具体尺寸、渐变、缺口、style3-only间距和全部返回券，去除通用近似布局。原Commerce四模块、领取API／journal、媒体policy／lease和canonical模型保持；新的原生事件许可绑定完整块、账号、session、返回行和响应代次。成功／未知结果／持久防重／只读核对与明确回滚后的人工重试保留，旧事件不能跨ABA或相同ID重读。当前TS最多10张保留为兼容策略，固定PHP缺LIMIT配置，不称原PHP上限。
+
+最终定向唯一861项通过（Admin188、Uni204、Worker469，新增213），双前端与Worker严格类型、Admin／H5／MP／App生产构建通过。最终合同与相邻回归区间47源／证据无漂移，旧18份dated proof／helper字节保持；15修改精确逆变换与14新文件全文固定。API前序报告逐字归档，当前仍703调用点／741注册可执行变体，仅DiseList hash与三个旧call行号各+2；显式fetch另列。
+
+本地实际生产Admin普通装修作者完成五样式尺寸、两次GUI夹具保存、错误／空结果／重试与桌面／390px验收，16请求、0error／warning；H5消费最终五块共25卡，核验五种几何、刷新及过期券强制点击不导航／提交，20业务GET、0error，仅现有Uni内置vue-router弃用warning一条精确记录。初轮Playwright isDisabled不识别UNI-BUTTON的失败收据保留，最终依真实disabled属性与点击结果核验，无生产修补迎合测试。全部为本地拦截API，不提升为真实PG/R2、真机、生产或远端精确头CI验收，本批未提交、推送、合并或部署。
+
+原台账字节前缀及88／405条复选记录保留。FE-001／FE-003及整个PHP→TS迁移继续未完成，商城作者尚余pointsMall、presale、combination、bargain、seckill、liveBroadcast六类；pointsMall完整44键默认、三图片槽、三布局和真实业务边界已只读归档，准备不计完成。详见 [本批合同与验证](workers-ts/docs/php-ts-diy-coupon-author-20261025.md)。
+
+
+### 2026-10-25 DIY 积分商城作者独立闭环（继续推进，整体未完成）
+
+固定PHP `8ed2a5b139f9170dd11b0dff91803f2fd59e40a5` 的pointsMall完整44键默认、实际作者字段、三种公开布局及三精确图片槽已移植。六个原公开未读取的作者字段可编辑且完整存档；原始rpx间距、圆角乘二、标题图按背景模式、网格数字颜色、裸bntNumber和原公开装饰PNG分别保留。Admin显式匿名积分列表预览只读，不保存DTO/签名、不新增ID选择或活动管理权限；详情继续传积分活动ID，更多去既有积分商城入口。
+
+图片限定imgBgConfig/imgConfig/imgConfig2三个.url槽，包括隐藏/备用；沿现有current归属/type/MIME/key/raster及ordinary2500原子预算。纯票据续签复用feed，真实expiry停用UI和所有旧回调；owner/page/raw/active/ABA后不能沿旧准入读请求或复活旧能力。保留完整父v-model回执、拒绝/延迟、过期/续签、三平台无window/URL与实际原生事件回归。
+
+去重 **1191项** 定向测试通过：Admin267（新增79+相邻188）、Uni335（新增79+相邻256）、Worker589（新增120+既有469），本批新增独立278项。三端严格类型和Admin/H5/微信/App生产构建通过。实际Chrome Admin普通level1装修+图库查看账号2次GUI保存/22请求/0错误0警告；H5三布局9卡、刷新、活动ID详情和更多导航26个GET/0错误，仅1条既有vue-router依赖弃用警告。全部API本地拦截；无外部数据库写入、真实PG/R2、设备/SDK端到端、远端CI或发布证据。
+
+新source `cedec475e804f04130567dbf77cf860b8f2eef14847465f629e45f13e7952e7b`；parity `bb7086d358c0d4b8177abd3bb72ef21627381c2edf521f80fb3b96c9ad6eaea2`。20份完整modified、15份full-add和8份原PNG；21份旧dated/fixture/helper原字节与原负例不变。API当前 `1989a3acb92e8186572b1e3a05a52c32f392432ab5c37eaef7a3066ec71a28f1`，703调用/741变体全注册可执行，仅DiseList hash和3旧call各+3行。最终48源文件在最后Worker合同前后无漂移；保留通用Commerce4模块字节。
+
+本条只追加事实说明，旧总账和checkbox行不勾改。后续五类商业作者presale/combination/bargain/seckill/liveBroadcast及其它父项保持开放；presale只读准备并行推进，不把准备算完成。详细边界见 `workers-ts/docs/php-ts-diy-points-author-20261025.md`，临时验证收据 `/tmp/cinashop-points-author/accepted-validation-result.json`。未执行commit/push/PR/merge/deploy。
+
+
+### 2026-10-25 DIY 预售作者独立闭环（继续推进，整体未完成）
+
+固定PHP8ed2a5b的presale完整48键默认、实际作者字段、四公开布局和三个精确作者图片槽已移植。原checkbox保存0/1/2但public读0/2/3的差异不自动翻译；单列按钮隐藏连价格条一起隐藏、双列原价无条件、三列/横滑无按钮。BaseMoney千分位/两小数/三段字号、header color0/0、单列底角0/1和真值字符串0等特殊行为分别验证。只有goodsBntTxtColor为公开未读存档字段；原3作者PNG与闪电装饰原字节各双端复制，装饰不获作者权限。
+
+Admin独立显式匿名预售list/count预览，不保存DTO/票据、不造ID选择，不增加商品写权限。图库/普通输入/发布读取/父v-model回执均绑定完整上下文防迟到/ABA；三个媒体槽沿current归属/type/MIME/key/raster、ordinary2500原子预算。有效准入后纯票据续签复用feed，首次过期或owner/raw/active变化不能沿旧能力读/跳转。公开id是基础商品ID，更多和详情仍走既有预售入口。Admin窄屏预览实际发现并修复固定尺寸竖排、继承表单32px行高，容器等比缩放支持科学记数；Uni原rpx不变。
+
+去重 **1554项** 测试通过：Admin380（新113+相邻267）、Uni455（新120+相邻335）、Worker719（新130+既有589），本批新独立363项。三端严格类型和Admin/H5/微信/App构建通过；真实Chrome Admin2保存/23业务请求/0错误0警告；H5四布局12卡/刷新/价格/状态/商品ID导航28GET/0错误，仅既有Vue Router弃用警告。所有API本地拦截，无真实数据库、PG/R2、设备/SDK/生产购买E2E或远端CI证据。
+
+source `751fb7a9e1a2805e977d328d673f430f916984b19abd2bd7a24fd237dc6b0628`；parity `370a6fe9286dd9dc4e945599db11cf8df744404557abe7224542b5f93899838e`；22 modified/18 full-add/8PNG，24旧dated/helper/fixture原字节和原负例保留，9旧源起止相同。API当前 `4be3effb39a421e94b480688dfed6ec41780a5b2d0e0668fb119635f3174282d`，703调用/741变体全注册可执行，只有DiseList hash及3旧call各+3行；最终53源文件在最后Worker合同前后无漂移。
+
+本条仅追加事实说明，不勾改旧总账。剩余combination/bargain/seckill/liveBroadcast四商业作者及其它父项继续开放；拼团只读partial材料在/tmp/cinashop-combination-author-scout，不计完成。详见workers-ts/docs/php-ts-diy-presale-author-20261025.md与/tmp/cinashop-presale-author/accepted-validation-result.json。未commit/push/PR/merge/deploy。
+
+
+### 2026-10-25 DIY 拼团作者独立闭环（继续推进，整体未完成）
+
+固定PHP8ed2a5b的combination完整48键默认、四种实际公开布局、双路商品/人数汇总与三个精确图片槽已移植。原checkbox0/1/2/3逐值保留；单列标签、双列无标签、三列/横滑无条件人数角标、横滑不显示原价/按钮。BaseMoney、头像汇总、图片四角0/1/2/3与外层0/1/3/2、自定义按钮色1→0均按实际原件。两张标题原PNG140×32与原作者提示154分别保留。
+
+Admin显式匿名顺序双读，整批校验/取消/迟到保护，不保存DTO或票据。完整父回执、原始拼写/未知资料/独立content保留。媒体仅imgBgConfig/imgConfig/imgColorConfig三.url槽沿原ordinary2500和current归属/type/MIME/key/raster，不授予业务图、头像或homeComb媒体权限；准入内续签复用双路资料。
+
+补齐MP-WEIXIN订阅延续：有效上下文提前匿名读取真实provider IDs，点击时同步SDK，success（包括拒绝/ban/filter）/fail仅一次继续活动ID详情。H5/App和更多不调SDK；跨账号/raw/active/ABA/expiry/unmount的旧回调不能跳转。缺ID/SDK或同步抛错直接详情为明确健壮性改进，无订阅结果/消息发送/订单/journal写入。模拟SDK与原生构建不代替设备验收。
+
+去重 **1976项** 测试通过：Admin505（新125+相邻380）、Uni634（新179+相邻455）、Worker837（新118+既有719），新独立422项。三端严格类型和Admin/H5/微信/App构建通过。真实Chrome Admin2保存/30请求/0错误0警告；H5四布局12卡/37GET/0错误，仅既有vue-router依赖警告。所有API本地拦截，无真实数据库、PG/R2、微信设备或生产购买E2E/远端CI证据。
+
+source `2c65f2efaf3cc9d605209e151615d6c7930c918992ac6f4e77ec9887ab0798e9`；parity `10bfa7317c987f875320d656b7da70d5f06774a5efaf76834dd0277c4c2bce45`；24 modified/19 full-add/6PNG，27旧dated/helper/fixture与原负例保持，14旧源前后字节相同。API `6a6bf25fbfc13584cf4c9fb5672a7d5750575f63beeb353c22765573ddc74990` 仍703/741全注册可执行，仅DiseList hash及3旧call各+3行。最终54文件在最后Worker合同前后无漂移，原总账完整前缀和88/405条checkbox行保持。
+
+本条仅追加，不勾改旧父项。余下bargain/seckill/liveBroadcast三商业作者及其它父项继续开放；砍价只读准备与已发现差异不计完成。详见workers-ts/docs/php-ts-diy-combination-author-20261025.md和/tmp/cinashop-combination-author/accepted-validation-result.json。未commit/push/PR/merge/deploy。
+
+
+### 2026-10-25 DIY 砍价作者独立闭环（继续推进，整体未完成）
+
+固定PHP8ed2a5b的bargain完整51键默认、四种真实公开布局与三个精确作者图片槽已移植。原checkbox0/1/2/3逐值保留；单列火焰参与人数、双列无人数、三列独有“低至”前缀、横滑成功标签跟随check0且无原价/按钮。活动起价price不偷换min_price，原字形U+E69D字体原字节随包分发，无运行时CDN。外层四角0/1/3/2与图片0/1/2/3、自定义按钮色1→0等均有原件绑定。
+
+Admin显式匿名单读真实bargain/list，整批校验、取消及迟到保护，DTO/providerID/签名不保存。完整父回执、原始拼写、未知资料及独立content保留。三槽媒体沿原ordinary2500与current归属/type/MIME/key/raster；业务商品图与字体不扩作者权限，完整意图内纯票据续签复用feed/provider。
+
+真实公开producer按PHP修正基础商品删除过滤、基础ot_price、非NULL闭区间及sort/id排序，仅StoreBargainDao.list和ActivityService的ot_price来源改变。getById与参与/助力/购物车/订单写入不变。真实内存Postgres九表/序列快照覆盖边界及无写入；旧PG夹具补日期和真实基础旧价，但未运行native PG16，不宣称其验收。
+
+MP-WEIXIN提前匿名读取bargain_success实际providerID；点击内同步单ID SDK，success（含reject/ban/filter）或fail单次延续，随后按当时身份登录或活动ID+spid详情。H5/App和更多无SDK；owner/raw/active/ABA/expiry/unmount旧回调不能跳转。缺ID/SDK或同步throw直接派发为明确健壮性改进，无回调不造超时；无消息发送、开始或助力写入。模拟SDK与原生构建不代替设备验收。
+
+去重 **2454项** 测试通过：Admin631（新126+相邻505）、Uni817（新183+相邻634）、Worker1006（新167+既有839），本批新独立476项。三端严格类型、Admin/H5/微信/App构建通过。真实Chrome Admin2保存/23请求/0错误0警告；H5四布局12卡/51GET/0错误，1类既有vue-router警告在3次页面载入触发3次。全部API本地拦截，无native PG16、真实R2、微信设备、生产购买E2E或远端CI证据。
+
+source `cfb6680900e15dca0c247ef6e82a44066c0df608ffb6c5154ee3c62cc974d20b`；parity `b8ac7c3ce27fbfb80ec2248144509a399c4dca47267357e48cb1332c321484d5`；31 modified/21 full-add/6PNG，30旧dated/helper/fixture及原负例保持，20旧源前后字节相同。实际API生成 `f95be9b56d2d826f86778aca2f53e0841d2eb50c4ae0455d2fb82dd7b4c3f199`，仍703/741全注册可执行，仅DiseList hash及3旧call各+3行。最终63文件在最后Worker合同前后无漂移，原总账完整前缀与88/405条checkbox行保持。
+
+本条仅追加，不勾改旧父项。余下seckill/liveBroadcast两商业作者及其它父项继续开放；秒杀只读53键准备不计完成。详见workers-ts/docs/php-ts-diy-bargain-author-20261025.md和/tmp/cinashop-bargain-author/accepted-validation-result.json。未commit/push/PR/merge/deploy。
+
+
+### 2026-10-25 DIY 秒杀作者独立闭环（继续推进，整体未完成）
+
+固定PHP8ed2a5b完整53键默认、49控件/26颜色、四真实公开布局、分段倒计时及三精确作者图片槽已移植。单列240图/进度始终显示/107px端点，双列324，三列212且隐藏售价仍有主题价格条/原闪电，横滑224仍有check3原价和“抢”；面板/图片角0/1/3/2，标题PNG154实际公开140×32。五原PNG双端10副本，业务父图和装饰无作者授权。演示专用颜色/checkbox1完整存档，不造公开效果。
+
+原index→server默认slot→list，独立匿名两GET，完整尾项/取消/迟到/owner/raw/active/ABA守卫，零Admin数量无IO。没有时段picker、SDK/订阅或点击登录gate。计时器归属当前代次，零点不换场；DTO/provider/图片签名不保存。canonical childID详情保留现有即时排期/SKU购买授权；原PHP time_id曾有真实语义，本批不以被忽略参数假装恢复旧购买路径，也不改购买系统。
+
+目录仅DAO.getByTimeId增加base innerJoin/isDel0且分页前过滤，平铺shape/sort/id不变；Service.seckillList批读本页唯一正父image并走现业务图片安全投影，activityId0空。既有完整schedule predicate/TimeAssetPolicy/getById/其它方法及写入域不变，不加base上下架/验证/stock门槛。11表/序列真实内存SQL及Hono无写快照、两旧目录/商品媒体回归通过，不声明native PG16验收。
+
+去重 **2981项** 全通过：Admin771（新140+旧631）、Uni959（新142+旧817）、Worker1251（新191+旧1060），本批新增独立473项。三端严格类型与Admin/H5/微信/App构建通过。真实Chrome Admin2保存/31请求/0错误0警告；H5四布局12卡/39GET/0错误，仅1类旧vue-router warning×1。浏览器全部API本地拦截，无真账号/微信设备、真实PG16/R2或生产购买E2E证据。
+
+source `d4597335e250a2ef408f13da19bbc9de0c20a7e3fc4f639feac29fb0552e7be8`；parity `634203d09f520c35a49cec6e97a9e58281a5813734ba2dce0a53aee0aa0f3f1b`；33modified/21full-add/10PNG，33旧dated/helper/fixture/负例不变，43旧源字节保持。实际API `cc24230caab91c9a80c8ee4eba659767f28b7f1533d6bf1e3a42976abfdec16b`，仍703/741全注册可执行，仅DiseList hash及3旧call各+3行。69最终文件最后Worker合同前后无漂移。原总账完整前缀、88/405条checkbox行保持，仅追加事实，不勾改旧父项。
+
+剩余liveBroadcast及其它父项继续开放；其只读21键准备不算实施或验收。详见workers-ts/docs/php-ts-diy-seckill-author-20261025.md和/tmp/cinashop-seckill-author/accepted-validation-result.json。未commit/push/PR/merge/deploy。
+
+
+### 2026-10-25 DIY 小程序直播作者独立闭环（继续推进，整体未完成）
+
+固定PHP8ed2a5b完整21键/13组25值作者及实际四种公开布局已迁移。独立Admin Editor/Preview/Card与Uni Widget/Card/controller/API，genericCommerce入口集为空而旧通用实现保持；DiseList仅加2行。完整raw、类型敏感checkbox、隐藏/备用/超量字段原样保存；newcount1..100/publiccap50，零无IO。精确一次父回执与actor/raw/context/ABA/unmount/native缓存回调隔离通过。
+
+0作者图片槽；房间/主播/商品图片只读，不保存DTO或追加图库/素材授权。原媒体政策/字体/manifest/本地四表producer字节保持，匿名单GET公共目录不触发provider或写入。MP-only、remote room_id+safeuid0目的地，没有SDK/登录/订阅/购买/journal；H5/App0展示0请求。真实微信租户/设备/播放器插件仍无验收，现manifest未注册插件。
+
+明确修正不冒称旧parity：保留现TS真价格/无假+5；长金额在96rpx条内等比收字。图片自身0/1/3/2按命名角映射CSS，区别原PHP误读背景第四角及旧通用TS自身0/1/2/3；truthy string0恢复PHP语义。全部导入元数据仍原样。
+
+去重**3394项**全通过，本批新增**413项**：Admin916（新145+旧771）、Uni1079（新120+旧959）、Worker1399（新148+旧1251）。三端严格类型、Admin/H5/微信/App生产构建通过。实际Admin2GUI保存/15请求/0错误0警告；实际H5四原直播布局0展示0请求、26业务GET/0错误，仅旧VueRouter warning×2。API皆本地拦截，不算真实账户、微信设备、nativePG16/R2或生产端到端。
+
+source `5851245158af821c0ec139aceb66b20494770a319cd20e0b079dff0cb8acece7`；parity `d63d5377d339cfc1f1c3108f43d13f6cc2aa751c8946e70bbf901fd9363c35a1`；28modified/19full-add/0asset，36旧证据和73旧源不变，最终53源码/证据在最后Worker合同前后字节无漂移。实际API `15567ac85dbc1e6769cf116d8fc5ebb98752906dd5fc7d19c05775541e7b40f8`，703/741全注册可执行，仅DiseList hash与三call各+2。原账本完整前缀及88/405条checkbox文本行均保留，仅追加，不勾父项。
+
+整体继续开放。下一搜索热词准备仅/tmp只读材料，未实施/未验收/未计测试；保留商品搜索既有history/cache写入和可选身份合同，不将其记作只读。详见workers-ts/docs/php-ts-diy-live-broadcast-author-20261025.md和/tmp/cinashop-live-broadcast-author/accepted-validation-result.json。未commit/push/PR/merge/deploy。
+
+
+## 2026-10-25 Uni 搜索热词增量（本批已验收，整体迁移继续）
+
+接续已验收liveBroadcast，补齐搜索页热词三色/业务图标/刷新、严格整批DTO、snake_case商品名称、本机历史形状验证及page/owner/native请求与事件隔离。商品GET保留optional-auth及服务端search history/cache写入；热词GET恢复noAuth且自身只读；hide/show不自动重发商品；完整128Unicode热词展示与<=255UTF16查询明确区分，无静默截断。坏缓存不隐式覆盖，显式清空仅本机key；不增加附件签名或图库权限。
+
+3832项唯一测试通过，其中新增374=Uni164（data82/SFC82）+Worker source153/catalog57；Uni完整toolchain2587、Worker source回归1178与catalog/原合同67。Uni/Worker严格类型、H5/MP/App构建通过；实际builtH5 320/375/390/1100与6截图，0错误，仅既有Router弃用warning；真实SQL另测。92验证输入无漂移、45冻结证据保留，旧15测试仅精确外层inverse；Admin API报告SHA15567ac85dbc1e6769cf116d8fc5ebb98752906dd5fc7d19c05775541e7b40f8不变。首次堆/类型/sourceinverse失败均保留，不计通过。
+
+未恢复PHP服务端历史UI/三个排行推荐/联想高亮；现TS内联结果与平台scope隔离保留。完整搜索页、FE-003与整体迁移不关闭；真机/真实账号/私有附件业务发布仍未验收。未commit/push/PR/merge/deploy。详见workers-ts/docs/php-ts-search-hotwords-20261025.md及/tmp/cinashop-search-hotwords/accepted-validation-result.json，source manifest SHAb1de5a72518df149aef05448139951153cf0ea60f2776df1e49dac6d4c0824d2。
+
+
+## 2026-10-25 Admin 配置分类作者增量（本批已验收，整体迁移继续）
+
+接续Uni搜索热词，补齐/config/classes及原PHP分类页精确别名。保留PHP八作者字段/defaults：后台范围、父级、名称、英文字段、符号图标、0/3类型、1/2表单状态、排序；列表开关仍1/0，历史status/type不挂载归一化，info只读保留。完整flat目录/revision与原分页树分开，5000项/坏图/跨范围/循环/后代排除显式处理；满容量只禁新增，现有编辑/删除/status和已成功UUID重放继续可用。通用配置值作者仍停用，原system forms/专用设置保留，无新DDL/媒体权限。
+
+写入复用live config权限/角色历史/数据库时钟、authority barrier、731622锁与引用表fence、全回读/审计原子事务；旧无intent形状、trim/UTF16/数值fallback兼容，现代UUID+revision+canonical及actor-scoped durable receipt防重放误用。每actor+UUID本机独立journal，未知结果只查询或用户主动原样重试；严格匹配且确认回滚的negative proof才解锁，晚回调/同token/同uid/owner/editor/view/draft ABA均被guard，abort真实Axios旧请求。
+
+1739项唯一测试通过，新增558（前端132模型数据+126实际SFC、87真实Hono/JWT/PGlite SQL、213来源/合同），既有相关1181项；Admin/Worker两项严格类型与Admin生产构建通过。built Admin桌面1365及375/320窄屏7截图、8写含1原样重试、筛选/树/八字段两次保存/历史元数据/删除/双未知恢复/坏DTO与503/只读会话通过；0 pageerror/warning/未解释console错误，3条预期故障精确归因。API实际709调用/747变体均已注册可执行，旧703/741仅由本批精确增量重建，旧dated/helper不改；26源增量、13新文件、34冻结前序/12既有源及91最终输入无漂移。前序台账字节及全部88/405复选文本行保持，失败阶段收据保留。
+
+仅配置分类元数据作者本地候选验收；通用字段/值钻取、FE-001/ADM-001和整体PHP→TS迁移仍开放。原生独立数据库会话/运行角色锁权限、真实账号/真机与发布未验收；无commit/push/PR/merge/deploy或生产业务写入。详见 workers-ts/docs/php-ts-config-class-author-20261025.md 与 /tmp/cinashop-config-class-author/accepted-validation-result.json；主manifest SHA6c208914768010f36feee20b1d493aa5150cd2e33ea501c35d375a91c192e922。
+
+
+## 2026-10-25 增量：Admin 本浏览器日志（仅本切片验收）
+
+恢复原PHP `/admin/system/log`，现代入口 `/system/frontend-log`：四等级、浏览器本地时间、原追加顺序、计数、固定安全详情及水位确认清空。每标签页内存最多500条，显式舍弃计数、等级筛选/20分页；真实Vue/Axios生产者保留原拒绝与取消，HTTP4xx/5xx均维持error，push任意字符串仍info、无效primitive忽略。原错误/URL/token/meta不进日志，快捷采集方法属于明确扩展。跨页保留、显式会话/成功再登录清空、失败登录保留、viewer卸载/ABA旧回调保护已验证。本地入口不授予服务端log.view；原请求/认证及server日志UI/API/Worker不改。
+
+1787项唯一测试通过，其中新增393（100纯状态+61实际安装+22实际SFC+210来源），既有1394；Admin/Worker严格类型检查及Admin生产构建通过。实际built Chrome在1365/375/320宽，四等级→筛选/详情→跨原server页→同payload登录→HTTP503/400/网络/业务拒绝→500容量/分页→清空保留新行→窄屏详情/确认→storage/刷新均通过。11图逐张查看，0pageerror/0warning/0未解释console error；3受控503、1受控400、1网络错误、1注入Vue原错误逐条归因。34次本地API请求，2POST仅登录验收；日志自身不发请求/不写存储。
+
+主来源21份PHP原件/19片段；22修改/7新来源，36旧dated/helper与13旧来源逐字保留。17旧测试仅最外层精确读取端口适配，原断言/负例未删。来源SHA89328bcd0d6d8492613bb66c28dd799dad92ad703683989d11c9286d2c7a9f16；API报告e00f364f4b64fd6eeb308a171bfdd6a0dcfe1e9ea498f359a4151921da8efec3保持709/747、0未解析/未注册/受控不可用。81份窄检查及最终3999份源码/执行输入原值，构建后4300份含dist完整输入无漂移。
+
+验收说明：`workers-ts/docs/php-ts-browser-log-20261025.md`；执行回执`/tmp/cinashop-browser-log-author/accepted-validation-result.json`。原自由文本/敏感meta有意收敛为固定摘要，原顶部快捷入口默认隐藏不照搬；不添加window.onerror/unhandledrejection。两账本原复选行保留，FE-001/ADM-001及整体迁移仍未完成。真实账号/设备、其它浏览器、远端CI/生产发布未验收，无commit/push/PR/merge/deploy。404异常页仅有下一片静态准备，不能计作已迁移。
+
+
+## 2026-10-25 增量：Admin 异常页目的地（本切片验收）
+
+公开独立403/404/500/other，现代精确入口与原/admin别名恢复，未知地址保留URL显示404、不再跳控制台。保留PHP文案、other的403及非IE提示、返回首页；安全菜单首子优先/空children叶子、仅注册固定named非redirect/nonparam/nonerror路径，alias canonical，无token返回login，坏/空菜单沿用现dashboard fallback。当前按钮fresh读取存储，route/query ABA/卸载旧listener退休，失败固定提示可重试；不写存储、不发诊断API、不显示query/hash/原错误。已知登录守卫、业务权限、原认证/请求/Vue日志与Worker ACL保持；不添加HTTP自动跳页，不宣称原全站RBAC403 producer或全部迁移已完成。
+
+2021项唯一测试通过，新增234（42真实VueRouter/cacheHandlers SFC/nativebutton+192来源）；既有1787回归。Admin/Worker严格类型及Admin生产构建通过。built Chrome在1365/375/320，未知404→键盘login→四族现代/旧别名→窄屏→旧/新按钮→原HTTP403不跳页全链通过；14图逐张查看，0pageerror/0warning/0未解释console error，唯一夹具GET403按原页面报错。7个既有API请求均GET，除既有main启动请求外，静态异常页不新增API，互切不发API。
+
+11份固定PHP原件/14片段，21修改/4新增，38前序dated/helper及16既有来源原值。18旧测试仅外层读取端口适配、原体/负例保留。主来源SHAf8c903e9d3516cb4d5662e794a37224a2c2b5684712ccdded4d626a151c9ed06；API报告e00f364f4b64fd6eeb308a171bfdd6a0dcfe1e9ea498f359a4151921da8efec3仍709/747、0未解析/未注册/受控不可用。82窄输入及最终4310含dist输入无漂移。
+
+说明：`workers-ts/docs/php-ts-admin-exceptions-20261025.md`；回执`/tmp/cinashop-error-pages-author/accepted-validation-result.json`。原账本复选行保持，FE-001/ADM-001及整个PHP→TS迁移仍未完成。真实账号/设备、其他浏览器、远端CI/生产发布未验收，无commit/push/PR/merge/deploy。管理员本人资料仅下一片静态侦察，不计完成。
+
+
+## 2026-10-25 Admin 本人资料四流程（本地代码验收完成）
+
+- 实现头像、姓名、原密码改密、新手机短信验证；现代 `/system/profile` 与原 `/admin/system/user` 精确别名，双Admin前缀，普通管理员仅维护本人。补齐Pages两个精确挑战代理、专属Admin SMS purpose/Queue、防重放回执及独立最小权限维护addon。
+- 最终2510项选定测试（500前端、7 Pages代理、2002后端/来源、1独立PG16 LOGIN）通过；两端与Pages类型、Vite/Functions构建、桌面/375/320四流程GUI通过。API清单717/755，全部注册/可执行，未注册/未解析/受控不可用均0。
+- 保留原件七字段互斥优先级；旧密码按现登录原串验证，新密码12字符/72字节/bcrypt12。旧JWT失效、同owner新登录恢复回执、Redis消费不可随PG回滚恢复均有实际证据；queued不表述为送达。
+- 详细合同与边界：`workers-ts/docs/php-ts-admin-profile-20261025.md`（SHA-256 `5d2b83148c37edb4bb7160b8516f8fd4b98cb7e0e36912129238119f64b3220d`）；完整来源：`workers-ts/audit/admin-profile-source-binding-20261025.json`（SHA-256 `014557a014be467ac07bc9d57b57caa46f1e9544ea3b8b01c01887eee6b111f6`）。32完整可逆前后像、17绑定新增、12固定PHP全文、1691历史证据文件保持原字节。
+- 未提交/推送/部署，未操作生产库或真实provider；生产环境需显式维护安装并配置Turnstile/Redis/Aliyun/R2。全仓PHP→TS迁移仍继续；平台type1权限规则仅完成只读来源准备，未计实现。
+
+
+### 2026-10-25 平台权限规则完整作者（PLATFORM-MENU-AUTHOR-20261025）
+
+- 承接固定PHP `8ed2a5b139f9170dd11b0dff91803f2fd59e40a5` 的type1权限规则：11活跃控件、完整父目录/树/筛选分页、真实Admin API拾取、原860图标、create/update/show/delete与双前缀旧REST适配。历史隐藏元数据/负sort与未变化旧tuple保留；当前固定导航不动态化。
+- 实时身份+独立权限+超级管理员写门禁，staff/role→menu锁序；全量角色引用防授权变义与删除，悬挂ID拒绝复活，永久soft tombstone。独立type1 SECURITY DEFINER与immutable回执addon，Admin仍无菜单裸DML，显式PG16维护安装，原type4/authority writer/stage plan未改。
+- 唯一选测2780项全通过（本域新增270）：前端564、后端/来源2214、PG16独立LOGIN原生2；Admin/Worker严格类型、Vite及fresh API audit通过。当前723调用点/761变体，761全registered/executable，0缺口。Built GUI1365/375/320八图已查看，控制台仅受控400/ERR_FAILED，无warning/pageerror；临时PG fixture0、集群已停止。
+- 证据：`workers-ts/docs/php-ts-platform-menu-author-20261025.md` SHA256 `0aa05808be777d662416faa3c736e194d8e8bfa317222b8258dd64e2106600b7`；`workers-ts/audit/platform-menu-source-binding-20261025.json` SHA256 `038ff45fc1a72a0fa79f0c956883a0a4dca7b19268d32aece8ecc2c59b9b9bce`，绑定32完整前后像/19新增源/11完整PHP，冻结1694既有证据与10关键源。20前驱测试仅导入外层可逆适配，未删断言/负例或改历史helper/proof。
+- 本地实现与验收；没有生产部署或真实provider。ADM-001/FE-001等父项与整个PHP→TS迁移仍开放。下一候选快递公司目录同步/条件账号作者仅35全源静态准备，不计实现验收。
+
+
+## 2026-10-26 追加：快递公司目录与六项账号完整作者
+
+本批在既有/express闭环搜索/分页、provider响应目录同步、六项keep/replace/clear、显隐、新增与受保护删除；恢复原/admin/setting/freight/express/index及双前缀freight/express适配。原TS整行列表泄漏六账号字段已收敛为明确presence DTO；PHP后三项未保存及同步三/六项readiness不一致作为原件缺陷修复。同步使用HTTPS Worker Secrets、独立1MiB/5000全响应校验，不假造原PHP未定义的完整远端分页合同；保留已有账号/名称/排序/显隐，不删除缺席项。
+
+prepare只读HMAC签章、签名ticket先持久化、同事务全回读和不可变回执；原UUID先于过期目录校验重放，404仍unknown，显式resolve封存not_applied防迟到提交；刷新不伪造secret重放，多标签逐条恢复。现场权限/凭据/期限重验，GET sync明确express.manage；独立九列addon仅Admin SELECT/INSERT，App无权限，显式PG16维护。staff/role→carrier短NOWAIT锁、全job/default/history删除保护及阻断任务配置保护，原签发/冻结job与customer边界不改。
+
+3155项唯一选测通过，新增367；后端/来源2563、前端既有564+新Vue27、native PG16独立LOGIN1，重复来源/界面复跑不重复统计。Admin vue-tsc/Worker strict tsc/Vite生产构建/API inventory均0；728calls/766variants全部registered/executable、0unresolved/unregistered/controlledUnavailable。built Chrome1365/375/320、8图逐张核验；长表单内部滚动且标题/操作固定；0pageerror/0warning，仅受控400与刻意丢回包ERR_FAILED。PG16.14最后集群.cache/finance-postgres-VM316J已停、fixtures0。未联调真实provider签发或生产维护。
+
+35完整修改前/后、16新增、12完整固定PHP，1697旧dated/helper及13既有边界原值；21旧套件只改最外读取端口、原断言/负例保留。来源SHA256 049743be929dfeb9ef85d163f2b45d2f1bcadb722fdd8ec0e673e45f73948970；文档workers-ts/docs/php-ts-express-author-20261026.md，SHA256 991dd8d91c15586fcdb760bf3d6e88b20427e37cec158f4874d2a826de546b1e。完整回执/tmp/cinashop-express-author/accepted-validation-result.json。原账本全部前缀字节/复选行保持；父项和整体PHP→TS迁移开放，无commit/push/PR/merge/deploy。下一普通会员等级/level仅有静态准备，不计完成。
+
+
+## 2026-10-26 追加：普通会员等级九字段与双图片作者
+
+本批实现/level及原/admin/vipuser/level/list：九有效字段、独立图标/背景图库、标题/0显隐筛选和分页、显隐、新增/编辑、全用户引用拒删与历史原子软删。名称/grade/exp跨全未删行唯一、相邻经验严格递增；外域历史只读并参与约束，展示编辑保留原结构缺陷和隐藏收费/有效期值。新建永久默认与PHP一致，完整INSERT字段/全目录/历史回读拒绝触发器改写。原任务/任意set_value不扩展；discount0保留现有原价回退，原getLevel/激活/购物车/报价/订单规则字节不动。
+
+实时权限/凭据/期限重验，staff/role→等级ACCESS EXCLUSIVE NOWAIT；删除加user/user_level SHARE ROW EXCLUSIVE NOWAIT。独立不可变admin_level_operation仅Admin SELECT/INSERT、App无权，显式维护升级/回滚/就绪检测，不扩展原业务授权。先持久化完整非秘密UUID/action/hash、同事务写入和回执；旧UUID先于过期目录校验，404仍未知，owner显式resolve封存阻止迟到提交。512KiB正文与journal支持历史长说明，严格矛盾终态不能删journal。规范平台附件元数据重验及响应预览签名，历史原值不重写；两槽图库仅level.manage范围，无附件CRUD扩权。
+
+3494项唯一选测通过，新增358（SQL/Hono54、图片37、图库24、addon32、来源173、Vue37、原生作者1）；完整后端/来源2549、相邻运行时200、原生既有激活/价格116、原生作者1、既有前端591和新Vue37。最终选测无失败/跳过；曾用PGlite扩展执行原生定价锁测试失败，未改断言，切PG16后116全过。Admin/Worker类型、Vite、AST API734calls/772variants全部registered/executable且零缺口。built Chrome1365/375/320九图逐张核验；0pageerror/0warning，仅受控400和刻意ERR_FAILED；桌面焦点外层滚动已修复。PG16.14 .cache/finance-postgres-JVVtOP已停、fixtures0，5213关闭。
+
+37完整修改前/后、20新增、16完整固定PHP、1700冻结旧证据与16既有边界；22旧来源suite只改读取端口、断言/负例原样，旧缓存fixture另记鉴权和清除无引用前提、32原断言保留。来源SHA256 b7bb59cd7162f559537ab69d05aa6475217c1cf7117201078357db692ad7a974；文档workers-ts/docs/php-ts-level-author-20261026.md SHA256 93aa6bf3ca9a2164e95d62048e216fe0bf29df97e0364284a669db39e086f732；验收/tmp/cinashop-level-author/accepted-validation-result.json。账本前缀字节与旧复选行保留；没有生产安装/联调或commit/push/PR/merge/deploy，父项及整体PHP→TS继续开放。下一用户标签/分类仅静态勘察。
+
+
+## 2026-10-26 追加：用户标签、分类与企业微信目录同步
+
+本批闭环/label及原/admin/user/label/：分类导航/名称与排序CRUD、用户标签五字段（原分类/名称及现TS颜色/排序/启停）、每页10/末页删除回退、原表单/REST/双前缀与原本活跃企业微信sync。平台范围、历史字段、全域引用和原子关系清理/完整写后回读均覆盖；商品标签原成熟页面继续/label/products。原混合页6调用完整归档退役、5typed作者调用替换，其余728旧调用逐项不动，733calls/771variants全部registered/executable、0缺口。
+
+独立九列immutable admin_label_operation、实时身份/权限/凭据/期限、authority→目录NOWAIT锁和原UUID持久化/owner回执恢复。同步queued/planned/dispatch/confirmed逐步追加，SQL事务外provider IO；dispatch先落盘且非幂等创建不重发，完整远端前后目录只证明新身份出现，未知不伪称完成/未应用。已有远端批次后停止使用stopped；Queue HMAC与原凭据/期限重验，过期/耗尽ACK仅投递结束。最终映射和导入须本地源未变；C7 targeted/current authority与原业务授权字节保持。纯协议校验独立于凭据传输，旧安全断言保留。
+
+3935唯一选测通过，新增454；后端236、来源2572、旧运行时392、前端657、原生78（含新作者1）。Admin/Worker类型、Vite、AST审计均通过。built Chrome1365/375/320七图逐张核验，0pageerror/warning，仅预期400/ERR_FAILED；本地受控接口不算真实企业账号联调。PG16.14最后集群/home/cina/cinagroup/cinashop/.cache/finance-postgres-HBh8Yd已停、fixtures0、5214关闭。初始夹具/读取端口/类型/旧provider来源失败与终止均保留，不计通过；最终重跑0退出码。
+
+39完整修改前后、23完整新增、20完整固定PHP，1703旧dated/helper/doc冻结与21既有边界源保持。23旧来源套件只改导入、断言/负例未改。来源SHA256 9aea23c96f1e70cbfe3d4eae0b334f9e9abe3fff4d7d023da2a827d0eefa4261；文档workers-ts/docs/php-ts-user-label-author-20261026.md SHA256 6228b7a89b8a704f4d003a4858d8df7fc0a7a492ba4e80a29289ccc161838c97；验收/tmp/cinashop-label-author/accepted-validation-result.json。两账本原前缀/复选行保留，未生产安装/真实租户Queue联调或commit/push/PR/merge/deploy。父项和整体迁移开放；下一提货点活跃表单仅28份静态勘察，不计实现。
+
+
+## 2026-10-26 追加：提货点完整作者与店员联动（本地验收）
+
+补齐12个保存值、专属图片与完整名称地区、固定地图iframe候选明确确认、现代原UUID回执和双前缀旧REST兼容。显式营业切换联动有效店员；回收保护订单status0/1/5并联动店员，恢复保留TS停业状态。完整base/current表结构适配、实时authority/ERP/店员订单锁和全行回读；独立不可变admin_store_operation仅显式维护安装，不扩业务DML。
+
+最终3363项唯一选测通过（新增404）：后端167、实际Vue57、双profile原生1、来源2751、邻接231、原消费者native63、前端回归93。Admin/Worker严格类型和生产构建通过；Chrome1365/375/320七图已逐张查看，0warning/pageerror，6项GUI核验通过。API741/779全registered/executable，0缺口，原733调用全部保留。临时fixture0且服务已停止。
+
+说明 `workers-ts/docs/php-ts-store-author-20261026.md` SHA256 `d9da985df3f88ae173360332715cc6d6b7143a68980396d34102205111047b45`；来源SHA256 `3f8470a2e741b2517959ec2be81eeaa9af808f048a1fdc6f12800e6ed8ea0c9f`（38完整前后像/22新增/12PHP/1706旧证据/25不变实现/24import-only旧测试）；验收回执 `/tmp/cinashop-store-author/accepted-validation-result.json`。原复选行保持，ADM-001/FE-001及整体PHP→TS迁移仍开放。未安装生产addon、未做真实地图/账号设备联调或远端CI，无commit/push/PR/merge/deploy。下一核销员作者仅20全件静态准备，不计完成。
+
+
+## 2026-10-26 追加：核销员七字段、用户选择与头像（本地验收）
+
+补齐原核销员入口与父页tab、真实用户目录/头像图库、七持久值、显式状态/软删除及现代owner UUID回执恢复。旧双前缀REST保持，image先规范化再复验；修正store_id=0全部筛选，完整历史容量can_create明确。原凭据/角色/管理员标记与成熟核销、门店、配送消费者保留，原PHP硬删除不替代现TS软删除。
+
+最终3393项唯一选测（新增398）通过：新SQL/HTTP/支持/头像/addon174、Vue46、来源2928、独立邻接114、原生45、旧前端86。Admin/Worker两套类型和Vite通过；GUI1365/375/320九图逐张核验，0warning/pageerror，API748calls/786variants零缺口，741旧calls保留。原生真实旧staff joined SELECT竞争、选中用户/头像行锁和提货点/核销读取回归通过，fixture0及服务停止。
+
+文档 `workers-ts/docs/php-ts-staff-author-20261026.md` SHA256 `fa2ee79a2b78241b1cd8771bdd4df6ce4968103aed89d3132839568779a05f12`；来源SHA256 `01f3910b4b07c4c3c52714b839eca3953fda555e660b3e32163b049aa3f7283f`（38完整前后/21新增/8PHP/1709旧证据/26不变实现/25import-only旧测试）；验收 `/tmp/cinashop-staff-author/accepted-validation-result.json`。账本原前缀与复选行保持，ADM-001/FE-001及整体迁移仍开放。未生产安装addon、真实账号设备/R2联调、远端CI或commit/push/PR/merge/deploy。下一配送员只读25源准备，不计完成。
+
+
+## 2026-10-26 追加：平台配送员完整作者（本地验收）
+
+补齐真实选人、250字头像、五持久值、固定编辑UID、原alias与门店配送标签、双前缀REST和owner UUID回执恢复。原数字菜单720精确tuple只授order.view，order.manage独立。创建blank名称/手机仅回落到锁定用户真实资料；保留旧TS软删除及其它scope/订单/资金原值。新HTTP写入口拒绝校验旧UID后写新UID，成熟StoreOperationsService/配送scope/read/writeoff与旧证据保留。
+
+唯一选测3598项（新增408）通过：后台与相邻247、来源3117、前端128、移动39、原生67。Admin/Worker两套类型和Vite通过；GUI1365/375/320及父页十图逐张核验，0warning/pageerror；API755calls/793variants零缺口且旧748调用保留。原生实际配送scope SHARE栅栏竞争、显式addon原子回滚/ACL/重放与旧工作台/送达核销回归通过；fixture0、临时服务已停。
+
+文档 `workers-ts/docs/php-ts-delivery-author-20261026.md` SHA256 `791bedd1a7a092a01a05da3b4e3243e5fd25d29e60703b77a048892993e04217`；来源SHA256 `4693ddbd1f6231f53d0699729a372afae2a742d5222a338930e64d104c73dbf9`（41完整前后/22新增/10PHP/1712冻结/36观察不变/26import-only）。验收 `/tmp/cinashop-delivery-author/accepted-validation-result.json`。账本原前缀与复选行不改，ADM-001/FE-001和整体迁移仍开放。未生产安装addon、真实帐号/R2联调、远端CI或commit/push/PR/merge/deploy。
+
+
+## 2026-10-26 追加：商城用户分组原入口与可恢复编辑（本地验收）
+
+保留20261014已迁业务CRUD、原四条REST/现代三条包装与服务、用户分配KEY SHARE和全用户引用拒删；增/admin/user/group精确alias、单名称作者与原UUID恢复/封存。raw摘要4096/normalized64 Unicode、历史原值不变、64emoji不按UTF16截断；新目录安全预算20000/16MiB明确拒截断，非PHP业务上限，旧分页API保留。原数字227/263只读、265 POST writer独立，未扩大用户DML。
+
+唯一选测3520（新增347）通过：后台与相邻149、当前原生事件前端60、原生7、源码3304。旧frontend5最终复跑并按身份去重不再加数，源码含3117旧断言与187新断言。类型/构建通过，GUI1365/375/320十图逐张核验，API759calls/797variants零缺口且旧755调用全保留。真实assignGroup与新作者双向独立LOGIN竞争、addon安装中断原子回滚/ACL/幂等/封存及旧六原生回归通过；fixture0、临时服务已停。
+
+文档 `workers-ts/docs/php-ts-user-group-author-20261026.md` SHA256 `f22b845d83ab252070b655aa7ca394bd9f1b5fd6140ecdbf55167e7cd1040f5c`；来源SHA256 `3e4a3ec3fc684dc585d552247a0f5150302b7c38ce507fdd770c3de0bf64d777`（42完整前后/16新增/11PHP/1715冻结/28观察/27import-only）。验收 `/tmp/cinashop-group-author/accepted-validation-result.json`。原账本前缀和复选行不改；整体迁移、ADM-001、FE-001仍开放。未生产安装addon、真实账号/R2联调、远端CI或commit/push/PR/merge/deploy。
+
+
+## 2026-10-26 追加：商品单位原入口与可恢复双字段编辑（恢复环境重新验收）
+
+原/admin/product/unitList映射/product/units，ProductMetadata活跃单位标签复用，名称/排序、15/page、历史varchar50/signed-smallint原值兼容，新变化名称15 Unicode、排序0..32767。原CRUD/三API包装及平台/Supplier保存代码保留，成熟731611锁与全live商品引用检查、仅is_del软删，独立9列回执显式PG16安装及原owner恢复/封存。
+
+环境切换后所有选测重跑：唯一3744（新391），行为251、来源3493（旧3304/新189）；路由测试修复后重跑Worker主类型/来源，逐图状态列nowrap CSS修复后仅重跑Vite/来源/GUI，七项未受影响门禁按原完整成功收据复用，失败/中间成功/177诊断均保留且不重复计数；两Worker类型/Admin类型/构建通过；PG16双向真实商品竞争、addon原子/ACL/幂等及旧8通过，fixture0/服务停；GUI三宽度11图逐张检查；API763/801零缺口，旧759调用的797变体保留。当前恢复快照7591份，旧/tmp日志和7200原before不可访问，未重造或冒称原外部证据仍在。
+
+文档 `workers-ts/docs/php-ts-product-unit-author-20261026.md` SHA256 `1ade984ce55ea2cf7bb6dc072133e8de38d633384830487998986102070913b7`；来源 `workers-ts/audit/product-unit-author-source-binding-20261026.json` SHA256 `d51dd1d86b7462d3d5a0978fa1f4c81e8c8902c97ecfb61a6f85609a8b3763c0`（41前后/17新增/12PHP/1718冻结/33观察/28导入端口）。验收 `/tmp/cinashop-unit-author-recovery/accepted-validation-result.json`。原账本字节前缀/复选行不改，整体迁移、ADM-001、FE-001继续开放。未生产addon、真实账号/R2、远端CI、commit/push/PR/merge/deploy。
+
+
+## 2026-10-26 追加：平台商品保障完整作者增量（本地验收）
+
+保留成熟CRUD/平台与Supplier绑定，原ensure入口+聚合标签四值作者、独立状态、完整九列+xmin CAS、物理删及跨scope引用保护、唯一canonical图库与原UUID恢复/封存。
+唯一选测4166（新367）：后台248、前端166（新82/旧84）、原生72（新1）、来源3680；类型/构建/API769/807与三宽度十图均实际通过，旧801变体保留。失败/中间尝试/准备不重计。
+文档 `workers-ts/docs/php-ts-product-ensure-author-20261026.md` SHA256 `85a398b3d3a679a6eb18191d575ef68d0c74c2197c4400fb089ce91c33fe35dd`；来源SHA256 `4ad98800ba6c3c1a803492b0a30a4755f3d4ea8899e828673fb507290eaf60cb`。原before7905、完整当前源码/dist与本轮原始证据持久缓存，receipt最后发布。
+原账本前缀/复选行保持；整体迁移/ADM-001/FE-001开放。未生产addon、真实账号/R2、远端CI、commit/push/PR/merge/deploy；SKU模板只读准备不计完成。
+
+
+## 2026-10-26 追加：平台SKU规格模板完整作者增量（本地验收）
+
+成熟CRUD/Supplier/商品复制保持；原product_attr独立入口+聚合标签、默认preserve/明确replace完整维度值作者、五列+xmin全scope CAS、独立immutable回执、原UUID恢复/封存与稳定原生控件租约。
+唯一选测4364（新364）：后台216、前端232（新66/旧166）、原生41（新1）、来源3875；双Worker/Admin类型、Vite/API773/811、三宽度十图均实际通过。旧807变体保留。失败/skip/准备不计通过。
+文档 `workers-ts/docs/php-ts-product-rule-author-20261026.md` SHA256 `e8ae88cb8527fe79cfedb63591373b155d61abd501b3a0bc07949b5a9966bd3f`；来源SHA256 `392bc3bcf6f9598b2a6651c8454a92d349ee07dda5a3025fb253f55d3d5985c1`。真before7929、完整当前输入/dist与原始证据缓存，receipt最后发布。
+账本原前缀和checkbox保持；整体迁移/ADM-001/FE-001仍开放；未生产addon/provider、远端CI、commit/push/PR/merge/deploy。
+
+
+## 2026-10-26 追加：商品参数模板完整作者增量（本地验收）
+
+保留原CRUD/平台/Supplier/参数copy消费者；原specs入口、15/page、默认preserve完整历史子行、显式0..100 replace、13父+9子+xmin全scope CAS、物理删引用保护、独立immutable回执和原UUID恢复/封存。
+唯一选测4784（新404）：后台314（新110）、前端321（新89）、原生70（新1）、来源4079（新204/旧3875）；8项runtime全新、32来源套件与三宽度十图实测。API777/815旧811变体全保留；失败/准备不计通过。
+文档 `workers-ts/docs/php-ts-product-parameter-author-20261026.md` SHA256 `8d56364bb80b11f7b94976f3910e6478ab3fa9ae4788585095910dbd24025271`；proofSHA `b4793a4cc6d673ad3603c3f8d8ce366e88e9816c501b8d7fed04e5f819720b74`；7951真实before、整源码/dist与全部原始证据实物归档，旧Rule cache/1727证据字节不变；两账本原前缀/checkbox保留，receipt最后发布。整体迁移继续，不涉及生产部署/真实provider/远端CI/Git发布。
+
+
+## 2026-10-27 追加：搜索热词完整作者增量（本地验收）
+
+八值作者、原hotWords入口、15/page、完整历史原稿保留、图库一槽、独立immutable回执和原UUID恢复；成熟producer/搜索合同及公开签名显示窄接线保持边界。
+唯一选测5156（新增476）：常规后台271/选中275，唯一4条件HTTP由独立PG16补验4/4且只计一次；前端588、原生合计9、来源4288（新209/旧4079）。13runtime均全新，33来源套件及三宽度十图实测；API783/821，旧815完整变体保留。
+文档 `workers-ts/docs/php-ts-product-hotword-author-20261027.md` SHA256 `f746ddb8e8899746c7d1f83064786cf641b70b4a6ed8103e54724832ac7da49e`；proof `9db55d738908e60ec9f3850133470d5af79807465b46e443b44f92b84053c3d7`。真实7973before、1730旧证据、原日志与失败、全输入/生成物实物归档；旧前缀/checkbox保持，accepted receipt最后发布。整体迁移继续，不涉及生产安装/真实provider/远端CI/Git发布。
+
+
+## 2026-10-27 追加：商品标签及分组完整作者（本地验收）
+
+十值标签/两值分组、原alias、15/page、历史原稿/单图库、九操作与原UUID恢复；保留成熟CRUD、双开关、批量保护及真实消费者。
+唯一选测4846（新增461）：后台262（新193），前端76（新62/旧14），原生15（新1/旧14），来源4493（新205/旧4288）。八门全新runtime、34来源套件与三宽度十二图；API789/827，旧821完整对象保留。失败/诊断不复用计数。
+文档 `workers-ts/docs/php-ts-product-label-author-20261027.md` SHA256 `f8a8079586802d007143cc6b6fd09bebfc32af7e0e0599d02075d42e4f565c8a`；proof `ceaa64364a23219d5f07b8423b420a1e7f294dd2df78445a2890da38bd0b3230`。真实8000before、1733旧证据、完整源及raw证据实物缓存，账本旧前缀/checkbox不改。整体迁移继续，未生产安装/真实provider/远端CI/Git发布/部署。
+
+- 2026-10-27 Supplier product-label current App capability: 4979 unique passed, 195 new; exact narrow EXECUTE, no App label DML/auxiliary read; source 9aeaf53960f53c193107c2af22d9c21b50224b00572bc6a2f387dee13aa516e0; overall migration active.
+
+
+- 2026-10-27 Admin bargain operational records/statistics: complete bounded read flow, six modern GETs plus five PHP aliases; 5052 unique selected tests passed (277 new), 795/833 API inventory, PG16 actual current LOGIN/Hono, desktop/375/320 ten-screen QA. See `workers-ts/docs/php-ts-admin-bargain-records-20261027.md`. Original ledger prefix/checkboxes retained; overall migration remains active.
+
+
+- 2026-10-27 Admin WeChat custom menu: complete 3×5 three-action editor and durable bounded publication/reconciliation; 5262 unique selected tests passed (343 new), 801/839 actual API inventory, isolated PG16 current LOGIN/Hono, ten-screen local GUI QA. See `workers-ts/docs/php-ts-admin-wechat-menu-author-20261027.md`. Original ledger prefix and checkboxes retained; overall PHP-to-TypeScript migration remains active. No production provider publication, deployment, or Git commit.
+
+
+- 2026-10-27 Admin WeChat base: complete nine-field author, explicit callback authority/three modes, rotation-aware credential consumers and fenced permanent QR publication; 5818 unique selected tests passed (405 new), 807/845 actual API inventory, isolated PG16 current LOGIN/Hono, ten-screen local GUI QA. See `workers-ts/docs/php-ts-admin-wechat-base-author-20261027.md`. Original ledger prefix and checkboxes retained; overall PHP-to-TypeScript migration remains active. No production provider publication, deployment, or Git commit.
+
+
+- 2026-10-28 Admin WeChat open (batch 20261027): complete two-field author, explicit credential authority and same-account PC/Kefu OAuth identity publication; 6218 actual selected unique cases (400 new), 811/849 actual API inventory with845 whole prior variants, fifteen staged gates, isolated PG16 LOGIN/Hono and eight-screen local GUI. See `workers-ts/docs/php-ts-admin-wechat-open-author-20261027.md`. Original ledger prefix/checkbox retained; overall PHP-to-TypeScript migration remains active. No production provider publication, deployment or Git commit.
+
+
+- 2026-10-28 PC base author (batch20261028): complete13-field intents and actual home/company/phone consumers; 7141 actual selected unique cases, all6218 prior identities retained, 923 newly selected (548 new-file author cases; 375 existing-file coverage). Backend629/frontend544/native130/source5838; 18 staged actual gates, API817/855 with849 whole prior variants, PG16 native and9 individually viewed screenshots. See `workers-ts/docs/php-ts-admin-pc-base-author-20261028.md` (SHA `cbe3e19acdcd33d611f8e473912774b5a8827f42c9909171a88fe6350d640840`). Original prefixes/checkboxes retained; overall PHP-to-TypeScript migration remains active. No production provider publication, commissioning, deployment or Git commit.
+
+
+- 2026-10-28 Native App WeChat author: 8563 actual selected unique cases (backend970/frontend817/native447/source6329), all7141 prior identities retained; 1422 newly selected (1030 new-file author; 392 existing-file coverage). Complete49 business gates/23 native calls, fresh source types, 41 source suites and12 individually viewed screenshots. See `workers-ts/docs/php-ts-admin-wechat-app-author-20261028.md` (SHA `970ee92f9f96659461154fb83d9ec3b54467627258facaae895103c6002ee0e9`). Old prefixes/checkboxes retained; overall PHP-to-TypeScript migration remains active. No real device/provider/SMS/packaging, production commissioning, deployment or Git commit acceptance.

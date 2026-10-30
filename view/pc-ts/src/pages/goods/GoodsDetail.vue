@@ -12,6 +12,7 @@
         <el-button v-if="preparedCart" type="primary" :loading="checkoutNavigating" :disabled="checkoutNavigating" @click="resumeCheckout">继续结算</el-button>
         <el-button :disabled="checkoutNavigating || purchaseSubmitting || packageBuying" @click="restartPurchase">{{ preparedCart ? '重新选择商品' : '重新加载商品' }}</el-button>
       </div>
+      <ProductPhoneBuy :product-id="detail.id" :key="detail.id" />
       <div class="detail-main">
         <!-- 图片 -->
         <div class="gallery">
@@ -200,6 +201,7 @@
 </template>
 
 <script setup lang="ts">
+import ProductPhoneBuy from "@/components/ProductPhoneBuy.vue";
 import ProductImage from "@/components/ProductImage.vue";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { isNavigationFailure, useRoute, useRouter } from "vue-router";

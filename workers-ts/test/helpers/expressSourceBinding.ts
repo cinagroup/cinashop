@@ -1,0 +1,25 @@
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {relative,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {platformMenuSourceBinding,reversePlatformMenuSource} from './platformMenuSourceBinding';
+import {adminProfileSourceBinding,reverseAdminProfileSource} from './adminProfileSourceBinding';
+import {errorPagesSourceBinding,reverseErrorPagesSource} from './errorPagesSourceBinding';
+import {browserLogSourceBinding,reverseBrowserLogSource} from './browserLogSourceBinding';
+import {configClassSourceBinding,reverseConfigClassSource} from './configClassSourceBinding';
+import {buildAdminFrontendApiAuditReport} from '../../scripts/admin-frontend-api-audit';
+import type {RouteSourceFollowup} from './routeSourceIncrement';
+const root=resolve(import.meta.dirname,'../../..'),sha=(v:string|Uint8Array)=>createHash('sha256').update(v).digest('hex');
+const PROOF_SHA='049743be929dfeb9ef85d163f2b45d2f1bcadb722fdd8ec0e673e45f73948970';
+const raw=readFileSync(resolve(root,'workers-ts/audit/express-author-source-binding-20261026.json'),'utf8');
+if(sha(raw)!==PROOF_SHA)throw Error('Express exact proof bytes differ');
+export const expressSourceBinding=JSON.parse(raw) as {sources:Array<RouteSourceFollowup&{file:string}>;full_additions:Array<{file:string;sha256:string;bytes:number}>;PHP_ref:string;PHP_sources:Array<{file:string;sha256:string;bytes:number;raw_utf8:string}>;frozen_predecessor_evidence:Record<string,string>;observed_unchanged:Record<string,string>;current_report:{file:string;sha256:string};previous_report:{sha256:string;raw_utf8:string};boundaries:Record<string,string>};
+export function reverseExpressSource(file:string,source:string,proof=expressSourceBinding){const row=proof.sources.find(r=>r.file===file);if(!row)return source;const edit=row.edits[0];if(sha(source)!==row.after_sha256||row.edits.length!==1||!edit||edit.after_line!==1||edit.before_line!==1||edit.after_source!==source||sha(edit.before_source)!==row.before_sha256)throw Error('Express complete source or predecessor differs');return edit.before_source;}
+function target(file:Exclude<Parameters<typeof readFileSync>[0],number>){return relative(root,resolve(typeof file==='string'?file:'href'in file?fileURLToPath(file.href):new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(file))).replace(/\\/gu,'/');}
+function read(file:Parameters<typeof readFileSync>[0],options:Parameters<typeof readFileSync>[1],layer:number){const result=readFileSync(file,options);if(typeof file==='number')return result;const name=target(file),proofs=[expressSourceBinding,platformMenuSourceBinding,adminProfileSourceBinding,errorPagesSourceBinding,browserLogSourceBinding,configClassSourceBinding];if(!proofs.slice(0,layer+1).some(p=>p.sources.some(r=>r.file===name)))return result;let value=typeof result==='string'?result:new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(result);value=reverseExpressSource(name,value);if(layer>=1)value=reversePlatformMenuSource(name,value);if(layer>=2)value=reverseAdminProfileSource(name,value);if(layer>=3)value=reverseErrorPagesSource(name,value);if(layer>=4)value=reverseBrowserLogSource(name,value);if(layer>=5)value=reverseConfigClassSource(name,value);return typeof result==='string'?value:new TextEncoder().encode(value);}
+const reader=(layer:number)=>((file:Parameters<typeof readFileSync>[0],options?:Parameters<typeof readFileSync>[1])=>read(file,options,layer)) as typeof readFileSync;
+export const readExpressPredecessor=reader(0),readPlatformMenuPredecessor=reader(1),readAdminProfilePredecessor=reader(2),readAdminProfileThenErrorPagesPredecessor=reader(3),readAdminProfileThenErrorPagesThenBrowserLogPredecessor=reader(4),readAdminProfileThenErrorPagesThenBrowserLogThenConfigClassPredecessor=reader(5);
+export {platformMenuSourceBinding,reversePlatformMenuSource,adminProfileSourceBinding,reverseAdminProfileSource};
+export function buildExpressPredecessorApiAuditReport(){const actual=buildAdminFrontendApiAuditReport();if(sha(JSON.stringify(actual,null,2)+'\n')!==expressSourceBinding.current_report.sha256)throw Error('Express current API inventory differs');const old=expressSourceBinding.previous_report;if(sha(old.raw_utf8)!==old.sha256||old.sha256!==platformMenuSourceBinding.current_report.sha256)throw Error('Express full predecessor API inventory differs');return JSON.parse(old.raw_utf8) as typeof actual;}
+export function buildPlatformMenuPredecessorApiAuditReport(){buildExpressPredecessorApiAuditReport();const old=platformMenuSourceBinding.previous_report;if(sha(old.raw_utf8)!==old.sha256||old.sha256!==adminProfileSourceBinding.current_report.sha256)throw Error('Platform menu full predecessor API inventory differs');return JSON.parse(old.raw_utf8) as ReturnType<typeof buildAdminFrontendApiAuditReport>;}
+export function buildAdminProfilePredecessorApiAuditReport(){buildPlatformMenuPredecessorApiAuditReport();const old=adminProfileSourceBinding.previous_report;if(sha(old.raw_utf8)!==old.sha256)throw Error('Profile predecessor inventory differs');return JSON.parse(old.raw_utf8) as ReturnType<typeof buildAdminFrontendApiAuditReport>;}

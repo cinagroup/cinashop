@@ -1,8 +1,9 @@
 import type { Env } from "@/env";
 import type { Container } from "@/lib/di";
 import type { WechatPaymentProfile } from "@/services/payment/WechatPaymentIdentity";
-import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { readPaymentPublicConfig } from './PaymentPublicRuntimeConfig';
 import { ValidateException } from "@/utils/errors";
+import { readNativeAppPaymentAccount } from './NativeAppPaymentAuthority';
 
 export type CheckoutPaymentMethod = "yue" | "weixin" | "alipay" | "offline";
 
@@ -53,6 +54,7 @@ type PaymentRuntimeEnv = Pick<
   | "WECHAT_API_V3_KEY"
   | "WECHAT_PLATFORM_PUBLIC_KEY"
   | "WECHAT_PLATFORM_CERT"
+  | "WECHAT_REFUND_NOTIFY_URL"
   | "ALIPAY_APP_ID"
   | "ALIPAY_PRIVATE_KEY"
   | "ALIPAY_PUBLIC_KEY"
@@ -103,6 +105,20 @@ function hasWechatDeploymentCredentials(env: PaymentRuntimeEnv): boolean {
   );
 }
 
+/** Existing refunds use the shared merchant, independently of new-payment
+ * switches and every client AppID/Secret. Match the gateway's callback rules. */
+export function evaluateWechatRefundReadiness(config: PaymentConfig, env: PaymentRuntimeEnv): PaymentMethodReadiness {
+  if (!isWechatMerchantId(config.pay_weixin_mchid) || !isWechatMerchantCertificateSerial(config.pay_weixin_serial_no))
+    return disabled('微信退款公开商户配置未完成');
+  if (!hasWechatDeploymentCredentials(env)) return disabled('微信退款部署凭据未完成');
+  const site = (config.site_url ?? '').replace(/\/$/, '');
+  try {
+    const url = new URL(env.WECHAT_REFUND_NOTIFY_URL ?? `${site}/api/pay/notify/wechat/refund`);
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' || url.search || url.hash) throw Error('Invalid callback');
+  } catch { return disabled('微信退款回调地址无效'); }
+  return enabled();
+}
+
 /**
  * Evaluate effective payment readiness without exposing credential values.
  * All WeChat profiles share one APIv3 merchant credential set; only AppID differs.
@@ -131,7 +147,8 @@ export function evaluatePaymentReadiness(
           state = disabled("微信支付公开商户配置未完成");
         } else if (!deploymentCredentialsReady) {
           state = disabled("微信支付部署凭据未完成");
-        } else if (!isWechatAppId(config[WECHAT_PAYMENT_PROFILE_APP_ID_KEYS[profile]])) {
+        } else if (profile === 'app' || profile === 'routine' ? !/^[A-Za-z0-9_-]{1,32}$/u.test(config[WECHAT_PAYMENT_PROFILE_APP_ID_KEYS[profile]] ?? '')
+          : !isWechatAppId(config[WECHAT_PAYMENT_PROFILE_APP_ID_KEYS[profile]])) {
           state = disabled(`${WECHAT_PAYMENT_PROFILE_LABELS[profile]} AppID 未配置`);
         } else {
           state = enabled();
@@ -184,8 +201,17 @@ export async function getPaymentReadinessSnapshot(
   container: Container,
   env: Env,
 ): Promise<PaymentReadinessSnapshot> {
-  const config = await new SystemConfigService(container, env).getMany([...PAYMENT_CONFIG_KEYS]);
-  return evaluatePaymentReadiness(config, env);
+  const config: PaymentConfig = { ...(await readPaymentPublicConfig(container, 'checkout')).values };
+  let nativeReady = true;
+  try {
+    const native = await readNativeAppPaymentAccount(container, env);
+    if (native.merchantId !== config.pay_weixin_mchid) throw new ValidateException('原生App商户配置快照已变化');
+    config.wechat_app_appid = native.appId;
+  }
+  catch { config.wechat_app_appid = ''; nativeReady = false; }
+  const result = evaluatePaymentReadiness(config, env);
+  if (!nativeReady) result.wechatProfiles.app = disabled('原生App支付账号目录尚未就绪');
+  return result;
 }
 
 /** Resolve the cashier surface after database switches and deployment dependencies are combined. */

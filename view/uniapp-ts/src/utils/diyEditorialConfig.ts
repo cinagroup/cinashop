@@ -1,5 +1,6 @@
 import type { ThemePreset } from '../../../common/theme';
-import { isDiyEnabled, normalizeDiyLink, safeDiyImageUrl } from './diy';
+import { isDiyEnabled, safeDiyImageUrl } from './diy';
+import { normalizeDiyEditorialLink as normalizeDiyLink } from './diyEditorialLink';
 import { diyThemeColor, diyThemeVariables } from './diyTheme';
 import { listChild, listNumber, listOrdinal, listRadius, listRecord, listText } from './diyListConfig';
 
@@ -57,12 +58,12 @@ export function normalizeDiyEditorial(value: unknown, preset: ThemePreset) {
     radiusStyle: { borderRadius: listRadius(block, 'fillet') },
     cardStyle: { borderRadius: listRadius(block, 'fillet'), background: gradient('moduleColor') },
     titleStyle: { color: color('titleColor', '#333333') },
-    tickerTitleStyle: { color: color('titleColor', '#ffffff'), background: gradient('titleBgColor', preset.theme) },
+    tickerTitleStyle: { color: Number(listChild(block, 'toneConfig').tabVal) === 1 ? color('titleColor', '#ffffff') : '#ffffff', background: Number(listChild(block, 'toneConfig').tabVal) === 1 ? gradient('titleBgColor', preset.theme) : preset.theme },
     newsTextStyle: { color: color('newsColor', '#333333') }, buttonStyle: { color: color('bntColor', '#999999') },
     partyStyle: { background: color('boxColor', '#fff4f2') },
     partyTitleStyle: { color: color('themeColor', preset.theme) }, partyBadgeStyle: { background: gradient('bgColor', preset.theme) },
     followWrapStyle: { ...diyThemeVariables(block, preset), padding: `0 ${size('prConfig')}`, marginTop: size('mbConfig') },
-    followCardStyle: { borderRadius: listRadius(block, 'fillet'), background: gradient('bgColor') },
+    followCardStyle: { borderRadius: listRadius(block, 'fillet', [0, 1, 2, 3]), background: gradient('bgColor') },
     followButtonStyle: { color: color('themeColor', preset.theme), borderColor: color('themeColor', preset.theme) },
   };
 }

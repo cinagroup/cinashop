@@ -52,6 +52,9 @@ import { SystemAdminDao, StoreServiceLogDao } from "@/dao/admin/AdminDaos";
 import { StoreProductReplyDao } from "@/dao/product/ReplyDaos";
 import { SystemSupplierDao } from "@/dao/supplier/SupplierDaos";
 import type { Env } from "@/env";
+import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from "@/migrations/customerFinancialRuntimePlan";
+import { MANAGER_RUNTIME_ROLE } from "@/migrations/managerRuntimePrivilegePlan";
+import { captureCashierRuntimeConditionalBinding } from "@/migrations/cashierRuntimeConditionalBinding";
 
 /** Drizzle DB 类型 (postgres-js 驱动) */
 export type DbClient = PostgresJsDatabase<Record<string, never>> & {
@@ -247,6 +250,132 @@ export function createManagerDatabaseSession(env: Env) {
     searchPath: "public,pg_temp", applicationName: "cinashop_manager",
   });
   return { container: createContainerFromDb(db), close: () => db.$client.end({ timeout: 5 }) };
+}
+
+/** Open only after complete UserJWT authentication. Commissioning validates
+ * the full profile; this request-time read checks the actual fixed LOGIN and
+ * its basic restrictions before any financial container is handed over. */
+export async function createCustomerFinancialDatabaseSession(env: Env) {
+  const unavailable = () => new HttpApiException("客服财务运行环境尚未完成独立配置", 503, 503);
+  const binding = env.HYPERDRIVE_CUSTOMER_FINANCIAL;
+  const connectionString = binding?.connectionString?.trim();
+  const otherBindings = [env.HYPERDRIVE, env.HYPERDRIVE_ADMIN, env.HYPERDRIVE_MANAGER];
+  if (!connectionString || otherBindings.some(other => other && (other === binding
+    || other.connectionString?.trim() === connectionString))) throw unavailable();
+
+  let db: DbClient | undefined;
+  try {
+    db = createDbFromConnectionString(connectionString, 1, {
+      searchPath: "public,pg_temp", applicationName: "cinashop_customer_financial",
+    });
+    const identity = await db.transaction(async tx => {
+      await tx.execute(sql`SELECT
+        set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
+        set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),1000)::text||'ms',true),
+        set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text||'ms',true)`);
+      const [state] = await tx.execute(sql`SELECT current_user AS role,session_user AS session,
+        (SELECT r.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid
+          WHERE a.pid=pg_backend_pid()) AS backend_role,
+        current_setting('server_version_num')::integer/10000=16 AS pg16,
+        current_setting('session_replication_role')='origin' AS origin,
+        r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit
+          OR r.rolreplication OR r.rolbypassrls) AS restricted,
+        NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid) AS no_memberships,
+        NOT EXISTS(SELECT 1 FROM pg_catalog.pg_shdepend WHERE refclassid='pg_catalog.pg_authid'::regclass
+          AND refobjid=r.oid AND deptype='o') AS no_ownership,
+        pg_catalog.has_database_privilege(r.oid,current_database(),'CONNECT')
+          AND pg_catalog.has_schema_privilege(r.oid,'public','USAGE') AS connected,
+        NOT pg_catalog.has_database_privilege(r.oid,current_database(),'CREATE')
+          AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace n WHERE n.nspname NOT LIKE 'pg_%'
+            AND pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE')) AS no_ddl,
+        NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM') AS no_replication_bypass
+        FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
+      return state;
+    }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+    if (!identity || ['role', 'session', 'backend_role'].some(key => identity[key] !== CUSTOMER_FINANCIAL_RUNTIME_ROLE)
+      || ['pg16', 'origin', 'restricted', 'no_memberships', 'no_ownership', 'connected', 'no_ddl', 'no_replication_bypass']
+        .some(key => identity[key] !== true)) throw unavailable();
+    const selected = db;
+    let closed = false;
+    return { container: createContainerFromDb(selected), close: async () => {
+      if (closed) return;
+      closed = true;
+      await selected.$client.end({ timeout: 5 });
+    } };
+  } catch {
+    await db?.$client.end({ timeout: 5 }).catch(() => {});
+    throw unavailable();
+  }
+}
+
+/** The formal full Cashier commissioning returns the trusted name/OID receipt
+ * after proving its distinction from App/Admin/Manager/Financial and the full
+ * profile. Env identity must be that maintenance result, not a caller-chosen
+ * expected principal used as a substitute for commissioning.
+ * This request-time SELECT proves that exact actual LOGIN and database before
+ * handing over I/O; it neither commissions a role nor infers one from a DSN. */
+export async function createCustomerCashierDatabaseSession(env: Env) {
+  const unavailable = () => new HttpApiException("客服收银运行环境尚未完成独立配置", 503, 503);
+  let db: DbClient | undefined;
+  let closed = false;
+  const close = async () => {
+    if (!db || closed) return;
+    closed = true;
+    try { await db.$client.end({ timeout: 5 }); }
+    catch { throw unavailable(); }
+  };
+  try {
+    const binding = env.HYPERDRIVE_CUSTOMER_CASHIER;
+    const connectionString = binding?.connectionString?.trim();
+    const expected = captureCashierRuntimeConditionalBinding(env.CUSTOMER_CASHIER_RUNTIME_IDENTITY!);
+    const otherBindings = [env.HYPERDRIVE, env.HYPERDRIVE_ADMIN,
+      env.HYPERDRIVE_MANAGER, env.HYPERDRIVE_CUSTOMER_FINANCIAL];
+    if (!connectionString || otherBindings.some(other => other && (other === binding
+      || other.connectionString?.trim() === connectionString))
+      || [MANAGER_RUNTIME_ROLE, CUSTOMER_FINANCIAL_RUNTIME_ROLE].includes(expected.role)) throw unavailable();
+
+    db = createDbFromConnectionString(connectionString, 1, {
+      searchPath: "public,pg_temp", applicationName: "cinashop_customer_cashier",
+    });
+    const identity = await db.transaction(async tx => {
+      await tx.execute(sql`SELECT
+        set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
+        set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),1000)::text||'ms',true),
+        set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text||'ms',true)`);
+      const [state] = await tx.execute(sql`SELECT current_user AS role,session_user AS session,
+        r.oid::text AS role_oid,
+        (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=session_user) AS session_oid,
+        (SELECT b.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles b ON b.oid=a.usesysid
+          WHERE a.pid=pg_backend_pid()) AS backend_role,
+        (SELECT usesysid::text FROM pg_catalog.pg_stat_activity WHERE pid=pg_backend_pid()) AS backend_role_oid,
+        current_database() AS database,
+        (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=current_database()) AS database_oid,
+        current_setting('server_version_num')::integer/10000=16 AS pg16,
+        current_setting('session_replication_role')='origin' AS origin,
+        r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit
+          OR r.rolreplication OR r.rolbypassrls) AS restricted,
+        NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid) AS no_memberships,
+        NOT EXISTS(SELECT 1 FROM pg_catalog.pg_shdepend WHERE refclassid='pg_catalog.pg_authid'::regclass
+          AND refobjid=r.oid AND deptype='o') AS no_ownership,
+        pg_catalog.has_database_privilege(r.oid,current_database(),'CONNECT')
+          AND pg_catalog.has_schema_privilege(r.oid,'public','USAGE') AS connected,
+        NOT pg_catalog.has_database_privilege(r.oid,current_database(),'CREATE')
+          AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace n WHERE n.nspname NOT LIKE 'pg_%'
+            AND pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE')) AS no_ddl,
+        NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM') AS no_replication_bypass
+        FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
+      return state;
+    }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+    if (!identity || ['role', 'session', 'backend_role'].some(key => identity[key] !== expected.role)
+      || ['role_oid', 'session_oid', 'backend_role_oid'].some(key => identity[key] !== expected.roleOid)
+      || identity.database !== expected.database || identity.database_oid !== expected.databaseOid
+      || ['pg16', 'origin', 'restricted', 'no_memberships', 'no_ownership', 'connected', 'no_ddl', 'no_replication_bypass']
+        .some(key => identity[key] !== true)) throw unavailable();
+    return { container: createContainerFromDb(db), close };
+  } catch {
+    await close().catch(() => {});
+    throw unavailable();
+  }
 }
 
 /**

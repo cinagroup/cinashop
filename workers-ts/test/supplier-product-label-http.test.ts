@@ -12,7 +12,7 @@ vi.mock('@/lib/di', async original => ({ ...await original<typeof import('@/lib/
 const env = { APP_KEY: 'owned-supplier-label-http', UPSTASH_REDIS_URL: '', UPSTASH_REDIS_TOKEN: '' } as Env;
 const prefix = '/supplierapi/product', catalogPath = `${prefix}/label/catalog`;
 
-describe('Supplier label complete createApp routes with real JWT, role and SQL', () => {
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier label complete createApp routes with real JWT, role and SQL', () => {
   let f: Awaited<ReturnType<typeof supplierProductLabelFixture>>, tokens: Record<number, string>, service: SupplierProductLabelService;
   const app = createApp();
   beforeAll(async () => { f = await supplierProductLabelFixture(); wiring.open.mockImplementation(() => f.container); service = new SupplierProductLabelService(f.container); }, 60000);
@@ -129,7 +129,7 @@ describe('Supplier label complete createApp routes with real JWT, role and SQL',
     finally { await f.exec('DROP TRIGGER mutate_supplier_label_style ON store_product_label; DROP FUNCTION mutate_supplier_label_style()'); }
   });
   it('rechecks label facts after a valid audit trigger changes them and rolls back both rows', async () => {
-    await f.exec("CREATE FUNCTION audit_supplier_label_mutation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_label SET sort=99 WHERE id=201; RETURN NEW; END $$; CREATE TRIGGER audit_supplier_label_mutation BEFORE INSERT ON system_log FOR EACH ROW EXECUTE FUNCTION audit_supplier_label_mutation()");
+    await f.exec("CREATE FUNCTION audit_supplier_label_mutation() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$ BEGIN UPDATE store_product_label SET sort=99 WHERE id=201; RETURN NEW; END $$; REVOKE ALL ON FUNCTION audit_supplier_label_mutation() FROM PUBLIC; CREATE TRIGGER audit_supplier_label_mutation BEFORE INSERT ON system_log FOR EACH ROW EXECUTE FUNCTION audit_supplier_label_mutation()");
     try { expect((await save(201)).body.status).not.toBe(200); expect((await f.db.select().from(storeProductLabel).where(eq(storeProductLabel.id, 201)))[0]).toMatchObject({ labelName: '旧平台组下的供应商标签', sort: 10 }); expect(await logs()).toEqual([]); }
     finally { await f.exec('DROP TRIGGER audit_supplier_label_mutation ON system_log; DROP FUNCTION audit_supplier_label_mutation()'); }
   });

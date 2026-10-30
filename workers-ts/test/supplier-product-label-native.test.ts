@@ -1,36 +1,31 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createContainerFromDb, withTx } from '@/lib/di';
 import { storeProduct, storeProductLabel, storeProductRelation, systemRole, systemAdmin, systemLog } from '@/models/schema';
 import { SupplierProductLabelService } from '@/services/supplier/SupplierProductLabelService';
 import { assertSupplierProductLabelBindings, replaceSupplierProductLabelBindings } from '@/services/supplier/SupplierProductLabelBindings';
-import { supplierLabelActor, supplierLabelBody, supplierLabelSchema, seedSupplierLabels } from './helpers/supplierProductLabels';
-import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
+import { supplierLabelActor, supplierLabelBody, supplierProductLabelFixture } from './helpers/supplierProductLabels';
+import type { SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
-type Fixture = Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+type Fixture = Awaited<ReturnType<typeof supplierProductLabelFixture>>;
 type Login = SequenceRunnerPeer & { role: string };
 function code(error: unknown): string {
   for (let i = 0; i < 6 && error && typeof error === 'object'; i++) { if ('code' in error) return String(error.code); error = 'cause' in error ? error.cause : null; } return '';
 }
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier label independent PG16 LOGIN and real product binding protocol', () => {
-  let f: Fixture, ddl: string;
-  beforeAll(async () => { const kit = await import('drizzle-kit/api'); ddl = (await kit.generateMigration(kit.generateDrizzleJson({}), kit.generateDrizzleJson(supplierLabelSchema))).join('\n'); });
+  let f: Fixture;
   beforeEach(async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Native Supplier label fixture forbids external I/O')); f = await sequenceRunnerDatabase();
-    if (f.format !== 'pg16' || !f.withPeer || !f.withRuntimeRole) throw Error('Independent owned PG16 peers are required');
-    await f.exec(ddl); await seedSupplierLabels(f.db); await f.exec("SELECT setval(pg_get_serial_sequence('store_product_label','id'),400,false)");
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Native Supplier label fixture forbids external I/O')); f = await supplierProductLabelFixture();
+    if (f.format !== 'pg16' || !f.withPeer || !f.withBusiness) throw Error('Independent owned PG16 peers are required');
   }, 60000);
   afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); } }, 30000);
   const service = (peer: SequenceRunnerPeer) => new SupplierProductLabelService(createContainerFromDb(peer.db));
   async function login<T>(write: boolean, run: (peer: Login) => Promise<T>) {
-    return f.withRuntimeRole!(async peer => {
+    // Narrow regression LOGIN only; the new runtime suite separately proves
+    // the whole commissioned App profile. No direct label DML or aux read grant.
+    return f.withBusiness(write, async peer => {
       if (!/^cinashop_runtime_[a-f0-9]{32}$/.test(peer.role)) throw Error('Unsafe native Supplier label role');
-      await f.exec(`GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${peer.role}"`);
-      if (write) await f.exec(`GRANT INSERT,UPDATE,DELETE ON store_product_label TO "${peer.role}";
-        GRANT INSERT ON system_log TO "${peer.role}"; GRANT UPDATE(id) ON category,system_admin,system_supplier,system_role,system_menus,store_product_relation TO "${peer.role}";
-        GRANT UPDATE(store_label_id) ON store_product TO "${peer.role}"; GRANT INSERT,DELETE ON store_product_relation TO "${peer.role}";
-        GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO "${peer.role}"`);
       const [identity] = await peer.exec("SELECT current_user AS role,session_user AS session,pg_backend_pid() AS pid,current_setting('server_version_num') AS version");
       expect(identity).toMatchObject({ role: peer.role, session: peer.role, pid: peer.pid }); expect(Math.floor(Number(identity.version) / 10000)).toBe(16);
       return run(peer);
@@ -115,7 +110,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Supplier label i
     }));
   });
   it('rolls back deletion when an actual audit trigger introduces a dangling reference after the first check', async () => {
-    await f.exec("CREATE FUNCTION audit_supplier_label_reference() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN INSERT INTO store_product_relation(product_id,type,relation_id) VALUES(80,3,201); RETURN NEW; END $$; CREATE TRIGGER audit_supplier_label_reference BEFORE INSERT ON system_log FOR EACH ROW EXECUTE FUNCTION audit_supplier_label_reference()");
+    await f.exec("CREATE FUNCTION audit_supplier_label_reference() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$ BEGIN INSERT INTO store_product_relation(product_id,type,relation_id) VALUES(80,3,201); RETURN NEW; END $$; REVOKE ALL ON FUNCTION audit_supplier_label_reference() FROM PUBLIC; CREATE TRIGGER audit_supplier_label_reference BEFORE INSERT ON system_log FOR EACH ROW EXECUTE FUNCTION audit_supplier_label_reference()");
     await login(true, async peer => {
       await expect(service(peer).delete(20, 201, undefined, supplierLabelActor())).rejects.toThrow('引用');
       expect(await f.db.select().from(storeProductLabel).where(eq(storeProductLabel.id, 201))).toHaveLength(1);

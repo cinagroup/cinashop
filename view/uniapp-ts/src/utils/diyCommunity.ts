@@ -32,15 +32,15 @@ export function normalizeDiyCommunity(block: unknown) {
     marginTop: size(block,'mbConfig',0), background: color(block,'bottomBgColor',0,'transparent') };
   const headerStyle: Style = { background: `linear-gradient(90deg, ${color(block,'headerBgColor',0,'#ffffff')} 0%, ${color(block,'headerBgColor',1,'#ffffff')} 100%)` };
   const titleStyle: Style = { color: color(block,'titleColor',0,'#222222'), fontSize: size(block,'titleNumber',16,40),
-    fontWeight: titleType === 0 || titleType === 2 ? 'bold' : 'normal', fontStyle: titleType === 2 ? 'italic' : 'normal' };
+    fontWeight: titleType === 0 ? 'bold' : 'normal', fontStyle: titleType === 2 ? 'italic' : 'normal' };
   const buttonStyle: Style = { color: color(block,'headerBntColor',0,'#999999'), fontSize: size(block,'bntNumber',12,32) };
-  const listStyle: Style = { background: `linear-gradient(90deg, ${color(block,'moduleColor',0,'#ffffff')} 0%, ${color(block,'moduleColor',1,'#ffffff')} 100%)`,
-    ...(layout === 'columns' ? { rowGap: size(block,'videoSpace',10), columnGap: size(block,'videoSpace2',10) }
-      : { gap: size(block,'videoSpace2',10) }) };
+  const listStyle: Style = layout === 'columns' ? { background: '#ffffff', columnGap: '20rpx' }
+    : { background: `linear-gradient(90deg, ${color(block,'moduleColor',0,'#ffffff')} 0%, ${color(block,'moduleColor',1,'#ffffff')} 100%)`, gap: size(block,'videoSpace2',10), paddingRight: size(block,'videoSpace2',10) };
   const key = source.timestamp;
   return { enabled: source.name === 'community' && !isDiyEnabled(source.isHide),
     key: typeof key === 'string' || typeof key === 'number' ? text(String(key),'',80) : '', limit, layout, titleMode,
     title: text(nested(block,'titleTxtConfig').value,'种草社区'), titleImage: safeDiyImageUrl(nested(block,'imgConfig').url),
     more: text(nested(block,'rightBntConfig').value,'好物分享'), wrapperStyle, headerStyle, titleStyle, buttonStyle, listStyle,
-    panelStyle: { borderRadius: radius(block,'fillet',8) } as Style, imageStyle: { borderRadius: imageRadius } as Style };
+    panelStyle: { borderRadius: radius(block,'fillet',8) } as Style,
+    imageStyle: { borderRadius: layout === 'columns' ? '16rpx 16rpx 0 0' : imageRadius } as Style };
 }

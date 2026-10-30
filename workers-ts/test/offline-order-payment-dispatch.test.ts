@@ -110,7 +110,9 @@ describe('offline first dispatch on isolated native PostgreSQL16', () => {
         expect(await counts()).toEqual({ selections: 1, dispatches: 1, cases: 1, money: 0, bills: 0, receipts: 0 });
         expect((await f.db.select().from(offlineOrderPaymentDispatch))[0].state).toBe('ISSUING');
         // Mutate current configuration while the original request is in flight.
-        t.api.env.WECHAT_PLATFORM_PUBLIC_KEY = 'invalid'; t.api.config.cfg_pay_weixin_mchid = '9999999999';
+        t.api.env.WECHAT_PLATFORM_PUBLIC_KEY = 'invalid';
+        await f.db.update(systemConfig).set({ value: '9999999999' }).where(eq(systemConfig.menuName, 'pay_weixin_mchid'));
+        expect(await t.api.env.CONFIG_KV.get('cfg_pay_weixin_mchid')).toBe('1234567890');
         return t.response();
       });
       const first = await t.send(); expect(first).toMatchObject({ status: 'READY', replayed: false });
@@ -129,7 +131,8 @@ describe('offline first dispatch on isolated native PostgreSQL16', () => {
           product_code: 'QUICK_WAP_WAY', passback_params: 'offline_order', quit_url: returnUrl });
         expect(p.has('seller_id')).toBe(false); expect(p.has('app_auth_token')).toBe(false);
       }
-      t.api.config.cfg_pay_weixin_open = '0'; t.api.env.ALIPAY_PRIVATE_KEY = 'invalid';
+      await f.db.update(systemConfig).set({ value: '0' }).where(eq(systemConfig.menuName, 'pay_weixin_open'));
+      t.api.env.ALIPAY_PRIVATE_KEY = 'invalid';
       if (channel === 'wechat' || channel === 'routine') await f.db.update(wechatUser).set({ openid: 'new-binding' });
       expect(await t.send()).toEqual({ ...first, replayed: true });
       expect(fetch).toHaveBeenCalledTimes(channel === 'alipay' ? 0 : 1);

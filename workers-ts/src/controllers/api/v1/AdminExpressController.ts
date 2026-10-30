@@ -1,0 +1,23 @@
+import type {Context} from 'hono';
+import type {AppVariables,Env} from '@/env';
+import {jsonOk} from '@/utils/json';
+import {readBoundedJsonObject} from '@/utils/request-body';
+import {ValidateException} from '@/utils/errors';
+import {AdminExpressService} from '@/services/admin/AdminExpressService';
+import {expressQuery} from '@/services/admin/AdminExpressInput';
+import {EXPRESS_FIELDS} from '../../../../../view/common/expressAuthor';
+type C=Context<{Bindings:Env;Variables:AppVariables}>;
+function context(c:C){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');return {s:new AdminExpressService(c.get('container'),c.env),a:{id:c.get('adminId')??0,authVersion:c.get('socketAuthVersion')??'',expiresAt:c.get('socketTokenExp')??0},q:new URL(c.req.url).searchParams};}
+export const catalog=(c:C)=>{const x=context(c);return x.s.catalog(x.q,x.a).then(r=>jsonOk(c,r));};
+export const list=(c:C)=>{const x=context(c);return x.s.legacyList(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyList=(c:C)=>{const x=context(c);return x.s.legacyList(x.q,x.a,true).then(r=>jsonOk(c,r));};
+export const detail=(c:C)=>{const x=context(c);return x.s.detail(c.req.param('id'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const form=async(c:C)=>{const x=context(c),r=await x.s.detail(c.req.param('id'),x.q,x.a);return jsonOk(c,{title:'编辑快递公司',action:`freight/express/${r.item.id}`,method:'PUT',rules:[...EXPRESS_FIELDS.filter(f=>r.item.required[f.field]).map(f=>({field:f.field.replace(/[A-Z]/g,s=>'_'+s.toLowerCase()),type:f.field==='key'?'password':'input',title:f.label,value:'',props:{placeholder:r.item.configured[f.field]?'已配置；留空保留原值':'请输入'},validate:[]})),{field:'sort',type:'inputNumber',title:'排序',value:r.item.sort},{field:'is_show',type:'radio',title:'显示状态',value:r.item.isShow,options:[{value:1,label:'显示'},{value:0,label:'隐藏'}]}]});};
+export const receipt=(c:C)=>{const x=context(c);return x.s.receipt(c.req.param('operationId'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const prepare=async(c:C)=>{const x=context(c);expressQuery(x.q);return jsonOk(c,await x.s.prepare(await readBoundedJsonObject(c.req.raw,16384),x.a));};
+export const commit=async(c:C)=>{const x=context(c);expressQuery(x.q);return jsonOk(c,await x.s.commit(await readBoundedJsonObject(c.req.raw,2*1024*1024),x.a));};
+export const resolve=async(c:C)=>{const x=context(c);expressQuery(x.q);return jsonOk(c,await x.s.resolve(await readBoundedJsonObject(c.req.raw,4096),x.a));};
+export const save=async(c:C)=>{const x=context(c);expressQuery(x.q);const b=await readBoundedJsonObject(c.req.raw,16384),id=b.id??c.req.param('id')??0;const r=await x.s.legacy(id? 'update':'create',id,b,x.a);return jsonOk(c,{id:r.result.id},'快递已保存');};
+export const remove=async(c:C)=>{const x=context(c);expressQuery(x.q);await x.s.legacy('delete',c.req.param('id'),await readBoundedJsonObject(c.req.raw,1024),x.a);return jsonOk(c,null,'快递已删除');};
+export const show=async(c:C)=>{const x=context(c);expressQuery(x.q);const status=c.req.param('status');if(status!=='0'&&status!=='1')throw new ValidateException('显示状态无效');const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('显示请求正文须为空');await x.s.legacy('show',c.req.param('id'),{is_show:Number(status)},x.a);return jsonOk(c,null,'显示状态已更新');};
+export const sync=async(c:C)=>{const x=context(c);expressQuery(x.q);await x.s.legacy('sync',0,{},x.a);return jsonOk(c,null,'本响应物流目录已同步');};

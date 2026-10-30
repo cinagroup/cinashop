@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { withTx, type Container } from "@/lib/di";
@@ -24,12 +26,15 @@ import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readBargainShippingSelection } from '@/services/activity/BargainShippingSelection';
 import { readCheckoutPickupEnabled } from './CheckoutPickupPolicy';
+import { prepareStoreOrderPaymentAdmission } from './StoreOrderPayService';
+import { assertExternalPaymentReplay } from '@/services/payment/PaymentInitiationAdmission';
+import { decimalToCents } from './OrderBrokerageService';
 
 const CHECKOUT_TTL_SECONDS = 30 * 60;
 const LEGACY_ALIPAY_TTL_SECONDS = 5 * 60;
 const MAX_CHECKOUT_ITEMS = 200;
 
-function checkedAlipayGatewayUrl(value: unknown, orderId: string): string {
+function checkedAlipayGatewayUrl(value: unknown, orderId: string, amountCents?: number): string {
   if (typeof value !== "string" || value.length < 80 || value.length > 16_384) {
     throw new ValidateException("支付宝支付地址无效");
   }
@@ -40,14 +45,97 @@ function checkedAlipayGatewayUrl(value: unknown, orderId: string): string {
       || url.searchParams.get("method") !== "alipay.trade.wap.pay"
       || !url.searchParams.get("app_id") || !url.searchParams.get("biz_content")
       || !url.searchParams.get("sign")) throw new Error("invalid_gateway");
+    const names = [...url.searchParams.keys()];
+    if (new Set(names).size !== names.length) throw new Error("duplicate_gateway_field");
     const business = JSON.parse(url.searchParams.get("biz_content") ?? "null") as Record<string, unknown> | null;
-    if (!business || business.out_trade_no !== orderId || !/^\d+\.\d{2}$/.test(String(business.total_amount ?? ""))) {
+    if (!business || business.out_trade_no !== orderId || typeof business.total_amount !== 'string'
+      || !/^\d{1,10}\.\d{2}$/.test(business.total_amount)
+      || !positivePaymentInteger(decimalToCents(business.total_amount))
+      || amountCents !== undefined && decimalToCents(business.total_amount) !== amountCents) {
       throw new Error("invalid_business");
     }
     return value;
   } catch {
     throw new ValidateException("支付宝支付地址无效");
   }
+}
+
+
+const ALIPAY_KEY_PURPOSE = 'alipay_redirect_replay';
+const ALIPAY_KEY_DOMAIN = 'cinashop.payment.alipay-redirect-capability.v2\0';
+const ALIPAY_KEY_FIELDS = ['version', 'purpose', 'key', 'uid', 'orderNo', 'orderId', 'amountCents',
+  'orderDomain', 'provider', 'profile', 'caseId', 'replayKey', 'payUrl', 'issuedAt', 'expiresAt', 'signature'] as const;
+const ALIPAY_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u;
+interface AlipayRedirectCapability {
+  version: 2;
+  purpose: typeof ALIPAY_KEY_PURPOSE;
+  key: string;
+  uid: number;
+  orderNo: string;
+  orderId: number;
+  amountCents: number;
+  orderDomain: 'store_order';
+  provider: 'alipay';
+  profile: 'alipay';
+  caseId: number;
+  replayKey: string;
+  payUrl: string;
+  issuedAt: number;
+  expiresAt: number;
+  signature: string;
+}
+const invalidAlipayKey = () => new ValidateException('该订单无法支付，请重新发起支付');
+const positiveCaseId = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+const positivePaymentInteger = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+function alipayKeySecret(env: Env): string {
+  if (typeof env.APP_KEY !== 'string' || !env.APP_KEY) throw invalidAlipayKey();
+  return env.APP_KEY;
+}
+function alipayKeyTime(): number {
+  const value = Math.floor(Date.now() / 1000);
+  if (!Number.isSafeInteger(value) || value <= 0) throw invalidAlipayKey();
+  return value;
+}
+function requireUnexpiredAlipayKey(value: Pick<AlipayRedirectCapability, 'issuedAt' | 'expiresAt'>): void {
+  const seconds = alipayKeyTime();
+  if (!Number.isSafeInteger(value.issuedAt) || value.issuedAt <= 0 || value.issuedAt > seconds
+    || !Number.isSafeInteger(value.expiresAt) || value.expiresAt <= value.issuedAt
+    || value.expiresAt - value.issuedAt > LEGACY_ALIPAY_TTL_SECONDS || seconds >= value.expiresAt) throw invalidAlipayKey();
+}
+function alipayKeySignature(secret: string, value: Omit<AlipayRedirectCapability, 'signature'>): string {
+  // A fixed public payload and separate domain; never sign current credentials,
+  // an OAuth secret, or an inference about a historical provider account.
+  const canonical = JSON.stringify({ version: value.version, purpose: value.purpose, key: value.key, uid: value.uid,
+    orderNo: value.orderNo, orderId: value.orderId, amountCents: value.amountCents, orderDomain: value.orderDomain,
+    provider: value.provider, profile: value.profile, caseId: value.caseId, replayKey: value.replayKey,
+    payUrl: value.payUrl, issuedAt: value.issuedAt, expiresAt: value.expiresAt });
+  return createHmac('sha256', secret).update(ALIPAY_KEY_DOMAIN).update(canonical).digest('hex');
+}
+function verifyAlipayKey(env: Env, key: string, raw: string): Readonly<AlipayRedirectCapability> {
+  const secret = alipayKeySecret(env);
+  if (raw.length > 24_576) throw invalidAlipayKey();
+  let value: unknown;
+  try { value = JSON.parse(raw) as unknown; } catch { throw invalidAlipayKey(); }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalidAlipayKey();
+  const row = value as Record<string, unknown>, names = Object.keys(row);
+  if (names.length !== ALIPAY_KEY_FIELDS.length || names.some(name => !ALIPAY_KEY_FIELDS.includes(name as typeof ALIPAY_KEY_FIELDS[number]))
+    || row.version !== 2 || row.purpose !== ALIPAY_KEY_PURPOSE || row.key !== key
+    || !positivePaymentInteger(row.uid) || typeof row.orderNo !== 'string' || row.orderNo.length < 2 || row.orderNo.length > 64 || /[^A-Za-z0-9_-]/u.test(row.orderNo)
+    || !positivePaymentInteger(row.orderId) || !positivePaymentInteger(row.amountCents) || !positiveCaseId(row.caseId)
+    || row.orderDomain !== 'store_order' || row.provider !== 'alipay' || row.profile !== 'alipay'
+    || typeof row.replayKey !== 'string' || row.replayKey.length !== 36 || !ALIPAY_UUID.test(row.replayKey)
+    || typeof row.payUrl !== 'string' || typeof row.signature !== 'string' || row.signature.length !== 64
+    || /[^a-f0-9]/u.test(row.signature) || typeof row.issuedAt !== 'number' || typeof row.expiresAt !== 'number') throw invalidAlipayKey();
+  const copy: AlipayRedirectCapability = { version: 2 as const, purpose: ALIPAY_KEY_PURPOSE, key, uid: row.uid, orderNo: row.orderNo,
+    orderId: row.orderId, amountCents: row.amountCents, orderDomain: 'store_order' as const, provider: 'alipay' as const,
+    profile: 'alipay' as const, caseId: row.caseId, replayKey: row.replayKey, payUrl: row.payUrl,
+    issuedAt: row.issuedAt, expiresAt: row.expiresAt, signature: row.signature };
+  requireUnexpiredAlipayKey(copy);
+  checkedAlipayGatewayUrl(copy.payUrl, copy.orderNo, copy.amountCents);
+  if (!timingSafeEqual(Buffer.from(copy.signature, 'hex'), Buffer.from(alipayKeySignature(secret, copy), 'hex'))) throw invalidAlipayKey();
+  return Object.freeze(copy);
 }
 
 type LegacyCartSelection = { cartId: number; cartNum?: number };
@@ -247,36 +335,51 @@ export class LegacyOrderCompatibilityService {
     }
   }
 
-  async createAlipayKey(uid: number, orderId: string, payUrl?: unknown): Promise<string> {
-    const key = crypto.randomUUID().replaceAll("-", "");
-    const checkedUrl = payUrl === undefined ? undefined : checkedAlipayGatewayUrl(payUrl, orderId);
-    await this.env.CONFIG_KV.put(
-      `pay:alipay:${key}`,
-      JSON.stringify({ uid, orderId, ...(checkedUrl ? { payUrl: checkedUrl } : {}) }),
-      { expirationTtl: LEGACY_ALIPAY_TTL_SECONDS },
-    );
+  async createAlipayKey(uid: number, orderNo: string, payUrl?: unknown): Promise<string> {
+    if (!positivePaymentInteger(uid) || typeof orderNo !== 'string' || orderNo.length < 2 || orderNo.length > 64 || /[^A-Za-z0-9_-]/u.test(orderNo)) throw invalidAlipayKey();
+    const signedUrl = checkedAlipayGatewayUrl(payUrl, orderNo), secret = alipayKeySecret(this.env);
+    const rows = await this.container.db.select().from(storeOrder).where(eq(storeOrder.orderId, orderNo)).limit(2);
+    if (rows.length !== 1 || rows[0].uid !== uid) throw invalidAlipayKey();
+    const order = rows[0], amountCents = decimalToCents(order.payPrice);
+    if (!positivePaymentInteger(order.id) || !positivePaymentInteger(amountCents)) throw invalidAlipayKey();
+    checkedAlipayGatewayUrl(signedUrl, orderNo, amountCents);
+    const admission = await prepareStoreOrderPaymentAdmission(this.container, this.env, uid, order);
+    const existing = await assertExternalPaymentReplay(this.container, { provider: 'alipay', profile: 'alipay', orderNo,
+      expectedAmountCents: amountCents, admission });
+    if (!positiveCaseId(existing.id) || typeof existing.replayKey !== 'string' || !ALIPAY_UUID.test(existing.replayKey)) throw invalidAlipayKey();
+    const key = crypto.randomUUID().replaceAll('-', ''), issuedAt = alipayKeyTime();
+    const payload: Omit<AlipayRedirectCapability, 'signature'> = { version: 2 as const, purpose: ALIPAY_KEY_PURPOSE, key, uid, orderNo, orderId: order.id, amountCents,
+      orderDomain: 'store_order' as const, provider: 'alipay' as const, profile: 'alipay' as const,
+      caseId: existing.id, replayKey: existing.replayKey, payUrl: signedUrl, issuedAt,
+      expiresAt: issuedAt + LEGACY_ALIPAY_TTL_SECONDS };
+    // All KV I/O is outside the SQL-only replay gate. The exact original URL is
+    // a short-lived capability, never an original-payment authority or reissue.
+    await this.env.CONFIG_KV.put(`pay:alipay:${key}`, JSON.stringify({ ...payload, signature: alipayKeySignature(secret, payload) }),
+      { expirationTtl: LEGACY_ALIPAY_TTL_SECONDS });
     return key;
   }
 
-  async consumeAlipayKey(key: string): Promise<{ uid: number; orderId: string; payUrl?: string }> {
-    if (!/^[a-f0-9]{32}$/.test(key)) throw new ValidateException("该订单无法支付");
-    const cacheKey = `pay:alipay:${key}`;
-    const value = await this.env.CONFIG_KV.get(cacheKey);
-    if (!value) throw new ValidateException("该订单无法支付");
-    let data: Record<string, unknown>;
-    try {
-      data = record(JSON.parse(value));
-    } catch {
-      throw new ValidateException("该订单无法支付");
-    }
-    const uid = Number(data.uid);
-    const orderId = String(data.orderId ?? "").trim();
-    if (!Number.isSafeInteger(uid) || uid <= 0 || !orderId) {
-      throw new ValidateException("该订单无法支付");
-    }
-    const payUrl = data.payUrl === undefined ? undefined : checkedAlipayGatewayUrl(data.payUrl, orderId);
+  async consumeAlipayKey(key: string): Promise<{ uid: number; orderId: string; payUrl: string }> {
+    if (typeof key !== 'string' || key.length !== 32 || !/^[a-f0-9]{32}$/u.test(key)) throw invalidAlipayKey();
+    const cacheKey = `pay:alipay:${key}`, raw = await this.env.CONFIG_KV.get(cacheKey);
+    if (!raw) throw invalidAlipayKey();
+    const saved = verifyAlipayKey(this.env, key, raw);
+    const rows = await this.container.db.select().from(storeOrder).where(eq(storeOrder.orderId, saved.orderNo)).limit(2);
+    if (rows.length !== 1 || rows[0].id !== saved.orderId || rows[0].uid !== saved.uid
+      || decimalToCents(rows[0].payPrice) !== saved.amountCents) throw invalidAlipayKey();
+    const admission = await prepareStoreOrderPaymentAdmission(this.container, this.env, saved.uid, rows[0]);
+    const existing = await assertExternalPaymentReplay(this.container, { provider: 'alipay', profile: 'alipay', orderNo: saved.orderNo,
+      expectedAmountCents: saved.amountCents, admission });
+    if (existing.id !== saved.caseId || existing.replayKey !== saved.replayKey) throw invalidAlipayKey();
+    requireUnexpiredAlipayKey(saved);
+    // Authentication, live-order, SQL-history and pre-delete expiry rejection
+    // leave the key untouched. This delete commits consumption of only this
+    // key; there is no registration, configuration fill or fresh URL signing.
     await this.env.CONFIG_KV.delete(cacheKey);
-    return { uid, orderId, ...(payUrl ? { payUrl } : {}) };
+    // A completed delete consumes the key even if network latency crosses the
+    // expiry. Never return an expired URL or restore an already consumed key.
+    requireUnexpiredAlipayKey(saved);
+    return { uid: saved.uid, orderId: saved.orderNo, payUrl: saved.payUrl };
   }
 
   async checkShipping(uid: number, cartIds: number[], bargainOnly = false) {

@@ -282,6 +282,9 @@ async function isolatedScenario(connectionString: string) {
     }
 
     await admin.unsafe(`
+      CREATE TABLE "${schema}".system_config (LIKE public.system_config INCLUDING ALL);
+      INSERT INTO "${schema}".system_config (id,menu_name,value,is_store) VALUES
+        (1,'wechat_appid','${APP_ID}',0), (2,'routine_appId','${APP_ID}',0);
       CREATE TABLE "${schema}".wechat_reply AS SELECT * FROM public.wechat_reply WITH NO DATA;
       CREATE TABLE "${schema}".wechat_key AS SELECT * FROM public.wechat_key WITH NO DATA;
       CREATE TABLE "${schema}".qrcode AS SELECT * FROM public.qrcode WITH NO DATA;
@@ -404,7 +407,9 @@ async function isolatedScenario(connectionString: string) {
     const payment = await receive(`<xml><ToUserName>gh-audit</ToUserName><FromUserName>openid-follow</FromUserName><CreateTime>1800000700</CreateTime><MsgType>event</MsgType><Event>funds_order_pay</Event><order_info><![CDATA[{"trade_no":"wxAuditPayment","transaction_id":"txAuditPayment"}]]></order_info></xml>`);
     const paymentResult = await service.processMessage(queueBody(payment));
     const receipt = await receive(`<xml><ToUserName>gh-audit</ToUserName><FromUserName>openid-follow</FromUserName><CreateTime>1800000800</CreateTime><MsgType>event</MsgType><Event>trade_manage_order_settlement</Event><merchant_trade_no>wxAuditReceipt</merchant_trade_no><confirm_receive_method>auto</confirm_receive_method></xml>`, "mini");
-    const receiptResult = await service.processMessage(queueBody(receipt));
+    let receiptEvidenceRequired = false;
+    try { await service.processMessage(queueBody(receipt)); }
+    catch (error) { receiptEvidenceRequired = error instanceof Error && error.message === 'wechat_callback_original_account_evidence_required'; }
 
     const submit = await receive(cardXml("submit_membercard_user_info", 1800000900, "code-a"));
     let deadResult: unknown = "not-run";
@@ -441,7 +446,9 @@ async function isolatedScenario(connectionString: string) {
       scan_is_additive_but_replay_safe: scanRows[0]?.qrScan === 2 && scanRows[0]?.channelScan === 2 && recordRows[0]?.count === 2 && scanReplay === "already-completed",
       card_delete_is_terminal_against_late_get: cardRows[0]?.isDel === 1 && cardRows[0]?.code === "code-a" && staleCard?.status === "SUPERSEDED",
       payment_enters_shared_ledger: paymentResult === "completed" && paymentRows[0]?.count === 1,
-      completed_receipt_is_idempotent_noop: receiptResult === "completed",
+      receipt_without_original_account_evidence_is_retained: receiptEvidenceRequired
+        && eventRows.find(row => row.id === receipt.eventId)?.status === 'FAILED'
+        && eventRows.find(row => row.id === receipt.eventId)?.appId === APP_ID,
       listener_failure_is_not_acknowledged_and_exhausts: deadResult === "dead" && submitRows[0]?.status === "DEAD" && submitRows[0]?.attempts === 8,
     };
     if (!Object.values(assertions).every(Boolean)) {

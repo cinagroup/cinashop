@@ -6,6 +6,7 @@ import { kefuApi } from "@/api/kefu";
 import UiIcon from "@/components/UiIcon.vue";
 import { useAuthStore } from "@/stores/auth";
 import { safeKefuRedirect } from "@/router/kefu-navigation";
+import { captureKefuSession, isCurrentKefuSession } from '@/services/session';
 
 type LoginMode = "password" | "scan";
 type ScanStage = "idle" | "pending" | "scanned" | "expired";
@@ -35,6 +36,13 @@ let scanGeneration = 0;
 let scanKey = "";
 let scanPollToken = "";
 let scanExpiresAt = 0;
+let alive = true, oauthGeneration = 0;
+function invalidateOauth() { oauthGeneration++; oauthStarting.value = false; oauthCallbackLoading.value = false; }
+window.addEventListener('kefu-session-changed', invalidateOauth);
+function oauthLease() {
+  const generation = ++oauthGeneration, session = captureKefuSession();
+  return () => alive && generation === oauthGeneration && isCurrentKefuSession(session);
+}
 
 function textQuery(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -176,14 +184,17 @@ async function loadConfig() {
 
 async function startWechatLogin() {
   if (!appid.value || oauthStarting.value) return;
+  const current = oauthLease();
   oauthStarting.value = true;
   error.value = "";
   try {
-    const { state } = await kefuApi.createOauthState();
+    const { state, appid: currentAppId } = await kefuApi.createOauthState();
+    if (!current()) return;
+    if (!/^wx[a-zA-Z0-9]{16}$/.test(currentAppId)) throw new Error('微信开放平台登录尚未配置');
     sessionStorage.setItem(OAUTH_REDIRECT_KEY, requestedRedirect);
     const callback = new URL("/login", window.location.origin).toString();
     const authorization = new URL("https://open.weixin.qq.com/connect/qrconnect");
-    authorization.searchParams.set("appid", appid.value);
+    authorization.searchParams.set("appid", currentAppId);
     authorization.searchParams.set("redirect_uri", callback);
     authorization.searchParams.set("response_type", "code");
     authorization.searchParams.set("scope", "snsapi_login");
@@ -191,8 +202,7 @@ async function startWechatLogin() {
     authorization.hash = "wechat_redirect";
     window.location.assign(authorization.toString());
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : "微信授权启动失败";
-    oauthStarting.value = false;
+    if (current()) { error.value = cause instanceof Error ? cause.message : "微信授权启动失败"; oauthStarting.value = false; }
   }
 }
 
@@ -200,10 +210,12 @@ async function handleOauthCallback() {
   const code = textQuery(route.query.code);
   const state = textQuery(route.query.state);
   if (!code && !state) return;
+  const current = oauthLease();
   const query = { ...route.query };
   delete query.code;
   delete query.state;
   await router.replace({ path: route.path, query, hash: route.hash });
+  if (!current()) return;
   if (!code || !state) {
     error.value = "微信授权回调缺少安全参数，请重新发起登录";
     return;
@@ -211,12 +223,14 @@ async function handleOauthCallback() {
   oauthCallbackLoading.value = true;
   error.value = "";
   try {
-    auth.applyLogin(await kefuApi.wechatLogin(code, state));
+    const result = await kefuApi.wechatLogin(code, state);
+    if (!current()) return;
+    auth.applyLogin(result);
     await finishLogin(true);
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : "微信登录失败";
+    if (current()) error.value = cause instanceof Error ? cause.message : "微信登录失败";
   } finally {
-    oauthCallbackLoading.value = false;
+    if (current()) oauthCallbackLoading.value = false;
   }
 }
 
@@ -233,7 +247,7 @@ onMounted(() => {
   void handleOauthCallback();
 });
 
-onUnmounted(() => stopScan());
+onUnmounted(() => { alive = false; invalidateOauth(); window.removeEventListener('kefu-session-changed', invalidateOauth); stopScan(); });
 </script>
 
 <template>

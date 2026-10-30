@@ -43,7 +43,7 @@ export function normalizeWechatPaymentChannel(value: unknown): WechatPaymentChan
   }
 }
 
-/** Resolve payer identity only from the authenticated user's stored binding. */
+/** Mini payer proof is resolved against the actual payment AppID inside admission. */
 export async function resolveWechatPaymentIdentity(
   container: Container,
   uid: number,
@@ -57,14 +57,14 @@ export async function resolveWechatPaymentIdentity(
   }
   if (channel === "pc") return { channel, profile, type: "native" };
   if (channel === "app") return { channel, profile, type: "app" };
+  if (channel === "routine") return { channel, profile, type: "jsapi" };
 
-  const userType = channel === "routine" ? "routine" : "wechat";
   const rows = await container.db
     .select({ openid: wechatUser.openid })
     .from(wechatUser)
     .where(and(
       eq(wechatUser.uid, uid),
-      eq(wechatUser.userType, userType),
+      eq(wechatUser.userType, "wechat"),
       eq(wechatUser.isDel, 0),
     ))
     .limit(2);

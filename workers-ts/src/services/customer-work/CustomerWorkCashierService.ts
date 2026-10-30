@@ -1,3 +1,4 @@
+import { lockLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { withTx, createContainerFromDb, type Container, type DbClient } from '@/lib/di';
 import type { Env } from '@/env';
@@ -141,7 +142,7 @@ export async function applyCustomerCashierCashPayment(container:Container,actorV
   const key=normalizeOutRequestKey(r.request_key),scopeKey=digest(r.scope_key),orderId=integer(r.order_id),orderNo=string(r.order_no,32),amount=string(r.expected_amount,13);
   if(!/^[A-Za-z0-9_-]+$/.test(orderNo)||!/^(0|[1-9]\d{0,9})\.\d{2}$/.test(amount))throw new ValidateException('付款订单号或金额格式无效');
   const request_hash=await outRequestHash({version:CUSTOMER_CASHIER_PAYMENT_VERSION,scope_key:scopeKey,order_id:orderId,order_no:orderNo,expected_amount:amount});
-  return withTx(container,async tx=>{await assertCashierSecondCardOriginCatalog(tx);await lockRequest(tx,actor,key);
+  return withTx(container,async tx=>{await lockLocalPaymentAdmissionTx(tx);await assertCashierSecondCardOriginCatalog(tx);await lockRequest(tx,actor,key);
     await assertCashierNotAbandoned(tx,actor.uid,key,'payment',request_hash);
     await tx.execute(sql`LOCK TABLE public.cashier_second_card_payment_v1 IN ROW SHARE MODE NOWAIT`);
     await lockOrderSettlement(tx,orderId);const[order]=await tx.select().from(storeOrder).where(eq(storeOrder.id,orderId)).limit(1).for('update');

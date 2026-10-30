@@ -7,6 +7,9 @@ import App from "./App.vue";
 import router from "./router";
 import { apiPublicBranding, applyFavicon } from "@/api/publicBranding";
 import { loadStatisticsScript } from '../../common/statisticsScript';
+import { useAuthStore } from '@/stores/auth';
+import request from '@/utils/request';
+import { installBrowserLog } from '@/utils/browserLog';
 
 const app = createApp(App);
 
@@ -16,6 +19,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.use(createPinia());
+installBrowserLog(app, router, useAuthStore(), request);
 app.use(router);
 app.use(ElementPlus);
 app.mount("#app");

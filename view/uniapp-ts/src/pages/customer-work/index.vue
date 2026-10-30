@@ -1,6 +1,6 @@
 <template>
   <CustomerWorkShell title="手机经营工作台" :manager="manager" :operations="operations" active="index">
-    <template #recovery><CustomerWorkProductRecoveryPanel :operations="productOperations" /><CustomerWorkUserRecoveryPanel :operations="userOperations" /><CustomerWorkWriteoffRecoveryPanel :operations="writeoff" /></template>
+    <template #recovery><view v-if="recoveryVisible && manager.auth.isLoggedIn" class="cw-recovery"><text class="cw-subtitle">核对原收银编号</text><text>使用原账号核对本机保存的收银和图片准备记录。</text><button @tap="openCashierRecovery">核对原收银编号</button></view><CustomerWorkProductRecoveryPanel :operations="productOperations" /><CustomerWorkUserRecoveryPanel :operations="userOperations" /><CustomerWorkWriteoffRecoveryPanel :operations="writeoff" /></template>
     <template v-if="overview">
       <view class="cw-card"><text class="cw-subtitle">今日经营</text><text class="cw-scope">销售额与订单数：全站履约订单 · 支付人数按用户去重 · 浏览量：全站商品浏览</text>
         <view class="cw-row"><text>销售额</text><text class="cw-money">¥{{ overview.today.after_price }}</text></view>
@@ -11,7 +11,7 @@
       </view>
       <view v-if="manager.context.value?.data.capabilities.writeoff_read===true" class="cw-card"><text class="cw-subtitle">普通客户核销</text><text class="cw-scope">扫码、手输或会员条码查单，核对实际商品与次数，再明确提交分次或全部核销。</text><button class="cw-full" @tap="manager.go('scanning')">进入客户核销</button></view>
       <view v-if="manager.context.value?.data.capabilities.cashier_records===true" class="cw-card"><text class="cw-subtitle">本人次卡收银记录</text><text class="cw-scope">查看由本经营账号实际创建的次卡订单，核对原购买商品、创建来源与现金付款凭据。</text><button class="cw-full" @tap="manager.go('cashierRecords')">查询本人收银记录</button></view>
-      <view v-if="manager.context.value?.data.capabilities.cashier_second_card===true" class="cw-card"><text class="cw-subtitle">次卡现金收银</text><text class="cw-scope">选择实际次卡和购买人，核对报价后创建订单，再确认现金或零元付款。中断后可核对原收银编号。</text><button class="cw-full" @tap="manager.go('cashier')">进入次卡现金收银</button></view>
+      <view v-if="cashierCapabilities.ready.value" class="cw-card"><text class="cw-subtitle">次卡现金收银</text><text class="cw-scope">选择实际次卡和购买人，核对报价后创建订单，再确认现金或零元付款。中断后可核对原收银编号。</text><button class="cw-full" @tap="manager.go('cashier')">进入次卡现金收银</button></view>
       <view v-if="manager.context.value?.data.capabilities.cashier_ordinary===true" class="cw-card"><text class="cw-subtitle">普通商品现金收银</text><text class="cw-scope">添加多个商品规格，核对会员、配送与实际优惠，再分别确认创建订单和现金付款。</text><button class="cw-full" :disabled="manager.context.value.data.cashier_ordinary_readiness?.writes!==true" @tap="manager.go('ordinaryCashier')">进入普通商品收银</button></view>
       <text class="cw-subtitle">待处理概况</text>
       <view class="cw-grid">
@@ -26,7 +26,7 @@
   </CustomerWorkShell>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'; import CustomerWorkShell from '@/components/customerWork/CustomerWorkShell.vue';
+import { ref } from 'vue'; import { onShow, onHide, onUnload } from '@dcloudio/uni-app'; import CustomerWorkShell from '@/components/customerWork/CustomerWorkShell.vue';
 import { useCustomerWork } from '@/composables/useCustomerWork'; import { isCustomerWorkOverview } from '@/utils/customerWork';
 import { useCustomerWorkOperations } from '@/composables/useCustomerWorkOperations';
 import { useCustomerWorkProductOperations } from '@/composables/useCustomerWorkProductOperations';
@@ -35,9 +35,17 @@ import CustomerWorkUserRecoveryPanel from '@/components/customerWork/CustomerWor
 import { useCustomerWorkUserOperations } from '@/composables/useCustomerWorkUserOperations';
 import {useCustomerWorkWriteoffOperations} from '@/composables/useCustomerWorkWriteoffOperations';
 import CustomerWorkWriteoffRecoveryPanel from '@/components/customerWork/CustomerWorkWriteoffRecoveryPanel.vue';
+import { useCustomerCashierCapabilities } from '@/composables/useCustomerCashierCapabilities';
 import type { CustomerWorkOverview } from '@/types/customerWork';
 const overview=ref<CustomerWorkOverview|null>(null);
-const manager=useCustomerWork({page:'index',clear(){overview.value=null;writeoff.clearDomain();},async load(controller){const valid=controller.fence();const response=await controller.read('overview',isCustomerWorkOverview);if(valid())overview.value=response.data;}});
+const recoveryVisible=ref(false);
+onShow(()=>{recoveryVisible.value=true;});
+onHide(()=>{recoveryVisible.value=false;});
+onUnload(()=>{recoveryVisible.value=false;});
+// Navigation to owner recovery does not grant current cashier authorship.
+function openCashierRecovery(){if(recoveryVisible.value&&manager.auth.isLoggedIn)uni.navigateTo({url:'/pages/customer-work/cashier'});}
+const manager=useCustomerWork({page:'index',clear(){overview.value=null;writeoff.clearDomain();cashierCapabilities.clear();},async load(controller){const valid=controller.fence();const response=await controller.read('overview',isCustomerWorkOverview);if(valid())overview.value=response.data;if(valid())void cashierCapabilities.load();}});
+const cashierCapabilities=useCustomerCashierCapabilities(manager);
 const operations=useCustomerWorkOperations(manager);
 const productOperations=useCustomerWorkProductOperations(manager);
 const userOperations=useCustomerWorkUserOperations(manager);

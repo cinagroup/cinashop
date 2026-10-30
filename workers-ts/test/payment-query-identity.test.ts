@@ -1,25 +1,38 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
 import { createContainerFromDb } from '../src/lib/di';
+import { systemConfig } from '../src/models/schema';
+import { financeMemoryPostgres } from './helpers/financePostgres';
 import { paymentQueryFixture, paymentQueryKeys } from './helpers/paymentQueryFixture';
 import { readPaymentProviderResponse } from '../src/utils/payment-response';
 import { parseAndVerifyAlipayApiResponse } from '../src/utils/alipay';
 
-describe('signed original-identity provider query adapters (no provider or database I/O)', () => {
-  // Lazy local client only supplies the real container type. All config comes from
-  // local KV; an unexpected DAO read throws before it can open a socket.
-  const client = postgres('postgres://unused:unused@127.0.0.1:1/unused', { max: 1, connect_timeout: 1 });
-  const container = createContainerFromDb(drizzle(client));
+describe('signed original-identity provider query adapters with real SQL and local provider bytes', () => {
+  let fixture: Awaited<ReturnType<typeof financeMemoryPostgres>>, container: ReturnType<typeof createContainerFromDb>;
   let keys: ReturnType<typeof paymentQueryKeys>, f: Awaited<ReturnType<typeof paymentQueryFixture>>;
-  beforeAll(() => { keys = paymentQueryKeys(); });
+  const cacheGet = vi.fn(async (_key: string): Promise<string | null> => null);
+  const cachePut = vi.fn(async () => {}), cacheDelete = vi.fn(async () => {});
+  beforeAll(async () => {
+    keys = paymentQueryKeys(); fixture = await financeMemoryPostgres([systemConfig]);
+    container = createContainerFromDb(fixture.db);
+  });
   beforeEach(async () => {
-    vi.spyOn(container.systemConfigDao, 'getValues').mockRejectedValue(Error('Database I/O forbidden'));
+    await fixture.reset(); cacheGet.mockReset(); cachePut.mockClear(); cacheDelete.mockClear();
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Unstubbed provider I/O forbidden'));
     f = await paymentQueryFixture(container, keys);
+    await fixture.db.insert(systemConfig).values(Object.entries(f.config).map(([key, value], index) => ({
+      id: index + 1, menuName: key.slice(4), value: JSON.stringify(value), isStore: 0,
+    })));
+    cacheGet.mockImplementation(async key => key === 'cfg_wechat_appid' ? 'stale-official-account'
+      : key === 'cfg_routine_appId' ? 'stale-mini-account' : f.config[key] ?? null);
+    Object.assign(f.bindings.CONFIG_KV, { get: cacheGet, put: cachePut, delete: cacheDelete });
   });
-  afterEach(() => { expect(container.systemConfigDao.getValues).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
-  afterAll(async () => { await client.end(); });
+  afterEach(() => {
+    try {
+      expect(cacheGet).not.toHaveBeenCalled(); expect(cachePut).not.toHaveBeenCalled(); expect(cacheDelete).not.toHaveBeenCalled();
+    } finally { vi.restoreAllMocks(); }
+  });
+  afterAll(async () => { if (fixture) await fixture.close(); });
   const query = (rail: 'wechat' | 'alipay') => rail === 'wechat'
     ? f.wechat.queryOrder(f.request(rail), f.identity(rail)) : f.alipay.query(f.request(rail), f.identity(rail));
   it.each(['wechat', 'alipay'] as const)('%s signs the exact original request and labels query provenance', async rail => {
@@ -45,8 +58,8 @@ describe('signed original-identity provider query adapters (no provider or datab
   });
   it.each(['wechat-app', 'wechat-merchant', 'alipay-app', 'alipay-merchant', 'alipay-missing-seller'] as const)
     ('rejects rotated %s before network', async change => {
-      if (change === 'wechat-app') f.config.cfg_wechat_appid = 'rotated-app';
-      if (change === 'wechat-merchant') f.config.cfg_pay_weixin_mchid = '9999999999';
+      if (change === 'wechat-app') await fixture.db.update(systemConfig).set({ value: '"rotated-app"' }).where(eq(systemConfig.menuName, 'wechat_appid'));
+      if (change === 'wechat-merchant') await fixture.db.update(systemConfig).set({ value: '"9999999999"' }).where(eq(systemConfig.menuName, 'pay_weixin_mchid'));
       if (change === 'alipay-app') f.bindings.ALIPAY_APP_ID = 'rotated-app';
       if (change === 'alipay-merchant') f.bindings.ALIPAY_SELLER_ID = '9999999999';
       if (change === 'alipay-missing-seller') f.bindings.ALIPAY_SELLER_ID = '';

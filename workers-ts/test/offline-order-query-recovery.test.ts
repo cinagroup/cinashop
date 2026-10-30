@@ -21,7 +21,8 @@ import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuS
 import { paymentQueryFixture, paymentQueryKeys } from './helpers/paymentQueryFixture';
 import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 
-// Real PG and real query crypto; provider transport/config KV are local fixtures.
+// Real PG and query crypto; public payment configuration is current SQL,
+// while provider transport bytes and Alipay deployment values are local fixtures.
 // Interleaved callbacks below are trusted decoded fixtures; the companion signed
 // HTTP suite verifies their actual ingress separately, not replaced by this test.
 describe('offline durable query collection and recovery on isolated native PG16', () => {
@@ -39,7 +40,13 @@ describe('offline durable query collection and recovery on isolated native PG16'
         OFFLINE_ORDER_EXTERNAL_PAYMENT_SQL, OFFLINE_ORDER_CALLBACK_DOMAIN_SQL]) await tx.execute(sql.raw(source));
     });
     await f.db.insert(user).values({ uid: 11, account: 'query-recovery-buyer', nowMoney: '100.00', integral: 50, isEverLevel: 1 });
-    await f.db.insert(systemConfig).values([{ menuName: 'member_card_status', value: '1' }, { menuName: 'order_give_integral', value: '1.234567' }]);
+    await f.db.insert(systemConfig).values([{ menuName: 'member_card_status', value: '1' }, { menuName: 'order_give_integral', value: '1.234567' },
+      { menuName: 'wechat_appid', value: '"wx-local-query"' },
+      { menuName: 'routine_appId', value: '"wx-local-query"' },
+      { menuName: 'pay_weixin_mchid', value: '"1234567890"' },
+      { menuName: 'pay_weixin_serial_no', value: '"ABCDEF123456"' },
+      { menuName: 'site_url', value: '"https://query.example"' },
+      { menuName: 'pay_weixin_open', value: '0' }]);
     await f.db.insert(memberRight).values([{ rightType: 'offline', number: 80, status: 1 }, { rightType: 'integral', number: 2, status: 1 }]);
   }, 30_000);
   afterEach(async () => { vi.restoreAllMocks(); await f?.close(); });
@@ -118,7 +125,11 @@ describe('offline durable query collection and recovery on isolated native PG16'
     await runtime(async r => {
       const t = await create(r); vi.mocked(fetch).mockResolvedValueOnce(t.response()); const ref = await t.persist();
       if (committed) await settlement.settleOfflineOrderQueryPayment(t.container, ref);
-      t.api.config.cfg_pay_weixin_mchid = '9999999999'; await t.due(); vi.mocked(fetch).mockClear();
+      await f.db.update(systemConfig).set({ value: '"9999999999"' }).where(eq(systemConfig.menuName, 'pay_weixin_mchid'));
+      await f.db.update(systemConfig).set({ value: '"rotated-official-app"' }).where(eq(systemConfig.menuName, 'wechat_appid'));
+      expect(await t.api.env.CONFIG_KV.get('cfg_pay_weixin_mchid')).toBe(t.api.identity().merchantId);
+      expect(await t.api.env.CONFIG_KV.get('cfg_wechat_appid')).toBe(t.api.identity().appId);
+      await t.due(); vi.mocked(fetch).mockClear();
       expect(await t.recovery.processMessage(t.message)).toBe(committed ? 'confirmed' : 'settled');
       expect(fetch).not.toHaveBeenCalled(); await paid();
     });

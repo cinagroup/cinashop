@@ -1,3 +1,4 @@
+import { lockLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 import { eq, sql } from 'drizzle-orm';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { storeOrder, user } from '@/models/schema';
@@ -103,7 +104,7 @@ export class ManagerOrderOperationRequest {
   }
   async execute(kind:ManagerOperationKind,ctx:ManagerOperationContext,input:unknown,callback:(tx:DbClient,scope:StoreManagerScope,order:Order)=>Promise<{outcome:ManagerOperationOutcome;evidence?:Record<string,ManagerJson>}>):Promise<ManagerOperationResult>{
     const p=await prepareManagerOperation(kind,ctx,input);
-    try{return await withTx(this.container,async tx=>{const prior=await checkManagerOperation(tx,p);if(prior){await authorizeManagerOperationOwner(tx,p.actor);return{receipt:prior,replayed:true};}const order=await lockManagerOrder(tx,p.input.order_id),scope=await authorizeLockedManagerOperation(tx,p,order);const result=await callback(tx,scope,order);return{receipt:await appendManagerOperation(tx,p,scope.staff_id,result.outcome,result.evidence),replayed:false};});}
+    try{return await withTx(this.container,async tx=>{const prior=await checkManagerOperation(tx,p);if(prior){await authorizeManagerOperationOwner(tx,p.actor);return{receipt:prior,replayed:true};}if(kind==='confirm_offline')await lockLocalPaymentAdmissionTx(tx);const order=await lockManagerOrder(tx,p.input.order_id),scope=await authorizeLockedManagerOperation(tx,p,order);const result=await callback(tx,scope,order);return{receipt:await appendManagerOperation(tx,p,scope.staff_id,result.outcome,result.evidence),replayed:false};});}
     catch(error){
       // Only a completed local validation rollback can produce rejection proof.
       // Network/commit ambiguity, SQL errors and timeouts stay unknown. Reacquire

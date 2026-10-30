@@ -116,7 +116,7 @@ export async function diyCommerceFixture(now = new Date(), options: { namespace?
     await f.db.insert(storeBargain).values([
       { id: 1901, productId: 604, storeName: '真实砍价1901', title: '真实砍价标题1901', price: '20.00', minPrice: '0.00', people: 6, sales: 2, stock: 8, sort: 10 },
       { id: 1902, productId: 611, storeName: '过期砍价旁观', stopTime: new Date((seconds - 1) * 1000), sort: 999 },
-    ].map(row => ({ ...row, image: '/static/logo.png' })));
+    ].map(row => ({ startTime: new Date((seconds - 3600) * 1000), stopTime: new Date((seconds + 3600) * 1000), ...row, image: '/static/logo.png' })));
     await f.db.insert(storeBargainUserHelp).values([
       { id: 2501, uid: 11, bargainId: 1901, bargainUserId: 2601, type: 1, price: '1.00', addTime: seconds - 60 },
       { id: 2502, uid: 22, bargainId: 1901, bargainUserId: 2602, type: 1, price: '2.00', addTime: seconds - 120 },

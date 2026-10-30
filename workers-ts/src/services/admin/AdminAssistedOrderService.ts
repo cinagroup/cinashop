@@ -572,10 +572,13 @@ export class AdminAssistedOrderService {
       },
       delete: async () => { throw new ValidateException('报价配置快照只读'); },
     } };
-    const [readiness, firstOrderConfig] = await Promise.all([
-      getPaymentReadiness(this.container, this.env),
-      selection.uid > 0 ? loadFirstOrderDiscountConfig(this.container, captureConfig) : undefined,
-    ]);
+    // Native App readiness owns a short SQL transaction. Finish it before the
+    // first-order reader can dispatch KV I/O, keeping every remote wait outside
+    // both the readiness transaction and the quote's repeatable-read snapshot.
+    const readiness = await getPaymentReadiness(this.container, this.env);
+    const firstOrderConfig = selection.uid > 0
+      ? await loadFirstOrderDiscountConfig(this.container, captureConfig)
+      : undefined;
     const cartConfig: SystemConfigEnv = { CONFIG_KV: {
       get: async key => {
         const value = firstOrderValues.get(key);

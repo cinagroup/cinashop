@@ -60,6 +60,71 @@ function editorialMediaSlots(components: unknown[], publication = false, page?: 
       }
       // The authored destination and Admin preview fields are never media slots.
     }
+    else if (component.name === 'userInfor' || component.name === 'ranking' || component.name === 'community') {
+      const owner = record(component[component.name === 'userInfor' ? 'logoConfig' : 'imgConfig']);
+      if (owner && typeof owner.url === 'string') {
+        // These authored JSON images use the existing platform-raster policy,
+        // without the legacy HTML attribute/entity decoder. Account avatars,
+        // product rows and other state/preview fields confer no image authority.
+        slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+        counts.ordinary++;
+      }
+    }
+    else if (component.name === 'seckill') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgColorConfig']) {
+        const owner = record(component[key]);
+        if (owner && typeof owner.url === 'string') {
+          slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
+    else if (component.name === 'bargain') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgColorConfig']) {
+        const owner = record(component[key]);
+        if (owner && typeof owner.url === 'string') {
+          slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
+    else if (component.name === 'combination') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgColorConfig']) {
+        const owner = record(component[key]);
+        if (owner && typeof owner.url === 'string') {
+          slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
+    else if (component.name === 'presale') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgColorConfig']) {
+        const owner = record(component[key]);
+        if (owner && typeof owner.url === 'string') {
+          slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
+    else if (component.name === 'pointsMall') {
+      for (const key of ['imgBgConfig', 'imgConfig', 'imgConfig2']) {
+        const owner = record(component[key]);
+        if (owner && typeof owner.url === 'string') {
+          slots.push({ value: owner.url, kind: 'image', set: value => { owner.url = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
+    else if (component.name === 'promotionList') {
+      const tabs = record(component.tabConfig)?.list;
+      if (Array.isArray(tabs)) for (const value of tabs) {
+        const owner = record(value);
+        if (owner && typeof owner.image === 'string') {
+          slots.push({ value: owner.image, kind: 'image', set: value => { owner.image = value; } });
+          counts.ordinary++;
+        }
+      }
+    }
     else if (component.name === 'videos') {
       for(const [key,kind] of [['videoConfig','video'],['imgConfig','image']] as const){
         const owner=record(component[key]);if(!owner||typeof owner.url!=='string')continue;

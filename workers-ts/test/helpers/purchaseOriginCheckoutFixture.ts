@@ -10,7 +10,7 @@ import { ownsSequenceRunnerEndpoint } from './kefuSequenceRunnerDatabase';
  * the reviewed installer still verifies all source types, ownership and guards.
  * Quote-only fixtures without detail rows do not need a checkout protocol.
  * This is neither a full-schema certification nor a production installer. */
-export async function purchaseOriginCheckoutFixture(fixture: { db: DbClient }) {
+export async function purchaseOriginCheckoutFixture(fixture: { db: DbClient; canonicalOrm?: true }) {
   const target = validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL ?? '');
   const [identity] = await fixture.db.execute(sql`SELECT current_database() AS database,
     current_schema() AS namespace,current_user AS role,current_setting('server_version_num') AS version,
@@ -18,8 +18,9 @@ export async function purchaseOriginCheckoutFixture(fixture: { db: DbClient }) {
   if (!identity || typeof identity.database !== 'string' || identity.namespace !== 'public'
     || identity.role !== 'finance_test' || Math.floor(Number(identity.version) / 10000) !== 16)
     throw Error('Origin checkout commissioning requires an owned public PG16 fixture');
-  const narrow = ownsFinanceFixtureEndpoint(identity.database, identity.namespace, target.href, identity.host, identity.port);
-  if (!narrow && !ownsSequenceRunnerEndpoint(identity.database, identity.namespace, target.href, identity.host, identity.port))
+  const financeOwned = ownsFinanceFixtureEndpoint(identity.database, identity.namespace, target.href, identity.host, identity.port);
+  const narrow = financeOwned && fixture.canonicalOrm !== true;
+  if (!financeOwned && !ownsSequenceRunnerEndpoint(identity.database, identity.namespace, target.href, identity.host, identity.port))
     throw Error('Origin checkout fixture ownership is unproven');
   const [sources] = await fixture.db.execute(sql`SELECT to_regclass('public.store_order_cart_info') IS NOT NULL AS details`);
   if (!sources.details) return;

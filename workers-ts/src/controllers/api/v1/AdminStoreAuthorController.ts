@@ -1,0 +1,26 @@
+import type {Context} from 'hono';
+import type {AppVariables,Env} from '@/env';
+import {jsonOk} from '@/utils/json';
+import {readBoundedJsonObject} from '@/utils/request-body';
+import {ServiceUnavailableException,ValidateException} from '@/utils/errors';
+import {AdminStoreAuthorService} from '@/services/admin/AdminStoreAuthorService';
+import {AdminStoreSupportService} from '@/services/admin/AdminStoreSupportService';
+import {storeQuery,storeId} from '@/services/admin/AdminStoreAuthorInput';
+type C=Context<{Bindings:Env;Variables:AppVariables}>;
+function context(c:C){c.header('Cache-Control','private, no-store');c.header('Pragma','no-cache');return {s:new AdminStoreAuthorService(c.get('container'),c.env),support:new AdminStoreSupportService(c.get('container'),c.env),a:{id:c.get('adminId')??0,authVersion:c.get('socketAuthVersion')??'',expiresAt:c.get('socketTokenExp')??0},q:new URL(c.req.url).searchParams};}
+export const catalog=(c:C)=>{const x=context(c);return x.s.catalog(x.q,x.a).then(r=>jsonOk(c,r));};
+export const receipt=(c:C)=>{const x=context(c);return x.s.receipt(c.req.param('operationId'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const commit=async(c:C)=>{const x=context(c);storeQuery(x.q);return jsonOk(c,await x.s.mutate(await readBoundedJsonObject(c.req.raw,64*1024),x.a));};
+export const resolve=async(c:C)=>{const x=context(c);storeQuery(x.q);return jsonOk(c,await x.s.resolve(await readBoundedJsonObject(c.req.raw,64*1024),x.a));};
+export const attachmentCategories=(c:C)=>{const x=context(c);return x.support.categories(x.q,x.a).then(r=>jsonOk(c,r));};
+export const attachmentOptions=(c:C)=>{const x=context(c);return x.support.options(x.q,x.a).then(r=>jsonOk(c,r));};
+export const regions=(c:C)=>{const x=context(c);return x.support.regions(x.q,x.a).then(r=>jsonOk(c,r));};
+export const mapConfig=(c:C)=>{const x=context(c);return x.support.mapConfig(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyAddress=async(c:C)=>{const x=context(c),r=await x.support.mapConfig(x.q,x.a);if(!r.available)throw new ServiceUnavailableException('请先配置腾讯地图浏览器KEY');return jsonOk(c,{key:new URL(r.url).searchParams.get('key')});};
+export const legacyList=(c:C)=>{const x=context(c);return x.s.legacyList(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyHeader=(c:C)=>{const x=context(c);return x.s.header(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyDetail=(c:C)=>{const x=context(c);return x.s.detail(c.req.param('id'),x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacyOptions=(c:C)=>{const x=context(c);return x.s.options(x.q,x.a).then(r=>jsonOk(c,r));};
+export const legacySave=async(c:C)=>{const x=context(c);storeQuery(x.q);const id=storeId(c.req.param('id'),true),r=await x.s.legacy(id?'update':'create',id,await readBoundedJsonObject(c.req.raw,64*1024),x.a);return jsonOk(c,{id:r.result.id},'提货点已保存');};
+export const legacyShow=async(c:C)=>{const x=context(c);storeQuery(x.q);const isShow=c.req.param('isShow');if(isShow!=='0'&&isShow!=='1')throw new ValidateException('营业状态无效');const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('营业状态正文须为空');const r=await x.s.legacy('show',c.req.param('id'),{is_show:Number(isShow)},x.a);return jsonOk(c,{id:r.result.id,is_show:Number(isShow)},'营业状态已更新');};
+export const legacyDelete=async(c:C)=>{const x=context(c);storeQuery(x.q);const b=await readBoundedJsonObject(c.req.raw,1024);if(Object.keys(b).length)throw new ValidateException('回收或恢复正文须为空');const id=storeId(c.req.param('id')),row=(await x.s.detail(id,new URLSearchParams(),x.a)).info,restoring=row.is_del===1,r=await x.s.legacy(restoring?'restore':'delete',id,{},x.a);return jsonOk(c,{id:r.result.id,is_del:restoring?0:1},restoring?'提货点已恢复':'提货点已回收');};

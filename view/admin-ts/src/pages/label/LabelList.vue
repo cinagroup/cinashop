@@ -1,161 +1,48 @@
 <template>
-  <div class="label-page">
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="商品标签" name="product">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-head">
-              <span>商品标签</span>
-              <el-button type="primary" size="small" @click="openForm()">＋ 新增标签</el-button>
-            </div>
-          </template>
-          <el-table :data="list" v-loading="loading" border>
-            <el-table-column prop="id" label="ID" width="70" />
-            <el-table-column label="标签名" min-width="140">
-              <template #default="{ row }">
-                <el-tag :style="{ background: row.bgColor || '#fff', color: row.color || '#333', borderColor: row.borderColor || '#ddd' }">
-                  {{ row.labelName }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="sort" label="排序" width="80" />
-            <el-table-column label="状态" width="90">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? "启用" : "停用" }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right">
-              <template #default="{ row }">
-                <el-button size="small" @click="openForm(row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="del(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-tab-pane>
-
-      <el-tab-pane label="用户标签" name="user">
-        <el-card shadow="never">
-          <template #header>
-            <div class="card-head">
-              <span>用户标签</span>
-              <el-button type="primary" size="small" @click="openUserForm()">＋ 新增标签</el-button>
-            </div>
-          </template>
-          <el-table :data="userList" v-loading="userLoading" border>
-            <el-table-column prop="id" label="ID" width="70" />
-            <el-table-column label="标签名" min-width="140">
-              <template #default="{ row }">
-                <el-tag :style="{ color: row.color || '#e93323', borderColor: row.color || '#e93323' }">{{ row.name }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="sort" label="排序" width="80" />
-            <el-table-column label="状态" width="90">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? "启用" : "停用" }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right">
-              <template #default="{ row }">
-                <el-button size="small" @click="openUserForm(row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="delUser(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-tab-pane>
-    </el-tabs>
-
-    <!-- 商品标签弹窗 -->
-    <el-dialog v-model="formVisible" :title="form.id ? '编辑标签' : '新增标签'" width="420px">
-      <el-form :model="form" label-width="80px">
-        <el-form-item label="标签名" required><el-input v-model="form.labelName" /></el-form-item>
-        <el-form-item label="文字颜色"><el-color-picker v-model="form.color" /></el-form-item>
-        <el-form-item label="背景色"><el-color-picker v-model="form.bgColor" /></el-form-item>
-        <el-form-item label="排序"><el-input-number v-model="form.sort" :min="0" /></el-form-item>
-        <el-form-item label="启用"><el-switch v-model="form.status" :active-value="1" :inactive-value="0" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="formVisible = false">取消</el-button>
-        <el-button type="primary" @click="save">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 用户标签弹窗 -->
-    <el-dialog v-model="userFormVisible" :title="userForm.id ? '编辑标签' : '新增标签'" width="420px">
-      <el-form :model="userForm" label-width="80px">
-        <el-form-item label="标签名" required><el-input v-model="userForm.name" /></el-form-item>
-        <el-form-item label="颜色"><el-color-picker v-model="userForm.color" /></el-form-item>
-        <el-form-item label="排序"><el-input-number v-model="userForm.sort" :min="0" /></el-form-item>
-        <el-form-item label="启用"><el-switch v-model="userForm.status" :active-value="1" :inactive-value="0" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="userFormVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveUser">保存</el-button>
-      </template>
-    </el-dialog>
-  </div>
+ <main class="user-label-page"><section v-for="screen in screens" :key="screen.key">
+  <header class="heading"><div><h1>用户标签</h1><p>按分类整理用户标签，保留现有颜色、排序和启停设置。</p></div><div class="actions"><a href="/label/products">商品标签管理</a><el-button :disabled="!canView || state.busy || state.loading" @click="screen.refresh">重新读取</el-button><el-button v-if="canManage" :disabled="!model.writable()" @click="screen.createCategory">添加分类</el-button><el-button v-if="canManage" type="primary" :disabled="!model.writable()" @click="screen.createLabel">添加标签</el-button><el-button v-if="canManage" :disabled="!model.writable() || !state.snapshot?.sync_configured || state.snapshot.sync_busy" @click="screen.sync">同步企业微信标签</el-button></div></header>
+  <el-alert v-if="!canView" title="当前没有用户标签查看权限" type="warning" :closable="false" />
+  <el-alert v-if="state.error || state.pendingError" :title="state.error || state.pendingError" type="error" :closable="false" />
+  <el-alert v-if="state.notice" :title="state.notice" type="success" :closable="false" />
+  <el-alert v-if="state.pending" title="原标签操作尚未结束，新的提交已暂停" type="warning" :closable="false"><p>{{ state.phase?.result.message || '请核对原回执；回执缺失仍表示结果未知。' }}</p><p v-if="state.pending.operation==='sync'">排队不表示同步完成。远端创建结果不确定时只读取核对，不重复发送；已发生的远端变更不能当作未应用。</p><div class="actions"><el-button :disabled="state.busy" @click="screen.receipt">读取原回执</el-button><el-button v-if="state.pending.operation==='sync' && canManage" :disabled="state.busy" @click="screen.advance">继续并核对同步</el-button><el-button :disabled="state.busy" @click="screen.resolve">核对并停止原请求</el-button><el-button v-if="state.retryReady && canManage" :disabled="state.busy" @click="screen.retry">原样重试</el-button></div></el-alert>
+  <template v-if="canView"><el-alert v-if="state.snapshot && !state.snapshot.write_ready" title="此环境尚未安装标签安全写入能力，目录可查看" type="warning" :closable="false" /><p v-if="state.snapshot && !state.snapshot.sync_configured" class="hint">企业微信同步尚未配置企业身份或客户联系凭据。</p><p v-if="state.snapshot?.sync_busy && !state.pending" class="hint">已有同步命令待原操作人核对，新的同步已暂停。</p>
+  <div class="taxonomy"><aside aria-label="标签分类"><el-button :disabled="viewLocked" :type="state.category===-1?'primary':'default'" @click="screen.all">全部标签</el-button><article v-for="category in categories" :key="category.key" class="category-row"><button type="button" class="category-name" :class="{selected:state.category===category.row.id}" :disabled="viewLocked" @click="category.select">{{ category.row.name || '未命名分类' }} <small>#{{ category.row.id }}</small></button><div v-if="canManage" class="actions"><el-button size="small" :disabled="!model.writable() || !!state.editor" @click="category.edit">编辑分类</el-button><el-button size="small" type="danger" plain :disabled="!model.writable() || !!state.editor" @click="category.remove">删除分类</el-button></div></article></aside>
+   <section class="labels"><label class="search">标签名称<input :value="state.keyword" aria-label="标签名称查询" :disabled="viewLocked" @input="screen.keyword(($event.target as HTMLInputElement).value)" placeholder="输入标签名称" /></label><p class="hint">共 {{ state.snapshot?.labels.length ?? 0 }} 个标签，当前筛选 {{ visible.length }} 个；每页10项。</p><p v-if="state.loading" role="status">正在读取完整标签目录…</p><div v-if="state.snapshot && !state.loading" class="rows"><article v-for="item in rows" :key="item.key" class="label-row"><div class="label-info"><strong :style="{color:color(item.row.color)}">{{ item.row.name || '未命名历史标签' }}</strong><p>#{{ item.row.id }} · {{ categoryName(item.row.labelCate) }} · {{ item.row.status===1?'启用':'停用' }} · 排序 {{ item.row.sort }}</p><p v-if="item.row.tagId" class="remote">企业微信标签 {{ item.row.tagId }}</p></div><div v-if="canManage" class="actions"><el-button :disabled="!model.writable() || !!state.editor" @click="item.edit">编辑标签</el-button><el-button type="danger" plain :disabled="!model.writable() || !!state.editor" @click="item.remove">删除标签</el-button></div></article><p v-if="!visible.length" class="empty">没有符合条件的标签</p></div><nav class="actions pagination" aria-label="标签分页"><span>第 {{ state.page }} / {{ pages }} 页</span><el-button :disabled="viewLocked || state.page<=1" @click="screen.previous">上一页</el-button><el-button :disabled="viewLocked || state.page>=pages" @click="screen.next">下一页</el-button></nav></section>
+  </div></template>
+ </section>
+ <el-dialog v-for="editor in editors" :key="editor.key" class="label-editor-dialog" top="16px" :model-value="true" :title="editor.category ? (editor.id?'编辑分类':'添加分类'):(editor.id?'编辑用户标签':'添加用户标签')" width="min(560px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false"><el-alert v-if="state.error" :title="state.error" type="error" :closable="false" /><div class="editor-fields"><label v-for="field in editor.fields" :key="field.key">{{ labels[field.field] }}<select v-if="field.field==='label_cate'" :value="field.value" aria-label="标签分类" :disabled="!model.writable()" @change="field.set(Number(($event.target as HTMLSelectElement).value))"><option :value="0">请选择分类</option><option v-if="Number(field.value)>0 && !state.snapshot?.categories.some(c=>c.id===Number(field.value))" :value="field.value">保留历史分类 #{{ field.value }}</option><option v-for="category in state.snapshot?.categories ?? []" :key="category.id" :value="category.id">{{ category.name }} #{{ category.id }}{{ category.isShow===1?'':'（停用）' }}</option></select><select v-else-if="field.field==='status'" :value="field.value" aria-label="启停状态" :disabled="!model.writable()" @change="field.set(Number(($event.target as HTMLSelectElement).value))"><option :value="1">启用</option><option :value="0">停用</option><option v-if="![0,1].includes(Number(field.value))" :value="field.value">保留历史状态 {{ field.value }}</option></select><input v-else :value="field.value" :type="field.field==='sort'?'number':'text'" :aria-label="labels[field.field]" :disabled="!model.writable()" @input="field.set(field.field==='sort'?Number(($event.target as HTMLInputElement).value):($event.target as HTMLInputElement).value)" /></label></div><p class="hint">新增或改名须为1到20字。远端ID与未显示的历史字段保留原值。</p><template #footer><el-button :disabled="state.busy" @click="editor.cancel">取消</el-button><el-button type="primary" :disabled="!model.writable()" @click="editor.submit">核对保存</el-button></template></el-dialog>
+ <el-dialog v-for="confirmation in confirmations" :key="confirmation.key" :model-value="true" title="确认标签操作" width="min(520px, calc(100vw - 24px))" :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false"><p>{{ operationNames[confirmation.operation] }} <span v-if="confirmation.id">#{{ confirmation.id }}</span></p><p v-if="confirmation.payload.name">{{ confirmation.payload.name }}</p><p v-if="confirmation.operation==='label_delete'">将删除标签及平台用户分配关系；促销、商品或订单快照引用时须保留并停用。</p><p v-if="confirmation.operation==='category_delete'">分类仍被任何标签或子分类引用时不能删除。</p><p v-if="confirmation.operation==='sync'">将排队导出本地标签，再核对企业微信完整目录并导入映射。可能创建远端标签；排队不表示完成。无标签的空分类无法导出，已有远端标签不会被删除。</p><template #footer><el-button :disabled="state.busy" @click="confirmation.cancel">取消</el-button><el-button type="primary" :disabled="state.busy" @click="confirmation.confirm">确认提交</el-button></template></el-dialog>
+ </main>
 </template>
-
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import request, { getData } from "@/utils/request";
-
-const activeTab = ref("product");
-
-// ── 商品标签 ──
-const list = ref<any[]>([]);
-const loading = ref(false);
-const formVisible = ref(false);
-const form = reactive({ id: 0, labelName: "", color: "#e93323", bgColor: "#fff5f4", sort: 0, status: 1 });
-
-async function loadLabels() {
-  loading.value = true;
-  try { list.value = await getData(request.get("/product_label/list")); } catch { list.value = []; } finally { loading.value = false; }
-}
-function openForm(row?: any) {
-  if (row) { form.id = row.id; form.labelName = row.labelName; form.color = row.color || "#e93323"; form.bgColor = row.bgColor || "#fff5f4"; form.sort = row.sort; form.status = row.status; }
-  else { form.id = 0; form.labelName = ""; form.color = "#e93323"; form.bgColor = "#fff5f4"; form.sort = 0; form.status = 1; }
-  formVisible.value = true;
-}
-async function save() {
-  if (!form.labelName) return ElMessage.error("请输入标签名");
-  try { await getData(request.post("/product_label/save", { id: form.id || undefined, labelName: form.labelName, color: form.color, bgColor: form.bgColor, sort: form.sort, status: form.status })); ElMessage.success("保存成功"); formVisible.value = false; loadLabels(); } catch (e) { ElMessage.error((e as Error).message); }
-}
-async function del(row: any) {
-  try { await ElMessageBox.confirm(`删除标签「${row.labelName}」?`, "确认", { type: "warning" }); } catch { return; }
-  try { await getData(request.delete(`/product_label/del/${row.id}`)); ElMessage.success("已删除"); loadLabels(); } catch (e) { ElMessage.error((e as Error).message); }
-}
-
-// ── 用户标签 ──
-const userList = ref<any[]>([]);
-const userLoading = ref(false);
-const userFormVisible = ref(false);
-const userForm = reactive({ id: 0, name: "", color: "#e93323", sort: 0, status: 1 });
-
-async function loadUserLabels() {
-  userLoading.value = true;
-  try { userList.value = await getData(request.get("/user_label/list")); } catch { userList.value = []; } finally { userLoading.value = false; }
-}
-function openUserForm(row?: any) {
-  if (row) { userForm.id = row.id; userForm.name = row.name; userForm.color = row.color || "#e93323"; userForm.sort = row.sort; userForm.status = row.status; }
-  else { userForm.id = 0; userForm.name = ""; userForm.color = "#e93323"; userForm.sort = 0; userForm.status = 1; }
-  userFormVisible.value = true;
-}
-async function saveUser() {
-  if (!userForm.name) return ElMessage.error("请输入标签名");
-  try { await getData(request.post("/user_label/save", { id: userForm.id || undefined, name: userForm.name, color: userForm.color, sort: userForm.sort, status: userForm.status })); ElMessage.success("保存成功"); userFormVisible.value = false; loadUserLabels(); } catch (e) { ElMessage.error((e as Error).message); }
-}
-async function delUser(row: any) {
-  try { await ElMessageBox.confirm(`删除标签「${row.name}」?`, "确认", { type: "warning" }); } catch { return; }
-  try { await getData(request.delete(`/user_label/del/${row.id}`)); ElMessage.success("已删除"); loadUserLabels(); } catch (e) { ElMessage.error((e as Error).message); }
-}
-
-watch(activeTab, (v) => { if (v === "user" && !userList.value.length) loadUserLabels(); });
-onMounted(loadLabels);
+import {computed,reactive,onMounted,onBeforeUnmount,watch} from 'vue';
+import {useRoute} from 'vue-router';
+import {useAuthStore} from '@/stores/auth';
+import {getToken,getAdminSession} from '@/utils/auth';
+import {apiLabelCatalog,apiLabelCommit,apiLabelReceipt,apiLabelResolve,apiLabelAdvance} from '@/api/labelAuthor';
+import {userLabelState} from '@/utils/userLabelState';
+import type {LabelAction,LabelOperation} from '../../../../common/labelAuthor';
+const auth=useAuthStore(),route=useRoute();let alive=false,generation=0,syncing=false,queued=false;
+const canView=computed(()=>!!auth.token&&auth.token===getToken()&&!!auth.userInfo&&(auth.userInfo.level===0||auth.uniqueAuth.some(p=>['label.view','label.manage'].includes(p))));
+const canManage=computed(()=>canView.value&&(auth.userInfo?.level===0||auth.uniqueAuth.includes('label.manage')));
+const prefix=(actor:number)=>`cinashop_user_label_pending_v1_${actor}_`;
+function keys(actor:number){const out:string[]=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(prefix(actor)))out.push(k);}return out.sort();}
+const model=userLabelState({identity:()=>`${generation}:${auth.token}:${auth.userInfo?.id}`,actor:()=>auth.userInfo?.id??0,view:()=>canView.value,manage:()=>canManage.value,read:apiLabelCatalog,write:apiLabelCommit,receipt:apiLabelReceipt,resolve:apiLabelResolve,advance:apiLabelAdvance,
+ readPending:actor=>{const key=keys(actor)[0];if(!key)return null;const raw=localStorage.getItem(key);if(!raw||raw.length>64*1024)throw Error('原标签操作记录异常，请保留核对');const a=JSON.parse(raw);if(key!==prefix(actor)+a?.operation_id)throw Error('原标签操作标识不一致');return a;},
+ persist:(actor:number,a:LabelAction|null,expected?:LabelAction)=>{const value=a??expected;if(!value)throw Error('缺少原标签操作');const key=prefix(actor)+value.operation_id,raw=localStorage.getItem(key);if(a){if(keys(actor).some(k=>k!==key)||raw&&raw!==JSON.stringify(a))throw Error('本账号已有其它未确认标签操作');localStorage.setItem(key,JSON.stringify(a));}else{if(raw&&raw!==JSON.stringify(expected))throw Error('原标签记录已变化，无法清除');localStorage.removeItem(key);}},
+},v=>reactive(v) as typeof v);
+const state=model.state,visible=computed(()=>model.visible()),pages=computed(()=>Math.max(1,Math.ceil(visible.value.length/10))),rows=computed(()=>visible.value.slice((state.page-1)*10,state.page*10).map(row=>model.rowControls(row,false))),categories=computed(()=>(state.snapshot?.categories??[]).map(row=>model.rowControls(row,true))),screens=computed(()=>[model.screen()]),editors=computed(()=>model.editorControls()),confirmations=computed(()=>model.confirmationControls());
+const viewLocked=computed(()=>state.busy||state.loading||!!state.pending||!!state.pendingError||!!state.editor||!!state.confirmation||!state.snapshot);
+const color=(v:string)=>/^#[a-f0-9]{6}$/i.test(v)?v:'#333333';
+const categoryName=(id:number)=>state.snapshot?.categories.find(c=>c.id===id)?.name??(id?`历史分类不可用 #${id}`:'历史未分类');
+const labels:Record<string,string>={name:'名称',label_cate:'标签分类',color:'标签颜色',sort:'排序',status:'启停状态'};
+const operationNames:Record<LabelOperation,string>={label_create:'添加用户标签',label_update:'保存用户标签',label_delete:'删除用户标签',category_create:'添加分类',category_update:'保存分类',category_delete:'删除分类',sync:'同步企业微信标签'};
+function schedule(){if(!alive||syncing)return;generation++;model.dispose();if(queued)return;queued=true;queueMicrotask(()=>{queued=false;if(alive)void model.activate();});}
+function syncStored(event?:Event){if(syncing||event instanceof StorageEvent&&event.key!==null&&!['admin_token','admin_session'].includes(event.key)&&!event.key.startsWith('cinashop_user_label_pending_v1_'))return;syncing=true;generation++;model.dispose();const session=getAdminSession();auth.$patch({token:getToken()??'',userInfo:session?.userInfo??null,menus:(session?.menus as typeof auth.menus)??[],uniqueAuth:session?.uniqueAuth??[]});syncing=false;schedule();}
+watch(()=>[auth.token,auth.userInfo,auth.uniqueAuth,auth.menus],schedule,{deep:true,flush:'sync'});watch(()=>route.fullPath,schedule,{flush:'sync'});const stopAction=auth.$onAction(({name,after})=>{if(name==='login'||name==='logout')after(schedule);});
+onMounted(()=>{alive=true;window.addEventListener('storage',syncStored);window.addEventListener('admin-session-changed',syncStored);window.addEventListener('admin-auth-expired',syncStored);syncStored();});
+onBeforeUnmount(()=>{alive=false;generation++;stopAction();model.dispose();window.removeEventListener('storage',syncStored);window.removeEventListener('admin-session-changed',syncStored);window.removeEventListener('admin-auth-expired',syncStored);});
 </script>
-
 <style scoped>
-.card-head { display: flex; align-items: center; justify-content: space-between; }
+.user-label-page,.user-label-page>section{display:grid;gap:16px;min-width:0}.heading,.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.heading{justify-content:space-between}.heading h1{font-size:22px;margin:0}.heading p,.hint,.label-info p{color:var(--el-text-color-secondary);font-size:13px;line-height:1.7;margin:6px 0}.taxonomy{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px}.taxonomy>aside{display:flex;flex-direction:column;gap:12px;min-width:0;max-height:70vh;overflow:auto}.category-row{padding:12px;border:1px solid var(--el-border-color);border-radius:6px;overflow-wrap:anywhere}.category-name{display:block;width:100%;border:0;background:transparent;text-align:left;font:inherit;color:var(--el-text-color-primary);padding:0 0 10px;cursor:pointer;overflow-wrap:anywhere}.category-name.selected{color:var(--el-color-primary);font-weight:600}.labels,.label-info{min-width:0}.label-row{display:flex;justify-content:space-between;gap:14px;padding:18px;overflow-wrap:anywhere}.label-row+.label-row{border-top:1px solid var(--el-border-color-lighter)}.rows{border:1px solid var(--el-border-color);border-radius:6px}.search,.editor-fields label{display:grid;gap:8px;font-size:14px}.editor-fields{display:grid;gap:16px}.remote{font-size:12px;word-break:break-all}.actions .el-button+.el-button{margin-left:0}.pagination{justify-content:flex-end;margin-top:16px;font-size:13px}.empty{padding:20px}input,select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;padding:9px 12px;border:1px solid var(--el-border-color);border-radius:4px;background:var(--el-bg-color);color:var(--el-text-color-primary);font:inherit}input:focus,select:focus,.category-name:focus{outline:2px solid var(--el-color-primary);outline-offset:1px}.user-label-page :deep(.el-overlay-dialog){overflow:clip}.user-label-page :deep(.label-editor-dialog){max-height:calc(100dvh - 32px);display:flex;flex-direction:column}.user-label-page :deep(.label-editor-dialog .el-dialog__body){min-height:0;overflow-y:auto}.user-label-page :deep(.label-editor-dialog .el-dialog__header),.user-label-page :deep(.label-editor-dialog .el-dialog__footer){flex-shrink:0}.user-label-page :deep(.el-alert__content){min-width:0;overflow-wrap:anywhere}@media(max-width:900px){.taxonomy{grid-template-columns:200px minmax(0,1fr)}.label-row{flex-direction:column}}@media(max-width:600px){.taxonomy{grid-template-columns:1fr}.taxonomy>aside{max-height:240px}.heading>.actions{width:100%}.label-row{padding:12px}.pagination{justify-content:flex-start}}
 </style>

@@ -22,11 +22,12 @@ import {
   assertWechatPaymentProfileAvailable,
 } from "@/services/payment/PaymentReadinessService";
 import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentIdentity";
-import { registerPaymentReconciliationIntent } from "@/services/payment/PaymentReconciliationRegistry";
+import { admitExternalPaymentInitiation, type PaymentOrderAdmission } from '@/services/payment/PaymentInitiationAdmission';
 import { signAlipayParams, type AlipayParams } from "@/utils/alipay";
 import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readVisibleAgreement } from "@/services/user/PublicAgreementService";
+import { lockLocalPaymentAdmissionTx, assertLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 
 const MEMBER_CHANNELS: Readonly<Record<string, string>> = {
   weixin: "wechat",
@@ -34,6 +35,7 @@ const MEMBER_CHANNELS: Readonly<Record<string, string>> = {
   weixinh5: "weixinh5",
   routine: "routine",
   h5: "h5",
+  app: "app",
 };
 
 const DAY_SECONDS = 86_400;
@@ -314,6 +316,26 @@ export async function applyMembershipPayment(
   container: Container,
   params: ApplyMembershipPaymentInput,
 ): Promise<MembershipPaymentResult> {
+  return applyMembershipPaymentCore(container, params, false);
+}
+
+/** Only verified callback/query services select provider settlement. */
+export async function applyProviderMembershipPayment(
+  container: Container,
+  params: ApplyMembershipPaymentInput,
+): Promise<MembershipPaymentResult> {
+  if (params.payType !== PayType.WEIXIN && params.payType !== PayType.ALIPAY) {
+    throw new ValidateException('提供方入账渠道无效');
+  }
+  return applyMembershipPaymentCore(container, params, true);
+}
+
+async function applyMembershipPaymentCore(
+  container: Container,
+  params: ApplyMembershipPaymentInput,
+  providerSettlement: boolean,
+): Promise<MembershipPaymentResult> {
+  params = { ...params };
   const orderId = params.orderId.trim();
   assertMembershipOrderId(orderId);
   if (!MEMBERSHIP_PAY_TYPES.has(params.payType)) {
@@ -338,6 +360,7 @@ export async function applyMembershipPayment(
   if (!Number.isSafeInteger(now) || now <= 0) throw new Error("会员支付时间无效");
 
   return withTx(container, async (tx) => {
+    if (!providerSettlement) await lockLocalPaymentAdmissionTx(tx);
     const orders = await tx
       .select()
       .from(otherOrder)
@@ -378,6 +401,12 @@ export async function applyMembershipPayment(
     }
     if (order.type === 1 && (order.isFree !== 0 || payCents <= 0)) {
       throw new ValidateException("付费会员订单快照无效");
+    }
+    if (!providerSettlement) {
+      if (params.payType !== PayType.YUE) throw new ValidateException('本地付款不能伪装提供方已验证入账');
+      if (params.tradeNo) throw new ValidateException('本地付款不能写入未经验证的提供方交易号');
+      if (order.tradeNo !== '') throw new ValidateException('订单已有交易，不能另行扣款或授予权益');
+      await assertLocalPaymentAdmissionTx(tx, { orderNo: order.orderId, orderDomain: 'membership', expectedAmountCents: payCents });
     }
     const permanent = order.isPermanent === 1;
     if (!permanent && (!Number.isSafeInteger(order.vipDay) || order.vipDay <= 0)) {
@@ -494,6 +523,52 @@ export class PaidMembershipService {
     });
   }
 
+  private paymentAdmission(uid: number, order: typeof otherOrder.$inferSelect, payCents: number): PaymentOrderAdmission {
+    const snapshot = Object.freeze({
+      id: order.id,
+      orderId: order.orderId,
+      type: order.type,
+      isFree: order.isFree,
+      memberType: order.memberType,
+      isPermanent: order.isPermanent,
+      vipDay: order.vipDay,
+    });
+    return {
+      uid,
+      orderId: snapshot.id,
+      orderDomain: "membership" as const,
+      lockOrder: async (bound: Container): Promise<void> => {
+        const rows = await bound.db.select().from(otherOrder)
+          .where(eq(otherOrder.orderId, snapshot.orderId)).limit(2).for("update");
+        if (rows.length !== 1 || rows[0].id !== snapshot.id || rows[0].uid !== uid
+          || rows[0].isDel !== 0 || !MEMBERSHIP_ORDER_TYPES.has(rows[0].type)) {
+          throw new NotFoundException("会员订单不存在或已变化");
+        }
+        const current = rows[0];
+        if (current.paid !== 0) throw new ValidateException("会员订单已支付");
+        if (current.type !== 1 || current.isFree !== 0 || payCents <= 0
+          || decimalToCents(current.payPrice) !== payCents
+          || current.type !== snapshot.type || current.isFree !== snapshot.isFree
+          || current.memberType !== snapshot.memberType || current.isPermanent !== snapshot.isPermanent
+          || current.vipDay !== snapshot.vipDay) {
+          throw new ValidateException("会员订单金额或权益已变化，请刷新后重新确认支付");
+        }
+        if (current.isPermanent !== 1 && (!Number.isSafeInteger(current.vipDay) || current.vipDay <= 0)) {
+          throw new ValidateException("会员订单有效天数无效");
+        }
+        const [account] = await bound.db.select({
+          isMoneyLevel: userTable.isMoneyLevel,
+          isEverLevel: userTable.isEverLevel,
+        }).from(userTable).where(and(eq(userTable.uid, uid), eq(userTable.isDel, 0)))
+          .limit(1).for("share");
+        if (!account) throw new NotFoundException("用户不存在");
+        if (account.isMoneyLevel > 0 && account.isEverLevel === 1) {
+          throw new ValidateException("您已是永久会员，该订单不能继续支付");
+        }
+      },
+    };
+  }
+
   async payOrder(
     uid: number,
     input: {
@@ -543,15 +618,9 @@ export class PaidMembershipService {
         channel,
         input.payerClientIp,
       );
-      await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
-      await registerPaymentReconciliationIntent(this.container, {
-        provider: "wechat",
-        profile: identity.profile,
-        orderDomain: "membership",
-        orderNo: order.orderId,
-        expectedAmountCents: payCents,
-        initiated: true,
-      });
+      const admission = this.paymentAdmission(uid, order, payCents);
+      const routinePayer = identity.profile === 'routine' ? admission : undefined;
+      if (!routinePayer) await assertWechatPaymentProfileAvailable(this.container, this.env, identity.profile);
       const config = await new WechatPayService(this.container, this.env).createOrder({
         profile: identity.profile,
         type: identity.type,
@@ -561,23 +630,22 @@ export class PaidMembershipService {
         ...(identity.openid ? { openid: identity.openid } : {}),
         ...(identity.payerClientIp ? { payerClientIp: identity.payerClientIp } : {}),
         attach: "member",
+        ...(routinePayer ? { routinePayer } : { beforeProviderRequest: async () => {
+          await admitExternalPaymentInitiation(this.container, { provider: 'wechat', profile: identity.profile as 'wechat' | 'app',
+            orderNo: order.orderId, expectedAmountCents: payCents, admission });
+        } }),
       });
-      return { order_id: orderId, paid: false, pay_type: PayType.WEIXIN, jsConfig: config };
+      return { order_id: orderId, paid: false, pay_type: PayType.WEIXIN, pay_mode: identity.type, jsConfig: config };
     }
     await assertPaymentMethodAvailable(this.container, this.env, PayType.ALIPAY);
-    await registerPaymentReconciliationIntent(this.container, {
-      provider: "alipay",
-      profile: "alipay",
-      orderDomain: "membership",
-      orderNo: order.orderId,
-      expectedAmountCents: payCents,
-      initiated: true,
-    });
+    const payUrl = await this.createAlipayUrl(order.orderId, order.payPrice, order.memberType);
+    await admitExternalPaymentInitiation(this.container, { provider: 'alipay', profile: 'alipay', orderNo: order.orderId,
+      expectedAmountCents: payCents, admission: this.paymentAdmission(uid, order, payCents) });
     return {
       order_id: orderId,
       paid: false,
       pay_type: PayType.ALIPAY,
-      payUrl: await this.createAlipayUrl(order.orderId, order.payPrice, order.memberType),
+      payUrl,
     };
   }
 
