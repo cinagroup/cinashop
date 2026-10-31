@@ -1,6 +1,7 @@
 import * as UserExtractController from '@/controllers/api/v1/UserExtractController';
 import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
 import * as AdminWechatApp from '@/controllers/api/v1/AdminWechatAppController';
+import * as AdminWechatRoutine from '@/controllers/api/v1/AdminWechatRoutineController';
 import * as AdminPcBase from '@/controllers/api/v1/AdminPcBaseController';
 import * as AdminWechatBasics from "@/controllers/api/v1/AdminWechatBasicsController";
 import * as AdminWechatBase from "@/controllers/api/v1/AdminWechatBaseController";
@@ -1683,6 +1684,11 @@ v1Routes.put("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogC
 v1Routes.delete("/admin/wechat/speechcraft/:id", adminAuth, CustomerServiceCatalogController.adminSpeechcraftDelete);
 v1Routes.get("/admin/marketing/user-point/export", adminAuth, AdminIntegralLog.exportManifest);
 v1Routes.get("/admin/wechat/open", adminAuth, AdminWechatOpen.read);
+v1Routes.get('/admin/wechat/routine', adminAuth, AdminWechatRoutine.read);
+v1Routes.post('/admin/wechat/routine', adminAuth, AdminWechatRoutine.save);
+v1Routes.get('/admin/setting/config/edit_new_build/routine', adminAuth, AdminWechatRoutine.read);
+v1Routes.get('/admin/wechat/routine/operations/:operationId', adminAuth, AdminWechatRoutine.receipt);
+v1Routes.post('/admin/wechat/routine/operations/:operationId/resolve', adminAuth, AdminWechatRoutine.resolve);
 v1Routes.get('/admin/wechat/app', adminAuth, AdminWechatApp.read);
 v1Routes.post('/admin/wechat/app', adminAuth, AdminWechatApp.save);
 v1Routes.get('/admin/setting/config/edit_new_build/app', adminAuth, AdminWechatApp.read);

@@ -38,6 +38,9 @@ export type WechatRoutineSnapshot = {
   fields: Record<WechatRoutineKey, { present: boolean; parseable: boolean }>;
   secrets: { routine_appsecret: { present: boolean } };
   revision: string;
+  /** Exact installed author/authority storage and actual Admin role only.
+   * It does not authorize AppID adoption/switching or establish consumers. */
+  storage_ready: boolean;
   /** Determined by the service's actual storage/consumer readiness checks.
    * Neither this DTO nor configuration presence proves provider readiness. */
   runtime_ready: boolean;

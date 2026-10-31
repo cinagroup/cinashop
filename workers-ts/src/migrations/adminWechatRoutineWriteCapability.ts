@@ -110,8 +110,9 @@ END
  * caller's claimed post-state, arbitrary receipt JSON or APP_KEY.
  *
  * Account ownership commissioning remains absent: material AppID changes fail
- * closed here, including first adoption. This is not the completed account
- * switch implementation and must not be published as a ready author endpoint.
+ * closed here, including first adoption. HTTP may expose the restricted author
+ * and its separate storage_ready status, but runtime_ready remains false until
+ * ownership maintenance and the original-account consumers are complete.
  */
 export function adminWechatRoutineWriteBody(binding: AdminWechatRoutineWriteBinding): string {
   const bound = identity(binding);

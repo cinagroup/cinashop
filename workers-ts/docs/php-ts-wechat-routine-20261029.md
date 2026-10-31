@@ -383,3 +383,20 @@ App/Base/Open/PC 四个已有作者仅接纳经过完整 Routine catalog／当�
 最终正式 native 完整文件 11 项通过，包含调用参数竞态；低层完整文件 46 项通过，两者无失败或跳过，各自 remaining=0 且 STOPPED。11 项选择 `upgrade-native-04`／`inputs-04.json`，46 项选择 `request-gate-green-01`／`inputs-03.json`；二者输入差异仅为后来修改的安装器与正式 native 文件，这两条路径不被低层文件调用。此前 `inputs-02.json` 的四个已有作者完整文件分别为 3／3／9／6 通过，回执和运行器两文件共 714 通过；这些是请求门修复及公共入口快照调整前的实测版本，不改称为最后源码上的重新执行。随后最终完整 unit/runtime 两套 TypeScript 检查 03 均 exit=0，13 条源路径在整个最终 pipeline 中保持不变，验证后仅追加本节。各阶段重复执行不累计为新增案例，首轮 8 通过／1 失败的公众号开关字符串断言保留，依既有存储合同纠正测试期望，未改业务序列化。完整五角色 fixture 的既有 IF EXISTS NOTICE 保留，不声称无诊断输出。原始日志与输入在 `/tmp/cinashop-phase23-validation/`。
 
 上述为自有本机 PG16 的维护协议验收，没有生产 DDL、provider 调用、部署或新增 HTTP/UI 启用。专用作者的 fresh 账号／密码／权限校验、原绑定回执恢复、控制器／双前缀／第五共享 envelope、前端页面与 Browser 验收仍需实现；不能用 SQL actor 参数或底层 PostgreSQL 测试替代真实 HTTP。跨 AppID 仍须先完成可审查归属维护，现有用户、权益、旧单与付款事实保持；旧配置、回执、witness、INIT/PREPAY 仍不证明旧付款归属。原付款／发货恢复、既有 CI 失败及全部剩余迁移范围继续保持未完成。
+
+
+## 阶段 24：受约束的 Routine 管理端 HTTP 作者与本人回执恢复（2026-10-30）
+
+此前用户明确授权的 `b874c56a`、`c7c36f42` 已成功推送 origin/main；本阶段在阶段 23 的本地 `a776bcc1` 上继续实现。新增生产 Hono Controller/Service、`/adminapi` 与 `/api/admin` 两组五端点、旧 `edit_new_build/routine` 读取别名，以及共享 save_basics 的第五种完整请求合同。五种请求必须完整且唯一匹配；没有按部分键分流或 generic fallback。
+
+普通管理员的域管理权限只由固定 PHP 叶子 1346（routine-download）与共享保存 315 的唯一、完整十一字段身份组合取得；父级 1345、info1347、源码下载1348、复制行和 opaque wechat_routine.* 均不能制造写权。新保存先持有 staff/role 与正式 menu 栅栏，在同一实际 Admin 事务内验证当前 UID、realm、状态、密码摘要、完整角色与权限，再验证独立 Routine writer 目录、完整 PostgreSQL source 和 actor HMAC CAS。唯一定义好的 SQL 端口独立比较全部 shadow/metadata/xmin，并原子提交配置和不可变回执；Service 首尾复验活跃权限，并在提交前按数据库时钟检查期限。
+
+Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正 SQL NULL。保存和恢复均不返回 AppSecret、私有 source、binding 或 payload hash。已提交 UUID 重放使用持久化原 actor_binding/before_source，不被同 UID 的新 JWT 或后续配置变动误拒；SQL 仍核对原提交 revision/fields，禁止同 UUID 改意图。本人 recovery 在域权限撤销后保留，但禁用、删除、跨 realm、密码改变、JWT 过期及其他 UID 均拒绝。GET 缺失回执为业务状态码 404（HTTP 沿既有兼容信封）；明确 resolve 原子封存 not_applied 并阻止迟到保存。缓存失败只报告 pending，回执和配置不逆转。
+
+新增 `storage_ready` 仅表示精确联合目录、同维护/Admin 的完整 Authority 回执/menu-lock 依赖、实际 current_user=session_user 及绑定 Admin 名称/OID 可用。SQL-only Routine installer 不隐式安装或修复 Authority 域；HTTP 应用必须另外显式安装该正式依赖。维护账号误接不报 storage-ready。`runtime_ready` 暂时保持 false，因为账号归属、旧付款和发货消费者尚未闭合；不能由 storage_ready 或 credentials_complete 推定可跨 AppID。凭据 presence 采用已有消费者的 trim 规则，作者原文仍无损保存；纯空白密钥可 parse 且原行存在，但 presence/complete 为 false。实质 AppID 切换及首次接入仍在任何五键写入前被 SQL 归属屏障拒绝。
+
+最终 inputs-03 的 Routine HTTP 完整文件 8 项通过，包含 JSON 对象/五键、NUL/反斜线/Unicode、无 Secret 回显、原 binding 重放、精确权限错误、元数据过期、首次接入拒绝、独立锁、目录漂移、65 行完整容量和活跃用户状态；SQL-only/Authority 依赖分离和维护角色反例亦实际覆盖。三份定向单元完整文件共 749 项通过；最终两套 Worker 类型检查均 exit=0。原始输入、各次终态与日志在 `/tmp/cinashop-phase24-validation/`。最终 15 源路径在 pipeline 内保持不变，本节在验证后单独追加。
+
+首轮 HTTP 为 1 通过/5 失败：夹具漏装正式 Authority menu-lock，保存在 SQL 写入前被拒绝；保留原失败与 remaining=0/STOPPED，补齐依赖后重跑，未放宽权限。inputs-02 上的 Routine 8 项、App HTTP 5 项和 PC native 6 项也分别完整通过；后两者覆盖旧 App 与 PC/Base/Open 的共享分流和既有 64/256KiB 限制，是该次输入的实际回归，不改称最终 bytes 上的重跑。重复执行不累计为新增案例。所有本阶段 native 集群均 remaining=0 且 STOPPED；预期拒绝请求的结构化 failure 日志保留，不声称无 stderr。
+
+上述是进程内真实生产 Hono Request/JWT/Drizzle 与独立、实际 TCP 认证 PG16 LOGIN 的本机验证；不是 HTTP 监听器、Browser、微信 provider 或部署验收。数据库时钟末尾过期竞态、Service 读取到 SQL 调用间竞态未分别注入，不以静态检查或其他低层用例冒充该 HTTP 覆盖。完整迁移继续未完成：前端严格 DTO/session/pending journal/页面与 Browser、归属维护、原付款证据及旧查单/回调/发货恢复、其余消费者和既有 CI 失败仍须推进。保留现有 UID、用户、权益、旧单与付款；配置、回执、witness、INIT/PREPAY 不成为旧付款归属证明。本阶段没有生产 DDL、真实 provider 调用或部署；整体 conditionalWriteSemanticsVerified 和完整迁移状态保持 false。

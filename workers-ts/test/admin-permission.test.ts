@@ -27,6 +27,7 @@ import {
   isAdminPcBaseRecoveryRoute,
   isAdminWechatOpenRecoveryRoute,
   isAdminWechatAppRecoveryRoute,
+  isAdminWechatRoutineRecoveryRoute,
   isAdminWechatBaseRecoveryRoute,
   isAdminProductLabelRecoveryRoute,
 } from "@/services/admin/AdminPermissionService";
@@ -135,6 +136,9 @@ describe("admin permission catalog", () => {
       { matches: isAdminWechatAppRecoveryRoute, expected: prefixes.flatMap(prefix => [
         pair("GET", `${prefix}/wechat/app/operations/:operationId`), pair("POST", `${prefix}/wechat/app/operations/:operationId/resolve`),
       ]) },
+      { matches: isAdminWechatRoutineRecoveryRoute, expected: prefixes.flatMap(prefix => [
+        pair("GET", `${prefix}/wechat/routine/operations/:operationId`), pair("POST", `${prefix}/wechat/routine/operations/:operationId/resolve`),
+      ]) },
       { matches: isAdminWechatBaseRecoveryRoute, expected: prefixes.flatMap(prefix => [
         pair("GET", `${prefix}/wechat/base/operations/:operationId`), pair("POST", `${prefix}/wechat/base/operations/:operationId/resolve`),
       ]) },
@@ -189,6 +193,31 @@ describe("admin permission catalog", () => {
       expect(requiredAdminPermission('GET', receipt)).toBeNull();
       expect(requiredAdminPermission('POST', receipt + '/resolve')).toBeNull();
     }
+  });
+
+  it('keeps Routine grants bound to the fixed leaf/save selection and limits owner recovery to its exact endpoints', () => {
+    for (const permission of ['wechat_routine.view', 'wechat_routine.manage'])
+      expect(() => normalizeRoleRules(permission)).toThrow('小程序权限须通过完整的旧菜单组合授予');
+    expect(normalizeRoleRules('1346,315')).toBe('315,1346');
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      expect(requiredAdminPermission('GET', `${prefix}/wechat/routine`)).toBe('wechat_routine.view');
+      expect(requiredAdminPermission('HEAD', `${prefix}/setting/config/edit_new_build/routine`)).toBe('wechat_routine.view');
+      expect(requiredAdminPermission('POST', `${prefix}/wechat/routine`)).toBe('wechat_routine.manage');
+      const receipt = `${prefix}/wechat/routine/operations/:operationId`;
+      expect(isAdminWechatRoutineRecoveryRoute('GET', receipt)).toBe(true);
+      expect(isAdminWechatRoutineRecoveryRoute('HEAD', receipt)).toBe(true);
+      expect(isAdminWechatRoutineRecoveryRoute('POST', receipt + '/resolve')).toBe(true);
+      expect(requiredAdminPermission('GET', receipt)).toBeNull();
+      expect(requiredAdminPermission('POST', receipt + '/resolve')).toBeNull();
+      for (const [method, path] of [['POST', receipt], ['GET', receipt + '/resolve'],
+        ['POST', receipt + '/resolve/extra'], ['GET', receipt + '/extra'],
+        ['POST', `${prefix}/wechat/routine/resolve`], ['GET', `${prefix}/wechat/routine/operations`]]) {
+        expect(isAdminWechatRoutineRecoveryRoute(method, path)).toBe(false);
+        expect(requiredAdminPermission(method, path)).toBeNull();
+      }
+    }
+    const permissions = new AdminPermissionService(createContainerFromDb({} as never));
+    expect(permissions.permissionTree().some(group => group.key === 'wechat_routine')).toBe(false);
   });
 
   it('limits video recovery to owned query and cancellation while keeping publication and previews capability gated', () => {
@@ -861,6 +890,7 @@ describe("admin permission catalog", () => {
       "pc_base": { method: "GET", path: "/adminapi/config/pc" },
       "wechat_open": { method: "GET", path: "/adminapi/wechat/open" },
       "wechat_app": { method: "GET", path: "/adminapi/wechat/app" },
+      "wechat_routine": { method: "GET", path: "/adminapi/wechat/routine" },
       "wechat_base": { method: "GET", path: "/adminapi/wechat/base" },
       "wechat_menu": { method: "GET", path: "/adminapi/wechat/menu" },
       "wechat_content": { method: "GET", path: "/adminapi/wechat/reply" },

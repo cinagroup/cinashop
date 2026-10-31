@@ -5,6 +5,7 @@ import { systemMenus, systemRole } from "@/models/schema";
 import { ApiErrorCode, AuthException, ValidateException } from "@/utils/errors";
 import { pcBaseMenuBinding, pcBasePermissionsFromMenus } from './AdminPcBasePermissionBinding';
 import { wechatAppMenuBinding, wechatAppPermissionsFromMenus } from './AdminWechatAppPermissionBinding';
+import { wechatRoutineMenuBinding, wechatRoutinePermissionsFromMenus } from './AdminWechatRoutinePermissionBinding';
 
 export interface AdminPermissionGroup {
   key: string;
@@ -213,6 +214,7 @@ export const ADMIN_PERMISSION_GROUPS: readonly AdminPermissionGroup[] = [
   },
   { key: "wechat_open", label: "微信开放平台", path: "/content/wechat-open", matches: ["wechat/open"], manage: true },
   { key: "wechat_app", label: "原生App微信配置", path: "/content/wechat-app", matches: ["wechat/app"], manage: true },
+  { key: "wechat_routine", label: "小程序基础配置", path: "/content/wechat-routine", matches: ["wechat/routine"], manage: true },
   { key: 'pc_base', label: 'PC基础配置', path: '/config/pc', matches: ['config/pc'], manage: true },
   { key: "wechat_base", label: "公众号基础设置", path: "/content/wechat-base", matches: ["wechat/base"], manage: true },
   { key: "wechat_menu", label: "公众号自定义菜单", path: "/content/wechat-menu", matches: ["wechat/menu", "app/wechat/menu"], manage: true },
@@ -411,6 +413,11 @@ export function isAdminWechatAppRecoveryRoute(method: string, routePath: string)
   return (['GET','HEAD'].includes(verb) && /^wechat\/app\/operations\/[^/]+$/u.test(route))
     || (verb === 'POST' && /^wechat\/app\/operations\/[^/]+\/resolve$/u.test(route));
 }
+export function isAdminWechatRoutineRecoveryRoute(method: string, routePath: string): boolean {
+  const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
+  return (['GET','HEAD'].includes(verb) && /^wechat\/routine\/operations\/[^/]+$/u.test(route))
+    || (verb === 'POST' && /^wechat\/routine\/operations\/[^/]+\/resolve$/u.test(route));
+}
 export function isAdminWechatOpenRecoveryRoute(method: string, routePath: string): boolean {
   const route = normalizeAdminRoute(routePath), verb = method.toUpperCase();
   return (['GET','HEAD'].includes(verb) && /^wechat\/open\/operations\/[^/]+$/u.test(route))
@@ -591,6 +598,12 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     if (isAdminWechatAppRecoveryRoute(method, routePath)) return null;
     if (['GET','HEAD'].includes(verb) && ['wechat/app','setting/config/edit_new_build/app'].includes(route)) return 'wechat_app.view';
     return verb === 'POST' && route === 'wechat/app' ? 'wechat_app.manage' : null;
+  }
+  if (route === 'wechat/routine' || route.startsWith('wechat/routine/') || route === 'setting/config/edit_new_build/routine') {
+    const verb = method.toUpperCase();
+    if (isAdminWechatRoutineRecoveryRoute(method, routePath)) return null;
+    if (['GET','HEAD'].includes(verb) && ['wechat/routine','setting/config/edit_new_build/routine'].includes(route)) return 'wechat_routine.view';
+    return verb === 'POST' && route === 'wechat/routine' ? 'wechat_routine.manage' : null;
   }
   if (route === 'wechat/open' || route.startsWith('wechat/open/') || route === 'setting/config/edit_new_build/wxopen') {
     const verb = method.toUpperCase();
@@ -776,7 +789,7 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // Only authenticated owners may recover their own immutable operation key.
   // Recovery service admits live identity independently of current role grants.
   if (method.toUpperCase()==='POST' && ['system/authority/preview','system/authority/commit'].includes(route)) return 'system.manage';
-  if (isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return null;
+  if (isAdminWechatRoutineRecoveryRoute(method,routePath) || isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return null;
   if (route === 'file/video_upload' || route === 'file/video_attachment') return method.toUpperCase() === 'POST' ? 'attachment.manage' : null;
   if (route === 'file/video_uploads' || route.startsWith('file/video_uploads/')) {
     const verb=method.toUpperCase();
@@ -917,6 +930,7 @@ export function normalizeRoleRules(value: string | readonly string[] | undefined
   const tokens = splitRuleTokens(value);
   for (const token of tokens) {
     if (token.startsWith('wechat_app.')) throw new ValidateException('原生App权限须通过完整的旧菜单组合授予');
+    if (token.startsWith('wechat_routine.')) throw new ValidateException('小程序权限须通过完整的旧菜单组合授予');
     if (!permissionKeys.has(token) && !isNumericToken(token)) {
       throw new ValidateException(`未知权限规则: ${token}`);
     }
@@ -1416,7 +1430,7 @@ function legacyRoleMenuBinding(menu: LegacyAdminMenuMetadata): { protected: bool
 
 export function canRetainOpaqueLegacyMenu(menu: Pick<typeof systemMenus.$inferSelect,
   'id' | 'authType' | 'apiUrl' | 'methods' | 'menuPath' | 'uniqueAuth'>): boolean {
-  if (wechatAppMenuBinding(menu).protected || pcBaseBinding(menu).protected || wechatOpenBinding(menu).protected || wechatBaseBinding(menu).protected || wechatMenuBinding(menu).protected || bargainReadMenuBinding(menu).protected || unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productGenerationMenuBinding(menu).protected || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
+  if (wechatRoutineMenuBinding(menu).protected || wechatAppMenuBinding(menu).protected || pcBaseBinding(menu).protected || wechatOpenBinding(menu).protected || wechatBaseBinding(menu).protected || wechatMenuBinding(menu).protected || bargainReadMenuBinding(menu).protected || unprovedProductStockMenuClaim(menu) || unprovedProductModerationMenuClaim(menu) || productGenerationMenuBinding(menu).protected || productRecycleMenuBinding(menu).protected || unprovedErpMenuClaim(menu) || productCatalogReadMenuBinding(menu).protected || productReplyMenuBinding(menu).protected || operationalGroupMenuBinding(menu).protected || productCategoryMenuBinding(menu).protected || productBrandMenuBinding(menu).protected || productLabelMenuBinding(menu).protected || legacyAdminMenuBinding(menu).protected || legacyRoleMenuBinding(menu).protected) return false;
   if (auditedLegacyMenuIds.has(menu.id) || permissionKeys.has(menu.uniqueAuth)
     || auditedLegacyPageAuth.has(menu.uniqueAuth) || menuPathPermission(menu.menuPath)) return false;
   // The membership-level page has a paired page-only policy outside the usual
@@ -1435,7 +1449,7 @@ export class AdminPermissionService {
   constructor(private readonly container: Container) {}
 
   permissionTree(): AdminPermissionTreeNode[] {
-    return ADMIN_PERMISSION_GROUPS.filter(group => group.key !== 'wechat_app').map((group) => ({
+    return ADMIN_PERMISSION_GROUPS.filter(group => !['wechat_app', 'wechat_routine'].includes(group.key)).map((group) => ({
       key: group.key,
       label: group.label,
       path: group.path,
@@ -1535,6 +1549,7 @@ export class AdminPermissionService {
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
                 and(eq(systemMenus.id,1361),eq(systemMenus.uniqueAuth,'app-pc'),eq(systemMenus.menuPath,'/admin/app/pc')),
                 and(eq(systemMenus.id,1379),eq(systemMenus.uniqueAuth,'app-app'),eq(systemMenus.menuPath,'/admin/app/app')),
+                and(eq(systemMenus.id,1346),eq(systemMenus.uniqueAuth,'routine-download'),eq(systemMenus.menuPath,'/admin/app/routine/download')),
                 and(eq(systemMenus.id,1360),eq(systemMenus.uniqueAuth,'app-wechat-open'),eq(systemMenus.menuPath,'/admin/app/wechat_open')),
                 and(eq(systemMenus.id,1362),eq(systemMenus.uniqueAuth,'app-wechat-base'),eq(systemMenus.menuPath,'/admin/app/wechat/base')),
                 and(eq(systemMenus.id,755),eq(systemMenus.uniqueAuth,'marketing-store_bargain-bargain_list'),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/bargain_list')),
@@ -1662,7 +1677,7 @@ export class AdminPermissionService {
     // Auth middleware has authenticated the account. The recovery service
     // repeats live realm/status/password checks and binds the receipt owner;
     // these two exact endpoints never perform a staff/role mutation.
-    if (isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return;
+    if (isAdminWechatRoutineRecoveryRoute(method,routePath) || isAdminWechatAppRecoveryRoute(method,routePath) || isAdminPcBaseRecoveryRoute(method,routePath) || isAdminWechatOpenRecoveryRoute(method,routePath) || isAdminWechatBaseRecoveryRoute(method,routePath) || isAdminAuthorityRecoveryRoute(method,routePath) || isAdminProductEditorRecoveryRoute(method,routePath) || isAdminProductVideoRecoveryRoute(method,routePath)) return;
     if (isAdminProfileRoute(method,routePath) || isAdminPlatformMenuRecoveryRoute(method,routePath) || isAdminExpressRecoveryRoute(method,routePath) || isAdminLevelRecoveryRoute(method,routePath) || isAdminUserLabelRecoveryRoute(method,routePath) || isAdminStoreRecoveryRoute(method,routePath) || isAdminStaffRecoveryRoute(method,routePath) || isAdminDeliveryRecoveryRoute(method,routePath) || isAdminGroupRecoveryRoute(method,routePath) || isAdminUnitRecoveryRoute(method,routePath) || isAdminEnsureRecoveryRoute(method,routePath) || isAdminRuleRecoveryRoute(method,routePath) || isAdminParameterRecoveryRoute(method,routePath) || isAdminHotwordRecoveryRoute(method,routePath) || isAdminProductLabelRecoveryRoute(method,routePath)) return;
     if (admin.level === 0) return;
     // Common header: authenticated financial/product-only roles need not hold
@@ -1677,7 +1692,7 @@ export class AdminPermissionService {
     // fresh authority inside the corresponding domain transaction. The default
     // route permission remains Base for existing permission/introspection callers.
     if (method.toUpperCase() === 'POST' && normalizeAdminRoute(routePath) === 'setting/config/save_basics'
-      && (hasAdminPermission(granted, 'wechat_open.manage') || hasAdminPermission(granted, 'pc_base.manage') || hasAdminPermission(granted, 'wechat_app.manage'))) return;
+      && (hasAdminPermission(granted, 'wechat_open.manage') || hasAdminPermission(granted, 'pc_base.manage') || hasAdminPermission(granted, 'wechat_app.manage') || hasAdminPermission(granted, 'wechat_routine.manage'))) return;
     if (!hasAdminPermission(granted, required)) {
       throw new AuthException("暂时没有权限访问", ApiErrorCode.ERR_AUTH);
     }
@@ -1736,6 +1751,7 @@ export class AdminPermissionService {
               or(eq(systemMenus.authType, 2), and(eq(systemMenus.authType, 1), or(
                 and(eq(systemMenus.id,1361),eq(systemMenus.uniqueAuth,'app-pc'),eq(systemMenus.menuPath,'/admin/app/pc')),
                 and(eq(systemMenus.id,1379),eq(systemMenus.uniqueAuth,'app-app'),eq(systemMenus.menuPath,'/admin/app/app')),
+                and(eq(systemMenus.id,1346),eq(systemMenus.uniqueAuth,'routine-download'),eq(systemMenus.menuPath,'/admin/app/routine/download')),
                 and(eq(systemMenus.id,1360),eq(systemMenus.uniqueAuth,'app-wechat-open'),eq(systemMenus.menuPath,'/admin/app/wechat_open')),
                 and(eq(systemMenus.id,1362),eq(systemMenus.uniqueAuth,'app-wechat-base'),eq(systemMenus.menuPath,'/admin/app/wechat/base')),
                 and(eq(systemMenus.id,755),eq(systemMenus.uniqueAuth,'marketing-store_bargain-bargain_list'),eq(systemMenus.menuPath,'/admin/marketing/store_bargain/bargain_list')),
@@ -1869,15 +1885,17 @@ export class AdminPermissionService {
       pid?: number; type?: number; module?: string; controller?: string; action?: string;
     }>,
   ): Set<string> {
-    // App view/manage are derived only from the whole fixed legacy selection.
-    // The module keys remain available for computed grants and level0, but an
-    // opaque role string cannot manufacture the current 1379/315 authority.
-    const resolved = new Set(tokens.filter((token) => permissionKeys.has(token) && !token.startsWith('wechat_app.')));
+    // App and Routine view/manage require their whole fixed legacy selection.
+    // Keys remain available for computed grants and level0; opaque role strings
+    // cannot manufacture either domain's exact page/shared-save authority.
+    const resolved = new Set(tokens.filter((token) => permissionKeys.has(token)
+      && !token.startsWith('wechat_app.') && !token.startsWith('wechat_routine.')));
     const allowedLegacyIds = new Set(tokens.filter(isNumericToken).map(Number));
     if (allowedLegacyIds.size) {
       const selected = menus.filter(menu => allowedLegacyIds.has(menu.id));
       for (const key of pcBasePermissionsFromMenus(selected)) resolved.add(key);
       for (const key of wechatAppPermissionsFromMenus(selected)) resolved.add(key);
+      for (const key of wechatRoutinePermissionsFromMenus(selected)) resolved.add(key);
       if (selected.some(menu => wechatOpenBinding(menu).permission === 'wechat_open.view')
         && selected.some(menu => wechatBaseBinding(menu).save)) resolved.add('wechat_open.manage');
       if (selected.some(menu => wechatBaseBinding(menu).permission === 'wechat_base.view')
@@ -1987,10 +2005,14 @@ export class AdminPermissionService {
           if (baseBinding.permission) resolved.add(baseBinding.permission);
           continue;
         }
-        // Shared315 must keep its existing Base/Open/PC meaning above. The
-        // independent App view/manage composition uses the whole selected set.
+        // Shared315 keeps its existing Base/Open/PC meaning above. App and
+        // Routine composition independently use the whole selected set.
         const appBinding = wechatAppMenuBinding(menu);
         if (appBinding.protected) { if (appBinding.view) resolved.add('wechat_app.view'); continue; }
+        const routineBinding = wechatRoutineMenuBinding(menu);
+        // All Routine grants were derived from the unique complete selection;
+        // a per-row fallback must not weaken duplicate/partial-tuple rejection.
+        if (routineBinding.protected) continue;
         const wechatBinding = wechatMenuBinding(menu);
         if (wechatBinding.protected) {
           if (wechatBinding.permission) resolved.add(wechatBinding.permission);

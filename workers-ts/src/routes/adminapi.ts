@@ -1,5 +1,6 @@
 import * as AdminWechatOpen from "@/controllers/api/v1/AdminWechatOpenController";
 import * as AdminWechatApp from '@/controllers/api/v1/AdminWechatAppController';
+import * as AdminWechatRoutine from '@/controllers/api/v1/AdminWechatRoutineController';
 import * as AdminPcBase from '@/controllers/api/v1/AdminPcBaseController';
 import * as AdminWechatBasics from "@/controllers/api/v1/AdminWechatBasicsController";
 import * as AdminWechatBase from "@/controllers/api/v1/AdminWechatBaseController";
@@ -1006,6 +1007,11 @@ adminapiRoutes.post('/config/pc', adminAuth, AdminPcBase.save);
 adminapiRoutes.get('/setting/config/edit_new_build/pc', adminAuth, AdminPcBase.read);
 adminapiRoutes.get('/config/pc/operations/:operationId', adminAuth, AdminPcBase.receipt);
 adminapiRoutes.post('/config/pc/operations/:operationId/resolve', adminAuth, AdminPcBase.resolve);
+adminapiRoutes.get('/wechat/routine', adminAuth, AdminWechatRoutine.read);
+adminapiRoutes.post('/wechat/routine', adminAuth, AdminWechatRoutine.save);
+adminapiRoutes.get('/setting/config/edit_new_build/routine', adminAuth, AdminWechatRoutine.read);
+adminapiRoutes.get('/wechat/routine/operations/:operationId', adminAuth, AdminWechatRoutine.receipt);
+adminapiRoutes.post('/wechat/routine/operations/:operationId/resolve', adminAuth, AdminWechatRoutine.resolve);
 adminapiRoutes.get('/wechat/app', adminAuth, AdminWechatApp.read);
 adminapiRoutes.post('/wechat/app', adminAuth, AdminWechatApp.save);
 adminapiRoutes.get('/setting/config/edit_new_build/app', adminAuth, AdminWechatApp.read);

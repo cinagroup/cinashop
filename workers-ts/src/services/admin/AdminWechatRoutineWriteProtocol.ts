@@ -37,7 +37,8 @@ export function wechatRoutineSourceRevision(env: Signing, actorBinding: string, 
 }
 
 /** Raw JSON strings keep escaped NUL/surrogates OUTSIDE jsonb's text decoder.
- * Pass this object with the DB driver's json helper, not JSON.stringify twice.
+ * Raw postgres.js may use its json helper; Drizzle must bind exactly once
+ * serialized text with ::text::jsonb, never stringify an already JSON string.
  * No caller-supplied metadata, target ID or claimed post-revision enters SQL.
  */
 export function wechatRoutineSqlFields(value: unknown): WechatRoutineSqlFields {
