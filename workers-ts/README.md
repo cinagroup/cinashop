@@ -213,10 +213,14 @@ GET  /supplierapi/product/product/virtual-alerts
 ### 6. 运行测试
 ```bash
 npm run test:unit       # Node 单元测试
-npm run test:runtime    # 本地 workerd：Cron / Queue / KV / Durable Object
+npm run test:runtime    # 本地 workerd；须显式设置专用 PG16 测试 URL
 npm test
 npm run typecheck       # 普通源码与 runtime 测试分别检查
 ```
+
+本工作区的测试、类型检查和构建均须通过共享串行锁运行：
+`bash /home/cina/cinagroup/tools/validate-serial.sh <command> [arguments...]`。
+仅在最外层调用一次，不嵌套；Vitest 限制为一个 worker。
 
 #### 独立 PostgreSQL 16 验证
 
@@ -243,6 +247,36 @@ node scripts/run-local-finance-postgres.mjs --schema-maintenance --verbose-tests
   test/customer-cashier-write-ui-postgres.test.ts `
   test/customer-cashier-records-postgres.test.ts
 ```
+
+workerd 的 offline provider 场景使用真实 PostgreSQL 16，保留实际 SQL 配置与 RSA
+合同。直接执行 `npm run test:runtime` 前，须在当前进程环境中设置
+`TEST_FINANCE_POSTGRES_URL`：仅接受 `127.0.0.1` 或 `localhost` 上的专用
+`cinashop_finance_test` 数据库、`finance_test` 账号，且 URL 不含查询参数或片段。
+该账号须能创建测试数据库；夹具核对 PG16、实际账号与服务端地址，为本次调用新建
+唯一数据库并在关闭时删除。缺失或不合格的 URL 会失败，不退回 PGlite。
+
+也可让 owned runner 创建并传入 URL。在 `workers-ts` 目录将下列占位目录替换为
+可信 PG16 `bin` 目录后运行：
+
+```bash
+# 完整 workerd 测试图
+bash /home/cina/cinagroup/tools/validate-serial.sh node scripts/run-local-finance-postgres.mjs \
+  --runtime '<trusted-pg16-bin-dir>' audit:runtime
+
+# 仅完整 offline provider 文件，不过滤其中场景
+bash /home/cina/cinagroup/tools/validate-serial.sh node scripts/run-local-finance-postgres.mjs \
+  --runtime '<trusted-pg16-bin-dir>' test/runtime/offline-payment-provider.test.ts
+```
+
+`--runtime` 与 `--schema-maintenance` 互斥；本地 runtime 模式使用非维护账号，
+不授予 `SUPERUSER` 或 `CREATEROLE`，仅保留夹具需要的 `CREATEDB`。它只接受上述
+两个入口，固定 worker 配置、一个 worker 和串行文件执行，不接受 case 过滤、
+额外文件或任意 Vitest 参数，沿用原有超时、残留检查与停机协议。
+
+当前 `postgres@3.4.9` 使用锁定的 [Cloudflare 关闭逻辑回补归档](vendor/README.md)，
+影响实际 CF 驱动；Node/CJS/types 及其余 36 个文件保持上游原字节。
+`test/postgres-cf-close-backport.test.ts` 核对完整安装树、归档/lock 和活跃错误传播。
+须用当前 lockfile 执行 `npm ci`，不能沿用旧安装树。
 
 `test:runtime` 使用 `wrangler.test.toml` 的本地 Miniflare 绑定，不连接生产
 Hyperdrive、KV 或 Queue。Windows 运行 workerd 前需安装最新版 Microsoft Visual C++

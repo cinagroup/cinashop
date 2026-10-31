@@ -14,6 +14,7 @@ export const ROUTINE_CREDENTIAL_GATE = [731666, 0] as const;
 export const ROUTINE_CREDENTIAL_KEYS = ['routine_appId', 'routine_appsecret'] as const;
 export interface RoutineCredentials { appId: string; secret: string; stamp: string }
 export interface RoutineAppIdSource { appId: string; stamp: string }
+export interface RoutineCredentialPresence { appIdConfigured: boolean; secretConfigured: boolean }
 type RuntimeEnv = Pick<Env, 'APP_KEY'>;
 
 /** Deterministic local configuration faults, distinct from SQL/transport faults. */
@@ -67,6 +68,20 @@ export function readRoutineCredentials(container: Container, env: RuntimeEnv) {
  * faults and a missing signing key remain errors; no cache fallback is used. */
 export function readRoutineCredentialsIfConfigured(container: Container, env: RuntimeEnv): Promise<RoutineCredentials | null> {
   return read(container, tx => configuredCredentialsInTx(tx, env));
+}
+
+/** Administrative presence only, not provider readiness or account ownership.
+ * Read the same complete bounded SQL pair as runtime consumers, without
+ * exposing either value, constructing a credential stamp or requiring APP_KEY.
+ * A malformed/empty winner is absent; a lower-priority shadow cannot replace it.
+ */
+export function readRoutineCredentialPresence(container: Container): Promise<RoutineCredentialPresence> {
+  return read(container, async tx => {
+    const rows = await rowsInTx(tx);
+    const configured = (key: typeof ROUTINE_CREDENTIAL_KEYS[number]) =>
+      (parseWechatRoutineStoredText(rows.find(row => row.menuName === key)?.value)?.trim() ?? '') !== '';
+    return { appIdConfigured: configured('routine_appId'), secretConfigured: configured('routine_appsecret') };
+  });
 }
 
 /** Public account selection is independent of an OAuth Secret and APP_KEY.

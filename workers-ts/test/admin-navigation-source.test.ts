@@ -1,9 +1,87 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { adminNavigationSourceItems, hasAdminNavigationMenu, hasConnectedAdminNavigation } from '../scripts/admin-navigation-source';
 import { readAdminNavigationSources } from './helpers/adminNavigationSource';
 
 const sources = readAdminNavigationSources();
+const routerSource = readFileSync(resolve(import.meta.dirname, '../../view/admin-ts/src/router/index.ts'), 'utf8');
+// Independent two-parent contract: the main parent 8cdf74a8 contains the
+// original 101 pairs, whose hash stays below. These sixteen pairs occur in
+// checkpoint d715da71's inline AdminLayout navigation. Frontend-log used its
+// explicit isLoggedIn gate there; the connected canMenu branch preserves it.
+const addedPairs = [
+  ['/activity/bargain-records', '/activity/bargain-records'],
+  ['/activity/bargain-statistics', '/activity/bargain-statistics'],
+  ['/config/classes', '/config'],
+  ['/config/pc', '/config/pc'],
+  ['/content/wechat-app', '/content/wechat-app'],
+  ['/content/wechat-base', '/content/wechat-base'],
+  ['/content/wechat-menu', '/content/wechat-menu'],
+  ['/content/wechat-open', '/content/wechat-open'],
+  ['/order/delivery-people', '/order'],
+  ['/product/ensures', '/product'],
+  ['/product/hotwords', '/product'],
+  ['/product/parameters', '/product'],
+  ['/product/rules', '/product'],
+  ['/product/units', '/product'],
+  ['/system/frontend-log', '/system/frontend-log'],
+  ['/system/menu-rules', '/system/menu-rules'],
+] as const;
+
+// Inspect the actual exported router's literal route array and real lazy
+// component imports. Comments, detached path strings and unused arrays cannot
+// establish registration under the same AdminLayout tested by the menu chain.
+function registeredAdminRoutes(source: string): string[] {
+  const tree = ts.createSourceFile('router.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const variables = tree.statements.filter(ts.isVariableStatement)
+    .filter(statement => statement.declarationList.flags & ts.NodeFlags.Const)
+    .flatMap(statement => [...statement.declarationList.declarations]);
+  const variable = (name: string) => {
+    const matches = variables.filter(node => ts.isIdentifier(node.name) && node.name.text === name);
+    return matches.length === 1 ? matches[0]!.initializer : undefined;
+  };
+  const property = (object: ts.ObjectLiteralExpression, name: string) => {
+    const matches = object.properties.filter(ts.isPropertyAssignment).filter(node =>
+      (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) && node.name.text === name);
+    return matches.length === 1 ? matches[0]!.initializer : undefined;
+  };
+  const lazyImport = (node: ts.Expression | undefined): string | undefined => {
+    if (!node || !ts.isArrowFunction(node) || !ts.isCallExpression(node.body)
+      || node.body.expression.kind !== ts.SyntaxKind.ImportKeyword || node.body.arguments.length !== 1) return undefined;
+    const target = node.body.arguments[0];
+    return target && ts.isStringLiteral(target) ? target.text : undefined;
+  };
+  const importsRouter = tree.statements.filter(ts.isImportDeclaration).some(node =>
+    ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === 'vue-router'
+    && node.importClause && !node.importClause.isTypeOnly && node.importClause.namedBindings
+    && ts.isNamedImports(node.importClause.namedBindings) && node.importClause.namedBindings.elements.some(binding =>
+      !binding.isTypeOnly && binding.name.text === 'createRouter' && (binding.propertyName ?? binding.name).text === 'createRouter'));
+  const router = variable('router'), routes = variable('routes');
+  if (!importsRouter || !router || !ts.isCallExpression(router) || !ts.isIdentifier(router.expression)
+    || router.expression.text !== 'createRouter' || router.arguments.length !== 1
+    || !routes || !ts.isArrayLiteralExpression(routes)) return [];
+  const options = router.arguments[0];
+  if (!options || !ts.isObjectLiteralExpression(options)
+    || !options.properties.some(node => ts.isShorthandPropertyAssignment(node) && node.name.text === 'routes')
+    || !tree.statements.some(node => ts.isExportAssignment(node) && !node.isExportEquals
+      && ts.isIdentifier(node.expression) && node.expression.text === 'router')) return [];
+  const layouts = routes.elements.filter(ts.isObjectLiteralExpression).filter(node => {
+    const path = property(node, 'path');
+    return path && ts.isStringLiteral(path) && path.text === '/' && lazyImport(property(node, 'component')) === '@/layouts/AdminLayout.vue';
+  });
+  if (layouts.length !== 1) return [];
+  const children = property(layouts[0]!, 'children');
+  if (!children || !ts.isArrayLiteralExpression(children)) return [];
+  return children.elements.filter(ts.isObjectLiteralExpression).flatMap(node => {
+    const path = property(node, 'path'), component = lazyImport(property(node, 'component'));
+    return path && ts.isStringLiteral(path) && component?.startsWith('@/pages/') && component.endsWith('.vue')
+      ? [path.text.startsWith('/') ? path.text : `/${path.text}`] : [];
+  });
+}
+
 function mutation(role: string, before: string, after: string): Record<string, string> {
   expect(sources[role]?.includes(before), `${role}: actual mutation target`).toBe(true);
   return { ...sources, [role]: sources[role]!.replace(before, after) };
@@ -20,6 +98,8 @@ const mutants: Mutant[] = [
   ['layout actual auth store initialization', 'sidebar', 'const authStore = useAuthStore();', 'const authStore = useFakeAuthStore();'],
   ['layout allowed menu paths source', 'sidebar', 'authStore.menus.map((menu) => menu.path)', 'authStore.menus.map((menu) => menu.label)'],
   ['layout membership guard', 'sidebar', 'return allowedMenuPaths.value.has(path);', 'return true;'],
+  ['frontend log cannot bypass login', 'sidebar', 'if (path === "/system/frontend-log") return authStore.isLoggedIn;', 'if (path === "/system/frontend-log") return true;'],
+  ['frontend log cannot admit logged-out sessions', 'sidebar', 'if (path === "/system/frontend-log") return authStore.isLoggedIn;', 'if (path === "/system/frontend-log") return !authStore.isLoggedIn;'],
   ['layout root exception remains restricted', 'sidebar', 'authStore.userInfo.level === 0', 'authStore.userInfo.level >= 0'],
   ['layout preview remains development only', 'sidebar', 'import.meta.env.DEV && new URLSearchParams', 'true && new URLSearchParams'],
   ['sidebar resolves actual inventory import', 'sidebarNavigation', "from '@/utils/adminNavigation'", "from '@/utils/fakeNavigation'"],
@@ -47,13 +127,18 @@ const mutants: Mutant[] = [
 ];
 
 describe('connected Admin navigation source evidence', () => {
-  it('preserves all 101 historical route/permission pairs through the real render chain', () => {
+  it('preserves the main parent 101 pairs and the checkpoint 16 additions through the real render chain', () => {
     expect(hasConnectedAdminNavigation(sources)).toBe(true);
     const items = adminNavigationSourceItems(sources);
-    expect(items).toHaveLength(101);
+    expect(items).toHaveLength(117);
+    expect(new Set(items.map(item => item.path)).size).toBe(117);
     // Original pre-grouping inventory, captured before the PR166 refactor:
     // navigation-before.json SHA256 745b2c57a667e48a98ffcccefbb6cd0fdd55705e62589cd1037767e6445aeae3.
-    const pairs = items.map(item => [item.path, item.permissionPath]);
+    const addedPaths = new Set<string>(addedPairs.map(([path]) => path));
+    const additions = items.filter(item => addedPaths.has(item.path)).map(item => [item.path, item.permissionPath]);
+    expect(additions.sort()).toEqual(addedPairs.map(pair => [...pair]).sort());
+    const pairs = items.filter(item => !addedPaths.has(item.path)).map(item => [item.path, item.permissionPath]);
+    expect(pairs).toHaveLength(101);
     // Use bytewise sorting, independent of locale/ICU installed on CI.
     pairs.sort((a, b) => JSON.stringify(a) < JSON.stringify(b) ? -1 : JSON.stringify(a) > JSON.stringify(b) ? 1 : 0);
     expect(createHash('sha256').update(JSON.stringify(pairs)).digest('hex')).toBe('b46be9c08cd792e9bbf0e99e399ac81aba3a725a50200f309e80f407883d0d75');
@@ -61,6 +146,20 @@ describe('connected Admin navigation source evidence', () => {
     expect(hasAdminNavigationMenu(sources, '/config/paid-membership', '/config')).toBe(true);
     expect(hasAdminNavigationMenu(sources, '/config/paid-membership')).toBe(false);
     expect(hasAdminNavigationMenu(sources, '/unregistered')).toBe(false);
+  });
+  it.each(addedPairs)('connects added menu %s to its exact permission and registered Admin page', (path, permissionPath) => {
+    expect(hasAdminNavigationMenu(sources, path, permissionPath)).toBe(true);
+    if (path !== permissionPath) expect(hasAdminNavigationMenu(sources, path, path)).toBe(false);
+    const routes = registeredAdminRoutes(routerSource);
+    expect(routes.filter(route => route === path || route === `${path}/:id?`)).toHaveLength(1);
+  });
+  it('does not count route strings detached from the exported router or its actual Admin layout', () => {
+    expect(routerSource).toContain('  routes,');
+    expect(registeredAdminRoutes(routerSource.replace('  routes,', '  routes: [],'))).toEqual([]);
+    expect(routerSource).toContain('export default router;');
+    expect(registeredAdminRoutes(routerSource.replace('export default router;', 'export default createRouter({history:createWebHistory(),routes:[]});'))).toEqual([]);
+    expect(routerSource).toContain('import("@/layouts/AdminLayout.vue")');
+    expect(registeredAdminRoutes(routerSource.replace('import("@/layouts/AdminLayout.vue")', 'import("@/layouts/UnusedLayout.vue")'))).toEqual([]);
   });
   it('accepts comments and formatting without requiring frozen whole-file hashes', () => {
     const formatted = { ...sources, adminNavigation: `/* non-evidence comment */\n${sources.adminNavigation!.replace('canMenu(item.permissionPath)', 'canMenu( /* real call */ item.permissionPath )')}` };

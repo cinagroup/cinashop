@@ -72,6 +72,69 @@ syncBuiltinESMExports();
   });
 });
 
+describe('local PostgreSQL runner workerd admission boundary', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'cinashop-finance-runner-runtime-'));
+  const bin = join(directory, 'bin'), hook = join(directory, 'block-native-launch.mjs');
+  const sentinel = 'WORKERD_ADMISSION_NATIVE_COMMAND_BOUNDARY';
+  const offline = 'test/runtime/offline-payment-provider.test.ts';
+  mkdirSync(bin);
+  for (const name of ['postgres', 'initdb', 'pg_ctl', 'psql']) {
+    writeFileSync(join(bin, `${name}${process.platform === 'win32' ? '.exe' : ''}`), 'Native launch must be blocked');
+  }
+  writeFileSync(hook, `import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
+childProcess.spawnSync = () => { throw new Error('${sentinel}'); };
+syncBuiltinESMExports();
+`);
+  afterAll(() => rmSync(directory, { recursive: true, force: true }));
+
+  function admission(args: string[]) {
+    const result = spawnSync(process.execPath, ['--import', pathToFileURL(hook).href, script, ...args], {
+      cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000,
+      env: { ...process.env, TEST_FINANCE_LOCAL_CACHE_ROOT: directory },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toBe('');
+    return result.stderr;
+  }
+
+  it.each([offline, 'audit:runtime'])('admits only the complete runtime entry %s up to the intercepted native command', entry => {
+    expect(admission(['--runtime', bin, entry])).toContain(sentinel);
+  });
+
+  it.each([
+    { label: 'maintenance after runtime', args: ['--runtime', '--schema-maintenance', bin, 'audit:runtime'],
+      error: '--runtime and --schema-maintenance are mutually exclusive leading modes' },
+    { label: 'runtime after maintenance', args: ['--schema-maintenance', '--runtime', bin, 'audit:runtime'],
+      error: '--runtime and --schema-maintenance are mutually exclusive leading modes' },
+    { label: 'audit case filter', args: ['--runtime', '--case', 'provider', bin, 'audit:runtime'],
+      error: '--runtime runs complete files without case filters' },
+    { label: 'offline case filter', args: ['--runtime', '--case', 'provider', bin, offline],
+      error: '--runtime runs complete files without case filters' },
+    { label: 'extra file after audit', args: ['--runtime', bin, 'audit:runtime', offline],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'extra file after offline', args: ['--runtime', bin, offline, 'test/runtime/worker-runtime.test.ts'],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'unreviewed runtime file', args: ['--runtime', bin, 'test/runtime/worker-runtime.test.ts'],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'unreviewed offline spelling', args: ['--runtime', bin, 'test/runtime/offline-payment-provider-extra.test.ts'],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'arbitrary config', args: ['--runtime', bin, offline, '--config', 'vitest.config.ts'],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'arbitrary worker count', args: ['--runtime', bin, 'audit:runtime', '--maxWorkers=2'],
+      error: '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime' },
+    { label: 'audit without runtime mode', args: [bin, 'audit:runtime'],
+      error: 'audit:runtime requires the explicit --runtime mode' },
+    { label: 'audit in maintenance mode', args: ['--schema-maintenance', bin, 'audit:runtime'],
+      error: 'audit:runtime requires the explicit --runtime mode' },
+  ])('rejects $label before any native command', ({ args, error }) => {
+    const output = admission(args);
+    expect(output).toContain(error);
+    expect(output).not.toContain(sentinel);
+  });
+});
+
 describe('local PostgreSQL runner command boundary', () => {
   it('admits the exact spread poster full-schema native test before native setup',()=>{
     const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin','test/spread-poster-page-postgres.test.ts'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});

@@ -1,0 +1,24 @@
+diff --git a/package/cf/polyfills.js b/package/cf/polyfills.js
+--- a/package/cf/polyfills.js
++++ b/package/cf/polyfills.js
+@@ -188 +188 @@
+-      ? tcp.write(data, () => tcp.raw.close())
++      ? tcp.write(data, () => tcp.writer.close().catch(error))
+@@ -202,0 +203 @@
++      close()
+@@ -209,2 +210,6 @@
+-    const { value } = await tcp.reader.read()
+-    tcp.emit('data', Buffer.from(value))
++    try {
++      const { value } = await tcp.reader.read()
++      tcp.emit('data', Buffer.from(value))
++    } catch (err) {
++      error(err)
++    }
+@@ -213,0 +219,3 @@
++    if (tcp.readyState === 'closed')
++      return
++
+@@ -215 +223 @@
+-    tcp.emit('close')
++    close()

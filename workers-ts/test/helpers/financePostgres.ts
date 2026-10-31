@@ -78,6 +78,15 @@ export async function financePostgres(tables: PgTable[], options: { namespace?: 
   return createFinanceFixture(tables, options, process.env.TEST_FINANCE_POSTGRES_URL);
 }
 
+/** Explicit native entry for workerd and other hosts without Node process.env.
+ * Validate before selecting the shared native branch: missing or invalid URLs
+ * must never silently fall back to memory. Creation, identity and cleanup use
+ * the same owned PostgreSQL16 fixture protocol as financePostgres(). */
+export async function financeNativePostgres(tables: PgTable[], url: string, options: { namespace?: 'public' } = {}) {
+  const target = validateFinanceFixtureUrl(url);
+  return createFinanceFixture(tables, options, target.href);
+}
+
 /** Explicit owned memory for business-only suites, even with CI native PG configured.
  * Backend proof comes from the actual Drizzle client, not a claimed driver label.
  * This never reads the native URL or changes process-wide environment variables. */

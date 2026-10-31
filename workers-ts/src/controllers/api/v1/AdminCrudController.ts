@@ -2,6 +2,7 @@ import { isWechatOpenConfigKey } from '../../../../../view/common/wechatOpen';
 import { isWechatAppConfigKey } from '../../../../../view/common/wechatApp';
 import { isPcBaseConfigKey } from '../../../../../view/common/pcBase';
 import { isWechatBaseConfigKey } from '../../../../../view/common/wechatBase';
+import { isWechatRoutineConfigKey } from '../../../../../view/common/wechatRoutine';
 /**
  * Admin 管理接口控制器 (M7+)
  *
@@ -768,7 +769,7 @@ export async function adminConfigList(c: C) {
   const list = await container.systemConfigDao.selectList({
     where: { isStore: 0 },
   });
-  return jsonOk(c, list.filter(row => !isWechatAppConfigKey(row.menuName) && !isPcBaseConfigKey(row.menuName) && !isCityCredentialKey(row.menuName) && !isWechatBaseConfigKey(row.menuName) && !isWechatOpenConfigKey(row.menuName)));
+  return jsonOk(c, list.filter(row => !isWechatAppConfigKey(row.menuName) && !isPcBaseConfigKey(row.menuName) && !isCityCredentialKey(row.menuName) && !isWechatBaseConfigKey(row.menuName) && !isWechatOpenConfigKey(row.menuName) && !isWechatRoutineConfigKey(row.menuName)));
 }
 
 /** POST /api/admin/config/save — 保存配置 (批量) */
@@ -989,6 +990,7 @@ export async function adminConfigGet(c: C) {
   if (isPcBaseConfigKey(menuName)) throw new ValidateException('PC配置仅可通过专用接口读取');
   if (isWechatOpenConfigKey(menuName)) throw new ValidateException('开放平台配置仅可通过专用接口读取，密钥不回显');
   if (isWechatBaseConfigKey(menuName)) throw new ValidateException('公众号基础配置仅可通过专用接口读取，密钥不回显');
+  if (isWechatRoutineConfigKey(menuName)) throw new ValidateException('小程序配置仅可通过专用接口读取，密钥不回显');
   const configSvc = new (await import("@/services/system/SystemConfigService")).SystemConfigService(
     c.get("container"),
     c.env,

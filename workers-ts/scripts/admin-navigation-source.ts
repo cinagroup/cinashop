@@ -127,6 +127,7 @@ export function hasConnectedAdminNavigation(sources: Record<string, string>): bo
     || !layout.initializer('previewMode', `import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview') === '1'`)
     || !layout.initializer('allowedMenuPaths', 'computed(() => new Set(authStore.menus.map((menu) => menu.path)))')
     || !layout.function('canMenu', `function canMenu(path: string): boolean {
+      if (path === "/system/frontend-log") return authStore.isLoggedIn;
       if (previewMode || !authStore.userInfo || authStore.userInfo.level === 0) return true;
       return allowedMenuPaths.value.has(path);
     }`)

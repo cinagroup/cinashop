@@ -20,6 +20,9 @@ const CACHE_TTL = 30 * 60; // 30 分钟
 // Neither an old KV hit nor a delayed cache fill may select a previous account,
 // and replacement secrets must not be copied into a general configuration KV.
 const freshOfficialCredential = (name: string) => name === 'wechat_appid' || name === 'wechat_appsecret';
+// Mini credentials require their paired, versioned SQL source. Public contact,
+// name and avatar policy remain available to their compatibility consumers.
+const routineCredential = (name: string) => name === 'routine_appId' || name === 'routine_appsecret';
 
 /** Narrow binding contract used by config readers and integration harnesses. */
 export interface SystemConfigEnv {
@@ -45,6 +48,7 @@ export class SystemConfigService {
     if (isPcBaseConfigKey(menuName)) throw new ValidateException('PC配置只能由新鲜快照解析器读取');
     if (isWechatOpenConfigKey(menuName)) throw new ValidateException('开放平台配置只能由专用运行时解析器读取');
     if (isCityCredentialKey(menuName)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
+    if (routineCredential(menuName)) throw new ValidateException('小程序凭据只能由专用新鲜快照读取');
     if (freshOfficialCredential(menuName)) return normalizeConfigScalar(await this.container.systemConfigDao.getValue(menuName));
     const cacheKey = `cfg_${menuName}`;
 
@@ -71,6 +75,7 @@ export class SystemConfigService {
     if (names.some(isPcBaseConfigKey)) throw new ValidateException('PC配置只能由新鲜快照解析器读取');
     if (names.some(isWechatOpenConfigKey)) throw new ValidateException('开放平台配置只能由专用运行时解析器读取');
     if (names.some(isCityCredentialKey)) throw new ValidateException('配送凭据只能由专用运行时解析器读取');
+    if (names.some(routineCredential)) throw new ValidateException('小程序凭据只能由专用新鲜快照读取');
     const cachedValues = await Promise.all(
       names.map((name) => freshOfficialCredential(name) ? Promise.resolve(null) : this.env.CONFIG_KV.get(`cfg_${name}`)),
     );

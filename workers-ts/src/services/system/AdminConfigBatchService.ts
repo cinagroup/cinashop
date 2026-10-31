@@ -2,6 +2,7 @@ import { isWechatOpenConfigKey } from '../../../../view/common/wechatOpen';
 import { isWechatAppConfigKey } from '../../../../view/common/wechatApp';
 import { isPcBaseConfigKey } from '../../../../view/common/pcBase';
 import { isWechatBaseConfigKey } from '../../../../view/common/wechatBase';
+import { isWechatRoutineConfigKey } from '../../../../view/common/wechatRoutine';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { withTx, type Container } from '@/lib/di';
 import { systemConfig } from '@/models/schema';
@@ -51,7 +52,7 @@ export function normalizeAdminConfigBatch(input: unknown): Array<[string, string
     // A generic string batch cannot carry these domains' revision, UUID,
     // option proofs or atomic audit. Reject the whole request before SQL/KV,
     // including when a superadmin submits it alongside unrelated settings.
-    const endpoint = isWechatAppConfigKey(key) ? '/wechat/app' : isPcBaseConfigKey(key) ? '/config/pc' : isCityConfigKey(key) ? '/config/city-delivery' : isWechatOpenConfigKey(key) ? '/wechat/open' : isWechatBaseConfigKey(key) ? '/wechat/base' : CONTROLLED_CONFIG_ENDPOINTS.get(key);
+    const endpoint = isWechatAppConfigKey(key) ? '/wechat/app' : isPcBaseConfigKey(key) ? '/config/pc' : isCityConfigKey(key) ? '/config/city-delivery' : isWechatOpenConfigKey(key) ? '/wechat/open' : isWechatBaseConfigKey(key) ? '/wechat/base' : isWechatRoutineConfigKey(key) ? '/wechat/routine' : CONTROLLED_CONFIG_ENDPOINTS.get(key);
     if (endpoint) throw new ValidateException(`配置${key}只能通过${endpoint}专用接口保存`);
     if (typeof value !== 'string' || !validText(value, 5000)) {
       throw new ValidateException('配置值必须是最多5000字符的有效字符串');

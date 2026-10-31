@@ -3,7 +3,7 @@ import { eq, getTableColumns, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, withTx } from '@/lib/di';
 import { systemConfig, user } from '@/models/schema';
-import { readRoutineAppId, readRoutineCredentials, readRoutineCredentialsInTx,
+import { readRoutineAppId, readRoutineCredentialPresence, readRoutineCredentials, readRoutineCredentialsInTx,
   routineCredentialCacheKey, withRoutineCredentials } from '@/services/wechat/RoutineRuntimeConfig';
 import { financePostgres } from './helpers/financePostgres';
 
@@ -113,6 +113,33 @@ describe('Mini Program fresh credential source and short commit fence', () => {
     expect(await readRoutineAppId(container())).toBe('');
   });
 
+  it('projects independent SQL presence without APP_KEY, credential values, cache or read-side writes', async () => {
+    env.APP_KEY = '';
+    const before = await rows();
+    expect(await readRoutineCredentialPresence(container())).toEqual({ appIdConfigured: true, secretConfigured: true });
+    expect(await rows()).toEqual(before);
+    await f.db.delete(systemConfig).where(eq(systemConfig.id, 2));
+    expect(await readRoutineCredentialPresence(container())).toEqual({ appIdConfigured: true, secretConfigured: false });
+    await f.db.delete(systemConfig);
+    await f.db.insert(systemConfig).values([
+      { id: 10, menuName: 'routine_appId', value: 'store-id', isStore: 1 },
+      { id: 11, menuName: 'wechat_appid', value: 'other-realm-id' },
+      { id: 12, menuName: 'routine_appsecret', value: ' secret-only ' },
+    ]);
+    expect(await readRoutineCredentialPresence(container())).toEqual({ appIdConfigured: false, secretConfigured: true });
+  });
+
+  it.each(['', '  ', 'null', '{}', '["secret"]', '"unterminated', '"\\ud800"'])('does not substitute a shadow for the malformed or empty presence winner %j', async raw => {
+    env.APP_KEY = '';
+    await f.db.insert(systemConfig).values([
+      { id: 3, menuName: 'routine_appsecret', value: raw, sort: 5, status: 0 },
+      { id: 4, menuName: 'routine_appsecret', value: 'store-secret', sort: 99, isStore: 1 },
+    ]);
+    const before = await rows();
+    expect(await readRoutineCredentialPresence(container())).toEqual({ appIdConfigured: true, secretConfigured: false });
+    expect(await rows()).toEqual(before);
+  });
+
   it.each(['null', '{}', '["secret"]', '"unterminated', '"\\ud800"'])('refuses unusable stored credential %j', async raw => {
     await f.db.update(systemConfig).set({ value: raw }).where(eq(systemConfig.id, 2));
     const before = await rows();
@@ -125,9 +152,11 @@ describe('Mini Program fresh credential source and short commit fence', () => {
       id: i + 3, menuName: 'routine_appsecret', value: 'shadow', sort: -1,
     })));
     expect((await current()).secret).toBe(SECRET);
+    expect(await readRoutineCredentialPresence(container())).toEqual({ appIdConfigured: true, secretConfigured: true });
     await f.db.insert(systemConfig).values({ id: 65, menuName: 'routine_appsecret', value: 'last-shadow', sort: -1 });
     await expect(current()).rejects.toThrow('完整读取容量');
     await expect(readRoutineAppId(container())).rejects.toThrow('完整读取容量');
+    await expect(readRoutineCredentialPresence(container())).rejects.toThrow('完整读取容量');
   });
 
   it('rejects an oversized complete UTF8 source even when every SQL value fits varchar5000', async () => {
@@ -137,6 +166,7 @@ describe('Mini Program fresh credential source and short commit fence', () => {
     expect(await f.db.select({ id: systemConfig.id }).from(systemConfig)).toHaveLength(64);
     await expect(current()).rejects.toThrow('完整读取容量');
     await expect(readRoutineAppId(container())).rejects.toThrow('完整读取容量');
+    await expect(readRoutineCredentialPresence(container())).rejects.toThrow('完整读取容量');
   });
 
   it('rejects old sources before an identity action and rolls back a post-action source mutation', async () => {

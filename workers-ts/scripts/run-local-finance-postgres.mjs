@@ -16,7 +16,12 @@ const arguments_ = process.argv.slice(2);
 // Schema/ACL tests deliberately need an isolated maintenance superuser (as in
 // the CI PostgreSQL service), never a privilege upgrade of an existing server.
 const schemaMaintenance = arguments_[0] === '--schema-maintenance';
-if (schemaMaintenance) arguments_.shift();
+const runtimeMode = arguments_[0] === '--runtime';
+if (schemaMaintenance || runtimeMode) {
+  arguments_.shift();
+  assert.ok(!arguments_.includes('--schema-maintenance') && !arguments_.includes('--runtime'),
+    '--runtime and --schema-maintenance are mutually exclusive leading modes');
+}
 // Literal case names permit bounded follow-up of an already completed batch.
 // They never become shell code or user-provided regular expressions.
 const caseNames = [];
@@ -33,7 +38,18 @@ while (arguments_[0] === '--case') {
 const verboseTests = arguments_[0] === '--verbose-tests';
 if (verboseTests) arguments_.shift();
 const [binArgument, ...tests] = arguments_;
-assert.ok(binArgument && tests.length, 'Usage: node scripts/run-local-finance-postgres.mjs [--schema-maintenance] [--case literal-name ...] <trusted-pg16-bin-dir> test/name.test.ts [...] (or audit:orm / audit:unit-shard-1 / audit:unit-shard-2 only in schema-maintenance mode)');
+assert.ok(binArgument && tests.length, 'Usage: node scripts/run-local-finance-postgres.mjs [--schema-maintenance | --runtime] [--case literal-name ...] [--verbose-tests] <trusted-pg16-bin-dir> test/name.test.ts [...] (schema-maintenance: audit:orm / audit:unit-shard-1 / audit:unit-shard-2; runtime: test/runtime/offline-payment-provider.test.ts / audit:runtime)');
+// Workerd gets only this reviewed file or the complete fixed worker-config
+// graph. No arbitrary filename/CLI filter and no maintenance privilege upgrade.
+const runtimeAudit = runtimeMode && tests.length === 1 && tests[0] === 'audit:runtime';
+if (runtimeMode) {
+  assert.equal(caseNames.length, 0, '--runtime runs complete files without case filters');
+  assert.ok(tests.length === 1 && (runtimeAudit || tests[0] === 'test/runtime/offline-payment-provider.test.ts'),
+    '--runtime accepts only test/runtime/offline-payment-provider.test.ts or audit:runtime');
+  if (!runtimeAudit) assert.ok(existsSync(resolve(workerRoot, tests[0])), `Test does not exist: ${tests[0]}`);
+} else {
+  assert.ok(!tests.includes('audit:runtime'), 'audit:runtime requires the explicit --runtime mode');
+}
 const catalogAudit = schemaMaintenance && tests.length === 1 && tests[0] === 'audit:orm';
 // Exact complete CI partitions only: no filters, arbitrary command or existing
 // database. The normal allowlist and ten-minute targeted-test deadline stay.
@@ -170,7 +186,7 @@ if (browserAcceptance) {
   const inside = relative(checkout, output);
   assert.ok(inside.startsWith('..') || isAbsolute(inside), 'Browser output must be outside the repository');
 }
-for (const test of catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {
+for (const test of runtimeMode || catalogAudit || browserAcceptance || offlineAdminBrowser || productEditorBrowser || supplierVideoBrowser || supplierRecycleBrowser || supplierCopyBrowser || supplierReviewBrowser || supplierDetailBrowser || supplierScheduleBrowser || supplierBrandBrowser || supplierEnsuresBrowser || supplierParametersBrowser || supplierSystemFormBrowser || supplierSkuBatchBrowser || supplierRecommendImageBrowser || supplierUnitBrowser || supplierShippingEditorBrowser || supplierOrderTrackingBrowser || supplierOrderDistributionBrowser || supplierOrderFiltersBrowser || supplierOrderReviewBrowser || supplierOrderInvoiceReviewBrowser || supplierOrderPromotionsReviewBrowser || supplierOrderGiftIdentityBrowser || supplierOrderVirtualReviewBrowser || supplierRefundApplicationReviewBrowser || refundApplicationEvidenceBrowser || customerOrderRepurchaseBrowser || integralPurchaseOriginBrowser || integralPurchaseLimitsBrowser || productPurchaseAdmissionBrowser || supplierRuleInlineBrowser || supplierOrderEditBrowser || supplierCashBrowser || supplierProactiveRefundBrowser || supplierRefundSettlementBrowser || supplierBillBrowser || supplierBillExportBrowser || supplierFlowBrowser || supplierExtractBrowser || supplierExtractApplicationBrowser || supplierFinanceAccountsBrowser || supplierExtractMediaBrowser || supplierExtractApplicationMediaBrowser || unitShard ? [] : tests) {
   assert.match(test, /^test\/[a-z0-9-]+\.test\.ts$/, 'Only explicit unit test paths are accepted');
   assert.ok(existsSync(resolve(workerRoot, test)), `Test does not exist: ${test}`);
 }
@@ -1117,7 +1133,7 @@ const psql = (role, database, password, statement) => command(binary('psql'),
 let initialized = false;
 let started = false;
 let failed = false;
-console.log(JSON.stringify({ version, host: '127.0.0.1', port, taskRoot, schemaMaintenance, tests }));
+console.log(JSON.stringify({ version, host: '127.0.0.1', port, taskRoot, schemaMaintenance, runtimeMode, tests }));
 try {
   const passwordFile = join(taskRoot, 'bootstrap-password');
   try {
@@ -1156,6 +1172,8 @@ try {
     inventoryFiles: preparedUnitGate.partition.files.length, selectedFiles: preparedUnitGate.partition.shards[unitShard - 1].length,
     inventorySha256: preparedUnitGate.partition.digest, inputFiles: preparedUnitGate.inputs.files.length, inputSha256: preparedUnitGate.inputs.sha256 })}`);
   const commandArgs = unitGate ? unitGate.unitGateArguments(unitShard, taskRoot)
+    : runtimeMode ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.worker.config.ts',
+      ...(runtimeAudit ? [] : tests), '--maxWorkers=1', '--fileParallelism=false']
     : supplierFinanceAccountsBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-finance-accounts-browser.config.ts', '--maxWorkers=1']
     : supplierExtractMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-extract-media-browser.config.ts', '--maxWorkers=1']
     : supplierExtractApplicationMediaBrowser ? ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.supplier-extract-application-media-browser.config.ts', '--maxWorkers=1']

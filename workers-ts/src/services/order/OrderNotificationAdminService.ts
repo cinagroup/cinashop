@@ -24,6 +24,7 @@ import {
   type OrderNotificationDeliveryStatus,
 } from "@/models/schema";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
+import { readRoutineCredentialPresence, ROUTINE_CREDENTIAL_KEYS } from '@/services/wechat/RoutineRuntimeConfig';
 import { NotFoundException, ValidateException } from "@/utils/errors";
 
 export const ORDER_NOTIFICATION_MARKS = [
@@ -438,8 +439,9 @@ export class OrderNotificationAdminService {
       "pay_weixin_mchid",
       "site_url",
     ];
-    const [values, duplicates, notifications, templates, identities, deliverySummary] = await Promise.all([
-      new SystemConfigService(this.container, this.env).getMany(keys),
+    const genericKeys = keys.filter(key => !ROUTINE_CREDENTIAL_KEYS.some(credential => credential === key));
+    const [values, duplicates, notifications, templates, identities, deliverySummary, routinePresence] = await Promise.all([
+      new SystemConfigService(this.container, this.env).getMany(genericKeys),
       withTx(this.container, (tx) => tx.select({
         menuName: systemConfig.menuName,
         rows: sql<number>`count(*)::int`,
@@ -454,6 +456,7 @@ export class OrderNotificationAdminService {
       withTx(this.container, (tx) => tx.select({ rows: sql<number>`count(*)::int` })
         .from(wechatUser)),
       this.deliverySummary(),
+      readRoutineCredentialPresence(this.container),
     ]);
     const rowCount = (key: string) => duplicates.find((entry) => entry.menuName === key)?.rows ?? 0;
     const configured = (key: string) => (values[key]?.trim() ?? "") !== "";
@@ -469,8 +472,8 @@ export class OrderNotificationAdminService {
       wechat: {
         officialAppIdConfigured: configured("wechat_appid"),
         officialSecretConfigured: configured("wechat_appsecret"),
-        routineAppIdConfigured: configured("routine_appId"),
-        routineSecretConfigured: configured("routine_appsecret"),
+        routineAppIdConfigured: routinePresence.appIdConfigured,
+        routineSecretConfigured: routinePresence.secretConfigured,
         merchantIdConfigured: configured("pay_weixin_mchid"),
         identityRows: identities[0]?.rows ?? 0,
       },
