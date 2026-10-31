@@ -136,6 +136,21 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it.each(['routine-original-payment-upgrade-native', 'routine-original-payment-evidence-native'])(
+    'admits the exact original-payment suite %s before native setup', suite => {
+      const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `test/${suite}.test.ts`],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe('');
+      expect(r.stderr).toContain('ENOENT'); expect(r.stderr).not.toContain('Schema maintenance accepts only');
+    });
+  it.each(['routine-original-payment-upgrade-native-extra.test.ts', 'routine-original-payment-upgrade-native.test.ts.extra',
+    'routine-original-payment-evidence-native-extra.test.ts', 'routine-original-payment-evidence-native.test.ts.extra'])(
+    'rejects unreviewed original-payment suite spelling %s before native setup', file => {
+      const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', `test/${file}`],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe('');
+      expect(r.stderr).not.toContain('ENOENT');
+    });
   it('admits only the exact Routine HTTP native test before native setup', () => {
     const result = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin',
       'test/admin-wechat-routine-http-native.test.ts'], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });

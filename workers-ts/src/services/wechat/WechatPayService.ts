@@ -33,6 +33,7 @@ import { assertNativeAppRefundProviderRequest } from '@/services/payment/NativeA
 import { readPaymentPublicConfig, type PaymentPublicSnapshot } from '@/services/payment/PaymentPublicRuntimeConfig';
 import { readRoutinePaymentReplay, reserveRoutinePayment, recordRoutinePaymentReceipt, requireRoutinePaymentReady,
   type RoutinePaymentAdmission } from '@/services/payment/RoutinePaymentInitiation';
+import { attachRoutineProviderObservation, captureRoutineProviderObservation } from '@/services/payment/RoutineProviderObservation';
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
@@ -291,13 +292,18 @@ export class WechatPayService {
     if (data.trade_state === "SUCCESS" && providerEventTime === undefined) {
       throw new ValidateException("微信支付回调成功时间无效");
     }
+    if (profile === 'routine' && data.trade_state === 'SUCCESS'
+      && (data.trade_type !== 'JSAPI' || typeof data.payer?.openid !== 'string'
+        || !/^[A-Za-z0-9_-]{1,128}$/u.test(data.payer.openid))) {
+      throw new ValidateException('小程序付款回调交易类型或付款人不完整');
+    }
     if (profile === 'app') {
       if (data.trade_type !== 'APP' || typeof data.appid !== 'string') throw new ValidateException('原生App回调交易类型无效');
       await recordNativeAppProviderEvidence(this.container, this.env, { source: 'callback', providerEventId: eventId,
         appId: data.appid, merchantId: cfg.mchId, orderNo: data.out_trade_no, transactionId: data.transaction_id,
         tradeState: data.trade_state, amountCents: Number(data.amount?.total), currency: 'CNY', providerEventTime: providerEventTime ?? 0, tradeType: 'APP' });
     }
-    return {
+    const result = {
       eventId,
       outTradeNo: data.out_trade_no,
       transactionId: data.transaction_id,
@@ -308,6 +314,17 @@ export class WechatPayService {
       merchantId: cfg.mchId,
       ...(typeof data.payer?.openid === 'string' ? { payerId: data.payer.openid } : {}),
     };
+    // Public merchant-only verification still works without APP_KEY when the
+    // optional original-evidence addon is absent. Its installed ingress will
+    // require this independent authenticated capture, never scalar identity.
+    return profile === 'routine' && data.trade_state === 'SUCCESS' && this.env.APP_KEY
+      ? attachRoutineProviderObservation(result, captureRoutineProviderObservation(this.env, {
+        source: 'callback', providerEventId: eventId, verifiedBody: rawBody,
+        verifierKey: headers['wechatpay-serial'] ?? headers['Wechatpay-Serial'] ?? '',
+        facts: { appId: data.appid!, merchantId: cfg.mchId, orderNo: data.out_trade_no,
+          transactionId: data.transaction_id, amountCents: data.amount!.total!, currency: 'CNY',
+          tradeState: 'SUCCESS', tradeType: 'JSAPI', payerId: data.payer!.openid!, providerEventTime: providerEventTime! },
+      })) : result;
   }
 
   async requestRefund(request: RefundProviderRequest): Promise<RefundProviderResult> {
@@ -362,8 +379,10 @@ export class WechatPayService {
     const path = `/v3/pay/transactions/out-trade-no/${encodeURIComponent(request.orderNo)}`
       + `?mchid=${encodeURIComponent(cfg.mchId)}`;
     let response: WechatTradeQueryResponse;
+    let verifiedResponse: { body: string; serial: string } | undefined;
     try {
-      response = await this.callApi<WechatTradeQueryResponse>("GET", path, undefined, cfg, true);
+      response = await this.callApi<WechatTradeQueryResponse>("GET", path, undefined, cfg, true,
+        (body, serial) => { verifiedResponse = { body, serial }; });
     } catch (error) {
       if (
         error instanceof WechatApiError
@@ -401,47 +420,46 @@ export class WechatPayService {
     const transactionId = typeof response.transaction_id === 'string' ? response.transaction_id : '';
     const amountCents = typeof response.amount?.total === 'number' ? response.amount.total : -1;
     const providerEventTime = parseProviderTime(response.success_time) ?? 0;
-    if (
-      !/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)
-      || !Number.isSafeInteger(amountCents)
-      || amountCents !== request.expectedAmountCents
-      || response.amount?.currency !== "CNY"
-      || providerEventTime <= 0
-      || (request.profile === 'app' && (response.trade_type !== 'APP' || typeof response.appid !== 'string'))
-      || (original && (transactionId.length > 50
-        || response.trade_type !== (original.transactionType === 'jsapi' ? 'JSAPI' : 'MWEB')
-        || (original.payerId !== '' && response.payer?.openid !== original.payerId)))
-    ) {
-      return {
-        ...emptyTradeQueryResult(
-          request,
-          "UNKNOWN",
-          providerTradeState,
-          "provider_evidence_mismatch",
-        ),
-        transactionId,
-        amountCents,
-        providerEventTime,
-      };
-    }
+    const rejected = (): PaymentProviderQueryResult => ({
+      ...emptyTradeQueryResult(request, 'UNKNOWN', providerTradeState, 'provider_evidence_mismatch'),
+      transactionId, amountCents, providerEventTime,
+    });
+    const completeFacts = /^[A-Za-z0-9_-]{1,100}$/u.test(transactionId)
+      && Number.isSafeInteger(amountCents) && amountCents > 0 && amountCents <= 2147483647
+      && response.amount?.currency === 'CNY' && providerEventTime > 0
+      && (request.profile !== 'routine' || response.trade_type === 'JSAPI'
+        && typeof response.payer?.openid === 'string' && /^[A-Za-z0-9_-]{1,128}$/u.test(response.payer.openid))
+      && (request.profile !== 'app' || response.trade_type === 'APP');
+    if (!completeFacts) return rejected();
+    const captured = (result: PaymentProviderQueryResult): PaymentProviderQueryResult => {
+      if (request.profile === 'routine' && this.env.APP_KEY) {
+        if (!verifiedResponse) throw Error('routine_query_verification_capture_missing');
+        attachRoutineProviderObservation(result, captureRoutineProviderObservation(this.env, {
+          source: 'signed_query', verifiedBody: verifiedResponse.body, verifierKey: verifiedResponse.serial,
+          facts: { appId: response.appid!, merchantId: cfg.mchId, orderNo: request.orderNo, transactionId,
+            amountCents, currency: 'CNY', tradeState: 'SUCCESS', tradeType: 'JSAPI',
+            payerId: response.payer!.openid!, providerEventTime },
+        }));
+      }
+      return result;
+    };
+    // Complete, genuine provider facts survive a local amount/payer conflict;
+    // their capture does not authorize settlement of that conflicting order.
+    if (amountCents !== request.expectedAmountCents || original && (transactionId.length > 50
+      || response.trade_type !== (original.transactionType === 'jsapi' ? 'JSAPI' : 'MWEB')
+      || original.payerId !== '' && response.payer?.openid !== original.payerId)) return captured(rejected());
     const nativeAppEvidenceId = request.profile === 'app' ? await recordNativeAppProviderEvidence(this.container, this.env, {
       source: 'signed_query', appId: response.appid!, merchantId: cfg.mchId, orderNo: request.orderNo, transactionId,
       tradeState: providerTradeState, amountCents, currency: 'CNY', providerEventTime, tradeType: 'APP',
     }) : undefined;
-    return {
-      status: "SUCCESS",
-      providerTradeState,
-      orderNo: request.orderNo,
-      transactionId,
-      amountCents,
-      currency: "CNY",
-      providerEventTime,
-      errorCode: "",
+    return captured({
+      status: 'SUCCESS', providerTradeState, orderNo: request.orderNo, transactionId,
+      amountCents, currency: 'CNY', providerEventTime, errorCode: '',
       ...(nativeAppEvidenceId ? { nativeAppEvidenceId } : {}),
       ...(original ? { identityEvidence: { source: 'wechat-signed-query' as const,
         appId: response.appid, merchantId: response.mchid,
         ...(original.payerId ? { payerId: response.payer?.openid } : {}) } } : {}),
-    };
+    });
   }
 
   async verifyAndParseRefundNotify(
@@ -570,6 +588,7 @@ export class WechatPayService {
     bodyValue: Record<string, unknown> | undefined,
     cfg: WechatMerchantConfig,
     verifyErrorResponse = false,
+    captureVerified?: (body: string, serial: string) => void,
   ): Promise<T> {
     const body = bodyValue ? JSON.stringify(bodyValue) : "";
     const authorization = await buildV3Authorization(
@@ -615,6 +634,9 @@ export class WechatPayService {
         typeof result.message === "string" ? result.message : response.statusText,
       );
     }
+    // This observer runs only for a successfully verified, bounded response.
+    // It retains no signature/raw body outside the request-local query scope.
+    captureVerified?.(rawBody, response.headers.get('Wechatpay-Serial') ?? '');
     return result as T;
   }
 

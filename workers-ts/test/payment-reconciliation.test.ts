@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 import { MigrationService } from "@/services/MigrationService";
 import { prepareOrderQueueDeadLetter } from "@/services/order/OrderQueueDeadLetterService";
@@ -117,22 +118,86 @@ describe("CORE-001-C active payment reconciliation", () => {
   });
 
   it("registers recovery intent before provider I/O across all external payment domains", () => {
-    const store = readFileSync("src/services/order/StoreOrderPayService.ts", "utf8");
-    const recharge = readFileSync("src/services/payment/RechargePaymentService.ts", "utf8");
-    const membership = readFileSync("src/services/user/PaidMembershipService.ts", "utf8");
-    for (const source of [store, recharge, membership]) {
-      expect(source).toContain("registerPaymentReconciliationIntent");
+    // Follow the current admission boundary and its awaited provider hook.
+    // A bare substring (or indexOf=-1) cannot establish callback execution or
+    // commit ordering. Actual three-domain Mini execution remains covered by
+    // routine-payment-callers.test.ts; this guards the full static wiring.
+    const tree = (file: string) => ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+    const nodes = <T extends ts.Node>(root: ts.Node, guard: (node: ts.Node) => node is T): T[] => {
+      const found: T[] = [];
+      const visit = (node: ts.Node) => { if (guard(node)) found.push(node); ts.forEachChild(node, visit); };
+      visit(root); return found;
+    };
+    const one = <T,>(values: T[]): T => { expect(values).toHaveLength(1); return values[0]!; };
+    const method = (file: ts.SourceFile, name: string) => one(nodes(file, ts.isMethodDeclaration).filter(node => node.name.getText(file) === name));
+    const fn = (file: ts.SourceFile, name: string) => one(nodes(file, ts.isFunctionDeclaration).filter(node => node.name?.text === name));
+    const calls = (root: ts.Node, name: string) => nodes(root, ts.isCallExpression).filter(node => node.expression.getText(root.getSourceFile()) === name);
+    const awaited = (call: ts.CallExpression) => { expect(ts.isAwaitExpression(call.parent)).toBe(true); return call; };
+    const before = (first: ts.Node, second: ts.Node) => expect(first.getStart()).toBeLessThan(second.getStart());
+    const literal = (node: ts.Expression) => {
+      while (ts.isAsExpression(node) || ts.isParenthesizedExpression(node)) node = node.expression;
+      expect(ts.isStringLiteral(node)).toBe(true); return (node as ts.StringLiteral).text;
+    };
+    const property = (object: ts.ObjectLiteralExpression, name: string) => one(object.properties.filter(node =>
+      ts.isPropertyAssignment(node) && node.name.getText(object.getSourceFile()) === name)) as ts.PropertyAssignment;
+    const initiated = (call: ts.CallExpression) => call.arguments[1] && ts.isObjectLiteralExpression(call.arguments[1])
+      && call.arguments[1].properties.some(node => ts.isPropertyAssignment(node) && node.name.getText() === 'initiated'
+        && node.initializer.kind === ts.SyntaxKind.TrueKeyword);
+    const store = tree("src/services/order/StoreOrderPayService.ts"), recharge = tree("src/services/payment/RechargePaymentService.ts");
+    const membership = tree("src/services/user/PaidMembershipService.ts"), wechat = tree("src/services/wechat/WechatPayService.ts");
+    const admission = tree("src/services/payment/PaymentInitiationAdmission.ts"), mini = tree("src/services/payment/RoutinePaymentInitiation.ts");
+    for (const [file, name, domain] of [[store, 'wechatPay', 'store_order'], [recharge, 'startWechatPayment', 'recharge'],
+      [membership, 'payOrder', 'membership']] as const) {
+      const entry = method(file, name), provider = awaited(one(nodes(entry, ts.isCallExpression).filter(call =>
+        ts.isPropertyAccessExpression(call.expression) && call.expression.name.text === 'createOrder'
+        && ts.isNewExpression(call.expression.expression) && call.expression.expression.expression.getText(file) === 'WechatPayService')));
+      expect(provider.arguments).toHaveLength(1); expect(ts.isObjectLiteralExpression(provider.arguments[0]!)).toBe(true);
+      const input = provider.arguments[0] as ts.ObjectLiteralExpression;
+      const hook = one(nodes(input, ts.isPropertyAssignment).filter(node => node.name.getText(file) === 'beforeProviderRequest'));
+      let callback = hook.initializer;
+      if (ts.isIdentifier(callback)) {
+        const initializer = one(nodes(entry, ts.isVariableDeclaration).filter(node => node.name.getText(file) === callback.getText(file))).initializer!;
+        expect(ts.isConditionalExpression(initializer)).toBe(true);
+        callback = (initializer as ts.ConditionalExpression).whenFalse;
+      }
+      expect(ts.isArrowFunction(callback)).toBe(true);
+      awaited(one(calls(callback, 'admitExternalPaymentInitiation')));
+      const routine = one(nodes(entry, ts.isVariableDeclaration).filter(node => node.name.getText(file) === 'routinePayer')).initializer!;
+      expect(ts.isConditionalExpression(routine)).toBe(true);
+      expect((routine as ts.ConditionalExpression).condition.getText(file).replace(/\s/g, '')).toBe("identity.profile==='routine'");
+      expect((routine as ts.ConditionalExpression).whenTrue.getText(file)).toBe('admission');
+      expect((routine as ts.ConditionalExpression).whenFalse.getText(file)).toBe('undefined');
+      expect(nodes(input, ts.isShorthandPropertyAssignment).filter(node => node.name.text === 'routinePayer')).toHaveLength(1);
+      const local = domain === 'store_order' ? fn(store, 'prepareStoreOrderPaymentAdmission')
+        : domain === 'membership' ? method(membership, 'paymentAdmission') : entry;
+      expect(literal(one(nodes(local, ts.isPropertyAssignment).filter(node => node.name.getText() === 'orderDomain')).initializer)).toBe(domain);
     }
-    expect(store.indexOf("registerPaymentReconciliationIntent", store.indexOf("async wechatPay")))
-      .toBeLessThan(
-      store.indexOf(".createOrder({", store.indexOf("async wechatPay")),
-    );
-    expect(recharge.indexOf("registerPaymentReconciliationIntent", recharge.indexOf("async startWechatPayment")))
-      .toBeLessThan(
-      recharge.indexOf(".createOrder({", recharge.indexOf("async startWechatPayment")),
-    );
-    expect(membership.indexOf("registerPaymentReconciliationIntent", membership.indexOf("async payOrder")))
-      .toBeLessThan(membership.indexOf(".createOrder({", membership.indexOf("async payOrder")));
+    const storeAli = method(store, 'alipayPay'), storeGate = awaited(one(calls(storeAli, 'admitExternalPaymentInitiation')));
+    const storeUrl = one(nodes(storeAli, ts.isReturnStatement).filter(node => node.expression && ts.isTemplateExpression(node.expression)));
+    before(awaited(one(calls(storeAli, 'signAlipayParams'))), storeGate); before(storeGate, storeUrl);
+    before(awaited(one(calls(storeAli, 'assertExternalPaymentReplay'))), storeUrl);
+    const memberPay = method(membership, 'payOrder'), memberGate = awaited(one(calls(memberPay, 'admitExternalPaymentInitiation').filter(call =>
+      ts.isObjectLiteralExpression(call.arguments[1]!) && literal(property(call.arguments[1] as ts.ObjectLiteralExpression, 'provider').initializer) === 'alipay')));
+    before(awaited(one(calls(memberPay, 'this.createAlipayUrl'))), memberGate);
+    before(memberGate, one(nodes(memberPay, ts.isReturnStatement).filter(node => node.expression && ts.isObjectLiteralExpression(node.expression)
+      && node.expression.properties.some(p => ts.isShorthandPropertyAssignment(p) && p.name.text === 'payUrl'))));
+
+    const publicAdmission = fn(admission, 'admitExternalPaymentInitiation'), run = fn(admission, 'run'), evaluate = fn(admission, 'evaluate');
+    const delegate = one(calls(publicAdmission, 'run')); expect(delegate.parent.kind).toBe(ts.SyntaxKind.ReturnStatement);
+    expect(delegate.arguments.map(node => node.getText(admission))).toEqual(['container', 'input', 'false']);
+    const transaction = awaited(one(calls(run, 'withTx'))); expect(calls(transaction, 'evaluate')).toHaveLength(1);
+    awaited(one(calls(transaction, 'evaluate')));
+    const registered = awaited(one(calls(evaluate, 'registerPaymentReconciliationTx').filter(initiated)));
+    before(awaited(one(calls(evaluate, 'input.admission.lockOrder'))), registered);
+    before(awaited(one(calls(evaluate, 'lockPaymentReconciliationRegistrationTx'))), registered);
+    expect(nodes(admission, ts.isCallExpression).some(call => /^(?:fetch|.*\.(?:callApi|createOrder))$/.test(call.expression.getText(admission)))).toBe(false);
+    const provider = method(wechat, 'createOrder'), providerPost = one(calls(provider, 'this.callApi').filter(call => literal(call.arguments[0]!) === 'POST'));
+    before(awaited(one(calls(provider, 'params.beforeProviderRequest'))), awaited(providerPost));
+    const miniProvider = method(wechat, 'createRoutineOrder'), reserve = fn(mini, 'reserveRoutinePayment');
+    before(awaited(one(calls(miniProvider, 'reserveRoutinePayment'))), awaited(one(calls(miniProvider, 'this.callApi'))));
+    const miniRegistration = awaited(one(calls(reserve, 'registerPaymentReconciliationTx').filter(initiated)));
+    before(awaited(one(calls(reserve, 'input.admission.lockOrder'))), miniRegistration);
+    expect(one(calls(reserve, 'withRoutinePaymentPublicSource')).parent.kind).toBe(ts.SyntaxKind.ReturnStatement);
   });
 
   it("wires callback evidence, provider queries, cron recovery and guarded admin decisions", () => {

@@ -48,11 +48,14 @@ import {
 import { lockPaymentReconciliationRegistrationTx, registerPaymentReconciliationTx } from "@/services/payment/PaymentReconciliationRegistry";
 import { lockStoreOrderPaymentBoundary } from "@/services/payment/StoreOrderPaymentBoundary";
 import { assertNativeAppQueryWitnessInTx } from './NativeAppPaymentAuthority';
+import { routineProviderObservationOf } from './RoutineProviderObservation';
+import { appendRoutineOriginalPaymentTx, prepareRoutineOriginalPaymentTx, attachRoutineOriginalReference,
+  assertRoutineOriginalReferenceTx } from './RoutineOriginalPaymentEvidence';
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { settleOfflineOrderExternalPayment, settleOfflineOrderQueryPayment } from "@/services/order/OfflineOrderExternalPaymentService";
 import { queryOfflineOrderPayment } from '@/services/order/OfflineOrderPaymentQueryService';
 import { findOfflineQueryEvidence, persistOfflineQueryEvidence } from '@/services/order/OfflineOrderQueryEvidenceService';
-import { ApiException, ValidateException } from "@/utils/errors";
+import { ApiException, ServiceUnavailableException, ValidateException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 
 const DISPATCH_PAGE_SIZE = 50;
@@ -155,6 +158,7 @@ export function paymentReconciliationBackoff(attempt: number): number {
 }
 
 function lowCardinalityError(error: unknown, fallback: string): string {
+  if (error instanceof ServiceUnavailableException) return 'payment_dependency_unavailable';
   if (error instanceof ApiException) return "payment_business_validation";
   return operationalErrorCode(error, fallback);
 }
@@ -295,6 +299,18 @@ export class PaymentReconciliationService {
     } catch (error) {
       return this.finishQueryFailure(claim, error);
     }
+    try {
+      const original = await this.captureRoutineQuery(claim, result);
+      if (original) {
+        attachRoutineOriginalReference(result, original.row.evidence_id);
+        if (original.conflict) return this.finish(claim, { status: 'CONFLICT', providerStatus: result.status, result,
+          errorCode: 'routine_original_evidence_conflict' });
+      }
+    } catch (error) {
+      // Failed capture authorizes no result scalar. In particular, do not
+      // reserve an injected or cross-order transaction on this case.
+      return this.finishQueryFailure(claim, error);
+    }
     if (result.orderNo !== claim.orderNo || result.currency !== "CNY") {
       return this.finish(claim, {
         status: "CONFLICT",
@@ -375,7 +391,7 @@ export class PaymentReconciliationService {
         errorCode: "",
       });
     } catch (error) {
-      if (error instanceof ApiException) {
+      if (error instanceof ApiException && !(error instanceof ServiceUnavailableException)) {
         return this.finish(claim, {
           status: "CONFLICT",
           providerStatus: "SUCCESS",
@@ -396,6 +412,8 @@ export class PaymentReconciliationService {
       // INSERT privilege or an unnecessary speculative INSERT on every query.
       await lockPaymentReconciliationRegistrationTx(tx, claim.provider, claim.orderNo, result.transactionId);
       if (claim.provider === 'wechat' && claim.profile === 'app') await assertNativeAppQueryWitnessInTx(tx, this.env, claim, result);
+      if (claim.provider === 'wechat' && claim.profile === 'routine' && !/^xx[0-9a-f]{30}$/u.test(claim.orderNo)) await assertRoutineOriginalReferenceTx(tx, this.env, result,
+        { source: 'signed_query', ...result }, claim.orderDomain);
       const [current] = await tx.select().from(paymentReconciliationCase)
         .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
       if (!current || current.replayKey !== claim.replayKey
@@ -812,6 +830,27 @@ export class PaymentReconciliationService {
       : new AlipayTradeQueryService(this.env).query(request);
   }
 
+  private async captureRoutineQuery(claim: ClaimedCase, result: PaymentProviderQueryResult) {
+    if (claim.provider !== 'wechat' || claim.profile !== 'routine' || /^xx[0-9a-f]{30}$/u.test(claim.orderNo)) return null;
+    const proof = routineProviderObservationOf(result);
+    // PENDING/NOTPAY never invents paid-original facts. A claimed SUCCESS,
+    // however, must carry the actual verifier capability once commissioned.
+    if (proof === undefined && result.status !== 'SUCCESS') return null;
+    return withTx(this.container, async tx => {
+      const prepared = await prepareRoutineOriginalPaymentTx(tx, this.env, proof,
+        { source: 'signed_query', ...result, orderNo: claim.orderNo, domain: claim.orderDomain });
+      if (!prepared) return null;
+      await lockPaymentReconciliationRegistrationTx(tx, claim.provider, claim.orderNo, result.transactionId);
+      const [current] = await tx.select().from(paymentReconciliationCase).where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for('update');
+      if (!current || current.replayKey !== claim.replayKey || current.provider !== 'wechat' || current.profile !== 'routine'
+        || current.orderNo !== claim.orderNo || current.expectedAmountCents !== claim.expectedAmountCents || current.currency !== 'CNY')
+        throw Error('routine_original_query_case_mismatch');
+      // This records observed provider/local facts. The existing registration
+      // and settlement fences still independently require the live query lease.
+      return appendRoutineOriginalPaymentTx(tx, this.env, prepared);
+    });
+  }
+
   private async localEvidence(orderNo: string, domain: PaymentCallbackOrderDomain) {
     return withTx(this.container, async (tx) => {
       const candidates: boolean[] = [];
@@ -843,6 +882,8 @@ export class PaymentReconciliationService {
     // The order row was locked by the caller. Hold this boundary until its
     // paid transition commits, and re-read callback/query evidence inside it.
     await lockStoreOrderPaymentBoundary(tx, claim.orderNo);
+    if (claim.provider === 'wechat' && claim.profile === 'routine' && !/^xx[0-9a-f]{30}$/u.test(claim.orderNo)) await assertRoutineOriginalReferenceTx(tx, this.env, result,
+      { source: 'signed_query', ...result }, domain);
     const [current] = await tx.select().from(paymentReconciliationCase)
       .where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for("update");
     if (!current || current.replayKey !== claim.replayKey

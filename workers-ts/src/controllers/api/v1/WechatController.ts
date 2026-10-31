@@ -22,6 +22,7 @@ import {
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
+import { routineProviderObservationOf } from '@/services/payment/RoutineProviderObservation';
 import { WechatCallbackService } from "@/services/wechat/WechatCallbackService";
 import type { WechatCallbackQuery, WechatCallbackSource } from "@/services/wechat/WechatCallbackCrypto";
 import { clientIp } from "@/controllers/api/v1/UserBehaviorController";
@@ -233,7 +234,7 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
       amountCents: notify.amountTotal,
       currency: "CNY",
       providerEventTime: notify.providerEventTime,
-    }, { appId: notify.appId, merchantId: notify.merchantId, payerId: notify.payerId });
+    }, { appId: notify.appId, merchantId: notify.merchantId, payerId: notify.payerId }, routineProviderObservationOf(notify));
     if (!received.terminalConflict) {
       c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
         emitOperationalEvent("error", {

@@ -400,3 +400,22 @@ Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正
 首轮 HTTP 为 1 通过/5 失败：夹具漏装正式 Authority menu-lock，保存在 SQL 写入前被拒绝；保留原失败与 remaining=0/STOPPED，补齐依赖后重跑，未放宽权限。inputs-02 上的 Routine 8 项、App HTTP 5 项和 PC native 6 项也分别完整通过；后两者覆盖旧 App 与 PC/Base/Open 的共享分流和既有 64/256KiB 限制，是该次输入的实际回归，不改称最终 bytes 上的重跑。重复执行不累计为新增案例。所有本阶段 native 集群均 remaining=0 且 STOPPED；预期拒绝请求的结构化 failure 日志保留，不声称无 stderr。
 
 上述是进程内真实生产 Hono Request/JWT/Drizzle 与独立、实际 TCP 认证 PG16 LOGIN 的本机验证；不是 HTTP 监听器、Browser、微信 provider 或部署验收。数据库时钟末尾过期竞态、Service 读取到 SQL 调用间竞态未分别注入，不以静态检查或其他低层用例冒充该 HTTP 覆盖。完整迁移继续未完成：前端严格 DTO/session/pending journal/页面与 Browser、归属维护、原付款证据及旧查单/回调/发货恢复、其余消费者和既有 CI 失败仍须推进。保留现有 UID、用户、权益、旧单与付款；配置、回执、witness、INIT/PREPAY 不成为旧付款归属证明。本阶段没有生产 DDL、真实 provider 调用或部署；整体 conditionalWriteSemanticsVerified 和完整迁移状态保持 false。
+
+
+## 阶段 25：Routine 真实提供方原始付款证据与结算复核（2026-10-30）
+
+新增独立、显式维护的 `routine_original_payment_evidence` 插件，不修改历史基础迁移和既有 callback v1 canonical hash。精确 PG16 目录为九列、十一约束、四索引、不可变行/整表触发器；实际受限 App LOGIN 只有 SELECT/INSERT，Admin、Financial、Manager、Cashier 没有新增读取或写入权限。正式安装器原子复核 App/Admin 与显式 local/case-lock/peer/App-reader 声明，完整重复不改 DDL、ACL 或业务行；owner-only、部分对象和漂移均拒绝。只有整个可选命名空间完全缺失时才保留旧路径，运行入口不隐式安装。
+
+生产微信适配器在真实 RSA 验签（回调另经过 AES-GCM 解密）之后，捕获 AppID、商户、订单、交易、金额、币种、SUCCESS/JSAPI、付款人 OpenID 和提供方成功时间。请求内不可枚举 Symbol 携带独立域 HMAC 证明；JSON/对象展开/Queue 不带证明。原始 body 仅取摘要，不存签名、密钥、Secret 或原始明文。回调事实和原最小事件/outbox 在同一事务提交，Queue 在提交后发出；查单在 SQL 事务外完成 HTTP 和 RSA，再提交原证。完整真实 SUCCESS 即使与本地金额冲突也保留原始事实，并标为不可结算；NOTPAY 不制造付款原证。来源同事实重放保留首次行及 xmin，同一来源改事实拒绝；相关订单/交易的不同账号、付款人或本地物理归属造成冲突。
+
+本地订单号在商城、充值、会员三域完整采集，不从付款人 OpenID 推导 UID，不写用户、绑定或旧单。缺失、重复、非法本地事实保留为 unresolved，真实金额冲突留存但不派发结算。入口先取三表有限 NOWAIT SHARE 栅栏及候选行，再取订单 boundary、provider transaction 和 case/event 锁；事务内只有 SQL 与本地 HMAC。这个保守栅栏会与无关订单写入发生竞争，当前只能明确拒绝/重试，不能宣称已完成生产吞吐验收。
+
+三个默认结算入口都在已有业务订单行锁之后重新读取确切不可变证据、相关冲突与当前 UID/物理 ID/订单号/金额/交易/付款状态。库或权限临时未就绪的 503 走有限 FAILED/重试，不再被永久业务 UNKNOWN 吞掉；真实业务矛盾仍按既有冲突与显式恢复流程处理。当前配置、管理回执、code2Session witness 和 INIT/PREPAY 仍不能充当旧付款归属；这些证据不激活跨 AppID 的历史账号，也不授权重绑用户或权益。
+
+本阶段严格按照微信官方 Mini 成功回调及 JSAPI 查单字段合同采证，官方来源为 [Mini 成功回调](https://pay.weixin.qq.com/doc/v3/merchant/4012791902)与[JSAPI 查单](https://pay.weixin.qq.com/doc/v3/merchant/4012791859)（本轮在线核对）。传输为本机受控替身，RSA/AES、生产 Hono/默认消费者和实际独立 TCP PG16 LOGIN 执行，不代表真实微信、Workers、Hyperdrive、Browser、生产 DDL 或部署。
+
+最终 inputs-05 的 16 源路径在整个串行 pipeline 内保持不变：七份定向单元完整文件 874 项通过；原始付款证据完整原生文件 13 项通过，包含真实双阶段回调/查单、三域默认结算、真实商城 checkout 与付款后置副作用、30天会员、付款人/买家隔离、权限503恢复、同事务回滚、TEMP遮蔽、金额变化恢复和两种真实跨订单能力拒绝后的正确订单成功。原证采集异常不传播未获原证授权的结果 scalar，故不会把另一订单交易号或缺证明 SUCCESS 的交易号写入当前 case；不把这项合同泛化为所有非 SUCCESS 诊断 scalar 的认证。33项离线回调/恢复整文件均通过；两套标准 Worker unit/runtime 类型检查 exit=0。正式目录/安装器完整七项在 inputs-01 实际执行，其四个目录、安装器、审计与测试文件至 inputs-05 完全同字节；既有公共来源/真实商户签名44项在 inputs-03 实际执行，其提供方代码保持不变，不改称最终全图重跑。每份原生集群均记录 remaining=0、STOPPED；预期拒绝的低基数结构化日志保留，不声称无 stderr。原始 inputs、各轮终态及日志位于 `/tmp/cinashop-phase25-validation/`，最终汇总为 `implementation-result-05.json`；本节在源冻结验证后单独追加。
+
+首轮原证集成8通过/1失败，是测试预期详细错误字符串而既有日志只返回低基数 Error.name；生产拒绝与零财务变成立，修正期望后重跑。扩展普通回归873通过/1失败，为旧静态测试仍寻找已经迁出的 registerPaymentReconciliationIntent；三域生产文件在 main 早已统一 admission，本次改成 AST 追踪实际 awaited hook、事务登记与 provider 调用顺序，既有实际执行用例保留。离线初轮19通过/14失败：夹具只有陈旧KV，已迁移的正式SQL商户来源缺失，造成微信过早拒绝与部分负例假通过；补齐六个global SQL键，原账号旋转改为真实SQL变化，保留冲突KV并强制零读取，原33场景及断言全部保留。类型初轮三错为 source 字面量收窄与 Node/Workers typedarray 编码类型；显式类型与 node:buffer 包装修正，不放宽类型或提高资源/时限。所有早期失败均保留，不累计为通过，不据此宣布历史全量CI绿色。当前尚无单独的运行入口 truly-absent/partial命名空间新用例；正式安装部分/孤儿/漂移拒绝、完整schema真正legacy离线回归及实际 TEMP 运行反例各有其明确覆盖边界。
+
+整体迁移与 runtime_ready 继续为 false。账号范围身份映射、完整历史清单与维护 manifest、原子消费切换授权，以及旧账号回调/查单/退款/发货/通知、Financial 的窄读取转交、前端 DTO/会话/操作 journal 与 Browser 验收及其余历史 CI 失败尚未闭合。用户已授权且成功推送的阶段23/24两笔为 a776bcc1、a8a57da7；本阶段提交和推送状态另由检查点记录，不纳入该次两笔授权。

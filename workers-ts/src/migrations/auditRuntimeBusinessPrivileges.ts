@@ -1,4 +1,5 @@
 import { inspectUserMessageReadCapability } from './userMessageReadCapability';
+import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES } from './routineOriginalPaymentEvidence';
 import { inspectAdminWechatAppOperation, ADMIN_WECHAT_APP_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatAppOperation';
 import { inspectNativeAppPaymentAuthority, NATIVE_APP_PAYMENT_AUTHORITY_RUNTIME_PRIVILEGES } from './nativeAppPaymentAuthority';
 import { inspectAdminWechatOpenOperation, ADMIN_WECHAT_OPEN_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatOpenOperation';
@@ -148,6 +149,11 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
         Object.assign(plan.tables,routinePaymentRuntimeTablePrivileges(kind));
         plan.tables.payment_reconciliation_action=[...new Set([...(plan.tables.payment_reconciliation_action??[]),'SELECT' as const])];
       }
+    }
+    const routineOriginal = await inspectRoutineOriginalPaymentEvidenceCatalog(tx, names);
+    if (routineOriginal.present) {
+      if (!routineOriginal.ready) failures.push('routine_original_payment_evidence_catalog');
+      else plan.tables.routine_original_payment_evidence = [...ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES[kind]];
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

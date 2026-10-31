@@ -32,6 +32,7 @@ import { outcome, waitForFinanceBlock } from './helpers/financePeers';
 describe('signed offline callback and recovery pipeline on isolated native PG16', () => {
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>, ddl: string;
   let keys: { privateKey: string; publicKey: string }, aesKey: string;
+  let cacheReads: ReturnType<typeof vi.fn>[];
   type Runtime = SequenceRunnerPeer & { role: string };
   type Rail = 'wechat' | 'alipay';
   const appId = 'wx-local-pipeline', aliApp = 'local-ali-app', merchantId = '1234567890', payer = 'original-local-payer';
@@ -43,6 +44,7 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
     aesKey = Buffer.from(randomBytes(16)).toString('hex');
   }, 60_000);
   beforeEach(async () => {
+    cacheReads = [];
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External I/O forbidden'));
     f = await sequenceRunnerDatabase();
     await f.db.transaction(async tx => {
@@ -51,11 +53,26 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
     });
     await f.db.insert(user).values({ uid: 11, account: 'signed-offline-buyer', nowMoney: '100.00', integral: 50, isEverLevel: 1 });
     await f.db.insert(systemConfig).values([{ id: 1, menuName: 'member_card_status', value: '1' },
-      { id: 2, menuName: 'order_give_integral', value: '1.234567' }]);
+      { id: 2, menuName: 'order_give_integral', value: '1.234567' },
+      // Both callback profiles read the complete current public cohort from
+      // SQL. OAuth Secret and cfg_* KV are not provider verification authority.
+      ...Object.entries({ wechat_appid: appId, routine_appId: appId, pay_weixin_mchid: merchantId,
+        pay_weixin_serial_no: 'ABCDEF123456', site_url: 'https://local.example', pay_weixin_open: '1' })
+        .map(([menuName, value], index) => ({ id: index + 3, menuName, value: JSON.stringify(value), isStore: 0, sort: 5 }))]);
     await f.db.insert(memberRight).values([{ id: 1, rightType: 'offline', number: 80, status: 1 },
       { id: 2, rightType: 'integral', number: 2, status: 1 }]);
   }, 30_000);
-  afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); } });
+  afterEach(async () => {
+    try {
+      expect(fetch).not.toHaveBeenCalled();
+      for (const read of cacheReads) expect(read).not.toHaveBeenCalled();
+    } finally { vi.restoreAllMocks(); await f?.close(); }
+  });
+  const updatePublicConfig = async (key: 'wechat_appid' | 'pay_weixin_mchid', value: string) => {
+    const rows = await f.db.update(systemConfig).set({ value: JSON.stringify(value) })
+      .where(eq(systemConfig.menuName, key)).returning({ name: systemConfig.menuName });
+    expect(rows).toEqual([{ name: key }]);
+  };
   const runtime = <T>(work: (r: Runtime) => Promise<T>) => f.withRuntimeRole!(async r => {
     await f.exec(offlineRuntimeGrantPlan(r.role));
     expect(await auditOfflineOrderRuntimePermissions(r.db)).toMatchObject({ready:true,failures:[]});
@@ -90,7 +107,7 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
   };
   const wechat = (orderNo: string, overrides: Record<string, unknown> = {}, eventId = crypto.randomUUID()) => {
     const payload = { appid: appId, mchid: merchantId, out_trade_no: orderNo, transaction_id: 'test-' + crypto.randomUUID(),
-      trade_state: 'SUCCESS', success_time: '2026-09-19T12:00:00+08:00', amount: { total: 800, currency: 'CNY' }, payer: { openid: payer }, ...overrides };
+      trade_state: 'SUCCESS', trade_type: 'JSAPI', success_time: '2026-09-19T12:00:00+08:00', amount: { total: 800, currency: 'CNY' }, payer: { openid: payer }, ...overrides };
     const nonce = Buffer.from(randomBytes(6)).toString('hex'), associated = 'transaction';
     const cipher = createCipheriv('aes-256-gcm', Buffer.from(aesKey), Buffer.from(nonce)); cipher.setAAD(Buffer.from(associated));
     const ciphertext = Buffer.concat([cipher.update(JSON.stringify(payload)), cipher.final(), cipher.getAuthTag()]).toString('base64');
@@ -104,13 +121,17 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
   const pipeline = async (r: Runtime) => {
     const container = createContainerFromDb(r.db), app = new Hono<{ Bindings: Env; Variables: AppVariables }>();
     const messages: PaymentCallbackMessage[] = [], pending: Promise<unknown>[] = [];
-    const config: Record<string, string> = { cfg_wechat_appid: appId, cfg_routine_appId: appId, cfg_wechat_app_appid: appId,
-      cfg_pay_weixin_mchid: merchantId, cfg_pay_weixin_serial_no: 'ABCDEF123456', cfg_site_url: 'https://local.example' };
+    // Deliberately stale, conflicting cache values must never select the
+    // account or make a negative pass before its intended frozen-identity guard.
+    const config: Record<string, string> = { cfg_wechat_appid: 'stale-official-app', cfg_routine_appId: 'stale-routine-app',
+      cfg_wechat_app_appid: 'stale-native-app', cfg_pay_weixin_mchid: '9999999999',
+      cfg_pay_weixin_serial_no: 'DEADBEEF0001', cfg_site_url: 'https://stale-cache.example' };
+    const cacheGet = vi.fn(async (key: string) => config[key] ?? null); cacheReads.push(cacheGet);
     const control = { failQueue: false };
     const env = { ALIPAY_PUBLIC_KEY: keys.publicKey, ALIPAY_APP_ID: aliApp, ALIPAY_SELLER_ID: merchantId,
       WECHAT_MCH_PRIVATE_KEY: keys.privateKey, WECHAT_PLATFORM_PUBLIC_KEY: keys.publicKey,
       WECHAT_API_V3_KEY: aesKey, WECHAT_PLATFORM_PUBLIC_KEY_ID: 'LOCAL_PLATFORM_KEY',
-      CONFIG_KV: { get: async (key: string) => config[key] ?? null, put: async () => {}, delete: async () => {} },
+      CONFIG_KV: { get: cacheGet, put: async () => {}, delete: async () => {} },
       ORDER_QUEUE: { sendBatch: async (batch: Iterable<{ body: OrderMessage }>) => {
         if (control.failQueue) throw Error('local_transport_failure');
         for (const item of batch) {
@@ -194,8 +215,10 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
       if (failure === 'amount') payload.amount = { total: 801, currency: 'CNY' };
       if (failure === 'payer') payload.payer = { openid: 'wrong-payer' };
       if (failure === 'missing-payer') payload.payer = {};
-      if (failure === 'original-app') api.config.cfg_wechat_appid = 'wrong-app';
-      if (failure === 'original-merchant') api.config.cfg_pay_weixin_mchid = '9876543210';
+      // Match the verified payload to today's actual SQL account, while the
+      // immutable payment selection retains its original app/merchant.
+      if (failure === 'original-app') await updatePublicConfig('wechat_appid', 'wrong-app');
+      if (failure === 'original-merchant') await updatePublicConfig('pay_weixin_mchid', '9876543210');
       const request = wechat(order.order_id, payload);
       if (failure === 'signature') request.body += ' ';
       expect((await api.post('/api/pay/notify/wechat', request)).status).toBe(400);
@@ -314,7 +337,7 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
     await runtime(async r => {
       const order = await create(r), api = await pipeline(r); await api.post('/api/pay/notify/wechat', wechat(order.order_id));
       if (paid) await settleOfflineOrderExternalPayment(createContainerFromDb(r.db), api.messages[0]);
-      api.config.cfg_pay_weixin_mchid = 'changed-after-collection';
+      await updatePublicConfig('pay_weixin_mchid', 'changed-after-collection');
       await f.exec('UPDATE payment_reconciliation_case SET next_check_time=0');
       const [row] = await f.db.select().from(paymentReconciliationCase);
       const message = { action: 'processPaymentReconciliation' as const, caseId: row.id, replayKey: row.replayKey };
@@ -330,7 +353,7 @@ describe('signed offline callback and recovery pipeline on isolated native PG16'
       const row = await api.reconciliation.registerIntent({ provider: 'wechat', profile: 'wechat', orderNo: order.order_id,
         orderDomain: 'offline_order', expectedAmountCents: 800, currency: 'CNY' });
       // Query is now available, but never with a rotated merchant identity.
-      api.config.cfg_pay_weixin_mchid = '9999999999';
+      await updatePublicConfig('pay_weixin_mchid', '9999999999');
       await f.exec('UPDATE payment_reconciliation_case SET next_check_time=0');
       expect(await api.reconciliation.processMessage({ action: 'processPaymentReconciliation', caseId: row.id, replayKey: row.replayKey })).toBe('unknown');
       expect(api.query).not.toHaveBeenCalled(); expect((await evidence()).rows[0]).toEqual({ ...zero, cases: 1 });

@@ -13,7 +13,9 @@ import type {
   PaymentCallbackMessage,
 } from "@/env";
 import type { Container } from "@/lib/di";
-import { withTx } from "@/lib/di";
+import { withTx, type DbClient } from "@/lib/di";
+import { appendRoutineOriginalPaymentTx, prepareRoutineOriginalPaymentTx, assertRoutineOriginalReferenceTx } from './RoutineOriginalPaymentEvidence';
+import { parseRoutineProviderObservation } from './RoutineProviderObservation';
 import { persistVerifiedPaymentCallbackTx, providerPaymentSucceeded,
   type VerifiedPaymentCallback, type PaymentCallbackReceiveResult } from './PaymentCallbackPersistence';
 export type { VerifiedPaymentCallback, PaymentCallbackReceiveResult } from './PaymentCallbackPersistence';
@@ -43,7 +45,7 @@ import {
   applyProviderMembershipPayment,
   findMembershipOrderByOrderId,
 } from "@/services/user/PaidMembershipService";
-import { ApiException } from "@/utils/errors";
+import { ApiException, ServiceUnavailableException } from "@/utils/errors";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import { assertNativeAppCallbackWitnessInTx } from './NativeAppPaymentAuthority';
 import { lockStoreOrderPaymentBoundary } from './StoreOrderPaymentBoundary';
@@ -128,6 +130,7 @@ function retryDelay(attempt: number): number {
 }
 
 function callbackErrorCode(error: unknown): string {
+  if (error instanceof ServiceUnavailableException) return 'payment_dependency_unavailable';
   if (error instanceof ApiException) return "payment_business_validation";
   const candidate = error instanceof Error ? error.message : String(error);
   return /^[a-z0-9_:-]{1,64}$/i.test(candidate)
@@ -160,16 +163,35 @@ export class PaymentCallbackEventService {
     this.settler = settler ?? ((callback) => this.settle(callback));
   }
 
-  async receive(callback: VerifiedPaymentCallback, identity?: OfflineVerifiedCallbackIdentity): Promise<PaymentCallbackReceiveResult> {
+  async receive(callback: VerifiedPaymentCallback, identity?: OfflineVerifiedCallbackIdentity, routineProof?: unknown): Promise<PaymentCallbackReceiveResult> {
+    callback = { ...callback };
+    const proof = routineProof === undefined ? undefined : parseRoutineProviderObservation({ APP_KEY: this.env.APP_KEY ?? '' }, routineProof);
     const offline = /^xx[0-9a-f]{30}$/.test(callback.orderNo) && providerPaymentSucceeded(callback);
     if (offline && !identity) throw new Error("offline_callback_verified_identity_required");
     return withTx(this.container, async tx => {
       if (offline) await prepareOfflinePaymentTransaction(tx);
+      const routine = callback.provider === 'wechat' && callback.profile === 'routine' && callback.tradeState === 'SUCCESS' && !offline;
+      const prepared = routine ? await prepareRoutineOriginalPaymentTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, proof,
+        { source: 'callback', ...callback }) : null;
+      const original = prepared ? await appendRoutineOriginalPaymentTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, prepared) : null;
       if (callback.provider === 'wechat' && callback.profile === 'app') {
         await lockStoreOrderPaymentBoundary(tx, callback.orderNo);
         await assertNativeAppCallbackWitnessInTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, callback);
       }
       const received = await persistVerifiedPaymentCallbackTx(tx, callback);
+      if (original?.conflict && !received.terminalConflict) {
+        // Keep the genuine verified observation and minimized event together;
+        // conflicting/unresolved original facts cannot dispatch settlement.
+        const now = Math.floor(Date.now()/1000);
+        await tx.update(paymentCallbackEvent).set({ status: 'UNKNOWN', lastErrorCode: 'routine_original_evidence_conflict', processedTime: now })
+          .where(eq(paymentCallbackEvent.id, received.eventId));
+        await tx.update(paymentCallbackOutbox).set({ status: 'COMPLETED', processedTime: now })
+          .where(eq(paymentCallbackOutbox.id, received.outboxId));
+        await tx.update(paymentReconciliationCase).set({ status: 'CONFLICT', nextCheckTime: 0, leaseUntil: 0, leaseToken: '',
+          lastErrorCode: 'routine_original_evidence_conflict', resolvedTime: now, updateTime: now })
+          .where(and(eq(paymentReconciliationCase.provider, callback.provider), eq(paymentReconciliationCase.orderNo, callback.orderNo)));
+        return { ...received, terminalConflict: true };
+      }
       if (offline && identity && !received.terminalConflict) {
         const [recovery] = await tx.select({ status: paymentReconciliationCase.status }).from(paymentReconciliationCase)
           .where(and(eq(paymentReconciliationCase.provider, callback.provider), eq(paymentReconciliationCase.orderNo, callback.orderNo)));
@@ -291,7 +313,7 @@ export class PaymentCallbackEventService {
       await this.finish(claim, "COMPLETED", settled.domain, "");
       return "completed";
     } catch (error) {
-      if (error instanceof ApiException) {
+      if (error instanceof ApiException && !(error instanceof ServiceUnavailableException)) {
         await this.finish(claim, "UNKNOWN", claim.orderDomain, callbackErrorCode(error));
         return "unknown";
       }
@@ -412,11 +434,15 @@ export class PaymentCallbackEventService {
       return { status: "unknown", domain: "", errorCode: "amount_mismatch" };
     }
     const payType = callback.provider === "wechat" ? "weixin" : "alipay";
+    const original = (tx: DbClient, domain: string) => callback.provider === 'wechat' && callback.profile === 'routine'
+      ? assertRoutineOriginalReferenceTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, callback.providerEventId,
+        { source: 'callback', ...callback }, domain) : Promise.resolve();
     if (storeOrder) {
       const result = await applyProviderStoreOrderPayment(this.container, {
         orderId: storeOrder.id,
         payType,
         tradeNo: callback.transactionId,
+        authorizeBeforePayment: tx => original(tx, 'store_order'),
       });
       if (result.outbox) {
         try {
@@ -439,6 +465,7 @@ export class PaymentCallbackEventService {
         payType,
         tradeNo: callback.transactionId,
         expectedAmountCents: callback.amountCents,
+        authorizeBeforePayment: tx => original(tx, 'recharge'),
       });
       return domainOutcome("recharge", result.outcome);
     }
@@ -447,6 +474,7 @@ export class PaymentCallbackEventService {
       payType,
       tradeNo: callback.transactionId,
       expectedAmountCents: callback.amountCents,
+      authorizeBeforePayment: tx => original(tx, 'membership'),
     });
     return domainOutcome("membership", result.outcome);
   }
