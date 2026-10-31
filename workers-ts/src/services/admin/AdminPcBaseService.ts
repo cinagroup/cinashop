@@ -5,6 +5,7 @@ import { withTx, type Container, type DbClient } from '@/lib/di';
 import { systemConfig } from '@/models/schema';
 import { acquireAdminAuthorityMenuLock } from '@/migrations/adminAuthorityOperation';
 import { assertAdminPcBaseOperationReady } from '@/migrations/adminPcBaseOperation';
+import { reviewedAdminWechatRoutineConfigGuardOid } from '@/migrations/adminWechatRoutineConfigCompatibility';
 import { parseCanonicalAttachmentId } from '@/services/system/AttachmentService';
 import { readPcBaseImageReferences, assertPcBaseImageReplacements, renderPcBaseImages } from '@/services/pc/PcBaseAssetPolicy';
 import { ApiException, HttpApiException, NotFoundException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
@@ -172,10 +173,12 @@ export class AdminPcBaseService {
     // PC has no OAuth account authority. The staff/menu fences were acquired
     // first; this physical relation lock also fences missing keys and raw DML.
     await tx.execute(sql`LOCK TABLE ONLY public.system_config IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
+    const routineGuardOid = await reviewedAdminWechatRoutineConfigGuardOid(tx);
     const [row] = await tx.execute<{ safe: boolean }>(sql`SELECT c.relkind='r' AND c.relpersistence='p' AND NOT c.relispartition AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
       AND c.relowner=o.relowner AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_rewrite WHERE ev_class=c.oid) AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_policy WHERE polrelid=c.oid)
-      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgrelid=c.oid AND NOT tgisinternal) AS safe
+      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgrelid=c.oid AND NOT tgisinternal
+        AND tgfoid IS DISTINCT FROM ${routineGuardOid}::oid) AS safe
       FROM pg_catalog.pg_class c CROSS JOIN pg_catalog.pg_class o
       WHERE c.oid=to_regclass('public.system_config') AND o.oid=to_regclass('public.admin_pc_base_operation')`);
     if (row?.safe !== true) throw new ServiceUnavailableException('PC配置存储目录已变化，请维护后再保存');

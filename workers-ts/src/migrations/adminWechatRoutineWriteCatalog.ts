@@ -46,11 +46,26 @@ export async function inspectAdminWechatRoutineWriteCatalog(tx: Query, names?: N
   const [context] = await tx.execute<{ database: string; database_oid: number; maintenance: string | null; present: boolean }>(sql`SELECT
     current_database() AS database,(SELECT oid::bigint FROM pg_catalog.pg_database WHERE datname=current_database()) AS database_oid,
     (SELECT pg_catalog.pg_get_userbyid(relowner) FROM pg_catalog.pg_class WHERE oid=to_regclass('public.admin_wechat_routine_operation')) AS maintenance,
-    to_regclass('public.admin_wechat_routine_operation') IS NOT NULL OR EXISTS(SELECT 1 FROM pg_catalog.pg_proc
-      WHERE pronamespace='public'::regnamespace AND proname IN (${ADMIN_WECHAT_ROUTINE_WRITE_FUNCTION},
-        ${ADMIN_WECHAT_ROUTINE_CONFIG_GUARD_FUNCTION},${ADMIN_WECHAT_ROUTINE_STORED_TEXT_FUNCTION},'admin_wechat_routine_operation_immutable_v1'))
-      OR EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgname IN ('routine_config_rows','routine_config_truncate')) AS present`);
+    EXISTS(SELECT 1 FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace
+      AND (starts_with(relname,'admin_wechat_routine_operation') OR starts_with(relname,'awro_')))
+      OR EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE pronamespace='public'::regnamespace
+        AND (starts_with(proname,'cinashop_admin_wechat_routine_') OR starts_with(proname,'cinashop_wechat_routine_')
+          OR starts_with(proname,'admin_wechat_routine_')))
+      OR EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE starts_with(tgname,'routine_config_') OR starts_with(tgname,'awro_')) AS present`);
   if (!context.present) return { present: false, ready: false, binding: null, failures: [] };
+  const [namespace] = await tx.execute<{ safe: boolean }>(sql`SELECT
+    NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class WHERE relnamespace='public'::regnamespace
+      AND (starts_with(relname,'admin_wechat_routine_operation') OR starts_with(relname,'awro_'))
+      AND relname NOT IN('admin_wechat_routine_operation','awro_pk'))
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE pronamespace='public'::regnamespace
+      AND (starts_with(proname,'cinashop_admin_wechat_routine_') OR starts_with(proname,'cinashop_wechat_routine_')
+        OR starts_with(proname,'admin_wechat_routine_'))
+      AND proname NOT IN(${ADMIN_WECHAT_ROUTINE_WRITE_FUNCTION},${ADMIN_WECHAT_ROUTINE_CONFIG_GUARD_FUNCTION},
+        ${ADMIN_WECHAT_ROUTINE_STORED_TEXT_FUNCTION},'admin_wechat_routine_operation_immutable_v1'))
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE (starts_with(tgname,'routine_config_') OR starts_with(tgname,'awro_'))
+      AND NOT(tgname IN('routine_config_rows','routine_config_truncate') AND tgrelid=to_regclass('public.system_config')
+        OR tgname IN('awro_immutable_rows','awro_immutable_truncate') AND tgrelid=to_regclass('public.admin_wechat_routine_operation'))) AS safe`);
+  check('namespace', namespace?.safe === true);
   const functions = await tx.execute<FunctionRow>(sql`SELECT p.oid::text AS oid,p.proname AS name,
     pg_catalog.pg_get_userbyid(p.proowner) AS owner,p.proowner::bigint AS owner_oid,p.prosrc AS body,
     p.proargtypes::text AS arguments,p.proargnames AS argument_names,p.prorettype::integer AS returns,
@@ -123,6 +138,8 @@ export async function inspectAdminWechatRoutineWriteCatalog(tx: Query, names?: N
     (SELECT NOT(rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_stat_activity WHERE usesysid=r.oid)
+      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_default_acl d CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a
+        WHERE a.grantee=r.oid OR(a.grantee=0 AND d.defaclobjtype IN('r','S')))
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_database d WHERE pg_catalog.has_database_privilege(r.oid,d.oid,'CREATE'))
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace n WHERE n.nspname NOT LIKE 'pg_%' AND pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE'))
       AND pg_catalog.has_schema_privilege(r.oid,'public','USAGE')

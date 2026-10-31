@@ -4,6 +4,7 @@ import type { Env } from '@/env';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { systemConfig } from '@/models/schema';
 import { inspectAdminWechatAppOperation, assertAdminWechatAppOperationReady } from '@/migrations/adminWechatAppOperation';
+import { reviewedAdminWechatRoutineConfigGuardOid } from '@/migrations/adminWechatRoutineConfigCompatibility';
 import { ApiException, HttpApiException, NotFoundException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { acquireAdminAuthorityWriteBarrier, withAdminAuthorityWriteTx, type AdminAuthorityActor } from './AdminAuthorityWriteService';
 import { loadAdminProfileActor } from './AdminProfileService';
@@ -93,10 +94,12 @@ export class AdminWechatAppService {
     const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731664,0) AS locked`);
     if (gate?.locked !== true) throw new ServiceUnavailableException('原生App登录身份正在提交，请稍后重新核对配置');
     await tx.execute(sql`LOCK TABLE ONLY public.system_config IN SHARE ROW EXCLUSIVE MODE NOWAIT`);
+    const routineGuardOid = await reviewedAdminWechatRoutineConfigGuardOid(tx);
     const [row] = await tx.execute<{ safe: boolean }>(sql`SELECT c.relkind='r' AND c.relpersistence='p' AND NOT c.relispartition AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
       AND c.relowner=o.relowner AND NOT EXISTS(SELECT 1 FROM pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_rewrite WHERE ev_class=c.oid) AND NOT EXISTS(SELECT 1 FROM pg_policy WHERE polrelid=c.oid)
-      AND NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=c.oid AND NOT tgisinternal) AS safe
+      AND NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid=c.oid AND NOT tgisinternal
+        AND tgfoid IS DISTINCT FROM ${routineGuardOid}::oid) AS safe
       FROM pg_class c CROSS JOIN pg_class o WHERE c.oid=to_regclass('public.system_config') AND o.oid=to_regclass('public.admin_wechat_app_operation')`);
     if (row?.safe !== true) throw new ServiceUnavailableException('原生App配置存储目录已变化，请维护后再保存');
   }

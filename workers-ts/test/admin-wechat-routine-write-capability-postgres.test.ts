@@ -10,7 +10,7 @@ import { systemConfig } from '@/models/schema';
 import { pricingIdentifier } from '@/migrations/checkoutPricingLockCatalog';
 import { ADMIN_WECHAT_ROUTINE_OPERATION_SQL, assertAdminWechatRoutineOperationReady } from '@/migrations/adminWechatRoutineOperation';
 import { ADMIN_WECHAT_ROUTINE_STORED_TEXT_SIGNATURE, ADMIN_WECHAT_ROUTINE_STORED_TEXT_SQL } from '@/migrations/adminWechatRoutineStoredText';
-import { ADMIN_WECHAT_ROUTINE_SOURCE_SQL, ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE,
+import { ADMIN_WECHAT_ROUTINE_SOURCE_SQL, ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE, ADMIN_WECHAT_ROUTINE_REQUEST_GATE,
   adminWechatRoutineWriteSql, type AdminWechatRoutineWriteBinding } from '@/migrations/adminWechatRoutineWriteCapability';
 import { inspectAdminWechatRoutineWriteCatalog } from '@/migrations/adminWechatRoutineWriteCatalog';
 import { wechatRoutineActorBinding, wechatRoutineSourceRevision, wechatRoutineSqlFields,
@@ -170,6 +170,29 @@ GRANT EXECUTE ON FUNCTION ${ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE} TO ${adminIden
 }
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine bounded writer on independent native PG16 roles (low-level only)', () => {
+  it('keeps financial request locks independent while enforcing its own request lock through replay', async () => withCapability(async c => {
+    const id=randomUUID(), expected=await c.source(), rows=await c.rows(), sequence=await c.sequence();
+    await c.fixture.db.transaction(async peer => {
+      // Financial operations own this namespace. Even an identical int32 key
+      // must not make an unrelated Routine request appear busy.
+      await peer.execute(sql`SELECT pg_advisory_xact_lock(731668,hashtext(${id}::text))`);
+      expect((await c.invoke({id,expected})).receipt).toMatchObject({state:'committed',replayed:false});
+      const facts=async()=>({
+        rows:Array.from(await peer.execute(sql`SELECT to_jsonb(c) AS row,c.xmin::text AS version FROM public.system_config c ORDER BY id`)),
+        receipts:Array.from(await peer.execute(sql`SELECT * FROM public.admin_wechat_routine_operation ORDER BY operation_id`)),
+        sequence:Array.from(await peer.execute(sql`SELECT last_value::text,is_called FROM public.system_config_id_seq`)),
+      });
+      const before=await facts();
+      await peer.execute(sql`SELECT pg_advisory_xact_lock(${ADMIN_WECHAT_ROUTINE_REQUEST_GATE},hashtext(${id}::text))`);
+      await expect(c.invoke({id,expected})).rejects.toMatchObject({code:'55P03'});
+      expect(await facts()).toEqual(before);
+    });
+    const replay=await c.invoke({id,expected});
+    expect(replay.receipt).toMatchObject({state:'committed',replayed:true});
+    expect(replay.xidBefore).toBeNull(); expect(replay.xidAfter).toBeNull();
+    expect(await c.rows()).toEqual(rows); expect(await c.sequence()).toEqual(sequence);
+  }));
+
   it('recognizes the complete catalog with explicit names and OID-bound inferred identities', async () => withCapability(async c => {
     const names = { maintenance: c.maintenance, admin: c.binding.admin, writer: c.binding.writer };
     expect(await inspectAdminWechatRoutineWriteCatalog(c.fixture.db, names))

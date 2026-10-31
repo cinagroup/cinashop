@@ -6,7 +6,9 @@ export const ADMIN_WECHAT_ROUTINE_WRITE_FUNCTION = 'cinashop_admin_wechat_routin
 export const ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE = `public.${ADMIN_WECHAT_ROUTINE_WRITE_FUNCTION}(uuid,integer,text,text,text,text,jsonb)`;
 export const ADMIN_WECHAT_ROUTINE_CONFIG_GUARD_FUNCTION = 'cinashop_wechat_routine_config_guard_v1';
 export const ADMIN_WECHAT_ROUTINE_CONFIG_GUARD_SIGNATURE = `public.${ADMIN_WECHAT_ROUTINE_CONFIG_GUARD_FUNCTION}()`;
-export const ADMIN_WECHAT_ROUTINE_REQUEST_GATE = 731668;
+// 731668 belongs to CustomerWork financial request idempotency. Different
+// request domains need distinct namespaces even when their int32 hashes match.
+export const ADMIN_WECHAT_ROUTINE_REQUEST_GATE = 731752;
 const keys = ['routine_appId', 'routine_appsecret', 'routine_name', 'routine_contact_type', 'store_user_avatar'] as const;
 const keyArray = `ARRAY[${keys.map(key => `'${key}'`).join(',')}]::text[]`;
 

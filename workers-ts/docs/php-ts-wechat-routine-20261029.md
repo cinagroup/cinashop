@@ -366,3 +366,20 @@ Attempt 05 的图片子项曾通过 13 项，但父进程以 143 中断，后续
 本阶段四个完整文件分别实际通过：原生文本解析 267 项、原生独立角色写入/目录/回执 45 项、PGlite 回执 30 项、运行器边界 681 项，均无失败或跳过；两套完整 Worker 类型检查使用项目既有脚本实际 exit=0。267 项与最终 45 项来自分别新建的 PG16.14 集群，两者 remaining=0 且 STOPPED。先前 36 项为最终写入文件的旧版本子集，不重复累计。日志在 `/tmp/cinashop-phase22-validation/`；最终运行绑定 `inputs-final-04.json`，验证后仅追加本节。早期双重 JSON 编码夹具、目录查询保留字和 input_type 默认值误写的失败保留，最终修正使用真实 schema 的 `input` 默认值，未放松断言。直接 tsc 的默认堆失败及两处测试宿主字节类型错误也保留；最终沿用原有 package 脚本，未改堆配置、超时或验证并发。阶段 21 提交 b874c56a 的提交后全历史扫描实际覆盖 869 个提交、无新增命中；本阶段提交须另行扫描，不能复用该旧结论。
 
 正式维护 installer、全库角色 profile、既有 App/Base/Open/PC 作者 guard 共存、专用 HTTP service/controller/UI 和历史账号归属维护仍未完成。本阶段拒绝实质 AppID 变化（包括首次接入），只允许相同解析字节的原值规范化；这是未 commissioning 时的关闭状态，不代表跨账号切换已实现。保留既有 UID、用户、权益、订单与付款，当前配置、回执、witness、INIT/PREPAY 均不提升为旧付款归属证明。用户已授权将未提交迁移工作一并 checkpoint 并合入 main；本轮不执行生产 DDL、真实 provider 调用或部署，既有全量 CI 失败与全局迁移未完成状态保持如实记录。
+
+
+## 阶段 23：正式维护准入、完整权限审计与四作者共存（2026-10-30）
+
+阶段 22 的 `c7c36f42` 已在用户明确授权后推送 origin/main，其提交后全历史扫描实际覆盖 870 个提交、无新增命中。本阶段从该提交新建 `codex/routine-author-commissioning` 继续迁移。
+
+新增 `runAdminWechatRoutineUpgrade`／事务组件，要求显式 PG16 维护身份、当前完整 App/Admin profile 和部署预建的空权限 NOLOGIN writer。先取得独立维护／凭据门及实际表锁，目录、最小授权、完整联合校验与最终双 profile 在同一事务中提交；完整重复只读返回，partial、额外权限或目录漂移拒绝且不修复。安装不创建角色、不改凭据或业务行。完整 runtime audit 只在精确 named catalog 通过后接纳 Admin 的回执 SELECT 与唯一实际函数 OID，App 不增加这些权限，基础首次 commissioning 的固定计划保持。
+
+目标合同显式保留 local/caseLock，gift peers 必须声明同一数据库及完整身份集合，App reader 也显式传递。公共入口在等待 BEGIN 前同步复制并校验这些声明；真实五角色用例在取得安装 Promise 后立即修改独立调用方副本的 writer、local、caseLock、peer Admin 和 reader，仍只安装原绑定。该用例使用当前完整 App/Admin/Financial/Manager/Cashier LOGIN、conditionalGuards 与 formImages，实际核对五个完整审计、独立 PID、四个非 Admin 的读取／EXECUTE 拒绝，以及全部配置 xmin 和业务 facts 不变。
+
+App/Base/Open/PC 四个已有作者仅接纳经过完整 Routine catalog／当前绑定 Admin／真实 guard OID 证明的两道触发器；无 bundle 时保留原有无触发器规则，未知触发器、反向挂载、未知 Routine 命名空间、默认授权和 partial 均拒绝。Menu 检查的 cache 目录保持独立。实际四作者保存及未知触发器拒绝后的全部源／五域回执原子性由正式 native 用例覆盖。
+
+另发现旧 Routine 请求门 `731668` 与 CustomerWork 财务请求幂等门重复。独立 peer 持有相同 int32 键时，新增原生反例实际为原 45 项通过、新例 `55P03` 失败；仅将 Routine 请求门改为独立 `731752` 后，整个 46 项文件通过。财务门保持原值，新例同时证明旧门不阻挡 Routine、新门仍阻挡同 UUID，释放后无 XID／源／序列改写的合法重放可恢复。修复前源码在真实失败终态后另行保存，未伪称执行前冻结。
+
+最终正式 native 完整文件 11 项通过，包含调用参数竞态；低层完整文件 46 项通过，两者无失败或跳过，各自 remaining=0 且 STOPPED。11 项选择 `upgrade-native-04`／`inputs-04.json`，46 项选择 `request-gate-green-01`／`inputs-03.json`；二者输入差异仅为后来修改的安装器与正式 native 文件，这两条路径不被低层文件调用。此前 `inputs-02.json` 的四个已有作者完整文件分别为 3／3／9／6 通过，回执和运行器两文件共 714 通过；这些是请求门修复及公共入口快照调整前的实测版本，不改称为最后源码上的重新执行。随后最终完整 unit/runtime 两套 TypeScript 检查 03 均 exit=0，13 条源路径在整个最终 pipeline 中保持不变，验证后仅追加本节。各阶段重复执行不累计为新增案例，首轮 8 通过／1 失败的公众号开关字符串断言保留，依既有存储合同纠正测试期望，未改业务序列化。完整五角色 fixture 的既有 IF EXISTS NOTICE 保留，不声称无诊断输出。原始日志与输入在 `/tmp/cinashop-phase23-validation/`。
+
+上述为自有本机 PG16 的维护协议验收，没有生产 DDL、provider 调用、部署或新增 HTTP/UI 启用。专用作者的 fresh 账号／密码／权限校验、原绑定回执恢复、控制器／双前缀／第五共享 envelope、前端页面与 Browser 验收仍需实现；不能用 SQL actor 参数或底层 PostgreSQL 测试替代真实 HTTP。跨 AppID 仍须先完成可审查归属维护，现有用户、权益、旧单与付款事实保持；旧配置、回执、witness、INIT/PREPAY 仍不证明旧付款归属。原付款／发货恢复、既有 CI 失败及全部剩余迁移范围继续保持未完成。

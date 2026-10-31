@@ -7,6 +7,9 @@ import { ADMIN_PRODUCT_LABEL_OPERATION_RUNTIME_PRIVILEGES, inspectAdminProductLa
 import { sql } from 'drizzle-orm';
 import { inspectAdminWechatMenuOperation, ADMIN_WECHAT_MENU_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatMenuOperation';
 import { inspectAdminWechatBaseOperation, ADMIN_WECHAT_BASE_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatBaseOperation';
+import { inspectAdminWechatRoutineWriteCatalog } from './adminWechatRoutineWriteCatalog';
+import { ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatRoutineOperation';
+import { ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE } from './adminWechatRoutineWriteCapability';
 import type { DbClient } from '../lib/di';
 import { outRequestHash } from '../services/out/OutIdempotency';
 import { runtimeBusinessPrivilegePlanAtStage, type RuntimeBusinessProfileVersion } from './runtimeBusinessPrivilegePlan';
@@ -341,6 +344,19 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       else plan.tables.admin_platform_menu_operation=ADMIN_PLATFORM_MENU_OPERATION_RUNTIME_PRIVILEGES[kind];
     }
     const reviewedPlatformMenu = kind==='admin' && platformMenuReady ? platformMenuWrite.functionOid : null;
+    // An independently commissioned Routine writer never extends App's SQL
+    // authority. Bind the whole bundle to these exact maintenance/Admin names
+    // before accepting Admin SELECT and this single SECURITY DEFINER OID.
+    const [routineOwner] = await tx.execute<{ writer: string; oid: string }>(sql`SELECT
+      pg_catalog.pg_get_userbyid(proowner) AS writer,oid::text AS oid FROM pg_catalog.pg_proc
+      WHERE oid=pg_catalog.to_regprocedure(${ADMIN_WECHAT_ROUTINE_WRITE_SIGNATURE})`);
+    const routineWrite = await inspectAdminWechatRoutineWriteCatalog(tx, routineOwner
+      ? { maintenance: names.maintenance, admin: names.admin, writer: routineOwner.writer } : undefined);
+    if (routineWrite.present) {
+      if (!routineWrite.ready) failures.push('admin_wechat_routine_catalog');
+      else plan.tables.admin_wechat_routine_operation=ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES[kind];
+    }
+    const reviewedRoutineWrite = kind==='admin' && routineWrite.ready && routineOwner ? routineOwner.oid : null;
     onStage?.('tables');
     const tableRows=await tx.execute(sql`SELECT c.relname AS name,c.oid::text AS oid,c.relkind,c.relpersistence,
       c.relrowsecurity OR c.relforcerowsecurity OR c.relispartition
@@ -438,7 +454,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       AND p.oid::text IS DISTINCT FROM ${reviewedMessageRead}
 
       AND p.oid::text IS DISTINCT FROM ${reviewedSupplierLabel}
-      AND p.oid::text IS DISTINCT FROM ${reviewedPlatformMenu}) AS no_unreviewed_definer,
+      AND p.oid::text IS DISTINCT FROM ${reviewedPlatformMenu}
+      AND p.oid::text IS DISTINCT FROM ${reviewedRoutineWrite}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
         AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
     if(routines?.no_unreviewed_definer!==true || routines?.no_delegation!==true)failures.push('routine_authority');
