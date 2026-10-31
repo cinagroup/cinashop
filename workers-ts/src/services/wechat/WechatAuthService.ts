@@ -37,6 +37,9 @@ import { readRoutineCredentials, withRoutineCredentials } from './RoutineRuntime
 import { getRoutineAccessToken } from './RoutineAccessTokenService';
 import { hasRoutineIdentityObservationShape, issueRoutineIdentityObservation, verifyRoutineIdentityObservation, type RoutineIdentityObservation } from './RoutineIdentityObservation';
 import { appendRoutineIdentityWitness } from './RoutineIdentityWitness';
+import { assertRoutineIdentityOwnershipInstalledTx } from '@/migrations/routineIdentityOwnership';
+import { assertRoutineIdentityWitnessReady } from '@/migrations/routineIdentityWitness';
+import { appendRoutineIdentityOwnershipTx, readRoutineIdentityOwnerBySubjectTx } from './RoutineIdentityOwnership';
 
 const SOCIAL_PENDING_TTL_SECONDS = 15 * 60;
 const SOCIAL_PENDING_PREFIX = "social_pending:";
@@ -284,11 +287,11 @@ export class WechatAuthService {
       routineObservation: session.observation,
       spreadUid: params.spreadUid,
     });
-    const [existing, requiredConfig] = await Promise.all([
-      this.findExistingIdentityUser(identity),
+    const [preview, requiredConfig] = await Promise.all([
+      this.routineIdentityPreview(identity),
       new SystemConfigService(this.container, this.env).get("store_user_mobile"),
     ]);
-    const requiresPhone = phoneBindingRequired(requiredConfig) && !existing?.phone;
+    const requiresPhone = preview.requiresContinuity || phoneBindingRequired(requiredConfig) && !preview.existing?.phone;
     const key = crypto.randomUUID();
     const stored = await cacheSetIfAbsent(
       ROUTINE_LOGIN_PREFIX + key,
@@ -545,12 +548,13 @@ export class WechatAuthService {
     iv: string;
     encryptedData: string;
   }): Promise<{ phone: string }> {
-    if (!Number.isSafeInteger(params.uid) || params.uid <= 0) {
+    const {uid,iv,encryptedData}=params;
+    if (!Number.isSafeInteger(uid) || uid <= 0) {
       throw new ValidateException("请先登录");
     }
     const credentials = await readRoutineCredentials(this.container, this.env);
     const session = await cacheTake<{ version?: number; openid?: string; sessionKey?: string; stamp?: string }>(
-      routineSessionKey(params.uid, credentials.stamp),
+      routineSessionKey(uid, credentials.stamp),
       this.env,
     );
     if (session?.version !== 2 || session.stamp !== credentials.stamp
@@ -561,7 +565,7 @@ export class WechatAuthService {
 
     let data: Record<string, unknown>;
     try {
-      data = await decryptMiniProgramData(params.encryptedData, session.sessionKey, params.iv);
+      data = await decryptMiniProgramData(encryptedData, session.sessionKey, iv);
     } catch {
       throw new ValidateException("手机号解密失败，请重新登录");
     }
@@ -575,16 +579,37 @@ export class WechatAuthService {
     // Reuse the same advisory-lock and duplicate-identity rules as SMS
     // registration/binding instead of directly updating the user row.
     return withRoutineCredentials(this.container, this.env, session.stamp, async bound => {
+      if (await assertRoutineIdentityOwnershipInstalledTx(bound.db)) {
+        const before=await bound.userDao.findForAuth(uid);
+        if (!before) throw new NotFoundException('用户不存在');
+        // Take all phone advisories before the user lock. The existing helper
+        // then re-enters these same locks on this caller-owned connection.
+        for (const value of [...new Set([before.phone,phone].filter(Boolean))].sort())
+          await bound.db.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`user-phone:${value}`}))`);
+        const locked=await bound.db.execute<{phone:string;account:string}>(sql`SELECT phone,account FROM public."user"
+          WHERE uid=${uid} AND status=1 AND is_del=0 AND delete_time IS NULL FOR UPDATE`);
+        if (locked.length!==1 || locked[0].phone!==before.phone || locked[0].account!==before.account)
+          throw new ValidateException('账号手机号已变化，请重新授权');
+        const owned=await readRoutineIdentityOwnerBySubjectTx(bound.db,this.env,{
+          appId:credentials.appId,openid:session.openid!,expectedUid:uid,
+        });
+        if (!owned) throw new ValidateException('微信身份尚未证明当前账号归属，请先完成账号绑定');
+        if (before.phone===phone) return {phone};
+        const login=new LoginService(bound,this.env);
+        if (before.phone) await login.updatePhone(uid,phone);
+        else await login.bindPhone(uid,phone);
+        return {phone};
+      }
       const linked = await bound.db.select({ uid: wechatUser.uid }).from(wechatUser)
-        .where(and(eq(wechatUser.uid, params.uid), eq(wechatUser.openid, session.openid!),
+        .where(and(eq(wechatUser.uid, uid), eq(wechatUser.openid, session.openid!),
           eq(wechatUser.userType, 'routine'), eq(wechatUser.isDel, 0))).limit(1);
       if (!linked[0]) throw new ValidateException('微信身份与当前账号不匹配，请重新登录');
-      const current = await bound.userDao.findForAuth(params.uid);
+      const current = await bound.userDao.findForAuth(uid);
       if (!current) throw new NotFoundException('用户不存在');
       if (current.phone === phone) return { phone };
       const login = new LoginService(bound, this.env);
-      if (current.phone) await login.updatePhone(params.uid, phone);
-      else await login.bindPhone(params.uid, phone);
+      if (current.phone) await login.updatePhone(uid, phone);
+      else await login.bindPhone(uid, phone);
       return { phone };
     });
   }
@@ -698,8 +723,10 @@ export class WechatAuthService {
     if (identity.userType === 'app') throw new ValidateException('原生App登录须使用独立授权状态与凭据屏障');
     const config = await new SystemConfigService(this.container, this.env)
       .get("store_user_mobile");
+    const preview = identity.userType === 'routine' ? await this.routineIdentityPreview(identity) : null;
+    if (preview?.requiresContinuity) return this.createPendingIdentity(identity, ip);
     if (phoneBindingRequired(config) || options.forcePendingForNew) {
-      const existing = await this.findExistingIdentityUser(identity);
+      const existing = preview ? preview.existing : await this.findExistingIdentityUser(identity);
       if (!existing || (phoneBindingRequired(config) && !existing.phone)) {
         return this.createPendingIdentity(identity, ip);
       }
@@ -1253,6 +1280,24 @@ export class WechatAuthService {
     return user;
   }
 
+  /** A preview decides whether to ask for the existing independent phone
+   * proof. It never authenticates a legacy global openid/unionid as an AppID
+   * owner. Reconciliation repeats this decision under the identity locks. */
+  private async routineIdentityPreview(identity: VerifiedSocialIdentity) {
+    const observation = verifyRoutineIdentityObservation(this.env, identity.routineObservation, {
+      openid: identity.openid, unionid: identity.unionid, sourceStamp: identity.routineStamp!,
+    });
+    return withRoutineCredentials(this.container, this.env, identity.routineStamp!, async bound => withTx(bound, async tx => {
+      const installed = await assertRoutineIdentityOwnershipInstalledTx(tx);
+      const existing = await new WechatAuthService(bound, this.env).findExistingIdentityUser(identity);
+      if (!installed) return { existing, requiresContinuity: false };
+      const mapped = await readRoutineIdentityOwnerBySubjectTx(tx, this.env, {
+        appId: observation.appId, openid: observation.openid, expectedUid: existing?.uid,
+      });
+      return { existing, requiresContinuity: !!existing && !mapped };
+    }));
+  }
+
   private async issueRoutineSocialToken(uid: number, stamp: string, ip: string, spreadUid: number): Promise<Extract<SocialAuthResult, { token: string }>> {
     const nonce = crypto.randomUUID();
     const prepared = await withRoutineCredentials(this.container, this.env, stamp, async bound => {
@@ -1418,10 +1463,12 @@ export class WechatAuthService {
     // This hint only avoids irrelevant prefetch; it never returns an accepted
     // UID or replaces the complete locked reconciliation below. If that binding
     // disappears, this request must retry rather than create without gifts.
-    const existingRoutine = params.userType === 'routine' && !phone
+    const existingRoutine = params.userType === 'routine'
       ? await this.findExistingIdentityUser(params) : null;
     const registration = existingRoutine ? null : await new StoreNewcomerService(c, this.env).registrationState();
     const reconcile = (bound: Container) => withTx(bound, async (tx) => {
+      const ownershipInstalled = params.userType === 'routine' && await assertRoutineIdentityOwnershipInstalledTx(tx);
+      if (ownershipInstalled) await assertRoutineIdentityWitnessReady(tx);
       const now = Math.floor(Date.now() / 1000);
       const identityLocks = [
         `social-openid:${params.openid}`,
@@ -1434,6 +1481,7 @@ export class WechatAuthService {
 
       const exact = await tx
         .select({
+          id: wechatUser.id,
           uid: wechatUser.uid,
           userType: wechatUser.userType,
           isDel: wechatUser.isDel,
@@ -1480,6 +1528,21 @@ export class WechatAuthService {
       }
 
       let uid = [...candidates][0];
+      // With an installed addon, legacy global identity rows remain conflict
+      // candidates, not authorization. A phone must independently select this
+      // same UID; merely presenting any new phone cannot adopt an old account.
+      if (ownershipInstalled && uid) {
+        const locked = await tx.execute<{uid:number}>(sql`SELECT uid FROM public."user"
+          WHERE uid=${uid} AND status=1 AND is_del=0 AND delete_time IS NULL FOR UPDATE`);
+        if (locked.length!==1) throw new ValidateException('小程序身份关联账号不可用，请重新授权');
+      }
+      const mapped = ownershipInstalled ? await readRoutineIdentityOwnerBySubjectTx(tx, this.env, {
+        appId: params.routineObservation!.appId, openid: params.openid, expectedUid: uid,
+      }) : null;
+      if (ownershipInstalled && !mapped && (exact.length || union.length)
+        && (!phone || phoneRows.length!==1 || phoneRows[0].uid!==uid)) {
+        throw new ValidateException('旧小程序身份尚未证明账号归属，请通过原账号手机号确认或维护归属');
+      }
       if (uid) {
         const users = await tx.select({
           uid: userTable.uid,
@@ -1523,8 +1586,9 @@ export class WechatAuthService {
         await applyRegistrationGifts(tx, uid, registration.gifts, now);
       }
 
+      let bindingId=exact[0]?.id;
       if (!exact[0]) {
-        await tx.insert(wechatUser).values({
+        const inserted = await tx.insert(wechatUser).values({
           uid,
           openid: params.openid,
           unionid: params.unionid ?? "",
@@ -1534,11 +1598,15 @@ export class WechatAuthService {
           userType: params.userType,
           addTime: now,
           subscribeTime: now,
-        });
+        }).returning({id:wechatUser.id});
+        bindingId=inserted[0]?.id;
       }
 
       if (params.userType === 'routine') {
-        await appendRoutineIdentityWitness(tx, this.env, { uid, observation: params.routineObservation! });
+        if (ownershipInstalled) {
+          if (!bindingId) throw new ValidateException('小程序身份绑定失败，请重新授权');
+          await appendRoutineIdentityOwnershipTx(tx, this.env, { uid, bindingId, observation: params.routineObservation! });
+        } else await appendRoutineIdentityWitness(tx, this.env, { uid, observation: params.routineObservation! });
       }
       return uid;
     });

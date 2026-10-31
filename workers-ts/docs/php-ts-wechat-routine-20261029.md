@@ -436,3 +436,22 @@ Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正
 最终 inputs-03 六条源/测试/运行合同路径在整个 pipeline 内逐字不变：完整原生文件14项通过，包含真正185步迁移、注册283表图及逐表独立计数，JSONB outbox 大整数/小数原文指纹、读前后 xmin/ctid/序列保留、末页/软删除/非public、继承/分区、并发 DML、TRUNCATE、发现漂移、schema 替换、真实受限 LOGIN、容量/fast-default/自定义 cast 拒绝；remaining=0且STOPPED。CLI 与运行器两个完整文件703项通过，两套标准 unit/runtime TypeScript 检查 exit=0。独立只读审查无剩余必须修复问题。inputs-01/02 的14项通过与 unit-01 的703项通过各保留原终态；复核后补充 missingval/LOGIN/预发现预算，再在 inputs-03 全文件重跑，不累计重复执行为新增案例。fixture 既有 NOTICE 与未持锁 cleanup 探针 WARNING 保留，不声称无诊断输出。原始 inputs、每轮日志和只读设计/审查在 `/tmp/cinashop-phase26-validation/`；本节在最终验证后追加，提交文件另行秘密扫描。
 
 本轮无生产执行、provider、Browser 或部署验收。完整迁移和 runtime_ready 仍未完成：数据库库存组件不能替代账号范围身份映射、外部闭合清单与归属分类、维护 manifest、原子消费许可或旧账号消费者。现有用户、UID、权益、旧单和付款继续保留，实质 AppID 切换/首次接入屏障保持关闭。新提交/合并/推送状态以本轮最终检查点为准，不把阶段25的推送授权扩展到新提交。
+
+
+## 阶段 27：前瞻性账号归属与严格登录、付款身份选择（2026-10-31）
+
+阶段26提交 `8e1d8cbd` 已按本轮明确授权推送，并通过直接 `git ls-remote` 核对 origin/main。新增独立、显式维护的 `routine_identity_ownership` 插件，记录精确 AppID／OpenID／UID／物理 binding 及首次不可变 witness anchor。十列、十二约束、四索引、行更新/删除与整表截断拒绝触发器采用完整目录与权限核验；App 只有 SELECT/INSERT，其余运行角色没有新增权限。正式安装器在独立门锁、真实维护 LOGIN 和完整角色声明下原子安装空表，调用参数在等待事务前复制；完整重复只读，partial、孤儿和漂移拒绝，不回填旧用户、绑定或付款归属。
+
+记录使用 APP_KEY 的独立域 HMAC，校验固定身份和全部记录事实。写入保持 caller transaction 的 user→exact binding 顺序，由 Auth 调用者先验证旧 UID 连续性，底层 append 再校验 fresh observation 和精确活跃 UID/binding，追加真实新 witness 与映射；重复交换保留首次 anchor、created_at 和 xmin，新增 witness 不替换原始锚点。读者按确切 AppID／OpenID 或 UID／AppID 有界完整读取，超限拒绝，逐项核对签名、原锚点、活跃 UID 和物理 binding；无映射返回 null，由严格调用者拒绝或要求连续性；歧义、禁用、删除或漂移受控拒绝。仅整个可选命名空间真正缺席才沿用旧兼容路径，部分对象拒绝，已安装时错误实际运行角色也不降级。
+
+已安装插件时，旧全局 OpenID／UnionID 只提供冲突候选，不能直接证明当前 AppID 对旧 UID 的归属。即使强制手机号配置关闭，未映射旧身份也须由已验证手机号独立定位同一旧 UID；给无手机号旧 UID 添加任意新手机号不能接管该账号。新身份仍可在同一事务创建 UID、礼包、binding、witness 和映射。已映射身份沿用原 UID，静默登录无需注册礼包 KV。加密手机号入口在首次 await 前捕获 UID/密文/IV，验证源绑定 session、AES watermark 及精确归属；普通更新手机号与 Routine 入口统一先锁排序后的旧/新手机号，再锁 user 并复验快照，避免这两条实际路径的相反锁顺序。
+
+新付款准入按已捕获的当前 AppID 选择唯一活跃 payer；同一 UID 可保留不同 AppID 的不同物理 binding。原 INITIATION/PREPAY v1 内容及 hash 不变，旧 PREPAY 在读取当前身份前按原回执恢复；已有 INITIATION 缺回执时仍保留不确定状态，不在账号变化后重发。全局 OpenID 唯一约束保留，同一物理 binding 不能再归给另一 AppID。该映射记录本次采集时点的精确绑定，消费时另验当前活跃 UID/binding，不将新 code2Session、当前配置或 INIT/PREPAY 解释为历史归属。官方 [code2Session 合同](https://developers.weixin.qq.com/miniprogram/dev/server/API/user-login/api_code2session.html) 已在线复核；提供方身份合同不替代本地旧 UID 连续性证明。
+
+最终身份归属完整原生文件在 inputs-03 实际重跑15项，通过、无跳过，remaining=0 且 STOPPED。正式安装器完整文件7项在 inputs-01 通过；既有 witness、auth session 和五个付款文件共七个完整文件291项在 inputs-02 通过；auth-phone-migration、auth-login-hardening 与 runner 三个完整单元文件708项在 inputs-02 通过。上述生产实现、目录、安装器与运行器从 inputs-01 至 inputs-03 保持逐字一致；inputs-02 只加入旧 phone 静态测试更新，inputs-03 只将新原生测试五处 raw transaction 改用项目既有 withTx 封装，不更换实际连接或放宽生产类型。不同批次及重复执行不相加为独立覆盖。完整标准 unit/runtime 两套 TypeScript 检查在 inputs-03 均 exit=0，12条源/测试路径在最终 pipeline 内保持不变；本节在验证后单独追加，提交文件另行扫描。
+
+原生15项覆盖未映射旧UID拒绝/同UID已验证手机号连续性、任意新手机号不能接管无手机号旧UID、其他UID冲突、新UID与礼包同事务、首次锚点/xmin保持、A/B不同binding的payer选择、旧真实RSA PREPAY重放与未知INIT保留、同binding跨App回滚、映射HMAC/原anchor篡改、活跃/多live拒绝、调用方晚期回滚、独立peer的user→binding及phone→user锁顺序，并使用实际mpLogin/session/AES证明await期间将调用方UID从11改为22不会改写22。正式安装7项另覆盖完整五角色声明与异步BEGIN前参数快照、精确目录/ACL/不可变性、幂等、partial/orphan、漂移、门锁/表锁及同事务回滚。
+
+首次 typecheck-02 的5处实际错误是新测试将 Drizzle raw PgTransaction 直接传给项目 DbClient 回调；改用已有 withTx，不削弱类型检查，随后重跑完整15项原生文件及两套类型检查。旧phone测试中4条要求反复读取 params.uid 的源码字符串断言由检查发现，移除这些实现细节断言并保留其余合同检查，以新PG/AES实际执行用例覆盖捕获UID连续性；没有虚构旧测试运行失败。历史失败与早期15项通过均保留原日志，不累计为最终新增通过；fixture的既有NOTICE和预期业务拒绝诊断保留，不声称零stderr或历史全量CI绿色。独立只读复核未发现剩余必须修复问题；目录/安装器作者另参与复核，其独立性不扩张为对自己实现的完全独立审计。原始冻结输入、各批日志/终态及审查位于 `/tmp/cinashop-phase27-validation/`。
+
+本轮在自有本机 PG16 调用实际生产服务实现，服务商 HTTP/Redis/KV 使用受控传输替身；实际执行 SQL、独立 TCP LOGIN、HMAC、RSA 和 AES，不代表真实微信、短信 HTTP、Browser、Workers、生产 DDL 或部署。直接 reconcile 的 phone 是服务端已验证测试输入，独立另有实际 getuserphonenumber 服务实现及受控提供方响应的路径覆盖。fixture 的 AppID 变化由自有维护连接执行，不是生产切换许可。当前跨 AppID/首次接入 SQL 屏障、runtime_ready=false 和历史 CI 未完成状态保持。完整归属分类、外部清单与维护 manifest、原子消费切换许可、历史账号凭据解析、旧账号查单/回调/退款/发货/通知，以及前端会话、journal、页面/Browser 和其余全局迁移仍待推进；保留现有 UID、权益、旧单和付款。新提交/合并/推送以本轮最终检查点为准，不扩张阶段26的单笔推送授权。

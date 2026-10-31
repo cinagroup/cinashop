@@ -155,11 +155,10 @@ describe("phone authentication migration", () => {
     const service = readFileSync("src/services/wechat/WechatAuthService.ts", "utf8");
     const controller = readFileSync("src/controllers/api/v1/WechatController.ts", "utf8");
     expect(service).toContain('routine_session:v2:${stamp}:${uid}');
-    expect(service).toContain('routineSessionKey(params.uid, credentials.stamp)');
     expect(service).not.toContain('`session_key_uid:${');
-    expect(service).toContain("eq(wechatUser.uid, params.uid)");
-    expect(service).toContain("login.bindPhone(params.uid, phone)");
-    expect(service).toContain("login.updatePhone(params.uid, phone)");
+    // UID continuity and its pre-I/O capture are exercised by the real PG16 /
+    // AES crypto-phone regression. Requiring repeated `params.uid` member
+    // reads here would enforce the unsafe mutable-input behavior it replaces.
     expect(service).toContain("md5(crypto.randomUUID())");
     expect(service).not.toContain('md5("123456")');
     expect(controller).toContain("uid,");

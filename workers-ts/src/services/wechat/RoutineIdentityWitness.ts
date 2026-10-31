@@ -47,7 +47,10 @@ export async function appendRoutineIdentityWitness(tx: DbClient, env: RuntimeEnv
   const observation=verifyRoutineIdentityObservation(env,input.observation), uid=input.uid;
   if (!positive(uid)) throw new ValidateException('小程序身份关联账号无效');
   if (Object.hasOwn(tx,'$client')) throw unavailable();
-  await tx.execute(sql`SELECT set_config('statement_timeout','5s',true),set_config('lock_timeout','2s',true),set_config('idle_in_transaction_session_timeout','5s',true)`);
+  await tx.execute(sql`SELECT
+    set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
+    set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text||'ms',true),
+    set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text||'ms',true)`);
   const [context]=await tx.execute<{valid:boolean;locked:boolean}>(sql`SELECT
     current_setting('transaction_isolation')='read committed' AND NOT current_setting('transaction_read_only')::boolean AS valid,
     pg_try_advisory_xact_lock_shared(731666,0) AS locked`);
@@ -110,4 +113,25 @@ export async function readRoutineIdentityWitness(tx: DbClient, env: RuntimeEnv, 
   if (proofs.some(proof=>proof.uid!==uid || proof.bindingId!==bindingId
     || proof.observation.appId!==appId || proof.observation.openid!==openid)) throw unavailable();
   return proofs[0]??null;
+}
+
+/** Exact immutable anchor, including an expired observation. This verifies
+ * captured evidence only; the caller separately locks/checks the live UID and
+ * exact binding. It grants no login, payer or historical payment authority. */
+export async function readRoutineIdentityWitnessAnchor(tx: DbClient, env: RuntimeEnv, input: {
+  observationId: string; uid: number; bindingId: number; appId: string; openid: string;
+}): Promise<RoutineIdentityWitness | null> {
+  const {observationId,uid,bindingId,appId,openid}=input;
+  if (typeof observationId!=='string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(observationId)
+    || !positive(uid) || !positive(bindingId) || typeof appId!=='string' || !/^[A-Za-z0-9_-]{1,32}$/u.test(appId)
+    || typeof openid!=='string' || !/^[A-Za-z0-9_-]{1,100}$/u.test(openid)) throw unavailable();
+  await assertRoutineIdentityWitnessReady(tx);
+  const rows=await tx.execute<Row>(sql`SELECT observation_id,uid,binding_id,format_version,observation,created_at,signature
+    FROM public.routine_identity_witness WHERE observation_id=${observationId}::uuid LIMIT 2`);
+  if (!rows.length) return null;
+  if (rows.length!==1) throw unavailable();
+  const proof=verified(env,rows[0]);
+  if (proof.observationId!==observationId || proof.uid!==uid || proof.bindingId!==bindingId
+    || proof.observation.appId!==appId || proof.observation.openid!==openid) throw unavailable();
+  return proof;
 }

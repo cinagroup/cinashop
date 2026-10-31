@@ -329,7 +329,7 @@ export class LoginService {
 
   async updatePhone(uid: number, phone: string): Promise<void> {
     await withTx(this.container, async (tx) => {
-      const currentRows = await tx.select({
+      const hintRows = await tx.select({
         uid: userTable.uid,
         account: userTable.account,
         phone: userTable.phone,
@@ -337,18 +337,27 @@ export class LoginService {
         eq(userTable.uid, uid),
         eq(userTable.isDel, 0),
         isNull(userTable.deleteTime),
-      )).for("update").limit(1);
-      const current = currentRows[0];
-      if (!current) throw new ValidateException("用户不存在");
-      if (current.phone === phone) {
+      )).limit(1);
+      const hint = hintRows[0];
+      if (!hint) throw new ValidateException("用户不存在");
+      if (hint.phone === phone) {
         throw new ValidateException("新手机号和原手机号相同，无需修改");
       }
-      const lockValues = [current.phone, phone].filter(Boolean).sort();
+      // Registration, binding and Routine reconciliation already take phone
+      // advisories before user rows. Keep the same order here, then re-read;
+      // never discover/acquire another phone lock while holding the user row.
+      const lockValues = [...new Set([hint.phone, phone].filter(Boolean))].sort();
       for (const value of lockValues) {
         await tx.execute(
           sql`SELECT pg_advisory_xact_lock(hashtext(${`user-phone:${value}`}))`,
         );
       }
+      const currentRows = await tx.select({ uid:userTable.uid,account:userTable.account,phone:userTable.phone })
+        .from(userTable).where(and(eq(userTable.uid,uid),eq(userTable.isDel,0),isNull(userTable.deleteTime)))
+        .for('update').limit(1);
+      const current=currentRows[0];
+      if (!current || current.phone!==hint.phone || current.account!==hint.account)
+        throw new ValidateException('账号手机号已变化，请重新验证后重试');
       const duplicate = await tx.select({ uid: userTable.uid }).from(userTable)
         .where(and(
           eq(userTable.isDel, 0),

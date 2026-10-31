@@ -7,6 +7,8 @@ import { paymentReconciliationAction, paymentReconciliationCase, wechatUser } fr
 import { assertRoutinePaymentAttemptReady } from '@/migrations/routinePaymentAttempt';
 import { assertRoutineIdentityWitnessReady } from '@/migrations/routineIdentityWitness';
 import { readRoutineIdentityWitness, type RoutineIdentityWitness } from '@/services/wechat/RoutineIdentityWitness';
+import { assertRoutineIdentityOwnershipInstalledTx } from '@/migrations/routineIdentityOwnership';
+import { readRoutineIdentityOwnerForUidTx } from '@/services/wechat/RoutineIdentityOwnership';
 import { verifyRoutineIdentityObservation } from '@/services/wechat/RoutineIdentityObservation';
 import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { lockPaymentReconciliationRegistrationTx, registerPaymentReconciliationTx } from './PaymentReconciliationRegistry';
@@ -208,10 +210,18 @@ export function reserveRoutinePayment(container:Container,env:RuntimeEnv,raw:Req
       return {kind:'conflict'};
     }
     if (cases.some(row=>!pristine(row)) || await hasPriorAction(tx,cases)) return {kind:'recovery'};
-    const bindings=await tx.select({id:wechatUser.id,openid:wechatUser.openid}).from(wechatUser)
-      .where(sql`${wechatUser.uid}=${input.admission.uid} AND ${wechatUser.userType}='routine' AND ${wechatUser.isDel}=0`).limit(2).for('share');
-    if (bindings.length!==1 || !id(bindings[0].openid,100)) throw new ValidateException('小程序付款缺少唯一的有效身份绑定，请重新授权或维护');
-    const binding=bindings[0],witness=await readRoutineIdentityWitness(tx,env,{uid:input.admission.uid,bindingId:binding.id,appId,openid:binding.openid});
+    const scoped=await assertRoutineIdentityOwnershipInstalledTx(tx);
+    let binding:{id:number;openid:string},witness:RoutineIdentityWitness|null;
+    if (scoped) {
+      const owned=await readRoutineIdentityOwnerForUidTx(tx,env,{uid:input.admission.uid,appId});
+      if (!owned) throw new ValidateException('小程序付款缺少唯一的有效账号归属，请重新授权或维护');
+      binding={id:owned.owner.bindingId,openid:owned.owner.openid}; witness=owned.witness;
+    } else {
+      const bindings=await tx.select({id:wechatUser.id,openid:wechatUser.openid}).from(wechatUser)
+        .where(sql`${wechatUser.uid}=${input.admission.uid} AND ${wechatUser.userType}='routine' AND ${wechatUser.isDel}=0`).limit(2).for('share');
+      if (bindings.length!==1 || !id(bindings[0].openid,100)) throw new ValidateException('小程序付款缺少唯一的有效身份绑定，请重新授权或维护');
+      binding=bindings[0]; witness=await readRoutineIdentityWitness(tx,env,{uid:input.admission.uid,bindingId:binding.id,appId,openid:binding.openid});
+    }
     if (!witness) throw new ValidateException('小程序付款身份尚未证明属于当前 AppID，请重新授权；跨账号切换请先维护归属');
     const payload=intentPayload(env,{version:1,purpose:'routine_payment_initiation',uid:input.admission.uid,orderId:input.admission.orderId,orderDomain:input.admission.orderDomain,
       amountCents:input.amountCents,currency:'CNY',appId,merchantId,payerId:binding.openid,bindingId:binding.id,witness,publicSourceStamp:publicSource.stamp,
