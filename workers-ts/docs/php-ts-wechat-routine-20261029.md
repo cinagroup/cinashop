@@ -419,3 +419,20 @@ Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正
 首轮原证集成8通过/1失败，是测试预期详细错误字符串而既有日志只返回低基数 Error.name；生产拒绝与零财务变成立，修正期望后重跑。扩展普通回归873通过/1失败，为旧静态测试仍寻找已经迁出的 registerPaymentReconciliationIntent；三域生产文件在 main 早已统一 admission，本次改成 AST 追踪实际 awaited hook、事务登记与 provider 调用顺序，既有实际执行用例保留。离线初轮19通过/14失败：夹具只有陈旧KV，已迁移的正式SQL商户来源缺失，造成微信过早拒绝与部分负例假通过；补齐六个global SQL键，原账号旋转改为真实SQL变化，保留冲突KV并强制零读取，原33场景及断言全部保留。类型初轮三错为 source 字面量收窄与 Node/Workers typedarray 编码类型；显式类型与 node:buffer 包装修正，不放宽类型或提高资源/时限。所有早期失败均保留，不累计为通过，不据此宣布历史全量CI绿色。当前尚无单独的运行入口 truly-absent/partial命名空间新用例；正式安装部分/孤儿/漂移拒绝、完整schema真正legacy离线回归及实际 TEMP 运行反例各有其明确覆盖边界。
 
 整体迁移与 runtime_ready 继续为 false。账号范围身份映射、完整历史清单与维护 manifest、原子消费切换授权，以及旧账号回调/查单/退款/发货/通知、Financial 的窄读取转交、前端 DTO/会话/操作 journal 与 Browser 验收及其余历史 CI 失败尚未闭合。用户已授权且成功推送的阶段23/24两笔为 a776bcc1、a8a57da7；本阶段提交和推送状态另由检查点记录，不纳入该次两笔授权。
+
+
+## 阶段 26：归属维护的只读数据库清单组件（2026-10-30）
+
+阶段25提交 `02b72d0e` 已按用户明确授权推送，并通过实际 `git ls-remote` 核对 origin/main。继续实现专用 Node 维护读取器与显式 CLI，不接入 Worker 请求图，不修改基础迁移或任何运行角色授权。完整运行合同见 [归属清单说明](./routine-ownership-inventory.md)。
+
+清单发现全部非系统 schema 的 heap 表及分区根，不按手选 Routine 表集截断。先取得全源 NOWAIT ACCESS SHARE 锁，再建立 REPEATABLE READ / READ ONLY 快照并复核源集合；每个 heap 用 ONLY 扫描，分区/继承子表只计一次，软删除行不筛掉。读取实际 PG16 主库、数据库/维护 LOGIN 名称与 OID，要求 current_user=session_user、superuser、rolcanlogin 和 origin；维护连接使用独立 max-one、prepare:false 客户端。每次 FETCH16，数据库文本保留大整数和小数精度，独立域 HMAC 覆盖源身份、xmin、ctid、完整行文本及目录。相同值更新、新表、配置/业务事实和目录变化均可造成源指纹变化。
+
+原生反例证明 TRUNCATE 与表重写不能在证据快照前制造假空读；独立 peer 的普通 DML 仍能提交，但本轮始终读取同一快照。显式 RR catalog 无法独立防住 schema 重命名后再建同名空表，故每个实际解析的数据源同时返回 composite type OID，空表也保留 sentinel，SQL 在预算和 to_jsonb 之前先核对该 OID。新增同名空表和带自定义 JSON cast 的非空替代表均整轮拒绝，后者的 session-lock 探针保持零执行。
+
+所有支持列在任何目录 JSON 前先检查 built-in scalar allowlist；foreign/materialized/custom AM/custom type/array/domain/enum、超限和漂移整轮失败，不返回成功前缀。文本/bytea、受限 JSON 及数值展开在完整业务行序列化前预算；目录 attmissingval 另行预检，拒绝 JSON/JSONB fast-default、压缩或过大的 missing array，不从目录指纹中删掉它们。库 API 的 RC 预发现与 RR 扫描均使用保留较短现有值的有限 statement/lock/idle/temp-file 设置；RR 的第一条 SELECT 始终在全源锁之后。一般目录文本仍由 PG 后端先渲染，再做返回字节检查，不能把验收容量声明成后端总内存限额或生产吞吐验收。
+
+报告仅在全部源扫描完成后返回，包含维护员可见的数据库/角色/关系名称与 OID、快照时间、十进制字符串计数和 keyed digests，不含原始业务行、openid、付款人、provider payload 或凭据；这不是匿名公开回执。错误与 CLI 连接关闭失败脱敏，无运行 URL/APP_KEY 回退。报告明确 ownership=not_evaluated、externalSourcesIncluded=false、activationAllowed=false；系统/临时存储、sequence reservation、large object、Redis/Queue 和外部账号凭据/提供方历史不在本组件内。不得由零计数推导首次接入许可，不把数据库库存指纹当成历史归属、成功付款原证或切换授权。
+
+最终 inputs-03 六条源/测试/运行合同路径在整个 pipeline 内逐字不变：完整原生文件14项通过，包含真正185步迁移、注册283表图及逐表独立计数，JSONB outbox 大整数/小数原文指纹、读前后 xmin/ctid/序列保留、末页/软删除/非public、继承/分区、并发 DML、TRUNCATE、发现漂移、schema 替换、真实受限 LOGIN、容量/fast-default/自定义 cast 拒绝；remaining=0且STOPPED。CLI 与运行器两个完整文件703项通过，两套标准 unit/runtime TypeScript 检查 exit=0。独立只读审查无剩余必须修复问题。inputs-01/02 的14项通过与 unit-01 的703项通过各保留原终态；复核后补充 missingval/LOGIN/预发现预算，再在 inputs-03 全文件重跑，不累计重复执行为新增案例。fixture 既有 NOTICE 与未持锁 cleanup 探针 WARNING 保留，不声称无诊断输出。原始 inputs、每轮日志和只读设计/审查在 `/tmp/cinashop-phase26-validation/`；本节在最终验证后追加，提交文件另行秘密扫描。
+
+本轮无生产执行、provider、Browser 或部署验收。完整迁移和 runtime_ready 仍未完成：数据库库存组件不能替代账号范围身份映射、外部闭合清单与归属分类、维护 manifest、原子消费许可或旧账号消费者。现有用户、UID、权益、旧单和付款继续保留，实质 AppID 切换/首次接入屏障保持关闭。新提交/合并/推送状态以本轮最终检查点为准，不把阶段25的推送授权扩展到新提交。
