@@ -59,7 +59,7 @@ describe('WechatRoutine independent immutable operation addon in owned memory', 
 
   it('recognizes its independent exact catalog without installing an App table or consuming a sequence', async () => {
     expect(ADMIN_WECHAT_ROUTINE_OPERATION_GATE).toEqual([731667, 0]);
-    expect(ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES).toEqual({ app: [], admin: ['SELECT', 'INSERT'] });
+    expect(ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES).toEqual({ app: [], admin: ['SELECT'] });
     const before = await facts();
     expect(await inspectAdminWechatRoutineOperation(f.db)).toBe(true);
     const [row] = await f.db.execute(sql`SELECT
@@ -156,7 +156,7 @@ describe('WechatRoutine independent immutable operation addon in owned memory', 
       code: 503, cause: { message: 'WechatRoutine readiness requires a caller-owned transaction' },
     });
     await expect(f.db.transaction(tx => assertAdminWechatRoutineOperationReady(tx))).rejects.toMatchObject({
-      code: 503, cause: { message: 'WechatRoutine operation runtime privileges are unsafe' },
+      code: 503, cause: { message: 'WechatRoutine operation catalog is absent or drifted' },
     });
     expect(await inspectAdminWechatRoutineOperation(f.db)).toBe(true);
     expect(await facts()).toEqual(before);

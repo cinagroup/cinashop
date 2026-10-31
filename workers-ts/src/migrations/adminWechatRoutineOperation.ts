@@ -3,7 +3,7 @@ import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 
 type Query = Pick<DbClient, 'execute'>;
-export const ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES = { app: [], admin: ['SELECT', 'INSERT'] } as const;
+export const ADMIN_WECHAT_ROUTINE_OPERATION_RUNTIME_PRIVILEGES = { app: [], admin: ['SELECT'] } as const;
 export const ADMIN_WECHAT_ROUTINE_OPERATION_GATE = [731667, 0] as const;
 export const ADMIN_WECHAT_ROUTINE_OPERATION_IMMUTABLE_BODY = `BEGIN
   RAISE EXCEPTION 'WechatRoutine operation evidence is immutable' USING ERRCODE='42501';
@@ -59,9 +59,13 @@ export const ADMIN_WECHAT_ROUTINE_OPERATION_EXPECTED_CONSTRAINTS: Record<string,
   awro_created_ck: 'CHECK ((created_at > 0))',
 };
 
-/** Exact schema, immutable trigger/function, maintenance owner and sole
- * SELECT/INSERT grantee. This does not establish a live HTTP actor. */
-export async function inspectAdminWechatRoutineOperation(tx: Query, names?: { maintenance: string; admin: string }): Promise<boolean> {
+/** Exact schema and immutable maintenance-owned evidence. With no names this
+ * accepts only the owner-only pre-grant state; the installed matrix is exactly
+ * Admin SELECT plus the independent writer SELECT/INSERT. Neither proves JWT. */
+export async function inspectAdminWechatRoutineOperation(tx: Query, names?: { maintenance: string; admin: string; writer: string }): Promise<boolean> {
+  if (names && new Set([names.maintenance, names.admin, names.writer]).size !== 3) return false;
+  const expectedAcl = names ? [[names.admin, 'SELECT', false], [names.writer, 'INSERT', false], [names.writer, 'SELECT', false]]
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])) || String(a[1]).localeCompare(String(b[1]))) : [];
   const [row] = await tx.execute(sql`SELECT
     c.relkind='r' AND c.relpersistence='p' AND NOT c.relispartition AND NOT c.relrowsecurity AND NOT c.relforcerowsecurity
     AND c.relnatts=9 AND c.relchecks=9 AND c.reloptions IS NULL AND c.relreplident='d'
@@ -101,17 +105,12 @@ export async function inspectAdminWechatRoutineOperation(tx: Query, names?: { ma
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc other WHERE other.pronamespace=f.pronamespace AND other.proname=f.proname AND other.oid<>f.oid)
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(f.proacl,pg_catalog.acldefault('f',f.proowner))) a
       WHERE a.grantee<>f.proowner) AS function,
-    NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-      WHERE a.grantee<>c.relowner AND (a.grantee=0 OR a.is_grantable OR a.privilege_type NOT IN ('SELECT','INSERT')
-        OR (${names?.admin ?? null}::text IS NOT NULL AND a.grantee<>(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text))))
-    AND (SELECT count(DISTINCT a.grantee)<=1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a WHERE a.grantee<>c.relowner)
+    (SELECT COALESCE(jsonb_agg(jsonb_build_array(pg_catalog.pg_get_userbyid(a.grantee),a.privilege_type,a.is_grantable)
+      ORDER BY pg_catalog.pg_get_userbyid(a.grantee) COLLATE "C",a.privilege_type COLLATE "C"),'[]'::jsonb)
+      FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+      WHERE a.grantee<>c.relowner)=${JSON.stringify(expectedAcl)}::jsonb
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute col CROSS JOIN LATERAL pg_catalog.aclexplode(col.attacl) a
-      WHERE col.attrelid=c.oid AND a.grantee<>c.relowner)
-    AND (${names?.admin ?? null}::text IS NULL OR
-      (EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-        WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text) AND a.privilege_type='SELECT')
-      AND EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-        WHERE a.grantee=(SELECT oid FROM pg_catalog.pg_roles WHERE rolname=${names?.admin ?? null}::text) AND a.privilege_type='INSERT'))) AS acl
+      WHERE col.attrelid=c.oid AND a.grantee<>c.relowner) AS acl
     FROM pg_catalog.pg_class c JOIN pg_catalog.pg_proc f ON f.oid=to_regprocedure('public.admin_wechat_routine_operation_immutable_v1()')
     WHERE c.oid=to_regclass('public.admin_wechat_routine_operation')`);
   if (!row || ['safe', 'constraint_count', 'indexes', 'triggers', 'function', 'acl'].some(key => row[key] !== true)) return false;
@@ -129,20 +128,14 @@ export async function assertAdminWechatRoutineOperationReady(tx: Query): Promise
     if (Object.hasOwn(tx, '$client')) throw Error('WechatRoutine readiness requires a caller-owned transaction');
     const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock_shared(731667,0) AS locked`);
     if (gate?.locked !== true) throw Error('WechatRoutine operation maintenance is busy');
-    if (!await inspectAdminWechatRoutineOperation(tx)) throw Error('WechatRoutine operation catalog is absent or drifted');
+    // The receipt's SELECT grant alone cannot establish the separate writer,
+    // its atomic SQL body or the five-key guard. Inspect their joint catalog.
+    const { inspectAdminWechatRoutineWriteCatalog } = await import('./adminWechatRoutineWriteCatalog');
+    const state = await inspectAdminWechatRoutineWriteCatalog(tx);
+    if (!state.ready || !state.binding) throw Error('WechatRoutine operation catalog is absent or drifted');
     const [row] = await tx.execute(sql`SELECT current_user=session_user
-      AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
-      AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)
-      AND NOT pg_catalog.has_database_privilege(r.oid,current_database(),'CREATE')
-      AND NOT pg_catalog.has_schema_privilege(r.oid,'public','CREATE')
-      AND NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM')
-      AND c.relowner<>r.oid AND pg_catalog.has_table_privilege(r.oid,c.oid,'SELECT')
-      AND pg_catalog.has_table_privilege(r.oid,c.oid,'INSERT')
-      AND NOT pg_catalog.has_table_privilege(r.oid,c.oid,'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-      AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
-        WHERE a.grantee<>c.relowner AND a.grantee<>r.oid) AS ready
-      FROM pg_catalog.pg_roles r CROSS JOIN pg_catalog.pg_class c
-      WHERE r.rolname=current_user AND c.oid=to_regclass('public.admin_wechat_routine_operation')`);
+      AND current_user=${state.binding.admin}::name AND r.oid=${state.binding.adminOid}::oid AS ready
+      FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
     if (row?.ready !== true) throw Error('WechatRoutine operation runtime privileges are unsafe');
   } catch (cause) {
     throw Object.assign(new ServiceUnavailableException('微信小程序配置操作回执或运行权限尚未就绪'), { cause });

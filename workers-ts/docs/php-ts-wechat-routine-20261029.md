@@ -353,3 +353,16 @@ Attempt 05 的图片子项曾通过 13 项，但父进程以 143 中断，后续
 下一阶段仍须实现五键原始 SQL writer 约束、独立不可假冒的受限作者能力、operation 正式维护安装与完整角色审计，再启用专用 service/controller/UI。当前 Admin 对 system_config 仍有整表 INSERT/UPDATE；advisory/GUC 不构成 DB 写授权。新增 guard 必须同时检查 OLD/NEW 的改名、realm、sort/id 与元数据，并与 App/Base/Open/PC 作者现有拒绝未知 trigger 的合同一并精确适配。已存在的 witness/attempt 安装器不重复实现。
 
 保留现有 UID、用户、权益、旧单和付款。跨 AppID/账号切换须先完成可审查归属维护；当前配置、witness、INIT/PREPAY 均不证明旧付款归属。本阶段没有生产 DDL、真实 provider 调用或部署；全局迁移与既有范围标志继续保持未完成。
+
+
+## 阶段 22：五键原子 SQL 写入与联合目录检查（2026-10-30）
+
+新增尚未发布的低层写入能力：独立 NOLOGIN writer 与真实 Admin LOGIN、数据库名称和实际 OID 绑定；五键 INSERT/UPDATE/DELETE 的 OLD/NEW、realm、行号、sort、全部元数据和 TRUNCATE 均有固定 guard。writer 仅取得配置 SELECT/INSERT、value 列 UPDATE、配置序列 USAGE 和回执 SELECT/INSERT；Admin 对回执只读。配置变更与不可变回执由同一个 SQL 语句提交；keep 不解析、不改写旧值、不消耗序列，重放不重复写源或分配 XID。SQL 自行取得完整 shadow/metadata/xmin 来源及实际变更后摘要，不接受调用方声称的变更后事实。
+
+存储文本解析器直接输出 UTF-8 bytea，处理 JSON 转义、NUL、合法代理对、ECMAScript 空白和两层 5000 码点容量，与共享 TypeScript 解析合同逐例比较。私有 SQL 来源摘要与 actor binding 通过分域 HMAC 形成公开 revision；公开回执严格投影七字段。同 UID 换 JWT 后恢复旧回执，保留原 binding 与原实际变更后来源。SQL 参数中的 actor 和摘要格式不证明当前 HTTP 身份；后续 service 仍须在同一事务内重新验证当前账号、密码、权限和签名。
+
+只读联合检查精确核对 helper/main/guard 的唯一签名、源码、owner、实际 OID、属性和 ACL，回执目录及三个非 owner ACL、writer 的有效表/列/序列权限、角色属性和其他 owned 对象、system_config 全部 16 列/default、五个正式索引、序列及唯一两道 trigger。回执就绪判断使用这一联合检查，并要求实际 current_user=session_user=绑定 Admin；不在请求中安装、修复或扩权。
+
+本阶段四个完整文件分别实际通过：原生文本解析 267 项、原生独立角色写入/目录/回执 45 项、PGlite 回执 30 项、运行器边界 681 项，均无失败或跳过；两套完整 Worker 类型检查使用项目既有脚本实际 exit=0。267 项与最终 45 项来自分别新建的 PG16.14 集群，两者 remaining=0 且 STOPPED。先前 36 项为最终写入文件的旧版本子集，不重复累计。日志在 `/tmp/cinashop-phase22-validation/`；最终运行绑定 `inputs-final-04.json`，验证后仅追加本节。早期双重 JSON 编码夹具、目录查询保留字和 input_type 默认值误写的失败保留，最终修正使用真实 schema 的 `input` 默认值，未放松断言。直接 tsc 的默认堆失败及两处测试宿主字节类型错误也保留；最终沿用原有 package 脚本，未改堆配置、超时或验证并发。阶段 21 提交 b874c56a 的提交后全历史扫描实际覆盖 869 个提交、无新增命中；本阶段提交须另行扫描，不能复用该旧结论。
+
+正式维护 installer、全库角色 profile、既有 App/Base/Open/PC 作者 guard 共存、专用 HTTP service/controller/UI 和历史账号归属维护仍未完成。本阶段拒绝实质 AppID 变化（包括首次接入），只允许相同解析字节的原值规范化；这是未 commissioning 时的关闭状态，不代表跨账号切换已实现。保留既有 UID、用户、权益、订单与付款，当前配置、回执、witness、INIT/PREPAY 均不提升为旧付款归属证明。用户已授权将未提交迁移工作一并 checkpoint 并合入 main；本轮不执行生产 DDL、真实 provider 调用或部署，既有全量 CI 失败与全局迁移未完成状态保持如实记录。

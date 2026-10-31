@@ -136,6 +136,20 @@ syncBuiltinESMExports();
 });
 
 describe('local PostgreSQL runner command boundary', () => {
+  it('admits the exact Routine bounded-writer native test before native setup', () => {
+    const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin',
+      'test/admin-wechat-routine-write-capability-postgres.test.ts'], { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe('');
+    expect(r.stderr).toContain('ENOENT'); expect(r.stderr).not.toContain('Schema maintenance accepts only');
+  });
+  it.each(['test/admin-wechat-routine-write-capability-postgres-extra.test.ts',
+    'test/admin-wechat-routine-write-capability-postgres.test.ts.extra'])(
+    'rejects unreviewed Routine writer test spelling %s before native setup', file => {
+      const r = spawnSync(process.execPath, [script, '--schema-maintenance', 'unused-bin', file],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      expect(r.error).toBeUndefined(); expect(r.status).not.toBe(0); expect(r.stdout).toBe('');
+      expect(r.stderr).not.toContain('ENOENT');
+    });
   it('admits the exact spread poster full-schema native test before native setup',()=>{
     const r=spawnSync(process.execPath,[script,'--schema-maintenance','unused-bin','test/spread-poster-page-postgres.test.ts'],{cwd:root,encoding:'utf8',windowsHide:true,timeout:10000});
     expect(r.error).toBeUndefined();expect(r.status).not.toBe(0);expect(r.stdout).toBe('');expect(r.stderr).toContain('ENOENT');expect(r.stderr).not.toContain('Schema maintenance accepts only');
