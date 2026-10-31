@@ -455,3 +455,24 @@ Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正
 首次 typecheck-02 的5处实际错误是新测试将 Drizzle raw PgTransaction 直接传给项目 DbClient 回调；改用已有 withTx，不削弱类型检查，随后重跑完整15项原生文件及两套类型检查。旧phone测试中4条要求反复读取 params.uid 的源码字符串断言由检查发现，移除这些实现细节断言并保留其余合同检查，以新PG/AES实际执行用例覆盖捕获UID连续性；没有虚构旧测试运行失败。历史失败与早期15项通过均保留原日志，不累计为最终新增通过；fixture的既有NOTICE和预期业务拒绝诊断保留，不声称零stderr或历史全量CI绿色。独立只读复核未发现剩余必须修复问题；目录/安装器作者另参与复核，其独立性不扩张为对自己实现的完全独立审计。原始冻结输入、各批日志/终态及审查位于 `/tmp/cinashop-phase27-validation/`。
 
 本轮在自有本机 PG16 调用实际生产服务实现，服务商 HTTP/Redis/KV 使用受控传输替身；实际执行 SQL、独立 TCP LOGIN、HMAC、RSA 和 AES，不代表真实微信、短信 HTTP、Browser、Workers、生产 DDL 或部署。直接 reconcile 的 phone 是服务端已验证测试输入，独立另有实际 getuserphonenumber 服务实现及受控提供方响应的路径覆盖。fixture 的 AppID 变化由自有维护连接执行，不是生产切换许可。当前跨 AppID/首次接入 SQL 屏障、runtime_ready=false 和历史 CI 未完成状态保持。完整归属分类、外部清单与维护 manifest、原子消费切换许可、历史账号凭据解析、旧账号查单/回调/退款/发货/通知，以及前端会话、journal、页面/Browser 和其余全局迁移仍待推进；保留现有 UID、权益、旧单和付款。新提交/合并/推送以本轮最终检查点为准，不扩张阶段26的单笔推送授权。
+
+
+## 阶段 28：经维护批准的原账号查单、回调与同事务使用证据（2026-10-31）
+
+阶段27提交 `ee55456b` 已按用户明确授权推送并核对 origin/main。本阶段新增显式维护的 `routine_payment_account_policy` 与 `routine_payment_account_use` 两表插件：七列维护 journal 与五列使用记录、总十四约束和四索引、同一不可变函数及四道触发器；App 仅能 SELECT policy，能 SELECT/INSERT use，其余运行角色没有新增授权。正式安装器完整保留 local/caseLock/peer/AppReader 声明，在真实 PG16 维护 LOGIN、认证 backend/OID 和独立门731717下原子安装空表；重复只读，partial、孤儿、owner-only 半安装和目录/权限漂移拒绝，不自动创建批准、不改配置、身份或旧单。完整运行合同见 [原账号付款维护合同](./routine-approved-payment-accounts.md)。
+
+新增 `appendRoutinePaymentAccountPolicy` 维护入口，没有 HTTP 管理作者或客户提交批准的路径。真实维护身份、数据库与角色 OID、操作 UUID、递增 CAS revision、前条记录和有效期由独立域 HMAC 保存；每个 subject 最多完整64版，超限拒绝。account 明确 AppID/merchant、query/notify 用途、active/revoked、opaque ref/version 及材料 commitment；query plan 另明确三域之一、单号、金额/CNY、account及revision。最新撤销、过期、未生效或不匹配不得回落旧版。维护输入、Env字符串和声明在异步事务前捕获，primitive string域拒绝对象转换；已存在原操作回执可在材料撤下后只读重放。
+
+`ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS` 是部署显式 provision 的有界 secret JSON 闭集，不是当前配置、KV 或任意环境变量/文件/URL selector。每组 ref/version 唯一，实际 pair、商户serial、APIv3密钥、商户私钥和平台公钥/id的所有字节参与材料HMAC；不匹配、缺失和非法 registry 拒绝，既不遍历凭据试单也不猜历史。仅 public metadata/commitment进入policy，key/token/secret不进入公开DTO、Queue或使用记录；受限使用记录保留真实provider付款事实（含payer），不将其说成匿名公开回执。
+
+默认Routine对账先提取六个正式请求primitive，按明确query plan选择批准原账号；没有plan才保留既有当前账号查单，present-invalid plan不降级。新增 POST `/api/pay/notify/routine-account/:accountId`，opaque路由值只选择一个已批准notify verifier；真实RSA/serial与AES-GCM之后仍必须核对解密pair。普通四类PHP回调和新付款入口保持原合同，新registry或批准不允许新付款，也不抬起AppID切换屏障。当前账号已经变成B甚至其公开配置全部清空，明确批准的A/refA仍可用实际A密钥查证旧单，无需给旧UID回填AppID。
+
+服务商HTTP与RSA/AES在SQL事务外；短SQL在请求/验签前后复验批准。采证先取得共享account gate，再进入原physical-order/provider/event锁图；原证v1、签名使用记录和callback event/outbox同事务提交，query另绑定真实server claim。尾部以数据库时钟复验有效期和5秒事务deadline。实际付款证据与批准用途独立：错误域或本地金额范围可保留真正provider事实和scopeMatches=false的使用记录，禁止结算；payer不成为买家UID。相同evidenceId/account-record/query-record的重放保留首次use/original和xmin，新批准版可以另建use，不重写旧行。已接受SUCCESS在后置撤销后仍是真事实；结算锁住原订单后仅复核durable当时provenance，不倒取account门或要求现行凭据。已有v1/current-verifier原证可没有sidecar，不能据此声称全部历史对象已分类。
+
+最终选择的正式安装完整文件7项在inputs-01通过；其catalog/installer/audit/runner/正式测试路径至最终版本同字节，root后续service修复不被该正式文件调用。原账号集成完整文件13项在inputs-03通过、无跳过，覆盖currentB/clear、不同真实密钥、实际默认对账/Hono callback/队列消费者、policy/registry/role/serial/pair拒绝、HTTP时独立peer可锁订单、期间撤销、同TX回滚、稳定重放、PENDING、跨订单/跨域、真physical-domain冲突留存，以及维护/callback跨await输入捕获和非primitive拒绝。既有原证/公开来源两份完整文件57项在inputs-03通过；共用服务的完整离线付款文件33项在inputs-04通过；回调路由/event/对账/query identity/runner五份完整单元文件808项在inputs-04通过。所有本轮native集群均有remaining=0及STOPPED。既有NOTICE和预期业务拒绝诊断保留，不声称无stderr。
+
+完整标准unit/runtime两套TypeScript检查最终在inputs-05均exit=0。inputs-04仅新增旧route单元AST修改，原14路径仍同inputs-03；inputs-05仅删除新native测试未用常量，其他14路径不变，原生通过版本中的其他测试/生产行保持原样，不将这个最终类型检查版本冒称另一次原生重跑。生产实现从inputs-03至最终检查保持逐字一致。15条源/测试路径在最终类型pipeline中冻结；提交前另仅移除新native文件EOF多余空行，不冒称再次运行检查。本文和新维护合同在验证后另行追加并纳入提交文件秘密扫描。原始物理输入、各批日志/终态、跨作者审查和下一阶段退款源码地图位于 `/tmp/cinashop-phase28-validation/`。
+
+首轮runtime类型检查3错是state/kind字面量被推断为string，显式返回/行类型修正，未放宽检查。首轮集成9通过/4失败：default reconciler传入带租约字段的宽case DTO，原 `{...raw}` 比较误将内部字段计入授权意图，在HTTP前拒绝；只投影完整六字段后，第二轮13项全通过。独立复核再发现 `String(orderDomain)` 会保留对象引用，改成严格string并加拒绝对象/coercion0次/journal不变断言，随后最终整文件重跑13项通过。单元首轮807通过/1失败为旧源码字符串要求回调校验恰好四参数；改为TypeScript AST核对实际transaction调用的headers/rawBody与profile传播，保留其他断言并整批重跑808项通过。早期结果保留原始终态，不累计重复用例。最终完整unit检查另发现native测试未使用的EVENT_TIME常量，仅删除该常量后重跑两套标准类型检查；生产代码未变，此类无运行效果修改不冒称重新执行原生测试。目录/测试作者参与root服务的跨作者只读复核，不扩张成对自己实现的完全独立审计；未发现剩余必须修复问题。
+
+以上为自有本机PG16、独立实际LOGIN、生产服务/Hono/default消费者与真实Node生成RSA/AES验收，provider/Queue/KV为受控传输替身；没有真实微信、Browser、Workerd/Hyperdrive、生产DDL或部署验收。当前仅query/notify批准，原账号退款/CNSR派发与Financial角色、原账号OAuth/token/发货/订阅仍待接入；完整内外清单、历史对象归属分类与维护manifest、原子切换许可和所有消费者、前端DTO/session/journal/页面及Browser、其余全局迁移与既有CI失败继续未完成。保留现有UID、权益、旧单和付款；未知保持未知，首次接入/实质跨AppID的42501屏障与runtime_ready=false保持。提交/合并/推送以本轮最终检查点为准，不扩张阶段27的单笔推送授权。

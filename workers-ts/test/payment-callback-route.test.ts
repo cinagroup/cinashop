@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import ts from 'typescript';
 import { resolvePaymentCallbackDispatch } from "@/controllers/api/v1/PaymentCallbackController";
 import { wechatPayAppIdKey } from "@/services/wechat/WechatPayService";
 import { parseAlipayNotificationForm } from "@/utils/alipay";
@@ -53,7 +54,20 @@ describe("CORE-001 payment callback compatibility", () => {
     }
     const service = readFileSync("src/services/wechat/WechatPayService.ts", "utf8");
     expect(service).toContain('const notifyUrl = `${siteUrl}/api/pay/notify/${profile}`');
-    expect(service).toContain('>(headers, rawBody, "transaction", profile)');
+    // Check channel propagation in the real call AST. Its optional internal
+    // approved-account configuration must not erase the existing profile.
+    const source=ts.createSourceFile('WechatPayService.ts',service,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const transactions:ts.CallExpression[]=[];
+    const visit=(node:ts.Node):void=>{
+      if(ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
+        && node.expression.name.text==='verifyAndDecryptNotify' && node.arguments[2]
+        && ts.isStringLiteral(node.arguments[2]) && node.arguments[2].text==='transaction') transactions.push(node);
+      ts.forEachChild(node,visit);
+    };
+    visit(source);
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0].arguments.slice(0,2).map(argument=>argument.getText(source))).toEqual(['headers','rawBody']);
+    expect(transactions[0].arguments[3].getText(source)).toBe('profile');
     const payController = readFileSync("src/controllers/api/v1/PayController.ts", "utf8");
     const wechatController = readFileSync("src/controllers/api/v1/WechatController.ts", "utf8");
     expect(payController).toContain("readBoundedUtf8Text");

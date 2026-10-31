@@ -19,6 +19,7 @@ import {
   WechatPayService,
   type WechatPayProfile,
 } from "@/services/wechat/WechatPayService";
+import { routinePaymentAccountAuthorizationOf } from '@/services/payment/RoutineApprovedPaymentAccount';
 import { StoreOrderPayService } from "@/services/order/StoreOrderPayService";
 import { StoreOrderRefundService } from "@/services/order/StoreOrderRefundService";
 import { PaymentCallbackEventService } from "@/services/payment/PaymentCallbackEventService";
@@ -214,7 +215,7 @@ export async function wechatConfig(c: C) {
  *   3. 短事务写入事件账本 + Queue outbox
  *   4. 立即返回 {"code":"SUCCESS"}；幂等入账由 Queue 消费者完成
  */
-export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat") {
+export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat", approvedAccountId?: string) {
   try {
     const rawBody = await readBoundedUtf8Text(c.req.raw, MAX_PAYMENT_CALLBACK_BODY_BYTES);
     const headers: Record<string, string> = {};
@@ -222,7 +223,7 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
       headers[k.toLowerCase()] = v;
     });
     const paySvc = new WechatPayService(c.get("container"), c.env);
-    const notify = await paySvc.verifyAndParseNotify(headers, rawBody, profile);
+    const notify = await paySvc.verifyAndParseNotify(headers, rawBody, profile, approvedAccountId);
     const callbackService = new PaymentCallbackEventService(c.get("container"), c.env);
     const received = await callbackService.receive({
       provider: "wechat",
@@ -234,7 +235,7 @@ export async function wechatPayNotify(c: C, profile: WechatPayProfile = "wechat"
       amountCents: notify.amountTotal,
       currency: "CNY",
       providerEventTime: notify.providerEventTime,
-    }, { appId: notify.appId, merchantId: notify.merchantId, payerId: notify.payerId }, routineProviderObservationOf(notify));
+    }, { appId: notify.appId, merchantId: notify.merchantId, payerId: notify.payerId }, routineProviderObservationOf(notify), routinePaymentAccountAuthorizationOf(notify));
     if (!received.terminalConflict) {
       c.executionCtx.waitUntil(callbackService.dispatchById(received.outboxId).catch((error) => {
         emitOperationalEvent("error", {

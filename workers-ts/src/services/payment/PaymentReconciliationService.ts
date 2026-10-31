@@ -49,6 +49,8 @@ import { lockPaymentReconciliationRegistrationTx, registerPaymentReconciliationT
 import { lockStoreOrderPaymentBoundary } from "@/services/payment/StoreOrderPaymentBoundary";
 import { assertNativeAppQueryWitnessInTx } from './NativeAppPaymentAuthority';
 import { routineProviderObservationOf } from './RoutineProviderObservation';
+import { prepareRoutineApprovedUseTx, appendRoutineApprovedUseTx, routinePaymentAccountAuthorizationOf,
+  assertRoutineApprovedUseDeadlineTx } from './RoutineApprovedPaymentAccount';
 import { appendRoutineOriginalPaymentTx, prepareRoutineOriginalPaymentTx, attachRoutineOriginalReference,
   assertRoutineOriginalReferenceTx } from './RoutineOriginalPaymentEvidence';
 import { WechatPayService } from "@/services/wechat/WechatPayService";
@@ -837,9 +839,15 @@ export class PaymentReconciliationService {
     // however, must carry the actual verifier capability once commissioned.
     if (proof === undefined && result.status !== 'SUCCESS') return null;
     return withTx(this.container, async tx => {
+      const accountUse = await prepareRoutineApprovedUseTx(tx, this.env, routinePaymentAccountAuthorizationOf(result), proof,
+        { provider:claim.provider,profile:claim.profile,orderDomain:claim.orderDomain,orderNo:claim.orderNo,
+          expectedAmountCents:claim.expectedAmountCents,currency:claim.currency });
       const prepared = await prepareRoutineOriginalPaymentTx(tx, this.env, proof,
         { source: 'signed_query', ...result, orderNo: claim.orderNo, domain: claim.orderDomain });
-      if (!prepared) return null;
+      if (!prepared) {
+        if (accountUse) throw Error('routine_approved_original_storage_required');
+        return null;
+      }
       await lockPaymentReconciliationRegistrationTx(tx, claim.provider, claim.orderNo, result.transactionId);
       const [current] = await tx.select().from(paymentReconciliationCase).where(eq(paymentReconciliationCase.id, claim.id)).limit(1).for('update');
       if (!current || current.replayKey !== claim.replayKey || current.provider !== 'wechat' || current.profile !== 'routine'
@@ -847,7 +855,11 @@ export class PaymentReconciliationService {
         throw Error('routine_original_query_case_mismatch');
       // This records observed provider/local facts. The existing registration
       // and settlement fences still independently require the live query lease.
-      return appendRoutineOriginalPaymentTx(tx, this.env, prepared);
+      const original = await appendRoutineOriginalPaymentTx(tx, this.env, prepared);
+      const use = await appendRoutineApprovedUseTx(tx, this.env, accountUse, original.row);
+      original.conflict ||= !use.scopeMatches;
+      await assertRoutineApprovedUseDeadlineTx(tx,accountUse);
+      return original;
     });
   }
 

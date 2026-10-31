@@ -33,7 +33,9 @@ import { assertNativeAppRefundProviderRequest } from '@/services/payment/NativeA
 import { readPaymentPublicConfig, type PaymentPublicSnapshot } from '@/services/payment/PaymentPublicRuntimeConfig';
 import { readRoutinePaymentReplay, reserveRoutinePayment, recordRoutinePaymentReceipt, requireRoutinePaymentReady,
   type RoutinePaymentAdmission } from '@/services/payment/RoutinePaymentInitiation';
-import { attachRoutineProviderObservation, captureRoutineProviderObservation } from '@/services/payment/RoutineProviderObservation';
+import { attachRoutineProviderObservation, captureRoutineProviderObservation, routineProviderObservationOf } from '@/services/payment/RoutineProviderObservation';
+import { prepareApprovedRoutineQuery, prepareApprovedRoutineNotify, routineApprovedAccountMaterials,
+  assertPreparedRoutineAccount, attachRoutinePaymentAccountAuthorization } from '@/services/payment/RoutineApprovedPaymentAccount';
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
@@ -251,6 +253,7 @@ export class WechatPayService {
     headers: Record<string, string>,
     rawBody: string,
     profile: WechatPayProfile,
+    approvedAccountId?: string,
   ): Promise<{
     eventId: string;
     outTradeNo: string;
@@ -262,6 +265,12 @@ export class WechatPayService {
     merchantId: string;
     payerId?: string;
   }> {
+    headers = { ...headers };
+    if (approvedAccountId !== undefined && profile !== 'routine') throw new ValidateException('原账号回调渠道无效');
+    const approved = approvedAccountId === undefined ? null : await prepareApprovedRoutineNotify(this.container, this.env, approvedAccountId);
+    const materials = approved ? routineApprovedAccountMaterials(approved) : null;
+    const approvedConfig: WechatPayConfig | undefined = materials ? { ...materials, mchId: materials.merchantId,
+      notifyUrl: '', refundNotifyUrl: '' } : undefined;
     const { data, cfg, eventId } = await this.verifyAndDecryptNotify<{
       appid?: string;
       mchid?: string;
@@ -272,7 +281,8 @@ export class WechatPayService {
       amount?: { total?: number; currency?: string };
       payer?: { openid?: string };
       trade_type?: string;
-    }>(headers, rawBody, "transaction", profile);
+    }>(headers, rawBody, "transaction", profile, approvedConfig);
+    if (approved) await assertPreparedRoutineAccount(this.container, this.env, approved);
     if (data.mchid !== cfg.mchId || (profile !== 'app' && data.appid !== cfg.appId)) {
       throw new ValidateException("微信支付回调商户信息不匹配");
     }
@@ -317,7 +327,7 @@ export class WechatPayService {
     // Public merchant-only verification still works without APP_KEY when the
     // optional original-evidence addon is absent. Its installed ingress will
     // require this independent authenticated capture, never scalar identity.
-    return profile === 'routine' && data.trade_state === 'SUCCESS' && this.env.APP_KEY
+    const verified = profile === 'routine' && data.trade_state === 'SUCCESS' && this.env.APP_KEY
       ? attachRoutineProviderObservation(result, captureRoutineProviderObservation(this.env, {
         source: 'callback', providerEventId: eventId, verifiedBody: rawBody,
         verifierKey: headers['wechatpay-serial'] ?? headers['Wechatpay-Serial'] ?? '',
@@ -325,6 +335,8 @@ export class WechatPayService {
           transactionId: data.transaction_id, amountCents: data.amount!.total!, currency: 'CNY',
           tradeState: 'SUCCESS', tradeType: 'JSAPI', payerId: data.payer!.openid!, providerEventTime: providerEventTime! },
       })) : result;
+    return approved && data.trade_state === 'SUCCESS'
+      ? attachRoutinePaymentAccountAuthorization(verified, this.env, approved, routineProviderObservationOf(verified)) : verified;
   }
 
   async requestRefund(request: RefundProviderRequest): Promise<RefundProviderResult> {
@@ -374,7 +386,10 @@ export class WechatPayService {
     request = { ...request };
     original = original ? { ...original } : undefined;
     validatePaymentQueryIdentity(request, original);
-    const cfg = await this.getConfig(request.profile as WechatPayProfile, false, undefined, true);
+    const approved = await prepareApprovedRoutineQuery(this.container, this.env, request);
+    const materials = approved ? routineApprovedAccountMaterials(approved) : null;
+    const cfg: WechatPayConfig = materials ? { ...materials, mchId: materials.merchantId, notifyUrl: '', refundNotifyUrl: '' }
+      : await this.getConfig(request.profile as WechatPayProfile, false, undefined, true);
     assertPaymentQueryCredentialIdentity(original, cfg.appId, cfg.mchId);
     const path = `/v3/pay/transactions/out-trade-no/${encodeURIComponent(request.orderNo)}`
       + `?mchid=${encodeURIComponent(cfg.mchId)}`;
@@ -391,6 +406,8 @@ export class WechatPayService {
         return emptyTradeQueryResult(request, "NOT_FOUND", "NOTPAY", "provider_trade_not_found");
       }
       throw error;
+    } finally {
+      if (approved) await assertPreparedRoutineAccount(this.container, this.env, approved);
     }
     if (
       typeof response.appid !== 'string'
@@ -440,6 +457,7 @@ export class WechatPayService {
             amountCents, currency: 'CNY', tradeState: 'SUCCESS', tradeType: 'JSAPI',
             payerId: response.payer!.openid!, providerEventTime },
         }));
+        if (approved) attachRoutinePaymentAccountAuthorization(result, this.env, approved, routineProviderObservationOf(result));
       }
       return result;
     };
@@ -514,7 +532,7 @@ export class WechatPayService {
   }
 
   private verifyAndDecryptNotify<T>(headers: Record<string, string>, rawBody: string,
-    expectedOriginalType: 'transaction', profile: WechatPayProfile): Promise<{ data: T; cfg: WechatPayConfig; eventId: string }>;
+    expectedOriginalType: 'transaction', profile: WechatPayProfile, approvedConfig?: WechatPayConfig): Promise<{ data: T; cfg: WechatPayConfig; eventId: string }>;
   private verifyAndDecryptNotify<T>(headers: Record<string, string>, rawBody: string,
     expectedOriginalType: 'refund', profile: WechatPayProfile): Promise<{ data: T; cfg: WechatMerchantConfig; eventId: string }>;
   private async verifyAndDecryptNotify<T>(
@@ -522,6 +540,7 @@ export class WechatPayService {
     rawBody: string,
     expectedOriginalType: "transaction" | "refund",
     profile: WechatPayProfile,
+    approvedConfig?: WechatPayConfig,
   ): Promise<{ data: T; cfg: WechatMerchantConfig; eventId: string }> {
     const timestamp = headers["wechatpay-timestamp"] ?? "";
     const nonce = headers["wechatpay-nonce"] ?? "";
@@ -536,7 +555,7 @@ export class WechatPayService {
       throw new ValidateException("微信回调已过期");
     }
 
-    const cfg = expectedOriginalType === 'refund' ? await this.getRefundConfig() : await this.getConfig(profile, false, undefined, true);
+    const cfg = approvedConfig ?? (expectedOriginalType === 'refund' ? await this.getRefundConfig() : await this.getConfig(profile, false, undefined, true));
     this.assertPlatformSerial(serial, cfg);
     if (signature.startsWith("WECHATPAY/SIGNTEST/")) {
       throw new ValidateException("微信签名探测请求已拒绝");

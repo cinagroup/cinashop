@@ -7,6 +7,7 @@ import { decimalToCents } from '@/services/order/OrderBrokerageService';
 import { inspectRoutineOriginalPaymentEvidenceCatalog, assertRoutineOriginalPaymentEvidenceReady,
   ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_GATE } from '@/migrations/routineOriginalPaymentEvidence';
 import { lockStoreOrderPaymentBoundary } from './StoreOrderPaymentBoundary';
+import { assertRoutineApprovedUseTx } from './RoutineApprovedPaymentAccount';
 import { parseRoutineProviderObservation, routineEvidenceCanonical, routineEvidenceHmac,
   type RoutineProviderObservation, type RoutineProviderFacts } from './RoutineProviderObservation';
 
@@ -198,6 +199,7 @@ export async function assertRoutineOriginalReferenceTx(tx: DbClient, env: Signin
   if (!hex(key)) return fail('reference_required');
   const [raw] = await tx.execute(sql`SELECT * FROM public.routine_original_payment_evidence WHERE evidence_id=${key}`);
   const row = parseRoutineOriginalEvidence(env, raw);
+  await assertRoutineApprovedUseTx(tx, env, row);
   expectedFacts(row.payload.observation, expected);
   const b = row.payload.binding;
   if (b.state !== 'bound' || domain && b.local.domain !== domain || conflicts(await related(tx, env, expected.orderNo, expected.transactionId), row)) return fail('evidence_conflict');

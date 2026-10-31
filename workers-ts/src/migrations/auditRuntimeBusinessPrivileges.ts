@@ -1,6 +1,7 @@
 import { inspectUserMessageReadCapability } from './userMessageReadCapability';
 import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES } from './routineOriginalPaymentEvidence';
 import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES } from './routineIdentityOwnership';
+import { inspectRoutinePaymentAccountPolicyCatalog, ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES } from './routinePaymentAccountPolicy';
 import { inspectAdminWechatAppOperation, ADMIN_WECHAT_APP_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatAppOperation';
 import { inspectNativeAppPaymentAuthority, NATIVE_APP_PAYMENT_AUTHORITY_RUNTIME_PRIVILEGES } from './nativeAppPaymentAuthority';
 import { inspectAdminWechatOpenOperation, ADMIN_WECHAT_OPEN_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatOpenOperation';
@@ -160,6 +161,12 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if (routineOwnership.present) {
       if (!routineOwnership.ready) failures.push('routine_identity_ownership_catalog');
       else plan.tables.routine_identity_ownership = [...ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES[kind]];
+    }
+    const routineAccount = await inspectRoutinePaymentAccountPolicyCatalog(tx, names);
+    if (routineAccount.present) {
+      if (!routineAccount.ready) failures.push('routine_payment_account_policy_catalog');
+      else for (const [table, privileges] of Object.entries(ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES[kind]))
+        plan.tables[table] = [...privileges];
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

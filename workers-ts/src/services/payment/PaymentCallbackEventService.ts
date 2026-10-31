@@ -16,6 +16,8 @@ import type { Container } from "@/lib/di";
 import { withTx, type DbClient } from "@/lib/di";
 import { appendRoutineOriginalPaymentTx, prepareRoutineOriginalPaymentTx, assertRoutineOriginalReferenceTx } from './RoutineOriginalPaymentEvidence';
 import { parseRoutineProviderObservation } from './RoutineProviderObservation';
+import { prepareRoutineApprovedUseTx, appendRoutineApprovedUseTx, snapshotRoutinePaymentAccountAuthorization,
+  assertRoutineApprovedUseDeadlineTx } from './RoutineApprovedPaymentAccount';
 import { persistVerifiedPaymentCallbackTx, providerPaymentSucceeded,
   type VerifiedPaymentCallback, type PaymentCallbackReceiveResult } from './PaymentCallbackPersistence';
 export type { VerifiedPaymentCallback, PaymentCallbackReceiveResult } from './PaymentCallbackPersistence';
@@ -68,6 +70,7 @@ export type PaymentCallbackProcessResult =
 interface PaymentCallbackEnvironment {
   ORDER_QUEUE: Queue<OrderMessage>;
   APP_KEY?: string;
+  ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS?: string;
 }
 
 interface ClaimedPaymentCallback extends VerifiedPaymentCallback {
@@ -163,17 +166,28 @@ export class PaymentCallbackEventService {
     this.settler = settler ?? ((callback) => this.settle(callback));
   }
 
-  async receive(callback: VerifiedPaymentCallback, identity?: OfflineVerifiedCallbackIdentity, routineProof?: unknown): Promise<PaymentCallbackReceiveResult> {
+  async receive(callback: VerifiedPaymentCallback, identity?: OfflineVerifiedCallbackIdentity, routineProof?: unknown, routineAccountAuthorization?: unknown): Promise<PaymentCallbackReceiveResult> {
     callback = { ...callback };
     const proof = routineProof === undefined ? undefined : parseRoutineProviderObservation({ APP_KEY: this.env.APP_KEY ?? '' }, routineProof);
+    const accountAuthorization = snapshotRoutinePaymentAccountAuthorization({ APP_KEY: this.env.APP_KEY ?? '' }, routineAccountAuthorization);
     const offline = /^xx[0-9a-f]{30}$/.test(callback.orderNo) && providerPaymentSucceeded(callback);
     if (offline && !identity) throw new Error("offline_callback_verified_identity_required");
     return withTx(this.container, async tx => {
       if (offline) await prepareOfflinePaymentTransaction(tx);
       const routine = callback.provider === 'wechat' && callback.profile === 'routine' && callback.tradeState === 'SUCCESS' && !offline;
+      if (accountAuthorization !== undefined && !routine) throw Error('routine_approved_callback_scope_required');
+      const accountUse = routine ? await prepareRoutineApprovedUseTx(tx,
+        { APP_KEY: this.env.APP_KEY ?? '', ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS: this.env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS }, accountAuthorization, proof) : null;
       const prepared = routine ? await prepareRoutineOriginalPaymentTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, proof,
         { source: 'callback', ...callback }) : null;
       const original = prepared ? await appendRoutineOriginalPaymentTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, prepared) : null;
+      const finish = async <T>(value: T): Promise<T> => { await assertRoutineApprovedUseDeadlineTx(tx,accountUse); return value; };
+      if (accountUse && !original) throw Error('routine_approved_original_storage_required');
+      if (original) {
+        const use = await appendRoutineApprovedUseTx(tx,
+          { APP_KEY: this.env.APP_KEY ?? '', ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS: this.env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS }, accountUse, original.row);
+        original.conflict ||= !use.scopeMatches;
+      }
       if (callback.provider === 'wechat' && callback.profile === 'app') {
         await lockStoreOrderPaymentBoundary(tx, callback.orderNo);
         await assertNativeAppCallbackWitnessInTx(tx, { APP_KEY: this.env.APP_KEY ?? '' }, callback);
@@ -190,7 +204,7 @@ export class PaymentCallbackEventService {
         await tx.update(paymentReconciliationCase).set({ status: 'CONFLICT', nextCheckTime: 0, leaseUntil: 0, leaseToken: '',
           lastErrorCode: 'routine_original_evidence_conflict', resolvedTime: now, updateTime: now })
           .where(and(eq(paymentReconciliationCase.provider, callback.provider), eq(paymentReconciliationCase.orderNo, callback.orderNo)));
-        return { ...received, terminalConflict: true };
+        return finish({ ...received, terminalConflict: true });
       }
       if (offline && identity && !received.terminalConflict) {
         const [recovery] = await tx.select({ status: paymentReconciliationCase.status }).from(paymentReconciliationCase)
@@ -205,7 +219,7 @@ export class PaymentCallbackEventService {
             await tx.update(paymentCallbackOutbox).set({ status: 'COMPLETED', processedTime: now })
               .where(eq(paymentCallbackOutbox.id, received.outboxId));
           }
-          return { ...received, terminalConflict: true };
+          return finish({ ...received, terminalConflict: true });
         }
         await bindOfflineOrderCallbackTx(tx, { ...received, ...identity });
         await tx.update(paymentCallbackEvent).set({ orderDomain: "offline_order" })
@@ -213,7 +227,7 @@ export class PaymentCallbackEventService {
         await tx.update(paymentReconciliationCase).set({ orderDomain: "offline_order" })
           .where(and(eq(paymentReconciliationCase.provider, callback.provider), eq(paymentReconciliationCase.orderNo, callback.orderNo)));
       }
-      return received;
+      return finish(received);
     });
   }
 

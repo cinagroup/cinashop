@@ -43,6 +43,10 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   WECHAT_PLATFORM_PUBLIC_KEY?: string;
   /** 与平台公钥对应的 PUB_KEY_ID_*；配置后同时校验 Wechatpay-Serial。 */
   WECHAT_PLATFORM_PUBLIC_KEY_ID?: string;
+  /** Closed, versioned historical Routine merchant bundles, provisioned as a
+   * secret JSON registry. References require separate maintenance approval;
+   * neither this registry nor current config authorizes an old account. */
+  ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS?: string;
   /** 微信退款结果通知地址；必须是无查询参数的外网 HTTPS URL。 */
   WECHAT_REFUND_NOTIFY_URL?: string;
   /** 支付宝 AppID (M23: 支付宝 H5 支付, 可选) */
