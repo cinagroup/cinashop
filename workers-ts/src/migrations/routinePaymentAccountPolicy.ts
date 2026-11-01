@@ -1,3 +1,5 @@
+import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
+import { inspectCustomerFinancialRoutineRefundReaders } from './customerFinancialRoutineRefund';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
@@ -230,13 +232,17 @@ export async function inspectRoutinePaymentAccountPolicyCatalog(tx:Query,
       && Object.keys(actual).length===Object.keys(expected).length && Object.entries(expected).every(([key,value])=>(actual as Record<string,unknown>)[key]===value);
     check(spec.table+':constraints',equalMap(row.constraints,ROUTINE_PAYMENT_ACCOUNT_POLICY_EXPECTED_CONSTRAINTS[spec.table]));
     check(spec.table+':definitions',equalMap(row.definitions,spec.indexes));
-    const grants=row.grants as Array<[string,string,string,boolean]>|null;
+    const allGrants=row.grants as Array<[string,string,string,boolean]>|null;
+    const financialGrants=Array.isArray(allGrants)?allGrants.filter(g=>g[0]===CUSTOMER_FINANCIAL_RUNTIME_ROLE):[];
+    const grants=Array.isArray(allGrants)?allGrants.filter(g=>g[0]!==CUSTOMER_FINANCIAL_RUNTIME_ROLE):null;
     let app:string|null=null,appOid:string|null=null;
     if(Array.isArray(grants) && grants.length===(spec.insert?2:1)
       && grants.every(g=>Array.isArray(g) && g.length===4 && g[0]===grants[0][0] && g[1]===grants[0][1] && !g[3])
       && grants.map(g=>g[2]).join(',')===(spec.insert?'INSERT,SELECT':'SELECT')) {app=grants[0][0];appOid=grants[0][1];}
     else check(spec.table+':acl',Array.isArray(grants) && grants.length===0);
     const maintenance=typeof row.maintenance==='string'?row.maintenance:null,maintenanceOid=typeof row.maintenance_oid==='string'?row.maintenance_oid:null;
+    if(financialGrants.length)check(spec.table+':financial_reader',financialGrants.length===1&&financialGrants[0][2]==='SELECT'&&!financialGrants[0][3]
+      &&!!maintenance&&!!app&&await inspectCustomerFinancialRoutineRefundReaders(tx,{maintenance,app}));
     check(spec.table+':binding',maintenance!==null && maintenanceOid!==null && app!==maintenance
       && (!names || maintenance===names.maintenance && app===names.app));
     if(maintenance && maintenanceOid) bindings.push({maintenance,maintenanceOid,app,appOid});

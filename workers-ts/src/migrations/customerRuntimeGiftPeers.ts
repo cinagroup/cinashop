@@ -1,3 +1,4 @@
+import { captureCustomerFinancialRoutineRefund, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -17,7 +18,7 @@ import { inspectCustomerCashierSecondCardRuntimePrivileges } from './auditCustom
 export interface RuntimeGiftPeerDeclarations {
   target: RoutinePaymentRuntimeTarget;
   financial?: { manualRefund?: CustomerFinancialManualRefundAddon;
-    originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon };
+    originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon; routineRefund?:CustomerFinancialRoutineRefundAddon };
   cashierSecondCard?: { role: string; abandon: true; conditionalGuards?: true; formImages?: true };
   manager?: true;
 }
@@ -32,13 +33,14 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   const t = value.target;
   for (const name of [t.database, t.maintenance, t.app, t.admin, ...(t.local ?? []),
     ...(t.caseLock ? [t.caseLock.owner, ...t.caseLock.runtimeRoles] : [])]) pricingIdentifier(name);
-  if (value.financial && (Object.keys(value.financial).some(key => !['manualRefund', 'originalPaymentReaders'].includes(key))
+  if (value.financial && (Object.keys(value.financial).some(key => !['manualRefund', 'originalPaymentReaders','routineRefund'].includes(key))
     || !t.local?.includes(CUSTOMER_FINANCIAL_RUNTIME_ROLE))) throw Error('Explicit bound Financial gift peer required');
   if (value.financial?.manualRefund) {
     if (Object.keys(value.financial.manualRefund).join(',') !== 'promotionOwner') throw Error('Explicit manual owner required');
     pricingIdentifier(value.financial.manualRefund.promotionOwner);
   }
   if (value.financial?.originalPaymentReaders) captureCustomerFinancialOriginalPaymentReaders(value.financial.originalPaymentReaders);
+  if(value.financial?.routineRefund)captureCustomerFinancialRoutineRefund(value.financial.routineRefund);
   const cashier = value.cashierSecondCard;
   if (cashier) {
     pricingIdentifier(cashier.role);
@@ -57,6 +59,7 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
     ...(value.financial ? { financial: {
       ...(value.financial.manualRefund ? { manualRefund: { ...value.financial.manualRefund } } : {}),
       ...(value.financial.originalPaymentReaders ? { originalPaymentReaders: { secondCard: true as const } } : {}),
+      ...(value.financial.routineRefund?{routineRefund:{routineRefund:true as const}}:{}),
     } } : {}), ...(cashier ? { cashierSecondCard: { role: cashier.role, abandon: true as const,
       ...(cashier.conditionalGuards ? { conditionalGuards: true as const } : {}),
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),

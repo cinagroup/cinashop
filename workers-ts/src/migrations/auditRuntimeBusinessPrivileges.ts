@@ -1,3 +1,4 @@
+import { inspectRoutineRefundCatalog, ROUTINE_REFUND_RUNTIME_PRIVILEGES } from './routineRefund';
 import { inspectUserMessageReadCapability } from './userMessageReadCapability';
 import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES } from './routineOriginalPaymentEvidence';
 import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES } from './routineIdentityOwnership';
@@ -167,6 +168,11 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       if (!routineAccount.ready) failures.push('routine_payment_account_policy_catalog');
       else for (const [table, privileges] of Object.entries(ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES[kind]))
         plan.tables[table] = [...privileges];
+    }
+    const routineRefund=await inspectRoutineRefundCatalog(tx,names);
+    if(routineRefund.present){
+      if(!routineRefund.ready)failures.push('routine_refund_catalog');
+      else for(const [table,privileges]of Object.entries(ROUTINE_REFUND_RUNTIME_PRIVILEGES[kind]))plan.tables[table]=[...privileges];
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

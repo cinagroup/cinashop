@@ -1,3 +1,4 @@
+import { captureCustomerFinancialRoutineRefund, inspectCustomerFinancialRoutineRefund, CUSTOMER_FINANCIAL_ROUTINE_REFUND_TABLE_PRIVILEGES, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
 import { is, sql } from 'drizzle-orm';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
 import * as models from '../models/schema';
@@ -34,14 +35,16 @@ import { captureCustomerFinancialOriginalPaymentReaders, CUSTOMER_FINANCIAL_ORIG
 type Query = Pick<DbClient, 'execute'>;
 /** Explicit maintenance extension; the historical base plan stays exact. */
 export interface CustomerFinancialManualRefundAddon { promotionOwner: string }
-function reviewedPlan(manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon) {
+function reviewedPlan(manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon, routineRefund?:CustomerFinancialRoutineRefundAddon) {
   if (originalPaymentReaders) {
     captureCustomerFinancialOriginalPaymentReaders(originalPaymentReaders);
     if (!manualRefund) throw Error('Original-payment readers require the explicitly commissioned manual Financial profile');
   }
+  if(routineRefund)captureCustomerFinancialRoutineRefund(routineRefund);
   const plan = manualRefund ? customerManualRefundRuntimePrivilegePlan() : customerFinancialRuntimePrivilegePlan();
   if (manualRefund) plan.tables.manager_order_operation_request = ['SELECT'];
   if (originalPaymentReaders) for (const table of CUSTOMER_FINANCIAL_ORIGINAL_PAYMENT_READ_TABLES) plan.tables[table] = ['SELECT'];
+  if(routineRefund)for(const[table,privileges]of Object.entries(CUSTOMER_FINANCIAL_ROUTINE_REFUND_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
   return plan;
 }
 const sourceTables = new Map(Object.values(models).filter(value => is(value, PgTable)).map(table => {
@@ -67,8 +70,9 @@ sourceSequences.set('kefu_visitor_uid_seq', {
 /** The whole existing Customer financial profile, never a subset learned from
  * a fixture or the server's grants. This inspects existing protocols only. */
 export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Query, maintenance: string,
-  manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon) {
-  const failures: string[] = [], plan = reviewedPlan(manualRefund, originalPaymentReaders);
+  manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon,
+  routineRefund?:CustomerFinancialRoutineRefundAddon, refundNames?:{app:string;admin:string}) {
+  const failures: string[] = [], plan = reviewedPlan(manualRefund, originalPaymentReaders,routineRefund);
   const relations = await db.execute<{ name: string; ordinary: boolean; columns: string[] }>(sql`SELECT c.relname AS name,
     c.relkind='r' AND c.relpersistence='p' AND NOT(c.relrowsecurity OR c.relforcerowsecurity OR c.relispartition)
       AND NOT EXISTS(SELECT 1 FROM pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
@@ -140,6 +144,11 @@ export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Qu
     role: CUSTOMER_FINANCIAL_RUNTIME_ROLE, maintenance, readers: originalPaymentReaders, requirePrivileges: false,
   }) : null;
   if (originalReaders && !originalReaders.catalogReady) failures.push(...originalReaders.failures.map(name => `original_payment:${name}`));
+  if(routineRefund){
+    if(!refundNames)failures.push('routine_refund_names');
+    else {const proof=await inspectCustomerFinancialRoutineRefund(db,{maintenance,...refundNames,addon:routineRefund,requirePrivileges:true});
+      if(!proof.ready)failures.push(...proof.failures.map(name=>'routine_refund:'+name));}
+  }
   const reviewedDefiners = [...scope.functionOids, ...product.functionOids, ...users.functionOids,
     ...(pricing.functionOid ? [pricing.functionOid] : []), ...(offline ? [offline] : []),
     ...(manual?.catalogReady && manual.manualFunctionOid ? [manual.manualFunctionOid] : [])];
@@ -153,6 +162,7 @@ export interface CustomerFinancialRuntimeInspection {
   routine: { target: RoutinePaymentRuntimeTarget; stage: 'before-customer' | 'ready' };
   manualRefund?: CustomerFinancialManualRefundAddon;
   originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon;
+  routineRefund?:CustomerFinancialRoutineRefundAddon;
 }
 
 /** Maintenance named-role comparison; no SET ROLE or automatic grants. */
@@ -160,8 +170,8 @@ export async function inspectCustomerFinancialRuntimePrivileges(db: Query, optio
   if (typeof options.requireLogin !== 'boolean' || !['before-customer', 'ready'].includes(options.routine?.stage))
     throw Error('Explicit Customer financial LOGIN and routine stage required');
   const role = CUSTOMER_FINANCIAL_RUNTIME_ROLE, { target, stage } = options.routine;
-  const catalogs = await inspectCustomerFinancialRuntimeCatalogPrerequisites(db, target.maintenance, options.manualRefund, options.originalPaymentReaders);
-  const failures = [...catalogs.failures], plan = reviewedPlan(options.manualRefund, options.originalPaymentReaders);
+  const catalogs = await inspectCustomerFinancialRuntimeCatalogPrerequisites(db, target.maintenance, options.manualRefund, options.originalPaymentReaders,options.routineRefund,target);
+  const failures = [...catalogs.failures], plan = reviewedPlan(options.manualRefund, options.originalPaymentReaders,options.routineRefund);
   const manual = options.manualRefund ? await inspectCustomerFinancialManualRefundRuntime(db, {
     role, promotionOwner: options.manualRefund.promotionOwner, requirePrivileges: true,
   }) : null;
@@ -270,7 +280,8 @@ export async function inspectCustomerFinancialRuntimePrivileges(db: Query, optio
 
 /** Independently authenticated LOGIN, not a maintenance SET ROLE session. */
 export async function auditCustomerFinancialRuntimePrivileges(db: DbClient, target: RoutinePaymentRuntimeTarget,
-  manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon) {
+  manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon,
+  routineRefund?:CustomerFinancialRoutineRefundAddon) {
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root Customer financial connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('search_path','public,pg_temp',true),
@@ -280,7 +291,7 @@ export async function auditCustomerFinancialRuntimePrivileges(db: DbClient, targ
     const [identity] = await tx.execute(sql`SELECT current_database() AS database,current_user AS role,session_user AS session,
       (SELECT r.rolname FROM pg_stat_activity a JOIN pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend_role,
       current_setting('session_replication_role')='origin' AS origin`);
-    const result = await inspectCustomerFinancialRuntimePrivileges(tx, { requireLogin: true, routine: { target, stage: 'ready' }, manualRefund, originalPaymentReaders });
+    const result = await inspectCustomerFinancialRuntimePrivileges(tx, { requireLogin: true, routine: { target, stage: 'ready' }, manualRefund, originalPaymentReaders,routineRefund });
     const realLogin = identity?.role === CUSTOMER_FINANCIAL_RUNTIME_ROLE && identity.session === CUSTOMER_FINANCIAL_RUNTIME_ROLE
       && identity.backend_role === CUSTOMER_FINANCIAL_RUNTIME_ROLE && identity.database === target.database && identity.origin === true;
     return { ...result, identity, realLogin, ready: result.ready && realLogin,

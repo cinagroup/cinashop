@@ -476,3 +476,28 @@ Drizzle 采用恰好一次序列化参数的 `::text::jsonb`；resolve 传真正
 首轮runtime类型检查3错是state/kind字面量被推断为string，显式返回/行类型修正，未放宽检查。首轮集成9通过/4失败：default reconciler传入带租约字段的宽case DTO，原 `{...raw}` 比较误将内部字段计入授权意图，在HTTP前拒绝；只投影完整六字段后，第二轮13项全通过。独立复核再发现 `String(orderDomain)` 会保留对象引用，改成严格string并加拒绝对象/coercion0次/journal不变断言，随后最终整文件重跑13项通过。单元首轮807通过/1失败为旧源码字符串要求回调校验恰好四参数；改为TypeScript AST核对实际transaction调用的headers/rawBody与profile传播，保留其他断言并整批重跑808项通过。早期结果保留原始终态，不累计重复用例。最终完整unit检查另发现native测试未使用的EVENT_TIME常量，仅删除该常量后重跑两套标准类型检查；生产代码未变，此类无运行效果修改不冒称重新执行原生测试。目录/测试作者参与root服务的跨作者只读复核，不扩张成对自己实现的完全独立审计；未发现剩余必须修复问题。
 
 以上为自有本机PG16、独立实际LOGIN、生产服务/Hono/default消费者与真实Node生成RSA/AES验收，provider/Queue/KV为受控传输替身；没有真实微信、Browser、Workerd/Hyperdrive、生产DDL或部署验收。当前仅query/notify批准，原账号退款/CNSR派发与Financial角色、原账号OAuth/token/发货/订阅仍待接入；完整内外清单、历史对象归属分类与维护manifest、原子切换许可和所有消费者、前端DTO/session/journal/页面及Browser、其余全局迁移与既有CI失败继续未完成。保留现有UID、权益、旧单和付款；未知保持未知，首次接入/实质跨AppID的42501屏障与runtime_ready=false保持。提交/合并/推送以本轮最终检查点为准，不扩张阶段27的单笔推送授权。
+
+
+## 阶段 29：原账号退款批准与 Financial 数据库协议基础（2026-10-31）
+
+阶段28提交 `fc7d61e3` 已按用户单笔明确授权推送，本轮实际 `git ls-remote origin refs/heads/main` 再次核对为 `fc7d61e369a0f7bed5b1b6a55731a178e9638d46`。本阶段先完成独立可验收的退款协议基础，没有将未完成的原账号退款请求、查单、回调或结算接入运行路径。完整合同见 [原账号退款基础](./routine-refund-foundation.md)。
+
+新增显式三表插件 `routine_refund_account_policy`、`routine_refund_dispatch`、`routine_refund_provider_evidence`：六/六/七列、总25约束/8索引、同一invoker不可变函数及六道行/整表触发器，无序列/default/FK。App仅SELECT policy，SELECT/INSERT dispatch及provider evidence；Admin/Manager/Cashier无新增权限。后两表本阶段没有生产写者或消费者，测试synthetic结构行不成为真实退款原证、CNSR授权或财务效果。正式安装器认证实际PG16维护LOGIN/backend/数据库，保留完整local/caseLock/peer/AppReader声明，以独立731718门原子安装；完整重复不改DDL/ACL/rows/xmin，部分、孤儿、owner-only半安装和漂移拒绝，不自动修复。
+
+新增独立 `appendRoutineRefundAccountPolicy` 维护入口，无HTTP作者。严格固定退款用途refund_request/refund_query/refund_notify，与旧付款query/notify journal不互认；新HMAC域绑定实际库/维护OID、完整policy、前版、CAS revision、UUID和SQL时钟。64版及1MiB完整历史上限拒绝成功前缀；状态、有效期、opaque ref/version/完整材料commitment明确。首await前捕获Env字符串、target primitives与purpose数组，拒绝getter、coercion、sparse/custom arrays和未知字段。全局UUID不可跨account/改意图；已提交原回执在材料撤下后仍可精确重放，撤销不需要秘密材料。latest读取只返回冻结的public policy metadata；撤销、未来/过期、缺材料、篡改或用途不符均不回落，不返回商户秘密、提供方capability或历史归属。
+
+Financial通过另一显式forward以{routineRefund:true}声明完整现行profile，原子取得三新表固定权限及三旧来源的SELECT。`routine_original_payment_evidence`、`routine_payment_account_policy/use`从未新增Financial写权限。旧两目录检查仅接受完整新插件加固定Financial精确联合ACL，不从任意grantee学习权限；新addon同步full Financial/App/Admin审计及gift peer声明，既有manual/second-card声明仍显式保留。新增probe验证真实独立App/Financial LOGIN与session/backend OID、RC/RW、public对象和有限SQL时间；后置纯历史读取无新gate，不把其当fresh provider授权。维护forward仅投影六个正式目标字段，夹具pricingOwner及未知字段不回显，异步BEGIN前捕获完整声明。
+
+最终正式安装器完整文件8项在inputs-03通过，无跳过；覆盖精确25约束/8索引、完整重复、原子回滚、partial/orphan/drift、真实门锁/表锁/无后置门、实际App/Admin/维护拒绝、TEMP阴影，以及真正五类独立LOGIN的Financial升级/rollback/repeat/异步捕获、旧source联合只读权限与后置完整profile/source TEMP反例。维护批准完整7项在inputs-02通过；inputs-03只修正式安装测试的六字段期望，其余14条路径包括所有生产实现与维护批准测试/依赖逐字一致，不把它冒称该7项再次重跑。七项覆盖public metadata/HMAC、首次receipt/xmin、错误材料/撤材料/撤销、CAS/全局UUID/用途/未来窗口、真实role与SET ROLE、维护门、跨await捕获及旧payment HMAC域拒绝。
+
+既有原始付款证据及批准账号恢复两个完整文件26项、八个完整定向单元文件884项在inputs-03均通过；包含真实Node RSA/AES、生产Hono/默认消费者与本机独立PG16，受控provider/Queue/KV传输不等同真实服务商。完整标准unit/runtime两套TypeScript检查也在inputs-03均exit=0。15条实现/测试/运行器路径在整个最终pipeline内冻结；不同输入、重复运行及先前失败不叠加计数。所有本轮native集群均实际remaining=0、STOPPED；既有NOTICE和预期业务拒绝诊断保留，不声称零stderr或历史全量CI绿色。
+
+源秘密扫描初报一项，确认为正式Financial metadata测试的固定无效PEM；依据仓库既有方式，仅给private-key规则、唯一测试路径及整条固定无效材料/platform-ID行添加精确例外。材料/平台ID变动、追加内容、生产/其他测试路径不匹配；不匹配的初次规则仍报一项，最终源复扫零项。该非功能扫描配置与本文在实现冻结后单独纳入提交文件扫描；本例外不是实际私钥、提供方验签或退款证明。
+
+首轮标准unit类型检查真实报TS2322：新ACL元组的数组literal在sort链后丢失tuple推断；改为显式tuple数组再push/sort，未放宽类型或提高资源。首轮新原生联合文件14通过/1失败，Financial正式forward/读取已执行到重复目标比较，测试误将夹具pricingOwner也计入六字段白名单目标；仅将期望改为明确六字段并保留unknown/pricingOwner不回显，后续完整重跑才计后置五profile/source TEMP结果。早期失败与开发18项/7项通过分别保留，不累计重复用例。共有source版本与每批终态可逐字复核。
+
+跨作者只读复核未发现维护服务剩余必须修复问题；root另复核目录/权限forward并要求系统查询pg_catalog限定、primitive-only目标及确定快照排序，均在最终冻结前完成。目录作者参与root服务复核，不扩张成对其自己实现的独立审计。read调用方abort不是公共维护append的callerTx写回滚；正式安装器另有实际callerTx回滚。65行容量与倒退时钟没有单独native注入，不以源码检查冒充这两项执行覆盖。
+
+本轮实际运行生产维护服务/目录/安装器、独立TCP认证LOGIN、HMAC与自有本机PG16，没有真实提供方退款、Browser、Workerd/Hyperdrive、生产DDL或部署。原账号CNSR首次派发与actor原子绑定、固定旧商户request/query/callback及负查单验签、provider证据与mutable投影同事务、durable SUCCESS结算及Financial只读状态/恢复仍待接入；基础批准不会放开旧商户退款。所有用户/UID/权益/旧单付款保留，未知不猜归属；首次接入/实质跨AppID的42501屏障、runtime_ready=false、整体迁移未完成及既有CI失败状态保持。
+
+重新连接本轮环境时，过去记录的/tmp阶段验证目录已不存在；未伪造恢复旧日志，也未把旧结果改称本轮重跑。本阶段原始输入manifest、日志、终态、跨作者复核及后续退款接入设计均留在ignored工作区 `.cache/php-ts-phase29-validation/`，可跨后续继续使用。提交文件另行秘密扫描；新增提交的推送不扩张用户对fc7d61e3的单笔授权。

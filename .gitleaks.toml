@@ -1,6 +1,14 @@
 title = "CinaShop repository secret scanning"
 minVersion = "8.29.0"
 
+[[allowlists]]
+description = "Exact non-secret placeholder PEM in the Routine refund metadata-only Financial fixture"
+targetRules = ["private-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^workers-ts/test/routine-refund-upgrade-native\.test\.ts$''']
+regexes = ['''^\s*privateKey:'\-\-\-\-\-BEGIN\ PRIVATE\ KEY\-\-\-\-\-fixture\-\-\-\-\-END\ PRIVATE\ KEY\-\-\-\-\-',platformPublicKey:'\-\-\-\-\-BEGIN\ PUBLIC\ KEY\-\-\-\-\-fixture\-\-\-\-\-END\ PUBLIC\ KEY\-\-\-\-\-',platformPublicKeyId:'PUB_FIXTURE'\}\]\}\)\};$''']
+
 # Reviewed release-candidate findings: fixed replay IDs and historical source
 # digests are not authentication material. Match only exact values and files.
 [[allowlists]]

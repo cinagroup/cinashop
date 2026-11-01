@@ -1,3 +1,5 @@
+import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
+import { inspectCustomerFinancialRoutineRefundReaders } from './customerFinancialRoutineRefund';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
@@ -194,7 +196,9 @@ export async function inspectRoutineOriginalPaymentEvidenceCatalog(tx: Query,
   const actual = row.constraints as Record<string, string> | null;
   check('constraints', !!actual && Object.keys(actual).length === Object.keys(ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_EXPECTED_CONSTRAINTS).length
     && Object.entries(ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_EXPECTED_CONSTRAINTS).every(([key, value]) => actual[key] === value));
-  const grants = row.grants as Array<[string, string, string, boolean]> | null;
+  const allGrants = row.grants as Array<[string, string, string, boolean]> | null;
+  const financialGrants = Array.isArray(allGrants) ? allGrants.filter(g=>g[0]===CUSTOMER_FINANCIAL_RUNTIME_ROLE) : [];
+  const grants = Array.isArray(allGrants) ? allGrants.filter(g=>g[0]!==CUSTOMER_FINANCIAL_RUNTIME_ROLE) : null;
   let app: string | null = null, appOid: string | null = null;
   if (Array.isArray(grants) && grants.length === 2 && grants.every(value => Array.isArray(value) && value.length === 4)
     && grants[0][0] === grants[1][0] && grants[0][1] === grants[1][1]
@@ -203,6 +207,8 @@ export async function inspectRoutineOriginalPaymentEvidenceCatalog(tx: Query,
   } else check('acl', Array.isArray(grants) && grants.length === 0);
   const maintenance = typeof row.maintenance === 'string' ? row.maintenance : null;
   const maintenanceOid = typeof row.maintenance_oid === 'string' ? row.maintenance_oid : null;
+  if(financialGrants.length) check('financial_reader',financialGrants.length===1&&financialGrants[0][2]==='SELECT'&&!financialGrants[0][3]
+    &&!!maintenance&&!!app&&await inspectCustomerFinancialRoutineRefundReaders(tx,{maintenance,app}));
   check('binding', maintenance !== null && maintenanceOid !== null && (app === null || app !== maintenance)
     && (!names || maintenance === names.maintenance && app === names.app));
   const [namespace] = await tx.execute<{ safe: boolean; roles: boolean }>(sql`SELECT
