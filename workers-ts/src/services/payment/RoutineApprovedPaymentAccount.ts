@@ -6,6 +6,7 @@ import { createContainerFromDb, withTx, type Container, type DbClient } from '@/
 import { inspectRoutinePaymentAccountPolicyCatalog, assertRoutinePaymentAccountPolicyInstalledTx,
   assertRoutinePaymentAccountPolicyReadInTx, ROUTINE_PAYMENT_ACCOUNT_POLICY_GATE } from '@/migrations/routinePaymentAccountPolicy';
 import { assertRoutineRefundReadInTx,assertRoutineRefundStatusReadTx, inspectRoutineRefundCatalog } from '@/migrations/routineRefund';
+import { assertRoutineShippingReadTx, inspectRoutineShippingCatalog } from '@/migrations/routineShipping';
 import { inspectRoutineOriginalPaymentEvidenceCatalog } from '@/migrations/routineOriginalPaymentEvidence';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
@@ -354,11 +355,21 @@ export async function assertRoutineApprovedUseTx(tx: DbClient, env: Signing, ori
  * related originals can be checked in one bounded source read, without a gate. */
 export async function readRoutineApprovedUsesForRefundTx(tx:DbClient,env:Signing,
  original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],statusRead=false) {
+ return readRoutineApprovedConsumerUsesTx(tx,env,original,'refund',statusRead);
+}
+/** App-only shipping provenance, without refund commissioning, a fresh payment
+ * gate, current policy or merchant secrets. Called after physical source locks. */
+export async function readRoutineApprovedUsesForShippingTx(tx:DbClient,env:Signing,
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[]) {
+ return readRoutineApprovedConsumerUsesTx(tx,env,original,'shipping',false);
+}
+async function readRoutineApprovedConsumerUsesTx(tx:DbClient,env:Signing,
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],consumer:'refund'|'shipping',statusRead:boolean) {
  env={APP_KEY:env.APP_KEY};
  const originals=(Array.isArray(original)?original:[original]).map(row=>parseRoutineOriginalEvidence(env,row));
  if(!originals.length||originals.length>64||new Set(originals.map(row=>row.evidence_id)).size!==originals.length)return fail();
- if(!await(statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
- const refund=await inspectRoutineRefundCatalog(tx),binding=refund.binding;
+ if(!await(consumer==='shipping'?assertRoutineShippingReadTx(tx):statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
+ const refund=await(consumer==='shipping'?inspectRoutineShippingCatalog(tx):inspectRoutineRefundCatalog(tx)),binding=refund.binding;
  const catalog=await inspectRoutinePaymentAccountPolicyCatalog(tx),source=await inspectRoutineOriginalPaymentEvidenceCatalog(tx);
  if(!refund.ready||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
   ||source.binding?.maintenanceOid!==binding.maintenanceOid||catalog.binding?.appOid!==binding.appOid||source.binding?.appOid!==binding.appOid)return fail();
@@ -383,7 +394,7 @@ export async function readRoutineApprovedUsesForRefundTx(tx:DbClient,env:Signing
   }
   decoded.push(u);
  }
- return freeze({uses:decoded,digest:routineEvidenceHmac(env,'refund-approved-use-set',decoded)});
+ return freeze({uses:decoded,digest:routineEvidenceHmac(env,consumer==='shipping'?'shipping-approved-use-set':'refund-approved-use-set',decoded)});
 }
 
 /** Explicit owner-only maintenance API. No HTTP route, config adoption, role

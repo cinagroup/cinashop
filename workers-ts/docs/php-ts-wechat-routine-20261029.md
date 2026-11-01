@@ -27,7 +27,7 @@
 - Mini 社交付款、收货事件目前缺少原单 AppID/商户/付款人证据，明确记录 `wechat_callback_original_account_evidence_required`，保留原账号事件并走既有 FAILED/DEAD 恢复流程；此检查先于旧水位判断，不能被较晚的历史水位误记成已完成。公众号既有支付/收货行为保留，原单恢复仍待实现。
 - 新的订单/提现通知在业务 outbox 创建事务中记录目标 `routineAppId`，投递渲染只继承原事件的记录。业务事件和投递回放保留原账号或历史缺失，不补当前 AppID；两份明确账号不一致时拒绝且不改原件。旧业务事件无记录则 Mini 渠道为 SKIPPED，旧已排队投递无记录或目标不符则为 DEAD，均保留原内容待维护。新安装未配公共 AppID 时仅跳过可选 Mini 渠道；确定的可选配置错误不回滚财务、SMS 或站内通知，SQL 故障仍传播。游客、次卡和机器人合同保留。
 - routine 通知的成对凭据改读新鲜 SQL，统一使用来源戳 token helper；不读旧 KV 凭据或 AppID-only token。明确 invalid-token 只允许在原来源内重试一次。POST 的 fetch 与流式正文受 8 秒、64 KiB 上限约束。明确 `errcode=0` 成功就记录 SENT，不因响应期间换配置改成可重发；断连、超时或坏响应记录 UNKNOWN，Queue 回放不再发送。新目标 AppID 只证明通知意图，不证明既有 UID 或旧订单归属。
-- 发货上传旧载荷没有完整原单账号见证，已阻止借用当前商户号或当前 AppID 发送，投递保留为带 `wechat_shipping_original_account_evidence_required` 的 DEAD。原单证据、维护恢复及真正的发货上传迁移尚未完成。
+- 原账号单履约商品发货已接入维护批准、独立归档 AppSecret/token、原付款及 NativeApp 反证、实际 Queue 派发和原子回执，详见 [原账号发货合同](routine-shipping-accounts.md)。分包、充值、会员、自提、历史 SKIPPED 维护恢复及全局迁移仍未完成，`runtime_ready=false` 保留。
 
 - `PaymentPublicRuntimeConfig.ts` 新增固定的 checkout/routine/official/merchant 公共 SQL 快照，沿既有平台 sort/id 优先级读取完整来源、影子行与 xmin；64 行和 1 MiB 上限拒绝不完整读取。公共摘要只证明来源一致，不证明旧 UID 或原订单归属；OAuth Secret、商户私钥和 KV 不进入该快照。
 - 支付就绪状态的余额、线下、支付宝开关与微信公共配置改读同一 checkout SQL 快照；原生 App 继续独立读取既有账户目录并核对商户，不从通用键读取 App 凭据。Mini 支付的公共 AppID 与商户配置不要求 OAuth Secret 或 APP_KEY；APIv3 部署凭据的要求保留。
@@ -589,3 +589,25 @@ root使用CUA in-app浏览器，在1280×720自有本地UI合成传输夹具验�
 跨作者只读复核覆盖root的联合ACL/正式forward、format2 actor/dispatch、Manager消费者、policy角色扩展、pricing窄兼容及Admin前端；发现的尾部actor后deadline检查、Manager已完成split原键可达性、无Financial新actor源TEMP边界和pricing OID缺口已在最终冻结前修复。Admin六路径、principal leaf和三份新native由该复核者参与编写，对其自身部分仅自审/root复核，不扩张为独立安全审计。
 
 尚无旧事务首receipt注入的xmin专门负例、Admin↔Manager跨kind接手续退、同名角色新OID重commission、pricing新分支单独SET ROLE反例、故意慢尾8秒/倒退时钟注入、无Financial新actor组合的专门原生执行、127/128容量边界运行或多会话高负载。旧Manager余额结算与Admin HTTP余额/本地完成兼容案例通过，但不能把它们称为新Admin execution状态入口的余额/零现金/Alipay专门验收。未运行真实微信账号/生产provider、生产DDL、部署、Workerd/Hyperdrive；未给Cashier扩权，未回填历史归属。用户/旧bindings/权益/旧付款保留，跨AppID屏障、`runtime_ready=false`、整体PHP→TS迁移未完成及既有历史CI状态保持。
+
+
+## 第32阶段：原账号单履约发货（2026-10-31）
+
+真实 App 消费者在领取 shipping Queue 前验证 SQL 身份，以验签 JSAPI SUCCESS 原证确定原 AppID、商户和实际付款人，再用专用维护批准读取归档 AppSecret。当前 B 配置、买家最新绑定、INIT 和 PREPAY 均不授权旧单发货。新 TS 的 `product.storeName` 与旧 PHP 的 `productInfo.store_name` 都从实际购物车快照读取，描述数量使用物理商品行。
+
+三个维护者所有的不可变存储保存 CAS 策略、首次派发与 TLS 回执。外部请求前的 SQL issuedAt 固定批准时点，应用时钟只参与有限偏差检查。HTTP 在 SQL 事务外，已知回执与投递投影同事务提交；可能已发出的未知结果保留 UNKNOWN。当前单履约准入明确拒绝拆分家族，所有全局就绪标记仍为 false。
+
+隔离验收使用完整五个真实 LOGIN、正式安装器与维护 API、真实 Admin 下单/发货、RSA/AES 回调、默认付款和 outbox 消费者。各批次只证明各自冻结版本，不累计重复运行：
+
+| 批次 | 实际结果与范围 |
+| --- | --- |
+| `native-upgrade-01` | 存储／角色／正式安装器8项通过，115.89秒；相关安装器、目录、审计与测试字节此后保持不变，运行器只追加有限测试白名单。 |
+| `native-account-01` | 当时版本的批准／token8项通过，135.51秒；之后新增了准备时 `now<created_at` 和历史读取时 `at<created_at` 两处拒绝保护，不冒称本批覆盖了这两条新负例。 |
+| `native-compat-01` | 旧账号／退款／通知来源64项通过，439.59秒；对应共享批准读取、NativeApp反证与投递接线此后未变，后来的发货实现及描述修复另由最终批次验证。 |
+| `final-02` | 当前单履约原生完整7项、3文件通知单测35项、标准Worker unit/runtime与Admin类型检查全部通过，465.78秒；23条冻结输入无变化。 |
+
+原生批次均为零剩余夹具且本地PG集群已停止。最终批次覆盖实际付款人区别于最新绑定、current配置清空／在途撤销、应用时钟领先SQL、UNKNOWN不重发、源事实／批准拒绝、真实NativeApp冲突、晚期投递写失败时证据共同回滚，以及其他四个真实运行账号在领取前拒绝。HTTP期间另有独立会话证明物理锁已释放。七项没有单独执行最终分包准入负例或上述两条倒退时钟读取负例；当前正常批准、token及历史回执链已执行，不能扩张为这些反例的覆盖。
+
+早期真实业务批次因未读取TS `product.storeName` 而在HTTP前失败；修复为规范／旧格式快照及物理数量后单履约七案通过。`final-01` 的7+35先通过，随后Worker unit类型检查报告通知查询未选择 `cartNum` 及关闭分包后的两处不可达访问，runtime/Admin未启动；补齐两个真实查询字段并删除死分支后，才有上述 `final-02` 全部通过。没有降低strict、增加内存／超时或并发重型检查。文档在最终批次之后补齐；实现、运行器与测试的冻结字节保持不变，提交文件另做完整秘密扫描。
+
+尝试的3项拆包验收暴露基础 App 与 Admin 都缺少同城任务读取合同。该缺口没有通过额外 raw grant、维护者生产者或删除 fence 绕过；本轮分包保持关闭，正式跨角色合同另续。充值、会员、付款后自提、物流更正、退款退役分代和旧 SKIPPED/UNKNOWN 维护恢复继续列为未完成。本轮无生产 DDL、部署或真实微信调用。

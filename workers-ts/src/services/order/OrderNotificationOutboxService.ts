@@ -532,21 +532,16 @@ function pinkProductTitleFromSnapshot(value: string | null): string {
   } catch { return ''; }
 }
 
-function shippingTitleFromSnapshot(value: string | null): string {
-  if (!value || value.length > 1_048_576) return "";
+function shippingTitleFromSnapshot(value: string | null, quantity: number): string {
+  if (!value || value.length > 1_048_576 || !Number.isSafeInteger(quantity) || quantity <= 0) return "";
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
-    const productInfo = parsed.productInfo;
-    if (!productInfo || typeof productInfo !== "object" || Array.isArray(productInfo)) return "";
-    const storeName = (productInfo as Record<string, unknown>).store_name;
-    if (typeof storeName !== "string" || !storeName) return "";
-    const cartNum = parsed.cart_num;
-    return typeof cartNum === "number" || typeof cartNum === "string"
-      ? `${storeName} * ${String(cartNum)}`
-      : storeName;
-  } catch {
-    return "";
-  }
+    const canonical = Object.hasOwn(parsed, 'product');
+    const info = canonical ? parsed.product : parsed.productInfo;
+    if (!info || typeof info !== 'object' || Array.isArray(info)) return '';
+    const name = (info as Record<string, unknown>)[canonical ? 'storeName' : 'store_name'];
+    return typeof name === 'string' && name ? `${name} * ${quantity}` : '';
+  } catch { return ''; }
 }
 
 function utf8Prefix(value: string, characters: number): string {
@@ -569,6 +564,7 @@ async function noticeContext(
     ? tx
         .select({
           cartInfo: storeOrderCartInfo.cartInfo,
+          cartNum: storeOrderCartInfo.cartNum,
           isWriteoff: storeOrderCartInfo.isWriteoff,
         })
         .from(storeOrderCartInfo)
@@ -581,6 +577,7 @@ async function noticeContext(
     : tx
         .select({
           cartInfo: storeOrderCartInfo.cartInfo,
+          cartNum: storeOrderCartInfo.cartNum,
           isWriteoff: storeOrderCartInfo.isWriteoff,
         })
         .from(storeOrderCartInfo)
@@ -645,7 +642,7 @@ async function noticeContext(
     20,
   );
   const shippingItemDescription = cartRows
-    .map((row) => shippingTitleFromSnapshot(row.cartInfo))
+    .map((row) => shippingTitleFromSnapshot(row.cartInfo, row.cartNum))
     .filter(Boolean)
     .join(" | ");
   const openid = (type: "wechat" | "routine") =>
@@ -1002,14 +999,15 @@ async function stageExternalNotifications(
   const shippingOpen = ["1", "true"].includes(
     normalizeConfigScalar(shippingConfigs[0]?.value).toLowerCase(),
   );
-  if (!shippingOpen || context.order.isChannel !== 1 || context.order.payType !== "weixin") return;
+  if (!shippingOpen || context.order.payType !== "weixin") return;
 
   let rootOrderNo = context.order.orderId;
+  let transactionId = context.order.tradeNo.trim();
   let isAllDelivered = true;
   const deliveryMode: 1 | 2 = context.order.pid > 0 ? 2 : 1;
   if (deliveryMode === 2) {
     const [rootRows, pendingRows] = await Promise.all([
-      tx.select({ orderId: storeOrder.orderId }).from(storeOrder)
+      tx.select({ orderId: storeOrder.orderId, tradeNo: storeOrder.tradeNo }).from(storeOrder)
         .where(eq(storeOrder.id, context.order.pid)).limit(1),
       tx.select({ id: storeOrder.id }).from(storeOrder).where(and(
         eq(storeOrder.pid, context.order.pid),
@@ -1018,13 +1016,18 @@ async function stageExternalNotifications(
     ]);
     if (!rootRows[0]) throw new Error("拆单根订单不存在");
     rootOrderNo = rootRows[0].orderId;
+    transactionId = rootRows[0].tradeNo.trim();
     isAllDelivered = pendingRows.length === 0;
   }
   const logisticsType = context.order.shippingType !== 1
     ? 4
     : delivery.deliveryType === "express" ? 1 : (delivery.deliveryType === "send" || delivery.deliveryType === "city_delivery") ? 2 : 3;
-  const transactionId = context.order.tradeNo.trim();
-  const target = context.routineOpenid;
+  // The real payer is resolved from authenticated original payment evidence at
+  // consumption. Retain a committed historical target only for immutable replay.
+  const [historicalShipping] = await tx.select({ target: orderNotificationDelivery.target, payload: orderNotificationDelivery.payload }).from(orderNotificationDelivery)
+    .where(and(eq(orderNotificationDelivery.eventKey,event.eventKey),eq(orderNotificationDelivery.channel,'wechat_shipping'))).limit(1);
+  const target = historicalShipping?.target ?? '';
+  if (historicalShipping?.payload.kind === 'wechat_shipping') transactionId = historicalShipping.payload.transactionId;
   await createImmutableDelivery(tx, {
     event, payload, mark, channel: "wechat_shipping", target, templateCode: "",
     deliveryPayload: {
@@ -1039,9 +1042,7 @@ async function stageExternalNotifications(
       receiverContact: logisticsType === 1 ? context.order.userPhone : "",
       path: `pages/goods/order_details/index?order_id=${rootOrderNo}`,
     },
-    skipReason: !target
-      ? "target_not_configured"
-      : !transactionId ? "transaction_not_configured" : undefined,
+    skipReason: !transactionId ? "transaction_not_configured" : undefined,
     now,
   });
 }

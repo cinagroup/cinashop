@@ -208,13 +208,14 @@ describe('Mini notification immutable intended account and provider outcome ledg
     try { expect(await run()).toBe('unknown'); expect(fetcher).not.toHaveBeenCalled(); }
     finally { await f.exec('ALTER TABLE system_config RENAME COLUMN unavailable_menu_name TO menu_name'); }
   });
-  it('shipping without original AppID/merchant/payer evidence is preserved DEAD without current-config or HTTP fallback', async () => {
+  it('shipping refuses an uncommissioned SQL principal before claiming and without current-config or HTTP fallback', async () => {
     const body = { kind: 'wechat_shipping' as const, transactionId: 'old-transaction', logisticsType: 1, deliveryMode: 1 as const, isAllDelivered: true,
       itemDescription: '商品', trackingNumber: 'old-track', expressCompanyName: 'old-express', receiverContact: '13800000000', path: '' };
     await f.db.insert(orderNotificationDelivery).values({ id: 17, outboxId: 1, eventKey: message().eventKey, orderId: 9, userId: 7, noticeMark: 'order_postage_success',
       channel: 'wechat_shipping', target: 'old-payer', payload: body, status: 'ENQUEUED' });
-    const before = (await ledger())[0].payload; expect(await run({ ...message(), channel: 'wechat_shipping' })).toBe('dead');
-    expect((await ledger())[0]).toMatchObject({ status: 'DEAD', payload: before, lastError: 'wechat_shipping_original_account_evidence_required' }); expect(fetcher).not.toHaveBeenCalled();
+    const before = (await ledger())[0];
+    await expect(run({ ...message(), channel: 'wechat_shipping' })).rejects.toMatchObject({ code: 503 });
+    expect((await ledger())[0]).toEqual(before); expect(fetcher).not.toHaveBeenCalled();
   });
   it.runIf(native)('independent PG maintenance gate blocks dispatch before HTTP without holding the provider in SQL', async () => {
     await queue(); await withFinancePeers(f.db, async ([owner]) => {

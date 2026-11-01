@@ -26,6 +26,10 @@ import { customerCityQueuedNoticeIsActive } from './OrderNotificationOutboxServi
 import { supplierOrderPriceRevisionIsActive } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
 import { sendWithdrawalWecomRobot, WECOM_WITHDRAWAL_TARGET } from "@/services/wechat/WithdrawalWecomRobotProvider";
 
+import { captureRoutineShippingDeliveryEnv, processRoutineShippingDelivery } from '@/services/payment/RoutineShippingDispatch';
+import { routineShippingUnavailable } from '@/services/payment/RoutineShippingAccount';
+import { assertRoutineShippingReadTx } from '@/migrations/routineShipping';
+
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
 const MAX_PROVIDER_ATTEMPTS = 5;
@@ -238,8 +242,18 @@ export class OrderNotificationDeliveryService {
     message: OrderNotificationDeliveryMessage,
     fetcher: typeof fetch = fetch,
   ): Promise<ProcessingResult> {
+    const shippingEnv = message.channel === 'wechat_shipping' ? captureRoutineShippingDeliveryEnv(this.env) : undefined;
+    if (shippingEnv) {
+      if (!Object.hasOwn(this.container.db, '$client') || !this.container.db.$client) return routineShippingUnavailable();
+      // Prove the actual App LOGIN before changing a Queue claim. A missing
+      // optional namespace is handled as a deterministic refusal after claim;
+      // wrong principals or partial/drifted storage never receive that claim.
+      await withTx(this.container, tx => assertRoutineShippingReadTx(tx));
+    }
     const claim = await this.claim(message);
     if (typeof claim === "string") return claim;
+    if (claim.channel === "wechat_shipping") return processRoutineShippingDelivery(this.container, shippingEnv!,
+      { id: claim.id, eventKey: claim.eventKey, leaseToken: claim.leaseToken }, fetcher);
     try {
       const result = await this.deliver(claim, fetcher);
       await this.finalize(claim, "SENT", result, "", Math.floor(Date.now() / 1_000));
