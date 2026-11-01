@@ -12,13 +12,15 @@ import { enqueuePresaleDeliveryIntent } from '@/services/activity/PresaleDeliver
 import { enqueueOrderPaidEvent, OrderOutboxService } from '@/services/order/OrderOutboxService';
 import { recordSupplierPayment } from '@/services/supplier/SupplierFinanceService';
 import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
+import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecovery';
 import { orderMembershipSavings } from '@/services/order/OrderMembershipSavings';
+import { amountToCents } from '@/services/payment/RefundGateway';
 import { REFUND_ORDER_SPLIT_SQL } from '@/migrations/refundOrderSplit';
 import { agentLevel, printDocument, storeCart, storeOrder, storeOrderCartInfo, storeOrderRefund,
   storeOrderStatus, storeProduct, storeOrderInvoice, storeOrderRefundPayment,
   storeOrderOutbox, orderWaybillJob, userBrokerage, supplierFlowingWater, supplierTransactions,
   storeProductVirtual, storeProductCoupon, storeOrderRefundSplit, systemSupplier, supplierExtract,
-  storeProductAttrValue, user, luckLottery, luckLotteryEntitlement, storeCouponIssue, storeCouponUser,
+  storeProductAttrValue, user, luckLottery, luckLotteryEntitlement, storeCouponIssue, storeCouponUser, systemConfig, orderNotificationDelivery,
   storeCouponIssueUser, storeOrderProductCouponReward, storeOrderEconomize, shippingTemplates, systemStore } from '@/models/schema';
 
 // Real presale checkout, refund finalizer and materializer. Payment marking is
@@ -31,7 +33,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
     f = await createPcCheckoutQuoteFixture([agentLevel, printDocument, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
       storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage,
       supplierFlowingWater, supplierTransactions, storeProductVirtual, storeProductCoupon, systemSupplier, supplierExtract, luckLottery,
-      luckLotteryEntitlement, storeCouponIssue, storeCouponUser, storeCouponIssueUser, storeOrderProductCouponReward, storeOrderEconomize]);
+      luckLotteryEntitlement, storeCouponIssue, storeCouponUser, storeCouponIssueUser, storeOrderProductCouponReward, storeOrderEconomize, orderNotificationDelivery]);
     await f.exec(REFUND_ORDER_SPLIT_SQL);
     await f.exec('CREATE UNIQUE INDEX baseline_event_key ON store_order_outbox(event_key)');
     await f.exec('CREATE UNIQUE INDEX baseline_flow_key ON supplier_flowing_water(order_id); CREATE UNIQUE INDEX baseline_transaction_key ON supplier_transactions(order_id)');
@@ -49,7 +51,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
   afterEach(async () => { try { expect(fetch).not.toHaveBeenCalled(); } finally { vi.restoreAllMocks(); await f?.close(); } }, 30000);
   const order = async (id: number) => (await f.db.select().from(storeOrder).where(eq(storeOrder.id, id)))[0];
   const carts = (id: number) => f.db.select().from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, id)).orderBy(storeOrderCartInfo.id);
-  async function paid(supplier = false, multiple = false) {
+  async function paid(supplier = false, multiple = false, sqlWechatPickup = false) {
     if (supplier) {
       await f.db.insert(systemSupplier).values({ id: 7, adminId: 7, supplierName: 'Local presale supplier' });
       await f.db.update(storeProduct).set({ type: 2, relationId: 7 });
@@ -65,15 +67,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
         cartNum: 1, type: 6, productType: 1, isNew: 1, status: 1 });
     }
     const [product] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
-    if (product.productType === 4) {
+    if (product.productType === 4 || sqlWechatPickup) {
       await f.setConfig({ store_func_status: '1', store_self_mention: '1' });
       await f.db.update(systemStore).set({ isStore: 1 }).where(eq(systemStore.id, 1));
     }
     const created = await StoreOrderCreateService.createWithRuntime(f.container,
       { CONFIG_KV: f.env.CONFIG_KV, nextOrderId: async () => 'baseline_presale_checkout' },
       { uid: 11, key: 'baseline-presale', type: 6, cartIds: multiple ? [1, 2] : [1], addressId: 11, userIp: '127.0.0.1', useIntegral: false,
-        ...(product.productType === 4 ? { shippingType: 2, storeId: 1, realName: 'Local pickup fixture', userPhone: '13800000000' } : {}) });
-    const [marked] = await f.db.update(storeOrder).set({ paid: 1, payType: 'yue', payTime: endsAt - 10 })
+        ...(product.productType === 4 || sqlWechatPickup ? { shippingType: 2, storeId: 1, realName: 'Local pickup fixture', userPhone: '13800000000' } : {}) });
+    // The optional rail is only a declared SQL domain specimen for the legacy
+    // recovery tests below; neither rail proves a provider payment.
+    const [marked] = await f.db.update(storeOrder).set({ paid: 1, payType: sqlWechatPickup ? 'weixin' : 'yue', payTime: endsAt - 10,
+      ...(sqlWechatPickup ? { tradeNo: 'SQL_BASELINE_WECHAT_PAYMENT' } : {}) })
       .where(eq(storeOrder.orderId, created.orderId)).returning();
     const allocated = await withTx(f.container, async tx => {
       const allocation = await allocatePaidOrderBySupplier(tx, marked.id, marked.orderId);
@@ -85,11 +90,24 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
     expect(JSON.parse((await carts(marked.id))[0].cartInfo!).presale.endsAt).toBe(endsAt);
     return marked.id;
   }
-  async function refund(id: number, quantity: number) {
+  async function refund(id: number, quantity: number, sqlWechatStatus = false) {
     const current = await order(id), [cart] = await carts(id);
     const application = await applyOrderRefund(f.container, { uid: 11, orderId: current.orderId, applyType: 1,
       applicationOrderId: `baseline_refund_${++serial}`, refundReason: 'Local baseline', refundExplain: '',
       cartSelections: [{ cartId: Number(cart.cartId), cartNum: quantity }] });
+    if (sqlWechatStatus) {
+      // Explicit lower-layer input, not genuine provider evidence: this old PG
+      // baseline tests legacy SQL financial/quantity recovery only. It does not
+      // install/sign Routine receipts, call a gateway, or certify crypto/LOGINs.
+      expect(current.payType).toBe('weixin');
+      const [request] = await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, application.refundId));
+      const paymentRoot = current.pid > 0 ? await order(current.pid) : current;
+      const requestAmount = amountToCents(request.refundPrice), totalAmount = amountToCents(paymentRoot.payPrice);
+      if (requestAmount === null || totalAmount === null) throw Error('Invalid owned legacy SQL refund amount');
+      await f.db.insert(storeOrderRefundPayment).values({ refundId: request.id, storeOrderId: current.id, provider: 'wechat',
+        outRefundNo: `CNSR${request.id}`, providerRefundId: `SQL_BASELINE_WECHAT_REFUND_${request.id}`, providerStatus: 'SUCCESS',
+        requestAmount, totalAmount, attemptCount: 1, successTime: endsAt, addTime: endsAt - 1, updateTime: endsAt });
+    }
     expect(await finalizeStoreOrderRefund(f.container, application.refundId)).toBe('completed');
     const [completed] = await f.db.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, application.refundId));
     return withTx(f.container, tx => materializeCompletedRefundOrder(tx, completed, Math.floor(Date.now() / 1000)));
@@ -225,6 +243,53 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('presale baseline
       expect(await service.processMessage(message)).toBe('already-completed');
       expect(await finance()).toEqual(after);
     }, 30000);
+  it.each([false, true])('keeps legacy SQL weixin/pickup paid recovery separate from shipping after a completed refund: whole=%s', async whole => {
+    // This is intentionally the existing synthetic-payment/SQL-status baseline,
+    // separate from routine-pickup-shipping-native's real RSA/AES eight cases.
+    await f.db.update(storeProduct).set({ productType: 4 }); await f.db.update(storeCart).set({ productType: 4 });
+    await f.db.update(storeProductAttrValue).set({ writeValid: 2, writeDays: 7, writeTimes: 5 });
+    await f.db.insert(systemConfig).values({ menuName: 'order_shipping_open', value: '1' });
+    const rootId = await paid(true, false, true), message = await paymentMessage(rootId);
+    expect(await order(rootId)).toMatchObject({ paid: 1, payType: 'weixin', shippingType: 2, storeId: 1 });
+    const materialized = await refund(rootId, whole ? 3 : 1, true), before = await finance();
+    expect(await order(materialized.selectedOrderId)).toMatchObject({ refundStatus: 2, refundType: 6 });
+    const service = new OrderOutboxService(f.container, { ORDER_QUEUE: queue });
+    expect(await service.processMessage(message)).toBe('completed');
+    const after = await finance();
+    expect(after.orders).toEqual(before.orders); expect(after.flows).toEqual(before.flows); expect(after.transactions).toEqual(before.transactions);
+    expect(after.bills).toEqual(before.bills); expect(after.users[0].payCount).toBe(before.users[0].payCount + 1);
+    expect(await f.db.select().from(orderNotificationDelivery)).toEqual([]);
+    expect(await f.db.select().from(storeOrderOutbox)).toEqual([expect.objectContaining({ id: message.outboxId, eventType: 'order.paid', status: 'COMPLETED' })]);
+    const committed = { finance: await finance(), delivery: await delivery(), benefits: await benefits() };
+    expect(await service.processMessage(message)).toBe('already-completed');
+    expect({ finance: await finance(), delivery: await delivery(), benefits: await benefits() }).toEqual(committed);
+    expect(await f.db.select().from(orderNotificationDelivery)).toEqual([]);
+  }, 30000);
+
+  it.each([false, true])('keeps the legacy SQL receipt immutable and rejects contradictory pickup recovery facts: whole=%s', async whole => {
+    await f.db.update(storeProduct).set({ productType: 4 }); await f.db.update(storeCart).set({ productType: 4 });
+    await f.db.update(storeProductAttrValue).set({ writeValid: 2, writeDays: 7, writeTimes: 5 });
+    await f.db.insert(systemConfig).values({ menuName: 'order_shipping_open', value: '1' });
+    const rootId = await paid(true, false, true), message = await paymentMessage(rootId), materialized = await refund(rootId, whole ? 3 : 1, true);
+    const [receipt] = await f.db.select().from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.selectedOrderId, materialized.selectedOrderId));
+    expect(receipt).toBeDefined();
+    await expect(f.db.update(storeOrderRefundSplit).set({ fingerprint: 'e'.repeat(64) })
+      .where(eq(storeOrderRefundSplit.refundId, receipt.refundId))).rejects.toMatchObject({cause:{code:'42501'}});
+    expect(await f.db.select().from(storeOrderRefundSplit).where(eq(storeOrderRefundSplit.refundId,receipt.refundId))).toEqual([receipt]);
+    // Corrupt only an ordinary mutable source. The immutable refund receipt
+    // stays intact; no trigger/ACL is removed to manufacture this negative.
+    const [cart]=await carts(materialized.selectedOrderId),info=JSON.parse(cart.cartInfo!);
+    info.presale.endsAt+=1;
+    await f.db.update(storeOrderCartInfo).set({cartInfo:JSON.stringify(info)}).where(eq(storeOrderCartInfo.id,cart.id));
+    const before = { finance: await finance(), delivery: await delivery(), benefits: await benefits() };
+    const rootNo=(await order(rootId)).orderId;
+    await expect(withTx(f.container,tx=>preparePresalePaidRecovery(tx,rootId,rootNo))).rejects.toThrow();
+    await expect(new OrderOutboxService(f.container, { ORDER_QUEUE: queue }).processMessage(message)).rejects.toThrow();
+    expect({ finance: await finance(), delivery: await delivery(), benefits: await benefits() }).toEqual(before);
+    expect(await f.db.select().from(orderNotificationDelivery)).toEqual([]);
+    expect(await f.db.select().from(storeOrderOutbox)).toEqual([expect.objectContaining({ id: message.outboxId, status: 'FAILED' })]);
+  }, 30000);
+
   it('preserves the real presale checkout prohibition on multiple products', async () => {
     await expect(paid(true, true)).rejects.toThrow('活动订单一次只能购买一种商品');
     expect(await f.db.select().from(storeOrder)).toEqual([]);

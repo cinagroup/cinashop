@@ -1026,6 +1026,9 @@ async function stageExternalNotifications(
   // consumption. Retain a committed historical target only for immutable replay.
   const [historicalShipping] = await tx.select({ target: orderNotificationDelivery.target, payload: orderNotificationDelivery.payload }).from(orderNotificationDelivery)
     .where(and(eq(orderNotificationDelivery.eventKey,event.eventKey),eq(orderNotificationDelivery.channel,'wechat_shipping'))).limit(1);
+  // New explicit pickup uses the paid outbox as its source. Retain any old
+  // committed delivery intent, but do not create a second payment-side effect.
+  if(context.order.shippingType===2&&!historicalShipping)return;
   const target = historicalShipping?.target ?? '';
   if (historicalShipping?.payload.kind === 'wechat_shipping') transactionId = historicalShipping.payload.transactionId;
   await createImmutableDelivery(tx, {

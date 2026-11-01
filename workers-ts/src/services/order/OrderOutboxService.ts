@@ -61,6 +61,7 @@ import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecov
 import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
 import { upgradeAgentLevelsForUser } from '@/services/agent/AgentLevelTaskService';
 import { processSupplierOrderPriceRevision, SUPPLIER_ORDER_PRICE_REVISION_EVENT } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
+import { stageRoutinePaidPickupShipping } from './RoutinePaidPickupShipping';
 
 type OutboxMessage = OrderPaidOutboxMessage | OrderNotificationOutboxMessage | PresaleDeliveryOutboxMessage;
 
@@ -639,6 +640,13 @@ export class OrderOutboxService {
         // so only fulfillment rows are activated; the split root remains an
         // immutable payment audit record.
         await activatePaidSecondCardValidity(tx, allocation.fulfillmentOrders, order.payTime);
+
+        // PHP reports explicit self-pickup at payment. Keep this source in the
+        // same commit as paid effects, without pretending the order was sent.
+        // A proven refund generation may still need its original paid effects.
+        // Shipping that generation needs its own contract; retain the financial
+        // proof below without letting this optional new intent block recovery.
+        if(!recovery)await stageRoutinePaidPickupShipping(tx, event, order, now);
 
         // The payment outbox and printer jobs commit together. Split-order roots
         // never print; each fulfillment order selects printers in its own scope.

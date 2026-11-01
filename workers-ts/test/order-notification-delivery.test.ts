@@ -28,6 +28,9 @@ describe("外部通知投递账本", () => {
     expect(isOrderNotificationDeliveryMessage({ ...message(), deliveryId: 0 })).toBe(false);
     expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "other:9" })).toBe(false);
     expect(isOrderNotificationDeliveryMessage({ ...message(), channel: "email" })).toBe(false);
+    expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:9", channel: "wechat_shipping" })).toBe(true);
+    expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:9", channel: "wechat_routine" })).toBe(false);
+    expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:0", channel: "wechat_shipping" })).toBe(false);
     expect(message()).not.toHaveProperty("target");
     expect(message()).not.toHaveProperty("payload");
   });

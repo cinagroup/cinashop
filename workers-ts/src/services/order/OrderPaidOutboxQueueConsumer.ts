@@ -6,6 +6,7 @@ import {
   type OrderOutboxService,
 } from "@/services/order/OrderOutboxService";
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
+import type { OrderNotificationDeliveryService } from './OrderNotificationDeliveryService';
 
 type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage">;
 type OrderPaidOutboxQueueMessage = Pick<
@@ -37,6 +38,7 @@ export function paymentOutboxQueueRetryDelaySeconds(attempts: number): number {
 export async function consumeOrderPaidOutboxQueueMessage(
   message: OrderPaidOutboxQueueMessage,
   processor: OrderPaidOutboxProcessor,
+  notifications?:Pick<OrderNotificationDeliveryService,'dispatchPending'>,
 ): Promise<void> {
   if (!isOrderPaidOutboxMessage(message.body)) {
     throw new Error("Queue message is not a payment outbox event");
@@ -57,6 +59,14 @@ export async function consumeOrderPaidOutboxQueueMessage(
       });
       message.retry({ delaySeconds });
       return;
+    }
+    // Payment effects have committed before this optional Queue accelerator.
+    // Its own durable scanner recovers an unavailable/ambiguous Queue without
+    // turning completed financial effects into another payment attempt.
+    if(notifications&&(result==='completed'||result==='already-completed')){
+      try{await notifications.dispatchPending(10,message.body.eventKey);}
+      catch(error){emitOperationalEvent('error',{event:'paid_shipping_dispatch_failed',component:'queue',
+        operation:'notification_delivery',outcome:'failure',errorCode:operationalErrorCode(error)});}
     }
     emitOperationalEvent("info", {
       event: "payment_outbox_consumed",

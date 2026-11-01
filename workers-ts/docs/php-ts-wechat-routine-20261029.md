@@ -27,7 +27,7 @@
 - Mini 社交付款、收货事件目前缺少原单 AppID/商户/付款人证据，明确记录 `wechat_callback_original_account_evidence_required`，保留原账号事件并走既有 FAILED/DEAD 恢复流程；此检查先于旧水位判断，不能被较晚的历史水位误记成已完成。公众号既有支付/收货行为保留，原单恢复仍待实现。
 - 新的订单/提现通知在业务 outbox 创建事务中记录目标 `routineAppId`，投递渲染只继承原事件的记录。业务事件和投递回放保留原账号或历史缺失，不补当前 AppID；两份明确账号不一致时拒绝且不改原件。旧业务事件无记录则 Mini 渠道为 SKIPPED，旧已排队投递无记录或目标不符则为 DEAD，均保留原内容待维护。新安装未配公共 AppID 时仅跳过可选 Mini 渠道；确定的可选配置错误不回滚财务、SMS 或站内通知，SQL 故障仍传播。游客、次卡和机器人合同保留。
 - routine 通知的成对凭据改读新鲜 SQL，统一使用来源戳 token helper；不读旧 KV 凭据或 AppID-only token。明确 invalid-token 只允许在原来源内重试一次。POST 的 fetch 与流式正文受 8 秒、64 KiB 上限约束。明确 `errcode=0` 成功就记录 SENT，不因响应期间换配置改成可重发；断连、超时或坏响应记录 UNKNOWN，Queue 回放不再发送。新目标 AppID 只证明通知意图，不证明既有 UID 或旧订单归属。
-- 原账号商品发货已接入维护批准、独立归档 AppSecret/token、原付款及 NativeApp 反证、实际 Queue 派发和原子回执；正式同城冲突 reader 下还支持未完成 express 分包的严格扩包，详见 [原账号发货合同](routine-shipping-accounts.md)及[读取合同](fulfillment-city-conflict-readers.md)。已完成发货的更正、充值、会员、付款后自提、历史 SKIPPED/UNKNOWN 维护恢复及全局迁移仍未完成，`runtime_ready=false` 保留。
+- 原账号商品发货已接入维护批准、独立归档 AppSecret/token、原付款及 NativeApp 反证、实际 Queue 派发和原子回执；正式同城冲突 reader 下还支持未完成 express 分包的严格扩包，详见 [原账号发货合同](routine-shipping-accounts.md)及[读取合同](fulfillment-city-conflict-readers.md)。商品付款后自提现已接通真实 paid outbox，详见[自提发货合同](routine-pickup-shipping.md)。已完成发货的更正、充值、会员、历史 SKIPPED/UNKNOWN 维护恢复及全局迁移仍未完成，`runtime_ready=false` 保留。
 
 - `PaymentPublicRuntimeConfig.ts` 新增固定的 checkout/routine/official/merchant 公共 SQL 快照，沿既有平台 sort/id 优先级读取完整来源、影子行与 xmin；64 行和 1 MiB 上限拒绝不完整读取。公共摘要只证明来源一致，不证明旧 UID 或原订单归属；OAuth Secret、商户私钥和 KV 不进入该快照。
 - 支付就绪状态的余额、线下、支付宝开关与微信公共配置改读同一 checkout SQL 快照；原生 App 继续独立读取既有账户目录并核对商户，不从通用键读取 App 凭据。Mini 支付的公共 AppID 与商户配置不要求 OAuth Secret 或 APP_KEY；APIv3 部署凭据的要求保留。
@@ -636,3 +636,33 @@ root使用CUA in-app浏览器，在1280×720自有本地UI合成传输夹具验�
 首轮 `native-reader-01` 为3通过/6失败：五个漂移子操作塞入同一个默认5秒用例导致超时，后续锁及未安装函数错误级联；回滚用例实际完成安装再回滚，末尾TEMP用例当时能力缺失，不能计作已安装证明。只把有限子场景拆成独立用例，保留原默认限制后，才得到完整18项通过；原失败保留，不累计通过或误称产品目录修复。原始日志、输入及终态位于本地 `.cache/php-ts-phase33-validation/`；本节与合同文档在最终验证后补齐，实现/测试字节仍匹配冻结输入，提交文件另做秘密扫描。
 
 未单独执行15/16包边界、连续三次以上扩包、运力列表删除旧公司、reader维护与fresh/recovery业务竞态或退款物化家族负例。Manager的函数能力与五角色共存已验收，Manager发货HTTP/可信门店归属作者仍未闭合。充值、会员、付款后自提、更正、退款代次、旧SKIPPED/UNKNOWN维护恢复、前端会话/journal/Browser及既有历史CI问题继续待推进。本轮无生产DDL、部署、真实微信调用或新的UI验收；保留现有用户、UID、权益、旧单与付款，跨AppID归属屏障、runtime_ready=false及完整迁移未完成状态保持。
+
+
+## 第34阶段：真实付款 outbox 的原账号商品自提发货（2026-11-01）
+
+阶段33的 `6c64e86e` 已按精确授权推送并直接核对远端。继续迁移固定 PHP `8ed2a5b139f9170dd11b0dff91803f2fd59e40a5` 的付款后自提作者：Pay.php:104–106 在 shipping_type=2 的付款成功时触发物流4，核销不会再次触发。官方[发货合同](https://developers.weixin.qq.com/miniprogram/dev/server/API/order_shipping/api_uploadshippinginfo.html)本轮实时读取为2026-05-08版本，确认自提4/统一1/单条列表及只有快递支持mode2；付款业务时点来自固定PHP源码，不把它称为官方要求。完整blob及当前链路证据在本地 `php-paid-pickup-source.md`。
+
+TS在实际 paid effects 事务的供应商分配/次卡有效期之后，原子创建真实 `order.paid:<root>` 对应的 wechat_shipping 投递，mark为 paid_pickup_shipping；与源COMPLETED一起提交。没有新增DDL、事件种类、运行grants、假delivery.notice或“已发货”状态。消费要求同源COMPLETED、真实受限App、完整原付款与归档批准、实际payer及NativeApp命名空间存在时的独立App反证。当前配置、最新买家绑定和渠道标签仍无旧付款authority。
+
+完整自提家族按原付款根聚合为一条logistics4/mode1，供应商分区不变成快递mode2；买家/门店/金额/原商品数量全部一致。immutable事实排除status、verifyCode及剩余核销计数，真实部分/全部核销后仍只重试首次body/upload_time。新普通delivery.notice不再创建第二条type2 shipping，历史原件保留。真实paid Queue helper在提交后尝试派发同eventKey；仅Queue派发失败不使已提交付款重跑，既有扫描恢复。完整合同见[自提说明](routine-pickup-shipping.md)。
+
+只读复核发现并修正两项共享paid兼容风险。第一，已有完整证明的预售退款物化恢复仍须完成原paid effects；新的fresh shipping会拒绝其退役家族，不能反过来永久阻断旧财务恢复。当前只在已证明recovery路径跳过新发货stage，其后结构/financial proof原样执行，源事实与不可变回执矛盾仍整笔失败。第二，真实付款服务允许SQL金额0保留weixin标签，但没有提供方交易；现在精确跳过零款的新意图，保留完整local guards、付款effects与幂等，不把零款标签升级为原证。
+
+| 冻结批次 | 实际结果与证据范围 |
+| --- | --- |
+| `native-pickup-01` | 初版完整8项真实自提原生通过，143.10秒，12条输入不变；其后新增上述兼容保护、本地零款及提交后Queue派发，不能冒称本批覆盖后来的改动。 |
+| `final-02` | 完整预售退款数据库基线42项、自提原生10项、既有发货原生12项、五文件单元48项全部通过；随后Worker unit类型因日志outcome枚举TS2322失败，runtime/Admin未启动。667.85秒，16条输入无变化。 |
+| `recovery-03` | 更正唯一异常日志枚举后，受影响的Queue完整8项、标准Worker unit/runtime及Admin类型全部通过，323.29秒；16条当前输入全程不变。 |
+
+
+自提10项覆盖真实Admin下单、RSA/AES/default付款、三叶平台/供应商聚合、后置任务回滚/同源重放、真实员工部分/全部核销后的原体重试、UNKNOWN不重发、四个实际LOGIN在领取前拒绝、撤销/源冲突、真实NativeApp冲突，以及独立的本地零款和实际paid Queue helper→ENQUEUED→shipping Queue→SENT接线。第9项是本地零款guard，不称提供方回调；第10项使用真实outbox处理器和派发端口，未用mock替代已提交事务。外部传输时独立peer NOWAIT持有家族与投递行锁，App无idle transaction。
+
+预售完整基线保留旧yue场景，新增4个明确合成SQL weixin/type2/open1标本：whole/partial恢复及不可变回执/矛盾源拒绝。该旧fixture的付款标记和legacy provider SUCCESS为显式测试输入，实际checkout/finalizer/materializer/财务复验与事务执行，但不是提供方验签、原账号回执或生产LOGIN证据；不与10项原生链合成crypto覆盖。重复批次不累计为新增通过。
+
+`final-01` 的预售基线为40通过/2失败：两个负例试图UPDATE不可变退款回执，正式append-only触发器以42501拒绝，尚未到达预期业务断言；后续阶段没有启动。修正后先明确断言回执不可变，再只改变普通cart的预售合同，使其与保留的回执矛盾；直接recovery读及完整paid effects都必须拒绝，未删除触发器、放宽ACL或修复证据。原失败和清理记录保留，不累计为最终通过。
+
+final-02 的类型失败仅来自新Queue日志的outcome=deferred不在既有OperationalOutcome集合；更正为failure。逐字逆向证明16项冻结候选实现/测试/夹具中，除这一异常日志字符串外均与final-02相同；付款、源、外部请求、租约和控制流未改。recovery-03只补跑受影响Queue8项及完整两套Worker/Admin类型，不把它冒称又一次全原生重跑，重复8项也不计为新增测试。
+
+原生集群均记录remaining=0和STOPPED；预期拒绝的低基数日志保留。所有重型检查在一个外层共享串行锁依次执行，沿用每个native600秒、单worker与现有内存/超时，没有并发重型验证。最终日志、输入、结果及独立复核位于 `.cache/php-ts-phase34-validation/`；三份文档在验证后补齐，源码和测试仍匹配冻结字节，提交文件另做完整秘密扫描。
+
+本轮没有新的UI、Browser、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。64/65叶与200/201商品边界、供应商家族核销竞态、Alipay零款/游客本轮专案、开关切换竞态、五次尝试终止/1MiB预算边界、退款代次发货和历史SKIPPED/UNKNOWN维护恢复尚未执行。充值/会员的真实领域意图、其余旧账号消费者、完整归属清单/维护manifest/原子切换许可、前端session/journal与Browser及既有CI问题仍待推进。保留现有用户/UID/权益/旧单/付款，未知归属不猜，跨AppID屏障、runtime_ready=false和整体迁移未完成状态保持。

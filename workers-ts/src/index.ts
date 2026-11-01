@@ -508,7 +508,7 @@ export default {
       }
 
       if (isOrderPaidOutboxMessage(msg.body)) {
-        await consumeOrderPaidOutboxQueueMessage(msg, outbox);
+        await consumeOrderPaidOutboxQueueMessage(msg, outbox, notificationDeliveries);
         continue;
       }
 

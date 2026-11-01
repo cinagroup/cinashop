@@ -10,6 +10,8 @@ import { assertOrderNotificationPayload,customerCityQueuedNoticeIsActive,ORDER_D
 import { WechatProviderRejectedError } from '@/services/wechat/WechatNotificationProvider';
 import { getRoutineShippingCarriers,uploadRoutineShipping,assertRoutineShippingHttpResult,type RoutineShippingHttpResult } from '@/services/wechat/RoutineShippingProvider';
 import { routineShippingLogisticsType } from '@/services/wechat/RoutineShippingLogistics';
+import { readRoutinePaidPickupSource, paidPickupEventIdentity, ROUTINE_PAID_PICKUP_MARK } from '@/services/order/RoutinePaidPickupShipping';
+import { routineShippingItemTitle } from './RoutineShippingItems';
 import { parseRoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
 import { readRoutineShippingOriginalTx,type RoutineShippingOriginal } from './RoutineShippingOriginal';
 import { assertNativeAppExcludedForRoutineShippingTx } from './NativeAppRoutineShippingAuthority';
@@ -50,7 +52,7 @@ const text=(value:unknown,max:number,empty=false):value is string=>typeof value=
 function root(container:Container){if(!Object.hasOwn(container.db,'$client')||!container.db.$client)return routineShippingUnavailable();}
 function captureClaim(value:RoutineShippingClaim):Readonly<RoutineShippingClaim>{
  const r=shippingObject(value,['id','eventKey','leaseToken']);
- if(!shippingInteger(r.id)||typeof r.eventKey!=='string'||!/^order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?$/u.test(r.eventKey)||!shippingUuid(r.leaseToken))return routineShippingUnavailable();
+ if(!shippingInteger(r.id)||typeof r.eventKey!=='string'||!/^order\.(?:delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|paid:[1-9]\d*)$/u.test(r.eventKey)||!shippingUuid(r.leaseToken))return routineShippingUnavailable();
  return Object.freeze({id:r.id,eventKey:r.eventKey,leaseToken:r.leaseToken});
 }
 export function captureRoutineShippingDeliveryEnv(env:Env):Env{
@@ -72,17 +74,6 @@ async function claimed(tx:DbClient,c:Readonly<RoutineShippingClaim>,lock=true){
   ||!shippingInteger(row.orderId)||row.withdrawalId!==null||row.templateCode!=='')return routineShippingUnavailable();
  const now=await routineShippingClockTx(tx);if(row.leaseUntil<=now)return routineShippingUnavailable();return row;
 }
-function title(value:string|null,quantity:number){
- if(!value||Buffer.byteLength(value,'utf8')>65536)return routineShippingUnavailable();
- let parsed:unknown;try{parsed=JSON.parse(value);}catch{return routineShippingUnavailable();}
- if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return routineShippingUnavailable();
- const record=parsed as Record<string,unknown>,canonical=Object.hasOwn(record,'product');
- const info=canonical?record.product:record.productInfo;
- if(!info||typeof info!=='object'||Array.isArray(info))return routineShippingUnavailable();
- const name=(info as Record<string,unknown>)[canonical?'storeName':'store_name'];
- if(!text(name,4096))return routineShippingUnavailable();
- return `${name} * ${quantity}`;
-}
 function masked(value:string){
  if(!value)return'';if(!/^[+0-9 ()-]{4,32}$/u.test(value)||!/[0-9]{4}$/u.test(value))return routineShippingUnavailable();
  return value.slice(0,-4).replace(/[0-9]/gu,'*')+value.slice(-4);
@@ -95,6 +86,7 @@ function physical(order:Order){return{id:order.id,pid:order.pid,uid:order.uid,or
  * carts, original-payment boundary or independent NativeApp verifier. */
 async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Promise<Snapshot>{
  await tables(tx);const initial=await claimed(tx,c,false);
+ if(c.eventKey.startsWith('order.paid:'))return pickupSnapshot(tx,env,c,initial);
  const [hint]=await tx.select({id:storeOrder.id,pid:storeOrder.pid}).from(storeOrder).where(eq(storeOrder.id,initial.orderId!)).limit(1);
  if(!hint)return routineShippingUnavailable();const rootId=hint.pid>0?hint.pid:hint.id;
  const family=await tx.select().from(storeOrder).where(or(eq(storeOrder.id,rootId),eq(storeOrder.pid,rootId))).orderBy(asc(storeOrder.id)).limit(66).for('update',{noWait:true});
@@ -136,7 +128,7 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
   if(p.orderId!==leaf.id||p.userId!==parent.uid||p.orderNo!==leaf.orderId||p.deliveryType!==leaf.deliveryType||p.deliveryId!==leaf.deliveryId||p.deliveryName!==leaf.deliveryName)return routineShippingUnavailable();
   const lines=carts.filter(row=>row.oid===leaf.id);
   if(!lines.length||lines.some(row=>row.uid!==parent.uid||!shippingInteger(row.cartNum)))return routineShippingUnavailable();
-  const description=Array.from(lines.map(line=>title(line.cartInfo,line.cartNum)).join('；')).slice(0,120).join('');
+  const description=Array.from(lines.map(line=>routineShippingItemTitle(line.cartInfo,line.cartNum)).join('；')).slice(0,120).join('');
   if(!description)return routineShippingUnavailable();
   const logisticsType=routineShippingLogisticsType(leaf.shippingType,leaf.deliveryType);
   if(!logisticsType)return routineShippingUnavailable();
@@ -156,6 +148,29 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
  const ownPackage=packages.find(p=>p.orderId===child.id);if(!ownPackage)return routineShippingUnavailable();
  const immutableDigest=shippingMac(env,'delivery-identity',[deliveryIdentity(delivery),{id:own.id,key:own.eventKey,type:own.eventType,aggregateId:own.aggregateId,aggregateType:own.aggregateType,payload:own.payload,addTime:own.addTime},ownPackage.digest,identity]);
  return{identity,immutableDigest,stateDigest:shippingMac(env,'source-state',[identity,immutableDigest,packages,allDelivered,mode,logisticsType]),packages,allDelivered,mode,logisticsType,original,delivery};
+}
+
+/** A real completed paid outbox is the pickup source; status0 is intentional.
+ * Supplier leaves are aggregated once for this payment, never mode2 parcels. */
+async function pickupSnapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>,initial:Delivery):Promise<Snapshot>{
+ const rootId=Number(c.eventKey.slice('order.paid:'.length));
+ if(initial.orderId!==rootId||initial.noticeMark!==ROUTINE_PAID_PICKUP_MARK||initial.target!=='')return routineShippingUnavailable();
+ const source=await readRoutinePaidPickupSource(tx,rootId,'COMPLETED'),parent=source.parent;
+ const delivery=await claimed(tx,c);
+ if(!shippingSame(deliveryIdentity(initial),deliveryIdentity(delivery))||delivery.outboxId!==source.event.id||delivery.userId!==parent.uid)return routineShippingUnavailable();
+ const expected:WechatShippingNotificationPayload={kind:'wechat_shipping',transactionId:parent.tradeNo.trim(),logisticsType:4,deliveryMode:1,isAllDelivered:true,
+   itemDescription:source.description,trackingNumber:'',expressCompanyName:'',receiverContact:'',path:`pages/goods/order_details/index?order_id=${parent.orderId}`};
+ if(!shippingSame(delivery.payload,expected))return routineShippingUnavailable();
+ const original=await readRoutineShippingOriginalTx(tx,env,{domain:'store_order',rootId:parent.id,buyerUid:parent.uid,orderNo:parent.orderId,
+   transactionId:parent.tradeNo,totalAmount:source.total});
+ await assertNativeAppExcludedForRoutineShippingTx(tx,env,original);
+ const facts=original.evidence.payload.observation.facts,identity:Identity={rootId:parent.id,childId:parent.id,buyerUid:parent.uid,orderNo:parent.orderId,
+   transactionId:parent.tradeNo,totalAmount:source.total,appId:facts.appId,merchantId:facts.merchantId,payerId:facts.payerId};
+ const part:Package={orderId:parent.id,eventId:source.event.id,eventKey:source.event.eventKey,logisticsType:4,description:source.description,
+   tracking:'',carrier:'',contact:'',digest:shippingMac(env,'paid-pickup-physical',source.facts)},packages=[part];
+ const immutableDigest=shippingMac(env,'delivery-identity',[deliveryIdentity(delivery),paidPickupEventIdentity(source.event),part.digest,identity]);
+ return{identity,immutableDigest,stateDigest:shippingMac(env,'source-state',[identity,immutableDigest,packages,true,1,4]),packages,
+   allDelivered:true,mode:1,logisticsType:4,original,delivery};
 }
 
 function sourceKey(env:Signing,i:Identity){return shippingMac(env,'payment-source',[i.rootId,i.buyerUid,i.orderNo,i.transactionId,i.totalAmount,i.appId,i.merchantId,i.payerId]);}
