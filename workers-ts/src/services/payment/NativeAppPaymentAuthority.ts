@@ -201,6 +201,62 @@ export async function assertNativeAppRefundAccountInTx(tx: DbClient, env: Runtim
   if (deadline?.valid !== true) throw unavailable();
 }
 
+/** Counter-proof only for a separately authenticated Routine JSAPI original.
+ * Its business transaction owns the payment boundary; this independent App RO
+ * verifier must never acquire that same lock on another session. No current
+ * AppID/merchant equality is removed from the existing refund path above. */
+export async function assertNativeAppAbsentForRoutineRefundInTx(tx:DbClient,env:RuntimeEnv,input:{
+ orderNo:string;transactionId:string;totalAmount:number;
+}):Promise<void> {
+ env={APP_KEY:env.APP_KEY};
+ const request={orderNo:input.orderNo,transactionId:input.transactionId,totalAmount:input.totalAmount};
+ if(!order(request.orderNo)||typeof request.transactionId!=='string'||!/^[A-Za-z0-9_-]{1,100}$/u.test(request.transactionId)
+  ||!cents(request.totalAmount))throw unavailable();
+ const[context]=await tx.execute<{safe:boolean}>(sql`SELECT
+  pg_catalog.current_setting('transaction_isolation')='read committed' AND pg_catalog.current_setting('transaction_read_only')='on'
+  AND pg_catalog.current_schema()='public'
+  AND pg_catalog.to_regclass('native_app_payment_account')=pg_catalog.to_regclass('public.native_app_payment_account')
+  AND pg_catalog.to_regclass('native_app_payment_evidence')=pg_catalog.to_regclass('public.native_app_payment_evidence')
+  AND pg_catalog.to_regclass('admin_wechat_app_operation')=pg_catalog.to_regclass('public.admin_wechat_app_operation') AS safe`);
+ if(context?.safe!==true)throw unavailable();
+ if(!await refundBundlePresent(tx))return;
+ await assertNativeAppPaymentAuthorityReady(tx,'app');
+ const owners=await tx.execute<{maintenance:string;admin:string}>(sql`SELECT o.rolname AS maintenance,r.rolname AS admin
+  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_roles o ON o.oid=c.relowner
+  CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(c.relacl,pg_catalog.acldefault('r',c.relowner))) a
+  JOIN pg_catalog.pg_roles r ON r.oid=a.grantee WHERE c.oid=pg_catalog.to_regclass('public.native_app_payment_account')
+   AND a.grantee<>c.relowner AND a.privilege_type='INSERT'`);
+ if(owners.length!==1||!await inspectAdminWechatAppOperation(tx,owners[0]))throw unavailable();
+ const[gate]=await tx.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(731664,0) AS locked`);
+ if(gate?.locked!==true)throw unavailable();
+ // Authenticate bounded account history without consulting the current pair.
+ await accounts(tx,env);
+ const rows=await tx.execute<EvidenceRow>(sql`SELECT evidence_id,order_no,kind,format_version,payload,created_at,signature
+  FROM public.native_app_payment_evidence WHERE order_no=${request.orderNo} OR payload->>'transactionId'=${request.transactionId}
+  ORDER BY evidence_id LIMIT 65`);
+ if(rows.length>64||new TextEncoder().encode(JSON.stringify(rows)).byteLength>1048576)throw unavailable();
+ for(const raw of rows) {
+  const row=evidence(env,raw),p=row.payload;
+  if(row.kind==='initiation') {
+   initiation(row);
+   if(row.evidence_id==='original:'+row.order_no)throw new ValidateException('小程序退款原单与已确认原生App付款身份冲突');
+   continue;
+  }
+  const source=row.kind;
+  const facts={appId:p.appId,merchantId:p.merchantId,orderNo:p.orderNo,amountCents:p.amountCents,currency:p.currency,
+   transactionId:p.transactionId,tradeState:p.tradeState,providerEventTime:p.providerEventTime,tradeType:p.tradeType} as ProviderFacts;
+  if(typeof p.transactionId!=='string'||typeof p.tradeState!=='string'||!validProvider(facts)||row.order_no!==facts.orderNo||!fields(p,['appId','merchantId','orderNo','amountCents','currency','transactionId',
+   'tradeState','providerEventTime','tradeType','source','profile','admission',...(source==='callback'?['providerEventId']:[])])
+   ||p.source!==source||p.profile!=='app'||typeof p.admission!=='string'||!['exact_initiation','provider_verified_legacy','original_mismatch'].includes(p.admission)
+   ||source==='callback'&&(typeof p.providerEventId!=='string'||row.evidence_id!=='callback:'+p.providerEventId))throw unavailable();
+  // A genuine APP SUCCESS conflicts with JSAPI even if AppID/merchant happen
+  // to match. A pre-request INIT attempt alone is deliberately not an original.
+  if(facts.tradeState==='SUCCESS')throw new ValidateException('小程序退款原单与原生App成功付款事实冲突');
+ }
+ const[deadline]=await tx.execute<{valid:boolean}>(sql`SELECT pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '5 seconds' AS valid`);
+ if(deadline?.valid!==true)throw unavailable();
+}
+
 function evidence(env: RuntimeEnv, raw: EvidenceRow): EvidenceRow {
   const row = whole(raw), { signature, ...facts } = row;
   if (row.format_version !== 1 || !order(row.order_no) || !Number.isSafeInteger(row.created_at) || row.created_at <= 0

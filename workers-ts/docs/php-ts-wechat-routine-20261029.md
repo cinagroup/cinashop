@@ -501,3 +501,33 @@ Financial通过另一显式forward以{routineRefund:true}声明完整现行profi
 本轮实际运行生产维护服务/目录/安装器、独立TCP认证LOGIN、HMAC与自有本机PG16，没有真实提供方退款、Browser、Workerd/Hyperdrive、生产DDL或部署。原账号CNSR首次派发与actor原子绑定、固定旧商户request/query/callback及负查单验签、provider证据与mutable投影同事务、durable SUCCESS结算及Financial只读状态/恢复仍待接入；基础批准不会放开旧商户退款。所有用户/UID/权益/旧单付款保留，未知不猜归属；首次接入/实质跨AppID的42501屏障、runtime_ready=false、整体迁移未完成及既有CI失败状态保持。
 
 重新连接本轮环境时，过去记录的/tmp阶段验证目录已不存在；未伪造恢复旧日志，也未把旧结果改称本轮重跑。本阶段原始输入manifest、日志、终态、跨作者复核及后续退款接入设计均留在ignored工作区 `.cache/php-ts-phase29-validation/`，可跨后续继续使用。提交文件另行秘密扫描；新增提交的推送不扩张用户对fc7d61e3的单笔授权。
+
+## 阶段 30：原账号首次退款派发、真实验签结果与 Financial 恢复（2026-10-31）
+
+阶段29的 `e55dd114` 已按用户单笔授权推送，远端 main 已直接核对。本阶段从该点建立独立开发分支，接入实际 App 和显式升级的固定 Financial LOGIN。完整合同见 [routine-refund-dispatch.md](routine-refund-dispatch.md)；阶段29基础文档保留为历史快照。
+
+首次退款继续使用现有实时 actor、review、数量与物理订单边界。原键 provider-admitted 回执先在真实业务事务内落定，再认证完整 Routine 原付款、相关冲突与旧 approved-use 历史，排除 NativeApp 原付来源。首派发 HMAC 绑定实际库/维护名称与 OID、root/child/refund/buyer/store/supplier、原证签名、完整 CNSR 请求/原因/金额、独立退款批准与归档材料 commitment、固定回调 URL，以及 Financial 首 actor/原键/请求 hash/回执摘要；首派发与 REQUESTING 同提交。后续有资格的 actor 可按现有协议恢复，不改首 actor。首回执时间以 epoch 秒规范化，避免连接 TimeZone 改变其摘要。在已证明 Routine 原付款的历史分支，已有 attempt/request 痕迹但缺首派发的旧 CNSR 拒绝补签；没有 Routine 原证的订单保留原路由。
+
+NativeApp namespace 存在时，反证通过独立实际 App RO 连接完成：同数据库名称/OID、不同 backend、真实 App session/backend OID、随机 advisory challenge 与业务物理行前后核对。Financial 不取得 NativeApp ledger SELECT，业务写入仍在原 Financial 事务；全 absent 不建该连接，partial 拒绝。旧 NativeApp 当前账号 equality 检查未移除。其维护安装器增加显式完整 peer/App-reader 声明，首 await 前捕获完整输入，保留 local/caseLock、实际维护 LOGIN/backend、精确目标和完整前后 profile 审计，没有扩张其他 runtime grants。
+
+fresh request/query/notify 分别要求当前独立 refund purpose 批准、完整历史、有效期及首派发固定材料 commitment。显式 `ROUTINE_REFUND_NOTIFY_ORIGIN` 仅接受 HTTPS origin，首派发固定 `/api/pay/notify/routine-refund/:dispatchId`；旧商户签名 POST/GET 及专用 RSA/AES 回调不依赖后来 current config。SQL preflight 关闭后才进行 provider I/O。正向 request/query 校验 CNY、根交易、CNSR 与金额；callback 校验解密 merchant 和对应 event type。官方 [退款查询](https://pay.wechatpay.cn/doc/v3/merchant/4013071041)未要求响应 mchid，可选冲突值仍拒绝；官方 [退款通知](https://pay.wechatpay.cn/doc/v3/merchant/4013071196)要求解密 mchid、未定义 currency 字段，未臆造两者共用字段。旧 generic scalar callback 不能更新历史派发。
+
+lost POST 先 UNKNOWN，再查固定 CNSR。只有生产 RSA 验证后的 HTTP404 RESOURCE_NOT_EXISTS、当前 query lease、未有正向 providerRefundId 历史及新鲜匹配的 refund_request 批准才能同 CNSR 重发；unsigned404、MCH_NOT_EXISTS 和存量负证据不能代替。本轮依据官方 [重试指引](https://pay.wechatpay.cn/doc/v3/merchant/4014959631)保留原 CNSR 与完整请求，不因不确定响应创建另一个退款编号。
+
+真实 provider 验证后才产生单独私有 result proof，绑定首派发、用途批准、source/lease、规范金融结果、首正文 digest、verifier/HTTP 状态及有限时间。immutable evidence 和 mutable payment 投影同退款事务提交；晚期失败共同回滚，本地错误不能造 SUCCESS，首正向 provider ID 不可更换，已接收 SUCCESS 不降级。在途真实结果按发起时批准认证，不因后来撤销丢失。request/query 按规范金融事实去重，lease/JSON 排序/非金融字段变化不新增行；真实重复事实可修复 UNKNOWN。已持久 callback eventId 继续核对首 raw digest。完整集最多128行/2MiB，127条后拒绝新增非 SUCCESS，预留第128条给首真实 SUCCESS；满容量的新 eventId 若为相同已持久 SUCCESS，可 ACK 而不记录该 event 的首 digest。
+
+durable finalize 与 Financial 状态重新核对原付款/完整冲突和旧用途历史、当时批准、首 Financial 回执及已接收结果和 mutable 投影；无须 active policy/current registry/fresh gate，撤销或撤材料不阻断真实成功的本地完成。假 mutable SUCCESS 不能结算。Financial status 改为实际 RR/RO，新增 snapshot-only owner SELECT；原写入 owner 授权仍持锁，实时资格和原键归属语义保留。
+
+本阶段覆盖 App/固定 Financial，未给 Admin/Manager/Cashier 新 addon。完整 bundle 安装后，未 commissioning 的 Admin/Manager 正数 WeChat 执行会被角色 guard 拒绝，包括尚未找到 Routine 原证的订单；原 readiness 可能更早拒绝。它们的既有 status/receipt/replay 尚未转换成此 durable-proof 合同。Cashier 没有独立退款执行 HTTP 路由；有资格的移动操作员进入既有 Financial 流程时仍重新认证并使用固定 Financial 身份。下一阶段应分别接入 Admin/Manager 完整权限、首 actor 回执与状态恢复，不能借 App/Financial 写业务绕过原 actor。
+
+最终6条完整新原生验收在 `inputs-08.json` 通过：独立 A/B RSA/AES、真实生产付款回调/默认消费者、buyer 与 payer UID 分离、实际五类 LOGIN、真实 Financial quote/review/原键/执行、HTTP 期间物理锁释放；覆盖 A POST→query SUCCESS→实际拆单结算、current 配置清空后首次派发、专用回调重放、unsigned/signed404 跨秒同 CNSR 恢复、真实 APP SUCCESS 反证、无 proof 伪成功/假 mutable SUCCESS、晚期 payment UPDATE 失败与证据原子回滚、撤销/撤材料后 durable 状态、重复 PROCESSING/UNKNOWN 恢复及已有正向退款后的 signed404 拒绝。每案都证明到达独立 App RO 反证连接，回滚案用会话锁 witness 证明实际到达晚期 UPDATE。6项无跳过，cluster remaining=0 且 STOPPED，冻结19条候选源码/运行器/测试输入逐字未变。
+
+另有5个完整单元文件187项在 `inputs-unit-03.json` 通过，旧退款原子物化与数量预留两个完整文件102项在 `inputs-native-regression-04.json` 通过；它们对应各自冻结版本，不把重复运行累计。当前代码的 Financial 完整71项与旧 NativeApp 安装器/作者完整9项在 `inputs-native-regression-10.json` 通过；独立退款批准完整7项和正式 Financial 升级完整8项在 `inputs-native-regression-11.json` 通过。两批均 remaining=0 且 STOPPED，输入逐字未变。本轮当前代码两套标准 unit/runtime TypeScript 检查在 `inputs-typecheck-09.json` 均 exit=0，未放宽 strict、提高内存/超时或并发。
+
+开发早期 PGlite 两文件为28通过/63失败/11跳过，63项停在 checkoutPricing readiness，未与 main baseline 对照，不能声称既有故障或绿色；其同名 PG16 文件后来102项全部通过。早期类型批次02的5项错误及06的测试 spy 泛型1项错误保留，未进入 runtime；修正后07两套通过，但晚于07的去重/容量更动仅以最终09为当前类型结论。新 native05为4通过/1失败：反证测试更换 current merchant 后沿用旧 Financial review，被旧 review guard 提前拒绝；仅改为重读真实 review，最终08完整6案通过，没有削弱503、独立连接可达、零HTTP/零写入断言。
+
+跨作者只读复核覆盖 root 编写的派发、provider/容量、核心退款和 Financial 接线；该作者自己的原证/NativeApp/安装器/测试改动不称为独立审计。127/128/129容量、字节边界及其临界并发没有额外 native 注入，也未单独执行已持久同 event 改 body、provider ID/冲突 SUCCESS 或满容量新 event ACK 反例；signed404 已有正向 ID 的新案到达 accept guard，不冒称 retry 冗余 guard 单独覆盖。没有为容量做压力请求。
+
+所有验证使用自有本机 PG16.14、独立 TCP LOGIN 和生产服务/Node RSA/AES，provider 仅受控传输替身；无真实微信、Browser、Workerd/Hyperdrive、生产 DDL 或部署。本阶段未改 rendered UI。用户/UID/权益/旧单/付款保留，未知历史不猜归属；完整归属清单与维护 manifest、旧账号其余消费者、Admin/Manager 接线、旧 attempted CNSR 恢复、前端 session/journal/页面/Browser 以及其余迁移和既有全量 CI 失败继续未完成，首次接入/实质 AppID 切换屏障及 runtime_ready=false 保留。
+
+本阶段精确输入、原始日志、终态、源码复核与下一阶段角色设计保存在 ignored 工作区 `.cache/php-ts-phase30-validation/`。最终22个提交文件含上述19条实现/测试/运行器及3份文档，另按固定 Gitleaks 8.29.0、现行精确规则和 redacted JSON 报告扫描；最终文件 manifest 和扫描终态独立记录，不挪用07旧版本的扫描或历史全库结果。提交/本地 main 合并与开发分支清理沿用用户授权；新提交推送不扩张此前仅覆盖 `e55dd114` 的单笔授权。

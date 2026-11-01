@@ -4,26 +4,52 @@ import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { inspectRuntimeBusinessProfileInTransaction } from './auditRuntimeBusinessPrivileges';
 import { ADMIN_WECHAT_APP_OPERATION_SQL, inspectAdminWechatAppOperation } from './adminWechatAppOperation';
 import { NATIVE_APP_PAYMENT_AUTHORITY_SQL, inspectNativeAppPaymentAuthority } from './nativeAppPaymentAuthority';
-import type { SeckillScheduleRuntimeTarget } from './runSeckillScheduleRuntimeUpgrade';
+import type { RoutinePaymentRuntimeTarget } from './routinePaymentRuntime';
+import { captureRuntimeGiftPeerDeclarations, type RuntimeGiftPeerDeclarations } from './customerRuntimeGiftPeers';
+import { captureRuntimeAppCashierOriginReader, type RuntimeAppCashierOriginReaderAddon } from './runtimeAppCashierOriginReader';
 
 export const ADMIN_WECHAT_APP_UPGRADE = 'admin-wechat-app-payment-authority-v1';
+
+/** Keep independently commissioned peers/readers explicit, and detach every
+ * declaration before the root BEGIN or caller transaction can yield. */
+function captureDeclaration(value:RoutinePaymentRuntimeTarget,peers?:RuntimeGiftPeerDeclarations,
+ appReader?:RuntimeAppCashierOriginReaderAddon){
+  if(!Array.isArray(value.local??[])||(value.local?.length??0)>16)throw Error('Explicit bounded WechatApp local identities required');
+  if(value.caseLock&&!Array.isArray(value.caseLock.runtimeRoles))throw Error('Explicit WechatApp case-lock identities required');
+  const target:RoutinePaymentRuntimeTarget={database:value.database,maintenance:value.maintenance,app:value.app,admin:value.admin,
+    ...(value.local?{local:[...value.local]}:{}),
+    ...(value.caseLock?{caseLock:{owner:value.caseLock.owner,runtimeRoles:[...value.caseLock.runtimeRoles]}}:{})};
+  const local=target.local??[],identities=[target.maintenance,target.app,target.admin,...local];
+  [...identities,target.database].forEach(pricingIdentifier);
+  if(new Set(identities).size!==identities.length)throw Error('Distinct WechatApp maintenance/runtime identities required');
+  if(target.caseLock){const lock=target.caseLock;pricingIdentifier(lock.owner);lock.runtimeRoles.forEach(pricingIdentifier);
+    if(!lock.runtimeRoles.length||lock.runtimeRoles.length>16||identities.includes(lock.owner)
+      ||new Set(lock.runtimeRoles).size!==lock.runtimeRoles.length||lock.runtimeRoles.some(role=>!local.includes(role)))
+      throw Error('Explicit local-only WechatApp case lock required');}
+  const capturedPeers=peers===undefined?undefined:captureRuntimeGiftPeerDeclarations(peers);
+  const capturedReader=appReader===undefined?undefined:captureRuntimeAppCashierOriginReader(appReader);
+  const binding=(t:RoutinePaymentRuntimeTarget)=>JSON.stringify([t.database,t.maintenance,t.app,t.admin,
+    [...(t.local??[])].sort(),t.caseLock?[t.caseLock.owner,[...t.caseLock.runtimeRoles].sort()]:null]);
+  if(capturedPeers&&binding(capturedPeers.target)!==binding(target))throw Error('WechatApp peers require the exact declared target');
+  return{target,peers:capturedPeers,appReader:capturedReader};
+}
 
 /** Explicit maintenance only. Exact existing current runtime profiles precede
  * installation; the operation receipt, historical accounts, order evidence and
  * exact App/Admin grants commit together. No business rows, credentials or old stages are
  * rewritten. Neither an HTTP request nor startup imports/calls this installer. */
-export async function installAdminWechatAppUpgradeInTransaction(tx: Pick<DbClient,'execute'>, target: SeckillScheduleRuntimeTarget) {
+export async function installAdminWechatAppUpgradeInTransaction(tx: Pick<DbClient,'execute'>, declaredTarget: RoutinePaymentRuntimeTarget,
+ declaredPeers?:RuntimeGiftPeerDeclarations,declaredReader?:RuntimeAppCashierOriginReaderAddon) {
   if (Object.hasOwn(tx,'$client')) throw Error('WechatApp operation upgrade requires an existing maintenance transaction');
-  const identities = [target.maintenance,target.app,target.admin];
-  [...identities,target.database].forEach(pricingIdentifier);
-  if (new Set(identities).size !== 3) throw Error('Distinct WechatApp operation maintenance/runtime identities required');
+  const{target,peers,appReader}=captureDeclaration(declaredTarget,declaredPeers,declaredReader);
   await tx.execute(sql`SELECT set_config('search_path','public,pg_temp',true),set_config('statement_timeout','5000',true),
     set_config('lock_timeout','1000',true),set_config('idle_in_transaction_session_timeout','5000',true)`);
   const [context] = await tx.execute(sql`SELECT current_database()=${target.database} AND current_user=${target.maintenance}
     AND current_user=session_user AND current_schema()='public' AND current_setting('server_version_num')::integer/10000=16
     AND current_setting('transaction_isolation')='read committed' AND NOT current_setting('transaction_read_only')::boolean
     AND current_setting('session_replication_role')='origin'
-    AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=current_user AND rolsuper)
+    AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles r WHERE r.rolname=current_user AND r.rolsuper AND r.rolcanlogin
+      AND r.oid=(SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()))
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D') AS supported`);
   if (context?.supported !== true) throw Error('WechatApp operation upgrade requires explicit PG16 owner/database maintenance');
   const [gate] = await tx.execute(sql`SELECT pg_try_advisory_xact_lock(731663,0) AS locked`);
@@ -63,8 +89,8 @@ export async function installAdminWechatAppUpgradeInTransaction(tx: Pick<DbClien
   if (present && !complete) throw Error('Partial WechatApp operation/payment authority bundle requires review');
   if (present) await tx.execute(sql.raw('LOCK TABLE ONLY public.admin_wechat_app_operation, ONLY public.native_app_payment_account, ONLY public.native_app_payment_evidence IN ACCESS EXCLUSIVE MODE NOWAIT'));
   const inspect = async () => ({
-    app: await inspectRuntimeBusinessProfileInTransaction(tx,'app',target,'current'),
-    admin: await inspectRuntimeBusinessProfileInTransaction(tx,'admin',target,'current'),
+    app: await inspectRuntimeBusinessProfileInTransaction(tx,'app',target,'current',peers,appReader),
+    admin: await inspectRuntimeBusinessProfileInTransaction(tx,'admin',target,'current',peers),
   });
   const before = await inspect();
   if (!before.app.ready || !before.admin.ready) throw Error('WechatApp operation commissioning requires exact existing runtime profiles');
@@ -87,7 +113,10 @@ GRANT SELECT, INSERT ON TABLE public.native_app_payment_evidence TO ${pricingIde
   return { operation: ADMIN_WECHAT_APP_UPGRADE, applied: true as const };
 }
 
-export async function runAdminWechatAppUpgrade(db: DbClient, target: SeckillScheduleRuntimeTarget) {
+export async function runAdminWechatAppUpgrade(db: DbClient, target: RoutinePaymentRuntimeTarget,
+ peers?:RuntimeGiftPeerDeclarations,appReader?:RuntimeAppCashierOriginReaderAddon) {
   if (!Object.hasOwn(db,'$client') || !db.$client) throw Error('WechatApp operation upgrade requires a root maintenance connection');
-  return db.transaction(tx => installAdminWechatAppUpgradeInTransaction(tx,target), { isolationLevel: 'read committed', accessMode: 'read write' });
+  const captured=captureDeclaration(target,peers,appReader);
+  return db.transaction(tx => installAdminWechatAppUpgradeInTransaction(tx,captured.target,captured.peers,captured.appReader),
+    { isolationLevel: 'read committed', accessMode: 'read write' });
 }

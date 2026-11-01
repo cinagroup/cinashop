@@ -268,7 +268,7 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
   const unique=[...new Set(failures)].sort();
   return{present:true,ready:!unique.length,failures:unique,binding:unique.length?null:{...binding,admin:names?.admin??null,adminOid:namespace?.admin_oid??null}};
 }
-async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'app'|'financial'):Promise<boolean> {
+async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'app'|'financial',statusRead=false):Promise<boolean> {
  try {
   if(Object.hasOwn(tx,'$client') || role!==undefined&&role!=='app'&&role!=='financial')throw Error();
   await tx.execute(sql`SELECT pg_catalog.set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
@@ -280,8 +280,9 @@ async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'a
   if(!catalog.ready||!b?.app||!b.appOid)throw Error();
   const [identity]=await tx.execute<{name:string;oid:string;ready:boolean}>(sql`SELECT r.rolname AS name,r.oid::text AS oid,
    current_user=session_user AND r.oid=(SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid())
-   AND pg_catalog.current_setting('server_version_num')::integer/10000=16 AND pg_catalog.current_setting('transaction_isolation')='read committed'
-   AND pg_catalog.current_setting('transaction_read_only')='off' AND pg_catalog.current_setting('session_replication_role')='origin' AND pg_catalog.current_schema()='public'
+   AND pg_catalog.current_setting('server_version_num')::integer/10000=16
+   AND pg_catalog.current_setting('transaction_isolation')=${statusRead?'repeatable read':'read committed'}
+   AND pg_catalog.current_setting('transaction_read_only')=${statusRead?'on':'off'} AND pg_catalog.current_setting('session_replication_role')='origin' AND pg_catalog.current_schema()='public'
    AND pg_catalog.to_regclass('routine_refund_account_policy')=pg_catalog.to_regclass('public.routine_refund_account_policy')
    AND pg_catalog.to_regclass('routine_refund_dispatch')=pg_catalog.to_regclass('public.routine_refund_dispatch')
    AND pg_catalog.to_regclass('routine_refund_provider_evidence')=pg_catalog.to_regclass('public.routine_refund_provider_evidence')
@@ -309,3 +310,6 @@ export async function assertRoutineRefundInstalledTx(tx:Query,role?:'app'|'finan
 export async function assertRoutineRefundReady(tx:Query,role?:'app'|'financial'):Promise<void>{await requireRuntime(tx,false,true,role);}
 /** Historical immutable reads only; never fresh provider approval. No gate is acquired. */
 export async function assertRoutineRefundReadInTx(tx:Query,role?:'app'|'financial'):Promise<boolean>{return requireRuntime(tx,true,false,role);}
+/** Status projection only. This grants no fresh provider authority, takes no
+ * maintenance gate and is deliberately unavailable in a writing transaction. */
+export async function assertRoutineRefundStatusReadTx(tx:Query,role?:'app'|'financial'):Promise<boolean>{return requireRuntime(tx,true,false,role,true);}

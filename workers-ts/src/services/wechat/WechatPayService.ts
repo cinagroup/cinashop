@@ -36,6 +36,9 @@ import { readRoutinePaymentReplay, reserveRoutinePayment, recordRoutinePaymentRe
 import { attachRoutineProviderObservation, captureRoutineProviderObservation, routineProviderObservationOf } from '@/services/payment/RoutineProviderObservation';
 import { prepareApprovedRoutineQuery, prepareApprovedRoutineNotify, routineApprovedAccountMaterials,
   assertPreparedRoutineAccount, attachRoutinePaymentAccountAuthorization } from '@/services/payment/RoutineApprovedPaymentAccount';
+import { prepareRoutineRefundProvider,routineRefundPreparedMaterials,captureRoutineRefundResult,
+  type PreparedRoutineRefund } from '@/services/payment/RoutineRefundProvider';
+import { sameRoutineRefund } from '@/services/payment/RoutineRefundDispatch';
 
 const BASE_URL = "https://api.mch.weixin.qq.com";
 
@@ -62,13 +65,14 @@ interface WechatPayConfig extends WechatMerchantConfig {
 }
 
 interface WechatRefundResponse {
+  mchid?:string;
   refund_id?: string;
   out_refund_no?: string;
   transaction_id?: string;
   out_trade_no?: string;
   status?: string;
   success_time?: string;
-  amount?: { refund?: number; total?: number };
+  amount?: { refund?: number; total?: number; currency?:string };
   code?: string;
   message?: string;
 }
@@ -379,6 +383,68 @@ export class WechatPayService {
     }
   }
 
+  /** Historical Routine uses one authenticated first dispatch, never current
+   * merchant configuration or a trial across the archive. SQL closes before I/O. */
+  async requestRoutineRefund(dispatchId:string,request:RefundProviderRequest):Promise<RefundProviderResult>{
+    request={...request};
+    const p=await prepareRoutineRefundProvider(this.container,this.env,dispatchId,'request');
+    if(!sameRoutineRefund(request,p.dispatch.payload.request))throw new ValidateException('原账号退款请求与首次受理不一致');
+    const cfg=this.routineRefundConfig(p),q=p.dispatch.payload.request;
+    const body={out_refund_no:q.outRefundNo,reason:q.reason.slice(0,80),notify_url:p.dispatch.payload.notifyUrl,
+      transaction_id:q.transactionId,amount:{refund:q.refundAmount,total:q.totalAmount,currency:'CNY'}};
+    let verified:{body:string;serial:string;status:number}|undefined;
+    const response=await this.callApi<WechatRefundResponse>('POST','/v3/refund/domestic/refunds',body,cfg,true,
+      (body,serial,status)=>{verified={body,serial,status};});
+    if(!verified)throw new ValidateException('原账号退款响应缺少验签记录');
+    return this.routineRefundResponse(p,response,verified);
+  }
+
+  async queryRoutineRefund(dispatchId:string,request:RefundProviderRequest):Promise<RefundProviderResult>{
+    request={...request};
+    const p=await prepareRoutineRefundProvider(this.container,this.env,dispatchId,'query');
+    if(!sameRoutineRefund(request,p.dispatch.payload.request))throw new ValidateException('原账号退款查单与首次受理不一致');
+    const cfg=this.routineRefundConfig(p);let verified:{body:string;serial:string;status:number}|undefined;
+    try{
+      const response=await this.callApi<WechatRefundResponse>('GET',`/v3/refund/domestic/refunds/${encodeURIComponent(request.outRefundNo)}`,
+        undefined,cfg,true,(body,serial,status)=>{verified={body,serial,status};});
+      if(!verified)throw new ValidateException('原账号退款查单缺少验签记录');
+      return this.routineRefundResponse(p,response,verified);
+    }catch(error){
+      if(error instanceof WechatApiError&&error.httpStatus===404&&error.code==='RESOURCE_NOT_EXISTS'&&verified?.status===404){
+        return captureRoutineRefundResult(this.env,p,{result:{status:'NOT_FOUND'},verifiedBody:verified.body,
+          verifierKey:verified.serial,httpStatus:404});
+      }throw error;
+    }
+  }
+
+  private routineRefundConfig(p:PreparedRoutineRefund):WechatPayConfig{
+    const m=routineRefundPreparedMaterials(this.env,p);return{...m,mchId:m.merchantId,notifyUrl:'',refundNotifyUrl:p.dispatch.payload.notifyUrl};
+  }
+
+  private routineRefundResponse(p:PreparedRoutineRefund,response:WechatRefundResponse,verified:{body:string;serial:string;status:number}):RefundProviderResult{
+    const result=normalizeWechatRefundResponse(response,p.dispatch.payload.request);
+    if(response.mchid!==undefined&&response.mchid!==p.dispatch.payload.approval.merchantId
+      ||response.amount?.currency!=='CNY'||!['SUCCESS','PROCESSING','CLOSED','ABNORMAL'].includes(result.status))
+      throw new ValidateException('原账号退款响应业务字段或币种不匹配');
+    return captureRoutineRefundResult(this.env,p,{result,verifiedBody:verified.body,verifierKey:verified.serial,httpStatus:verified.status});
+  }
+
+  async verifyAndParseRoutineRefundNotify(dispatchId:string,headers:Record<string,string>,rawBody:string):Promise<RefundProviderResult>{
+    headers={...headers};
+    const p=await prepareRoutineRefundProvider(this.container,this.env,dispatchId,'callback'),cfg=this.routineRefundConfig(p);
+    const {data,eventId}=await this.verifyAndDecryptNotify<{mchid?:string;out_trade_no?:string;transaction_id?:string;
+      out_refund_no?:string;refund_id?:string;refund_status?:string;success_time?:string;amount?:{total?:number;refund?:number}}>
+      (headers,rawBody,'refund','routine',cfg);
+    const q=p.dispatch.payload.request,event=JSON.parse(rawBody) as {event_type?:unknown};
+    if(data.mchid!==cfg.mchId||data.out_trade_no!==q.outTradeNo||data.transaction_id!==q.transactionId
+      ||data.out_refund_no!==q.outRefundNo||data.amount?.refund!==q.refundAmount||data.amount?.total!==q.totalAmount
+      ||!['SUCCESS','CLOSED','ABNORMAL'].includes(data.refund_status??'')||event.event_type!=='REFUND.'+data.refund_status)
+      throw new ValidateException('原账号退款回调与首次受理记录不匹配');
+    return captureRoutineRefundResult(this.env,p,{result:{status:normalizeWechatStatus(data.refund_status!),
+      providerRefundId:data.refund_id,successTime:parseProviderTime(data.success_time)},verifiedBody:rawBody,
+      verifierKey:headers['wechatpay-serial'],httpStatus:200,eventId});
+  }
+
   async queryOrder(request: PaymentProviderQueryRequest, original?: PaymentQueryOriginalIdentity): Promise<PaymentProviderQueryResult> {
     if (request.provider !== "wechat" || !["wechat", "routine", "app"].includes(request.profile)) {
       throw new ValidateException("微信支付查单渠道无效");
@@ -534,7 +600,7 @@ export class WechatPayService {
   private verifyAndDecryptNotify<T>(headers: Record<string, string>, rawBody: string,
     expectedOriginalType: 'transaction', profile: WechatPayProfile, approvedConfig?: WechatPayConfig): Promise<{ data: T; cfg: WechatPayConfig; eventId: string }>;
   private verifyAndDecryptNotify<T>(headers: Record<string, string>, rawBody: string,
-    expectedOriginalType: 'refund', profile: WechatPayProfile): Promise<{ data: T; cfg: WechatMerchantConfig; eventId: string }>;
+    expectedOriginalType: 'refund', profile: WechatPayProfile, approvedConfig?:WechatPayConfig): Promise<{ data: T; cfg: WechatMerchantConfig; eventId: string }>;
   private async verifyAndDecryptNotify<T>(
     headers: Record<string, string>,
     rawBody: string,
@@ -607,7 +673,7 @@ export class WechatPayService {
     bodyValue: Record<string, unknown> | undefined,
     cfg: WechatMerchantConfig,
     verifyErrorResponse = false,
-    captureVerified?: (body: string, serial: string) => void,
+    captureVerified?: (body: string, serial: string,status:number) => void,
   ): Promise<T> {
     const body = bodyValue ? JSON.stringify(bodyValue) : "";
     const authorization = await buildV3Authorization(
@@ -647,15 +713,18 @@ export class WechatPayService {
     } catch {
       throw new Error(`微信支付响应不是 JSON (HTTP ${response.status})`);
     }
+    // Negative observations are exposed only when the caller explicitly asked
+    // for error RSA verification. Unsigned 404 never becomes retry authority.
+    if(response.ok||verifyErrorResponse)captureVerified?.(rawBody,response.headers.get('Wechatpay-Serial')??'',response.status);
     if (!response.ok) {
       throw new WechatApiError(
         typeof result.code === "string" ? result.code : `HTTP_${response.status}`,
         typeof result.message === "string" ? result.message : response.statusText,
+        response.status,
       );
     }
     // This observer runs only for a successfully verified, bounded response.
     // It retains no signature/raw body outside the request-local query scope.
-    captureVerified?.(rawBody, response.headers.get('Wechatpay-Serial') ?? '');
     return result as T;
   }
 
@@ -748,6 +817,7 @@ export class WechatApiError extends Error {
   constructor(
     readonly code: string,
     message: string,
+    readonly httpStatus?:number,
   ) {
     super(`微信支付 ${code}: ${message}`);
     this.name = "WechatApiError";

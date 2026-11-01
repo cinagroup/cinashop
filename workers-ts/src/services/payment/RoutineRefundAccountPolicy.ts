@@ -3,7 +3,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
-import { inspectRoutineRefundCatalog, assertRoutineRefundInstalledTx, ROUTINE_REFUND_GATE } from '@/migrations/routineRefund';
+import { inspectRoutineRefundCatalog, assertRoutineRefundInstalledTx, assertRoutineRefundReadInTx,
+  assertRoutineRefundStatusReadTx, ROUTINE_REFUND_GATE } from '@/migrations/routineRefund';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac } from './RoutineProviderObservation';
@@ -143,6 +144,48 @@ export async function readRoutineRefundAccountPolicyTx(tx: DbClient, env: Runtim
   if (!row || row.payload.data.state !== 'active' || now < row.payload.data.validFrom || now >= row.payload.data.validUntil
     || !row.payload.data.purposes.includes(purpose)) return fail();
   commitment(env, row.payload.data);
+  return row;
+}
+
+/** Select one explicitly approved account for authenticated original facts.
+ * Histories that ever named this pair stay in the candidate set, so editing
+ * the latest pair cannot hide an invalid chain. No credential trial occurs. */
+export async function selectRoutineRefundAccountPolicyTx(tx: DbClient, env: Runtime,
+  pair: { appId: string; merchantId: string }, purpose: RoutineRefundPurpose,
+  projection?:'write-snapshot'|'read-snapshot'): Promise<RoutineRefundAccountJournal> {
+  const raw=object(pair,['appId','merchantId']);pair = { appId: raw.appId as string, merchantId: raw.merchantId as string };
+  if (!token(pair.appId,32) || typeof pair.merchantId!=='string' || !/^[0-9]{1,32}$/u.test(pair.merchantId)
+    || !['refund_request','refund_query','refund_notify'].includes(purpose)) return fail();
+  if(projection!==undefined&&projection!=='write-snapshot'&&projection!=='read-snapshot')return fail();
+  if (!await (projection==='read-snapshot'?assertRoutineRefundStatusReadTx(tx):projection==='write-snapshot'
+    ?assertRoutineRefundReadInTx(tx):assertRoutineRefundInstalledTx(tx))) return fail();
+  const subjects = await tx.execute<{account_id:string}>(sql`SELECT DISTINCT account_id FROM public.routine_refund_account_policy
+    WHERE payload->'data'->>'appId'=${pair.appId} AND payload->'data'->>'merchantId'=${pair.merchantId}
+    ORDER BY account_id LIMIT 17`);
+  if (subjects.length>16) return fail();
+  const s=await scope(tx), now=await clock(tx), matches:RoutineRefundAccountJournal[]=[];
+  for (const subject of subjects) {
+    if (!token(subject.account_id)) return fail();
+    const row=(await history(tx,env,subject.account_id,s)).at(-1);
+    if (!row) return fail();
+    const d=row.payload.data;
+    if (d.appId===pair.appId && d.merchantId===pair.merchantId && d.state==='active'
+      && now>=d.validFrom && now<d.validUntil && d.purposes.includes(purpose)) matches.push(row);
+  }
+  if (matches.length!==1) return fail();
+  commitment(env,matches[0].payload.data);
+  return matches[0];
+}
+
+/** Durable historical metadata, including revoked approvals. This never
+ * resolves current credentials or produces a fresh provider capability. */
+export async function readRoutineRefundAccountJournalTx(tx: DbClient, env: Signing,
+  recordId: string, statusRead=false): Promise<RoutineRefundAccountJournal> {
+  if (!uuid(recordId)) return fail();
+  if (!await (statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx))) return fail();
+  const [raw]=await tx.execute(sql`SELECT * FROM public.routine_refund_account_policy WHERE record_id=${recordId}::uuid`);
+  const s=await scope(tx), row=journal(env,raw,s), rows=await history(tx,env,row.account_id,s);
+  if (!rows.some(candidate=>same(candidate,row))) return fail();
   return row;
 }
 

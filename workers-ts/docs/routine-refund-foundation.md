@@ -1,6 +1,8 @@
-# Historical Routine refund foundation
+# Historical Routine refund foundation (phase29 snapshot)
 
-This phase adds explicit PG16 storage, maintenance refund-account approvals and a separately declared Financial permission upgrade. It does **not** enable historical-account refunds. The existing refund request/query/callback paths do not consume this protocol yet. Installation, a registry entry or an approval cannot send a refund, assign ownership or settle money. First-adoption and cross-AppID activation remain closed.
+This document records the foundation at `e55dd114`, before the phase30 consumers. The current App/Financial dispatch, provider evidence and durable completion contract is in [routine-refund-dispatch.md](routine-refund-dispatch.md). Statements below about reserved tables and missing consumers describe phase29.
+
+Phase29 added explicit PG16 storage, maintenance refund-account approvals and a separately declared Financial permission upgrade. It did **not** enable historical-account refunds. At that checkpoint the existing refund request/query/callback paths did not consume this protocol. Installation, a registry entry or an approval cannot send a refund, assign ownership or settle money. First-adoption and cross-AppID activation remain closed.
 
 The three optional tables install atomically through `runRoutineRefundUpgrade`:
 

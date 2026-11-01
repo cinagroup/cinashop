@@ -5,12 +5,14 @@ import type { Env } from '@/env';
 import { createContainerFromDb, withTx, type Container, type DbClient } from '@/lib/di';
 import { inspectRoutinePaymentAccountPolicyCatalog, assertRoutinePaymentAccountPolicyInstalledTx,
   assertRoutinePaymentAccountPolicyReadInTx, ROUTINE_PAYMENT_ACCOUNT_POLICY_GATE } from '@/migrations/routinePaymentAccountPolicy';
+import { assertRoutineRefundReadInTx,assertRoutineRefundStatusReadTx, inspectRoutineRefundCatalog } from '@/migrations/routineRefund';
+import { inspectRoutineOriginalPaymentEvidenceCatalog } from '@/migrations/routineOriginalPaymentEvidence';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac, parseRoutineProviderObservation,
   type RoutineProviderObservation } from './RoutineProviderObservation';
 import type { PaymentProviderQueryRequest } from './PaymentProviderQuery';
-import type { RoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
+import { parseRoutineOriginalEvidence, type RoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
 
 type Signing = Pick<Env, 'APP_KEY'>;
 type Runtime = Pick<Env, 'APP_KEY' | 'ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS'>;
@@ -124,6 +126,18 @@ export function routinePaymentCredentialCommitment(env: Runtime, ref: string, ve
   if (!token(ref) || !integer(version)) return fail();
   const m = resolve(env, ref, version);
   return Object.freeze({ appId: m.appId, merchantId: m.merchantId, credentialStamp: mac(env, 'materials', m) });
+}
+/** Pure closed-registry lookup plus all-material commitment equality. This is
+ * not account approval, original identity, a dispatch claim or provider authority. */
+export function routineCommittedMerchantMaterials(env:Runtime,expected:{appId:string;merchantId:string;
+ credentialRef:string;credentialVersion:number;credentialStamp:string}):Readonly<RoutineMerchantMaterials> {
+ env={APP_KEY:env.APP_KEY,ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS:env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS};
+ const r=object(expected,['appId','merchantId','credentialRef','credentialVersion','credentialStamp']);
+ if(!token(r.appId,32)||typeof r.merchantId!=='string'||!/^[0-9]{1,32}$/u.test(r.merchantId)
+  ||!token(r.credentialRef)||!integer(r.credentialVersion)||!hex(r.credentialStamp))return fail();
+ const materials=resolve(env,r.credentialRef,r.credentialVersion);
+ if(materials.appId!==r.appId||materials.merchantId!==r.merchantId||!equal(r.credentialStamp,mac(env,'materials',materials)))return fail();
+ return materials;
 }
 async function scope(tx: DbClient): Promise<Scope> {
   const [r] = await tx.execute<Scope>(sql`SELECT current_database() AS database,
@@ -332,6 +346,44 @@ export async function assertRoutineApprovedUseTx(tx: DbClient, env: Signing, ori
       if (!same(journal(env,row,s),policy)) return fail();
     }
   }
+}
+
+/** Purpose-specific durable payment provenance reader for real Routine refund
+ * App/Financial transactions. It does not broaden the App-only payment guard,
+ * read current approval/registry, or authorize any provider operation. All
+ * related originals can be checked in one bounded source read, without a gate. */
+export async function readRoutineApprovedUsesForRefundTx(tx:DbClient,env:Signing,
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],statusRead=false) {
+ env={APP_KEY:env.APP_KEY};
+ const originals=(Array.isArray(original)?original:[original]).map(row=>parseRoutineOriginalEvidence(env,row));
+ if(!originals.length||originals.length>64||new Set(originals.map(row=>row.evidence_id)).size!==originals.length)return fail();
+ if(!await(statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
+ const refund=await inspectRoutineRefundCatalog(tx),binding=refund.binding;
+ const catalog=await inspectRoutinePaymentAccountPolicyCatalog(tx),source=await inspectRoutineOriginalPaymentEvidenceCatalog(tx);
+ if(!refund.ready||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
+  ||source.binding?.maintenanceOid!==binding.maintenanceOid||catalog.binding?.appOid!==binding.appOid||source.binding?.appOid!==binding.appOid)return fail();
+ const [resolution]=await tx.execute<{ready:boolean}>(sql`SELECT
+  pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
+  AND pg_catalog.to_regclass('routine_payment_account_policy')=pg_catalog.to_regclass('public.routine_payment_account_policy')
+  AND pg_catalog.to_regclass('routine_payment_account_use')=pg_catalog.to_regclass('public.routine_payment_account_use') AS ready`);
+ if(resolution?.ready!==true)return fail();
+ const s=await scope(tx),rows=await tx.execute(sql`SELECT * FROM public.routine_payment_account_use
+  WHERE evidence_id IN (${sql.join(originals.map(row=>sql`${row.evidence_id}`),sql`,`)}) ORDER BY evidence_id,use_id LIMIT 65`);
+ if(rows.length>64||Buffer.byteLength(JSON.stringify(rows),'utf8')>1048576)return fail();
+ const decoded:Use[]=[];
+ const policies=new Map<string,Journal>();
+ for(const raw of rows) {
+  const match=originals.find(row=>row.evidence_id===raw.evidence_id);if(!match)return fail();
+  const u=use(env,raw,s,match);if(!u.payload.scopeMatches)return fail();
+  for(const policy of[u.payload.authorization.account,u.payload.authorization.query].filter((v):v is Journal=>!!v)) {
+   let saved=policies.get(policy.record_id);
+   if(!saved){const[row]=await tx.execute(sql`SELECT * FROM public.routine_payment_account_policy WHERE record_id=${policy.record_id}::uuid`);
+    saved=journal(env,row,s);policies.set(policy.record_id,saved);}
+   if(!same(saved,policy))return fail();
+  }
+  decoded.push(u);
+ }
+ return freeze({uses:decoded,digest:routineEvidenceHmac(env,'refund-approved-use-set',decoded)});
 }
 
 /** Explicit owner-only maintenance API. No HTTP route, config adoption, role

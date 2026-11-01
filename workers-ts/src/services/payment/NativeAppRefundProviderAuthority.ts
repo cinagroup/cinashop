@@ -2,8 +2,11 @@ import { sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, createDbFromConnectionString, withTx, type Container, type DbClient } from '@/lib/di';
 import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
-import { assertNativeAppRefundAccountInTx, refundBundlePresent } from './NativeAppPaymentAuthority';
+import { assertNativeAppRefundAccountInTx, assertNativeAppAbsentForRoutineRefundInTx, refundBundlePresent } from './NativeAppPaymentAuthority';
 import { amountToCents, type RefundProviderRequest } from './RefundGateway';
+import { assertRoutineRefundReadInTx,inspectRoutineRefundCatalog } from '@/migrations/routineRefund';
+import { assertRoutineRefundOriginalTx,type RoutineRefundOriginal } from './RoutineRefundOriginal';
+import { parseRoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
 
 type Mode = 'request' | 'query';
 type Row = Record<string, unknown>;
@@ -148,4 +151,89 @@ export async function assertNativeAppRefundProviderRequest(container: Container,
       try { await verifier.$client.end({ timeout: 5 }); } catch { throw unavailable(); }
     }
   }
+}
+
+/** Extra NativeApp exclusion for a real Routine original, on the original
+ * App/Financial business transaction. The root/child/refund physical locks
+ * precede this helper; lease/actor/dispatch authority belongs to its caller.
+ * CREATED is allowed: this is also used before first REQUESTING admission.
+ * No provider I/O, replacement business connection or current merchant bypass. */
+export async function assertNativeAppExcludedForRoutineRefundTx(business:DbClient,env:Env,
+ value:RefundProviderRequest,proof:RoutineRefundOriginal):Promise<void> {
+ const request=detach(value),signing={APP_KEY:env.APP_KEY},binding=env.HYPERDRIVE?.connectionString;
+ const original=assertRoutineRefundOriginalTx(business,proof);
+ let verifier:DbClient|undefined;
+ try {
+  // The detached signing deployment must authenticate this same immutable
+  // record, including when the optional NativeApp namespace is wholly absent.
+  parseRoutineOriginalEvidence(signing,original.evidence);
+  if(!await assertRoutineRefundReadInTx(business))throw unavailable();
+  const catalog=await inspectRoutineRefundCatalog(business),b=catalog.binding;
+  if(!catalog.ready||!b?.app||!b.appOid)throw unavailable();
+  const before=await snapshot(business,request);
+  validateRoutineSnapshot(request,before,original);
+  // Every writer of a NativeApp confirmed original holds this same payment
+  // boundary. Try-only acquisition avoids waiting behind another lock graph.
+  const[boundary]=await business.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock(
+   pg_catalog.hashtextextended(${`store-order-payment-evidence:v1:${request.outTradeNo}`},0)) AS locked`);
+  if(boundary?.locked!==true)throw unavailable();
+  const[maintenance]=await business.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(731663,0) AS locked`);
+  if(maintenance?.locked!==true)throw unavailable();
+  if(!await refundBundlePresent(business))return;
+  if(typeof binding!=='string'||!binding.trim())throw unavailable();
+  const originalIdentity=await identity(business);
+  const[first,second]=crypto.getRandomValues(new Int32Array(2));
+  const[challenge]=await business.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock(${first}::integer,${second}::integer) AS locked`);
+  if(challenge?.locked!==true)throw unavailable();
+  verifier=createDbFromConnectionString(binding,1,{searchPath:'public,pg_temp',applicationName:'cinashop_routine_refund_verify'});
+  await withTx(createContainerFromDb(verifier),async app=>{
+   await app.execute(sql`SET TRANSACTION ISOLATION LEVEL READ COMMITTED,READ ONLY`);
+   await app.execute(sql`SELECT pg_catalog.set_config('search_path','public,pg_temp',true),
+    pg_catalog.set_config('statement_timeout','5s',true),pg_catalog.set_config('lock_timeout','2s',true),
+    pg_catalog.set_config('idle_in_transaction_session_timeout','5s',true)`);
+   const appIdentity=await identity(app);
+   if(appIdentity.database!==originalIdentity.database||appIdentity.database_oid!==originalIdentity.database_oid
+    ||appIdentity.pid===originalIdentity.pid||appIdentity.role!==b.app||appIdentity.session!==b.app)throw unavailable();
+   const[actualApp]=await app.execute<{ready:boolean}>(sql`SELECT r.oid=${b.appOid}::oid AND r.rolname=current_user
+    AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
+    AND r.oid=(SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()) AS ready
+    FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
+   if(actualApp?.ready!==true)throw unavailable();
+   const[probe]=await app.execute<{acquired:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(${first}::integer,${second}::integer) AS acquired`);
+   if(probe?.acquired!==false)throw unavailable();
+   const[held]=await app.execute<{present:boolean}>(sql`SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_locks
+    WHERE locktype='advisory' AND database::text=${originalIdentity.database_oid} AND pid=${originalIdentity.pid}
+     AND classid::text=${String(first>>>0)} AND objid::text=${String(second>>>0)} AND objsubid=2
+     AND mode='ExclusiveLock' AND granted) AS present`);
+   if(held?.present!==true)throw unavailable();
+   // Do not acquire the business-owned order boundary on this App session.
+   await assertNativeAppAbsentForRoutineRefundInTx(app,signing,{orderNo:request.outTradeNo,
+    transactionId:request.transactionId!,totalAmount:request.totalAmount});
+   if(!same(await identity(app),appIdentity))throw unavailable();
+  });
+  if(!same(await identity(business),originalIdentity))throw unavailable();
+  const after=await snapshot(business,request);
+  if(!same(before,after))throw unavailable();
+  validateRoutineSnapshot(request,after,original);
+  const[deadline]=await business.execute<{valid:boolean}>(sql`SELECT pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '8 seconds' AS valid`);
+  if(deadline?.valid!==true)throw unavailable();
+ }catch{throw unavailable();}
+ finally{if(verifier){try{await verifier.$client.end({timeout:5});}catch{throw unavailable();}}}
+}
+
+function validateRoutineSnapshot(request:Readonly<RefundProviderRequest>,s:Snapshot,original:RoutineRefundOriginal):void {
+ const p=row(s.payment),r=row(s.refund),c=row(s.child),o=row(s.root),b=original.evidence.payload.binding,
+  f=original.evidence.payload.observation.facts;
+ const rootRelation=(c.pid===0||c.pid===-1)&&o.id===c.id||positiveId(c.pid)&&o.id===c.pid&&o.pid===-1;
+ const allocated=o.pid===-1&&o.supplier_id===0&&o.supplier_allocation_status===2;
+ if(b.state!=='bound'||b.local.domain!=='store_order'||!positiveId(p.id)||!positiveId(r.id)||!positiveId(c.id)||!positiveId(o.id)
+  ||p.provider!=='wechat'||p.refund_id!==r.id||p.store_order_id!==c.id||r.store_order_id!==c.id
+  ||p.out_refund_no!=='CNSR'+r.id||p.out_refund_no!==request.outRefundNo||r.uid!==c.uid||r.store_id!==c.store_id||r.supplier_id!==c.supplier_id
+  ||!rootRelation||o.id!==b.local.orderId||o.uid!==b.local.buyerUid||c.uid!==o.uid||c.pay_type!=='weixin'||o.pay_type!=='weixin'
+  ||c.paid!==1||o.paid!==1||c.store_id!==o.store_id&&!allocated||c.supplier_id!==o.supplier_id&&!allocated
+  ||r.is_cancel!==0||r.is_del!==0||![0,1,2,4,5,6].includes(Number(r.refund_type))
+  ||p.request_amount!==request.refundAmount||p.total_amount!==request.totalAmount||amountToCents(s.refund_price)!==request.refundAmount
+  ||amountToCents(s.total_price)!==request.totalAmount||request.totalAmount!==f.amountCents||o.order_id!==f.orderNo
+  ||request.outTradeNo!==f.orderNo||o.trade_no!==f.transactionId||request.transactionId!==f.transactionId
+  ||(r.refund_reason||'订单售后退款')!==request.reason)throw unavailable();
 }

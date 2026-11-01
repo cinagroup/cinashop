@@ -81,6 +81,11 @@ import {authorizeSupplierManualRefundApplication,persistSupplierManualRefundProo
 import {assertSupplierProactiveRefundAuthority,authorizeSupplierProactiveRefundApplication,type SupplierProactiveRefundApplicationCapability} from '@/services/supplier/SupplierProactiveRefundCapability';
 import {supplierProactiveRefundApplicationNumber} from '@/services/supplier/SupplierProactiveRefundIdentity';
 import {supplierProactiveRefundConflict} from '@/services/supplier/SupplierProactiveRefundInput';
+import { assertRoutineRefundInstalledTx,assertRoutineRefundReadInTx } from '@/migrations/routineRefund';
+import { admitRoutineRefundDispatchTx,readRoutineRefundDispatchTx,readRoutineRefundDispatchIdTx,routineRefundRootTx,
+  type RoutineRefundDispatch } from '@/services/payment/RoutineRefundDispatch';
+import { acceptRoutineRefundResultTx,assertRoutineRefundProjectionTx,assertRoutineRefundRetryTx,
+  hasRoutineRefundResult } from '@/services/payment/RoutineRefundProvider';
 
 const REFUND_LOCK_NAMESPACE = 63841;
 const REQUEST_LEASE_SECONDS = 120;
@@ -569,6 +574,7 @@ export async function finalizeStoreOrderRefund(
   refundId: number,
   now = Math.floor(Date.now() / 1000),
   scopeInput?: RefundExecutionScopeInput,
+  env?: Env,
 ): Promise<RefundFinalizationOutcome> {
   const scope = normalizeRefundExecutionScope(scopeInput);
   return withTx(container, async (tx) => {
@@ -611,6 +617,10 @@ export async function finalizeStoreOrderRefund(
     assertRefundExecutionScope(refund, order, scope);
     await assertSupplierProactiveRefundExecution(tx,refund,order,scope);
     await scope?.authorizeLockedDecision?.(tx, refund, order);
+    if(order.payType==='weixin'&&amountToCents(refund.refundPrice)!>0&&await assertRoutineRefundReadInTx(tx)){
+      if(!env)throw new ValidateException('原账号退款完成凭据缺少服务端验证环境');
+      await assertRoutineRefundProjectionTx(tx,env,refund.id);
+    }
     if (refund.refundType === 6) {
       if (materializeOrders) await assertAtomicRefundCompleted(tx, refund);
       return "already-completed";
@@ -1593,6 +1603,8 @@ export class StoreOrderRefundService {
         throw new ValidateException("售后状态不允许退款");
       }
       await recordRefundExecutionAuditOnce(tx, snapshot.order.id, scope?.executionAudit);
+      if(snapshot.refund.refundType===6&&snapshot.order.payType==='weixin'&&await assertRoutineRefundReadInTx(tx))
+        await assertRoutineRefundProjectionTx(tx,this.env,refundId);
       return snapshot;
     });
     if (refund.refundType === 6) return { completed: true, status: "SUCCESS" };
@@ -1610,6 +1622,7 @@ export class StoreOrderRefundService {
         refundId,
         Math.floor(Date.now() / 1000),
         scope,
+        this.env,
       );
       return { completed: true, status: scope?.manualRefund||scope?.supplierManualRefund ? refundCents===0 ? 'ZERO_SUCCESS' : 'CASH_SUCCESS' : "BALANCE_SUCCESS" };
     }
@@ -1639,7 +1652,8 @@ export class StoreOrderRefundService {
       throw new ValidateException("该渠道退款已关闭或异常，需人工核对后处理");
     }
 
-    const gateway = this.refundGateway(provider);
+    const dispatch=provider==='wechat'?await this.routineDispatch(refundId):null;
+    const gateway = this.refundGateway(provider,dispatch);
     if (action === "QUERY") {
       const queryResult = await this.invokeProvider(
         refundId,
@@ -1650,7 +1664,8 @@ export class StoreOrderRefundService {
         await this.recordProviderResult(refundId, queryResult, true);
         return this.consumeProviderResult(refundId, queryResult);
       }
-      action = await this.claimProviderRequest(refundId, scope);
+      if(dispatch)await this.recordProviderResult(refundId,queryResult,true);
+      action = await this.claimProviderRequest(refundId, scope,queryResult,provider);
       if (action === "SUCCESS") {
         await this.finalizeRefund(refundId);
         return { completed: true, status: "SUCCESS" };
@@ -1667,13 +1682,22 @@ export class StoreOrderRefundService {
     return this.consumeProviderResult(refundId, requestResult);
   }
 
-  private refundGateway(provider: RefundProvider): {
+  private refundGateway(provider: RefundProvider,dispatch:RoutineRefundDispatch|null=null): {
     requestRefund(request: RefundProviderRequest): Promise<RefundProviderResult>;
     queryRefund(request: RefundProviderRequest): Promise<RefundProviderResult>;
   } {
-    return provider === "wechat"
-      ? new WechatPayService(this.container, this.env)
-      : new AlipayRefundService(this.env);
+    if(provider!=="wechat")return new AlipayRefundService(this.env);
+    const service=new WechatPayService(this.container,this.env);
+    return dispatch?{requestRefund:request=>service.requestRoutineRefund(dispatch.dispatch_id,request),
+      queryRefund:request=>service.queryRoutineRefund(dispatch.dispatch_id,request)}:service;
+  }
+
+  private async routineDispatch(refundId:number):Promise<RoutineRefundDispatch|null>{
+    return withTx(this.container,async tx=>{
+      const d=await readRoutineRefundDispatchTx(tx,this.env,refundId);
+      if(!d&&await assertRoutineRefundReadInTx(tx))await assertRoutineRefundProjectionTx(tx,this.env,refundId);
+      return d;
+    });
   }
 
   private async buildProviderRequest(
@@ -1727,6 +1751,7 @@ export class StoreOrderRefundService {
     scope?: RefundExecutionScope,
   ): Promise<"REQUEST" | "QUERY" | "WAIT" | "SUCCESS" | "TERMINAL"> {
     return this.runInTx(this.container.db, async (tx) => {
+      if(provider==='wechat')await assertRoutineRefundInstalledTx(tx);
       const { refund, order } = await lockRefundExecutionSnapshot(tx, refundId, scope);
       if (refund.isCancel || refund.isDel) {
         throw new ValidateException("退款申请已取消或删除");
@@ -1734,14 +1759,7 @@ export class StoreOrderRefundService {
       if (refund.refundType !== 6 && ![0, 1, 2, 4, 5].includes(refund.refundType)) {
         throw new ValidateException("售后状态不允许退款");
       }
-      const paymentOrderRows = order.pid > 0
-        ? await tx
-            .select()
-            .from(storeOrder)
-            .where(eq(storeOrder.id, order.pid))
-            .limit(1)
-        : [order];
-      const paymentOrder = paymentOrderRows[0];
+      const paymentOrder = await routineRefundRootTx(tx,order);
       if (!paymentOrder || paymentOrder.paid !== 1) {
         throw new ValidateException("原支付订单不存在或未支付");
       }
@@ -1761,7 +1779,7 @@ export class StoreOrderRefundService {
         request.transactionId !== currentTransactionId ||
         request.outRefundNo !== `CNSR${refundId}` ||
         request.refundAmount !== currentRefundAmount ||
-        request.totalAmount !== currentTotalAmount
+        request.totalAmount !== currentTotalAmount||request.reason!==(refund.refundReason||'订单售后退款')
       ) {
         throw new ValidateException("退款渠道请求与当前订单状态不一致，请重试");
       }
@@ -1784,6 +1802,7 @@ export class StoreOrderRefundService {
       if (!payment) throw new Error("退款支付状态创建失败");
       this.assertImmutablePayment(payment, provider, request);
       await scope?.recordLockedDecision?.(tx, 'provider-admitted');
+      if(provider==='wechat')await admitRoutineRefundDispatchTx(tx,this.env,refund,order,paymentOrder,payment,request);
 
       if (payment.providerStatus === "SUCCESS") return "SUCCESS";
       if (["CLOSED", "ABNORMAL"].includes(payment.providerStatus)) return "TERMINAL";
@@ -1808,13 +1827,19 @@ export class StoreOrderRefundService {
   private async claimProviderRequest(
     refundId: number,
     scope?: RefundExecutionScope,
+    negative?:RefundProviderResult,
+    provider?:RefundProvider,
   ): Promise<"REQUEST" | "WAIT" | "SUCCESS"> {
     return this.runInTx(this.container.db, async (tx) => {
+      if(provider==='wechat')await assertRoutineRefundInstalledTx(tx);
       if (scope) await lockRefundExecutionSnapshot(tx, refundId, scope);
       else await this.lockRefund(tx, refundId);
       const payment = await this.getPaymentRow(tx, refundId);
       if (!payment) throw new NotFoundException("退款支付状态不存在");
       if (payment.providerStatus === "SUCCESS") return "SUCCESS";
+      const dispatch=provider==='wechat'?await readRoutineRefundDispatchTx(tx,this.env,refundId):null;
+      if(dispatch){if(!negative)throw new ValidateException('原账号退款重试缺少已验签的未受理结果');
+        await assertRoutineRefundRetryTx(tx,this.env,dispatch,negative);}
       const now = Math.floor(Date.now() / 1000);
       if (
         payment.providerStatus === "REQUESTING" &&
@@ -1867,6 +1892,7 @@ export class StoreOrderRefundService {
     refundId: number,
     result: RefundProviderResult,
     queried: boolean,
+    notified=false,
   ): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
     const values: Partial<typeof storeOrderRefundPayment.$inferInsert> = {
@@ -1874,9 +1900,34 @@ export class StoreOrderRefundService {
       lastError: (result.message ?? "").slice(0, 512),
       updateTime: now,
       ...(queried ? { queryTime: now } : {}),
+      ...(notified?{notifyTime:now}:{}),
     };
     if (result.providerRefundId) values.providerRefundId = result.providerRefundId;
     if (result.status === "SUCCESS") values.successTime = result.successTime ?? now;
+    const base=(await this.container.db.select().from(storeOrderRefundPayment).where(eq(storeOrderRefundPayment.refundId,refundId)).limit(1))[0];
+    const dispatch=base?.provider==='wechat'?await withTx(this.container,tx=>readRoutineRefundDispatchTx(tx,this.env,refundId)):null;
+    if(dispatch){
+      // The query claim time is part of the prepared observation's lease.
+      // Completion time lives in immutable evidence, not a rewritten claim.
+      if(queried)delete values.queryTime;
+      await withTx(this.container,async tx=>{
+        await assertRoutineRefundReadInTx(tx);
+        await this.lockRefund(tx,refundId);
+        await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id,refundId)).for('update');
+        const payment=await this.getPaymentRow(tx,refundId);
+        if(!payment)throw new NotFoundException('退款支付状态不存在');
+        if(hasRoutineRefundResult(result)){
+          const accepted=await acceptRoutineRefundResultTx(tx,this.env,dispatch,result);
+          if(accepted.replayed&&payment.providerStatus===values.providerStatus
+            &&(!result.providerRefundId||payment.providerRefundId===result.providerRefundId)
+            &&(result.status!=='SUCCESS'||payment.successTime===result.successTime))return;
+        }
+        else if(['UNKNOWN','FAILED'].includes(result.status))values.providerStatus='UNKNOWN';
+        else throw new ValidateException('原账号退款结果缺少渠道验签凭据');
+        await tx.update(storeOrderRefundPayment).set(values).where(result.status==='SUCCESS'
+          ?eq(storeOrderRefundPayment.refundId,refundId):and(eq(storeOrderRefundPayment.refundId,refundId),ne(storeOrderRefundPayment.providerStatus,'SUCCESS')));
+      });return;
+    }
     await this.container.db
       .update(storeOrderRefundPayment)
       .set(values)
@@ -1891,7 +1942,13 @@ export class StoreOrderRefundService {
   }
 
   private async finalizeRefund(refundId: number): Promise<void> {
-    await finalizeStoreOrderRefund(this.container, refundId);
+    await finalizeStoreOrderRefund(this.container, refundId,undefined,undefined,this.env);
+  }
+
+  async handleRoutineRefundNotification(dispatchId:string,result:RefundProviderResult):Promise<void>{
+    const d=await withTx(this.container,tx=>readRoutineRefundDispatchIdTx(tx,this.env,dispatchId));
+    await this.recordProviderResult(d.refund_id,result,false,true);
+    if(result.status==='SUCCESS')await this.finalizeRefund(d.refund_id);
   }
 
   async handleWechatRefundNotification(notification: {
@@ -1913,6 +1970,7 @@ export class StoreOrderRefundService {
     if (!payment || payment.provider !== "wechat") {
       throw new NotFoundException("微信退款单不存在");
     }
+    if(await this.routineDispatch(payment.refundId))throw new ValidateException('原账号退款必须使用已固定的独立回调与验签凭据');
     if (
       payment.requestAmount !== notification.refundAmount ||
       payment.totalAmount !== notification.totalAmount
@@ -2014,7 +2072,8 @@ export class StoreOrderRefundService {
           completed += 1;
           continue;
         }
-        const result = await this.refundGateway(payment.provider).queryRefund(request);
+        const dispatch=payment.provider==='wechat'?await this.routineDispatch(payment.refundId):null;
+        const result = await this.refundGateway(payment.provider,dispatch).queryRefund(request);
         await this.recordProviderResult(payment.refundId, result, true);
         if (result.status === "SUCCESS") {
           await this.finalizeRefund(payment.refundId);

@@ -41,9 +41,17 @@ export async function prepareCustomerOperation(kind:CustomerOperationKind,contex
 }
 /** Only a currently authenticated owner may recover a minimal receipt. This
  * authority does not allow a new operation after the customer role is removed. */
-export async function authorizeCustomerOperationOwner(tx:DbClient,value:CustomerWorkActor){
-  const actor=freezeCustomerActor(value),rows=await tx.select({uid:user.uid,status:user.status,isDel:user.isDel,deleteTime:user.deleteTime,digest:sql<string>`md5(${user.pwd})`}).from(user).where(eq(user.uid,actor.uid)).limit(1).for('share',{noWait:true});
+async function owner(tx:DbClient,value:CustomerWorkActor,readOnly=false){
+  const actor=freezeCustomerActor(value),query=tx.select({uid:user.uid,status:user.status,isDel:user.isDel,deleteTime:user.deleteTime,digest:sql<string>`md5(${user.pwd})`}).from(user).where(eq(user.uid,actor.uid)).limit(1);
+  const rows=readOnly?await query:await query.for('share',{noWait:true});
   if(actor.expires_at<=Math.floor(Date.now()/1000)||rows.length!==1||rows[0].status!==1||rows[0].isDel!==0||rows[0].deleteTime!==null||rows[0].digest!==actor.auth_version)throw new HttpApiException('工作台会话已失效，请重新登录后核对原操作',403,403);
+}
+export async function authorizeCustomerOperationOwner(tx:DbClient,value:CustomerWorkActor){return owner(tx,value);}
+/** Snapshot-only owner authentication; this can never authorize a writer. */
+export async function authorizeCustomerOperationOwnerReadTx(tx:DbClient,value:CustomerWorkActor){
+ const[r]=await tx.execute<{ready:boolean}>(sql`SELECT pg_catalog.current_setting('transaction_isolation')='repeatable read'
+ AND pg_catalog.current_setting('transaction_read_only')='on' AS ready`);
+ if(r?.ready!==true)throw new HttpApiException('原操作查询必须使用只读快照',503,503);return owner(tx,value,true);
 }
 async function lockRequest(tx:DbClient,uid:number,key:string,write=true){
   if(Object.hasOwn(tx,'$client'))throw Error('Customer operations require caller-owned transaction');

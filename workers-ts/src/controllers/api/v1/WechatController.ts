@@ -301,6 +301,21 @@ export async function wechatRefundNotify(c: C) {
   }
 }
 
+/** Each historical refund fixes one archive reference in its first admission. */
+export async function routineRefundNotify(c:C){
+  try{
+    const rawBody=await readBoundedUtf8Text(c.req.raw,MAX_PAYMENT_CALLBACK_BODY_BYTES),headers:Record<string,string>={};
+    c.req.raw.headers.forEach((value,key)=>{headers[key.toLowerCase()]=value;});
+    const id=c.req.param('dispatchId')??'',container=c.get('container');
+    const result=await new WechatPayService(container,c.env).verifyAndParseRoutineRefundNotify(id,headers,rawBody);
+    await new StoreOrderRefundService(container,c.env).handleRoutineRefundNotification(id,result);
+    return new Response(null,{status:204});
+  }catch(error){
+    emitOperationalEvent('warn',{event:'refund_callback_rejected',component:'refund',operation:'routine_refund_callback',outcome:'rejected',errorCode:operationalErrorCode(error)});
+    return c.json({code:'FAIL',message:'原账号退款回调尚未通过核对'},400);
+  }
+}
+
 /**
  * POST /api/order/wechat_pay — backwards-compatible WeChat payment alias.
  * Client-supplied openid is intentionally ignored; identity is server-resolved.

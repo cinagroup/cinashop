@@ -896,6 +896,7 @@ v1Routes.all(
   }),
 );
 v1Routes.post("/pay/notify/wechat/refund", WechatController.wechatRefundNotify);
+v1Routes.post('/pay/notify/routine-refund/:dispatchId',WechatController.routineRefundNotify);
 // An opaque route selector chooses one explicitly approved verifier. The
 // decrypted AppID/merchant still require actual RSA/AES and exact policy match.
 v1Routes.post('/pay/notify/routine-account/:accountId', c =>
