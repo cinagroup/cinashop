@@ -1,10 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { timingSafeEqual } from 'node:crypto';
 import { createContainerFromDb, type DbClient } from '@/lib/di';
 import { systemAdmin } from '@/models/schema';
 import { AdminPermissionService } from './AdminPermissionService';
 import { adminRefundReview } from './AdminRefundReadService';
-import { ApiErrorCode, AuthException, ValidateException } from '@/utils/errors';
+import { ApiErrorCode, AuthException, ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { md5 } from '@/utils/jwt';
 import type { RefundExecutionScope } from '@/services/order/StoreOrderRefundService';
 
@@ -38,6 +38,40 @@ export async function authorizeAdminRefundActor(tx: DbClient, actor: AdminRefund
     }
     throw error;
   }
+}
+
+/** Live refund.manage authentication in the caller's RR/RO snapshot only.
+ * No row/advisory lock, writer authority or permission-loss recovery is added.
+ * The HTTP middleware separately verifies the admin JWT realm before selecting
+ * its independent Admin connection. This rechecks the captured principal. */
+export async function authorizeAdminRefundActorReadTx(tx: DbClient, actorInput: AdminRefundDecisionActor): Promise<void> {
+  const actor = Object.freeze({ id: actorInput.id, authVersion: actorInput.authVersion, expiresAt: actorInput.expiresAt });
+  if (!Number.isSafeInteger(actor.id) || actor.id <= 0 || actor.id > 2147483647
+    || typeof actor.authVersion !== 'string' || !/^[a-f0-9]{32}$/.test(actor.authVersion)
+    || !Number.isSafeInteger(actor.expiresAt) || actor.expiresAt <= 0) throw new AuthException('请重新登录', ApiErrorCode.ERR_LOGIN);
+  if (Object.hasOwn(tx, '$client')) throw new ServiceUnavailableException('退款执行状态必须在只读快照中核对');
+  const [mode] = await tx.execute<{ ready: boolean }>(sql`SELECT
+    pg_catalog.current_setting('transaction_isolation')='repeatable read'
+    AND pg_catalog.current_setting('transaction_read_only')='on'
+    AND pg_catalog.current_setting('session_replication_role')='origin'
+    AND pg_catalog.current_schema()='public'
+    AND pg_catalog.to_regclass('system_admin')=pg_catalog.to_regclass('public.system_admin')
+    AND pg_catalog.to_regclass('system_role')=pg_catalog.to_regclass('public.system_role')
+    AND pg_catalog.to_regclass('system_menus')=pg_catalog.to_regclass('public.system_menus') AS ready`);
+  if (mode?.ready !== true) throw new ServiceUnavailableException('退款执行状态必须在只读快照中核对');
+  const expired = () => actor.expiresAt <= Math.floor(Date.now() / 1000);
+  if (expired()) throw new AuthException('登录已过期', ApiErrorCode.ERR_EXPIRED);
+  const [admin] = await tx.select({ id: systemAdmin.id, pwd: systemAdmin.pwd, adminType: systemAdmin.adminType,
+    status: systemAdmin.status, isDel: systemAdmin.isDel, level: systemAdmin.level, roles: systemAdmin.roles })
+    .from(systemAdmin).where(eq(systemAdmin.id, actor.id)).limit(1);
+  if (!admin || admin.adminType !== 1 || admin.status !== 1 || admin.isDel !== 0) throw new AuthException('管理员已禁用或身份已变化', ApiErrorCode.ERR_BANNED);
+  const encoder = new TextEncoder();
+  if (!timingSafeEqual(encoder.encode(md5(admin.pwd)), encoder.encode(actor.authVersion))) throw new AuthException('登录凭据已变化', ApiErrorCode.ERR_EXPIRED);
+  if (admin.level !== 0) {
+    const { keys } = await new AdminPermissionService(createContainerFromDb(tx)).resolveRoleAssignment(admin.roles, false);
+    if (!keys.has('refund.manage')) throw new AuthException('退款操作权限已变化', ApiErrorCode.ERR_AUTH);
+  }
+  if (expired()) throw new AuthException('登录已过期', ApiErrorCode.ERR_EXPIRED);
 }
 
 export function adminRefundDecisionScope(review: unknown, value: unknown, action: Action, actor: AdminRefundDecisionActor): RefundExecutionScope {

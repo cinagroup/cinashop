@@ -5,6 +5,7 @@ import { storeOrderRefundPayment } from '@/models/schema';
 import { HttpApiException, ValidateException } from '@/utils/errors';
 import { normalizeOutRequestKey, outRequestHash } from '@/services/out/OutIdempotency';
 import { centsToDecimal } from '@/services/order/OrderBrokerageService';
+import { assertRoutineRefundProjectionTx } from '@/services/payment/RoutineRefundProvider';
 import { approveStoreOrderReturn, StoreOrderRefundService, type RefundExecutionResult } from '@/services/order/StoreOrderRefundService';
 import { adminRefundDecisionScope, authorizeAdminRefundActor, type AdminRefundDecisionActor } from './AdminRefundDecisionService';
 import { appendAdminRefundOperation, checkAdminRefundOperation, findAdminRefundOperation,
@@ -102,6 +103,7 @@ export async function executeAdminRefundOperation(container: Container, env: Env
         || payment.provider!==(order.payType==='weixin'?'wechat':order.payType==='alipay'?'alipay':'')) {
         throw new HttpApiException('已受理退款的结算凭据不一致，请人工核对',503,503);
       }
+      if (payment.provider === 'wechat') await assertRoutineRefundProjectionTx(tx,env,refund.id);
       throw new OperationReplay(admitted,{completed:true,status:'SUCCESS'});
     }
     await validate(tx,refund,order);

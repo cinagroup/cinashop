@@ -210,7 +210,7 @@ async function recordResult(intent: RefundOperation, raw: string, result: Operat
   acceptIntent({ raw: nextRaw, legacy: false, intent: next }, intent.refundId);
   return operationMessage(next);
 }
-async function reconcilePending() { return recoverPending('receipt'); }
+async function reconcilePending() { return recoverPending('execution'); }
 async function recoverPending(mode: OperationMode) {
   if (!active() || !canReconcile.value || !pendingIntent.value || observedRaw === null) return;
   clearSettlement();
@@ -218,7 +218,7 @@ async function recoverPending(mode: OperationMode) {
   const owns = () => active() && action === actionGeneration && detailOpen.value && selectedId.value === intent.refundId;
   actionLoading.value = true;
   try {
-    if (mode !== 'receipt') {
+    if (mode === 'execute' || mode === 'abandon') {
       ownsConfirmation = true;
       await ElMessageBox.confirm(mode === 'abandon'
         ? '仅为未受理的原键建立永久放弃屏障；已受理操作不会取消。确认继续？'

@@ -8,6 +8,7 @@ import type { AdminRefundDecisionActor } from '@/services/admin/AdminRefundDecis
 import type { AdminRefundOperationAction } from '@/services/admin/AdminRefundOperationLedger';
 import { normalizeOutRequestKey } from '@/services/out/OutIdempotency';
 import { abandonAdminRefundOperation, executeAdminRefundOperation, lookupAdminRefundOperation } from '@/services/admin/AdminRefundOperationService';
+import { ADMIN_REFUND_EXECUTION_VERSION, lookupAdminRefundExecution } from '@/services/admin/AdminRefundExecutionService';
 
 type HttpEnv = { Bindings: Env; Variables: AppVariables };
 type C = Context<HttpEnv>;
@@ -97,6 +98,16 @@ export async function receipt(c: C) {
   version(record(await body(c), ['version']));
   return jsonOk(c, { version: ADMIN_REFUND_OPERATION_PROTOCOL,
     receipt: await lookupAdminRefundOperation(c.get('container'), actor, key) });
+}
+
+/** A separate settlement projection keeps the old admission receipt DTO fixed.
+ * This uses the same live refund.manage/realm/owner/scope/key requirements and
+ * never sends a query or mutation to an external payment provider. */
+export async function execution(c: C) {
+  const { actor, key } = identity(c);
+  const value = record(await body(c), ['version']);
+  if (value.version !== ADMIN_REFUND_EXECUTION_VERSION) throw new ValidateException('退款执行状态协议版本无效');
+  return jsonOk(c, await lookupAdminRefundExecution(c.get('container'), c.env, actor, key));
 }
 
 export async function abandon(c: C) {

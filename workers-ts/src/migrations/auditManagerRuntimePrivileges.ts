@@ -113,6 +113,7 @@ export interface ManagerRuntimeInspectionOptions {
   /** before-manager validates the complete old profile for an explicit forward;
    * it never reports a commissioned runtime as ready. */
   routine?: { target: RoutinePaymentRuntimeTarget; stage: 'before-manager' | 'ready' };
+  routineRefund?:true;
 }
 export async function inspectManagerRuntimePrivileges(db: Query, options: ManagerRuntimeInspectionOptions) {
   if (typeof options?.requireLogin !== 'boolean') throw Error('Explicit manager LOGIN stage required');
@@ -140,6 +141,12 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
       routineLockOid = lock.functionOid;
     }
   } else if (rawPresence?.present === true) failures.push('manager_routine_payment_unbound');
+  if(options.routineRefund!==undefined){
+    if(options.routineRefund!==true||routine?.stage!=='ready')throw Error('Explicit commissioned Manager refund addon required');
+    const {inspectRoutineRefundActorAddon,ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES}=await import('./routineRefundActorAddon');
+    if(!await inspectRoutineRefundActorAddon(db,routine.target,'manager'))failures.push('manager_routine_refund_addon');
+    else for(const[table,privileges]of Object.entries(ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
+  }
   const [identity] = await db.execute(sql`SELECT
     current_setting('server_version_num')::int/10000=16 AS pg16,
     r.rolcanlogin=${options.requireLogin} AS login_stage,
@@ -234,7 +241,8 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
 }
 
 /** Actual independently authenticated connection, not role impersonation. */
-export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget) {
+export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget, routineRefund?:true) {
+  if(routineRefund!==undefined&&routineRefund!==true)throw Error('Explicit Manager refund addon flag required');
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root manager connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
@@ -243,7 +251,7 @@ export async function auditManagerRuntimePrivileges(db: DbClient, routine?: Rout
       (SELECT r.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend_role,
       current_setting('session_replication_role')='origin' AS origin`);
     const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
-      ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}) });
+      ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}),...(routineRefund?{routineRefund}:{}) });
     if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true
       && (!routine || identity.database === routine.database)) return { ...result, identity };
     return { ...result, identity, ready: false, failures: [...new Set([...result.failures, 'connection_identity'])].sort() };

@@ -51,6 +51,21 @@ export async function authorizeManagerOperationOwner(tx:DbClient,value:ManagerOr
   const rows=await tx.select({uid:user.uid,pwd:user.pwd,status:user.status,isDel:user.isDel,deleteTime:user.deleteTime,digest:sql<string>`md5(${user.pwd})`}).from(user).where(eq(user.uid,actor.uid)).limit(1).for('share',{noWait:true});
   if(actor.expiresAt<=now||rows.length!==1||rows[0].status!==1||rows[0].isDel!==0||rows[0].deleteTime!==null||rows[0].digest!==actor.authVersion)throw new HttpApiException('管理会话已失效，请重新登录后核对原操作',403,403);
 }
+/** Same current owner check for a SQL-only execution snapshot. Manager role
+ * removal still permits recovery of this owner's minimal immutable receipt. */
+export async function authorizeManagerOperationOwnerReadTx(tx:DbClient,value:ManagerOrderActor){
+  const actor=managerActor(value);
+  if(Object.hasOwn(tx,'$client'))throw Error('Manager receipt snapshot requires a caller-owned transaction');
+  const [mode]=await tx.execute<{ready:boolean}>(sql`SELECT
+    pg_catalog.current_setting('transaction_isolation')='repeatable read'
+    AND pg_catalog.current_setting('transaction_read_only')='on'
+    AND pg_catalog.current_setting('session_replication_role')='origin'
+    AND pg_catalog.current_schema()='public'
+    AND pg_catalog.to_regclass('"user"')=pg_catalog.to_regclass('public."user"') AS ready`);
+  if(mode?.ready!==true)throw new HttpApiException('管理回执状态必须在只读快照中核对',503,503);
+  const rows=await tx.select({digest:sql<string>`md5(${user.pwd})`,status:user.status,isDel:user.isDel,deleteTime:user.deleteTime}).from(user).where(eq(user.uid,actor.uid)).limit(2);
+  if(actor.expiresAt<=Math.floor(Date.now()/1000)||rows.length!==1||rows[0].status!==1||rows[0].isDel!==0||rows[0].deleteTime!==null||rows[0].digest!==actor.authVersion)throw new HttpApiException('管理会话已失效，请重新登录后核对原操作',403,403);
+}
 async function lock(tx:DbClient,uid:number,key:string,write=true){
   if(Object.hasOwn(tx,'$client'))throw Error('Manager operation requires a caller-owned transaction');
   await assertManagerOrderOperationCatalog(tx);
@@ -66,6 +81,18 @@ async function read(tx:DbClient,uid:number,key:string):Promise<ManagerOperationR
   if(rows.length!==1||row.actor_uid!==uid||!kinds.has(row.kind)||!validOutcome(row.kind as ManagerOperationKind,row.outcome)||!hashes.test(row.request_hash)||!Number.isSafeInteger(row.staff_id)||row.staff_id<0||!row.evidence||Array.isArray(row.evidence))throw new HttpApiException('原管理操作回执异常，请人工核对',503,503);
   managerId(row.store_id);managerId(row.order_id);return Object.freeze({...row,kind:row.kind as ManagerOperationKind,outcome:row.outcome as ManagerOperationOutcome,version:MANAGER_OPERATION_VERSION,request_key:key,evidence:freezeManagerJson(row.evidence) as Readonly<Record<string,ManagerJson>>});
 }
+/** No request lock or admission fence is acquired by a status read. The caller
+ * authenticates this owner in the same RR/RO transaction before calling. */
+export async function readManagerOperationSnapshotTx(tx:DbClient,actorInput:ManagerOrderActor,keyInput:unknown){
+  const actor=managerActor(actorInput),key=normalizeOutRequestKey(keyInput);
+  if(Object.hasOwn(tx,'$client'))throw Error('Manager receipt snapshot requires a caller-owned transaction');
+  const[mode]=await tx.execute<{ready:boolean}>(sql`SELECT
+    pg_catalog.current_setting('transaction_isolation')='repeatable read'
+    AND pg_catalog.current_setting('transaction_read_only')='on' AS ready`);
+  if(mode?.ready!==true)throw new HttpApiException('管理回执状态必须在只读快照中核对',503,503);
+  await assertManagerOrderOperationCatalog(tx);
+  return read(tx,actor.uid,key);
+}
 function same(prior:ManagerOperationReceipt,p:PreparedManagerOperation){if(prior.request_hash!==p.hash||prior.kind!==p.kind||prior.order_id!==p.input.order_id||prior.store_id!==p.input.store_id)throw new HttpApiException('原请求标识已绑定不同管理操作，不能更换原内容',409,409);}
 export async function checkManagerOperation(tx:DbClient,p:PreparedManagerOperation){await lock(tx,p.actor.uid,p.key);const prior=await read(tx,p.actor.uid,p.key);if(prior)same(prior,p);return prior;}
 /** Resource lock graph is shared by remark/fulfillment/payment/refund. Never
@@ -78,9 +105,13 @@ export async function lockManagerOrder(tx:DbClient,orderId:number):Promise<Order
   const [order]=rootId===orderId?[root]:await tx.select().from(storeOrder).where(eq(storeOrder.id,orderId)).limit(1).for('update');
   if(!root||!order||order.pid!==candidate.pid||order.uid!==root.uid||order.pid<0||order.isDel||order.isSystemDel||order.supplierAllocationStatus===1)throw new ValidateException('订单归属或可操作状态已变化');return order;
 }
-export async function authorizeLockedManagerOperation(tx:DbClient,p:PreparedManagerOperation,order:Order,options:{skipRevision?:boolean}={}):Promise<StoreManagerScope>{
+export async function authorizeLockedManagerOperation(tx:DbClient,p:PreparedManagerOperation,order:Order,options:{skipRevision?:boolean;allowCompletedRefundSource?:boolean}={}):Promise<StoreManagerScope>{
   await authorizeManagerOperationOwner(tx,p.actor);const scope=await requireStoreManagerScope(tx,p.actor.uid,p.input.store_id,{lock:true,expectedScopeKey:p.input.scope_key});
-  if(order.id!==p.input.order_id||order.storeId!==scope.store_id||order.isDel||order.isSystemDel||order.supplierAllocationStatus===1||order.pid<0)throw new NotFoundException('订单不属于当前管理门店');
+  // Only a caller already holding the matching admitted refund can inspect its
+  // archived source after materialization. Fresh writes still require pid>=0;
+  // the refund consumer must prove its final payment/source before returning.
+  const archived=options.allowCompletedRefundSource===true&&p.kind==='refund_execute'&&order.pid===-1&&order.paid===1;
+  if(order.id!==p.input.order_id||order.storeId!==scope.store_id||order.isDel||order.isSystemDel||order.supplierAllocationStatus===1||order.pid<0&&!archived)throw new NotFoundException('订单不属于当前管理门店');
   if(!options.skipRevision&&await merchantOrderRevision(order)!==p.input.expected_order_revision)throw new HttpApiException('订单已变化，请核对原请求与最新订单',412,412);
   await tx.execute(sql`SELECT set_config(${MANAGER_SCOPE_CONTEXT},${JSON.stringify({actor_uid:p.actor.uid,store_id:scope.store_id,staff_id:scope.staff_id,
     root_order_id:order.pid>0?order.pid:order.id,request_hash:p.hash,kind:p.kind,auth_version:p.actor.authVersion,expires_at:p.actor.expiresAt})},true)`);

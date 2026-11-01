@@ -38,17 +38,17 @@ async function lock(tx: DbClient, adminId: number, key: string): Promise<void> {
   if (!validId(adminId)) throw new ValidateException('退款操作账号无效');
   await tx.execute(sql`SET LOCAL row_security = off`);
   await tx.execute(sql`SELECT
-    set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
-    set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),1500)::text || 'ms',true)`);
+    pg_catalog.set_config('statement_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text || 'ms',true),
+    pg_catalog.set_config('lock_timeout', LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1500)::text || 'ms',true)`);
   const hash = await outRequestHash([adminId, key]);
   // Hash collisions only serialize. The full database primary key is authority.
-  await tx.execute(sql`SELECT pg_advisory_xact_lock(${LOCK_NAMESPACE}::int,${Number.parseInt(hash.slice(0,8),16)|0}::int)`);
+  await tx.execute(sql`SELECT pg_catalog.pg_advisory_xact_lock(${LOCK_NAMESPACE}::int,${Number.parseInt(hash.slice(0,8),16)|0}::int)`);
 }
 
 async function read(tx: DbClient, adminId: number, key: string): Promise<AdminRefundOperationReceipt | null> {
   const rows = await tx.select({ refundId: sql<number>`refund_id`, action: sql<string>`action`,
     requestHash: sql<string>`request_hash`, outcome: sql<string>`outcome` })
-    .from(sql`admin_refund_operation`).where(sql`admin_id=${adminId} AND request_key=${key}::uuid`).limit(2);
+    .from(sql`public.admin_refund_operation`).where(sql`admin_id=${adminId} AND request_key=${key}::uuid`).limit(2);
   if (!rows.length) return null;
   const row = rows[0];
   if (rows.length !== 1 || !validId(row.refundId) || !actions.has(row.action)
@@ -89,7 +89,7 @@ export async function appendAdminRefundOperation(tx: DbClient, value: AdminRefun
     if (prior.outcome !== outcome) throw new HttpApiException('原操作已有确定回执，不能覆盖', 409, 409);
     return prior;
   }
-  await tx.execute(sql`INSERT INTO admin_refund_operation(admin_id,request_key,request_hash,refund_id,action,outcome)
+  await tx.execute(sql`INSERT INTO public.admin_refund_operation(admin_id,request_key,request_hash,refund_id,action,outcome)
     VALUES(${operation.adminId},${operation.requestKey}::uuid,${operation.requestHash},${operation.refundId},${operation.action},${outcome})`);
   const receipt = await read(tx, operation.adminId, operation.requestKey);
   if (!receipt) throw new Error('退款操作回执未持久化');
@@ -105,4 +105,19 @@ export async function findAdminRefundOperation(container: Container, adminId: nu
   if (!validId(adminId)) throw new ValidateException('退款操作账号无效');
   const key = normalizeOutRequestKey(requestKey);
   return withTx(container, async tx => { await lock(tx, adminId, key); return read(tx, adminId, key); });
+}
+
+/** Existing seven-field receipt, read without the writer's request/advisory
+ * lock. The caller must authenticate the current owner in this same RR/RO
+ * transaction. An absent row is never a fence against a delayed sender. */
+export async function readAdminRefundOperationSnapshotTx(tx: DbClient, adminId: number,
+  requestKey: unknown): Promise<AdminRefundOperationReceipt | null> {
+  if (!validId(adminId)) throw new ValidateException('退款操作账号无效');
+  const key = normalizeOutRequestKey(requestKey);
+  if (Object.hasOwn(tx, '$client')) throw new Error('Refund operation snapshot requires the caller read-only transaction');
+  const [mode] = await tx.execute<{ ready: boolean }>(sql`SELECT
+    pg_catalog.current_setting('transaction_isolation')='repeatable read'
+    AND pg_catalog.current_setting('transaction_read_only')='on' AS ready`);
+  if (mode?.ready !== true) throw new Error('Refund operation snapshot requires REPEATABLE READ READ ONLY');
+  return read(tx, adminId, key);
 }

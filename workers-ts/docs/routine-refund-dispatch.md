@@ -1,4 +1,6 @@
-# Historical Routine refund dispatch
+# Historical Routine refund dispatch (phase30 snapshot)
+
+Phase31 explicitly commissions Admin/Manager and adds their first-actor receipts, durable replay and SQL-only execution status. See [routine-refund-actors.md](routine-refund-actors.md) for the current extension. App/Financial format1 and provider contracts below remain unchanged; statements about missing Admin/Manager consumers record phase30.
 
 Phase30 connects the phase29 storage to the actual App and explicitly commissioned Financial business roles. It preserves users, buyer UID, entitlements, orders and payments. An independent refund approval and archived credentials authorize a particular provider operation; they do not establish historical payment ownership. Unknown history remains unresolved. The global migration and account-switch activation remain incomplete.
 

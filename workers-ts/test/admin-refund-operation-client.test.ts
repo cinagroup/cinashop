@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { outRequestHash } from '@/services/out/OutIdempotency';
 import { parseAdminRefundDetail } from '../../view/admin-ts/src/utils/refundDetail';
 import { makeRefundIntent, writeRefundIntent } from '../../view/admin-ts/src/utils/refundIntent';
-import { applyOperationResult, makeRefundOperation, operationBody, operationMessage, operationVersion,
+import { applyOperationResult, executionVersion, makeRefundOperation, operationBody, operationMessage, operationVersion,
   parseOperationResult, parseRefundOperation, readRefundOperation, refundOperationKey, verifyRefundOperation,
   writeRefundOperation, type RefundOperation, type OperationOutcome, type OperationReceipt } from '../../view/admin-ts/src/utils/refundOperation';
 
@@ -83,4 +83,31 @@ it.each(['pending','resolved'] as const)('keeps old v2 %s markers unchanged and 
   const state = await readRefundOperation(100,25); expect(state.legacy).toBe(true); expect(state.intent).toBeNull();
   const next = await make(); expect(() => writeRefundOperation(next,null)).toThrow();
   expect(localStorage.getItem('admin-refund-intent-v2:100:25')).toBe(oldRaw);
+});
+it.each(['CREATED','REQUESTING','PROCESSING','CLOSED','ABNORMAL','FAILED','UNKNOWN','NOT_FOUND'] as const)('retains the same v3 key and pending fence after SQL-only %s projection',async status=>{
+  const intent=await make(),raw=writeRefundOperation(intent,null),bound=receipt(intent,'provider-admitted');
+  const result=parseOperationResult({version:executionVersion,receipt:bound,execution:{completed:false,status}},intent,'execution');
+  const next=applyOperationResult(intent,result);writeRefundOperation(next,raw);
+  const restored=(await readRefundOperation(100,25)).intent!;
+  expect(restored.phase).toBe('pending');expect(restored.nonce).toBe(intent.nonce);
+  expect(restored.requestHash).toBe(intent.requestHash);expect(restored.execution).toEqual({completed:false,status});
+  expect(operationMessage(restored)).not.toContain('已确认完成');
+});
+it('resolves a lost provider response through the separate status DTO without another execute or a new nonce',async()=>{
+  const intent=await make(),raw=writeRefundOperation(intent,null);
+  const result=parseOperationResult({version:executionVersion,receipt:receipt(intent,'provider-admitted'),execution:{completed:true,status:'SUCCESS'}},intent,'execution');
+  const next=applyOperationResult(intent,result);writeRefundOperation(next,raw);
+  expect((await readRefundOperation(100,25)).intent).toEqual(next);expect(next.phase).toBe('resolved');expect(next.nonce).toBe(intent.nonce);
+  expect(()=>applyOperationResult(next,{...result,execution:{completed:false,status:'UNKNOWN'}})).toThrow();
+});
+it('keeps absent or unverifiable balance completion pending and refuses cross-version/extra-field status responses',async()=>{
+  const intent=await make();
+  const absent=applyOperationResult(intent,parseOperationResult({version:executionVersion,receipt:null,execution:null},intent,'execution'));
+  expect(absent.phase).toBe('pending');expect(operationMessage(absent)).toContain('迟到请求');
+  const unverified=applyOperationResult(intent,parseOperationResult({version:executionVersion,receipt:receipt(intent),execution:{completed:false,status:'UNKNOWN'}},intent,'execution'));
+  expect(unverified.phase).toBe('pending');expect(operationMessage(unverified)).toContain('暂不可核对');
+  for(const value of[{version:operationVersion,receipt:null,execution:null},{version:executionVersion,receipt:null},
+    {version:executionVersion,receipt:null,execution:null,replayed:false},
+    {version:executionVersion,receipt:receipt(intent,'provider-admitted'),execution:{completed:true,status:'CLOSED'}}])
+    expect(()=>parseOperationResult(value,intent,'execution')).toThrow();
 });

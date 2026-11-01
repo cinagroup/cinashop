@@ -3,7 +3,7 @@ import { clearAuth, getToken, getAdminSession } from '@/utils/auth';
 import { createAdminSessionScope } from '@/utils/adminSessionScope';
 import { AdminResponseError } from '@/utils/request';
 import { parseAdminRefund, parseAdminRefundDetail, type AdminRefundDetail } from '@/utils/refundDetail';
-import { operationBody, operationVersion, parseRefundOperation, verifyRefundOperation, parseOperationResult, type RefundOperation, type OperationMode } from '@/utils/refundOperation';
+import { executionVersion, operationBody, operationVersion, parseRefundOperation, verifyRefundOperation, parseOperationResult, type RefundOperation, type OperationMode } from '@/utils/refundOperation';
 import { parseSupplierRefundSettlement } from '../../../common/supplierRefundSettlement';
 export type { AdminRefund, AdminRefundDetail } from '@/utils/refundDetail';
 export type { SupplierRefundSettlement } from '../../../common/supplierRefundSettlement';
@@ -48,9 +48,10 @@ async function send(url: string, method: 'get' | 'post', data?: unknown, params?
 export async function apiAdminRefundOperation(input: RefundOperation, mode: OperationMode, signal?: AbortSignal) {
   if (previewMode) throw Error('预览仅可查看；真实回执流程请连接隔离测试接口');
   const intent = parseRefundOperation(input, input.actorId, input.refundId);
-  if (!['execute','receipt','abandon'].includes(mode)) throw Error('操作方式无效');
-  const value = await send('/refund/operations/' + mode + (mode === 'receipt' ? '' : '/' + intent.refundId), 'post',
-    mode === 'receipt' ? { version: operationVersion } : operationBody(intent), undefined, signal, intent);
+  if (!['execute','receipt','execution','abandon'].includes(mode)) throw Error('操作方式无效');
+  const read = mode === 'receipt' || mode === 'execution';
+  const value = await send('/refund/operations/' + mode + (read ? '' : '/' + intent.refundId), 'post',
+    read ? { version: mode === 'execution' ? executionVersion : operationVersion } : operationBody(intent), undefined, signal, intent);
   return parseOperationResult(value, intent, mode);
 }
 const previewRows: AdminRefundDetail[] = [802, 801].map((id, i) => ({ id, storeOrderId: id, orderId: 'PREVIEW-R' + id, originalOrderId: 'PREVIEW-O' + id,

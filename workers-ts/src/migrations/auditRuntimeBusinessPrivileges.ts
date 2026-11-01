@@ -1,4 +1,5 @@
 import { inspectRoutineRefundCatalog, ROUTINE_REFUND_RUNTIME_PRIVILEGES } from './routineRefund';
+import { ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES } from './routineRefundActorAddon';
 import { inspectUserMessageReadCapability } from './userMessageReadCapability';
 import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES } from './routineOriginalPaymentEvidence';
 import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES } from './routineIdentityOwnership';
@@ -172,7 +173,13 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     const routineRefund=await inspectRoutineRefundCatalog(tx,names);
     if(routineRefund.present){
       if(!routineRefund.ready)failures.push('routine_refund_catalog');
-      else for(const [table,privileges]of Object.entries(ROUTINE_REFUND_RUNTIME_PRIVILEGES[kind]))plan.tables[table]=[...privileges];
+      else {
+        for(const [table,privileges]of Object.entries(ROUTINE_REFUND_RUNTIME_PRIVILEGES[kind]))plan.tables[table]=[...privileges];
+        const declared=peers?.routineRefundActors,b=routineRefund.binding;
+        if(!!declared?.admin!==!!b?.adminRefund||!!declared?.manager!==!!b?.manager)failures.push('routine_refund_actor_declaration');
+        if(kind==='admin'&&declared?.admin&&b?.adminRefund&&b.admin===names.admin)
+          for(const[table,privileges]of Object.entries(ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
+      }
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

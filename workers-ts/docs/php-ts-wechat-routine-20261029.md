@@ -531,3 +531,61 @@ durable finalize 与 Financial 状态重新核对原付款/完整冲突和旧用
 所有验证使用自有本机 PG16.14、独立 TCP LOGIN 和生产服务/Node RSA/AES，provider 仅受控传输替身；无真实微信、Browser、Workerd/Hyperdrive、生产 DDL 或部署。本阶段未改 rendered UI。用户/UID/权益/旧单/付款保留，未知历史不猜归属；完整归属清单与维护 manifest、旧账号其余消费者、Admin/Manager 接线、旧 attempted CNSR 恢复、前端 session/journal/页面/Browser 以及其余迁移和既有全量 CI 失败继续未完成，首次接入/实质 AppID 切换屏障及 runtime_ready=false 保留。
 
 本阶段精确输入、原始日志、终态、源码复核与下一阶段角色设计保存在 ignored 工作区 `.cache/php-ts-phase30-validation/`。最终22个提交文件含上述19条实现/测试/运行器及3份文档，另按固定 Gitleaks 8.29.0、现行精确规则和 redacted JSON 报告扫描；最终文件 manifest 和扫描终态独立记录，不挪用07旧版本的扫描或历史全库结果。提交/本地 main 合并与开发分支清理沿用用户授权；新提交推送不扩张此前仅覆盖 `e55dd114` 的单笔授权。
+
+## 阶段 31：Admin／门店经理原账号退款、首派发身份与只读恢复（2026-10-31）
+
+阶段30提交 `fdefefe7` 已按用户本轮明确授权推送，并直接核对 origin/main。本阶段按 `.cache/php-ts-phase31-validation/` 的冻结候选输入、各批结果和原始终态记录；完整迁移、生产 commissioning、部署和新提交推送仍分别受各自边界约束。
+
+### 本阶段实际行为与验证范围
+
+新增无DDL的角色元数据证明和显式 Admin/Manager refund addon：Admin身份来自既有named canonical作者/员工/锁合同的联合证明，Manager仅为固定受限角色；不从额外source读权猜身份。正式forward保留完整target/local/caseLock/peer/App-reader声明，只给显式启用角色三旧来源SELECT，以及新policy SELECT、新dispatch/evidence SELECT+INSERT；Cashier无新增退款权限。部分、未知ACL与漂移拒绝，不自动修复。
+
+消费者沿用真实实时actor、review、原键及物理订单边界。Admin/Manager采用format2首派发actor：首回执须由同一业务事务实际追加，HMAC绑定规范化原行、actor/原key/hash、真实role及历史OID；首次记录与REQUESTING同提交，后续合法恢复不改首actor。App回调或跨kind消费者不取得其他角色ledger读权，实际同kind角色才核对自己的首回执。App/Financial原有format1保持原合同。
+
+Admin新增两个真实alias下的POST `/refund/operations/execution`，body仅为 `{version:'admin-refund-execution-v1'}`，沿用原Idempotency-Key与Scope；返回独立execution DTO和固定原七字段receipt。它执行真实RR/RO读取与实时`refund.manage`/密码/状态/realm校验，不发provider请求。Manager既有状态入口改用同类耐久验证。已受理完成重放必须重新验证真实原证/批准历史/不可变provider结果及业务完成，mutable伪SUCCESS不能走shortcut。Admin客户端保留v3原key/hash/owner/session/CAS；查询按钮调用新execution版本，不新建nonce、不进入execute确认。
+
+### 已完成批次，不累计重跑
+
+| 批次 | 实际终态 | 证明范围 |
+| --- | --- | --- |
+| `native-principals-02` | 8通过，0失败/跳过，exit0；remaining0/STOPPED；输入未变 | named身份/当前OID元数据、Manager缺席、五独立LOGIN一致读取、getter与异步捕获、完整body/flags/owner/trigger及交叉named来源漂移、反向attachment、TEMP、Cashier conditional身份漂移、Manager禁用；不是业务退款执行证明。 |
+| `native-upgrade-03` | 9通过，0失败/跳过，exit0；remaining0/STOPPED；输入未变 | 完整五LOGIN正式forward；callerTx rollback、partial/未知/列ACL/函数漂移无repair、实际维护LOGIN/数据库/SET ROLE、独立gate/NOWAIT、Admin-only→Manager完整successor、首await捕获、精确只读repeat及五profile/Cashier拒绝。metadata specimen不是真实付款或批准。 |
+| `typecheck-04` | 标准Worker unit/runtime两套与Admin vue-tsc均通过，exit0；32个冻结输入未变 | 旧版消费者/前端类型检查。之后改过native测试并新增pricing兼容修复；不能用本批替代最终版本类型检查。 |
+| `native-consumers-09` | 完整新文件6通过，0跳过，exit0，278.02秒；33个冻结输入未变；remaining0/STOPPED | 真实生产Hono/auth/服务、五独立受限LOGIN、正式addon、实际付款RSA/AES/默认消费者与旧用途原证、受控provider传输的Admin/Manager退款端到端。 |
+| `unit-client-10` | 完整文件35通过，exit0，0.93秒；33个输入未变 | 客户端原键/hash/CAS与独立execution parser；8种非完成状态继续pending、余额UNKNOWN、缺失/跨version/extra字段拒绝及合法完成。它本身不挂载Vue按钮，不单独证明零execute HTTP。 |
+
+Foundation两批各16条路径的输入与最终33条manifest对照，所有被记录的foundation source/test/helper字节保持一致；只有运行器因后续精确测试白名单而变化。其8+9是各自实际批次的结果，不冒称在consumer09再次执行。最终consumer测试SHA256为 `8716257d29a0b27de83fa3ecea0e938ba9f4157e432d009e73e7d419ee4ced7c`。
+
+consumer六案分别覆盖：非root Admin实时菜单权限、旧A签名POST→真实query SUCCESS→拆单完成及两个status alias；current清空下Manager真实quote/create/review/execute、专用回调、RR/RO状态和原键重放；Admin161先受理丢响应后Admin162按新实时review合法恢复且首actor/首行xmin保持；实际权限/realm/password/scope/跨店/staff/review拒绝且无provider派发；Admin/Manager假mutable SUCCESS的UNKNOWN状态和completed replay503；同root真实APP SUCCESS原证冲突与独立实际App RO verifier到达。原买家UID与付款payer身份未混同，另核对payer原行和旧bindings保持；HTTP期间实际peer可锁定root/child/refund，未把提供方I/O放进SQL事务。
+
+Manager旧pricing审计漏列已正式commissioned的 `local_payment_case_lock_v1(text)`，通过本轮真实HTTP定位并窄修：仅`public/shared-shop`、固定actual Manager current=session=backend与PG16成立后，完整`inspectLocalPaymentCaseLock(...).runtimeReady`才认可实际OID；无新ACL、函数执行、门或递归full-profile。最终case2真实COST101漂移仍使pricing拒绝，finally还原100后才运行真实Manager报价和派发。
+
+### 早期失败与纠正
+
+`typecheck-01`实际exit2，两处新leaf类型未满足`Record<string,unknown>`约束；runtime检查未启动。只给Context/RoleRow显式extends该约束，未cast绕过或放宽strict。
+
+`native-consumers-05`为2通过/4失败，214.98秒，32输入未变：两个Admin主线已通过，Manager两案停在实际报价503，另外两案因真实assisted producer有限库存耗尽而未到目标断言。测试只给确切product70/SKU1一次性stock40，继续由真实producer/消费者扣减；增加安全公开msg以定位，不mock业务或扩大资源。诊断06、07各1失败/5跳过（139.27/138.95秒），精确确认pricing的catalogReady/callerSafe/requiredPrivileges为true，仅noUnreviewedDefinerRoutine=false，缺少的是上述唯一实际case-lock OID；没有通过盲加权限绕过guard。
+
+完整08为5通过/1失败，273.38秒，33输入未变。失败实际是已撤销批准并撤下registry后的**第二次**same-packet回调误期望204；首次回调204、真实materialization、Manager耐久status与same-key完成重放已经通过。测试改为撤销前重放204并检查不可变行/业务稳定；撤销后新回调400，同时已接受结果、原receipt、完成业务及耐久查询/重放仍稳定。fresh notify仍需要有效`refund_notify`和材料，durable completion不需要，二者与phase30既定合同一致。未修改callback源码或时间限制；先前8秒截止仅为基于错误失败位置的未证实诊断候选，不是实际故障。纠正后才有上述完整09六案通过。
+
+### 浏览器实测与传输边界
+
+root使用CUA in-app浏览器，在1280×720自有本地UI合成传输夹具验证：一次真实页面execute动作、刷新恢复原记录、两次同key的独立execution-version查询；UNKNOWN保留pending，之后SUCCESS解决。`/tmp/php-ts-phase31-ui-result.json`记录passed=true、executions=1、queries=2、三次相同key、两个查询body仅新version、errors=[]，并明确`syntheticTransport:true, actualDatabase:false, actualProvider:false`。console为空来自本次浏览器验收说明；实际SQL、角色和RSA/AES证明来自独立原生六案，不归给浏览器夹具。此前本机夹具遗漏统计脚本GET `/api/get_script`，补上空JavaScript响应后重新从头验收；一次额外CDP诊断等待约404秒超时，夹具按既定8分钟期限停止。它们没有形成产品缺陷证据，未修改产品以绕过错误，也未使用其他浏览器fallback。最终页面身份、非空DOM、无框架overlay、控制台、UNKNOWN/成功截图及交互均通过；无手机尺寸、其他浏览器或真实后端UI验收。
+
+### 兼容回归与基线核对
+
+`native-compat-11` 四个完整文件为66通过/2失败、0跳过，exit1，432.23秒，33条候选输入未变，remaining0/STOPPED。其中旧App/Financial v1派发完整6项、Admin操作HTTP完整31项、Admin决策完整8项均通过；Manager完整23项为21通过/2失败。此批不是全绿，不把后续重复运行相加。
+
+线下收款的失败链是既有 `offline→applyStoreOrderPayment→assertLocalPaymentAdmissionTx→assertRoutinePaymentAttemptReady`；subset夹具缺少完整Routine attempt存储。不能仅凭静态文件未变称其既有。本轮另建detached精确 `fdefefe73fe68e87cb7e810b7a81e5d5b55329a8` 基线、运行同一完整Manager文件：`native-baseline-12` 为22通过/1失败、0跳过，exit1，34.52秒；唯一失败就是相同线下收款503。6356个跟踪Worker文件hash不变，基线跟踪内容保持干净，remaining0/STOPPED；临时工作树已安全删除。没有取消或放宽生产付款存储检查，此既有故障仍未修复。
+
+另一项Manager synthetic status夹具曾使用非生产 `CNSR_MANAGER_SEEDED_*`，被本轮新增精确CNSR校验正确拒绝。生产作者既有生成格式为 `CNSR+refundId`。仅将该夹具首行校正为真实格式，同时新增改回错误CNSR必须UNKNOWN、再恢复原正确CNSR的原生反例，保留无provider/noRoutine的legacy声明及全部owner、金额、materialization、假SUCCESS和隐私断言。没有删除失败案例或修改生产guard。`native-manager-13` 完整23项为22通过/1失败、0跳过，exit1，72.41秒，37条候选输入未变；退款状态的PROCESSING、错误CNSR/金额UNKNOWN及真实物化后的SUCCESS均通过，唯一余留失败与精确基线相同；remaining0/STOPPED。11之后所有生产实现/新原生测试/运行器字节保持不变，只改上述旧测试及文档。
+
+最终 `typecheck-final-14` 标准Worker `npm run typecheck` 的unit/runtime两套及Admin `vue-tsc --noEmit`均exit0，360.26秒，37条冻结候选输入未变化；保持既有8192堆限制、单外层共享串行锁和原超时，没有并发重型检查。上述所有业务源码／测试／运行器从13至14保持相同字节，本节在最终类型检查之后单独追加。
+
+最终提交文件另按固定Gitleaks8.29.0、现行精确规则、既有ignore和redacted JSON扫描；最终文件manifest与结果独立记录，不挪用typecheck04、前阶段扫描或历史全库结论。提交／本地main快进合并／安全分支清理沿用用户明确授权；新提交推送不扩张此前仅覆盖已推送 `fdefefe7` 的单笔授权。
+
+### 审查与未执行边界
+
+跨作者只读复核覆盖root的联合ACL/正式forward、format2 actor/dispatch、Manager消费者、policy角色扩展、pricing窄兼容及Admin前端；发现的尾部actor后deadline检查、Manager已完成split原键可达性、无Financial新actor源TEMP边界和pricing OID缺口已在最终冻结前修复。Admin六路径、principal leaf和三份新native由该复核者参与编写，对其自身部分仅自审/root复核，不扩张为独立安全审计。
+
+尚无旧事务首receipt注入的xmin专门负例、Admin↔Manager跨kind接手续退、同名角色新OID重commission、pricing新分支单独SET ROLE反例、故意慢尾8秒/倒退时钟注入、无Financial新actor组合的专门原生执行、127/128容量边界运行或多会话高负载。旧Manager余额结算与Admin HTTP余额/本地完成兼容案例通过，但不能把它们称为新Admin execution状态入口的余额/零现金/Alipay专门验收。未运行真实微信账号/生产provider、生产DDL、部署、Workerd/Hyperdrive；未给Cashier扩权，未回填历史归属。用户/旧bindings/权益/旧付款保留，跨AppID屏障、`runtime_ready=false`、整体PHP→TS迁移未完成及既有历史CI状态保持。

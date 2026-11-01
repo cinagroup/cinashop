@@ -1,0 +1,33 @@
+# Routine refund Admin and Manager consumers
+
+Phase31 extends the existing original-account refund protocol to explicitly commissioned Admin and fixed Manager LOGINs. Users, buyer UID, entitlements, old orders and payments remain intact. Historical ownership still requires audited maintenance. Current configuration, code2Session, prospective mappings and INIT/PREPAY cannot establish an old payment's AppID. Unknown history remains unresolved; the account-switch barrier and `runtime_ready=false` remain in place.
+
+## Explicit commissioning
+
+`upgradeRoutineRefundActors(db,target,{actors,previousActors?},completePeers,appReaders?)` and its caller-transaction variant perform a bounded forward upgrade. The nonempty closed `actors` object contains only `admin:true` and/or `manager:true`. `completePeers.routineRefundActors` must match it exactly; Manager also requires the existing complete Manager peer. Adding Manager after an Admin-only installation supplies `previousActors:{admin:true}`. A repeat of the complete desired state is read-only and needs no previous declaration. Flags cannot be removed through this API.
+
+The actual superuser maintenance LOGIN/backend, database and role OIDs, PostgreSQL16, current named catalogs and complete App/Admin/Financial/Manager/Cashier profiles are checked before and after. Try-only advisory gates and sorted `ACCESS EXCLUSIVE NOWAIT` table locks precede grants. The upgrade grants only SELECT on original payment evidence, approved payment policy/use and refund policy, plus SELECT/INSERT on refund dispatch and provider evidence. It creates no roles, repairs no catalog or row, and never rewrites business data. Cashier receives no new refund grants. A partial installation or unexpected grant refuses without repair.
+
+Admin's identity is derived from the exact existing mandatory Agent namespace and its canonical owners, bodies, flags and trigger attachments, including the conditional Cashier variant. A matching ACL or function-name prefix alone is insufficient. Manager uses its existing fixed LOGIN. The six-table/source ACL matrix must jointly describe the same proved roles and OIDs. The leaf proof does not recursively call its parent catalog or a complete business profile.
+
+## First actor and durable recovery
+
+Existing App and Financial dispatches retain payload format1 and their existing HMAC domains. New Admin/Manager dispatches use format2. The first actor pins its actual LOGIN/name/OID, original operation key/hash and normalized immutable own-ledger digest; Admin adds its human admin ID, while Manager adds human UID, store and staff ID. The receipt must have been appended directly by the same business transaction (`xmin` against the current xid32), after live authorization and before REQUESTING commits. An older row cannot retrospectively label a first dispatch. The SQL clock, approval window and existing eight-second transaction limit are rechecked after actor collection.
+
+Dispatch, provider evidence, original CNSR, merchant pair, root/child/buyer/store/supplier identities and first actor are immutable across lawful recovery. A different authorized operator may append their own recovery receipt while using the original dispatch; the first actor is preserved. Only the actual corresponding business LOGIN reads its own first-actor ledger for the extra digest check. App callbacks and other consumers get no foreign-ledger SELECT. The pinned old role/OID attest admission history and are not rewritten when a role is lawfully recommissioned.
+
+Admin completed replays retain current `refund.manage`, realm, password/session, scope, original-key and refund-identity checks, then prove the durable provider projection. Manager retains live owner/store/staff/scope qualification. Only its matching admitted, completed refund can inspect an archived `pid=-1` source after materialization; ordinary/fresh writes still refuse it. Mutable SUCCESS alone cannot bypass either consumer's durable proof.
+
+Manager quote/create/review availability uses authenticated original-account metadata for the actual payment root, including when current configuration points elsewhere or is empty. Absence of the complete Routine namespace or of a Routine original retains legacy semantics; a partial or invalid protocol does not fall back. Actual request/query/callback preflight still needs the purpose-specific fresh approval and archived materials. Status and completed replay use historical evidence without an active registry, fresh gate or provider I/O.
+
+## SQL-only execution status
+
+Admin's existing POST `/api/admin/refund/operations/receipt` and `/adminapi/refund/operations/receipt` keep their seven-field admission receipt. New POST `/execution` on both aliases accepts only `{version:'admin-refund-execution-v1'}` with the existing `Idempotency-Key` and `X-Refund-Operation-Scope` headers. It returns exactly `{version,receipt,execution}`, where execution is null or `{completed,status}`. Current live Admin authority is rechecked in the same real RR/RO snapshot; no writer row/request/advisory lock or provider call is taken.
+
+Manager's existing execution-status DTO is retained. It now reads the authenticated owner's immutable receipt and intent in the same RR/RO snapshot, without the writer's locks. Its established minimal owner recovery remains available after mutable Manager qualification is removed; initiating/resuming funds still requires live qualification. Both status consumers check public relation resolution and complete original-account/provider provenance. Complete SUCCESS additionally needs actual quantity, split/physical generation, refund log, invoice and point-compensation evidence. Missing or inconsistent evidence returns UNKNOWN with the original receipt retained. No read repairs or finalizes data.
+
+The Admin page's explicit query button uses the separate execution DTO. Existing keyed v3 journals, hashes, nonce and compare-and-swap/Web Lock/session ownership remain. Pending, UNKNOWN, closed, failed or missing-provider states do not authorize a fresh request. A complete bound SUCCESS can resolve a lost response using a read only. Older v2 records remain fenced under their existing legacy rules; no new nonce is fabricated.
+
+## Validation
+
+Results and limitations are recorded in phase31 of `php-ts-wechat-routine-20261029.md`. Tests use an owned local PostgreSQL16 host, independent TCP LOGINs and generated RSA/AES. Provider transport is controlled locally; there is no real WeChat call, production DDL, deployment or Workerd/Hyperdrive acceptance. Browser UI protocol checks are separate from native SQL/crypto proof.

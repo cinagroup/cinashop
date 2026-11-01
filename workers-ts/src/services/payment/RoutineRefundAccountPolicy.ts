@@ -135,10 +135,10 @@ function commitment(env: Runtime, data: RoutineRefundAccountPolicy) {
  * A future dispatch consumer must additionally prove the immutable original,
  * physical order/refund, live actor and first pinned dispatch in its own TX. */
 export async function readRoutineRefundAccountPolicyTx(tx: DbClient, env: Runtime,
-  accountId: string, purpose: RoutineRefundPurpose, role: 'app' | 'financial' = 'app'): Promise<RoutineRefundAccountJournal> {
+  accountId: string, purpose: RoutineRefundPurpose, role: import('@/migrations/routineRefundActorAddon').RoutineRefundRuntimeRole = 'app'): Promise<RoutineRefundAccountJournal> {
   env = { APP_KEY: env.APP_KEY, ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS: env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS };
   if (!token(accountId) || !['refund_request', 'refund_query', 'refund_notify'].includes(purpose)
-    || role !== 'app' && role !== 'financial') return fail();
+    || !['app','financial','admin','manager'].includes(role)) return fail();
   if (!await assertRoutineRefundInstalledTx(tx, role)) return fail();
   const row = (await history(tx, env, accountId, await scope(tx))).at(-1), now = await clock(tx);
   if (!row || row.payload.data.state !== 'active' || now < row.payload.data.validFrom || now >= row.payload.data.validUntil

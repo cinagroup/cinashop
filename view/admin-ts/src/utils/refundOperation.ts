@@ -4,17 +4,19 @@ import { refundReview, type AdminRefundDetail } from './refundDetail';
 export { withRefundActionLock } from './refundIntent';
 export type { RefundAction } from './refundIntent';
 export const operationVersion = 'admin-refund-operation-v1' as const;
+export const executionVersion = 'admin-refund-execution-v1' as const;
 export type OperationOutcome = 'return-approved' | 'refused' | 'balance-settled' | 'provider-admitted' | 'abandoned';
 export interface OperationReceipt {
   version: typeof operationVersion; adminId: number; requestKey: string; requestHash: string;
   refundId: number; action: RefundAction; outcome: OperationOutcome;
 }
-export interface OperationExecution { completed: boolean; status: 'SUCCESS' | 'BALANCE_SUCCESS' | 'PROCESSING' }
+export type OperationStatus = 'SUCCESS' | 'BALANCE_SUCCESS' | 'CREATED' | 'REQUESTING' | 'PROCESSING' | 'CLOSED' | 'ABNORMAL' | 'FAILED' | 'UNKNOWN' | 'NOT_FOUND';
+export interface OperationExecution { completed: boolean; status: OperationStatus }
 export interface RefundOperation extends Omit<RefundIntent, 'version'> {
   version: 3; requestHash: string; receipt: OperationReceipt | null; execution: OperationExecution | null;
 }
 export interface OperationResult { receipt: OperationReceipt | null; execution: OperationExecution | null }
-export type OperationMode = 'execute' | 'receipt' | 'abandon';
+export type OperationMode = 'execute' | 'receipt' | 'execution' | 'abandon';
 const invalid = () => Error('原操作或回执无效，结果仍待核对');
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid();
@@ -59,14 +61,17 @@ function parseExecution(value: unknown, receipt: OperationReceipt | null): Opera
   if (value === null) return null;
   const row = record(value); exact(row, ['completed', 'status']);
   if (receipt?.outcome === 'balance-settled' && row.completed === true && row.status === 'BALANCE_SUCCESS') return { completed: true, status: 'BALANCE_SUCCESS' };
+  if (receipt?.outcome === 'balance-settled' && row.completed === false && row.status === 'UNKNOWN') return { completed: false, status: 'UNKNOWN' };
   if (receipt?.outcome === 'provider-admitted') {
     if (row.completed === true && row.status === 'SUCCESS') return { completed: true, status: 'SUCCESS' };
-    if (row.completed === false && row.status === 'PROCESSING') return { completed: false, status: 'PROCESSING' };
+    if (row.completed === false && typeof row.status === 'string'
+      && ['CREATED','REQUESTING','PROCESSING','CLOSED','ABNORMAL','FAILED','UNKNOWN','NOT_FOUND'].includes(row.status)) return { completed: false, status: row.status as OperationStatus };
   }
   throw invalid();
 }
 export function operationResolved(result: OperationResult) {
-  return !!result.receipt && (result.receipt.outcome !== 'provider-admitted' || result.execution?.completed === true);
+  return !!result.receipt && (result.receipt.outcome === 'provider-admitted' ? result.execution?.completed === true
+    : result.receipt.outcome !== 'balance-settled' || result.execution === null || result.execution.completed);
 }
 /** Copy synchronously before any crypto/network await; callers cannot change the
  * decision being verified by mutating a reactive row while hashing. */
@@ -122,11 +127,12 @@ export function writeRefundOperation(intent: RefundOperation, expectedRaw: strin
 }
 export function parseOperationResult(value: unknown, intent: RefundOperation, mode: OperationMode): OperationResult {
   const row = record(value);
-  exact(row, mode === 'execute' ? ['version','receipt','replayed','execution'] : ['version','receipt']);
-  if (row.version !== operationVersion || mode === 'execute' && typeof row.replayed !== 'boolean') throw invalid();
-  const receipt = row.receipt === null && mode === 'receipt' ? null : parseOperationReceipt(row.receipt, intent);
-  const execution = mode === 'execute' ? parseExecution(row.execution, receipt) : null;
+  exact(row, mode === 'execute' ? ['version','receipt','replayed','execution'] : mode === 'execution' ? ['version','receipt','execution'] : ['version','receipt']);
+  if (row.version !== (mode === 'execution' ? executionVersion : operationVersion) || mode === 'execute' && typeof row.replayed !== 'boolean') throw invalid();
+  const receipt = row.receipt === null && (mode === 'receipt' || mode === 'execution') ? null : parseOperationReceipt(row.receipt, intent);
+  const execution = mode === 'execute' || mode === 'execution' ? parseExecution(row.execution, receipt) : null;
   if (mode === 'execute' && ['balance-settled','provider-admitted'].includes(receipt!.outcome) && !execution) throw invalid();
+  if (mode === 'execution' && receipt && ['balance-settled','provider-admitted'].includes(receipt.outcome) && !execution) throw invalid();
   return { receipt, execution };
 }
 export function applyOperationResult(intent: RefundOperation, result: OperationResult): RefundOperation {
@@ -141,8 +147,16 @@ export function operationMessage(result: OperationResult): string {
   switch (result.receipt?.outcome) {
     case 'return-approved': return '原操作回执已确认：已同意退货，等待用户寄回';
     case 'refused': return '原操作回执已确认：已拒绝退款';
-    case 'balance-settled': return '原操作回执已确认：退款已完成（余额或零现金结算）';
-    case 'provider-admitted': return result.execution?.completed ? '原操作渠道结算已确认完成' : '原操作已受理，尚未确认渠道结算；可显式重试原操作继续核对';
+    case 'balance-settled': return result.execution?.completed === false ? '原操作已记录余额或零现金结算，实际完成证据暂不可核对；请保留原操作' : '原操作回执已确认：退款已完成（余额或零现金结算）';
+    case 'provider-admitted': {
+      if (result.execution?.completed) return '原操作渠道结算已确认完成';
+      const status = result.execution?.status;
+      if (status === 'UNKNOWN') return '原操作已受理，实际结算证据暂不可核对；请保留原键继续查询';
+      if (status === 'CLOSED') return '原操作渠道退款已关闭，尚未确认结算；请保留原键并人工核对';
+      if (status === 'ABNORMAL' || status === 'FAILED') return '原操作渠道退款异常，尚未确认结算；请保留原键并人工核对';
+      if (status === 'NOT_FOUND') return '原操作已受理，暂未查到渠道退款；请保留原键，不可新建请求';
+      return '原操作已受理，尚未确认渠道结算；可继续查询，或显式重试原操作';
+    }
     case 'abandoned': return '原操作未受理，已建立永久放弃屏障；该原键不会再执行。这不是撤销已受理退款';
     default: return '暂未查到原操作回执；迟到请求仍可能受理，不可据此新建操作';
   }

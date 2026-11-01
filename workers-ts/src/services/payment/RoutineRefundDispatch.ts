@@ -13,6 +13,8 @@ import { readRoutineApprovedUsesForRefundTx } from './RoutineApprovedPaymentAcco
 import { readRoutineRefundOriginalTx } from './RoutineRefundOriginal';
 import { assertNativeAppExcludedForRoutineRefundTx } from './NativeAppRefundProviderAuthority';
 import { readRoutineRefundAccountJournalTx, selectRoutineRefundAccountPolicyTx } from './RoutineRefundAccountPolicy';
+import type { RoutineRefundRuntimeRole } from '@/migrations/routineRefundActorAddon';
+import { firstRoutineRefundActorV2Tx,parseRoutineRefundActorV2,validateRoutineRefundActorV2ReceiptTx,type RoutineRefundActorV2 } from './RoutineRefundActorReceipt';
 
 type Signing=Pick<Env,'APP_KEY'>;
 type Refund=typeof storeOrderRefund.$inferSelect;
@@ -21,10 +23,10 @@ type Payment=typeof storeOrderRefundPayment.$inferSelect;
 type Scope={database:string;databaseOid:string;maintenance:string;maintenanceOid:string};
 export type RoutineRefundApproval={recordId:string;signature:string;accountId:string;appId:string;merchantId:string;
  credentialRef:string;credentialVersion:number;credentialStamp:string};
-type Actor={kind:'app'}|{kind:'financial';actorUid:number;requestKey:string;requestHash:string;serviceId:number;receiptDigest:string};
+type Actor={kind:'app'}|{kind:'financial';actorUid:number;requestKey:string;requestHash:string;serviceId:number;receiptDigest:string}|RoutineRefundActorV2;
 export interface RoutineRefundDispatch {
  dispatch_id:string;refund_id:number;out_refund_no:string;created_at:number;signature:string;
- payload:{format:1;purpose:'routine_refund_dispatch';scope:Scope;
+ payload:{format:1|2;purpose:'routine_refund_dispatch';scope:Scope;
   identity:{refundId:number;refundNo:string;childId:number;rootId:number;buyerUid:number;storeId:number;supplierId:number};
   request:Required<RefundProviderRequest>;approval:RoutineRefundApproval;original:{evidenceId:string;signature:string};
   actor:Actor;notifyUrl:string};
@@ -67,10 +69,12 @@ export function routineRefundApproval(row:Awaited<ReturnType<typeof readRoutineR
 }
 export function routineRefundMaterialsReference(d:RoutineRefundDispatch){const a=d.payload.approval;return{appId:a.appId,
  merchantId:a.merchantId,credentialRef:a.credentialRef,credentialVersion:a.credentialVersion,credentialStamp:a.credentialStamp};}
-export async function routineRefundRoleTx(tx:DbClient):Promise<'app'|'financial'> {
+export async function routineRefundRoleTx(tx:DbClient):Promise<RoutineRefundRuntimeRole> {
  const c=await inspectRoutineRefundCatalog(tx),[r]=await tx.execute<{name:string}>(sql`SELECT current_user AS name`);
  if(c.ready&&r?.name===c.binding?.app)return'app';
- if(c.ready&&c.binding?.financial&&r?.name===c.binding.financial)return'financial';return fail();
+ if(c.ready&&c.binding?.financial&&r?.name===c.binding.financial)return'financial';
+ if(c.ready&&c.binding?.adminRefund&&r?.name===c.binding.admin)return'admin';
+ if(c.ready&&c.binding?.manager&&r?.name===c.binding.manager)return'manager';return fail();
 }
 function callbackUrl(origin:unknown,id:string):string {
  if(typeof origin!=='string'||origin.length>200)return fail();
@@ -87,18 +91,20 @@ function decode(env:Signing,raw:unknown,s:Scope):RoutineRefundDispatch {
  const a=routineRefundRecord(p.approval,['recordId','signature','accountId','appId','merchantId','credentialRef','credentialVersion','credentialStamp']);
  const o=routineRefundRecord(p.original,['evidenceId','signature']);
  const actorKind=p.actor&&typeof p.actor==='object'?Object.getOwnPropertyDescriptor(p.actor,'kind')?.value:undefined;
- const actor=routineRefundRecord(p.actor,actorKind==='app'?['kind']:['kind','actorUid','requestKey','requestHash','serviceId','receiptDigest']);
+ const actor=p.format===2?parseRoutineRefundActorV2(p.actor) as unknown as Record<string,unknown>:
+  routineRefundRecord(p.actor,actorKind==='app'?['kind']:['kind','actorUid','requestKey','requestHash','serviceId','receiptDigest']);
  const created=typeof r.created_at==='string'&&/^[1-9][0-9]*$/u.test(r.created_at)?Number(r.created_at):r.created_at;
  if(!hex(r.dispatch_id)||!positive(r.refund_id)||!positive(created)||r.out_refund_no!=='CNSR'+r.refund_id
-  ||p.format!==1||p.purpose!=='routine_refund_dispatch'||!sameRoutineRefund(p.scope,s)
+  ||p.format!==1&&p.format!==2||p.purpose!=='routine_refund_dispatch'||!sameRoutineRefund(p.scope,s)
   ||i.refundId!==r.refund_id||!token(i.refundNo)||!positive(i.childId)||!positive(i.rootId)||!positive(i.buyerUid)
   ||!nonnegative(i.storeId)||!nonnegative(i.supplierId)||!token(q.outTradeNo)||!token(q.transactionId,100)
   ||q.outRefundNo!==r.out_refund_no||!positive(q.refundAmount)||!positive(q.totalAmount)||q.refundAmount>q.totalAmount
   ||typeof q.reason!=='string'||q.reason.length>512||!uuid(a.recordId)||!hex(a.signature)||!token(a.accountId)||!token(a.appId,32)
   ||typeof a.merchantId!=='string'||!/^\d{1,32}$/u.test(a.merchantId)||!token(a.credentialRef)||!positive(a.credentialVersion)
   ||!hex(a.credentialStamp)||!hex(o.evidenceId)||!hex(o.signature)
-  ||actor.kind!=='app'&&(actor.kind!=='financial'||!positive(actor.actorUid)||!uuid(actor.requestKey)||!hex(actor.requestHash)
-   ||!positive(actor.serviceId)||!hex(actor.receiptDigest))||typeof p.notifyUrl!=='string')return fail();
+  ||p.format===1&&actor.kind!=='app'&&(actor.kind!=='financial'||!positive(actor.actorUid)||!uuid(actor.requestKey)||!hex(actor.requestHash)
+   ||!positive(actor.serviceId)||!hex(actor.receiptDigest))||p.format===2&&actor.kind==='manager'&&actor.storeId!==i.storeId
+  ||typeof p.notifyUrl!=='string')return fail();
  const id=routineEvidenceHmac(env,'refund-dispatch-id',{scope:s,refundId:r.refund_id});
  if(r.dispatch_id!==id||!p.notifyUrl.endsWith('/api/pay/notify/routine-refund/'+id))return fail();
  const origin=p.notifyUrl.slice(0,-('/api/pay/notify/routine-refund/'+id).length);
@@ -125,6 +131,10 @@ async function financialActor(tx:DbClient,env:Signing,refund:Refund,order:Order)
  const catalog=await inspectRoutineRefundCatalog(tx);
  const[identity]=await tx.execute<{name:string}>(sql`SELECT current_user AS name`);
  if(identity?.name===catalog.binding?.app)return{kind:'app'};
+ if(catalog.binding?.adminRefund&&identity?.name===catalog.binding.admin)
+  return firstRoutineRefundActorV2Tx(tx,env,'admin',{refundId:refund.id,childId:order.id,storeId:refund.storeId});
+ if(catalog.binding?.manager&&identity?.name===catalog.binding.manager)
+  return firstRoutineRefundActorV2Tx(tx,env,'manager',{refundId:refund.id,childId:order.id,storeId:refund.storeId});
  if(!catalog.binding?.financial||identity?.name!==catalog.binding.financial)return fail();
  const rows=await tx.execute<{actor_uid:number;request_key:string;request_hash:string;service_id:number;row:unknown}>(sql`
   SELECT actor_uid,request_key::text,request_hash,service_id,
@@ -181,6 +191,8 @@ export async function validateRoutineRefundDispatchTx(tx:DbClient,env:Signing,d:
   // consumer verifies this separate owner receipt; dispatch HMAC preserves it.
   if(rows.length!==1||routineEvidenceHmac(env,'refund-financial-receipt',rows[0].row)!==actor.receiptDigest)return fail();
  }
+ if(actor.kind==='admin'||actor.kind==='manager')await validateRoutineRefundActorV2ReceiptTx(tx,env,actor,
+  {refundId:i.refundId,childId:i.childId,storeId:i.storeId},statusRead);
 }
 /** Called after the existing actor callback persisted provider-admitted and
  * before REQUESTING commits, with physical root/child/refund locks held. */
@@ -200,13 +212,15 @@ export async function admitRoutineRefundDispatchTx(tx:DbClient,env:Env,refund:Re
  const facts=original.evidence.payload.observation.facts;
  const approval=await selectRoutineRefundAccountPolicyTx(tx,env,{appId:facts.appId,merchantId:facts.merchantId},'refund_request');
  await assertNativeAppExcludedForRoutineRefundTx(tx,env,request,original);
- const s=await scope(tx),id=routineEvidenceHmac(env,'refund-dispatch-id',{scope:s,refundId:refund.id}),now=await routineRefundClock(tx);
+ const s=await scope(tx),id=routineEvidenceHmac(env,'refund-dispatch-id',{scope:s,refundId:refund.id});
+ const actor=await financialActor(tx,env,refund,order);
+ const now=await routineRefundClock(tx);
  const[deadline]=await tx.execute<{ready:boolean}>(sql`SELECT pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '8 seconds' AS ready`);
  if(now<approval.payload.data.validFrom||now>=approval.payload.data.validUntil||deadline?.ready!==true)return fail();
- const payload:RoutineRefundDispatch['payload']={format:1,purpose:'routine_refund_dispatch',scope:s,
+ const payload:RoutineRefundDispatch['payload']={format:actor.kind==='admin'||actor.kind==='manager'?2:1,purpose:'routine_refund_dispatch',scope:s,
   identity:{refundId:refund.id,refundNo:refund.orderId,childId:order.id,rootId:root.id,buyerUid:refund.uid,storeId:refund.storeId,supplierId:refund.supplierId},
   request:{...request,transactionId:request.transactionId,reason:request.reason},approval:routineRefundApproval(approval),
-  original:{evidenceId:original.evidence.evidence_id,signature:original.evidence.signature},actor:await financialActor(tx,env,refund,order),
+  original:{evidenceId:original.evidence.evidence_id,signature:original.evidence.signature},actor,
   notifyUrl:callbackUrl(env.ROUTINE_REFUND_NOTIFY_ORIGIN,id)};
  const body={dispatch_id:id,refund_id:refund.id,out_refund_no:request.outRefundNo,payload,created_at:now};
  const signed={...body,signature:routineEvidenceHmac(env,'refund-dispatch-record',body)};

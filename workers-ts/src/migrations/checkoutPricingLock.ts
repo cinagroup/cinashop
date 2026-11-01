@@ -7,6 +7,7 @@ import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRun
 import { managerScopeLockReadiness } from './runManagerScopeLock';
 import { customerWorkScopeLockReadiness } from './runCustomerWorkScopeLock';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
+import { MANAGER_RUNTIME_ROLE } from './managerRuntimePrivilegePlan';
 
 const installationErrors = new Set([
   'Pricing installation requires an explicit safe NOLOGIN owner setting',
@@ -131,8 +132,25 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
   const supplierLabel=scope==='shared-shop'&&schema==='public'
     ?await(await import('./supplierProductLabelCapability')).inspectSupplierProductLabelCapability(tx):null;
   const supplierLabelOids=supplierLabel?.ready&&supplierLabel.functionOid?[supplierLabel.functionOid]:[];
+  // A commissioned Manager can also hold the existing local-payment case
+  // lock. Its complete catalog/NOLOGIN owner/SELECT-only runtime proof, rather
+  // than its name or an ACL alone, admits only that actual definer OID. This
+  // inspection neither invokes it nor acquires its separate maintenance gate.
+  let managerCaseOid:string|null=null;
+  if(scope==='shared-shop'&&schema==='public'){
+    const [identity]=await tx.execute<{ready:boolean}>(sql`SELECT
+      current_user=${MANAGER_RUNTIME_ROLE} AND session_user=current_user
+      AND current_setting('server_version_num')::integer/10000=16
+      AND EXISTS(SELECT 1 FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid
+        WHERE a.pid=pg_catalog.pg_backend_pid() AND r.rolname=current_user) AS ready`);
+    if(identity?.ready===true){
+      const lock=await(await import('./localPaymentCaseLock')).inspectLocalPaymentCaseLock(tx,MANAGER_RUNTIME_ROLE);
+      if(lock.runtimeReady)managerCaseOid=lock.functionOid;
+    }
+  }
   const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
-    ...supplierManualOids,...ordinaryOids,...supplierLabelOids,...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[])];
+    ...supplierManualOids,...ordinaryOids,...supplierLabelOids,...(managerCaseOid?[managerCaseOid]:[]),
+    ...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[])];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()

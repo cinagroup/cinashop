@@ -3,13 +3,16 @@ import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
+import { inspectRoutineRefundActorPrincipals } from './routineRefundActorPrincipals';
+import { inspectRoutineRefundSourceAclMatrix, routineRefundSourceAppCandidate, type RoutineRefundRuntimeRole } from './routineRefundActorAddon';
 
 type Query = Pick<DbClient,'execute'>;
 export interface RoutineRefundNames { maintenance:string; app:string; admin:string }
 export interface RoutineRefundCatalog {
   present:boolean; ready:boolean; failures:string[];
   binding:{maintenance:string;maintenanceOid:string;app:string|null;appOid:string|null;
-    admin:string|null;adminOid:string|null;financial:string|null;financialOid:string|null}|null;
+    admin:string|null;adminOid:string|null;adminRefund:boolean;manager:string|null;managerOid:string|null;
+    financial:string|null;financialOid:string|null}|null;
 }
 export const ROUTINE_REFUND_GATE = [731718,0] as const;
 export const ROUTINE_REFUND_RUNTIME_PRIVILEGES = {
@@ -140,7 +143,18 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
  if(!inventory.present)return{present:false,ready:false,binding:null,failures:[]};
  const failures:string[]=[],check=(key:string,value:boolean)=>{if(!value)failures.push(key);};
  check('namespace',inventory.namespace===true);
- const bindings:Array<{maintenance:string;maintenanceOid:string;app:string|null;appOid:string|null;financial:string|null;financialOid:string|null}>=[];
+ type Binding={maintenance:string;maintenanceOid:string;app:string|null;appOid:string|null;
+  financial:string|null;financialOid:string|null;actorAdmin:string|null;actorAdminOid:string|null;manager:string|null;managerOid:string|null};
+ const bindings:Binding[]=[];
+ // The new actor names come from exact existing named boundaries, never from
+ // subtracting ACL grantees. Legacy App/Financial catalogs do not need the leaf.
+ let actors:Awaited<ReturnType<typeof inspectRoutineRefundActorPrincipals>>|undefined;
+ const actorPrincipals=async()=>{
+  if(actors===undefined){const source=await routineRefundSourceAppCandidate(tx);
+   actors=source?await inspectRoutineRefundActorPrincipals(tx,{maintenance:source.maintenance,app:source.app,
+    ...(names?{admin:names.admin}:{})}):{ready:false,failures:['source_app'],binding:null};}
+  return actors.ready?actors.binding:null;
+ };
   for(const spec of specs) {
     const [row]=await tx.execute<Record<string,unknown>>(sql`SELECT
       pg_catalog.pg_get_userbyid(c.relowner) AS maintenance,c.relowner::text AS maintenance_oid,
@@ -222,10 +236,24 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
     check(spec.table+':definitions',equalMap(row.definitions,spec.indexes));
     const grants=row.grants as Array<[string,string,string,boolean]>|null;
     const financialRows=Array.isArray(grants)?grants.filter(g=>g[0]===CUSTOMER_FINANCIAL_RUNTIME_ROLE):[];
-    const appRows=Array.isArray(grants)?grants.filter(g=>g[0]!==CUSTOMER_FINANCIAL_RUNTIME_ROLE):[];
+    let appRows=Array.isArray(grants)?grants.filter(g=>g[0]!==CUSTOMER_FINANCIAL_RUNTIME_ROLE):[];
     const valid=(rows:Array<[string,string,string,boolean]>)=>rows.length===(spec.insert?2:1)
       && rows.every(g=>Array.isArray(g)&&g.length===4&&g[0]===rows[0][0]&&g[1]===rows[0][1]&&!g[3])
       && rows.map(g=>g[2]).join(',')===(spec.insert?'INSERT,SELECT':'SELECT');
+    let actorAdmin:string|null=null,actorAdminOid:string|null=null,manager:string|null=null,managerOid:string|null=null;
+    if(appRows.length&&!valid(appRows)){
+      const principals=await actorPrincipals();
+      check(spec.table+':actor_principals',!!principals&&principals.maintenance===row.maintenance);
+      if(principals){
+        const adminRows=appRows.filter(g=>g[0]===principals.admin),managerRows=appRows.filter(g=>g[0]===principals.manager);
+        appRows=appRows.filter(g=>g[0]!==principals.admin&&g[0]!==principals.manager);
+        if(adminRows.length){check(spec.table+':admin_acl',valid(adminRows)&&adminRows[0][1]===principals.adminOid);
+          if(valid(adminRows)){actorAdmin=principals.admin;actorAdminOid=principals.adminOid;}}
+        if(managerRows.length){check(spec.table+':manager_acl',valid(managerRows)&&managerRows[0][1]===principals.managerOid);
+          if(valid(managerRows)){manager=principals.manager;managerOid=principals.managerOid;}}
+        check(spec.table+':named_app',valid(appRows)&&appRows[0][0]===principals.app&&appRows[0][1]===principals.appOid);
+      }
+    }
     let app:string|null=null,appOid:string|null=null,financial:string|null=null,financialOid:string|null=null;
     if(valid(appRows)){app=appRows[0][0];appOid=appRows[0][1];}
     else check(spec.table+':acl',Array.isArray(grants)&&grants.length===0);
@@ -234,12 +262,12 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
     const maintenance=typeof row.maintenance==='string'?row.maintenance:null,maintenanceOid=typeof row.maintenance_oid==='string'?row.maintenance_oid:null;
     check(spec.table+':binding',!!maintenance&&!!maintenanceOid&&app!==maintenance&&(app===null||app!==financial)
       && (!names||maintenance===names.maintenance&&app===names.app));
-    if(maintenance&&maintenanceOid)bindings.push({maintenance,maintenanceOid,app,appOid,financial,financialOid});
+    if(maintenance&&maintenanceOid)bindings.push({maintenance,maintenanceOid,app,appOid,financial,financialOid,actorAdmin,actorAdminOid,manager,managerOid});
   }
   check('joint_binding',bindings.length===3&&bindings.every(b=>same(b,bindings[0])));
   const binding=bindings[0];
   if(!binding)return{present:true,ready:false,binding:null,failures:[...new Set(failures)].sort()};
-  const {maintenanceOid,app,financial}=binding;
+  const {maintenanceOid,app,financial,actorAdmin,manager}=binding,admin=actorAdmin??names?.admin??null;
   const [namespace]=await tx.execute<{safe:boolean;roles:boolean;admin_oid:string|null}>(sql`SELECT
     (SELECT pg_catalog.count(*)=6 AND pg_catalog.bool_and(t.typowner=${maintenanceOid}::oid AND t.typacl IS NULL
       AND ((t.typname IN('routine_refund_account_policy','routine_refund_dispatch','routine_refund_provider_evidence') AND t.typtype='c'
@@ -251,8 +279,8 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
        OR pg_catalog.starts_with(typname,'rrap_') OR pg_catalog.starts_with(typname,'_rrap_') OR pg_catalog.starts_with(typname,'rrd_') OR pg_catalog.starts_with(typname,'_rrd_') OR pg_catalog.starts_with(typname,'rrpe_') OR pg_catalog.starts_with(typname,'_rrpe_')))
     AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_default_acl d CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a
       WHERE (d.defaclrole=${maintenanceOid}::oid AND d.defaclnamespace IN(0,'public'::regnamespace) AND d.defaclobjtype IN('r','f','S') AND a.grantee<>d.defaclrole)
-      OR a.grantee IN(SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN(${app},${financial},${names?.admin??null})) OR (a.grantee=0 AND d.defaclobjtype IN('r','S'))) AS safe,
-    (SELECT pg_catalog.count(*)=${(names?2:app?1:0)+(financial?1:0)} AND COALESCE(pg_catalog.bool_and(r.rolcanlogin
+      OR a.grantee IN(SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN(${app},${financial},${admin},${manager})) OR (a.grantee=0 AND d.defaclobjtype IN('r','S'))) AS safe,
+    (SELECT pg_catalog.count(*)=${(app?1:0)+(admin?1:0)+(financial?1:0)+(manager?1:0)} AND COALESCE(pg_catalog.bool_and(r.rolcanlogin
       AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_shdepend WHERE refclassid='pg_catalog.pg_authid'::regclass AND refobjid=r.oid AND deptype='o')
@@ -260,17 +288,19 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
       AND NOT pg_catalog.has_database_privilege(r.oid,pg_catalog.current_database(),'CREATE')
       AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace n WHERE n.nspname NOT LIKE 'pg_%' AND pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE'))
       AND NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM')),true)
-      FROM pg_catalog.pg_roles r WHERE rolname IN(${app},${financial},${names?.admin??null})) AS roles,
-    (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=${names?.admin??null}) AS admin_oid`);
+      FROM pg_catalog.pg_roles r WHERE rolname IN(${app},${financial},${admin},${manager})) AS roles,
+    (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=${admin}) AS admin_oid`);
   check('types_defaults',namespace?.safe===true);check('runtime_roles',namespace?.roles===true);
-  if(financial){const {inspectCustomerFinancialRoutineRefundSourceAcls}=await import('./customerFinancialRoutineRefund');
-   check('financial_sources',!!app&&await inspectCustomerFinancialRoutineRefundSourceAcls(tx,{maintenance:binding.maintenance,app:app!}));}
+  if(financial||actorAdmin||manager)check('joint_sources',!!app&&await inspectRoutineRefundSourceAclMatrix(tx,
+   {maintenance:binding.maintenance,app:app!},[...(financial?[financial]:[]),...(actorAdmin?[actorAdmin]:[]),...(manager?[manager]:[])]));
   const unique=[...new Set(failures)].sort();
-  return{present:true,ready:!unique.length,failures:unique,binding:unique.length?null:{...binding,admin:names?.admin??null,adminOid:namespace?.admin_oid??null}};
+  const{actorAdmin:_,actorAdminOid:__,...publicBinding}=binding;
+  return{present:true,ready:!unique.length,failures:unique,binding:unique.length?null:{...publicBinding,
+   admin,adminOid:namespace?.admin_oid??null,adminRefund:actorAdmin!==null}};
 }
-async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'app'|'financial',statusRead=false):Promise<boolean> {
+async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:RoutineRefundRuntimeRole,statusRead=false):Promise<boolean> {
  try {
-  if(Object.hasOwn(tx,'$client') || role!==undefined&&role!=='app'&&role!=='financial')throw Error();
+  if(Object.hasOwn(tx,'$client') || role!==undefined&&!['app','financial','admin','manager'].includes(role))throw Error();
   await tx.execute(sql`SELECT pg_catalog.set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
    pg_catalog.set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000)::text||'ms',true),
    pg_catalog.set_config('idle_in_transaction_session_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000)::text||'ms',true)`);
@@ -286,7 +316,7 @@ async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'a
    AND pg_catalog.to_regclass('routine_refund_account_policy')=pg_catalog.to_regclass('public.routine_refund_account_policy')
    AND pg_catalog.to_regclass('routine_refund_dispatch')=pg_catalog.to_regclass('public.routine_refund_dispatch')
    AND pg_catalog.to_regclass('routine_refund_provider_evidence')=pg_catalog.to_regclass('public.routine_refund_provider_evidence')
-   AND (${b.financial}::text IS NULL OR (pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
+   AND (${!b.financial&&!b.adminRefund&&!b.manager} OR (pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
     AND pg_catalog.to_regclass('routine_payment_account_policy')=pg_catalog.to_regclass('public.routine_payment_account_policy')
     AND pg_catalog.to_regclass('routine_payment_account_use')=pg_catalog.to_regclass('public.routine_payment_account_use')))
    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_event_trigger WHERE evtenabled<>'D')
@@ -296,20 +326,24 @@ async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:'a
    FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
   const isApp=identity?.name===b.app&&identity.oid===b.appOid;
   const isFinancial=identity?.name===CUSTOMER_FINANCIAL_RUNTIME_ROLE&&b.financial===identity.name&&b.financialOid===identity.oid;
-  if(identity?.ready!==true || role==='app'&&!isApp || role==='financial'&&!isFinancial || !isApp&&!isFinancial)throw Error();
+  const isAdmin=b.adminRefund&&identity?.name===b.admin&&identity.oid===b.adminOid;
+  const isManager=!!b.manager&&identity?.name===b.manager&&identity.oid===b.managerOid;
+  if(identity?.ready!==true || role==='app'&&!isApp || role==='financial'&&!isFinancial
+   ||role==='admin'&&!isAdmin||role==='manager'&&!isManager||!isApp&&!isFinancial&&!isAdmin&&!isManager)throw Error();
   // Financial's source reads are commissioned as one complete explicit addon.
-  if(b.financial){const {inspectCustomerFinancialRoutineRefundReaders}=await import('./customerFinancialRoutineRefund');
-   if(!await inspectCustomerFinancialRoutineRefundReaders(tx,{maintenance:b.maintenance,app:b.app}))throw Error();
+  if(b.financial||b.adminRefund||b.manager){
+   if(!await inspectRoutineRefundSourceAclMatrix(tx,{maintenance:b.maintenance,app:b.app},
+    [...(b.financial?[b.financial]:[]),...(b.adminRefund&&b.admin?[b.admin]:[]),...(b.manager?[b.manager]:[])]))throw Error();
    const {inspectRoutineOriginalPaymentEvidenceCatalog}=await import('./routineOriginalPaymentEvidence');
    const {inspectRoutinePaymentAccountPolicyCatalog}=await import('./routinePaymentAccountPolicy');
    if(!(await inspectRoutineOriginalPaymentEvidenceCatalog(tx)).ready||!(await inspectRoutinePaymentAccountPolicyCatalog(tx)).ready)throw Error();}
   return true;
  }catch{throw new ServiceUnavailableException('小程序原账号退款数据库协议或运行权限尚未就绪');}
 }
-export async function assertRoutineRefundInstalledTx(tx:Query,role?:'app'|'financial'):Promise<boolean>{return requireRuntime(tx,true,true,role);}
-export async function assertRoutineRefundReady(tx:Query,role?:'app'|'financial'):Promise<void>{await requireRuntime(tx,false,true,role);}
+export async function assertRoutineRefundInstalledTx(tx:Query,role?:RoutineRefundRuntimeRole):Promise<boolean>{return requireRuntime(tx,true,true,role);}
+export async function assertRoutineRefundReady(tx:Query,role?:RoutineRefundRuntimeRole):Promise<void>{await requireRuntime(tx,false,true,role);}
 /** Historical immutable reads only; never fresh provider approval. No gate is acquired. */
-export async function assertRoutineRefundReadInTx(tx:Query,role?:'app'|'financial'):Promise<boolean>{return requireRuntime(tx,true,false,role);}
+export async function assertRoutineRefundReadInTx(tx:Query,role?:RoutineRefundRuntimeRole):Promise<boolean>{return requireRuntime(tx,true,false,role);}
 /** Status projection only. This grants no fresh provider authority, takes no
  * maintenance gate and is deliberately unavailable in a writing transaction. */
-export async function assertRoutineRefundStatusReadTx(tx:Query,role?:'app'|'financial'):Promise<boolean>{return requireRuntime(tx,true,false,role,true);}
+export async function assertRoutineRefundStatusReadTx(tx:Query,role?:RoutineRefundRuntimeRole):Promise<boolean>{return requireRuntime(tx,true,false,role,true);}

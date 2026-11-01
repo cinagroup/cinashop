@@ -1,4 +1,5 @@
 import { captureCustomerFinancialRoutineRefund, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
+import { captureRoutineRefundActorAddons, type RoutineRefundActorAddons } from './routineRefundActorAddon';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -21,13 +22,14 @@ export interface RuntimeGiftPeerDeclarations {
     originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon; routineRefund?:CustomerFinancialRoutineRefundAddon };
   cashierSecondCard?: { role: string; abandon: true; conditionalGuards?: true; formImages?: true };
   manager?: true;
+  routineRefundActors?:RoutineRefundActorAddons;
 }
 const giftTable = 'store_order_promotion_gift_coupon_reward';
 const giftSequence = giftTable + '_id_seq';
 
 export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclarations): RuntimeGiftPeerDeclarations {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager'].includes(key))
+    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors'].includes(key))
     || !value.target || ![value.financial, value.cashierSecondCard, value.manager].some(Boolean))
     throw Error('Explicit bounded gift peer declarations required');
   const t = value.target;
@@ -53,6 +55,8 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   }
   if (value.manager !== undefined && (value.manager !== true || !t.local?.includes(MANAGER_RUNTIME_ROLE)))
     throw Error('Explicit bound Manager gift peer required');
+  const refundActors=value.routineRefundActors===undefined?undefined:captureRoutineRefundActorAddons(value.routineRefundActors);
+  if(refundActors?.manager&&value.manager!==true)throw Error('Routine refund Manager requires its complete declared peer');
   return { target: { database: t.database, maintenance: t.maintenance, app: t.app, admin: t.admin,
     ...(t.local ? { local: [...t.local] } : {}),
     ...(t.caseLock ? { caseLock: { owner: t.caseLock.owner, runtimeRoles: [...t.caseLock.runtimeRoles] } } : {}) },
@@ -63,7 +67,7 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
     } } : {}), ...(cashier ? { cashierSecondCard: { role: cashier.role, abandon: true as const,
       ...(cashier.conditionalGuards ? { conditionalGuards: true as const } : {}),
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),
-    ...(value.manager ? { manager: true as const } : {}) };
+    ...(value.manager ? { manager: true as const } : {}),...(refundActors?{routineRefundActors:refundActors}:{}) };
 }
 
 export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execute'>,
@@ -109,7 +113,8 @@ export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execut
     }
   }
   if (peers.manager) {
-    const proof = await inspectManagerRuntimePrivileges(db, { requireLogin: true, routine: { target, stage: 'ready' } });
+    const proof = await inspectManagerRuntimePrivileges(db, { requireLogin: true, routine: { target, stage: 'ready' },
+      ...(peers.routineRefundActors?.manager?{routineRefund:true}:{} ) });
     if (!proof.ready) failures.push(...proof.failures.map(name => 'manager:' + name));
     else {
       const plan = managerRuntimePrivilegePlan('current');
