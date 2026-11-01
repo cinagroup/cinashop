@@ -1,3 +1,4 @@
+import { readRoutineShippingRefundGenerationTx, parseRoutineShippingRefundGeneration, type RoutineShippingRefundGeneration } from './RoutineShippingRefundGeneration';
 import { readRoutineVirtualPaidSourceTx, routineVirtualPaidKey, routineVirtualPaidPayload, ROUTINE_VIRTUAL_PAID_MARK, type RoutineVirtualShippingDomain } from '@/services/order/RoutineVirtualPaidShipping';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
@@ -33,7 +34,7 @@ export interface RoutineShippingRequest {
 }
 interface Package {orderId:number;eventId:number;eventKey:string;logisticsType:number;description:string;tracking:string;carrier:string;contact:string;digest:string}
 interface Identity {rootId:number;childId:number;buyerUid:number;orderNo:string;transactionId:string;totalAmount:number;appId:string;merchantId:string;payerId:string}
-interface Snapshot {identity:Identity;immutableDigest:string;stateDigest:string;packages:Package[];allDelivered:boolean;mode:1|2;logisticsType:number;original:RoutineShippingOriginal;delivery:Delivery}
+interface Snapshot {refundGeneration?:RoutineShippingRefundGeneration;identity:Identity;immutableDigest:string;stateDigest:string;packages:Package[];allDelivered:boolean;mode:1|2;logisticsType:number;original:RoutineShippingOriginal;delivery:Delivery}
 interface DispatchPayload {
  format:1;purpose:'routine_shipping_upload';scope:RoutineShippingScope;identity:Identity;immutableDigest:string;
  packages:Package[];request:RoutineShippingRequest;account:RoutineShippingAccountJournal;
@@ -46,7 +47,9 @@ interface VirtualPackage extends Omit<Package,'orderId'> {domain:RoutineVirtualS
 interface VirtualSnapshot extends Omit<Snapshot,'identity'|'packages'> {identity:VirtualIdentity;packages:VirtualPackage[]}
 interface VirtualDispatchPayload extends Omit<DispatchPayload,'format'|'identity'|'packages'> {format:2;identity:VirtualIdentity;packages:VirtualPackage[]}
 export interface RoutineVirtualShippingDispatch extends Omit<RoutineShippingDispatch,'payload'> {payload:VirtualDispatchPayload}
-type AnyDispatch=RoutineShippingDispatch|RoutineVirtualShippingDispatch;
+interface RefundDispatchPayload extends Omit<DispatchPayload,'format'> {format:3;refundGeneration:RoutineShippingRefundGeneration}
+export interface RoutineRefundShippingDispatch extends Omit<RoutineShippingDispatch,'payload'> {payload:RefundDispatchPayload}
+type AnyDispatch=RoutineShippingDispatch|RoutineVirtualShippingDispatch|RoutineRefundShippingDispatch;
 type AnySnapshot=Snapshot|VirtualSnapshot;
 type AnyIdentity=Identity|VirtualIdentity;
 type AnyPackage=Package|VirtualPackage;
@@ -107,13 +110,12 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
   ||!shippingInteger(parent.uid)||!text(parent.tradeNo,100))return routineShippingUnavailable();
  const total=amountToCents(parent.payPrice);if(total===null||total<=0)return routineShippingUnavailable();
  const split=parent.pid===-1,leaves=split?family.filter(o=>o.pid===parent.id):[parent];
- if(split?(child.pid!==parent.id||parent.supplierAllocationStatus!==2||leaves.length<2||leaves.length>15||family.length!==leaves.length+1):
+ if(split?(child.pid!==parent.id||leaves.length<2||leaves.length>64||family.length!==leaves.length+1):
   (child.id!==parent.id||family.length!==1))return routineShippingUnavailable();
  if(leaves.some(o=>o.uid!==parent.uid||o.paid!==1||o.payType!=='weixin'||o.isDel!==0||o.isSystemDel!==0
-  ||o.refundStatus===2||o.refundStatus===3||o.refundType===6||split&&![1,3].includes(o.shippingType)))return routineShippingUnavailable();
+  ||split&&![1,3].includes(o.shippingType)))return routineShippingUnavailable();
  const amounts=leaves.map(o=>amountToCents(o.payPrice));
  if(amounts.some(n=>n===null||n<0)||amounts.reduce<number>((sum,n)=>sum+(n??0),0)!==total)return routineShippingUnavailable();
- if(parent.refundStatus===2||parent.refundStatus===3||parent.refundType===6)return routineShippingUnavailable();
  const delivery=await claimed(tx,c);if(!shippingSame(deliveryIdentity(initial),deliveryIdentity(delivery)))return routineShippingUnavailable();
  const events=await tx.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.eventType,ORDER_DELIVERY_NOTICE_EVENT),
   inArray(storeOrderOutbox.aggregateId,leaves.map(o=>o.id)))).orderBy(asc(storeOrderOutbox.id)).limit(65).for('share',{noWait:true});
@@ -129,8 +131,13 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
  if(old.kind!=='wechat_shipping'||old.transactionId!==parent.tradeNo||typeof old.itemDescription!=='string'||typeof old.isAllDelivered!=='boolean')return routineShippingUnavailable();
  const carts=await tx.select().from(storeOrderCartInfo).where(inArray(storeOrderCartInfo.oid,leaves.map(o=>o.id))).orderBy(asc(storeOrderCartInfo.id)).limit(201).for('share',{noWait:true});
  if(!carts.length||carts.length>200||Buffer.byteLength(JSON.stringify(carts),'utf8')>1048576)return routineShippingUnavailable();
+ const refundGeneration=await readRoutineShippingRefundGenerationTx(tx,env,{root:parent,family,carts});
+ if(!refundGeneration&&(split&&(parent.supplierAllocationStatus!==2||leaves.length>15)
+  ||[parent,...leaves].some(o=>o.refundStatus===2||o.refundStatus===3||o.refundType===6)))return routineShippingUnavailable();
+ if(refundGeneration&&(!split||!refundGeneration.activeOrderIds.includes(child.id)))return routineShippingUnavailable();
+ const activeLeaves=refundGeneration?leaves.filter(o=>refundGeneration.activeOrderIds.includes(o.id)):leaves;
  const packages:Package[]=[];
- for(const leaf of leaves){
+ for(const leaf of activeLeaves){
   if(leaf.status<1)continue;
   const candidates=events.filter(e=>e.aggregateId===leaf.id);let event:typeof own|undefined;
   for(const candidate of candidates){if(await customerCityQueuedNoticeIsActive(tx,candidate.eventKey)){if(event)return routineShippingUnavailable();event=candidate;}}
@@ -157,8 +164,11 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
  const facts=original.evidence.payload.observation.facts,identity={rootId:parent.id,childId:child.id,buyerUid:parent.uid,orderNo:parent.orderId,
   transactionId:parent.tradeNo,totalAmount:total,appId:facts.appId,merchantId:facts.merchantId,payerId:facts.payerId};
  const ownPackage=packages.find(p=>p.orderId===child.id);if(!ownPackage)return routineShippingUnavailable();
- const immutableDigest=shippingMac(env,'delivery-identity',[deliveryIdentity(delivery),{id:own.id,key:own.eventKey,type:own.eventType,aggregateId:own.aggregateId,aggregateType:own.aggregateType,payload:own.payload,addTime:own.addTime},ownPackage.digest,identity]);
- return{identity,immutableDigest,stateDigest:shippingMac(env,'source-state',[identity,immutableDigest,packages,allDelivered,mode,logisticsType]),packages,allDelivered,mode,logisticsType,original,delivery};
+ const immutableFacts=[deliveryIdentity(delivery),{id:own.id,key:own.eventKey,type:own.eventType,aggregateId:own.aggregateId,aggregateType:own.aggregateType,payload:own.payload,addTime:own.addTime},ownPackage.digest,identity];
+ const immutableDigest=refundGeneration?shippingMac(env,'delivery-identity-refund-v1',[immutableFacts,refundGeneration]):shippingMac(env,'delivery-identity',immutableFacts);
+ const stateFacts=[identity,immutableDigest,packages,allDelivered,mode,logisticsType];
+ return{identity,immutableDigest,stateDigest:refundGeneration?shippingMac(env,'source-state-refund-v1',[stateFacts,refundGeneration]):shippingMac(env,'source-state',stateFacts),
+  packages,allDelivered,mode,logisticsType,original,delivery,...(refundGeneration?{refundGeneration}:{})};
 }
 
 /** A real completed paid outbox is the pickup source; status0 is intentional.
@@ -244,8 +254,10 @@ function parseRequest(raw:unknown):RoutineShippingRequest{
 }
 function parseDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):AnyDispatch{
  const record=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
- const payload=shippingObject(record.payload,['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction']);
- return payload.format===2?parseVirtualDispatch(env,raw,scope):parseStoreDispatch(env,raw,scope);
+ const payload=shippingObject(record.payload,Object.hasOwn(Object(record.payload),'refundGeneration')
+  ?['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction','refundGeneration']
+  :['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction']);
+ return payload.format===3?parseRefundDispatch(env,raw,scope):payload.format===2?parseVirtualDispatch(env,raw,scope):parseStoreDispatch(env,raw,scope);
 }
 function parseVirtualDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineVirtualShippingDispatch{
  const r=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
@@ -306,6 +318,41 @@ function parseStoreDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):
   identity,immutableDigest:p.immutableDigest,packages,request,account,original:o as unknown as DispatchPayload['original'],actor:actor as unknown as DispatchPayload['actor'],previousDispatchId:p.previousDispatchId as string,correction:false},created_at:Number(created)};
  if(!shippingEqual(r.signature,shippingMac(env,'dispatch',body)))return routineShippingUnavailable();return freezeShipping({...body,signature:r.signature});
 }
+function parseRefundDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineRefundShippingDispatch{
+ const r=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
+ const p=shippingObject(r.payload,['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction','refundGeneration']);
+ const i=shippingObject(p.identity,['rootId','childId','buyerUid','orderNo','transactionId','totalAmount','appId','merchantId','payerId']);
+ const actor=shippingObject(p.actor,['role','roleOid']),o=shippingObject(p.original,['evidenceId','signature','relatedDigest','approvedUseDigest']);
+ const created=typeof r.created_at==='string'&&/^\d+$/u.test(r.created_at)?Number(r.created_at):r.created_at;
+ if(!shippingUuid(r.dispatch_id)||!shippingInteger(r.delivery_id)||!shippingHex(r.source_key)||!shippingInteger(created)||!shippingHex(r.signature)
+  ||p.format!==3||p.purpose!=='routine_shipping_upload'||!shippingSame(p.scope,scope)||!shippingHex(p.immutableDigest)
+  ||!['rootId','childId','buyerUid','totalAmount'].every(k=>shippingInteger(i[k]))||!text(i.orderNo,64)||!text(i.transactionId,100)
+  ||!text(i.appId,64)||!text(i.merchantId,64)||!text(i.payerId,128)||!text(actor.role,128)||typeof actor.roleOid!=='string'||!/^\d+$/u.test(actor.roleOid)
+  ||!shippingHex(o.evidenceId)||!shippingHex(o.signature)||!shippingHex(o.relatedDigest)||!shippingHex(o.approvedUseDigest)
+  ||p.previousDispatchId!==''&&!shippingUuid(p.previousDispatchId)||p.correction!==false||!Array.isArray(p.packages)||!p.packages.length||p.packages.length>15)return routineShippingUnavailable();
+ const packages=p.packages.map(value=>{
+  const v=shippingObject(value,['orderId','eventId','eventKey','logisticsType','description','tracking','carrier','contact','digest']);
+  if(!shippingInteger(v.orderId)||!shippingInteger(v.eventId)||!text(v.eventKey,128)||![1,2,3,4].includes(Number(v.logisticsType))||typeof v.logisticsType!=='number'
+   ||!text(v.description,4096)||Array.from(v.description).length>120||!text(v.tracking,128,true)||!text(v.carrier,512,true)||!text(v.contact,64,true)||!shippingHex(v.digest))return routineShippingUnavailable();
+  return v as unknown as Package;
+ });
+ if(new Set(packages.map(v=>v.orderId)).size!==packages.length||!packages.some(v=>v.orderId===i.childId))return routineShippingUnavailable();
+ const refundGeneration=parseRoutineShippingRefundGeneration(env,p.refundGeneration);
+ const identity=i as unknown as Identity,request=parseRequest(p.request),account=parseRoutineShippingAccountJournal(env,p.account,scope);
+ if(!shippingSame(refundGeneration.payment,{rootId:identity.rootId,buyerUid:identity.buyerUid,orderNo:identity.orderNo,transactionId:identity.transactionId,totalAmount:identity.totalAmount})
+  ||!refundGeneration.activeOrderIds.includes(identity.childId)||packages.some(v=>!refundGeneration.activeOrderIds.includes(v.orderId))
+  ||request.delivery_mode!==2||request.logistics_type!==1)return routineShippingUnavailable();
+ if(r.source_key!==sourceKey(env,identity)||request.order_key.transaction_id!==identity.transactionId||request.payer.openid!==identity.payerId
+  ||account.payload.data.appId!==identity.appId||account.payload.data.merchantId!==identity.merchantId||Date.parse(request.upload_time)!==Number(created)*1000)return routineShippingUnavailable();
+ if(packages.some((v,n)=>v.logisticsType!==request.logistics_type||n>0&&packages[n-1].orderId>=v.orderId)
+  ||identity.childId===identity.rootId
+  ||request.logistics_type===1&&(request.shipping_list.length!==packages.length||packages.some((v,n)=>{
+   const item=request.shipping_list[n];return item.item_desc!==v.description||item.tracking_no!==v.tracking||(item.contact?.receiver_contact??'')!==v.contact;
+  })))return routineShippingUnavailable();
+ const body={dispatch_id:r.dispatch_id,delivery_id:r.delivery_id,source_key:r.source_key,payload:{format:3 as const,purpose:'routine_shipping_upload' as const,scope,
+  identity,immutableDigest:p.immutableDigest,packages,request,account,refundGeneration,original:o as unknown as DispatchPayload['original'],actor:actor as unknown as DispatchPayload['actor'],previousDispatchId:p.previousDispatchId as string,correction:false},created_at:Number(created)};
+ if(!shippingEqual(r.signature,shippingMac(env,'dispatch',body)))return routineShippingUnavailable();return freezeShipping({...body,signature:r.signature});
+}
 async function savedDispatch(tx:DbClient,env:Signing,deliveryId:number){
  const rows=await tx.execute(sql`SELECT * FROM public.routine_shipping_dispatch WHERE delivery_id=${deliveryId} LIMIT 2`);
  if(rows.length>1)return routineShippingUnavailable();return rows.length?parseDispatch(env,rows[0],await routineShippingScopeTx(tx)):null;
@@ -355,6 +402,7 @@ function containsPackages(previous:readonly AnyPackage[],current:readonly AnyPac
  return previous.every(p=>{if(!('orderId'in p))return false;const now=current.find(v=>('orderId'in v)&&v.orderId===p.orderId);return now!==undefined&&shippingSame(p,now);});
 }
 function matchingSnapshot(d:AnyDispatch,s:AnySnapshot){
+ if(!shippingSame(d.payload.format===3?d.payload.refundGeneration:null,s.refundGeneration??null))return routineShippingUnavailable();
  if(!shippingSame(d.payload.identity,s.identity)||d.payload.immutableDigest!==s.immutableDigest
   ||d.payload.request.logistics_type!==s.logisticsType||d.payload.request.delivery_mode!==s.mode)return routineShippingUnavailable();
  if(shippingSame(d.payload.packages,s.packages)&& (s.mode===1||d.payload.request.is_all_delivered===s.allDelivered))return;
@@ -402,7 +450,8 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
   }else{
    if(last){
     const results=await evidence(tx,env,last);if(!results.some(v=>v.payload.result.code===0))throw new Deferred();
-    if(!('rootId'in last.payload.identity)||!('rootId'in s.identity))return routineShippingUnavailable();
+    if(!shippingSame(last.payload.format===3?last.payload.refundGeneration:null,s.refundGeneration??null)
+     ||!('rootId'in last.payload.identity)||!('rootId'in s.identity))return routineShippingUnavailable();
     const {childId:_,...oldIdentity}=last.payload.identity,{childId:__,...currentIdentity}=s.identity;
     if(last.payload.request.delivery_mode!==2||s.mode!==2||last.payload.request.is_all_delivered!==false
      ||!shippingSame(oldIdentity,currentIdentity)||last.payload.identity.childId===s.identity.childId
@@ -414,8 +463,9 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
     request:newRequest(s,carriers,now,last),account:account.account,
     original:{evidenceId:s.original.evidence.evidence_id,signature:s.original.evidence.signature,relatedDigest:s.original.relatedDigest,approvedUseDigest:s.original.approvedUseDigest},
     actor:{role:binding.app,roleOid:binding.appOid},previousDispatchId:last?.dispatch_id??'',correction:false as const};
-   const payload:DispatchPayload|VirtualDispatchPayload='domain'in s.identity
+   const payload:DispatchPayload|VirtualDispatchPayload|RefundDispatchPayload='domain'in s.identity
     ?{...common,format:2,identity:s.identity,packages:s.packages as VirtualPackage[]}
+    :s.refundGeneration?{...common,format:3,identity:s.identity,packages:s.packages as Package[],refundGeneration:s.refundGeneration}
     :{...common,format:1,identity:s.identity,packages:s.packages as Package[]};
    const body={dispatch_id:randomUUID(),delivery_id:initial.claim.id,source_key:key,payload,created_at:now};
    const signed={...body,signature:shippingMac(env,'dispatch',body)};
@@ -476,7 +526,8 @@ async function recoverKnown(container:Container,env:Env,c:Readonly<RoutineShippi
   const d=await savedDispatch(tx,env,c.id);if(!d)return false;
   const success=(await evidence(tx,env,d)).find(r=>r.payload.result.code===0);if(!success)return false;
   const s=await snapshot(tx,env,c);
-  if(d.payload.immutableDigest!==s.immutableDigest||!shippingSame(d.payload.identity,s.identity))return routineShippingUnavailable();
+  if(!shippingSame(d.payload.format===3?d.payload.refundGeneration:null,s.refundGeneration??null)
+   ||d.payload.immutableDigest!==s.immutableDigest||!shippingSame(d.payload.identity,s.identity))return routineShippingUnavailable();
   await finish(tx,c,'SENT',await routineShippingClockTx(tx),'0','',d.dispatch_id);return true;
  });
 }

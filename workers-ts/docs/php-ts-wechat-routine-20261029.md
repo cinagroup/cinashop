@@ -688,3 +688,16 @@ SQL stagedAt+10 决定初次延迟，Queue 使用数据库计算的剩余 delay�
 原生、类型和单测在一层共享串行锁顺序运行，保持原单worker、内存、每组native600秒及case限制。代码/测试冻结证据位于本地 `.cache/php-ts-phase35-validation/`；本节和独立合同在最终验证后补齐，执行文件字节保持，提交文件另做秘密扫描。交叉作者审查覆盖运行链，schema/正式测试作者对其自身部分是自审及root复核，不称独立安全审计。
 
 本轮没有生产DDL、部署、真实微信、Browser或Workerd/Hyperdrive验收。永久会员专案、所有损坏format2字段、容量与重试终止边界、发货开关并发、退款代次发货、更正和历史SKIPPED/UNKNOWN维护恢复仍未完成；完整归属清单/切换许可、前端session/journal及既有CI缺口继续推进。保留用户/UID/权益/旧单/付款，未知归属不猜，跨AppID屏障、runtime_ready=false和整体PHP→TS迁移未完成状态保持。此前对a2b26985的推送授权已履行，本轮新提交需按具体SHA另行推送授权。
+
+
+## 阶段36：真实数量退款后的余单原账号发货
+
+新增[退款代次发货合同](routine-refund-shipping.md)。真实 Admin 快递下单和原账号 RSA/AES 付款，经 Financial quote/review/CNSR 首派发及签名查单 SUCCESS，同事务生成退款物化，再由 Admin 余单实际发货和真实 delivery outbox/opaque Queue 触发上传。退款成功本身不是发货作者；没有正向维护 SQL 补 paid、退款/发货事件或首次上传证据。
+
+App 只读验证完整退款及 fulfillment branch 代次：精确 legacy/guest 实体目录/保护函数与维护owner、申请指纹、不可变档案、实体及商品数量/行身份、连续前驱/成对分支、实际退款payment和经生产验签器持久化的成功投影。仅 proved selected/whole 叶退休，活跃叶仍有真实履约事件。保持根付款全额和付款人、完整叶价款及数量守恒；零款读取仅承认申请档案的成熟纯积分条件，不把裸零额/无payment作为授权，也不修改普通正价微信零退款禁令。纯积分零款正向运行仍未证明。
+
+新商品退款回执显式format3，保存有序退款/分支引用和active/retired ID/HMAC代次摘要。旧format1、format2具体decoder和原商品payment-source函数逐字不变。原payment-wide来源边界不变；旧UNKNOWN/无成功提供方结果阻止新intent，不能换版本/key重发。同一已证明代次仅按既有成功partial严格扩包，前包逐项不变、时间递增；跨代次、format1→format3不被当作更正许可。沿用所有status0子单参与的固定PHP完成判断，因此退休status0仍使is_all_delivered=false，不能称为全部完成。锁后只读退款原证，不调用退款写者/资金结算或新refund mutex；HTTP在事务外，可能已POST的丢失响应仍UNKNOWN。
+
+最终验证 `final-04` 全六阶段退出0：74项单元、Worker unit/runtime与Admin类型，9项新真实组合原生、既有express12/自提10/虚拟13，共44项原生。8个冻结输入在运行期间不变，3个自有PG16 cluster均remaining0并STOPPED；最终执行文件字节另与提交扫描清单核对。首轮原生8通过/1失败的失败是错误测试假设普通正价微信可申请零退款，既有作者正确拒绝；修正用例，补齐纯积分零额读取条件后重新完整验证。final03在74单元通过后为此中止，不充当完整通过记录。源回执/hash/原始日志与详细限制在本地 `.cache/php-ts-phase36-validation/`；文档在最终运行结束后补齐，提交文件另做秘密扫描。
+
+本轮没有生产DDL、部署、真实微信、Browser或Workerd/Hyperdrive；只读Manager来源地图也不等于已验收Manager正向链。64/201容量、整退兄弟分区、历史soft-delete、新格式完成回滚、清空当前配置与纯积分零款正向仍未专门运行。物流更正/永久partial完成、历史SKIPPED/UNKNOWN维护恢复、可信门店配送来源、完整归属清单/维护manifest/原子切换许可、前端session/journal及既有CI缺口继续未完成。保留现有用户/UID/权益/旧单/付款、未知不猜归属；跨AppID屏障、runtime_ready=false和整体PHP→TS迁移未完成状态保持。b19dfe03已按精确授权推送，本阶段新提交需具体SHA的新授权。
