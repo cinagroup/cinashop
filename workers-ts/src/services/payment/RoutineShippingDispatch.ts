@@ -5,9 +5,11 @@ import type { Env } from '@/env';
 import { withTx,type Container,type DbClient } from '@/lib/di';
 import { orderNotificationDelivery,storeOrder,storeOrderCartInfo,storeOrderOutbox,type WechatShippingNotificationPayload } from '@/models/schema';
 import { assertRoutineShippingReadyTx,assertRoutineShippingReadTx,inspectRoutineShippingCatalog } from '@/migrations/routineShipping';
+import { FULFILLMENT_CITY_CONFLICT_GATE,inspectFulfillmentCityConflictReader } from '@/migrations/fulfillmentCityConflictReader';
 import { assertOrderNotificationPayload,customerCityQueuedNoticeIsActive,ORDER_DELIVERY_NOTICE_EVENT } from '@/services/order/OrderNotificationOutboxService';
 import { WechatProviderRejectedError } from '@/services/wechat/WechatNotificationProvider';
 import { getRoutineShippingCarriers,uploadRoutineShipping,assertRoutineShippingHttpResult,type RoutineShippingHttpResult } from '@/services/wechat/RoutineShippingProvider';
+import { routineShippingLogisticsType } from '@/services/wechat/RoutineShippingLogistics';
 import { parseRoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
 import { readRoutineShippingOriginalTx,type RoutineShippingOriginal } from './RoutineShippingOriginal';
 import { assertNativeAppExcludedForRoutineShippingTx } from './NativeAppRoutineShippingAuthority';
@@ -100,11 +102,14 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
  const parent=family.find(o=>o.id===rootId),child=family.find(o=>o.id===initial.orderId);
  if(!parent||!child||(child.pid>0?child.pid:child.id)!==rootId||![0,-1].includes(parent.pid)||parent.paid!==1||parent.payType!=='weixin'
   ||!shippingInteger(parent.uid)||!text(parent.tradeNo,100))return routineShippingUnavailable();
- // Only the currently proven single fulfillment is admitted. Split families
- // require the separate city/waybill reader commissioning and native proof.
- if(parent.pid!==0||child.id!==parent.id||family.length!==1)return routineShippingUnavailable();
  const total=amountToCents(parent.payPrice);if(total===null||total<=0)return routineShippingUnavailable();
- const leaves=[parent];
+ const split=parent.pid===-1,leaves=split?family.filter(o=>o.pid===parent.id):[parent];
+ if(split?(child.pid!==parent.id||parent.supplierAllocationStatus!==2||leaves.length<2||leaves.length>15||family.length!==leaves.length+1):
+  (child.id!==parent.id||family.length!==1))return routineShippingUnavailable();
+ if(leaves.some(o=>o.uid!==parent.uid||o.paid!==1||o.payType!=='weixin'||o.isDel!==0||o.isSystemDel!==0
+  ||o.refundStatus===2||o.refundStatus===3||o.refundType===6||split&&![1,3].includes(o.shippingType)))return routineShippingUnavailable();
+ const amounts=leaves.map(o=>amountToCents(o.payPrice));
+ if(amounts.some(n=>n===null||n<0)||amounts.reduce<number>((sum,n)=>sum+(n??0),0)!==total)return routineShippingUnavailable();
  if(parent.refundStatus===2||parent.refundStatus===3||parent.refundType===6)return routineShippingUnavailable();
  const delivery=await claimed(tx,c);if(!shippingSame(deliveryIdentity(initial),deliveryIdentity(delivery)))return routineShippingUnavailable();
  const events=await tx.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.eventType,ORDER_DELIVERY_NOTICE_EVENT),
@@ -133,7 +138,7 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
   if(!lines.length||lines.some(row=>row.uid!==parent.uid||!shippingInteger(row.cartNum)))return routineShippingUnavailable();
   const description=Array.from(lines.map(line=>title(line.cartInfo,line.cartNum)).join('；')).slice(0,120).join('');
   if(!description)return routineShippingUnavailable();
-  const logisticsType=leaf.shippingType!==1?4:leaf.deliveryType==='express'?1:['send','city_delivery'].includes(leaf.deliveryType)?2:leaf.deliveryType==='fictitious'?3:0;
+  const logisticsType=routineShippingLogisticsType(leaf.shippingType,leaf.deliveryType);
   if(!logisticsType)return routineShippingUnavailable();
   const tracking=logisticsType===1?leaf.deliveryId:'',carrier=logisticsType===1?leaf.deliveryName:'',contact=logisticsType===1?masked(leaf.userPhone):'';
   if(logisticsType===1&&(!text(tracking,128)||!text(carrier,512)))return routineShippingUnavailable();
@@ -142,7 +147,8 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
   packages.push(part);
  }
  if(!packages.length||packages.length>15||new Set(packages.map(p=>p.logisticsType)).size!==1)return routineShippingUnavailable();
- const allDelivered=true,logisticsType=packages[0].logisticsType,mode=1 as const;
+ const allDelivered=leaves.every(o=>o.status>=1),logisticsType=packages[0].logisticsType,mode=split?2 as const:1 as const;
+ if(split&&logisticsType!==1)return routineShippingUnavailable();
  const original=await readRoutineShippingOriginalTx(tx,env,{domain:'store_order',rootId:parent.id,buyerUid:parent.uid,orderNo:parent.orderId,transactionId:parent.tradeNo,totalAmount:total});
  await assertNativeAppExcludedForRoutineShippingTx(tx,env,original);
  const facts=original.evidence.payload.observation.facts,identity={rootId:parent.id,childId:child.id,buyerUid:parent.uid,orderNo:parent.orderId,
@@ -153,6 +159,20 @@ async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Pr
 }
 
 function sourceKey(env:Signing,i:Identity){return shippingMac(env,'payment-source',[i.rootId,i.buyerUid,i.orderNo,i.transactionId,i.totalAmount,i.appId,i.merchantId,i.payerId]);}
+/** A split upload is commissioned separately from shipping storage. This is a
+ * fresh-use check only; durable accepted receipts acquire no new reader gate. */
+async function splitReader(tx:DbClient,s:Snapshot){
+ if(s.mode!==2)return;
+ const [gate]=await tx.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(${FULFILLMENT_CITY_CONFLICT_GATE[0]},${FULFILLMENT_CITY_CONFLICT_GATE[1]}) AS locked`);
+ if(gate?.locked!==true)throw new Deferred();
+ const reader=await inspectFulfillmentCityConflictReader(tx),b=reader.binding;
+ if(!reader.ready||!b||!b.actors.app)return routineShippingUnavailable();
+ const [actual]=await tx.execute<{ready:boolean}>(sql`SELECT current_user=${b.app} AND current_user=session_user
+  AND pg_catalog.current_database()=${b.database}
+  AND (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=pg_catalog.current_database())=${b.databaseOid}
+  AND (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=current_user)=${b.appOid} AS ready`);
+ if(actual?.ready!==true)return routineShippingUnavailable();
+}
 function parseRequest(raw:unknown):RoutineShippingRequest{
  const r=shippingObject(raw,Object.hasOwn(Object(raw),'is_all_delivered')?['order_key','logistics_type','delivery_mode','is_all_delivered','shipping_list','upload_time','payer']:['order_key','logistics_type','delivery_mode','shipping_list','upload_time','payer']);
  const order=shippingObject(r.order_key,['order_number_type','transaction_id']),payer=shippingObject(r.payer,['openid']);
@@ -195,6 +215,11 @@ function parseDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):Routi
  const identity=i as unknown as Identity,request=parseRequest(p.request),account=parseRoutineShippingAccountJournal(env,p.account,scope);
  if(r.source_key!==sourceKey(env,identity)||request.order_key.transaction_id!==identity.transactionId||request.payer.openid!==identity.payerId
   ||account.payload.data.appId!==identity.appId||account.payload.data.merchantId!==identity.merchantId||Date.parse(request.upload_time)!==Number(created)*1000)return routineShippingUnavailable();
+ if(packages.some((v,n)=>v.logisticsType!==request.logistics_type||n>0&&packages[n-1].orderId>=v.orderId)
+  ||request.delivery_mode===1&&packages.length!==1||request.delivery_mode===2&&identity.childId===identity.rootId
+  ||request.logistics_type===1&&(request.shipping_list.length!==packages.length||packages.some((v,n)=>{
+   const item=request.shipping_list[n];return item.item_desc!==v.description||item.tracking_no!==v.tracking||(item.contact?.receiver_contact??'')!==v.contact;
+  })))return routineShippingUnavailable();
  const body={dispatch_id:r.dispatch_id,delivery_id:r.delivery_id,source_key:r.source_key,payload:{format:1 as const,purpose:'routine_shipping_upload' as const,scope,
   identity,immutableDigest:p.immutableDigest,packages,request,account,original:o as unknown as DispatchPayload['original'],actor:actor as unknown as DispatchPayload['actor'],previousDispatchId:p.previousDispatchId as string,correction:false},created_at:Number(created)};
  if(!shippingEqual(r.signature,shippingMac(env,'dispatch',body)))return routineShippingUnavailable();return freezeShipping({...body,signature:r.signature});
@@ -244,13 +269,25 @@ async function sourceBoundary(tx:DbClient,key:string){
  const [r]=await tx.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock(pg_catalog.hashtextextended(${'routine-shipping-source:v1:'+key},0)) AS locked`);
  if(r?.locked!==true)throw new Deferred();
 }
-function matchingSnapshot(d:RoutineShippingDispatch,s:Snapshot){
- if(!shippingSame(d.payload.identity,s.identity)||d.payload.immutableDigest!==s.immutableDigest||!shippingSame(d.payload.packages,s.packages)
-  ||d.payload.request.logistics_type!==s.logisticsType||d.payload.request.delivery_mode!==s.mode
-  ||s.mode===2&&d.payload.request.is_all_delivered!==s.allDelivered)return routineShippingUnavailable();
+function containsPackages(previous:readonly Package[],current:readonly Package[]){
+ return previous.every(p=>{const now=current.find(v=>v.orderId===p.orderId);return now!==undefined&&shippingSame(p,now);});
 }
-function newRequest(s:Snapshot,carriers:ReadonlyArray<{id:string;name:string}>,created:number):RoutineShippingRequest{
+function matchingSnapshot(d:RoutineShippingDispatch,s:Snapshot){
+ if(!shippingSame(d.payload.identity,s.identity)||d.payload.immutableDigest!==s.immutableDigest
+  ||d.payload.request.logistics_type!==s.logisticsType||d.payload.request.delivery_mode!==s.mode)return routineShippingUnavailable();
+ if(shippingSame(d.payload.packages,s.packages)&& (s.mode===1||d.payload.request.is_all_delivered===s.allDelivered))return;
+ // A known rejected partial request may be retried after another package was
+ // physically shipped, but its old body/time remain pinned. Admission below
+ // still requires a genuine non-success receipt and the latest source intent.
+ if(s.mode!==2||d.payload.request.is_all_delivered!==false||d.payload.packages.length>=s.packages.length
+  ||!containsPackages(d.payload.packages,s.packages))return routineShippingUnavailable();
+}
+function newRequest(s:Snapshot,carriers:ReadonlyArray<{id:string;name:string}>,created:number,previous?:RoutineShippingDispatch):RoutineShippingRequest{
  const list=s.logisticsType===1?s.packages.map(p=>{
+  const old=previous?.payload.packages.findIndex(v=>v.orderId===p.orderId)??-1;
+  // Accepted entries keep their exact original carrier ID and contact even if
+  // the current carrier list changed its spelling or removed that company.
+  if(previous&&old>=0)return previous.payload.request.shipping_list[old];
   const matches=carriers.filter(v=>v.id===p.carrier||v.name===p.carrier);if(matches.length!==1)return routineShippingUnavailable();
   const carrier=matches[0];return{item_desc:p.description,tracking_no:p.tracking,express_company:carrier.id,...(p.contact?{contact:{receiver_contact:p.contact}}:{})};
  }):[{item_desc:Array.from(s.packages.map(p=>p.description).join('；')).slice(0,120).join('')}];
@@ -260,7 +297,8 @@ function newRequest(s:Snapshot,carriers:ReadonlyArray<{id:string;name:string}>,c
 async function prepare(container:Container,env:Env,c:Readonly<RoutineShippingClaim>):Promise<Preflight>{
  return withTx(container,async tx=>{
   if(!await assertRoutineShippingReadyTx(tx))return routineShippingUnavailable();
-  const s=await snapshot(tx,env,c),account=await prepareRoutineShippingAccountTx(tx,env,s.identity.appId,s.identity.merchantId),existing=await savedDispatch(tx,env,c.id);
+  const s=await snapshot(tx,env,c);await splitReader(tx,s);
+  const account=await prepareRoutineShippingAccountTx(tx,env,s.identity.appId,s.identity.merchantId),existing=await savedDispatch(tx,env,c.id);
   if(existing){matchingSnapshot(existing,s);if(!shippingSame(existing.payload.account,account.account))return routineShippingUnavailable();}
   const p=Object.freeze({[preflightSlot]:true as const});preflights.set(p,{snapshot:s,claim:c,account,existing});return p;
  });
@@ -270,6 +308,7 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
  return withTx(container,async tx=>{
   if(!await assertRoutineShippingReadyTx(tx))return routineShippingUnavailable();
   const s=await snapshot(tx,env,initial.claim);if(s.stateDigest!==initial.snapshot.stateDigest)return routineShippingUnavailable();
+  await splitReader(tx,s);
   const account=await prepareRoutineShippingAccountTx(tx,env,s.identity.appId,s.identity.merchantId);
   if(!shippingSame(initial.account.account,account.account))return routineShippingUnavailable();
   const key=sourceKey(env,s.identity);await sourceBoundary(tx,key);
@@ -280,17 +319,18 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
    if(results.some(v=>v.payload.result.code===0)||results.length>=5)return routineShippingUnavailable();
   }else{
    if(last){
-    const results=await evidence(tx,env,last);if(!results.length)throw new Deferred();
-    // Another delivery or correction needs a separately reviewed protocol.
-    // A human SENT projection cannot authorize another provider side effect.
-    return routineShippingUnavailable();
+    const results=await evidence(tx,env,last);if(!results.some(v=>v.payload.result.code===0))throw new Deferred();
+    const {childId:_,...oldIdentity}=last.payload.identity,{childId:__,...currentIdentity}=s.identity;
+    if(last.payload.request.delivery_mode!==2||s.mode!==2||last.payload.request.is_all_delivered!==false
+     ||!shippingSame(oldIdentity,currentIdentity)||last.payload.identity.childId===s.identity.childId
+     ||last.payload.packages.length>=s.packages.length||!containsPackages(last.payload.packages,s.packages))return routineShippingUnavailable();
    }
-   const now=await routineShippingClockTx(tx);
+   const now=await routineShippingClockTx(tx);if(last&&now<=last.created_at)throw new Deferred();
    const binding=(await inspectRoutineShippingCatalog(tx)).binding;if(!binding?.app||!binding.appOid)return routineShippingUnavailable();
    const body={dispatch_id:randomUUID(),delivery_id:initial.claim.id,source_key:key,payload:{format:1 as const,purpose:'routine_shipping_upload' as const,
-    scope:await routineShippingScopeTx(tx),identity:s.identity,immutableDigest:s.immutableDigest,packages:s.packages,request:newRequest(s,carriers,now),account:account.account,
+    scope:await routineShippingScopeTx(tx),identity:s.identity,immutableDigest:s.immutableDigest,packages:s.packages,request:newRequest(s,carriers,now,last),account:account.account,
     original:{evidenceId:s.original.evidence.evidence_id,signature:s.original.evidence.signature,relatedDigest:s.original.relatedDigest,approvedUseDigest:s.original.approvedUseDigest},
-    actor:{role:binding.app,roleOid:binding.appOid},previousDispatchId:'',correction:false},created_at:now};
+    actor:{role:binding.app,roleOid:binding.appOid},previousDispatchId:last?.dispatch_id??'',correction:false},created_at:now};
    const signed={...body,signature:shippingMac(env,'dispatch',body)};
    await tx.execute(sql`INSERT INTO public.routine_shipping_dispatch(dispatch_id,delivery_id,source_key,payload,created_at,signature)
     VALUES(${signed.dispatch_id}::uuid,${signed.delivery_id},${signed.source_key},${JSON.stringify(signed.payload)}::text::jsonb,${signed.created_at},${signed.signature})`);
@@ -304,7 +344,7 @@ export async function recheckRoutineShippingUpload(container:Container,env:Env,v
  root(container);env=captureRoutineShippingDeliveryEnv(env);const p=assertRoutineShippingUploadProof(value);
  return withTx(container,async tx=>{
   if(!await assertRoutineShippingReadyTx(tx))return routineShippingUnavailable();
-  const s=await snapshot(tx,env,p.claim);matchingSnapshot(p.dispatch,s);await sourceBoundary(tx,p.dispatch.source_key);
+  const s=await snapshot(tx,env,p.claim);matchingSnapshot(p.dispatch,s);await splitReader(tx,s);await sourceBoundary(tx,p.dispatch.source_key);
   const account=await prepareRoutineShippingAccountTx(tx,env,s.identity.appId,s.identity.merchantId);
   if(!shippingSame(p.account.account,account.account))return routineShippingUnavailable();
   const history=await sourceHistory(tx,env,p.dispatch.source_key),d=history.at(-1);
@@ -337,7 +377,7 @@ async function finishKnown(container:Container,env:Env,c:Readonly<RoutineShippin
    VALUES(${id},${d.dispatch_id}::uuid,${JSON.stringify(payload)}::text::jsonb,${now},${shippingMac(env,'provider-result',body)})`);
   const accepted=await evidence(tx,env,d);if(!accepted.some(r=>r.evidence_id===id))return routineShippingUnavailable();
   const [row]=await tx.select({attempt:orderNotificationDelivery.attemptCount}).from(orderNotificationDelivery).where(eq(orderNotificationDelivery.id,c.id));
-  const retry=result.code!==0&&([-1,45009,45011].includes(result.code)||result.status===429||result.status>=500)&&(row?.attempt??5)<5;
+  const retry=result.code!==0&&([-1,45009,45011,10060012,10060019].includes(result.code)||result.status===429||result.status>=500)&&(row?.attempt??5)<5;
   const status=result.code===0?'SENT':retry?'RETRYABLE':'DEAD';
   await finish(tx,c,status,now,String(result.code),result.code===0?'':`wechat_shipping_rejected:${result.code}`,d.dispatch_id,retry?now+Math.min(60*2**Math.max((row?.attempt??1)-1,0),3600):0);
   return result.code===0?'sent' as const:retry?'retry-scheduled' as const:'dead' as const;

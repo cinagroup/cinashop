@@ -13,6 +13,7 @@ import { inspectManagerRuntimeCapabilities } from './managerRuntimeCapabilities'
 import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftReceipt';
 import { inspectRoutinePaymentRuntime, routinePaymentRuntimeTablePrivileges, type RoutinePaymentRuntimeTarget } from './routinePaymentRuntime';
 import { inspectLocalPaymentCaseLock } from './localPaymentCaseLock';
+import { captureFulfillmentCityConflictReadersAddon, inspectFulfillmentCityConflictReader, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
 
 type Query = Pick<DbClient, 'execute'>;
 const modelColumns=new Map(Object.values(models).filter(value=>is(value,PgTable)).map(table=>{
@@ -114,6 +115,7 @@ export interface ManagerRuntimeInspectionOptions {
    * it never reports a commissioned runtime as ready. */
   routine?: { target: RoutinePaymentRuntimeTarget; stage: 'before-manager' | 'ready' };
   routineRefund?:true;
+  cityConflictReaders?:FulfillmentCityConflictReadersAddon;
 }
 export async function inspectManagerRuntimePrivileges(db: Query, options: ManagerRuntimeInspectionOptions) {
   if (typeof options?.requireLogin !== 'boolean') throw Error('Explicit manager LOGIN stage required');
@@ -217,8 +219,18 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
     pg_catalog.has_function_privilege(${role},p.oid,'EXECUTE') AS executable,
     pg_catalog.has_function_privilege(${role},p.oid,'EXECUTE WITH GRANT OPTION') AS delegate
     FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace`);
+  let cityReaderOid:string|null=null;
+  if(options.cityConflictReaders){
+    const declared=captureFulfillmentCityConflictReadersAddon(options.cityConflictReaders);
+    const city=await inspectFulfillmentCityConflictReader(db,routine?{maintenance:routine.target.maintenance,app:routine.target.app,admin:routine.target.admin}:undefined);
+    if(!declared.manager||!city.ready||!city.binding||city.binding.manager!==role||city.binding.owner!==declared.owner
+      ||!(['app','admin','manager'] as const).every(actor=>!!city.binding!.actors[actor]===!!declared[actor]))
+      failures.push('manager_city_conflict_reader');
+    else cityReaderOid=city.functionOid;
+  }
   const reviewed = [...catalogs.scope.functionOids, ...(catalogs.pricing.functionOid ? [catalogs.pricing.functionOid] : []),
     ...(routineLockOid ? [routineLockOid] : []),
+    ...(cityReaderOid?[cityReaderOid]:[]),
     ...[catalogs.capabilities.waybill,catalogs.capabilities.delivery,catalogs.capabilities.promotion].filter(c=>c.ready&&c.functionOid).map(c=>c.functionOid!)];
   const [routines] = await db.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
     WHERE p.prosecdef AND n.nspname NOT LIKE 'pg_%' AND n.nspname<>'information_schema'
@@ -241,8 +253,10 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
 }
 
 /** Actual independently authenticated connection, not role impersonation. */
-export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget, routineRefund?:true) {
+export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget, routineRefund?:true,
+  cityConflictReaders?:FulfillmentCityConflictReadersAddon) {
   if(routineRefund!==undefined&&routineRefund!==true)throw Error('Explicit Manager refund addon flag required');
+  const cityReaders=cityConflictReaders===undefined?undefined:captureFulfillmentCityConflictReadersAddon(cityConflictReaders);
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root manager connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
@@ -251,7 +265,8 @@ export async function auditManagerRuntimePrivileges(db: DbClient, routine?: Rout
       (SELECT r.rolname FROM pg_catalog.pg_stat_activity a JOIN pg_catalog.pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend_role,
       current_setting('session_replication_role')='origin' AS origin`);
     const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
-      ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}),...(routineRefund?{routineRefund}:{}) });
+      ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}),...(routineRefund?{routineRefund}:{}),
+      ...(cityReaders?{cityConflictReaders:cityReaders}:{}) });
     if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true
       && (!routine || identity.database === routine.database)) return { ...result, identity };
     return { ...result, identity, ready: false, failures: [...new Set([...result.failures, 'connection_identity'])].sort() };

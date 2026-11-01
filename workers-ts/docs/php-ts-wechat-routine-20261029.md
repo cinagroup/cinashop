@@ -27,7 +27,7 @@
 - Mini 社交付款、收货事件目前缺少原单 AppID/商户/付款人证据，明确记录 `wechat_callback_original_account_evidence_required`，保留原账号事件并走既有 FAILED/DEAD 恢复流程；此检查先于旧水位判断，不能被较晚的历史水位误记成已完成。公众号既有支付/收货行为保留，原单恢复仍待实现。
 - 新的订单/提现通知在业务 outbox 创建事务中记录目标 `routineAppId`，投递渲染只继承原事件的记录。业务事件和投递回放保留原账号或历史缺失，不补当前 AppID；两份明确账号不一致时拒绝且不改原件。旧业务事件无记录则 Mini 渠道为 SKIPPED，旧已排队投递无记录或目标不符则为 DEAD，均保留原内容待维护。新安装未配公共 AppID 时仅跳过可选 Mini 渠道；确定的可选配置错误不回滚财务、SMS 或站内通知，SQL 故障仍传播。游客、次卡和机器人合同保留。
 - routine 通知的成对凭据改读新鲜 SQL，统一使用来源戳 token helper；不读旧 KV 凭据或 AppID-only token。明确 invalid-token 只允许在原来源内重试一次。POST 的 fetch 与流式正文受 8 秒、64 KiB 上限约束。明确 `errcode=0` 成功就记录 SENT，不因响应期间换配置改成可重发；断连、超时或坏响应记录 UNKNOWN，Queue 回放不再发送。新目标 AppID 只证明通知意图，不证明既有 UID 或旧订单归属。
-- 原账号单履约商品发货已接入维护批准、独立归档 AppSecret/token、原付款及 NativeApp 反证、实际 Queue 派发和原子回执，详见 [原账号发货合同](routine-shipping-accounts.md)。分包、充值、会员、自提、历史 SKIPPED 维护恢复及全局迁移仍未完成，`runtime_ready=false` 保留。
+- 原账号商品发货已接入维护批准、独立归档 AppSecret/token、原付款及 NativeApp 反证、实际 Queue 派发和原子回执；正式同城冲突 reader 下还支持未完成 express 分包的严格扩包，详见 [原账号发货合同](routine-shipping-accounts.md)及[读取合同](fulfillment-city-conflict-readers.md)。已完成发货的更正、充值、会员、付款后自提、历史 SKIPPED/UNKNOWN 维护恢复及全局迁移仍未完成，`runtime_ready=false` 保留。
 
 - `PaymentPublicRuntimeConfig.ts` 新增固定的 checkout/routine/official/merchant 公共 SQL 快照，沿既有平台 sort/id 优先级读取完整来源、影子行与 xmin；64 行和 1 MiB 上限拒绝不完整读取。公共摘要只证明来源一致，不证明旧 UID 或原订单归属；OAuth Secret、商户私钥和 KV 不进入该快照。
 - 支付就绪状态的余额、线下、支付宝开关与微信公共配置改读同一 checkout SQL 快照；原生 App 继续独立读取既有账户目录并核对商户，不从通用键读取 App 凭据。Mini 支付的公共 AppID 与商户配置不要求 OAuth Secret 或 APP_KEY；APIv3 部署凭据的要求保留。
@@ -611,3 +611,28 @@ root使用CUA in-app浏览器，在1280×720自有本地UI合成传输夹具验�
 早期真实业务批次因未读取TS `product.storeName` 而在HTTP前失败；修复为规范／旧格式快照及物理数量后单履约七案通过。`final-01` 的7+35先通过，随后Worker unit类型检查报告通知查询未选择 `cartNum` 及关闭分包后的两处不可达访问，runtime/Admin未启动；补齐两个真实查询字段并删除死分支后，才有上述 `final-02` 全部通过。没有降低strict、增加内存／超时或并发重型检查。文档在最终批次之后补齐；实现、运行器与测试的冻结字节保持不变，提交文件另做完整秘密扫描。
 
 尝试的3项拆包验收暴露基础 App 与 Admin 都缺少同城任务读取合同。该缺口没有通过额外 raw grant、维护者生产者或删除 fence 绕过；本轮分包保持关闭，正式跨角色合同另续。充值、会员、付款后自提、物流更正、退款退役分代和旧 SKIPPED/UNKNOWN 维护恢复继续列为未完成。本轮无生产 DDL、部署或真实微信调用。
+
+
+## 第33阶段：同事务同城冲突 reader 与原账号 express 分包（2026-11-01）
+
+阶段32的 `aa3315eb` 已按用户对该 SHA 的明确授权推送，实际远端 main 已核对。继续增加显式 PG16 维护 forward，不修改基础迁移，不临时给 App/Admin 增加同城表 raw SELECT。专用 NOLOGIN owner 的固定 SECURITY DEFINER 端口以完整源目录、命名角色/OID、固定 body 和精确 ACL 证明身份；App/Admin/Manager 必须分别选择，Manager 后继只能显式增加。正式五角色合同在前后审核，精确重复无 DDL，漂移和半安装不修复。声明在首次 await 前快照；调用者回滚会一并撤回 DDL/ACL。
+
+运行请求先持付款根锁，再取 try-only 共享731721门；固定函数保持 store_delivery_order 的 SHARE ROW EXCLUSIVE NOWAIT 锁至业务提交。未结同城任务、超500行或非法上下文拒绝，维护 forward 在表锁前取排他门，避免反向等待。定价与角色审计只豁免精确核对的函数 OID，不扩大 profile。真正同城 writer 的完整合同及真实同根任务仍单独验证，reader 不提供 allowedJobId 逃逸。详情见[读取合同](fulfillment-city-conflict-readers.md)。
+
+真实 Admin 下单、RSA/AES 原付款回调、默认付款、实际 GET/PUT 拆包发货端点与 App outbox/Queue 现已接通 express 分包。完整2..15叶子家族须与原付款金额、UID、渠道及物理状态相符。新意图只可在前一真实 code=0、仍未完成且包裹严格增加时追加；旧包裹、承运商、联系方式与条目保持原值。明确非零部分请求重试保持首次 body/upload_time，即使另一个包裹已物理发货；UNKNOWN 不重发且阻止后继上传。10060012/10060019 两个系统忙碌码加入既有五次上传尝试边界，运力 API 重试规则不变。
+
+官方[发货信息录入](https://developers.weixin.qq.com/miniprogram/dev/server/API/order_shipping/api_uploadshippinginfo.html)本轮读取版本为2026-05-08，确认 express 的 mode2、最多15包、必填 is_all_delivered、更新需更晚 upload_time、完成后或模式/物流切换计入重新发货。当前“未完成且旧条目不变才追加”的规则是基于这些条件的保守实现，不代表真实微信账号验收。已完成后的更正与重新发货仍关闭。
+
+共用物流分类同时修正 TS/PHP 历史的“所有 shipping_type!=1 视为自提”问题：仅2是自提，1/3按明确 deliveryType 分类，未知及收银4拒绝。旧 PHP 的这一分支不能作为正确业务依据。type3目前有分类单测；真实拆包用例使用type1。源码未找到可证明门店归属的 TS 平台→门店生产者，不能用维护者设置 store_id 或传入客户端 store_id 来冒充 Manager 发货 HTTP 验收。
+
+| 冻结批次 | 实际结果与范围 |
+| --- | --- |
+| `native-reader-02` | 正式完整18项通过，141.76秒，12条输入不变；五LOGIN、App/Admin首装→显式Manager后继、真实三角色端口调用、回滚/重复/参数快照、源/owner/body/ACL漂移、NOWAIT/ROLE/RCRO与安装后的TEMP/search_path。其foundation及相关审计字节至最终批次未变。 |
+| `native-split-03` | 当时版本的真实业务完整10项通过，172.59秒，14条输入不变；后续增加两个忙碌码及共用物流分类，最终结果以下一行替代，不重复累计。 |
+| `final-04` | 当前完整发货原生12项、三文件单元36项、标准Worker unit/runtime及Admin类型检查全部通过；17条实现/测试/夹具输入全程不变。 |
+
+原生集群均记录 remaining=0 和 STOPPED；本地受控 HTTP 期间独立连接证明家族与 notice 的物理锁已释放。最终12项保留阶段32七项原账号、时钟、UNKNOWN、权限与原子回滚回归，并覆盖真实部分→完整两包、UNKNOWN阻后继，以及-1/10060012/10060019三种原体重试后完整上传。专用18项的同城冲突任务是明确维护测试标本，不声称执行真实同城 provider。所有重型检查使用一层共享串行锁，未增加内存、超时或并发。
+
+首轮 `native-reader-01` 为3通过/6失败：五个漂移子操作塞入同一个默认5秒用例导致超时，后续锁及未安装函数错误级联；回滚用例实际完成安装再回滚，末尾TEMP用例当时能力缺失，不能计作已安装证明。只把有限子场景拆成独立用例，保留原默认限制后，才得到完整18项通过；原失败保留，不累计通过或误称产品目录修复。原始日志、输入及终态位于本地 `.cache/php-ts-phase33-validation/`；本节与合同文档在最终验证后补齐，实现/测试字节仍匹配冻结输入，提交文件另做秘密扫描。
+
+未单独执行15/16包边界、连续三次以上扩包、运力列表删除旧公司、reader维护与fresh/recovery业务竞态或退款物化家族负例。Manager的函数能力与五角色共存已验收，Manager发货HTTP/可信门店归属作者仍未闭合。充值、会员、付款后自提、更正、退款代次、旧SKIPPED/UNKNOWN维护恢复、前端会话/journal/Browser及既有历史CI问题继续待推进。本轮无生产DDL、部署、真实微信调用或新的UI验收；保留现有用户、UID、权益、旧单与付款，跨AppID归属屏障、runtime_ready=false及完整迁移未完成状态保持。

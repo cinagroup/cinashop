@@ -5,6 +5,7 @@ import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_
 import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES } from './routineIdentityOwnership';
 import { inspectRoutinePaymentAccountPolicyCatalog, ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES } from './routinePaymentAccountPolicy';
 import { inspectRoutineShippingCatalog, ROUTINE_SHIPPING_RUNTIME_PRIVILEGES } from './routineShipping';
+import { inspectFulfillmentCityConflictReader } from './fulfillmentCityConflictReader';
 import { inspectAdminWechatAppOperation, ADMIN_WECHAT_APP_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatAppOperation';
 import { inspectNativeAppPaymentAuthority, NATIVE_APP_PAYMENT_AUTHORITY_RUNTIME_PRIVILEGES } from './nativeAppPaymentAuthority';
 import { inspectAdminWechatOpenOperation, ADMIN_WECHAT_OPEN_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatOpenOperation';
@@ -482,6 +483,12 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if (!supplierLabelWrite.absent && !supplierLabelWrite.ready) failures.push('supplier_product_label_capability');
     const reviewedSupplierLabel = kind === 'app' && supplierLabelWrite.ready
       ? supplierLabelWrite.functionOid : null;
+    const cityReader=await inspectFulfillmentCityConflictReader(tx,{maintenance:names.maintenance,app:names.app,admin:names.admin}),declaredCity=peers?.cityConflictReaders;
+    const cityReaderMatches=cityReader.ready&&cityReader.binding&&declaredCity
+      &&cityReader.binding.owner===declaredCity.owner
+      &&(['app','admin','manager'] as const).every(actor=>!!cityReader.binding!.actors[actor]===!!declaredCity[actor]);
+    if((cityReader.present||declaredCity)&&!cityReaderMatches)failures.push('city_conflict_reader_declaration');
+    const reviewedCityReader=cityReaderMatches&&declaredCity?.[kind]?cityReader.functionOid:null;
     onStage?.('routines');
     const [routines]=await tx.execute(sql`SELECT NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
       JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE p.prosecdef AND n.nspname NOT LIKE 'pg_%'
@@ -494,7 +501,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
 
       AND p.oid::text IS DISTINCT FROM ${reviewedSupplierLabel}
       AND p.oid::text IS DISTINCT FROM ${reviewedPlatformMenu}
-      AND p.oid::text IS DISTINCT FROM ${reviewedRoutineWrite}) AS no_unreviewed_definer,
+      AND p.oid::text IS DISTINCT FROM ${reviewedRoutineWrite}
+      AND p.oid::text IS DISTINCT FROM ${reviewedCityReader}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
         AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
     if(routines?.no_unreviewed_definer!==true || routines?.no_delegation!==true)failures.push('routine_authority');

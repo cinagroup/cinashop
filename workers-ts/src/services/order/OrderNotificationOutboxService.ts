@@ -29,6 +29,7 @@ import { normalizeConfigScalar } from "@/utils/config";
 import { assertCustomerCityDeliveryReady } from '@/migrations/customerCityDelivery';
 import {assertGuestRefundRefusedNoticeSource} from './GuestRefundRefusedNoticeSource';
 import { readRoutineNotificationAppIdInTx, RoutineConfigurationError } from '@/services/wechat/RoutineRuntimeConfig';
+import { routineShippingLogisticsType } from '@/services/wechat/RoutineShippingLogistics';
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
@@ -1019,9 +1020,8 @@ async function stageExternalNotifications(
     transactionId = rootRows[0].tradeNo.trim();
     isAllDelivered = pendingRows.length === 0;
   }
-  const logisticsType = context.order.shippingType !== 1
-    ? 4
-    : delivery.deliveryType === "express" ? 1 : (delivery.deliveryType === "send" || delivery.deliveryType === "city_delivery") ? 2 : 3;
+  const logisticsType = routineShippingLogisticsType(context.order.shippingType,delivery.deliveryType);
+  if(logisticsType===null)return;
   // The real payer is resolved from authenticated original payment evidence at
   // consumption. Retain a committed historical target only for immutable replay.
   const [historicalShipping] = await tx.select({ target: orderNotificationDelivery.target, payload: orderNotificationDelivery.payload }).from(orderNotificationDelivery)

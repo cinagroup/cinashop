@@ -148,9 +148,23 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
       if(lock.runtimeReady)managerCaseOid=lock.functionOid;
     }
   }
+  let cityReaderOid:string|null=null;
+  if(sharedScope&&schema==='public'){
+    const [actual]=await tx.execute<{role:string;roleOid:string}>(sql`SELECT r.rolname AS role,r.oid::text AS "roleOid"
+      FROM pg_catalog.pg_roles r JOIN pg_catalog.pg_stat_activity a ON a.usesysid=r.oid
+      WHERE a.pid=pg_catalog.pg_backend_pid() AND r.rolname=current_user AND current_user=session_user
+        AND pg_catalog.current_setting('role')='none' AND pg_catalog.current_setting('session_replication_role')='origin'
+        AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
+        AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)`);
+    if(actual){
+      const city=await(await import('./fulfillmentCityConflictReader')).inspectFulfillmentCityConflictReader(tx),b=city.binding;
+      if(city.ready&&b&&(['app','admin','manager'] as const).some(actor=>b.actors[actor]
+        &&b[actor]===actual.role&&b[`${actor}Oid`]===actual.roleOid))cityReaderOid=city.functionOid;
+    }
+  }
   const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
     ...supplierManualOids,...ordinaryOids,...supplierLabelOids,...(managerCaseOid?[managerCaseOid]:[]),
-    ...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[])];
+    ...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[]),...(cityReaderOid?[cityReaderOid]:[])];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()

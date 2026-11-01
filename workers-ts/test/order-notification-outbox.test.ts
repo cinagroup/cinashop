@@ -10,6 +10,7 @@ import {
 } from "../src/services/order/OrderNotificationOutboxService";
 import { consumeOrderNotificationOutboxQueueMessage } from "../src/services/order/OrderPaidOutboxQueueConsumer";
 import { prepareOrderQueueDeadLetter } from "../src/services/order/OrderQueueDeadLetterService";
+import { routineShippingLogisticsType } from '../src/services/wechat/RoutineShippingLogistics';
 
 function notificationMessage(attempts = 1) {
   return {
@@ -25,6 +26,19 @@ function notificationMessage(attempts = 1) {
 }
 
 describe("order notification outbox", () => {
+  it('classifies physical store delivery independently of pickup and refuses unsupported fulfillment types',()=>{
+    // Legacy store assignment changes shipping_type 1 to 3. It does not turn
+    // the same express/city/virtual fulfillment into customer pickup.
+    for(const shippingType of[1,3]){
+      expect(routineShippingLogisticsType(shippingType,'express')).toBe(1);
+      expect(routineShippingLogisticsType(shippingType,'send')).toBe(2);
+      expect(routineShippingLogisticsType(shippingType,'city_delivery')).toBe(2);
+      expect(routineShippingLogisticsType(shippingType,'fictitious')).toBe(3);
+      expect(routineShippingLogisticsType(shippingType,'unknown')).toBeNull();
+    }
+    expect(routineShippingLogisticsType(2,'send')).toBe(4);
+    for(const shippingType of[0,4,99])expect(routineShippingLogisticsType(shippingType,'express')).toBeNull();
+  });
   it("uses stable event keys and a distinct Queue contract", () => {
     expect(orderDeliveryNoticeEventKey(42)).toBe(`${ORDER_DELIVERY_NOTICE_EVENT}:42`);
     expect(orderRefundRefusedNoticeEventKey(7)).toBe(`${ORDER_REFUND_REFUSED_NOTICE_EVENT}:7`);
