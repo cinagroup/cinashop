@@ -121,7 +121,11 @@ export async function inspectCustomerCashierSecondCardRuntimePrivileges(db: Quer
     if (row.allowed !== (plan.tables[name]?.some(value => value === privilege) ?? false) || row.delegate !== false) failures.push(`table:${name}:${privilege}`);
     if (plan.tables[name]) {
       if (row.relkind !== 'r' || row.relpersistence !== 'p' || row.nonordinary !== false || row.owned !== true) failures.push(`shape:${name}`);
-      const expected = sourceTables.get(name);
+      const source = sourceTables.get(name);
+      // The prerequisite inspector already proved the whole owner-bound
+      // subject/event/index successor in this transaction; no Drizzle expansion
+      // or bare two-column exception is accepted here.
+      const expected = source&&name==='order_notification_delivery'?[...source,...catalogs.virtualShippingSubjectColumns]:source;
       if (expected && (!Array.isArray(row.columns)
         || JSON.stringify([...row.columns].sort()) !== JSON.stringify([...expected].sort()))) failures.push(`columns:${name}`);
     }

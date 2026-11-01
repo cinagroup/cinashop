@@ -1,6 +1,8 @@
 import type postgres from 'postgres';
 import type { DbClient } from '../lib/di';
 import { inspectWithdrawalReplayUpgrade } from './runWithdrawalReplayUpgrade';
+import { ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL, classifyRoutineVirtualShippingSubjects,
+  routineVirtualShippingEventDefinition, type RoutineVirtualShippingSubjectsStructure } from './routineVirtualShippingSubjects';
 
 // Fixed DB-007 operation only: external 0131–0133, directly to the final
 // superset CHECK. Never replay the intermediate narrower notification CHECKs.
@@ -26,6 +28,7 @@ type State = {
   keyPresent: boolean; keyCorrect: boolean; withdrawalPresent: boolean; withdrawalCorrect: boolean;
   orderNullable: boolean; subjectPresent: boolean; subjectCorrect: boolean;
   eventDefinition: string | null; eventValidated: boolean;
+  virtualSubjects: RoutineVirtualShippingSubjectsStructure | null;
   indexes: { name: string; definition: string | null; valid: boolean; ready: boolean }[];
 };
 
@@ -74,16 +77,27 @@ async function state(tx: postgres.TransactionSql): Promise<State> {
       LEFT JOIN pg_catalog.pg_index i ON i.indexrelid=c.oid WHERE n.nspname='public' AND c.relname IN ('cf_event_key_uq','ond_withdrawal','smsg_staff_inbox'))
   ) AS state`;
   if (!row) throw new Error('Withdrawal effects catalog unavailable');
+  const [virtual] = await tx.unsafe<Record<string, unknown>[]>(ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL);
+  const marked = virtual && (Number(virtual.subject_columns)>0 || Number(virtual.indexes)>0
+    || String(virtual.subject_definition).includes('subject_domain')
+    || String(virtual.event_definition).includes('recharge.paid.shipping') || String(virtual.event_definition).includes('membership.paid.shipping'));
+  row.state.virtualSubjects = marked ? classifyRoutineVirtualShippingSubjects(virtual) : null;
   return row.state;
+}
+function knownReadyEvents(s: State): boolean {
+  return READY_EVENT_COUNTS.some(n => s.eventDefinition===eventDefinition(n))
+    || s.eventDefinition===routineVirtualShippingEventDefinition(true,false) || s.virtualSubjects?.ready===true;
 }
 function supported(s: State): boolean {
   return s.baseSupported && s.noEventTriggers && (!s.keyPresent || s.keyCorrect)
-    && (!s.withdrawalPresent || s.withdrawalCorrect) && (!s.subjectPresent || s.subjectCorrect)
-    && s.eventValidated && SUPPORTED_EVENT_COUNTS.some(n => eventDefinition(n) === s.eventDefinition)
+    && (!s.withdrawalPresent || s.withdrawalCorrect) && (!s.subjectPresent || s.subjectCorrect || s.virtualSubjects?.ready===true)
+    && (!s.virtualSubjects || s.virtualSubjects.ready)
+    && s.eventValidated && (SUPPORTED_EVENT_COUNTS.some(n => eventDefinition(n) === s.eventDefinition)
+      || s.eventDefinition===routineVirtualShippingEventDefinition(true,false) || s.virtualSubjects?.ready===true)
     && s.indexes.every(i => i.valid && i.ready && Object.entries(INDEXES).some(([name,definition]) => name===i.name && definition===i.definition));
 }
 const ready = (s: State) => supported(s) && s.keyCorrect && s.withdrawalCorrect && s.orderNullable
-  && s.subjectCorrect && READY_EVENT_COUNTS.some(n => s.eventDefinition===eventDefinition(n)) && s.indexes.length===3;
+  && (s.subjectCorrect || s.virtualSubjects?.ready===true) && knownReadyEvents(s) && s.indexes.length===3;
 function validate(s: State) { if (!supported(s)) throw new Error('Withdrawal effects prerequisite drift; no automatic repair'); }
 async function configure(tx: postgres.TransactionSql) {
   await tx`SELECT pg_catalog.set_config('search_path','pg_catalog,public,pg_temp',true),
@@ -147,7 +161,7 @@ export async function runWithdrawalEffectsUpgrade(db: Pick<DbClient,'$client'>) 
     if (!initial.orderNullable) await tx`ALTER TABLE public.order_notification_delivery ALTER COLUMN order_id DROP NOT NULL`;
     if (!initial.subjectPresent) await tx`ALTER TABLE public.order_notification_delivery ADD CONSTRAINT ond_subject_ck CHECK (
       (withdrawal_id IS NULL AND order_id IS NOT NULL) OR (withdrawal_id IS NOT NULL AND withdrawal_id>0 AND order_id IS NULL))`;
-    if (!READY_EVENT_COUNTS.some(n => initial.eventDefinition===eventDefinition(n))) {
+    if (!knownReadyEvents(initial)) {
       await tx`ALTER TABLE public.store_order_outbox DROP CONSTRAINT soob_event_type_ck`;
       await tx.unsafe(`ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (event_type IN (${EVENTS.slice(0,9).map(e => `'${e}'`).join(',')}))`);
     }

@@ -3,6 +3,8 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { PRODUCT_SAVE_EFFECTS_EVENTS } from './productSaveEffects';
+import { ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL, ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION,
+  routineVirtualShippingEventDefinition, inspectRoutineVirtualShippingSubjectsStructure } from './routineVirtualShippingSubjects';
 export const SUPPLIER_ORDER_PRICE_REVISION_EVENTS = [...PRODUCT_SAVE_EFFECTS_EVENTS, 'order.price.revision'] as const;
 export const SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION = `CHECK (((event_type)::text = ANY ((ARRAY[${SUPPLIER_ORDER_PRICE_REVISION_EVENTS.map(event => `'${event}'::character varying`).join(', ')}])::text[])))`;
 export const SUPPLIER_ORDER_PRICE_REVISION_SQL = String.raw`-- Expand only the known event whitelist. No business rows, roles or privileges change.
@@ -16,6 +18,8 @@ DECLARE
   current_definition text;
   existing_comment text;
   row_count integer;
+  virtual_catalog record;
+  virtual_successor boolean := false;
 BEGIN
   IF current_setting('server_version_num')::integer/10000<>16 OR current_setting('session_replication_role')<>'origin'
     OR current_user<>session_user OR current_schema()<>'pg_catalog' THEN
@@ -35,18 +39,35 @@ BEGIN
       AND c.conkey=ARRAY[a.attnum]::smallint[] AND a.atttypid='varchar'::regtype AND a.atttypmod=68
       AND a.attnotnull AND a.attgenerated='' AND a.attidentity='' AND NOT a.atthasdef
       AND a.attcollation='pg_catalog."default"'::regcollation AND NOT a.attisdropped;
+  IF current_definition IN ('${routineVirtualShippingEventDefinition(false).replaceAll("'","''")}',
+      '${routineVirtualShippingEventDefinition(true).replaceAll("'","''")}') THEN
+    SELECT * INTO virtual_catalog FROM (${ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL}) virtual_structure;
+    IF NOT COALESCE(virtual_catalog.safe AND virtual_catalog.core AND virtual_catalog.subject_safe AND virtual_catalog.event_safe
+      AND virtual_catalog.subject_columns=2 AND virtual_catalog.columns_ready AND virtual_catalog.indexes=1 AND virtual_catalog.index_ready
+      AND virtual_catalog.subject_definition='${ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''")}',false) THEN
+      RAISE EXCEPTION 'Supplier order price revision virtual subject prerequisite drift; no automatic repair';
+    END IF;
+    IF current_definition='${routineVirtualShippingEventDefinition(true).replaceAll("'","''")}' THEN RETURN; END IF;
+    virtual_successor := true;
+  END IF;
   IF current_definition = 'CHECK (((event_type)::text = ANY ((ARRAY[''order.paid''::character varying, ''order.delivery.notice''::character varying, ''order.refund.refused.notice''::character varying, ''order.second_card.advent.notice''::character varying, ''order.second_card.expired.notice''::character varying, ''withdrawal.approved.notice''::character varying, ''withdrawal.refused.notice''::character varying, ''withdrawal.applied.notice''::character varying, ''withdrawal.staff.refresh''::character varying, ''order.presale.fulfillment''::character varying, ''order.pink.success.notice''::character varying, ''product.stock.effects''::character varying, ''product.recycle.effects''::character varying, ''product.save.effects''::character varying, ''order.price.revision''::character varying])::text[])))' THEN
     RETURN;
   END IF;
-  IF current_definition IS DISTINCT FROM 'CHECK (((event_type)::text = ANY ((ARRAY[''order.paid''::character varying, ''order.delivery.notice''::character varying, ''order.refund.refused.notice''::character varying, ''order.second_card.advent.notice''::character varying, ''order.second_card.expired.notice''::character varying, ''withdrawal.approved.notice''::character varying, ''withdrawal.refused.notice''::character varying, ''withdrawal.applied.notice''::character varying, ''withdrawal.staff.refresh''::character varying, ''order.presale.fulfillment''::character varying, ''order.pink.success.notice''::character varying, ''product.stock.effects''::character varying, ''product.recycle.effects''::character varying, ''product.save.effects''::character varying])::text[])))' THEN
+  IF NOT virtual_successor AND current_definition IS DISTINCT FROM 'CHECK (((event_type)::text = ANY ((ARRAY[''order.paid''::character varying, ''order.delivery.notice''::character varying, ''order.refund.refused.notice''::character varying, ''order.second_card.advent.notice''::character varying, ''order.second_card.expired.notice''::character varying, ''withdrawal.approved.notice''::character varying, ''withdrawal.refused.notice''::character varying, ''withdrawal.applied.notice''::character varying, ''withdrawal.staff.refresh''::character varying, ''order.presale.fulfillment''::character varying, ''order.pink.success.notice''::character varying, ''product.stock.effects''::character varying, ''product.recycle.effects''::character varying, ''product.save.effects''::character varying])::text[])))' THEN
     RAISE EXCEPTION 'Supplier order price revision outbox event CHECK drift; no automatic repair';
   END IF;
   SELECT count(*) INTO row_count FROM (SELECT 1 FROM public.store_order_outbox LIMIT 10001) bounded;
   IF row_count>10000 THEN RAISE EXCEPTION 'Supplier order price revision outbox maintenance row budget exceeded'; END IF;
   ALTER TABLE public.store_order_outbox DROP CONSTRAINT soob_event_type_ck;
+  IF virtual_successor THEN
+    ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
+      event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice', 'order.second_card.advent.notice', 'order.second_card.expired.notice', 'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice', 'product.stock.effects', 'product.recycle.effects', 'product.save.effects', 'order.price.revision', 'recharge.paid.shipping', 'membership.paid.shipping')
+    );
+  ELSE
   ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
     event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice', 'order.second_card.advent.notice', 'order.second_card.expired.notice', 'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice', 'product.stock.effects', 'product.recycle.effects', 'product.save.effects', 'order.price.revision')
   );
+  END IF;
   IF existing_comment IS NOT NULL THEN
     EXECUTE format('COMMENT ON CONSTRAINT soob_event_type_ck ON public.store_order_outbox IS %L',existing_comment);
   END IF;
@@ -79,6 +100,9 @@ export async function assertSupplierOrderPriceRevisionReady(tx: Pick<DbClient, '
       JOIN pg_catalog.pg_constraint k ON k.conrelid=c.oid AND k.conname='soob_event_type_ck'
       JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid AND a.attname='event_type'
     WHERE c.relname='store_order_outbox'`);
-  if (!row || row.supported!==true || row.safe!==true || row.definition!==SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION)
+  const known = row?.definition===SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION
+    || row?.definition===routineVirtualShippingEventDefinition(true)
+      && (await inspectRoutineVirtualShippingSubjectsStructure(tx)).state==='virtual17';
+  if (!row || row.supported!==true || row.safe!==true || !known)
     throw new ServiceUnavailableException('订单改价通知维护协议尚未就绪');
 }

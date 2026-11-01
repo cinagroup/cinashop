@@ -8,6 +8,7 @@ import { resolveWechatPaymentIdentity } from "@/services/payment/WechatPaymentId
 import { admitExternalPaymentInitiation } from '@/services/payment/PaymentInitiationAdmission';
 import { WechatPayService } from "@/services/wechat/WechatPayService";
 import { NotFoundException, ValidateException } from "@/utils/errors";
+import { stageRoutineVirtualPaidShippingTx } from '@/services/order/RoutineVirtualPaidShipping';
 
 export type RechargePaymentOutcome = "paid" | "already-paid" | "missing";
 
@@ -20,11 +21,14 @@ export interface ApplyRechargePaymentInput {
   now?: number;
   /** Recheck a provider query's evidence while the order row is locked. */
   authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
+  /** Passed only by the actual Routine callback/signed-query consumer. */
+  routineShipping?: Pick<Env,'APP_KEY'>;
 }
 
 export interface ApplyRechargePaymentResult {
   outcome: RechargePaymentOutcome;
   balance: string | null;
+  shippingEventKey?: string;
 }
 
 function assertRechargeOrderId(orderId: string): void {
@@ -49,6 +53,7 @@ export async function applyRechargePayment(
   container: Container,
   params: ApplyRechargePaymentInput,
 ): Promise<ApplyRechargePaymentResult> {
+  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{})};
   const orderId = params.orderId.trim();
   assertRechargeOrderId(orderId);
   if (!params.tradeNo || params.tradeNo.length > 100) {
@@ -130,7 +135,9 @@ export async function applyRechargePayment(
       addTime: now,
     });
 
-    return { outcome: "paid", balance };
+    const shippingEventKey=params.payType==='weixin'
+      ?await stageRoutineVirtualPaidShippingTx(tx,params.routineShipping,'recharge',order.id,now):null;
+    return { outcome: "paid", balance,...(shippingEventKey?{shippingEventKey}:{}) };
   });
 }
 

@@ -1,3 +1,4 @@
+import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
   and,
   asc,
@@ -961,7 +962,9 @@ export class PaymentReconciliationService {
         tradeNo: result.transactionId,
         expectedAmountCents: result.amountCents,
         authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "recharge"),
+        routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
       });
+      await dispatchCommittedRoutineVirtualShipping(this.container,this.env,settled.shippingEventKey);
       return settlementOutcome("recharge", settled.outcome);
     }
     const settled = await applyProviderMembershipPayment(this.container, {
@@ -970,7 +973,9 @@ export class PaymentReconciliationService {
       tradeNo: result.transactionId,
       expectedAmountCents: result.amountCents,
       authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "membership"),
+      routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
     });
+    await dispatchCommittedRoutineVirtualShipping(this.container,this.env,settled.shippingEventKey);
     return settlementOutcome("membership", settled.outcome);
   }
 }

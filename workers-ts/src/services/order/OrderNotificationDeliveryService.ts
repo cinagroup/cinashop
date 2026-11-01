@@ -27,8 +27,10 @@ import { supplierOrderPriceRevisionIsActive } from '@/services/supplier/Supplier
 import { sendWithdrawalWecomRobot, WECOM_WITHDRAWAL_TARGET } from "@/services/wechat/WithdrawalWecomRobotProvider";
 
 import { captureRoutineShippingDeliveryEnv, processRoutineShippingDelivery } from '@/services/payment/RoutineShippingDispatch';
-import { routineShippingUnavailable } from '@/services/payment/RoutineShippingAccount';
+import { routineShippingClockTx, routineShippingUnavailable } from '@/services/payment/RoutineShippingAccount';
 import { assertRoutineShippingReadTx } from '@/migrations/routineShipping';
+import { assertRoutineVirtualShippingSubjectsReadTx } from '@/migrations/routineVirtualShippingSubjects';
+import { routineVirtualPaidKey, ROUTINE_VIRTUAL_PAID_DELAY } from './RoutineVirtualPaidShipping';
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -68,8 +70,9 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
-    isChannel(message.channel) && (!message.eventKey.startsWith('order.paid:') || message.channel==='wechat_shipping');
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    isChannel(message.channel) && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
+    (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null);
 }
 
 function retryDelaySeconds(attempt: number): number {
@@ -142,24 +145,34 @@ function isAliyunRetryable(code: string): boolean {
   return /^(?:isp\.ram_action_not_support|throttling|system\.error|isp\.system_error)/i.test(code);
 }
 
-export class OrderNotificationDeliveryService {
-  constructor(
-    private readonly container: Container,
-    private readonly env: Env,
-  ) {}
+/** Queue-only capability shared by post-commit settlement and the scanner. */
+export class OrderNotificationDeliveryDispatcher {
+  constructor(protected readonly container:Container,private readonly queue:Queue<OrderMessage>) {}
 
   async dispatchPending(
     limit = 20,
     eventKey?: string,
   ): Promise<{ claimed: number; enqueued: number; unknown: number }> {
+    return this.dispatch(limit,eventKey,false);
+  }
+
+  /** Claim one just-committed virtual intent and let Queue defer its delivery;
+   * the ordinary scanner only claims due rows and recovers an unavailable send. */
+  async dispatchVirtualPaid(eventKey:string):Promise<{claimed:number;enqueued:number;unknown:number}>{
+    if(!routineVirtualPaidKey(eventKey))throw new ValidateException('虚拟付款发货事件无效');
+    return this.dispatch(1,eventKey,true);
+  }
+
+  private async dispatch(limit:number,eventKey:string|undefined,earlyVirtual:boolean):Promise<{claimed:number;enqueued:number;unknown:number}>{
     const boundedLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
     const now = Math.floor(Date.now() / 1_000);
+    const eligibilityNow=earlyVirtual?await withTx(this.container,tx=>routineShippingClockTx(tx)):now;
     const leaseToken = crypto.randomUUID();
     const unknownRows = await this.markExpiredProviderCallsUnknown(now, eventKey);
     const eligible = or(
       and(
         inArray(orderNotificationDelivery.status, ["PENDING", "RETRYABLE"]),
-        lte(orderNotificationDelivery.availableTime, now),
+        lte(orderNotificationDelivery.availableTime, eligibilityNow+(earlyVirtual?ROUTINE_VIRTUAL_PAID_DELAY:0)),
       ),
       and(
         inArray(orderNotificationDelivery.status, ["ENQUEUING", "ENQUEUED"]),
@@ -174,6 +187,9 @@ export class OrderNotificationDeliveryService {
           id: orderNotificationDelivery.id,
           eventKey: orderNotificationDelivery.eventKey,
           channel: orderNotificationDelivery.channel,
+          availableTime: orderNotificationDelivery.availableTime,
+          queueDelay:sql<number>`CASE WHEN ${orderNotificationDelivery.eventKey} OPERATOR(pg_catalog.~) '^(recharge|membership)[.]paid[.]shipping:[1-9][0-9]*$'
+            THEN GREATEST(0,LEAST(10,${orderNotificationDelivery.addTime}::bigint+10-FLOOR(EXTRACT(EPOCH FROM pg_catalog.clock_timestamp()))::bigint))::integer ELSE 0 END`,
         })
         .from(orderNotificationDelivery)
         .where(and(...conditions))
@@ -193,7 +209,7 @@ export class OrderNotificationDeliveryService {
     if (!claimed.length) return { claimed: 0, enqueued: 0, unknown: unknownRows };
 
     try {
-      await this.env.ORDER_QUEUE.sendBatch(claimed.map((row) => ({
+      const messages=claimed.map((row) => ({
         body: {
           action: "processOrderNotificationDelivery" as const,
           deliveryId: row.id,
@@ -201,7 +217,13 @@ export class OrderNotificationDeliveryService {
           channel: row.channel,
         },
         contentType: "json" as const,
-      })));
+        ...(!earlyVirtual&&routineVirtualPaidKey(row.eventKey)?{delaySeconds:row.queueDelay}:{}),
+      }));
+      if(earlyVirtual){
+        const delay=Math.max(0,...claimed.map(row=>row.queueDelay));
+        if(delay>ROUTINE_VIRTUAL_PAID_DELAY||claimed.some(row=>row.channel!=='wechat_shipping'))throw new ValidateException('虚拟付款发货延迟无效');
+        await this.queue.sendBatch(messages,{delaySeconds:delay});
+      }else await this.queue.sendBatch(messages);
       await withTx(this.container, async (tx) => {
         const transitioned = await tx.update(orderNotificationDelivery).set({
           status: "ENQUEUED",
@@ -238,6 +260,30 @@ export class OrderNotificationDeliveryService {
     }
   }
 
+  private async markExpiredProviderCallsUnknown(now: number, eventKey?: string): Promise<number> {
+    const conditions: SQL[] = [
+      eq(orderNotificationDelivery.status, "PROCESSING"),
+      lte(orderNotificationDelivery.leaseUntil, now),
+    ];
+    if (eventKey) conditions.push(eq(orderNotificationDelivery.eventKey, eventKey));
+    const rows = await withTx(this.container, (tx) => tx
+      .update(orderNotificationDelivery)
+      .set({
+        status: "UNKNOWN",
+        leaseToken: "",
+        leaseUntil: 0,
+        lastError: "provider_result_unknown_after_expired_lease",
+        updateTime: now,
+      })
+      .where(and(...conditions))
+      .returning({ id: orderNotificationDelivery.id }));
+    return rows.length;
+  }
+}
+
+export class OrderNotificationDeliveryService extends OrderNotificationDeliveryDispatcher {
+  constructor(container:Container,private readonly env:Env){super(container,env.ORDER_QUEUE);}
+
   async processMessage(
     message: OrderNotificationDeliveryMessage,
     fetcher: typeof fetch = fetch,
@@ -249,6 +295,9 @@ export class OrderNotificationDeliveryService {
       // optional namespace is handled as a deterministic refusal after claim;
       // wrong principals or partial/drifted storage never receive that claim.
       await withTx(this.container, tx => assertRoutineShippingReadTx(tx));
+      if(routineVirtualPaidKey(message.eventKey))await withTx(this.container,async tx=>{
+        if(!await assertRoutineVirtualShippingSubjectsReadTx(tx))return routineShippingUnavailable();
+      });
     }
     const claim = await this.claim(message);
     if (typeof claim === "string") return claim;
@@ -381,6 +430,11 @@ export class OrderNotificationDeliveryService {
         return "unknown";
       }
       if (row.status !== "ENQUEUED") return "busy";
+      if(routineVirtualPaidKey(row.eventKey)){
+        // An application clock ahead of PG cannot consume the initial PHP
+        // deferral. Existing retry scheduling still uses its ordinary clock.
+        if(row.availableTime>now||row.addTime+ROUTINE_VIRTUAL_PAID_DELAY>await routineShippingClockTx(tx))return 'busy';
+      }
       if(!await customerCityQueuedNoticeIsActive(tx,row.eventKey)){
         await tx.update(orderNotificationDelivery).set({status:'SKIPPED',leaseToken:'',leaseUntil:0,lastError:'city_attempt_no_longer_active',updateTime:now}).where(eq(orderNotificationDelivery.id,row.id));
         return 'skipped';
@@ -442,25 +496,6 @@ export class OrderNotificationDeliveryService {
     if (!updated[0]) throw new Error("外部通知投递租约已失效");
   }
 
-  private async markExpiredProviderCallsUnknown(now: number, eventKey?: string): Promise<number> {
-    const conditions: SQL[] = [
-      eq(orderNotificationDelivery.status, "PROCESSING"),
-      lte(orderNotificationDelivery.leaseUntil, now),
-    ];
-    if (eventKey) conditions.push(eq(orderNotificationDelivery.eventKey, eventKey));
-    const rows = await withTx(this.container, (tx) => tx
-      .update(orderNotificationDelivery)
-      .set({
-        status: "UNKNOWN",
-        leaseToken: "",
-        leaseUntil: 0,
-        lastError: "provider_result_unknown_after_expired_lease",
-        updateTime: now,
-      })
-      .where(and(...conditions))
-      .returning({ id: orderNotificationDelivery.id }));
-    return rows.length;
-  }
 }
 
 /** Narrow queue consumer keeps retry policy independent from provider payloads. */

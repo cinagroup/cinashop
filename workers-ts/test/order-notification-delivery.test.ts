@@ -31,6 +31,12 @@ describe("外部通知投递账本", () => {
     expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:9", channel: "wechat_shipping" })).toBe(true);
     expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:9", channel: "wechat_routine" })).toBe(false);
     expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: "order.paid:0", channel: "wechat_shipping" })).toBe(false);
+    for(const domain of ['recharge','membership']){
+      expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: `${domain}.paid.shipping:9`, channel: 'wechat_shipping' })).toBe(true);
+      expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: `${domain}.paid.shipping:9`, channel: 'wechat_routine' })).toBe(false);
+      expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: `${domain}.paid.shipping:0`, channel: 'wechat_shipping' })).toBe(false);
+      expect(isOrderNotificationDeliveryMessage({ ...message(), eventKey: `${domain}.paid.shipping:9007199254740992`, channel: 'wechat_shipping' })).toBe(false);
+    }
     expect(message()).not.toHaveProperty("target");
     expect(message()).not.toHaveProperty("payload");
   });

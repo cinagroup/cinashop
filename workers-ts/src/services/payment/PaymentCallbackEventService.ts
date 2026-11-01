@@ -1,3 +1,4 @@
+import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
   and,
   asc,
@@ -480,7 +481,9 @@ export class PaymentCallbackEventService {
         tradeNo: callback.transactionId,
         expectedAmountCents: callback.amountCents,
         authorizeBeforePayment: tx => original(tx, 'recharge'),
+        routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
       });
+      await dispatchCommittedRoutineVirtualShipping(this.container,this.env,result.shippingEventKey);
       return domainOutcome("recharge", result.outcome);
     }
     const result = await applyProviderMembershipPayment(this.container, {
@@ -489,7 +492,9 @@ export class PaymentCallbackEventService {
       tradeNo: callback.transactionId,
       expectedAmountCents: callback.amountCents,
       authorizeBeforePayment: tx => original(tx, 'membership'),
+      routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
     });
+    await dispatchCommittedRoutineVirtualShipping(this.container,this.env,result.shippingEventKey);
     return domainOutcome("membership", result.outcome);
   }
 

@@ -1,3 +1,4 @@
+import { readRoutineVirtualPaidSourceTx, routineVirtualPaidKey, routineVirtualPaidPayload, ROUTINE_VIRTUAL_PAID_MARK, type RoutineVirtualShippingDomain } from '@/services/order/RoutineVirtualPaidShipping';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { and,asc,eq,inArray,or,sql } from 'drizzle-orm';
@@ -40,9 +41,18 @@ interface DispatchPayload {
  actor:{role:string;roleOid:string};previousDispatchId:string;correction:boolean;
 }
 export interface RoutineShippingDispatch {dispatch_id:string;delivery_id:number;source_key:string;payload:DispatchPayload;created_at:number;signature:string}
+interface VirtualIdentity extends Omit<Identity,'rootId'|'childId'> {domain:RoutineVirtualShippingDomain;subjectId:number}
+interface VirtualPackage extends Omit<Package,'orderId'> {domain:RoutineVirtualShippingDomain;subjectId:number}
+interface VirtualSnapshot extends Omit<Snapshot,'identity'|'packages'> {identity:VirtualIdentity;packages:VirtualPackage[]}
+interface VirtualDispatchPayload extends Omit<DispatchPayload,'format'|'identity'|'packages'> {format:2;identity:VirtualIdentity;packages:VirtualPackage[]}
+export interface RoutineVirtualShippingDispatch extends Omit<RoutineShippingDispatch,'payload'> {payload:VirtualDispatchPayload}
+type AnyDispatch=RoutineShippingDispatch|RoutineVirtualShippingDispatch;
+type AnySnapshot=Snapshot|VirtualSnapshot;
+type AnyIdentity=Identity|VirtualIdentity;
+type AnyPackage=Package|VirtualPackage;
 interface Evidence {evidence_id:string;dispatch_id:string;payload:{format:1;dispatchSignature:string;result:RoutineShippingHttpResult};created_at:number;signature:string}
-const proofs=new WeakMap<RoutineShippingUploadProof,{dispatch:RoutineShippingDispatch;account:PreparedRoutineShippingAccount;claim:Readonly<RoutineShippingClaim>}>();
-const preflights=new WeakMap<Preflight,{snapshot:Snapshot;claim:Readonly<RoutineShippingClaim>;account:PreparedRoutineShippingAccount;existing:RoutineShippingDispatch|null}>();
+const proofs=new WeakMap<RoutineShippingUploadProof,{dispatch:AnyDispatch;account:PreparedRoutineShippingAccount;claim:Readonly<RoutineShippingClaim>}>();
+const preflights=new WeakMap<Preflight,{snapshot:AnySnapshot;claim:Readonly<RoutineShippingClaim>;account:PreparedRoutineShippingAccount;existing:AnyDispatch|null}>();
 const uploadSlot=Symbol('routine.shipping.upload-proof.v1'),preflightSlot=Symbol('routine.shipping.preflight.v1');
 export interface RoutineShippingUploadProof {readonly [uploadSlot]:true}
 interface Preflight {readonly [preflightSlot]:true}
@@ -52,7 +62,7 @@ const text=(value:unknown,max:number,empty=false):value is string=>typeof value=
 function root(container:Container){if(!Object.hasOwn(container.db,'$client')||!container.db.$client)return routineShippingUnavailable();}
 function captureClaim(value:RoutineShippingClaim):Readonly<RoutineShippingClaim>{
  const r=shippingObject(value,['id','eventKey','leaseToken']);
- if(!shippingInteger(r.id)||typeof r.eventKey!=='string'||!/^order\.(?:delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|paid:[1-9]\d*)$/u.test(r.eventKey)||!shippingUuid(r.leaseToken))return routineShippingUnavailable();
+ if(!shippingInteger(r.id)||typeof r.eventKey!=='string'||(!/^order\.(?:delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|paid:[1-9]\d*)$/u.test(r.eventKey)&&!routineVirtualPaidKey(r.eventKey))||!shippingUuid(r.leaseToken))return routineShippingUnavailable();
  return Object.freeze({id:r.id,eventKey:r.eventKey,leaseToken:r.leaseToken});
 }
 export function captureRoutineShippingDeliveryEnv(env:Env):Env{
@@ -71,7 +81,7 @@ async function claimed(tx:DbClient,c:Readonly<RoutineShippingClaim>,lock=true){
  const query=tx.select().from(orderNotificationDelivery).where(eq(orderNotificationDelivery.id,c.id)).limit(2);
  const rows=lock?await query.for('update',{noWait:true}):await query,row=rows[0];
  if(rows.length!==1||row.channel!=='wechat_shipping'||row.eventKey!==c.eventKey||row.status!=='PROCESSING'||row.leaseToken!==c.leaseToken
-  ||!shippingInteger(row.orderId)||row.withdrawalId!==null||row.templateCode!=='')return routineShippingUnavailable();
+  ||(routineVirtualPaidKey(c.eventKey)?row.orderId!==null:!shippingInteger(row.orderId))||row.withdrawalId!==null||row.templateCode!=='')return routineShippingUnavailable();
  const now=await routineShippingClockTx(tx);if(row.leaseUntil<=now)return routineShippingUnavailable();return row;
 }
 function masked(value:string){
@@ -84,7 +94,8 @@ function physical(order:Order){return{id:order.id,pid:order.pid,uid:order.uid,or
  deliveryCode:order.deliveryCode,userPhone:order.userPhone};}
 /** Physical family locks are acquired in ID order, before the delivery/outbox,
  * carts, original-payment boundary or independent NativeApp verifier. */
-async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Promise<Snapshot>{
+async function snapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Promise<AnySnapshot>{
+ if(routineVirtualPaidKey(c.eventKey))return virtualSnapshot(tx,env,c);
  await tables(tx);const initial=await claimed(tx,c,false);
  if(c.eventKey.startsWith('order.paid:'))return pickupSnapshot(tx,env,c,initial);
  const [hint]=await tx.select({id:storeOrder.id,pid:storeOrder.pid}).from(storeOrder).where(eq(storeOrder.id,initial.orderId!)).limit(1);
@@ -173,10 +184,33 @@ async function pickupSnapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClai
    allDelivered:true,mode:1,logisticsType:4,original,delivery};
 }
 
-function sourceKey(env:Signing,i:Identity){return shippingMac(env,'payment-source',[i.rootId,i.buyerUid,i.orderNo,i.transactionId,i.totalAmount,i.appId,i.merchantId,i.payerId]);}
+function sourceKey(env:Signing,i:AnyIdentity){
+ if('domain'in i)return shippingMac(env,'payment-source-v2',[i.domain,i.subjectId,i.buyerUid,i.orderNo,i.transactionId,i.totalAmount,i.appId,i.merchantId,i.payerId]);
+ return shippingMac(env,'payment-source',[i.rootId,i.buyerUid,i.orderNo,i.transactionId,i.totalAmount,i.appId,i.merchantId,i.payerId]);
+}
+async function virtualSnapshot(tx:DbClient,env:Env,c:Readonly<RoutineShippingClaim>):Promise<VirtualSnapshot>{
+ const {source,event}=await readRoutineVirtualPaidSourceTx(tx,env,c.eventKey);
+ const delivery=await claimed(tx,c);
+ const subjects=await tx.execute<{domain:string;id:number}>(sql`SELECT subject_domain AS domain,subject_id AS id
+  FROM public.order_notification_delivery WHERE id=${c.id} LIMIT 2`);
+ if(subjects.length!==1||subjects[0].domain!==source.domain||subjects[0].id!==source.subjectId||delivery.orderId!==null||delivery.withdrawalId!==null
+  ||delivery.outboxId!==event.id||delivery.userId!==source.buyerUid||delivery.noticeMark!==ROUTINE_VIRTUAL_PAID_MARK||delivery.target!==''
+  ||!shippingSame(delivery.payload,routineVirtualPaidPayload(source)))return routineShippingUnavailable();
+ const original=await readRoutineShippingOriginalTx(tx,env,{domain:source.domain,rootId:source.subjectId,buyerUid:source.buyerUid,
+  orderNo:source.orderNo,transactionId:source.transactionId,totalAmount:source.totalAmount});
+ await assertNativeAppExcludedForRoutineShippingTx(tx,env,original);
+ const facts=original.evidence.payload.observation.facts;
+ const identity:VirtualIdentity={domain:source.domain,subjectId:source.subjectId,buyerUid:source.buyerUid,orderNo:source.orderNo,
+  transactionId:source.transactionId,totalAmount:source.totalAmount,appId:facts.appId,merchantId:facts.merchantId,payerId:facts.payerId};
+ const part:VirtualPackage={domain:source.domain,subjectId:source.subjectId,eventId:event.id,eventKey:event.eventKey,logisticsType:3,
+  description:source.description,tracking:'',carrier:'',contact:'',digest:shippingMac(env,'virtual-paid-physical',[source,paidPickupEventIdentity(event)])};
+ const packages=[part],immutableDigest=shippingMac(env,'virtual-delivery-identity',[deliveryIdentity(delivery),subjects[0],part.digest,identity]);
+ return{identity,immutableDigest,stateDigest:shippingMac(env,'virtual-source-state',[identity,immutableDigest,packages]),packages,
+  allDelivered:true,mode:1,logisticsType:3,original,delivery};
+}
 /** A split upload is commissioned separately from shipping storage. This is a
  * fresh-use check only; durable accepted receipts acquire no new reader gate. */
-async function splitReader(tx:DbClient,s:Snapshot){
+async function splitReader(tx:DbClient,s:AnySnapshot){
  if(s.mode!==2)return;
  const [gate]=await tx.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(${FULFILLMENT_CITY_CONFLICT_GATE[0]},${FULFILLMENT_CITY_CONFLICT_GATE[1]}) AS locked`);
  if(gate?.locked!==true)throw new Deferred();
@@ -208,7 +242,40 @@ function parseRequest(raw:unknown):RoutineShippingRequest{
  return freezeShipping({order_key:{order_number_type:2 as const,transaction_id:order.transaction_id},logistics_type:r.logistics_type,delivery_mode:r.delivery_mode,
   ...(r.delivery_mode===2?{is_all_delivered:r.is_all_delivered as boolean}:{}),shipping_list:list,upload_time:r.upload_time,payer:{openid:payer.openid}});
 }
-function parseDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineShippingDispatch{
+function parseDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):AnyDispatch{
+ const record=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
+ const payload=shippingObject(record.payload,['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction']);
+ return payload.format===2?parseVirtualDispatch(env,raw,scope):parseStoreDispatch(env,raw,scope);
+}
+function parseVirtualDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineVirtualShippingDispatch{
+ const r=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
+ const p=shippingObject(r.payload,['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction']);
+ const i=shippingObject(p.identity,['domain','subjectId','buyerUid','orderNo','transactionId','totalAmount','appId','merchantId','payerId']);
+ const actor=shippingObject(p.actor,['role','roleOid']),o=shippingObject(p.original,['evidenceId','signature','relatedDigest','approvedUseDigest']);
+ const created=typeof r.created_at==='string'&&/^\d+$/u.test(r.created_at)?Number(r.created_at):r.created_at;
+ if(!shippingUuid(r.dispatch_id)||!shippingInteger(r.delivery_id)||!shippingHex(r.source_key)||!shippingInteger(created)||!shippingHex(r.signature)
+  ||p.format!==2||p.purpose!=='routine_shipping_upload'||!shippingSame(p.scope,scope)||!shippingHex(p.immutableDigest)
+  ||i.domain!=='recharge'&&i.domain!=='membership'||!['subjectId','buyerUid','totalAmount'].every(k=>shippingInteger(i[k]))
+  ||!text(i.orderNo,64)||!text(i.transactionId,100)||!text(i.appId,64)||!text(i.merchantId,64)||!text(i.payerId,128)
+  ||!text(actor.role,128)||typeof actor.roleOid!=='string'||!/^\d+$/u.test(actor.roleOid)
+  ||!shippingHex(o.evidenceId)||!shippingHex(o.signature)||!shippingHex(o.relatedDigest)||!shippingHex(o.approvedUseDigest)
+  ||p.previousDispatchId!==''||p.correction!==false||!Array.isArray(p.packages)||p.packages.length!==1)return routineShippingUnavailable();
+ const v=shippingObject(p.packages[0],['domain','subjectId','eventId','eventKey','logisticsType','description','tracking','carrier','contact','digest']);
+ if(v.domain!==i.domain||v.subjectId!==i.subjectId||!shippingInteger(v.eventId)||v.eventKey!==`${i.domain}.paid.shipping:${i.subjectId}`
+  ||v.logisticsType!==3||!text(v.description,4096)||Array.from(v.description).length>120
+  ||v.tracking!==''||v.carrier!==''||v.contact!==''||!shippingHex(v.digest))return routineShippingUnavailable();
+ const identity=i as unknown as VirtualIdentity,packages=[v as unknown as VirtualPackage],request=parseRequest(p.request);
+ const account=parseRoutineShippingAccountJournal(env,p.account,scope);
+ if(r.source_key!==sourceKey(env,identity)||request.order_key.transaction_id!==identity.transactionId||request.payer.openid!==identity.payerId
+  ||account.payload.data.appId!==identity.appId||account.payload.data.merchantId!==identity.merchantId||Date.parse(request.upload_time)!==Number(created)*1000
+  ||request.logistics_type!==3||request.delivery_mode!==1||request.shipping_list[0].item_desc!==v.description)return routineShippingUnavailable();
+ const body={dispatch_id:r.dispatch_id,delivery_id:r.delivery_id,source_key:r.source_key,payload:{format:2 as const,purpose:'routine_shipping_upload' as const,scope,
+  identity,immutableDigest:p.immutableDigest,packages,request,account,original:o as unknown as VirtualDispatchPayload['original'],
+  actor:actor as unknown as VirtualDispatchPayload['actor'],previousDispatchId:'',correction:false as const},created_at:Number(created)};
+ if(!shippingEqual(r.signature,shippingMac(env,'dispatch',body)))return routineShippingUnavailable();
+ return freezeShipping({...body,signature:r.signature});
+}
+function parseStoreDispatch(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineShippingDispatch{
  const r=shippingObject(raw,['dispatch_id','delivery_id','source_key','payload','created_at','signature']);
  const p=shippingObject(r.payload,['format','purpose','scope','identity','immutableDigest','packages','request','account','original','actor','previousDispatchId','correction']);
  const i=shippingObject(p.identity,['rootId','childId','buyerUid','orderNo','transactionId','totalAmount','appId','merchantId','payerId']);
@@ -243,15 +310,15 @@ async function savedDispatch(tx:DbClient,env:Signing,deliveryId:number){
  const rows=await tx.execute(sql`SELECT * FROM public.routine_shipping_dispatch WHERE delivery_id=${deliveryId} LIMIT 2`);
  if(rows.length>1)return routineShippingUnavailable();return rows.length?parseDispatch(env,rows[0],await routineShippingScopeTx(tx)):null;
 }
-async function authenticateHistorical(tx:DbClient,env:Signing,d:RoutineShippingDispatch){
+async function authenticateHistorical(tx:DbClient,env:Signing,d:AnyDispatch){
  await assertRoutineShippingHistoricalAccountTx(tx,env,d.payload.account,d.created_at);
  const rows=await tx.execute(sql`SELECT * FROM public.routine_original_payment_evidence WHERE evidence_id=${d.payload.original.evidenceId} LIMIT 2`);
  if(rows.length!==1)return routineShippingUnavailable();const original=parseRoutineOriginalEvidence(env,rows[0]),facts=original.payload.observation.facts,b=original.payload.binding,i=d.payload.identity;
- if(original.signature!==d.payload.original.signature||b.state!=='bound'||b.local.domain!=='store_order'||b.local.orderId!==i.rootId||b.local.buyerUid!==i.buyerUid
+ if(original.signature!==d.payload.original.signature||b.state!=='bound'||b.local.domain!==('domain'in i?i.domain:'store_order')||b.local.orderId!==('domain'in i?i.subjectId:i.rootId)||b.local.buyerUid!==i.buyerUid
   ||b.local.amountCents!==i.totalAmount||facts.orderNo!==i.orderNo||facts.transactionId!==i.transactionId||facts.appId!==i.appId||facts.merchantId!==i.merchantId
   ||facts.payerId!==i.payerId||facts.amountCents!==i.totalAmount||facts.tradeType!=='JSAPI'||facts.tradeState!=='SUCCESS')return routineShippingUnavailable();
 }
-async function evidence(tx:DbClient,env:Signing,d:RoutineShippingDispatch):Promise<Evidence[]>{
+async function evidence(tx:DbClient,env:Signing,d:AnyDispatch):Promise<Evidence[]>{
  await authenticateHistorical(tx,env,d);
  const rows=await tx.execute(sql`SELECT * FROM public.routine_shipping_provider_evidence WHERE dispatch_id=${d.dispatch_id}::uuid ORDER BY created_at,evidence_id LIMIT 65`);
  if(rows.length>64||Buffer.byteLength(JSON.stringify(rows),'utf8')>1048576)return routineShippingUnavailable();
@@ -284,10 +351,10 @@ async function sourceBoundary(tx:DbClient,key:string){
  const [r]=await tx.execute<{locked:boolean}>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock(pg_catalog.hashtextextended(${'routine-shipping-source:v1:'+key},0)) AS locked`);
  if(r?.locked!==true)throw new Deferred();
 }
-function containsPackages(previous:readonly Package[],current:readonly Package[]){
- return previous.every(p=>{const now=current.find(v=>v.orderId===p.orderId);return now!==undefined&&shippingSame(p,now);});
+function containsPackages(previous:readonly AnyPackage[],current:readonly AnyPackage[]){
+ return previous.every(p=>{if(!('orderId'in p))return false;const now=current.find(v=>('orderId'in v)&&v.orderId===p.orderId);return now!==undefined&&shippingSame(p,now);});
 }
-function matchingSnapshot(d:RoutineShippingDispatch,s:Snapshot){
+function matchingSnapshot(d:AnyDispatch,s:AnySnapshot){
  if(!shippingSame(d.payload.identity,s.identity)||d.payload.immutableDigest!==s.immutableDigest
   ||d.payload.request.logistics_type!==s.logisticsType||d.payload.request.delivery_mode!==s.mode)return routineShippingUnavailable();
  if(shippingSame(d.payload.packages,s.packages)&& (s.mode===1||d.payload.request.is_all_delivered===s.allDelivered))return;
@@ -297,9 +364,9 @@ function matchingSnapshot(d:RoutineShippingDispatch,s:Snapshot){
  if(s.mode!==2||d.payload.request.is_all_delivered!==false||d.payload.packages.length>=s.packages.length
   ||!containsPackages(d.payload.packages,s.packages))return routineShippingUnavailable();
 }
-function newRequest(s:Snapshot,carriers:ReadonlyArray<{id:string;name:string}>,created:number,previous?:RoutineShippingDispatch):RoutineShippingRequest{
- const list=s.logisticsType===1?s.packages.map(p=>{
-  const old=previous?.payload.packages.findIndex(v=>v.orderId===p.orderId)??-1;
+function newRequest(s:AnySnapshot,carriers:ReadonlyArray<{id:string;name:string}>,created:number,previous?:AnyDispatch):RoutineShippingRequest{
+ const list=s.logisticsType===1?(s.packages as Package[]).map(p=>{
+  const old=previous?.payload.packages.findIndex(v=>'orderId'in v&&v.orderId===p.orderId)??-1;
   // Accepted entries keep their exact original carrier ID and contact even if
   // the current carrier list changed its spelling or removed that company.
   if(previous&&old>=0)return previous.payload.request.shipping_list[old];
@@ -335,6 +402,7 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
   }else{
    if(last){
     const results=await evidence(tx,env,last);if(!results.some(v=>v.payload.result.code===0))throw new Deferred();
+    if(!('rootId'in last.payload.identity)||!('rootId'in s.identity))return routineShippingUnavailable();
     const {childId:_,...oldIdentity}=last.payload.identity,{childId:__,...currentIdentity}=s.identity;
     if(last.payload.request.delivery_mode!==2||s.mode!==2||last.payload.request.is_all_delivered!==false
      ||!shippingSame(oldIdentity,currentIdentity)||last.payload.identity.childId===s.identity.childId
@@ -342,10 +410,14 @@ async function admit(container:Container,env:Env,p:Preflight,carriers:ReadonlyAr
    }
    const now=await routineShippingClockTx(tx);if(last&&now<=last.created_at)throw new Deferred();
    const binding=(await inspectRoutineShippingCatalog(tx)).binding;if(!binding?.app||!binding.appOid)return routineShippingUnavailable();
-   const body={dispatch_id:randomUUID(),delivery_id:initial.claim.id,source_key:key,payload:{format:1 as const,purpose:'routine_shipping_upload' as const,
-    scope:await routineShippingScopeTx(tx),identity:s.identity,immutableDigest:s.immutableDigest,packages:s.packages,request:newRequest(s,carriers,now,last),account:account.account,
+   const common={purpose:'routine_shipping_upload' as const,scope:await routineShippingScopeTx(tx),immutableDigest:s.immutableDigest,
+    request:newRequest(s,carriers,now,last),account:account.account,
     original:{evidenceId:s.original.evidence.evidence_id,signature:s.original.evidence.signature,relatedDigest:s.original.relatedDigest,approvedUseDigest:s.original.approvedUseDigest},
-    actor:{role:binding.app,roleOid:binding.appOid},previousDispatchId:last?.dispatch_id??'',correction:false},created_at:now};
+    actor:{role:binding.app,roleOid:binding.appOid},previousDispatchId:last?.dispatch_id??'',correction:false as const};
+   const payload:DispatchPayload|VirtualDispatchPayload='domain'in s.identity
+    ?{...common,format:2,identity:s.identity,packages:s.packages as VirtualPackage[]}
+    :{...common,format:1,identity:s.identity,packages:s.packages as Package[]};
+   const body={dispatch_id:randomUUID(),delivery_id:initial.claim.id,source_key:key,payload,created_at:now};
    const signed={...body,signature:shippingMac(env,'dispatch',body)};
    await tx.execute(sql`INSERT INTO public.routine_shipping_dispatch(dispatch_id,delivery_id,source_key,payload,created_at,signature)
     VALUES(${signed.dispatch_id}::uuid,${signed.delivery_id},${signed.source_key},${JSON.stringify(signed.payload)}::text::jsonb,${signed.created_at},${signed.signature})`);

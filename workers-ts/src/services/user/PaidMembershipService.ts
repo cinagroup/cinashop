@@ -31,6 +31,7 @@ import { normalizeConfigScalar, parseConfigInteger } from "@/utils/config";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readVisibleAgreement } from "@/services/user/PublicAgreementService";
 import { lockLocalPaymentAdmissionTx, assertLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
+import { stageRoutineVirtualPaidShippingTx } from '@/services/order/RoutineVirtualPaidShipping';
 
 const MEMBER_CHANNELS: Readonly<Record<string, string>> = {
   weixin: "wechat",
@@ -83,11 +84,14 @@ export interface ApplyMembershipPaymentInput {
   now?: number;
   /** Recheck a provider query's evidence while the order row is locked. */
   authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
+  /** Actual Routine provider consumer only; never selected by local payment. */
+  routineShipping?: Pick<Env,'APP_KEY'>;
 }
 
 export interface MembershipPaymentResult {
   outcome: MembershipPaymentOutcome;
   overdue_time: number | null;
+  shippingEventKey?: string;
 }
 
 export function normalizeMemberChannel(value: unknown): string | null {
@@ -355,7 +359,7 @@ async function applyMembershipPaymentCore(
   params: ApplyMembershipPaymentInput,
   providerSettlement: boolean,
 ): Promise<MembershipPaymentResult> {
-  params = { ...params };
+  params = { ...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}) };
   const orderId = params.orderId.trim();
   assertMembershipOrderId(orderId);
   if (!MEMBERSHIP_PAY_TYPES.has(params.payType)) {
@@ -510,7 +514,9 @@ async function applyMembershipPaymentCore(
       shopType: order.type,
       changeTime: now,
     });
-    return { outcome: "paid", overdue_time: orderOverdueTime };
+    const shippingEventKey=providerSettlement&&params.payType===PayType.WEIXIN
+      ?await stageRoutineVirtualPaidShippingTx(tx,params.routineShipping,'membership',order.id,now):null;
+    return { outcome: "paid", overdue_time: orderOverdueTime,...(shippingEventKey?{shippingEventKey}:{}) };
   });
 }
 

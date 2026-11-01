@@ -3,6 +3,7 @@ import { is, sql } from 'drizzle-orm';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
 import * as models from '../models/schema';
 import type { DbClient } from '../lib/di';
+import { inspectRoutineVirtualShippingSubjectsStructure } from './routineVirtualShippingSubjects';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE, CUSTOMER_FINANCIAL_RUNTIME_CONNECTION_LIMIT, customerFinancialRuntimePrivilegePlan } from './customerFinancialRuntimePlan';
 import { MANAGER_PUBLIC_INVOKER_BASELINE } from './managerRuntimePrivilegePlan';
 import { inspectCustomerWorkOperation } from './runCustomerWorkOperation';
@@ -73,6 +74,13 @@ export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Qu
   manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon,
   routineRefund?:CustomerFinancialRoutineRefundAddon, refundNames?:{app:string;admin:string}) {
   const failures: string[] = [], plan = reviewedPlan(manualRefund, originalPaymentReaders,routineRefund);
+  // These nullable fields are intentionally absent from the legacy Drizzle
+  // model. Recognize them only as a complete owner-bound 16/17-event forward,
+  // not as optional columns inferred from the server. This structural leaf
+  // never enters Shipping/full-role inspectors, so peer audits do not recurse.
+  const virtualSubjects=await inspectRoutineVirtualShippingSubjectsStructure(db);
+  const virtualShippingSubjectColumns=virtualSubjects.ready&&virtualSubjects.maintenance===maintenance
+    ?['subject_domain','subject_id'] as const:[];
   const relations = await db.execute<{ name: string; ordinary: boolean; columns: string[] }>(sql`SELECT c.relname AS name,
     c.relkind='r' AND c.relpersistence='p' AND NOT(c.relrowsecurity OR c.relforcerowsecurity OR c.relispartition)
       AND NOT EXISTS(SELECT 1 FROM pg_inherits WHERE inhrelid=c.oid OR inhparent=c.oid)
@@ -83,7 +91,8 @@ export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Qu
     const relation = relations.find(row => row.name === name);
     if (!relation) { failures.push(`missing:${name}`); continue; }
     if (!relation.ordinary) failures.push(`shape:${name}`);
-    const expected = sourceTables.get(name);
+    const source = sourceTables.get(name);
+    const expected = source&&name==='order_notification_delivery'?[...source,...virtualShippingSubjectColumns]:source;
     for (const column of expected ?? []) if (!relation.columns.includes(column)) failures.push(`missing_column:${name}.${column}`);
     if (expected) for (const column of relation.columns) if (!expected.includes(column)) failures.push(`unexpected_column:${name}.${column}`);
     for (const column of plan.updateColumns[name] ?? []) if (!relation.columns.includes(column)) failures.push(`missing_column:${name}.${column}`);
@@ -154,6 +163,7 @@ export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Qu
     ...(manual?.catalogReady && manual.manualFunctionOid ? [manual.manualFunctionOid] : [])];
   const unique = [...new Set(failures)].sort();
   return { ready: unique.length === 0, readOnly: true as const, failures: unique, ownedSequences, reviewedDefiners,
+    virtualShippingSubjectColumns,
     requiredTableCount: Object.keys(plan.tables).length };
 }
 

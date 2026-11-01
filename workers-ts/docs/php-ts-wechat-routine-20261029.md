@@ -666,3 +666,25 @@ final-02 的类型失败仅来自新Queue日志的outcome=deferred不在既有Op
 原生集群均记录remaining=0和STOPPED；预期拒绝的低基数日志保留。所有重型检查在一个外层共享串行锁依次执行，沿用每个native600秒、单worker与现有内存/超时，没有并发重型验证。最终日志、输入、结果及独立复核位于 `.cache/php-ts-phase34-validation/`；三份文档在验证后补齐，源码和测试仍匹配冻结字节，提交文件另做完整秘密扫描。
 
 本轮没有新的UI、Browser、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。64/65叶与200/201商品边界、供应商家族核销竞态、Alipay零款/游客本轮专案、开关切换竞态、五次尝试终止/1MiB预算边界、退款代次发货和历史SKIPPED/UNKNOWN维护恢复尚未执行。充值/会员的真实领域意图、其余旧账号消费者、完整归属清单/维护manifest/原子切换许可、前端session/journal与Browser及既有CI问题仍待推进。保留现有用户/UID/权益/旧单/付款，未知归属不猜，跨AppID屏障、runtime_ready=false和整体迁移未完成状态保持。
+
+
+## 第35阶段：真实充值／会员付款的原账号虚拟发货（2026-11-01）
+
+阶段34 `a2b26985` 已按精确授权推送并直接核对远端 main。本轮迁移固定 PHP 的充值、会员付款后虚拟发货作者：真实领域创建、RSA/AES 回调或签名查单的默认消费者，在钱包/权益事务中原子写入 COMPLETED 的签名领域源与延迟投递，提交后只入队不透明引用。源使用真实 recharge/membership 主体，新的派发 format2 对 domain/subjectId 单独签名；商品 format1 解析及 HMAC 字节合同保持。内容使用原充值价或保存的会员天数/永久权益，原付款人和原账号批准不由当前配置、最新绑定或新套餐代替。详情见[虚拟发货合同](routine-virtual-shipping.md)。
+
+显式 PG16 维护 forward 只接受精确旧14/15并升级完整16/17；两列 nullable 主体、封闭 CHECK、精确部分索引和事件列表共同成立。Supplier/DB007 后继与完整五角色前后审计保留。Financial/Cashier 的既有整表授权自然覆盖新列，但没有新增 grant；它们的逐列审计只在完整维护归属后接受这两个后继字段。新作者和消费者仍核对实际 App。旧库 inactive Stage 单独证明命名目录、current/session/backend OID、四门及可选存储 absent/full；新16/17与历史 Read 不降级，partial/TEMP/错误账号继续拒绝。
+
+SQL stagedAt+10 决定初次延迟，Queue 使用数据库计算的剩余 delay，消费者在进入 PROCESSING 前再次核对 SQL 截止时间。事务外有限等待的实测包含应用时钟领先40秒仍 busy。财务提交后的 Queue 失败由普通扫描恢复，不重做入账；明确忙碌保持首次 body/upload_time，丢失 POST 为 UNKNOWN 且不自动重发。明确响应的签名观测和对应终态同事务保存；UNKNOWN 不伪造响应。领域源是既有可变 outbox 中受 HMAC 验证的快照，不是新增 SQL 不可变提供方账本。
+
+| 冻结批次 | 实际结果与边界 |
+| --- | --- |
+| `runtime-native-06` | 当时完整13项通过，307.82秒，22输入未变、remaining0/STOPPED；随后新增旧库 inactive 兼容分支，以下最终批次重新执行。 |
+| `final-09` | 74项单元、148项既有金融PG、正式12项、真实充值/会员13项、旧自提10项和快递12项全部通过；Worker unit/runtime与Admin类型通过，22条输入全程不变。三组原生均remaining0/STOPPED。 |
+
+正式12案是结构协议证明，维护SQL标本不是付款事实。真实13案执行领域生产者、两类回调/查单、赠款/权益、晚期投递失败共同回滚及重放、Queue恢复、固定请求重试、UNKNOWN、四非App账号领取前拒绝、事实矛盾/撤销批准及独立App会话发现真实APP原证冲突。HTTP期间独立连接可取得物理金融/投递锁且App无idle事务，原UID22付款人和旧bindings保持。旧148项另在既有有限PG白名单运行，不把纯单测模式跳过视为覆盖。
+
+保留失败记录：首类型8项诊断修正后，types07又报4处正式测试用了不同事务类型，改用真实项目withTx适配器而非cast。formal01为3通过/9失败；diagnostic02为1失败/11跳过，实际新CHECK/索引正确，失败来自Financial/Cashier把新两列视作未知；精确完整后继识别后formal03为11通过/1失败，唯一问题是测试期望的嵌套peer target含夹具专用pricingOwner。runtime04在批准初始化因多余声明失败、13项未执行；runtime05为1通过/12失败，后者由凭据恢复顺序错误级联。两处夹具纠正后才有06完整通过。final08误选三份需PG文件作纯单测，74项通过但3个suite失败、148项未执行；最终批次用真实PG运行并验证全部，不累计重复通过。
+
+原生、类型和单测在一层共享串行锁顺序运行，保持原单worker、内存、每组native600秒及case限制。代码/测试冻结证据位于本地 `.cache/php-ts-phase35-validation/`；本节和独立合同在最终验证后补齐，执行文件字节保持，提交文件另做秘密扫描。交叉作者审查覆盖运行链，schema/正式测试作者对其自身部分是自审及root复核，不称独立安全审计。
+
+本轮没有生产DDL、部署、真实微信、Browser或Workerd/Hyperdrive验收。永久会员专案、所有损坏format2字段、容量与重试终止边界、发货开关并发、退款代次发货、更正和历史SKIPPED/UNKNOWN维护恢复仍未完成；完整归属清单/切换许可、前端session/journal及既有CI缺口继续推进。保留用户/UID/权益/旧单/付款，未知归属不猜，跨AppID屏障、runtime_ready=false和整体PHP→TS迁移未完成状态保持。此前对a2b26985的推送授权已履行，本轮新提交需按具体SHA另行推送授权。
