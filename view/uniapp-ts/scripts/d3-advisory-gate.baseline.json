@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "lockSemanticSha256": "9636a49bcc355d00c59e83a19f4b8b87cd4ddcdc00d2beb8e94af4e80480cfea",
-  "reviewedReceipt": "2026-10-28 actual C3 official bulk POST200/lock-only raw SHA82e18c448356d03b524ea24d453186f612ba97d2ab0a603393b564cfaa84ebc4 reports48 entries/25 direct objects/24 GHSA URLs across8 preserved chain definitions (6 active). Raw lockdb4757d2896d2381d83fba74133992db8a02df8f1ade279c68c52e538cbd97cf uses official Express4.22.3 and the shared qs6.16.2. Only new direct source1243629/GHSA-8rc2-428q-7ww3 is reviewed as an exact seven-distribution local mixed-escaping source backport on retained core-base9.1.9, still in the advisory version range; not an official fixed9.x release and not a fix for other old Intlify advisories. Formal12 files/all7 distributions/installed source/native DCloud and actual security-backport29/runtime13 are bound by workers-ts/audit/uni-d3-security-backports-20261028.json and D3 regressions. The three fixed qs sources, external deepmerge1243505 and four removed root Intlify sources are forbidden to return. Old15 resolved notes remain byte-structurally preserved historical observations; their prior Express/root/nested qs layouts do not describe C3. Unknown sources, tuples, installed paths, forward edges and resolved returns remain fail-closed. Full original raw delta and earlier failed audits are retained; no gate implementation change or blanket exception is made.",
+  "lockSemanticSha256": "f0d1ebaf5e0c8e45f635c2118d2ce6c0e9f0cda2d179d593d0031effa55abf5a",
+  "reviewedReceipt": "2026-11-01 scoped official consumer upgrade; actual lock-only raw SHA61f479703abab30377eefdf176d519d393a709c8e0cd2724813b78afafc3dc19 under Node24.14.1/npm11.11.0 reports62 affected entries/26 direct objects/25 GHSA URLs across8 preserved chain definitions (7 active). Official follow-redirects1.16.2 resolves source1244003 and preserves both prior forbidden redirect sources. Only the three named-API minimatch9 consumers move to official11.0.1, with all37 published files verified and actual unplugin CJS/ESM hooks and Vue template generation controls. The retained root callable minimatch3.1.5 still triggers npm source1244012/<11.0.1; it is explicitly retained as an unresolved version-range alert, not an official fixed3.x release or general safety claim. Exact official4-file bytes lack the advisory firstPhasePreProcess/secondPhasePreProcess/optimizationLevel mechanism. Only its single root installed node and complete14-new/6-existing-entry propagation closure are reviewed under glob-toolchain, with real Glob7/TestExclude6 behavior verified. Maintainer range clarification remains open. All25 earlier direct tuples and23 earlier forbidden source records remain unchanged; source1244003 is additionally forbidden. Unknown sources, tuples, paths, forward edges, severities and resolved returns remain fail-closed. Full pinned official receipts, exact lock/inventory delta and bounded consumer controls are bound by workers-ts/audit/uni-d3-consumer-upgrades-20261101.json. This does not establish the cause of the earlier malformed centra CI entry, which is absent from both captured fresh reports.",
   "chains": {
     "intlify": "DCloud-retained Intlify9.1.9 with a project-maintained mixed-argument escaping source backport; other existing Intlify advisories and configured client-graph exclusions remain separately scoped",
     "vue-ssr": "Vue server renderer version advisory with verified local safety backport",
@@ -187,6 +187,13 @@
       "severity": "low",
       "range": ">=9.0.0-beta.12 <11.4.14",
       "chain": "intlify"
+    },
+    "1244012": {
+      "package": "minimatch",
+      "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+      "severity": "moderate",
+      "range": "<11.0.1",
+      "chain": "glob-toolchain"
     }
   },
   "entries": {
@@ -288,6 +295,7 @@
       "effects": [],
       "chains": [
         "encrypted-zip",
+        "glob-toolchain",
         "intlify",
         "jest-toolchain",
         "vue-ssr"
@@ -703,15 +711,21 @@
       ]
     },
     "@jest/core": {
-      "severity": "low",
+      "severity": "moderate",
       "isDirect": false,
-      "range": "27.0.1 - 27.5.1",
+      "range": "*",
       "nodes": [
         "node_modules/@jest/core"
       ],
       "viaPackages": [
+        "@jest/reporters",
+        "@jest/transform",
         "jest-config",
-        "jest-runner"
+        "jest-resolve-dependencies",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot",
+        "rimraf"
       ],
       "advisorySources": [],
       "effects": [
@@ -719,7 +733,66 @@
         "jest-cli"
       ],
       "chains": [
+        "glob-toolchain",
         "jest-toolchain"
+      ]
+    },
+    "@jest/reporters": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/reporters"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/test-sequencer": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=28.0.0-alpha.11",
+      "nodes": [
+        "node_modules/@jest/test-sequencer"
+      ],
+      "viaPackages": [
+        "jest-runtime"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/transform": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/transform"
+      ],
+      "viaPackages": [
+        "babel-plugin-istanbul"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "babel-jest",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain"
       ]
     },
     "@jimp/core": {
@@ -910,6 +983,66 @@
         "encrypted-zip"
       ]
     },
+    "babel-jest": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.0.0-alpha.0",
+      "nodes": [
+        "node_modules/babel-jest"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "babel-plugin-istanbul"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "babel-plugin-istanbul": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=5.0.1",
+      "nodes": [
+        "node_modules/babel-plugin-istanbul"
+      ],
+      "viaPackages": [
+        "test-exclude"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/transform",
+        "babel-jest"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "glob": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "3.0.0 - 13.0.6",
+      "nodes": [
+        "node_modules/glob"
+      ],
+      "viaPackages": [
+        "minimatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/reporters",
+        "jest-config",
+        "jest-runtime",
+        "rimraf",
+        "test-exclude"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
     "http-proxy-agent": {
       "severity": "low",
       "isDirect": false,
@@ -929,9 +1062,9 @@
       ]
     },
     "jest": {
-      "severity": "low",
+      "severity": "moderate",
       "isDirect": false,
-      "range": "27.0.1 - 27.5.1",
+      "range": ">=19.1.0-alpha.eed82034",
       "nodes": [
         "node_modules/jest"
       ],
@@ -944,13 +1077,33 @@
         "@dcloudio/uni-automator"
       ],
       "chains": [
+        "glob-toolchain",
         "jest-toolchain"
       ]
     },
-    "jest-cli": {
-      "severity": "low",
+    "jest-circus": {
+      "severity": "moderate",
       "isDirect": false,
-      "range": "27.0.1 - 27.5.1",
+      "range": ">=25.2.4",
+      "nodes": [
+        "node_modules/jest-circus"
+      ],
+      "viaPackages": [
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-cli": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=19.1.0-alpha.eed82034",
       "nodes": [
         "node_modules/jest-cli"
       ],
@@ -963,26 +1116,32 @@
         "jest"
       ],
       "chains": [
+        "glob-toolchain",
         "jest-toolchain"
       ]
     },
     "jest-config": {
-      "severity": "low",
+      "severity": "moderate",
       "isDirect": true,
-      "range": "27.0.1 - 27.5.1",
+      "range": ">=19.1.0-alpha.eed82034",
       "nodes": [
         "node_modules/jest-config"
       ],
       "viaPackages": [
+        "@jest/test-sequencer",
+        "babel-jest",
+        "glob",
+        "jest-circus",
         "jest-environment-jsdom",
+        "jest-jasmine2",
         "jest-runner"
       ],
       "advisorySources": [],
       "effects": [
-        "@jest/core",
         "jest-cli"
       ],
       "chains": [
+        "glob-toolchain",
         "jest-toolchain"
       ]
     },
@@ -1005,23 +1164,105 @@
         "jest-toolchain"
       ]
     },
-    "jest-runner": {
-      "severity": "low",
+    "jest-jasmine2": {
+      "severity": "moderate",
       "isDirect": false,
-      "range": "27.0.4 - 27.5.1",
+      "range": ">=24.2.0-alpha.0",
+      "nodes": [
+        "node_modules/jest-jasmine2"
+      ],
+      "viaPackages": [
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-resolve-dependencies": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=27.0.0-next.0",
+      "nodes": [
+        "node_modules/jest-resolve-dependencies"
+      ],
+      "viaPackages": [
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-runner": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.0.0-alpha.0",
       "nodes": [
         "node_modules/jest-runner"
       ],
       "viaPackages": [
-        "jest-environment-jsdom"
+        "@jest/transform",
+        "jest-environment-jsdom",
+        "jest-runtime"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain",
+        "jest-toolchain"
+      ]
+    },
+    "jest-runtime": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.0.0-alpha.0",
+      "nodes": [
+        "node_modules/jest-runtime"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "glob",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-snapshot": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=27.0.0-next.0",
+      "nodes": [
+        "node_modules/jest-snapshot"
+      ],
+      "viaPackages": [
+        "@jest/transform"
       ],
       "advisorySources": [],
       "effects": [
         "@jest/core",
-        "jest-config"
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-resolve-dependencies",
+        "jest-runtime"
       ],
       "chains": [
-        "jest-toolchain"
+        "glob-toolchain"
       ]
     },
     "jimp": {
@@ -1080,6 +1321,25 @@
         "jest-toolchain"
       ]
     },
+    "minimatch": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<11.0.1",
+      "nodes": [
+        "node_modules/minimatch"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1244012
+      ],
+      "effects": [
+        "glob",
+        "test-exclude"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
     "phin": {
       "severity": "moderate",
       "isDirect": false,
@@ -1096,6 +1356,43 @@
       ],
       "chains": [
         "automator-qr"
+      ]
+    },
+    "rimraf": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "2.3.0 - 3.0.2 || >=4.2.0",
+      "nodes": [
+        "node_modules/rimraf"
+      ],
+      "viaPackages": [
+        "glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "test-exclude": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "4.2.2 || >=5.0.0",
+      "nodes": [
+        "node_modules/test-exclude"
+      ],
+      "viaPackages": [
+        "glob",
+        "minimatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "babel-plugin-istanbul"
+      ],
+      "chains": [
+        "glob-toolchain"
       ]
     },
     "vite": {
@@ -1284,6 +1581,14 @@
       "removedVersion": "9.14.5",
       "affectedRange": "=9.14.5",
       "reason": "The unused root vue-i18n9.14.5 dependency and its affected nested copies are absent from the actual C3 full lock/installed graph. The retained DCloud private runtime and core-base9.1.9 remain. This records dependency removal, not an official fixed9.x release or a srcdoc repair to retained9.1.9."
+    },
+    "1244003": {
+      "package": "follow-redirects",
+      "url": "https://github.com/advisories/GHSA-mrwp-f3q8-3g9p",
+      "resolution": "patched",
+      "fixedVersion": "1.16.2",
+      "affectedRange": ">=1.16.0 <=1.16.1",
+      "reason": "Adopted exact official1.16.2 package and all7 installed files; verified original1.16.1 index.js is recovered by reversing the two official fix fragments. Loopback object/array-form header controls reproduce only the original cross-realm custom credential forwarding; installed1.16.2 and actual Centra2.7.0 suppress it while preserving ordinary/same-origin behavior."
     }
   }
 }

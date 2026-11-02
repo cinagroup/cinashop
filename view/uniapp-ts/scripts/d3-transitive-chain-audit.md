@@ -1,6 +1,28 @@
-# Current source/backport review — 2026-10-28
+# Current source/consumer review — 2026-11-01
 
-The current locked review is documented in
+The [scoped consumer review](../../../workers-ts/docs/uni-d3-consumer-upgrades-20261101.md)
+adopts official follow-redirects1.16.2 and moves only the three named-API
+minimatch consumers to official11.0.1. Callable minimatch3.1.5 remains an
+unresolved version-range alert, bounded by its complete official four-file
+source and actual Glob/TestExclude behavior; it is not an official fixed3.x
+release or a general safety claim. The current inventory is62 affected entries,
+26 direct sources,25 URLs and8 chain definitions (7 active), with24 forbidden
+resolved/withdrawn/replaced IDs. All25 earlier direct tuples and23 earlier
+return guards remain unchanged. Unknown sources, paths and edges still fail.
+
+Final local evidence combines full-02's unchanged type/toolchain/build inputs
+with final-03's successful D3/live, QR, actual runtime graphs and Uni/PC common
+checks. The interrupted full-01 and failed full-02 QR batch remain recorded;
+the detailed note distinguishes them from passing stages. The historical
+malformed centra record was absent from fresh reports, so its cause remains
+unconfirmed. Exact-head CI and its original20-minute budget, optional modes,
+physical devices and the overall migration remain separate unfinished gates.
+
+---
+
+# Historical source/backport review — 2026-10-28
+
+The then-current locked review is documented in
 `workers-ts/docs/uni-d3-security-backports-20261028.md` with complete machine and
 raw npm receipts alongside it. Official Express4.22.3/shared qs6.16.2, the
 verified Jest-config local merge helper and the seven-format Intlify9.1.9 mixed

@@ -40,9 +40,13 @@ function normalizeAudit(report, reviewedAdvisories) {
   const entries = Object.create(null);
   for (const [name, value] of Object.entries(raw)) {
     const item = object(value, `vulnerability ${name}`);
-    if (item.name !== name || !SEVERITIES.has(item.severity) || typeof item.isDirect !== "boolean"
-      || typeof item.range !== "string" || !item.range || !Array.isArray(item.via)
-      || item.via.length === 0) throw new Error(`invalid vulnerability entry ${name}`);
+    const invalidFields = [];
+    if (item.name !== name) invalidFields.push("name (must equal package key)");
+    if (!SEVERITIES.has(item.severity)) invalidFields.push("severity (must be low/moderate/high/critical)");
+    if (typeof item.isDirect !== "boolean") invalidFields.push("isDirect (must be boolean)");
+    if (typeof item.range !== "string" || !item.range) invalidFields.push("range (must be nonempty string)");
+    if (!Array.isArray(item.via) || item.via.length === 0) invalidFields.push("via (must be nonempty array)");
+    if (invalidFields.length) throw new Error(`invalid vulnerability entry ${name}: ${invalidFields.join("; ")}`);
     const nodes = strings(item.nodes, `${name}.nodes`);
     if (!nodes.length || nodes.some((node) => !/(?:^|\/)node_modules\//.test(node)
       || node.includes("\\") || node.split("/").includes(".."))) {

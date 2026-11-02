@@ -12,6 +12,10 @@ const { evaluateAudit } = require("./d3-advisory-gate.cjs");
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "d3-advisory-gate.baseline.json"), "utf8"));
 const preSecurityBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-security-backports-20261028.baseline.json"));
 const preSecurityBaseline = JSON.parse(preSecurityBaselineBytes.toString("utf8"));
+const preConsumerBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-consumer-upgrades-20261101.baseline.json"));
+const preConsumerBaseline = JSON.parse(preConsumerBaselineBytes.toString("utf8"));
+const consumerReviewBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-consumer-upgrades-20261101.json'));
+const consumerReview = JSON.parse(consumerReviewBytes.toString('utf8'));
 
 function reviewedFixture(reviewed = baseline) {
   const vulnerabilities = Object.create(null);
@@ -45,18 +49,105 @@ function rejected(fixture, fragment) {
   assert.ok(result.issues.some((issue) => issue.includes(fragment)), JSON.stringify(result.issues));
 }
 
+for (const [label, mutate, expected] of [
+  ['name', entry => { entry.name = 'other'; }, 'name (must equal package key)'],
+  ['severity', entry => { entry.severity = 'info'; }, 'severity (must be low/moderate/high/critical)'],
+  ['isDirect', entry => { entry.isDirect = 1; }, 'isDirect (must be boolean)'],
+  ['empty range', entry => { entry.range = ''; }, 'range (must be nonempty string)'],
+  ['nonstring range', entry => { entry.range = 1; }, 'range (must be nonempty string)'],
+  ['nonarray via', entry => { entry.via = {}; }, 'via (must be nonempty array)'],
+  ['empty via', entry => { entry.via = []; }, 'via (must be nonempty array)'],
+]) test('entry header diagnoses ' + label + ' without accepting the malformed report', () => {
+  const report = reviewedFixture();
+  mutate(report.vulnerabilities.vite);
+  rejected(report, 'invalid vulnerability entry vite: ' + expected);
+});
+
+test('entry header reports every failed field using static diagnostics', () => {
+  const report = reviewedFixture();
+  Object.assign(report.vulnerabilities.vite, {
+    name: 'untrusted-name', severity: 'untrusted-severity', isDirect: null, range: null, via: [],
+  });
+  const result = evaluateAudit(report, baseline);
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.issues, ['invalid vulnerability entry vite: name (must equal package key); '
+    + 'severity (must be low/moderate/high/critical); isDirect (must be boolean); '
+    + 'range (must be nonempty string); via (must be nonempty array)']);
+});
+
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 48);
-  assert.equal(Object.keys(baseline.advisories).length, 25);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 23);
+  assert.equal(Object.keys(baseline.entries).length, 62);
+  assert.equal(Object.keys(baseline.advisories).length, 26);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 24);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 25);
-  assert.equal(result.distinctAdvisoryUrls, 24);
+  assert.equal(result.directAdvisoryObjects, 26);
+  assert.equal(result.distinctAdvisoryUrls, 25);
   assert.equal(Object.keys(baseline.chains).length, 8);
-  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);
+  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);
+});
+
+test('scoped consumer upgrade preserves every old tuple and forbidden source except the exact pinned inventory delta', () => {
+  assert.equal(createHash('sha256').update(preConsumerBaselineBytes).digest('hex'),
+    '7790eafd184b534236d93d81b51412b30c80fb42211e0c441fbed4a0c98dcdf6');
+  assert.equal(createHash('sha256').update(consumerReviewBytes).digest('hex'),
+    'cd2b62eefb5c2f43a6029a504963d248ff6bf9461c1364aac10d1679560b28d8');
+  assert.deepEqual(Object.keys(consumerReview.addedAdvisories), ['1244012']);
+  assert.deepEqual(Object.keys(consumerReview.addedResolvedAdvisories), ['1244003']);
+  assert.equal(Object.keys(consumerReview.addedEntries).length, 14);
+  // The complete named delta lives in the hash-pinned JSON inventory above.
+  assert.equal(Object.keys(consumerReview.changedEntries).length, 6);
+  const expected = structuredClone(preConsumerBaseline);
+  expected.lockSemanticSha256 = consumerReview.lockSemanticSha256;
+  expected.reviewedReceipt = baseline.reviewedReceipt;
+  Object.assign(expected.advisories, consumerReview.addedAdvisories);
+  Object.assign(expected.resolvedAdvisories, consumerReview.addedResolvedAdvisories);
+  Object.assign(expected.entries, consumerReview.addedEntries);
+  for (const [name, delta] of Object.entries(consumerReview.changedEntries)) {
+    assert.deepEqual(expected.entries[name], delta.old, name + ' original entry');
+    expected.entries[name] = delta.new;
+  }
+  assert.deepEqual(baseline, expected);
+  assert.deepEqual(baseline.entries.minimatch.nodes, ['node_modules/minimatch']);
+  assert.deepEqual(baseline.advisories['1244012'], { package: 'minimatch',
+    url: 'https://github.com/advisories/GHSA-g3hv-75wg-m249', severity: 'moderate', range: '<11.0.1', chain: 'glob-toolchain' });
+  assert.match(baseline.reviewedReceipt, /unresolved version-range alert/);
+});
+
+for (const kind of ['source', 'url', 'severity', 'range', 'missing', 'new-node', 'new-forward-edge']) {
+  test('retained callable minimatch finding rejects changed ' + kind, () => {
+    const report = reviewedFixture(), entry = report.vulnerabilities.minimatch, direct = entry.via[0];
+    if (kind === 'source') direct.source = 9999999;
+    if (kind === 'url') direct.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
+    if (kind === 'severity') direct.severity = 'high';
+    if (kind === 'range') direct.range = '*';
+    if (kind === 'missing') {
+      const old = reviewedFixture(preConsumerBaseline);
+      for (const name of Object.keys(consumerReview.addedEntries)) delete report.vulnerabilities[name];
+      for (const name of Object.keys(consumerReview.changedEntries)) report.vulnerabilities[name] = old.vulnerabilities[name];
+    }
+    if (kind === 'new-node') entry.nodes.push('node_modules/@vue/language-core/node_modules/minimatch');
+    if (kind === 'new-forward-edge') report.vulnerabilities.vite.via.push('minimatch');
+    refreshMetadata(report);
+    const expected = kind === 'source' ? 'unknown direct advisory 9999999'
+      : kind === 'missing' ? 'direct advisory disappeared without baseline review: 1244012'
+      : kind === 'new-node' ? 'affected package entry changed: minimatch'
+      : kind === 'new-forward-edge' ? 'affected package entry changed: vite'
+      : 'direct advisory changed: 1244012';
+    rejected(report, expected);
+  });
+}
+
+test('officially patched follow-redirects source cannot return as a new allowance', () => {
+  const report = reviewedFixture();
+  report.vulnerabilities['follow-redirects'] = { name: 'follow-redirects', severity: 'high',
+    isDirect: false, range: '1.16.0 - 1.16.1', nodes: ['node_modules/follow-redirects'], effects: [],
+    via: [{ source: 1244003, name: 'follow-redirects', dependency: 'follow-redirects', severity: 'high',
+      range: '>=1.16.0 <=1.16.1', url: 'https://github.com/advisories/GHSA-mrwp-f3q8-3g9p' }] };
+  refreshMetadata(report);
+  rejected(report, 'resolved advisory reappeared: 1244003');
 });
 
 test("all eight scoped Vite advisories have exact reversible source patches, while redirect advisories are forbidden", () => {
@@ -135,7 +226,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all twenty-three resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
+test("all twenty-four resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -211,7 +302,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /48 affected package entries/);
+    assert.match(accepted.stdout, /62 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -224,18 +315,17 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
 });
 
 
-test("withdrawn sprintf-js source and its exclusive propagated entries remain forbidden", () => {
+test("withdrawn sprintf-js source and its old exclusive forward paths remain forbidden", () => {
   const source = baseline.resolvedAdvisories['1241202'];
   assert.equal(source.package, 'sprintf-js');
   assert.equal(source.url, 'https://github.com/advisories/GHSA-hp3w-g68c-fv3c');
   assert.equal(source.resolution, 'upstream-withdrawn');
   assert.equal(source.withdrawnAt, '2026-10-22T19:21:04Z');
   for (const name of ['@istanbuljs/load-nyc-config', 'argparse', 'babel-plugin-istanbul', 'js-yaml', 'sprintf-js']) {
-    assert.equal(baseline.entries[name], undefined);
     const returned = reviewedFixture();
     returned.vulnerabilities[name] = {name, severity:'high', isDirect:false, range:'*', nodes:[`node_modules/${name}`], effects:[], via:['vite']};
     refreshMetadata(returned);
-    rejected(returned, `unknown affected package entry: ${name}`);
+    rejected(returned, `${baseline.entries[name] ? 'affected package entry changed' : 'unknown affected package entry'}: ${name}`);
   }
   const returned = reviewedFixture();
   returned.vulnerabilities['sprintf-js'] = {name:'sprintf-js', severity:'moderate', isDirect:false, range:'<=1.1.3', nodes:['node_modules/sprintf-js'], effects:[],
@@ -271,7 +361,7 @@ function previousBracesBaseline() {
   return previous;
 }
 
-test('withdrawn braces source and all 26 exclusive package entries remain forbidden', () => {
+test('withdrawn braces source and all 26 old exclusive forward paths remain forbidden', () => {
   const source = baseline.resolvedAdvisories['1240992'];
   assert.equal(source.package, 'braces');
   assert.equal(source.url, 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm');
@@ -279,12 +369,11 @@ test('withdrawn braces source and all 26 exclusive package entries remain forbid
   assert.equal(source.withdrawnAt, '2026-10-23T12:53:02Z');
   assert.equal(bracesReview.removed_entries.length, 26);
   for (const { name } of bracesReview.removed_entries) {
-    assert.equal(baseline.entries[name], undefined);
     const returned = reviewedFixture();
     returned.vulnerabilities[name] = { name, severity: 'high', isDirect: false, range: '*',
       nodes: [`node_modules/${name}`], effects: [], via: ['vite'] };
     refreshMetadata(returned);
-    rejected(returned, `unknown affected package entry: ${name}`);
+    rejected(returned, `${baseline.entries[name] ? 'affected package entry changed' : 'unknown affected package entry'}: ${name}`);
   }
   const returned = reviewedFixture(previousBracesBaseline());
   rejected(returned, 'resolved advisory reappeared: 1240992');
@@ -479,6 +568,7 @@ for (const kind of ['source','url','severity','range','missing','new-node','old-
 
 // Exact2026-10-28 C3 inventory delta. Older history is pinned separately above.
 test('C3 preserves all old50 tuples except the complete reviewed exact delta', () => {
+  const baseline = preConsumerBaseline; // Freeze the historical C3 review before the later scoped consumer upgrades.
   assert.equal(createHash('sha256').update(preSecurityBaselineBytes).digest('hex'), '778662a60ae0eb6874b9705a98effe2ce39ec337a41ce0b853a77a3bdbbf20f4');
   assert.equal(Object.keys(preSecurityBaseline.entries).length,50);
   assert.equal(Object.keys(preSecurityBaseline.advisories).length,27);

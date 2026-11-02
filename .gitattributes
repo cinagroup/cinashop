@@ -18,3 +18,8 @@ view/uniapp-ts/scripts/d3-advisory-gate.pre-body-parser-20261024.baseline.json t
 workers-ts/test/fixtures/uni-body-parser-lock-transition-20261024.json text eol=lf
 workers-ts/test/fixtures/diy-state-author-defaults.json text eol=lf
 workers-ts/test/fixtures/diy-state-author-historical-bindings-20261024.json text eol=lf
+# Keep the scoped consumer review and official-source receipts hash stable.
+view/uniapp-ts/scripts/d3-advisory-gate.pre-consumer-upgrades-20261101.baseline.json text eol=lf
+view/uniapp-ts/vendor/minimatch-official-source-20261101.json text eol=lf
+view/uniapp-ts/vendor/follow-redirects-official-source-20261101.json text eol=lf
+workers-ts/audit/uni-d3-consumer-upgrades-20261101.json text eol=lf

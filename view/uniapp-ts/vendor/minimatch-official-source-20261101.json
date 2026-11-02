@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "packages": {
+    "3.1.5": {
+      "name": "minimatch",
+      "version": "3.1.5",
+      "tarball": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.5.tgz",
+      "integrity": "sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==",
+      "archiveSha256": "d81817ecf72de3c8c5d3724407752d943c9e1a42af5c437d9cb923be8a72c648",
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b",
+          "size": 765,
+          "mode": 420
+        },
+        {
+          "path": "README.md",
+          "sha256": "2c77413d0968383754fa5334cb061822a32b400834b9214677bf58b7eb279851",
+          "size": 8752,
+          "mode": 420
+        },
+        {
+          "path": "minimatch.js",
+          "sha256": "746849f267c4868a53729225bd85c7dccd387712136fb305fcc0a3eadd4a3d9d",
+          "size": 27460,
+          "mode": 420
+        },
+        {
+          "path": "package.json",
+          "sha256": "eefa1c89527d52bbb2e8b053fe8ecf3e3ced399bdba82cf27e0e92edfd833938",
+          "size": 700,
+          "mode": 420
+        }
+      ]
+    },
+    "11.0.1": {
+      "name": "minimatch",
+      "version": "11.0.1",
+      "tarball": "https://registry.npmjs.org/minimatch/-/minimatch-11.0.1.tgz",
+      "integrity": "sha512-t+Vn6DX4wPCxS23y03C0uhF7S1jpi1GfqPrnlEipCJaA2ykiNbMkVlDutZtmvLfRcUN6R8AYVlzTsQrT4RZoLQ==",
+      "archiveSha256": "8e6e370e8cc4d4d0d9e6b041f5ef888dbd9a15b5bdb1957794fe8eef6d60ac62",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "2c7c5d22ed5a8ee968c64757710979afcd77438c48b4a265b94e615babd8a901",
+          "size": 1550,
+          "mode": 420
+        },
+        {
+          "path": "README.md",
+          "sha256": "17a7bd7a21e56f7abf8b3ccd857c63ad3fdf4658f2246a828aee41a6692ba828",
+          "size": 20743,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/assert-valid-pattern.d.ts",
+          "sha256": "ff8872a24ed233ed9b80a521c1c5214ee996f4d649f537a1e8d12196d9f83d77",
+          "size": 119,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/assert-valid-pattern.d.ts.map",
+          "sha256": "6bda19e78c29faff99d261fb630e1b28ae01f61dd429861535834ae4fdbb9d59",
+          "size": 199,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/assert-valid-pattern.js",
+          "sha256": "fcd3b0e6efee67b11249804cc64bf4d22c883395491f79bfb484869d61823600",
+          "size": 492,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/assert-valid-pattern.js.map",
+          "sha256": "93d366c74b6028b0b32b257a681cb52d6b1243113916fdd6c2a67daf597d69e3",
+          "size": 832,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/escape.d.ts",
+          "sha256": "a7224113134dbd16bcf5e95e31b02f2d3da83aa99756a4b3cd133031670c72fc",
+          "size": 781,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/escape.d.ts.map",
+          "sha256": "230a99e35af8c1a96bb303a6f649785d29ca23e9e688230641b931f1c1a5e365",
+          "size": 278,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/escape.js",
+          "sha256": "54b57f8f50c8e834f35a30c1848ac3f79acf8dd85894505f046afaf3965e63a0",
+          "size": 1253,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/escape.js.map",
+          "sha256": "b5f20d5a880214494df8a92d7cdec4e4d68b8b3470b81e4bf3c55f058bac6d28",
+          "size": 1890,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/index.d.ts",
+          "sha256": "16c357d775998e72a60942626811db8e8297d9f6e408aebd5dcaf37b3486e3f9",
+          "size": 7528,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/index.d.ts.map",
+          "sha256": "f2cab884aa4fe0129347d6a46f909af68f37f858dbe9797056c77b1bdced0651",
+          "size": 3835,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/index.js",
+          "sha256": "d89e8ca7dda77bd9dc9efed6920b0ed09deb2f478ada54110980daa3080d3f9b",
+          "size": 62059,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/index.js.map",
+          "sha256": "0d85d99598bc532d2062c9d608b176f583b87e497c7947b8afee5c785ee26c97",
+          "size": 114991,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/package.json",
+          "sha256": "8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a",
+          "size": 25,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/unescape.d.ts",
+          "sha256": "7d3795e78cdc9079f6b03c6f85145f469582795af61134bbcf0568ae2e1476fe",
+          "size": 956,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/unescape.d.ts.map",
+          "sha256": "f9d8bff082045d428437be45a83e2a5c07cf1f3f4c3481a88779f1e24ecc76c5",
+          "size": 290,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/unescape.js",
+          "sha256": "bec1bb4483a2c325599949dd6668b5b7daa2dcbe046c5a09899bc8c5b51c08c1",
+          "size": 1390,
+          "mode": 420
+        },
+        {
+          "path": "dist/commonjs/unescape.js.map",
+          "sha256": "7a386a679c12ea329eca1c76d10db048489d3292c9a5658574e9307b89392b1b",
+          "size": 2080,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/assert-valid-pattern.d.ts",
+          "sha256": "ff8872a24ed233ed9b80a521c1c5214ee996f4d649f537a1e8d12196d9f83d77",
+          "size": 119,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/assert-valid-pattern.d.ts.map",
+          "sha256": "6bda19e78c29faff99d261fb630e1b28ae01f61dd429861535834ae4fdbb9d59",
+          "size": 199,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/assert-valid-pattern.js",
+          "sha256": "90e8d3327d573b9d2391edf03dc7d50c1c0b468d720a4c0fb4a08a36ee5c50dc",
+          "size": 336,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/assert-valid-pattern.js.map",
+          "sha256": "83dd43a7bb36f95e216c8473f43f731d9ce2d1a27cfc5246226efb8a1d5232d9",
+          "size": 815,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/escape.d.ts",
+          "sha256": "a7224113134dbd16bcf5e95e31b02f2d3da83aa99756a4b3cd133031670c72fc",
+          "size": 781,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/escape.d.ts.map",
+          "sha256": "230a99e35af8c1a96bb303a6f649785d29ca23e9e688230641b931f1c1a5e365",
+          "size": 278,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/escape.js",
+          "sha256": "8418e37c202bcd247e76b1c205d4eff9474f15fb76c1db1ef0688cb6a8ec3c94",
+          "size": 1133,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/escape.js.map",
+          "sha256": "d167494c1bc002ba3b3ae18bb41bc18b13a9f20631a3c24efe21f6394e107515",
+          "size": 1874,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/index.d.ts",
+          "sha256": "16c357d775998e72a60942626811db8e8297d9f6e408aebd5dcaf37b3486e3f9",
+          "size": 7528,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/index.d.ts.map",
+          "sha256": "f2cab884aa4fe0129347d6a46f909af68f37f858dbe9797056c77b1bdced0651",
+          "size": 3835,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/index.js",
+          "sha256": "c2ac65e82b196476009b53e1939811c788cb001d910304c6108a1f665fac3c3d",
+          "size": 60839,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/index.js.map",
+          "sha256": "454d0be4f4ed15d0bea9ceab4ff4040d8c3d0127883701a0b7b92c5794bd005f",
+          "size": 115030,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/package.json",
+          "sha256": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a",
+          "size": 23,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/unescape.d.ts",
+          "sha256": "7d3795e78cdc9079f6b03c6f85145f469582795af61134bbcf0568ae2e1476fe",
+          "size": 956,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/unescape.d.ts.map",
+          "sha256": "f9d8bff082045d428437be45a83e2a5c07cf1f3f4c3481a88779f1e24ecc76c5",
+          "size": 290,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/unescape.js",
+          "sha256": "2cd61ba96e616969f152445c61ec2ca129a0afd2028ea71309b862a4222304d6",
+          "size": 1264,
+          "mode": 420
+        },
+        {
+          "path": "dist/esm/unescape.js.map",
+          "sha256": "11dca08b65b198c0a72baba3d8a866ff32f4875366e76d7205ca54b428bf39cf",
+          "size": 2064,
+          "mode": 420
+        },
+        {
+          "path": "package.json",
+          "sha256": "ea6b9d265cb24d67204005cb28ffc98264b1c3d84c91c78dce76bffce69778a1",
+          "size": 1862,
+          "mode": 420
+        }
+      ]
+    }
+  }
+}
