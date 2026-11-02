@@ -725,3 +725,18 @@ App 只读验证完整退款及 fulfillment branch 代次：精确 legacy/guest 
 首个 canonical-01 空指纹诊断为 1 失败/22 跳过，不算通过。native-03 为 5 通过/19 失败：正常部署 target 的 pricingOwner 元信息被严格键集错误拒绝，未安装引发后续级联。修正为捕获有界纯数据但只提取身份，额外元信息不参与授权，再修正夹具的 peers 快照，才有上述完整新原生通过。原失败及冻结证据保留，不据早期拒绝断言虚构目录覆盖。最终两套类型是修正后的重新验证，沿用单层共享串行锁、单 worker、既有内存/case/每阶段 600 秒限制。
 
 本轮只读独立复核未发现范围内阻塞缺陷，没有独立重跑测试或扩张为安全审计。记录位于本地 `.cache/php-ts-phase38-validation/`，文档在最终执行后补齐，提交文件另做逐文件秘密扫描。后续 Admin 作者的隔离缓存草稿未接入应用，不能算业务完成。真实分配作者、Manager 专用整单快递、完整正向付款/Queue/App 链、前端会话/journal/Browser、归属 manifest/原子切换及既有 CI 缺口继续待推进。本轮无生产 DDL、部署、真实微信或业务 HTTP/Browser/Workerd 验收；现有用户/UID/权益/旧单/付款保留，跨 AppID 屏障、runtime_ready=false及整体 PHP→TS 迁移未完成状态保持。
+
+
+## 第39轮：真实 Admin 门店分配作者与原回执恢复
+
+阶段38 `c172d016` 已获精确授权、推送并直接核对远端 main。本轮接通[后台分配作者合同](admin-fulfillment-assignment-author.md)：可信 Env 显式完整peers、缺配置关闭，两个Admin URL前缀共用真实鉴权和独立Admin LOGIN。review/stores/commit分别按order.view/order.manage；只有精确receipt GET/HEAD允许当前原作者在角色移除后恢复最小回执，HTTP commit不豁免管理权限。严格有界JSON、UUID原内容幂等和head/revision/source CAS，失败不留下预占终态，缺失保持unknown。
+
+写入持实际Admin/role barrier、请求锁、63842及物理根行，cart/refund/waybill空集合有表fence，目标门店与cart行锁定，同城冲突用正式reader。当前只接TS普通已付未发货平台整根快递，保留root/store0及type0/1原库存事实。私有来源hash绑定实际根/路由/cartInfo，保存source为封闭cart投影；hash不是签名，也不提供完整财务、purchase-origin或原账号付款证明。整链64项/1MiB；改派/撤销只追加回执，撤销保留原source并可在真实发货后执行，不倒退履约事实。
+
+最终 `native-04` 完整11项通过，123.78秒，8510冻结输入不变、remaining0/STOPPED；真实Admin下单→RSA/AES默认Routine付款→App paid消费→实际production router双mount的grant/reassign/revoke、幂等/CAS、实际备注writer stale、真实Admin发货后撤销、角色失权恢复、错误LOGIN/缺Env、空waybill/根行锁、真实SQL尾部caller-abort回滚、type1及真实满送赠品最终总数量均执行。五种来源反向标本是明确维护SQL篡改并恢复原字节，不冒称正向业务证据。使用本地KV/Queue/内部ID和回调传输适配，不是createApp全栈或真实provider验收。
+
+首轮 `native-03` 10项全失败，115.43秒、输入不变、remaining0/STOPPED。静态复核也漏检了正常下单和赠品都会写financial_version的事实；首版错误拒绝所有这类快照。只接受真实writer的checkout-line-finance-v1并核对id/cart_num、保留refund_generation/legacy/unknown拒绝后，新增反例再完整通过11项；原失败、原复核和后续聚焦独立复核分别留存。最终 `final-07` 的Worker两套类型和两文件33项单元全部通过，336.67秒、8506外层冻结输入不变，运行前核对native-04字节无变化。原生、类型与单元不重复累计；沿用单层共享串行锁、单worker、原内存/每阶段600秒/case限制。
+
+文档在最终执行后补齐，当前14个提交文件另做秘密扫描。没有Admin前端修改，不挪用旧Admin类型或Browser结果；没有生产DDL、部署、真实微信、Workerd/Hyperdrive。Manager专用履约回执和正式后继、waybill能力适配、当前批准/员工scope与源证明、完整Manager HTTP→Queue/App首上传、前端session/journal/Browser仍未实现。缓存中的下一阶段设计不是实现。保持通用订单财务归属、promotion capability、现有用户/UID/权益/旧单/付款；跨AppID归属屏障、runtime_ready=false及整体迁移未完成状态保持。
+
+CI界限：26a43cc7的Uni成功17分36秒已实际取得；该旧run之后由新main推送取消，Worker分片没有成功终态。c172d016的[新run](https://github.com/cinagroup/cinashop/actions/runs/41384583531)的secret/Admin/Supplier/PG16/workerd成功，PC/Kefu完整依赖树审计失败，两个Worker分片最后观测仍在执行。Uni主type/test/build成功16分15秒、安全回归成功，但job随后取得cancelled终态：03:43:35Z→04:03:52Z，共20分17秒，editorial步骤中止。未以timed_out替代实际cancelled字段，20分钟预算的稳定性仍未解决，整体CI不能称通过。本轮新作者提交的远端CI尚未运行。

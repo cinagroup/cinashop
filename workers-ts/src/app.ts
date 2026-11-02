@@ -19,6 +19,7 @@ import { securityHeadersMiddleware } from "@/middleware/security-headers";
 import { responseCacheMiddleware } from "@/middleware/response-cache";
 import { apiRoutes } from "@/routes";
 import { adminapiRoutes } from "@/routes/adminapi";
+import { adminFulfillmentAssignmentRoutes } from '@/routes/admin-fulfillment-assignments';
 import { adminRefundOperationRoutes } from "@/routes/admin-refund-operations";
 import { adminRefundCreationRoutes } from "@/routes/admin-refund-creation";
 import { supplierapiRoutes } from "@/routes/supplierapi";
@@ -59,6 +60,8 @@ export function createApp() {
   app.route('/adminapi/refund/operations', adminRefundOperationRoutes);
   app.route('/api/admin/refund/creation', adminRefundCreationRoutes);
   app.route('/adminapi/refund/creation', adminRefundCreationRoutes);
+  app.route('/api/admin/order/fulfillment_assignment', adminFulfillmentAssignmentRoutes);
+  app.route('/adminapi/order/fulfillment_assignment', adminFulfillmentAssignmentRoutes);
   app.route("/api", apiRoutes);
 
   // 6. Admin 前端兼容路由 (/adminapi/*)

@@ -18,6 +18,7 @@ import {
   isAdminStoreRecoveryRoute,
   isAdminStaffRecoveryRoute,
   isAdminDeliveryRecoveryRoute,
+  isAdminFulfillmentAssignmentRecoveryRoute,
   isAdminGroupRecoveryRoute,
   isAdminUnitRecoveryRoute,
   isAdminEnsureRecoveryRoute,
@@ -39,10 +40,11 @@ function registeredAdminRoutes(
   file: string,
   routeVariable: string,
   mountPrefix: string,
+  guard = 'adminAuth\\b',
 ): Array<{ method: string; path: string }> {
   const source = readFileSync(file, "utf8");
   const pattern = new RegExp(
-    `${routeVariable}\\.(get|post|put|delete|patch)\\(\\s*[\"']([^\"']+)[\"']\\s*,\\s*adminAuth\\b`,
+    `${routeVariable}\\.(get|post|put|delete|patch)\\(\\s*[\"']([^\"']+)[\"']\\s*,\\s*${guard}`,
     "g",
   );
   return [...source.matchAll(pattern)].map((match) => ({
@@ -70,6 +72,9 @@ describe("admin permission catalog", () => {
     const routes = [
       ...registeredAdminRoutes("src/routes/adminapi.ts", "adminapiRoutes", "/adminapi"),
       ...registeredAdminRoutes("src/routes/v1/index.ts", "v1Routes", "/api"),
+      ...['/adminapi', '/api/admin'].flatMap(prefix => registeredAdminRoutes(
+        'src/routes/admin-fulfillment-assignments.ts', 'adminFulfillmentAssignmentRoutes',
+        `${prefix}/order/fulfillment_assignment`, 'privateResponse\\s*,\\s*auth\\b')),
       { method: "GET", path: "/api/ws/kefu" },
     ];
     expect(routes.length).toBeGreaterThan(200);
@@ -79,6 +84,8 @@ describe("admin permission catalog", () => {
     // These are explicit registered owner-recovery contracts, not a blanket
     // exemption for any URL containing receipt/resolve or a namespace prefix.
     const recoveryContracts = [
+      { matches: isAdminFulfillmentAssignmentRecoveryRoute, expected: prefixes.map(prefix =>
+        pair('GET', `${prefix}/order/fulfillment_assignment/receipt/:operationId`)) },
       { matches: isAdminAuthorityRecoveryRoute, expected: prefixes.flatMap(prefix => [
         pair("GET", `${prefix}/setting/admin-authority/receipt/:operationId`),
         pair("POST", `${prefix}/setting/admin-authority/resolve`),

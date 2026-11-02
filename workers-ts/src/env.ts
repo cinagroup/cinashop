@@ -1,6 +1,7 @@
 import type {UserLabelSyncMessage} from './services/admin/AdminUserLabelSyncQueue';
 import type { CashierRuntimeConditionalBinding } from './migrations/cashierRuntimeConditionalBinding';
 import type { RoutinePaymentRuntimeTarget } from './migrations/routinePaymentRuntime';
+import type { RuntimeGiftPeerDeclarations } from './migrations/customerRuntimeGiftPeers';
 /**
  * Workers 环境绑定类型
  *
@@ -23,6 +24,10 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   /** Same trusted full target returned by formal Cashier commissioning. Only
    * the dedicated read-only capability entry requires this additional receipt. */
   CUSTOMER_CASHIER_RUNTIME_TARGET?: RoutinePaymentRuntimeTarget;
+  /** Trusted explicit full declaration returned by assignment commissioning.
+   * Never accept this authority from HTTP, discover it from ACLs or borrow an
+   * App/Manager connection. Missing configuration keeps the Admin author shut. */
+  ADMIN_FULFILLMENT_ASSIGNMENT_RUNTIME?: RuntimeGiftPeerDeclarations;
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;

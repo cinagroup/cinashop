@@ -430,6 +430,10 @@ export function isAdminWechatBaseRecoveryRoute(method: string, routePath: string
 }
 export function isAdminHotwordRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^product\/words\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='product/words/author/resolve';}
 export function isAdminDeliveryRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^order\/delivery\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='order/delivery/author/resolve';}
+export function isAdminFulfillmentAssignmentRecoveryRoute(method: string, routePath: string): boolean {
+  return ['GET','HEAD'].includes(method.toUpperCase())
+    && /^order\/fulfillment_assignment\/receipt\/[^/]+$/.test(normalizeAdminRoute(routePath));
+}
 export function isAdminStaffRecoveryRoute(method:string,routePath:string):boolean {const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^merchant\/store_staff\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='merchant/store_staff/author/resolve';}
 export function isAdminUserLabelRecoveryRoute(method:string,routePath:string):boolean {
  const route=normalizeAdminRoute(routePath),verb=method.toUpperCase();return ['GET','HEAD'].includes(verb)&&/^user_label\/author\/receipt\/[^/]+$/.test(route)||verb==='POST'&&route==='user_label/author/resolve';
@@ -677,6 +681,14 @@ export function requiredAdminPermission(method: string, routePath: string): stri
     if(isAdminGroupRecoveryRoute(method,routePath))return null;
     if(['GET','HEAD'].includes(verb)&&route==='user/group/author/catalog')return 'user.view';
     if(verb==='POST'&&route==='user/group/author/commit')return 'user.manage';
+    return null;
+  }
+  if (route === 'order/fulfillment_assignment' || route.startsWith('order/fulfillment_assignment/')) {
+    const verb = method.toUpperCase(), read = ['GET','HEAD'].includes(verb);
+    if (isAdminFulfillmentAssignmentRecoveryRoute(method, routePath)) return null;
+    if (read && /^order\/fulfillment_assignment\/review\/(?:[1-9]\d{0,9}|:id|<id>)$/.test(route)) return 'order.view';
+    if (read && route === 'order/fulfillment_assignment/stores') return 'order.manage';
+    if (verb === 'POST' && route === 'order/fulfillment_assignment/commit') return 'order.manage';
     return null;
   }
   if(route==='order/delivery/author'||route.startsWith('order/delivery/author/')){
@@ -1674,6 +1686,9 @@ export class AdminPermissionService {
     method: string,
     routePath: string,
   ): Promise<void> {
+    // This exact GET/HEAD exposes only the current original owner's minimal
+    // immutable receipt; the service repeats live realm/password/owner checks.
+    if (isAdminFulfillmentAssignmentRecoveryRoute(method, routePath)) return;
     // Auth middleware has authenticated the account. The recovery service
     // repeats live realm/status/password checks and binds the receipt owner;
     // these two exact endpoints never perform a staff/role mutation.
