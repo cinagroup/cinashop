@@ -1,3 +1,4 @@
+import type { RoutineSubscriptionNoticeIntent } from '@/services/wechat/RoutineSubscriptionNoticeIntent';
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -43,6 +44,8 @@ export interface WechatTemplateNotificationPayload {
   /** Immutable intended Mini delivery account; absent on historical payloads.
    * This does not establish ownership of an old UID or payment. */
   routineAppId?: string;
+  /** Signed staging projection only; the immutable attempt author still admits every POST. */
+  routineSubscriptionIntent?: RoutineSubscriptionNoticeIntent;
   data: Record<string, string>;
   url: string;
 }

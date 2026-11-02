@@ -158,10 +158,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
     await runRoutinePaymentAccountPolicyUpgrade(f.maintenanceDb, f.target, f.peers, f.appReaders);
     await runRoutineIdentityOwnershipUpgrade(f.maintenanceDb, f.target, f.peers, f.appReaders);
     await runRoutineSubscriptionUpgrade(f.maintenanceDb, f.target, f.peers, f.appReaders);
-    await runRoutineSubscriptionDeliveryUpgrade(f.maintenanceDb, f.target, f.peers, f.appReaders);
     await runAdminWechatAppUpgrade(f.maintenanceDb, f.target, f.peers, f.appReaders);
     const cityOwner = await f.createOwnedRole('citysub'), readers = { owner: cityOwner.role, app: true, admin: true, manager: true } as const;
-    await upgradeFulfillmentCityConflictReaders(f.maintenanceDb, f.target, { readers }, { ...f.peers, cityConflictReaders: readers }, f.appReaders);
+    const cityUpgrade = await upgradeFulfillmentCityConflictReaders(f.maintenanceDb, f.target, { readers }, { ...f.peers, cityConflictReaders: readers }, f.appReaders);
     await f.maintenanceDb.update(storeProduct).set({ productType: 0, stock: 40, freight: 1, isVip: 0 }).where(eq(storeProduct.id, 70));
     await f.maintenanceDb.update(storeProductAttrValue).set({ stock: 40, price: '5.00', vipPrice: '5.00' }).where(eq(storeProductAttrValue.id, 1));
     await f.maintenanceDb.update(user).set({ phone: PHONE }).where(eq(user.uid, 11));
@@ -197,6 +196,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
     sources.push(await stage(11, 'send'));
     sources.push(await stage());
     sources.push(await stage());
+    await runRoutineSubscriptionDeliveryUpgrade(f.maintenanceDb, f.target, cityUpgrade.peers, f.appReaders);
     await identity(OTHER, TARGET_B); await current();
     network.mockReset().mockRejectedValue(Error('Unexpected provider request'));
   }, 240000);

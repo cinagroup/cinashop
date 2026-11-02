@@ -21,6 +21,7 @@ import {
 } from "@/models/schema";
 import { withTx, type Container, type DbClient } from "@/lib/di";
 import type {
+  Env,
   OrderMessage,
   OrderNotificationOutboxMessage,
   OrderPaidOutboxMessage,
@@ -61,6 +62,7 @@ import { preparePresalePaidRecovery } from '@/services/activity/PresalePaidRecov
 import { assertPresaleSupplierRefundProof } from '@/services/activity/PresaleSupplierRefundProof';
 import { upgradeAgentLevelsForUser } from '@/services/agent/AgentLevelTaskService';
 import { processSupplierOrderPriceRevision, SUPPLIER_ORDER_PRICE_REVISION_EVENT } from '@/services/supplier/SupplierUnpaidOrderEditEffects';
+import { assertRoutineSubscriptionNoticeClaimTx, captureRoutineSubscriptionNoticeEnvironment, prepareRoutineSubscriptionNoticeStagingTx } from '@/services/wechat/RoutineSubscriptionNoticeAuthor';
 import { stageRoutinePaidPickupShipping } from './RoutinePaidPickupShipping';
 
 type OutboxMessage = OrderPaidOutboxMessage | OrderNotificationOutboxMessage | PresaleDeliveryOutboxMessage;
@@ -82,7 +84,7 @@ const OUTBOX_STATUSES = [
 
 export type OrderOutboxStatus = (typeof OUTBOX_STATUSES)[number];
 
-export interface OrderOutboxEnvironment {
+export interface OrderOutboxEnvironment extends Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE'>> {
   ORDER_QUEUE: Queue<OrderMessage>;
   STAFF_NOTICE?: StaffPublisher;
   WITHDRAWAL_WECOM_ROBOT_ENABLED?: string;
@@ -495,6 +497,13 @@ export class OrderOutboxService {
     let now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
+      let routineIdentityChecked = false;
+      if (message.action === 'processOrderNotificationOutbox') {
+        const [hint] = await tx.select({ payload: storeOrderOutbox.payload }).from(storeOrderOutbox).where(eq(storeOrderOutbox.id, message.outboxId)).limit(1);
+        if (hint && Object.hasOwn(hint.payload, 'routineSubscriptionRequest')) {
+          await assertRoutineSubscriptionNoticeClaimTx(tx); routineIdentityChecked = true;
+        }
+      }
       if (message.action === 'processPresaleDeliveryOutbox') {
         if (!isPresaleDeliveryOutboxMessage(message)) throw new ValidateException('预售交付消息无效');
         const preparation = await preparePresaleDeliveryClaim(tx, message);
@@ -518,6 +527,10 @@ export class OrderOutboxService {
       ) {
         throw new ValidateException("outbox 消息动作与事件类型不匹配");
       }
+      // The locked row is authoritative even if an external owner changed a
+      // legacy hint while the SELECT was waiting. No claim write precedes this.
+      if (message.action === 'processOrderNotificationOutbox' && Object.hasOwn(event.payload, 'routineSubscriptionRequest') && !routineIdentityChecked)
+        await assertRoutineSubscriptionNoticeClaimTx(tx);
       if (event.status === "COMPLETED") return "already-completed";
       if (event.status === "DEAD") return "dead";
       if (event.status === "PROCESSING" && event.leaseUntil > now) return "busy";
@@ -547,6 +560,7 @@ export class OrderOutboxService {
   }
 
   private async runClaimedEvent(claim: ClaimedEvent): Promise<void | 'deferred'> {
+    const routineEnv = captureRoutineSubscriptionNoticeEnvironment(this.env);
     if (claim.eventType === PRODUCT_STOCK_EFFECTS_EVENT || claim.eventType === PRODUCT_RECYCLE_EFFECTS_EVENT
       || claim.eventType === PRODUCT_SAVE_EFFECTS_EVENT) {
       const [event] = await this.container.db.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.id, claim.id),
@@ -581,6 +595,8 @@ export class OrderOutboxService {
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
       let robotGap: WithdrawalWecomGap | null = null;
+      const versionedRoutine = claim.eventType === ORDER_DELIVERY_NOTICE_EVENT && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
+      const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
       const eventRows = await tx
         .select()
         .from(storeOrderOutbox)
@@ -602,6 +618,9 @@ export class OrderOutboxService {
       ) {
         throw new Error("outbox 处理期间不可变字段发生变化");
       }
+
+      if (versionedRoutine && (event.aggregateType !== claim.aggregateType || JSON.stringify(event.payload) !== JSON.stringify(claim.payload)))
+        throw new Error('版本化通知来源在处理期间发生变化');
 
       if (event.eventType === ORDER_PAID_EVENT) {
         assertOrderPaidPayload(event.payload, event.aggregateId);
@@ -724,7 +743,15 @@ export class OrderOutboxService {
       } else if (event.eventType === SUPPLIER_ORDER_PRICE_REVISION_EVENT) {
         await processSupplierOrderPriceRevision(tx, event, now);
       } else if (isNotificationEventType(event.eventType)) {
-        await processOrderNotificationOutboxEvent(tx, event, now);
+        const staged = await processOrderNotificationOutboxEvent(tx, event, now, { env: routineEnv, earlyReady: routineReady });
+        if (staged === 'deferred') {
+          const disposition = outboxFailureDisposition(claim.attemptCount, now);
+          const [deferred] = await tx.update(storeOrderOutbox).set({ status: disposition.status, availableTime: disposition.availableTime,
+            leaseUntil: 0, leaseToken: '', lastError: 'routine_original_notice_deferred', updateTime: now })
+            .where(and(eq(storeOrderOutbox.id, claim.id), eq(storeOrderOutbox.status, 'PROCESSING'), eq(storeOrderOutbox.leaseToken, claim.leaseToken))).returning({ id: storeOrderOutbox.id });
+          if (!deferred) throw new Error('版本化通知延迟租约已失效');
+          return 'deferred' as const;
+        }
       } else {
         throw new Error(`不支持的订单 outbox 事件类型: ${event.eventType}`);
       }

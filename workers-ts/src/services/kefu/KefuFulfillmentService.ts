@@ -63,6 +63,7 @@ export interface KefuDeliveryInput extends SupplierDeliveryInput {
 }
 
 interface KefuFulfillmentEnv extends SystemConfigEnv {
+  APP_KEY?: string;
   CRMEB_ONEPASS_ACCESS_KEY?: string;
   CRMEB_ONEPASS_SECRET_KEY?: string;
 }

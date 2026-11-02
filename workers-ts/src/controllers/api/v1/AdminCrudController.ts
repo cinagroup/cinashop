@@ -557,7 +557,7 @@ export async function adminOrderDelivery(c: C) {
       deliveryType: deliveryType as "express" | "send" | "fictitious",
       deliveryName,
       deliveryId,
-    }, now);
+    }, now, c.env);
   });
   return jsonOk(c, null, "发货成功");
 }

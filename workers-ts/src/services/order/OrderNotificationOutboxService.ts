@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
-import type { DbClient } from "@/lib/di";
+import { createRoutineSubscriptionNoticeRequestTx } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
+import { stageRoutineSubscriptionNoticeTx, type RoutineSubscriptionNoticeEnvironment } from '@/services/wechat/RoutineSubscriptionNoticeAuthor';
+import { createContainerFromDb, withTx, type DbClient } from "@/lib/di";
 import {
   storeOrderCartInfo,
   storeOrder,
@@ -50,6 +52,7 @@ export interface OrderNotificationOutboxEvent {
   aggregateId: number;
   eventType: string;
   payload: OrderOutboxPayload;
+  addTime?: number;
 }
 
 export interface DeliveryNoticeInput {
@@ -82,7 +85,7 @@ export interface SecondCardNoticeInput {
   storeName: string;
 }
 
-type NotificationResult = "created" | "already-created" | "disabled";
+type NotificationResult = "created" | "already-created" | "disabled" | "deferred";
 
 interface NoticeContext {
   values: Record<string, string>;
@@ -189,6 +192,14 @@ function payloadEquals(left: OrderOutboxPayload, right: OrderOutboxPayload): boo
   return canonicalJson(left) === canonicalJson(right);
 }
 
+function deliveryBusinessEquals(left: OrderOutboxPayload, right: OrderOutboxPayload) {
+  const body = (value: OrderOutboxPayload) => {
+    const { routineAppId: _pin, routineSubscriptionRequest: _request, ...rest } = value as OrderDeliveryNoticeOutboxPayload;
+    return rest;
+  };
+  return canonicalJson(body(left)) === canonicalJson(body(right));
+}
+
 /** Record delivery intent in the original business transaction, before Queue
  * delay. Existing events retain their exact pin or historical absence. This
  * account is not a witness for ownership of an old UID or payment. */
@@ -226,9 +237,37 @@ async function insertImmutableNotificationEvent(
       | OrderPinkSuccessNoticeOutboxPayload
       | OrderSecondCardNoticeOutboxPayload;
     now: number;
+    noticeEnv?: Readonly<{ APP_KEY?: string }>;
   },
 ): Promise<{ id: number; eventKey: string }> {
-  const payload = input.payload.userId > 0 && ![ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT, ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT].includes(input.eventType)
+  const key = input.noticeEnv && Object.getOwnPropertyDescriptor(input.noticeEnv, 'APP_KEY');
+  const noticeEnv = key?.enumerable && 'value' in key && typeof key.value === 'string'
+    ? Object.freeze({ APP_KEY: key.value }) : undefined;
+  const versioned = input.eventType === ORDER_DELIVERY_NOTICE_EVENT && input.payload.userId > 0
+    && 'deliveryType' in input.payload && input.payload.deliveryType !== 'fictitious';
+  let payload: typeof input.payload;
+  if (versioned) {
+    const [prior] = await db.select({ payload: storeOrderOutbox.payload }).from(storeOrderOutbox).where(eq(storeOrderOutbox.eventKey, input.eventKey)).limit(1);
+    if (prior) {
+      // Preserve the version winner, its original signature/pin/absence. No
+      // re-signing, repinning or later adoption of a committed legacy event.
+      const source = prior.payload as OrderDeliveryNoticeOutboxPayload;
+      payload = { ...input.payload, ...(Object.hasOwn(source, 'routineAppId') ? { routineAppId: source.routineAppId } : {}),
+        ...(Object.hasOwn(source, 'routineSubscriptionRequest') ? { routineSubscriptionRequest: source.routineSubscriptionRequest } : {}) };
+    } else {
+      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx>>;
+      try {
+        resolved = await withTx(createContainerFromDb(db), nested => createRoutineSubscriptionNoticeRequestTx(nested, noticeEnv,
+          { eventKey: input.eventKey, aggregateId: input.aggregateId, payload: input.payload as OrderDeliveryNoticeOutboxPayload, now: input.now }));
+      } catch {
+        // Mini-only metadata/SQL faults roll back their actual SAVEPOINT.
+        // Keep fulfillment and other notices, without falling back to a pin.
+        resolved = { kind: 'original', request: { format: 2, unavailable: true } };
+      }
+      payload = resolved.kind === 'original' ? { ...input.payload, routineSubscriptionRequest: resolved.request }
+        : await captureRoutineNotificationAccount(db, input.eventKey, input.payload);
+    }
+  } else payload = input.payload.userId > 0 && ![ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT, ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT].includes(input.eventType)
     ? await captureRoutineNotificationAccount(db, input.eventKey, input.payload) : input.payload;
   const inserted = await db
     .insert(storeOrderOutbox)
@@ -263,7 +302,7 @@ async function insertImmutableNotificationEvent(
   if (
     event.aggregateId !== input.aggregateId ||
     event.eventType !== input.eventType ||
-    !payloadEquals(event.payload, payload)
+    !(versioned ? deliveryBusinessEquals(event.payload, input.payload) : payloadEquals(event.payload, payload))
   ) {
     throw new Error("通知 outbox 不可变字段冲突");
   }
@@ -275,6 +314,7 @@ export async function enqueueOrderDeliveryNoticeEvent(
   db: DbClient,
   input: DeliveryNoticeInput,
   now = Math.floor(Date.now() / 1_000),
+  noticeEnv?: Readonly<{ APP_KEY?: string }>,
 ): Promise<{ id: number; eventKey: string }> {
   const orderId = positiveId(input.orderId, "订单 ID");
   const userId = input.userId === 0 ? 0 : positiveId(input.userId, "用户 ID");
@@ -308,7 +348,7 @@ export async function enqueueOrderDeliveryNoticeEvent(
     aggregateId: orderId,
     eventType: ORDER_DELIVERY_NOTICE_EVENT,
     payload,
-    now,
+    now, noticeEnv,
   });
 }
 
@@ -786,6 +826,19 @@ export async function createImmutableDelivery(
     now: number;
   },
 ): Promise<void> {
+  if (input.channel !== 'wechat_routine' && input.event.payload != null && Object.hasOwn(input.event.payload, 'routineSubscriptionRequest')) {
+    const [prior] = await tx.select().from(orderNotificationDelivery).where(and(eq(orderNotificationDelivery.eventKey, input.event.eventKey),
+      eq(orderNotificationDelivery.channel, input.channel))).limit(1);
+    if (prior) {
+      // V2 may commit SMS/official/shipping while only Mini resolution waits.
+      // Configuration/identity changes on a later retry cannot rewrite those
+      // already committed intents or make their original rendering conflict.
+      if (prior.outboxId !== input.event.id || prior.orderId !== (input.payload.orderId ?? null)
+        || prior.withdrawalId !== (input.payload.withdrawalId ?? null) || prior.userId !== input.payload.userId
+        || prior.noticeMark !== input.mark || prior.payload.kind !== input.channel) throw new Error('版本化通知重放与原渠道意图冲突');
+      return;
+    }
+  }
   // Pin only at creation. Consumption never fills a historical missing account
   // with today's AppID. Immutable-conflict checks also cover this new field.
   let deliveryPayload = input.deliveryPayload;
@@ -882,6 +935,7 @@ async function stageExternalNotifications(
   config: NoticeConfig | undefined,
   context: NoticeContext,
   now: number,
+  suppressRoutine = false,
 ): Promise<void> {
   if (event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) {
     // The old success callback invokes system, SMS and routine channels;
@@ -968,7 +1022,7 @@ async function stageExternalNotifications(
 
   const routineEnabled = config?.isRoutine === 1 &&
     (isRefund || delivery?.deliveryType === "express" || (delivery?.deliveryType === "send" || delivery?.deliveryType === "city_delivery"));
-  if (routineEnabled) {
+  if (routineEnabled && !suppressRoutine) {
     const templateMark = isRefund
       ? "1451"
       : delivery?.deliveryType === "express" ? "1458" : "1128";
@@ -1064,6 +1118,7 @@ export async function processOrderNotificationOutboxEvent(
   tx: DbClient,
   event: OrderNotificationOutboxEvent,
   now: number,
+  routine?: { env: Readonly<RoutineSubscriptionNoticeEnvironment>; earlyReady: boolean },
 ): Promise<NotificationResult> {
   assertOrderNotificationPayload(event.payload, event.eventType, event.aggregateId);
   const payload = event.payload as
@@ -1071,6 +1126,9 @@ export async function processOrderNotificationOutboxEvent(
     | OrderRefundRefusedNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload;
+  const versionedRoutine = event.eventType === ORDER_DELIVERY_NOTICE_EVENT && Object.hasOwn(payload, 'routineSubscriptionRequest');
+  const renderAt = versionedRoutine && Number.isSafeInteger(event.addTime) ? event.addTime! : now;
+  let routineDeferred = false;
   const mark = noticeMark(event.eventType, payload);
   const templates = await tx
     .select({
@@ -1099,9 +1157,20 @@ export async function processOrderNotificationOutboxEvent(
   ) {
     return "disabled";
   }
-  await stageExternalNotifications(tx, event, payload, mark, template, context, now);
-  if (!template || template.isSystem !== 1 || payload.userId === 0) return "disabled";
+  if (versionedRoutine && template?.isRoutine === 1 && 'deliveryType' in payload && ['express', 'send', 'city_delivery'].includes(payload.deliveryType)) {
+    routineDeferred = await stageRoutineSubscriptionNoticeTx(tx, routine?.env ?? {}, event, mark, routine?.earlyReady === true, renderAt) === 'deferred';
+  }
+  await stageExternalNotifications(tx, event, payload, mark, template, context, renderAt, versionedRoutine);
+  if (!template || template.isSystem !== 1 || payload.userId === 0) return routineDeferred ? "deferred" : "disabled";
 
+  if (versionedRoutine) {
+    const [prior] = await tx.select({ mark: systemMessage.mark, userId: systemMessage.userId }).from(systemMessage)
+      .where(eq(systemMessage.eventKey, event.eventKey)).limit(1);
+    if (prior) {
+      if (prior.mark !== mark || prior.userId !== payload.userId) throw new Error('版本化通知重放与原站内消息冲突');
+      return routineDeferred ? 'deferred' : 'already-created';
+    }
+  }
   const title = renderTemplate(template.title, context.values);
   const content = renderTemplate(template.content, context.values);
   if ([...title].length > 256) throw new Error(`通知模板 ${mark} 渲染后的标题过长`);
@@ -1117,12 +1186,12 @@ export async function processOrderNotificationOutboxEvent(
       look: 0,
       type: 1,
       status: 1,
-      addTime: now,
+      addTime: renderAt,
       isDel: 0,
     })
     .onConflictDoNothing({ target: systemMessage.eventKey })
     .returning({ id: systemMessage.id });
-  if (inserted[0]) return "created";
+  if (inserted[0]) return routineDeferred ? "deferred" : "created";
 
   const existing = await tx
     .select({
@@ -1143,5 +1212,5 @@ export async function processOrderNotificationOutboxEvent(
   ) {
     throw new Error("站内通知事件键与既有消息冲突");
   }
-  return "already-created";
+  return routineDeferred ? "deferred" : "already-created";
 }

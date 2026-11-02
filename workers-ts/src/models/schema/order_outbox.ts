@@ -5,6 +5,7 @@
  * 定时扫描负责补偿“数据库已提交但 Queue 投递失败/结果未知”的窗口。
  */
 import { sql } from "drizzle-orm";
+import type { RoutineSubscriptionNoticeRequest, RoutineSubscriptionNoticeUnavailable } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductSaveEffectsPayload } from '@/services/product/ProductSaveEffects';
@@ -37,6 +38,8 @@ export interface OrderPinkSuccessNoticeOutboxPayload {
 
 export interface OrderDeliveryNoticeOutboxPayload {
   routineAppId?: string;
+  /** New signed original-payment resolution request; never an upgrade of legacy pins. */
+  routineSubscriptionRequest?: RoutineSubscriptionNoticeRequest | RoutineSubscriptionNoticeUnavailable;
   orderId: number;
   orderNo: string;
   userId: number;

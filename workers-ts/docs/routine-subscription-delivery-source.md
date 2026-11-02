@@ -70,3 +70,10 @@ native-02 首次真实运行在 beforeAll 的 Admin cart HTTP 阶段失败，134
 本页前述第46轮结果是当轮历史快照。第47轮已接通[实际 Queue 派发、不可变 attempt/result 与固定 POST](routine-subscription-delivery-dispatch.md)：新增同事务 `prepareRoutineSubscriptionDeliveryNoticeTx` / WeakMap 检查，维护 gate 顺序在731725后追加731726，并在写首attempt的同一实际App短事务内重新核对完整来源摘要、原接收人/模板/请求。token GET 后再准入，SQL之外发送，一次性能力不因慢COMMIT确认重新计时；未知旧attempt不因Admin重试或更换delivery ID重发。
 
 新9项存储/13项实际Queue业务、旧来源10/通知45、单元166及Worker两套类型检查已通过，另2个既有条件用例跳过。普通express与真实配送员send已动态执行，split/city/容量未单独动态证明；来源/通知作者的版本化接线仍未完成，B pin与历史缺失继续拒绝。没有生产DDL、部署或真实微信调用；完整归属manifest/原子切换和整体迁移仍待完成。
+
+
+## 第48轮后继：新发货作者接线
+
+[新版本作者](routine-subscription-notice-author.md)已接入真实 Admin 与受控分配 Manager 发货：A付款→当前/裸绑定/全局模板B→真实发货→签名request2→App精确A归属/独立模板→既有Queue attempt/result。保留本页旧pin来源准入；旧B/空/缺pin事件不改版或重新解释。App claim仅作轻量真实身份核验，完整目录/来源检查留实际Mini SAVEPOINT；源锁/缺owner/模板可延后Mini并提交原SMS/inbox，既有渠道重放不重渲染。签名staging仍是可变投影，首不可变接受意图仍是dispatch attempt。
+
+最终regression-09新作者19+旧Queue13+来源10+通知45共87项、final-10单元198/2既有跳过及Worker两套类型通过；两批8574冻结一致、四PG remaining0/STOPPED。失败批次和边界详见后继文档，未部署或执行生产DDL，其他事件/非微信单、split/city动态证明、完整切换及整体迁移未完成。

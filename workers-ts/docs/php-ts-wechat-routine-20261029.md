@@ -841,3 +841,18 @@ native-03 新存储9/实际Queue业务13共22项通过，332.34秒；compat-04�
 首轮storage-02为3通过/6失败，新增维护总龄5秒错误导致约8秒全审计回滚及级联未安装失败；移除误套总龄后完整重跑，既有单SQL/idle/锁限值和全部审计未放宽。final-01的166/2后标本unused/union类型失败保留，修正后最终两套类型通过。交叉复核修正慢提交确认能力窗口与send配送员/手机号标本，未改变生产鉴权；5个主流程文件独立交叉读、另6由复核者编写并由主流程另读，不称全11独立审计或重跑。原日志/冻结/失败/复核在本机.cache/php-ts-phase47-validation，文档后补、提交文件另做秘密扫描与暂存/提交字节核对。
 
 新动态正例ordinary express/send，split/city及容量未单独重证。legacy通知作者仍未迁移；原本B pin和旧缺来源不重解释为A，其他事件/非微信单/历史恢复、完整归属manifest/单次许可/原子切换及整体迁移继续待办。无生产DDL/Env切换、部署、真实微信、Browser或Workerd/Hyperdrive环境验收；用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障与runtime_ready=false保持。此前授权仅覆盖已推送5b4074f2，本轮新提交仍需精确SHA推送授权。
+
+
+## 第48轮：切换后实际发货作者、签名请求与 App staging
+
+`a400366b181a2303a452bb906d9acf40a443b883` 已按具体SHA授权推送并直接核对main。[其CI](https://github.com/cinagroup/cinashop/actions/runs/41423671523)末次快照10成功、Worker两分片仍运行，不作全CI绿色或本轮新提交证明。
+
+本轮接通[新实物发货通知作者](routine-subscription-notice-author.md)：真实A付款后切当前B/裸绑定B/全局模板B，再由Admin express/send或受控分配Manager金融store0整单express发货；业务原事务只签封闭request2与实际LOGIN/OID，不读私有账本、不选择接收人。App同事务核对完整原付款、精确A owner、独立最新1458/1128批准与材料，再写绑定delivery/event/request的签名staging。旧A/B/空/缺pin和并发赢家保持原版本/签名，不升级；namespace全缺席才legacy，部分目录/缺writer材料/可回滚元数据SQL失败记录unavailable2，无新DDL/grant。
+
+claim写入前以纯pg_catalog锚定真实App身份，不把完整目录反解器放在源锁隔离之前；hint若被外部owner改变，锁定V2行在写入前补验。八个共享try-only gate、outbox/delivery SRE NOWAIT与完整fresh源在真实Mini SAVEPOINT内，争用/SQL错误回滚后短信/站内信仍可提交。有效request缺consumer key/scope、owner/独立模板时仅Mini使用既有FAILED退避/8次上限；重试保留原已提交渠道/站内信，不随手机号/模板变化重渲染。确认无效或unavailable请求为空目标终态skip，配置修复不升级。intent解析先descriptor-only有界JSON快照；staging是可变投影，仍由phase47首不可变attempt和fresh一次性能力决定每次POST，UNKNOWN不重发。
+
+最终regression-09为19新原生+13旧Queue+10来源+45通知共87通过，554.04秒；final-10单元198通过/2既有PG条件跳过、两套Worker类型通过，321.80秒。两批各8574输入运行中及补文档前一致、四PG remaining0/STOPPED，只计最终285次成功/2跳过；单层锁、单worker、命令600秒/整组1200秒及既有内存限值保持。32新纯codec单元不作SQL批准证明；新原生是导出的真实路由/服务链，HTTP/缓存/Queue受控、phone等为明确fixture输入，无真实微信或浏览器证明。
+
+保留final-01 mock hook清理失败、author-03快照及源锁揭示问题、native-05延后安装漏传city peer而13未执行、compat-07 legacy SMS无payload兼容失败；分别修正后以上述同一最终图重验，不放宽安装器/准入、不累计中间通过。4主流程独立交叉读、另2源3测试由复核者编写主流程另读、余7窄diff，不称全16独立审计或重跑。本机.cache/php-ts-phase48-validation保留完整日志、冻结、失败和字节/扫描记录，文档在全部重验证终态后补。
+
+split/city、其他角色与容量未单独动态重证，退款拒绝/成团等作者、非微信单原账号发送、完整manifest/单次许可/原子切换及整体迁移仍未完成。未执行生产DDL/Env切换、部署、真实微信或Workerd/Hyperdrive环境验收；旧用户/UID/权益/订单/付款保持，未知不猜归属、跨AppID屏障及runtime_ready=false保留。此前授权仅覆盖已推送a400366b，本轮新提交仍需具体SHA推送授权。

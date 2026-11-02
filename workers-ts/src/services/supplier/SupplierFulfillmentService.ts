@@ -710,6 +710,7 @@ async function applyDelivery(
   expectedStoreId?: number,
   waybillMetadata?: FulfillmentWaybillMetadata,
   cityDeliveryJobId?: number,
+  noticeEnv?: Readonly<{ APP_KEY?: string }>,
 ) {
   const now = Math.floor(Date.now() / 1_000);
   assertDeliverable(order);
@@ -788,13 +789,13 @@ async function applyDelivery(
     deliveryName: input.deliveryName,
     deliveryId: input.deliveryId,
     ...(cityDeliveryJobId===undefined?{}:{cityDeliveryJobId}),
-  }, now);
+  }, now, noticeEnv);
 }
 
 export class SupplierFulfillmentService {
   constructor(
     private readonly container: Container,
-    private readonly env: SystemConfigEnv,
+    private readonly env: SystemConfigEnv & Readonly<{ APP_KEY?: string }>,
   ) {}
 
   async expressList() {
@@ -839,6 +840,7 @@ export class SupplierFulfillmentService {
         options.expectedStoreId,
         options.waybillMetadata,
         options.cityDeliveryJobId,
+        this.env,
       );
       if (root.id !== active.id) {
         await tx.insert(storeOrderStatus).values({
@@ -952,6 +954,7 @@ export class SupplierFulfillmentService {
           options.expectedStoreId,
           options.waybillMetadata,
           options.cityDeliveryJobId,
+          this.env,
         );
         if (root.id !== active.id) {
           await tx.insert(storeOrderStatus).values({
@@ -1262,7 +1265,7 @@ export class SupplierFulfillmentService {
         deliveryName: input.deliveryName,
         deliveryId: input.deliveryId,
         ...(options.cityDeliveryJobId===undefined?{}:{cityDeliveryJobId:options.cityDeliveryJobId}),
-      }, now);
+      }, now, this.env);
       const result = {
         split: true,
         order_id: selectedOrderPk,
