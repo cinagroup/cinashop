@@ -1,5 +1,6 @@
 <template>
   <div class="order-list">
+    <div class="assignment-recovery-entry"><el-button @click="$router.push('/order/fulfillment-assignment')">核对分配原请求</el-button></div>
     <el-card shadow="never" class="chart-card" v-loading="chartLoading">
       <template #header><strong>订单状态概览</strong></template>
       <p class="chart-tip">全部当前履约单，含平台、门店及供应商；包含拆单子单，不含已删除订单及拆单支付父单。计数不随下方搜索变化。</p>

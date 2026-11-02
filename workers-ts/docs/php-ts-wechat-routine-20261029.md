@@ -754,3 +754,17 @@ order、标准发货状态、补充Manager audit、唯一真实PENDING delivery.
 本轮为自有PG16、实际独立TCP LOGIN、production服务/导出router与本地provider/Queue/KV传输验收；无createApp全栈、Browser、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。前端Admin分配面板、Manager分配待办、专用session/journal/Browser未接通；旧门店列表仍按真实store_id读取，不会因grant读到平台store0单。真实退款余单/分包/自提/虚拟/物流更正与历史UNKNOWN不属新Manager入口；完整维护manifest/原子切换、前端及整体迁移继续未完成，现有用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障与runtime_ready=false保留。
 
 阶段39的[远端CI](https://github.com/cinagroup/cinashop/actions/runs/41387142973)已观测UniApp success（04:12:58Z→04:30:39Z，17分41秒），Admin/Supplier/PG16/workerd/secret也成功，PC/Kefu依赖审计仍失败，Worker全量分片尚无本轮取得的成功终态。旧c172的20分17秒cancelled保留，未提高预算或删检查，整体CI仍不能称通过；本轮新提交与推送以最终检查点为准，需要具体新SHA授权。
+
+## 第41轮：Admin分配与Manager整单快递页面、待办和恢复
+
+`2681f27bb2a2322395d08374bc4145f1ff9b7831` 已按用户精确授权推送并直接核对远端main。本轮接通[实际页面与验收合同](assigned-fulfillment-ui.md)：Admin订单详情批准/改派/撤销，独立登录后原作者恢复路由；UniApp新增后台分配订单页，当前门店的专用游标待办、最新review、承运商/单号及显式整单发货确认。待办10+1前瞻均核对完整批准链与根身份，不扩张旧财务门店列表，不将发现结果冒称来源审阅。付款根、财务store0和原type0/1商品库存来源不变，没有新增SQL权限。
+
+两端独立journal先持久化原请求再POST，未知保留原键/内容；H5 Web Locks、原字节CAS、会话/token/账号ABA/门店/路由/隐藏与晚到响应栅栏。Admin缺安全UUID/Web Locks关闭写入，角色丢失后仍可最小owner GET；Manager旧context失败不遮盖恢复，完整25字段公开回执关联保存intent/hash。原生Uni只覆盖单JS运行时，不宣称多进程互斥。页面区分发货记录和渠道上传。
+
+manager-02原生完整15项（旧10+新5）通过196.63秒、输入不变、remaining0/STOPPED。final-06完整Admin64项（新14+旧50）6.11秒、正式Admin构建93.62秒、Uni61项（新19+旧42）17.12秒、Uni类型27.53秒/H5构建37.14秒、Worker unit/runtime类型218.18/109.63秒全部通过；8535外层冻结输入不变。旧merchant回归的失效.cache/过时页数修为固定Git审计真实98路径及父提交153路径，154页仅新增assignedOrders；原断言含义保留，无依赖升级。manager-02的Uni60/1失败和frontend-04的Worker5条类型错误均保留；final-06重跑修正后的全部受影响图，不挪用旧通过结果。
+
+browser-07为一个真实createApp/CUA Browser用例内9阶段，通过401.84秒，remaining0/STOPPED。两笔实际下单→默认RSA/AES付款回调→App paid，由实际产品DOM/API执行4次Admin批准/改派/撤销和1次Manager发货；两次真实提交后的响应丢失、角色撤销后的owner GET恢复、Queue/App旧A凭据/付款人首上传与重复只上传1次均核对。3392源码及Admin358/Uni557构建文件终态逐项匹配，cart/商品/SKU全值不变，根只允许预期7项发货变化。两端页面身份、非空/无框架覆盖层、实际交互、桌面1163×858及移动full-page375×1324截图与无横向溢出均核对；Uni仅既有两条vendor router弃用警告，Admin无warn/error。截图和Browser证据保留在仓库外/tmp，执行摘要在本地忽略缓存。
+
+browser-05确实失败521.05秒：监督漏读Vitest缓冲的READY，只在窗口末段完成Admin两阶段，六分钟窗口到期；没有完整成功evidence，也不是SQL死锁。仅修复仓库外监督程序实时读取ready.json，在未变源码、原时限/内存/单worker/单层共享锁下重跑通过。独立只读复核核对host、客户端和执行证据边界，没有独立重跑或安全审计声明；文档后补，最终提交文件另做秘密扫描与暂存字节核对。
+
+本轮provider/Queue/KV、session bootstrap/角色开关/提交后丢响应为明确本机适配；没有真实登录表单、原生设备、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。App仍不独立读取新Manager回执/分配权限。完整归属manifest、原子切换、其他迁移和CI缺口继续未完成；用户/UID/权益/旧单/付款、未知归属不猜及runtime_ready=false保留。2681的[远端run](https://github.com/cinagroup/cinashop/actions/runs/41390906709)截至2026-11-02 05:43:04UTC仍运行，Worker两分片仍unit；Uni实际cancelled20分17秒、原因未确证，PC/Kefu依赖审计失败，不能称整体CI通过。新提交推送仍需具体SHA授权。

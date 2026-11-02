@@ -2,6 +2,7 @@
   <div class="order-detail-page">
     <div class="page-head">
       <h2>订单详情</h2>
+      <el-button v-if="order && permitted('order.view')" @click="$router.push({ path: '/order/fulfillment-assignment', query: { order_id: String(order.id) } })">门店履约分配</el-button>
       <el-button v-if="order && canRefund" @click="$router.push({ path: '/refund', query: { creationOrderId: String(order.id) } })">{{ order.pid === -1 ? '查看退款 / 恢复原请求' : '主动退款 / 恢复原请求' }}</el-button>
       <el-button v-if="sessionValid" :disabled="loading" @click="loadOrder">刷新</el-button>
       <el-button @click="$router.back()">返回</el-button>

@@ -31,6 +31,12 @@ const COLUMNS = sql.raw(`actor_uid,request_key::text AS request_key,format_versi
   delivery_outbox_id,delivery_event_key,delivery_payload_hash,intent,created_at::text AS created_at`);
 type Result = { receipt: AssignedFulfillmentReceipt; replayed: boolean };
 type Proof = { scope: StoreManagerScope; grant: AssignmentEvent; source: AssignmentCurrentSource };
+const INBOX_PAGE_SIZE = 10;
+type InboxItem = Readonly<{
+  order_id: number; order_no: string; total_num: number; financial_store_id: 0;
+  grant: Readonly<{ operation_id: string; ordinal: number; payload_hash: string; source_hash: string; order_revision: string }>;
+  admission: 'requires_review';
+}>;
 function databaseError(error: unknown): never {
   let e = error;
   for (let i = 0; i < 6 && e && typeof e === 'object'; i++) {
@@ -119,6 +125,58 @@ export class StoreManagerAssignedFulfillmentService {
       if (clock?.ready !== true || actor.expiresAt <= Math.floor(Date.now()/1000)) throw unavailable('分配履约事务或登录会话已超时，请先查原回执');
       return value;
     }).catch(databaseError);
+  }
+  /** A bounded discovery snapshot, never source approval. Read the current
+   * grant head before disclosing a root and validate its complete immutable
+   * chain, including the lookahead row; a truncated chain is not a new genesis.
+   * Cart/route/revision/conflict proof remains the separate review and commit. */
+  inbox(query: URLSearchParams, actorValue: ManagerOrderActor) {
+    const entries = [...query.entries()], stores = query.getAll('store_id'), cursors = query.getAll('after');
+    if (stores.length !== 1 || cursors.length > 1 || entries.some(([key]) => key !== 'store_id' && key !== 'after')
+      || !/^[1-9][0-9]{0,9}$/u.test(stores[0]) || cursors.length === 1 && !/^(?:0|[1-9][0-9]{0,9})$/u.test(cursors[0]))
+      throw new ValidateException('分配待办仅接受唯一门店和可选订单游标');
+    const storeId = assignmentId(Number(stores[0])), after = assignmentId(cursors.length ? Number(cursors[0]) : 0, true);
+    const actor = captureAssignedActor(actorValue);
+    return this.transaction(actor, false, async tx => {
+      await authorizeManagerOperationOwnerReadTx(tx, actor);
+      const scope = await requireStoreManagerScope(tx, actor.uid, storeId);
+      // The existing (target_store_id,order_id,ordinal DESC) index discovers
+      // candidates. NOT EXISTS checks every later event, including revocations
+      // and reassignment, before LIMIT; this is not a capped event scan.
+      const candidates = await tx.execute<{ order_id: number; operation_id: string; ordinal: number; payload_hash: string }>(sql`SELECT
+        a.order_id,a.operation_id::text AS operation_id,a.ordinal,a.payload_hash
+        FROM public.store_order_fulfillment_assignment a
+        LEFT JOIN public.store_order o ON o.id=a.order_id
+        WHERE a.target_store_id=${storeId} AND a.kind='grant' AND a.order_id>${after}
+          AND NOT EXISTS(SELECT 1 FROM public.store_order_fulfillment_assignment later
+            WHERE later.order_id=a.order_id AND later.ordinal>a.ordinal)
+          AND (o.id IS NULL OR (o.status=0 AND o.is_del=0 AND o.is_system_del=0))
+        ORDER BY a.order_id ASC LIMIT ${INBOX_PAGE_SIZE + 1}`);
+      if (candidates.length > INBOX_PAGE_SIZE + 1) throw unavailable('分配待办候选超过页面容量');
+      const list: InboxItem[] = []; let previous = after;
+      for (const candidate of candidates) {
+        const id = assignmentId(candidate.order_id);
+        if (id <= previous) throw unavailable('分配待办候选重复或顺序错误');
+        previous = id;
+        const chain = await readChain(tx, id), grant = chain.at(-1);
+        if (!grant || grant.kind !== 'grant' || grant.target_store_id !== scope.store_id
+          || grant.operation_id !== candidate.operation_id || grant.ordinal !== candidate.ordinal || grant.payload_hash !== candidate.payload_hash)
+          throw unavailable('分配待办当前批准或完整链不一致');
+        const order = await orderSnapshot(tx, id);
+        if (order.id !== id || order.pid !== 0 || order.uid !== grant.customer_uid || order.storeId !== 0 || order.supplierId !== 0
+          || grant.financial_store_id !== 0 || order.paid !== 1 || order.status !== 0 || order.isDel !== 0 || order.isSystemDel !== 0
+          || order.shippingType !== 1 || order.productType !== 0 || order.type !== 0
+          || typeof order.orderId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/u.test(order.orderId))
+          throw unavailable('分配待办付款根身份与原批准不一致');
+        list.push(Object.freeze({ order_id: id, order_no: order.orderId, total_num: assignmentId(order.totalNum), financial_store_id: 0,
+          grant: Object.freeze({ operation_id: grant.operation_id, ordinal: grant.ordinal, payload_hash: grant.payload_hash,
+            source_hash: grant.source_hash, order_revision: grant.order_revision }), admission: 'requires_review' }));
+      }
+      const hasMore = list.length > INBOX_PAGE_SIZE, visible = list.slice(0, INBOX_PAGE_SIZE);
+      return { version: 'merchant-assigned-whole-express-inbox-v1' as const, actor_uid: actor.uid,
+        store_id: scope.store_id, scope_key: scope.scope_key, list: visible,
+        next_after: hasMore ? visible[visible.length - 1].order_id : null, admission: 'requires_review' as const };
+    });
   }
   review(idValue: unknown, query: URLSearchParams, actorValue: ManagerOrderActor) {
     const entries = [...query.entries()];

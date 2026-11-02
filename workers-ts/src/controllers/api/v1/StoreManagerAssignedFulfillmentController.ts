@@ -18,6 +18,9 @@ function service(c: C) {
 export async function review(c: C) {
   return jsonOk(c, await service(c).review(c.req.param('id'), new URL(c.req.url).searchParams, managerOperationActor(c)));
 }
+export async function inbox(c: C) {
+  return jsonOk(c, await service(c).inbox(new URL(c.req.url).searchParams, managerOperationActor(c)));
+}
 export async function receipt(c: C) {
   return jsonOk(c, await service(c).receipt(c.req.param('requestKey'), new URL(c.req.url).searchParams, managerOperationActor(c)));
 }

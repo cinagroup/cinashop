@@ -19,6 +19,7 @@ import { StoreManagerAssignedFulfillmentService } from '@/services/store/StoreMa
 import { requireStoreManagerScope, merchantOrderRevision } from '@/services/store/StoreManagerScope';
 import { ASSIGNED_FULFILLMENT_VERSION, assignedFulfillmentHash, type AssignedFulfillmentInput } from '@/services/store/ManagerAssignedFulfillmentInput';
 import { readRoutineAppId } from '@/services/wechat/RoutineRuntimeConfig';
+import { assignmentRequestHash, type AssignmentRequest } from '@/services/order/FulfillmentAssignmentProtocol';
 import type { RoutineShippingDispatch, RoutineShippingRequest } from '@/services/payment/RoutineShippingDispatch';
 import { managerAssignedFulfillmentFixture, ASSIGNED_APP, ASSIGNED_PAYER, ASSIGNED_AES, ASSIGNED_BUYER_BINDING,
   ASSIGNED_SHIPPING_SECRET, ASSIGNED_CARRIER } from './helpers/managerAssignedFulfillmentFixture';
@@ -26,6 +27,7 @@ import { managerAssignedFulfillmentFixture, ASSIGNED_APP, ASSIGNED_PAYER, ASSIGN
 type Fixture = Awaited<ReturnType<typeof managerAssignedFulfillmentFixture>>;
 type Query = Pick<DbClient, 'execute'>;
 type Review = Awaited<ReturnType<StoreManagerAssignedFulfillmentService['review']>>;
+type Inbox = Awaited<ReturnType<StoreManagerAssignedFulfillmentService['inbox']>>;
 const base = '/store/manager/assigned-order';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Manager assigned whole express through HTTP outbox and App shipping', () => {
@@ -63,6 +65,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Manager a
     expect(r.response.status).toBe(200); expect(r.body.status, r.body.msg).toBe(200);
     expect(r.response.headers.get('Cache-Control')).toBe('private, no-store'); return r.body.data;
   };
+  const inbox = async (after = 0, uid = 103, store = 77): Promise<Inbox> => {
+    const r = await f.http(base + '/inbox?store_id=' + store + '&after=' + after, undefined, { uid }); noSecrets(r.body);
+    expect(r.response.status).toBe(200); expect(r.body.status, r.body.msg).toBe(200);
+    expect(r.response.headers.get('Cache-Control')).toBe('private, no-store'); return r.body.data;
+  };
+  const lastOrderId = async () => (await f.maintenanceDb.execute<{ id: number }>(sql`SELECT COALESCE(max(id),0)::integer AS id FROM public.store_order`))[0].id;
   function input(r: Review, tracking = 'ASSIGNED-' + r.order_id): AssignedFulfillmentInput {
     return { version: ASSIGNED_FULFILLMENT_VERSION, order_id: r.order_id, store_id: r.store_id, scope_key: r.scope_key,
       assignment_operation_id: r.grant.operation_id, assignment_ordinal: r.grant.ordinal, assignment_payload_hash: r.grant.payload_hash,
@@ -262,6 +270,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Manager a
   it('refuses App Admin Financial Cashier and maintenance real LOGINs as the Manager author', async () => {
     const c = await prepared(), before = await facts(c.order.id);
     for (const peer of [f.appRuntime, f.adminRuntime, f.financialRuntime, f.cashierRuntime, { db: f.maintenanceDb }]) {
+      await expect(service(peer.db).inbox(new URLSearchParams({ store_id: '77' }), f.managerActor())).rejects.toThrow();
       await expect(service(peer.db).review(String(c.order.id), new URLSearchParams({ store_id: '77' }), f.managerActor())).rejects.toThrow();
       await expect(service(peer.db).commit(c.body, { actor: f.managerActor(), request_key: randomUUID() })).rejects.toThrow();
       expect(await facts(c.order.id)).toEqual(before);
@@ -271,6 +280,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Manager a
 
   it('closes the production HTTP route when the explicit full declaration is missing', async () => {
     const c = await prepared(), before = await facts(c.order.id), bindings = { ...f.env, MANAGER_FULFILLMENT_ASSIGNMENT_RUNTIME: undefined };
+    expect((await f.http(base + '/inbox?store_id=77', undefined, { bindings })).body.status).not.toBe(200);
     expect((await f.http(base + '/review/' + c.order.id + '?store_id=77', undefined, { bindings })).body.status).not.toBe(200);
     expect((await f.http(base + '/commit', c.body, { key: randomUUID(), bindings })).body.status).not.toBe(200);
     expect(await facts(c.order.id)).toEqual(before); expect(network).not.toHaveBeenCalled();
@@ -285,6 +295,110 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Manager a
     expect(f.messages).toHaveLength(beforeMessages); expect(network).not.toHaveBeenCalled();
     const saved = await committed(c.body, key); expect(saved.result).toMatchObject({ replayed: false, receipt: { request_key: key, order_id: c.order.id } });
     expect(await receipts(c.order.id)).toHaveLength(1); expect(await notices(c.order.id)).toHaveLength(1);
+  }, 90000);
+
+  it('paginates eleven real assigned roots by fixed ten-row pages without disclosing source or claiming admission', async () => {
+    const after = await lastOrderId(), created: Array<Awaited<ReturnType<typeof prepared>>> = [];
+    for (let n = 0; n < 11; n++) created.push(await prepared(n % 2 ? 0 : 1));
+    const first = await inbox(after), firstIds = created.slice(0, 10).map(c => c.order.id);
+    expect(first).toMatchObject({ version: 'merchant-assigned-whole-express-inbox-v1', actor_uid: 103, store_id: 77,
+      admission: 'requires_review', next_after: firstIds[9] });
+    expect(first.list.map(row => row.order_id)).toEqual(firstIds); expect(first.list).toHaveLength(10);
+    for (const [index, row] of first.list.entries()) {
+      const c = created[index];
+      expect(Object.keys(row).sort()).toEqual(['admission', 'financial_store_id', 'grant', 'order_id', 'order_no', 'total_num']);
+      expect(row).toEqual({ order_id: c.order.id, order_no: c.order.orderId, total_num: 1, financial_store_id: 0,
+        admission: 'requires_review', grant: { operation_id: c.grant.receipt.operation_id, ordinal: 1,
+          payload_hash: c.grant.receipt.payload_hash, source_hash: c.grant.receipt.source_hash, order_revision: c.grant.receipt.order_revision } });
+      expect(await receipts(c.order.id)).toHaveLength(0); expect(await notices(c.order.id)).toHaveLength(0);
+    }
+    const second = await inbox(first.next_after!);
+    expect(second.list.map(row => row.order_id)).toEqual([created[10].order.id]); expect(second.next_after).toBeNull();
+    expect((await inbox(created[10].order.id)).list).toEqual([]);
+    expect((await inbox(2147483647)).next_after).toBeNull();
+    expect(network).not.toHaveBeenCalled();
+  }, 90000);
+
+  it('removes revoked reassigned and genuinely delivered roots while retaining only the current target grant', async () => {
+    const after = await lastOrderId(), revoked = await prepared(), reassigned = await prepared(), delivered = await prepared(), active = await prepared();
+    expect((await inbox(after)).list.map(row => row.order_id)).toEqual([revoked.order.id, reassigned.order.id, delivered.order.id, active.order.id]);
+    await f.decide(revoked.order.id, 77, 'revoke'); await f.decide(reassigned.order.id, 78);
+    await committed(delivered.body);
+    expect((await inbox(after)).list.map(row => row.order_id)).toEqual([active.order.id]);
+    const moved = await inbox(after, 105, 78);
+    expect(moved.list.map(row => row.order_id)).toEqual([reassigned.order.id]); expect(moved.list[0].grant.ordinal).toBe(2);
+    expect(await f.actual(delivered.order.id)).toMatchObject({ status: 1, storeId: 0, supplierId: 0 });
+    expect(await notices(delivered.order.id)).toHaveLength(1); expect(network).not.toHaveBeenCalled();
+  }, 90000);
+
+  it('rejects malformed inbox queries wrong-store actors and revoked staff, and requires separate source review', async () => {
+    const c = await prepared(), after = c.order.id - 1, before = await facts(c.order.id);
+    for (const query of ['', '?store_id=77&store_id=77', '?store_id=77&after=0&after=0', '?store_id=77&limit=100',
+      '?store_id=77&after=-1', '?store_id=77&after=01', '?store_id=77&after=2147483648', '?store_id=0'])
+      expect((await f.http(base + '/inbox' + query)).body.status).not.toBe(200);
+    expect((await f.http(base + '/inbox?store_id=78&after=' + after)).body.status).not.toBe(200);
+    expect((await f.http(base + '/inbox?store_id=77&after=' + after, undefined, { uid: 105 })).body.status).not.toBe(200);
+    await f.maintenanceDb.update(systemStoreStaff).set({ isManager: 0, isAdmin: 0 }).where(eq(systemStoreStaff.id, 901));
+    try { expect((await f.http(base + '/inbox?store_id=77&after=' + after)).body.status).not.toBe(200); }
+    finally { await f.maintenanceDb.update(systemStoreStaff).set({ isManager: 1 }).where(eq(systemStoreStaff.id, 901)); }
+    expect(await facts(c.order.id)).toEqual(before);
+    const [cart] = await carts(c.order.id);
+    // Negative source mutation only. Discovery must say requires_review; it
+    // does not claim the current cart snapshot passes review or commit.
+    await f.maintenanceDb.update(storeOrderCartInfo).set({ cartNum: cart.cartNum + 1, surplusNum: cart.surplusNum + 1, splitSurplusNum: cart.splitSurplusNum + 1 })
+      .where(eq(storeOrderCartInfo.id, cart.id));
+    try {
+      expect((await inbox(after)).list).toMatchObject([{ order_id: c.order.id, admission: 'requires_review' }]);
+      expect((await f.http(base + '/review/' + c.order.id + '?store_id=77')).body.status).not.toBe(200);
+      expect(await receipts(c.order.id)).toHaveLength(0); expect(await notices(c.order.id)).toHaveLength(0);
+    } finally { await f.maintenanceDb.update(storeOrderCartInfo).set({ cartNum: cart.cartNum, surplusNum: cart.surplusNum, splitSurplusNum: cart.splitSurplusNum }).where(eq(storeOrderCartInfo.id, cart.id)); }
+    expect(network).not.toHaveBeenCalled();
+  }, 90000);
+
+  it('refuses a damaged complete chain in the eleventh lookahead instead of returning a successful truncated page', async () => {
+    const after = await lastOrderId(), created: Array<Awaited<ReturnType<typeof prepared>>> = [];
+    for (let n = 0; n < 11; n++) created.push(await prepared());
+    const c = created[10];
+    // Explicit rejected ledger counterexample under the actual Admin LOGIN.
+    // The real checkout, payment and first grant remain untouched. This raw
+    // SQL append is not presented as an accepted business-author operation.
+    await f.adminRuntime.db.execute(sql`INSERT INTO public.store_order_fulfillment_assignment(operation_id,format_version,kind,actor_id,
+      root_order_id,order_id,target_store_id,customer_uid,financial_store_id,ordinal,previous_ref,order_revision,payload_hash,source_hash,source)
+      SELECT ${randomUUID()}::uuid,format_version,kind,actor_id,root_order_id,order_id,target_store_id,customer_uid,financial_store_id,
+        ordinal+1,operation_id,order_revision,${'a'.repeat(64)},source_hash,source
+      FROM public.store_order_fulfillment_assignment WHERE operation_id=${c.grant.receipt.operation_id}::uuid`);
+    const before = await facts(c.order.id), r = await f.http(base + '/inbox?store_id=77&after=' + after);
+    expect(r.body.status).not.toBe(200); expect(r.body.data ?? {}).not.toHaveProperty('list');
+    expect(await facts(c.order.id)).toEqual(before); expect(await receipts(c.order.id)).toHaveLength(0);
+    expect(await notices(c.order.id)).toHaveLength(0); expect(network).not.toHaveBeenCalled();
+  }, 90000);
+
+  it('refuses an actual sixty-five-event chain instead of treating its first sixty-four events as the current grant', async () => {
+    const c = await prepared(), after = c.order.id - 1;
+    const [stored] = await f.maintenanceDb.execute<{ source: unknown }>(sql`SELECT source FROM public.store_order_fulfillment_assignment
+      WHERE operation_id=${c.grant.receipt.operation_id}::uuid`);
+    let previous = c.grant.receipt.operation_id;
+    // Bounded raw SQL counterexample only: source facts and the initial grant
+    // are real; 64 deliberately over-cap append specimens are not UI success.
+    // Each specimen has a reproducible hash and alternating target, so the
+    // capacity rejection does not depend on an invalid digest or duplicate grant.
+    for (let ordinal = 2; ordinal <= 65; ordinal++) {
+      const operation = randomUUID(), target = ordinal % 2 ? 77 : 78;
+      const request: AssignmentRequest = { format_version: 1, operation_id: operation, kind: 'grant', order_id: c.order.id,
+        target_store_id: target, expected_head: { ordinal: ordinal - 1, operation_id: previous },
+        expected_order_revision: c.grant.receipt.order_revision, expected_source_hash: c.grant.receipt.source_hash };
+      const hash = await assignmentRequestHash(request, 1);
+      await f.adminRuntime.db.execute(sql`INSERT INTO public.store_order_fulfillment_assignment(operation_id,format_version,kind,actor_id,
+        root_order_id,order_id,target_store_id,customer_uid,financial_store_id,ordinal,previous_ref,order_revision,payload_hash,source_hash,source)
+        VALUES(${operation}::uuid,1,'grant',1,${c.order.id},${c.order.id},${target},${c.order.uid},0,${ordinal},${previous}::uuid,
+          ${c.grant.receipt.order_revision},${hash},${c.grant.receipt.source_hash},${JSON.stringify(stored.source)}::jsonb)`);
+      previous = operation;
+    }
+    expect(await grants(c.order.id)).toHaveLength(65);
+    const before = await facts(c.order.id), r = await f.http(base + '/inbox?store_id=77&after=' + after);
+    expect(r.body.status).not.toBe(200); expect(r.body.data ?? {}).not.toHaveProperty('list');
+    expect(await facts(c.order.id)).toEqual(before); expect(await receipts(c.order.id)).toHaveLength(0);
+    expect(await notices(c.order.id)).toHaveLength(0); expect(network).not.toHaveBeenCalled();
   }, 90000);
 });
 

@@ -32,6 +32,12 @@
       }
     },
     {
+      "path": "pages/merchant/assignedOrders",
+      "style": {
+        "navigationBarTitleText": "后台分配订单"
+      }
+    },
+    {
       "path": "pages/merchant/orderDetail",
       "style": {
         "navigationBarTitleText": "门店订单详情"

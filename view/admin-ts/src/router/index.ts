@@ -141,6 +141,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "发票管理" },
       },
       {
+        path: "order/fulfillment-assignment",
+        name: "order-fulfillment-assignment",
+        component: () => import("@/pages/order/FulfillmentAssignment.vue"),
+        // Original-owner recovery remains reachable after order permission loss.
+        meta: { title: "门店履约分配" },
+      },
+      {
         path: "order/:orderId",
         name: "order-detail",
         component: () => import("@/pages/order/OrderDetail.vue"),

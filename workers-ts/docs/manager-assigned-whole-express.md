@@ -1,5 +1,7 @@
 # Manager 后台分配整单快递
 
+后续第41轮已接通[Admin与Manager页面、待办和原请求恢复](assigned-fulfillment-ui.md)，并执行实际createApp/Browser验收。下文是第40轮后端交付时的边界与执行记录，历史“前端尚未接通”不代表第41轮后的现状。
+
 第40轮在[后台分配作者](admin-fulfillment-assignment-author.md)之上接通实际 Manager 整单手工快递。平台付款根保留原 ID，订单 `store_id` 与 `supplier_id` 均保持0，原 type0/1 库存来源不变；履约门店来自当前员工身份和真实 Admin grant。全局 `runtime_ready=false`，整体 PHP→TS 迁移仍未完成。本轮未部署或执行生产 DDL。
 
 ## 正式存储与显式运行声明
