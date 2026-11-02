@@ -1,6 +1,7 @@
 import { captureCustomerFinancialRoutineRefund, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
 import { captureRoutineRefundActorAddons, type RoutineRefundActorAddons } from './routineRefundActorAddon';
 import { captureFulfillmentCityConflictReadersAddon, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
+import { captureStoreOrderFulfillmentAssignmentsAddon, type StoreOrderFulfillmentAssignmentsAddon } from './storeOrderFulfillmentAssignment';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -25,13 +26,14 @@ export interface RuntimeGiftPeerDeclarations {
   manager?: true;
   routineRefundActors?:RoutineRefundActorAddons;
   cityConflictReaders?:FulfillmentCityConflictReadersAddon;
+  fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
 }
 const giftTable = 'store_order_promotion_gift_coupon_reward';
 const giftSequence = giftTable + '_id_seq';
 
 export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclarations): RuntimeGiftPeerDeclarations {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders'].includes(key))
+    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments'].includes(key))
     || !value.target || ![value.financial, value.cashierSecondCard, value.manager].some(Boolean))
     throw Error('Explicit bounded gift peer declarations required');
   const t = value.target;
@@ -61,6 +63,12 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   if(refundActors?.manager&&value.manager!==true)throw Error('Routine refund Manager requires its complete declared peer');
   const cityReaders=value.cityConflictReaders===undefined?undefined:captureFulfillmentCityConflictReadersAddon(value.cityConflictReaders);
   if(cityReaders?.manager&&value.manager!==true)throw Error('City conflict Manager requires its complete declared peer');
+  const assignmentDescriptor=Object.getOwnPropertyDescriptor(value,'fulfillmentAssignments');
+  if(('fulfillmentAssignments' in value)&&(!assignmentDescriptor||!assignmentDescriptor.enumerable||!('value' in assignmentDescriptor)))
+    throw Error('Data-only fulfillment assignment declaration required');
+  const assignments=assignmentDescriptor?.value===undefined?undefined:captureStoreOrderFulfillmentAssignmentsAddon(assignmentDescriptor.value);
+  if(assignments&&(!value.financial||!cashier||value.manager!==true))
+    throw Error('Complete five runtime fulfillment assignment peers required');
   return { target: { database: t.database, maintenance: t.maintenance, app: t.app, admin: t.admin,
     ...(t.local ? { local: [...t.local] } : {}),
     ...(t.caseLock ? { caseLock: { owner: t.caseLock.owner, runtimeRoles: [...t.caseLock.runtimeRoles] } } : {}) },
@@ -72,7 +80,7 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
       ...(cashier.conditionalGuards ? { conditionalGuards: true as const } : {}),
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),
     ...(value.manager ? { manager: true as const } : {}),...(refundActors?{routineRefundActors:refundActors}:{}),
-    ...(cityReaders?{cityConflictReaders:cityReaders}:{}) };
+    ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}) };
 }
 
 export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execute'>,
@@ -120,7 +128,8 @@ export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execut
   if (peers.manager) {
     const proof = await inspectManagerRuntimePrivileges(db, { requireLogin: true, routine: { target, stage: 'ready' },
       ...(peers.routineRefundActors?.manager?{routineRefund:true}:{} ),
-      ...(peers.cityConflictReaders?.manager?{cityConflictReaders:peers.cityConflictReaders}:{}) });
+      ...(peers.cityConflictReaders?.manager?{cityConflictReaders:peers.cityConflictReaders}:{}),
+      ...(peers.fulfillmentAssignments?{fulfillmentAssignments:peers.fulfillmentAssignments}:{}) });
     if (!proof.ready) failures.push(...proof.failures.map(name => 'manager:' + name));
     else {
       const plan = managerRuntimePrivilegePlan('current');

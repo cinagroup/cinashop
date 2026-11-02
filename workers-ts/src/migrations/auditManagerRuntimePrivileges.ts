@@ -14,6 +14,8 @@ import { inspectOrderPromotionGiftReceiptCatalog } from './orderPromotionGiftRec
 import { inspectRoutinePaymentRuntime, routinePaymentRuntimeTablePrivileges, type RoutinePaymentRuntimeTarget } from './routinePaymentRuntime';
 import { inspectLocalPaymentCaseLock } from './localPaymentCaseLock';
 import { captureFulfillmentCityConflictReadersAddon, inspectFulfillmentCityConflictReader, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
+import { captureStoreOrderFulfillmentAssignmentsAddon, inspectStoreOrderFulfillmentAssignment,
+  STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE, type StoreOrderFulfillmentAssignmentsAddon } from './storeOrderFulfillmentAssignment';
 
 type Query = Pick<DbClient, 'execute'>;
 const modelColumns=new Map(Object.values(models).filter(value=>is(value,PgTable)).map(table=>{
@@ -116,6 +118,7 @@ export interface ManagerRuntimeInspectionOptions {
   routine?: { target: RoutinePaymentRuntimeTarget; stage: 'before-manager' | 'ready' };
   routineRefund?:true;
   cityConflictReaders?:FulfillmentCityConflictReadersAddon;
+  fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
 }
 export async function inspectManagerRuntimePrivileges(db: Query, options: ManagerRuntimeInspectionOptions) {
   if (typeof options?.requireLogin !== 'boolean') throw Error('Explicit manager LOGIN stage required');
@@ -148,6 +151,15 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
     const {inspectRoutineRefundActorAddon,ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES}=await import('./routineRefundActorAddon');
     if(!await inspectRoutineRefundActorAddon(db,routine.target,'manager'))failures.push('manager_routine_refund_addon');
     else for(const[table,privileges]of Object.entries(ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
+  }
+  if(options.fulfillmentAssignments!==undefined){
+    captureStoreOrderFulfillmentAssignmentsAddon(options.fulfillmentAssignments);
+    if(routine?.stage!=='ready')throw Error('Explicit commissioned Manager assignment addon required');
+  }
+  const assignment=await inspectStoreOrderFulfillmentAssignment(db,routine?{maintenance:routine.target.maintenance,admin:routine.target.admin}:undefined);
+  if(assignment.present||options.fulfillmentAssignments){
+    if(!assignment.ready||!options.fulfillmentAssignments)failures.push('manager_fulfillment_assignment_declaration');
+    else plan.tables[STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE]=['SELECT'];
   }
   const [identity] = await db.execute(sql`SELECT
     current_setting('server_version_num')::int/10000=16 AS pg16,
@@ -254,9 +266,10 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
 
 /** Actual independently authenticated connection, not role impersonation. */
 export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget, routineRefund?:true,
-  cityConflictReaders?:FulfillmentCityConflictReadersAddon) {
+  cityConflictReaders?:FulfillmentCityConflictReadersAddon,fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon) {
   if(routineRefund!==undefined&&routineRefund!==true)throw Error('Explicit Manager refund addon flag required');
   const cityReaders=cityConflictReaders===undefined?undefined:captureFulfillmentCityConflictReadersAddon(cityConflictReaders);
+  const assignments=fulfillmentAssignments===undefined?undefined:captureStoreOrderFulfillmentAssignmentsAddon(fulfillmentAssignments);
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root manager connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
@@ -266,7 +279,7 @@ export async function auditManagerRuntimePrivileges(db: DbClient, routine?: Rout
       current_setting('session_replication_role')='origin' AS origin`);
     const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
       ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}),...(routineRefund?{routineRefund}:{}),
-      ...(cityReaders?{cityConflictReaders:cityReaders}:{}) });
+      ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}) });
     if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true
       && (!routine || identity.database === routine.database)) return { ...result, identity };
     return { ...result, identity, ready: false, failures: [...new Set([...result.failures, 'connection_identity'])].sort() };

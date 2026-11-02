@@ -103,7 +103,8 @@ export async function upgradeFulfillmentCityConflictReadersInTransaction(tx:Quer
     const app=await inspectRuntimeBusinessProfileInTransaction(tx,'app',t,'current',p,c.reader),
       admin=await inspectRuntimeBusinessProfileInTransaction(tx,'admin',t,'current',p),
       manager=await inspectManagerRuntimePrivileges(tx,{requireLogin:true,routine:{target:t,stage:'ready'},
-        ...(p.routineRefundActors?.manager?{routineRefund:true}:{}),...(p.cityConflictReaders?.manager?{cityConflictReaders:p.cityConflictReaders}:{})});
+        ...(p.routineRefundActors?.manager?{routineRefund:true}:{}),...(p.cityConflictReaders?.manager?{cityConflictReaders:p.cityConflictReaders}:{}),
+        ...(p.fulfillmentAssignments?{fulfillmentAssignments:p.fulfillmentAssignments}:{})});
     return{ready:app.ready&&admin.ready&&manager.ready,failures:[...app.failures.map(n=>'app:'+n),...admin.failures.map(n=>'admin:'+n),...manager.failures.map(n=>'manager:'+n)].slice(0,32)};
   };
   if(same(actual,c.readers)){

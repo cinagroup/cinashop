@@ -6,6 +6,7 @@ import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNT
 import { inspectRoutinePaymentAccountPolicyCatalog, ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES } from './routinePaymentAccountPolicy';
 import { inspectRoutineShippingCatalog, ROUTINE_SHIPPING_RUNTIME_PRIVILEGES } from './routineShipping';
 import { inspectFulfillmentCityConflictReader } from './fulfillmentCityConflictReader';
+import { inspectStoreOrderFulfillmentAssignment, STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE } from './storeOrderFulfillmentAssignment';
 import { inspectAdminWechatAppOperation, ADMIN_WECHAT_APP_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatAppOperation';
 import { inspectNativeAppPaymentAuthority, NATIVE_APP_PAYMENT_AUTHORITY_RUNTIME_PRIVILEGES } from './nativeAppPaymentAuthority';
 import { inspectAdminWechatOpenOperation, ADMIN_WECHAT_OPEN_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatOpenOperation';
@@ -188,6 +189,16 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
         if(kind==='admin'&&declared?.admin&&b?.adminRefund&&b.admin===names.admin)
           for(const[table,privileges]of Object.entries(ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
       }
+    }
+    // Assignment permission is a declared successor, not an installed-table
+    // exception learned from ACLs. App retains no new data access.
+    const assignment=await inspectStoreOrderFulfillmentAssignment(tx,{maintenance:names.maintenance,admin:names.admin});
+    if(assignment.present||peers?.fulfillmentAssignments){
+      const bound=peers&&assignment.binding?.database===peers.target.database&&peers.target.maintenance===names.maintenance
+        &&peers.target.app===names.app&&peers.target.admin===names.admin;
+      if(!assignment.ready||!peers?.fulfillmentAssignments||!bound||version!=='current')
+        failures.push('fulfillment_assignment_declaration');
+      else if(kind==='admin')plan.tables[STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE]=['SELECT','INSERT'];
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

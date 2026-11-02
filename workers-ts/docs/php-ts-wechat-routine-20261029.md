@@ -710,3 +710,18 @@ App 只读验证完整退款及 fulfillment branch 代次：精确 legacy/guest 
 本地类型、原工具链100文件/2723次执行及23后续组/1029次执行、6/21/4边界检查、三端资源构建及产物4通过。full-02第43阶段QR因清单字符串静态误命中而失败；修正测试冗余字面量，保持扫描与完整具名清单SHA不变后，final-03的D3离线94/live、QR5、实际运行图13、Uni/PC共享14/16全部通过。两个批次的源码差异只有该D3测试；1044项pre-run、运行中补充8496项和final-03的8495项哈希证据分别保存。整包中断、两处旧测试假设失败和QR失败均留存，不算整批通过。精确提交CI及原20分钟预算待后续验证，PC/Kefu历史审计缺口仍保留，没有部署或设备/真实供应商调用。
 
 用户已选择下一步规则：仅后台受控分配到门店，保留不可变分配回执。本轮未实现该作者。后续最小正向闭环需从真实平台单、原账号付款和后台分配，经Manager专用整单履约入口到既有Queue/App首上传；技术设计优先保留平台root/store0及买家、付款、财务、库存事实，继续保留通用订单财务授权。存量有效店长身份的验收bootstrap与新业务事实须分别说明。整体迁移、归属切换和运行时就绪条件仍未完成。
+
+
+## 第38轮：门店履约分配的不可变存储与 PG16 后继
+
+阶段37的 `26a43cc7` 已按该 SHA 的精确授权推送并直接核对远端。[精确提交 CI](https://github.com/cinagroup/cinashop/actions/runs/41381002305) 的 UniApp job 已成功，03:04:00Z→03:21:36Z，共 17 分 36 秒，满足既有 20 分钟预算；主合同及安全回归步骤均通过。历史 centra 的具体失败条目仍未取得。最后观测时 secret scan、Admin、Supplier、PG16 catalog 和 workerd 成功，PC/Kefu 在完整依赖树审计失败，Worker 两个分片仍在执行，不能称整体 CI 全绿。
+
+本轮实现[门店分配存储合同](store-order-fulfillment-assignment.md)。维护者所有的 16 列表保存 grant/revoke 结构、操作 ID、前驱、平台财务 store0、封闭购物车快照和 revision/hash；唯一约束防重复序号/同前驱分叉，不可变触发器拒绝 UPDATE/DELETE/TRUNCATE。hash 和 SQL 默认时间均不构成授权或提供方证明，前驱存在、连续性、状态转移、来源和真实后台权限仍须未来作者证明。本轮没有开放 Admin 分配 HTTP 或 Manager 分配单发货。
+
+显式维护 forward 在首次 await 前捕获完整有界纯数据声明，绑定真实 PG16 维护 LOGIN/数据库/OID 和五角色前后 profiles；只增加 Admin SELECT/INSERT、固定 Manager SELECT，App/Financial/Cashier无新增权限。完整目录指纹、owner/body/ACL/附着对象同时核对；半安装及漂移拒绝，不修复。精确重复持物理 ACCESS SHARE NOWAIT fence 后只读复验；调用者回滚撤回全部 DDL/ACL。旧 city/refund forward 显式传递新声明，基础 profile 不变。
+
+当前新原生 `native-04` 完整 24 项通过，203.65 秒、8502 冻结输入不变、remaining0/STOPPED；五真实 LOGIN、回滚/重复/ACL、source 边界、实际上下文、gate/表锁/TEMP/目录漂移，以及安装后旧 city/refund 正式后继均执行。最终 `final-07` 三组全部 exit0：35 项兼容原生、Worker unit/runtime 类型、四文件 40 项单元，687.95 秒、8498 外层冻结输入不变。新原生复用前逐项核对无变更，不累计重复执行；每个原生集群均清理停止。没有新增 Admin 前端代码，因此没有把前阶段 Admin 类型结果列为本轮验证。
+
+首个 canonical-01 空指纹诊断为 1 失败/22 跳过，不算通过。native-03 为 5 通过/19 失败：正常部署 target 的 pricingOwner 元信息被严格键集错误拒绝，未安装引发后续级联。修正为捕获有界纯数据但只提取身份，额外元信息不参与授权，再修正夹具的 peers 快照，才有上述完整新原生通过。原失败及冻结证据保留，不据早期拒绝断言虚构目录覆盖。最终两套类型是修正后的重新验证，沿用单层共享串行锁、单 worker、既有内存/case/每阶段 600 秒限制。
+
+本轮只读独立复核未发现范围内阻塞缺陷，没有独立重跑测试或扩张为安全审计。记录位于本地 `.cache/php-ts-phase38-validation/`，文档在最终执行后补齐，提交文件另做逐文件秘密扫描。后续 Admin 作者的隔离缓存草稿未接入应用，不能算业务完成。真实分配作者、Manager 专用整单快递、完整正向付款/Queue/App 链、前端会话/journal/Browser、归属 manifest/原子切换及既有 CI 缺口继续待推进。本轮无生产 DDL、部署、真实微信或业务 HTTP/Browser/Workerd 验收；现有用户/UID/权益/旧单/付款保留，跨 AppID 屏障、runtime_ready=false及整体 PHP→TS 迁移未完成状态保持。
