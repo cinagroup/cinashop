@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+import {readUniCiHistoricalWorkflow as readFileSync} from './helpers/uniCiWorkflowSourceBinding';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {describe,it,expect} from 'vitest';

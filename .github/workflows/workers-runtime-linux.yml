@@ -283,6 +283,93 @@ jobs:
       - name: Run Workers runtime tests
         run: npm run test:runtime
 
+  # Keep the exact required check, but require both complete UniApp groups.
+  uniapp:
+    name: UniApp build
+    if: ${{ always() }}
+    needs: [uni-core, uni-authors]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require both unchanged UniApp gate groups to succeed
+        shell: bash
+        env:
+          CORE_RESULT: ${{ needs.uni-core.result }}
+          AUTHORS_RESULT: ${{ needs.uni-authors.result }}
+        run: |
+          test "$CORE_RESULT" = "success"
+          test "$AUTHORS_RESULT" = "success"
+
+  # Run 41390906709 completed the original core contract in 16m59s, then
+  # cancelled during the author chain at 20m17s. Preserve both complete chains
+  # and their original 20-minute execution limits on independent runners.
+  uni-core:
+    name: UniApp type, runtime and three-platform build execution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: view/uniapp-ts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.14.1"
+          cache: npm
+          cache-dependency-path: view/uniapp-ts/package-lock.json
+
+      - name: Verify pinned Node and npm
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify complete frontend gate partition
+        run: node --test --test-concurrency=1 scripts/ci-migration-gates.test.cjs
+
+      - name: Run type, test and build contract
+        run: npm run typecheck && npm run test:toolchain && npm run test:admzip && npm run test:express-qs && npm run test:jest-jsdom-once && npm run test:d3-advisories && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts && npm run test:automator-qr && npm run test:runtime-i18n
+
+      - name: Verify frontend dependency security regressions
+        run: node --test ../common/toolchain-security.test.mjs
+
+  uni-authors:
+    name: UniApp editorial author and PHP style execution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: view/uniapp-ts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.14.1"
+          cache: npm
+          cache-dependency-path: view/uniapp-ts/package-lock.json
+
+      - name: Verify pinned Node and npm
+        run: |
+          test "$(node --version)" = "v24.14.1"
+          test "$(npm --version)" = "11.11.0"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify complete frontend gate partition
+        run: node --test --test-concurrency=1 scripts/ci-migration-gates.test.cjs
+
+      - name: Verify editorial author navigation and immutable PHP styles
+        run: npm run test:diy-editorial-author && npm run test:diy-community-author && npm run test:diy-promotion-author && npm run test:diy-coupon-author && npm run test:diy-points-author && npm run test:diy-presale-author && npm run test:diy-combination-author && npm run test:diy-bargain-author && npm run test:diy-seckill-author && npm run test:diy-live-broadcast-author
+
   frontends:
     name: ${{ matrix.name }} build
     runs-on: ubuntu-24.04
@@ -303,9 +390,6 @@ jobs:
           - name: Kefu
             directory: kefu-ts
             command: npm test && npm run build
-          - name: UniApp
-            directory: uniapp-ts
-            command: npm run typecheck && npm run test:toolchain && npm run test:admzip && npm run test:express-qs && npm run test:jest-jsdom-once && npm run test:d3-advisories && npm run build:h5 && npm run build:mp-weixin && npm run build:app && npm run test:build-artifacts && npm run test:automator-qr && npm run test:runtime-i18n
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -369,11 +453,6 @@ jobs:
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
         run: npm run test:product-label-author
-
-      - name: Verify editorial author navigation and immutable PHP styles
-        if: matrix.directory == 'uniapp-ts'
-        working-directory: view/uniapp-ts
-        run: npm run test:diy-editorial-author && npm run test:diy-community-author && npm run test:diy-promotion-author && npm run test:diy-coupon-author && npm run test:diy-points-author && npm run test:diy-presale-author && npm run test:diy-combination-author && npm run test:diy-bargain-author && npm run test:diy-seckill-author && npm run test:diy-live-broadcast-author
 
       - name: Verify current ECharts tooltip paths
         if: matrix.directory == 'admin-ts' || matrix.directory == 'supplier-ts'

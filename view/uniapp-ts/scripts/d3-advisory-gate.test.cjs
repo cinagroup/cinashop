@@ -608,7 +608,23 @@ test('source1243629 is exact and linked to all7 published source patches and rea
   const verified=B.verifyDerived(readFileSync(resolve(__dirname,'../vendor/intlify-core-base-9.1.9-mixed-escape-backport.tgz')));
   assert.equal(verified.sha256,expected.intlify.derivedArchiveSha256);assert.equal(verified.fileCount,12);assert.deepEqual(verified.patchedPublishedDistributions,expected.intlify.patchedDistributions);
   const pkg=JSON.parse(readFileSync(resolve(__dirname,'../package.json'),'utf8'));
-  assert.equal(pkg.scripts['test:security-backports'],'node --test --test-concurrency=1 scripts/security-source-archive.test.cjs scripts/jest-deepmerge-safety-backport.test.cjs scripts/intlify-core-safety-backport.test.cjs');assert.ok(pkg.scripts['test:toolchain'].endsWith(' && npm run test:security-backports'));
+  assert.equal(pkg.scripts['test:security-backports'],'node --test --test-concurrency=1 scripts/security-source-archive.test.cjs scripts/jest-deepmerge-safety-backport.test.cjs scripts/intlify-core-safety-backport.test.cjs');
+  assert.equal(pkg.scripts['test:manager-assigned-fulfillment'],'node --test --test-concurrency=1 scripts/manager-assigned-fulfillment-runtime.test.cjs');
+  const reviewedTail=['npm run test:security-backports','npm run test:manager-assigned-fulfillment'];
+  const requireReviewedTail=script=>{
+    const commands=script.split(' && ');
+    assert.deepEqual(commands.slice(-2),reviewedTail);
+    for(const command of reviewedTail)assert.equal(commands.filter(value=>value===command).length,1,command+' must run exactly once');
+  };
+  requireReviewedTail(pkg.scripts['test:toolchain']);
+  for(const invalid of [
+    pkg.scripts['test:toolchain'].replace(' && '+reviewedTail.join(' && '),' && '+reviewedTail[0]),
+    pkg.scripts['test:toolchain'].replace(' && '+reviewedTail.join(' && '),' && '+reviewedTail[1]),
+    pkg.scripts['test:toolchain'].replace(reviewedTail.join(' && '),[...reviewedTail].reverse().join(' && ')),
+    reviewedTail[0]+' && '+pkg.scripts['test:toolchain'],
+    reviewedTail[1]+' && '+pkg.scripts['test:toolchain'],
+    pkg.scripts['test:toolchain']+' && npm run typecheck',
+  ])assert.throws(()=>requireReviewedTail(invalid));
   assert.equal(createHash('sha256').update(readFileSync(resolve(__dirname,'runtime-i18n-audit.test.cjs'))).digest('hex'),'45361a067027ac17842d6f0e180f8d3bff2e857b9ff4ef56d9c2e4c98ccff931');
 });
 for(const kind of ['source','url','severity','range','missing','new-node'])test('reviewed mixed source rejects '+kind,()=>{

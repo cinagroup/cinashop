@@ -6,7 +6,7 @@
  * No substring or hash fallback. */
 import {createHash} from 'node:crypto';
 import {execFileSync as diskExecFileSync} from 'node:child_process';
-import {readFileSync as diskReadFileSync} from 'node:fs';
+import {readUniCiHistoricalWorkflow as diskReadFileSync} from './uniCiWorkflowSourceBinding';
 import {relative,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=resolve(import.meta.dirname,'../../..');

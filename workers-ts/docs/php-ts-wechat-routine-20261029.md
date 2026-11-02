@@ -768,3 +768,12 @@ browser-07为一个真实createApp/CUA Browser用例内9阶段，通过401.84秒
 browser-05确实失败521.05秒：监督漏读Vitest缓冲的READY，只在窗口末段完成Admin两阶段，六分钟窗口到期；没有完整成功evidence，也不是SQL死锁。仅修复仓库外监督程序实时读取ready.json，在未变源码、原时限/内存/单worker/单层共享锁下重跑通过。独立只读复核核对host、客户端和执行证据边界，没有独立重跑或安全审计声明；文档后补，最终提交文件另做秘密扫描与暂存字节核对。
 
 本轮provider/Queue/KV、session bootstrap/角色开关/提交后丢响应为明确本机适配；没有真实登录表单、原生设备、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。App仍不独立读取新Manager回执/分配权限。完整归属manifest、原子切换、其他迁移和CI缺口继续未完成；用户/UID/权益/旧单/付款、未知归属不猜及runtime_ready=false保留。2681的[远端run](https://github.com/cinagroup/cinashop/actions/runs/41390906709)截至2026-11-02 05:43:04UTC仍运行，Worker两分片仍unit；Uni实际cancelled20分17秒、原因未确证，PC/Kefu依赖审计失败，不能称整体CI通过。新提交推送仍需具体SHA授权。
+
+
+## 第42轮：UniApp CI 分组容量与精确历史工作流证据
+
+阶段41 `20f180ae24a88f40fe6d0a35c26d2cae0204ca01` 已按具体 SHA 授权推送并直接核对远端 main。本轮完成 [UniApp CI 分组合同](uniapp-ci-capacity.md)：原 12 条 core 命令及共享安全回归、完整十条作者链分别在两个独立 runner 执行，每组继续 20 分钟。唯一 `UniApp build` 使用 always/needs 严格要求两组 success，取消/跳过/失败不能放行；其他前端/审计、锁文件安装、固定版本与权限不变。旧2681 run 的 core 成功16分59秒，随后作者中取消，job实际cancelled20分17秒，原因未确证；不能因此声称新预算已实际通过。
+
+49项实际YAML/真实Bash分组合同、69项D3离线、完整十条作者1087项均通过；作者组含分组验证439.21秒，为本机已有锁定依赖，不含fresh npm ci。D3尾断言修为严格security-backports→Manager原脚本、各一次，并保留六种反例。新增workflow-only历史读取器及完整两层来源，逐字节核对20f/b874和两旧merge来源，不修改旧7.1MB证据/PIN或旧断言正文，仅两条import接线；其他历史绑定差异保留。最终worker-04的新38项、既有容量5项、旧workflow2项和unit类型通过，类型198.6秒，8541输入不变；旧套件456项未选中，不宣告全绿。worker-03的Uint8Array解码类型错误及原失败保留，仅修正解码后重跑整个受影响图。按身份去重1250项，不重复累计49项重跑。
+
+各批输入/原日志与来源核对在本地.cache/php-ts-phase42-validation，单层共享锁、单worker及既有内存/时限保持。独立只读复核未报范围内阻塞问题，非独立重跑/安全审计；文档后补，提交文件另做秘密扫描。完整当前core/live审计/安装/三端构建/Browser未在本轮重跑，远端新SHA的实际容量仍待验证；PC/Kefu审计及其他历史CI/绑定缺口、完整归属manifest/原子切换和整体迁移继续未完成。无生产DDL、部署或真实提供方调用；既有用户/UID/权益/旧单/付款、未知归属不猜、跨AppID屏障与runtime_ready=false保持。新提交推送需具体SHA授权。
