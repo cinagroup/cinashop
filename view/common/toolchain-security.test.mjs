@@ -114,6 +114,9 @@ if (["cinashop-kefu-ts", "cinashop-pc", "cinashop-admin-ts", "cinashop-supplier-
 if (["cinashop-pc", "cinashop-uniapp"].includes(manifest.name)) {
   await import("./follow-redirects-security.test.mjs");
 }
+if (["cinashop-pc", "cinashop-kefu-ts"].includes(manifest.name)) {
+  await import("./language-core-minimatch.test.mjs");
+}
 
 if (manifest.name === "cinashop-kefu-ts") {
   await import("./mocker-security.test.mjs");

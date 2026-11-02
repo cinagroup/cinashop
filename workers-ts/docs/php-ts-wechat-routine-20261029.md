@@ -788,3 +788,13 @@ targeted-01四脚本116项、Uni类型、H5/MP/App三端及4项产物通过；�
 本轮CUA实际H5窄UI验收151.66秒：正常门店/403/匿名旧页点击新入口，新页重验或登录提示，403原用户GET原回执恢复；557份构建和8542份冻结输入终态匹配，桌面内容宽1224、移动319/334均等于scrollWidth，移动请求375×844、full-page截图360×1340。22个明确合成接口请求、零业务POST/未知API；截图、观察和原日志在仓库外`/tmp/php-ts-phase43-browser-e694d0d0-eca0-4ed7-8a47-655264d78d38/`（截图另在`/tmp/cinashop-phase43-shots/`）。会话/角色状态/既有journal及回执为明确本机HTTP fixture，不是PG/createApp/真实登录/业务写入重跑，不沿用第41轮原生闭环作为本轮结果。独立只读复核未报范围内阻塞；文档后补，提交文件另做秘密扫描。
 
 PC/Kefu原审计与旧历史绑定、完整归属manifest/单次许可/原子切换及整体迁移继续未完成；只读后继地图不计实现。既有用户/UID/权益/旧单/付款、财务store0、原库存、未知归属不猜、跨AppID屏障与runtime_ready=false保持。没有生产DDL、部署或真实提供方调用；新提交推送需具体SHA授权。
+
+## 第44轮：PC / Kefu 最小依赖后继与完整 live 审计
+
+阶段43 `64bfb958e3ae27216036cb028c2c1a4e1a58386d` 已按具体SHA授权推送并核对远端。针对真实CI中PC / Kefu完整审计失败，实际完成[最小依赖闭包后继](pc-kefu-dependency-audit-20261102.md)：两端仅对language-core限定minimatch11.0.1，PC follow-redirects升级1.16.2；锁仅5 / 4条预期记录变化，其余187 / 160条（含根）、锁顶层及Vue / vue-tsc / core / TypeScript / axios原版本保持。没有force fix或放松完整审计门槛。
+
+三个公共消费者用例实际核对官方37文件源码 / 锁SRI、真实language-core模板生成的data-* / aria-*与named ABI，以及32 / 64有界optimizer；经现有common gate只接PC / Kefu。PC重定向采用与Uni相同的跨realm、object / array及同 / 跨源8种组合，保留凭据剥离与正向保留检查。
+
+先离线复制公共缓存生成锁并reify，源缓存不变；validate-03以49.94秒通过。原npm预检双配置同为/dev/null失败留存，未开始安装、锁未变，改两个独立空配置后继续。随后fresh-04实际两端npm ci（禁安装脚本）、完整官方npm audit、实际公共回归 / 单测 / 类型与Vite构建全部通过，65.36秒、8542冻结输入不变。本次PC191 / Kefu163总依赖审计全严重度为0。fresh公共19 + 29、PC367 + 9、Kefu30共454次执行，加另行Uni共享重定向2次为456；离线重复不加数。本轮审计时点结果不替代新提交CI，也不宣称永久无漏洞。
+
+原日志 / 审计JSON / 冻结字节 / 精确差异与静态独立复核留在本机.cache/php-ts-phase44-validation，最终文件另做秘密扫描。全流程单层共享串行锁、单worker，沿用600秒每命令 / 1200秒整组。未重跑Browser / PG / 全Worker；无业务页面 / API / SQL / 工作流改动、生产DDL、部署或真实提供方调用。64bfb958作者组远端成功5分30秒，所读core快照仍运行；新SHA全CI / 正常安装脚本、完整归属manifest / 单次许可 / 原子切换及整体迁移仍需推进，跨AppID屏障与runtime_ready=false保持。新提交推送仍需具体SHA授权。

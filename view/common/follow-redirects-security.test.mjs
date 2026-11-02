@@ -10,7 +10,7 @@ const require = createRequire(resolve('package.json'));
 const lock = JSON.parse(readFileSync(resolve('package-lock.json'), 'utf8'));
 const project = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).name;
 const releases = {
-  'cinashop-pc': { version: '1.16.1', integrity: 'sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==' },
+  'cinashop-pc': { version: '1.16.2', integrity: 'sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==' },
   'cinashop-uniapp': { version: '1.16.2', integrity: 'sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==' },
 };
 assert.ok(Object.hasOwn(releases, project), 'review the exact redirect release for this project');
@@ -42,9 +42,9 @@ test('actual redirects strip object and array-form credentials across origins an
   try {
     await listen(collector); await listen(origin);
     destination = `http://127.0.0.1:${collector.address().port}/collect`;
-    // PC's prior1.16.1 contract remains explicit; its newer cross-realm advisory
-    // is still unresolved. Only Uni's adopted1.16.2 claims this extra control.
-    for (const crossRealm of project === 'cinashop-uniapp' ? [false, true] : [false])
+    // Both adopted 1.16.2 consumers retain credentials only on the same origin,
+    // including sensitiveHeaders arrays created in another JavaScript realm.
+    for (const crossRealm of [false, true])
       for (const array of [false, true]) for (const sameOrigin of [false, true]) {
       const values = { ...credentials, 'X-Public-Control': 'preserved' };
       const sensitiveHeaders = crossRealm ? runInNewContext(JSON.stringify(protectedNames.slice(3))) : protectedNames.slice(3);
