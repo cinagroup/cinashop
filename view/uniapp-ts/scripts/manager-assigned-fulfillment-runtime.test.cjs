@@ -53,11 +53,35 @@ async function ready(r) { await r.page.manager.open(r.page.manager.items.value[0
 const writes = r => r.calls.filter(c => c.method === 'POST');
 const moduleAt = (r, file = 'view/common/managerAssignedFulfillment.ts') => r.load(path.resolve(root, '../..', file));
 
-test('new page registration and old entry remain reachable outside failed store context', () => {
+test('new page is registered once in both actual page and runtime navigation manifests', () => {
   const pages = JSON.parse(fs.readFileSync(path.join(root, 'src/pages.json'))).pages;
   assert.equal(pages.filter(p => p.path === 'pages/merchant/assignedOrders').length, 1);
-  const source = fs.readFileSync(path.join(root, 'src/pages/merchant/orders.vue'), 'utf8');
-  assert.ok(source.indexOf('打开后台分配订单') < source.indexOf('<MerchantShell'));
+  const r = fixture(); try {
+    const navigation = r.load(path.join(root, 'src/config/navigation.ts'));
+    assert.ok(navigation.REGISTERED_PAGE_ROUTES.has('/pages/merchant/assignedOrders'));
+  } finally { r.stop(); }
+});
+for (const state of ['selected-store', 'context-denied', 'anonymous']) test('real old entry has one theme host and remains visible with ' + state, async () => {
+  const merchant = require('./merchant-orders-runtime.cjs');
+  const r = merchant.runtime({ anonymous: state === 'anonymous', send(_call, endpoint) {
+    if (state === 'context-denied' && endpoint === '/store/manager/context') return { status: 403, msg: '门店资格已撤销' };
+  } });
+  try {
+    await r.start(); const html = await merchant.markup(r), tree = require('@vue/compiler-dom').parse(html), entries = [];
+    function visit(node, ancestors = []) {
+      if (node.type === 1) {
+        const attrs = Object.fromEntries(node.props.filter(prop => prop.type === 6).map(prop => [prop.name, prop.value?.content || '']));
+        if ((attrs.class || '').split(/\s+/).includes('assigned-entry')) entries.push([...ancestors, attrs]);
+        for (const child of node.children) visit(child, [...ancestors, attrs]);
+      } else for (const child of node.children || []) visit(child, ancestors);
+    }
+    visit(tree); assert.equal(entries.length, 1); assert.ok(html.includes('打开后台分配订单'));
+    assert.equal(entries[0].filter(attrs => (attrs.class || '').split(/\s+/).includes('theme-page')).length, 1);
+    assert.ok(entries[0].every(attrs => !/display\s*:\s*none/.test(attrs.style || '')), 'the actual entry cannot live in a context-hidden slot');
+    if (state !== 'selected-store') { assert.equal(r.page.manager.context.value, null); assert.ok(r.page.manager.error.value); }
+    r.page.openAssigned(); assert.equal(r.navigations.at(-1), '/pages/merchant/assignedOrders' + (state === 'selected-store' ? '?store_id=3' : ''));
+    r.hooks.onHide(); r.page.openAssigned(); assert.equal(r.navigations.length, 1);
+  } finally { r.stop(); }
 });
 test('anonymous sends no authenticated requests and can reach login', async () => {
   const r = await start({ anonymous: true }); try { assert.equal(r.calls.length, 0); r.page.manager.login(); assert.deepEqual(r.navigations, ['/pages/auth/login']); } finally { r.stop(); }

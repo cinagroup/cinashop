@@ -43,6 +43,7 @@ export const REGISTERED_PAGE_ROUTES = new Set<string>([
   "/pages/delivery/scanDetail",
   "/pages/merchant/statistics",
   "/pages/merchant/orders",
+  "/pages/merchant/assignedOrders",
   "/pages/merchant/orderDetail",
   "/pages/merchant/delivery",
   "/pages/merchant/refund",

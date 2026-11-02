@@ -2,6 +2,7 @@
   <ThemePage>
   <view class="merchant-page">
     <view class="merchant-heading"><button class="merchant-back" @tap="manager.back">返回</button><text class="merchant-title">{{ title }}</text><button class="merchant-refresh" :disabled="manager.loading.value || manager.busy.value" @tap="manager.load">刷新</button></view>
+    <slot name="entry" />
     <view v-show="manager.context.value" class="merchant-store">
       <text>当前管理门店</text><picker :range="manager.context.value?.data.stores || []" range-key="name" @change="manager.chooseStore"><view class="store-selector">{{ manager.storeName.value }} <text>⌄</text></view></picker>
       <text v-if="!manager.selectedStore.value" class="merchant-note">请选择本次管理的门店。</text>
