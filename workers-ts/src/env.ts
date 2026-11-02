@@ -57,6 +57,9 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
   ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS?: string;
   /** Explicit archived Mini AppSecret registry for approved original-account shipping only. */
   ROUTINE_SHIPPING_ACCOUNT_CREDENTIALS?: string;
+  /** Archived Mini AppSecrets for separately approved subscription_send use.
+   * Shipping/payment approvals and current configuration grant no such use. */
+  ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS?: string;
   /** Fixed HTTPS origin for individually pinned historical Routine refunds. */
   ROUTINE_REFUND_NOTIFY_ORIGIN?: string;
   /** 微信退款结果通知地址；必须是无查询参数的外网 HTTPS URL。 */

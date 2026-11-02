@@ -5,6 +5,7 @@ import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_
 import { inspectRoutineIdentityOwnershipCatalog, ROUTINE_IDENTITY_OWNERSHIP_RUNTIME_PRIVILEGES } from './routineIdentityOwnership';
 import { inspectRoutinePaymentAccountPolicyCatalog, ROUTINE_PAYMENT_ACCOUNT_POLICY_RUNTIME_PRIVILEGES } from './routinePaymentAccountPolicy';
 import { inspectRoutineShippingCatalog, ROUTINE_SHIPPING_RUNTIME_PRIVILEGES } from './routineShipping';
+import { inspectRoutineSubscriptionCatalog, ROUTINE_SUBSCRIPTION_RUNTIME_PRIVILEGES } from './routineSubscription';
 import { inspectFulfillmentCityConflictReader } from './fulfillmentCityConflictReader';
 import { inspectStoreOrderFulfillmentAssignment, STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE } from './storeOrderFulfillmentAssignment';
 import { inspectManagerAssignedFulfillment } from './managerAssignedFulfillment';
@@ -178,6 +179,12 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     if (routineShipping.present) {
       if (!routineShipping.ready) failures.push('routine_shipping_catalog');
       else for (const [table, privileges] of Object.entries(ROUTINE_SHIPPING_RUNTIME_PRIVILEGES[kind]))
+        plan.tables[table] = [...privileges];
+    }
+    const routineSubscription = await inspectRoutineSubscriptionCatalog(tx, names);
+    if (routineSubscription.present) {
+      if (!routineSubscription.ready) failures.push('routine_subscription_catalog');
+      else for (const [table, privileges] of Object.entries(ROUTINE_SUBSCRIPTION_RUNTIME_PRIVILEGES[kind]))
         plan.tables[table] = [...privileges];
     }
     const routineRefund=await inspectRoutineRefundCatalog(tx,names);

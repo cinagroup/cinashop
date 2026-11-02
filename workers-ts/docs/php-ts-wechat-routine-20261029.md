@@ -798,3 +798,15 @@ PC/Kefu原审计与旧历史绑定、完整归属manifest/单次许可/原子切
 先离线复制公共缓存生成锁并reify，源缓存不变；validate-03以49.94秒通过。原npm预检双配置同为/dev/null失败留存，未开始安装、锁未变，改两个独立空配置后继续。随后fresh-04实际两端npm ci（禁安装脚本）、完整官方npm audit、实际公共回归 / 单测 / 类型与Vite构建全部通过，65.36秒、8542冻结输入不变。本次PC191 / Kefu163总依赖审计全严重度为0。fresh公共19 + 29、PC367 + 9、Kefu30共454次执行，加另行Uni共享重定向2次为456；离线重复不加数。本轮审计时点结果不替代新提交CI，也不宣称永久无漏洞。
 
 原日志 / 审计JSON / 冻结字节 / 精确差异与静态独立复核留在本机.cache/php-ts-phase44-validation，最终文件另做秘密扫描。全流程单层共享串行锁、单worker，沿用600秒每命令 / 1200秒整组。未重跑Browser / PG / 全Worker；无业务页面 / API / SQL / 工作流改动、生产DDL、部署或真实提供方调用。64bfb958作者组远端成功5分30秒，所读core快照仍运行；新SHA全CI / 正常安装脚本、完整归属manifest / 单次许可 / 原子切换及整体迁移仍需推进，跨AppID屏障与runtime_ready=false保持。新提交推送仍需具体SHA授权。
+
+## 第45轮：独立订阅通知批准、模板与 token 基础
+
+`ab90aa8cd7429b78bc9ae265bc0c97d2d5e0e727` 已按精确授权推送并直接核对远端。[该提交 CI](https://github.com/cinagroup/cinashop/actions/runs/41404561360) 的 PC / Kefu 完整审计与构建成功，Uni core 17分16秒、authors 5分43秒及唯一聚合 `UniApp build` 均成功，实际分组预算已有该 SHA 的远端证明。原历史失败和本地整包超时仍保留；最后读取时 Worker 两分片仍在运行，不能称整套 CI 全绿，也不替代本轮新提交 CI。
+
+本轮实现[订阅通知账号合同](routine-subscription-authority.md)：新六列不可变策略表和显式 PG16 维护后继，双来源目录核对维护者 / App OID；App 仅 SELECT，不扩大其他业务角色。真实 LOGIN / 目录 / ACL / 触发器正文、固定 gate 顺序和五角色前后审计均封闭；缺失不启用，半安装和漂移拒绝且不修复。维护 UUID / CAS 与版本签名链绑定数据库、AppID、独立 `subscription_send`、有效期及有序模板清单，旧批准不能借用 shipping / payment / current 凭据。
+
+独立 Env 材料注册表与 commitment、不具可复制性的 prepared 能力、实际短 App 事务 fresh 复验和独立 token 缓存命名空间已实现。HTTP / Redis 等待不持 SQL gate；固定 GET、禁止 redirect、32KiB / 严格 UTF-8、8秒硬期限、迟到响应清理及统一脱敏。历史策略读取只证明留存和声明窗口，不证明历史最新、已发送或 fresh 准入；没有通知发送消费者 / POST 接线。
+
+native-02 新原生 9+15 共24项通过，265.31秒；compat-04 既有身份7 / 发货8 / 通知来源45共60项通过，333.41秒；final-03 单元139通过 / 2个既有PG条件跳过，Worker unit / runtime 类型检查通过，314.55秒。139已包含3个 mocked-admission 超时资源单测，不能重复计数或当作PG批准证明。三个完整批次各8554输入运行中及补文档前一致，五个成功原生阶段均remaining0 / STOPPED。native-01的7通过 / 2错误fixture peer期望失败保留；只修测试期望后完整重跑，首轮账号阶段未执行。原日志 / 冻结摘要在本地.cache/php-ts-phase45-validation；独立只读复核不冒称重跑或安全审计，文档后补，提交文件另做秘密扫描。
+
+本轮为自有PG16 / 实际独立TCP LOGIN与生产服务代码，provider / Redis为受控本地传输；没有生产DDL、部署、真实微信、Browser或Workerd / Hyperdrive。旧单原SUCCESS付款来源、精确AppID+UID接收人归属、模板批准与首次attempt / result尚待组合，历史策略不能作发送证据，UNKNOWN不能换键重发。完整维护manifest / 单次许可 / 原子切换和整体迁移继续未完成；保留用户 / UID / 权益 / 旧单 / 付款，未知不猜归属、跨AppID屏障与runtime_ready=false保持。此前推送授权只覆盖ab90，本轮新提交需具体SHA授权。

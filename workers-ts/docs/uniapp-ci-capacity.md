@@ -32,3 +32,17 @@
 日志、输入摘要和 Git 来源核对记录在本地忽略目录 `.cache/php-ts-phase42-validation/`。文档在最终运行结束后补齐，提交文件另做秘密扫描及暂存/提交字节核对。
 
 本轮未重新执行完整 core 链、live npm audit、依赖安装、三端构建或 Browser；原命令保留的结构证明不替代实际新 SHA CI 终态。没有包/锁文件、业务页面或运行时代码变更，没有生产 DDL、部署或真实提供方调用。PC/Kefu 审计、其他历史绑定、完整迁移和运行时就绪条件仍未完成，用户/UID/权益/旧单/付款、未知归属不猜、跨 AppID 屏障与 runtime_ready=false 保留。
+
+## ab90aa8c 的实际远端终态
+
+阶段45读取已推送的精确提交 `ab90aa8cd7429b78bc9ae265bc0c97d2d5e0e727` 对应 [run 41404561360](https://github.com/cinagroup/cinashop/actions/runs/41404561360)。新分组、原锁定安装及实际完整命令在独立 runner 上执行成功，UTC 时间如下：
+
+| Job | 开始 → 结束 | 实际耗时 | 终态 |
+| --- | --- | --- | --- |
+| [UniApp core](https://github.com/cinagroup/cinashop/actions/runs/41404561360/job/125143687111) | 2026-11-02 07:10:50 → 07:28:06 | 17分16秒 | success |
+| [UniApp authors](https://github.com/cinagroup/cinashop/actions/runs/41404561360/job/125143687148) | 2026-11-02 07:11:00 → 07:16:43 | 5分43秒 | success |
+| [唯一 UniApp build](https://github.com/cinagroup/cinashop/actions/runs/41404561360/job/125149579245) | 2026-11-02 07:28:19 → 07:28:22 | 3秒 | success |
+
+两组及聚合的全部步骤均成功，两组各在原20分钟预算内；这是该 SHA 的实际预算证明。同期 [PC](https://github.com/cinagroup/cinashop/actions/runs/41404561360/job/125143686884) / [Kefu](https://github.com/cinagroup/cinashop/actions/runs/41404561360/job/125143687132) 完整审计与构建也成功，定向依赖修复已取得实际 CI 结果。
+
+原 cancelled20分17秒、历史失败和本地toolchain-02的1200秒超时记录不改写。最后读取时 Worker 两分片仍 in_progress，不能将整套 CI 写为绿色，也不能用父提交结果证明第45轮新代码。原始 jobs JSON、时间差核对及只读摘要在本机 `.cache/php-ts-phase45-validation/base-ci-jobs-final-05.json` 与 `base-ci-uni-reviewed-03.json`；新提交CI与整体迁移仍需后续验证。
