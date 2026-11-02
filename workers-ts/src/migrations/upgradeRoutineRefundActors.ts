@@ -110,7 +110,7 @@ export async function upgradeRoutineRefundActorsInTransaction(tx:Query,target:Ro
    admin=await inspectRuntimeBusinessProfileInTransaction(tx,'admin',t,'current',p);
   const manager=p.manager?await inspectManagerRuntimePrivileges(tx,{requireLogin:true,routine:{target:t,stage:'ready'},
    ...(p.routineRefundActors?.manager?{routineRefund:true}:{}),...(p.cityConflictReaders?.manager?{cityConflictReaders:p.cityConflictReaders}:{}),
-   ...(p.fulfillmentAssignments?{fulfillmentAssignments:p.fulfillmentAssignments}:{})}):null;
+   ...(p.fulfillmentAssignments?{fulfillmentAssignments:p.fulfillmentAssignments}:{}),...(p.managerAssignedWholeExpress?{managerAssignedWholeExpress:p.managerAssignedWholeExpress}:{})}):null;
   return{ready:app.ready&&admin.ready&&(!manager||manager.ready),failures:[
    ...app.failures.map(n=>'app:'+n),...admin.failures.map(n=>'admin:'+n),...(manager?.failures.map(n=>'manager:'+n)??[])].slice(0,32)};
  };

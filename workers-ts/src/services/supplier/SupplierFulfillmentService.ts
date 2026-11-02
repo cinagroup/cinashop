@@ -75,6 +75,9 @@ export interface FulfillmentExecutionOptions {
     find: (tx: DbClient, scope: FulfillmentAuthorizationScope) => Promise<FulfillmentExecutionResult | undefined>;
     record: (tx: DbClient, result: Omit<FulfillmentExecutionResult, 'idempotent'>) => Promise<void>;
   };
+  /** Internal SQL-only adapter. The physical table fence is checked before
+   * using a non-row-locking waybill read. It supplies no business authority. */
+  waybillFence?: (tx: DbClient) => Promise<void>;
   /** The matching active job is allowed through; every other active job blocks manual fulfillment. */
   waybillJobId?: number;
   /** Only the matching durable city task may finalize its admitted effect. */
@@ -424,9 +427,17 @@ async function assertNoConflictingWaybillJob(
   tx: SupplierTx,
   rootOrderId: number,
   allowedJobId?: number,
+  fence?: FulfillmentExecutionOptions['waybillFence'],
 ): Promise<void> {
   const [context]=await tx.execute(sql`SELECT nullif(current_setting(${MANAGER_SCOPE_CONTEXT},true),'') IS NOT NULL AS manager`);
   if(context?.manager===true)await tx.execute(sql`SELECT public.manager_lock_waybill_v1()`);
+  if(fence){
+    await fence(tx);
+    const [locked]=await tx.execute<{ready:boolean}>(sql`SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_locks
+      WHERE pid=pg_catalog.pg_backend_pid() AND relation='public.order_waybill_job'::regclass AND granted
+        AND mode IN('ShareLock','ShareRowExclusiveLock','ExclusiveLock','AccessExclusiveLock')) AS ready`);
+    if(locked?.ready!==true)throw new ValidateException('面单来源缺少同事务物理写入栅栏');
+  }
   const query = tx
     .select({ id: orderWaybillJob.id })
     .from(orderWaybillJob)
@@ -437,7 +448,7 @@ async function assertNoConflictingWaybillJob(
       )`,
     ))
     .limit(2);
-  const rows = await(context?.manager===true?query:query.for("key share"));
+  const rows = await(context?.manager===true||fence?query:query.for("key share"));
   if (rows.some((row) => row.id !== allowedJobId)) {
     throw new ValidateException("订单存在进行中的电子面单任务，请先在面单账本中处理");
   }
@@ -801,8 +812,9 @@ export class SupplierFulfillmentService {
     options: FulfillmentExecutionOptions = {},
   ): Promise<FulfillmentExecutionResult> {
     return withTx(this.container, async (tx) => {
-      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
-      await tx.execute(sql.raw("SET LOCAL statement_timeout = '10s'"));
+      await tx.execute(sql`SELECT
+        pg_catalog.set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text||'ms',true),
+        pg_catalog.set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),10000)::text||'ms',true)`);
       const { root, active } = await resolveLockedOrder(
         tx,
         supplierId,
@@ -817,7 +829,7 @@ export class SupplierFulfillmentService {
         rootOrderId: root.id, customerUid: root.uid, supplierId });
       if (trustedReplay) return trustedReplay;
       await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
-      await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
+      await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId, options.waybillFence);
       if (!active) throw new ValidateException("该订单已全部发货");
       await applyDelivery(
         tx,
@@ -864,8 +876,9 @@ export class SupplierFulfillmentService {
     options: FulfillmentExecutionOptions = {},
   ): Promise<FulfillmentExecutionResult> {
     return withTx(this.container, async (tx) => {
-      await tx.execute(sql.raw("SET LOCAL lock_timeout = '2s'"));
-      await tx.execute(sql.raw("SET LOCAL statement_timeout = '10s'"));
+      await tx.execute(sql`SELECT
+        pg_catalog.set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),2000)::text||'ms',true),
+        pg_catalog.set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),10000)::text||'ms',true)`);
       const { root, active } = await resolveLockedOrder(
         tx,
         supplierId,
@@ -880,7 +893,7 @@ export class SupplierFulfillmentService {
         rootOrderId: root.id, customerUid: root.uid, supplierId });
       if (trustedReplay) return trustedReplay;
       await assertNoConflictingCustomerCityJob(tx, root.id, options.cityDeliveryJobId);
-      await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId);
+      await assertNoConflictingWaybillJob(tx, root.id, options.waybillJobId, options.waybillFence);
       if (!active) throw new ValidateException("该订单已全部发货");
       assertDeliverable(active);
       assertManualOrderDeliveryType(active.productType, input.deliveryType);

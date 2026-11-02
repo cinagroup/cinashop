@@ -16,6 +16,8 @@ import { inspectLocalPaymentCaseLock } from './localPaymentCaseLock';
 import { captureFulfillmentCityConflictReadersAddon, inspectFulfillmentCityConflictReader, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
 import { captureStoreOrderFulfillmentAssignmentsAddon, inspectStoreOrderFulfillmentAssignment,
   STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE, type StoreOrderFulfillmentAssignmentsAddon } from './storeOrderFulfillmentAssignment';
+import { captureManagerAssignedWholeExpressAddon, inspectManagerAssignedFulfillment,
+  MANAGER_ASSIGNED_FULFILLMENT_TABLE, type ManagerAssignedWholeExpressAddon } from './managerAssignedFulfillment';
 
 type Query = Pick<DbClient, 'execute'>;
 const modelColumns=new Map(Object.values(models).filter(value=>is(value,PgTable)).map(table=>{
@@ -119,6 +121,7 @@ export interface ManagerRuntimeInspectionOptions {
   routineRefund?:true;
   cityConflictReaders?:FulfillmentCityConflictReadersAddon;
   fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
+  managerAssignedWholeExpress?:ManagerAssignedWholeExpressAddon;
 }
 export async function inspectManagerRuntimePrivileges(db: Query, options: ManagerRuntimeInspectionOptions) {
   if (typeof options?.requireLogin !== 'boolean') throw Error('Explicit manager LOGIN stage required');
@@ -160,6 +163,16 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
   if(assignment.present||options.fulfillmentAssignments){
     if(!assignment.ready||!options.fulfillmentAssignments)failures.push('manager_fulfillment_assignment_declaration');
     else plan.tables[STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE]=['SELECT'];
+  }
+  if(options.managerAssignedWholeExpress!==undefined){
+    captureManagerAssignedWholeExpressAddon(options.managerAssignedWholeExpress);
+    if(routine?.stage!=='ready'||!options.fulfillmentAssignments)
+      throw Error('Explicit commissioned Manager assignment receipt successor required');
+  }
+  const receipt=await inspectManagerAssignedFulfillment(db,routine?{maintenance:routine.target.maintenance}:undefined);
+  if(receipt.present||options.managerAssignedWholeExpress){
+    if(!receipt.ready||!options.managerAssignedWholeExpress)failures.push('manager_assigned_fulfillment_declaration');
+    else plan.tables[MANAGER_ASSIGNED_FULFILLMENT_TABLE]=['SELECT','INSERT'];
   }
   const [identity] = await db.execute(sql`SELECT
     current_setting('server_version_num')::int/10000=16 AS pg16,
@@ -266,10 +279,12 @@ export async function inspectManagerRuntimePrivileges(db: Query, options: Manage
 
 /** Actual independently authenticated connection, not role impersonation. */
 export async function auditManagerRuntimePrivileges(db: DbClient, routine?: RoutinePaymentRuntimeTarget, routineRefund?:true,
-  cityConflictReaders?:FulfillmentCityConflictReadersAddon,fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon) {
+  cityConflictReaders?:FulfillmentCityConflictReadersAddon,fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon,
+  managerAssignedWholeExpress?:ManagerAssignedWholeExpressAddon) {
   if(routineRefund!==undefined&&routineRefund!==true)throw Error('Explicit Manager refund addon flag required');
   const cityReaders=cityConflictReaders===undefined?undefined:captureFulfillmentCityConflictReadersAddon(cityConflictReaders);
   const assignments=fulfillmentAssignments===undefined?undefined:captureStoreOrderFulfillmentAssignmentsAddon(fulfillmentAssignments);
+  const receipts=managerAssignedWholeExpress===undefined?undefined:captureManagerAssignedWholeExpressAddon(managerAssignedWholeExpress);
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root manager connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('statement_timeout','5000',true),set_config('lock_timeout','1000',true),
@@ -279,7 +294,8 @@ export async function auditManagerRuntimePrivileges(db: DbClient, routine?: Rout
       current_setting('session_replication_role')='origin' AS origin`);
     const result = await inspectManagerRuntimePrivileges(tx, { requireLogin: true,
       ...(routine ? { routine: { target: routine, stage: 'ready' as const } } : {}),...(routineRefund?{routineRefund}:{}),
-      ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}) });
+      ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}),
+      ...(receipts?{managerAssignedWholeExpress:receipts}:{}) });
     if (identity?.role === MANAGER_RUNTIME_ROLE && identity.session === MANAGER_RUNTIME_ROLE && identity.backend_role === MANAGER_RUNTIME_ROLE && identity.origin === true
       && (!routine || identity.database === routine.database)) return { ...result, identity };
     return { ...result, identity, ready: false, failures: [...new Set([...result.failures, 'connection_identity'])].sort() };

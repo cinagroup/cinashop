@@ -7,6 +7,7 @@ import { inspectRoutinePaymentAccountPolicyCatalog, ROUTINE_PAYMENT_ACCOUNT_POLI
 import { inspectRoutineShippingCatalog, ROUTINE_SHIPPING_RUNTIME_PRIVILEGES } from './routineShipping';
 import { inspectFulfillmentCityConflictReader } from './fulfillmentCityConflictReader';
 import { inspectStoreOrderFulfillmentAssignment, STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE } from './storeOrderFulfillmentAssignment';
+import { inspectManagerAssignedFulfillment } from './managerAssignedFulfillment';
 import { inspectAdminWechatAppOperation, ADMIN_WECHAT_APP_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatAppOperation';
 import { inspectNativeAppPaymentAuthority, NATIVE_APP_PAYMENT_AUTHORITY_RUNTIME_PRIVILEGES } from './nativeAppPaymentAuthority';
 import { inspectAdminWechatOpenOperation, ADMIN_WECHAT_OPEN_OPERATION_RUNTIME_PRIVILEGES } from './adminWechatOpenOperation';
@@ -199,6 +200,15 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       if(!assignment.ready||!peers?.fulfillmentAssignments||!bound||version!=='current')
         failures.push('fulfillment_assignment_declaration');
       else if(kind==='admin')plan.tables[STORE_ORDER_FULFILLMENT_ASSIGNMENT_TABLE]=['SELECT','INSERT'];
+    }
+    const assignedReceipt=await inspectManagerAssignedFulfillment(tx,{maintenance:names.maintenance});
+    if(assignedReceipt.present||peers?.managerAssignedWholeExpress){
+      const bound=peers&&assignedReceipt.binding?.database===peers.target.database&&peers.target.maintenance===names.maintenance
+        &&peers.target.app===names.app&&peers.target.admin===names.admin;
+      if(!assignedReceipt.ready||!peers?.managerAssignedWholeExpress||!peers.fulfillmentAssignments||!bound||version!=='current')
+        failures.push('manager_assigned_fulfillment_declaration');
+      // App/Admin acquire no raw receipt rights. Their complete declaration
+      // still pins the installed cross-profile successor.
     }
     // This separately commissioned receipt is absent from the fixed base
     // profile. When installed, its actual PG16 shape must match before the

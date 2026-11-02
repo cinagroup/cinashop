@@ -2,6 +2,7 @@ import { captureCustomerFinancialRoutineRefund, type CustomerFinancialRoutineRef
 import { captureRoutineRefundActorAddons, type RoutineRefundActorAddons } from './routineRefundActorAddon';
 import { captureFulfillmentCityConflictReadersAddon, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
 import { captureStoreOrderFulfillmentAssignmentsAddon, type StoreOrderFulfillmentAssignmentsAddon } from './storeOrderFulfillmentAssignment';
+import { captureManagerAssignedWholeExpressAddon, type ManagerAssignedWholeExpressAddon } from './managerAssignedFulfillment';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -27,13 +28,14 @@ export interface RuntimeGiftPeerDeclarations {
   routineRefundActors?:RoutineRefundActorAddons;
   cityConflictReaders?:FulfillmentCityConflictReadersAddon;
   fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
+  managerAssignedWholeExpress?:ManagerAssignedWholeExpressAddon;
 }
 const giftTable = 'store_order_promotion_gift_coupon_reward';
 const giftSequence = giftTable + '_id_seq';
 
 export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclarations): RuntimeGiftPeerDeclarations {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments'].includes(key))
+    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress'].includes(key))
     || !value.target || ![value.financial, value.cashierSecondCard, value.manager].some(Boolean))
     throw Error('Explicit bounded gift peer declarations required');
   const t = value.target;
@@ -69,6 +71,12 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   const assignments=assignmentDescriptor?.value===undefined?undefined:captureStoreOrderFulfillmentAssignmentsAddon(assignmentDescriptor.value);
   if(assignments&&(!value.financial||!cashier||value.manager!==true))
     throw Error('Complete five runtime fulfillment assignment peers required');
+  const receiptDescriptor=Object.getOwnPropertyDescriptor(value,'managerAssignedWholeExpress');
+  if(('managerAssignedWholeExpress' in value)&&(!receiptDescriptor||!receiptDescriptor.enumerable||!('value' in receiptDescriptor)))
+    throw Error('Data-only Manager assigned fulfillment declaration required');
+  const receipts=receiptDescriptor?.value===undefined?undefined:captureManagerAssignedWholeExpressAddon(receiptDescriptor.value);
+  if(receipts&&(!assignments||!value.financial||!cashier||value.manager!==true))
+    throw Error('Complete assignment and five runtime receipt peers required');
   return { target: { database: t.database, maintenance: t.maintenance, app: t.app, admin: t.admin,
     ...(t.local ? { local: [...t.local] } : {}),
     ...(t.caseLock ? { caseLock: { owner: t.caseLock.owner, runtimeRoles: [...t.caseLock.runtimeRoles] } } : {}) },
@@ -80,7 +88,8 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
       ...(cashier.conditionalGuards ? { conditionalGuards: true as const } : {}),
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),
     ...(value.manager ? { manager: true as const } : {}),...(refundActors?{routineRefundActors:refundActors}:{}),
-    ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}) };
+    ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}),
+    ...(receipts?{managerAssignedWholeExpress:receipts}:{}) };
 }
 
 export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execute'>,
@@ -129,7 +138,8 @@ export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execut
     const proof = await inspectManagerRuntimePrivileges(db, { requireLogin: true, routine: { target, stage: 'ready' },
       ...(peers.routineRefundActors?.manager?{routineRefund:true}:{} ),
       ...(peers.cityConflictReaders?.manager?{cityConflictReaders:peers.cityConflictReaders}:{}),
-      ...(peers.fulfillmentAssignments?{fulfillmentAssignments:peers.fulfillmentAssignments}:{}) });
+      ...(peers.fulfillmentAssignments?{fulfillmentAssignments:peers.fulfillmentAssignments}:{}),
+      ...(peers.managerAssignedWholeExpress?{managerAssignedWholeExpress:peers.managerAssignedWholeExpress}:{}) });
     if (!proof.ready) failures.push(...proof.failures.map(name => 'manager:' + name));
     else {
       const plan = managerRuntimePrivilegePlan('current');

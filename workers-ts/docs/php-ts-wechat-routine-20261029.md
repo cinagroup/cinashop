@@ -740,3 +740,17 @@ App 只读验证完整退款及 fulfillment branch 代次：精确 legacy/guest 
 文档在最终执行后补齐，当前14个提交文件另做秘密扫描。没有Admin前端修改，不挪用旧Admin类型或Browser结果；没有生产DDL、部署、真实微信、Workerd/Hyperdrive。Manager专用履约回执和正式后继、waybill能力适配、当前批准/员工scope与源证明、完整Manager HTTP→Queue/App首上传、前端session/journal/Browser仍未实现。缓存中的下一阶段设计不是实现。保持通用订单财务归属、promotion capability、现有用户/UID/权益/旧单/付款；跨AppID归属屏障、runtime_ready=false及整体迁移未完成状态保持。
 
 CI界限：26a43cc7的Uni成功17分36秒已实际取得；该旧run之后由新main推送取消，Worker分片没有成功终态。c172d016的[新run](https://github.com/cinagroup/cinashop/actions/runs/41384583531)的secret/Admin/Supplier/PG16/workerd成功，PC/Kefu完整依赖树审计失败，两个Worker分片最后观测仍在执行。Uni主type/test/build成功16分15秒、安全回归成功，但job随后取得cancelled终态：03:43:35Z→04:03:52Z，共20分17秒，editorial步骤中止。未以timed_out替代实际cancelled字段，20分钟预算的稳定性仍未解决，整体CI不能称通过。本轮新作者提交的远端CI尚未运行。
+
+## 第40轮：实际 Manager 分配单整单快递与成功回执
+
+阶段39 `e11d6de4` 已按具体SHA授权推送并直接核对远端main。本轮接通[Manager分配整单合同](manager-assigned-whole-express.md)：专用26列不可变成功回执、显式五角色权限后继及实际Manager LOGIN准入；可信Env缺失关闭，真实导出router在主应用catchall前挂载。review须当前员工scope与有效Admin grant同意目标门店，commit在物理根锁后验证完整批准链、CAS、原cart/source和承运商，并由既有Supplier整单服务写入。付款根与财务store0、原type0/1库存来源不变，不伪造旧门店GUC或扩张promotion权限。
+
+order、标准发货状态、补充Manager audit、唯一真实PENDING delivery.notice和新回执同事务提交，写后检查根/原cart、实际notice hash与回执readback。原键原内容只重放成功，不重新发货；后台后来撤销批准不倒退过去履约。员工失去角色后仅原用户GET恢复最小回执，unknown不是未应用，没有abandon/换键终态。waybill通过正式能力取得并核对实际SHARE锁，Supplier共享超时保留外层更窄限制。提交后仍由既有App outbox/Queue派发，实际actor是App；旧notice不虚构Manager/assignment原证，App不独立读取或核验新回执授权。
+
+`author-04` 完整10项真实业务通过，164.05秒：Admin assisted checkout→默认RSA/AES Routine付款→App paid消费→真实Admin grant→导出Manager HTTP与独立LOGIN→SQL回执/notice→Queue/App旧账号A首上传；明确读取当前配置B，验证原A凭据/付款人和实际App dispatch/provider证据。type0/1、错门店、改派/撤销stale、明确损坏cart反例、真实根锁、其他五LOGIN、缺声明、角色撤销owner恢复及尾部实际SQL除零后全回滚/同键重试均执行。`storage-05` 完整101项通过（1目录捕获+100结构），143.37秒；结构SQL标本不冒称业务履约。`regression-06` 既有Admin分配11项与原账号快递Queue12项分别122.70/205.38秒通过。所有原生输入不变、remaining0/STOPPED。
+
+最终 `final-07` 为41项单元、Worker unit/runtime两套类型检查全部通过，33.91/196.51/96.32秒、合计326.75秒，8525输入不变。`canonical-01` 原捕获22.17秒、源内空pin本身不算正式核对；其后固定实际PG16指纹，完整storage套件匹配。`types-02` 原14条编译错误保留，修正共享抽取import及测试savepoint类型；`author-03` 在fixture过完整shipping-policy target初始化失败、10项全skipped，143.17秒、清理完整，只收窄测试四身份字段而未放宽生产接口。文档后补；暂存格式检查后只从fulfillmentAssignmentRuntimeDeclaration.ts末尾删除一个多余LF，与已扫描前像逐字节核对，其余可执行源码和全部测试字节不变，不重复重型检查，提交文件重新秘密扫描。独立作者外复核核对通过日志与用例，未报阻塞问题，不冒称独立重跑或安全审计。
+
+本轮为自有PG16、实际独立TCP LOGIN、production服务/导出router与本地provider/Queue/KV传输验收；无createApp全栈、Browser、Workerd/Hyperdrive、生产DDL、部署或真实微信验收。前端Admin分配面板、Manager分配待办、专用session/journal/Browser未接通；旧门店列表仍按真实store_id读取，不会因grant读到平台store0单。真实退款余单/分包/自提/虚拟/物流更正与历史UNKNOWN不属新Manager入口；完整维护manifest/原子切换、前端及整体迁移继续未完成，现有用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障与runtime_ready=false保留。
+
+阶段39的[远端CI](https://github.com/cinagroup/cinashop/actions/runs/41387142973)已观测UniApp success（04:12:58Z→04:30:39Z，17分41秒），Admin/Supplier/PG16/workerd/secret也成功，PC/Kefu依赖审计仍失败，Worker全量分片尚无本轮取得的成功终态。旧c172的20分17秒cancelled保留，未提高预算或删检查，整体CI仍不能称通过；本轮新提交与推送以最终检查点为准，需要具体新SHA授权。

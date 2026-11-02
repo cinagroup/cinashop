@@ -28,6 +28,9 @@ export interface Env extends Omit<WorkerBindings, "ALLOWED_ORIGINS" | "PC_AUTH_A
    * Never accept this authority from HTTP, discover it from ACLs or borrow an
    * App/Manager connection. Missing configuration keeps the Admin author shut. */
   ADMIN_FULFILLMENT_ASSIGNMENT_RUNTIME?: RuntimeGiftPeerDeclarations;
+  /** Exact trusted assignment plus success-receipt successor. The dedicated
+   * Manager path never infers this authority from HTTP, ACLs or an App binding. */
+  MANAGER_FULFILLMENT_ASSIGNMENT_RUNTIME?: RuntimeGiftPeerDeclarations;
   // ─── 密钥 (wrangler secret) ───────────────────────────
   /** JWT 签名密钥, 对应 PHP 的 app.app_key (默认 'crmeb_app_key') */
   APP_KEY: string;
