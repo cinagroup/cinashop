@@ -31,6 +31,7 @@ import { routineShippingClockTx, routineShippingUnavailable } from '@/services/p
 import { assertRoutineShippingReadTx } from '@/migrations/routineShipping';
 import { assertRoutineVirtualShippingSubjectsReadTx } from '@/migrations/routineVirtualShippingSubjects';
 import { routineVirtualPaidKey, ROUTINE_VIRTUAL_PAID_DELAY } from './RoutineVirtualPaidShipping';
+import { captureRoutineSubscriptionDeliveryEnv, processRoutineSubscriptionDelivery, routineSubscriptionDeliveryCommissioned } from '@/services/wechat/RoutineSubscriptionDispatch';
 
 const QUEUE_LEASE_SECONDS = 5 * 60;
 const PROVIDER_LEASE_SECONDS = 2 * 60;
@@ -299,9 +300,13 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
         if(!await assertRoutineVirtualShippingSubjectsReadTx(tx))return routineShippingUnavailable();
       });
     }
+    const subscriptionEnv = message.channel === 'wechat_routine' && /^order\.delivery\.notice:/u.test(message.eventKey)
+      && await routineSubscriptionDeliveryCommissioned(this.container) ? captureRoutineSubscriptionDeliveryEnv(this.env) : undefined;
     const claim = await this.claim(message);
     if (typeof claim === "string") return claim;
     if (claim.channel === "wechat_shipping") return processRoutineShippingDelivery(this.container, shippingEnv!,
+      { id: claim.id, eventKey: claim.eventKey, leaseToken: claim.leaseToken }, fetcher);
+    if (subscriptionEnv) return processRoutineSubscriptionDelivery(this.container, subscriptionEnv,
       { id: claim.id, eventKey: claim.eventKey, leaseToken: claim.leaseToken }, fetcher);
     try {
       const result = await this.deliver(claim, fetcher);

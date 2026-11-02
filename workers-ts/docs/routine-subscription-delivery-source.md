@@ -63,3 +63,10 @@ native-02 首次真实运行在 beforeAll 的 Admin cart HTTP 阶段失败，134
 本轮动态正例仅普通 express；split、send、city 及 64 / 200 容量边界未单独运行，不能以代码分支或类型通过代替原生证明。退款拒绝 / 成团通知、非微信单、历史缺来源或缺 pin 的维护恢复也不由该 delivery reader 处理。
 
 仍需新增可信通知作者接线、不可变 attempt / result、实际 Queue / provider POST，以及提交后未知结果恢复。可能已 POST 的 UNKNOWN 不能换键或仅凭旧 Admin retry 决策自动重发；历史策略行不证明发送结果。当前实现不创建新 SQL 表 / grant，不改变生产 AppID、用户 / UID / 权益 / 旧单 / 付款。无生产 DDL、部署、Browser、Workerd / Hyperdrive 环境或真实微信验收；完整维护 manifest / 单次许可 / 原子切换与整体 PHP→TS 迁移仍未完成，跨 AppID 屏障与 runtime_ready=false 保留。
+
+
+## 第47轮后继：同事务来源与实际 Queue 派发
+
+本页前述第46轮结果是当轮历史快照。第47轮已接通[实际 Queue 派发、不可变 attempt/result 与固定 POST](routine-subscription-delivery-dispatch.md)：新增同事务 `prepareRoutineSubscriptionDeliveryNoticeTx` / WeakMap 检查，维护 gate 顺序在731725后追加731726，并在写首attempt的同一实际App短事务内重新核对完整来源摘要、原接收人/模板/请求。token GET 后再准入，SQL之外发送，一次性能力不因慢COMMIT确认重新计时；未知旧attempt不因Admin重试或更换delivery ID重发。
+
+新9项存储/13项实际Queue业务、旧来源10/通知45、单元166及Worker两套类型检查已通过，另2个既有条件用例跳过。普通express与真实配送员send已动态执行，split/city/容量未单独动态证明；来源/通知作者的版本化接线仍未完成，B pin与历史缺失继续拒绝。没有生产DDL、部署或真实微信调用；完整归属manifest/原子切换和整体迁移仍待完成。

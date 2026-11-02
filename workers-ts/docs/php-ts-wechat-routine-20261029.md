@@ -824,3 +824,20 @@ native-03 新普通快递10项通过，153.48秒；真实Admin HTTP checkout / d
 compat-04 既有发货8 / 通知45 / 订阅15共68项通过，268.40秒；final-05单元139通过 / 2个既有PG条件跳过、Worker两套类型检查通过，316.31秒。三批各8559输入运行期间及补文档前一致，四个成功原生阶段均remaining0 / STOPPED；只计最终217次成功 / 2跳过，不把final-01或旧deadline单测重复加数。交叉只读复核、原日志 / 冻结摘要 / 失败记录在本机.cache/php-ts-phase46-validation；没有独立重跑或安全审计声明，文档后补，提交文件另做秘密扫描。
 
 仅ordinary express动态正例已运行，split / send / city与64 / 200容量未单独证明；退款拒绝 / 成团 / 非微信单及旧缺来源意图不由本reader处理。新来源未接入现有通知作者或Queue / provider POST，没有immutable attempt / result；未来必须同事务fresh来源+首attempt、SQL外POST与不可变结果恢复，UNKNOWN不能换键重发。无新增生产DDL / grant、部署、真实微信、Browser或Workerd / Hyperdrive环境验收；完整维护manifest / 单次许可 / 原子切换及整体迁移继续未完成，用户 / UID / 权益 / 旧单 / 付款、未知不猜归属、跨AppID屏障与runtime_ready=false保持。新提交推送需具体SHA授权。
+
+
+## 第47轮：原账号订阅通知的实际 Queue、首 attempt 与不可变结果
+
+`5b4074f24e9c28526ff86b1c88ceb376951bbff9` 已按具体SHA授权推送并直接核对远端main。[该SHA CI](https://github.com/cinagroup/cinashop/actions/runs/41415138730) 最新快照中，PC/Kefu、Admin/Supplier、PG16、workerd、秘密扫描与Uni core 12分35秒/authors 5分11秒/唯一聚合均成功；Worker两分片仍运行，不能称全CI绿色或替代本轮新提交CI。
+
+本轮完成[既有A pin发货订阅的实际派发](routine-subscription-delivery-dispatch.md)。独立双不可变表、7/5列、15约束/5索引/4触发器与显式维护后继，App只新增SELECT/INSERT，其他业务角色无新增数据权限；完整真实LOGIN/目录/ACL/默认/前后五角色声明审计，半安装/漂移拒绝。维护沿用逐SQL/idle5秒与锁1秒，fresh业务事务仍总龄5秒。整个可选namespace缺席保留legacy，任意对象存在则须完整actual-App就绪后才改claim，材料撤回不退回legacy。
+
+实际Queue consumer组合完整历史、原付款/精确owner/模板及token后fresh同事务来源，先存验签attempt、关闭SQL后以一次性能力固定POST。能力期限从最终SQL前monotonic与精确SQL剩余策略窗口确定，COMMIT确认不重置。每POST一UUID/ordinal，eventKey+channel source_key跨delivery ID约束；任何无result历史先停UNKNOWN，旧Admin confirmRetry和换ID不能重新发送。40014等明确拒绝先落结果，下一独立attempt才刷新token；最多5次，永久拒绝停止。
+
+Provider固定路径/禁止redirect、fetch+stream共8秒、32KiB/严格UTF8/int32，取消迟到结果并脱敏；私有结果绑定attempt签名，结果/投影同事务CAS。POST中撤销批准仍留存当次明确成功，历史策略不作任意时刻latest或发送证明。SQL结果写入/投影失败原子回滚，COMMIT确认不确定则保守停且不推断已回滚；人工状态不制造不可变提供方证据。
+
+native-03 新存储9/实际Queue业务13共22项通过，332.34秒；compat-04旧来源10/通知45共55项通过，163.54秒；final-05单元166通过/2个既有PG条件跳过、Worker unit/runtime类型通过，335.92秒。三批8567输入运行中及补文档前均匹配，四PG均remaining0/STOPPED；只计最终243次成功/2跳过。27新provider单测明确mock admission，仅证明传输资源，不作PG批准/平台订阅同意证明。实际业务正例经过真实Admin鉴权/下单/发货、独立批准原账号RSA/AES回调、App paid/notice outbox、code2Session归属和Queue claim/不可变作者，payer≠owner/当前B/latest裸B；HTTP/Redis/KV/Queue受控，phone和配送员为明确fixture输入，不冒称真实SMS/登录/微信接受。
+
+首轮storage-02为3通过/6失败，新增维护总龄5秒错误导致约8秒全审计回滚及级联未安装失败；移除误套总龄后完整重跑，既有单SQL/idle/锁限值和全部审计未放宽。final-01的166/2后标本unused/union类型失败保留，修正后最终两套类型通过。交叉复核修正慢提交确认能力窗口与send配送员/手机号标本，未改变生产鉴权；5个主流程文件独立交叉读、另6由复核者编写并由主流程另读，不称全11独立审计或重跑。原日志/冻结/失败/复核在本机.cache/php-ts-phase47-validation，文档后补、提交文件另做秘密扫描与暂存/提交字节核对。
+
+新动态正例ordinary express/send，split/city及容量未单独重证。legacy通知作者仍未迁移；原本B pin和旧缺来源不重解释为A，其他事件/非微信单/历史恢复、完整归属manifest/单次许可/原子切换及整体迁移继续待办。无生产DDL/Env切换、部署、真实微信、Browser或Workerd/Hyperdrive环境验收；用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障与runtime_ready=false保持。此前授权仅覆盖已推送5b4074f2，本轮新提交仍需精确SHA推送授权。

@@ -33,7 +33,7 @@ export interface PreparedRoutineSubscriptionDeliveryNotice {
   readonly account: PreparedRoutineSubscriptionAccount;
   readonly request: Readonly<RoutineSubscriptionNoticeRequest>;
 }
-const notices = new WeakMap<PreparedRoutineSubscriptionDeliveryNotice, Readonly<RoutineSubscriptionDeliveryNoticeInput>>();
+const notices = new WeakMap<PreparedRoutineSubscriptionDeliveryNotice, { input: Readonly<RoutineSubscriptionDeliveryNoticeInput>; tx: DbClient }>();
 const bounded = (value: unknown, max: number): value is string => typeof value === 'string'
   && value.length <= max && !/[\u0000-\u001f\u007f]/u.test(value);
 
@@ -55,7 +55,7 @@ async function gates(tx: DbClient) {
   // Every lower maintenance gate is taken before physical source/identity locks.
   // Reentrant guards in the original, ownership, witness and NativeApp readers
   // cannot introduce a new lower-order dependency inside this transaction.
-  for (const first of [731663, 731664, 731669, 731714, 731716, 731717, 731725]) {
+  for (const first of [731663, 731664, 731669, 731714, 731716, 731717, 731725, 731726]) {
     const [row] = await tx.execute<{ locked: boolean }>(sql`SELECT pg_catalog.pg_try_advisory_xact_lock_shared(${first},0) AS locked`);
     if (row?.locked !== true) return routineSubscriptionUnavailable();
   }
@@ -157,12 +157,22 @@ async function prepare(tx: DbClient, env: Env, expected: Readonly<RoutineSubscri
     AND pg_catalog.clock_timestamp()<pg_catalog.to_timestamp(${account.account.payload.data.validUntil}) AS ready`);
   if (tail?.ready !== true) return routineSubscriptionUnavailable();
   const prepared = Object.freeze({ [noticeSlot]: true as const, facts: freezeSubscription({ ...identity, sourceDigest }), account, request });
-  notices.set(prepared, expected); return prepared;
+  notices.set(prepared, { input: expected, tx }); return prepared;
+}
+
+/** Same-transaction fresh source for the immutable dispatch author. The caller
+ * must enter before its physical locks; all lower maintenance gates are first. */
+export async function prepareRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, env: Env, raw: RoutineSubscriptionDeliveryNoticeInput) {
+  const captured = input(raw), signing = environment(env);
+  try { return await prepare(tx, signing, captured); } catch { return routineSubscriptionUnavailable(); }
+}
+export function assertRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, value: PreparedRoutineSubscriptionDeliveryNotice) {
+  if (notices.get(value)?.tx !== tx) return routineSubscriptionUnavailable(); return value;
 }
 
 /** Prospective delivery-notice evidence only. It neither creates an attempt nor
  * authorizes a POST; durable dispatch/result admission must still precede send.
- * The legacy staging and Queue consumer do not call this new reader yet. */
+ * Dispatch admission additionally requires its same-transaction API above. */
 export async function prepareRoutineSubscriptionDeliveryNotice(container: Container, env: Env, raw: RoutineSubscriptionDeliveryNoticeInput) {
   root(container); const captured = input(raw), signing = environment(env);
   try { return await withTx(container, tx => prepare(tx, signing, captured)); }
@@ -175,7 +185,7 @@ export function assertPreparedRoutineSubscriptionDeliveryNotice(value: PreparedR
  * actual-App transaction. A token return alone never replaces this boundary. */
 export async function recheckRoutineSubscriptionDeliveryNotice(container: Container, env: Env, value: PreparedRoutineSubscriptionDeliveryNotice) {
   assertPreparedRoutineSubscriptionDeliveryNotice(value);
-  const current = await prepareRoutineSubscriptionDeliveryNotice(container, env, notices.get(value)!);
+  const current = await prepareRoutineSubscriptionDeliveryNotice(container, env, notices.get(value)!.input);
   if (current.facts.sourceDigest !== value.facts.sourceDigest || !subscriptionSame(current.request, value.request))
     return routineSubscriptionUnavailable();
   return current;
