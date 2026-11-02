@@ -595,7 +595,7 @@ export class OrderOutboxService {
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
       let robotGap: WithdrawalWecomGap | null = null;
-      const versionedRoutine = claim.eventType === ORDER_DELIVERY_NOTICE_EVENT && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
+      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
       const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
       const eventRows = await tx
         .select()

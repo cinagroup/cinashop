@@ -2,12 +2,13 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
 import { orderNotificationDelivery, type WechatTemplateNotificationPayload } from '@/models/schema';
-import type { OrderNotificationOutboxEvent } from '@/services/order/OrderNotificationOutboxService';
+import { ORDER_REFUND_REFUSED_NOTICE_EVENT, type OrderNotificationOutboxEvent } from '@/services/order/OrderNotificationOutboxService';
 import { acquireRoutineSubscriptionNoticeSourceGatesTx, prepareRoutineSubscriptionNoticeAuthorTx,
   assertRoutineSubscriptionNoticeAuthorTx } from './RoutineSubscriptionDeliveryNotice';
 import { assertRoutineSubscriptionDeliveryReadyTx } from '@/migrations/routineSubscriptionDelivery';
 import { parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { parseRoutineSubscriptionNoticeRequest } from './RoutineSubscriptionNoticeRequest';
+import { parseRoutineSubscriptionRefusalRequest } from './RoutineSubscriptionRefusalRequest';
 import { routineSubscriptionScopeTx, routineSubscriptionUnavailable, subscriptionMac, subscriptionSame } from './RoutineSubscriptionAccount';
 
 export type RoutineSubscriptionNoticeEnvironment = Partial<Pick<Env, 'APP_KEY' | 'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS' | 'HYPERDRIVE'>>;
@@ -84,9 +85,15 @@ async function skip(tx: DbClient, event: OrderNotificationOutboxEvent, mark: str
   if (!('orderId' in p) || !('orderNo' in p) || !('userId' in p)) return routineSubscriptionUnavailable();
   await tx.insert(orderNotificationDelivery).values({ outboxId: event.id, eventKey: event.eventKey, orderId: p.orderId,
     userId: p.userId, noticeMark: mark, channel: 'wechat_routine', target: '', templateCode: '',
-    payload: { kind: 'wechat_routine', data: {}, url: `/pages/goods/order_details/index?order_id=${p.orderNo}` },
+    payload: { kind: 'wechat_routine', data: {}, url: event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
+      ? `/pages/goods/order_after_details/index?order_id=${p.orderNo}&isReturen=1` : `/pages/goods/order_details/index?order_id=${p.orderNo}` },
     status: 'SKIPPED', availableTime: now, lastError: 'routine_original_notice_source_unavailable', addTime: now, updateTime: now })
     .onConflictDoNothing({ target: [orderNotificationDelivery.eventKey, orderNotificationDelivery.channel] });
+}
+function parseRequest(env: Env, event: OrderNotificationOutboxEvent, scope: Awaited<ReturnType<typeof routineSubscriptionScopeTx>>) {
+  const raw = 'routineSubscriptionRequest' in event.payload ? event.payload.routineSubscriptionRequest : undefined;
+  return event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT ? parseRoutineSubscriptionRefusalRequest(env, raw, scope)
+    : parseRoutineSubscriptionNoticeRequest(env, raw, scope);
 }
 /** This author creates a signed staging projection. Only phase47's immutable
  * attempt + fresh source read can later authorize the first provider POST. */
@@ -100,7 +107,7 @@ export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readon
     scope = await withTx(createContainerFromDb(tx), nested => routineSubscriptionScopeTx(nested));
   } catch { return 'deferred'; }
   try {
-    parseRoutineSubscriptionNoticeRequest(captured, 'routineSubscriptionRequest' in event.payload ? event.payload.routineSubscriptionRequest : undefined, scope);
+    parseRequest(captured, event, scope);
   } catch { await skip(tx, event, mark, now); return 'staged'; }
   if (!earlyReady) return 'deferred';
   try {
@@ -111,10 +118,11 @@ export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readon
         // may be authenticated for replay, including after policy retirement.
         if (prior.payload.kind === 'wechat_routine' && prior.payload.routineSubscriptionIntent) {
           const scope = await routineSubscriptionScopeTx(nested), intent = parseRoutineSubscriptionNoticeIntent(captured, prior.payload.routineSubscriptionIntent, scope);
-          const request = parseRoutineSubscriptionNoticeRequest(captured, 'routineSubscriptionRequest' in event.payload ? event.payload.routineSubscriptionRequest : undefined, scope);
+          const request = parseRequest(captured, event, scope);
           const payload = prior.payload;
           if (prior.outboxId !== event.id || intent.outboxId !== event.id || intent.deliveryId !== prior.id || intent.eventKey !== event.eventKey
             || intent.createdAt !== prior.addTime || intent.requestSignature !== request.signature || prior.noticeMark !== mark
+            || prior.orderId !== request.body.orderId || prior.userId !== request.body.userId || prior.withdrawalId !== null
             || prior.target !== intent.request.touser || prior.templateCode !== intent.request.template_id || payload.routineAppId !== intent.source.appId
             || payload.url !== intent.request.page || !subscriptionSame(payload.data, Object.fromEntries(Object.entries(intent.request.data).map(([k, v]) => [k, v.value]))))
             return routineSubscriptionUnavailable();
@@ -134,10 +142,11 @@ export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readon
       const [actor] = await nested.execute<{ role: string; roleOid: string }>(sql`SELECT current_user AS role,
         (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=current_user) AS "roleOid"`);
       if (!actor) return routineSubscriptionUnavailable();
-      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
+      const refusal = source.facts.templateMark === '1451';
+      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: refusal ? 3 : 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
         deliveryId: inserted.id, outboxId: event.id, eventKey: event.eventKey, createdAt: source.renderedAt, requestSignature: source.requestSignature,
         source: { ...source.facts, deliveryId: inserted.id }, policy: source.account.account, request: source.request };
-      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, 'notice-stage', body) }, scope);
+      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, refusal ? 'refusal-notice-stage' : 'notice-stage', body) }, scope);
       const finalPayload = { ...payload, routineSubscriptionIntent: intent };
       const [updated] = await nested.update(orderNotificationDelivery).set({ payload: finalPayload }).where(and(eq(orderNotificationDelivery.id, inserted.id),
         eq(orderNotificationDelivery.status, 'PENDING'), eq(orderNotificationDelivery.attemptCount, 0), eq(orderNotificationDelivery.dispatchCount, 0),

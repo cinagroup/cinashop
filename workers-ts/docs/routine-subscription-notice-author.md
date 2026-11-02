@@ -40,3 +40,9 @@ staging intent 是认证后的可变投影，不是物理不可变回执，也�
 原日志、冻结/失败、交叉复核及提交字节/秘密扫描记录在本机 `.cache/php-ts-phase48-validation/`。4个主流程源由复核者独立交叉读；另2源/3测试由其编写、主流程另读，剩余7文件作窄 diff 核对，不称16文件全独立审计或独立重跑。文档在全部验证终态后补。
 
 父提交 [a400366b 的 CI](https://github.com/cinagroup/cinashop/actions/runs/41423671523) 末次快照为10成功、Worker两分片仍运行，不称全绿色，也不替代新提交 CI。split/city、其他角色入口及容量未单独动态重证，退款拒绝/成团等作者、非微信单原账号发送、完整归属 manifest/单次许可/原子切换与整体 PHP→TS 迁移仍待完成。未做生产DDL/Env切换、部署、真实微信或 Workerd/Hyperdrive 环境验收；旧用户/UID/权益/订单/付款保持，未知不猜归属，跨 AppID 屏障和 runtime_ready=false 保留。新提交推送需具体 SHA 授权。
+
+## 第49轮后继：退款拒绝1451
+
+后继已接通[退款拒绝通知作者与Queue](routine-subscription-refusal-notice.md)：独立request3／staging3域绑定原申请和拒绝决定，真实Admin／Financial普通未拆单正例经A付款后切B，再由App解析原A owner及独立1451模板。发货format2、旧签名及历史事件保持原合同。Financial完整payload核对保留原版本，缺必需事件继续返回原回滚拒绝回执。
+
+第49轮最终图新原生16＋Financial71、单元264／既有2跳过及两套类型通过；本轮旧发货兼容87是在其后唯一helper错误类型修复前通过，未冒称最终字节重跑或重复计数。来源/签名/UNKNOWN与其他渠道隔离边界见后继文档；其他作者、拆单、成团及整体迁移继续待办。

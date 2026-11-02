@@ -17,6 +17,7 @@ import { prepareRoutineSubscriptionDeliveryNotice, prepareRoutineSubscriptionDel
 import { getRoutineSubscriptionAccessToken } from './RoutineSubscriptionAccessToken';
 import { postRoutineSubscription, assertRoutineSubscriptionProviderResult,
   type AcceptedRoutineSubscriptionResult } from './RoutineSubscriptionProvider';
+import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey } from './RoutineSubscriptionNoticeKinds';
 
 type Delivery = typeof orderNotificationDelivery.$inferSelect;
 export interface RoutineSubscriptionClaim { id: number; eventKey: string; leaseToken: string }
@@ -49,7 +50,7 @@ const time = (v: unknown): v is number => subscriptionInteger(v);
 function claim(value: RoutineSubscriptionClaim): Readonly<RoutineSubscriptionClaim> {
   const r = subscriptionObject(value, ['id', 'eventKey', 'leaseToken']);
   if (!subscriptionInteger(r.id) || typeof r.eventKey !== 'string' || r.eventKey.length > 128
-    || !/^order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?$/u.test(r.eventKey) || !subscriptionUuid(r.leaseToken))
+    || !routineSubscriptionNoticeKey(r.eventKey) || !subscriptionUuid(r.leaseToken))
     return routineSubscriptionUnavailable();
   return Object.freeze({ id: r.id, eventKey: r.eventKey, leaseToken: r.leaseToken });
 }
@@ -101,6 +102,8 @@ function parseAttempt(env: Env, raw: unknown, scope: RoutineSubscriptionScope, a
     || p.previousAttemptId !== '' && !subscriptionUuid(p.previousAttemptId) || !subscriptionUuid(c.leaseToken)
     || c.attemptCount !== r.attempt_no || !time(c.leaseUntil) || created >= c.leaseUntil
     || c.eventKey !== f.eventKey || r.delivery_id !== f.deliveryId || typeof c.eventKey !== 'string'
+    || !routineSubscriptionNoticeKey(c.eventKey) || typeof f.templateMark !== 'string'
+    || !(routineSubscriptionRefusalKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
     || r.source_key !== sourceKey(env, { id: r.delivery_id, eventKey: c.eventKey, leaseToken: c.leaseToken })
     || !subscriptionInteger(f.orderId) || !subscriptionInteger(f.rootId) || !subscriptionInteger(f.buyerUid)
     || !subscriptionHex(f.sourceDigest) || !subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest)

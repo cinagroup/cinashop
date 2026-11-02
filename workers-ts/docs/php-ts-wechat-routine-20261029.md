@@ -856,3 +856,17 @@ claim写入前以纯pg_catalog锚定真实App身份，不把完整目录反解�
 保留final-01 mock hook清理失败、author-03快照及源锁揭示问题、native-05延后安装漏传city peer而13未执行、compat-07 legacy SMS无payload兼容失败；分别修正后以上述同一最终图重验，不放宽安装器/准入、不累计中间通过。4主流程独立交叉读、另2源3测试由复核者编写主流程另读、余7窄diff，不称全16独立审计或重跑。本机.cache/php-ts-phase48-validation保留完整日志、冻结、失败和字节/扫描记录，文档在全部重验证终态后补。
 
 split/city、其他角色与容量未单独动态重证，退款拒绝/成团等作者、非微信单原账号发送、完整manifest/单次许可/原子切换及整体迁移仍未完成。未执行生产DDL/Env切换、部署、真实微信或Workerd/Hyperdrive环境验收；旧用户/UID/权益/订单/付款保持，未知不猜归属、跨AppID屏障及runtime_ready=false保留。此前授权仅覆盖已推送a400366b，本轮新提交仍需具体SHA推送授权。
+
+## 第49轮：原账号退款拒绝1451、Admin／Financial与真实Queue
+
+`b68619873f870c6d448d76973a7603befe6093b9`已按具体SHA授权推送并直接核对远端main。[其CI](https://github.com/cinagroup/cinashop/actions/runs/41437973088)末次快照10成功、两个Worker分片仍运行，不作全绿或本轮新提交证明。
+
+本轮完成[原账号退款拒绝订阅通知](routine-subscription-refusal-notice.md)：真实A付款及买家申请后切当前B／裸绑定B／全局模板B，正式Admin operation或实际Financial拒绝并留不可变业务回执。业务原事务只签独立request3，绑定五个原业务字段、实际作者LOGIN/OID、数据库/维护者scope与原申请15字段摘要及拒绝原因/时间；不读私有账本或选择接收人。App额外稳定实际refund/refund_payment，核对原SUCCESS付款、精确A+UIDowner、NativeApp排除和独立subscription_send的1451批准，写独立staging3后接既有Queue attempt/result。旧发货2及MAC域/摘要排列不改，旧pin/缺失/赢家不升级，无新DDL/grant。
+
+真实reapply新建refundId和当前hold，旧通知绑定原申请而不要求当前hold0或order.refundType3；1451仍用原整单金额和商品标题。Financial验证实际留存完整payload，避免重新捕获B pin；缺失业务事实为ValidateException并保留既有rollback-rejected，真实SQLfault继续传播。Mini源锁、缺owner/模板/材料或晚intent UPDATE失败在真实SAVEPOINT隔离，短信/站内信可先提交且重试不重渲染；POST仍需fresh来源和首durable attempt，UNKNOWN不重发。
+
+最终recheck-07新原生16＋Financial完整71共87通过，359.64秒；final-09单元264通过／2既有PG条件跳过及Worker两套类型通过，322.17秒。两批各8579输入运行中与补文档前一致，两PG remaining0/STOPPED，最终只计351次成功/2跳过；单层锁、单worker、命令600秒/整组1200秒及既有内存限值保持。新纯codec66项不作SQL批准证据；新业务普通未拆单Admin/Financial链为实际路由/服务LOGIN，HTTP/缓存/Queue和手机号连续性明确受控，不作真实微信或浏览器证明。
+
+保留final-01只读字段测试类型失败（构造副本修复，runtime当时未启动）；中间refusal-03的16和regression-04旧19/13/10/45共87通过；financial-05为70通过/1失败，暴露普通Error导致缺必需通知时回滚回执分类回退。仅改helper错误类型/import，不放宽catch、准入或断言，之后重跑受影响16＋71和单元/两类型。旧87兼容是修复前图，不计最终351或冒称同字节重跑。8核心独立交叉读、5窄接线、5由复核者编写主流程另读，不称18文件全独立审计或重跑。本机.cache/php-ts-phase49-validation保留日志、冻结、差异、失败及复核；文档后补，提交文件另扫秘密并核暂存/提交字节。
+
+其他角色入口、拆单/复杂后续退款、成团3098、非微信原账号通知、完整manifest/单次许可/原子切换及整体迁移仍未完成；成团只读地图不是实现。无生产DDL/Env切换、部署、真实微信或Workerd/Hyperdrive验收；旧用户/UID/权益/订单/付款、未知不猜归属、跨AppID屏障及runtime_ready=false保持。此前推送授权仅覆盖已推送b6861987，本轮新提交仍需具体SHA授权。

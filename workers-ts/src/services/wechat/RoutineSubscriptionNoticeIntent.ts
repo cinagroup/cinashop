@@ -4,11 +4,12 @@ import { freezeSubscription, parseRoutineSubscriptionAccountJournal, routineSubs
   subscriptionEqual, subscriptionHex, subscriptionInteger, subscriptionMac, subscriptionObject, subscriptionSame,
   type RoutineSubscriptionAccountJournal, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
 import type { RoutineSubscriptionDeliveryNoticeFacts, RoutineSubscriptionNoticeRequest } from './RoutineSubscriptionDeliveryNotice';
+import { routineSubscriptionDeliveryKey, routineSubscriptionRefusalKey } from './RoutineSubscriptionNoticeKinds';
 
 /** Authenticated staging projection, never evidence of a POST or fresh send
  * authority. The immutable accepted intent remains the dispatch attempt. */
 export interface RoutineSubscriptionNoticeIntent {
-  format: 2; scope: RoutineSubscriptionScope; actor: { role: string; roleOid: string };
+  format: 2 | 3; scope: RoutineSubscriptionScope; actor: { role: string; roleOid: string };
   deliveryId: number; outboxId: number; eventKey: string; createdAt: number; requestSignature: string;
   source: RoutineSubscriptionDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
   request: Readonly<RoutineSubscriptionNoticeRequest>; signature: string;
@@ -75,14 +76,16 @@ export function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, 
   const source = subscriptionObject(r.source, ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',
     'observationId', 'evidenceId', 'evidenceSignature', 'relatedDigest', 'approvedUseDigest', 'templateMark', 'sourceDigest']);
   const q = subscriptionObject(r.request, ['touser', 'template_id', 'page', 'data']);
-  if (r.format !== 2 || !subscriptionSame(capturedScope, expectedScope) || !roleName(actor.role) || !roleOid(actor.roleOid)
+  const refusal = r.format === 3;
+  if (r.format !== 2 && r.format !== 3 || !subscriptionSame(capturedScope, expectedScope) || !roleName(actor.role) || !roleOid(actor.roleOid)
     || !subscriptionInteger(r.deliveryId) || !subscriptionInteger(r.outboxId) || !subscriptionInteger(r.createdAt)
-    || !text(r.eventKey, 128) || !/^order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?$/u.test(r.eventKey)
+    || !(refusal ? routineSubscriptionRefusalKey(r.eventKey) : routineSubscriptionDeliveryKey(r.eventKey))
     || !subscriptionHex(r.requestSignature) || !subscriptionHex(r.signature) || r.deliveryId !== source.deliveryId || r.outboxId !== source.outboxId
     || r.eventKey !== source.eventKey || !subscriptionInteger(source.orderId) || !subscriptionInteger(source.rootId) || !subscriptionInteger(source.buyerUid)
     || !subscriptionInteger(source.bindingId) || !text(source.appId, 32) || !text(source.ownershipId, 128) || !text(source.observationId, 128)
     || !text(source.evidenceId, 128) || !subscriptionHex(source.evidenceSignature) || !subscriptionHex(source.relatedDigest)
-    || !subscriptionHex(source.approvedUseDigest) || !subscriptionHex(source.sourceDigest) || typeof source.templateMark !== 'string' || !['1458', '1128'].includes(source.templateMark)
+    || !subscriptionHex(source.approvedUseDigest) || !subscriptionHex(source.sourceDigest) || typeof source.templateMark !== 'string'
+    || !(refusal ? source.templateMark === '1451' : ['1458', '1128'].includes(source.templateMark))
     || !text(q.touser, 128) || !text(q.template_id, 100) || !text(q.page, 512) || !q.data || typeof q.data !== 'object' || Array.isArray(q.data)
     || Buffer.byteLength(JSON.stringify(r), 'utf8') > 65536) return routineSubscriptionUnavailable();
   const descriptors = Object.getOwnPropertyDescriptors(q.data), fields = Reflect.ownKeys(q.data);
@@ -97,6 +100,6 @@ export function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, 
     || r.createdAt < policy.payload.data.validFrom || r.createdAt >= policy.payload.data.validUntil
     || !policy.payload.data.templates.some(t => t.mark === source.templateMark && t.templateId === q.template_id)) return routineSubscriptionUnavailable();
   const { signature, ...body } = r;
-  if (!subscriptionEqual(signature, subscriptionMac(env, 'notice-stage', body))) return routineSubscriptionUnavailable();
+  if (!subscriptionEqual(signature, subscriptionMac(env, refusal ? 'refusal-notice-stage' : 'notice-stage', body))) return routineSubscriptionUnavailable();
   return freezeSubscription({ ...body, signature } as unknown as RoutineSubscriptionNoticeIntent);
 }

@@ -67,18 +67,14 @@ function capture(value:{eventKey:string;aggregateId:number;payload:NoticeBusines
  if(r.eventKey!==eventKey(body)||r.aggregateId!==body.orderId||!subscriptionInteger(r.now))return routineSubscriptionUnavailable();
  return Object.freeze({eventKey:r.eventKey as string,aggregateId:body.orderId,body,eventTime:r.now});
 }
-/** A candidate for a genuinely new business event, never ownership or send
- * authority. The caller alone retains an INSERT winner; existing/on-conflict
- * events keep their original version, absence, pin and signature. No private
- * payment/identity rows, GUC changes, gates or external I/O are used here. SQL
- * errors propagate so the caller can roll back its real optional savepoint. */
-export async function createRoutineSubscriptionNoticeRequestTx(tx:Query,env:Signing|undefined,
- raw:{eventKey:string;aggregateId:number;payload:NoticeBusiness;now:number}):Promise<RoutineSubscriptionNoticeRequestOutcome>{
- const captured=capture(raw),key=signing(env);
- const catalog=await inspectRoutineSubscriptionDeliveryCatalog(tx),binding=catalog.binding;
- if(!catalog.present)return Object.freeze({kind:'legacy' as const});
- if(!catalog.ready||!binding?.app||!binding.appOid||!key||Object.hasOwn(tx,'$client')
-  ||captured.body.userId===0||captured.body.deliveryType==='fictitious')return UNAVAILABLE;
+export interface RoutineSubscriptionNoticeWriterProvenance {
+ readonly scope:Readonly<RoutineSubscriptionScope>;readonly actor:Readonly<{role:string;roleOid:string}>;readonly createdAt:number;
+}
+/** Candidate writer provenance only. Callers must independently prove their
+ * commissioned catalog before passing its public owner binding. No private
+ * business ledger, new gate or transaction-setting change is used here. */
+export async function readRoutineSubscriptionNoticeWriterTx(tx:Query,binding:Readonly<{maintenance:string;maintenanceOid:string}>):Promise<Readonly<RoutineSubscriptionNoticeWriterProvenance>|null>{
+ if(Object.hasOwn(tx,'$client'))return null;
  const maintenance=binding.maintenance,maintenanceOid=binding.maintenanceOid;
  const [who]=await tx.execute<{database:string;databaseOid:string;role:string;roleOid:string;now:string;ready:boolean}>(sql`SELECT
   pg_catalog.current_database() AS database,
@@ -103,11 +99,27 @@ export async function createRoutineSubscriptionNoticeRequestTx(tx:Query,env:Sign
     AND pg_catalog.has_schema_privilege(r.oid,n.oid,'CREATE'))
   AND NOT pg_catalog.has_parameter_privilege(r.oid,'session_replication_role','SET,ALTER SYSTEM') AS ready
   FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`);
- if(who?.ready!==true||!name(who.role)||!oid(who.roleOid)||typeof who.now!=='string'||!/^\d+$/u.test(who.now))return UNAVAILABLE;
- const createdAt=Number(who.now);if(!subscriptionInteger(createdAt))return UNAVAILABLE;
+ if(who?.ready!==true||!name(who.role)||!oid(who.roleOid)||typeof who.now!=='string'||!/^\d+$/u.test(who.now))return null;
+ const createdAt=Number(who.now);if(!subscriptionInteger(createdAt))return null;
  let scope:Readonly<RoutineSubscriptionScope>;
- try{scope=scopeValue({database:who.database,databaseOid:who.databaseOid,maintenance,maintenanceOid});}catch{return UNAVAILABLE;}
- const body={format:2 as const,requestId:randomUUID(),scope,actor:Object.freeze({role:who.role,roleOid:who.roleOid}),
+ try{scope=scopeValue({database:who.database,databaseOid:who.databaseOid,maintenance,maintenanceOid});}catch{return null;}
+ return Object.freeze({scope,actor:Object.freeze({role:who.role,roleOid:who.roleOid}),createdAt});
+}
+/** A candidate for a genuinely new business event, never ownership or send
+ * authority. The caller alone retains an INSERT winner; existing/on-conflict
+ * events keep their original version, absence, pin and signature. No private
+ * payment/identity rows, GUC changes, gates or external I/O are used here. SQL
+ * errors propagate so the caller can roll back its real optional savepoint. */
+export async function createRoutineSubscriptionNoticeRequestTx(tx:Query,env:Signing|undefined,
+ raw:{eventKey:string;aggregateId:number;payload:NoticeBusiness;now:number}):Promise<RoutineSubscriptionNoticeRequestOutcome>{
+ const captured=capture(raw),key=signing(env);
+ const catalog=await inspectRoutineSubscriptionDeliveryCatalog(tx),binding=catalog.binding;
+ if(!catalog.present)return Object.freeze({kind:'legacy' as const});
+ if(!catalog.ready||!binding?.app||!binding.appOid||!key||Object.hasOwn(tx,'$client')
+  ||captured.body.userId===0||captured.body.deliveryType==='fictitious')return UNAVAILABLE;
+ const writer=await readRoutineSubscriptionNoticeWriterTx(tx,binding);if(!writer)return UNAVAILABLE;
+ const {scope,actor,createdAt}=writer;
+ const body={format:2 as const,requestId:randomUUID(),scope,actor,
   eventKey:captured.eventKey,aggregateId:captured.aggregateId,eventTime:captured.eventTime,body:captured.body,createdAt};
  return Object.freeze({kind:'original' as const,request:freezeSubscription({...body,signature:subscriptionMac(key,'notice-request',body)})});
 }

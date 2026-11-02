@@ -6,6 +6,7 @@
  */
 import { sql } from "drizzle-orm";
 import type { RoutineSubscriptionNoticeRequest, RoutineSubscriptionNoticeUnavailable } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
+import type { RoutineSubscriptionRefusalRequest, RoutineSubscriptionRefusalUnavailable } from '@/services/wechat/RoutineSubscriptionRefusalRequest';
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductSaveEffectsPayload } from '@/services/product/ProductSaveEffects';
@@ -51,6 +52,7 @@ export interface OrderDeliveryNoticeOutboxPayload {
 }
 
 export interface OrderRefundRefusedNoticeOutboxPayload {
+  routineSubscriptionRequest?: RoutineSubscriptionRefusalRequest | RoutineSubscriptionRefusalUnavailable;
   routineAppId?: string;
   orderId: number;
   orderNo: string;

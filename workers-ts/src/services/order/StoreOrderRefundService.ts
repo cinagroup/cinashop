@@ -2217,7 +2217,7 @@ export class StoreOrderRefundService {
         refundId,
         userId: order.uid,
         payPrice: order.payPrice,
-      }, now);
+      }, now, this.env);
       await scope?.recordLockedDecision?.(tx, 'refused');
     });
   }

@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionNoticeIntent } from '@/services/wechat/RoutineSubscriptionNoticeIntent';
 import { routineSubscriptionAccountId, subscriptionMac } from '@/services/wechat/RoutineSubscriptionAccount';
+import { routineSubscriptionDeliveryKey, routineSubscriptionRefusalKey, routineSubscriptionNoticeKey,
+  routineSubscriptionNoticePrefix } from '@/services/wechat/RoutineSubscriptionNoticeKinds';
 
 const env = { APP_KEY: 'inert-notice-intent-codec-key' }, now = 1793602800;
 const scope = { database: 'notice_intent_fixture', databaseOid: '102', maintenance: 'notice_owner', maintenanceOid: '103' };
@@ -30,6 +32,24 @@ function fixture(): RoutineSubscriptionNoticeIntent {
 }
 function resign(raw: RoutineSubscriptionNoticeIntent): RoutineSubscriptionNoticeIntent {
   const { signature: _signature, ...body } = raw; return { ...body, signature: subscriptionMac(env, 'notice-stage', body) };
+}
+function refusalFixture(): RoutineSubscriptionNoticeIntent {
+  const original = fixture(), { signature: _originalSignature, ...base } = original,
+    { signature: _policySignature, ...policy } = original.policy;
+  const unsignedPolicy = { ...policy, payload: { ...policy.payload, data: { ...policy.payload.data,
+    templates: [{ mark: '1451', templateId: 'notice_refusal_a' }] } } };
+  const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { ...base, format: 3,
+    eventKey: 'order.refund.refused.notice:71', source: { ...original.source,
+      eventKey: 'order.refund.refused.notice:71', templateMark: '1451' },
+    policy: { ...unsignedPolicy, signature: subscriptionMac(env, 'account-policy', unsignedPolicy) },
+    request: { touser: original.request.touser, template_id: 'notice_refusal_a',
+      page: '/pages/goods/order_after_details/index?order_id=order17&isReturen=1',
+      data: { thing1: { value: '退款失败' }, thing2: { value: '中文 😀 商品' },
+        amount3: { value: '5.00' }, character_string6: { value: 'order17' } } } };
+  return { ...body, signature: subscriptionMac(env, 'refusal-notice-stage', body) };
+}
+function signWith(raw: RoutineSubscriptionNoticeIntent, domain: string): RoutineSubscriptionNoticeIntent {
+  const { signature: _signature, ...body } = raw; return { ...body, signature: subscriptionMac(env, domain, body) };
 }
 
 describe('bounded descriptor-only subscription staging intent codec', () => {
@@ -118,5 +138,72 @@ describe('bounded descriptor-only subscription staging intent codec', () => {
     const { signature: _signature, ...body } = raw;
     expect(() => parseRoutineSubscriptionNoticeIntent(env, { ...body, signature: subscriptionMac(env, 'shipping-stage', body) }, scope)).toThrow(message);
     expect(() => parseRoutineSubscriptionNoticeIntent({ APP_KEY: 'wrong-codec-key' }, raw, scope)).toThrow(message);
+  });
+
+  it('authenticates only a format3/refund/1451 intent with its independent refusal MAC and frozen snapshot', () => {
+    const raw = refusalFixture(), parsed = parseRoutineSubscriptionNoticeIntent(env, clone(raw), scope);
+    expect(parsed).toEqual(raw); expect(parsed).toMatchObject({ format: 3, eventKey: 'order.refund.refused.notice:71',
+      source: { orderId: 17, templateMark: '1451' }, request: { template_id: 'notice_refusal_a' } });
+    for (const object of [parsed, parsed.scope, parsed.source, parsed.policy, parsed.request, parsed.request.data.thing1]) expect(Object.isFrozen(object)).toBe(true);
+    raw.request.data.thing1.value = 'changed later'; expect(parsed.request.data.thing1.value).toBe('退款失败');
+    const { signature: _signature, ...body } = parsed;
+    expect(parsed.signature).toBe(subscriptionMac(env, 'refusal-notice-stage', body));
+    expect(parsed.signature).not.toBe(subscriptionMac(env, 'notice-stage', body));
+    // Existing delivery format2 and the old MAC remain independently accepted.
+    const old = fixture(); expect(parseRoutineSubscriptionNoticeIntent(env, clone(old), scope)).toEqual(old);
+  });
+
+  it.each(['refusal-old-domain', 'delivery-refusal-domain', 'refusal-format2', 'delivery-format3',
+    'refusal-delivery-prefix', 'delivery-refusal-prefix', 'refusal-delivery-mark', 'delivery-refusal-mark',
+    'refusal-pink-prefix', 'refusal-source-key-mismatch'])('rejects cross-version/prefix/mark/domain substitution %s', kind => {
+    let raw = kind.startsWith('delivery-') ? fixture() : refusalFixture();
+    if (kind === 'refusal-old-domain') raw = signWith(raw, 'notice-stage');
+    else if (kind === 'delivery-refusal-domain') raw = signWith(raw, 'refusal-notice-stage');
+    else {
+      if (kind === 'refusal-format2') raw.format = 2;
+      if (kind === 'delivery-format3') raw.format = 3;
+      if (kind === 'refusal-delivery-prefix') raw = { ...raw, eventKey: 'order.delivery.notice:17', source: { ...raw.source, eventKey: 'order.delivery.notice:17' } };
+      if (kind === 'delivery-refusal-prefix') raw = { ...raw, eventKey: 'order.refund.refused.notice:71', source: { ...raw.source, eventKey: 'order.refund.refused.notice:71' } };
+      if (kind === 'refusal-delivery-mark') raw = { ...raw, source: { ...raw.source, templateMark: '1458' } };
+      if (kind === 'delivery-refusal-mark') raw = { ...raw, source: { ...raw.source, templateMark: '1451' } };
+      if (kind === 'refusal-pink-prefix') raw = { ...raw, eventKey: 'order.pink.success.notice:71', source: { ...raw.source, eventKey: 'order.pink.success.notice:71' } };
+      if (kind === 'refusal-source-key-mismatch') raw = { ...raw, source: { ...raw.source, eventKey: 'order.refund.refused.notice:72' } };
+      raw = signWith(raw, raw.format === 3 ? 'refusal-notice-stage' : 'notice-stage');
+    }
+    expect(() => parseRoutineSubscriptionNoticeIntent(env, raw, scope)).toThrow(message);
+  });
+
+  it('requires the exact A1451 template approval inside an otherwise MAC-valid refusal intent', () => {
+    for (const templates of [[{ mark: '1458', templateId: 'notice_refusal_a' }], [{ mark: '1451', templateId: 'different_refusal_template' }]]) {
+      const raw = refusalFixture(), { signature: _signature, ...body } = raw.policy;
+      const unsigned = { ...body, payload: { ...body.payload, data: { ...body.payload.data, templates } } };
+      raw.policy = { ...unsigned, signature: subscriptionMac(env, 'account-policy', unsigned) };
+      expect(() => parseRoutineSubscriptionNoticeIntent(env, signWith(raw, 'refusal-notice-stage'), scope)).toThrow(message);
+    }
+  });
+
+  it.each(['order.delivery.notice:1', 'order.delivery.notice:2147483647', 'order.delivery.notice:17:city:71',
+    'order.refund.refused.notice:1', 'order.refund.refused.notice:71'])('routes an exact syntactic notice key %s into only its own kind', key => {
+    const refusal = key.startsWith('order.refund.');
+    expect(routineSubscriptionNoticePrefix(key)).toBe(true); expect(routineSubscriptionNoticeKey(key)).toBe(true);
+    expect(routineSubscriptionRefusalKey(key)).toBe(refusal); expect(routineSubscriptionDeliveryKey(key)).toBe(!refusal);
+  });
+
+  it.each(['order.delivery.notice:', 'order.delivery.notice:0', 'order.delivery.notice:01', 'order.delivery.notice:-1',
+    'order.delivery.notice:1:city:0', 'order.delivery.notice:1:city:2:extra', 'order.delivery.notice:1/extra',
+    'order.refund.refused.notice:', 'order.refund.refused.notice:0', 'order.refund.refused.notice:01',
+    'order.refund.refused.notice:1.0', 'order.refund.refused.notice:71:city:2', 'order.refund.refused.notice:NaN',
+    'order.refund.refused.notice:' + '1'.repeat(129)])('keeps malformed %s on broad protocol routing while denying exact admission', key => {
+    expect(routineSubscriptionNoticePrefix(key)).toBe(true); expect(routineSubscriptionNoticeKey(key)).toBe(false);
+    expect(routineSubscriptionDeliveryKey(key)).toBe(false); expect(routineSubscriptionRefusalKey(key)).toBe(false);
+  });
+
+  it('keeps unrelated event families and non-string exact-key values outside the protocol', () => {
+    for (const key of ['order.pink.success.notice:71', 'order.refund.approved.notice:71', 'order.delivery.notice', 'xorder.delivery.notice:1', '']) {
+      expect(routineSubscriptionNoticePrefix(key)).toBe(false); expect(routineSubscriptionNoticeKey(key)).toBe(false);
+    }
+    for (const key of [null, undefined, 71, {}, [], true]) {
+      expect(routineSubscriptionNoticeKey(key)).toBe(false); expect(routineSubscriptionDeliveryKey(key)).toBe(false); expect(routineSubscriptionRefusalKey(key)).toBe(false);
+    }
   });
 });
