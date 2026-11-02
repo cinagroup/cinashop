@@ -810,3 +810,17 @@ PC/Kefu原审计与旧历史绑定、完整归属manifest/单次许可/原子切
 native-02 新原生 9+15 共24项通过，265.31秒；compat-04 既有身份7 / 发货8 / 通知来源45共60项通过，333.41秒；final-03 单元139通过 / 2个既有PG条件跳过，Worker unit / runtime 类型检查通过，314.55秒。139已包含3个 mocked-admission 超时资源单测，不能重复计数或当作PG批准证明。三个完整批次各8554输入运行中及补文档前一致，五个成功原生阶段均remaining0 / STOPPED。native-01的7通过 / 2错误fixture peer期望失败保留；只修测试期望后完整重跑，首轮账号阶段未执行。原日志 / 冻结摘要在本地.cache/php-ts-phase45-validation；独立只读复核不冒称重跑或安全审计，文档后补，提交文件另做秘密扫描。
 
 本轮为自有PG16 / 实际独立TCP LOGIN与生产服务代码，provider / Redis为受控本地传输；没有生产DDL、部署、真实微信、Browser或Workerd / Hyperdrive。旧单原SUCCESS付款来源、精确AppID+UID接收人归属、模板批准与首次attempt / result尚待组合，历史策略不能作发送证据，UNKNOWN不能换键重发。完整维护manifest / 单次许可 / 原子切换和整体迁移继续未完成；保留用户 / UID / 权益 / 旧单 / 付款，未知不猜归属、跨AppID屏障与runtime_ready=false保持。此前推送授权只覆盖ab90，本轮新提交需具体SHA授权。
+
+## 第46轮：既有 A 发货通知的原付款、接收人与模板组合
+
+`af314e5ba8f671c768eac4d03e67fa48f1923377` 已按精确授权推送并直接核对远端 main。[该 SHA CI](https://github.com/cinagroup/cinashop/actions/runs/41409626276) 的 PC / Kefu 审计与构建、Uni core 11分07秒 / authors 5分10秒 / 唯一聚合3秒均成功；最后取得 jobs 快照时 Worker 两分片仍在执行，不能称全 CI 绿色，亦不替代本轮新提交 CI。
+
+本轮完成[发货通知来源准入](routine-subscription-delivery-source.md)：固定商品付款根的完整 Routine 原证 / 历史付款 use 读取与同事务 WeakMap proof，独立 subscription 摘要域，不依赖 shipping 批准或当前 merchant / Mini 配置。真实 App 短事务按七个低序维护 gate 先取共享 try-only fence，再稳定商品 / cart / 充值 / 会员 / outbox / delivery 来源，核对根 family、跨域同号 / transaction、原发货事件与数据。NativeApp 使用独立真实 App SQL 连接、数据库 / OID / PID / 持锁 challenge 和完整缺失反证；不借用 Financial 或发货身份。
+
+只按原 AppID + 买家 UID 的完整归属 / witness / 活用户 / 精确 binding 选择接收人，与该账号独立批准的1458 / 1128模板核对。只接受本来已记录 A 的 event / delivery 及原 target / template / render，不重解释 B pin 或补历史缺失。复用原纯 renderer，新读取限200行 / 1MiB且纳入cart解析 / SHARE NOWAIT fence；legacy staging输出不变。返回冻结 facts / request 与 sourceDigest，每次重验重新读取完整事实；读取能力与 token 字符串都不是 POST / 历史发送证明。
+
+native-03 新普通快递10项通过，153.48秒；真实Admin HTTP checkout / delivery、独立批准原账号RSA/AES付款回调、App paid / notice outbox、实际code2Session归属作者与A token GET组合，payer≠owner、当前B / 空配置、最新裸B和无归属UID22均核对。错误principal / pin / 目标 / 模板 / 原渲染、UNKNOWN、金额 / 同号变化、模板替换 / 撤销、真实验签Routine / APP冲突和实际锁占用均拒绝。native-02真实beforeAll因cache mock漏Admin读取导出失败，134.90秒、10项跳过，PG清理完整；仅补importOriginal保留真实导出后完整重跑，不放宽生产鉴权。手机号连续性与用户 / 地址 / 裸绑定明确bootstrap，不冒称真实SMS / 登录表单 / Redis鉴权。
+
+compat-04 既有发货8 / 通知45 / 订阅15共68项通过，268.40秒；final-05单元139通过 / 2个既有PG条件跳过、Worker两套类型检查通过，316.31秒。三批各8559输入运行期间及补文档前一致，四个成功原生阶段均remaining0 / STOPPED；只计最终217次成功 / 2跳过，不把final-01或旧deadline单测重复加数。交叉只读复核、原日志 / 冻结摘要 / 失败记录在本机.cache/php-ts-phase46-validation；没有独立重跑或安全审计声明，文档后补，提交文件另做秘密扫描。
+
+仅ordinary express动态正例已运行，split / send / city与64 / 200容量未单独证明；退款拒绝 / 成团 / 非微信单及旧缺来源意图不由本reader处理。新来源未接入现有通知作者或Queue / provider POST，没有immutable attempt / result；未来必须同事务fresh来源+首attempt、SQL外POST与不可变结果恢复，UNKNOWN不能换键重发。无新增生产DDL / grant、部署、真实微信、Browser或Workerd / Hyperdrive环境验收；完整维护manifest / 单次许可 / 原子切换及整体迁移继续未完成，用户 / UID / 权益 / 旧单 / 付款、未知不猜归属、跨AppID屏障与runtime_ready=false保持。新提交推送需具体SHA授权。

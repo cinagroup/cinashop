@@ -57,3 +57,9 @@ native-01 首次执行为 7 通过 / 2 失败，后续账号阶段未执行。�
 未来 dispatch 必须在首次 attempt 前同时取得可信订单来源、目标归属及本批准，并在 token 后 / POST 前重新检查 fresh 条件；实际发送需要独立不可变 attempt / result。可能已发出的 UNKNOWN 不得换键重复发送，历史策略行本身不能恢复发送结论。非微信单、拆单和缺历史来源必须按明确合同处理，不能猜测。
 
 没有改动 Outbox / DeliveryService / WechatNotificationProvider 的消费者，没有通知 POST、Admin 发送入口、完整维护 manifest、单次切换许可或原子 AppID 切换。保留用户 / UID / 权益 / 旧单 / 付款，未知不猜归属；跨 AppID 屏障与 runtime_ready=false 保持。无生产 DDL、部署、Browser、Workerd / Hyperdrive 或真实提供方验收；整体 PHP→TS 迁移尚未完成。
+
+## 第46轮来源组合后继
+
+[发货通知来源合同](routine-subscription-delivery-source.md)新增既有 A 意图的原 Routine SUCCESS / NativeApp 反证 / 精确 A + UID owner / 批准模板组合与 fresh 重验。普通快递真实 Admin checkout / 付款 / 发货、App outbox 与 code2Session 归属作者已动态组合；没有把当前 B、最新裸绑定、payer 或无 AppID 模板当作历史归属。
+
+仅处理本来就有 A event / delivery pin 且原 target / template / render 一致的 prospective 记录，不改写 B 或缺失 pin。新 reader 未接入现有通知作者、Queue / provider POST，也不生成 immutable attempt / result；历史策略与一次读取均不构成发送证据。原 staging 只共享同一纯 data renderer，行为保持。新10项、既有68项原生及最终139单元 / 2既有PG条件跳过、Worker两套类型检查通过，具体字节、失败记录与未执行分支见后继合同。

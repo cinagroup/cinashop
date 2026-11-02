@@ -732,6 +732,27 @@ function routineDeliveryName(value: string): string {
   return truncated.replace(/[0-9]/g, "");
 }
 
+function routineDeliveryNotificationData(storeName: string, delivery: OrderDeliveryNoticeOutboxPayload, now: number): Record<string, string> {
+  return delivery.deliveryType === 'express'
+    ? { character_string2: delivery.deliveryId, thing1: utf8Prefix(delivery.deliveryName, 20),
+        time3: chinaDateTime(now), thing5: storeName }
+    : { thing8: storeName, character_string1: delivery.orderNo,
+        name4: routineDeliveryName(delivery.deliveryName), phone_number10: delivery.deliveryId };
+}
+
+/** Same product renderer as staging, using a captured original rendering time.
+ * It supplies no target/account/template permission and performs no provider I/O. */
+export async function readRoutineDeliveryNotificationDataTx(tx: DbClient, payload: OrderDeliveryNoticeOutboxPayload, at: number): Promise<Record<string, string>> {
+  if (!Number.isSafeInteger(at) || at <= 0 || at > 2147483647) throw Error('通知渲染时间无效');
+  const rows = await tx.select({ cartInfo: storeOrderCartInfo.cartInfo, uid: storeOrderCartInfo.uid, cartNum: storeOrderCartInfo.cartNum })
+    .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, payload.orderId)).orderBy(asc(storeOrderCartInfo.id)).limit(201).for('share', { noWait: true });
+  if (!rows.length || rows.length > 200 || new TextEncoder().encode(JSON.stringify(rows)).byteLength > 1048576
+    || rows.some(row => row.uid !== payload.userId || !Number.isSafeInteger(row.cartNum) || row.cartNum <= 0))
+    throw Error('通知商品渲染来源超限或不匹配');
+  const storeName = utf8Prefix(rows.map(row => productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join('|'), 20);
+  return routineDeliveryNotificationData(storeName, payload, at);
+}
+
 export async function configuredTemplate(
   tx: DbClient,
   mark: string,
@@ -959,19 +980,7 @@ async function stageExternalNotifications(
           amount3: context.order.payPrice,
           character_string6: payload.orderNo,
         }
-      : delivery?.deliveryType === "express"
-        ? {
-            character_string2: delivery.deliveryId,
-            thing1: utf8Prefix(delivery.deliveryName, 20),
-            time3: chinaDateTime(now),
-            thing5: context.storeName,
-          }
-        : {
-            thing8: context.storeName,
-            character_string1: payload.orderNo,
-            name4: routineDeliveryName(delivery?.deliveryName ?? ""),
-            phone_number10: delivery?.deliveryId ?? "",
-          };
+      : routineDeliveryNotificationData(context.storeName, delivery!, now);
     await createImmutableDelivery(tx, {
       event, payload, mark, channel: "wechat_routine", target: context.routineOpenid,
       templateCode,

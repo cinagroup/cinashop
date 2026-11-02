@@ -7,6 +7,7 @@ import { inspectRoutinePaymentAccountPolicyCatalog, assertRoutinePaymentAccountP
   assertRoutinePaymentAccountPolicyReadInTx, ROUTINE_PAYMENT_ACCOUNT_POLICY_GATE } from '@/migrations/routinePaymentAccountPolicy';
 import { assertRoutineRefundReadInTx,assertRoutineRefundStatusReadTx, inspectRoutineRefundCatalog } from '@/migrations/routineRefund';
 import { assertRoutineShippingReadTx, inspectRoutineShippingCatalog } from '@/migrations/routineShipping';
+import { assertRoutineSubscriptionReadTx, inspectRoutineSubscriptionCatalog } from '@/migrations/routineSubscription';
 import { inspectRoutineOriginalPaymentEvidenceCatalog } from '@/migrations/routineOriginalPaymentEvidence';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
@@ -363,16 +364,27 @@ export async function readRoutineApprovedUsesForShippingTx(tx:DbClient,env:Signi
  original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[]) {
  return readRoutineApprovedConsumerUsesTx(tx,env,original,'shipping',false);
 }
+/** App-only subscription source provenance. Historical payment query/notify
+ * approval explains an original SUCCESS; it grants no subscription_send,
+ * template, receiver, token or provider authority. No fresh lock is acquired. */
+export async function readRoutineApprovedUsesForSubscriptionTx(tx:DbClient,env:Signing,
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[]) {
+ return readRoutineApprovedConsumerUsesTx(tx,env,original,'subscription',false);
+}
 async function readRoutineApprovedConsumerUsesTx(tx:DbClient,env:Signing,
- original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],consumer:'refund'|'shipping',statusRead:boolean) {
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],consumer:'refund'|'shipping'|'subscription',statusRead:boolean) {
  env={APP_KEY:env.APP_KEY};
  const originals=(Array.isArray(original)?original:[original]).map(row=>parseRoutineOriginalEvidence(env,row));
  if(!originals.length||originals.length>64||new Set(originals.map(row=>row.evidence_id)).size!==originals.length)return fail();
- if(!await(consumer==='shipping'?assertRoutineShippingReadTx(tx):statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
- const refund=await(consumer==='shipping'?inspectRoutineShippingCatalog(tx):inspectRoutineRefundCatalog(tx)),binding=refund.binding;
+ if(!await(consumer==='shipping'?assertRoutineShippingReadTx(tx):consumer==='subscription'?assertRoutineSubscriptionReadTx(tx)
+  :statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
+ const consumerCatalog=await(consumer==='shipping'?inspectRoutineShippingCatalog(tx):consumer==='subscription'
+  ?inspectRoutineSubscriptionCatalog(tx):inspectRoutineRefundCatalog(tx)),binding=consumerCatalog.binding;
  const catalog=await inspectRoutinePaymentAccountPolicyCatalog(tx),source=await inspectRoutineOriginalPaymentEvidenceCatalog(tx);
- if(!refund.ready||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
+ if(!consumerCatalog.ready||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
   ||source.binding?.maintenanceOid!==binding.maintenanceOid||catalog.binding?.appOid!==binding.appOid||source.binding?.appOid!==binding.appOid)return fail();
+ if(consumer==='subscription'&&(!binding.appOid||catalog.binding?.maintenance!==binding.maintenance
+  ||source.binding?.maintenance!==binding.maintenance||catalog.binding?.app!==binding.app||source.binding?.app!==binding.app))return fail();
  const [resolution]=await tx.execute<{ready:boolean}>(sql`SELECT
   pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
   AND pg_catalog.to_regclass('routine_payment_account_policy')=pg_catalog.to_regclass('public.routine_payment_account_policy')
@@ -394,7 +406,8 @@ async function readRoutineApprovedConsumerUsesTx(tx:DbClient,env:Signing,
   }
   decoded.push(u);
  }
- return freeze({uses:decoded,digest:routineEvidenceHmac(env,consumer==='shipping'?'shipping-approved-use-set':'refund-approved-use-set',decoded)});
+ return freeze({uses:decoded,digest:routineEvidenceHmac(env,consumer==='shipping'?'shipping-approved-use-set'
+  :consumer==='subscription'?'subscription-approved-use-set':'refund-approved-use-set',decoded)});
 }
 
 /** Explicit owner-only maintenance API. No HTTP route, config adoption, role
