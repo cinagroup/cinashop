@@ -6,19 +6,23 @@ import { withFinancePeers, waitForFinanceBlock, waitForFinanceClock, outcome, ty
 import { createContainerFromDb, type Container, type DbClient } from '../src/lib/di';
 import type { OrderMessage } from '../src/env';
 import { StoreOrderCreateService } from '../src/services/order/StoreOrderCreateService';
-import { applyStoreOrderBalancePayment, applyStoreOrderPayment } from '../src/services/order/StoreOrderPayService';
+import { applyStoreOrderBalancePayment, applyProviderStoreOrderPayment } from '../src/services/order/StoreOrderPayService';
 import { applyOrderRefund, ensureAutomaticOrderRefund, finalizeStoreOrderRefund } from '../src/services/order/StoreOrderRefundService';
 import { PinkTimeoutService } from '../src/services/activity/PinkTimeoutService';
 import { ScheduledMaintenanceService, createScheduledRunMessages } from '../src/services/order/ScheduledMaintenanceService';
 import { WechatPayService } from '../src/services/wechat/WechatPayService';
+import { ROUTINE_PAYMENT_ATTEMPT_SQL, inspectRoutinePaymentAttempt } from '../src/migrations/routinePaymentAttempt';
 import { storeCombination, storePink, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderRefundPayment,
   storeOrderInvoice, storeOrderOutbox, storeOrderStatus, storeCart, storeProduct, storeProductAttrValue,
-  user, userBrokerage, printDocument, systemStore } from '../src/models/schema';
+  user, userBrokerage, printDocument, systemStore, paymentReconciliationCase, paymentReconciliationAction } from '../src/models/schema';
 
-// Actual order creation, balance ledger, paid activation, timeout and refund SQL.
-// The finite model-column fixture installs the real outbox CHECK and uniqueness.
-// Only explicit WeChat transport results are substituted; there is no provider,
-// host binding, runtime grant fallback, mocked transaction or fabricated paid row.
+// Actual order creation, local admission/balance ledger, downstream provider
+// settlement, paid activation, timeout and refund SQL. The finite model-column
+// fixture installs the real payment protocol and outbox CHECK/uniqueness.
+// Explicit server-only settlement inputs assume already-verified ingress; this
+// suite does not prove callback signatures, original accounts or runtime LOGINs.
+// Only legacy WeChat refund transport results are substituted. There is no host
+// binding, runtime grant fallback, mocked transaction or fabricated paid row.
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink completion and late charged payment on PG16', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   let leaderOrder: typeof storeOrder.$inferSelect;
@@ -48,7 +52,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('External network prohibited in isolated fixture'));
     try {
     f = await createPcCheckoutQuoteFixture([storeCombination, storePink, storeOrderCartInfo, storeOrderRefund,
-      storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, storeOrderStatus, userBrokerage, printDocument]);
+      storeOrderRefundPayment, storeOrderInvoice, storeOrderOutbox, storeOrderStatus, userBrokerage, printDocument,
+      paymentReconciliationCase, paymentReconciliationAction]);
+    // This suite pays real local orders, beyond the shared quote-only fixture.
+    // Install the unchanged payment protocol in this owned PG16 database; its
+    // exact catalog assertion still runs before every balance debit.
+    await f.exec(ROUTINE_PAYMENT_ATTEMPT_SQL);
+    expect(await inspectRoutinePaymentAttempt(f.db)).toBe(true);
     const dialect = new PgDialect();
     for (const check of getTableConfig(storeOrderOutbox).checks) {
       await f.exec(`ALTER TABLE store_order_outbox ADD CONSTRAINT "${check.name}" CHECK (${dialect.sqlToQuery(check.value).sql})`);
@@ -242,12 +252,12 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
       await expect(applyStoreOrderBalancePayment(f.container, { uid: 33, orderId: pending.orderId })).rejects.toThrow('拼团活动已结束或配置无效');
       expect({ financial: await financial(), pinks: await pinks(), notices: await notices(), outbox: await f.db.select().from(storeOrderOutbox) }).toEqual(before);
       const input = { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-already-charged' };
-      expect(await applyStoreOrderPayment(f.container, input)).toMatchObject({ outcome: 'paid' });
+      expect(await applyProviderStoreOrderPayment(f.container, input)).toMatchObject({ outcome: 'paid' });
       const paid = await readOrder(pending.id);
       expect(paid).toMatchObject({ paid: 1, tradeNo: input.tradeNo, payType: 'weixin' });
       expect(paid.pinkId).not.toBe(leaderOrder.pinkId);
       expect((await pinks()).find(row => row.id === paid.pinkId)).toMatchObject({ status: 3, uid: 33, isVirtual: 0 });
-      expect(await applyStoreOrderPayment(f.container, input)).toMatchObject({ outcome: 'already-paid' });
+      expect(await applyProviderStoreOrderPayment(f.container, input)).toMatchObject({ outcome: 'already-paid' });
       expect(await notices()).toHaveLength(0);
       const messages: unknown[] = [];
       f.env.ORDER_QUEUE = { send: vi.fn(async (message: OrderMessage) => { messages.push(message); return { metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } } }; }),
@@ -305,7 +315,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
       await waitForFinanceBlock(f.db, maintainer.pid, blocker.pid);
       const container = createContainerFromDb(payer.db);
       const paying = outcome(mode === 'external'
-        ? applyStoreOrderPayment(container, { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-late-group' })
+        ? applyProviderStoreOrderPayment(container, { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-late-group' })
         : applyStoreOrderBalancePayment(container, { uid: 33, orderId: pending.orderId }));
       await waitForFinanceBlock(f.db, payer.pid, maintainer.pid);
       await blocker.exec('COMMIT');
@@ -359,11 +369,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
     });
     expect(await notices()).toHaveLength(0);
   }, 20_000);
-  it('rechecks a close after the provider waits for KEY SHARE and commits paid evidence into a failed group', async () => {
+  it('rechecks a close after server settlement waits for KEY SHARE and commits paid state into a failed group', async () => {
     const pending = await create(33, 3, leaderOrder.pinkId);
     await withFinancePeers(f.db, async ([closer, payer]) => {
       await closer.exec('BEGIN; SELECT id FROM store_combination WHERE id=30 FOR UPDATE; UPDATE store_combination SET status=0 WHERE id=30');
-      const paying = outcome(applyStoreOrderPayment(createContainerFromDb(payer.db), { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-close-race' }));
+      const paying = outcome(applyProviderStoreOrderPayment(createContainerFromDb(payer.db), { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-close-race' }));
       await waitForFinanceBlock(f.db, payer.pid, closer.pid);
       await closer.exec('COMMIT');
       expect(await paying).toMatchObject({ ok: true, value: { outcome: 'paid' } });
@@ -373,13 +383,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('virtual pink com
     expect((await pinks()).find(row => row.id === paid.pinkId)).toMatchObject({ status: 3 });
     expect(await notices()).toHaveLength(0);
   }, 20_000);
-  it('uses post-lock millisecond clock if the activity ends while the charged callback is waiting', async () => {
+  it('uses post-lock millisecond clock if the activity ends while server settlement is waiting', async () => {
     const pending = await create(33, 3, leaderOrder.pinkId);
     const deadline = Date.now() + 800;
     await f.db.update(storeCombination).set({ stopTime: new Date(deadline) });
     await withFinancePeers(f.db, async ([blocker, payer]) => {
       await blocker.exec('BEGIN; SELECT id FROM store_combination WHERE id=30 FOR UPDATE');
-      const paying = outcome(applyStoreOrderPayment(createContainerFromDb(payer.db), { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-expiry-race' }));
+      const paying = outcome(applyProviderStoreOrderPayment(createContainerFromDb(payer.db), { orderId: pending.id, payType: 'weixin', tradeNo: 'isolated-expiry-race' }));
       await waitForFinanceBlock(f.db, payer.pid, blocker.pid);
       await waitForFinanceClock(f.db, deadline);
       await blocker.exec('COMMIT');

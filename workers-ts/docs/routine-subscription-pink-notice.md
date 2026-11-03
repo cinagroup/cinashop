@@ -53,3 +53,26 @@ Queue复用[既有不可变attempt/result与一次性POST能力](routine-subscri
 父提交[d837的CI](https://github.com/cinagroup/cinashop/actions/runs/41456540520)已取得终态failure：10个其他job成功，两个Worker分片和聚合失败；包含大量旧源码绑定／缺失PHP来源断言、固定原付款角色冲突及原生诊断失败，不能概称全部无关或仅预算问题。本轮只定向核验上述错误文案修复，不宣称全CI通过；新SHA尚未推送，远端CI未验证。
 
 其他通知事件／角色与非微信原账号发送、复杂拆单退款、完整维护manifest／单次许可／原子AppID切换和整体PHP→TS迁移继续待办。保留用户／UID／权益／旧单／付款，未知归属不猜、跨AppID归属屏障及runtime_ready=false。没有生产DDL／Env切换、部署或真实微信发送；新提交推送仍需具体SHA授权。
+
+
+## 第51轮：旧虚拟超时付款协议标本恢复
+
+`341490fc2d41d48d1cb60d442b960075cbdc39d9`已按具体授权推送并直接核对远端main。本轮修复第50轮留下的旧虚拟超时41例：原quote-only测试数据库只具备报价／下单协议，却调用真实余额付款；首笔扣款前因正式attempt存储缺席被拒绝。仅在该套件的owned PG16准备中增加reconciliation case/action列模型、执行未改的ROUTINE_PAYMENT_ATTEMPT_SQL，并显式通过完整catalog就绪核验；共享quote helper、付款准入、正式DDL源、其他生产源码和CI均不修改。
+
+五处旧外部付款调用改用现有server-only applyProviderStoreOrderPayment，沿用同一paid/outbox/activatePaidPink核心、默认分团行为与原行锁。这里明确假设上游已核验的结算输入，仅验证其后的业务SQL，不证明回调签名／金额准入／原账号付款原证；不通过本地普通入口伪装weixin／tradeNo。退款仍以原legacy transport替身返回PROCESSING／SUCCESS并执行真实退款SQL，不作真实微信或原账号退款证明。
+
+原105条expect行按原顺序保留（只归一入口名称），参数矩阵、钱包回滚／完整快照、退款同请求／次数、PID阻塞与锁后时钟不变；仅新增正式存储ready断言和收窄两条用例标题。41例实际覆盖阈值与退款、500人中5真实+495虚拟、真实待退款意图、虚拟无订单／通知、通知写入失败原子回滚及竞争。该500人正例在新Dispatch namespace缺席、走legacy通知的业务标本中，不能替代新request4的500真实买家／账号准入证明。
+
+最终成功阶段如下，合计148项原生、零跳过：
+
+| 阶段 | 通过 | 耗时 |
+| --- | --- | --- |
+| virtual | 41 | 68.66秒 |
+| local-admission | 76 | 30.49秒 |
+| pink-notices | 31 | 191.89秒 |
+
+virtual02完整41项通过；regression05的76项本地付款准入继续拒绝伪造提供方渠道、调用方交易号、外部历史／case／attempt冲突，新旧通知31项（新实际回调／Queue13+旧通知18）通过。final07仅Worker unit类型检查，217.88秒；本轮改测试和文档，生产源码字节与341一致，未重复runtime类型或构建。三批各8585输入运行中及补文档前匹配，三个原生阶段均remaining0／STOPPED。prereq01的两个代表例只作准备核验（另39未选），不重复计148或称其全套通过。
+
+第50轮的41准备失败及精确d837代表例失败原日志保留，本轮将同41业务例恢复为执行成功，没有改CI选项／过滤、放宽生产guard或用SQL制造paid／成团／退款成功。只读复核与主流程独立，曾提供设计建议；未独立重跑、非安全审计。记录在本机.cache/php-ts-phase51-validation，文档在全部重型验证终态后补，提交文件另扫秘密并核暂存／提交字节。
+
+341远端CI已启动[run41562752284](https://github.com/cinagroup/cinashop/actions/runs/41562752284)，当前末次快照仍在执行，不能称全绿；本轮新提交尚未推送，CI未验证。固定角色碰撞、其他旧来源绑定／缺失PHP及诊断等剩余CI问题仍需逐因处理。其他通知／角色、非微信发送、完整归属manifest／单次许可／原子切换和整体PHP→TS迁移仍未完成。无生产DDL／Env切换、部署、真实微信、Browser或Workerd／Hyperdrive验收；原用户／UID／权益／旧单／付款、未知归属不猜与runtime_ready=false保持。新增提交需具体SHA推送授权。

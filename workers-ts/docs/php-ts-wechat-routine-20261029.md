@@ -885,3 +885,12 @@ split/city、其他角色与容量未单独动态重证，退款拒绝/成团等
 保留首轮临时启动失败、preflight08的旧图212／20跳过、pink10 beforeAll重复裸绑定使13未执行及pink12中间通过；修复测试精确裸绑定和unused import后，在最终同图重验。23源／测试／runner交叉复核及完整日志／冻结／失败在.cache/php-ts-phase50-validation；19既有文件另一作者复核、4新文件由其编写主流程另读，不称全量独立审计／重跑。三份文档后补，提交文件另扫秘密并核字节。
 
 本轮未部署、无生产DDL／Env切换或真实微信／Browser／Workerd／Hyperdrive验收。其他通知作者／角色、非微信发送、复杂拆单退款、完整manifest／单次许可／原子切换及整体迁移仍未完成，旧用户／UID／权益／旧单／付款、未知归属不猜、跨AppID屏障及runtime_ready=false保持。旧虚拟超时41例在首笔余额准备缺正式付款协议而失败；精确d837导出的一条代表例复现相同503，不冒称41例全基线重跑，也未改旧套件／CI或放宽生产付款校验。本轮新SHA远端CI未验证，推送需要具体新授权。
+
+
+## 第51轮：旧虚拟超时41例的付款协议准备与结算边界
+
+`341490fc2d41d48d1cb60d442b960075cbdc39d9`已按具体授权推送并直接核对main。本轮恢复[旧虚拟超时业务验证](routine-subscription-pink-notice.md)：只在该suite的owned PG16安装既有正式attempt存储并核catalog，增加reconciliation表；旧weixin/tradeNo调用迁到现有server-only已核验后结算入口。共享quote helper、生产付款准入／DDL源／业务源码、CI不改。原105条断言、参数与完整快照／退款／PID锁等待／锁后clock均保留，结算标本不宣称真实回调签名或原账号证据。
+
+virtual02原41项、regression05本地准入76及新旧通知31共148项PG16通过、零跳过，final07 unit类型通过；生产源码与341字节一致，没有重复runtime检查／构建。三批各8585输入运行中及补文档前一致，三个PG remaining0／STOPPED。原500人用例证明legacy业务5真实+495虚拟，不能升级为request4的500真实买家原账号证明。先跑的2例／39未选不重复计数，第50轮41失败及基线代表失败保留。只读复核非独立重跑／安全审计，文档后补，提交文件另扫秘密核字节。
+
+341的[新CI](https://github.com/cinagroup/cinashop/actions/runs/41562752284)末次快照仍运行，不称全绿。固定角色碰撞、其余旧来源绑定／缺失PHP和诊断CI问题、其他通知／角色／非微信、完整manifest／单次许可／原子切换及整体迁移仍未完成。本轮没有生产DDL／Env切换、部署、真实微信或Browser／Workerd／Hyperdrive验收；用户／UID／权益／旧单／付款与runtime_ready=false保持，新提交推送须具体授权。
