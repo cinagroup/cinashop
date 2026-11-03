@@ -1,6 +1,8 @@
 # 固定旧 PHP 原库作为只读 CI 输入
 
-## 当前状态
+第53轮记录保留其当时状态；后续实际配置、传输中止和 CI 读口修复见文末第59轮。
+
+## 第53轮完成时的历史状态
 
 本轮为两个 Worker unit 分片提供完整固定原库检出和失败关闭的预检；没有修改生产业务源码、数据库协议或依赖。用户选择完整原库，并在检查发布范围后选择私有仓库、CI 只读访问。本轮本地实现及验证完成时，GitHub 的 `cinagroup/cinashop-php`（仓库 ID `1418182944`）仍是空的公开仓库，固定提交不在远端；私有化、环境规则、deploy key、secret 和首次原库推送均未执行。配置供应方和推送本轮消费者提交仍须明确授权，不能把本地成功当作云端检出证明。
 
@@ -80,3 +82,22 @@ Schema 覆盖源表 201、目标 287、共享 201、源列缺口 0；外部定�
 原 Git LF `view/uniapp/pages.json` 为 39,359 字节，SHA256 `875a8a9c6187f528898b824ad41d3af82b43314bd6dae942b4d44b84041db3dc`；旧手动 Uni 审计固定的是 41,222 字节 CRLF、SHA256 `b3f0d0db6f6e7e1e2c039695712797fbbb0b1146acc85d304c24bb344e185eb7`。本轮未供应或运行该手动 derivative，不通过全局 autocrlf 或改旧 hash 来掩盖差异。
 
 远端私有供应及新 SHA CI、现存 6 项断言失败/schema 等价差异、完整维护 manifest/单次许可/原子切换、其他通知角色与非微信路径及整体 PHP→TS 迁移仍未完成。未执行生产 DDL/Env 切换、部署、真实微信、浏览器或 Workerd/Hyperdrive 验收。旧用户/UID/权益/旧单/付款、未知归属不猜、跨 AppID 屏障及 `runtime_ready=false` 保持。
+
+
+## 第59轮：实际配置、传输中止与 Uni CI 读口修复
+
+用户先恢复远端操作，随后针对固定旧源码中的敏感项、私有目标、专用密钥及 main-only／PR 阻塞边界明确回复“明确授权该私有源码及密钥接入”。消费者从 `f2a848eb…` 后的六笔连续提交已推送并直接核对至 `5622484081fb4b221f2ddb0840bfdfdf8846fdc8`；65 个最终文件及六笔 patch 的扫描零发现，与旧库范围扫描分开。
+
+`cinagroup/cinashop-php` 已改为私有；消费者的 `legacy-php-readonly` environment、仅允许 main 的 branch policy、专用 `read_only=true` deploy key 和环境级 `LEGACY_PHP_READONLY_SSH_KEY` 已配置。私钥未进入仓库文件、命令参数或 artifact；续传只读取公钥核对指纹，没有再次读取或发送私钥。当前不删除这些已配置访问项，也不把 secret 元数据当成成功的 CI 检出证明。
+
+固定原库首次上传在 180 秒发生 `TimeoutExpired`。后续只续传同一 `8ed2a5b…`，使用独立 600 秒传输期限、一个 pack thread 和 64MiB pack window；没有改变本地验证的 600／1200 秒预算。用户询问“旧库不上传是否可行”后，仍在进行的专用传输组被停止，实际 push 运行 329.49 秒，以 TERM／exit -15 结束，外层 session 退出 1。2026-11-03 10:17:16 UTC 的回读仍为私库 main API `409 empty`，没有可用 main；专用进程组已退出。**已有部分 Git 对象传输字节发送到私库，空 main 不等于 GitHub 未收到或未保留任何数据。** 不声明私库供应完成、真实 SSH checkout 通过或此前传输数据已清除。
+
+不上传完整旧库仍可在本机保留真实固定检出并继续完整只读预检和原文验收。当前 GitHub-hosted Worker job 无条件检出私库，缺少输入会失败，必需聚合仍要求 success，不能以 skip 或快照替代制造绿色。受保护自托管 runner 可把完整原库留在本地受控卷，但实查该仓库 self-hosted runner 数为 0，供应与隔离接线尚未实现，不能让不受信任的 PR 读取该卷。仅 11 个原文件不能覆盖现合同：hotwords 11、路由权威 26（交集 2）及 SQL 1 的显式输入并集至少 36 个，且当前完整预检仍要求 14,664 文件。较小原文／Git 对象包或受信任外部构建证明需要另立完整、失败关闭的供应合同；构建回执不能替代现有真实 `git show`。本次询问没有选定新的供应架构。
+
+真实新 SHA 的 [CI run 41613267383](https://github.com/cinagroup/cinashop/actions/runs/41613267383) 暴露了独立问题：两个 Uni job 的旧 `ci-migration-gates.test.cjs` 直接解析当前 workflow，与原完整分组基线比较时，遇到第53轮新增 environment、legacy checkout、receipt 和 pipefail。该失败不能归因于 PHP 上传或凭据。
+
+本轮仅改三份 CJS：新增严格历史读口及其测试，旧入口只替换 fs import 并导入新测试。读口复用原 `e5427c…` 完整证明，对精确当前 workflow `2dd8f6…` 应用五处精确逆编辑，得到 f2 完整前像 `30c491…`；其余路径仍读真实文件，未知字节、历史 fallback、证明或 edit 漂移均拒绝。实际 workflow、旧 CJS baseline、旧 49 项 verify／mutants／Bash 断言正文和预算没有修改；精确撤回两处 import 后原文件完整 SHA256 仍为 `624a77aefb8fcaaa3e6c246c24d17c2351429334f7be8b26112a27b48ce11a54`。
+
+真实 CI 旧入口一次执行 **94 项＝原 49＋新 45，全部通过、零跳过，1.53 秒**；8,629 个预列输入运行前后字节一致，单并发、600／1200 秒预算保持。没有另跑新文件重复累计，也没有在本轮运行类型检查、构建、完整 Worker 或云端新提交验收；TS、依赖和业务代码未变。参与作者的交叉阅读不是独立重跑或安全审计。日志、冻结、逐阶段远端元数据和中止记录保存在本机忽略的 `.cache/php-ts-phase59-validation`，最终五个提交文件另按字节扫描、审阅并核暂存／提交。
+
+当前云端 gate 尚未通过；原库供应／替代架构、完整 CI 与整体迁移仍未完成。没有部署、生产 DDL、业务 Env 切换、维护 permit 或 AppID 原子切换。本轮本地 CI 修复与私库传输是独立结果。

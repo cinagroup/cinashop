@@ -5,11 +5,12 @@
 // different frontend or weakening a dependency result must fail this check.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { readFileSync } = require('./legacy-php-workflow-source-binding.cjs');
 const { resolve } = require('node:path');
 const { createHash } = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const YAML = require('yaml');
+require('./legacy-php-workflow-source-binding.test.cjs');
 
 const baseline = JSON.parse(readFileSync(resolve(__dirname, 'ci-migration-gates.baseline.json'), 'utf8'));
 assert.equal(createHash('sha256').update(JSON.stringify(baseline)).digest('hex'),
