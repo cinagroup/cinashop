@@ -1,5 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { registeredTableNames, assertRegisteredModelCohort, reviewedExplicitDeclarationTables, assertExternalMigrationCohort } from './helpers/registeredCatalogCohort';
+import { reviewedPostMergeDeclarationSources, reviewedPostMergeDeclarationTableNames } from './helpers/postMergeDeclarationCohort';
+import { extractStaticMigrationSql } from '../scripts/data-migration/schema-source-extraction';
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MIGRATION_TABLES } from "../scripts/data-migration/manifest";
@@ -241,6 +243,16 @@ describe("MySQL to PostgreSQL schema audit", () => {
     ].join("\n");
     const report = buildSchemaAudit(sourceSql, externalTargetSql);
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
+    // Only these exact, independently reviewed modules follow the frozen
+    // historical scopes. A future unknown module stays visible and fails them.
+    const workerRoot = resolve(import.meta.dirname, '..');
+    const postMergeSourceNames = reviewedPostMergeDeclarationSources(workerRoot);
+    expect(embeddedMigrationSources.filter(({ name }) => postMergeSourceNames.includes(name)).map(({ name }) => name))
+      .toEqual(postMergeSourceNames);
+    const historicalMigrationSources = embeddedMigrationSources.filter(({ name }) => !postMergeSourceNames.includes(name));
+    const extractDeclarations = [readFileSync('src/services/MigrationService.ts', 'utf8'),
+      ...historicalMigrationSources.map(({ sql }) => sql)].join('\n');
+    const extractDefinitionDrift = comparePostgresDefinitions(externalTargetSql, extractDeclarations);
 
     expect(report.sourceTableCount).toBe(201);
     expect(report.targetTableCount).toBe(287);
@@ -352,16 +364,16 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(embeddedMigrationSources.filter(({name})=>orderAddonSources.includes(name)).map(({name})=>name)).toEqual(orderAddonSources);
     const productDeclarations = [
       readFileSync('src/services/MigrationService.ts','utf8'),
-      ...embeddedMigrationSources.filter(({name})=>!orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({sql})=>sql),
+      ...historicalMigrationSources.filter(({name})=>!orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({sql})=>sql),
     ].join('\n');
     const productDefinitionDrift = comparePostgresDefinitions(externalTargetSql, productDeclarations);
     const ordinaryDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({ sql }) => sql),
+      ...historicalMigrationSources.filter(({ name }) => !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDeclarations = [
       readFileSync("src/services/MigrationService.ts", "utf8"),
-      ...embeddedMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({ sql }) => sql),
+      ...historicalMigrationSources.filter(({ name }) => name !== "cashierOrdinary.ts" && !productAddonSources.includes(name) && !orderAddonSources.includes(name) && !cashAddonSources.includes(name) && !proactiveAddonSources.includes(name) && !extractAddonSources.includes(name)).map(({ sql }) => sql),
     ].join("\n");
     const historicalDefinitionDrift = comparePostgresDefinitions(externalTargetSql, historicalDeclarations);
     expect(historicalDefinitionDrift).toEqual({
@@ -404,7 +416,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(productOnly).toEqual(['admin_product_editor_operation_v1','admin_product_video_upload_v1','product_video_gc_state_v1','supplier_product_copy_operation_v1','supplier_product_video_upload_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>productOnly.includes(table))).toEqual([]);
-    const orderDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!cashAddonSources.includes(name)&&!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
+    const orderDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...historicalMigrationSources.filter(({name})=>!cashAddonSources.includes(name)&&!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const orderDefinitionDrift = comparePostgresDefinitions(externalTargetSql, orderDeclarations);
     expect(orderDefinitionDrift).toEqual({ externalTableCount:287, workerTableCount:312,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
@@ -413,7 +425,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(orderOnly).toEqual(['legacy_order_gain_partition_v1','supplier_order_edit_operation_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>orderOnly.includes(table))).toEqual([]);
-    const cashDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
+    const cashDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...historicalMigrationSources.filter(({name})=>!proactiveAddonSources.includes(name)&&!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const cashDefinitionDrift = comparePostgresDefinitions(externalTargetSql, cashDeclarations);
     expect(cashDefinitionDrift).toEqual({externalTableCount:287,workerTableCount:315,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
@@ -422,7 +434,7 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(cashOnly).toEqual(['supplier_manual_refund_operation_v1','supplier_manual_refund_proof_v1','supplier_offline_payment_operation_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>cashOnly.includes(table))).toEqual([]);
-    const proactiveDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...embeddedMigrationSources.filter(({name})=>!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
+    const proactiveDeclarations = [readFileSync('src/services/MigrationService.ts','utf8'), ...historicalMigrationSources.filter(({name})=>!extractAddonSources.includes(name)).map(({sql})=>sql)].join('\n');
     const proactiveDefinitionDrift = comparePostgresDefinitions(externalTargetSql, proactiveDeclarations);
     expect(proactiveDefinitionDrift).toEqual({externalTableCount:287,workerTableCount:319,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
@@ -431,11 +443,30 @@ describe("MySQL to PostgreSQL schema audit", () => {
     expect(proactiveOnly).toEqual(['supplier_proactive_refund_decision_v1','supplier_proactive_refund_operation_v1','supplier_refund_money_completion_v1','supplier_refund_money_payment_v1']);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>proactiveOnly.includes(table))).toEqual([]);
-    expect(definitionDrift).toEqual({externalTableCount:287,workerTableCount:320,
+    expect(extractDefinitionDrift).toEqual({externalTableCount:287,workerTableCount:320,
       externalOnlyTables:historicalDefinitionDrift.externalOnlyTables,
       workerOnlyTables:reviewedExplicitDeclarationTables('current-supplier-extract'),columnDrift:[]});
-    const extractOnly=definitionDrift.workerOnlyTables.filter(table=>!proactiveDefinitionDrift.workerOnlyTables.includes(table));
+    const extractOnly=extractDefinitionDrift.workerOnlyTables.filter(table=>!proactiveDefinitionDrift.workerOnlyTables.includes(table));
     expect(extractOnly).toEqual(['supplier_extract_application_operation_v1']);
+    const postMergeTables = reviewedPostMergeDeclarationTableNames(workerRoot);
+    expect(postMergeTables).toHaveLength(41);
+    const allCurrentOnly = [...reviewedExplicitDeclarationTables('current-supplier-extract'), ...postMergeTables].sort();
+    expect(allCurrentOnly).toHaveLength(77);
+    expect(new Set(allCurrentOnly).size).toBe(77);
+    expect(definitionDrift).toEqual({ externalTableCount: 287, workerTableCount: 361,
+      externalOnlyTables: historicalDefinitionDrift.externalOnlyTables,
+      workerOnlyTables: allCurrentOnly, columnDrift: [] });
+    // Literal decoding is a separate declaration view; it does not install or
+    // evaluate any of the dynamic SQL in these independently owned modules.
+    const currentStaticLiterals = [
+      { name: 'src/services/MigrationService.ts', source: readFileSync('src/services/MigrationService.ts', 'utf8') },
+      ...embeddedMigrationSources.map(({ name, sql: source }) => ({ name: 'src/migrations/' + name, source })),
+    ].flatMap(({ name, source }) => extractStaticMigrationSql(source, name).staticSqlLiterals.map(value => value.sql));
+    expect(comparePostgresDefinitions(externalTargetSql, [embeddedTargetSql, ...currentStaticLiterals].join('\n')))
+      .toEqual({ externalTableCount: 287, workerTableCount: 364, externalOnlyTables: [],
+        workerOnlyTables: allCurrentOnly, columnDrift: [] });
+    for (const path of ['embedded', 'external', 'orm'] as const)
+      expect(registeredTableNames(path).filter(table => postMergeTables.includes(table))).toEqual([]);
     for(const path of ['embedded','external','orm'] as const)
       expect(registeredTableNames(path).filter(table=>extractOnly.includes(table))).toEqual([]);
     for (const tableName of [

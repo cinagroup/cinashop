@@ -934,3 +934,18 @@ e275的[CI](https://github.com/cinagroup/cinashop/actions/runs/41565199699)在20
 保留三来源首轮缺后继、600秒combined类型超时及新增测试TS2554／TS2345；仅修严格解码／必填BOM选项及stdout窄结构视图，原全字节／列／PK断言保持，最终两配置通过不覆盖原超时。只计最终313结果，不累计中间重复。单层锁／单worker／原内存及600／1200预算保持，原日志／冻结／只读复核在本机.cache/php-ts-phase54-validation；文档终态后补、九提交文件另扫秘密核字节。
 
 剩余旧writeoff约束名来源后继、41新增声明表的封闭cohort／独立owner安装合同、77差异及容量CI仍待处理；不能直接刷新旧hash或320计数。完整manifest／单次许可／原子切换、其他通知／角色／非微信及整体迁移未完成。无生产DDL／Env切换、部署、真实微信／Browser／Workerd／Hyperdrive验收，用户／UID／权益／旧单／付款及runtime_ready=false保持。本轮仅提交合入本地main并清理已合并开发分支，远端操作继续暂缓。
+
+
+## 第55轮：旧来源后继与独立声明 cohort
+
+本轮基点为仅本地main的`a03a52a119122615fbf5bd5c3a983dc6f60bb5cd`。用户“暂不执行远端操作”持续有效：私有原库／environment／deploy key／secret／凭据发送及两仓库推送均未执行，新SHA云端CI未验证。
+
+完成[独立声明合同](schema-declaration-cohorts.md)：d715真实Git父4094ce1e的writeoff完整来源仅一行PK约束名后继，当前15653B／05b10…精确逆成旧15619B／044d8…；旧pin／真实安装SQL／物理约束名不改，旧图回退或任意其他正文漂移拒绝。另固定63完整Git源813071B、33声明模块、41表列／PK、31维护安装器文件／61入口、实际命名import与SQL执行范围和两个原子bundle。34处仅为所列SQL常量的未求值插值，不替代全源536未知范围，不拼空串／执行迁移或推断安装／传递调用闭包。
+
+七个历史301／305／310／312／315／319／320层及旧完整集合保留，只有已全图验证33basename从旧视图移出，未知模块不被自动分类。当前完整raw361／literal364及旧36＋新41＝77另断言，不将声明等价冒作runAll安装；全源ALTER-before-CREATE检查保留。
+
+pure-01六阶段728.32秒、native-02两完整PG文件290.67秒，两批8607输入每阶段及跨批一致。单元77全通过（新27、原data36、旧literal14）、PG16 21全通过，零跳过；最终只计98次，不累计旧轮。Worker两完整类型配置／固定PHP输入通过，实际external287／runAll283／ORM292及显式city＋abandon组合、OID／owner／ACL保持和拒绝重装得到真实PG证明，两个宿主remaining0／STOPPED。不据此称31维护安装器均已安装或业务就绪。
+
+真实schema CLI继续exit1：外部only0／Workeronly77／列PK差异0，36静态补充／536已知未求值、完整提取／安装标志false。真实原生1654各一次、827／827、固定角色58串行，仅collection，不是全部文件执行或容量10秒恢复。原预算／单层锁／单worker保持；日志／冻结／Git核对／只读复核在.cache/php-ts-phase55-validation，文档终态后补、九提交文件另扫秘密核字节。
+
+生产源码／迁移SQL／grants未改，未部署／Env切换或真实微信／Browser／Workerd／Hyperdrive验收。真实可比安装等价、容量CI、私有原库供应及云端CI、完整manifest／单次许可／原子切换、其他通知／角色／非微信和整体迁移仍未完成；用户／UID／权益／旧单／付款及runtime_ready=false保持。本轮仅本地提交合main并清理已合并开发分支，远端操作继续暂缓。

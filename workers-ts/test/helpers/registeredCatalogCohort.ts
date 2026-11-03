@@ -9,6 +9,7 @@ import { assertCustomerCityDeliveryReady, installCustomerCityDelivery } from '..
 import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog } from '../../scripts/data-migration/cashier-abandon-catalog';
 import { completeConstructionTableNames, MANUAL_RED_NOTE_ORM_TABLE_NAMES, ERP_ORM_TABLE_NAMES } from './completeConstructionInventory';
 import { inspectInvoiceManualRedNote } from '../../src/migrations/invoiceManualRedNoteCatalog';
+import { historicalWriteoffOperationSource } from './writeoffOperationSourceSuccessor';
 
 // Fixed independent 281-table SQL cohort through 0169, before the five reviewed
 // additions. Never generate expected table names from the live ORM under test.
@@ -227,7 +228,8 @@ const supplierExtractExplicitColumns = {
 export function reviewedExplicitDeclarationTables(scope:'historical'|'current-ordinary'|'current-product'|'current-supplier-order'|'current-supplier-cash'|'current-supplier-proactive'|'current-supplier-extract'='historical') {
   assert.ok(['historical','current-ordinary','current-product','current-supplier-order','current-supplier-cash','current-supplier-proactive','current-supplier-extract'].includes(scope),'Unknown independently commissioned declaration scope');
   for (const [file,sha256,tables] of [...explicitDeclarations,...additionalExplicitDeclarations,...manualRedNoteExplicitDeclarations]) {
-    const source=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
+    const currentSource=readFileSync(resolve(root,'src/migrations',file),'utf8').replace(/\r\n/g,'\n');
+    const source=file==='customerWriteoffOperation.ts'?historicalWriteoffOperationSource(currentSource):currentSource;
     assert.equal(digest(source),sha256,'Complete independently commissioned DDL source changed: '+file);
     assert.deepEqual([...parseCreateTables(source,'postgres').keys()].sort(),[...tables].sort());
   }
