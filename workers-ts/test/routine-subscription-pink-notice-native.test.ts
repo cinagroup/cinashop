@@ -6,6 +6,7 @@
  * SQL mutations below are labelled negatives/scheduler controls, never paid,
  * successful group, approval, business receipt or provider-positive authors.
  * Phone continuity is explicit verified server input, not SMS login coverage. */
+import { assertRoutineNotificationContinuation } from './helpers/routineNotificationContinuationAssertions';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { and, eq, sql } from 'drizzle-orm';
@@ -346,4 +347,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual multi-buy
     await withTx(app(), tx => enqueueOrderPinkSuccessNoticeEvent(tx, { orderId: p.orderId, orderNo: p.orderNo, userId: p.userId, pinkId: p.pinkId, people: p.people }, s.event.addTime + 1, f.env));
     expect((await eventFor(s)).payload).toEqual(s.event.payload); expect(network).not.toHaveBeenCalled();
   }, 120000);
+  it('classifies actual format4 history in the complete maintenance snapshot without sending or rewriting it', async () => {
+    await assertRoutineNotificationContinuation(f,4,()=>[network.mock.calls.length,transport.get.mock.calls.length,transport.set.mock.calls.length,
+      transport.remove.mock.calls.length,transport.take.mock.calls.length,transport.setIfAbsent.mock.calls.length,f.messages.length],Object.values(PINK_ACCOUNTS).flatMap(a=>[a.appId,a.payer,a.target,a.phone,a.secret,a.template]),false);
+  },90000);
 });

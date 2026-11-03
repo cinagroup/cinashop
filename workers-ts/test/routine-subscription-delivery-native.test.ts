@@ -3,8 +3,9 @@
  * is explicit server-verified test input, not an SMS/login-form acceptance.
  * Only HTTP/Redis/KV/Queue transports are controlled. Actual Queue claims,
  * source admission and immutable attempt/result writers remain unmocked. */
+import { assertRoutineNotificationContinuation } from './helpers/routineNotificationContinuationAssertions';
 import { Buffer } from 'node:buffer';
-import { createCipheriv, randomBytes, randomUUID, sign } from 'node:crypto';
+import { createCipheriv, createHmac, randomBytes, randomUUID, sign } from 'node:crypto';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -13,7 +14,7 @@ import { createContainerFromDb } from '@/lib/di';
 import * as Di from '@/lib/di';
 import type { WechatTemplateNotificationPayload } from '@/models/schema';
 import { deliveryService, notificationTemplate, orderNotificationDelivery, storeOrder, storeOrderOutbox, storeProduct,
-  storeProductAttrValue, systemConfig, systemNotification, user, userAddress, wechatUser } from '@/models/schema';
+  storeProductAttrValue, systemConfig, systemMessage, systemNotification, user, userAddress, wechatUser } from '@/models/schema';
 import { errorHandler } from '@/middleware/error';
 import { v1Routes } from '@/routes/v1';
 import { createToken, md5 } from '@/utils/jwt';
@@ -38,6 +39,8 @@ import { appendRoutineSubscriptionAccountPolicy, routineSubscriptionAccountId, r
   type RoutineSubscriptionAccountPolicy } from '@/services/wechat/RoutineSubscriptionAccount';
 import { customerCashierRuntimeHttpFixture } from './helpers/customerCashierRuntimeHttpFixture';
 import { paymentQueryKeys } from './helpers/paymentQueryFixture';
+import { collectRoutineNotificationContinuationDraft } from '../scripts/routine-ownership-inventory';
+import type postgres from 'postgres';
 
 const transport = vi.hoisted(() => {
   const values = new Map<string, unknown>();
@@ -104,10 +107,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
       { waitUntil: (p: Promise<unknown>) => pending.push(p), props: {}, passThroughOnException: () => { throw Error('Unexpected payment fallback'); } });
     await Promise.all(pending); expect(response.status).toBe(200);
   }
-  async function stage(uid = 11, mode: 'express' | 'send' = 'express') {
+  async function paidCheckout(uid = 11, contact?: Readonly<{ real_name: string; phone: string }>) {
     const cart = await admin('/admin/order/cart/add/' + uid, { tourist_uid: '', productId: 70, uniqueId: 'qared001', cartNum: 1, new: 1 });
     const selection = { cartId: [cart.cartId], tourist_uid: '', new: 1, shipping_type: 1, store_id: 1, addressId: uid,
-      real_name: '', phone: '', payType: 'cash', useIntegral: false, couponId: 0, from: 'pc' };
+      real_name: '', phone: '', payType: 'cash', useIntegral: false, couponId: 0, from: 'pc', ...contact };
     const quote = await admin('/admin/order/confirm/' + uid, selection);
     const created = await admin('/admin/order/create/' + quote.orderKey + '/' + uid, { ...selection, quoteToken: quote.quoteToken });
     const order = await f.container.storeOrderDao.findByOrderId(created.result.order_id); if (!order) throw Error('Actual checkout root absent');
@@ -124,6 +127,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
       observation: { facts: { appId: APP, payerId: PAYER, tradeState: 'SUCCESS', tradeType: 'JSAPI' } } } });
     const [paidEvent] = await f.maintenanceDb.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateId, order.id), eq(storeOrderOutbox.eventType, 'order.paid')));
     await f.consume(paidEvent);
+    return { order, paid };
+  }
+  async function stage(uid = 11, mode: 'express' | 'send' = 'express') {
+    const { order } = await paidCheckout(uid);
     await admin('/admin/order/delivery/' + order.orderId, { delivery_type: mode, delivery_name: mode === 'send' ? '本机送货人' : '本机通知承运商', delivery_id: mode === 'send' ? '13800000011' : 'NOTICE-' + order.id, ...(mode === 'send' ? { delivery_uid: 30 } : {}) });
     const [event] = await f.maintenanceDb.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateId, order.id), eq(storeOrderOutbox.eventType, 'order.delivery.notice')));
     expect(await new OrderOutboxService(container(), f.env).processMessage({ action: 'processOrderNotificationOutbox', outboxId: event.id, eventKey: event.eventKey })).toBe('completed');
@@ -345,4 +352,72 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
     expect(rows.map(r => r.attempt_id)).toEqual([attempt.attempt_id]); expect(await results(12)).toHaveLength(0);
   }, 90000);
 
+  it('keeps actual paid manual virtual fulfillment on PHP SMS/inbox channels without a Mini subscription', async () => {
+    const mark = 'order_fictitious_success', content = '本机真实手工虚拟交付内容';
+    const [product] = await f.maintenanceDb.select({ productType: storeProduct.productType }).from(storeProduct).where(eq(storeProduct.id, 70));
+    if (!product) throw Error('Owned catalog product absent');
+    const configuration = await f.maintenanceDb.select().from(systemNotification).where(eq(systemNotification.mark, mark));
+    const ledger = async () => {
+      const [counts] = await f.maintenanceDb.execute<{ attempts: number; results: number }>(sql`SELECT
+        (SELECT count(*)::integer FROM public.routine_subscribe_attempt) AS attempts,
+        (SELECT count(*)::integer FROM public.routine_subscribe_result) AS results`);
+      if (!counts) throw Error('Actual immutable subscription ledgers absent');
+      return counts;
+    };
+    const before = await ledger();
+    try {
+      // Bootstrap only the catalog BEFORE cart/quote/create. The order, product
+      // snapshot, approved callback, paid event and fulfillment are real authors.
+      await f.maintenanceDb.update(storeProduct).set({ productType: 3 }).where(eq(storeProduct.id, 70));
+      await f.maintenanceDb.delete(systemNotification).where(eq(systemNotification.mark, mark));
+      await f.maintenanceDb.insert(systemNotification).values({ mark, isSystem: 1, isSms: 1, isWechat: 0, isRoutine: 0,
+        smsId: 'owned_manual_virtual_sms', systemTitle: '虚拟交付成功', systemText: '订单 {order_id} 已人工交付' });
+      const { order, paid } = await paidCheckout(11, { real_name: '手工虚拟买家', phone: PHONE });
+      expect(paid).toMatchObject({ productType: 3, paid: 1, status: 0, payType: 'weixin', userPhone: PHONE });
+      await admin('/admin/order/delivery/' + order.orderId, { delivery_type: 'fictitious', fictitious_content: content });
+      const [delivered] = await f.maintenanceDb.select().from(storeOrder).where(eq(storeOrder.id, order.id));
+      expect(delivered).toMatchObject({ productType: 3, paid: 1, status: 1, deliveryType: 'fictitious', fictitiousContent: content });
+      const [event] = await f.maintenanceDb.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.aggregateId, order.id), eq(storeOrderOutbox.eventType, 'order.delivery.notice')));
+      expect(event.payload).toMatchObject({ orderId: order.id, userId: 11, deliveryType: 'fictitious' });
+      expect(Object.hasOwn(event.payload, 'routineSubscriptionRequest')).toBe(false);
+      expect(await new OrderOutboxService(container(), f.env).processMessage({ action: 'processOrderNotificationOutbox', outboxId: event.id, eventKey: event.eventKey })).toBe('completed');
+      const deliveries = await f.maintenanceDb.select({ channel: orderNotificationDelivery.channel, mark: orderNotificationDelivery.noticeMark,
+        target: orderNotificationDelivery.target }).from(orderNotificationDelivery).where(eq(orderNotificationDelivery.eventKey, event.eventKey));
+      expect(deliveries).toEqual([{ channel: 'sms', mark, target: PHONE }]);
+      expect(await f.maintenanceDb.select({ mark: systemMessage.mark, userId: systemMessage.userId }).from(systemMessage)
+        .where(eq(systemMessage.eventKey, event.eventKey))).toEqual([{ mark, userId: 11 }]);
+      expect(await ledger()).toEqual(before); expect(network).not.toHaveBeenCalled();
+      const fingerprintKey = '71'.repeat(32);
+      const report = await collectRoutineNotificationContinuationDraft(f.maintenanceDb.$client as unknown as postgres.Sql,
+        f.target, fingerprintKey, { APP_KEY: f.env.APP_KEY });
+      const outboxDigest = createHmac('sha256', fingerprintKey)
+        .update('cinashop.routine-notification-continuation-draft.v1\0outbox-id\0').update(JSON.stringify(event.id)).digest('hex');
+      expect(report.notifications.outboxes.find(row => row.outboxDigest === outboxDigest)).toMatchObject({ state: 'outside_subscription_contract', format: null });
+      expect(report.notifications).toMatchObject({ activationAllowed: false, permitIssued: false, switchCommissioned: false,
+        subscriptionSendAuthorized: false, currentBusinessEligibility: 'not_evaluated' });
+      expect(await ledger()).toEqual(before); expect(network).not.toHaveBeenCalled();
+    } finally {
+      try { await f.maintenanceDb.update(storeProduct).set({ productType: product.productType }).where(eq(storeProduct.id, 70)); }
+      finally {
+        await f.maintenanceDb.delete(systemNotification).where(eq(systemNotification.mark, mark));
+        if (configuration.length) await f.maintenanceDb.insert(systemNotification).values(configuration);
+      }
+    }
+  }, 90000);
+
+  it('classifies actual format2 history in the complete maintenance snapshot without sending or rewriting it', async () => {
+    // The original thirteen sources intentionally predate Dispatch commissioning.
+    // Append a new real Admin checkout, approved A callback and delivery while B
+    // remains current; only this post-commission producer can author request2.
+    const index = sources.length; expect(index).toBe(13);
+    sources.push(await stage());
+    expect(sources[index].event).toMatchObject({ payload: { routineSubscriptionRequest: { format: 2 } } });
+    expect(sources[index].delivery).toMatchObject({ payload: { routineAppId: APP, routineSubscriptionIntent: { format: 2 } } });
+    clearTokens(); provider(0);
+    expect(await service().processMessage(await queued(index), network)).toBe('sent');
+    expect(posts()).toHaveLength(1); expect(await attempts(index)).toHaveLength(1); expect(await results(index)).toHaveLength(1);
+    // The maintenance-only no-I/O baseline is captured after this real Queue POST.
+    await assertRoutineNotificationContinuation(f,2,()=>[network.mock.calls.length,transport.get.mock.calls.length,transport.set.mock.calls.length,
+      transport.remove.mock.calls.length,transport.take.mock.calls.length,transport.setIfAbsent.mock.calls.length,f.messages.length],[APP,OTHER,TARGET,PAYER,PHONE,SECRET,TEMPLATE],true);
+  },90000);
 });

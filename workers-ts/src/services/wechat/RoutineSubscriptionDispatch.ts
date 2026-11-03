@@ -1,3 +1,10 @@
+import { parseRoutineSubscriptionAttemptForActor as parseAttempt, parseRoutineSubscriptionResult as parseReceipt,
+  type RoutineSubscriptionAttemptPayload as AttemptPayload, type RoutineSubscriptionAttempt as Attempt,
+  type RoutineSubscriptionResult as Receipt } from './RoutineSubscriptionDispatchEvidenceCodec';
+export { parseRoutineSubscriptionAttempt, parseRoutineSubscriptionAttemptForActor, parseRoutineSubscriptionResult,
+  validateRoutineSubscriptionAttemptChain } from './RoutineSubscriptionDispatchEvidenceCodec';
+export type { RoutineSubscriptionAttempt, RoutineSubscriptionAttemptPayload, RoutineSubscriptionResult,
+  RoutineSubscriptionHistoricalActor, RoutineSubscriptionAttemptChain, RoutineSubscriptionAttemptChainIdentity } from './RoutineSubscriptionDispatchEvidenceCodec';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { and, eq, sql } from 'drizzle-orm';
@@ -7,36 +14,17 @@ import { orderNotificationDelivery } from '@/models/schema';
 import { assertRoutineSubscriptionDeliveryReadTx, assertRoutineSubscriptionDeliveryReadyTx,
   inspectRoutineSubscriptionDeliveryCatalog } from '@/migrations/routineSubscriptionDelivery';
 import { assertRoutineSubscriptionHistoricalAccountTx, captureRoutineSubscriptionEnv, freezeSubscription,
-  parseRoutineSubscriptionAccountJournal, routineSubscriptionClockTx, routineSubscriptionScopeTx,
-  routineSubscriptionUnavailable, subscriptionEqual, subscriptionHex, subscriptionInteger,
-  subscriptionMac, subscriptionObject, subscriptionSame, subscriptionUuid,
-  type RoutineSubscriptionAccountJournal, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
+  routineSubscriptionClockTx, routineSubscriptionScopeTx,
+  routineSubscriptionUnavailable, subscriptionInteger,
+  subscriptionMac, subscriptionObject, subscriptionSame, subscriptionUuid } from './RoutineSubscriptionAccount';
 import { prepareRoutineSubscriptionDeliveryNotice, prepareRoutineSubscriptionDeliveryNoticeTx,
-  assertRoutineSubscriptionDeliveryNoticeTx, type RoutineSubscriptionDeliveryNoticeFacts,
-  type RoutineSubscriptionNoticeRequest } from './RoutineSubscriptionDeliveryNotice';
+  assertRoutineSubscriptionDeliveryNoticeTx } from './RoutineSubscriptionDeliveryNotice';
 import { getRoutineSubscriptionAccessToken } from './RoutineSubscriptionAccessToken';
-import { postRoutineSubscription, assertRoutineSubscriptionProviderResult,
-  type AcceptedRoutineSubscriptionResult } from './RoutineSubscriptionProvider';
-import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey } from './RoutineSubscriptionNoticeKinds';
+import { postRoutineSubscription, assertRoutineSubscriptionProviderResult } from './RoutineSubscriptionProvider';
+import { routineSubscriptionNoticeKey } from './RoutineSubscriptionNoticeKinds';
 
 type Delivery = typeof orderNotificationDelivery.$inferSelect;
 export interface RoutineSubscriptionClaim { id: number; eventKey: string; leaseToken: string }
-interface AttemptPayload {
-  format: 1; purpose: 'routine_subscription_send'; scope: RoutineSubscriptionScope;
-  actor: { role: string; roleOid: string }; previousAttemptId: string; intentDigest: string;
-  claim: { eventKey: string; leaseToken: string; attemptCount: number; leaseUntil: number };
-  facts: RoutineSubscriptionDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
-  request: Readonly<RoutineSubscriptionNoticeRequest>;
-}
-interface Attempt {
-  attempt_id: string; delivery_id: number; attempt_no: number; source_key: string;
-  payload: AttemptPayload; created_at: number; signature: string;
-}
-interface Receipt {
-  result_id: string; attempt_id: string; payload: { format: 1; purpose: 'routine_subscription_result';
-    scope: RoutineSubscriptionScope; attemptSignature: string; result: AcceptedRoutineSubscriptionResult };
-  created_at: number; signature: string;
-}
 const sendSlot = Symbol('routine.subscription.send-authority.v1');
 export interface RoutineSubscriptionSendAuthority { readonly [sendSlot]: true }
 const authorities = new WeakMap<RoutineSubscriptionSendAuthority, {
@@ -45,8 +33,6 @@ const authorities = new WeakMap<RoutineSubscriptionSendAuthority, {
 class PriorUnknown extends Error {}
 const invalidToken = (code: number) => [40001, 40014, 42001].includes(code);
 const retryable = (code: number) => invalidToken(code) || [-1, 45009, 45011, 45028].includes(code);
-const number = (v: unknown) => typeof v === 'string' && /^[0-9]+$/u.test(v) ? Number(v) : v;
-const time = (v: unknown): v is number => subscriptionInteger(v);
 function claim(value: RoutineSubscriptionClaim): Readonly<RoutineSubscriptionClaim> {
   const r = subscriptionObject(value, ['id', 'eventKey', 'leaseToken']);
   if (!subscriptionInteger(r.id) || typeof r.eventKey !== 'string' || r.eventKey.length > 128
@@ -87,55 +73,6 @@ async function claimed(tx: DbClient, c: Readonly<RoutineSubscriptionClaim>) {
     || r.leaseToken !== c.leaseToken || r.leaseUntil <= now || r.leaseUntil > now + 180 || !subscriptionInteger(r.orderId) || r.withdrawalId !== null)
     return routineSubscriptionUnavailable();
   return r;
-}
-function parseAttempt(env: Env, raw: unknown, scope: RoutineSubscriptionScope, actor: { role: string; roleOid: string }): Attempt {
-  const r = subscriptionObject(raw, ['attempt_id', 'delivery_id', 'attempt_no', 'source_key', 'payload', 'created_at', 'signature']);
-  const p = subscriptionObject(r.payload, ['format', 'purpose', 'scope', 'actor', 'previousAttemptId', 'intentDigest', 'claim', 'facts', 'policy', 'request']);
-  const c = subscriptionObject(p.claim, ['eventKey', 'leaseToken', 'attemptCount', 'leaseUntil']);
-  const f = subscriptionObject(p.facts, ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',
-    'observationId', 'evidenceId', 'evidenceSignature', 'relatedDigest', 'approvedUseDigest', 'templateMark', 'sourceDigest']);
-  const q = subscriptionObject(p.request, ['touser', 'template_id', 'page', 'data']);
-  const created = number(r.created_at);
-  if (!subscriptionUuid(r.attempt_id) || !subscriptionInteger(r.delivery_id) || !subscriptionInteger(r.attempt_no) || r.attempt_no > 5
-    || !subscriptionHex(r.source_key) || !time(created) || !subscriptionHex(r.signature) || p.format !== 1 || p.purpose !== 'routine_subscription_send'
-    || !subscriptionSame(p.scope, scope) || !subscriptionSame(p.actor, actor) || !subscriptionHex(p.intentDigest)
-    || p.previousAttemptId !== '' && !subscriptionUuid(p.previousAttemptId) || !subscriptionUuid(c.leaseToken)
-    || c.attemptCount !== r.attempt_no || !time(c.leaseUntil) || created >= c.leaseUntil
-    || c.eventKey !== f.eventKey || r.delivery_id !== f.deliveryId || typeof c.eventKey !== 'string'
-    || !routineSubscriptionNoticeKey(c.eventKey) || typeof f.templateMark !== 'string'
-    || !(routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
-    || r.source_key !== sourceKey(env, { id: r.delivery_id, eventKey: c.eventKey, leaseToken: c.leaseToken })
-    || !subscriptionInteger(f.orderId) || !subscriptionInteger(f.rootId) || !subscriptionInteger(f.buyerUid)
-    || !subscriptionHex(f.sourceDigest) || !subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest)
-    || !subscriptionHex(f.evidenceSignature) || typeof q.touser !== 'string' || typeof q.template_id !== 'string'
-    || typeof q.page !== 'string' || Buffer.byteLength(JSON.stringify(p), 'utf8') > 65536) return routineSubscriptionUnavailable();
-  const policy = parseRoutineSubscriptionAccountJournal(env, p.policy, scope);
-  if (policy.payload.data.state !== 'active' || f.appId !== policy.payload.data.appId || created < policy.created_at
-    || created < policy.payload.data.validFrom || created >= policy.payload.data.validUntil
-    || !policy.payload.data.templates.some(t => t.mark === f.templateMark && t.templateId === q.template_id)) return routineSubscriptionUnavailable();
-  const body = { attempt_id: r.attempt_id, delivery_id: r.delivery_id, attempt_no: r.attempt_no, source_key: r.source_key,
-    payload: p as unknown as AttemptPayload, created_at: created };
-  if (!subscriptionEqual(r.signature, subscriptionMac(env, 'delivery-attempt', body))) return routineSubscriptionUnavailable();
-  return freezeSubscription({ ...body, signature: r.signature });
-}
-function parseReceipt(env: Env, raw: unknown, a: Attempt, scope: RoutineSubscriptionScope): Receipt {
-  const r = subscriptionObject(raw, ['result_id', 'attempt_id', 'payload', 'created_at', 'signature']);
-  const p = subscriptionObject(r.payload, ['format', 'purpose', 'scope', 'attemptSignature', 'result']);
-  const result = subscriptionObject(p.result, ['code', 'httpStatus', 'rawDigest', 'requestStartedAt', 'verifiedAt']);
-  const created = number(r.created_at);
-  if (!subscriptionHex(r.result_id) || r.attempt_id !== a.attempt_id || !subscriptionHex(r.signature) || !time(created)
-    || p.format !== 1 || p.purpose !== 'routine_subscription_result' || !subscriptionSame(p.scope, scope) || p.attemptSignature !== a.signature
-    || !Number.isInteger(result.code) || Number(result.code) < -2147483648 || Number(result.code) > 2147483647
-    || !Number.isInteger(result.httpStatus) || Number(result.httpStatus) < 100 || Number(result.httpStatus) > 599
-    || result.code === 0 && (Number(result.httpStatus) < 200 || Number(result.httpStatus) >= 300)
-    || !subscriptionHex(result.rawDigest) || !time(result.requestStartedAt) || !time(result.verifiedAt)
-    || result.verifiedAt < result.requestStartedAt || result.verifiedAt - result.requestStartedAt > 9
-    || result.requestStartedAt < a.created_at - 60 || result.verifiedAt > created + 60
-    || created < a.created_at || created - a.created_at > 90
-    || r.result_id !== subscriptionMac(env, 'delivery-result-id', [a.attempt_id, a.signature])) return routineSubscriptionUnavailable();
-  const body = { result_id: r.result_id, attempt_id: r.attempt_id, payload: p as unknown as Receipt['payload'], created_at: created };
-  if (!subscriptionEqual(r.signature, subscriptionMac(env, 'delivery-result', body))) return routineSubscriptionUnavailable();
-  return freezeSubscription({ ...body, signature: r.signature });
 }
 async function history(tx: DbClient, env: Env, c: Readonly<RoutineSubscriptionClaim>) {
   if (!await assertRoutineSubscriptionDeliveryReadTx(tx)) return routineSubscriptionUnavailable();

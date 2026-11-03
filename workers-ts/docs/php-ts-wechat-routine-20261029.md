@@ -1007,3 +1007,22 @@ pure-01六阶段728.32秒、native-02两完整PG文件290.67秒，两批8607输�
 实际 [run 41613267383](https://github.com/cinagroup/cinashop/actions/runs/41613267383) 的两个 Uni job 在完整分组比较中发现第53轮新增私有输入步骤，属于独立 CJS 历史读口缺失。新增 helper 复用 `e5427c…` 完整来源证明，严格核当前 `2dd8f6…` 和五处精确逆编辑，只向旧分组测试提供 f2／`30c491…` 前像。原 baseline、实际 workflow、旧 49 项 verify／反例／真实 Bash 正文与预算不动，旧入口仅两处 import 接线；完整撤回这两处后 SHA256 仍为 `624a77ae…`。新测试进入同一真实 CI 入口，**94 项＝49＋45 全部通过／零跳过，1.53 秒**，8,629 预列输入字节保持，单并发与 600／1200 秒不变，没有重复计数。
 
 本轮只有三份 CJS 和两份文档；TS／依赖／业务代码未改，未运行本轮类型检查、构建或完整 Worker，也不宣称云端 gate／整体迁移完成。参与作者复核不是独立验收或安全审计；五文件另扫秘密并核审阅、暂存和提交字节。本地提交合 main／清理本轮分支与后续远端推送分别守卫；私库供应或替代接线及新提交云端验收仍待完成，生产 DDL／Env、用户权益旧单和 AppID 切换保持原边界。
+
+
+## 第60轮：同一维护快照的订阅请求、staging 与发送历史
+
+本轮基点为 `18073410c0b6a8d9aa9a776d945259f04a3e2ffd`。用户询问旧库不上传的可行性后，完整旧 PHP 上传继续停止，不重试，也没有安装自托管 runner 或选定新云端供应合同。前轮已有部分数据发往私库，不能改称从未传输；本轮不向远端发送旧源码；消费者推送驱动不读取或发送 CI 私钥。实际 [run 41618794401](https://github.com/cinagroup/cinashop/actions/runs/41618794401) 已终态：Uni core／authors／聚合及 Admin、PC、Kefu、Supplier、Worker runtime、secret、catalog job 成功；两个 Worker unit 分片在固定旧 PHP 检出失败，必需聚合仍失败。没有绕过 gate 记绿。
+
+完成[订阅通知历史续办维护草案](routine-notification-continuation-draft.md)：在同一完整锁定 RR 只读物理流结束前，同时完成 inventory、身份、原付款及通知分类，并以组合 HMAC 绑定三个分类和同一 sourceDigest。通知只解释四个命名 public heap 根，加同快照的 subscription policy／原付款两个历史引用根；其他 schema、继承子表及其他业务仍完整计数／指纹并列为 unclassified。期望 scope 来自真实库及 policy 表 owner／OID，APP_KEY 仅在本地验 HMAC，不发送 SQL；没有从 payload 或当前诊断 actor 自证归属。
+
+提取共享纯 request2／3／4、intent、attempt／result 解码，旧签名域／字段／时间／异常保持，runtime attempt／SQL history 的当前 actor、fresh admission、凭据、token、WeakMap 单次能力及 provider 路径保留原服务。维护侧认证捕获时的历史 policy／actor，不因当前撤销、过期或停止 LOGIN 抹掉旧回执。核签名请求与物理 outbox、staging 的订单／买家／模板／时间，以及 delivery 的目标、模板、URL／data／时间；整条有界 attempt 链要求 ordinal、previous ID、语义 source key、request 和 intentDigest 一致。末次无 result 保持 UNKNOWN，历史 accepted 与当前可变投影漂移分开。原证及 policy recordDigest 可与同快照 payments 闭合；输出仅计数、固定标签、目录元数据和 keyed 摘要，全部发送／activation／permit／switch 标志 false。
+
+压缩读取保留旧七个 JSONB CHECK 证明，再严格核既有 attempt／result 的完整 CHECK／OID／NOT NULL／内建依赖。mutable outbox／delivery 的新例外仅限实际 PG16.14／160014 两个命名 payload、有效 pglz 和物理≤32KiB；内建 jsonb_set_lax 保持原值，实际二进制≤32KiB 后才走 numeric-leaf 和整行≤262144预算。固定八份 PG 源码逐字核 SHA；有效 pglz 中间展开保守界小于3MiB，不是损坏 TOAST header 的后端内存配额或完整 DDL／writer fence。二进制上限不保证整行可接收。真实 scalar／array、未知关系／列、物理及数字展开超界、peer 后建 JSONB→text cast／显式可观察控制均验收；无生产 DDL／storage／grants 放宽，未伪造 LZ4 原生证明。
+
+三类原生整文件分别 15／17／14 全通过：第14个实际 Admin 下单→批准的 A 付款回调→发货→Queue 成功源补齐 request2，保留原13个安装前旧源；同格式 outboxDigest→accepted deliveryDigest→attempt→result 精确关联。真实手工虚拟商品先设目录再下单付款发货，只生成 SMS／站内信记录，没有 Mini 发送记录；不是新增 Routine 路径。三个真实套件各观察到 staged pglz，维护读取前后旧用户／单／付款／证据物理指纹和外部调用计数保持；format2 的实际 NOLOGIN 后继仍认证旧历史，format4 对 URL／data／时间的显式可变行反例保留签名历史，恢复值但不冒称其 MVCC 未变。provider／cache／Queue 传输受控，phone 连续性用 server-verified 夹具输入，不称真实微信或手机号 HTTP 验收。
+
+最终接受 PG70＝预算及旧 inventory21＋三通知46＋旧账号混合五 LOGIN 兼容3，所有原生宿主 remaining0／STOPPED；07／08／09／10 耗时286.94／325.70／320.11／555.85秒。纯逻辑1131＝check06保留1122＋check11当前调度器9替换旧9，不累计中间重复。Vitest config 会动态读取改后的 native／helper 正文，不能称所有动态输入逐字未变；独立静读核前像 SHA、差异未改 import／调度风险，当前调度器又整文件通过。预算21的 reader／runner／两选定文件及被执行读路径未变，新可选 accumulator 未被两 API 调用，明确作为受限复用，不称最终整组重跑。最终两完整 Worker 类型配置及当前调度器的终态为 check11 三阶段全部通过、零跳过，共448.38秒（unit 219.88／runtime 101.94秒），8641输入各阶段不变。07～11 工作树／Node／PG 输入一致，不同两 driver 各核自身 SHA；本轮文档终态后补，二十消费者提交文件另扫秘密并核审阅／暂存／提交字节。
+
+保留02显式 schema-maintenance 文件准入失败（PG未启动）、03错误测试把二进制cap等同整行cap的20通过／1失败、05三处只读反例赋值类型错误；均先留终态，再作窄修，未弱化生产 reader。01旧纯子集、06前像类型及旧9不重复累计。单层共享锁、单 worker、600／1200秒及原内存限制保持；作者复核与独立源码／证据静读区分，未冒称独立执行或安全审计，证据在本机 `.cache/php-ts-phase60-validation`。
+
+独立 CLI 仅有19项进程前置拒绝；成功路径通过 collector API，不称 CLI 真实连接或远程 TLS 验收。当前业务新鲜准入、catalog commissioning、credentials、外部 Queue／provider 状态、其他通知／角色／非微信、全部维护来源、完整 manifest／单次 permit／原子 AppID 切换及回执恢复、旧 PHP 云端供应与整体迁移仍未完成。没有生产维护或部署，尚无本轮新代码的 Browser／Workerd／Hyperdrive或真实微信验收；用户／UID／权益／旧单／付款及跨 AppID 屏障保持。

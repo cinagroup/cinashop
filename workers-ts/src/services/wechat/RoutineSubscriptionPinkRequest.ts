@@ -1,3 +1,7 @@
+import type { RoutineSubscriptionPinkBusiness, RoutineSubscriptionPinkGroup, RoutineSubscriptionPinkMember, RoutineSubscriptionPinkRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+import { parseRoutineSubscriptionPinkRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export { parseRoutineSubscriptionPinkRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export type { RoutineSubscriptionPinkBusiness, RoutineSubscriptionPinkGroup, RoutineSubscriptionPinkMember, RoutineSubscriptionPinkRequest } from './RoutineSubscriptionRequestEvidenceCodec';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
@@ -6,26 +10,10 @@ import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
 import { inspectRoutineSubscriptionDeliveryCatalog } from '@/migrations/routineSubscriptionDelivery';
 import { readRoutineSubscriptionNoticeWriterTx, type RoutineSubscriptionNoticeWriterProvenance } from './RoutineSubscriptionNoticeRequest';
 import { freezeSubscription, routineSubscriptionUnavailable, subscriptionEqual, subscriptionHex, subscriptionInteger,
-  subscriptionMac, subscriptionObject, subscriptionSame, subscriptionUuid, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
+  subscriptionMac, subscriptionObject, subscriptionSame, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
 
 type Query = Pick<DbClient, 'execute'>;
 type Signing = Readonly<{ APP_KEY?: string }>;
-export interface RoutineSubscriptionPinkBusiness { orderId: number; orderNo: string; userId: number; pinkId: number; people: number }
-export interface RoutineSubscriptionPinkGroup {
-  readonly pinkId: number; readonly combinationId: number; readonly productId: number; readonly people: number;
-  readonly completedAt: number; readonly realMembers: number; readonly virtualMembers: number;
-  readonly memberIds: readonly number[]; readonly membersDigest: string;
-}
-export interface RoutineSubscriptionPinkMember {
-  readonly id: number; readonly uid: number; readonly orderId: number; readonly orderNo: string;
-  readonly orderIdKey: string; readonly addTime: number;
-}
-export interface RoutineSubscriptionPinkRequest {
-  readonly format: 4; readonly requestId: string; readonly scope: Readonly<RoutineSubscriptionScope>;
-  readonly actor: Readonly<{ role: string; roleOid: string }>; readonly eventKey: string; readonly aggregateId: number;
-  readonly eventTime: number; readonly body: Readonly<RoutineSubscriptionPinkBusiness>; readonly group: Readonly<RoutineSubscriptionPinkGroup>;
-  readonly member: Readonly<RoutineSubscriptionPinkMember>; readonly createdAt: number; readonly signature: string;
-}
 export interface RoutineSubscriptionPinkUnavailable { readonly format: 4; readonly unavailable: true }
 export type RoutineSubscriptionPinkRequestOutcome = { readonly kind: 'legacy' } | {
   readonly kind: 'original'; readonly request: Readonly<RoutineSubscriptionPinkRequest | RoutineSubscriptionPinkUnavailable>;
@@ -231,21 +219,7 @@ export function createRoutineSubscriptionPinkRequestTx(tx: DbClient, candidate: 
 }
 /** Historical formation provenance only. Current owner, independent 3098
  * approval and each buyer's original payment remain fresh App/Queue checks. */
-export function parseRoutineSubscriptionPinkRequest(env: Pick<Env, 'APP_KEY'>, raw: unknown,
-  expectedScope: RoutineSubscriptionScope): Readonly<RoutineSubscriptionPinkRequest> {
-  const key = signing(env); if (!key) return routineSubscriptionUnavailable();
-  const r = subscriptionObject(raw, ['format', 'requestId', 'scope', 'actor', 'eventKey', 'aggregateId', 'eventTime', 'body', 'group', 'member', 'createdAt', 'signature']);
-  const scope = scopeValue(r.scope), expected = scopeValue(expectedScope), actor = subscriptionObject(r.actor, ['role', 'roleOid']);
-  const body = captureRoutineSubscriptionPinkBusiness(r.body), group = groupValue(r.group), member = memberValue(r.member, body, group);
-  if (r.format !== 4 || !subscriptionUuid(r.requestId) || !subscriptionSame(scope, expected) || !name(actor.role) || !oid(actor.roleOid)
-    || actor.role === scope.maintenance || actor.roleOid === scope.maintenanceOid || r.eventKey !== `order.pink.success.notice:${body.orderId}`
-    || r.aggregateId !== body.orderId || !subscriptionInteger(r.eventTime) || !subscriptionInteger(r.createdAt)
-    || group.pinkId !== body.pinkId || group.people !== body.people) return routineSubscriptionUnavailable();
-  const unsigned = { format: 4 as const, requestId: r.requestId, scope, actor: Object.freeze({ role: actor.role, roleOid: actor.roleOid }),
-    eventKey: r.eventKey as string, aggregateId: body.orderId, eventTime: r.eventTime, body, group, member, createdAt: r.createdAt };
-  if (!subscriptionEqual(r.signature, subscriptionMac(key, 'pink-notice-request', unsigned))) return routineSubscriptionUnavailable();
-  return freezeSubscription({ ...unsigned, signature: r.signature as string });
-}
+
 /** Caller authenticates request against its actual database scope first and
  * owns public table fences. Other signed members may later refund; only this
  * target and its leader must still qualify. Identity, set and digest stay exact. */

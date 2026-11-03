@@ -5,6 +5,7 @@ import { createHmac, type Hmac } from 'node:crypto';
 import type postgres from 'postgres';
 import { routineIdentityAccumulator, type RoutineIdentityContinuation } from './routine-identity-continuation';
 import { routinePaymentAccumulator, type RoutinePaymentContinuation } from './routine-payment-continuation';
+import { routineNotificationAccumulator, type RoutineNotificationContinuation } from './routine-notification-continuation';
 
 type Query = Pick<postgres.Sql, 'unsafe'>;
 type Relation = { oid: string; type_oid: string; schema: string; name: string; kind: string; am: string | null };
@@ -25,6 +26,9 @@ export type RoutineAccountContinuationDraft = {
   inventory:RoutineOwnershipInventory;identity:RoutineIdentityContinuation;payments:RoutinePaymentContinuation;
   classificationDigest:string;
 };
+export type RoutineNotificationContinuationDraft=Omit<RoutineAccountContinuationDraft,'purpose'>&{
+  purpose:'routine_notification_continuation_draft';notifications:RoutineNotificationContinuation;
+};
 
 // Capacity refusals are whole-operation failures, never successful prefixes.
 const PAGE = 16, MAX_RELATIONS = 2048, MAX_ROW_BYTES = 262144, MAX_DURATION_MS = 30000;
@@ -41,6 +45,8 @@ const constrainedJson:Record<string,readonly [string,string,number]>={
   routine_shipping_account_policy:['payload','rshp_payload_ck',16384],
   routine_subscription_account_policy:['payload','rsua_payload_ck',32768],
   routine_identity_witness:['observation','riw_observation_ck',8192],
+  routine_subscribe_attempt:['payload','rsnd_a_payload_ck',65536],
+  routine_subscribe_result:['payload','rsnd_r_payload_ck',32768],
 };
 const jsonBoundProof=`SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint k
   JOIN pg_catalog.pg_attribute a ON a.attrelid=k.conrelid AND a.attname=$2
@@ -80,7 +86,7 @@ function hash(key: string, domain: string) {
 // user code. Arrays, domains, enums, foreign tables and custom table AMs require
 // a separately reviewed extension, not a fallback cast in this reader.
 const scalarOids = new Set([16,17,18,19,20,21,23,25,26,114,700,701,1042,1043,1082,1083,1114,1184,1186,1266,1700,2950,3802]);
-function rowBudget(columns: Column[], boundedJsonColumn:string|null=null) {
+function rowBudget(columns: Column[], boundedJsonColumn:string|null=null, compressedJsonColumn:string|null=null) {
   let overhead = 2;
   const terms = columns.map(column => {
     if (column.namespace !== 'pg_catalog' || !scalarOids.has(column.oid)) throw fail();
@@ -98,8 +104,20 @@ function rowBudget(columns: Column[], boundedJsonColumn:string|null=null) {
       if(column.oid===3802&&column.name===boundedJsonColumn)
         return `COALESCE(pg_catalog.octet_length(${jsonText(c)})::bigint,4)`;
       const json = column.oid === 114 ? `pg_catalog.jsonb_in(pg_catalog.json_out(${c}))` : c;
-      return `CASE WHEN pg_catalog.pg_column_compression(${c}) IS NOT NULL OR pg_catalog.pg_column_size(${c})>32768
-        THEN ${MAX_ROW_BYTES + 1} ELSE COALESCE(8::bigint*pg_catalog.pg_column_size(${c}),4)
+      // PG16.14's valid pglz stream expands by at most 91 bytes per encoded
+      // byte. Physical size <=32KiB therefore bounds the intermediate detoast
+      // (<3MiB) BEFORE jsonb_set_lax returns the same detoasted datum. Only a
+      // <=32KiB actual binary value may reach the existing numeric-leaf walk.
+      // This is not a bound on corrupted storage headers/backend allocation.
+      const physical = `pg_catalog.pg_column_size(${c})`;
+      const rawSize = `pg_catalog.pg_column_size(pg_catalog.jsonb_set_lax(${c},'{}'::pg_catalog.text[],NULL::pg_catalog.jsonb,false,'return_target'::pg_catalog.text))`;
+      const binarySize = column.oid===3802&&column.name===compressedJsonColumn
+        ? `CASE WHEN pg_catalog.pg_column_compression(${c}) IS NULL THEN ${physical}
+          WHEN pg_catalog.pg_column_compression(${c})='pglz' AND ${physical}<=32768 THEN ${rawSize}
+          ELSE ${MAX_ROW_BYTES+1} END`
+        : `CASE WHEN pg_catalog.pg_column_compression(${c}) IS NOT NULL THEN ${MAX_ROW_BYTES+1} ELSE ${physical} END`;
+      return `CASE WHEN (${binarySize})>32768
+        THEN ${MAX_ROW_BYTES + 1} ELSE COALESCE(8::bigint*(${binarySize}),4)
         +COALESCE((SELECT sum(pg_catalog.octet_length(${jsonText('v')})) FROM pg_catalog.jsonb_path_query(${json},
           'strict $.** ? (@.type() == "number")'::jsonpath) AS numbers(v)),0) END`;
     }
@@ -183,9 +201,26 @@ export async function collectRoutineAccountContinuationDraft(client:postgres.Sql
     inventory:result.inventory,identity:result.identity,payments:result.payments,classificationDigest:combined.digest('hex')};
 }
 
+/** The complete inventory, identity, payment and notification classifications
+ * all consume the same locked physical RR row stream. No external work runs. */
+export async function collectRoutineNotificationContinuationDraft(client:postgres.Sql,declaration:RoutineInventoryTarget,
+  fingerprintKey:string,verification:Readonly<{APP_KEY:string}>):Promise<RoutineNotificationContinuationDraft>{
+  const authenticator=verification.APP_KEY;
+  const result=await collectRoutineOwnershipObservation(client,declaration,fingerprintKey,
+    routineIdentityAccumulator(authenticator,fingerprintKey),routinePaymentAccumulator(authenticator,fingerprintKey),
+    routineNotificationAccumulator(authenticator,fingerprintKey));
+  if(!result.identity||!result.payments||!result.notifications)throw fail();
+  const combined=hash(fingerprintKey,'notification-continuation');
+  frame(combined,JSON.stringify([result.inventory.sourceDigest,result.identity.classificationDigest,
+    result.payments.classificationDigest,result.notifications.classificationDigest]));
+  return{purpose:'routine_notification_continuation_draft',activationAllowed:false,permitIssued:false,switchCommissioned:false,
+    inventory:result.inventory,identity:result.identity,payments:result.payments,notifications:result.notifications,classificationDigest:combined.digest('hex')};
+}
+
 async function collectRoutineOwnershipObservation(client: postgres.Sql, declaration: RoutineInventoryTarget,
-  fingerprintKey: string, identity?: ReturnType<typeof routineIdentityAccumulator>, payments?:ReturnType<typeof routinePaymentAccumulator>): Promise<{
-    inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation | null;payments:RoutinePaymentContinuation|null;
+  fingerprintKey: string, identity?: ReturnType<typeof routineIdentityAccumulator>, payments?:ReturnType<typeof routinePaymentAccumulator>,
+  notifications?:ReturnType<typeof routineNotificationAccumulator>): Promise<{
+    inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation | null;payments:RoutinePaymentContinuation|null;notifications:RoutineNotificationContinuation|null;
   }> {
   // Capture primitives synchronously, before BEGIN or any awaited callback.
   const target = { database: declaration.database, maintenance: declaration.maintenance };
@@ -200,13 +235,13 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
   try {
     const contextSql = `SELECT d.oid::text AS database_oid,r.oid::text AS role_oid,
       pg_backend_pid() AS pid,extract(epoch FROM pg_postmaster_start_time())::text AS server_start,
-      current_database() AS database,current_user AS maintenance,
+      current_database() AS database,current_user AS maintenance,current_setting('server_version_num') AS server_version,
       current_user=session_user AND r.rolsuper AND r.rolcanlogin AND current_setting('server_version_num')::integer/10000=16
       AND current_setting('server_encoding')='UTF8' AND NOT pg_is_in_recovery()
       AND current_setting('session_replication_role')='origin' AS ready
       FROM pg_catalog.pg_database d JOIN pg_catalog.pg_roles r ON r.rolname=current_user WHERE d.datname=current_database()`;
     type Context = { database_oid: string; role_oid: string; pid: number; server_start: string;
-      database: string; maintenance: string; ready: boolean };
+      database: string; maintenance: string; server_version:string; ready: boolean };
     const { before, discovered } = await client.begin('isolation level read committed read only', async tx => {
       await query(tx, 'SET LOCAL search_path=pg_catalog');
       await query(tx, limitsSql);
@@ -236,6 +271,11 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
         current_setting('transaction_isolation')='repeatable read' AND current_setting('transaction_read_only')='on' AS ready`);
       if (!snapshot?.ready) throw fail();
       payments?.context({database:target.database,databaseOid:actual.database_oid,observedAt:Number(snapshot.observed_epoch)});
+      if(notifications){
+        const roles=await query<{oid:string;name:string;login:boolean}>(tx,`SELECT oid::text AS oid,rolname AS name,rolcanlogin AS login
+          FROM pg_catalog.pg_roles ORDER BY oid LIMIT 16385`);
+        notifications.context({database:target.database,databaseOid:actual.database_oid,observedAt:Number(snapshot.observed_epoch)},Array.from(roles));
+      }
       // Validate the complete stored column universe before catalog JSON too:
       // pg_attribute.attmissingval may contain a typed array whose conversion
       // would otherwise reach a custom type output function during metadata.
@@ -291,11 +331,12 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
           WHERE a.attrelid=$1::oid AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum`, [relation.oid]);
         if (columns.length > 512) throw fail();
         identity?.relation(relation, Array.from(columns));
-        if(payments?.accepts(relation)){
+        if(payments?.accepts(relation)||notifications?.accepts(relation)){
           const [owner]=await query<{owner:string;owner_oid:string}>(tx,`SELECT r.rolname AS owner,c.relowner::text AS owner_oid
             FROM pg_catalog.pg_class c JOIN pg_catalog.pg_roles r ON r.oid=c.relowner WHERE c.oid=$1::oid`,[relation.oid]);
           if(!owner)throw fail();
-          payments.relation({...relation,owner:owner.owner,ownerOid:owner.owner_oid},Array.from(columns));
+          if(payments?.accepts(relation))payments.relation({...relation,owner:owner.owner,ownerOid:owner.owner_oid},Array.from(columns));
+          if(notifications?.accepts(relation))notifications.relation({...relation,owner:owner.owner,ownerOid:owner.owner_oid},Array.from(columns));
         }
         let boundedJsonColumn:string|null=null;
         const bound=relation.schema==='public'&&relation.kind==='r'&&Object.hasOwn(constrainedJson,relation.name)?constrainedJson[relation.name]:undefined;
@@ -305,7 +346,9 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
           const [proof]=await query<{ready:boolean}>(tx,jsonBoundProof,[relation.oid,column,constraint,expected]);
           if(proof?.ready===true)boundedJsonColumn=column;
         }
-        const budget = rowBudget(columns,boundedJsonColumn), digest = hash(fingerprintKey, 'relation');
+        const compressedJsonColumn=actual.server_version==='160014'&&relation.schema==='public'&&relation.kind==='r'
+          && ['store_order_outbox','order_notification_delivery'].includes(relation.name)?'payload':null;
+        const budget = rowBudget(columns,boundedJsonColumn,compressedJsonColumn), digest = hash(fingerprintKey, 'relation');
         frame(digest, JSON.stringify(relation));
         let count = 0n;
         // The sentinel makes even an empty parsed relation attest its actual
@@ -323,6 +366,7 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
           if (row.empty) return;
           identity?.row(relation, row.value!);
           payments?.row(relation,row.value!);
+          notifications?.row(relation,row.value!);
           frame(digest, row.value!); count++;
         });
         total += count;
@@ -339,8 +383,9 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
         metadataDigest, sourceDigest: source.digest('hex'), rowCount: total.toString(), relations };
       const classification = identity?.finish(relations, inventory.sourceDigest) ?? null;
       const paymentClassification=payments?.finish(relations,inventory.sourceDigest)??null;
+      const notificationClassification=notifications?.finish(relations,inventory.sourceDigest)??null;
       if (Date.now() >= deadline) throw fail();
-      return { inventory, identity: classification,payments:paymentClassification };
+      return { inventory, identity: classification,payments:paymentClassification,notifications:notificationClassification };
     });
   } catch { throw fail(); } // SQL/cast errors can contain secrets or row values.
 }

@@ -1,3 +1,6 @@
+import type { RefusalBusiness, RoutineSubscriptionRefusalDecision, RoutineSubscriptionRefusalRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export { parseRoutineSubscriptionRefusalRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export type { RefusalBusiness, RoutineSubscriptionRefusalBusiness, RoutineSubscriptionRefusalDecision, RoutineSubscriptionRefusalRequest } from './RoutineSubscriptionRequestEvidenceCodec';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
@@ -5,27 +8,16 @@ import type { Env } from '@/env';
 import type { DbClient } from '@/lib/di';
 import { inspectRoutineSubscriptionDeliveryCatalog } from '@/migrations/routineSubscriptionDelivery';
 import { readRoutineSubscriptionNoticeWriterTx } from './RoutineSubscriptionNoticeRequest';
-import { freezeSubscription, routineSubscriptionUnavailable, subscriptionEqual, subscriptionHex, subscriptionInteger,
-  subscriptionMac, subscriptionObject, subscriptionSame, subscriptionUuid, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
+import { freezeSubscription, routineSubscriptionUnavailable, subscriptionHex, subscriptionInteger,
+  subscriptionMac, subscriptionObject, subscriptionSame } from './RoutineSubscriptionAccount';
 
 type Query = Pick<DbClient, 'execute'>;
 type Signing = Readonly<{ APP_KEY?: string }>;
-export interface RefusalBusiness { orderId: number; orderNo: string; refundId: number; userId: number; payPrice: string }
-export type RoutineSubscriptionRefusalBusiness = RefusalBusiness;
-export interface RoutineSubscriptionRefusalDecision { readonly refuseReason: string; readonly refundedTime: number; readonly applicationDigest: string }
-export interface RoutineSubscriptionRefusalRequest {
-  readonly format: 3; readonly requestId: string; readonly scope: Readonly<RoutineSubscriptionScope>;
-  readonly actor: Readonly<{ role: string; roleOid: string }>; readonly eventKey: string; readonly aggregateId: number;
-  readonly eventTime: number; readonly body: Readonly<RefusalBusiness>; readonly decision: Readonly<RoutineSubscriptionRefusalDecision>;
-  readonly createdAt: number; readonly signature: string;
-}
 export interface RoutineSubscriptionRefusalUnavailable { readonly format: 3; readonly unavailable: true }
 export type RoutineSubscriptionRefusalRequestOutcome = { readonly kind: 'legacy' } | {
   readonly kind: 'original'; readonly request: Readonly<RoutineSubscriptionRefusalRequest | RoutineSubscriptionRefusalUnavailable>;
 };
 const UNAVAILABLE = Object.freeze({ kind: 'original' as const, request: Object.freeze({ format: 3 as const, unavailable: true as const }) });
-const name = (v: unknown): v is string => typeof v === 'string' && /^[a-z_][a-z0-9_]{0,62}$/u.test(v) && !v.startsWith('pg_') && v !== 'information_schema';
-const oid = (v: unknown): v is string => typeof v === 'string' && /^[1-9][0-9]{0,9}$/u.test(v) && BigInt(v) <= 4294967295n;
 const zeroInteger = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0 && Number(v) <= 2147483647;
 const money = (v: unknown): v is string => typeof v === 'string' && /^(?:0|[1-9][0-9]{0,9})\.[0-9]{2}$/u.test(v);
 function text(v: unknown, max: number, nonempty = false): v is string {
@@ -37,11 +29,6 @@ function signing(env: Signing | undefined): Readonly<Pick<Env, 'APP_KEY'>> | und
   const key = Object.getOwnPropertyDescriptor(env, 'APP_KEY');
   if (!key?.enumerable || !('value' in key) || typeof key.value !== 'string' || !key.value || key.value.length > 8192) return;
   return Object.freeze({ APP_KEY: key.value });
-}
-function scopeValue(raw: unknown): Readonly<RoutineSubscriptionScope> {
-  const r = subscriptionObject(raw, ['database', 'databaseOid', 'maintenance', 'maintenanceOid']);
-  if (!name(r.database) || !oid(r.databaseOid) || !name(r.maintenance) || !oid(r.maintenanceOid)) return routineSubscriptionUnavailable();
-  return Object.freeze({ database: r.database, databaseOid: r.databaseOid, maintenance: r.maintenance, maintenanceOid: r.maintenanceOid });
 }
 export function captureRoutineSubscriptionRefusalBusiness(raw: unknown): Readonly<RefusalBusiness> {
   const r = subscriptionObject(raw, ['orderId', 'orderNo', 'refundId', 'userId', 'payPrice']);
@@ -142,19 +129,3 @@ export async function createRoutineSubscriptionRefusalRequestTx(tx: Query, env: 
 }
 /** Authentication of historical public provenance only; no current writer
  * liveness, owner, template, latest policy or send capability is implied. */
-export function parseRoutineSubscriptionRefusalRequest(env: Pick<Env, 'APP_KEY'>, raw: unknown,
-  expectedScope: RoutineSubscriptionScope): Readonly<RoutineSubscriptionRefusalRequest> {
-  const key = signing(env); if (!key) return routineSubscriptionUnavailable();
-  const r = subscriptionObject(raw, ['format', 'requestId', 'scope', 'actor', 'eventKey', 'aggregateId', 'eventTime', 'body', 'decision', 'createdAt', 'signature']);
-  const scope = scopeValue(r.scope), expected = scopeValue(expectedScope), actor = subscriptionObject(r.actor, ['role', 'roleOid']);
-  const body = captureRoutineSubscriptionRefusalBusiness(r.body);
-  if (r.format !== 3 || !subscriptionUuid(r.requestId) || !subscriptionSame(scope, expected) || !name(actor.role) || !oid(actor.roleOid)
-    || actor.role === scope.maintenance || actor.roleOid === scope.maintenanceOid || !subscriptionInteger(body.userId)
-    || r.eventKey !== `order.refund.refused.notice:${body.refundId}` || r.aggregateId !== body.orderId
-    || !subscriptionInteger(r.eventTime) || !subscriptionInteger(r.createdAt)) return routineSubscriptionUnavailable();
-  const decision = decisionValue(r.decision, r.eventTime);
-  const unsigned = { format: 3 as const, requestId: r.requestId, scope, actor: Object.freeze({ role: actor.role, roleOid: actor.roleOid }),
-    eventKey: r.eventKey as string, aggregateId: body.orderId, eventTime: r.eventTime, body, decision, createdAt: r.createdAt };
-  if (!subscriptionEqual(r.signature, subscriptionMac(key, 'refusal-notice-request', unsigned))) return routineSubscriptionUnavailable();
-  return freezeSubscription({ ...unsigned, signature: r.signature as string });
-}

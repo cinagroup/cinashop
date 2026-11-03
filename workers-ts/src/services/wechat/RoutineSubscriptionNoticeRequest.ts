@@ -1,22 +1,16 @@
+import type { NoticeBusiness, RoutineSubscriptionNoticeRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export { parseRoutineSubscriptionNoticeRequest } from './RoutineSubscriptionRequestEvidenceCodec';
+export type { NoticeBusiness, RoutineSubscriptionNoticeRequest } from './RoutineSubscriptionRequestEvidenceCodec';
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import type { DbClient } from '@/lib/di';
 import { inspectRoutineSubscriptionDeliveryCatalog } from '@/migrations/routineSubscriptionDelivery';
-import { freezeSubscription, routineSubscriptionUnavailable, subscriptionEqual, subscriptionInteger,
- subscriptionMac, subscriptionObject, subscriptionSame, subscriptionUuid, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
+import { freezeSubscription, routineSubscriptionUnavailable, subscriptionInteger,
+ subscriptionMac, subscriptionObject, type RoutineSubscriptionScope } from './RoutineSubscriptionAccount';
 
 type Query=Pick<DbClient,'execute'>;
 type Signing=Readonly<{APP_KEY?:string}>;
-export interface NoticeBusiness {
- orderId:number;orderNo:string;userId:number;deliveryType:'express'|'send'|'fictitious'|'city_delivery';
- deliveryName:string;deliveryId:string;userAddress:string;cityDeliveryJobId?:number;
-}
-export interface RoutineSubscriptionNoticeRequest {
- readonly format:2;readonly requestId:string;readonly scope:Readonly<RoutineSubscriptionScope>;
- readonly actor:Readonly<{role:string;roleOid:string}>;readonly eventKey:string;readonly aggregateId:number;
- readonly eventTime:number;readonly body:Readonly<NoticeBusiness>;readonly createdAt:number;readonly signature:string;
-}
 export interface RoutineSubscriptionNoticeUnavailable {readonly format:2;readonly unavailable:true}
 export type RoutineSubscriptionNoticeRequestOutcome={readonly kind:'legacy'}|{
  readonly kind:'original';readonly request:Readonly<RoutineSubscriptionNoticeRequest|RoutineSubscriptionNoticeUnavailable>;
@@ -126,18 +120,3 @@ export async function createRoutineSubscriptionNoticeRequestTx(tx:Query,env:Sign
 /** Historical signed provenance only. The writer need not still exist or remain
  * enabled today. This establishes no current owner, template approval, latest
  * policy, token or permission to POST; App admission proves those separately. */
-export function parseRoutineSubscriptionNoticeRequest(env:Pick<Env,'APP_KEY'>,raw:unknown,
- expectedScope:RoutineSubscriptionScope):Readonly<RoutineSubscriptionNoticeRequest>{
- const key=signing(env);if(!key)return routineSubscriptionUnavailable();
- const r=subscriptionObject(raw,['format','requestId','scope','actor','eventKey','aggregateId','eventTime','body','createdAt','signature']);
- const scope=scopeValue(r.scope),expected=scopeValue(expectedScope),actor=subscriptionObject(r.actor,['role','roleOid']);
- const business=captureRoutineSubscriptionNoticeBusiness(r.body);
- if(r.format!==2||!subscriptionUuid(r.requestId)||!subscriptionSame(scope,expected)||!name(actor.role)||!oid(actor.roleOid)
-  ||actor.role===scope.maintenance||actor.roleOid===scope.maintenanceOid||r.eventKey!==eventKey(business)||r.aggregateId!==business.orderId
-  ||!subscriptionInteger(business.userId)||business.deliveryType==='fictitious'||!subscriptionInteger(r.eventTime)||!subscriptionInteger(r.createdAt))
-  return routineSubscriptionUnavailable();
- const body={format:2 as const,requestId:r.requestId,scope,actor:Object.freeze({role:actor.role,roleOid:actor.roleOid}),
-  eventKey:r.eventKey as string,aggregateId:business.orderId,eventTime:r.eventTime,body:business,createdAt:r.createdAt};
- if(!subscriptionEqual(r.signature,subscriptionMac(key,'notice-request',body)))return routineSubscriptionUnavailable();
- return freezeSubscription({...body,signature:r.signature as string});
-}

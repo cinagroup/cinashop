@@ -5,6 +5,7 @@
  * authors. SQL corruption/locking/fault DDL below are explicit negative cases.
  * HTTP, KV/cache and Queue transports are local; no real provider consent,
  * production commissioning, browser, SMS/form-login or Workerd is claimed. */
+import { assertRoutineNotificationContinuation } from './helpers/routineNotificationContinuationAssertions';
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { and, eq, sql } from 'drizzle-orm';
@@ -491,4 +492,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual original-
       provider(); expect(await consumer().processMessage(await queued(repaired), network)).toBe('sent'); expect(posts()).toHaveLength(1);
     } finally { await approve(); }
   }, 120000);
+  it('classifies actual format3 history in the complete maintenance snapshot without sending or rewriting it', async () => {
+    await assertRoutineNotificationContinuation(f,3,()=>[network.mock.calls.length,transport.get.mock.calls.length,transport.set.mock.calls.length,
+      transport.remove.mock.calls.length,transport.take.mock.calls.length,transport.setIfAbsent.mock.calls.length,f.messages.length],[CURRENT_B,TARGET,BARE_B,PHONE,SECRET,TEMPLATE],false);
+  },90000);
 });
