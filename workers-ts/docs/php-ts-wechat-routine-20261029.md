@@ -894,3 +894,12 @@ split/city、其他角色与容量未单独动态重证，退款拒绝/成团等
 virtual02原41项、regression05本地准入76及新旧通知31共148项PG16通过、零跳过，final07 unit类型通过；生产源码与341字节一致，没有重复runtime检查／构建。三批各8585输入运行中及补文档前一致，三个PG remaining0／STOPPED。原500人用例证明legacy业务5真实+495虚拟，不能升级为request4的500真实买家原账号证明。先跑的2例／39未选不重复计数，第50轮41失败及基线代表失败保留。只读复核非独立重跑／安全审计，文档后补，提交文件另扫秘密核字节。
 
 341的[新CI](https://github.com/cinagroup/cinashop/actions/runs/41562752284)末次快照仍运行，不称全绿。固定角色碰撞、其余旧来源绑定／缺失PHP和诊断CI问题、其他通知／角色／非微信、完整manifest／单次许可／原子切换及整体迁移仍未完成。本轮没有生产DDL／Env切换、部署、真实微信或Browser／Workerd／Hyperdrive验收；用户／UID／权益／旧单／付款与runtime_ready=false保持，新提交推送须具体授权。
+
+
+## 第52轮：固定角色文件调度与受控生命周期验证
+
+`e2757cb1b6e2a4bc2031ff9c97c126d22eae94a4`已按授权推送。本轮完成[固定角色测试调度](fixed-role-fixture-scheduling.md)：AST反向闭包将三根夹具及未知动态目标保守收齐，保留原Manager六文件、专用项目去重；实际1648文件各一次、824／824完整分片，58文件单worker串行，原hook／内存／分片算法不改。真实工厂在外层期限后继续创建角色已受控证实，随后精确drain／owned close归零；不是实际失败hook或历史首次冲突复现，不修改工厂取消／所有权协议。
+
+最终729单元、30原生（1＋6＋12＋11）及Worker unit类型通过，零跳过，四成功PG均remaining0／STOPPED；生产源码与共享夹具不改。保留类型宽化失败及600秒合并命令超时；后者17条打印不计成功，自有PG宿主确认停止但残留角色未审计，再按完整文件和原600／1200预算通过。各批输入运行期间不变、最终仓库源图相同；原日志／冻结／复核在本机.cache/php-ts-phase52-validation，文档后补、提交另扫秘密。
+
+e275的[CI](https://github.com/cinagroup/cinashop/actions/runs/41565199699)在2026-11-03T03:06:18.557Z仍有两个Worker分片运行、其余10成功，不代替新SHA验证。PHP输入等剩余CI问题、其他通知／角色／非微信、完整manifest／单次许可／原子切换和整体迁移仍未完成；无生产DDL／Env切换、部署或真实微信，旧用户／权益／旧单／付款与runtime_ready=false保持，新提交推送须具体授权。
