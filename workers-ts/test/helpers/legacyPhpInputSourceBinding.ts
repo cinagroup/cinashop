@@ -1,7 +1,7 @@
 /** One exact workflow predecessor for the new fixed PHP input steps. The older
  * two-layer proof and its assertions remain unchanged behind import-only wiring. */
 import { createHash } from 'node:crypto';
-import { readFileSync as readDiskFileSync } from 'node:fs';
+import { readPostMergeHistoricalSource as readDiskFileSync } from './postMergeSourceBinding';
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

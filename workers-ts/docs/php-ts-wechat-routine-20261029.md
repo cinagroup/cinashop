@@ -921,3 +921,16 @@ e275的[CI](https://github.com/cinagroup/cinashop/actions/runs/41565199699)在20
 完整原库默认规则限深扫描66项/55文件，11项有技术上下文、55项仍需持有人核实；OAuth appsecret配置、初始管理员哈希seed及再分发限制存在，不推断失效或公开许可。固定SHA保持全部原内容，私有只读不替代持有人/权利审查；新提交扫描与原库扫描分开。旧手动Uni的CRLF derivative未供应/运行，原LF Git字节与旧hash均不改。
 
 尚无私有原库、环境规则/只读凭据和新SHA云端验收；现存源文/schema/容量CI缺口及完整归属维护/单次许可/原子切换、其他通知/角色/非微信和整体迁移继续未完成。没有生产DDL/Env切换、部署、真实微信/Browser/Workerd/Hyperdrive验收，用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障及runtime_ready=false保持。本轮新SHA及私有供应远端操作须一并具体授权。
+
+
+## 第54轮：合并后来源连续性与静态 SQL 声明读取
+
+上一轮本地提交 `53f212ddf1a1025c19642c92be795d5c245af483` 的具体私有接入／两次推送计划，用户答复 **暂不执行远端操作**。计划已标记 deferred；没有变更仓库可见性、environment、deploy key、secret，没有发送凭据或推送任一仓库。远端原库供应、新 SHA 云端 CI 和原库 55 项待核实内容继续未完成。
+
+本轮完成[来源后继与声明审计](ci-schema-source-declarations.md)：四个完整当前 package／pages／routes 文件、十个精确逆编辑及六笔真实 Git 历史，接回原 3d4780a6 合并图，旧三份证明／hash／断言正文不改，仅改 PHP helper 一个实际 import。当前直接读盘／运行时来源和 Git 原文不投影；旧图不能回退充当当前。另用 TypeScript AST 读取 exported const SQL／*_SQL 静态字面量，不执行被审阅迁移 TS 或猜插值；保留 raw 漂移／位置／已知 unresolved，明确有界提取、非穷尽且不是安装证明。默认 raw 模式最终仍拒绝当作完整安装，显式自包含原始 SQL 覆盖保持原语义。
+
+最终 final-06 六阶段 742.80 秒，8598 输入每阶段不变；九完整文件313项为312通过／1既有来源 pin 失败、零跳过，其中新增37及全部153热词通过。Worker unit／runtime 两完整配置分别通过，完整固定PHP输入通过。真实schema CLI仍exit1：外部287／声明364、raw361、外部only0／Workeronly77／列PK漂移0；36静态补充与536已知未求值不构成完整提取／安装。真实原生收集1652各一次、826／826、固定角色58串行，仅是collection，未冒称全文件执行或旧10秒容量通过。
+
+保留三来源首轮缺后继、600秒combined类型超时及新增测试TS2554／TS2345；仅修严格解码／必填BOM选项及stdout窄结构视图，原全字节／列／PK断言保持，最终两配置通过不覆盖原超时。只计最终313结果，不累计中间重复。单层锁／单worker／原内存及600／1200预算保持，原日志／冻结／只读复核在本机.cache/php-ts-phase54-validation；文档终态后补、九提交文件另扫秘密核字节。
+
+剩余旧writeoff约束名来源后继、41新增声明表的封闭cohort／独立owner安装合同、77差异及容量CI仍待处理；不能直接刷新旧hash或320计数。完整manifest／单次许可／原子切换、其他通知／角色／非微信及整体迁移未完成。无生产DDL／Env切换、部署、真实微信／Browser／Workerd／Hyperdrive验收，用户／UID／权益／旧单／付款及runtime_ready=false保持。本轮仅提交合入本地main并清理已合并开发分支，远端操作继续暂缓。

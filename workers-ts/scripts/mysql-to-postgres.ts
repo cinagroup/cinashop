@@ -9,6 +9,11 @@ import {
   formatSchemaAuditMarkdown,
 } from "./data-migration/schema-audit.js";
 import {
+  extractStaticMigrationSql,
+  type StaticSqlLiteral,
+  type UnresolvedSqlSource,
+} from "./data-migration/schema-source-extraction.js";
+import {
   addTableCounts,
   buildTransferPlans,
   copyEligibleTables,
@@ -91,6 +96,14 @@ async function readSchemaFiles(): Promise<{
   sourceSql: string;
   externalTargetSql: string;
   embeddedTargetSql: string;
+  rawEmbeddedTargetSql: string;
+  sourceDeclarations: {
+    mode: "raw-typescript-with-static-literal-supplement" | "explicit-source-override";
+    interpretation: "declared-source-not-installed-catalog";
+    installationEquivalenceProven: false;
+    staticLiteralSupplement: Array<Omit<StaticSqlLiteral, "sql"> & { bytes: number }>;
+    unresolved: UnresolvedSqlSource[];
+  };
 }> {
   const localSourcePath = resolve(import.meta.dirname, "../../../cinashop-php/public/install/crmeb.sql");
   const snapshotSourcePath = resolve(import.meta.dirname, "../audit/legacy-schema-authority.sql");
@@ -110,29 +123,46 @@ async function readSchemaFiles(): Promise<{
     process.env.TARGET_EMBEDDED_MIGRATION_SOURCE ??
     resolve(import.meta.dirname, "../src/services/MigrationService.ts");
   const embeddedSources = [await readFile(embeddedSourcePath, "utf8")];
+  const staticLiterals: StaticSqlLiteral[] = [];
+  const unresolved: UnresolvedSqlSource[] = [];
+  const extract = (sourceText: string, sourceName: string) => {
+    const result = extractStaticMigrationSql(sourceText, sourceName);
+    staticLiterals.push(...result.staticSqlLiterals);
+    unresolved.push(...result.unresolved);
+  };
   // MigrationService may import exact SQL constants from src/migrations to
   // keep very large verified statements out of the service body. Include all
   // local migration modules in the default repository audit so those imports
   // cannot silently disappear from external/Worker parity accounting. An
   // explicit override remains a self-contained source supplied by the caller.
   if (!process.env.TARGET_EMBEDDED_MIGRATION_SOURCE) {
+    extract(embeddedSources[0], "src/services/MigrationService.ts");
     const embeddedMigrationsDirectory = resolve(import.meta.dirname, "../src/migrations");
     const embeddedMigrationFiles = (await readdir(embeddedMigrationsDirectory))
       .filter((name) => name.endsWith(".ts"))
       .sort();
-    embeddedSources.push(
-      ...(await Promise.all(
-        embeddedMigrationFiles.map((name) =>
-          readFile(resolve(embeddedMigrationsDirectory, name), "utf8"),
-        ),
-      )),
-    );
+    const migrationTexts = await Promise.all(embeddedMigrationFiles.map((name) =>
+      readFile(resolve(embeddedMigrationsDirectory, name), "utf8")));
+    for (const [index, sourceText] of migrationTexts.entries()) {
+      embeddedSources.push(sourceText);
+      extract(sourceText, `src/migrations/${embeddedMigrationFiles[index]}`);
+    }
   }
-  const embeddedTargetSql = embeddedSources.join("\n");
+  const rawEmbeddedTargetSql = embeddedSources.join("\n");
   return {
     sourceSql: await readFile(sourcePath, "utf8"),
     externalTargetSql,
-    embeddedTargetSql,
+    // Preserve the historical raw declaration view separately. No expression
+    // is executed or replaced with blank/invented interpolation values.
+    embeddedTargetSql: [rawEmbeddedTargetSql, ...staticLiterals.map(literal => literal.sql)].join("\n"),
+    rawEmbeddedTargetSql,
+    sourceDeclarations: {
+      mode: process.env.TARGET_EMBEDDED_MIGRATION_SOURCE ? "explicit-source-override" : "raw-typescript-with-static-literal-supplement",
+      interpretation: "declared-source-not-installed-catalog",
+      installationEquivalenceProven: false,
+      staticLiteralSupplement: staticLiterals.map(({ sql: text, ...provenance }) => ({ ...provenance, bytes: Buffer.byteLength(text, "utf8") })),
+      unresolved,
+    },
   };
 }
 
@@ -343,20 +373,28 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     throw new Error("verify requires an explicit --tables=table_a,table_b allowlist");
   }
   if (options.command === "schema-audit") {
-    const { sourceSql, externalTargetSql, embeddedTargetSql } = await readSchemaFiles();
+    const { sourceSql, externalTargetSql, embeddedTargetSql, rawEmbeddedTargetSql, sourceDeclarations } = await readSchemaFiles();
     const report = buildSchemaAudit(
       sourceSql,
       externalTargetSql,
       process.env.SOURCE_MYSQL_PREFIX ?? "eb_",
     );
     const definitionDrift = comparePostgresDefinitions(externalTargetSql, embeddedTargetSql);
+    const declarationScan = { ...sourceDeclarations,
+      rawDefinitionDrift: comparePostgresDefinitions(externalTargetSql, rawEmbeddedTargetSql),
+      staticLiteralExtractionScope: sourceDeclarations.mode === "explicit-source-override"
+        ? "explicit-self-contained-source-override-not-typescript-parsed"
+        : "top-level-exported-const-SQL-or-*_SQL-string-or-no-substitution-literals",
+      unresolvedListExhaustive: false,
+      completeStaticSqlExtraction: false,
+    };
     if (options.json) {
-      process.stdout.write(`${JSON.stringify({ coverage: report, definitionDrift }, null, 2)}\n`);
+      process.stdout.write(`${JSON.stringify({ coverage: report, definitionDrift, declarationScan }, null, 2)}\n`);
     } else {
       process.stdout.write(formatSchemaAuditMarkdown(report));
       process.stdout.write("\n## Repository migration definition drift\n\n");
       process.stdout.write(`- External migration tables: ${definitionDrift.externalTableCount}\n`);
-      process.stdout.write(`- Worker migration tables: ${definitionDrift.workerTableCount}\n`);
+      process.stdout.write(`- Worker declared-source tables: ${definitionDrift.workerTableCount}\n`);
       process.stdout.write(
         `- Tables defined only by the external path: ${definitionDrift.externalOnlyTables.map((table) => `\`${table}\``).join(", ")}\n`,
       );
@@ -364,6 +402,14 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
         `- Tables defined only by the Worker path: ${definitionDrift.workerOnlyTables.map((table) => `\`${table}\``).join(", ")}\n`,
       );
       process.stdout.write(`- Tables with column/primary-key drift: ${definitionDrift.columnDrift.length}\n`);
+      process.stdout.write("- Declaration scan only; installed/runAll equivalence is not inferred\n");
+      process.stdout.write(`- Raw declaration tables: ${declarationScan.rawDefinitionDrift.workerTableCount}\n`);
+      process.stdout.write(`- Proven static SQL literal supplements: ${declarationScan.staticLiteralSupplement.length}\n`);
+      process.stdout.write(`- Unevaluated SQL declarations/templates: ${declarationScan.unresolved.length}\n`);
+      process.stdout.write("- Bounded literal supplement; unresolved list is not exhaustive and complete extraction is not proven\n");
+      for (const source of declarationScan.unresolved) {
+        process.stdout.write(`  - ${source.sourceName}:${source.line}:${source.column} (${source.reason})\n`);
+      }
       for (const table of definitionDrift.columnDrift) {
         process.stdout.write(
           `  - ${table.table}: external-only [${table.externalOnlyColumns.join(", ")}], Worker-only [${table.workerOnlyColumns.join(", ")}]` +
@@ -378,6 +424,12 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
       definitionDrift.columnDrift.length
     ) {
       throw new Error("External and Worker migration definitions are not equivalent");
+    }
+    if (sourceDeclarations.unresolved.length) {
+      throw new Error("Unevaluated TypeScript SQL declarations prevent complete schema-audit acceptance");
+    }
+    if (sourceDeclarations.mode === "raw-typescript-with-static-literal-supplement") {
+      throw new Error("Raw TypeScript declarations do not establish a complete migration installation contract");
     }
     return;
   }
