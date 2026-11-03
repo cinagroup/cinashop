@@ -34,7 +34,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
   });
   it("retains every gate, pins the measured unit job budget and preserves catalog and child limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
-    expect(names(unit)).toEqual([...setup,"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Install locked Supplier dependencies for cross-package unit tests","Install locked Kefu dependencies for cross-package unit tests","Install locked Uni dependencies for customer SFC unit tests","Run both TypeScript configurations","Begin isolated native child diagnostic capture","Run Worker unit tests",
+    expect(names(unit)).toEqual([...setup.slice(0,3),"Check out fixed legacy PHP input","Verify full fixed legacy PHP checkout and expose sibling input",setup[3],"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Install locked Supplier dependencies for cross-package unit tests","Install locked Kefu dependencies for cross-package unit tests","Install locked Uni dependencies for customer SFC unit tests","Run both TypeScript configurations","Begin isolated native child diagnostic capture","Run Worker unit tests",
       "Audit native child diagnostics including incomplete failed runs",
       "Preserve unit shard diagnostics even on failure",
       "Verify exact executed unit shard coverage",
@@ -78,7 +78,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     expect(unit).toContain("- name: Audit native child diagnostics including incomplete failed runs\n        if: ${{ always() }}\n        run: node node_modules/tsx/dist/cli.mjs scripts/audit-native-child-diagnostics.ts\n\n      - name: Preserve unit shard diagnostics even on failure");
     expect(unit).toContain("- name: Preserve unit shard diagnostics even on failure\n        if: ${{ always() }}\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
     expect(unit).toContain("name: unit-shard-${{ matrix.shard }}-${{ github.sha }}");
-    expect(unit).toContain("name: unit-shard-${{ matrix.shard }}-${{ github.sha }}\n          include-hidden-files: true\n          path: |\n            workers-ts/unit-shard-results.json\n            workers-ts/unit-shard.log\n            workers-ts/.cache/native-child-diagnostics/published-*/*.json\n          if-no-files-found: error\n          retention-days: 7");
+    expect(unit).toContain("name: unit-shard-${{ matrix.shard }}-${{ github.sha }}\n          include-hidden-files: true\n          path: |\n            workers-ts/unit-shard-results.json\n            workers-ts/unit-shard.log\n            workers-ts/legacy-php-input-receipt.json\n            workers-ts/.cache/native-child-diagnostics/published-*/*.json\n          if-no-files-found: error\n          retention-days: 7");
     expect(unit).not.toMatch(/\|\| true|continue-on-error|set \+e/);
     expect(unit).toContain("run: node scripts/audit-unit-shards.mjs ${{ matrix.shard }} unit-shard-results.json");
     expect(unit.match(/if: matrix.shard == 1/g)).toHaveLength(5);
@@ -86,7 +86,9 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Audit legacy-to-PostgreSQL schema drift", "Audit legacy-to-Worker route parity"])
       expect(unit).toContain("- name: "+name+"\n        if: matrix.shard == 1\n");
     expect(catalog).not.toContain("--shard");
-    expect(workflow).not.toContain("secrets.");
+    expect(unit).toContain("environment: legacy-php-readonly");
+    expect(workflow.match(/secrets\.[A-Z_]+/g)).toEqual(["secrets.LEGACY_PHP_READONLY_SSH_KEY"]);
+    expect(unit).toContain("ssh-key: ${{ secrets.LEGACY_PHP_READONLY_SSH_KEY }}\n          ssh-strict: true\n          persist-credentials: false");
   });
   it("uses the real native partition and refuses omitted, duplicate, skipped or failed executed results",()=>{
     const environment={...process.env};

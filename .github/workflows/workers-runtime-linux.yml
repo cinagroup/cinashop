@@ -60,6 +60,9 @@ jobs:
 
   worker-unit:
     name: Worker type, unit, schema and route execution (shard ${{ matrix.shard }}/2)
+    # Configure this environment's deployment branch policy to main only before
+    # adding its read-only source key. Untrusted PR refs cannot read legacy code.
+    environment: legacy-php-readonly
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +104,25 @@ jobs:
         run: |
           test "$(node --version)" = "v24.14.1"
           test "$(npm --version)" = "11.11.0"
+
+      # Preserve the real original commit, Git objects and full worktree. Both
+      # shards include fixed-ref PHP proofs; frontend jobs have other filesystems.
+      - name: Check out fixed legacy PHP input
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: cinagroup/cinashop-php
+          ref: 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5
+          path: .cache/legacy-php-input
+          ssh-key: ${{ secrets.LEGACY_PHP_READONLY_SSH_KEY }}
+          ssh-strict: true
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify full fixed legacy PHP checkout and expose sibling input
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types scripts/verify-legacy-php-input.ts --input ../.cache/legacy-php-input --link-sibling | tee legacy-php-input-receipt.json
 
       - name: Install locked dependencies
         run: npm ci
@@ -149,6 +171,7 @@ jobs:
           path: |
             workers-ts/unit-shard-results.json
             workers-ts/unit-shard.log
+            workers-ts/legacy-php-input-receipt.json
             workers-ts/.cache/native-child-diagnostics/published-*/*.json
           if-no-files-found: error
           retention-days: 7
@@ -163,12 +186,14 @@ jobs:
       - name: Audit legacy-to-PostgreSQL schema drift
         if: matrix.shard == 1
         run: |
+          set -euo pipefail
           npx --no-install tsx scripts/mysql-to-postgres.ts schema-audit --json |
             node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({source:r.coverage.sourceTableCount,target:r.coverage.targetTableCount,shared:r.coverage.sharedTableCount,sourceGaps:r.coverage.sourceColumnGapTableCount,externalOnly:r.definitionDrift.externalOnlyTables.length,workerOnly:r.definitionDrift.workerOnlyTables.length,columnDrift:r.definitionDrift.columnDrift.length}));})'
 
       - name: Audit legacy-to-Worker route parity
         if: matrix.shard == 1
         run: |
+          set -euo pipefail
           npx --no-install tsx scripts/route-parity-audit.ts |
             node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);console.log(JSON.stringify({authority:r.phpRoot,...r.totals}));})'
 

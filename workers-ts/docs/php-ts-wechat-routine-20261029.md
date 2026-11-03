@@ -903,3 +903,21 @@ virtual02原41项、regression05本地准入76及新旧通知31共148项PG16通�
 最终729单元、30原生（1＋6＋12＋11）及Worker unit类型通过，零跳过，四成功PG均remaining0／STOPPED；生产源码与共享夹具不改。保留类型宽化失败及600秒合并命令超时；后者17条打印不计成功，自有PG宿主确认停止但残留角色未审计，再按完整文件和原600／1200预算通过。各批输入运行期间不变、最终仓库源图相同；原日志／冻结／复核在本机.cache/php-ts-phase52-validation，文档后补、提交另扫秘密。
 
 e275的[CI](https://github.com/cinagroup/cinashop/actions/runs/41565199699)在2026-11-03T03:06:18.557Z仍有两个Worker分片运行、其余10成功，不代替新SHA验证。PHP输入等剩余CI问题、其他通知／角色／非微信、完整manifest／单次许可／原子切换和整体迁移仍未完成；无生产DDL／Env切换、部署或真实微信，旧用户／权益／旧单／付款与runtime_ready=false保持，新提交推送须具体授权。
+
+## 第53轮：完整固定 PHP 原证输入与私有只读 CI 接线
+
+`f2a848eb6b8375b292de33df2937e9c091673662`已按精确授权推送并直接核对远端main。[其CI](https://github.com/cinagroup/cinashop/actions/runs/41571731884)本轮最后快照为10成功、Worker两分片仍运行，不作全绿或新SHA证明。远端原PHP仓库目前公开且为空，固定8ed对象只在本机；用户先选择完整真实检出、另审发布范围，再选择私有仓库与CI只读。两次选择均未直接授权远端变更或凭据发送。
+
+本轮完成[固定原库CI输入](legacy-php-ci-input.md)：完整8ed/tree/14664文件/313865557字节合同，真正.git与全量fsck、全部原生blob和工作字节核对；真实git show的11原文/15片段、26路由和原SQL摘要保持。默认archive遗漏218文件被拒绝；已有原库的40项CRLF差异未被采用或改写。同大小损坏object虽能通过connectivity/type/size，新增真实Git反例和完整fsck正确拒绝。脚本只读源文，不执行原PHP/依赖/hooks；占用或悬空sibling停止，保护已有checkout。
+
+两Worker分片固定checkout原SHA、严格SSH且不持久化凭据、预检后接实际sibling，artifact只增加元数据回执。独立main-only environment与专用只读deploy key/环境secret的管理计划及本地0600密钥已准备，尚未改远端、上传密钥或推送原库。main-only会阻止所有PR refs（包括同仓库PR）满足两个必需job；聚合仍要求success，不以skip作绿。此影响须列入具体新SHA/私有供应最终授权。
+
+新证明以5项精确逆编辑还原完整f2 workflow再接旧两层，旧72feefd证明及断言正文不变；只有两处import读取历史前驱，其余当前gate直接读实际新图，Git/源文不投影。真实schema审计exit1曾被下游JSON consumer掩盖为pipeline0，原schema/route block新增pipefail；实际同报告旧0/新1，失败继续保留，不刷新既有源pin。
+
+最终final07完整13阶段1029.29秒，预列25765输入每阶段不变、root/candidate各8589规范化源图一致、精确f2基线8584；单层锁、单worker及600/1200预算不变。候选四套输入/workflow81通过/1既有容量超时（82），新增13+26全通过；实际sibling四套源文194通过/5失败（199），零跳过，Worker两套类型通过。精确f2同四文件完整重跑194/5，5失败的规范化错误内容逐项相同；容量10秒子进程超时亦另在精确f2复现。只计候选275通过/6失败，不累计基线或中间run，不能称全CI通过。
+
+真实分片收集1650文件各一次、825/825、固定角色58文件串行，仅是完整清单与配置证明。route CLI0仍有actionableMissing795；schema两边CLI1且原日志同字节，源201/目标287/共享201/源列缺口0、外部only3/Workeronly77/列漂移0，等价断言未解决。先前类型失败、被取消标本run、准备错误和审计失败原记录保留。独立只读交叉复核不称重跑或全安全审计；本机.cache/php-ts-phase53-validation保留日志/冻结/基线/范围/计划，文档终态后补、最终提交文件另扫秘密核暂存与提交字节。
+
+完整原库默认规则限深扫描66项/55文件，11项有技术上下文、55项仍需持有人核实；OAuth appsecret配置、初始管理员哈希seed及再分发限制存在，不推断失效或公开许可。固定SHA保持全部原内容，私有只读不替代持有人/权利审查；新提交扫描与原库扫描分开。旧手动Uni的CRLF derivative未供应/运行，原LF Git字节与旧hash均不改。
+
+尚无私有原库、环境规则/只读凭据和新SHA云端验收；现存源文/schema/容量CI缺口及完整归属维护/单次许可/原子切换、其他通知/角色/非微信和整体迁移继续未完成。没有生产DDL/Env切换、部署、真实微信/Browser/Workerd/Hyperdrive验收，用户/UID/权益/旧单/付款、未知不猜归属、跨AppID屏障及runtime_ready=false保持。本轮新SHA及私有供应远端操作须一并具体授权。

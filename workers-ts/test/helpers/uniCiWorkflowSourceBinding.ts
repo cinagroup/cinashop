@@ -2,7 +2,7 @@
  * node:fs directly. Only the one frozen workflow maps through its two complete
  * reviewed predecessors; no other source, AST report or inventory is projected. */
 import { createHash } from 'node:crypto';
-import { readFileSync as readDiskFileSync } from 'node:fs';
+import { readLegacyPhpWorkflowPredecessor as readDiskFileSync } from './legacyPhpInputSourceBinding';
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
