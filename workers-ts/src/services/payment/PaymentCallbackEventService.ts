@@ -454,6 +454,7 @@ export class PaymentCallbackEventService {
         { source: 'callback', ...callback }, domain) : Promise.resolve();
     if (storeOrder) {
       const result = await applyProviderStoreOrderPayment(this.container, {
+        routineNotice: { APP_KEY: this.env.APP_KEY },
         orderId: storeOrder.id,
         payType,
         tradeNo: callback.transactionId,

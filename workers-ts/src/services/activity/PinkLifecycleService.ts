@@ -222,7 +222,7 @@ export async function activatePaidPink(
   tx: DbClient,
   order: PaidPinkOrder,
   now = Math.floor(Date.now() / 1000),
-  options: { allowGroupReplacement?: boolean } = {},
+  options: { allowGroupReplacement?: boolean; routineNotice?: Readonly<{ APP_KEY?: string }> } = {},
 ): Promise<{ pinkId: number; completed: boolean } | null> {
   if (order.type !== 3 || order.activityId <= 0) return null;
   const combinations = await tx
@@ -386,7 +386,7 @@ export async function activatePaidPink(
       .update(storePink)
       .set({ status: 2, stopTime: paidAt })
       .where(and(eq(storePink.kId, leader.id), eq(storePink.isRefund, 0), eq(storePink.status, 1)));
-    await enqueuePinkSuccessNotices(tx, leader.id, activatedAt);
+    await enqueuePinkSuccessNotices(tx, leader.id, activatedAt, options.routineNotice);
   }
   return { pinkId: leader.id, completed };
 }

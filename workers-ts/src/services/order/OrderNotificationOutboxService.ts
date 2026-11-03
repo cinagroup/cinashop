@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { createRoutineSubscriptionNoticeRequestTx } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
 import { createRoutineSubscriptionRefusalRequestTx } from '@/services/wechat/RoutineSubscriptionRefusalRequest';
+import { prepareRoutineSubscriptionPinkRequestsTx, createRoutineSubscriptionPinkRequestTx,
+  type PreparedRoutineSubscriptionPinkRequests } from '@/services/wechat/RoutineSubscriptionPinkRequest';
 import { stageRoutineSubscriptionNoticeTx, type RoutineSubscriptionNoticeEnvironment } from '@/services/wechat/RoutineSubscriptionNoticeAuthor';
 import { createContainerFromDb, withTx, type DbClient } from "@/lib/di";
 import {
@@ -196,7 +198,7 @@ function payloadEquals(left: OrderOutboxPayload, right: OrderOutboxPayload): boo
 
 function deliveryBusinessEquals(left: OrderOutboxPayload, right: OrderOutboxPayload) {
   const body = (value: OrderOutboxPayload) => {
-    const { routineAppId: _pin, routineSubscriptionRequest: _request, ...rest } = value as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+    const { routineAppId: _pin, routineSubscriptionRequest: _request, ...rest } = value as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
     return rest;
   };
   return canonicalJson(body(left)) === canonicalJson(body(right));
@@ -240,13 +242,15 @@ async function insertImmutableNotificationEvent(
       | OrderSecondCardNoticeOutboxPayload;
     now: number;
     noticeEnv?: Readonly<{ APP_KEY?: string }>;
+    pinkRequests?: PreparedRoutineSubscriptionPinkRequests;
   },
 ): Promise<{ id: number; eventKey: string }> {
   const key = input.noticeEnv && Object.getOwnPropertyDescriptor(input.noticeEnv, 'APP_KEY');
   const noticeEnv = key?.enumerable && 'value' in key && typeof key.value === 'string'
     ? Object.freeze({ APP_KEY: key.value }) : undefined;
   const refusal = input.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
-  const versioned = input.payload.userId > 0 && (refusal || input.eventType === ORDER_DELIVERY_NOTICE_EVENT
+  const pink = input.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT;
+  const versioned = input.payload.userId > 0 && (refusal || pink || input.eventType === ORDER_DELIVERY_NOTICE_EVENT
     && 'deliveryType' in input.payload && input.payload.deliveryType !== 'fictitious');
   let payload: typeof input.payload;
   if (versioned) {
@@ -254,13 +258,18 @@ async function insertImmutableNotificationEvent(
     if (prior) {
       // Preserve the version winner, its original signature/pin/absence. No
       // re-signing, repinning or later adoption of a committed legacy event.
-      const source = prior.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+      const source = prior.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
       payload = { ...input.payload, ...(Object.hasOwn(source, 'routineAppId') ? { routineAppId: source.routineAppId } : {}),
         ...(Object.hasOwn(source, 'routineSubscriptionRequest') ? { routineSubscriptionRequest: source.routineSubscriptionRequest } : {}) } as typeof input.payload;
     } else {
-      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx>>;
+      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx>
+        | ReturnType<typeof createRoutineSubscriptionPinkRequestTx>>;
       try {
-        resolved = await withTx(createContainerFromDb(db), async nested => refusal
+        resolved = pink ? createRoutineSubscriptionPinkRequestTx(db,
+          input.pinkRequests ?? await prepareRoutineSubscriptionPinkRequestsTx(db, noticeEnv,
+            { pinkId: (input.payload as OrderPinkSuccessNoticeOutboxPayload).pinkId, now: input.now }),
+          { eventKey: input.eventKey, aggregateId: input.aggregateId, payload: input.payload as OrderPinkSuccessNoticeOutboxPayload, now: input.now })
+          : await withTx(createContainerFromDb(db), async nested => refusal
           ? createRoutineSubscriptionRefusalRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
             payload: input.payload as OrderRefundRefusedNoticeOutboxPayload, now: input.now })
           : createRoutineSubscriptionNoticeRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
@@ -268,7 +277,8 @@ async function insertImmutableNotificationEvent(
       } catch {
         // Mini-only metadata/SQL faults roll back their actual SAVEPOINT.
         // Keep fulfillment and other notices, without falling back to a pin.
-        resolved = refusal ? { kind: 'original', request: { format: 3, unavailable: true } }
+        resolved = pink ? { kind: 'original', request: { format: 4, unavailable: true } }
+          : refusal ? { kind: 'original', request: { format: 3, unavailable: true } }
           : { kind: 'original', request: { format: 2, unavailable: true } };
       }
       payload = resolved.kind === 'original' ? { ...input.payload, routineSubscriptionRequest: resolved.request } as typeof input.payload
@@ -395,7 +405,7 @@ export async function readRefundRefusalNoticePayloadTx(tx: DbClient, eventKey: s
   if (rows.length !== 1 || !row || row.aggregateType !== 'order' || row.aggregateId !== base.orderId
     || row.eventType !== ORDER_REFUND_REFUSED_NOTICE_EVENT || eventKey !== orderRefundRefusedNoticeEventKey(base.refundId)
     || !(base.userId === 0 ? payloadEquals(row.payload, base) : deliveryBusinessEquals(row.payload, base)))
-    throw new ValidateException('退款拒绝通知业务事实或版本来源冲突');
+    throw new ValidateException('实际支付或拒绝通知事件未完整持久化');
   return row.payload as OrderRefundRefusedNoticeOutboxPayload;
 }
 
@@ -438,12 +448,14 @@ export async function enqueueOrderPinkSuccessNoticeEvent(
   db: DbClient,
   input: OrderPinkSuccessNoticeOutboxPayload,
   now = Math.floor(Date.now() / 1000),
+  noticeEnv?: Readonly<{ APP_KEY?: string }>,
+  pinkRequests?: PreparedRoutineSubscriptionPinkRequests,
 ): Promise<{ id: number; eventKey: string }> {
   assertOrderNotificationPayload(input, ORDER_PINK_SUCCESS_NOTICE_EVENT, input.orderId);
   return insertImmutableNotificationEvent(db, {
     eventKey: `${ORDER_PINK_SUCCESS_NOTICE_EVENT}:${input.orderId}`,
     aggregateId: input.orderId, eventType: ORDER_PINK_SUCCESS_NOTICE_EVENT,
-    payload: { orderId: input.orderId, orderNo: input.orderNo, userId: input.userId, pinkId: input.pinkId, people: input.people }, now,
+    payload: { orderId: input.orderId, orderNo: input.orderNo, userId: input.userId, pinkId: input.pinkId, people: input.people }, now, noticeEnv, pinkRequests,
   });
 }
 
@@ -808,19 +820,29 @@ export async function readRoutineDeliveryNotificationDataTx(tx: DbClient, payloa
   if (!Number.isSafeInteger(at) || at <= 0 || at > 2147483647) throw Error('通知渲染时间无效');
   return routineDeliveryNotificationData(await readRoutineOrderNotificationTitleTx(tx, payload), payload, at);
 }
-async function readRoutineOrderNotificationTitleTx(tx: DbClient, payload: { orderId: number; userId: number }) {
+async function readRoutineOrderNotificationTitleTx(tx: DbClient, payload: { orderId: number; userId: number }, pink = false) {
   const rows = await tx.select({ cartInfo: storeOrderCartInfo.cartInfo, uid: storeOrderCartInfo.uid, cartNum: storeOrderCartInfo.cartNum })
     .from(storeOrderCartInfo).where(eq(storeOrderCartInfo.oid, payload.orderId)).orderBy(asc(storeOrderCartInfo.id)).limit(201).for('share', { noWait: true });
   if (!rows.length || rows.length > 200 || new TextEncoder().encode(JSON.stringify(rows)).byteLength > 1048576
     || rows.some(row => row.uid !== payload.userId || !Number.isSafeInteger(row.cartNum) || row.cartNum <= 0))
     throw Error('通知商品渲染来源超限或不匹配');
-  return utf8Prefix(rows.map(row => productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join('|'), 20);
+  return utf8Prefix(rows.map(row => pink ? pinkProductTitleFromSnapshot(row.cartInfo) : productTitleFromSnapshot(row.cartInfo)).filter(Boolean).join('|'), 20);
 }
 /** Original order amount and full-order product title follow the existing
  * 1451 contract; a refund request amount does not replace the order amount. */
 export async function readRoutineRefundRefusalNotificationDataTx(tx: DbClient, payload: OrderRefundRefusedNoticeOutboxPayload): Promise<Record<string, string>> {
   return { thing1: '退款失败', thing2: await readRoutineOrderNotificationTitleTx(tx, payload),
     amount3: payload.payPrice, character_string6: payload.orderNo };
+}
+
+/** Preserve the existing 3098 contract: title from the target order, nickname
+ * from its leader, but the date belongs to this member rather than the leader. */
+export async function readRoutinePinkSuccessNotificationDataTx(tx: DbClient, payload: OrderPinkSuccessNoticeOutboxPayload,
+  source: { leaderNickname: string; memberAddTime: number }): Promise<Record<string, string>> {
+  if (!Number.isSafeInteger(source.memberAddTime) || source.memberAddTime <= 0 || source.memberAddTime > 2147483647)
+    throw Error('成团通知成员时间无效');
+  return { thing1: await readRoutineOrderNotificationTitleTx(tx, payload, true), name3: routineDeliveryName(source.leaderNickname),
+    date5: chinaDateTime(source.memberAddTime), number2: String(payload.people) };
 }
 
 export async function configuredTemplate(
@@ -975,7 +997,7 @@ async function stageExternalNotifications(
       deliveryPayload: { kind: 'sms', params: { title: context.storeName, nickname: context.values.nickname } },
       skipReason: !context.buyerPhone ? 'target_not_configured' : !config.smsId.trim() ? 'template_not_configured' : undefined, now,
     });
-    if (config?.isRoutine === 1) {
+    if (config?.isRoutine === 1 && !suppressRoutine) {
       const templateCode = await configuredTemplate(tx, '3098', 0);
       await createImmutableDelivery(tx, {
         event, payload, mark, channel: 'wechat_routine', target: context.routineOpenid, templateCode,
@@ -1156,7 +1178,7 @@ export async function processOrderNotificationOutboxEvent(
     | OrderRefundRefusedNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload;
-  const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT].includes(event.eventType) && Object.hasOwn(payload, 'routineSubscriptionRequest');
+  const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType) && Object.hasOwn(payload, 'routineSubscriptionRequest');
   const renderAt = versionedRoutine && Number.isSafeInteger(event.addTime) ? event.addTime! : now;
   let routineDeferred = false;
   const mark = noticeMark(event.eventType, payload);
@@ -1187,7 +1209,7 @@ export async function processOrderNotificationOutboxEvent(
   ) {
     return "disabled";
   }
-  if (versionedRoutine && template?.isRoutine === 1 && (event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
+  if (versionedRoutine && template?.isRoutine === 1 && ([ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType)
     || 'deliveryType' in payload && ['express', 'send', 'city_delivery'].includes(payload.deliveryType))) {
     routineDeferred = await stageRoutineSubscriptionNoticeTx(tx, routine?.env ?? {}, event, mark, routine?.earlyReady === true, renderAt) === 'deferred';
   }

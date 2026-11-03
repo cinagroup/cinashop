@@ -141,7 +141,7 @@ export class PinkTimeoutService {
           })));
           await tx.update(storePink).set({ status: 2, stopTime: endedAt }).where(inArray(storePink.id, liveMembers.map(member => member.id)));
           await tx.update(storePink).set({ memberCount: leader.people }).where(eq(storePink.id, leader.id));
-          await enqueuePinkSuccessNotices(tx, leader.id, settledAt);
+          await enqueuePinkSuccessNotices(tx, leader.id, settledAt, this.env);
           return { completed: true as const, orderIds: [] };
         }
       }

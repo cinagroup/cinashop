@@ -17,7 +17,7 @@ import { prepareRoutineSubscriptionDeliveryNotice, prepareRoutineSubscriptionDel
 import { getRoutineSubscriptionAccessToken } from './RoutineSubscriptionAccessToken';
 import { postRoutineSubscription, assertRoutineSubscriptionProviderResult,
   type AcceptedRoutineSubscriptionResult } from './RoutineSubscriptionProvider';
-import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey } from './RoutineSubscriptionNoticeKinds';
 
 type Delivery = typeof orderNotificationDelivery.$inferSelect;
 export interface RoutineSubscriptionClaim { id: number; eventKey: string; leaseToken: string }
@@ -103,7 +103,7 @@ function parseAttempt(env: Env, raw: unknown, scope: RoutineSubscriptionScope, a
     || c.attemptCount !== r.attempt_no || !time(c.leaseUntil) || created >= c.leaseUntil
     || c.eventKey !== f.eventKey || r.delivery_id !== f.deliveryId || typeof c.eventKey !== 'string'
     || !routineSubscriptionNoticeKey(c.eventKey) || typeof f.templateMark !== 'string'
-    || !(routineSubscriptionRefusalKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
+    || !(routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
     || r.source_key !== sourceKey(env, { id: r.delivery_id, eventKey: c.eventKey, leaseToken: c.leaseToken })
     || !subscriptionInteger(f.orderId) || !subscriptionInteger(f.rootId) || !subscriptionInteger(f.buyerUid)
     || !subscriptionHex(f.sourceDigest) || !subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest)

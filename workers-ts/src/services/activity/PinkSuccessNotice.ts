@@ -2,10 +2,12 @@ import { and, asc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderRefund, storePink } from '@/models/schema';
 import { enqueueOrderPinkSuccessNoticeEvent } from '@/services/order/OrderNotificationOutboxService';
+import { prepareRoutineSubscriptionPinkRequestsTx } from '@/services/wechat/RoutineSubscriptionPinkRequest';
 
 /** Runs inside the transaction that commits group success. Virtual members have
  * no order, inventory, bill or notice. Queue/provider delivery stays outside. */
-export async function enqueuePinkSuccessNotices(tx: DbClient, leaderId: number, now: number): Promise<void> {
+export async function enqueuePinkSuccessNotices(tx: DbClient, leaderId: number, now: number,
+  noticeEnv?: Readonly<{ APP_KEY?: string }>): Promise<void> {
   if (!Number.isSafeInteger(leaderId) || leaderId <= 0 || leaderId > 2_147_483_647 ||
     !Number.isSafeInteger(now) || now < 0 || now > 2_147_483_647) throw new Error('拼团成功通知身份无效');
   const [leader] = await tx.select().from(storePink).where(eq(storePink.id, leaderId)).limit(1);
@@ -25,7 +27,10 @@ export async function enqueuePinkSuccessNotices(tx: DbClient, leaderId: number, 
         AND ${storeOrderRefund.isCancel}=0 AND ${storeOrderRefund.isDel}=0 AND ${storeOrderRefund.refundType} IN (0,1,2,4,5))`))
     .orderBy(asc(storeOrder.id)).limit(501);
   if (orders.length > 500 || orders.length > leader.people) throw new Error('拼团成功通知订单超过完整成员容量');
+  // Capture one complete, transaction-bound formation and writer for the
+  // whole group; each real order still proves its own payment at dispatch.
+  const requests = orders.length ? await prepareRoutineSubscriptionPinkRequestsTx(tx, noticeEnv, { pinkId: leaderId, now }) : undefined;
   for (const order of orders) await enqueueOrderPinkSuccessNoticeEvent(tx, {
     orderId: order.id, orderNo: order.orderNo, userId: order.uid, pinkId: leaderId, people: leader.people,
-  }, now);
+  }, now, noticeEnv, requests);
 }

@@ -935,6 +935,7 @@ export class PaymentReconciliationService {
     const payType = request.provider === "wechat" ? "weixin" : "alipay";
     if (store) {
       const settled = await applyProviderStoreOrderPayment(this.container, {
+        routineNotice: this.env,
         orderId: store.id,
         payType,
         tradeNo: result.transactionId,

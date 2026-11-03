@@ -55,6 +55,14 @@ import { PayType } from "@/services/payment/PayType";
 import { lockLocalPaymentAdmissionTx, assertLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 export { PayType } from "@/services/payment/PayType";
 
+/** Keep optional notification signing primitive independent of subsequent
+ * payment awaits. Invalid material is unavailable, never a current-App pin. */
+function captureNoticeSigning(env?: Readonly<{ APP_KEY?: string }>) {
+  const key = env && Object.getOwnPropertyDescriptor(env, 'APP_KEY');
+  return key?.enumerable && 'value' in key && typeof key.value === 'string'
+    ? Object.freeze({ APP_KEY: key.value }) : undefined;
+}
+
 export async function prepareStoreOrderPaymentAdmission(
   container: Container, env: Env, uid: number, order: typeof storeOrder.$inferSelect,
 ): Promise<PaymentOrderAdmission> {
@@ -107,6 +115,7 @@ export async function prepareStoreOrderPaymentAdmission(
 }
 
 export interface ApplyStoreOrderPaymentInput {
+  routineNotice?: Readonly<{ APP_KEY?: string }>;
   orderId: number;
   payType: string;
   tradeNo?: string;
@@ -137,6 +146,7 @@ export interface ApplyStoreOrderPaymentResult {
 }
 
 export interface ApplyStoreOrderBalancePaymentInput {
+  routineNotice?: Readonly<{ APP_KEY?: string }>;
   uid: number;
   orderId: string;
   now?: number;
@@ -264,7 +274,7 @@ async function applyStoreOrderPaymentCore(
   params: ApplyStoreOrderPaymentInput,
   providerSettlement: boolean,
 ): Promise<ApplyStoreOrderPaymentResult> {
-  params = { ...params, ...(params.audit ? { audit: { ...params.audit } } : {}) };
+  params = { ...params, routineNotice: captureNoticeSigning(params.routineNotice), ...(params.audit ? { audit: { ...params.audit } } : {}) };
   if (!Number.isSafeInteger(params.orderId) || params.orderId <= 0) {
     throw new Error("订单 ID 无效");
   }
@@ -347,7 +357,7 @@ async function applyStoreOrderPaymentCore(
     const paidOrder = paidRows[0];
     if (!paidOrder) return { outcome: "not-payable", outbox: null };
 
-    await activatePaidPink(tx, paidOrder, now);
+    await activatePaidPink(tx, paidOrder, now, { routineNotice: params.routineNotice });
     await tx
       .update(storeOrderInvoice)
       .set({ isPay: 1 })
@@ -373,7 +383,7 @@ export async function applyStoreOrderBalancePayment(
   container: Container,
   params: ApplyStoreOrderBalancePaymentInput,
 ): Promise<ApplyStoreOrderPaymentResult> {
-  params = { ...params };
+  params = { ...params, routineNotice: captureNoticeSigning(params.routineNotice) };
   if (!Number.isSafeInteger(params.uid) || params.uid <= 0) throw new Error("用户 ID 无效");
   if (!params.orderId.trim()) throw new Error("订单号无效");
   const now = params.now ?? Math.floor(Date.now() / 1000);
@@ -446,7 +456,7 @@ export async function applyStoreOrderBalancePayment(
     const paidOrder = paidRows[0];
     if (!paidOrder) return { outcome: "not-payable", outbox: null };
 
-    await activatePaidPink(tx, paidOrder, now, { allowGroupReplacement: false });
+    await activatePaidPink(tx, paidOrder, now, { allowGroupReplacement: false, routineNotice: params.routineNotice });
     await tx
       .update(storeOrderInvoice)
       .set({ isPay: 1 })
@@ -476,7 +486,7 @@ export class StoreOrderPayService {
    *   4. paySuccess (paid=1)
    */
   async yuePay(uid: number, orderId: string): Promise<{ paid: boolean }> {
-    const result = await applyStoreOrderBalancePayment(this.container, { uid, orderId });
+    const result = await applyStoreOrderBalancePayment(this.container, { uid, orderId, routineNotice: this.env });
     if (result.outcome === "missing") throw new NotFoundException("订单不存在");
     if (result.outcome === "not-payable") throw new ValidateException("订单状态不允许支付");
     if (result.outcome === "paid") {
@@ -678,7 +688,7 @@ export class StoreOrderPayService {
 
   /** Execute the paid transition and expose the exact outcome to trusted callers. */
   async applyPayment(params: ApplyStoreOrderPaymentInput): Promise<ApplyStoreOrderPaymentResult> {
-    const paymentResult = await applyStoreOrderPayment(this.container, params);
+    const paymentResult = await applyStoreOrderPayment(this.container, { ...params, routineNotice: this.env });
     if (paymentResult.outcome === "paid") {
       if (!paymentResult.outbox) throw new Error("支付 outbox 未创建");
       await this.dispatchOutboxBestEffort(paymentResult.outbox.id);

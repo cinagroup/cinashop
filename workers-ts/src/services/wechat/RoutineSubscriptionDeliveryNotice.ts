@@ -3,18 +3,19 @@ import { asc, eq, or, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { withTx, type Container, type DbClient } from '@/lib/di';
 import { orderNotificationDelivery, storeOrder, storeOrderOutbox, storeOrderRefund, storeOrderRefundPayment,
-  type OrderDeliveryNoticeOutboxPayload, type OrderRefundRefusedNoticeOutboxPayload } from '@/models/schema';
+  type OrderDeliveryNoticeOutboxPayload, type OrderRefundRefusedNoticeOutboxPayload, type OrderPinkSuccessNoticeOutboxPayload } from '@/models/schema';
 import { assertRoutineSubscriptionDeliveryReadyTx } from '@/migrations/routineSubscriptionDelivery';
 import { assertRoutineSubscriptionReadyTx } from '@/migrations/routineSubscription';
 import { amountToCents } from '@/services/payment/RefundGateway';
 import { assertOrderNotificationPayload, customerCityNoticeIsActive, ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT,
   orderDeliveryNoticeEventKey, orderRefundRefusedNoticeEventKey, readRoutineDeliveryNotificationDataTx,
-  readRoutineRefundRefusalNotificationDataTx } from '@/services/order/OrderNotificationOutboxService';
+  readRoutineRefundRefusalNotificationDataTx, ORDER_PINK_SUCCESS_NOTICE_EVENT, readRoutinePinkSuccessNotificationDataTx } from '@/services/order/OrderNotificationOutboxService';
 import { readRoutineIdentityOwnerForUidTx } from './RoutineIdentityOwnership';
 import { readRoutineSubscriptionOriginalTx } from './RoutineSubscriptionOriginal';
 import { assertNativeAppExcludedForRoutineSubscriptionTx } from './NativeAppRoutineSubscriptionAuthority';
 import { parseRoutineSubscriptionNoticeRequest } from './RoutineSubscriptionNoticeRequest';
 import { parseRoutineSubscriptionRefusalRequest, assertRoutineSubscriptionRefusalDecision } from './RoutineSubscriptionRefusalRequest';
+import { parseRoutineSubscriptionPinkRequest, readRoutineSubscriptionPinkTargetTx } from './RoutineSubscriptionPinkRequest';
 import { routineSubscriptionNoticeKey } from './RoutineSubscriptionNoticeKinds';
 import { parseRoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { captureRoutineSubscriptionEnv, freezeSubscription, prepareRoutineSubscriptionAccountTx,
@@ -31,7 +32,7 @@ export interface RoutineSubscriptionDeliveryNoticeFacts {
   readonly ownershipId: string; readonly bindingId: number; readonly observationId: string;
   readonly evidenceId: string; readonly evidenceSignature: string;
   readonly relatedDigest: string; readonly approvedUseDigest: string;
-  readonly templateMark: '1458' | '1128' | '1451'; readonly sourceDigest: string;
+  readonly templateMark: '1458' | '1128' | '1451' | '3098'; readonly sourceDigest: string;
 }
 const noticeSlot = Symbol('routine.subscription.delivery-notice-source.v1');
 export interface PreparedRoutineSubscriptionDeliveryNotice {
@@ -90,12 +91,15 @@ function business(payload: OrderDeliveryNoticeOutboxPayload) {
     ...(payload.cityDeliveryJobId === undefined ? {} : { cityDeliveryJobId: payload.cityDeliveryJobId }) };
 }
 async function versionedRequest(tx: DbClient, env: Env, event: typeof storeOrderOutbox.$inferSelect) {
-  const payload = event.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+  const payload = event.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
   if (!Object.hasOwn(payload, 'routineSubscriptionRequest') || Object.hasOwn(payload, 'routineAppId')) return routineSubscriptionUnavailable();
-  const refusal = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT, scope = await routineSubscriptionScopeTx(tx);
-  const r = refusal ? parseRoutineSubscriptionRefusalRequest(env, payload.routineSubscriptionRequest, scope)
+  const refusal = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT, pink = event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT, scope = await routineSubscriptionScopeTx(tx);
+  const r = pink ? parseRoutineSubscriptionPinkRequest(env, payload.routineSubscriptionRequest, scope)
+    : refusal ? parseRoutineSubscriptionRefusalRequest(env, payload.routineSubscriptionRequest, scope)
     : parseRoutineSubscriptionNoticeRequest(env, payload.routineSubscriptionRequest, scope);
-  const expected = refusal ? { orderId: payload.orderId, orderNo: payload.orderNo, refundId: (payload as OrderRefundRefusedNoticeOutboxPayload).refundId,
+  const expected = pink ? { orderId: payload.orderId, orderNo: payload.orderNo, userId: payload.userId,
+    pinkId: (payload as OrderPinkSuccessNoticeOutboxPayload).pinkId, people: (payload as OrderPinkSuccessNoticeOutboxPayload).people }
+    : refusal ? { orderId: payload.orderId, orderNo: payload.orderNo, refundId: (payload as OrderRefundRefusedNoticeOutboxPayload).refundId,
     userId: payload.userId, payPrice: (payload as OrderRefundRefusedNoticeOutboxPayload).payPrice } : business(payload as OrderDeliveryNoticeOutboxPayload);
   if (r.eventKey !== event.eventKey || r.aggregateId !== event.aggregateId || r.eventTime !== event.addTime || !subscriptionSame(r.body, expected))
     return routineSubscriptionUnavailable();
@@ -111,9 +115,10 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
   const hint = !author ? (await tx.select().from(orderNotificationDelivery).where(eq(orderNotificationDelivery.id, expected.deliveryId)).limit(1))[0] : undefined;
   const eventHint = (await tx.select().from(storeOrderOutbox).where(eq(storeOrderOutbox.id, author ? expected.outboxId : hint?.outboxId ?? 0)).limit(1))[0];
   const refusal = eventHint?.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
-  if (!eventHint || ![ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT].includes(eventHint.eventType)) return routineSubscriptionUnavailable();
+  const pink = eventHint?.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT;
+  if (!eventHint || ![ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(eventHint.eventType)) return routineSubscriptionUnavailable();
   const tables = ['store_order', 'store_order_cart_info', 'user_recharge', 'other_order', 'store_order_outbox', 'order_notification_delivery', 'user', 'wechat_user',
-    ...(refusal ? ['store_order_refund', 'store_order_refund_payment'] : [])];
+    ...(refusal ? ['store_order_refund', 'store_order_refund_payment'] : pink ? ['store_order_refund', 'store_pink'] : [])];
   for (const table of tables) {
     const [resolution] = await tx.execute<{ ready: boolean }>(sql`SELECT
       pg_catalog.to_regclass(${table})=pg_catalog.to_regclass(${'public.' + table}) AS ready`);
@@ -122,6 +127,7 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
   await tx.execute(sql`LOCK TABLE ONLY public.store_order, ONLY public.store_order_cart_info, ONLY public.user_recharge, ONLY public.other_order,
     ONLY public.store_order_outbox, ONLY public.order_notification_delivery IN SHARE MODE NOWAIT`);
   if (refusal) await tx.execute(sql`LOCK TABLE ONLY public.store_order_refund, ONLY public.store_order_refund_payment IN SHARE MODE NOWAIT`);
+  if (pink) await tx.execute(sql`LOCK TABLE ONLY public.store_order_refund, ONLY public.store_pink IN SHARE MODE NOWAIT`);
   if (author ? eventHint.eventKey !== expected.eventKey
     : !hint || hint.channel !== 'wechat_routine' || hint.eventKey !== expected.eventKey || !subscriptionInteger(hint.orderId)
       || hint.withdrawalId !== null || !['PENDING', 'ENQUEUED', 'PROCESSING', 'RETRYABLE'].includes(hint.status)
@@ -139,7 +145,7 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
     return routineSubscriptionUnavailable();
   const total = amountToCents(parent.payPrice), split = parent.pid === -1;
   const leaves = split ? family.filter(row => row.pid === rootId) : [parent];
-  if (total === null || total <= 0 || (split ? child.pid !== rootId || leaves.length < 2 || family.length !== leaves.length + 1
+  if (total === null || total <= 0 || (split ? (pink ? child.id !== rootId : child.pid !== rootId) || leaves.length < 2 || family.length !== leaves.length + 1
     : child.id !== rootId || family.length !== 1)) return routineSubscriptionUnavailable();
   if (family.some(row => row.uid !== parent.uid || row.paid !== 1 || row.payType !== 'weixin'
     || row.isDel !== 0 || row.isSystemDel !== 0 || row.tradeNo !== parent.tradeNo)) return routineSubscriptionUnavailable();
@@ -160,13 +166,18 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
     || !author && (!delivery || !hint || !subscriptionSame(immutableDelivery(hint), immutableDelivery(delivery)) || delivery.userId !== parent.uid))
     return routineSubscriptionUnavailable();
   assertOrderNotificationPayload(event.payload, event.eventType, event.aggregateId);
-  const payload = event.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload;
+  const payload = event.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
   const signedRequest = Object.hasOwn(payload, 'routineSubscriptionRequest') ? await versionedRequest(tx, env, event) : undefined;
   if (author && !signedRequest) return routineSubscriptionUnavailable();
   if (payload.orderNo !== child.orderId || payload.userId !== parent.uid || payload.orderId !== child.id) return routineSubscriptionUnavailable();
   let refund: typeof storeOrderRefund.$inferSelect | undefined;
   let refundPayment: typeof storeOrderRefundPayment.$inferSelect | undefined;
-  if (refusal) {
+  let pinkTarget: Awaited<ReturnType<typeof readRoutineSubscriptionPinkTargetTx>> | undefined;
+  if (pink) {
+    if (!signedRequest || signedRequest.format !== 4 || child.id !== rootId || event.eventKey !== `order.pink.success.notice:${child.id}`)
+      return routineSubscriptionUnavailable();
+    pinkTarget = await readRoutineSubscriptionPinkTargetTx(tx, env, signedRequest);
+  } else if (refusal) {
     const p = payload as OrderRefundRefusedNoticeOutboxPayload;
     if (!signedRequest || signedRequest.format !== 3 || event.eventKey !== orderRefundRefusedNoticeEventKey(p.refundId)
       || p.payPrice !== child.payPrice || amountToCents(p.payPrice) === null) return routineSubscriptionUnavailable();
@@ -190,11 +201,12 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
   const appId = original.evidence.payload.observation.facts.appId;
   const owner = await readRoutineIdentityOwnerForUidTx(tx, env, { uid: parent.uid, appId });
   if (!owner) return routineSubscriptionUnavailable();
-  const templateMark = refusal ? '1451' as const : (payload as OrderDeliveryNoticeOutboxPayload).deliveryType === 'express' ? '1458' as const : '1128' as const;
+  const templateMark = pink ? '3098' as const : refusal ? '1451' as const : (payload as OrderDeliveryNoticeOutboxPayload).deliveryType === 'express' ? '1458' as const : '1128' as const;
   const account = await prepareRoutineSubscriptionAccountTx(tx, env, appId, templateMark);
   if (account.template.templateId.length > 100) return routineSubscriptionUnavailable();
   const renderedAt = author ? await routineSubscriptionClockTx(tx) : delivery!.addTime;
-  const data = refusal ? await readRoutineRefundRefusalNotificationDataTx(tx, payload as OrderRefundRefusedNoticeOutboxPayload)
+  const data = pink ? await readRoutinePinkSuccessNotificationDataTx(tx, payload as OrderPinkSuccessNoticeOutboxPayload, pinkTarget!)
+    : refusal ? await readRoutineRefundRefusalNotificationDataTx(tx, payload as OrderRefundRefusedNoticeOutboxPayload)
     : await readRoutineDeliveryNotificationDataTx(tx, payload as OrderDeliveryNoticeOutboxPayload, renderedAt);
   if (Object.values(data).some(value => !bounded(value, 500))) return routineSubscriptionUnavailable();
   const url = refusal ? `/pages/goods/order_after_details/index?order_id=${payload.orderNo}&isReturen=1`
@@ -204,7 +216,7 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
   if (!author) {
     const expectedKeys = ['kind', 'routineAppId', 'data', 'url', ...(signedRequest ? ['routineSubscriptionIntent'] : [])];
     const rendered = subscriptionObject(delivery!.payload, expectedKeys);
-    const expectedMark = refusal ? 'send_order_refund_no_status'
+    const expectedMark = pink ? 'order_user_groups_success' : refusal ? 'send_order_refund_no_status'
       : (payload as OrderDeliveryNoticeOutboxPayload).deliveryType === 'express' ? 'order_postage_success' : 'order_deliver_success';
     if (rendered.kind !== 'wechat_routine' || rendered.routineAppId !== appId || !signedRequest && payload.routineAppId !== appId
       || delivery!.target !== owner.owner.openid || delivery!.noticeMark !== expectedMark || delivery!.templateCode !== account.template.templateId
@@ -224,7 +236,7 @@ async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubs
     aggregateId: event.aggregateId, payload: event.payload, addTime: event.addTime };
   const digestFacts = [identity, family, eventIdentity, delivery ? immutableDelivery(delivery) : null, owner, account.account, request];
   const sourceDigest = subscriptionMac(env, author ? 'notice-author-source' : 'delivery-notice-source',
-    refusal ? [...digestFacts, refund, refundPayment ?? null] : digestFacts);
+    pink ? [...digestFacts, pinkTarget] : refusal ? [...digestFacts, refund, refundPayment ?? null] : digestFacts);
   const [tail] = await tx.execute<{ ready: boolean }>(sql`SELECT pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '5 seconds'
     AND pg_catalog.clock_timestamp()<pg_catalog.to_timestamp(${account.account.payload.data.validUntil}) AS ready`);
   if (tail?.ready !== true) return routineSubscriptionUnavailable();

@@ -137,7 +137,7 @@ export class SupplierOfflinePaymentService {
       const bills = await tx.select().from(userBill).where(and(eq(userBill.uid, before.order.uid), eq(userBill.linkId, String(id)))).orderBy(asc(userBill.id)).limit(1001);
       if (bills.length > 1000) throw new ValidateException('原订单积分台账过长');
       const audit = { changeType: 'supplier_order_offline', changeMessage: `供应商 ${actor.supplierId} / 管理员 ${actor.id} / 原请求 ${intent.operation_id} 确认实际线下收款` };
-      const payment = await applyStoreOrderPayment(createContainerFromDb(tx), { orderId: id, payType: PayType.OFFLINE, now, audit,
+      const payment = await applyStoreOrderPayment(createContainerFromDb(tx), { orderId: id, payType: PayType.OFFLINE, now, audit, routineNotice: { APP_KEY: this.appKey },
         authorizeBeforePayment: async (db, order) => {
           await assertSupplierVideoAuthority(db, actor, 'supplier.order.manage');
           if (supplierPaymentCanonical(order) !== supplierPaymentCanonical(before.order)) throw supplierPaymentConflict('锁定付款来源不一致');

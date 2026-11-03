@@ -4,7 +4,9 @@ export const routineSubscriptionDeliveryKey = (v: unknown): v is string => typeo
   && /^order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?$/u.test(v);
 export const routineSubscriptionRefusalKey = (v: unknown): v is string => typeof v === 'string' && v.length <= 128
   && /^order\.refund\.refused\.notice:[1-9]\d*$/u.test(v);
-export const routineSubscriptionNoticeKey = (v: unknown): v is string => routineSubscriptionDeliveryKey(v) || routineSubscriptionRefusalKey(v);
+export const routineSubscriptionPinkKey = (v: unknown): v is string => typeof v === 'string' && v.length <= 128
+  && /^order\.pink\.success\.notice:[1-9]\d*$/u.test(v);
+export const routineSubscriptionNoticeKey = (v: unknown): v is string => routineSubscriptionDeliveryKey(v) || routineSubscriptionRefusalKey(v) || routineSubscriptionPinkKey(v);
 // Keep malformed keys in a commissioned protocol's fail-closed route rather
 // than allowing them to fall back to a legacy provider path.
-export const routineSubscriptionNoticePrefix = (v: string) => v.startsWith('order.delivery.notice:') || v.startsWith('order.refund.refused.notice:');
+export const routineSubscriptionNoticePrefix = (v: string) => v.startsWith('order.delivery.notice:') || v.startsWith('order.refund.refused.notice:') || v.startsWith('order.pink.success.notice:');
