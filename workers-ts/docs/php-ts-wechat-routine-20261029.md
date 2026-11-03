@@ -964,3 +964,18 @@ pure-01六阶段728.32秒、native-02两完整PG文件290.67秒，两批8607输�
 旧schema CLI仍exit1：外部287／声明364（raw361）、only0／77／列PK0，36静态补充／536已知未求值，完整提取与安装false。原生case正文可移植修复前真实收集1657文件，829／828、固定角色58串行，仅collection不当全执行／10秒容量恢复。单锁／单worker／原预算保持，文档终态后补，八文件另扫秘密核index／commit字节，证据在.cache/php-ts-phase56-validation。
 
 生产源码／迁移SQL／grants／Env保持基点；未部署或真实微信／Browser／Workerd／Hyperdrive验收。原始安装差异仍需独立合同解释，31维护安装器及其61入口、完整manifest／单次许可／原子切换、其他业务／角色／非微信、私有旧PHP供应及CI／容量和整体迁移仍未完成。用户／UID／权益／旧单／付款及跨AppID屏障、runtime_ready=false保持。本轮仅本地合main和清理本轮开发分支；远端继续暂缓。
+
+
+## 第57轮：同一维护快照的身份归属与原始锚点分类
+
+本轮基点为本地main `49f6d9959a295891d23a58d93fe04ad34c284dce`。用户“暂不执行远端操作”持续有效：没有GitHub读写、私有原库接入、environment／deploy key／secret配置、凭据发送、推送或部署，新SHA云端CI未验证。
+
+完成[身份续办维护草案](routine-identity-continuation-draft.md)：从既有身份服务提取共享纯封闭解码，原HMAC字节、持久见证与owner各自时间规则、异常语义和runtime LOGIN／catalog／RC写事务／fresh观察／配置检查保持。维护侧不借App上下文或SET ROLE，而在完整数据库inventory的同一锁定RR只读流内分类ONLY四个public身份根，逐条核owner、原observation_id见证、UID、精确绑定与live／inactive状态。缺／坏原锚点不能借最新见证；同UID不同AppID保留不同承诺，同UID+AppID多live冲突不按行序选赢家，旧未映射／软删尾部不推断归属。
+
+全库其他schema、继承子表及新来源仍完整计数／HMAC并显式unclassified；分类与inventory sourceDigest绑定，缺失的命名表列入missingSources；错误布局或超容量不返回成功前缀。输出只有维护库／角色／来源名OID、计数、keyed账户／主体／记录摘要及状态，没有原UID／AppID／openid／phone／签名或凭据。CLI独立三Env，无runtime或inventory变量回退；验证key只在进程中验HMAC，不发送SQL。catalog commissioning、付款、其他身份realm与外部源均明确未评估，activation／permit／switch始终false，现有跨AppID写入屏障未改。
+
+首批完整身份20例为19通过／1清理后严格catalog失败，385.84秒，8620输入不变，原失败保留。原因是owned测试ADD／DROP列留下dropped属性槽；仅两段SQL改为RENAME／还原，前后case及helpers／其余全部输入字节相同。后继494.13秒、8621输入不变：当前literal1通过／19未选，另完整inventory14、三旧PG文件128和五纯文件156通过；首批19按未变正文复用，合计接受162原生＋156纯＝318，不重复累计未选或中间结果，也不称当前身份整文件重跑。新增76为纯codec52／classifier6／CLI13及原生5。types批336.16秒、相同8621输入，两完整Worker配置通过，unit220.90秒／runtime115.26秒。四次PG包括失败轮全部remaining0／STOPPED，单锁／单worker／600与1200预算未改。
+
+新原生实际运行App LOGIN、code2Session／reconcile服务、存储签名、维护快照及独立进程CLI；provider／缓存为受控传输，新增phone连续性是server-verified夹具参数，不作本轮真实手机号HTTP或真实微信声明。动态覆盖老锚点、损坏owner／anchor、缺首见证但新见证合法、多AppID／同账号冲突、inactive／未映射软删尾部、真实peer并发DML与新来源、实际App拒绝和布局漂移，分类前后旧用户／权益／旧单／付款／证据快照不改。交叉复核区分作者与独立阅读范围，不称独立重跑或安全审计；证据／失败／逐项复用在本机`.cache/php-ts-phase57-validation`，文档终态后补，最终14提交文件另扫秘密核index／commit字节。
+
+迁移SQL／grants／Env／配置作者未改；付款原SUCCESS／历史approved-use／各独立用途批准、provider／Queue等外部闭合、完整manifest／单次许可／原子切换、其余业务／角色／非微信、私有原PHP供应与CI／容量及整体迁移仍未完成。下一步只读地图绑定24当前来源，尚未实现付款分类或发出权限。没有生产维护执行、部署、Browser／Workerd／Hyperdrive或真实微信验收；用户／UID／权益／旧单／付款、跨AppID屏障与runtime_ready=false保持。本轮仅本地提交合main并清理开发分支；远端继续暂缓。

@@ -1,5 +1,4 @@
-import { Buffer } from 'node:buffer';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import type { DbClient } from '@/lib/di';
@@ -7,16 +6,11 @@ import { assertRoutineIdentityWitnessReady } from '@/migrations/routineIdentityW
 import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { verifyRoutineIdentityObservation, type RoutineIdentityObservation } from './RoutineIdentityObservation';
 import { readRoutineCredentialsInTx } from './RoutineRuntimeConfig';
+import { parseRoutineIdentityWitness, type RoutineIdentityWitnessRow as Row,
+  type RoutineIdentityWitness } from './RoutineIdentityEvidenceCodec';
+export type { RoutineIdentityWitness } from './RoutineIdentityEvidenceCodec';
 
 type RuntimeEnv = Pick<Env,'APP_KEY'>;
-type Row = {
-  observation_id: string; uid: number; binding_id: number; format_version: number;
-  observation: unknown; created_at: number | string; signature: string;
-};
-export interface RoutineIdentityWitness {
-  readonly observationId: string; readonly uid: number; readonly bindingId: number;
-  readonly observation: Readonly<RoutineIdentityObservation>; readonly createdAt: number;
-}
 const unavailable = () => new ServiceUnavailableException('小程序身份观察记录无效，请重新授权或维护');
 const positive = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value)>0 && Number(value)<=2147483647;
 function sign(env: RuntimeEnv, row: Omit<Row,'signature'>): string {
@@ -25,16 +19,6 @@ function sign(env: RuntimeEnv, row: Omit<Row,'signature'>): string {
   return createHmac('sha256',env.APP_KEY).update('cinashop.routine-identity-witness.record.v1\0')
     .update(JSON.stringify([row.observation_id,row.uid,row.binding_id,row.format_version,
       [o.version,o.purpose,o.observationId,o.appId,o.openid,o.unionid,o.sourceStamp,o.observedAt,o.signature],Number(row.created_at)])).digest('hex');
-}
-function verified(env: RuntimeEnv, raw: Row): RoutineIdentityWitness {
-  const observation = verifyRoutineIdentityObservation(env,raw.observation,undefined,{allowExpired:true});
-  const row = {...raw,created_at:Number(raw.created_at),observation};
-  if (!positive(row.uid) || !positive(row.binding_id) || row.format_version!==1
-    || row.observation_id!==observation.observationId || !Number.isSafeInteger(row.created_at)
-    || row.created_at<observation.observedAt-60 || row.created_at>Math.floor(Date.now()/1000)+60
-    || typeof row.signature!=='string' || !/^[a-f0-9]{64}$/u.test(row.signature)
-    || !timingSafeEqual(Buffer.from(row.signature,'hex'),Buffer.from(sign(env,row),'hex'))) throw unavailable();
-  return Object.freeze({observationId:row.observation_id,uid:row.uid,bindingId:row.binding_id,observation,createdAt:row.created_at});
 }
 
 /** Called after full identity reconciliation on the very same transaction.
@@ -81,7 +65,7 @@ export async function appendRoutineIdentityWitness(tx: DbClient, env: RuntimeEnv
   const saved=await tx.execute<Row>(sql`SELECT observation_id,uid,binding_id,format_version,observation,created_at,signature
     FROM public.routine_identity_witness WHERE observation_id=${observation.observationId}::uuid LIMIT 2`);
   if (saved.length!==1) throw unavailable();
-  const witness=verified(env,saved[0]);
+  const witness=parseRoutineIdentityWitness(env,saved[0]);
   if (witness.uid!==facts.uid || witness.bindingId!==facts.binding_id
     || witness.observation.signature!==observation.signature) throw new ValidateException('小程序身份观察已用于其他绑定，请重新授权');
   await sourceMatches();
@@ -109,7 +93,7 @@ export async function readRoutineIdentityWitness(tx: DbClient, env: RuntimeEnv, 
       AND w.openid=${openid} AND w.user_type='routine' AND w.is_del=0
       AND u.status=1 AND u.is_del=0 AND u.delete_time IS NULL
     ORDER BY e.created_at DESC,e.observation_id LIMIT 2 FOR SHARE OF w,u`);
-  const proofs=rows.map(row=>verified(env,row));
+  const proofs=rows.map(row=>parseRoutineIdentityWitness(env,row));
   if (proofs.some(proof=>proof.uid!==uid || proof.bindingId!==bindingId
     || proof.observation.appId!==appId || proof.observation.openid!==openid)) throw unavailable();
   return proofs[0]??null;
@@ -130,7 +114,7 @@ export async function readRoutineIdentityWitnessAnchor(tx: DbClient, env: Runtim
     FROM public.routine_identity_witness WHERE observation_id=${observationId}::uuid LIMIT 2`);
   if (!rows.length) return null;
   if (rows.length!==1) throw unavailable();
-  const proof=verified(env,rows[0]);
+  const proof=parseRoutineIdentityWitness(env,rows[0]);
   if (proof.observationId!==observationId || proof.uid!==uid || proof.bindingId!==bindingId
     || proof.observation.appId!==appId || proof.observation.openid!==openid) throw unavailable();
   return proof;

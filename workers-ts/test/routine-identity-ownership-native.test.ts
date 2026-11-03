@@ -5,6 +5,9 @@
  * no production switch writer or historical account adoption is commissioned. */
 import { Buffer } from 'node:buffer';
 import { randomUUID, sign } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import type postgres from 'postgres';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '@/env';
@@ -22,6 +25,7 @@ import { RechargePaymentService } from '@/services/payment/RechargePaymentServic
 import { verifyRoutineIdentityObservation } from '@/services/wechat/RoutineIdentityObservation';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
 import { paymentQueryKeys } from './helpers/paymentQueryFixture';
+import { collectRoutineIdentityContinuationDraft } from '../scripts/routine-ownership-inventory';
 
 const transport = vi.hoisted(() => {
   const state = { values: new Map<string, unknown>(), buckets: new Map<string, unknown>(), depth: 0,
@@ -56,6 +60,7 @@ const APP = 'wxOwnedProspectiveA', OTHER_APP = 'wxOwnedProspectiveB', OPENID = '
   PHONE = '13800000011', NEW_PHONE = '13900000011', IP = '127.0.0.1', SECRET = 'owned-prospective-oauth-secret';
 const SESSION = Buffer.from('0123456789abcdef').toString('base64');
 const ABORT = Error('Owned caller aborted the complete identity transaction');
+const DRAFT_KEY = '53'.repeat(32);
 let keys: ReturnType<typeof paymentQueryKeys>;
 type Fixture = Awaited<ReturnType<typeof refundRuntimeFixture>>;
 type Peer = Parameters<NonNullable<Fixture['withRuntimeRole']>>[0] extends (peer: infer P) => unknown ? P : never;
@@ -190,6 +195,12 @@ async function state(c: Context) {
 }
 async function owners(c: Context) { return Array.from(await c.f.db.execute(sql`SELECT to_jsonb(t) AS row,t.xmin::text AS version FROM public.routine_identity_ownership t ORDER BY ownership_id`)); }
 async function witnesses(c: Context) { return Array.from(await c.f.db.execute(sql`SELECT * FROM public.routine_identity_witness ORDER BY observation_id`)); }
+const draft = (c: Context, client = c.f.db.$client as unknown as postgres.Sql) =>
+  collectRoutineIdentityContinuationDraft(client,c.target,DRAFT_KEY,{APP_KEY:c.env.APP_KEY});
+function redactedDraft(c: Context, value: unknown) {
+  const text=JSON.stringify(value);
+  for(const secret of [APP,OTHER_APP,OPENID,PHONE,SECRET,c.env.APP_KEY,DRAFT_KEY,'owned-existing-account'])expect(text).not.toContain(secret);
+}
 const ledger = (c: Context) => c.f.db.execute(sql`SELECT to_jsonb(t) AS row,t.xmin::text AS version FROM public.routine_payment_attempt t ORDER BY order_no,event_kind`);
 function gifts() {
   for (const [key, value] of Object.entries({ newcomer_status: '1', register_integral_status: '1', register_give_integral: '7',
@@ -215,6 +226,120 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('prospective Rout
     s.violations.length = 0; s.rejectGifts = false; s.abortAfterMapping = false; s.abortedFacts = undefined; s.takeHook = undefined;
   });
   afterEach(() => { try { expect(transport.state.depth).toBe(0); expect(transport.state.violations).toEqual([]); } finally { vi.restoreAllMocks(); } });
+
+  it('classifies real code2Session anchors on the full maintenance snapshot, survives aging and exposes no identity or secret', async () => fixture(async c => {
+    const first=await c.reconcile(OPENID,PHONE);await c.reconcile(OPENID,PHONE);
+    await c.f.db.insert(wechatUser).values({id:799,uid:11,openid:'owned_unmapped_deleted_tail',userType:'routine',isDel:1});
+    const before=await state(c), fetches=vi.mocked(fetch).mock.calls.length;
+    const report=await draft(c);
+    expect(report.identity).toMatchObject({activationAllowed:false,permitIssued:false,switchCommissioned:false,
+      paymentEvidence:'not_evaluated',catalogCommissioning:'not_evaluated',missingSources:[],
+      counts:{routineBindings:2,owners:1,witnesses:2,ownerStates:{verified_anchor_live:1},bindingStates:{anchored:1,unmapped:1}}});
+    expect(report.identity.inventorySourceDigest).toBe(report.inventory.sourceDigest);
+    expect(report.identity.sources).toHaveLength(4);expect(report.identity.unclassifiedRelationCount).toBeGreaterThan(200);
+    expect(report.identity.bindings.find(b=>b.state==='unmapped')?.live).toBe(false);
+    expect(await state(c)).toEqual(before);expect(vi.mocked(fetch).mock.calls).toHaveLength(fetches);redactedDraft(c,report);
+    const realNow=Date.now();const clock=vi.spyOn(Date,'now').mockReturnValue(realNow+86400000);
+    try {
+      expect(()=>verifyRoutineIdentityObservation(c.env,first.observation)).toThrow();
+      const aged=await draft(c);expect(aged.identity.counts.ownerStates.verified_anchor_live).toBe(1);
+      expect(aged.identity.classificationDigest).toBe(report.identity.classificationDigest);
+    }finally{clock.mockRestore();}
+    // Run the actual CLI in a separate process on this owned local database.
+    const url=new URL(process.env.TEST_FINANCE_POSTGRES_URL!);url.pathname='/'+c.target.database;
+    const result=spawnSync(process.execPath,['--import','tsx','scripts/inspect-routine-identity-continuation.ts',c.target.database,c.target.maintenance],{
+      cwd:resolve(import.meta.dirname,'..'),env:{...process.env,ROUTINE_IDENTITY_DRAFT_DATABASE_URL:url.href,
+        ROUTINE_IDENTITY_DRAFT_FINGERPRINT_KEY:DRAFT_KEY,ROUTINE_IDENTITY_DRAFT_AUTHENTICATOR:c.env.APP_KEY},
+      encoding:'utf8',timeout:40000,maxBuffer:4194304});
+    expect(result.error).toBeUndefined();expect(result.status).toBe(0);expect(result.stderr).toBe('');
+    const cli=JSON.parse(result.stdout) as Awaited<ReturnType<typeof draft>>;
+    expect(cli.identity.classificationDigest).toBe(report.identity.classificationDigest);redactedDraft(c,cli);
+    expect(await state(c)).toEqual(before);
+  }),180000);
+
+  it('reports a corrupt owner and then its missing first anchor without adopting the valid newest witness', async () => fixture(async c => {
+    const first=await c.reconcile(OPENID,PHONE);await c.reconcile(OPENID,PHONE);
+    const [original]=await c.f.db.execute(sql`SELECT signature FROM public.routine_identity_ownership`);
+    await c.f.exec(`ALTER TABLE public.routine_identity_ownership DISABLE TRIGGER rio_immutable_rows;
+      UPDATE public.routine_identity_ownership SET signature=repeat('0',64);
+      ALTER TABLE public.routine_identity_ownership ENABLE TRIGGER rio_immutable_rows`);
+    const corrupt=await draft(c);expect(corrupt.identity.counts.ownerStates.ownership_invalid).toBe(1);
+    expect(corrupt.identity.counts.bindingStates.unresolved).toBe(1);redactedDraft(c,corrupt);
+    await c.f.db.transaction(async tx=>{
+      await tx.execute(sql`ALTER TABLE public.routine_identity_ownership DISABLE TRIGGER rio_immutable_rows`);
+      await tx.execute(sql`UPDATE public.routine_identity_ownership SET signature=${original.signature}`);
+      await tx.execute(sql`ALTER TABLE public.routine_identity_ownership ENABLE TRIGGER rio_immutable_rows`);
+      await tx.execute(sql`ALTER TABLE public.routine_identity_witness DISABLE TRIGGER riw_immutable_rows`);
+      await tx.execute(sql`UPDATE public.routine_identity_witness SET signature=repeat('0',64) WHERE observation_id=${first.observation.observationId}::uuid`);
+      await tx.execute(sql`ALTER TABLE public.routine_identity_witness ENABLE TRIGGER riw_immutable_rows`);
+    });
+    const invalidAnchor=await draft(c);
+    expect(invalidAnchor.identity.counts.ownerStates.anchor_invalid).toBe(1);
+    expect(invalidAnchor.identity.counts.witnessStates).toMatchObject({witness_invalid:1,verified_linked:1});
+    await c.f.db.transaction(async tx=>{
+      await tx.execute(sql`ALTER TABLE public.routine_identity_witness DISABLE TRIGGER riw_immutable_rows`);
+      await tx.execute(sql`DELETE FROM public.routine_identity_witness WHERE observation_id=${first.observation.observationId}::uuid`);
+      await tx.execute(sql`ALTER TABLE public.routine_identity_witness ENABLE TRIGGER riw_immutable_rows`);
+    });
+    const before=await state(c), missing=await draft(c);
+    expect(missing.identity.counts.ownerStates.anchor_missing).toBe(1);
+    expect(missing.identity.counts.witnessStates.verified_linked).toBe(1);
+    expect(missing.identity.counts.bindingStates.unresolved).toBe(1);expect(await state(c)).toEqual(before);
+  }),180000);
+
+  it('keeps distinct AppID commitments for one UID and marks same-account live ambiguity and inactive history', async () => fixture(async c => {
+    await c.reconcile(OPENID,PHONE);await c.rotate(OTHER_APP);await c.reconcile('owned_subject_b',PHONE);
+    let report=await draft(c);expect(report.identity.accounts).toHaveLength(2);
+    expect(report.identity.counts.ownerStates.verified_anchor_live).toBe(2);
+    await c.reconcile('owned_subject_b_second',PHONE);report=await draft(c);
+    expect(report.identity.counts.ownerStates).toMatchObject({verified_anchor_live:1,conflict:2});
+    expect(report.identity.counts.bindingStates).toMatchObject({anchored:1,unresolved:2});
+    await c.f.db.update(wechatUser).set({isDel:1}).where(eq(wechatUser.openid,'owned_subject_b_second'));
+    report=await draft(c);expect(report.identity.counts.ownerStates).toMatchObject({verified_anchor_live:2,verified_anchor_inactive:1,conflict:0});
+    await c.f.db.update(user).set({status:0}).where(eq(user.uid,11));
+    const before=await state(c);report=await draft(c);
+    expect(report.identity.counts.ownerStates.verified_anchor_inactive).toBe(3);expect(await state(c)).toEqual(before);redactedDraft(c,report);
+  }),180000);
+
+  it('classifies the exact RR inventory snapshot while a real peer changes a user and adds a new source', async () => fixture(async c => {
+    await c.reconcile(OPENID,PHONE);
+    await c.f.withPeer!(async peer=>{
+      const client=c.f.db.$client as unknown as postgres.Sql;let changed=false;
+      const observed=new Proxy(client,{get(target,key,receiver){
+        if(key!=='begin')return Reflect.get(target,key,receiver);
+        return (mode:string,action:(tx:postgres.TransactionSql)=>Promise<unknown>)=>client.begin(mode,tx=>action(new Proxy(tx,{
+          get(bound,property,innerReceiver){
+            if(property!=='unsafe')return Reflect.get(bound,property,innerReceiver);
+            return (text:string,...args:unknown[])=>(async()=>{
+              const result=await Reflect.apply(bound.unsafe,bound,[text,...args]);
+              if(!changed&&text.startsWith('SELECT pg_current_snapshot()')){
+                changed=true;await peer.exec(`UPDATE public."user" SET status=0 WHERE uid=11;
+                  CREATE TABLE public.owned_new_identity_source(id integer);INSERT INTO public.owned_new_identity_source VALUES(1)`);
+              }
+              return result;
+            })();
+          },
+        })));
+      }});
+      const first=await draft(c,observed);expect(changed).toBe(true);
+      expect(first.identity.counts.ownerStates.verified_anchor_live).toBe(1);
+      expect(first.inventory.relations.some(r=>r.name==='owned_new_identity_source')).toBe(false);
+      const second=await draft(c);expect(second.identity.counts.ownerStates.verified_anchor_inactive).toBe(1);
+      expect(second.identity.unclassifiedRelationCount).toBe(first.identity.unclassifiedRelationCount+1);
+      expect(second.inventory.relations.find(r=>r.name==='owned_new_identity_source')?.rowCount).toBe('1');
+      expect(second.identity.inventorySourceDigest).not.toBe(first.identity.inventorySourceDigest);
+      await peer.exec('DROP TABLE public.owned_new_identity_source');
+    });
+  }),180000);
+
+  it('refuses a real App LOGIN and a drifted signed-record layout without emitting a partial draft', async () => fixture(async c => {
+    await c.reconcile(OPENID,PHONE);const before=await state(c);
+    await expect(draft(c,c.app.db.$client as unknown as postgres.Sql)).rejects.toThrow('Routine ownership database inventory incomplete');
+    await c.f.exec('ALTER TABLE public.routine_identity_ownership RENAME COLUMN signature TO owned_unreviewed_signature');
+    try{await expect(draft(c)).rejects.toThrow('Routine ownership database inventory incomplete');}
+    finally{await c.f.exec('ALTER TABLE public.routine_identity_ownership RENAME COLUMN owned_unreviewed_signature TO signature');}
+    expect(await state(c)).toEqual(before);
+  }),180000);
 
   it('cannot silently adopt an unmapped legacy binding even when that old UID has a phone and mandatory-phone KV is off', async () => fixture(async c => {
     gifts(); const before = await state(c);

@@ -3,6 +3,7 @@
  * issues/consumes a switch permit. No runtime connection or APP_KEY fallback. */
 import { createHmac, type Hmac } from 'node:crypto';
 import type postgres from 'postgres';
+import { routineIdentityAccumulator, type RoutineIdentityContinuation } from './routine-identity-continuation';
 
 type Query = Pick<postgres.Sql, 'unsafe'>;
 type Relation = { oid: string; type_oid: string; schema: string; name: string; kind: string; am: string | null };
@@ -17,6 +18,7 @@ export type RoutineOwnershipInventory = {
   metadataDigest: string; sourceDigest: string; rowCount: string;
   relations: { oid: string; schema: string; name: string; kind: string; rowCount: string; digest: string }[];
 };
+export type RoutineIdentityContinuationDraft = { inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation };
 
 // Capacity refusals are whole-operation failures, never successful prefixes.
 const PAGE = 16, MAX_RELATIONS = 2048, MAX_ROW_BYTES = 262144, MAX_DURATION_MS = 30000;
@@ -112,6 +114,24 @@ const limitsSql = `SELECT set_config('statement_timeout',LEAST(NULLIF((SELECT se
  * This API makes no provider/Redis/SMS call and performs no DML/DDL/grants. */
 export async function collectRoutineOwnershipInventory(client: postgres.Sql, declaration: RoutineInventoryTarget,
   fingerprintKey: string): Promise<RoutineOwnershipInventory> {
+  return (await collectRoutineOwnershipObservation(client, declaration, fingerprintKey)).inventory;
+}
+
+/** A separate maintenance diagnostic, on the SAME complete locked RR snapshot.
+ * APP_KEY authenticates stored evidence; it is never SQL activation authority.
+ * No runtime role/context guard is borrowed, weakened or bypassed. */
+export async function collectRoutineIdentityContinuationDraft(client: postgres.Sql, declaration: RoutineInventoryTarget,
+  fingerprintKey: string, verification: Readonly<{ APP_KEY: string }>): Promise<RoutineIdentityContinuationDraft> {
+  const identity = routineIdentityAccumulator(verification.APP_KEY, fingerprintKey);
+  const result = await collectRoutineOwnershipObservation(client, declaration, fingerprintKey, identity);
+  if (!result.identity) throw fail();
+  return { inventory: result.inventory, identity: result.identity };
+}
+
+async function collectRoutineOwnershipObservation(client: postgres.Sql, declaration: RoutineInventoryTarget,
+  fingerprintKey: string, identity?: ReturnType<typeof routineIdentityAccumulator>): Promise<{
+    inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation | null;
+  }> {
   // Capture primitives synchronously, before BEGIN or any awaited callback.
   const target = { database: declaration.database, maintenance: declaration.maintenance };
   if (![target.database,target.maintenance].every(v => typeof v === 'string' && IDENTIFIER.test(v))
@@ -209,6 +229,7 @@ export async function collectRoutineOwnershipInventory(client: postgres.Sql, dec
           FROM pg_attribute a JOIN pg_type t ON t.oid=a.atttypid JOIN pg_namespace n ON n.oid=t.typnamespace
           WHERE a.attrelid=$1::oid AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum`, [relation.oid]);
         if (columns.length > 512) throw fail();
+        identity?.relation(relation, Array.from(columns));
         const budget = rowBudget(columns), digest = hash(fingerprintKey, 'relation');
         frame(digest, JSON.stringify(relation));
         let count = 0n;
@@ -225,6 +246,7 @@ export async function collectRoutineOwnershipInventory(client: postgres.Sql, dec
           FROM (VALUES(1)) sentinel(n) LEFT JOIN ONLY ${quote(relation.schema)}.${quote(relation.name)} t ON true ORDER BY t.ctid) s`, row => {
           if (row.row_type !== relation.type_oid) throw fail();
           if (row.empty) return;
+          identity?.row(relation, row.value!);
           frame(digest, row.value!); count++;
         });
         total += count;
@@ -234,11 +256,14 @@ export async function collectRoutineOwnershipInventory(client: postgres.Sql, dec
       const metadataDigest = metadata.digest('hex'), source = hash(fingerprintKey, 'source');
       frame(source, JSON.stringify([target,actual.database_oid,actual.role_oid,metadataDigest,relations]));
       // Construct a public result only after every source has completed.
-      return { version: 1 as const, purpose: 'routine_ownership_database_inventory' as const,
+      const inventory: RoutineOwnershipInventory = { version: 1 as const, purpose: 'routine_ownership_database_inventory' as const,
         database: { name: target.database, oid: actual.database_oid }, maintenance: { name: target.maintenance, oid: actual.role_oid },
         snapshot: snapshot.snapshot, observedAt: snapshot.observed_at, scope: 'non_system_heap_tables_and_partition_roots' as const,
         ownership: 'not_evaluated' as const, activationAllowed: false as const, externalSourcesIncluded: false as const,
         metadataDigest, sourceDigest: source.digest('hex'), rowCount: total.toString(), relations };
+      const classification = identity?.finish(relations, inventory.sourceDigest) ?? null;
+      if (Date.now() >= deadline) throw fail();
+      return { inventory, identity: classification };
     });
   } catch { throw fail(); } // SQL/cast errors can contain secrets or row values.
 }

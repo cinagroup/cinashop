@@ -6,6 +6,11 @@ prove a provider payment, issue a maintenance manifest, or authorize activation.
 The material AppID switch barrier remains closed. Existing users, bindings,
 entitlements, payments and order state are never rewritten by this reader.
 
+The separate [identity continuation draft](routine-identity-continuation-draft.md)
+uses the same complete inventory snapshot to authenticate the four named public
+identity roots. The original inventory API and command retain
+`ownership: not_evaluated`; neither output authorizes activation.
+
 ## Explicit command
 
 Run from `workers-ts` using a dedicated PG16 maintenance LOGIN connection, not

@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import type { DbClient } from '@/lib/di';
@@ -8,14 +8,11 @@ import { ServiceUnavailableException, ValidateException } from '@/utils/errors';
 import { verifyRoutineIdentityObservation, type RoutineIdentityObservation } from './RoutineIdentityObservation';
 import { appendRoutineIdentityWitness, readRoutineIdentityWitnessAnchor, type RoutineIdentityWitness } from './RoutineIdentityWitness';
 import { readRoutineCredentialsInTx } from './RoutineRuntimeConfig';
+import { parseRoutineIdentityOwnership, type RoutineIdentityOwnershipRow as Row,
+  type RoutineIdentityOwner } from './RoutineIdentityEvidenceCodec';
+export type { RoutineIdentityOwner } from './RoutineIdentityEvidenceCodec';
 
 type RuntimeEnv = Pick<Env,'APP_KEY'>;
-type Row = { ownership_id:string; app_id:string; openid:string; uid:number; binding_id:number; observation_id:string;
-  format_version:number; observed_at:number|string; created_at:number|string; signature:string };
-export interface RoutineIdentityOwner {
-  readonly ownershipId:string; readonly appId:string; readonly openid:string; readonly uid:number; readonly bindingId:number;
-  readonly observationId:string; readonly observedAt:number; readonly createdAt:number;
-}
 export interface OwnedRoutineIdentity { readonly owner:RoutineIdentityOwner; readonly witness:RoutineIdentityWitness }
 const unavailable=()=>new ServiceUnavailableException('小程序账号归属记录未完整就绪，请维护后重试');
 const conflict=()=>new ValidateException('小程序身份归属冲突，请先维护归属后重新授权');
@@ -32,18 +29,6 @@ function identityId(env:RuntimeEnv,row:Pick<Row,'app_id'|'openid'|'uid'|'binding
 function sign(env:RuntimeEnv,row:Omit<Row,'signature'>) {
   return mac(env,'record',[row.ownership_id,row.app_id,row.openid,row.uid,row.binding_id,row.observation_id,
     row.format_version,Number(row.observed_at),Number(row.created_at)]);
-}
-function decode(env:RuntimeEnv,row:Row):RoutineIdentityOwner {
-  const observedAt=Number(row.observed_at),createdAt=Number(row.created_at);
-  if (!positive(row.uid) || !positive(row.binding_id) || !token(row.app_id,32) || !token(row.openid,100)
-    || row.format_version!==1 || !/^[a-f0-9]{64}$/u.test(row.ownership_id) || row.ownership_id!==identityId(env,row)
-    || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(row.observation_id)
-    || !Number.isSafeInteger(observedAt) || observedAt<=0 || !Number.isSafeInteger(createdAt)
-    || createdAt<observedAt-60 || createdAt>observedAt+900 || createdAt>Math.floor(Date.now()/1000)+60
-    || typeof row.signature!=='string' || !/^[a-f0-9]{64}$/u.test(row.signature)
-    || !timingSafeEqual(Buffer.from(row.signature,'hex'),Buffer.from(sign(env,row),'hex'))) throw unavailable();
-  return Object.freeze({ownershipId:row.ownership_id,appId:row.app_id,openid:row.openid,uid:row.uid,bindingId:row.binding_id,
-    observationId:row.observation_id,observedAt,createdAt});
 }
 async function context(tx:DbClient) {
   if (Object.hasOwn(tx,'$client')) throw unavailable();
@@ -110,7 +95,7 @@ export async function appendRoutineIdentityOwnershipTx(tx:DbClient,env:RuntimeEn
   const saved=await tx.execute<Row>(sql`SELECT ${fields} FROM public.routine_identity_ownership
     WHERE (app_id=${observation.appId} AND openid=${observation.openid}) OR binding_id=${bindingId} LIMIT 3`);
   if (saved.length!==1) throw conflict();
-  const owner=decode(env,saved[0]);
+  const owner=parseRoutineIdentityOwnership(env,saved[0]);
   if (owner.uid!==uid || owner.bindingId!==bindingId || owner.appId!==observation.appId || owner.openid!==observation.openid) throw conflict();
   // Existing mapping keeps its first anchor/xmin; every new exchange still
   // records its own witness without rewriting the original prospective scope.
@@ -131,7 +116,7 @@ export async function readRoutineIdentityOwnerBySubjectTx(tx:DbClient,env:Runtim
     WHERE app_id=${appId} AND openid=${openid} LIMIT 2`);
   if (!rows.length) return null;
   if (rows.length!==1) throw unavailable();
-  const owner=decode(env,rows[0]);
+  const owner=parseRoutineIdentityOwnership(env,rows[0]);
   if (owner.appId!==appId || owner.openid!==openid) throw unavailable();
   if (expectedUid!==undefined && owner.uid!==expectedUid) throw conflict();
   await lockUser(tx,owner.uid);
@@ -153,7 +138,7 @@ export async function readRoutineIdentityOwnerForUidTx(tx:DbClient,env:RuntimeEn
   if (rows.length>64 || Buffer.byteLength(JSON.stringify(rows),'utf8')>1048576) throw unavailable();
   const live:OwnedRoutineIdentity[]=[];
   for (const row of rows) {
-    const owner=decode(env,row);
+    const owner=parseRoutineIdentityOwnership(env,row);
     if (owner.uid!==uid || owner.appId!==appId) throw unavailable();
     const active=await liveBinding(tx,owner),witness=await anchor(tx,env,owner);
     if (active) live.push(Object.freeze({owner,witness}));

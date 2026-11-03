@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
-import type { Env } from '@/env';
-import { ValidateException } from '@/utils/errors';
+import type { Env } from '../../env';
+import { ValidateException } from '../../utils/errors';
 
 export interface RoutineIdentityObservation {
   version: 1;
