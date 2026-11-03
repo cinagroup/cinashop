@@ -1,5 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
-import type { Env } from '@/env';
+import type { Env } from '../../env';
 
 type Signing = Pick<Env, 'APP_KEY'>;
 export interface RoutineProviderFacts {

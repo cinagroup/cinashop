@@ -3,6 +3,9 @@
  * local adapters; no real WeChat, Workers, browser or historical UID claim. */
 import { createCipheriv, randomBytes, randomUUID, sign } from 'node:crypto';
 import { Buffer } from 'node:buffer';
+import type postgres from 'postgres';
+import { collectRoutineAccountContinuationDraft } from '../scripts/routine-ownership-inventory';
+import { runRoutinePaymentAccountPolicyUpgrade } from '@/migrations/runRoutinePaymentAccountPolicyUpgrade';
 import { Hono } from 'hono';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -207,6 +210,20 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine original
     expect((await c.post(signed)).status).toBe(200);
     expect(await c.ledger()).toEqual(stored); expect(await c.financial()).toEqual(paid);
     expect(await c.caseRow(order.orderId)).toMatchObject({ status: 'CONFIRMED', orderDomain: 'recharge' });
+    const report=await collectRoutineAccountContinuationDraft(c.f.db.$client as unknown as postgres.Sql,c.target,
+      '74'.repeat(32),{APP_KEY:c.env.APP_KEY});
+    expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',related:'consistent',approvedUse:'none_recorded'});
+    expect(report.payments.counts.uses).toBe(0);expect(report.payments.missingSources).toContain('routine_payment_account_use');
+    expect(report).toMatchObject({activationAllowed:false,permitIssued:false,switchCommissioned:false});noPayer(report);
+    expect(await c.ledger()).toEqual(stored);expect(await c.financial()).toEqual(paid);
+    // A later genuine addon installation cannot retroactively require an
+    // approved-use sidecar on this accepted pre-addon v1 original.
+    await runRoutinePaymentAccountPolicyUpgrade(c.f.db,c.target);
+    const afterAddon=await collectRoutineAccountContinuationDraft(c.f.db.$client as unknown as postgres.Sql,c.target,
+      '74'.repeat(32),{APP_KEY:c.env.APP_KEY});
+    expect(afterAddon.payments.missingSources).not.toContain('routine_payment_account_use');
+    expect(afterAddon.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',approvedUse:'none_recorded'});
+    expect(afterAddon.payments.counts.uses).toBe(0);noPayer(afterAddon);
     noPayer(c.publicJson); noPayer(c.messages); expect(fetch).not.toHaveBeenCalled();
   }), 180000);
 
@@ -338,6 +355,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine original
     }
     expect(c.messages).toEqual([]); expect(await c.financial()).toEqual(before);
     expect(await c.f.db.select().from(paymentCallbackEvent)).toHaveLength(4);
+    const report=await collectRoutineAccountContinuationDraft(c.f.db.$client as unknown as postgres.Sql,c.target,
+      '74'.repeat(32),{APP_KEY:c.env.APP_KEY});
+    expect(report.payments.counts).toMatchObject({originals:4,verifiedSuccesses:4,invalidOriginals:0});
+    expect(report.payments.originals.filter(o=>o.binding==='unresolved')).toHaveLength(3);
+    expect(report.payments.originals.filter(o=>o.local==='identity_or_amount_changed')).toHaveLength(1);noPayer(report);
     noPayer(c.publicJson); expect(fetch).not.toHaveBeenCalled();
   }), 180000);
 
@@ -352,6 +374,11 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine original
     expect(c.messages.filter(isPaymentCallbackMessage)).toHaveLength(1);
     const done = await consumeCallback(c, message); expect(done.ack).not.toHaveBeenCalled(); expect(done.retry).toHaveBeenCalledOnce();
     expect(await c.caseRow(order.orderId)).toMatchObject({ status: 'CONFLICT' });
+    const draft=()=>collectRoutineAccountContinuationDraft(c.f.db.$client as unknown as postgres.Sql,c.target,
+      '74'.repeat(32),{APP_KEY:c.env.APP_KEY});
+    const report=await draft();expect(report.payments.originals).toHaveLength(2);
+    expect(report.payments.originals.every(o=>o.authenticity==='verified_success'&&o.related==='conflict')).toBe(true);
+    noPayer(report);
     expect(await c.ledger()).toEqual(rows); expect(await c.financial()).toEqual(before); noPayer(c.publicJson); noPayer(c.messages);
   }), 180000);
 

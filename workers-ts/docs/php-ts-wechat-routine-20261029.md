@@ -979,3 +979,20 @@ pure-01六阶段728.32秒、native-02两完整PG文件290.67秒，两批8607输�
 新原生实际运行App LOGIN、code2Session／reconcile服务、存储签名、维护快照及独立进程CLI；provider／缓存为受控传输，新增phone连续性是server-verified夹具参数，不作本轮真实手机号HTTP或真实微信声明。动态覆盖老锚点、损坏owner／anchor、缺首见证但新见证合法、多AppID／同账号冲突、inactive／未映射软删尾部、真实peer并发DML与新来源、实际App拒绝和布局漂移，分类前后旧用户／权益／旧单／付款／证据快照不改。交叉复核区分作者与独立阅读范围，不称独立重跑或安全审计；证据／失败／逐项复用在本机`.cache/php-ts-phase57-validation`，文档终态后补，最终14提交文件另扫秘密核index／commit字节。
 
 迁移SQL／grants／Env／配置作者未改；付款原SUCCESS／历史approved-use／各独立用途批准、provider／Queue等外部闭合、完整manifest／单次许可／原子切换、其余业务／角色／非微信、私有原PHP供应与CI／容量及整体迁移仍未完成。下一步只读地图绑定24当前来源，尚未实现付款分类或发出权限。没有生产维护执行、部署、Browser／Workerd／Hyperdrive或真实微信验收；用户／UID／权益／旧单／付款、跨AppID屏障与runtime_ready=false保持。本轮仅本地提交合main并清理开发分支；远端继续暂缓。
+
+
+## 第58轮：同一维护快照的原付款与独立用途分类
+
+本轮基点为本地main `a685a8152b5ccbc4877a7e7ba7e419b9c3d6b047`。用户“暂不执行远端操作”持续有效；没有GitHub读写、私有原库／environment／deploy key／secret配置、凭据发送、推送或部署，新SHA云端CI未验证。
+
+完成[账号续办维护草案](routine-account-continuation-draft.md)：在完整锁定RR只读inventory结束前，从同一物理行流同时分类身份与付款，并以组合HMAC绑定两个分类和原sourceDigest。付款只解释九个命名public heap根，保留其他关系的全库计数／指纹及unclassified；不能从旧24个源文件定位清单推断数据库表总数。共享原证、历史批准use及refund／shipping／subscription纯解码，固定签名域／持久时间规则保持，runtime写事务、fresh admission、registry与能力对象保持原服务。期望scope来自实际库OID及各policy表owner，不能借payload自证。
+
+真实SUCCESS的真实性、捕获时binding、当前paid／金额／buyer／transaction、关联原证冲突和历史用途分别输出；付款前paid0、老v1零use、scopeMatches=false、后续撤销、软删旧单及缺损政策链均保留，不按最新记录或payer认领用户。价格按PG原始numeric token和整数分比较；精确布局、保留容量及全库预算失败不返回成功前缀。CLI独立三Env且无runtime回退，authenticator只在本地验签；输出只有计数、标签、目录来源和keyed摘要，所有activation／permit／switch及独立用途授权均false。
+
+真实signed-query use为pglz压缩，旧通用inventory在完整诊断前拒绝。修复仅对七个既有JSONB列核实际OID／NOT NULL、完整已验证CHECK和内建依赖以证明有限文本上限；未知压缩JSON仍拒绝，不改DDL／storage／旧证据。读取端显式使用PG内建I/O，真实独立peer后建JSONB→text cast反例及可观察控制证明不会执行该隐藏函数；不据此声称完整DDL或业务writer fence。
+
+最终接受98项PG覆盖与112项纯逻辑，共210项；PG为approved18、真实五LOGIN混合A/C整文件3、original13、三独立用途整文件30、旧inventory／identity整文件34。approved18明确为check05字节未变17项加check06修正literal1，当前18项整文件未重跑，17未选及中间重复不累计。07／08／09／10耗时545.31／270.42／420.39／378.79秒，均冻结8630输入、remaining0／STOPPED；最终11纯逻辑和两完整Worker类型配置共420.98秒，8625共有worktree输入与06之后各批相同。新增CLI是19项独立进程前置拒绝；真实PG通过collector API，不声称新CLI成功连接／远程TLS验收。provider／cache为受控传输，phone连续性用server-verified夹具输入，不称真实微信或手机号HTTP验收。
+
+保留01新增测试TS18046、03合并命令600秒超时及精确手动停止status3但未观察fixture-zero、04真实压缩原因失败、05新断言误判binding、06驱动器误要求failed==skipped==17而拒绝原生成功等原事实。06未执行的checkout由07另跑完整文件；独立阅读明确自身作者范围、未重跑／未安全审计。单层共享锁、单worker、600／1200秒及原内存预算保持。日志、冻结、复用审阅和后续范围只读图在本机`.cache/php-ts-phase58-validation`；文档终态后补，最终23提交文件另扫秘密并核暂存／提交字节。
+
+本轮没有迁移SQL／grants／Env切换或现有用户、UID、权益、旧单、付款改写。实际外部dispatch／attempt／result闭合、完整维护manifest／单次许可／原子切换和回执恢复、其他业务／角色／非微信、私有PHP供应、CI／容量及整体迁移仍未完成，跨AppID屏障及runtime_ready=false保持。仅本地提交合main并清理本轮已合并开发分支，远端继续暂缓；没有生产维护、Browser／Workerd／Hyperdrive或真实微信验收。

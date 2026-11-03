@@ -4,6 +4,7 @@
 import { createHmac, type Hmac } from 'node:crypto';
 import type postgres from 'postgres';
 import { routineIdentityAccumulator, type RoutineIdentityContinuation } from './routine-identity-continuation';
+import { routinePaymentAccumulator, type RoutinePaymentContinuation } from './routine-payment-continuation';
 
 type Query = Pick<postgres.Sql, 'unsafe'>;
 type Relation = { oid: string; type_oid: string; schema: string; name: string; kind: string; am: string | null };
@@ -19,15 +20,53 @@ export type RoutineOwnershipInventory = {
   relations: { oid: string; schema: string; name: string; kind: string; rowCount: string; digest: string }[];
 };
 export type RoutineIdentityContinuationDraft = { inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation };
+export type RoutineAccountContinuationDraft = {
+  purpose:'routine_account_continuation_draft';activationAllowed:false;permitIssued:false;switchCommissioned:false;
+  inventory:RoutineOwnershipInventory;identity:RoutineIdentityContinuation;payments:RoutinePaymentContinuation;
+  classificationDigest:string;
+};
 
 // Capacity refusals are whole-operation failures, never successful prefixes.
 const PAGE = 16, MAX_RELATIONS = 2048, MAX_ROW_BYTES = 262144, MAX_DURATION_MS = 30000;
 const IDENTIFIER = /^[a-z_][a-z0-9_]{0,62}$/;
+
+// Fixed named-column size proofs only, separate from runtime commissioning.
+// A validated exact CHECK bounds rendered JSON even when its stored datum is
+// compressed. Unknown JSON keeps the generic pre-decompression refusal.
+const constrainedJson:Record<string,readonly [string,string,number]>={
+  routine_original_payment_evidence:['payload','rope_payload_ck',16384],
+  routine_payment_account_policy:['payload','rpap_payload_ck',16384],
+  routine_payment_account_use:['payload','rpau_payload_ck',16384],
+  routine_refund_account_policy:['payload','rrap_payload_ck',16384],
+  routine_shipping_account_policy:['payload','rshp_payload_ck',16384],
+  routine_subscription_account_policy:['payload','rsua_payload_ck',32768],
+  routine_identity_witness:['observation','riw_observation_ck',8192],
+};
+const jsonBoundProof=`SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_constraint k
+  JOIN pg_catalog.pg_attribute a ON a.attrelid=k.conrelid AND a.attname=$2
+  WHERE k.conrelid=$1::oid AND k.conname=$3 AND k.contype='c'
+    AND k.connamespace='public'::regnamespace AND k.convalidated AND k.conislocal
+    AND k.coninhcount=0 AND k.conparentid=0 AND NOT k.connoinherit
+    AND NOT k.condeferrable AND NOT k.condeferred
+    AND a.attnum>0 AND NOT a.attisdropped AND a.atttypid=3802 AND a.attnotnull
+    AND k.conkey=ARRAY[a.attnum]::smallint[]
+    AND pg_catalog.pg_get_constraintdef(k.oid,false)=$4
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_depend d
+      WHERE d.classid='pg_catalog.pg_constraint'::regclass AND d.objid=k.oid AND NOT(
+        (d.refclassid='pg_catalog.pg_class'::regclass AND d.refobjid=k.conrelid AND d.refobjsubid IN(0,a.attnum))
+        OR(d.refclassid='pg_catalog.pg_namespace'::regclass AND d.refobjid=k.connamespace)
+        OR(d.refclassid='pg_catalog.pg_proc'::regclass AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc f WHERE f.oid=d.refobjid AND f.pronamespace='pg_catalog'::regnamespace))
+        OR(d.refclassid='pg_catalog.pg_operator'::regclass AND EXISTS(SELECT 1 FROM pg_catalog.pg_operator o WHERE o.oid=d.refobjid AND o.oprnamespace='pg_catalog'::regnamespace))
+        OR(d.refclassid='pg_catalog.pg_type'::regclass AND EXISTS(SELECT 1 FROM pg_catalog.pg_type t WHERE t.oid=d.refobjid AND t.typnamespace='pg_catalog'::regnamespace))
+        OR(d.refclassid='pg_catalog.pg_collation'::regclass AND EXISTS(SELECT 1 FROM pg_catalog.pg_collation l WHERE l.oid=d.refobjid AND l.collnamespace='pg_catalog'::regnamespace))
+      ))) AS ready`;
+
 const scope = "n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'";
 const tableScope = `SELECT c.oid::text AS oid,c.reltype::text AS type_oid,n.nspname AS schema,c.relname AS name,c.relkind AS kind,a.amname AS am
   FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
   LEFT JOIN pg_catalog.pg_am a ON a.oid=c.relam
   WHERE ${scope} AND c.relkind IN ('r','m','p','f') ORDER BY c.oid LIMIT ${MAX_RELATIONS + 1}`;
+const jsonText=(expression:string)=>`pg_catalog.textin(pg_catalog.jsonb_out(${expression}))`;
 const quote = (value: string) => '"' + value.replaceAll('"', '""') + '"';
 const fail = () => new Error('Routine ownership database inventory incomplete');
 function frame(hash: Hmac, value: string) {
@@ -41,7 +80,7 @@ function hash(key: string, domain: string) {
 // user code. Arrays, domains, enums, foreign tables and custom table AMs require
 // a separately reviewed extension, not a fallback cast in this reader.
 const scalarOids = new Set([16,17,18,19,20,21,23,25,26,114,700,701,1042,1043,1082,1083,1114,1184,1186,1266,1700,2950,3802]);
-function rowBudget(columns: Column[]) {
+function rowBudget(columns: Column[], boundedJsonColumn:string|null=null) {
   let overhead = 2;
   const terms = columns.map(column => {
     if (column.namespace !== 'pg_catalog' || !scalarOids.has(column.oid)) throw fail();
@@ -50,16 +89,18 @@ function rowBudget(columns: Column[]) {
     if ([17,25,1042,1043].includes(column.oid))
       return `COALESCE(6::bigint*pg_catalog.octet_length(${c}),4)`;
     if (column.oid === 1700)
-      return `COALESCE(pg_catalog.octet_length(${c}::text)::bigint,4)`;
+      return `COALESCE(pg_catalog.octet_length(pg_catalog.textin(pg_catalog.numeric_out(${c})))::bigint,4)`;
     // Bound the binary/input document before conversion. Small JSONB numeric
     // values can expand to 100k+ decimal characters, so size*8 alone is unsafe.
     // Walk numeric leaves first; each PG numeric scalar has a bounded output.
     // The walk is over <=32KiB input, never an already expanded full document.
     if ([114,3802].includes(column.oid)) {
-      const json = column.oid === 114 ? `${c}::jsonb` : c;
+      if(column.oid===3802&&column.name===boundedJsonColumn)
+        return `COALESCE(pg_catalog.octet_length(${jsonText(c)})::bigint,4)`;
+      const json = column.oid === 114 ? `pg_catalog.jsonb_in(pg_catalog.json_out(${c}))` : c;
       return `CASE WHEN pg_catalog.pg_column_compression(${c}) IS NOT NULL OR pg_catalog.pg_column_size(${c})>32768
         THEN ${MAX_ROW_BYTES + 1} ELSE COALESCE(8::bigint*pg_catalog.pg_column_size(${c}),4)
-        +COALESCE((SELECT sum(pg_catalog.octet_length(v::text)) FROM pg_catalog.jsonb_path_query(${json},
+        +COALESCE((SELECT sum(pg_catalog.octet_length(${jsonText('v')})) FROM pg_catalog.jsonb_path_query(${json},
           'strict $.** ? (@.type() == "number")'::jsonpath) AS numbers(v)),0) END`;
     }
     return '128::bigint';
@@ -71,8 +112,8 @@ function rowBudget(columns: Column[]) {
 // are definitions/privileges, not sequence reservations or pg_authid secrets.
 // Statistics and physical allocation fields are intentionally excluded.
 const metadataQueries = [
-  `SELECT to_jsonb(n)::text AS value FROM pg_catalog.pg_namespace n WHERE ${scope} ORDER BY n.oid`,
-  `SELECT (to_jsonb(c)-ARRAY['relpages','reltuples','relallvisible','relfrozenxid','relminmxid'])::text AS value
+  `SELECT ${jsonText('to_jsonb(n)')} AS value FROM pg_catalog.pg_namespace n WHERE ${scope} ORDER BY n.oid`,
+  `SELECT ${jsonText("to_jsonb(c)-ARRAY['relpages','reltuples','relallvisible','relfrozenxid','relminmxid']")} AS value
     FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE ${scope} ORDER BY c.oid`,
   ...[
     ['pg_attribute','a','a.attrelid','a.attrelid,a.attnum','AND a.attnum>0'],
@@ -83,24 +124,24 @@ const metadataQueries = [
     ['pg_policy','a','a.polrelid','a.oid',''],
     ['pg_sequence','a','a.seqrelid','a.seqrelid',''],
     ['pg_inherits','a','a.inhrelid','a.inhrelid,a.inhseqno',''],
-  ].map(([table, alias, relation, order, extra]) => `SELECT to_jsonb(${alias})::text AS value
+  ].map(([table, alias, relation, order, extra]) => `SELECT ${jsonText('to_jsonb('+alias+')')} AS value
     FROM pg_catalog.${table} ${alias} JOIN pg_catalog.pg_class c ON c.oid=${relation}
     JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE ${scope} ${extra} ORDER BY ${order}`),
   ...[
     ['pg_constraint','connamespace'], ['pg_proc','pronamespace'], ['pg_type','typnamespace'], ['pg_collation','collnamespace'],
-  ].map(([table, namespace]) => `SELECT to_jsonb(a)::text AS value FROM pg_catalog.${table} a
+  ].map(([table, namespace]) => `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.${table} a
     JOIN pg_catalog.pg_namespace n ON n.oid=a.${namespace} WHERE ${scope} ORDER BY a.oid`),
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_enum a JOIN pg_catalog.pg_type t ON t.oid=a.enumtypid
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_enum a JOIN pg_catalog.pg_type t ON t.oid=a.enumtypid
     JOIN pg_catalog.pg_namespace n ON n.oid=t.typnamespace WHERE ${scope} ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_range a JOIN pg_catalog.pg_type t ON t.oid=a.rngtypid
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_range a JOIN pg_catalog.pg_type t ON t.oid=a.rngtypid
     JOIN pg_catalog.pg_namespace n ON n.oid=t.typnamespace WHERE ${scope} ORDER BY a.rngtypid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_default_acl a ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_roles a ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_auth_members a ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_db_role_setting a ORDER BY a.setdatabase,a.setrole`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_extension a ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_event_trigger a ORDER BY a.oid`,
-  `SELECT to_jsonb(a)::text AS value FROM pg_catalog.pg_database a WHERE datname=current_database()`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_default_acl a ORDER BY a.oid`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_roles a ORDER BY a.oid`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_auth_members a ORDER BY a.oid`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_db_role_setting a ORDER BY a.setdatabase,a.setrole`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_extension a ORDER BY a.oid`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_event_trigger a ORDER BY a.oid`,
+  `SELECT ${jsonText('to_jsonb(a)')} AS value FROM pg_catalog.pg_database a WHERE datname=current_database()`,
 ];
 const limitsSql = `SELECT set_config('statement_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='statement_timeout'),0),5000)::text||'ms',true),
   set_config('lock_timeout',LEAST(NULLIF((SELECT setting::bigint FROM pg_settings WHERE name='lock_timeout'),0),1000)::text||'ms',true),
@@ -128,9 +169,23 @@ export async function collectRoutineIdentityContinuationDraft(client: postgres.S
   return { inventory: result.inventory, identity: result.identity };
 }
 
+/** Identity and payment components are classified before the SAME inventory
+ * transaction ends. Their combined digest is a diagnostic, never a permit. */
+export async function collectRoutineAccountContinuationDraft(client:postgres.Sql,declaration:RoutineInventoryTarget,
+  fingerprintKey:string,verification:Readonly<{APP_KEY:string}>):Promise<RoutineAccountContinuationDraft>{
+  const authenticator=verification.APP_KEY;
+  const result=await collectRoutineOwnershipObservation(client,declaration,fingerprintKey,
+    routineIdentityAccumulator(authenticator,fingerprintKey),routinePaymentAccumulator(authenticator,fingerprintKey));
+  if(!result.identity||!result.payments)throw fail();
+  const combined=hash(fingerprintKey,'account-continuation');
+  frame(combined,JSON.stringify([result.inventory.sourceDigest,result.identity.classificationDigest,result.payments.classificationDigest]));
+  return{purpose:'routine_account_continuation_draft',activationAllowed:false,permitIssued:false,switchCommissioned:false,
+    inventory:result.inventory,identity:result.identity,payments:result.payments,classificationDigest:combined.digest('hex')};
+}
+
 async function collectRoutineOwnershipObservation(client: postgres.Sql, declaration: RoutineInventoryTarget,
-  fingerprintKey: string, identity?: ReturnType<typeof routineIdentityAccumulator>): Promise<{
-    inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation | null;
+  fingerprintKey: string, identity?: ReturnType<typeof routineIdentityAccumulator>, payments?:ReturnType<typeof routinePaymentAccumulator>): Promise<{
+    inventory: RoutineOwnershipInventory; identity: RoutineIdentityContinuation | null;payments:RoutinePaymentContinuation|null;
   }> {
   // Capture primitives synchronously, before BEGIN or any awaited callback.
   const target = { database: declaration.database, maintenance: declaration.maintenance };
@@ -175,10 +230,12 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
       if (JSON.stringify(actual) !== JSON.stringify(before)) throw fail();
       const locked = Array.from(await query<Relation>(tx, tableScope));
       if (JSON.stringify(locked) !== JSON.stringify(discovered)) throw fail();
-      const [snapshot] = await query<{ snapshot: string; observed_at: string; ready: boolean }>(tx,
+      const [snapshot] = await query<{ snapshot: string; observed_at: string; observed_epoch:string;ready: boolean }>(tx,
         `SELECT pg_current_snapshot()::text AS snapshot,clock_timestamp()::text AS observed_at,
+        floor(extract(epoch FROM clock_timestamp()))::bigint::text AS observed_epoch,
         current_setting('transaction_isolation')='repeatable read' AND current_setting('transaction_read_only')='on' AS ready`);
       if (!snapshot?.ready) throw fail();
+      payments?.context({database:target.database,databaseOid:actual.database_oid,observedAt:Number(snapshot.observed_epoch)});
       // Validate the complete stored column universe before catalog JSON too:
       // pg_attribute.attmissingval may contain a typed array whose conversion
       // would otherwise reach a custom type output function during metadata.
@@ -202,6 +259,10 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
         WHERE c.castsource IN (${[...scalarOids].join(',')}) AND c.casttarget IN (114,3802)
         AND p.pronamespace<>'pg_catalog'::regnamespace LIMIT 1`);
       if (casts.length) throw fail();
+      // An explicit JSON -> text cast can hide a user function behind the
+      // same deparse spelling. Neither budgets nor CHECK proofs may call it.
+      if((await query(tx,`SELECT 1 FROM pg_catalog.pg_cast
+        WHERE castsource IN(114,3802) AND casttarget=25 LIMIT 1`)).length)throw fail();
       type StreamRow = { value: string | null; row_type?: string; empty?: boolean };
       const stream = async (select: string, visit: (row: StreamRow) => void) => {
         await query(tx, 'DECLARE routine_inventory_cursor NO SCROLL CURSOR WITHOUT HOLD FOR ' + select);
@@ -230,7 +291,21 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
           WHERE a.attrelid=$1::oid AND a.attnum>0 AND NOT a.attisdropped ORDER BY a.attnum`, [relation.oid]);
         if (columns.length > 512) throw fail();
         identity?.relation(relation, Array.from(columns));
-        const budget = rowBudget(columns), digest = hash(fingerprintKey, 'relation');
+        if(payments?.accepts(relation)){
+          const [owner]=await query<{owner:string;owner_oid:string}>(tx,`SELECT r.rolname AS owner,c.relowner::text AS owner_oid
+            FROM pg_catalog.pg_class c JOIN pg_catalog.pg_roles r ON r.oid=c.relowner WHERE c.oid=$1::oid`,[relation.oid]);
+          if(!owner)throw fail();
+          payments.relation({...relation,owner:owner.owner,ownerOid:owner.owner_oid},Array.from(columns));
+        }
+        let boundedJsonColumn:string|null=null;
+        const bound=relation.schema==='public'&&relation.kind==='r'&&Object.hasOwn(constrainedJson,relation.name)?constrainedJson[relation.name]:undefined;
+        if(bound){
+          const [column,constraint,maxBytes]=bound;
+          const expected=`CHECK (((jsonb_typeof(${column}) = 'object'::text) AND (octet_length((${column})::text) <= ${maxBytes})))`;
+          const [proof]=await query<{ready:boolean}>(tx,jsonBoundProof,[relation.oid,column,constraint,expected]);
+          if(proof?.ready===true)boundedJsonColumn=column;
+        }
+        const budget = rowBudget(columns,boundedJsonColumn), digest = hash(fingerprintKey, 'relation');
         frame(digest, JSON.stringify(relation));
         let count = 0n;
         // The sentinel makes even an empty parsed relation attest its actual
@@ -242,11 +317,12 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
           SELECT t.xmin::text AS version,t.ctid::text AS position,
             pg_typeof(t)::oid::text AS row_type,t.ctid IS NULL AS empty,
             CASE WHEN pg_typeof(t)::oid=${relation.type_oid}::oid THEN
-              CASE WHEN (${budget})<=${MAX_ROW_BYTES - 64} THEN to_jsonb(t)::text ELSE NULL END ELSE NULL END AS value
+              CASE WHEN (${budget})<=${MAX_ROW_BYTES - 64} THEN ${jsonText('to_jsonb(t)')} ELSE NULL END ELSE NULL END AS value
           FROM (VALUES(1)) sentinel(n) LEFT JOIN ONLY ${quote(relation.schema)}.${quote(relation.name)} t ON true ORDER BY t.ctid) s`, row => {
           if (row.row_type !== relation.type_oid) throw fail();
           if (row.empty) return;
           identity?.row(relation, row.value!);
+          payments?.row(relation,row.value!);
           frame(digest, row.value!); count++;
         });
         total += count;
@@ -262,8 +338,9 @@ async function collectRoutineOwnershipObservation(client: postgres.Sql, declarat
         ownership: 'not_evaluated' as const, activationAllowed: false as const, externalSourcesIncluded: false as const,
         metadataDigest, sourceDigest: source.digest('hex'), rowCount: total.toString(), relations };
       const classification = identity?.finish(relations, inventory.sourceDigest) ?? null;
+      const paymentClassification=payments?.finish(relations,inventory.sourceDigest)??null;
       if (Date.now() >= deadline) throw fail();
-      return { inventory, identity: classification };
+      return { inventory, identity: classification,payments:paymentClassification };
     });
   } catch { throw fail(); } // SQL/cast errors can contain secrets or row values.
 }

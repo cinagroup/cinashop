@@ -8,17 +8,13 @@ import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRun
 import { ServiceUnavailableException } from '@/utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac } from '@/services/payment/RoutineProviderObservation';
 
+import { parseRoutineSubscriptionAccountPolicy as policy, parseRoutineSubscriptionAccountJournal, validateRoutineSubscriptionAccountHistory,
+  type RoutineSubscriptionScope, type RoutineSubscriptionAccountPolicy, type RoutineSubscriptionAccountJournal, type RoutineSubscriptionTemplate } from '../payment/RoutinePurposeAccountEvidenceCodec';
+export { parseRoutineSubscriptionAccountJournal } from '../payment/RoutinePurposeAccountEvidenceCodec';
+export type { RoutineSubscriptionScope, RoutineSubscriptionAccountPolicy, RoutineSubscriptionAccountJournal, RoutineSubscriptionTemplate } from '../payment/RoutinePurposeAccountEvidenceCodec';
+
 export type RoutineSubscriptionEnv = Pick<Env,'APP_KEY'|'ROUTINE_SUBSCRIPTION_ACCOUNT_CREDENTIALS'>;
 type Signing = Pick<Env,'APP_KEY'>;
-export interface RoutineSubscriptionScope { database:string; databaseOid:string; maintenance:string; maintenanceOid:string }
-export interface RoutineSubscriptionTemplate { mark:string;templateId:string }
-export interface RoutineSubscriptionAccountPolicy {
- accountId:string;state:'active'|'revoked';appId:string;credentialRef:string;credentialVersion:number;
- credentialStamp:string;purposes:['subscription_send'];templates:RoutineSubscriptionTemplate[];validFrom:number;validUntil:number;
-}
-export interface RoutineSubscriptionAccountJournal {
- record_id:string;account_id:string;revision:number;payload:{format:1;scope:RoutineSubscriptionScope;previousRecordId:string;data:RoutineSubscriptionAccountPolicy};created_at:number;signature:string;
-}
 interface Materials {ref:string;version:number;appId:string;secret:string}
 const preparedSlot=Symbol('routine.subscription.prepared-account.v1');
 export interface PreparedRoutineSubscriptionAccount {
@@ -75,29 +71,6 @@ export function routineSubscriptionAccountId(env:Signing,appId:string){
  if(!token(appId,32))return routineSubscriptionUnavailable();
  return subscriptionMac(env,'account-subject',[appId]);
 }
-function templates(value:unknown):RoutineSubscriptionTemplate[]{
- if(!Array.isArray(value)||Object.getPrototypeOf(value)!==Array.prototype||!value.length||value.length>16
-  ||Reflect.ownKeys(value).length!==value.length+1)return routineSubscriptionUnavailable();
- const output:RoutineSubscriptionTemplate[]=[];
- for(let i=0;i<value.length;i++){
-  const d=Object.getOwnPropertyDescriptor(value,String(i));
-  if(!d?.enumerable||!('value'in d))return routineSubscriptionUnavailable();
-  const entry=subscriptionObject(d.value,['mark','templateId']);
-  if(!token(entry.mark)||!token(entry.templateId,128)||i>0&&output[i-1].mark>=entry.mark)return routineSubscriptionUnavailable();
-  output.push({mark:entry.mark,templateId:entry.templateId});
- }
- return output;
-}
-function policy(env:Signing,value:unknown):RoutineSubscriptionAccountPolicy{
- const r=subscriptionObject(value,['accountId','state','appId','credentialRef','credentialVersion','credentialStamp','purposes','templates','validFrom','validUntil']);
- if(!token(r.appId,32)||r.accountId!==routineSubscriptionAccountId(env,r.appId)||!token(r.credentialRef)||!subscriptionInteger(r.credentialVersion)||!subscriptionHex(r.credentialStamp)
-  ||r.state!=='active'&&r.state!=='revoked'||!subscriptionInteger(r.validFrom)||!subscriptionInteger(r.validUntil)||r.validUntil<=r.validFrom||r.validUntil-r.validFrom>366*86400)return routineSubscriptionUnavailable();
- const p=r.purposes;
- if(!Array.isArray(p)||Object.getPrototypeOf(p)!==Array.prototype||p.length!==1||Reflect.ownKeys(p).length!==2
-  ||!Object.getOwnPropertyDescriptor(p,'0')?.enumerable||!('value'in Object.getOwnPropertyDescriptor(p,'0')!)||p[0]!=='subscription_send')return routineSubscriptionUnavailable();
- return{accountId:r.accountId as string,state:r.state,appId:r.appId,credentialRef:r.credentialRef,
-  credentialVersion:r.credentialVersion,credentialStamp:r.credentialStamp,purposes:['subscription_send'],templates:templates(r.templates),validFrom:r.validFrom,validUntil:r.validUntil};
-}
 export async function routineSubscriptionScopeTx(tx:DbClient):Promise<RoutineSubscriptionScope>{
  const [s]=await tx.execute<RoutineSubscriptionScope & Record<string,unknown>>(sql`SELECT pg_catalog.current_database() AS database,
   (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=pg_catalog.current_database()) AS "databaseOid",
@@ -106,23 +79,11 @@ export async function routineSubscriptionScopeTx(tx:DbClient):Promise<RoutineSub
  if(!s||!token(s.database,128)||!token(s.maintenance,128)||!/^[0-9]+$/u.test(s.databaseOid)||!/^[0-9]+$/u.test(s.maintenanceOid))return routineSubscriptionUnavailable();
  return{database:s.database,databaseOid:s.databaseOid,maintenance:s.maintenance,maintenanceOid:s.maintenanceOid};
 }
-export function parseRoutineSubscriptionAccountJournal(env:Signing,raw:unknown,scope:RoutineSubscriptionScope):RoutineSubscriptionAccountJournal{
- const r=subscriptionObject(raw,['record_id','account_id','revision','payload','created_at','signature']),p=subscriptionObject(r.payload,['format','scope','previousRecordId','data']);
- const s=subscriptionObject(p.scope,['database','databaseOid','maintenance','maintenanceOid']);
- const created=typeof r.created_at==='string'&&/^[0-9]+$/u.test(r.created_at)?Number(r.created_at):r.created_at;
- if(!subscriptionUuid(r.record_id)||!subscriptionHex(r.account_id)||!subscriptionInteger(r.revision)||!subscriptionInteger(created)||p.format!==1||!subscriptionSame(s,scope)
-  ||p.previousRecordId!==''&&!subscriptionUuid(p.previousRecordId)||!subscriptionHex(r.signature))return routineSubscriptionUnavailable();
- const data=policy(env,p.data);if(data.accountId!==r.account_id)return routineSubscriptionUnavailable();
- const body={record_id:r.record_id,account_id:r.account_id,revision:r.revision,payload:{format:1 as const,scope:{...scope},previousRecordId:p.previousRecordId as string,data},created_at:created};
- if(!subscriptionEqual(r.signature,subscriptionMac(env,'account-policy',body)))return routineSubscriptionUnavailable();
- return freezeSubscription({...body,signature:r.signature});
-}
 async function history(tx:DbClient,env:Signing,id:string,scope:RoutineSubscriptionScope){
  const rows=await tx.execute(sql`SELECT * FROM public.routine_subscription_account_policy WHERE account_id=${id} ORDER BY revision LIMIT 65`);
  if(rows.length>64||Buffer.byteLength(JSON.stringify(rows),'utf8')>1048576)return routineSubscriptionUnavailable();
  const decoded=Array.from(rows,r=>parseRoutineSubscriptionAccountJournal(env,r,scope));
- for(let i=0;i<decoded.length;i++)if(decoded[i].account_id!==id||decoded[i].revision!==i+1
-  ||decoded[i].payload.previousRecordId!==(i?decoded[i-1].record_id:'')||i>0&&decoded[i].created_at<decoded[i-1].created_at)return routineSubscriptionUnavailable();
+ validateRoutineSubscriptionAccountHistory(decoded,id);
  return decoded;
 }
 export async function routineSubscriptionClockTx(tx:DbClient){

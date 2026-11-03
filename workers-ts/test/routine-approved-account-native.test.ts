@@ -3,6 +3,7 @@
  * local adapters; no real WeChat, Workers, browser or historical UID claim. */
 import { createCipheriv, randomBytes, randomUUID, sign } from 'node:crypto';
 import { Buffer } from 'node:buffer';
+import type postgres from 'postgres';
 import { Hono } from 'hono';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -31,6 +32,7 @@ import { alipayNotify } from '@/controllers/api/v1/PayController';
 import { paymentNotify } from '@/controllers/api/v1/PaymentCallbackController';
 import { refundRuntimeFixture } from './helpers/refundRuntimeFixture';
 import { paymentQueryFixture, paymentQueryKeys } from './helpers/paymentQueryFixture';
+import { collectRoutineAccountContinuationDraft } from '../scripts/routine-ownership-inventory';
 
 const APP_ID = 'wx-local-query', MERCHANT = '1234567890', PAYER = 'phase28_actual_provider_payer';
 const BUYER_BINDING = 'phase28_buyer_current_binding', OTHER_PAYER = 'phase28_conflicting_provider_payer';
@@ -187,6 +189,60 @@ async function context(f: Fixture, app: Peer, admin: Peer) {
     wallet,caseRow,queryCase,signedQuery,approve,plan,accountData,uses,policies,clearCurrent,registry,materials };
 }
 type Context = Awaited<ReturnType<typeof context>>;
+const draft = (c:Context)=>collectRoutineAccountContinuationDraft(c.f.db.$client as unknown as postgres.Sql,
+  c.target,'73'.repeat(32),{APP_KEY:c.env.APP_KEY});
+async function observeCompressedQueryUses(c:Context) {
+  // This controlled positive table already has its actual validated 16KiB
+  // payload CHECK. Project only storage metadata; never print signed content.
+  const [metadata]=await c.f.db.execute<{rows:number;compressed_rows:number;compression_methods:string;
+    max_physical_bytes:number|null;max_text_bytes:number|null}>(sql`SELECT count(*)::integer AS rows,
+    (count(*) FILTER(WHERE pg_catalog.pg_column_compression(payload) IS NOT NULL))::integer AS compressed_rows,
+    COALESCE(string_agg(DISTINCT pg_catalog.pg_column_compression(payload),','
+      ORDER BY pg_catalog.pg_column_compression(payload)),'none') AS compression_methods,
+    max(pg_catalog.pg_column_size(payload))::integer AS max_physical_bytes,
+    max(pg_catalog.octet_length(payload::text))::integer AS max_text_bytes
+    FROM ONLY public.routine_payment_account_use`);
+  if(!metadata)throw Error('Actual approved-use compression metadata absent');
+  process.stdout.write('ROUTINE_ACCOUNT_QUERY_COMPRESSION '+JSON.stringify(metadata)+'\n');
+  expect(metadata.rows).toBe(1);expect(metadata.compressed_rows).toBeGreaterThanOrEqual(1);
+  expect(metadata.max_physical_bytes).toBeGreaterThan(0);
+  expect(metadata.max_text_bytes).toBeGreaterThan(0);expect(metadata.max_text_bytes).toBeLessThanOrEqual(16384);
+}
+const USE_PAYLOAD_CHECK="CHECK(pg_catalog.jsonb_typeof(payload)='object' AND pg_catalog.octet_length(payload::text)<=16384)";
+const dropUseCheck='ALTER TABLE public.routine_payment_account_use DROP CONSTRAINT IF EXISTS rpau_payload_ck';
+const restoreUseCheck='ALTER TABLE public.routine_payment_account_use ADD CONSTRAINT rpau_payload_ck '+USE_PAYLOAD_CHECK;
+async function actualCompressedQuery(c:Context,orderNo:string) {
+  await c.approve();const order=await c.recharge(orderNo);await c.plan(request(order.orderId));
+  vi.mocked(fetch).mockImplementation(async()=>c.signedQuery(order.orderId,'draft_compressed_query_tx'));
+  const query=await c.queryCase(order.orderId);await consumeQuery(query.service,query.message);
+  expect(await c.caseRow(order.orderId)).toMatchObject({status:'SETTLED'});
+  await observeCompressedQueryUses(c);
+}
+function ownedCastProbe(c:Context) {
+  const name=pricingIdentifier('owned_draft_cast_'+randomUUID().replaceAll('-',''));
+  const classKey=754813,objectKey=Number.parseInt(randomUUID().replaceAll('-','').slice(0,7),16);
+  const held=sql`SELECT 1 FROM pg_catalog.pg_locks WHERE locktype='advisory' AND pid=pg_catalog.pg_backend_pid()
+    AND classid=${classKey}::oid AND objid=${objectKey}::oid AND objsubid=2 AND granted`;
+  const functionSql=(raise:boolean)=>`CREATE OR REPLACE FUNCTION public.${name}(jsonb) RETURNS text
+    LANGUAGE plpgsql VOLATILE STRICT SECURITY INVOKER SET search_path=pg_catalog AS $owned_cast$
+    BEGIN ${raise?`PERFORM pg_catalog.pg_advisory_lock(${classKey},${objectKey}); RAISE EXCEPTION 'owned_json_cast_executed';`:"RETURN '{}'::text;"} END; $owned_cast$`;
+  return {
+    assertAbsent:async()=>{
+      const [prior]=await c.f.db.execute<{rows:number}>(sql`SELECT count(*)::integer AS rows FROM pg_catalog.pg_cast
+        WHERE castsource IN(114,3802) AND casttarget=25`);
+      expect(prior.rows).toBe(0);
+    },
+    create:async(exec:(statement:string)=>Promise<unknown>,raise:boolean)=>{
+      await exec(functionSql(raise));
+      await exec(`CREATE CAST (jsonb AS text) WITH FUNCTION public.${name}(jsonb)`);
+    },
+    arm:()=>c.f.exec(functionSql(true)),
+    called:async()=>{const [row]=await c.f.db.execute<{called:boolean}>(sql`SELECT EXISTS(${held}) AS called`);return row.called;},
+    release:()=>c.f.db.execute(sql`SELECT pg_catalog.pg_advisory_unlock(${classKey},${objectKey}) WHERE EXISTS(${held})`),
+    drop:async()=>{try{await c.f.exec('DROP CAST IF EXISTS (jsonb AS text)');}
+      finally{await c.f.exec(`DROP FUNCTION IF EXISTS public.${name}(jsonb)`);}},
+  };
+}
 async function consumeCallback(c: Context, message: PaymentCallbackMessage) {
   const ack = vi.fn(), retry = vi.fn();
   await consumePaymentCallbackMessage({ body: message, attempts: 1, ack, retry }, c.callbacks);
@@ -412,6 +468,16 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('approved histori
       .toMatchObject({orderNo:physical.orderId,appId:APP_ID,merchantId:MERCHANT,transactionId:'approved_wrong_physical_tx'});
     const uses=await c.uses();expect(uses).toHaveLength(1);expect(uses[0].row).toMatchObject({payload:{scopeMatches:false}});
     expect(await c.caseRow(physical.orderId)).toMatchObject({status:'CONFLICT'});expect(await c.financial()).toEqual(before);
+    await observeCompressedQueryUses(c);
+    const report=await draft(c);
+    // The real query author deliberately leaves a mismatched requested domain
+    // unresolved; a maintenance report must not invent a different binding.
+    expect(ledger[0].row.payload.binding).toEqual({state:'unresolved',reason:'order_ambiguous'});
+    expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',binding:'unresolved',local:'unresolved_binding',
+      related:'conflict',approvedUse:'non_authorizing_scope_mismatch',source:'signed_query'});
+    expect(report.payments.uses[0]).toMatchObject({authenticity:'authenticated',scopeMatches:false,savedJournals:'matched',policyChains:'complete'});
+    expect(report.payments.policies.find(p=>p.kind==='query')).toMatchObject({accountRevisionReference:'matched'});
+    expect(report.payments.refundRequestAuthorized).toBe(false);noPayer(report);
   }),180000);
 
   it('preserves an accepted SUCCESS after revocation and settles while a peer holds the exclusive account gate',async()=>fixture(async c=>{
@@ -425,6 +491,176 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('approved histori
     }));
     expect(await c.ledger()).toEqual(originals);expect(await c.uses()).toEqual(uses);
     expect(await c.caseRow(order.orderId)).toMatchObject({status:'CONFIRMED'});expect(fetch).not.toHaveBeenCalled();
+    c.env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS=undefined;
+    const before=await c.financial(),report=await draft(c);
+    expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',approvedUse:'authenticated_scope_match'});
+    expect(report.payments.policies).toEqual(expect.arrayContaining([expect.objectContaining({kind:'account',state:'revoked',latest:true,chain:'complete'})]));
+    expect(report.payments).toMatchObject({activationAllowed:false,credentials:'not_evaluated',catalogCommissioning:'not_evaluated'});
+    expect(await c.financial()).toEqual(before);expect(await c.ledger()).toEqual(originals);expect(await c.uses()).toEqual(uses);noPayer(report);
+  }),180000);
+
+  it('classifies actual ingress before settlement and refuses changed local transaction, amount and cross-domain ambiguity',async()=>fixture(async c=>{
+    await c.approve();const order=await c.recharge('czdraft_local_changes');
+    expect((await c.post(callback(order.orderId,'draft_local_tx'))).status).toBe(200);
+    const before=await c.financial();let report=await draft(c);
+    expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'unpaid_match',related:'consistent',approvedUse:'authenticated_scope_match'});
+    expect(await c.financial()).toEqual(before);
+    await consumeCallback(c,c.messages.filter(isPaymentCallbackMessage)[0]);
+    report=await draft(c);expect(report.payments.originals[0].local).toBe('paid_match');
+    await c.f.db.update(userRecharge).set({tradeNo:''}).where(eq(userRecharge.id,order.id));
+    try{expect((await draft(c)).payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'payment_changed'});}
+    finally{await c.f.db.update(userRecharge).set({tradeNo:'draft_local_tx'}).where(eq(userRecharge.id,order.id));}
+    await c.f.db.update(userRecharge).set({price:'10.01'}).where(eq(userRecharge.id,order.id));
+    try{expect((await draft(c)).payments.originals[0].local).toBe('identity_or_amount_changed');}
+    finally{await c.f.db.update(userRecharge).set({price:'10.00'}).where(eq(userRecharge.id,order.id));}
+    await c.f.db.execute(sql`INSERT INTO public.other_order(uid,order_id,pay_price,type,paid) VALUES(11,${order.orderId},10.00,0,0)`);
+    try{report=await draft(c);expect(report.payments.originals[0].local).toBe('ambiguous');
+      expect(report.payments.localOrders.filter(p=>p.state==='duplicate_number')).toHaveLength(2);}
+    finally{await c.f.db.execute(sql`DELETE FROM public.other_order WHERE order_id=${order.orderId}`);}
+    expect((await draft(c)).payments.originals[0].local).toBe('paid_match');noPayer(report);
+  }),180000);
+
+  it('keeps a real signed-query SUCCESS separate from current policy revocation and invalid stored sidecars',async()=>fixture(async c=>{
+    await c.approve();const order=await c.recharge('czdraft_query_history');await c.plan(request(order.orderId));
+    vi.mocked(fetch).mockImplementation(async()=>c.signedQuery(order.orderId,'draft_query_tx'));
+    const query=await c.queryCase(order.orderId);await consumeQuery(query.service,query.message);
+    expect(await c.caseRow(order.orderId)).toMatchObject({status:'SETTLED'});
+    await observeCompressedQueryUses(c);
+    let report=await draft(c);expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',source:'signed_query',approvedUse:'authenticated_scope_match'});
+    expect(report.payments.policies.find(p=>p.kind==='query')).toMatchObject({accountRevisionReference:'matched'});
+    await c.plan(request(order.orderId),{state:'revoked'});await c.approve({state:'revoked'});
+    report=await draft(c);expect(report.payments.originals[0].approvedUse).toBe('authenticated_scope_match');
+    expect(report.payments.policies.filter(p=>p.latest&&p.state==='revoked')).toHaveLength(2);
+    const [use]=await c.f.db.execute<{use_id:string;signature:string}>(sql`SELECT use_id,signature FROM public.routine_payment_account_use`);
+    // Owned maintenance corruption negative only. Restore the immutable
+    // trigger in the same transaction before observing the diagnostic.
+    const setSignature=(signature:string)=>c.f.db.transaction(async tx=>{
+      await tx.execute(sql`ALTER TABLE public.routine_payment_account_use DISABLE TRIGGER rpau_immutable_rows`);
+      await tx.execute(sql`UPDATE public.routine_payment_account_use SET signature=${signature} WHERE use_id=${use.use_id}`);
+      await tx.execute(sql`ALTER TABLE public.routine_payment_account_use ENABLE TRIGGER rpau_immutable_rows`);
+    });
+    await setSignature('0'.repeat(64));
+    try{report=await draft(c);expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',approvedUse:'unresolved'});
+      expect(report.payments.uses[0].authenticity).toBe('invalid');}
+    finally{await setSignature(use.signature);}
+    expect((await draft(c)).payments.originals[0].approvedUse).toBe('authenticated_scope_match');noPayer(report);
+  }),180000);
+
+  it('retains independently valid originals when a saved policy is missing or its authentic history has a gap',async()=>fixture(async c=>{
+    await c.approve();const order=await c.recharge('czdraft_policy_gap');expect((await c.post(callback(order.orderId,'draft_gap_tx'))).status).toBe(200);
+    await c.approve({state:'revoked'});
+    const [first]=await c.f.db.execute<{record_id:string}>(sql`SELECT record_id FROM public.routine_payment_account_policy WHERE kind='account' AND revision=1`);
+    // Explicit missing-history negative in this disposable owned database.
+    // No runtime permit or provider path runs with a disabled trigger.
+    await c.f.db.transaction(async tx=>{
+      await tx.execute(sql`ALTER TABLE public.routine_payment_account_policy DISABLE TRIGGER rpap_immutable_rows`);
+      await tx.execute(sql`DELETE FROM public.routine_payment_account_policy WHERE record_id=${first.record_id}::uuid`);
+      await tx.execute(sql`ALTER TABLE public.routine_payment_account_policy ENABLE TRIGGER rpap_immutable_rows`);
+    });
+    const report=await draft(c);expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'unpaid_match',approvedUse:'unresolved'});
+    expect(report.payments.uses[0]).toMatchObject({authenticity:'authenticated',savedJournals:'missing',policyChains:'unresolved'});
+    expect(report.payments.policies[0]).toMatchObject({authenticity:'authenticated',chain:'broken',latest:null});noPayer(report);
+  }),180000);
+
+  it('admits genuine compressed query use only with its exact validated CHECK and refuses hidden casts and unknown compressed JSON',async()=>fixture(async c=>{
+    await actualCompressedQuery(c,'czdraft_compressed_checks');
+    const ledger=await c.ledger(),uses=await c.uses(),financial=await c.financial(),calls=vi.mocked(fetch).mock.calls.length;
+    const restored=async()=>{
+      const report=await draft(c);expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',approvedUse:'authenticated_scope_match'});
+      expect(await c.ledger()).toEqual(ledger);expect(await c.uses()).toEqual(uses);expect(await c.financial()).toEqual(financial);noPayer(report);
+    };
+    await restored();
+    const variants=[
+      {name:'missing',check:null},
+      {name:'not_valid',check:USE_PAYLOAD_CHECK+' NOT VALID'},
+      {name:'or_true',check:"CHECK((pg_catalog.jsonb_typeof(payload)='object' AND pg_catalog.octet_length(payload::text)<=16384) OR true)"},
+      {name:'larger_bound',check:USE_PAYLOAD_CHECK.replace('16384','32768')},
+      {name:'other_column',check:"CHECK(pg_catalog.jsonb_typeof(payload)='object' AND pg_catalog.octet_length(signature::text)<=16384)"},
+    ] as const;
+    for(const variant of variants){
+      await c.f.exec(dropUseCheck);
+      try{
+        if(variant.check)await c.f.exec('ALTER TABLE public.routine_payment_account_use ADD CONSTRAINT rpau_payload_ck '+variant.check);
+        await expect(draft(c),variant.name).rejects.toThrow('Routine ownership database inventory incomplete');
+      }finally{await c.f.exec(dropUseCheck);await c.f.exec(restoreUseCheck);}
+      await restored();
+    }
+    const [original]=await c.f.db.execute<{definition:string}>(sql`SELECT pg_catalog.pg_get_constraintdef(oid,false) AS definition
+      FROM pg_catalog.pg_constraint WHERE conrelid='public.routine_payment_account_use'::regclass AND conname='rpau_payload_ck'`);
+    const probe=ownedCastProbe(c);await probe.assertAbsent();
+    await c.f.exec(dropUseCheck);
+    try{
+      // Parsing under the owned custom cast records a real function dependency
+      // while pg_get_constraintdef can still print the identical ::text form.
+      await probe.create(statement=>c.f.exec(statement),false);await c.f.exec(restoreUseCheck);
+      const [hidden]=await c.f.db.execute<{definition:string}>(sql`SELECT pg_catalog.pg_get_constraintdef(oid,false) AS definition
+        FROM pg_catalog.pg_constraint WHERE conrelid='public.routine_payment_account_use'::regclass AND conname='rpau_payload_ck'`);
+      expect(hidden.definition).toBe(original.definition);
+      await probe.arm();
+      await expect(draft(c)).rejects.toThrow('Routine ownership database inventory incomplete');
+      expect(await probe.called()).toBe(false);
+      // The session lock survives the deliberate error, proving this control
+      // distinguishes execution from a generic redacted diagnostic rejection.
+      const client=c.f.db.$client as unknown as postgres.Sql;
+      await expect(client.unsafe("SELECT '{}'::jsonb::text")).rejects.toThrow('owned_json_cast_executed');
+      expect(await probe.called()).toBe(true);
+    }finally{
+      try{await c.f.exec(dropUseCheck);}
+      finally{try{await probe.release();}finally{try{await probe.drop();}finally{await c.f.exec(restoreUseCheck);}}}
+    }
+    await restored();
+    const unknown=pricingIdentifier('owned_unreviewed_json_'+randomUUID().replaceAll('-',''));
+    await c.f.exec(`CREATE TABLE public.${unknown}(payload jsonb NOT NULL)`);
+    try{
+      // Auxiliary SQL negative only: copying actual bytes creates no payment,
+      // provider original, approval, use sidecar or signed positive record.
+      await c.f.exec(`INSERT INTO public.${unknown}(payload) SELECT payload FROM ONLY public.routine_payment_account_use`);
+      const [storage]=await c.f.db.execute<{rows:number;compressed:number}>(sql.raw(`SELECT count(*)::integer AS rows,
+        (count(*) FILTER(WHERE pg_catalog.pg_column_compression(payload) IS NOT NULL))::integer AS compressed FROM ONLY public.${unknown}`));
+      expect(storage).toEqual({rows:1,compressed:1});
+      await expect(draft(c)).rejects.toThrow('Routine ownership database inventory incomplete');
+    }finally{await c.f.exec(`DROP TABLE public.${unknown}`);}
+    await restored();expect(vi.mocked(fetch).mock.calls).toHaveLength(calls);
+  }),180000);
+
+  it('does not execute a peer-created late JSON cast and proves the cast control has an observable effect',async()=>fixture(async c=>{
+    await actualCompressedQuery(c,'czdraft_late_cast');
+    const ledger=await c.ledger(),uses=await c.uses(),financial=await c.financial(),calls=vi.mocked(fetch).mock.calls.length;
+    const probe=ownedCastProbe(c);await probe.assertAbsent();
+    if(!c.f.withPeer)throw Error('Actual independent maintenance peer required');
+    await c.f.withPeer(async peer=>{
+      const [identity]=await peer.db.execute<{ready:boolean}>(sql`SELECT current_user=session_user AND current_user=${c.target.maintenance}
+        AND current_database()=${c.target.database} AND pg_backend_pid()<>${(await c.f.db.execute<{pid:number}>(sql`SELECT pg_backend_pid() AS pid`))[0].pid}
+        AND EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=current_user AND rolsuper) AS ready`);
+      expect(identity.ready).toBe(true);
+      const client=c.f.db.$client as unknown as postgres.Sql;let installed=false;
+      const observed=new Proxy(client,{get(target,key,receiver){
+        if(key!=='begin')return Reflect.get(target,key,receiver);
+        return(mode:string,action:(tx:postgres.TransactionSql)=>Promise<unknown>)=>client.begin(mode,tx=>action(new Proxy(tx,{
+          get(bound,property,innerReceiver){
+            if(property!=='unsafe')return Reflect.get(bound,property,innerReceiver);
+            return((text:string,...args:unknown[])=>(async()=>{
+              const result=await Reflect.apply(bound.unsafe,bound,[text,...args]);
+              if(!installed&&text.includes('castsource IN(114,3802)')&&text.includes('casttarget=25')){
+                installed=true;await probe.create(statement=>peer.exec(statement),true);
+              }
+              return result;
+            })()) as typeof bound.unsafe;
+          },
+        })));
+      }});
+      try{
+        const report=await collectRoutineAccountContinuationDraft(observed,c.target,'73'.repeat(32),{APP_KEY:c.env.APP_KEY});
+        expect(installed).toBe(true);expect(await probe.called()).toBe(false);
+        expect(report.payments.originals[0]).toMatchObject({authenticity:'verified_success',local:'paid_match',approvedUse:'authenticated_scope_match'});
+        expect(report).toMatchObject({activationAllowed:false,permitIssued:false,switchCommissioned:false});noPayer(report);
+        await expect(client.unsafe("SELECT '{}'::jsonb::text")).rejects.toThrow('owned_json_cast_executed');
+        expect(await probe.called()).toBe(true);
+      }finally{try{await probe.release();}finally{await probe.drop();}}
+    });
+    expect((await draft(c)).payments.originals[0].approvedUse).toBe('authenticated_scope_match');
+    expect(await c.ledger()).toEqual(ledger);expect(await c.uses()).toEqual(uses);expect(await c.financial()).toEqual(financial);
+    expect(vi.mocked(fetch).mock.calls).toHaveLength(calls);
   }),180000);
 
   it('captures maintenance declarations and callback authorization before real transaction awaits without changing the authenticated role',async()=>fixture(async c=>{

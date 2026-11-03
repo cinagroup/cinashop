@@ -96,9 +96,24 @@ Catalog text such as function definitions is rendered by PostgreSQL before the
 final byte check; these acceptance limits are not a backend memory quota.
 This implementation does not claim production-scale throughput acceptance.
 
-Text/bytea sizes are budgeted before full row JSON conversion. Compressed or
-over-32KiB JSON documents are refused; bounded JSON numeric leaves are checked
+Text/bytea sizes are budgeted before full row JSON conversion. Generic compressed
+or over-32KiB JSON documents are refused; bounded JSON numeric leaves are checked
 before constructing expanded row text. A final serialized byte check remains.
+There is one finite named-column exception for Routine original/payment-use and
+independent account policy `payload` columns, plus identity witness `observation`.
+In the same locked RR snapshot, the reader verifies actual relation/attribute,
+JSONB/not-null type, the complete exact validated local non-inherited size CHECK,
+and its built-in-only dependencies before rendering compressed data. The five
+original/payment/refund/shipping columns are limited to 16KiB text; subscription
+policy is 32KiB and identity witness 8KiB. Unknown JSON or a missing, unvalidated,
+weakened, different-column or custom-function CHECK gets no exception. This is
+size safety, not runtime catalog commissioning or purpose approval.
+
+JSON and numeric rendering use explicit `pg_catalog` I/O functions rather than
+late-resolved JSON-to-text casts. Existing explicit JSON/JSONB-to-text casts are
+refused; a subsequently added cast cannot replace these explicit built-ins.
+The original server JSON bytes, row limits, fingerprints and read-only scope
+remain. This does not fence all DDL writers or mutable PostgreSQL built-ins.
 Catalog fast-default values are checked before metadata conversion: JSON/JSONB
 `attmissingval`, compressed missing values and missing arrays over 32KiB are
 unsupported and cause whole-operation refusal. Ordinary small built-in defaults

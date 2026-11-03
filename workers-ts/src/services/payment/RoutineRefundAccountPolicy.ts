@@ -10,32 +10,14 @@ import { ServiceUnavailableException } from '@/utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac } from './RoutineProviderObservation';
 import { routinePaymentCredentialCommitment } from './RoutineApprovedPaymentAccount';
 
+import { parseRoutineRefundAccountPolicy as parse, parseRoutineRefundAccountJournal as journal, validateRoutineRefundAccountHistory,
+  type RoutineRefundScope as Scope, type RoutineRefundPurpose, type RoutineRefundAccountPolicy,
+  type RoutineRefundAccountJournal } from './RoutinePurposeAccountEvidenceCodec';
+export type { RoutineRefundPurpose, RoutineRefundAccountPolicy, RoutineRefundAccountJournal } from './RoutinePurposeAccountEvidenceCodec';
+
 type Signing = Pick<Env, 'APP_KEY'>;
 type Runtime = Pick<Env, 'APP_KEY' | 'ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS'>;
 type Target = Pick<RoutinePaymentRuntimeTarget, 'database' | 'maintenance' | 'app' | 'admin'>;
-type Scope = { database: string; databaseOid: string; maintenance: string; maintenanceOid: string };
-export type RoutineRefundPurpose = 'refund_request' | 'refund_query' | 'refund_notify';
-export interface RoutineRefundAccountPolicy {
-  accountId: string;
-  state: 'active' | 'revoked';
-  appId: string;
-  merchantId: string;
-  credentialRef: string;
-  credentialVersion: number;
-  credentialStamp: string;
-  purposes: RoutineRefundPurpose[];
-  validFrom: number;
-  validUntil: number;
-}
-export interface RoutineRefundAccountJournal {
-  record_id: string;
-  account_id: string;
-  revision: number;
-  payload: { format: 1; purpose: 'routine_refund_account'; scope: Scope; previousRecordId: string; data: RoutineRefundAccountPolicy };
-  created_at: number;
-  signature: string;
-}
-
 const fail = (): never => { throw new ServiceUnavailableException('原账号退款批准或维护权限尚未完整就绪'); };
 const hex = (v: unknown): v is string => typeof v === 'string' && /^[a-f0-9]{64}$/u.test(v);
 const token = (v: unknown, max = 64): v is string => typeof v === 'string' && new RegExp(`^[A-Za-z0-9_-]{1,${max}}$`, 'u').test(v);
@@ -46,13 +28,6 @@ const same = (a: unknown, b: unknown) => routineEvidenceCanonical(a) === routine
 function equal(a: unknown, b: string) {
   return hex(a) && timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
 }
-function freeze<T>(value: T): T {
-  if (value && typeof value === 'object') {
-    for (const d of Object.values(Object.getOwnPropertyDescriptors(value))) if ('value' in d) freeze(d.value);
-    Object.freeze(value);
-  }
-  return value;
-}
 function object(value: unknown, keys: readonly string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) return fail();
@@ -60,28 +35,6 @@ function object(value: unknown, keys: readonly string[]): Record<string, unknown
   if (Reflect.ownKeys(value).length !== keys.length || keys.some(key => !Object.hasOwn(descriptors, key))
     || Object.entries(descriptors).some(([key, d]) => !keys.includes(key) || !d.enumerable || !('value' in d))) return fail();
   return value as Record<string, unknown>;
-}
-function parse(value: unknown): RoutineRefundAccountPolicy {
-  const r = object(value, ['accountId', 'state', 'appId', 'merchantId', 'credentialRef', 'credentialVersion',
-    'credentialStamp', 'purposes', 'validFrom', 'validUntil']);
-  const purpose = (p: unknown): p is RoutineRefundPurpose => p === 'refund_request' || p === 'refund_query' || p === 'refund_notify';
-  if (!token(r.accountId) || r.state !== 'active' && r.state !== 'revoked' || !token(r.appId, 32)
-    || typeof r.merchantId !== 'string' || !/^[0-9]{1,32}$/u.test(r.merchantId)
-    || !token(r.credentialRef) || !positive(r.credentialVersion) || !hex(r.credentialStamp)
-    || !positive(r.validFrom) || !positive(r.validUntil) || r.validUntil <= r.validFrom
-    || r.validUntil - r.validFrom > 366 * 86400 || !Array.isArray(r.purposes) || !r.purposes.length
-    || r.purposes.length > 3) return fail();
-  // Copy only primitive own data elements. Sparse/accessor/custom arrays must
-  // not be normalized into a different approval or invoke caller coercions.
-  const descriptors = Object.getOwnPropertyDescriptors(r.purposes);
-  if (Object.getPrototypeOf(r.purposes) !== Array.prototype || Reflect.ownKeys(r.purposes).length !== r.purposes.length + 1
-    || Array.from({ length: r.purposes.length }, (_, i) => descriptors[String(i)])
-      .some(d => !d || !d.enumerable || !('value' in d) || !purpose(d.value))) return fail();
-  const purposes = Array.from({ length: r.purposes.length }, (_, i) => descriptors[String(i)].value as RoutineRefundPurpose);
-  if (new Set(purposes).size !== purposes.length) return fail();
-  return { accountId: r.accountId, state: r.state, appId: r.appId, merchantId: r.merchantId,
-    credentialRef: r.credentialRef, credentialVersion: r.credentialVersion, credentialStamp: r.credentialStamp,
-    purposes: purposes.sort(), validFrom: r.validFrom, validUntil: r.validUntil };
 }
 async function scope(tx: DbClient): Promise<Scope> {
   const [row] = await tx.execute<Scope>(sql`SELECT pg_catalog.current_database() AS database,
@@ -92,31 +45,12 @@ async function scope(tx: DbClient): Promise<Scope> {
     || !/^[0-9]+$/u.test(row.databaseOid) || !/^[0-9]+$/u.test(row.maintenanceOid)) return fail();
   return { ...row };
 }
-function journal(env: Signing, value: unknown, expectedScope: Scope): RoutineRefundAccountJournal {
-  const r = object(value, ['record_id', 'account_id', 'revision', 'payload', 'created_at', 'signature']);
-  const p = object(r.payload, ['format', 'purpose', 'scope', 'previousRecordId', 'data']);
-  const s = object(p.scope, ['database', 'databaseOid', 'maintenance', 'maintenanceOid']);
-  const created = typeof r.created_at === 'string' && /^[1-9][0-9]*$/u.test(r.created_at) ? Number(r.created_at) : r.created_at;
-  const data = parse(p.data);
-  if (!uuid(r.record_id) || r.account_id !== data.accountId || !positive(r.revision) || r.revision > 64
-    || p.format !== 1 || p.purpose !== 'routine_refund_account' || !same(s, expectedScope)
-    || p.previousRecordId !== '' && !uuid(p.previousRecordId) || !positive(created)) return fail();
-  const body = { record_id: r.record_id, account_id: data.accountId, revision: r.revision,
-    payload: { format: 1 as const, purpose: 'routine_refund_account' as const, scope: { ...expectedScope },
-      previousRecordId: p.previousRecordId as string, data }, created_at: created };
-  if (!equal(r.signature, mac(env, body))) return fail();
-  return freeze({ ...body, signature: r.signature as string });
-}
 async function history(tx: DbClient, env: Signing, accountId: string, s: Scope): Promise<RoutineRefundAccountJournal[]> {
   const rows = await tx.execute(sql`SELECT * FROM public.routine_refund_account_policy
     WHERE account_id=${accountId} ORDER BY revision LIMIT 65`);
   if (rows.length > 64 || Buffer.byteLength(JSON.stringify(rows), 'utf8') > 1048576) return fail();
   const decoded = Array.from(rows, row => journal(env, row, s));
-  for (let i = 0; i < decoded.length; i++) {
-    const current = decoded[i], prior = decoded[i - 1];
-    if (current.account_id !== accountId || current.revision !== i + 1
-      || current.payload.previousRecordId !== (prior?.record_id ?? '') || prior && current.created_at < prior.created_at) return fail();
-  }
+  validateRoutineRefundAccountHistory(decoded,accountId);
   return decoded;
 }
 async function clock(tx: DbClient): Promise<number> {

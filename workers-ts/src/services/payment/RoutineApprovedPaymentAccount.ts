@@ -11,36 +11,25 @@ import { assertRoutineSubscriptionReadTx, inspectRoutineSubscriptionCatalog } fr
 import { inspectRoutineOriginalPaymentEvidenceCatalog } from '@/migrations/routineOriginalPaymentEvidence';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
-import { routineEvidenceCanonical, routineEvidenceHmac, parseRoutineProviderObservation,
-  type RoutineProviderObservation } from './RoutineProviderObservation';
+import { routineEvidenceCanonical, routineEvidenceHmac, parseRoutineProviderObservation } from './RoutineProviderObservation';
 import type { PaymentProviderQueryRequest } from './PaymentProviderQuery';
 import { parseRoutineOriginalEvidence, type RoutineOriginalEvidence } from './RoutineOriginalPaymentEvidence';
 
+import { parseRoutineApprovedAccountPolicy as account, parseRoutineApprovedQueryPlan as query,
+  parseRoutineApprovedAccountJournal as journal, parseRoutineApprovedAuthorization as authorization,
+  parseRoutineApprovedUse as use, validateRoutineApprovedAccountHistory,
+  type RoutineApprovedScope as Scope, type RoutineApprovedPurpose as Purpose, type RoutineApprovedAccountJournal as Journal,
+  type RoutineApprovedAuthorization as Authorization, type RoutineApprovedUse as Use,
+  type RoutineAccountPolicy, type RoutineAccountQueryPlan } from './RoutineApprovedPaymentEvidenceCodec';
+export type { RoutineAccountPolicy, RoutineAccountQueryPlan } from './RoutineApprovedPaymentEvidenceCodec';
+
 type Signing = Pick<Env, 'APP_KEY'>;
 type Runtime = Pick<Env, 'APP_KEY' | 'ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS'>;
-type Scope = { database: string; databaseOid: string; maintenance: string; maintenanceOid: string };
-type Purpose = 'query' | 'notify';
 export interface RoutineMerchantMaterials {
   ref: string; version: number; appId: string; merchantId: string; serialNo: string;
   apiV3Key: string; privateKey: string; platformPublicKey: string; platformPublicKeyId: string;
 }
-export interface RoutineAccountPolicy {
-  accountId: string; state: 'active' | 'revoked'; appId: string; merchantId: string;
-  credentialRef: string; credentialVersion: number; credentialStamp: string;
-  purposes: Purpose[]; validFrom: number; validUntil: number;
-}
-export interface RoutineAccountQueryPlan {
-  state: 'active' | 'revoked'; accountId: string; accountRevision: number;
-  request: PaymentProviderQueryRequest; validFrom: number; validUntil: number;
-}
-type Journal = { record_id: string; kind: 'account' | 'query'; subject_id: string; revision: number;
-  payload: { format: 1; scope: Scope; previousRecordId: string; data: RoutineAccountPolicy | RoutineAccountQueryPlan };
-  created_at: number; signature: string };
 type Prepared = { readonly account: Journal; readonly query: Journal | null; readonly purpose: Purpose };
-type Authorization = { format: 1; purpose: 'routine_approved_provider'; account: Journal; query: Journal | null;
-  observation: RoutineProviderObservation; issuedAt: number; signature: string };
-type Use = { use_id: string; evidence_id: string; payload: { format: 1; evidenceSignature: string; scopeMatches: boolean; authorization: Authorization };
-  created_at: number; signature: string };
 const materialsSlot = Symbol('routine.approved.merchant-materials.v1');
 const authorizationSlot = Symbol('routine.approved.provider-authorization.v1');
 const preparedSlot = Symbol('routine.approved.use-transaction.v1');
@@ -68,35 +57,6 @@ function object(v: unknown, keys: readonly string[]): Record<string, unknown> {
   if (Reflect.ownKeys(v).length !== keys.length || keys.some(k => !Object.hasOwn(ds, k))
     || Object.entries(ds).some(([k, d]) => !keys.includes(k) || !d.enumerable || !('value' in d))) return fail();
   return v as Record<string, unknown>;
-}
-function interval(r: Record<string, unknown>): {state:'active'|'revoked';validFrom:number;validUntil:number} {
-  if (!integer(r.validFrom) || !integer(r.validUntil) || r.validUntil <= r.validFrom
-    || r.validUntil - r.validFrom > 366 * 86400 || r.state !== 'active' && r.state !== 'revoked') return fail();
-  return { state: r.state, validFrom: r.validFrom, validUntil: r.validUntil };
-}
-function account(value: unknown): RoutineAccountPolicy {
-  const r = object(value, ['accountId','state','appId','merchantId','credentialRef','credentialVersion','credentialStamp','purposes','validFrom','validUntil']);
-  const times = interval(r);
-  if (!token(r.accountId) || !token(r.appId, 32) || typeof r.merchantId !== 'string' || !/^[0-9]{1,32}$/u.test(r.merchantId)
-    || !token(r.credentialRef) || !integer(r.credentialVersion) || !hex(r.credentialStamp) || !Array.isArray(r.purposes)
-    || !r.purposes.length || r.purposes.length > 2 || r.purposes.some(p => p !== 'query' && p !== 'notify')
-    || new Set(r.purposes).size !== r.purposes.length) return fail();
-  return { accountId: r.accountId, ...times, appId: r.appId, merchantId: r.merchantId,
-    credentialRef: r.credentialRef, credentialVersion: r.credentialVersion, credentialStamp: r.credentialStamp,
-    purposes: [...r.purposes].sort() as Purpose[] };
-}
-function request(value: unknown): PaymentProviderQueryRequest {
-  const r = object(value, ['provider','profile','orderDomain','orderNo','expectedAmountCents','currency']);
-  if (r.provider !== 'wechat' || r.profile !== 'routine' || typeof r.orderDomain !== 'string' || !['store_order','recharge','membership'].includes(r.orderDomain)
-    || !token(r.orderNo) || r.orderNo.length < 2 || /^xx[0-9a-f]{30}$/u.test(r.orderNo)
-    || !integer(r.expectedAmountCents) || r.currency !== 'CNY') return fail();
-  return { provider: 'wechat', profile: 'routine', orderDomain: r.orderDomain as PaymentProviderQueryRequest['orderDomain'],
-    orderNo: r.orderNo, expectedAmountCents: r.expectedAmountCents, currency: 'CNY' };
-}
-function query(value: unknown): RoutineAccountQueryPlan {
-  const r = object(value, ['state','accountId','accountRevision','request','validFrom','validUntil']), times = interval(r);
-  if (!token(r.accountId) || !integer(r.accountRevision)) return fail();
-  return { ...times, accountId: r.accountId, accountRevision: r.accountRevision, request: request(r.request) };
 }
 function registry(env: Runtime): RoutineMerchantMaterials[] {
   const text = env.ROUTINE_PAYMENT_ACCOUNT_CREDENTIALS;
@@ -149,29 +109,13 @@ async function scope(tx: DbClient): Promise<Scope> {
   if (!r || !token(r.database, 128) || !token(r.maintenance, 128) || !/^[0-9]+$/u.test(r.databaseOid) || !/^[0-9]+$/u.test(r.maintenanceOid)) return fail();
   return r;
 }
-function journal(env: Signing, value: unknown, expectedScope: Scope): Journal {
-  const r = object(value, ['record_id','kind','subject_id','revision','payload','created_at','signature']);
-  const p = object(r.payload, ['format','scope','previousRecordId','data']);
-  const s = object(p.scope, ['database','databaseOid','maintenance','maintenanceOid']);
-  const created = typeof r.created_at === 'string' ? Number(r.created_at) : r.created_at;
-  if (!uuid(r.record_id) || r.kind !== 'account' && r.kind !== 'query' || !token(r.subject_id,128) || !integer(r.revision)
-    || p.format !== 1 || !same(s,expectedScope) || !integer(created)
-    || p.previousRecordId !== '' && !uuid(p.previousRecordId) || !hex(r.signature)) return fail();
-  const data = r.kind === 'account' ? account(p.data) : query(p.data);
-  const row: Omit<Journal,'signature'> = { record_id:r.record_id, kind:r.kind, subject_id:r.subject_id, revision:r.revision,
-    payload:{ format:1 as const, scope:{...expectedScope}, previousRecordId:p.previousRecordId as string, data }, created_at:created };
-  if (!equal(r.signature, mac(env,'policy',row)) || (r.kind === 'account' ? (data as RoutineAccountPolicy).accountId
-    : querySubject(env,(data as RoutineAccountQueryPlan).request.orderNo)) !== r.subject_id) return fail();
-  return freeze({...row,signature:r.signature});
-}
 const querySubject = (env: Signing, orderNo: string) => mac(env,'query-subject',['wechat','routine',orderNo]);
 async function history(tx: DbClient, env: Signing, kind: Journal['kind'], subjectId: string, s: Scope): Promise<Journal[]> {
   const rows = await tx.execute(sql`SELECT * FROM public.routine_payment_account_policy
     WHERE kind=${kind} AND subject_id=${subjectId} ORDER BY revision LIMIT 65`);
   if (rows.length > 64 || Buffer.byteLength(JSON.stringify(rows),'utf8') > 1048576) return fail();
   const decoded = Array.from(rows, r => journal(env,r,s));
-  for (let i=0;i<decoded.length;i++) if (decoded[i].kind!==kind || decoded[i].subject_id!==subjectId || decoded[i].revision!==i+1
-    || decoded[i].payload.previousRecordId!==(i ? decoded[i-1].record_id : '') || i && decoded[i].created_at < decoded[i-1].created_at) return fail();
+  validateRoutineApprovedAccountHistory(decoded,kind,subjectId);
   return decoded;
 }
 async function clock(tx: DbClient) {
@@ -263,22 +207,6 @@ export function snapshotRoutinePaymentAccountAuthorization(env: Signing, value: 
   if (Object.values(s).some(v=>typeof v!=='string')) return fail();
   return authorization(env,value,s as Scope);
 }
-function authorization(env: Signing, value: unknown, s: Scope): Authorization {
-  const r=object(value,['format','purpose','account','query','observation','issuedAt','signature']);
-  const a=journal(env,r.account,s), q=r.query===null?null:journal(env,r.query,s), o=parseRoutineProviderObservation(env,r.observation);
-  if (r.format!==1 || r.purpose!=='routine_approved_provider' || !integer(r.issuedAt) || a.kind!=='account'
-    || q && q.kind!=='query' || !hex(r.signature)) return fail();
-  const data=a.payload.data as RoutineAccountPolicy, purpose=o.source==='callback'?'notify':'query';
-  approved(a,purpose,r.issuedAt);
-  if (data.appId!==o.facts.appId || data.merchantId!==o.facts.merchantId || (purpose==='query')!==!!q) return fail();
-  if (q) {
-    const plan=q.payload.data as RoutineAccountQueryPlan; active(plan,r.issuedAt);
-    if (plan.accountId!==a.subject_id || plan.accountRevision!==a.revision || plan.request.orderNo!==o.facts.orderNo) return fail();
-  }
-  const body={format:1 as const,purpose:'routine_approved_provider' as const,account:a,query:q,observation:o,issuedAt:r.issuedAt};
-  if (!equal(r.signature,mac(env,'authorization',body))) return fail();
-  return freeze({...body,signature:r.signature});
-}
 /** Acquire the account gate BEFORE physical-order/registration locks. This
  * fresh ingress check holds until evidence, use and event commit together. */
 export async function prepareRoutineApprovedUseTx(tx: DbClient, env: Runtime, raw: unknown, proof: unknown,
@@ -296,19 +224,6 @@ function scopeMatches(a: Authorization, original: RoutineOriginalEvidence): bool
   const plan=a.query.payload.data as RoutineAccountQueryPlan, binding=original.payload.binding;
   return binding.state==='bound' && binding.local.domain===plan.request.orderDomain
     && binding.local.amountCents===plan.request.expectedAmountCents;
-}
-function use(env: Signing, raw: unknown, s: Scope, original: RoutineOriginalEvidence): Use {
-  const r=object(raw,['use_id','evidence_id','payload','created_at','signature']), p=object(r.payload,['format','evidenceSignature','scopeMatches','authorization']);
-  const a=authorization(env,p.authorization,s), created=typeof r.created_at==='string'?Number(r.created_at):r.created_at;
-  const expected=mac(env,'use-key',[original.evidence_id,a.account.record_id,a.query?.record_id??'']);
-  const body={use_id:r.use_id,evidence_id:r.evidence_id,payload:{format:1 as const,evidenceSignature:p.evidenceSignature,scopeMatches:p.scopeMatches,authorization:a},created_at:created};
-  if (!hex(r.use_id) || r.use_id!==expected || r.evidence_id!==original.evidence_id || p.format!==1
-    || p.evidenceSignature!==original.signature || !same(a.observation.facts,original.payload.observation.facts)
-    || typeof p.scopeMatches!=='boolean' || p.scopeMatches!==scopeMatches(a,original)
-    || a.observation.source!==original.source || a.observation.sourceId!==original.source_id || !integer(created)
-    || created<a.issuedAt-60 || created>a.issuedAt+900 || !equal(r.signature,mac(env,'use-record',body))) return fail();
-  return {use_id:r.use_id,evidence_id:original.evidence_id,payload:{format:1,evidenceSignature:original.signature,
-    scopeMatches:p.scopeMatches,authorization:a},created_at:created,signature:r.signature as string};
 }
 export async function appendRoutineApprovedUseTx(tx: DbClient, env: Runtime, prepared: PreparedUse|null, original: RoutineOriginalEvidence) {
   if (!prepared) return {scopeMatches:true};

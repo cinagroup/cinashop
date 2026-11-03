@@ -8,16 +8,13 @@ import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRun
 import { ServiceUnavailableException } from '@/utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac } from './RoutineProviderObservation';
 
+import { parseRoutineShippingAccountPolicy as policy, parseRoutineShippingAccountJournal, validateRoutineShippingAccountHistory,
+  type RoutineShippingScope, type RoutineShippingAccountPolicy, type RoutineShippingAccountJournal } from './RoutinePurposeAccountEvidenceCodec';
+export { parseRoutineShippingAccountJournal } from './RoutinePurposeAccountEvidenceCodec';
+export type { RoutineShippingScope, RoutineShippingAccountPolicy, RoutineShippingAccountJournal } from './RoutinePurposeAccountEvidenceCodec';
+
 export type RoutineShippingEnv = Pick<Env,'APP_KEY'|'ROUTINE_SHIPPING_ACCOUNT_CREDENTIALS'>;
 type Signing = Pick<Env,'APP_KEY'>;
-export interface RoutineShippingScope { database:string; databaseOid:string; maintenance:string; maintenanceOid:string }
-export interface RoutineShippingAccountPolicy {
- accountId:string;state:'active'|'revoked';appId:string;merchantId:string;credentialRef:string;credentialVersion:number;
- credentialStamp:string;purposes:['shipping_upload'];validFrom:number;validUntil:number;
-}
-export interface RoutineShippingAccountJournal {
- record_id:string;account_id:string;revision:number;payload:{format:1;scope:RoutineShippingScope;previousRecordId:string;data:RoutineShippingAccountPolicy};created_at:number;signature:string;
-}
 interface Materials {ref:string;version:number;appId:string;secret:string}
 const preparedSlot=Symbol('routine.shipping.prepared-account.v1');
 export interface PreparedRoutineShippingAccount {readonly account:RoutineShippingAccountJournal;readonly [preparedSlot]:true}
@@ -72,17 +69,6 @@ export function routineShippingAccountId(env:Signing,appId:string,merchantId:str
  if(!token(appId,32)||typeof merchantId!=='string'||!/^[0-9]{1,32}$/u.test(merchantId))return routineShippingUnavailable();
  return shippingMac(env,'account-subject',[appId,merchantId]);
 }
-function policy(env:Signing,value:unknown):RoutineShippingAccountPolicy{
- const r=shippingObject(value,['accountId','state','appId','merchantId','credentialRef','credentialVersion','credentialStamp','purposes','validFrom','validUntil']);
- if(!token(r.appId,32)||typeof r.merchantId!=='string'||!/^[0-9]{1,32}$/u.test(r.merchantId)
-  ||r.accountId!==routineShippingAccountId(env,r.appId,r.merchantId)||!token(r.credentialRef)||!shippingInteger(r.credentialVersion)||!shippingHex(r.credentialStamp)
-  ||r.state!=='active'&&r.state!=='revoked'||!shippingInteger(r.validFrom)||!shippingInteger(r.validUntil)||r.validUntil<=r.validFrom||r.validUntil-r.validFrom>366*86400)return routineShippingUnavailable();
- const p=r.purposes;
- if(!Array.isArray(p)||Object.getPrototypeOf(p)!==Array.prototype||p.length!==1||Reflect.ownKeys(p).length!==2
-  ||!Object.getOwnPropertyDescriptor(p,'0')?.enumerable||!('value'in Object.getOwnPropertyDescriptor(p,'0')!)||p[0]!=='shipping_upload')return routineShippingUnavailable();
- return{accountId:r.accountId as string,state:r.state,appId:r.appId,merchantId:r.merchantId,credentialRef:r.credentialRef,
-  credentialVersion:r.credentialVersion,credentialStamp:r.credentialStamp,purposes:['shipping_upload'],validFrom:r.validFrom,validUntil:r.validUntil};
-}
 export async function routineShippingScopeTx(tx:DbClient):Promise<RoutineShippingScope>{
  const [s]=await tx.execute<RoutineShippingScope & Record<string,unknown>>(sql`SELECT pg_catalog.current_database() AS database,
   (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=pg_catalog.current_database()) AS "databaseOid",
@@ -91,23 +77,11 @@ export async function routineShippingScopeTx(tx:DbClient):Promise<RoutineShippin
  if(!s||!token(s.database,128)||!token(s.maintenance,128)||!/^[0-9]+$/u.test(s.databaseOid)||!/^[0-9]+$/u.test(s.maintenanceOid))return routineShippingUnavailable();
  return{database:s.database,databaseOid:s.databaseOid,maintenance:s.maintenance,maintenanceOid:s.maintenanceOid};
 }
-export function parseRoutineShippingAccountJournal(env:Signing,raw:unknown,scope:RoutineShippingScope):RoutineShippingAccountJournal{
- const r=shippingObject(raw,['record_id','account_id','revision','payload','created_at','signature']),p=shippingObject(r.payload,['format','scope','previousRecordId','data']);
- const s=shippingObject(p.scope,['database','databaseOid','maintenance','maintenanceOid']);
- const created=typeof r.created_at==='string'&&/^[0-9]+$/u.test(r.created_at)?Number(r.created_at):r.created_at;
- if(!shippingUuid(r.record_id)||!shippingHex(r.account_id)||!shippingInteger(r.revision)||!shippingInteger(created)||p.format!==1||!shippingSame(s,scope)
-  ||p.previousRecordId!==''&&!shippingUuid(p.previousRecordId)||!shippingHex(r.signature))return routineShippingUnavailable();
- const data=policy(env,p.data);if(data.accountId!==r.account_id)return routineShippingUnavailable();
- const body={record_id:r.record_id,account_id:r.account_id,revision:r.revision,payload:{format:1 as const,scope:{...scope},previousRecordId:p.previousRecordId as string,data},created_at:created};
- if(!shippingEqual(r.signature,shippingMac(env,'account-policy',body)))return routineShippingUnavailable();
- return freezeShipping({...body,signature:r.signature});
-}
 async function history(tx:DbClient,env:Signing,id:string,scope:RoutineShippingScope){
  const rows=await tx.execute(sql`SELECT * FROM public.routine_shipping_account_policy WHERE account_id=${id} ORDER BY revision LIMIT 65`);
  if(rows.length>64||Buffer.byteLength(JSON.stringify(rows),'utf8')>1048576)return routineShippingUnavailable();
  const decoded=Array.from(rows,r=>parseRoutineShippingAccountJournal(env,r,scope));
- for(let i=0;i<decoded.length;i++)if(decoded[i].account_id!==id||decoded[i].revision!==i+1
-  ||decoded[i].payload.previousRecordId!==(i?decoded[i-1].record_id:'')||i>0&&decoded[i].created_at<decoded[i-1].created_at)return routineShippingUnavailable();
+ validateRoutineShippingAccountHistory(decoded,id);
  return decoded;
 }
 export async function routineShippingClockTx(tx:DbClient){
