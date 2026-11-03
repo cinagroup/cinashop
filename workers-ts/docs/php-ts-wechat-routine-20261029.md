@@ -949,3 +949,18 @@ pure-01六阶段728.32秒、native-02两完整PG文件290.67秒，两批8607输�
 真实schema CLI继续exit1：外部only0／Workeronly77／列PK差异0，36静态补充／536已知未求值、完整提取／安装标志false。真实原生1654各一次、827／827、固定角色58串行，仅collection，不是全部文件执行或容量10秒恢复。原预算／单层锁／单worker保持；日志／冻结／Git核对／只读复核在.cache/php-ts-phase55-validation，文档终态后补、九提交文件另扫秘密核字节。
 
 生产源码／迁移SQL／grants未改，未部署／Env切换或真实微信／Browser／Workerd／Hyperdrive验收。真实可比安装等价、容量CI、私有原库供应及云端CI、完整manifest／单次许可／原子切换、其他通知／角色／非微信和整体迁移仍未完成；用户／UID／权益／旧单／付款及runtime_ready=false保持。本轮仅本地提交合main并清理已合并开发分支，远端操作继续暂缓。
+
+
+## 第56轮：真实安装的扩展public目录与权限观察
+
+本轮基点为本地main `6ae2bf97896cfba6355d74aadeb1858cd1adf231`。用户“暂不执行远端操作”持续有效；GitHub可见性／environment／deploy key／secret／凭据发送、两仓库推送与部署均未执行，新SHA云端CI未验证。
+
+新增[实际安装public观察合同](installed-public-catalog.md)：严格显式profile与专用回环测试服务，实际执行external182→287表、runAll185→283再city3＋abandon1→287。全部构造完成后，两个REPEATABLE READ READ ONLY快照保留旧五类，并增加物理列、关系、完整函数、全部触发器、视图／规则、策略、owner／ACL／默认ACL／相关角色及成员关系和未知清单；原始OID／节点树单列。没有角色、正文或内部触发器名归一化，未知对象即使两边相同也拒绝equal；全安装／有效权限／运行就绪标志保持false。
+
+默认ACL全局owner仅闭包，成员grantor只保留属性，不因此读取无关global默认授权；新实际PG反例查pg_auth_members真实bootstrap grantor和真实defaultACL，证明无关新grantee不被拉入观察范围，之后精确撤回并清理。未新建superuser或修改真实应用权限。CLI创建清单限定cleanup，逐库／角色复核不存在；源码／Node／三包元数据前后相同，明确不等于全传递依赖认证。
+
+保留首批unit类型TS2352失败214.80秒及未执行后续的终态；终态后修复并收紧范围。最终pure-02六阶段800.53秒、final-05 PG四例／reader31／完整unit类型471.02秒（PG167.60秒）。pure 8613／final 8616输入各阶段一致；共有输入仅native单case正文可移植后继、reader两别名引号与列ACL输入修复及原pure断言（读真实grantor、临时独立库owner、独立cleanup），其余源和导入未变，旧单元794／runtime等结果复用，最终reader31替换旧31；新图完整unit类型、reader31与PG文件重跑，final03的1通过／3失败与final04类型／reader通过但原生1通过／3失败、两轮CLI无JSON／cleanup终态均保留，不重复累计那两次通过。最终单元825＋PG4＝829次成功，新增51例、零跳过；Worker两套完整类型／固定PHP输入通过。实际API和CLI旧五类均零差异，扩展真实差异与两次精确计数见合同；CLI如实exit1，绝不称全安装已等价。
+
+旧schema CLI仍exit1：外部287／声明364（raw361）、only0／77／列PK0，36静态补充／536已知未求值，完整提取与安装false。原生case正文可移植修复前真实收集1657文件，829／828、固定角色58串行，仅collection不当全执行／10秒容量恢复。单锁／单worker／原预算保持，文档终态后补，八文件另扫秘密核index／commit字节，证据在.cache/php-ts-phase56-validation。
+
+生产源码／迁移SQL／grants／Env保持基点；未部署或真实微信／Browser／Workerd／Hyperdrive验收。原始安装差异仍需独立合同解释，31维护安装器及其61入口、完整manifest／单次许可／原子切换、其他业务／角色／非微信、私有旧PHP供应及CI／容量和整体迁移仍未完成。用户／UID／权益／旧单／付款及跨AppID屏障、runtime_ready=false保持。本轮仅本地合main和清理本轮开发分支；远端继续暂缓。

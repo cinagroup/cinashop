@@ -738,6 +738,7 @@ if (schemaMaintenance) {
     'test/order-invoice-concurrency.test.ts',
     'test/invoice-evidence-migration.test.ts',
     'test/invoice-evidence-registration.test.ts',
+    'test/installed-public-catalog-native.test.ts',
     'test/refund-split-migration.test.ts',
     'test/refund-runtime-permissions.test.ts',
     'test/refund-read-generations.test.ts',
