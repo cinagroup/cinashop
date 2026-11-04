@@ -32,6 +32,7 @@ export const ORDER_NOTIFICATION_MARKS = [
   "order_deliver_success",
   "order_fictitious_success",
   "send_order_refund_no_status",
+  "order_refund",
   "user_extract",
   "user_balance_change",
   "kefu_send_extract_application",
@@ -69,6 +70,7 @@ const MARK_POLICY: Record<OrderNotificationMark, {
   order_postage_success: { label: "快递发货成功", official: true, routine: true },
   order_deliver_success: { label: "平台配送成功", official: false, routine: true },
   order_fictitious_success: { label: "虚拟交付成功", official: false, routine: false },
+  order_refund: { label: "退款成功", official: true, routine: true },
   send_order_refund_no_status: { label: "退款申请未通过", official: true, routine: true },
   user_extract: { label: "提现成功", official: true, routine: true },
   user_balance_change: { label: "提现拒绝退回", official: false, routine: true },
@@ -504,7 +506,7 @@ export class OrderNotificationAdminService {
       throw new ValidateException("投递渠道无效");
     }
     const eventKey = query.eventKey?.trim();
-    if (eventKey && !/^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(eventKey)) {
+    if (eventKey && !/^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:approved|refused)\.notice):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(eventKey)) {
       throw new ValidateException("事件键无效");
     }
     const afterId = query.afterId ?? 0;

@@ -14,6 +14,8 @@ import { assertRoutineVirtualShippingSubjectsReadTx, assertRoutineVirtualShippin
   inspectRoutineVirtualShippingSubjects, ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION,
   routineVirtualShippingEventDefinition, ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL, inspectRoutineVirtualShippingSubjectsStructure } from '@/migrations/routineVirtualShippingSubjects';
 import { runSupplierOrderPriceRevision, assertSupplierOrderPriceRevisionReady, SUPPLIER_ORDER_PRICE_REVISION_SQL } from '@/migrations/supplierOrderPriceRevision';
+import { REFUND_SUCCESS_NOTICE_PREDECESSORS, REFUND_SUCCESS_NOTICE_SUCCESSORS, REFUND_SUCCESS_NOTICE_SQL,
+  refundSuccessNoticeCommissionedTx } from '@/migrations/refundSuccessNotice';
 import { inspectWithdrawalEffectsUpgrade, runWithdrawalEffectsUpgrade } from '@/migrations/runWithdrawalEffectsUpgrade';
 import { auditRuntimeBusinessPrivileges } from '@/migrations/auditRuntimeBusinessPrivileges';
 import { auditCustomerFinancialRuntimePrivileges, inspectCustomerFinancialRuntimePrivileges } from '@/migrations/auditCustomerFinancialRuntimePrivileges';
@@ -152,6 +154,53 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('formal virtual R
     })).rejects.toThrow('Owned virtual-subject caller rollback');
     expect(await snapshot(f.maintenanceDb)).toEqual(before);expect(await f.facts()).toEqual(facts);
   },90000);
+
+  it.each([
+    ['refund-success → price → virtual', ['refund', 'price', 'virtual']],
+    ['virtual → refund-success → price', ['virtual', 'refund', 'price']],
+    ['price → refund-success → virtual', ['price', 'refund', 'virtual']],
+    ['price → virtual → refund-success', ['price', 'virtual', 'refund']],
+    ['refund-success → virtual → price', ['refund', 'virtual', 'price']],
+  ] as const)('preserves every exact 0198 successor through real maintenance order %s and caller rollback', async (label, steps) => {
+    const before = await snapshot(f.maintenanceDb), facts = await f.facts(), messages = [...f.messages];
+    const rollback = 'Owned refund-success maintenance order rollback: ' + label;
+    await expect(f.maintenanceDb.transaction(async tx => {
+      let price = false, virtual = false, success = false;
+      const definition = async () => {
+        const rows = await tx.execute<{ definition: string }>(sql`SELECT pg_catalog.pg_get_constraintdef(oid,false) AS definition
+          FROM pg_catalog.pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'`);
+        expect(rows).toHaveLength(1); return rows[0].definition;
+      };
+      expect(await definition()).toBe(REFUND_SUCCESS_NOTICE_PREDECESSORS[0]);
+      for (const step of steps) {
+        if (step === 'refund') { await tx.execute(sql.raw(REFUND_SUCCESS_NOTICE_SQL)); success = true; }
+        if (step === 'price') { await tx.execute(sql.raw(SUPPLIER_ORDER_PRICE_REVISION_SQL)); price = true; }
+        if (step === 'virtual') {
+          expect(await installCaller(tx)).toMatchObject({ applied: true, state: price ? 'virtual17' : 'virtual16' });
+          virtual = true;
+        }
+        const index = virtual ? price ? 3 : 2 : price ? 1 : 0;
+        expect(await definition()).toBe((success ? REFUND_SUCCESS_NOTICE_SUCCESSORS : REFUND_SUCCESS_NOTICE_PREDECESSORS)[index]);
+        expect(await refundSuccessNoticeCommissionedTx(tx)).toBe(success);
+      }
+      // Standalone SQL deliberately uses pg_catalog during maintenance. Restore
+      // the ordinary caller path before its full runtime/catalog inspection.
+      await tx.execute(sql`SET LOCAL search_path TO public,pg_temp`);
+      expect(await inspectRoutineVirtualShippingSubjects(tx,names())).toMatchObject({ ready: true, state: 'virtual17', failures: [] });
+      const installed = await snapshot(tx);
+      expect(installed.delivery).toEqual(before.delivery); expect(installed.source).toEqual(before.source);
+      // Execute all three formal operations again: an existing price/virtual
+      // successor must retain its CHECK OID and its complete public catalog.
+      await tx.execute(sql.raw(REFUND_SUCCESS_NOTICE_SQL));
+      await tx.execute(sql.raw(SUPPLIER_ORDER_PRICE_REVISION_SQL));
+      expect(await installCaller(tx)).toMatchObject({ applied: false, state: 'virtual17' });
+      await assertSupplierOrderPriceRevisionReady(tx);
+      expect(await snapshot(tx)).toEqual(installed);
+      throw Error(rollback);
+    })).rejects.toThrow(rollback);
+    expect(await snapshot(f.maintenanceDb)).toEqual(before); expect(await f.facts()).toEqual(facts);
+    expect(f.messages).toEqual(messages); expect(network).not.toHaveBeenCalled();
+  },120000);
 
   it('refuses a real exclusive gate and independent table writer immediately without repairing and succeeds after release',async()=>{
     const before=await snapshot(f.maintenanceDb);

@@ -8,7 +8,7 @@ import { routineEvidenceCanonical, routineEvidenceHmac } from '../payment/Routin
 import { parseRoutineSubscriptionAccountJournal, type RoutineSubscriptionAccountJournal,
   type RoutineSubscriptionScope } from '../payment/RoutinePurposeAccountEvidenceCodec';
 import type { RoutineSubscriptionNoticeIntent } from './RoutineSubscriptionRequestEvidenceCodec';
-import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey, routineSubscriptionRefundSuccessKey } from './RoutineSubscriptionNoticeKinds';
 type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionNoticeIntent['source'];
 type RoutineSubscriptionNoticeRequest = RoutineSubscriptionNoticeIntent['request'];
 type Signing = Pick<Env, 'APP_KEY'>;
@@ -70,7 +70,7 @@ export function parseRoutineSubscriptionAttemptForActor(env: Signing, raw: unkno
     || c.attemptCount !== r.attempt_no || !time(c.leaseUntil) || created >= c.leaseUntil
     || c.eventKey !== f.eventKey || r.delivery_id !== f.deliveryId || typeof c.eventKey !== 'string'
     || !routineSubscriptionNoticeKey(c.eventKey) || typeof f.templateMark !== 'string'
-    || !(routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
+    || !(routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) || routineSubscriptionRefundSuccessKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
     || r.source_key !== sourceKey(env, { id: r.delivery_id, eventKey: c.eventKey, leaseToken: c.leaseToken })
     || !subscriptionInteger(f.orderId) || !subscriptionInteger(f.rootId) || !subscriptionInteger(f.buyerUid)
     || !subscriptionHex(f.sourceDigest) || !subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest)

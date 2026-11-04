@@ -72,7 +72,7 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.refused\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel) && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
     (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null);
 }
@@ -301,8 +301,11 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
         if(!await assertRoutineVirtualShippingSubjectsReadTx(tx))return routineShippingUnavailable();
       });
     }
-    const subscriptionEnv = message.channel === 'wechat_routine' && routineSubscriptionNoticePrefix(message.eventKey)
-      && await routineSubscriptionDeliveryCommissioned(this.container) ? captureRoutineSubscriptionDeliveryEnv(this.env) : undefined;
+    const subscriptionNotice = message.channel === 'wechat_routine' && routineSubscriptionNoticePrefix(message.eventKey);
+    const subscriptionReady = subscriptionNotice && await routineSubscriptionDeliveryCommissioned(this.container);
+    if (subscriptionNotice && message.eventKey.startsWith('order.refund.success.notice:') && !subscriptionReady)
+      throw new WechatProviderConfigurationError('退款成功小程序通知的原账号协议尚未就绪');
+    const subscriptionEnv = subscriptionReady ? captureRoutineSubscriptionDeliveryEnv(this.env) : undefined;
     const claim = await this.claim(message);
     if (typeof claim === "string") return claim;
     if (claim.channel === "wechat_shipping") return processRoutineShippingDelivery(this.container, shippingEnv!,

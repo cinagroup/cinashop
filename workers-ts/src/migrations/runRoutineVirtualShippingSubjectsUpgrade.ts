@@ -1,3 +1,4 @@
+import { refundSuccessNoticeCommissionedTx } from './refundSuccessNotice';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -144,7 +145,7 @@ export async function runRoutineVirtualShippingSubjectsUpgradeInTransaction(tx: 
       OR (k.conrelid='public.store_order_outbox'::regclass AND k.conname='soob_event_type_ck')`);
   if (comments.length!==2||comments.some(r=>r.comment!==null&&(typeof r.comment!=='string'||r.comment.length>4096)))
     throw Error('Virtual shipping constraint comments require review');
-  await tx.execute(sql.raw(routineVirtualShippingSubjectsInstallSql(before.state==='base15')));
+  await tx.execute(sql.raw(routineVirtualShippingSubjectsInstallSql(before.state==='base15', await refundSuccessNoticeCommissionedTx(tx))));
   for (const row of comments) if (row.comment!==null)
     await tx.execute(sql.raw(`COMMENT ON CONSTRAINT ${pricingIdentifier(row.name)} ON public.${pricingIdentifier(row.table_name)} IS ${row.comment_literal}`));
   const after=await inspectRoutineVirtualShippingSubjects(tx,names),post=await inspect();

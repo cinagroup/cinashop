@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { createRoutineSubscriptionNoticeRequestTx } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
+import { createRoutineSubscriptionRefundSuccessRequestTx } from '@/services/wechat/RoutineSubscriptionRefundSuccessRequest';
 import { createRoutineSubscriptionRefusalRequestTx } from '@/services/wechat/RoutineSubscriptionRefusalRequest';
 import { prepareRoutineSubscriptionPinkRequestsTx, createRoutineSubscriptionPinkRequestTx,
   type PreparedRoutineSubscriptionPinkRequests } from '@/services/wechat/RoutineSubscriptionPinkRequest';
@@ -27,6 +28,7 @@ import {
   type OrderNotificationDeliveryPayload,
   type OrderOutboxPayload,
   type OrderRefundRefusedNoticeOutboxPayload,
+  type OrderRefundSuccessNoticeOutboxPayload,
   type OrderSecondCardNoticeOutboxPayload,
   type OrderPinkSuccessNoticeOutboxPayload,
 } from "@/models/schema";
@@ -38,6 +40,7 @@ import { readRoutineNotificationAppIdInTx, RoutineConfigurationError } from '@/s
 import { routineShippingLogisticsType } from '@/services/wechat/RoutineShippingLogistics';
 
 export const ORDER_DELIVERY_NOTICE_EVENT = "order.delivery.notice";
+export const ORDER_REFUND_SUCCESS_NOTICE_EVENT = "order.refund.success.notice";
 export const ORDER_REFUND_REFUSED_NOTICE_EVENT = "order.refund.refused.notice";
 export const ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT = "order.second_card.advent.notice";
 export const ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT = "order.second_card.expired.notice";
@@ -46,6 +49,7 @@ export const ORDER_PINK_SUCCESS_NOTICE_EVENT = 'order.pink.success.notice';
 export type OrderNotificationEventType =
   | typeof ORDER_DELIVERY_NOTICE_EVENT
   | typeof ORDER_REFUND_REFUSED_NOTICE_EVENT
+  | typeof ORDER_REFUND_SUCCESS_NOTICE_EVENT
   | typeof ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
   | typeof ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT
   | typeof ORDER_PINK_SUCCESS_NOTICE_EVENT;
@@ -169,6 +173,10 @@ export function orderDeliveryNoticeEventKey(orderId: number, cityDeliveryJobId?:
     + (cityDeliveryJobId === undefined ? '' : `:city:${positiveId(cityDeliveryJobId, '同城任务 ID')}`);
 }
 
+export function orderRefundSuccessNoticeEventKey(refundId: number): string {
+  return `${ORDER_REFUND_SUCCESS_NOTICE_EVENT}:${positiveId(refundId, '售后 ID')}`;
+}
+
 export function orderRefundRefusedNoticeEventKey(refundId: number): string {
   return `${ORDER_REFUND_REFUSED_NOTICE_EVENT}:${positiveId(refundId, "售后 ID")}`;
 }
@@ -198,7 +206,7 @@ function payloadEquals(left: OrderOutboxPayload, right: OrderOutboxPayload): boo
 
 function deliveryBusinessEquals(left: OrderOutboxPayload, right: OrderOutboxPayload) {
   const body = (value: OrderOutboxPayload) => {
-    const { routineAppId: _pin, routineSubscriptionRequest: _request, ...rest } = value as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
+    const { routineAppId: _pin, routineSubscriptionRequest: _request, ...rest } = value as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
     return rest;
   };
   return canonicalJson(body(left)) === canonicalJson(body(right));
@@ -237,7 +245,7 @@ async function insertImmutableNotificationEvent(
     eventType: OrderNotificationEventType;
     payload:
       | OrderDeliveryNoticeOutboxPayload
-      | OrderRefundRefusedNoticeOutboxPayload
+      | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
       | OrderPinkSuccessNoticeOutboxPayload
       | OrderSecondCardNoticeOutboxPayload;
     now: number;
@@ -248,9 +256,10 @@ async function insertImmutableNotificationEvent(
   const key = input.noticeEnv && Object.getOwnPropertyDescriptor(input.noticeEnv, 'APP_KEY');
   const noticeEnv = key?.enumerable && 'value' in key && typeof key.value === 'string'
     ? Object.freeze({ APP_KEY: key.value }) : undefined;
+  const success = input.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT;
   const refusal = input.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
   const pink = input.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT;
-  const versioned = input.payload.userId > 0 && (refusal || pink || input.eventType === ORDER_DELIVERY_NOTICE_EVENT
+  const versioned = input.payload.userId > 0 && (success || refusal || pink || input.eventType === ORDER_DELIVERY_NOTICE_EVENT
     && 'deliveryType' in input.payload && input.payload.deliveryType !== 'fictitious');
   let payload: typeof input.payload;
   if (versioned) {
@@ -258,18 +267,21 @@ async function insertImmutableNotificationEvent(
     if (prior) {
       // Preserve the version winner, its original signature/pin/absence. No
       // re-signing, repinning or later adoption of a committed legacy event.
-      const source = prior.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
+      const source = prior.payload as OrderDeliveryNoticeOutboxPayload | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload | OrderPinkSuccessNoticeOutboxPayload;
       payload = { ...input.payload, ...(Object.hasOwn(source, 'routineAppId') ? { routineAppId: source.routineAppId } : {}),
         ...(Object.hasOwn(source, 'routineSubscriptionRequest') ? { routineSubscriptionRequest: source.routineSubscriptionRequest } : {}) } as typeof input.payload;
     } else {
-      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx>
+      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx> | ReturnType<typeof createRoutineSubscriptionRefundSuccessRequestTx>
         | ReturnType<typeof createRoutineSubscriptionPinkRequestTx>>;
       try {
         resolved = pink ? createRoutineSubscriptionPinkRequestTx(db,
           input.pinkRequests ?? await prepareRoutineSubscriptionPinkRequestsTx(db, noticeEnv,
             { pinkId: (input.payload as OrderPinkSuccessNoticeOutboxPayload).pinkId, now: input.now }),
           { eventKey: input.eventKey, aggregateId: input.aggregateId, payload: input.payload as OrderPinkSuccessNoticeOutboxPayload, now: input.now })
-          : await withTx(createContainerFromDb(db), async nested => refusal
+          : await withTx(createContainerFromDb(db), async nested => success
+          ? createRoutineSubscriptionRefundSuccessRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
+            payload: input.payload as OrderRefundSuccessNoticeOutboxPayload, now: input.now })
+          : refusal
           ? createRoutineSubscriptionRefusalRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
             payload: input.payload as OrderRefundRefusedNoticeOutboxPayload, now: input.now })
           : createRoutineSubscriptionNoticeRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
@@ -277,7 +289,7 @@ async function insertImmutableNotificationEvent(
       } catch {
         // Mini-only metadata/SQL faults roll back their actual SAVEPOINT.
         // Keep fulfillment and other notices, without falling back to a pin.
-        resolved = pink ? { kind: 'original', request: { format: 4, unavailable: true } }
+        resolved = success ? { kind: 'original', request: { format: 5, unavailable: true } } : pink ? { kind: 'original', request: { format: 4, unavailable: true } }
           : refusal ? { kind: 'original', request: { format: 3, unavailable: true } }
           : { kind: 'original', request: { format: 2, unavailable: true } };
       }
@@ -395,6 +407,17 @@ export async function enqueueOrderRefundRefusedNoticeEvent(
   });
 }
 
+/** First completed ordinary refund only, inside its business transaction.
+ * orderNo is the refund business number, as in PHP's order_refund renderer. */
+export async function enqueueOrderRefundSuccessNoticeEvent(db: DbClient, input: RefundRefusedNoticeInput,
+  now = Math.floor(Date.now() / 1000), noticeEnv?: Readonly<{ APP_KEY?: string }>) {
+  const payload: OrderRefundSuccessNoticeOutboxPayload = { orderId: positiveId(input.orderId, '订单 ID'),
+    orderNo: requiredString(input.orderNo, '退款单号', 50), refundId: positiveId(input.refundId, '售后 ID'),
+    userId: positiveId(input.userId, '用户 ID'), payPrice: requiredString(input.payPrice, '订单金额', 32) };
+  return insertImmutableNotificationEvent(db, { eventKey: orderRefundSuccessNoticeEventKey(payload.refundId),
+    aggregateId: payload.orderId, eventType: ORDER_REFUND_SUCCESS_NOTICE_EVENT, payload, now, noticeEnv });
+}
+
 /** Financial's same-transaction effect verifier retains the exact notification
  * version written by the refusal author. It verifies business facts without
  * recreating a current pin or authenticating any provider send. */
@@ -465,7 +488,7 @@ export function assertOrderNotificationPayload(
   aggregateId: number,
 ): asserts value is
   | OrderDeliveryNoticeOutboxPayload
-  | OrderRefundRefusedNoticeOutboxPayload
+  | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
   | OrderPinkSuccessNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload {
   if (!value || typeof value !== "object") throw new Error("通知 outbox payload 不是对象");
@@ -473,7 +496,7 @@ export function assertOrderNotificationPayload(
   positiveId(payload.orderId, "通知订单 ID");
   if (!([ORDER_DELIVERY_NOTICE_EVENT,ORDER_REFUND_REFUSED_NOTICE_EVENT].includes(eventType) && payload.userId === 0)) positiveId(payload.userId, "通知用户 ID");
   if (payload.orderId !== aggregateId) throw new Error("通知 outbox 聚合 ID 不匹配");
-  requiredString(payload.orderNo, "通知订单号", 32);
+  requiredString(payload.orderNo, "通知订单号", eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? 50 : 32);
 
   if (eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) {
     positiveId(payload.pinkId, '通知团长 ID');
@@ -493,7 +516,7 @@ export function assertOrderNotificationPayload(
     else if(payload.cityDeliveryJobId!==undefined)throw Error('同城任务不能用于其他发货通知');
     return;
   }
-  if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
+  if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) {
     if(payload.userId===0&&Object.keys(payload).sort().join(',')!==['orderId','orderNo','refundId','userId','payPrice'].sort().join(','))throw Error('游客拒绝通知字段无效');
     positiveId(payload.refundId, "通知售后 ID");
     requiredString(payload.payPrice, "通知订单金额", 32);
@@ -559,10 +582,11 @@ function noticeMark(
   eventType: string,
   payload:
     | OrderDeliveryNoticeOutboxPayload
-    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
 ): string {
+  if (eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) return "order_refund";
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) return "send_order_refund_no_status";
   if (eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT) return 'order_user_groups_success';
   if (eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT) return "reminder_brink_death";
@@ -628,7 +652,7 @@ async function noticeContext(
   eventType: string,
   payload:
     | OrderDeliveryNoticeOutboxPayload
-    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
 ): Promise<NoticeContext> {
@@ -704,8 +728,16 @@ async function noticeContext(
       .orderBy(desc(wechatUser.id)),
   ]);
   const order = orderRows[0];
-  if (!order || order.uid !== payload.userId || order.orderId !== payload.orderNo) {
+  if (!order || order.uid !== payload.userId || eventType !== ORDER_REFUND_SUCCESS_NOTICE_EVENT && order.orderId !== payload.orderNo) {
     throw new Error("通知订单快照与当前订单不匹配");
+  }
+  if (eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) {
+    const p = payload as OrderRefundSuccessNoticeOutboxPayload;
+    const rows = await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, p.refundId)).limit(2);
+    const r = rows[0];
+    if (rows.length !== 1 || !r || r.storeOrderId !== order.id || r.uid !== payload.userId || r.orderId !== p.orderNo
+      || r.refundType !== 6 || r.isCancel !== 0 || r.isDel !== 0 || r.refundedPrice !== p.payPrice || order.payPrice !== p.payPrice)
+      throw Error('成功退款通知与完成申请不匹配');
   }
   if (payload.userId === 0) {
     if(eventType===ORDER_REFUND_REFUSED_NOTICE_EVENT)await assertGuestRefundRefusedNoticeSource(tx,payload as OrderRefundRefusedNoticeOutboxPayload);
@@ -747,10 +779,11 @@ async function noticeContext(
       (member.orderId === order.orderId || member.orderIdKey === String(order.id) || member.orderIdKey === order.unique));
     values = { title: storeName, store_name: storeName, nickname: leader?.nickname ?? '', count: String(pink.people),
       pink_time: chinaDateTime(member?.addTime ?? order.payTime), order_id: order.orderId };
-  } else if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT) {
+  } else if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) {
     const refusal = payload as OrderRefundRefusedNoticeOutboxPayload;
     values = {
-      order_id: refusal.orderNo,
+      order_id: eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? order.orderId : refusal.orderNo,
+      ...(eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? { refund_price: refusal.payPrice } : {}),
       pay_price: refusal.payPrice,
       store_name: storeName,
     };
@@ -832,6 +865,12 @@ async function readRoutineOrderNotificationTitleTx(tx: DbClient, payload: { orde
  * 1451 contract; a refund request amount does not replace the order amount. */
 export async function readRoutineRefundRefusalNotificationDataTx(tx: DbClient, payload: OrderRefundRefusedNoticeOutboxPayload): Promise<Record<string, string>> {
   return { thing1: '退款失败', thing2: await readRoutineOrderNotificationTitleTx(tx, payload),
+    amount3: payload.payPrice, character_string6: payload.orderNo };
+}
+
+/** PHP order_refund uses the refund number and the original full order amount. */
+export async function readRoutineRefundSuccessNotificationDataTx(tx: DbClient, payload: OrderRefundSuccessNoticeOutboxPayload): Promise<Record<string, string>> {
+  return { thing1: '已成功退款', thing2: await readRoutineOrderNotificationTitleTx(tx, payload),
     amount3: payload.payPrice, character_string6: payload.orderNo };
 }
 
@@ -980,7 +1019,7 @@ async function stageExternalNotifications(
   event: OrderNotificationOutboxEvent,
   payload:
     | OrderDeliveryNoticeOutboxPayload
-    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload,
   mark: string,
@@ -1009,7 +1048,8 @@ async function stageExternalNotifications(
     }
     return;
   }
-  const isRefund = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
+  const success = event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT;
+  const isRefund = success || event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
   const isSecondCard = event.eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || event.eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
   const delivery = isRefund || isSecondCard
@@ -1019,7 +1059,7 @@ async function stageExternalNotifications(
     const params: Record<string, string> = isSecondCard
       ? context.values
       : isRefund
-        ? { order_id: payload.orderNo }
+        ? success ? { order_id: context.order.orderId, refund_price: context.order.payPrice } : { order_id: payload.orderNo }
         : {
           order_id: payload.orderNo,
           store_name: context.storeName,
@@ -1041,13 +1081,15 @@ async function stageExternalNotifications(
   const officialEnabled = config?.isWechat === 1 &&
     (isRefund || delivery?.deliveryType === "express");
   if (officialEnabled) {
-    const templateMark = isRefund ? "46232" : "42984";
+    const templateMark = isRefund ? success ? "48058" : "46232" : "42984";
     const templateCode = await configuredTemplate(tx, templateMark, 1);
-    const data: Record<string, string> = isRefund
+    const data: Record<string, string> = success
+      ? { amount2: context.order.payPrice, time4: chinaDateTime(context.order.addTime), character_string5: payload.orderNo }
+      : isRefund
       ? {
           amount5: context.order.payPrice,
           character_string8: payload.orderNo,
-          thing6: "审核未通过",
+          thing6: success ? "退款成功" : "审核未通过",
           time9: chinaDateTime(context.order.addTime),
         }
       : {
@@ -1074,7 +1116,9 @@ async function stageExternalNotifications(
 
   const routineEnabled = config?.isRoutine === 1 &&
     (isRefund || delivery?.deliveryType === "express" || (delivery?.deliveryType === "send" || delivery?.deliveryType === "city_delivery"));
-  if (routineEnabled && !suppressRoutine) {
+  // Success is a new opt-in author: only Request5 staging above may select a
+  // Mini account. An absent delivery namespace keeps SMS/inbox, never a B send.
+  if (routineEnabled && !suppressRoutine && !success) {
     const templateMark = isRefund
       ? "1451"
       : delivery?.deliveryType === "express" ? "1458" : "1128";
@@ -1175,10 +1219,10 @@ export async function processOrderNotificationOutboxEvent(
   assertOrderNotificationPayload(event.payload, event.eventType, event.aggregateId);
   const payload = event.payload as
     | OrderDeliveryNoticeOutboxPayload
-    | OrderRefundRefusedNoticeOutboxPayload
+    | OrderRefundRefusedNoticeOutboxPayload | OrderRefundSuccessNoticeOutboxPayload
     | OrderPinkSuccessNoticeOutboxPayload
     | OrderSecondCardNoticeOutboxPayload;
-  const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType) && Object.hasOwn(payload, 'routineSubscriptionRequest');
+  const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType) && Object.hasOwn(payload, 'routineSubscriptionRequest');
   const renderAt = versionedRoutine && Number.isSafeInteger(event.addTime) ? event.addTime! : now;
   let routineDeferred = false;
   const mark = noticeMark(event.eventType, payload);
@@ -1209,7 +1253,7 @@ export async function processOrderNotificationOutboxEvent(
   ) {
     return "disabled";
   }
-  if (versionedRoutine && template?.isRoutine === 1 && ([ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType)
+  if (versionedRoutine && template?.isRoutine === 1 && ([ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(event.eventType)
     || 'deliveryType' in payload && ['express', 'send', 'city_delivery'].includes(payload.deliveryType))) {
     routineDeferred = await stageRoutineSubscriptionNoticeTx(tx, routine?.env ?? {}, event, mark, routine?.earlyReady === true, renderAt) === 'deferred';
   }

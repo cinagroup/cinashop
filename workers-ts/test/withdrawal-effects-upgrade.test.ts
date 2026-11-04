@@ -7,6 +7,8 @@ import * as models from '../src/models/schema';
 import { PRODUCT_STOCK_EFFECTS_CHECK_DEFINITION, PRODUCT_STOCK_EFFECTS_EVENTS } from '../src/migrations/productStockEffects';
 import { PRODUCT_RECYCLE_EFFECTS_CHECK_DEFINITION, PRODUCT_RECYCLE_EFFECTS_EVENTS } from '../src/migrations/productRecycleEffects';
 import { PRODUCT_SAVE_EFFECTS_CHECK_DEFINITION, PRODUCT_SAVE_EFFECTS_EVENTS } from '../src/migrations/productSaveEffects';
+import { runSupplierOrderPriceRevision } from '../src/migrations/supplierOrderPriceRevision';
+import { runRefundSuccessNoticeUpgrade, REFUND_SUCCESS_NOTICE_SUCCESSORS } from '../src/migrations/refundSuccessNotice';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('DB-007 bounded production increment',()=>{
   let f: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
@@ -107,6 +109,36 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('DB-007 bounded p
     expect(await constraint()).toEqual(original);
     expect((await exec(`SELECT count(*)::integer AS count FROM store_order_outbox WHERE event_type='${event}'`))[0].count).toBe(1);
   });
+
+  it.each([false,true])('keeps a real 0198 base/price successor unchanged through root DB007 replay: price=%s', async price => {
+    await runWithdrawalEffectsUpgrade(f.db);
+    // Use the actual incremental SQL chain, never a hand-authored successor
+    // CHECK or a fabricated refund/payment row. Each case owns this database.
+    for (const name of ['0161_presale_delivery_outbox', '0168_pink_success_notice',
+      '0175_product_stock_effects', '0177_product_recycle_effects', '0178_product_save_effects']) await migration(name);
+    if (price) await runSupplierOrderPriceRevision(f.db);
+    await runRefundSuccessNoticeUpgrade(f.db);
+    const constraint = () => exec("SELECT oid::text,pg_get_constraintdef(oid,false) AS definition FROM pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'");
+    const identity = () => exec(`SELECT 'relation' AS kind,c.oid::text AS identity,to_jsonb(c) AS metadata FROM pg_class c
+      WHERE relnamespace='public'::regnamespace UNION ALL
+      SELECT 'constraint',k.oid::text,to_jsonb(k) FROM pg_constraint k WHERE connamespace='public'::regnamespace UNION ALL
+      SELECT 'attribute',a.attrelid::text||':'||a.attnum::text,to_jsonb(a) FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid
+      WHERE c.relnamespace='public'::regnamespace AND a.attnum>0 UNION ALL
+      SELECT 'function',p.oid::text,to_jsonb(p) FROM pg_proc p WHERE pronamespace='public'::regnamespace UNION ALL
+      SELECT 'default_acl',d.oid::text,to_jsonb(d) FROM pg_default_acl d ORDER BY kind,identity`);
+    const check = await constraint(), catalog = await identity(), before = await inspectWithdrawalEffectsUpgrade(f.db);
+    expect(check).toHaveLength(1); expect(check[0].definition).toBe(REFUND_SUCCESS_NOTICE_SUCCESSORS[price ? 1 : 0]);
+    expect(before).toMatchObject({ supported: true, ready: true, withinBudget: true });
+    const queries: string[] = [], debug = f.db.$client.options.debug;
+    f.db.$client.options.debug = (_c,query) => { queries.push(query); };
+    try {
+      expect(await runWithdrawalEffectsUpgrade(f.db)).toMatchObject({ applied: false, ready: true,
+        before: before.fingerprint, after: before.fingerprint });
+      expect(await inspectWithdrawalEffectsUpgrade(f.db)).toEqual(before);
+    } finally { f.db.$client.options.debug = debug; }
+    expect(queries.some(query => /^\s*(ALTER|CREATE|DROP|INSERT|UPDATE|DELETE|GRANT|REVOKE)\b/iu.test(query))).toBe(false);
+    expect(await constraint()).toEqual(check); expect(await identity()).toEqual(catalog);
+  },60000);
 
   it.each(['unregistered','reordered'] as const)('rejects an %s fourteen-event successor before DDL while preserving its exact catalog',async kind=>{
     await runWithdrawalEffectsUpgrade(f.db);

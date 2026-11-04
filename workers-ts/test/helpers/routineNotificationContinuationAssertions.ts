@@ -26,7 +26,7 @@ async function physical(f:Fixture){
     frame(JSON.stringify(relation));for(const row of rows)frame(row.value);result[name]=mac.digest('hex');
   }return result;
 }
-export async function assertRoutineNotificationContinuation(f:Fixture,format:2|3|4,sideEffects:()=>number[],secrets:readonly string[],disableActor=false){
+export async function assertRoutineNotificationContinuation(f:Fixture,format:2|3|4|5,sideEffects:()=>number[],secrets:readonly string[],disableActor=false){
   const before=await physical(f),calls=sideEffects();
   const collect=()=>collectRoutineNotificationContinuationDraft(f.maintenanceDb.$client as unknown as postgres.Sql,f.target,KEY,{APP_KEY:f.env.APP_KEY});
   const report=await collect(),n=report.notifications;

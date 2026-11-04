@@ -2,13 +2,14 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
 import { orderNotificationDelivery, type WechatTemplateNotificationPayload } from '@/models/schema';
-import { ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT, type OrderNotificationOutboxEvent } from '@/services/order/OrderNotificationOutboxService';
+import { ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT, type OrderNotificationOutboxEvent } from '@/services/order/OrderNotificationOutboxService';
 import { acquireRoutineSubscriptionNoticeSourceGatesTx, prepareRoutineSubscriptionNoticeAuthorTx,
   assertRoutineSubscriptionNoticeAuthorTx } from './RoutineSubscriptionDeliveryNotice';
 import { assertRoutineSubscriptionDeliveryReadyTx } from '@/migrations/routineSubscriptionDelivery';
 import { parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { parseRoutineSubscriptionNoticeRequest } from './RoutineSubscriptionNoticeRequest';
 import { parseRoutineSubscriptionRefusalRequest } from './RoutineSubscriptionRefusalRequest';
+import { parseRoutineSubscriptionRefundSuccessRequest } from './RoutineSubscriptionRefundSuccessRequest';
 import { parseRoutineSubscriptionPinkRequest } from './RoutineSubscriptionPinkRequest';
 import { routineSubscriptionScopeTx, routineSubscriptionUnavailable, subscriptionMac, subscriptionSame } from './RoutineSubscriptionAccount';
 
@@ -86,14 +87,15 @@ async function skip(tx: DbClient, event: OrderNotificationOutboxEvent, mark: str
   if (!('orderId' in p) || !('orderNo' in p) || !('userId' in p)) return routineSubscriptionUnavailable();
   await tx.insert(orderNotificationDelivery).values({ outboxId: event.id, eventKey: event.eventKey, orderId: p.orderId,
     userId: p.userId, noticeMark: mark, channel: 'wechat_routine', target: '', templateCode: '',
-    payload: { kind: 'wechat_routine', data: {}, url: event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
+    payload: { kind: 'wechat_routine', data: {}, url: [ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT].includes(event.eventType)
       ? `/pages/goods/order_after_details/index?order_id=${p.orderNo}&isReturen=1` : `/pages/goods/order_details/index?order_id=${p.orderNo}` },
     status: 'SKIPPED', availableTime: now, lastError: 'routine_original_notice_source_unavailable', addTime: now, updateTime: now })
     .onConflictDoNothing({ target: [orderNotificationDelivery.eventKey, orderNotificationDelivery.channel] });
 }
 function parseRequest(env: Env, event: OrderNotificationOutboxEvent, scope: Awaited<ReturnType<typeof routineSubscriptionScopeTx>>) {
   const raw = 'routineSubscriptionRequest' in event.payload ? event.payload.routineSubscriptionRequest : undefined;
-  return event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT ? parseRoutineSubscriptionPinkRequest(env, raw, scope)
+  return event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? parseRoutineSubscriptionRefundSuccessRequest(env, raw, scope)
+    : event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT ? parseRoutineSubscriptionPinkRequest(env, raw, scope)
     : event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT ? parseRoutineSubscriptionRefusalRequest(env, raw, scope)
     : parseRoutineSubscriptionNoticeRequest(env, raw, scope);
 }
@@ -144,12 +146,13 @@ export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readon
       const [actor] = await nested.execute<{ role: string; roleOid: string }>(sql`SELECT current_user AS role,
         (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=current_user) AS "roleOid"`);
       if (!actor) return routineSubscriptionUnavailable();
-      const refusal = source.facts.templateMark === '1451';
+      const success = event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT;
+      const refusal = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
       const pink = source.facts.templateMark === '3098';
-      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: pink ? 4 : refusal ? 3 : 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
+      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: success ? 5 : pink ? 4 : refusal ? 3 : 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
         deliveryId: inserted.id, outboxId: event.id, eventKey: event.eventKey, createdAt: source.renderedAt, requestSignature: source.requestSignature,
         source: { ...source.facts, deliveryId: inserted.id }, policy: source.account.account, request: source.request };
-      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body) }, scope);
+      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, success ? 'refund-success-notice-stage' : pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body) }, scope);
       const finalPayload = { ...payload, routineSubscriptionIntent: intent };
       const [updated] = await nested.update(orderNotificationDelivery).set({ payload: finalPayload }).where(and(eq(orderNotificationDelivery.id, inserted.id),
         eq(orderNotificationDelivery.status, 'PENDING'), eq(orderNotificationDelivery.attemptCount, 0), eq(orderNotificationDelivery.dispatchCount, 0),

@@ -59,7 +59,8 @@ import {
 import { WechatApiError, WechatPayService } from "@/services/wechat/WechatPayService";
 import { reconcileRefundedPink } from "@/services/activity/PinkLifecycleService";
 import { lockPinkRefundOrders } from "@/services/activity/PinkInventoryLocks";
-import { enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
+import { refundSuccessNoticeCommissionedTx } from '@/migrations/refundSuccessNotice';
+import { enqueueOrderRefundSuccessNoticeEvent, enqueueOrderRefundRefusedNoticeEvent } from "@/services/order/OrderNotificationOutboxService";
 import { resolveRefundReturnContact } from "@/services/order/RefundReturnContactService";
 import { SystemConfigService } from "@/services/system/SystemConfigService";
 import { assertVirtualProductRefundPolicy } from "@/services/order/VirtualProductRefundPolicy";
@@ -844,6 +845,14 @@ export async function finalizeStoreOrderRefund(
     await recordSupplierRefund(tx, order, refundId, refundAmount, cumulativeCents, now, lineCompensation);
     if (materializeOrders) await materializeCompletedRefundOrder(tx, refund, now, invoiceSnapshot);
     await scope?.recordLockedDecision?.(tx, 'balance-settled');
+    // An explicit forward upgrade enables new notices. First ordinary v1 full
+    // completion only; the already-completed return above never backfills history.
+    if (!materializeOrders && claim?.version === 'refund-quantity-reservation-v1' && order.pid === 0 && order.type === 0
+      && order.uid > 0 && order.payType === 'weixin' && refundCents > 0 && refundCents === paidCents && previousCents === 0
+      && refund.refundNum === order.totalNum && await refundSuccessNoticeCommissionedTx(tx)) {
+      await enqueueOrderRefundSuccessNoticeEvent(tx, { orderId: order.id, orderNo: refund.orderId,
+        refundId: refund.id, userId: refund.uid, payPrice: order.payPrice }, now, env);
+    }
     return "completed";
   });
 }

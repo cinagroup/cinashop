@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { PRODUCT_SAVE_EFFECTS_EVENTS } from './productSaveEffects';
+import { REFUND_SUCCESS_NOTICE_PREDECESSORS, REFUND_SUCCESS_NOTICE_SUCCESSORS } from './refundSuccessNotice';
 import { ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL, ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION,
   routineVirtualShippingEventDefinition, inspectRoutineVirtualShippingSubjectsStructure } from './routineVirtualShippingSubjects';
 export const SUPPLIER_ORDER_PRICE_REVISION_EVENTS = [...PRODUCT_SAVE_EFFECTS_EVENTS, 'order.price.revision'] as const;
@@ -20,6 +21,7 @@ DECLARE
   row_count integer;
   virtual_catalog record;
   virtual_successor boolean := false;
+  refund_success boolean := false;
 BEGIN
   IF current_setting('server_version_num')::integer/10000<>16 OR current_setting('session_replication_role')<>'origin'
     OR current_user<>session_user OR current_schema()<>'pg_catalog' THEN
@@ -39,6 +41,12 @@ BEGIN
       AND c.conkey=ARRAY[a.attnum]::smallint[] AND a.atttypid='varchar'::regtype AND a.atttypmod=68
       AND a.attnotnull AND a.attgenerated='' AND a.attidentity='' AND NOT a.atthasdef
       AND a.attcollation='pg_catalog."default"'::regcollation AND NOT a.attisdropped;
+  -- Normalize only the four exact 0198 successors for classification. Keep the
+  -- success event when appending price revision; never rewrite an existing one.
+  CASE current_definition
+${REFUND_SUCCESS_NOTICE_SUCCESSORS.map((definition, index) => `    WHEN '${definition.replaceAll("'", "''")}' THEN refund_success := true; current_definition := '${REFUND_SUCCESS_NOTICE_PREDECESSORS[index].replaceAll("'", "''")}';`).join('\n')}
+    ELSE NULL;
+  END CASE;
   IF current_definition IN ('${routineVirtualShippingEventDefinition(false).replaceAll("'","''")}',
       '${routineVirtualShippingEventDefinition(true).replaceAll("'","''")}') THEN
     SELECT * INTO virtual_catalog FROM (${ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL}) virtual_structure;
@@ -59,7 +67,17 @@ BEGIN
   SELECT count(*) INTO row_count FROM (SELECT 1 FROM public.store_order_outbox LIMIT 10001) bounded;
   IF row_count>10000 THEN RAISE EXCEPTION 'Supplier order price revision outbox maintenance row budget exceeded'; END IF;
   ALTER TABLE public.store_order_outbox DROP CONSTRAINT soob_event_type_ck;
-  IF virtual_successor THEN
+  IF refund_success THEN
+    IF virtual_successor THEN
+      ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
+        event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice', 'order.second_card.advent.notice', 'order.second_card.expired.notice', 'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice', 'product.stock.effects', 'product.recycle.effects', 'product.save.effects', 'order.price.revision', 'recharge.paid.shipping', 'membership.paid.shipping', 'order.refund.success.notice')
+      );
+    ELSE
+      ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
+        event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice', 'order.second_card.advent.notice', 'order.second_card.expired.notice', 'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice', 'product.stock.effects', 'product.recycle.effects', 'product.save.effects', 'order.price.revision', 'order.refund.success.notice')
+      );
+    END IF;
+  ELSIF virtual_successor THEN
     ALTER TABLE public.store_order_outbox ADD CONSTRAINT soob_event_type_ck CHECK (
       event_type IN ('order.paid', 'order.delivery.notice', 'order.refund.refused.notice', 'order.second_card.advent.notice', 'order.second_card.expired.notice', 'withdrawal.approved.notice', 'withdrawal.refused.notice', 'withdrawal.applied.notice', 'withdrawal.staff.refresh', 'order.presale.fulfillment', 'order.pink.success.notice', 'product.stock.effects', 'product.recycle.effects', 'product.save.effects', 'order.price.revision', 'recharge.paid.shipping', 'membership.paid.shipping')
     );
@@ -101,7 +119,8 @@ export async function assertSupplierOrderPriceRevisionReady(tx: Pick<DbClient, '
       JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid AND a.attname='event_type'
     WHERE c.relname='store_order_outbox'`);
   const known = row?.definition===SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION
-    || row?.definition===routineVirtualShippingEventDefinition(true)
+    || row?.definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
+    || (row?.definition===routineVirtualShippingEventDefinition(true) || row?.definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[3])
       && (await inspectRoutineVirtualShippingSubjectsStructure(tx)).state==='virtual17';
   if (!row || row.supported!==true || row.safe!==true || !known)
     throw new ServiceUnavailableException('订单改价通知维护协议尚未就绪');

@@ -37,6 +37,7 @@ import { activatePaidSecondCardValidity } from "@/services/order/SecondCardValid
 import {
   ORDER_DELIVERY_NOTICE_EVENT,
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
+  ORDER_REFUND_SUCCESS_NOTICE_EVENT,
   ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT,
   ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT,
   ORDER_PINK_SUCCESS_NOTICE_EVENT,
@@ -152,7 +153,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.refused\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
   );
 }
 
@@ -176,6 +177,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === ORDER_DELIVERY_NOTICE_EVENT
     || eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
+    || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 }
@@ -595,7 +597,7 @@ export class OrderOutboxService {
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
       let robotGap: WithdrawalWecomGap | null = null;
-      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
+      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
       const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
       const eventRows = await tx
         .select()
