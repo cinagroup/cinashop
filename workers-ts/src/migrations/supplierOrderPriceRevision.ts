@@ -1,3 +1,4 @@
+import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_CATALOG_SQL, writeoffNoticeAddonUpgradeSql } from './writeoffNotice';
 /** Independent 0193 owner maintenance. No bootstrap, rows, roles or grants. */
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -92,12 +93,26 @@ ${REFUND_SUCCESS_NOTICE_SUCCESSORS.map((definition, index) => `    WHEN '${defin
 END
 $supplier_order_price_revision_outbox$;
 `;
+/** New-family port only; historical standalone SQL remains byte-identical. */
+const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', `
+ IF virtual_subjects THEN
+  SELECT * INTO virtual_catalog FROM (${ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL}) virtual_structure;
+  IF NOT COALESCE(virtual_catalog.safe AND virtual_catalog.core AND virtual_catalog.subject_safe AND virtual_catalog.event_safe
+    AND virtual_catalog.subject_columns=2 AND virtual_catalog.columns_ready AND virtual_catalog.indexes=1 AND virtual_catalog.index_ready
+    AND virtual_catalog.subject_definition='${ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''")}',false) THEN
+   RAISE EXCEPTION 'Writeoff notice Supplier virtual subject prerequisite drift; no automatic repair';
+  END IF;
+ END IF;`);
 export async function installSupplierOrderPriceRevision(tx: Pick<DbClient, 'execute'>): Promise<void> {
-  await tx.execute(sql.raw(SUPPLIER_ORDER_PRICE_REVISION_SQL));
+  const [row] = await tx.execute<{ definition: string }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
+  await tx.execute(sql.raw(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL));
 }
 export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'>): Promise<void> {
   if (!db.$client) throw Error('Supplier order price revision maintenance requires a root database');
-  await db.$client.begin('isolation level read committed', async tx => { await tx.unsafe(SUPPLIER_ORDER_PRICE_REVISION_SQL); });
+  await db.$client.begin('isolation level read committed', async tx => {
+    const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
+    await tx.unsafe(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL);
+  });
 }
 /** SELECT-only catalog gate. HTTP never repairs an event whitelist. */
 export async function assertSupplierOrderPriceRevisionReady(tx: Pick<DbClient, 'execute'>): Promise<void> {
@@ -118,9 +133,10 @@ export async function assertSupplierOrderPriceRevisionReady(tx: Pick<DbClient, '
       JOIN pg_catalog.pg_constraint k ON k.conrelid=c.oid AND k.conname='soob_event_type_ck'
       JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid AND a.attname='event_type'
     WHERE c.relname='store_order_outbox'`);
-  const known = row?.definition===SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION
-    || row?.definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
-    || (row?.definition===routineVirtualShippingEventDefinition(true) || row?.definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[3])
+  const definition = normalizeWriteoffNoticeEventDefinition(row?.definition);
+  const known = definition===SUPPLIER_ORDER_PRICE_REVISION_CHECK_DEFINITION
+    || definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
+    || (definition===routineVirtualShippingEventDefinition(true) || definition===REFUND_SUCCESS_NOTICE_SUCCESSORS[3])
       && (await inspectRoutineVirtualShippingSubjectsStructure(tx)).state==='virtual17';
   if (!row || row.supported!==true || row.safe!==true || !known)
     throw new ServiceUnavailableException('订单改价通知维护协议尚未就绪');

@@ -204,7 +204,7 @@ describe("customer-service order/refund context migration", () => {
       supplier.indexOf("await lockOrderSettlement(tx, rootId)"),
     );
     expect(supplier).toContain("await generatePickupVerifyCode(tx, order.id)");
-    expect(writeoff).toContain('| { kind: "kefu"; kefuId: number; kefuUid: number }');
+    expect(writeoff).toContain('| { kind: "kefu"; kefuId: number; kefuUid: number; phpWriteoffSource?: "legacy-verific" }');
     expect(writeoff.indexOf("await lockKefuConversationOwnership(tx")).toBeLessThan(
       writeoff.indexOf("await lockOrderSettlement(tx, candidates[0].id)"),
     );

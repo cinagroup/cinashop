@@ -13,7 +13,9 @@ import { deliveryOrderRevision, requireDeliveryScope } from '@/services/store/De
 import { DeliveryOrderOperationRequest, prepareDeliveryOperation, type DeliveryOperationContext, type DeliveryOperationInput } from '@/services/store/DeliveryOrderOperationRequest';
 import { DeliveryOrderWriteoffService, parseDeliveryWriteoffPayload } from '@/services/store/DeliveryOrderWriteoffService';
 import { DELIVERY_ORDER_OPERATION_CATALOG_SHA256, deliveryOperationReadiness, inspectDeliveryOrderOperation, runDeliveryOrderOperation } from '@/migrations/runDeliveryOrderOperation';
-import { deliveryService, memberRight, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, supplierFlowingWater, systemConfig, systemStore, user, userBill, userBrokerage, storeOrderPromotions, storePromotions, storeCouponIssue, systemAttachment, systemSupplier } from '@/models/schema';
+import { SECOND_CARD_REMINDER_MIGRATION_SQL } from '@/migrations/secondCardReminderIndexes';
+import { writeoffNoticeCommissionedTx } from '@/migrations/writeoffNotice';
+import { deliveryService, memberRight, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storeOrderOutbox, storePink, supplierFlowingWater, systemConfig, systemStore, user, userBill, userBrokerage, storeOrderPromotions, storePromotions, storeCouponIssue, systemAttachment, systemSupplier } from '@/models/schema';
 import { financePostgres } from './helpers/financePostgres';
 import { withFinancePeers, waitForFinanceBlock } from './helpers/financePeers';
 import { createDeliveryWorkbenchRuntime } from './helpers/deliveryWorkbenchRuntime';
@@ -53,9 +55,13 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native courier s
   beforeAll(async () => {
     const tables = [user, systemStore, deliveryService, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus, storeOrderWriteoff, storePink, systemConfig, memberRight, userBill, userBrokerage, supplierFlowingWater];
     const readTables = [storeOrderPromotions, storePromotions, storeCouponIssue, systemAttachment, systemSupplier];
-    f = await financePostgres([...tables, ...readTables], { namespace: 'public' }); await runDeliveryOrderOperation(f.db);
+    // Only maintenance owns this additional historical Outbox specimen. It
+    // does not expand the independently granted delivery runtime table list.
+    f = await financePostgres([...tables, ...readTables, storeOrderOutbox], { namespace: 'public' });
+    await f.exec(SECOND_CARD_REMINDER_MIGRATION_SQL); await runDeliveryOrderOperation(f.db);
     await f.exec('CREATE UNIQUE INDEX delivery_fixture_bill_event ON user_bill(uid,link_id,event_key)');
     runtime = await createDeliveryWorkbenchRuntime(f.db, tables);
+    expect(await writeoffNoticeCommissionedTx(runtime.db)).toBe(false);
     if(!/^delivery_runtime_[a-f0-9]{32}$/.test(runtime.role))throw Error('Unexpected owned original delivery role');
     await f.db.execute(sql`GRANT SELECT ON public.${sql.identifier('store_order_promotions')},public.${sql.identifier('store_promotions')},public.${sql.identifier('store_coupon_issue')},public.${sql.identifier('system_attachment')},public.${sql.identifier('system_supplier')} TO ${sql.identifier(runtime.role)}`);
   }, 30000);

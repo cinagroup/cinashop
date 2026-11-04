@@ -3,8 +3,10 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { deliveryService, storeOrder, storeOrderCartInfo, storeOrderRefund, storeOrderStatus,
-  storeOrderWriteoff, storePink, storeServiceRecord, systemStore, systemStoreStaff, user } from '../src/models/schema';
+  storeOrderWriteoff, storeOrderOutbox, storePink, storeServiceRecord, systemStore, systemStoreStaff, user } from '../src/models/schema';
 import { StoreOrderWriteoffService, normalizeMemberWriteoffCode } from '../src/services/order/StoreOrderWriteoffService';
+import { SECOND_CARD_REMINDER_MIGRATION_SQL } from '../src/migrations/secondCardReminderIndexes';
+import { writeoffNoticeCommissionedTx } from '../src/migrations/writeoffNotice';
 import { runMemberBarcodeIndex } from '../src/migrations/runMemberBarcodeIndex';
 import { financePostgres } from './helpers/financePostgres';
 import { outcome, waitForFinanceBlock, withFinancePeers } from './helpers/financePeers';
@@ -17,7 +19,7 @@ vi.mock('@/services/order/OrderBrokerageService', async (original) => {
 });
 
 const TABLES = [user, systemStore, systemStoreStaff, deliveryService, storeOrder,
-  storeOrderCartInfo, storeOrderRefund, storeOrderWriteoff, storeOrderStatus, storePink, storeServiceRecord];
+  storeOrderCartInfo, storeOrderRefund, storeOrderWriteoff, storeOrderOutbox, storeOrderStatus, storePink, storeServiceRecord];
 const MEMBER = '123456789';
 const VERIFY = '112233445566';
 const actor = { kind: 'staff' as const, uid: 101 };
@@ -73,7 +75,10 @@ it('keeps the member-code protocol distinct from twelve-digit order codes', () =
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('member writeoff on isolated native PostgreSQL 16', () => {
   let f: Awaited<ReturnType<typeof financePostgres>>;
-  beforeEach(async () => { f = await financePostgres(TABLES, { namespace: 'public' }); await fixture(f.db); });
+  beforeEach(async () => { f = await financePostgres(TABLES, { namespace: 'public' });
+    await f.exec(SECOND_CARD_REMINDER_MIGRATION_SQL);
+    expect(await writeoffNoticeCommissionedTx(f.db)).toBe(false);
+    await fixture(f.db); });
   afterEach(async () => { await f?.close(); });
 
   it('requires the exact member unique index, rejects a public decoy, and keeps the legacy order code available', async () => {

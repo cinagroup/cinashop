@@ -1,3 +1,4 @@
+import { normalizeWriteoffNoticeEventDefinition } from './writeoffNotice';
 import { REFUND_SUCCESS_NOTICE_PREDECESSORS, REFUND_SUCCESS_NOTICE_SUCCESSORS } from './refundSuccessNotice';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -38,8 +39,10 @@ export const ROUTINE_VIRTUAL_SHIPPING_SUBJECT_CHECK_SQL = `CHECK (
     AND event_key=subject_domain::text || '.paid.shipping:'::text || subject_id::text)
 )`;
 export const ROUTINE_VIRTUAL_SHIPPING_INDEX = 'CREATE INDEX ond_virtual_subject ON public.order_notification_delivery USING btree (subject_domain, subject_id, id) WHERE (subject_domain IS NOT NULL)';
-export function routineVirtualShippingSubjectsInstallSql(priceRevision: boolean, refundSuccess = false): string {
-  const events = [...(priceRevision ? ROUTINE_VIRTUAL_SHIPPING_PRICE_EVENTS : ROUTINE_VIRTUAL_SHIPPING_BASE_EVENTS), ...ROUTINE_VIRTUAL_SHIPPING_EVENTS, ...(refundSuccess ? ['order.refund.success.notice'] : [])];
+export function routineVirtualShippingSubjectsInstallSql(priceRevision: boolean, refundSuccess = false, writeoff = false, writeoffFirst = false): string {
+  const refundTail = refundSuccess ? ['order.refund.success.notice'] : [], writeoffTail = writeoff ? ['order.writeoff.notice'] : [];
+  const events = [...(priceRevision ? ROUTINE_VIRTUAL_SHIPPING_PRICE_EVENTS : ROUTINE_VIRTUAL_SHIPPING_BASE_EVENTS), ...ROUTINE_VIRTUAL_SHIPPING_EVENTS,
+    ...(writeoffFirst ? [...writeoffTail, ...refundTail] : [...refundTail, ...writeoffTail])];
   return `ALTER TABLE public.order_notification_delivery ADD COLUMN subject_domain varchar(16), ADD COLUMN subject_id integer;
 ALTER TABLE public.order_notification_delivery DROP CONSTRAINT ond_subject_ck;
 ALTER TABLE public.order_notification_delivery ADD CONSTRAINT ond_subject_ck ${ROUTINE_VIRTUAL_SHIPPING_SUBJECT_CHECK_SQL};
@@ -119,6 +122,7 @@ export const ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL = `WITH
 
 /** Exact classification is also used by DB-007 and Supplier's successor port. */
 export function classifyRoutineVirtualShippingSubjects(row: Record<string, unknown> | undefined): RoutineVirtualShippingSubjectsStructure {
+  if (row) row = { ...row, event_definition: normalizeWriteoffNoticeEventDefinition(row.event_definition) };
   const successorIndex = REFUND_SUCCESS_NOTICE_SUCCESSORS.indexOf(String(row?.event_definition));
   if (successorIndex >= 0) row = { ...row, event_definition: REFUND_SUCCESS_NOTICE_PREDECESSORS[successorIndex] };
   const failures: string[] = [];

@@ -1,3 +1,4 @@
+import { normalizeWriteoffNoticeEventDefinition } from './writeoffNotice';
 import type postgres from 'postgres';
 import type { DbClient } from '../lib/di';
 import { inspectWithdrawalReplayUpgrade } from './runWithdrawalReplayUpgrade';
@@ -86,18 +87,20 @@ async function state(tx: postgres.TransactionSql): Promise<State> {
   return row.state;
 }
 function knownReadyEvents(s: State): boolean {
-  return READY_EVENT_COUNTS.some(n => s.eventDefinition===eventDefinition(n))
-    || s.eventDefinition===routineVirtualShippingEventDefinition(true,false)
-    || s.eventDefinition===REFUND_SUCCESS_NOTICE_SUCCESSORS[0] || s.eventDefinition===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
+  const event = normalizeWriteoffNoticeEventDefinition(s.eventDefinition);
+  return READY_EVENT_COUNTS.some(n => event===eventDefinition(n))
+    || event===routineVirtualShippingEventDefinition(true,false)
+    || event===REFUND_SUCCESS_NOTICE_SUCCESSORS[0] || event===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
     || s.virtualSubjects?.ready===true;
 }
 function supported(s: State): boolean {
+  const event = normalizeWriteoffNoticeEventDefinition(s.eventDefinition);
   return s.baseSupported && s.noEventTriggers && (!s.keyPresent || s.keyCorrect)
     && (!s.withdrawalPresent || s.withdrawalCorrect) && (!s.subjectPresent || s.subjectCorrect || s.virtualSubjects?.ready===true)
     && (!s.virtualSubjects || s.virtualSubjects.ready)
-    && s.eventValidated && (SUPPORTED_EVENT_COUNTS.some(n => eventDefinition(n) === s.eventDefinition)
-      || s.eventDefinition===routineVirtualShippingEventDefinition(true,false)
-      || s.eventDefinition===REFUND_SUCCESS_NOTICE_SUCCESSORS[0] || s.eventDefinition===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
+    && s.eventValidated && (SUPPORTED_EVENT_COUNTS.some(n => eventDefinition(n) === event)
+      || event===routineVirtualShippingEventDefinition(true,false)
+      || event===REFUND_SUCCESS_NOTICE_SUCCESSORS[0] || event===REFUND_SUCCESS_NOTICE_SUCCESSORS[1]
       || s.virtualSubjects?.ready===true)
     && s.indexes.every(i => i.valid && i.ready && Object.entries(INDEXES).some(([name,definition]) => name===i.name && definition===i.definition));
 }

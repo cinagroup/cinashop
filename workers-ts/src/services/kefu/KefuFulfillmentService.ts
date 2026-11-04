@@ -428,7 +428,7 @@ export class KefuFulfillmentService {
     kefuUidValue: unknown,
     orderIdValue: unknown,
   ) {
-    const actor = this.actor(kefuIdValue, kefuUidValue);
+    const actor = { ...this.actor(kefuIdValue, kefuUidValue), phpWriteoffSource: 'legacy-verific' as const };
     const order = await this.visibleOrderById(actor.kefuUid, orderIdValue);
     if (!order.verifyCode) throw new ValidateException("订单缺少核销码");
     return new StoreOrderWriteoffService(this.container, this.env).execute(actor, {

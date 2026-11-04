@@ -84,6 +84,21 @@ export interface OrderSecondCardNoticeOutboxPayload {
   storeName: string;
 }
 
+/** One actual SQL writeoff batch, including partial completion. The phone and
+ * live product-name rendering are captured by the writer, never a caller. */
+export interface OrderWriteoffNoticeOutboxPayload {
+  format: 1;
+  orderId: number;
+  orderNo: string;
+  userId: number;
+  occurredAt: number;
+  recordIds: number[];
+  recordsDigest: string;
+  selection: 'explicit' | 'all';
+  phone: string;
+  storeName: string;
+}
+
 export interface WithdrawalNoticeOutboxPayload {
   routineAppId?: string;
   withdrawalId: number;
@@ -115,6 +130,7 @@ export type OrderOutboxPayload =
   | OrderRefundRefusedNoticeOutboxPayload
   | OrderRefundSuccessNoticeOutboxPayload
   | OrderSecondCardNoticeOutboxPayload
+  | OrderWriteoffNoticeOutboxPayload
   | WithdrawalNoticeOutboxPayload
   | WithdrawalApplicationOutboxPayload
   | { withdrawalId: number };

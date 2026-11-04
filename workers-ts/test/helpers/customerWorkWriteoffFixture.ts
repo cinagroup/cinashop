@@ -2,6 +2,8 @@ import {asc,eq,sql} from 'drizzle-orm';
 import type {PgTable} from 'drizzle-orm/pg-core';
 import {customerWorkFinancialFixture} from './customerWorkFinancialFixture';
 import {runCustomerWriteoffOperation,customerWriteoffOperationReadiness} from '../../src/migrations/runCustomerWriteoffOperation';
+import {SECOND_CARD_REMINDER_MIGRATION_SQL} from '../../src/migrations/secondCardReminderIndexes';
+import {writeoffNoticeCommissionedTx} from '../../src/migrations/writeoffNotice';
 import {runCashierSecondCardOrigin,cashierSecondCardOriginReadiness} from '../../src/migrations/runCashierSecondCardOrigin';
 import {CUSTOMER_WRITEOFF_FUNCTIONS} from '../../src/migrations/customerWriteoffRuntimePlan';
 import {CASHIER_SECOND_CARD_FUNCTIONS,CASHIER_SECOND_CARD_TABLES,CASHIER_SECOND_CARD_PURCHASE_APPEND_TABLES,cashierSecondCardRuntimePrivilegePlan} from '../../src/migrations/cashierSecondCardRuntimePlan';
@@ -29,6 +31,10 @@ export async function customerWorkWriteoffFixture(extraTables:PgTable[]=[]){
  const manualOwner=`manual_promotion_${crypto.randomUUID().replaceAll('-','')}`,owner='"'+manualOwner+'"';
  const close=async()=>{try{if(manualOwnerCreated){await f.exec(`DROP OWNED BY ${owner};DROP ROLE ${owner}`);manualOwnerCreated=false;}}finally{await f.close();}};
  try{
+  // The column fixture does not carry CHECKs. Establish the published old
+  // contract explicitly; these legacy tests do not commission new notices.
+  await f.exec(SECOND_CARD_REMINDER_MIGRATION_SQL);
+  if(await writeoffNoticeCommissionedTx(f.db))throw Error('Legacy writeoff fixture unexpectedly enabled notices');
   const kit=await import('drizzle-kit/api');for(const statement of await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson({storeOrderEconomize,paymentReconciliationCase,supplierFlowingWater,supplierTransactions,storeOrderPromotions,storePromotions,storePromotionsAuxiliary,storeProductRelation})))if(/^CREATE (?:UNIQUE )?INDEX/.test(statement.trim()))await f.exec(statement);
   const[conversation]=await f.maintenanceDb.execute<{present:boolean}>(sql`SELECT to_regclass('public.store_service_record') IS NOT NULL AS present`);if(!conversation.present)for(const statement of await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson({storeServiceRecord})))await f.exec(statement);
   for(const[name,table]of [['agent_level_task',agentLevelTask],['agent_level_task_record',agentLevelTaskRecord]] as const){const[present]=await f.maintenanceDb.execute<{present:boolean}>(sql`SELECT to_regclass(${`public.${name}`}) IS NOT NULL AS present`);if(!present.present)for(const statement of await kit.generateMigration(kit.generateDrizzleJson({}),kit.generateDrizzleJson({[name]:table})))await f.exec(statement);}

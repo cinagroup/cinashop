@@ -32,6 +32,8 @@ import { authorizeCustomerWorkActor, type CustomerWorkActor } from '@/services/c
 import { authorizeCustomerOperationOwner } from '@/services/customer-work/CustomerWorkOperationRequest';
 import { acquireCustomerWorkScopeLock } from '@/migrations/runCustomerWorkScopeLock';
 import { customerWriteoffLinePrice } from '@/services/customer-work/CustomerWorkWriteoffSalePrice';
+import { writeoffNoticeCommissionedTx } from '@/migrations/writeoffNotice';
+import { enqueueOrderWriteoffNoticeTx } from './OrderWriteoffNoticeService';
 
 const VERIFY_CODE_LOCK_NAMESPACE = 63_843;
 const OPEN_REFUND_TYPES = [0, 1, 2, 4, 5];
@@ -48,7 +50,8 @@ export type WriteoffActor =
   | { kind: "delivery"; uid: number }
   | { kind: "scoped-delivery"; uid: number; actor: DeliveryActor; selection: DeliverySelection; scopeKey: string }
   | { kind: "admin"; adminId: number }
-  | { kind: "kefu"; kefuId: number; kefuUid: number }
+  // Only the trusted legacy verific caller sets this; modern Kefu still emits.
+  | { kind: "kefu"; kefuId: number; kefuUid: number; phpWriteoffSource?: "legacy-verific" }
   | CustomerWriteoffActor;
 
 /** Server-only ordinary UserJWT principal. Neither JSON fields nor a UID can
@@ -701,6 +704,9 @@ export class StoreOrderWriteoffService {
         }
         if (actor.kind === 'customer') await tx.insert(storeOrderStatus).values({ oid: order.id,
           changeType: 'customer_order_writeoff', changeMessage: `手机订单用户 ${actor.uid}，经营身份 ${actor.serviceId} 完成部分核销`, changeTime: now });
+        if (!(actor.kind === 'kefu' && actor.phpWriteoffSource === 'legacy-verific') &&
+          await writeoffNoticeCommissionedTx(tx)) await enqueueOrderWriteoffNoticeTx(tx,
+          { order, recordIds, explicitSelection: Boolean(input.items?.length), now });
         return { order_id: order.orderId, completed: false, status: 5, ...(actor.kind === "scoped-delivery" || actor.kind === 'customer' ? { record_ids: recordIds } : {}) };
       }
 
@@ -737,6 +743,9 @@ export class StoreOrderWriteoffService {
       }
       if (actor.kind === 'customer') await tx.insert(storeOrderStatus).values({ oid: order.id,
         changeType: 'customer_order_writeoff', changeMessage: `手机订单用户 ${actor.uid}，经营身份 ${actor.serviceId} 完成全部核销`, changeTime: now });
+      if (!(actor.kind === 'kefu' && actor.phpWriteoffSource === 'legacy-verific') &&
+        await writeoffNoticeCommissionedTx(tx)) await enqueueOrderWriteoffNoticeTx(tx,
+        { order, recordIds, explicitSelection: Boolean(input.items?.length), now });
       return { order_id: order.orderId, completed: true, status: 2, ...(actor.kind === "scoped-delivery" || actor.kind === 'customer' ? { record_ids: recordIds } : {}) };
     });
   }

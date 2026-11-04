@@ -1,3 +1,4 @@
+import { assertWriteoffSmsPayload } from './OrderWriteoffNoticeCodec';
 import { and, asc, eq, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import type { Env, OrderMessage, OrderNotificationDeliveryMessage } from "@/env";
 import type { Container } from "@/lib/di";
@@ -72,8 +73,8 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
-    isChannel(message.channel) && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    isChannel(message.channel) && (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
     (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null);
 }
 
@@ -336,7 +337,10 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
   }
 
   private async deliver(claim: ClaimedDelivery, fetcher: typeof fetch): Promise<ProviderResult> {
-    assertPayload(claim.channel, claim.payload);
+    if (claim.eventKey.startsWith('order.writeoff.notice:')) {
+      if (claim.channel !== 'sms') throw new WechatProviderConfigurationError('核销通知仅支持短信渠道');
+      assertWriteoffSmsPayload(claim.payload);
+    } else assertPayload(claim.channel, claim.payload);
     if (!claim.target) throw new WechatProviderConfigurationError("通知目标尚未配置");
     if (claim.channel === "wecom_robot") {
       if (claim.target !== WECOM_WITHDRAWAL_TARGET || claim.templateCode !== "") {

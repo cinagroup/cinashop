@@ -34,6 +34,8 @@ import { grantPaidOrderProductCoupons } from "@/services/activity/ProductCouponS
 import { grantLotteryEntitlement } from "@/services/activity/LotteryService";
 import { deliverPaidVirtualOrders } from "@/services/order/VirtualProductDeliveryService";
 import { activatePaidSecondCardValidity } from "@/services/order/SecondCardValidityService";
+import { WRITEOFF_NOTICE_EVENT } from '@/migrations/writeoffNotice';
+import { processOrderWriteoffNoticeTx, type WriteoffNoticeInboxGap } from './OrderWriteoffNoticeService';
 import {
   ORDER_DELIVERY_NOTICE_EVENT,
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
@@ -153,7 +155,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.writeoff\.notice|order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
   );
 }
 
@@ -178,6 +180,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
     || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT
+    || eventType === WRITEOFF_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 }
@@ -596,7 +599,7 @@ export class OrderOutboxService {
     }
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
-      let robotGap: WithdrawalWecomGap | null = null;
+      let noticeGap: WithdrawalWecomGap | WriteoffNoticeInboxGap | null | undefined = null;
       const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
       const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
       const eventRows = await tx
@@ -738,12 +741,14 @@ export class OrderOutboxService {
           return 'deferred' as const;
         }
       } else if (event.eventType === WITHDRAWAL_APPLICATION_EVENT) {
-        robotGap = await processWithdrawalApplication(tx, event, now,
+        noticeGap = await processWithdrawalApplication(tx, event, now,
           this.env.WITHDRAWAL_WECOM_ROBOT_ENABLED === "enabled");
       } else if (isWithdrawalNoticeEvent(event.eventType)) {
         await processWithdrawalNoticeEvent(tx, event, now);
       } else if (event.eventType === SUPPLIER_ORDER_PRICE_REVISION_EVENT) {
         await processSupplierOrderPriceRevision(tx, event, now);
+      } else if (event.eventType === WRITEOFF_NOTICE_EVENT) {
+        noticeGap = await processOrderWriteoffNoticeTx(tx, event, now);
       } else if (isNotificationEventType(event.eventType)) {
         const staged = await processOrderNotificationOutboxEvent(tx, event, now, { env: routineEnv, earlyReady: routineReady });
         if (staged === 'deferred') {
@@ -777,11 +782,12 @@ export class OrderOutboxService {
         )
         .returning({ id: storeOrderOutbox.id });
       if (!completed[0]) throw new Error("outbox 完成状态写入失败");
-      return robotGap;
+      return noticeGap;
     });
     if (outcome === "deferred") return "deferred";
     if (outcome) emitOperationalEvent("warn", {
-      event: "withdrawal_wecom_robot_gap", component: "queue", operation: "notification_delivery",
+      event: claim.eventType === WRITEOFF_NOTICE_EVENT ? "writeoff_inbox_gap" : "withdrawal_wecom_robot_gap",
+      component: "queue", operation: "notification_delivery",
       outcome: "failure", errorCode: outcome, eventKey: claim.eventKey, resourceCount: 1,
     });
   }

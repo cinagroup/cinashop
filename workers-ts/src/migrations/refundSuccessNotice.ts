@@ -2,6 +2,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
+import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_REFUND_SUCCESS_SQL } from './writeoffNotice';
 export const REFUND_SUCCESS_NOTICE_PREDECESSORS: readonly string[] = [
   "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying, 'order.presale.fulfillment'::character varying, 'order.pink.success.notice'::character varying, 'product.stock.effects'::character varying, 'product.recycle.effects'::character varying, 'product.save.effects'::character varying])::text[])))",
   "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying, 'order.presale.fulfillment'::character varying, 'order.pink.success.notice'::character varying, 'product.stock.effects'::character varying, 'product.recycle.effects'::character varying, 'product.save.effects'::character varying, 'order.price.revision'::character varying])::text[])))",
@@ -79,12 +80,17 @@ $refund_success_notice$;
 export async function refundSuccessNoticeCommissionedTx(tx: Pick<DbClient, 'execute'>): Promise<boolean> {
  const rows = await tx.execute<{definition: string; safe: boolean}>(sql.raw(REFUND_SUCCESS_NOTICE_CATALOG_SQL));
  if (rows.length !== 1 || rows[0].safe !== true) throw new ServiceUnavailableException('退款成功通知数据库合同尚未就绪');
- if (REFUND_SUCCESS_NOTICE_SUCCESSORS.includes(rows[0].definition)) return true;
- if (REFUND_SUCCESS_NOTICE_PREDECESSORS.includes(rows[0].definition)
-   || REFUND_SUCCESS_NOTICE_INACTIVE_HISTORICAL.includes(rows[0].definition)) return false;
+ const definition = normalizeWriteoffNoticeEventDefinition(rows[0].definition);
+ if (typeof definition !== 'string') throw new ServiceUnavailableException('退款成功通知数据库合同发生漂移');
+ if (REFUND_SUCCESS_NOTICE_SUCCESSORS.includes(definition)) return true;
+ if (REFUND_SUCCESS_NOTICE_PREDECESSORS.includes(definition)
+   || REFUND_SUCCESS_NOTICE_INACTIVE_HISTORICAL.includes(definition)) return false;
  throw new ServiceUnavailableException('退款成功通知数据库合同发生漂移');
 }
 export async function runRefundSuccessNoticeUpgrade(db: Pick<DbClient, '$client'>): Promise<void> {
  if (!db.$client) throw Error('Refund success notice upgrade requires a root database');
- await db.$client.begin('isolation level read committed', async tx => { await tx.unsafe(REFUND_SUCCESS_NOTICE_SQL); });
+ await db.$client.begin('isolation level read committed', async tx => {
+  const [row] = await tx.unsafe<{ definition: string }[]>(REFUND_SUCCESS_NOTICE_CATALOG_SQL);
+  await tx.unsafe(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? WRITEOFF_NOTICE_REFUND_SUCCESS_SQL : REFUND_SUCCESS_NOTICE_SQL);
+ });
 }

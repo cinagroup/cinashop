@@ -1,3 +1,4 @@
+import { WRITEOFF_NOTICE_CATALOG_SQL, WRITEOFF_NOTICE_EVENT, writeoffNoticeEventGeneration } from './writeoffNotice';
 import { refundSuccessNoticeCommissionedTx } from './refundSuccessNotice';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -145,7 +146,11 @@ export async function runRoutineVirtualShippingSubjectsUpgradeInTransaction(tx: 
       OR (k.conrelid='public.store_order_outbox'::regclass AND k.conname='soob_event_type_ck')`);
   if (comments.length!==2||comments.some(r=>r.comment!==null&&(typeof r.comment!=='string'||r.comment.length>4096)))
     throw Error('Virtual shipping constraint comments require review');
-  await tx.execute(sql.raw(routineVirtualShippingSubjectsInstallSql(before.state==='base15', await refundSuccessNoticeCommissionedTx(tx))));
+  const [eventCatalog] = await tx.execute<{ definition: string; safe: boolean }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
+  const generation = eventCatalog?.safe === true ? writeoffNoticeEventGeneration(eventCatalog.definition) : null;
+  if (!generation) throw Error('Virtual shipping event family requires exact explicit commissioning');
+  await tx.execute(sql.raw(routineVirtualShippingSubjectsInstallSql(before.state==='base15', await refundSuccessNoticeCommissionedTx(tx),
+    generation.addons.includes(WRITEOFF_NOTICE_EVENT), generation.addons[0] === WRITEOFF_NOTICE_EVENT)));
   for (const row of comments) if (row.comment!==null)
     await tx.execute(sql.raw(`COMMENT ON CONSTRAINT ${pricingIdentifier(row.name)} ON public.${pricingIdentifier(row.table_name)} IS ${row.comment_literal}`));
   const after=await inspectRoutineVirtualShippingSubjects(tx,names),post=await inspect();

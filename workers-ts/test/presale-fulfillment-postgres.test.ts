@@ -8,6 +8,8 @@ import { assertPresaleDispatchReady, presaleDispatchBoundary } from '@/services/
 import { SupplierFulfillmentService } from '@/services/supplier/SupplierFulfillmentService';
 import { OrderWaybillJobService } from '@/services/waybill/OrderWaybillJobService';
 import { StoreOrderWriteoffService } from '@/services/order/StoreOrderWriteoffService';
+import { SECOND_CARD_REMINDER_MIGRATION_SQL } from '@/migrations/secondCardReminderIndexes';
+import { writeoffNoticeCommissionedTx } from '@/migrations/writeoffNotice';
 import { expressCompany, memberRight, orderWaybillJob, orderWaybillJobAction, storeConfig, storeOrder, storeOrderCartInfo,
   storeOrderInvoice, storeOrderInvoiceAllocation, storeOrderInvoiceEvidence, storeOrderOutbox,
   storeOrderRefund, storeOrderStatus, storeOrderWriteoff, supplierFlowingWater, systemConfig, systemStore } from '@/models/schema';
@@ -86,7 +88,9 @@ describe('presale manual delivery and waybill SQL entry points', () => {
   beforeAll(async () => {
     f = await financePostgres([storeOrder, storeOrderCartInfo, storeOrderStatus, storeOrderRefund, storeOrderOutbox,
       orderWaybillJob, orderWaybillJobAction, expressCompany, systemConfig, storeConfig,
-      storeOrderInvoice, storeOrderInvoiceEvidence, storeOrderInvoiceAllocation, supplierFlowingWater, systemStore, storeOrderWriteoff, memberRight]);
+      storeOrderInvoice, storeOrderInvoiceEvidence, storeOrderInvoiceAllocation, supplierFlowingWater, systemStore, storeOrderWriteoff, memberRight], { namespace: 'public' });
+    await f.exec(SECOND_CARD_REMINDER_MIGRATION_SQL);
+    expect(await writeoffNoticeCommissionedTx(f.db)).toBe(false);
     await f.exec('CREATE UNIQUE INDEX test_presale_notice_key ON store_order_outbox(event_key)');
   }, 30_000);
   afterAll(async () => { await f?.close(); });
