@@ -464,6 +464,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real post-switch
 
   it('refuses a MAC-valid staging intent bound to another delivery ID', async () => {
     const source = await staged(await adminDelivery()), payload = clone(source.delivery.payload as WechatTemplateNotificationPayload), original = payload.routineSubscriptionIntent!;
+    if (original.format !== 2) throw Error('Actual delivery author did not produce the expected format2 staging intent');
     const { signature: _signature, ...body } = original;
     // Explicit re-signed foreign-delivery specimen; it is not source authority.
     const foreign = { ...body, deliveryId: source.delivery.id + 1, source: { ...body.source, deliveryId: source.delivery.id + 1 } };

@@ -36,6 +36,10 @@ import { deliverPaidVirtualOrders } from "@/services/order/VirtualProductDeliver
 import { activatePaidSecondCardValidity } from "@/services/order/SecondCardValidityService";
 import { WRITEOFF_NOTICE_EVENT } from '@/migrations/writeoffNotice';
 import { processOrderWriteoffNoticeTx, type WriteoffNoticeInboxGap } from './OrderWriteoffNoticeService';
+import { PAID_NOTICE_EVENT, paidNoticeCommissionedTx } from '@/migrations/paidNotice';
+import { completedPaidSupplierNoticeReplayTx, enqueuePaidBuyerNoticesTx, processPaidBuyerNoticeTx } from './OrderPaidNoticeService';
+import { captureOrderPaidSourcePayload } from './OrderPaidNoticeCodec';
+import { subscriptionSame } from '@/services/wechat/RoutineSubscriptionAccount';
 import {
   ORDER_DELIVERY_NOTICE_EVENT,
   ORDER_REFUND_REFUSED_NOTICE_EVENT,
@@ -155,7 +159,7 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.writeoff\.notice|order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pay\.success\.notice|order\.writeoff\.notice|order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
   );
 }
 
@@ -181,6 +185,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT
     || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT
     || eventType === WRITEOFF_NOTICE_EVENT
+    || eventType === PAID_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 }
@@ -235,6 +240,8 @@ export async function enqueueOrderPaidEvent(
   now = Math.floor(Date.now() / 1000),
 ): Promise<{ id: number; eventKey: string }> {
   const eventKey = orderPaidEventKey(order.id);
+  const payload: OrderPaidOutboxPayload = { orderId: order.id, orderNo: order.orderId,
+    ...(await paidNoticeCommissionedTx(db) ? { payNoticeAdmission: { format: 1 as const, nonce: crypto.randomUUID() } } : {}) };
   const inserted = await db
     .insert(storeOrderOutbox)
     .values({
@@ -242,15 +249,21 @@ export async function enqueueOrderPaidEvent(
       aggregateType: "order",
       aggregateId: order.id,
       eventType: ORDER_PAID_EVENT,
-      payload: { orderId: order.id, orderNo: order.orderId },
+      payload,
       status: "PENDING",
       availableTime: now,
       addTime: now,
       updateTime: now,
     })
     .onConflictDoNothing({ target: storeOrderOutbox.eventKey })
-    .returning({ id: storeOrderOutbox.id, eventKey: storeOrderOutbox.eventKey });
-  if (inserted[0]) return inserted[0];
+    .returning();
+  if (inserted[0]) {
+    const row = inserted[0];
+    if (row.eventKey !== eventKey || row.aggregateType !== 'order' || row.aggregateId !== order.id
+      || row.eventType !== ORDER_PAID_EVENT || row.addTime !== now || !subscriptionSame(row.payload, payload))
+      throw Error('支付 outbox 不可变字段冲突');
+    return { id: row.id, eventKey: row.eventKey };
+  }
 
   const existing = await db
     .select({
@@ -389,6 +402,24 @@ export class OrderOutboxService {
     return this.dispatchPending(1, id);
   }
 
+  /** Post-commit accelerator only. Every pending child remains discoverable by
+   * the durable scanner if Queue is unavailable or the bounded page is full. */
+  async dispatchPaidBuyerNotices(message: OrderPaidOutboxMessage): Promise<{ claimed: number; enqueued: number }> {
+    if (!isOrderPaidOutboxMessage(message)) throw Error('付款通知派发来源无效');
+    const [paid] = await this.container.db.select().from(storeOrderOutbox).where(and(eq(storeOrderOutbox.id, message.outboxId),
+      eq(storeOrderOutbox.eventKey, message.eventKey), eq(storeOrderOutbox.eventType, ORDER_PAID_EVENT), eq(storeOrderOutbox.status, 'COMPLETED'))).limit(1);
+    if (!paid) throw Error('付款通知派发须在付款后置事务提交后');
+    assertOrderPaidPayload(paid.payload, paid.aggregateId);
+    if (!Object.hasOwn(paid.payload, 'payNoticeAdmission')) return { claimed: 0, enqueued: 0 };
+    const now = Math.floor(Date.now() / 1000);
+    const rows = await this.container.db.select({ id: storeOrderOutbox.id }).from(storeOrderOutbox).where(and(
+      eq(storeOrderOutbox.eventType, PAID_NOTICE_EVENT), inArray(storeOrderOutbox.status, ['PENDING','FAILED']), lte(storeOrderOutbox.availableTime, now),
+      sql`${storeOrderOutbox.payload}->>'paymentEventId'=${String(paid.id)}`)).orderBy(asc(storeOrderOutbox.id)).limit(20);
+    const result = { claimed: 0, enqueued: 0 };
+    for (const row of rows) { const sent = await this.dispatchById(row.id); result.claimed += sent.claimed; result.enqueued += sent.enqueued; }
+    return result;
+  }
+
   async processMessage(
     message: OutboxMessage,
   ): Promise<
@@ -401,7 +432,7 @@ export class OrderOutboxService {
           .where(and(eq(storeOrderOutbox.id,message.outboxId),eq(storeOrderOutbox.eventKey,message.eventKey),
             eq(storeOrderOutbox.eventType,ORDER_PAID_EVENT),eq(storeOrderOutbox.status,'COMPLETED'))).limit(1);
         if(!event)throw Error('Completed payment outbox identity changed');
-        await this.upgradePaidBuyer(event.aggregateId,event.payload);
+        await this.upgradePaidBuyer(event.aggregateId,event.payload,event.id);
       }
       return claim;
     }
@@ -419,13 +450,17 @@ export class OrderOutboxService {
     }
   }
 
-  private async upgradePaidBuyer(aggregateId:number,payload:OrderOutboxPayload):Promise<void> {
+  private async upgradePaidBuyer(aggregateId:number,payload:OrderOutboxPayload,completedEventId?:number):Promise<void> {
     assertOrderPaidPayload(payload,aggregateId);
     const [order]=await this.container.db.select({id:storeOrder.id,uid:storeOrder.uid,orderNo:storeOrder.orderId,
       paid:storeOrder.paid,pid:storeOrder.pid,type:storeOrder.type}).from(storeOrder).where(eq(storeOrder.id,aggregateId)).limit(1);
     if(!order || order.orderNo!==payload.orderNo || order.paid!==1 || ![0,-1].includes(order.pid))
       throw Error('Distributor upgrade requires the actual paid root order');
     if(order.pid===-1) {
+      // Only a duplicate COMPLETED event can use this new atomic supplier
+      // occurrence. Initial/retry consumption retains the original root guard.
+      if(completedEventId && Object.hasOwn(payload,'payNoticeAdmission') && await withTx(this.container,
+        tx=>completedPaidSupplierNoticeReplayTx(tx,completedEventId,aggregateId,payload))) return;
       // A refund can archive the original paid presale root before its paid
       // message arrives. Require the retained root quantities, immutable refund
       // partitions and every successor generation; pid=-1 alone is no proof.
@@ -600,7 +635,7 @@ export class OrderOutboxService {
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
       let noticeGap: WithdrawalWecomGap | WriteoffNoticeInboxGap | null | undefined = null;
-      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
+      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT, PAID_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
       const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
       const eventRows = await tx
         .select()
@@ -728,6 +763,7 @@ export class OrderOutboxService {
             : "订单支付成功，后置任务处理完成",
           changeTime: now,
         });
+        if (!recovery) await enqueuePaidBuyerNoticesTx(tx, event, allocation, this.env, now);
       } else if (event.eventType === PRESALE_DELIVERY_EVENT) {
         const intent = readPresaleDeliveryIntent(event.payload, event.aggregateId);
         if (await deliverDuePresale(tx, intent) === 'waiting') {
@@ -749,6 +785,17 @@ export class OrderOutboxService {
         await processSupplierOrderPriceRevision(tx, event, now);
       } else if (event.eventType === WRITEOFF_NOTICE_EVENT) {
         noticeGap = await processOrderWriteoffNoticeTx(tx, event, now);
+      } else if (event.eventType === PAID_NOTICE_EVENT) {
+        const staged = await processPaidBuyerNoticeTx(tx, event, now, { env: routineEnv, earlyReady: routineReady });
+        noticeGap = staged.gap;
+        if (staged.deferred) {
+          const disposition = outboxFailureDisposition(claim.attemptCount, now);
+          const [deferred] = await tx.update(storeOrderOutbox).set({ status: disposition.status, availableTime: disposition.availableTime,
+            leaseUntil: 0, leaseToken: '', lastError: 'routine_original_notice_deferred', updateTime: now })
+            .where(and(eq(storeOrderOutbox.id, claim.id), eq(storeOrderOutbox.status, 'PROCESSING'), eq(storeOrderOutbox.leaseToken, claim.leaseToken))).returning({ id: storeOrderOutbox.id });
+          if (!deferred) throw Error('付款通知延迟租约已失效');
+          return 'deferred' as const;
+        }
       } else if (isNotificationEventType(event.eventType)) {
         const staged = await processOrderNotificationOutboxEvent(tx, event, now, { env: routineEnv, earlyReady: routineReady });
         if (staged === 'deferred') {
@@ -786,7 +833,7 @@ export class OrderOutboxService {
     });
     if (outcome === "deferred") return "deferred";
     if (outcome) emitOperationalEvent("warn", {
-      event: claim.eventType === WRITEOFF_NOTICE_EVENT ? "writeoff_inbox_gap" : "withdrawal_wecom_robot_gap",
+      event: claim.eventType === PAID_NOTICE_EVENT ? 'paid_notice_inbox_gap' : claim.eventType === WRITEOFF_NOTICE_EVENT ? "writeoff_inbox_gap" : "withdrawal_wecom_robot_gap",
       component: "queue", operation: "notification_delivery",
       outcome: "failure", errorCode: outcome, eventKey: claim.eventKey, resourceCount: 1,
     });
@@ -847,6 +894,7 @@ function assertOrderPaidPayload(value: unknown, aggregateId: number): asserts va
   ) {
     throw new Error("outbox payload 无效");
   }
+  captureOrderPaidSourcePayload(payload);
 }
 
 function truncateError(message: string): string {

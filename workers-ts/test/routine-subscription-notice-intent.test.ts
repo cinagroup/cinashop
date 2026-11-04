@@ -2,7 +2,8 @@
  * are not real App source/admission, ownership, producer or POST evidence. */
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionNoticeIntent } from '@/services/wechat/RoutineSubscriptionNoticeIntent';
+import { parseRoutineSubscriptionNoticeIntent } from '@/services/wechat/RoutineSubscriptionNoticeIntent';
+import type { RoutineSubscriptionLegacyNoticeIntent } from '@/services/wechat/RoutineSubscriptionRequestEvidenceCodec';
 import { routineSubscriptionAccountId, subscriptionMac } from '@/services/wechat/RoutineSubscriptionAccount';
 import { routineSubscriptionDeliveryKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey, routineSubscriptionNoticeKey,
   routineSubscriptionNoticePrefix } from '@/services/wechat/RoutineSubscriptionNoticeKinds';
@@ -11,7 +12,7 @@ const env = { APP_KEY: 'inert-notice-intent-codec-key' }, now = 1793602800;
 const scope = { database: 'notice_intent_fixture', databaseOid: '102', maintenance: 'notice_owner', maintenanceOid: '103' };
 const message = '小程序原账号订阅通知批准、凭据或证据尚未完整就绪';
 const clone = <T>(raw: T): T => JSON.parse(JSON.stringify(raw)) as T;
-function fixture(): RoutineSubscriptionNoticeIntent {
+function fixture(): RoutineSubscriptionLegacyNoticeIntent {
   const localScope = { ...scope };
   const accountId = routineSubscriptionAccountId(env, 'wx_notice_intent_a');
   const unsignedPolicy = { record_id: randomUUID(), account_id: accountId, revision: 1,
@@ -20,7 +21,7 @@ function fixture(): RoutineSubscriptionNoticeIntent {
       templates: [{ mark: '1128', templateId: 'notice_send_a' }, { mark: '1458', templateId: 'notice_express_a' }], validFrom: now - 60, validUntil: now + 3600 } },
     created_at: now };
   const policy = { ...unsignedPolicy, signature: subscriptionMac(env, 'account-policy', unsignedPolicy) };
-  const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: 2, scope: localScope, actor: { role: 'notice_app', roleOid: '104' },
+  const body: Omit<RoutineSubscriptionLegacyNoticeIntent, 'signature'> = { format: 2, scope: localScope, actor: { role: 'notice_app', roleOid: '104' },
     deliveryId: 31, outboxId: 41, eventKey: 'order.delivery.notice:17', createdAt: now, requestSignature: 'd'.repeat(64),
     source: { deliveryId: 31, outboxId: 41, eventKey: 'order.delivery.notice:17', orderId: 17, rootId: 17, buyerUid: 11,
       appId: 'wx_notice_intent_a', ownershipId: 'ownership_structural_a', bindingId: 61, observationId: 'observation_structural_a',
@@ -30,15 +31,15 @@ function fixture(): RoutineSubscriptionNoticeIntent {
       data: { thing1: { value: '中文 😀 商品' }, character_string2: { value: 'TRACK-17' } } } };
   return { ...body, signature: subscriptionMac(env, 'notice-stage', body) };
 }
-function resign(raw: RoutineSubscriptionNoticeIntent): RoutineSubscriptionNoticeIntent {
+function resign(raw: RoutineSubscriptionLegacyNoticeIntent): RoutineSubscriptionLegacyNoticeIntent {
   const { signature: _signature, ...body } = raw; return { ...body, signature: subscriptionMac(env, 'notice-stage', body) };
 }
-function refusalFixture(): RoutineSubscriptionNoticeIntent {
+function refusalFixture(): RoutineSubscriptionLegacyNoticeIntent {
   const original = fixture(), { signature: _originalSignature, ...base } = original,
     { signature: _policySignature, ...policy } = original.policy;
   const unsignedPolicy = { ...policy, payload: { ...policy.payload, data: { ...policy.payload.data,
     templates: [{ mark: '1451', templateId: 'notice_refusal_a' }] } } };
-  const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { ...base, format: 3,
+  const body: Omit<RoutineSubscriptionLegacyNoticeIntent, 'signature'> = { ...base, format: 3,
     eventKey: 'order.refund.refused.notice:71', source: { ...original.source,
       eventKey: 'order.refund.refused.notice:71', templateMark: '1451' },
     policy: { ...unsignedPolicy, signature: subscriptionMac(env, 'account-policy', unsignedPolicy) },
@@ -48,10 +49,10 @@ function refusalFixture(): RoutineSubscriptionNoticeIntent {
         amount3: { value: '5.00' }, character_string6: { value: 'order17' } } } };
   return { ...body, signature: subscriptionMac(env, 'refusal-notice-stage', body) };
 }
-function signWith(raw: RoutineSubscriptionNoticeIntent, domain: string): RoutineSubscriptionNoticeIntent {
+function signWith(raw: RoutineSubscriptionLegacyNoticeIntent, domain: string): RoutineSubscriptionLegacyNoticeIntent {
   const { signature: _signature, ...body } = raw; return { ...body, signature: subscriptionMac(env, domain, body) };
 }
-function pinkFixture(): RoutineSubscriptionNoticeIntent {
+function pinkFixture(): RoutineSubscriptionLegacyNoticeIntent {
   const original = fixture(), { signature: _signature, ...policy } = original.policy;
   const unsignedPolicy = { ...policy, payload: { ...policy.payload, data: { ...policy.payload.data,
     templates: [{ mark: '3098', templateId: 'notice_group_a' }] } } };

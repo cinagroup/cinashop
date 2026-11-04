@@ -86,4 +86,17 @@ describe("payment outbox queue consumer", () => {
     expect(paymentOutboxQueueRetryDelaySeconds(4)).toBe(240);
     expect(paymentOutboxQueueRetryDelaySeconds(99)).toBe(900);
   });
+
+  it.each(['completed','already-completed'] as const)('accelerates buyer child notices after %s and acknowledges a Queue-only failure',async result=>{
+    const message=makeMessage(1);let committed=false;
+    const processor={processMessage:vi.fn(async()=>{committed=true;return result;}),dispatchPaidBuyerNotices:vi.fn(async source=>{
+      expect(committed).toBe(true);expect(source).toEqual(message.body);throw Error('Owned child Queue unavailable');
+    })};
+    await consumeOrderPaidOutboxQueueMessage(message,processor);
+    expect(processor.dispatchPaidBuyerNotices).toHaveBeenCalledOnce();expect(message.ack).toHaveBeenCalledOnce();expect(message.retry).not.toHaveBeenCalled();
+  });
+  it.each(['dead','deferred'] as const)('does not accelerate buyer notices for %s financial effects',async result=>{
+    const message=makeMessage(1),processor={processMessage:vi.fn(async()=>result),dispatchPaidBuyerNotices:vi.fn()};
+    await consumeOrderPaidOutboxQueueMessage(message,processor);expect(processor.dispatchPaidBuyerNotices).not.toHaveBeenCalled();expect(message.ack).toHaveBeenCalledOnce();
+  });
 });

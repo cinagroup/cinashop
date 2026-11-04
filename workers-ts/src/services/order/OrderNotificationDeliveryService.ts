@@ -73,8 +73,9 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
-    isChannel(message.channel) && (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pay\.success\.notice|order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    isChannel(message.channel) && (!message.eventKey.startsWith('order.pay.success.notice:') || ['sms','wechat_official','wechat_routine'].includes(String(message.channel))) &&
+    (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
     (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null);
 }
 

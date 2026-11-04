@@ -10,6 +10,8 @@ import type { RoutineSubscriptionRefusalRequest, RoutineSubscriptionRefusalUnava
 import type { RoutineSubscriptionRefundSuccessRequest, RoutineSubscriptionRefundSuccessUnavailable } from '@/services/wechat/RoutineSubscriptionRefundSuccessRequest';
 import type { RoutineSubscriptionMaterializedRefundSuccessBusiness, RoutineSubscriptionMaterializedRefundSuccessRequest, RoutineSubscriptionMaterializedRefundSuccessUnavailable } from '@/services/wechat/RoutineSubscriptionMaterializedRefundSuccessRequest';
 import type { RoutineSubscriptionPinkRequest, RoutineSubscriptionPinkUnavailable } from '@/services/wechat/RoutineSubscriptionPinkRequest';
+import type { RoutineSubscriptionPaidRequest, RoutineSubscriptionPaidUnavailable } from '@/services/wechat/RoutineSubscriptionPaidRequest';
+import type { PaidNoticeBusiness, PaidNoticeAdmission } from '@/services/order/OrderPaidNoticeCodec';
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductSaveEffectsPayload } from '@/services/product/ProductSaveEffects';
@@ -29,6 +31,11 @@ import {
 export interface OrderPaidOutboxPayload {
   orderId: number;
   orderNo: string;
+  payNoticeAdmission?: PaidNoticeAdmission;
+}
+
+export interface OrderPaidNoticeOutboxPayload extends PaidNoticeBusiness {
+  routineSubscriptionRequest?: RoutineSubscriptionPaidRequest | RoutineSubscriptionPaidUnavailable;
 }
 
 export interface OrderPinkSuccessNoticeOutboxPayload {
@@ -119,6 +126,7 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | OrderPaidNoticeOutboxPayload
   | SupplierOrderPriceRevisionPayload
   | ProductSaveEffectsPayload
   | ProductRecycleEffectsPayload

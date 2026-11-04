@@ -2,6 +2,7 @@
  * admission. Receipts remain historical facts when mutable projections drift. */
 import { parseRoutineSubscriptionRefundSuccessRequest } from '../src/services/wechat/RoutineSubscriptionRefundSuccessEvidenceCodec';
 import { parseRoutineSubscriptionMaterializedRefundSuccessRequest } from '../src/services/wechat/RoutineSubscriptionMaterializedRefundSuccessEvidenceCodec';
+import { parseRoutineSubscriptionPaidRequest } from '../src/services/wechat/RoutineSubscriptionPaidEvidenceCodec';
 import { createHmac } from 'node:crypto';
 import { routineEvidenceCanonical, routineEvidenceHmac } from '../src/services/payment/RoutineProviderObservation';
 import { parseRoutineOriginalEvidence } from '../src/services/payment/RoutineOriginalPaymentEvidenceCodec';
@@ -14,7 +15,8 @@ import { routineSubscriptionNoticePrefix } from '../src/services/wechat/RoutineS
 type Row=Record<string,unknown>;
 type Source={schema:string;name:string;oid:string;kind:string;owner:string;ownerOid:string};
 type Context={database:string;databaseOid:string;observedAt:number};
-type Request=ReturnType<typeof parseRoutineSubscriptionMaterializedRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
+type Request=ReturnType<typeof parseRoutineSubscriptionPaidRequest>|ReturnType<typeof parseRoutineSubscriptionMaterializedRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
+type Intent=ReturnType<typeof parseRoutineSubscriptionNoticeIntent>;
 const policyName='routine_subscription_account_policy',originalName='routine_original_payment_evidence';
 const outboxName='store_order_outbox',deliveryName='order_notification_delivery',attemptName='routine_subscribe_attempt',resultName='routine_subscribe_result';
 const layouts:Record<string,Record<string,number>>={
@@ -38,6 +40,25 @@ function group<T>(rows:T[],key:(r:T)=>unknown):Map<unknown,T[]>{
   const map=new Map<unknown,T[]>();for(const r of rows){const k=key(r),a=map.get(k)??[];a.push(r);map.set(k,a);}return map;
 }
 const rowStatuses=new Set(['PENDING','ENQUEUING','ENQUEUED','PROCESSING','RETRYABLE','SENT','SKIPPED','UNKNOWN','DEAD']);
+/** Historical reference projection only, after the signed codec succeeded.
+ * The unique-UID payment variant has no original-provider record to reference. */
+function originalFacts(facts:Intent['source']){
+  if(facts.templateMark!=='1927')return facts;
+  if(facts.payment.kind!=='routine-original')return null;
+  return{evidenceId:facts.payment.evidenceId,evidenceSignature:facts.payment.evidenceSignature,
+    appId:facts.appId,rootId:facts.rootId,buyerUid:facts.buyerUid};
+}
+function paidSourceMatches(request:Request,intent:Intent){
+  if(request.format!==7)return intent.format!==7;
+  if(intent.format!==7)return false;
+  const f=intent.source,s=request.selection;
+  return f.paymentEventId===request.body.paymentEventId&&f.rootId===request.body.paymentOrderId
+    &&f.paymentAdmissionNonce===request.body.paymentAdmissionNonce&&f.familyDigest===request.familyDigest
+    &&f.appId===s.appId&&f.ownershipId===s.ownershipId&&f.bindingId===s.bindingId
+    &&f.observationId===s.observationId&&f.ownershipDigest===s.ownershipDigest&&intent.request.touser===s.openid
+    &&(s.mode==='routine-original'?f.payment.kind==='routine-original'
+      :f.payment.kind==='unique-identity'&&f.payment.paymentDigest===request.paymentDigest);
+}
 export type RoutineNotificationContinuation=ReturnType<ReturnType<typeof routineNotificationAccumulator>['finish']>;
 
 export function routineNotificationAccumulator(authenticator:string,fingerprintKey:string){
@@ -115,10 +136,10 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         let request:Request|null=null;
         if(relevant&&scope&&candidate!==undefined)request=safely(()=>{
           const format=object(candidate)?.format;
-          return format===2?parseRoutineSubscriptionNoticeRequest(env,candidate,scope)
+          return format===7?parseRoutineSubscriptionPaidRequest(env,candidate,scope):format===2?parseRoutineSubscriptionNoticeRequest(env,candidate,scope)
             :format===3?parseRoutineSubscriptionRefusalRequest(env,candidate,scope):format===6?parseRoutineSubscriptionMaterializedRefundSuccessRequest(env,candidate,scope):format===5?parseRoutineSubscriptionRefundSuccessRequest(env,candidate,scope):parseRoutineSubscriptionPinkRequest(env,candidate,scope);
         });
-        const eventType=request?.format===5||request?.format===6?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
+        const eventType=request?.format===7?'order.pay.success.notice':request?.format===5||request?.format===6?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
         const sourceMatches=request!==null&&p!==null&&raw.aggregate_type==='order'&&raw.aggregate_id===request.aggregateId
           &&raw.event_key===request.eventKey&&raw.event_type===eventType&&raw.add_time===request.eventTime
           &&same(request.body,Object.fromEntries(Object.keys(request.body).map(k=>[k,p[k]])));
@@ -127,7 +148,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         // legacy pin and deliberately never creates a subscription request.
         const excluded=relevant&&raw.event_type==='order.delivery.notice'&&p?.deliveryType==='fictitious'&&candidate===undefined;
         const state=!relevant?'unrelated' as const:excluded?'outside_subscription_contract' as const:candidate===undefined?'legacy_unattributed' as const
-          :marker?.unavailable===true&&Object.keys(marker).length===2&&[2,3,4,5,6].includes(Number(marker.format))?'unavailable' as const
+          :marker?.unavailable===true&&Object.keys(marker).length===2&&([2,3,4,5,6].includes(Number(marker.format))||marker.format===7)?'unavailable' as const
           :!scope?'scope_unavailable' as const:!request?'invalid' as const:sourceMatches?'authenticated_source_match' as const:'authenticated_source_mismatch' as const;
         return{raw,request,state};
       });
@@ -138,14 +159,15 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         const p=object(raw.payload),candidate=p?.routineSubscriptionIntent;
         const intent=scope&&raw.channel==='wechat_routine'&&candidate!==undefined?safely(()=>parseRoutineSubscriptionNoticeIntent(env,candidate,scope)):null;
         const sources=outboxes.filter(o=>o.raw.id===raw.outbox_id),source=sources.length===1?sources[0]:null;
-        const expectedMark=source?.request?.format===5||source?.request?.format===6?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
+        const expectedMark=source?.request?.format===7?'order_pay_success':source?.request?.format===5||source?.request?.format===6?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
           :source?.request?.format===2?source.request.body.deliveryType==='express'?'order_postage_success'
             :source.request.body.deliveryType==='fictitious'?'order_fictitious_success':'order_deliver_success':null;
         const sourceMatch=Boolean(intent&&source?.request&&source.state==='authenticated_source_match'
           &&intent.format===source.request.format
           &&intent.requestSignature===source.request.signature&&intent.eventKey===source.request.eventKey&&intent.createdAt>=source.request.eventTime
           &&intent.source.orderId===source.request.body.orderId&&intent.source.buyerUid===source.request.body.userId
-          &&intent.source.templateMark===(source.request.format===4?'3098':source.request.format===3||source.request.format===5||source.request.format===6?'1451':source.request.body.deliveryType==='express'?'1458':'1128'));
+          &&intent.source.templateMark===(source.request.format===7?'1927':source.request.format===4?'3098':source.request.format===3||source.request.format===5||source.request.format===6?'1451':source.request.body.deliveryType==='express'?'1458':'1128')
+          &&paidSourceMatches(source.request,intent));
         const rowMatch=Boolean(intent&&raw.id===intent.deliveryId&&raw.outbox_id===intent.outboxId&&raw.event_key===intent.eventKey
           &&raw.order_id===intent.source.orderId&&raw.withdrawal_id===null&&raw.user_id===intent.source.buyerUid
           &&raw.notice_mark===expectedMark&&raw.target===intent.request.touser&&raw.template_code===intent.request.template_id
@@ -161,6 +183,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
       });
       const publicAttempts=parsedAttempts.map(({raw,row})=>{
         const saved=parsedResults.filter(r=>r.raw.attempt_id===raw.attempt_id),delivery=deliveries.filter(d=>d.raw.id===raw.delivery_id);
+        const original=row?originalFacts(row.payload.facts):null;
         return{recordDigest:digest('attempt',raw),attemptDigest:digest('attempt-id',raw.attempt_id),authenticity:row?'authenticated' as const:scope?'invalid' as const:'scope_unavailable' as const,
         accountDigest:row?digest('app-account',row.payload.facts.appId):null,
         deliveryDigest:digest('delivery-id',raw.delivery_id),deliveryPresence:!selected.has(deliveryName)?'source_missing' as const
@@ -168,8 +191,8 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         result:!saved.length?'unknown' as const:!scope?'scope_unavailable' as const:saved.length!==1||!saved[0].row?'invalid' as const
           :saved[0].row.payload.result.code===0?'verified_accepted' as const:'verified_rejected' as const,
         policy:row?policyReference(row.payload.policy):'not_evaluated' as const,
-        original:row?originalReference(row.payload.facts):'not_evaluated' as const,
-        originalRecordDigest:row?originalLink(row.payload.facts.evidenceId):null,policyRecordDigest:row?policyLink(row.payload.policy.record_id):null,
+        original:row?original?originalReference(original):'not_applicable' as const:'not_evaluated' as const,
+        originalRecordDigest:original?originalLink(original.evidenceId):null,policyRecordDigest:row?policyLink(row.payload.policy.record_id):null,
         ...(row?actor(row.payload.actor):{actorDigest:null,currentRole:null})};});
       const publicResults=parsedResults.map(({raw,row,attemptPresent})=>({recordDigest:digest('result',raw),attemptDigest:digest('attempt-id',raw.attempt_id),
         resultDigest:digest('result-id',raw.result_id),
@@ -186,12 +209,13 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         const intentMatches=last?last.payload.intentDigest===routineEvidenceHmac(env,'subscription-delivery-intent',identity):null;
         const currentProjection=lastResult?.payload.result.code===0?raw.status==='SENT'&&raw.provider_reference===lastResult.result_id&&raw.response_code==='0'
           ?'matched' as const:'drifted' as const:'not_evaluated' as const;
+        const original=intent?originalFacts(intent.source):null;
         return{recordDigest:digest('delivery',raw),deliveryDigest:digest('delivery-id',raw.id),outboxDigest:digest('outbox-id',raw.outbox_id),eventDigest:relevant?digest('event',raw.event_key):null,
           staging:!relevant?'unrelated' as const:object(raw.payload)?.routineSubscriptionIntent===undefined?'legacy_unattributed' as const
             :!scope?'scope_unavailable' as const:!intent?'invalid' as const:sourceMatch&&rowMatch?'authenticated_source_match' as const:'authenticated_source_mismatch' as const,
           source:!sourceMatch?'unresolved' as const:'matched' as const,policy:intent?policyReference(intent.policy):'not_evaluated' as const,
-          original:intent?originalReference(intent.source):'not_evaluated' as const,
-          originalRecordDigest:intent?originalLink(intent.source.evidenceId):null,policyRecordDigest:intent?policyLink(intent.policy.record_id):null,
+          original:intent?original?originalReference(original):'not_applicable' as const:'not_evaluated' as const,
+          originalRecordDigest:original?originalLink(original.evidenceId):null,policyRecordDigest:intent?policyLink(intent.policy.record_id):null,
           dispatch:!relevant?'not_applicable' as const:!scope?'scope_unavailable' as const:!chain?'invalid_chain' as const:!chain.attempts.length?'not_attempted' as const
             :chain.state==='unknown'?'unknown' as const:lastResult?.payload.result.code===0?'accepted' as const:'rejected' as const,
           attempts:attempts.length,intentMatches,currentProjection,

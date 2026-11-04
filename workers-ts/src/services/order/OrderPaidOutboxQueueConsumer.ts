@@ -8,7 +8,7 @@ import {
 import { emitOperationalEvent, operationalErrorCode } from "@/utils/observability";
 import type { OrderNotificationDeliveryService } from './OrderNotificationDeliveryService';
 
-type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage">;
+type OrderPaidOutboxProcessor = Pick<OrderOutboxService, "processMessage"> & Partial<Pick<OrderOutboxService, 'dispatchPaidBuyerNotices'>>;
 type OrderPaidOutboxQueueMessage = Pick<
   Message<OrderMessage>,
   "body" | "attempts" | "ack" | "retry"
@@ -63,6 +63,11 @@ export async function consumeOrderPaidOutboxQueueMessage(
     // Payment effects have committed before this optional Queue accelerator.
     // Its own durable scanner recovers an unavailable/ambiguous Queue without
     // turning completed financial effects into another payment attempt.
+    if((result==='completed'||result==='already-completed')&&processor.dispatchPaidBuyerNotices){
+      try{await processor.dispatchPaidBuyerNotices(message.body);}
+      catch(error){emitOperationalEvent('error',{event:'paid_buyer_notice_dispatch_failed',component:'queue',
+        operation:'notification_outbox',outcome:'failure',errorCode:operationalErrorCode(error)});}
+    }
     if(notifications&&(result==='completed'||result==='already-completed')){
       try{await notifications.dispatchPending(10,message.body.eventKey);}
       catch(error){emitOperationalEvent('error',{event:'paid_shipping_dispatch_failed',component:'queue',

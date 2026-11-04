@@ -1,3 +1,5 @@
+import { readRoutineSubscriptionPaidNoticeSourceTx } from './RoutineSubscriptionPaidSource';
+import type { RoutineSubscriptionPaidNoticeFacts } from './RoutineSubscriptionPaidEvidenceCodec';
 import { Buffer } from 'node:buffer';
 import { asc, eq, or, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
@@ -19,7 +21,7 @@ import { parseRoutineSubscriptionRefundSuccessRequest, assertRoutineSubscription
 import { parseRoutineSubscriptionMaterializedRefundSuccessRequest, assertRoutineSubscriptionMaterializedRefundSuccessDecision } from './RoutineSubscriptionMaterializedRefundSuccessRequest';
 import { readRoutineMaterializedRefundSuccessSourceTx, type MaterializedRefundSuccessPublicRefund } from './RoutineSubscriptionMaterializedRefundSource';
 import { parseRoutineSubscriptionPinkRequest, readRoutineSubscriptionPinkTargetTx } from './RoutineSubscriptionPinkRequest';
-import { routineSubscriptionNoticeKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionPaidKey } from './RoutineSubscriptionNoticeKinds';
 import { parseRoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { captureRoutineSubscriptionEnv, freezeSubscription, prepareRoutineSubscriptionAccountTx,
   routineSubscriptionUnavailable, routineSubscriptionScopeTx, routineSubscriptionClockTx, subscriptionInteger, subscriptionMac, subscriptionObject, subscriptionSame,
@@ -29,7 +31,8 @@ export interface RoutineSubscriptionDeliveryNoticeInput { deliveryId: number; ev
 export interface RoutineSubscriptionNoticeRequest {
   touser: string; template_id: string; page: string; data: Record<string, { value: string }>;
 }
-export interface RoutineSubscriptionDeliveryNoticeFacts {
+/** Formats 2..6 always reference an authenticated original WeChat payment. */
+export interface RoutineSubscriptionLegacyDeliveryNoticeFacts {
   readonly deliveryId: number; readonly outboxId: number; readonly eventKey: string;
   readonly orderId: number; readonly rootId: number; readonly buyerUid: number; readonly appId: string;
   readonly ownershipId: string; readonly bindingId: number; readonly observationId: string;
@@ -37,6 +40,9 @@ export interface RoutineSubscriptionDeliveryNoticeFacts {
   readonly relatedDigest: string; readonly approvedUseDigest: string;
   readonly templateMark: '1458' | '1128' | '1451' | '3098'; readonly sourceDigest: string;
 }
+/** A 1927 paid source has its own closed payment variant; a balance payment
+ * must never acquire synthetic legacy original-evidence fields. */
+export type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionLegacyDeliveryNoticeFacts | RoutineSubscriptionPaidNoticeFacts;
 const noticeSlot = Symbol('routine.subscription.delivery-notice-source.v1');
 export interface PreparedRoutineSubscriptionDeliveryNotice {
   readonly [noticeSlot]: true;
@@ -115,6 +121,7 @@ async function versionedRequest(tx: DbClient, env: Env, event: typeof storeOrder
 }
 async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubscriptionDeliveryNoticeInput> | Readonly<RoutineSubscriptionNoticeAuthorInput>) {
   await acquireRoutineSubscriptionNoticeSourceGatesTx(tx);
+  if (routineSubscriptionPaidKey(expected.eventKey)) return readRoutineSubscriptionPaidNoticeSourceTx(tx, env, expected);
   const author = 'outboxId' in expected;
   if (author) {
     if (!await assertRoutineSubscriptionDeliveryReadyTx(tx)) return routineSubscriptionUnavailable();

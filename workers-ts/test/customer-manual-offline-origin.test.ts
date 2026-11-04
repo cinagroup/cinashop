@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION,parseCustomerManualOfflineOrigin} from '../src/services/order/CustomerManualOfflineOrigin';
+import {CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION,parseCustomerManualOfflineOrigin,readCustomerManualOfflineOrigin} from '../src/services/order/CustomerManualOfflineOrigin';
 import {outRequestHash} from '../src/services/out/OutIdempotency';
 import {customerManualManagerOriginReadiness,customerManualManagerOriginReadGrantSql} from '../src/migrations/customerManualOfflineOriginCatalog';
 const version=CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION;
@@ -9,6 +9,14 @@ async function manager(staff_id=901){
  return{version,kind:'manager_order_offline',primary_audit_id:9,actor_uid:401,receipt};
 }
 describe('versioned manual offline original payment evidence',()=>{
+ it.each([false,true])('retains actual admin manual-payment provenance for admitted=%s paid source without an invented operator receipt',async admitted=>{
+  const payload={orderId:7,orderNo:'owned_manual_order',...(admitted?{payNoticeAdmission:{format:1,nonce:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}}:{})};
+  const root={id:7,orderId:'owned_manual_order',paid:1,payType:'offline',payTime:1700000000};
+  const audit={id:9,changeType:'admin_order_offline',changeTime:1700000000,changeMessage:'管理员 801 确认订单线下收款'};
+  expect(await readCustomerManualOfflineOrigin({} as never,root as never,audit as never,{status:'COMPLETED',payload} as never))
+   .toEqual({version,kind:'admin_order_offline',primary_audit_id:9,admin_id:801});
+  await expect(readCustomerManualOfflineOrigin({} as never,root as never,audit as never,{status:'COMPLETED',payload:{...payload,payNoticeAdmission:{format:1,nonce:'bad'}}} as never)).rejects.toThrow();
+ });
  it('round trips the complete original manager intent and exact microsecond timestamp through JSON',async()=>{
   const original=await manager();expect(await parseCustomerManualOfflineOrigin(JSON.parse(JSON.stringify(original)))).toEqual(original);
   expect(await parseCustomerManualOfflineOrigin(await manager(0))).toMatchObject({receipt:{staff_id:0}});

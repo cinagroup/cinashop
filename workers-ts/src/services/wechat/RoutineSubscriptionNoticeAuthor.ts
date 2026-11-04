@@ -1,3 +1,5 @@
+import { parseRoutineSubscriptionPaidRequest } from './RoutineSubscriptionPaidRequest';
+import { PAID_SUBSCRIPTION_EVENT } from './RoutineSubscriptionPaidEvidenceCodec';
 import { and, eq, sql } from 'drizzle-orm';
 import type { Env } from '@/env';
 import { createContainerFromDb, withTx, type DbClient } from '@/lib/di';
@@ -95,7 +97,7 @@ async function skip(tx: DbClient, event: OrderNotificationOutboxEvent, mark: str
 }
 function parseRequest(env: Env, event: OrderNotificationOutboxEvent, scope: Awaited<ReturnType<typeof routineSubscriptionScopeTx>>) {
   const raw = 'routineSubscriptionRequest' in event.payload ? event.payload.routineSubscriptionRequest : undefined;
-  return event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? Object.hasOwn(event.payload, 'materializedRefund')
+  return event.eventType === PAID_SUBSCRIPTION_EVENT ? parseRoutineSubscriptionPaidRequest(env, raw, scope) : event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? Object.hasOwn(event.payload, 'materializedRefund')
     ? parseRoutineSubscriptionMaterializedRefundSuccessRequest(env, raw, scope) : parseRoutineSubscriptionRefundSuccessRequest(env, raw, scope)
     : event.eventType === ORDER_PINK_SUCCESS_NOTICE_EVENT ? parseRoutineSubscriptionPinkRequest(env, raw, scope)
     : event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT ? parseRoutineSubscriptionRefusalRequest(env, raw, scope)
@@ -150,11 +152,12 @@ export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readon
       if (!actor) return routineSubscriptionUnavailable();
       const success = event.eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT;
       const refusal = event.eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT;
+      const paid = source.facts.templateMark === '1927';
       const pink = source.facts.templateMark === '3098';
-      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: success ? Object.hasOwn(event.payload, 'materializedRefund') ? 6 : 5 : pink ? 4 : refusal ? 3 : 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
+      const body: Omit<RoutineSubscriptionNoticeIntent, 'signature'> = { format: paid ? 7 : success ? Object.hasOwn(event.payload, 'materializedRefund') ? 6 : 5 : pink ? 4 : refusal ? 3 : 2, scope, actor: { role: actor.role, roleOid: actor.roleOid },
         deliveryId: inserted.id, outboxId: event.id, eventKey: event.eventKey, createdAt: source.renderedAt, requestSignature: source.requestSignature,
         source: { ...source.facts, deliveryId: inserted.id }, policy: source.account.account, request: source.request };
-      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, body.format === 6 ? 'materialized-refund-success-notice-stage' : success ? 'refund-success-notice-stage' : pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body) }, scope);
+      const intent = parseRoutineSubscriptionNoticeIntent(captured, { ...body, signature: subscriptionMac(captured, body.format === 7 ? 'paid-notice-stage' : body.format === 6 ? 'materialized-refund-success-notice-stage' : success ? 'refund-success-notice-stage' : pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body) }, scope);
       const finalPayload = { ...payload, routineSubscriptionIntent: intent };
       const [updated] = await nested.update(orderNotificationDelivery).set({ payload: finalPayload }).where(and(eq(orderNotificationDelivery.id, inserted.id),
         eq(orderNotificationDelivery.status, 'PENDING'), eq(orderNotificationDelivery.attemptCount, 0), eq(orderNotificationDelivery.dispatchCount, 0),

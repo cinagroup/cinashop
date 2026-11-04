@@ -1,4 +1,5 @@
 import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_CATALOG_SQL, writeoffNoticeAddonUpgradeSql } from './writeoffNotice';
+import { paidNoticeEventGeneration, paidNoticeAddonUpgradeSql, NOTICE_MAINTENANCE_BUDGET_SQL } from './paidNotice';
 /** Independent 0193 owner maintenance. No bootstrap, rows, roles or grants. */
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -94,7 +95,7 @@ END
 $supplier_order_price_revision_outbox$;
 `;
 /** New-family port only; historical standalone SQL remains byte-identical. */
-const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', `
+const noticePriceVirtualGuard = `
  IF virtual_subjects THEN
   SELECT * INTO virtual_catalog FROM (${ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL}) virtual_structure;
   IF NOT COALESCE(virtual_catalog.safe AND virtual_catalog.core AND virtual_catalog.subject_safe AND virtual_catalog.event_safe
@@ -102,16 +103,22 @@ const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', `
     AND virtual_catalog.subject_definition='${ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''")}',false) THEN
    RAISE EXCEPTION 'Writeoff notice Supplier virtual subject prerequisite drift; no automatic repair';
   END IF;
- END IF;`);
+ END IF;`;
+const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', noticePriceVirtualGuard);
+const paidPriceRevisionSql = paidNoticeAddonUpgradeSql('price', noticePriceVirtualGuard);
 export async function installSupplierOrderPriceRevision(tx: Pick<DbClient, 'execute'>): Promise<void> {
+  await tx.execute(sql.raw(NOTICE_MAINTENANCE_BUDGET_SQL));
   const [row] = await tx.execute<{ definition: string }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
-  await tx.execute(sql.raw(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL));
+  await tx.execute(sql.raw(paidNoticeEventGeneration(row?.definition)?.paid ? paidPriceRevisionSql
+    : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL));
 }
 export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'>): Promise<void> {
   if (!db.$client) throw Error('Supplier order price revision maintenance requires a root database');
   await db.$client.begin('isolation level read committed', async tx => {
+    await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
-    await tx.unsafe(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL);
+    await tx.unsafe(paidNoticeEventGeneration(row?.definition)?.paid ? paidPriceRevisionSql
+      : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL);
   });
 }
 /** SELECT-only catalog gate. HTTP never repairs an event whitelist. */

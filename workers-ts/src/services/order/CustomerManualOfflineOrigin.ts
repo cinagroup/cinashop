@@ -2,6 +2,7 @@ import {sql} from 'drizzle-orm';
 import type {DbClient} from '@/lib/di';
 import {storeOrder,storeOrderStatus,storeOrderOutbox} from '@/models/schema';
 import {ValidateException} from '@/utils/errors';
+import {isOrderPaidSourcePayload} from './OrderPaidNoticeCodec';
 import {outRequestHash,normalizeOutRequestKey} from '@/services/out/OutIdempotency';
 import {financialRecord,financialId,financialHash} from '@/services/customer-work/CustomerWorkFinancialProtocol';
 import {customerManualManagerOriginReadiness} from '@/migrations/customerManualOfflineOriginCatalog';
@@ -58,7 +59,7 @@ export async function parseCustomerManualOfflineOrigin(value:unknown):Promise<Cu
 export async function readCustomerManualOfflineOrigin(db:DbClient,root:Order,primary:Audit,event:Event):Promise<CustomerManualOfflineOrigin>{
  if(primary.changeType==='supplier_order_offline')return readSupplierOfflinePaymentOrigin(db,root,primary,event);
  fact(root.payType==='offline'&&primary.changeTime===root.payTime&&root.paid===1&&root.payTime>0&&event.status==='COMPLETED');
- const payload=financialRecord(event.payload,['orderId','orderNo']);fact(payload.orderId===root.id&&payload.orderNo===root.orderId);
+ fact(isOrderPaidSourcePayload(event.payload)&&event.payload.orderId===root.id&&event.payload.orderNo===root.orderId);
  if(primary.changeType==='admin_order_offline'){
   const match=/^管理员 ([1-9][0-9]*) 确认订单线下收款$/.exec(primary.changeMessage);fact(match);
   return parseCustomerManualOfflineOrigin({version:CUSTOMER_MANUAL_OFFLINE_ORIGIN_VERSION,kind:'admin_order_offline',primary_audit_id:primary.id,admin_id:financialId(Number(match[1]))});

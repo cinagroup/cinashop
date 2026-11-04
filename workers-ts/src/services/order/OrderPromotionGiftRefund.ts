@@ -4,6 +4,7 @@ import { storeCouponUser, storeOrder, storeOrderCartInfo, storeOrderOutbox, stor
   user, userBill } from '@/models/schema';
 import { readOrderPromotionGiftIntent } from '@/services/activity/OrderPromotionGiftSnapshot';
 import { ValidateException } from '@/utils/errors';
+import { isOrderPaidSourcePayload } from './OrderPaidNoticeCodec';
 import { amountToCents } from '@/services/payment/RefundGateway';
 
 type Order = typeof storeOrder.$inferSelect;
@@ -104,8 +105,7 @@ export async function assertFullGiftRefundAdmission(tx: DbClient, order: Order,
   const event = events[0], payload = event?.payload;
   if (events.length !== 1 || event.aggregateType !== 'order' || event.aggregateId !== order.id
     || event.eventType !== 'order.paid' || event.status !== 'COMPLETED'
-    || !payload || typeof payload !== 'object' || Array.isArray(payload)
-    || Object.keys(payload).length !== 2 || !('orderId' in payload) || !('orderNo' in payload)
+    || !isOrderPaidSourcePayload(payload)
     || payload.orderId !== order.id || payload.orderNo !== order.orderId) {
     throw new ValidateException('满送付款后置任务尚未完成或订单归属不一致，请稍后重试');
   }

@@ -39,10 +39,10 @@ export const ROUTINE_VIRTUAL_SHIPPING_SUBJECT_CHECK_SQL = `CHECK (
     AND event_key=subject_domain::text || '.paid.shipping:'::text || subject_id::text)
 )`;
 export const ROUTINE_VIRTUAL_SHIPPING_INDEX = 'CREATE INDEX ond_virtual_subject ON public.order_notification_delivery USING btree (subject_domain, subject_id, id) WHERE (subject_domain IS NOT NULL)';
-export function routineVirtualShippingSubjectsInstallSql(priceRevision: boolean, refundSuccess = false, writeoff = false, writeoffFirst = false): string {
+export function routineVirtualShippingSubjectsInstallSql(priceRevision: boolean, refundSuccess = false, writeoff = false, writeoffFirst = false, paidNotice = false): string {
   const refundTail = refundSuccess ? ['order.refund.success.notice'] : [], writeoffTail = writeoff ? ['order.writeoff.notice'] : [];
   const events = [...(priceRevision ? ROUTINE_VIRTUAL_SHIPPING_PRICE_EVENTS : ROUTINE_VIRTUAL_SHIPPING_BASE_EVENTS), ...ROUTINE_VIRTUAL_SHIPPING_EVENTS,
-    ...(writeoffFirst ? [...writeoffTail, ...refundTail] : [...refundTail, ...writeoffTail])];
+    ...(writeoffFirst ? [...writeoffTail, ...refundTail] : [...refundTail, ...writeoffTail]), ...(paidNotice ? ['order.pay.success.notice'] : [])];
   return `ALTER TABLE public.order_notification_delivery ADD COLUMN subject_domain varchar(16), ADD COLUMN subject_id integer;
 ALTER TABLE public.order_notification_delivery DROP CONSTRAINT ond_subject_ck;
 ALTER TABLE public.order_notification_delivery ADD CONSTRAINT ond_subject_ck ${ROUTINE_VIRTUAL_SHIPPING_SUBJECT_CHECK_SQL};

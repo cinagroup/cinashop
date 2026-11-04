@@ -1,3 +1,4 @@
+import { parseRoutineSubscriptionPaidIntent, type RoutineSubscriptionPaidIntent } from './RoutineSubscriptionPaidEvidenceCodec';
 /** Historical authentication only. These pure decoders do not issue records,
  * inspect a current LOGIN, select latest policies, obtain tokens or permit I/O. */
 import { Buffer } from 'node:buffer';
@@ -7,7 +8,7 @@ import { ServiceUnavailableException } from '../../utils/errors';
 import { routineEvidenceCanonical, routineEvidenceHmac } from '../payment/RoutineProviderObservation';
 import { parseRoutineSubscriptionAccountJournal, type RoutineSubscriptionAccountJournal,
   type RoutineSubscriptionScope } from '../payment/RoutinePurposeAccountEvidenceCodec';
-import type { RoutineSubscriptionDeliveryNoticeFacts, RoutineSubscriptionNoticeRequest as DeliveryNoticeRequest } from './RoutineSubscriptionDeliveryNotice';
+import type { RoutineSubscriptionLegacyDeliveryNoticeFacts, RoutineSubscriptionNoticeRequest as DeliveryNoticeRequest } from './RoutineSubscriptionDeliveryNotice';
 import { routineSubscriptionDeliveryKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey, routineSubscriptionRefundSuccessKey } from './RoutineSubscriptionNoticeKinds';
 
 type Signing=Readonly<{APP_KEY?:string}>;
@@ -67,12 +68,13 @@ export interface RoutineSubscriptionPinkRequest {
 
 /** Authenticated staging projection, never evidence of a POST or fresh send
  * authority. The immutable accepted intent remains the dispatch attempt. */
-export interface RoutineSubscriptionNoticeIntent {
+export interface RoutineSubscriptionLegacyNoticeIntent {
   format: 2 | 3 | 4 | 5 | 6; scope: RoutineSubscriptionScope; actor: { role: string; roleOid: string };
   deliveryId: number; outboxId: number; eventKey: string; createdAt: number; requestSignature: string;
-  source: RoutineSubscriptionDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
+  source: RoutineSubscriptionLegacyDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
   request: Readonly<DeliveryNoticeRequest>; signature: string;
 }
+export type RoutineSubscriptionNoticeIntent = RoutineSubscriptionLegacyNoticeIntent | RoutineSubscriptionPaidIntent;
 
 const noticeCodec = (() => {
 const name=(value:unknown):value is string=>typeof value==='string'&&/^[a-z_][a-z0-9_]{0,62}$/u.test(value)
@@ -320,7 +322,9 @@ function captureIntentScope(raw: unknown): RoutineSubscriptionScope {
   return { database: r.database, databaseOid: r.databaseOid, maintenance: r.maintenance, maintenanceOid: r.maintenanceOid };
 }
 function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, raw: unknown, scope: RoutineSubscriptionScope): Readonly<RoutineSubscriptionNoticeIntent> {
-  const r = subscriptionObject(captureIntentJson(raw), ['format', 'scope', 'actor', 'deliveryId', 'outboxId', 'eventKey', 'createdAt', 'requestSignature', 'source', 'policy', 'request', 'signature']);
+  const snapshot = captureIntentJson(raw);
+  if ((snapshot as { format?: unknown })?.format === 7) return parseRoutineSubscriptionPaidIntent(env, snapshot, scope);
+  const r = subscriptionObject(snapshot, ['format', 'scope', 'actor', 'deliveryId', 'outboxId', 'eventKey', 'createdAt', 'requestSignature', 'source', 'policy', 'request', 'signature']);
   const expectedScope = captureIntentScope(scope), capturedScope = captureIntentScope(r.scope);
   const actor = subscriptionObject(r.actor, ['role', 'roleOid']);
   const source = subscriptionObject(r.source, ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',

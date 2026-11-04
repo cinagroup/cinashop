@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { ServiceUnavailableException } from '../src/utils/errors';
 import { parseRoutineSubscriptionNoticeRequest, parseRoutineSubscriptionRefusalRequest, parseRoutineSubscriptionPinkRequest,
-  parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionNoticeIntent } from '../src/services/wechat/RoutineSubscriptionRequestEvidenceCodec';
+  parseRoutineSubscriptionNoticeIntent, type RoutineSubscriptionLegacyNoticeIntent } from '../src/services/wechat/RoutineSubscriptionRequestEvidenceCodec';
 import { parseRoutineSubscriptionAttempt, parseRoutineSubscriptionAttemptForActor, parseRoutineSubscriptionResult,
   validateRoutineSubscriptionAttemptChain, type RoutineSubscriptionAttempt,
   type RoutineSubscriptionResult } from '../src/services/wechat/RoutineSubscriptionDispatchEvidenceCodec';
@@ -54,7 +54,7 @@ function pink() {
       virtualMembers: 1, memberIds: [81, 82], membersDigest: 'c'.repeat(64) },
     member: { id: 81, uid: 11, orderId: 17, orderNo: 'order17', orderIdKey: '17', addTime: old - 10 }, createdAt: old });
 }
-function intent(): RoutineSubscriptionNoticeIntent {
+function intent(): RoutineSubscriptionLegacyNoticeIntent {
   return sign('notice-stage', { format: 2 as const, scope: { ...scope }, actor: { ...actor }, deliveryId: 31, outboxId: 41,
     eventKey: identity.eventKey, createdAt: old, requestSignature: notice().signature,
     source: { deliveryId: 31, outboxId: 41, eventKey: identity.eventKey, orderId: 17, rootId: 17, buyerUid: 11,
@@ -70,7 +70,7 @@ function attempt(ordinal = 1, previous = ''): RoutineSubscriptionAttempt {
       intentDigest: 'b'.repeat(64), claim: { eventKey: identity.eventKey, leaseToken: uuid(200 + ordinal), attemptCount: ordinal, leaseUntil: created + 60 },
       facts: staged.source, policy: staged.policy, request: staged.request }, created_at: created });
 }
-function refundSuccessIntent(format: 5 | 6): RoutineSubscriptionNoticeIntent {
+function refundSuccessIntent(format: 5 | 6): RoutineSubscriptionLegacyNoticeIntent {
   const { signature: _signature, ...base } = intent(), eventKey = 'order.refund.success.notice:71';
   return sign(format === 6 ? 'materialized-refund-success-notice-stage' : 'refund-success-notice-stage', {
     ...base, format, eventKey,

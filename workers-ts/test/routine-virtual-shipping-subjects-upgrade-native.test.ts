@@ -15,8 +15,10 @@ import { assertRoutineVirtualShippingSubjectsReadTx, assertRoutineVirtualShippin
   routineVirtualShippingEventDefinition, ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL, inspectRoutineVirtualShippingSubjectsStructure } from '@/migrations/routineVirtualShippingSubjects';
 import { runSupplierOrderPriceRevision, assertSupplierOrderPriceRevisionReady, SUPPLIER_ORDER_PRICE_REVISION_SQL } from '@/migrations/supplierOrderPriceRevision';
 import { REFUND_SUCCESS_NOTICE_PREDECESSORS, REFUND_SUCCESS_NOTICE_SUCCESSORS, REFUND_SUCCESS_NOTICE_SQL,
-  refundSuccessNoticeCommissionedTx } from '@/migrations/refundSuccessNotice';
+  refundSuccessNoticeCommissionedTx, runRefundSuccessNoticeUpgrade } from '@/migrations/refundSuccessNotice';
 import { inspectWithdrawalEffectsUpgrade, runWithdrawalEffectsUpgrade } from '@/migrations/runWithdrawalEffectsUpgrade';
+import { PAID_NOTICE_SQL, paidNoticeAddonUpgradeSql, paidNoticeCommissionedTx, paidNoticeEventGeneration, runPaidNoticeUpgrade } from '@/migrations/paidNotice';
+import { runWriteoffNoticeUpgrade, writeoffNoticeCommissionedTx } from '@/migrations/writeoffNotice';
 import { auditRuntimeBusinessPrivileges } from '@/migrations/auditRuntimeBusinessPrivileges';
 import { auditCustomerFinancialRuntimePrivileges, inspectCustomerFinancialRuntimePrivileges } from '@/migrations/auditCustomerFinancialRuntimePrivileges';
 import { auditManagerRuntimePrivileges } from '@/migrations/auditManagerRuntimePrivileges';
@@ -143,6 +145,45 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('formal virtual R
     expect(await snapshot(f.maintenanceDb)).toEqual(before);
   },90000);
 
+  it('preserves paid commissioning and both independent addon orders through the formal virtual wrapper and DDL-free replay',async()=>{
+    // These are explicit structural commissions on the actual maintenance
+    // LOGIN, not paid business rows or a fabricated successful provider source.
+    const before=await snapshot(f.maintenanceDb),facts=await f.facts(),messages=[...f.messages];
+    for(const addons of [['writeoff','refund'],['refund','writeoff']] as const){
+      const rollback='Owned paid virtual addon order rollback: '+addons.join('/');
+      await expect(f.maintenanceDb.transaction(async tx=>{
+        await tx.execute(sql`COMMENT ON CONSTRAINT soob_event_type_ck ON public.store_order_outbox IS 'owned paid virtual tail comment'`);
+        await tx.execute(sql`COMMENT ON CONSTRAINT ond_subject_ck ON public.order_notification_delivery IS 'owned paid virtual subject comment'`);
+        await tx.execute(sql.raw(PAID_NOTICE_SQL));
+        for(const addon of addons)await tx.execute(sql.raw(paidNoticeAddonUpgradeSql(addon)));
+        expect(await paidNoticeCommissionedTx(tx)).toBe(true);expect(await writeoffNoticeCommissionedTx(tx)).toBe(true);
+        expect(await refundSuccessNoticeCommissionedTx(tx)).toBe(true);
+        const prior=await snapshot(tx);
+        expect(await installCaller(tx)).toMatchObject({applied:true,state:'virtual16'});
+        const [event]=await tx.execute<{definition:string;comment:string|null}>(sql`SELECT pg_catalog.pg_get_constraintdef(oid,false) AS definition,
+          pg_catalog.obj_description(oid,'pg_constraint') AS comment FROM pg_catalog.pg_constraint
+          WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'`);
+        expect(paidNoticeEventGeneration(event.definition)).toMatchObject({paid:true,virtual:true,price:false,
+          addons:addons.map(addon=>addon==='writeoff'?'order.writeoff.notice':'order.refund.success.notice')});
+        expect(event.comment).toBe('owned paid virtual tail comment');
+        const [subject]=await tx.execute<{comment:string|null}>(sql`SELECT pg_catalog.obj_description(oid,'pg_constraint') AS comment
+          FROM pg_catalog.pg_constraint WHERE conrelid='public.order_notification_delivery'::regclass AND conname='ond_subject_ck'`);
+        expect(subject.comment).toBe('owned paid virtual subject comment');
+        const installed=await snapshot(tx);expect(installed.delivery).toEqual(prior.delivery);expect(installed.source).toEqual(prior.source);
+        if(!prior.catalog||typeof prior.catalog!=='object'||!('roles' in prior.catalog))throw Error('Owned role snapshot missing');
+        expect(installed.catalog).toMatchObject({roles:prior.catalog.roles});
+        await tx.execute(sql.raw(PAID_NOTICE_SQL));
+        for(const addon of addons)await tx.execute(sql.raw(paidNoticeAddonUpgradeSql(addon)));
+        expect(await installCaller(tx)).toMatchObject({applied:false,state:'virtual16'});
+        expect(await paidNoticeCommissionedTx(tx)).toBe(true);expect(await writeoffNoticeCommissionedTx(tx)).toBe(true);
+        expect(await refundSuccessNoticeCommissionedTx(tx)).toBe(true);expect(await snapshot(tx)).toEqual(installed);
+        throw Error(rollback);
+      })).rejects.toThrow(rollback);
+      expect(await snapshot(f.maintenanceDb)).toEqual(before);expect(await f.facts()).toEqual(facts);
+      expect(f.messages).toEqual(messages);expect(network).not.toHaveBeenCalled();
+    }
+  },120000);
+
   it.each([false,true])('atomically forwards the real old variant and rolls back every column/index/CHECK: price=%s',async price=>{
     const before=await snapshot(f.maintenanceDb),facts=await f.facts();
     await expect(f.maintenanceDb.transaction(async tx=>{
@@ -263,8 +304,17 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('formal virtual R
   it('preserves Supplier authority through exact16→17 and DB007 successors without narrowing events or replacing repeat OIDs',async()=>{
     await expect(f.appRuntime.db.transaction(tx=>assertSupplierOrderPriceRevisionReady(tx))).rejects.toMatchObject({code:503});
     expect(readFileSync('src/migrations/maintenance/0193_supplier_order_price_revision.sql','utf8')).toBe(SUPPLIER_ORDER_PRICE_REVISION_SQL);
+    // Exercise the real root wrappers on a commissioned PAY generation. The
+    // later DB007 replay must preserve that independent tail, not reinstall an
+    // older, narrower event whitelist. No business facts are authored here.
+    await runPaidNoticeUpgrade(f.maintenanceDb);await runWriteoffNoticeUpgrade(f.maintenanceDb);await runRefundSuccessNoticeUpgrade(f.maintenanceDb);
     await runSupplierOrderPriceRevision(f.maintenanceDb);
     expect(await inspectRoutineVirtualShippingSubjects(f.maintenanceDb,names())).toMatchObject({ready:true,state:'virtual17',failures:[]});
+    const [paidEvent]=await f.maintenanceDb.execute<{definition:string}>(sql`SELECT pg_catalog.pg_get_constraintdef(oid,false) AS definition
+      FROM pg_catalog.pg_constraint WHERE conrelid='public.store_order_outbox'::regclass AND conname='soob_event_type_ck'`);
+    expect(paidNoticeEventGeneration(paidEvent.definition)).toMatchObject({paid:true,virtual:true,price:true,
+      addons:['order.writeoff.notice','order.refund.success.notice']});
+    expect(await f.appRuntime.db.transaction(tx=>paidNoticeCommissionedTx(tx))).toBe(true);
     await f.appRuntime.db.transaction(tx=>assertSupplierOrderPriceRevisionReady(tx));
     const before=await snapshot(f.maintenanceDb);
     await runSupplierOrderPriceRevision(f.maintenanceDb);expect(await install()).toMatchObject({applied:false,state:'virtual17'});expect(await snapshot(f.maintenanceDb)).toEqual(before);

@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { PRODUCT_SAVE_EFFECTS_EVENTS } from './productSaveEffects';
+import { normalizePaidNoticeEventDefinition, paidNoticeEventGeneration, paidNoticeAddonUpgradeSql, NOTICE_MAINTENANCE_BUDGET_SQL } from './paidNotice';
 
 export const WRITEOFF_NOTICE_EVENT = 'order.writeoff.notice';
 const REFUND_EVENT = 'order.refund.success.notice';
@@ -35,6 +36,7 @@ export function writeoffNoticeEventGeneration(value: unknown): WriteoffNoticeEve
 /** Normalize only exact finite successors, retaining refund commissioning.
  * Unknown input is returned unchanged so every older closed reader rejects it. */
 export function normalizeWriteoffNoticeEventDefinition(value: unknown): unknown {
+  value = normalizePaidNoticeEventDefinition(value);
   const generation = writeoffNoticeEventGeneration(value);
   return generation?.addons.includes(WRITEOFF_NOTICE_EVENT)
     ? definition(generation.events.filter(event => event !== WRITEOFF_NOTICE_EVENT)) : value;
@@ -117,12 +119,16 @@ export const WRITEOFF_NOTICE_REFUND_SUCCESS_SQL = writeoffNoticeAddonUpgradeSql(
 export async function writeoffNoticeCommissionedTx(tx: Pick<DbClient, 'execute'>): Promise<boolean> {
   const rows = await tx.execute<{ definition: string; safe: boolean }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
   if (rows.length !== 1 || rows[0].safe !== true) throw new ServiceUnavailableException('核销成功通知数据库合同尚未就绪');
-  const generation = writeoffNoticeEventGeneration(rows[0].definition);
+  const generation = writeoffNoticeEventGeneration(normalizePaidNoticeEventDefinition(rows[0].definition));
   if (generation) return generation.addons.includes(WRITEOFF_NOTICE_EVENT);
   if (INACTIVE_HISTORICAL.includes(rows[0].definition)) return false;
   throw new ServiceUnavailableException('核销成功通知数据库合同发生漂移');
 }
 export async function runWriteoffNoticeUpgrade(db: Pick<DbClient, '$client'>): Promise<void> {
   if (!db.$client) throw Error('Writeoff notice upgrade requires a root database');
-  await db.$client.begin('isolation level read committed', async tx => { await tx.unsafe(WRITEOFF_NOTICE_SQL); });
+  await db.$client.begin('isolation level read committed', async tx => {
+    await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
+    const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
+    await tx.unsafe(paidNoticeEventGeneration(row?.definition)?.paid ? paidNoticeAddonUpgradeSql('writeoff') : WRITEOFF_NOTICE_SQL);
+  });
 }

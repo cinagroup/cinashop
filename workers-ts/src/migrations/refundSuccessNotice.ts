@@ -2,6 +2,7 @@
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
+import { paidNoticeEventGeneration, paidNoticeAddonUpgradeSql, NOTICE_MAINTENANCE_BUDGET_SQL } from './paidNotice';
 import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_REFUND_SUCCESS_SQL } from './writeoffNotice';
 export const REFUND_SUCCESS_NOTICE_PREDECESSORS: readonly string[] = [
   "CHECK (((event_type)::text = ANY ((ARRAY['order.paid'::character varying, 'order.delivery.notice'::character varying, 'order.refund.refused.notice'::character varying, 'order.second_card.advent.notice'::character varying, 'order.second_card.expired.notice'::character varying, 'withdrawal.approved.notice'::character varying, 'withdrawal.refused.notice'::character varying, 'withdrawal.applied.notice'::character varying, 'withdrawal.staff.refresh'::character varying, 'order.presale.fulfillment'::character varying, 'order.pink.success.notice'::character varying, 'product.stock.effects'::character varying, 'product.recycle.effects'::character varying, 'product.save.effects'::character varying])::text[])))",
@@ -90,7 +91,9 @@ export async function refundSuccessNoticeCommissionedTx(tx: Pick<DbClient, 'exec
 export async function runRefundSuccessNoticeUpgrade(db: Pick<DbClient, '$client'>): Promise<void> {
  if (!db.$client) throw Error('Refund success notice upgrade requires a root database');
  await db.$client.begin('isolation level read committed', async tx => {
+  await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
   const [row] = await tx.unsafe<{ definition: string }[]>(REFUND_SUCCESS_NOTICE_CATALOG_SQL);
-  await tx.unsafe(typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? WRITEOFF_NOTICE_REFUND_SUCCESS_SQL : REFUND_SUCCESS_NOTICE_SQL);
+  await tx.unsafe(paidNoticeEventGeneration(row?.definition)?.paid ? paidNoticeAddonUpgradeSql('refund')
+    : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? WRITEOFF_NOTICE_REFUND_SUCCESS_SQL : REFUND_SUCCESS_NOTICE_SQL);
  });
 }

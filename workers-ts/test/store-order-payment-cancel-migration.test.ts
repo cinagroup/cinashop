@@ -41,7 +41,7 @@ describe("订单支付与取消 PostgreSQL 迁移", () => {
     expect(payment).toContain("const payCents = decimalToCents(order.payPrice);");
     expect(payment).toContain("await debitRequiredOrderIntegral(tx, order, now);");
     expect(payment).toContain('eventKey: "order_pay_integral"');
-    expect(payment).toContain("const result = await applyStoreOrderBalancePayment(this.container, { uid, orderId });");
+    expect(payment).toContain("const result = await applyStoreOrderBalancePayment(this.container, { uid, orderId, routineNotice: this.env });");
     expect(payment).not.toContain("余额不足 (并发冲突)");
   });
 

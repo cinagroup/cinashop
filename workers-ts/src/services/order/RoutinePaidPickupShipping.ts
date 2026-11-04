@@ -4,9 +4,10 @@ import type { DbClient } from '@/lib/di';
 import { storeOrder, storeOrderCartInfo, storeOrderOutbox, systemConfig } from '@/models/schema';
 import { normalizeConfigScalar } from '@/utils/config';
 import { amountToCents } from '@/services/payment/RefundGateway';
-import { shippingInteger, shippingObject, shippingSame, routineShippingUnavailable } from '@/services/payment/RoutineShippingAccount';
+import { shippingInteger, shippingSame, routineShippingUnavailable } from '@/services/payment/RoutineShippingAccount';
 import { routineShippingItemDescription } from '@/services/payment/RoutineShippingItems';
 import { createImmutableDelivery, type OrderNotificationOutboxEvent } from './OrderNotificationOutboxService';
+import { isOrderPaidSourcePayload } from './OrderPaidNoticeCodec';
 
 export const ROUTINE_PAID_PICKUP_MARK='paid_pickup_shipping';
 type Order=typeof storeOrder.$inferSelect;
@@ -45,7 +46,8 @@ export async function readRoutinePaidPickupSource(tx:DbClient,rootId:number,stat
     eq(storeOrderOutbox.eventType,'order.paid'))).limit(2).for('share',{noWait:true});
   const event=events[0];
   if(events.length!==1||!event||event.aggregateType!=='order'||event.eventKey!==`order.paid:${parent.id}`||event.status!==state)return routineShippingUnavailable();
-  const payload=shippingObject(event.payload,['orderId','orderNo']);
+  if(!isOrderPaidSourcePayload(event.payload))return routineShippingUnavailable();
+  const payload=event.payload;
   if(payload.orderId!==parent.id||payload.orderNo!==parent.orderId)return routineShippingUnavailable();
   const carts=await tx.select().from(storeOrderCartInfo).where(inArray(storeOrderCartInfo.oid,leaves.map(o=>o.id)))
     .orderBy(asc(storeOrderCartInfo.id)).limit(201).for('share',{noWait:true});
