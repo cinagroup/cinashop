@@ -1,3 +1,4 @@
+import { membershipSubscriptionTransientSqlState } from './RoutineSubscriptionMembershipEvidenceCodec';
 import { parseRoutineSubscriptionAttemptForActor as parseAttempt, parseRoutineSubscriptionResult as parseReceipt,
   type RoutineSubscriptionAttemptPayload as AttemptPayload, type RoutineSubscriptionAttempt as Attempt,
   type RoutineSubscriptionResult as Receipt } from './RoutineSubscriptionDispatchEvidenceCodec';
@@ -21,9 +22,9 @@ import { prepareRoutineSubscriptionDeliveryNotice, prepareRoutineSubscriptionDel
   assertRoutineSubscriptionDeliveryNoticeTx } from './RoutineSubscriptionDeliveryNotice';
 import { getRoutineSubscriptionAccessToken } from './RoutineSubscriptionAccessToken';
 import { postRoutineSubscription, assertRoutineSubscriptionProviderResult } from './RoutineSubscriptionProvider';
-import { routineSubscriptionNoticeKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
 
-type Delivery = typeof orderNotificationDelivery.$inferSelect;
+type Delivery = typeof orderNotificationDelivery.$inferSelect & { subjectDomain?: 'membership'; subjectId?: number };
 export interface RoutineSubscriptionClaim { id: number; eventKey: string; leaseToken: string }
 const sendSlot = Symbol('routine.subscription.send-authority.v1');
 export interface RoutineSubscriptionSendAuthority { readonly [sendSlot]: true }
@@ -62,7 +63,8 @@ export async function routineSubscriptionDeliveryCommissioned(container: Contain
 function identity(row: Delivery) {
   return { id: row.id, outboxId: row.outboxId, eventKey: row.eventKey, orderId: row.orderId,
     withdrawalId: row.withdrawalId, userId: row.userId, noticeMark: row.noticeMark, channel: row.channel,
-    target: row.target, templateCode: row.templateCode, payload: row.payload, addTime: row.addTime };
+    target: row.target, templateCode: row.templateCode, payload: row.payload, addTime: row.addTime,
+    ...(routineSubscriptionMembershipKey(row.eventKey) ? { subjectDomain: row.subjectDomain, subjectId: row.subjectId } : {}) };
 }
 const sourceKey = (env: Env, c: Readonly<RoutineSubscriptionClaim>) => subscriptionMac(env, 'delivery-source-key', [c.eventKey, 'wechat_routine']);
 const intentDigest = (env: Env, row: Delivery) => subscriptionMac(env, 'delivery-intent', identity(row));
@@ -70,8 +72,16 @@ async function claimed(tx: DbClient, c: Readonly<RoutineSubscriptionClaim>) {
   const [r] = await tx.select().from(orderNotificationDelivery).where(eq(orderNotificationDelivery.id, c.id)).limit(1).for('update', { noWait: true });
   const now = await routineSubscriptionClockTx(tx);
   if (!r || r.eventKey !== c.eventKey || r.channel !== 'wechat_routine' || r.status !== 'PROCESSING'
-    || r.leaseToken !== c.leaseToken || r.leaseUntil <= now || r.leaseUntil > now + 180 || !subscriptionInteger(r.orderId) || r.withdrawalId !== null)
+    || r.leaseToken !== c.leaseToken || r.leaseUntil <= now || r.leaseUntil > now + 180 || r.withdrawalId !== null
+    || (routineSubscriptionMembershipKey(r.eventKey) ? r.orderId !== null : !subscriptionInteger(r.orderId)))
     return routineSubscriptionUnavailable();
+  if (routineSubscriptionMembershipKey(r.eventKey)) {
+    const rows = await tx.execute<{ subjectDomain: string; subjectId: number }>(sql`SELECT subject_domain AS "subjectDomain",subject_id AS "subjectId"
+      FROM public.order_notification_delivery WHERE id=${r.id} LIMIT 2`), subject = rows[0];
+    if (rows.length !== 1 || subject.subjectDomain !== 'membership' || !subscriptionInteger(subject.subjectId)
+      || r.eventKey !== `membership.pay.success.notice:${subject.subjectId}`) return routineSubscriptionUnavailable();
+    return { ...r, subjectDomain: 'membership' as const, subjectId: subject.subjectId };
+  }
   return r;
 }
 async function history(tx: DbClient, env: Env, c: Readonly<RoutineSubscriptionClaim>) {
@@ -116,10 +126,32 @@ async function project(tx: DbClient, c: Readonly<RoutineSubscriptionClaim>, stat
     eq(orderNotificationDelivery.status, 'PROCESSING'), eq(orderNotificationDelivery.leaseToken, c.leaseToken))).returning({ id: orderNotificationDelivery.id });
   if (!updated) return routineSubscriptionUnavailable();
 }
+/** Only a failed pre-attempt membership SQL read can enter here. Re-read the
+ * complete semantic attempt history under the still-owned claim before undoing
+ * its claim-only counter; no immutable attempt or provider POST is erased. */
+async function retryMembershipSourceSqlTx(tx: DbClient, env: Env, c: Readonly<RoutineSubscriptionClaim>, baseline: Awaited<ReturnType<typeof history>>) {
+  if (!routineSubscriptionMembershipKey(c.eventKey) || !await assertRoutineSubscriptionDeliveryReadTx(tx)) return false;
+  const row = await claimed(tx, c), current = await history(tx, env, c), count = baseline.attempts.length;
+  if (!subscriptionSame(current, baseline) || count >= 5 || row.attemptCount !== count + 1 || count === 0 && row.replayCount !== 0) return false;
+  const code = baseline.results.at(-1)?.payload.result.code;
+  if (count > 0 && (code === undefined || code === 0 || !retryable(code))) return false;
+  const now = await routineSubscriptionClockTx(tx);
+  const [updated] = await tx.update(orderNotificationDelivery).set({ status: 'RETRYABLE', availableTime: now + 60,
+    attemptCount: count, leaseToken: '', leaseUntil: 0, responseCode: '', providerReference: '', providerRequestId: '', sentTime: 0,
+    lastError: 'routine_membership_source_sql_transient', updateTime: now }).where(and(eq(orderNotificationDelivery.id, c.id),
+    eq(orderNotificationDelivery.eventKey, c.eventKey), eq(orderNotificationDelivery.channel, 'wechat_routine'),
+    eq(orderNotificationDelivery.status, 'PROCESSING'), eq(orderNotificationDelivery.leaseToken, c.leaseToken),
+    eq(orderNotificationDelivery.attemptCount, count + 1), eq(orderNotificationDelivery.dispatchCount, row.dispatchCount),
+    eq(orderNotificationDelivery.replayCount, row.replayCount), sql`${orderNotificationDelivery.leaseUntil}>${now}`,
+    sql`${orderNotificationDelivery.orderId} IS NULL AND ${orderNotificationDelivery.withdrawalId} IS NULL
+      AND subject_domain='membership' AND subject_id=${'subjectId' in row ? row.subjectId : 0}`)).returning({ id: orderNotificationDelivery.id });
+  return Boolean(updated);
+}
 export async function processRoutineSubscriptionDelivery(container: Container, env: Env, raw: RoutineSubscriptionClaim, fetcher: typeof fetch = fetch):
 Promise<'sent' | 'retry-scheduled' | 'dead' | 'unknown'> {
   root(container); const c = claim(raw), signing = captureRoutineSubscriptionDeliveryEnv(env);
-  let uncertain = true;
+  let uncertain = true, membershipSourceSql = false;
+  let retryBaseline: Awaited<ReturnType<typeof history>> | undefined;
   try {
     const prior = await withTx(container, tx => history(tx, signing, c));
     const last = prior.results.at(-1), code = last?.payload.result.code;
@@ -134,7 +166,10 @@ Promise<'sent' | 'retry-scheduled' | 'dead' | 'unknown'> {
     }
     // History is complete and every preceding POST has an explicit rejection.
     uncertain = false;
+    retryBaseline = prior;
+    membershipSourceSql = routineSubscriptionMembershipKey(c.eventKey);
     const source = await prepareRoutineSubscriptionDeliveryNotice(container, signing, { deliveryId: c.id, eventKey: c.eventKey });
+    membershipSourceSql = false; // Token/network and durable admission are not this SQL-only window.
     const token = await getRoutineSubscriptionAccessToken(container, signing, source.account, { fetcher, forceRefresh: code !== undefined && invalidToken(code) });
     uncertain = true; // A failed commit acknowledgement may have saved the attempt.
     const admission = await withTx(container, async tx => {
@@ -200,7 +235,15 @@ Promise<'sent' | 'retry-scheduled' | 'dead' | 'unknown'> {
       await project(tx, c, status, now, String(response.code), resultId, admitted.attempt_no);
       return status === 'SENT' ? 'sent' as const : status === 'RETRYABLE' ? 'retry-scheduled' as const : 'dead' as const;
     });
-  } catch {
+  } catch (error) {
+    if (!uncertain && membershipSourceSql && retryBaseline && membershipSubscriptionTransientSqlState(error)) {
+      // Any failed confirmation remains UNKNOWN. Never turn a possible saved
+      // attempt, expired/replaced lease or incomplete history into another POST.
+      uncertain = true;
+      try {
+        if (await withTx(container, tx => retryMembershipSourceSqlTx(tx, signing, c, retryBaseline!))) return 'retry-scheduled';
+      } catch { /* The ordinary conservative UNKNOWN projection below remains. */ }
+    }
     const status = uncertain ? 'UNKNOWN' : 'DEAD';
     await withTx(container, async tx => {
       if (!await assertRoutineSubscriptionDeliveryReadTx(tx)) return routineSubscriptionUnavailable();

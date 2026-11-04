@@ -1,5 +1,6 @@
 import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_CATALOG_SQL, writeoffNoticeAddonUpgradeSql } from './writeoffNotice';
 import { paidNoticeEventGeneration, paidNoticeAddonUpgradeSql, NOTICE_MAINTENANCE_BUDGET_SQL } from './paidNotice';
+import { MEMBERSHIP_PAID_SUBJECT_DEFINITION } from './membershipPaidNoticeContract';
 /** Independent 0193 owner maintenance. No bootstrap, rows, roles or grants. */
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
@@ -106,10 +107,13 @@ const noticePriceVirtualGuard = `
  END IF;`;
 const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', noticePriceVirtualGuard);
 const paidPriceRevisionSql = paidNoticeAddonUpgradeSql('price', noticePriceVirtualGuard);
+const membershipPriceRevisionSql = paidNoticeAddonUpgradeSql('price',noticePriceVirtualGuard.replace(
+  ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''"),MEMBERSHIP_PAID_SUBJECT_DEFINITION.replaceAll("'","''")),true);
 export async function installSupplierOrderPriceRevision(tx: Pick<DbClient, 'execute'>): Promise<void> {
   await tx.execute(sql.raw(NOTICE_MAINTENANCE_BUDGET_SQL));
   const [row] = await tx.execute<{ definition: string }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
-  await tx.execute(sql.raw(paidNoticeEventGeneration(row?.definition)?.paid ? paidPriceRevisionSql
+  const generation = paidNoticeEventGeneration(row?.definition);
+  await tx.execute(sql.raw(generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
     : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL));
 }
 export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'>): Promise<void> {
@@ -117,7 +121,8 @@ export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'
   await db.$client.begin('isolation level read committed', async tx => {
     await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
-    await tx.unsafe(paidNoticeEventGeneration(row?.definition)?.paid ? paidPriceRevisionSql
+    const generation = paidNoticeEventGeneration(row?.definition);
+    await tx.unsafe(generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
       : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL);
   });
 }

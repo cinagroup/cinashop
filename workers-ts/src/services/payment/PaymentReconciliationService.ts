@@ -1,3 +1,4 @@
+import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';
 import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
   and,
@@ -975,7 +976,9 @@ export class PaymentReconciliationService {
       expectedAmountCents: result.amountCents,
       authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "membership"),
       routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
+      routineNotice:{APP_KEY:this.env.APP_KEY},
     });
+    await dispatchCommittedMembershipPaidNotice(this.container,this.env,settled.noticeEventKey);
     await dispatchCommittedRoutineVirtualShipping(this.container,this.env,settled.shippingEventKey);
     return settlementOutcome("membership", settled.outcome);
   }

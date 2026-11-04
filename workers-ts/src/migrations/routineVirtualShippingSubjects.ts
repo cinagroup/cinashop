@@ -5,6 +5,8 @@ import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { PRODUCT_SAVE_EFFECTS_EVENTS } from './productSaveEffects';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
+import { MEMBERSHIP_PAID_SUBJECT_DEFINITION } from './membershipPaidNoticeContract';
+import { paidNoticeEventGeneration } from './paidNotice';
 import type { RoutineShippingNames, RoutineShippingCatalog } from './routineShipping';
 
 type Query = Pick<DbClient, 'execute'>;
@@ -122,6 +124,9 @@ export const ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL = `WITH
 
 /** Exact classification is also used by DB-007 and Supplier's successor port. */
 export function classifyRoutineVirtualShippingSubjects(row: Record<string, unknown> | undefined): RoutineVirtualShippingSubjectsStructure {
+  const membership = paidNoticeEventGeneration(row?.event_definition)?.membership === true;
+  if (row && membership) row = { ...row, subject_definition: row.subject_definition === MEMBERSHIP_PAID_SUBJECT_DEFINITION
+    ? ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION : 'membership subject successor drift' };
   if (row) row = { ...row, event_definition: normalizeWriteoffNoticeEventDefinition(row.event_definition) };
   const successorIndex = REFUND_SUCCESS_NOTICE_SUCCESSORS.indexOf(String(row?.event_definition));
   if (successorIndex >= 0) row = { ...row, event_definition: REFUND_SUCCESS_NOTICE_PREDECESSORS[successorIndex] };

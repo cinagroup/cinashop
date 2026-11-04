@@ -12,20 +12,20 @@ import { amountToCents } from '@/services/payment/RefundGateway';
 import { subscriptionMac, subscriptionSame } from '@/services/wechat/RoutineSubscriptionAccount';
 
 type Signing = Pick<Env, 'APP_KEY'>;
-type Source = { domain: 'store_order'; id: number; uid: number; orderNo: string; transactionId: string; amount: number };
+type Source = { domain: 'store_order' | 'membership'; id: number; uid: number; orderNo: string; transactionId: string; amount: number };
 type Snapshot = { id: number; uid: number; order_no: string; price: string; paid: number; pay_type: string;
   trade_no: string; shape: boolean; xmin: string; ctid: string };
 type Identity = { database: string; database_oid: string; pid: number; role: string; session: string; role_oid: string; ready: boolean };
 const unavailable = () => new ServiceUnavailableException('原生App与小程序原账号订阅通知付款身份额外校验尚未完整就绪');
 const positive = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) > 0 && Number(v) <= 2147483647;
 
-function source(original: RoutineOriginalEvidence): Readonly<Source> {
+function source(original: RoutineOriginalEvidence, domain: Source['domain']): Readonly<Source> {
   const b = original.payload.binding, f = original.payload.observation.facts;
-  if (b.state !== 'bound' || b.local.domain !== 'store_order' || !positive(b.local.orderId) || !positive(b.local.buyerUid) || !positive(b.local.amountCents)
+  if (b.state !== 'bound' || b.local.domain !== domain || !positive(b.local.orderId) || !positive(b.local.buyerUid) || !positive(b.local.amountCents)
     || b.local.orderNo !== f.orderNo || b.local.amountCents !== f.amountCents
     || b.local.tradeNo !== '' && b.local.tradeNo !== f.transactionId || b.local.paid === 1 && b.local.payType !== 'weixin'
     || f.currency !== 'CNY' || f.tradeState !== 'SUCCESS' || f.tradeType !== 'JSAPI' || !f.payerId) throw unavailable();
-  return Object.freeze({ domain: b.local.domain, id: b.local.orderId, uid: b.local.buyerUid,
+  return Object.freeze({ domain, id: b.local.orderId, uid: b.local.buyerUid,
     orderNo: f.orderNo, transactionId: f.transactionId, amount: f.amountCents });
 }
 
@@ -33,7 +33,8 @@ async function snapshot(tx: DbClient, s: Readonly<Source>): Promise<Snapshot> {
   // Identifiers come only from the closed original domain. The caller has
   // already locked this physical source in its business/root/child order; do
   // not acquire another row lock after entering the payment boundary.
-  const table = 'public.store_order', price = 'pay_price', payType = 'pay_type', shape = 'pid IN (0,-1)';
+  const table = s.domain === 'membership' ? 'public.other_order' : 'public.store_order', price = 'pay_price', payType = 'pay_type',
+    shape = s.domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : 'pid IN (0,-1)';
   const [resolution] = await tx.execute<{ ready: boolean }>(sql`SELECT
     pg_catalog.to_regclass(${table.slice('public.'.length)})=pg_catalog.to_regclass(${table}) AS ready`);
   if (resolution?.ready !== true) throw unavailable();
@@ -89,12 +90,19 @@ async function assertCurrentOriginalSet(tx: DbClient, env: Signing, s: Readonly<
  * is only a local App PostgreSQL verifier; no refund row/profile is required. */
 export async function assertNativeAppExcludedForRoutineSubscriptionTx(business: DbClient, env: Env,
   proof: RoutineSubscriptionOriginal): Promise<void> {
+  return assertExcluded(business, env, proof, 'store_order');
+}
+export async function assertNativeAppExcludedForRoutineMembershipSubscriptionTx(business: DbClient, env: Env,
+  proof: RoutineSubscriptionOriginal): Promise<void> {
+  return assertExcluded(business, env, proof, 'membership');
+}
+async function assertExcluded(business: DbClient, env: Env, proof: RoutineSubscriptionOriginal, domain: Source['domain']): Promise<void> {
   // Deployment selection and original signature are detached before any await.
   const signing = { APP_KEY: env.APP_KEY }, binding = env.HYPERDRIVE?.connectionString;
   let verifier: DbClient | undefined;
   try {
     if (Object.hasOwn(business, '$client')) throw unavailable();
-    const original = assertRoutineSubscriptionOriginalTx(business, proof), parsed = parseRoutineOriginalEvidence(signing, original.evidence), s = source(parsed);
+    const original = assertRoutineSubscriptionOriginalTx(business, proof), parsed = parseRoutineOriginalEvidence(signing, original.evidence), s = source(parsed, domain);
     if (!await assertRoutineSubscriptionReadTx(business)) throw unavailable();
     const catalog = await inspectRoutineSubscriptionCatalog(business), b = catalog.binding;
     if (!catalog.ready || !b?.app || !b.appOid) throw unavailable();

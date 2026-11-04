@@ -60,6 +60,7 @@ export interface OrderNotificationOutboxEvent {
   id: number;
   eventKey: string;
   aggregateId: number;
+  aggregateType?: string;
   eventType: string;
   payload: OrderOutboxPayload;
   addTime?: number;

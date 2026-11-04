@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '@/lib/di';
 import { ServiceUnavailableException } from '@/utils/errors';
 import { PRODUCT_SAVE_EFFECTS_EVENTS } from './productSaveEffects';
+import { MEMBERSHIP_PAID_EVENTS } from './membershipPaidNoticeContract';
 export const PAID_NOTICE_EVENT = 'order.pay.success.notice';
 /** Bound even the first catalog-routing read. This changes only transaction
  * time budgets, preserves stricter callers and grants no maintenance authority. */
@@ -14,6 +15,7 @@ export const NOTICE_MAINTENANCE_BUDGET_SQL = String.raw`SELECT pg_catalog.set_co
 const REFUND = 'order.refund.success.notice', WRITEOFF = 'order.writeoff.notice', PRICE = 'order.price.revision';
 const VIRTUAL = ['recharge.paid.shipping','membership.paid.shipping'] as const;
 export interface PaidNoticeGeneration { readonly price:boolean; readonly virtual:boolean; readonly paid:boolean;
+  readonly membership?:boolean;
   readonly addons:readonly string[]; readonly events:readonly string[]; readonly definition:string }
 const definition=(events:readonly string[])=>`CHECK (((event_type)::text = ANY ((ARRAY[${events.map(e=>`'${e}'::character varying`).join(', ')}])::text[])))`;
 export const PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.freeze([false,true].flatMap(virtual=>[false,true].flatMap(price=>
@@ -21,11 +23,17 @@ export const PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.free
     const events=Object.freeze([...PRODUCT_SAVE_EFFECTS_EVENTS,...(price?[PRICE]:[]),...(virtual?VIRTUAL:[]),...addons,...(paid?[PAID_NOTICE_EVENT]:[])]);
     return Object.freeze({price,virtual,paid,addons:Object.freeze([...addons]),events,definition:definition(events)});
   })))));
+/** Membership requires the formally installed domain columns. Existing forty
+ * generations and standalone 0200 SQL keep their byte-identical definitions. */
+export const MEMBERSHIP_PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.freeze(PAID_NOTICE_GENERATIONS.filter(g=>g.virtual).map(g=>{
+  const events=Object.freeze([...g.events,...MEMBERSHIP_PAID_EVENTS]);
+  return Object.freeze({...g,membership:true,events,definition:definition(events)});
+}));
 export function paidNoticeEventGeneration(value:unknown):PaidNoticeGeneration|null {
-  return typeof value==='string'?PAID_NOTICE_GENERATIONS.find(g=>g.definition===value)??null:null;
+  return typeof value==='string'?[...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS].find(g=>g.definition===value)??null:null;
 }
 export function normalizePaidNoticeEventDefinition(value:unknown):unknown {
-  const g=paidNoticeEventGeneration(value);return g?.paid?definition(g.events.filter(e=>e!==PAID_NOTICE_EVENT)):value;
+  const g=paidNoticeEventGeneration(value);return g&&(g.paid||g.membership)?definition(g.events.filter(e=>e!==PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(e))):value;
 }
 export const PAID_NOTICE_CATALOG_SQL = String.raw`SELECT pg_catalog.pg_get_constraintdef(k.oid,false) AS definition,
   k.contype='c' AND k.convalidated AND NOT k.condeferrable AND NOT k.condeferred
@@ -47,13 +55,18 @@ const literal = (value: string) => "'" + value.replaceAll("'", "''") + "'";
  * successors can enter their addon branches; a raced unknown catalog is rejected
  * again under the same ACCESS EXCLUSIVE lock. The optional virtual guard is
  * fixed trusted SQL supplied by the Supplier wrapper, never input. */
-export function paidNoticeAddonUpgradeSql(addon: 'paid' | 'writeoff' | 'refund' | 'price', virtualGuard = ''): string {
-  const sources = addon === 'paid' ? PAID_NOTICE_GENERATIONS : PAID_NOTICE_GENERATIONS.filter(g => g.paid);
+export function paidNoticeAddonUpgradeSql(addon: 'paid' | 'writeoff' | 'refund' | 'price' | 'membership', virtualGuard = '', includeMembership = false): string {
+  const all = includeMembership ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS] : PAID_NOTICE_GENERATIONS;
+  const sources = addon === 'membership' ? all.filter(g=>g.virtual) : addon === 'paid' ? all : all.filter(g => g.paid || g.membership);
   const cases = sources.map(generation => {
-    const enabled = addon === 'price' ? generation.price : addon === 'paid' ? generation.paid : generation.addons.includes(addon === 'refund' ? REFUND : WRITEOFF);
-    const events = addon === 'price'
-      ? [...PRODUCT_SAVE_EFFECTS_EVENTS, PRICE, ...(generation.virtual ? VIRTUAL : []), ...generation.addons, ...(generation.paid ? [PAID_NOTICE_EVENT] : [])]
-      : [...generation.events.filter(event => event !== PAID_NOTICE_EVENT), ...(addon === 'paid' ? [] : [addon === 'refund' ? REFUND : WRITEOFF]), PAID_NOTICE_EVENT];
+    const enabled = addon === 'membership' ? generation.membership===true : addon === 'price' ? generation.price : addon === 'paid' ? generation.paid : generation.addons.includes(addon === 'refund' ? REFUND : WRITEOFF);
+    const memberTail = generation.membership ? MEMBERSHIP_PAID_EVENTS : [];
+    const events = addon === 'membership' ? [...generation.events.filter(e=>!MEMBERSHIP_PAID_EVENTS.includes(e)),...MEMBERSHIP_PAID_EVENTS]
+      : addon === 'price'
+      ? [...PRODUCT_SAVE_EFFECTS_EVENTS, PRICE, ...(generation.virtual ? VIRTUAL : []), ...generation.addons, ...(generation.paid ? [PAID_NOTICE_EVENT] : []),...memberTail]
+      : [...generation.events.filter(event => event !== PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(event)),
+        ...(addon === 'paid' ? [] : [addon === 'refund' ? REFUND : WRITEOFF]),
+        ...(addon === 'paid'||generation.paid ? [PAID_NOTICE_EVENT] : []),...memberTail];
     return ` WHEN ${literal(generation.definition)} THEN already_enabled:=${enabled}; virtual_subjects:=${generation.virtual}; events:=${literal(events.map(literal).join(','))};`;
   }).join('\n');
   return `-- Explicit bounded ${addon} event commissioning; no business DML or grants.
@@ -111,5 +124,10 @@ export async function paidNoticeCommissionedTx(tx:Pick<DbClient,'execute'>):Prom
 }
 export async function runPaidNoticeUpgrade(db:Pick<DbClient,'$client'>):Promise<void>{
   if(!db.$client)throw Error('Paid notice upgrade requires a root database');
-  await db.$client.begin('isolation level read committed',async tx=>{await tx.unsafe(PAID_NOTICE_SQL);});
+  await db.$client.begin('isolation level read committed',async tx=>{
+    await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
+    const rows=await tx.unsafe(PAID_NOTICE_CATALOG_SQL);
+    await tx.unsafe(rows.length===1&&paidNoticeEventGeneration(rows[0].definition)?.membership
+      ?paidNoticeAddonUpgradeSql('paid','',true):PAID_NOTICE_SQL);
+  });
 }

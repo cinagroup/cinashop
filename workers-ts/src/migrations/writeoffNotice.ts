@@ -129,6 +129,8 @@ export async function runWriteoffNoticeUpgrade(db: Pick<DbClient, '$client'>): P
   await db.$client.begin('isolation level read committed', async tx => {
     await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
-    await tx.unsafe(paidNoticeEventGeneration(row?.definition)?.paid ? paidNoticeAddonUpgradeSql('writeoff') : WRITEOFF_NOTICE_SQL);
+    const generation = paidNoticeEventGeneration(row?.definition);
+    await tx.unsafe(generation?.membership ? paidNoticeAddonUpgradeSql('writeoff','',true)
+      : generation?.paid ? paidNoticeAddonUpgradeSql('writeoff') : WRITEOFF_NOTICE_SQL);
   });
 }

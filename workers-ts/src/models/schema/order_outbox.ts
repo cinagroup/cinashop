@@ -12,6 +12,8 @@ import type { RoutineSubscriptionMaterializedRefundSuccessBusiness, RoutineSubsc
 import type { RoutineSubscriptionPinkRequest, RoutineSubscriptionPinkUnavailable } from '@/services/wechat/RoutineSubscriptionPinkRequest';
 import type { RoutineSubscriptionPaidRequest, RoutineSubscriptionPaidUnavailable } from '@/services/wechat/RoutineSubscriptionPaidRequest';
 import type { PaidNoticeBusiness, PaidNoticeAdmission } from '@/services/order/OrderPaidNoticeCodec';
+import type { MembershipPaidNoticeBusiness } from '@/services/order/MembershipPaidNoticeCodec';
+import type { RoutineSubscriptionMembershipRequest, RoutineSubscriptionMembershipUnavailable } from '@/services/wechat/RoutineSubscriptionMembershipRequest';
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
 import type { ProductSaveEffectsPayload } from '@/services/product/ProductSaveEffects';
@@ -126,6 +128,8 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | (MembershipPaidNoticeBusiness & { routineSubscriptionRequest?: RoutineSubscriptionMembershipRequest | RoutineSubscriptionMembershipUnavailable })
+  | { scope: {database:string;databaseOid:string;maintenance:string;maintenanceOid:string}; business: MembershipPaidNoticeBusiness; signature: string }
   | OrderPaidNoticeOutboxPayload
   | SupplierOrderPriceRevisionPayload
   | ProductSaveEffectsPayload

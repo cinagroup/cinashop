@@ -1,3 +1,7 @@
+import { MEMBERSHIP_PAID_NOTICE_EVENT, processMembershipPaidNoticeTx } from './MembershipPaidNoticeService';
+import { membershipPaidNoticeSubjectId } from './MembershipPaidNoticeCodec';
+import { prepareMembershipPaidNoticeTx } from '@/migrations/membershipPaidNotice';
+import { prepareRoutineSubscriptionMembershipNoticeStagingTx } from '@/services/wechat/RoutineSubscriptionMembershipRequest';
 import {
   and,
   asc,
@@ -159,7 +163,8 @@ export function isOrderNotificationOutboxMessage(
     Number.isSafeInteger(message.outboxId) &&
     message.outboxId > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pay\.success\.notice|order\.writeoff\.notice|order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    /^(?:order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:membership\.pay\.success\.notice|order\.pay\.success\.notice|order\.writeoff\.notice|order\.pink\.success\.notice|order\.refund\.(?:refused|success)\.notice|withdrawal\.(?:applied|approved|refused)\.notice|withdrawal\.staff\.refresh):[1-9]\d*|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|product\.(?:stock|recycle|save)\.effects:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12})$/.test(message.eventKey)
+    && (!message.eventKey.startsWith('membership.') || membershipPaidNoticeSubjectId(message.eventKey)!==null)
   );
 }
 
@@ -186,6 +191,7 @@ function isNotificationEventType(eventType: string): boolean {
     || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT
     || eventType === WRITEOFF_NOTICE_EVENT
     || eventType === PAID_NOTICE_EVENT
+    || eventType === MEMBERSHIP_PAID_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_ADVENT_NOTICE_EVENT
     || eventType === ORDER_SECOND_CARD_EXPIRED_NOTICE_EVENT;
 }
@@ -635,8 +641,11 @@ export class OrderOutboxService {
     const now = Math.floor(Date.now() / 1000);
     const outcome = await withTx(this.container, async (tx) => {
       let noticeGap: WithdrawalWecomGap | WriteoffNoticeInboxGap | null | undefined = null;
-      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT, PAID_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
-      const routineReady = versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
+      const versionedRoutine = [ORDER_DELIVERY_NOTICE_EVENT, ORDER_REFUND_REFUSED_NOTICE_EVENT, ORDER_REFUND_SUCCESS_NOTICE_EVENT, ORDER_PINK_SUCCESS_NOTICE_EVENT, PAID_NOTICE_EVENT, MEMBERSHIP_PAID_NOTICE_EVENT].includes(claim.eventType) && Object.hasOwn(claim.payload, 'routineSubscriptionRequest');
+      const memberNotice = claim.eventType === MEMBERSHIP_PAID_NOTICE_EVENT;
+      const routineReady = memberNotice ? await prepareRoutineSubscriptionMembershipNoticeStagingTx(tx)
+        : versionedRoutine ? await prepareRoutineSubscriptionNoticeStagingTx(tx) : false;
+      if (memberNotice && !await prepareMembershipPaidNoticeTx(tx)) throw Error('会员付款通知尚未完成显式维护');
       const eventRows = await tx
         .select()
         .from(storeOrderOutbox)
@@ -785,8 +794,10 @@ export class OrderOutboxService {
         await processSupplierOrderPriceRevision(tx, event, now);
       } else if (event.eventType === WRITEOFF_NOTICE_EVENT) {
         noticeGap = await processOrderWriteoffNoticeTx(tx, event, now);
-      } else if (event.eventType === PAID_NOTICE_EVENT) {
-        const staged = await processPaidBuyerNoticeTx(tx, event, now, { env: routineEnv, earlyReady: routineReady });
+      } else if (event.eventType === PAID_NOTICE_EVENT || event.eventType === MEMBERSHIP_PAID_NOTICE_EVENT) {
+        const staged = event.eventType === MEMBERSHIP_PAID_NOTICE_EVENT
+          ? await processMembershipPaidNoticeTx(tx, event, now, { env: routineEnv, earlyReady: routineReady })
+          : await processPaidBuyerNoticeTx(tx, event, now, { env: routineEnv, earlyReady: routineReady });
         noticeGap = staged.gap;
         if (staged.deferred) {
           const disposition = outboxFailureDisposition(claim.attemptCount, now);
@@ -833,7 +844,7 @@ export class OrderOutboxService {
     });
     if (outcome === "deferred") return "deferred";
     if (outcome) emitOperationalEvent("warn", {
-      event: claim.eventType === PAID_NOTICE_EVENT ? 'paid_notice_inbox_gap' : claim.eventType === WRITEOFF_NOTICE_EVENT ? "writeoff_inbox_gap" : "withdrawal_wecom_robot_gap",
+      event: [PAID_NOTICE_EVENT,MEMBERSHIP_PAID_NOTICE_EVENT].includes(claim.eventType) ? 'paid_notice_inbox_gap' : claim.eventType === WRITEOFF_NOTICE_EVENT ? "writeoff_inbox_gap" : "withdrawal_wecom_robot_gap",
       component: "queue", operation: "notification_delivery",
       outcome: "failure", errorCode: outcome, eventKey: claim.eventKey, resourceCount: 1,
     });

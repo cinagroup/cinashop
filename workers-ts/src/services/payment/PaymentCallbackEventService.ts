@@ -1,3 +1,4 @@
+import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';
 import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
   and,
@@ -494,7 +495,9 @@ export class PaymentCallbackEventService {
       expectedAmountCents: callback.amountCents,
       authorizeBeforePayment: tx => original(tx, 'membership'),
       routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
+      routineNotice:{APP_KEY:this.env.APP_KEY},
     });
+    await dispatchCommittedMembershipPaidNotice(this.container,this.env,result.noticeEventKey);
     await dispatchCommittedRoutineVirtualShipping(this.container,this.env,result.shippingEventKey);
     return domainOutcome("membership", result.outcome);
   }

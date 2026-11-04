@@ -1,3 +1,6 @@
+import { prepareMembershipPaidNoticeTx } from '@/migrations/membershipPaidNotice';
+import { membershipPaidNoticeSubjectId } from './MembershipPaidNoticeCodec';
+import { assertMembershipPaidDeliveryTx } from './MembershipPaidNoticeService';
 import { assertWriteoffSmsPayload } from './OrderWriteoffNoticeCodec';
 import { and, asc, eq, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import type { Env, OrderMessage, OrderNotificationDeliveryMessage } from "@/env";
@@ -73,10 +76,11 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:order\.pay\.success\.notice|order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:membership\.pay\.success\.notice|order\.pay\.success\.notice|order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel) && (!message.eventKey.startsWith('order.pay.success.notice:') || ['sms','wechat_official','wechat_routine'].includes(String(message.channel))) &&
-    (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||/^(?:recharge|membership)\./u.test(message.eventKey)) || message.channel==='wechat_shipping') &&
-    (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null);
+    (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||routineVirtualPaidKey(message.eventKey)!==null) || message.channel==='wechat_shipping') &&
+    (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null||membershipPaidNoticeSubjectId(message.eventKey)!==null) &&
+    (membershipPaidNoticeSubjectId(message.eventKey)===null||['sms','wechat_official','wechat_routine'].includes(String(message.channel)));
 }
 
 function retryDelaySeconds(attempt: number): number {
@@ -305,7 +309,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
     }
     const subscriptionNotice = message.channel === 'wechat_routine' && routineSubscriptionNoticePrefix(message.eventKey);
     const subscriptionReady = subscriptionNotice && await routineSubscriptionDeliveryCommissioned(this.container);
-    if (subscriptionNotice && message.eventKey.startsWith('order.refund.success.notice:') && !subscriptionReady)
+    if (subscriptionNotice && (message.eventKey.startsWith('order.refund.success.notice:') || membershipPaidNoticeSubjectId(message.eventKey)!==null) && !subscriptionReady)
       throw new WechatProviderConfigurationError('退款成功小程序通知的原账号协议尚未就绪');
     const subscriptionEnv = subscriptionReady ? captureRoutineSubscriptionDeliveryEnv(this.env) : undefined;
     const claim = await this.claim(message);
@@ -421,6 +425,8 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
     const now = Math.floor(Date.now() / 1_000);
     const leaseToken = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
+      const membership = membershipPaidNoticeSubjectId(message.eventKey)!==null;
+      if (membership && !await prepareMembershipPaidNoticeTx(tx)) throw new ValidateException('会员付款通知合同尚未就绪');
       const rows = await tx.select().from(orderNotificationDelivery)
         .where(eq(orderNotificationDelivery.id, message.deliveryId)).limit(1).for("update");
       const row = rows[0];
@@ -444,6 +450,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
         return "unknown";
       }
       if (row.status !== "ENQUEUED") return "busy";
+      if (membership) await assertMembershipPaidDeliveryTx(tx,this.env,row.id,row.eventKey,row.channel);
       if(routineVirtualPaidKey(row.eventKey)){
         // An application clock ahead of PG cannot consume the initial PHP
         // deferral. Existing retry scheduling still uses its ordinary clock.

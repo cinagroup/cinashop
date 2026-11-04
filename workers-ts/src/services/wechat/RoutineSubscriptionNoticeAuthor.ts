@@ -1,3 +1,4 @@
+import { stageRoutineSubscriptionMembershipNoticeTx } from './RoutineSubscriptionMembershipRequest';
 import { parseRoutineSubscriptionPaidRequest } from './RoutineSubscriptionPaidRequest';
 import { PAID_SUBSCRIPTION_EVENT } from './RoutineSubscriptionPaidEvidenceCodec';
 import { and, eq, sql } from 'drizzle-orm';
@@ -107,6 +108,7 @@ function parseRequest(env: Env, event: OrderNotificationOutboxEvent, scope: Awai
  * attempt + fresh source read can later authorize the first provider POST. */
 export async function stageRoutineSubscriptionNoticeTx(tx: DbClient, env: Readonly<RoutineSubscriptionNoticeEnvironment>,
   event: OrderNotificationOutboxEvent, mark: string, earlyReady: boolean, now: number): Promise<'staged' | 'deferred'> {
+  if (event.eventType === 'membership.pay.success.notice') return stageRoutineSubscriptionMembershipNoticeTx(tx, env, event, mark, earlyReady, now);
   // Invalid/unsigned requests cannot acquire a later target merely because
   // material is repaired. This terminal skip never upgrades an existing row.
   let captured: Env, scope: Awaited<ReturnType<typeof routineSubscriptionScopeTx>>;

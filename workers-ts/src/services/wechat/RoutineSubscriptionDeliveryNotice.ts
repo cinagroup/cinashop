@@ -1,3 +1,5 @@
+import { readRoutineSubscriptionMembershipNoticeSourceTx } from './RoutineSubscriptionMembershipSource';
+import { membershipSubscriptionTransientSqlState, type RoutineSubscriptionMembershipNoticeFacts } from './RoutineSubscriptionMembershipEvidenceCodec';
 import { readRoutineSubscriptionPaidNoticeSourceTx } from './RoutineSubscriptionPaidSource';
 import type { RoutineSubscriptionPaidNoticeFacts } from './RoutineSubscriptionPaidEvidenceCodec';
 import { Buffer } from 'node:buffer';
@@ -21,7 +23,7 @@ import { parseRoutineSubscriptionRefundSuccessRequest, assertRoutineSubscription
 import { parseRoutineSubscriptionMaterializedRefundSuccessRequest, assertRoutineSubscriptionMaterializedRefundSuccessDecision } from './RoutineSubscriptionMaterializedRefundSuccessRequest';
 import { readRoutineMaterializedRefundSuccessSourceTx, type MaterializedRefundSuccessPublicRefund } from './RoutineSubscriptionMaterializedRefundSource';
 import { parseRoutineSubscriptionPinkRequest, readRoutineSubscriptionPinkTargetTx } from './RoutineSubscriptionPinkRequest';
-import { routineSubscriptionNoticeKey, routineSubscriptionPaidKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionPaidKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
 import { parseRoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { captureRoutineSubscriptionEnv, freezeSubscription, prepareRoutineSubscriptionAccountTx,
   routineSubscriptionUnavailable, routineSubscriptionScopeTx, routineSubscriptionClockTx, subscriptionInteger, subscriptionMac, subscriptionObject, subscriptionSame,
@@ -42,7 +44,7 @@ export interface RoutineSubscriptionLegacyDeliveryNoticeFacts {
 }
 /** A 1927 paid source has its own closed payment variant; a balance payment
  * must never acquire synthetic legacy original-evidence fields. */
-export type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionLegacyDeliveryNoticeFacts | RoutineSubscriptionPaidNoticeFacts;
+export type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionLegacyDeliveryNoticeFacts | RoutineSubscriptionPaidNoticeFacts | RoutineSubscriptionMembershipNoticeFacts;
 const noticeSlot = Symbol('routine.subscription.delivery-notice-source.v1');
 export interface PreparedRoutineSubscriptionDeliveryNotice {
   readonly [noticeSlot]: true;
@@ -121,6 +123,7 @@ async function versionedRequest(tx: DbClient, env: Env, event: typeof storeOrder
 }
 async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubscriptionDeliveryNoticeInput> | Readonly<RoutineSubscriptionNoticeAuthorInput>) {
   await acquireRoutineSubscriptionNoticeSourceGatesTx(tx);
+  if (routineSubscriptionMembershipKey(expected.eventKey)) return readRoutineSubscriptionMembershipNoticeSourceTx(tx, env, expected);
   if (routineSubscriptionPaidKey(expected.eventKey)) return readRoutineSubscriptionPaidNoticeSourceTx(tx, env, expected);
   const author = 'outboxId' in expected;
   if (author) {
@@ -310,7 +313,14 @@ export async function prepareRoutineSubscriptionNoticeAuthorTx(tx: DbClient, env
  * must enter before its physical locks; all lower maintenance gates are first. */
 export async function prepareRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, env: Env, raw: RoutineSubscriptionDeliveryNoticeInput) {
   const captured = input(raw), signing = environment(env);
-  try { return await prepare(tx, signing, captured); } catch { return routineSubscriptionUnavailable(); }
+  try { return await prepare(tx, signing, captured); }
+  catch (error) {
+    // Preserve only the new member protocol's bounded SQL cause. The dispatch
+    // author still decides whether an untouched pre-attempt claim may retry;
+    // durable admission/possible POST failures remain UNKNOWN.
+    if (routineSubscriptionMembershipKey(captured.eventKey) && membershipSubscriptionTransientSqlState(error)) throw error;
+    return routineSubscriptionUnavailable();
+  }
 }
 export function assertRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, value: PreparedRoutineSubscriptionDeliveryNotice) {
   if (notices.get(value)?.tx !== tx) return routineSubscriptionUnavailable(); return value;
@@ -322,7 +332,12 @@ export function assertRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, value: P
 export async function prepareRoutineSubscriptionDeliveryNotice(container: Container, env: Env, raw: RoutineSubscriptionDeliveryNoticeInput) {
   root(container); const captured = input(raw), signing = environment(env);
   try { return await withTx(container, tx => prepare(tx, signing, captured)); }
-  catch { return routineSubscriptionUnavailable(); }
+  catch (error) {
+    // Older notice formats keep their existing conservative normalization.
+    // A member SQL lock/timeout must reach the pre-attempt retry classifier.
+    if (routineSubscriptionMembershipKey(captured.eventKey) && membershipSubscriptionTransientSqlState(error)) throw error;
+    return routineSubscriptionUnavailable();
+  }
 }
 export function assertPreparedRoutineSubscriptionDeliveryNotice(value: PreparedRoutineSubscriptionDeliveryNotice) {
   if (!notices.has(value)) return routineSubscriptionUnavailable(); return value;

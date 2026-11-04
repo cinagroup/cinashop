@@ -32,6 +32,10 @@ import { NotFoundException, ValidateException } from "@/utils/errors";
 import { readVisibleAgreement } from "@/services/user/PublicAgreementService";
 import { lockLocalPaymentAdmissionTx, assertLocalPaymentAdmissionTx } from '@/services/payment/LocalPaymentAdmission';
 import { stageRoutineVirtualPaidShippingTx } from '@/services/order/RoutineVirtualPaidShipping';
+import { prepareMembershipPaidNoticeTx } from '@/migrations/membershipPaidNotice';
+import { membershipNoticeSigning } from '@/services/order/MembershipPaidNoticeSource';
+import { enqueueMembershipPaidNoticeTx, dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';
+import { membershipPaidNoticeEventKey } from '@/services/order/MembershipPaidNoticeCodec';
 
 const MEMBER_CHANNELS: Readonly<Record<string, string>> = {
   weixin: "wechat",
@@ -58,6 +62,7 @@ export interface CreateMembershipOrderInput {
   now?: number;
   /** Only the UUID opt-in branch may replay; legacy requests always create. */
   purchaseReplay?: boolean;
+  routineNotice?: Readonly<{APP_KEY?:string}>;
 }
 
 export interface CreateMembershipOrderResult {
@@ -86,12 +91,14 @@ export interface ApplyMembershipPaymentInput {
   authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
   /** Actual Routine provider consumer only; never selected by local payment. */
   routineShipping?: Pick<Env,'APP_KEY'>;
+  routineNotice?: Readonly<{APP_KEY?:string}>;
 }
 
 export interface MembershipPaymentResult {
   outcome: MembershipPaymentOutcome;
   overdue_time: number | null;
   shippingEventKey?: string;
+  noticeEventKey?: string;
 }
 
 export function normalizeMemberChannel(value: unknown): string | null {
@@ -209,8 +216,11 @@ export async function createMembershipOrder(
   if (!channel) throw new ValidateException("非法渠道");
   const now = params.now ?? Math.floor(Date.now() / 1000);
   if (!Number.isSafeInteger(now) || now <= 0) throw new Error("会员订单时间无效");
+  const noticeSnapshot = params.routineNotice ? {APP_KEY:params.routineNotice.APP_KEY} : undefined;
 
   return withTx(container, async (tx) => {
+    const noticeReady = await prepareMembershipPaidNoticeTx(tx);
+    const noticeSigning = noticeReady ? membershipNoticeSigning(noticeSnapshot) : undefined;
     // The user lock serializes free-plan eligibility and membership extension.
     const users = await tx
       .select({
@@ -320,6 +330,7 @@ export async function createMembershipOrder(
         shopType: 0,
         changeTime: now,
       });
+      if (noticeSigning) await enqueueMembershipPaidNoticeTx(tx,noticeSigning,order.id,now);
     }
 
     return {
@@ -359,7 +370,8 @@ async function applyMembershipPaymentCore(
   params: ApplyMembershipPaymentInput,
   providerSettlement: boolean,
 ): Promise<MembershipPaymentResult> {
-  params = { ...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}) };
+  params = { ...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}),
+    ...(params.routineNotice?{routineNotice:{APP_KEY:params.routineNotice.APP_KEY}}:{}) };
   const orderId = params.orderId.trim();
   assertMembershipOrderId(orderId);
   if (!MEMBERSHIP_PAY_TYPES.has(params.payType)) {
@@ -384,6 +396,8 @@ async function applyMembershipPaymentCore(
   if (!Number.isSafeInteger(now) || now <= 0) throw new Error("会员支付时间无效");
 
   return withTx(container, async (tx) => {
+    const noticeReady = await prepareMembershipPaidNoticeTx(tx);
+    const noticeSigning = noticeReady ? membershipNoticeSigning(params.routineNotice) : undefined;
     if (!providerSettlement) await lockLocalPaymentAdmissionTx(tx);
     const orders = await tx
       .select()
@@ -516,7 +530,9 @@ async function applyMembershipPaymentCore(
     });
     const shippingEventKey=providerSettlement&&params.payType===PayType.WEIXIN
       ?await stageRoutineVirtualPaidShippingTx(tx,params.routineShipping,'membership',order.id,now):null;
-    return { outcome: "paid", overdue_time: orderOverdueTime,...(shippingEventKey?{shippingEventKey}:{}) };
+    if (noticeSigning) await enqueueMembershipPaidNoticeTx(tx,noticeSigning,order.id,now);
+    return { outcome: "paid", overdue_time: orderOverdueTime,...(shippingEventKey?{shippingEventKey}:{}),
+      ...(noticeSigning?{noticeEventKey:membershipPaidNoticeEventKey(order.id)}:{}) };
   });
 }
 
@@ -538,20 +554,25 @@ export class PaidMembershipService {
     if (!channel) throw new ValidateException("非法渠道");
     if (input.requestId !== undefined) {
       const requestId = membershipPurchaseRequestId(input.requestId);
-      return createMembershipOrder(this.container, { uid, planId, channel,
-        orderId: await membershipPurchaseOrderId(uid, requestId), purchaseReplay: true });
+      const result = await createMembershipOrder(this.container, { uid, planId, channel,
+        orderId: await membershipPurchaseOrderId(uid, requestId), purchaseReplay: true, routineNotice:{APP_KEY:this.env.APP_KEY} });
+      if (result.paid) await dispatchCommittedMembershipPaidNotice(this.container,this.env,membershipPaidNoticeEventKey(result.id));
+      return result;
     }
     // New purchases use the committed global SQL winner, never a stale KV flag.
     const enabled = normalizeConfigScalar(await this.container.systemConfigDao.getValue("member_card_status"));
     if (parseConfigInteger(enabled, 1) !== 1) {
       throw new ValidateException("付费会员功能暂未开启");
     }
-    return createMembershipOrder(this.container, {
+    const result = await createMembershipOrder(this.container, {
       uid,
       planId,
       orderId: await this.nextOrderId(),
       channel,
+      routineNotice:{APP_KEY:this.env.APP_KEY},
     });
+    if (result.paid) await dispatchCommittedMembershipPaidNotice(this.container,this.env,membershipPaidNoticeEventKey(result.id));
+    return result;
   }
 
   async purchaseReceipt(uid: number, requestId: unknown): Promise<MembershipPurchaseReceipt> {
@@ -640,7 +661,9 @@ export class PaidMembershipService {
         orderId,
         payType: PayType.YUE,
         debitBalance: payCents > 0,
+        routineNotice:{APP_KEY:this.env.APP_KEY},
       });
+      await dispatchCommittedMembershipPaidNotice(this.container,this.env,result.noticeEventKey);
       if (result.outcome === "missing") throw new NotFoundException("会员订单不存在");
       if (result.outcome === "not-payable") throw new ValidateException("会员订单状态不允许支付");
       return {

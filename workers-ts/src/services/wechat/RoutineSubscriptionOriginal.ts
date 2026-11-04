@@ -45,7 +45,17 @@ export function assertRoutineSubscriptionOriginalTx(tx: DbClient, value: Routine
  * The payer in the original remains a payment fact, never a notification target. */
 export async function readRoutineSubscriptionOriginalTx(tx: DbClient, env: Signing,
   input: RoutineSubscriptionOriginalExpected): Promise<RoutineSubscriptionOriginal> {
+  return readOriginal(tx, env, input, 'store_order');
+}
+/** Separate membership entry: identical provenance rules, explicitly other_order. */
+export async function readRoutineSubscriptionMembershipOriginalTx(tx: DbClient, env: Signing,
+  input: RoutineSubscriptionOriginalExpected): Promise<RoutineSubscriptionOriginal> {
+  return readOriginal(tx, env, input, 'membership');
+}
+async function readOriginal(tx: DbClient, env: Signing, input: RoutineSubscriptionOriginalExpected,
+  domain: 'store_order' | 'membership'): Promise<RoutineSubscriptionOriginal> {
   env = { APP_KEY: env.APP_KEY }; const e = capture(input);
+  const table = domain === 'membership' ? 'other_order' : 'store_order';
   try {
     if (!await assertRoutineSubscriptionReadTx(tx)) return routineSubscriptionUnavailable();
     const subscription = await inspectRoutineSubscriptionCatalog(tx), b = subscription.binding;
@@ -57,7 +67,7 @@ export async function readRoutineSubscriptionOriginalTx(tx: DbClient, env: Signi
       || o.app !== b.app || o.appOid !== b.appOid || a.app !== b.app || a.appOid !== b.appOid)
       return routineSubscriptionUnavailable();
     const [resolution] = await tx.execute<{ ready: boolean }>(sql`SELECT
-      pg_catalog.to_regclass('store_order')=pg_catalog.to_regclass('public.store_order')
+      pg_catalog.to_regclass(${table})=pg_catalog.to_regclass(${'public.' + table})
       AND pg_catalog.to_regclass('routine_subscription_account_policy')=pg_catalog.to_regclass('public.routine_subscription_account_policy')
       AND pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
       AND pg_catalog.to_regclass('routine_payment_account_policy')=pg_catalog.to_regclass('public.routine_payment_account_policy')
@@ -71,7 +81,7 @@ export async function readRoutineSubscriptionOriginalTx(tx: DbClient, env: Signi
     const selected = decoded[0], facts = selected.payload.observation.facts;
     for (const row of decoded) {
       const bound = row.payload.binding, f = row.payload.observation.facts;
-      if (!subscriptionSame(f, facts) || bound.state !== 'bound' || bound.local.domain !== 'store_order'
+      if (!subscriptionSame(f, facts) || bound.state !== 'bound' || bound.local.domain !== domain
         || bound.local.orderId !== e.rootId || bound.local.buyerUid !== e.buyerUid
         || bound.local.orderNo !== e.orderNo || bound.local.amountCents !== e.totalAmount
         || bound.local.tradeNo !== '' && bound.local.tradeNo !== e.transactionId
@@ -81,8 +91,9 @@ export async function readRoutineSubscriptionOriginalTx(tx: DbClient, env: Signi
         return routineSubscriptionUnavailable();
     }
     const current = await tx.execute<{ uid: number; order_no: string; price: string; paid: number; pay_type: string; trade_no: string; shape: boolean }>(sql`
-      SELECT uid,order_id AS order_no,pay_price::text AS price,paid,pay_type,trade_no,pid IN (0,-1) AS shape
-      FROM public.store_order WHERE id=${e.rootId} LIMIT 2`);
+      SELECT uid,order_id AS order_no,pay_price::text AS price,paid,pay_type,trade_no,
+      ${sql.raw(domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : 'pid IN (0,-1)')} AS shape
+      FROM ${sql.raw('public.' + table)} WHERE id=${e.rootId} LIMIT 2`);
     const root = current[0];
     if (current.length !== 1 || root.uid !== e.buyerUid || root.order_no !== e.orderNo || amountToCents(root.price) !== e.totalAmount
       || root.paid !== 1 || root.pay_type !== 'weixin' || root.trade_no !== e.transactionId || root.shape !== true)
@@ -91,5 +102,10 @@ export async function readRoutineSubscriptionOriginalTx(tx: DbClient, env: Signi
     const result = Object.freeze({ evidence: freezeSubscription(selected),
       relatedDigest: subscriptionMac(env, 'related-originals', decoded), approvedUseDigest: uses.digest });
     owners.set(result, tx); return result;
-  } catch { return routineSubscriptionUnavailable(); }
+  } catch (error) {
+    // Legacy readers retain their existing unavailable projection. A new
+    // membership reader must not disguise SQL/lock failures as absent evidence.
+    if (domain === 'store_order') return routineSubscriptionUnavailable();
+    throw error;
+  }
 }
