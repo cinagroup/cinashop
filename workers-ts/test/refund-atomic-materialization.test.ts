@@ -9,6 +9,8 @@ import { recordSupplierPayment, SupplierFinanceService } from '../src/services/s
 import { allocatePaidOrderBySupplier } from '../src/services/order/OrderSupplierAllocationService';
 import { createContainerFromDb, withTx, type DbClient } from '../src/lib/di';
 import { REFUND_ORDER_SPLIT_SQL } from '../src/migrations/refundOrderSplit';
+import { SECOND_CARD_REMINDER_MIGRATION_SQL } from '../src/migrations/secondCardReminderIndexes';
+import { refundSuccessNoticeCommissionedTx } from '../src/migrations/refundSuccessNotice';
 import { storeOrderRefundSplit, storeOrderFulfillmentBranch } from '../src/models/schema/order_refund_split';
 import { WechatPayService } from '../src/services/wechat/WechatPayService';
 import { StoreOrderInvoiceService } from '../src/services/order/StoreOrderInvoiceService';
@@ -98,6 +100,10 @@ beforeEach(async () => {
     storeOrderInvoice, storeOrderRefundPayment, storeOrderOutbox, orderWaybillJob, userBrokerage, systemSupplier,
     supplierFlowingWater, supplierTransactions, supplierExtract, userInvoice]);
   await f.exec(REFUND_ORDER_SPLIT_SQL);
+  // This column-only fixture needs the published historical outbox CHECK.
+  // Keep success explicitly inactive; do not commission or seed a new notice.
+  await f.exec(SECOND_CARD_REMINDER_MIGRATION_SQL);
+  expect(await withTx(f.container, refundSuccessNoticeCommissionedTx)).toBe(false);
   await f.exec('CREATE UNIQUE INDEX atomic_outbox ON store_order_outbox(event_key); CREATE UNIQUE INDEX atomic_flow ON supplier_flowing_water(order_id); CREATE UNIQUE INDEX atomic_transaction ON supplier_transactions(order_id)');
   await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
   await f.setConfig({ integral_ratio_status: '1', integral_ratio: '0.01', integral_max_type: '1', integral_max_num: '100' });

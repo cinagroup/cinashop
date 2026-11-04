@@ -843,11 +843,19 @@ export async function finalizeStoreOrderRefund(
       changeTime: now,
     });
     await recordSupplierRefund(tx, order, refundId, refundAmount, cumulativeCents, now, lineCompensation);
-    if (materializeOrders) await materializeCompletedRefundOrder(tx, refund, now, invoiceSnapshot);
+    const materialization = materializeOrders ? await materializeCompletedRefundOrder(tx, refund, now, invoiceSnapshot) : undefined;
     await scope?.recordLockedDecision?.(tx, 'balance-settled');
-    // An explicit forward upgrade enables new notices. First ordinary v1 full
-    // completion only; the already-completed return above never backfills history.
-    if (!materializeOrders && claim?.version === 'refund-quantity-reservation-v1' && order.pid === 0 && order.type === 0
+    // The explicit event upgrade enables new completions. Mature physical
+    // receipts use format6; the old first-full v1 format5 stays unchanged.
+    // The already-completed return above never backfills history.
+    if (materialization && order.uid > 0 && order.payType === 'weixin' && refundCents > 0 && await refundSuccessNoticeCommissionedTx(tx)) {
+      const [selected] = await tx.select({ id: storeOrder.id, payPrice: storeOrder.payPrice }).from(storeOrder)
+        .where(eq(storeOrder.id, materialization.selectedOrderId)).limit(1);
+      if (!selected) throw new ValidateException('退款实体通知订单不存在');
+      await enqueueOrderRefundSuccessNoticeEvent(tx, { orderId: selected.id, orderNo: refund.orderId, refundId: refund.id,
+        userId: refund.uid, payPrice: selected.payPrice, materializedRefund: { sourceOrderId: materialization.sourceOrderId,
+          paymentOrderId: materialization.paymentOrderId, refundAmount } }, now, env);
+    } else if (!materializeOrders && claim?.version === 'refund-quantity-reservation-v1' && order.pid === 0 && order.type === 0
       && order.uid > 0 && order.payType === 'weixin' && refundCents > 0 && refundCents === paidCents && previousCents === 0
       && refund.refundNum === order.totalNum && await refundSuccessNoticeCommissionedTx(tx)) {
       await enqueueOrderRefundSuccessNoticeEvent(tx, { orderId: order.id, orderNo: refund.orderId,

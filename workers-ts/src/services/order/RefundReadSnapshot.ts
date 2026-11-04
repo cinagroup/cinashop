@@ -27,7 +27,7 @@ function text(value: unknown, fallback: string) {
 /** Caller already authorized the original refund/order and owns one read-only
  * snapshot transaction. Never reinterpret current remainder carts as history.
  * Legacy/nonterminal applications do not require the new evidence relation. */
-export async function readMaterializedRefundSnapshot(db: DbClient, refund: Refund): Promise<{
+export async function readMaterializedRefundSnapshot(db: Pick<DbClient, 'execute'>, refund: Refund): Promise<{
   physicalOrderId: number; items: RefundReadItem[];
 } | null> {
   const claim = readRefundQuantityReservation(refund);

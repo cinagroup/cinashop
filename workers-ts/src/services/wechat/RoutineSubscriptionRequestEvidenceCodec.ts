@@ -68,7 +68,7 @@ export interface RoutineSubscriptionPinkRequest {
 /** Authenticated staging projection, never evidence of a POST or fresh send
  * authority. The immutable accepted intent remains the dispatch attempt. */
 export interface RoutineSubscriptionNoticeIntent {
-  format: 2 | 3 | 4 | 5; scope: RoutineSubscriptionScope; actor: { role: string; roleOid: string };
+  format: 2 | 3 | 4 | 5 | 6; scope: RoutineSubscriptionScope; actor: { role: string; roleOid: string };
   deliveryId: number; outboxId: number; eventKey: string; createdAt: number; requestSignature: string;
   source: RoutineSubscriptionDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
   request: Readonly<DeliveryNoticeRequest>; signature: string;
@@ -326,10 +326,10 @@ function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, raw: un
   const source = subscriptionObject(r.source, ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',
     'observationId', 'evidenceId', 'evidenceSignature', 'relatedDigest', 'approvedUseDigest', 'templateMark', 'sourceDigest']);
   const q = subscriptionObject(r.request, ['touser', 'template_id', 'page', 'data']);
-  const success = r.format === 5;
+  const success = r.format === 5 || r.format === 6;
   const refusal = r.format === 3;
   const pink = r.format === 4;
-  if (r.format !== 2 && r.format !== 3 && r.format !== 4 && r.format !== 5 || !subscriptionSame(capturedScope, expectedScope) || !roleName(actor.role) || !roleOid(actor.roleOid)
+  if (r.format !== 2 && r.format !== 3 && r.format !== 4 && r.format !== 5 && r.format !== 6 || !subscriptionSame(capturedScope, expectedScope) || !roleName(actor.role) || !roleOid(actor.roleOid)
     || !subscriptionInteger(r.deliveryId) || !subscriptionInteger(r.outboxId) || !subscriptionInteger(r.createdAt)
     || !(success ? routineSubscriptionRefundSuccessKey(r.eventKey) : pink ? routineSubscriptionPinkKey(r.eventKey) : refusal ? routineSubscriptionRefusalKey(r.eventKey) : routineSubscriptionDeliveryKey(r.eventKey))
     || !subscriptionHex(r.requestSignature) || !subscriptionHex(r.signature) || r.deliveryId !== source.deliveryId || r.outboxId !== source.outboxId
@@ -352,7 +352,7 @@ function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, raw: un
     || r.createdAt < policy.payload.data.validFrom || r.createdAt >= policy.payload.data.validUntil
     || !policy.payload.data.templates.some(t => t.mark === source.templateMark && t.templateId === q.template_id)) return routineSubscriptionUnavailable();
   const { signature, ...body } = r;
-  if (!subscriptionEqual(signature, subscriptionMac(env, success ? 'refund-success-notice-stage' : pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body))) return routineSubscriptionUnavailable();
+  if (!subscriptionEqual(signature, subscriptionMac(env, r.format === 6 ? 'materialized-refund-success-notice-stage' : success ? 'refund-success-notice-stage' : pink ? 'pink-notice-stage' : refusal ? 'refusal-notice-stage' : 'notice-stage', body))) return routineSubscriptionUnavailable();
   return freezeSubscription({ ...body, signature } as unknown as RoutineSubscriptionNoticeIntent);
 }
 

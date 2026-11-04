@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 import { createRoutineSubscriptionNoticeRequestTx } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
 import { createRoutineSubscriptionRefundSuccessRequestTx } from '@/services/wechat/RoutineSubscriptionRefundSuccessRequest';
+import { createRoutineSubscriptionMaterializedRefundSuccessRequestTx, captureRoutineSubscriptionMaterializedRefundSuccessBusiness } from '@/services/wechat/RoutineSubscriptionMaterializedRefundSuccessRequest';
+import { readRoutineMaterializedRefundSuccessSourceTx } from '@/services/wechat/RoutineSubscriptionMaterializedRefundSource';
 import { createRoutineSubscriptionRefusalRequestTx } from '@/services/wechat/RoutineSubscriptionRefusalRequest';
 import { prepareRoutineSubscriptionPinkRequestsTx, createRoutineSubscriptionPinkRequestTx,
   type PreparedRoutineSubscriptionPinkRequests } from '@/services/wechat/RoutineSubscriptionPinkRequest';
@@ -271,7 +273,7 @@ async function insertImmutableNotificationEvent(
       payload = { ...input.payload, ...(Object.hasOwn(source, 'routineAppId') ? { routineAppId: source.routineAppId } : {}),
         ...(Object.hasOwn(source, 'routineSubscriptionRequest') ? { routineSubscriptionRequest: source.routineSubscriptionRequest } : {}) } as typeof input.payload;
     } else {
-      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx> | ReturnType<typeof createRoutineSubscriptionRefundSuccessRequestTx>
+      let resolved: Awaited<ReturnType<typeof createRoutineSubscriptionNoticeRequestTx> | ReturnType<typeof createRoutineSubscriptionRefusalRequestTx> | ReturnType<typeof createRoutineSubscriptionRefundSuccessRequestTx> | ReturnType<typeof createRoutineSubscriptionMaterializedRefundSuccessRequestTx>
         | ReturnType<typeof createRoutineSubscriptionPinkRequestTx>>;
       try {
         resolved = pink ? createRoutineSubscriptionPinkRequestTx(db,
@@ -279,7 +281,10 @@ async function insertImmutableNotificationEvent(
             { pinkId: (input.payload as OrderPinkSuccessNoticeOutboxPayload).pinkId, now: input.now }),
           { eventKey: input.eventKey, aggregateId: input.aggregateId, payload: input.payload as OrderPinkSuccessNoticeOutboxPayload, now: input.now })
           : await withTx(createContainerFromDb(db), async nested => success
-          ? createRoutineSubscriptionRefundSuccessRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
+          ? Object.hasOwn(input.payload, 'materializedRefund')
+          ? createRoutineSubscriptionMaterializedRefundSuccessRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
+            payload: captureRoutineSubscriptionMaterializedRefundSuccessBusiness(input.payload), now: input.now })
+          : createRoutineSubscriptionRefundSuccessRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
             payload: input.payload as OrderRefundSuccessNoticeOutboxPayload, now: input.now })
           : refusal
           ? createRoutineSubscriptionRefusalRequestTx(nested, noticeEnv, { eventKey: input.eventKey, aggregateId: input.aggregateId,
@@ -289,7 +294,9 @@ async function insertImmutableNotificationEvent(
       } catch {
         // Mini-only metadata/SQL faults roll back their actual SAVEPOINT.
         // Keep fulfillment and other notices, without falling back to a pin.
-        resolved = success ? { kind: 'original', request: { format: 5, unavailable: true } } : pink ? { kind: 'original', request: { format: 4, unavailable: true } }
+        resolved = success ? Object.hasOwn(input.payload, 'materializedRefund')
+          ? { kind: 'original', request: { format: 6, unavailable: true } }
+          : { kind: 'original', request: { format: 5, unavailable: true } } : pink ? { kind: 'original', request: { format: 4, unavailable: true } }
           : refusal ? { kind: 'original', request: { format: 3, unavailable: true } }
           : { kind: 'original', request: { format: 2, unavailable: true } };
       }
@@ -407,13 +414,15 @@ export async function enqueueOrderRefundRefusedNoticeEvent(
   });
 }
 
-/** First completed ordinary refund only, inside its business transaction.
+/** Newly completed refund only, inside its business transaction.
  * orderNo is the refund business number, as in PHP's order_refund renderer. */
-export async function enqueueOrderRefundSuccessNoticeEvent(db: DbClient, input: RefundRefusedNoticeInput,
+export async function enqueueOrderRefundSuccessNoticeEvent(db: DbClient, input: RefundRefusedNoticeInput & Pick<OrderRefundSuccessNoticeOutboxPayload, 'materializedRefund'>,
   now = Math.floor(Date.now() / 1000), noticeEnv?: Readonly<{ APP_KEY?: string }>) {
   const payload: OrderRefundSuccessNoticeOutboxPayload = { orderId: positiveId(input.orderId, '订单 ID'),
     orderNo: requiredString(input.orderNo, '退款单号', 50), refundId: positiveId(input.refundId, '售后 ID'),
     userId: positiveId(input.userId, '用户 ID'), payPrice: requiredString(input.payPrice, '订单金额', 32) };
+  if (Object.hasOwn(input, 'materializedRefund')) payload.materializedRefund = captureRoutineSubscriptionMaterializedRefundSuccessBusiness({
+    ...payload, materializedRefund: input.materializedRefund }).materializedRefund;
   return insertImmutableNotificationEvent(db, { eventKey: orderRefundSuccessNoticeEventKey(payload.refundId),
     aggregateId: payload.orderId, eventType: ORDER_REFUND_SUCCESS_NOTICE_EVENT, payload, now, noticeEnv });
 }
@@ -517,6 +526,11 @@ export function assertOrderNotificationPayload(
     return;
   }
   if (eventType === ORDER_REFUND_REFUSED_NOTICE_EVENT || eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) {
+    if (Object.hasOwn(payload, 'materializedRefund')) {
+      if (eventType !== ORDER_REFUND_SUCCESS_NOTICE_EVENT) throw Error('实体退款成功来源不能用于其他事件');
+      const { routineAppId: _pin, routineSubscriptionRequest: _request, ...body } = payload;
+      captureRoutineSubscriptionMaterializedRefundSuccessBusiness(body);
+    }
     if(payload.userId===0&&Object.keys(payload).sort().join(',')!==['orderId','orderNo','refundId','userId','payPrice'].sort().join(','))throw Error('游客拒绝通知字段无效');
     positiveId(payload.refundId, "通知售后 ID");
     requiredString(payload.payPrice, "通知订单金额", 32);
@@ -733,11 +747,16 @@ async function noticeContext(
   }
   if (eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT) {
     const p = payload as OrderRefundSuccessNoticeOutboxPayload;
+    if (p.materializedRefund) {
+      await readRoutineMaterializedRefundSuccessSourceTx(tx, captureRoutineSubscriptionMaterializedRefundSuccessBusiness({
+        orderId: p.orderId, orderNo: p.orderNo, refundId: p.refundId, userId: p.userId, payPrice: p.payPrice, materializedRefund: p.materializedRefund }));
+    } else {
     const rows = await tx.select().from(storeOrderRefund).where(eq(storeOrderRefund.id, p.refundId)).limit(2);
     const r = rows[0];
     if (rows.length !== 1 || !r || r.storeOrderId !== order.id || r.uid !== payload.userId || r.orderId !== p.orderNo
       || r.refundType !== 6 || r.isCancel !== 0 || r.isDel !== 0 || r.refundedPrice !== p.payPrice || order.payPrice !== p.payPrice)
       throw Error('成功退款通知与完成申请不匹配');
+    }
   }
   if (payload.userId === 0) {
     if(eventType===ORDER_REFUND_REFUSED_NOTICE_EVENT)await assertGuestRefundRefusedNoticeSource(tx,payload as OrderRefundRefusedNoticeOutboxPayload);
@@ -783,7 +802,7 @@ async function noticeContext(
     const refusal = payload as OrderRefundRefusedNoticeOutboxPayload;
     values = {
       order_id: eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? order.orderId : refusal.orderNo,
-      ...(eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? { refund_price: refusal.payPrice } : {}),
+      ...(eventType === ORDER_REFUND_SUCCESS_NOTICE_EVENT ? { refund_price: (payload as OrderRefundSuccessNoticeOutboxPayload).materializedRefund?.refundAmount ?? refusal.payPrice } : {}),
       pay_price: refusal.payPrice,
       store_name: storeName,
     };
@@ -1059,7 +1078,7 @@ async function stageExternalNotifications(
     const params: Record<string, string> = isSecondCard
       ? context.values
       : isRefund
-        ? success ? { order_id: context.order.orderId, refund_price: context.order.payPrice } : { order_id: payload.orderNo }
+        ? success ? { order_id: context.order.orderId, refund_price: context.values.refund_price! } : { order_id: payload.orderNo }
         : {
           order_id: payload.orderNo,
           store_name: context.storeName,
@@ -1084,7 +1103,7 @@ async function stageExternalNotifications(
     const templateMark = isRefund ? success ? "48058" : "46232" : "42984";
     const templateCode = await configuredTemplate(tx, templateMark, 1);
     const data: Record<string, string> = success
-      ? { amount2: context.order.payPrice, time4: chinaDateTime(context.order.addTime), character_string5: payload.orderNo }
+      ? { amount2: context.values.refund_price!, time4: chinaDateTime(context.order.addTime), character_string5: payload.orderNo }
       : isRefund
       ? {
           amount5: context.order.payPrice,

@@ -70,6 +70,15 @@ function attempt(ordinal = 1, previous = ''): RoutineSubscriptionAttempt {
       intentDigest: 'b'.repeat(64), claim: { eventKey: identity.eventKey, leaseToken: uuid(200 + ordinal), attemptCount: ordinal, leaseUntil: created + 60 },
       facts: staged.source, policy: staged.policy, request: staged.request }, created_at: created });
 }
+function refundSuccessIntent(format: 5 | 6): RoutineSubscriptionNoticeIntent {
+  const { signature: _signature, ...base } = intent(), eventKey = 'order.refund.success.notice:71';
+  return sign(format === 6 ? 'materialized-refund-success-notice-stage' : 'refund-success-notice-stage', {
+    ...base, format, eventKey,
+    source: { ...base.source, eventKey, orderId: format === 6 ? 27 : 17, templateMark: '1451' as const },
+    request: { ...base.request, template_id: 'refusal_a', page: '/pages/goods/order_after_details/index?order_id=refund71&isReturen=1',
+      data: { thing1: { value: '已成功退款' }, amount3: { value: '5.00' }, character_string6: { value: 'refund71' } } },
+  });
+}
 function receipt(a: RoutineSubscriptionAttempt, code = 0): RoutineSubscriptionResult {
   return sign('delivery-result', { result_id: mac('delivery-result-id', [a.attempt_id, a.signature]), attempt_id: a.attempt_id,
     payload: { format: 1 as const, purpose: 'routine_subscription_result' as const, scope: { ...scope }, attemptSignature: a.signature,
@@ -82,6 +91,13 @@ function chain(count: number, finalCode = 0) {
 }
 
 describe('DB-free historical subscription request and dispatch codecs', () => {
+  it.each([5, 6] as const)('authenticates success staging format%s only in its distinct historical MAC domain', format => {
+    const raw = refundSuccessIntent(format);
+    expect(parseRoutineSubscriptionNoticeIntent(env, raw, scope)).toEqual(raw);
+    const wrongDomain = format === 6 ? 'refund-success-notice-stage' : 'materialized-refund-success-notice-stage';
+    expect(() => parseRoutineSubscriptionNoticeIntent(env, resign(wrongDomain, raw), scope)).toThrow(message);
+    expect(() => parseRoutineSubscriptionNoticeIntent(env, { ...raw, format: format === 6 ? 5 : 6 }, scope)).toThrow(message);
+  });
   it('preserves fixed pre-extraction HMAC vectors and canonical domains', () => {
     const a = attempt();
     expect([notice().signature, refusal().signature, pink().signature, intent().signature, a.signature, receipt(a).signature])

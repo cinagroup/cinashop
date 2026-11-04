@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import type { RoutineSubscriptionNoticeRequest, RoutineSubscriptionNoticeUnavailable } from '@/services/wechat/RoutineSubscriptionNoticeRequest';
 import type { RoutineSubscriptionRefusalRequest, RoutineSubscriptionRefusalUnavailable } from '@/services/wechat/RoutineSubscriptionRefusalRequest';
 import type { RoutineSubscriptionRefundSuccessRequest, RoutineSubscriptionRefundSuccessUnavailable } from '@/services/wechat/RoutineSubscriptionRefundSuccessRequest';
+import type { RoutineSubscriptionMaterializedRefundSuccessBusiness, RoutineSubscriptionMaterializedRefundSuccessRequest, RoutineSubscriptionMaterializedRefundSuccessUnavailable } from '@/services/wechat/RoutineSubscriptionMaterializedRefundSuccessRequest';
 import type { RoutineSubscriptionPinkRequest, RoutineSubscriptionPinkUnavailable } from '@/services/wechat/RoutineSubscriptionPinkRequest';
 import type { PresaleDeliveryIntent } from '@/services/activity/PresaleDeliveryIntent';
 import type { ProductRecycleEffectsPayload } from '@/services/product/ProductRecycleEffects';
@@ -65,9 +66,11 @@ export interface OrderRefundRefusedNoticeOutboxPayload {
 }
 
 export interface OrderRefundSuccessNoticeOutboxPayload {
-  routineSubscriptionRequest?: RoutineSubscriptionRefundSuccessRequest | RoutineSubscriptionRefundSuccessUnavailable;
+  routineSubscriptionRequest?: RoutineSubscriptionRefundSuccessRequest | RoutineSubscriptionRefundSuccessUnavailable
+    | RoutineSubscriptionMaterializedRefundSuccessRequest | RoutineSubscriptionMaterializedRefundSuccessUnavailable;
   routineAppId?: string;
   orderId: number; orderNo: string; refundId: number; userId: number; payPrice: string;
+  materializedRefund?: RoutineSubscriptionMaterializedRefundSuccessBusiness['materializedRefund'];
 }
 
 export interface OrderSecondCardNoticeOutboxPayload {

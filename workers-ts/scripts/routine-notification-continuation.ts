@@ -1,6 +1,7 @@
 /** Maintenance classification of signed notification history, never send
  * admission. Receipts remain historical facts when mutable projections drift. */
 import { parseRoutineSubscriptionRefundSuccessRequest } from '../src/services/wechat/RoutineSubscriptionRefundSuccessEvidenceCodec';
+import { parseRoutineSubscriptionMaterializedRefundSuccessRequest } from '../src/services/wechat/RoutineSubscriptionMaterializedRefundSuccessEvidenceCodec';
 import { createHmac } from 'node:crypto';
 import { routineEvidenceCanonical, routineEvidenceHmac } from '../src/services/payment/RoutineProviderObservation';
 import { parseRoutineOriginalEvidence } from '../src/services/payment/RoutineOriginalPaymentEvidenceCodec';
@@ -13,7 +14,7 @@ import { routineSubscriptionNoticePrefix } from '../src/services/wechat/RoutineS
 type Row=Record<string,unknown>;
 type Source={schema:string;name:string;oid:string;kind:string;owner:string;ownerOid:string};
 type Context={database:string;databaseOid:string;observedAt:number};
-type Request=ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
+type Request=ReturnType<typeof parseRoutineSubscriptionMaterializedRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
 const policyName='routine_subscription_account_policy',originalName='routine_original_payment_evidence';
 const outboxName='store_order_outbox',deliveryName='order_notification_delivery',attemptName='routine_subscribe_attempt',resultName='routine_subscribe_result';
 const layouts:Record<string,Record<string,number>>={
@@ -115,9 +116,9 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         if(relevant&&scope&&candidate!==undefined)request=safely(()=>{
           const format=object(candidate)?.format;
           return format===2?parseRoutineSubscriptionNoticeRequest(env,candidate,scope)
-            :format===3?parseRoutineSubscriptionRefusalRequest(env,candidate,scope):format===5?parseRoutineSubscriptionRefundSuccessRequest(env,candidate,scope):parseRoutineSubscriptionPinkRequest(env,candidate,scope);
+            :format===3?parseRoutineSubscriptionRefusalRequest(env,candidate,scope):format===6?parseRoutineSubscriptionMaterializedRefundSuccessRequest(env,candidate,scope):format===5?parseRoutineSubscriptionRefundSuccessRequest(env,candidate,scope):parseRoutineSubscriptionPinkRequest(env,candidate,scope);
         });
-        const eventType=request?.format===5?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
+        const eventType=request?.format===5||request?.format===6?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
         const sourceMatches=request!==null&&p!==null&&raw.aggregate_type==='order'&&raw.aggregate_id===request.aggregateId
           &&raw.event_key===request.eventKey&&raw.event_type===eventType&&raw.add_time===request.eventTime
           &&same(request.body,Object.fromEntries(Object.keys(request.body).map(k=>[k,p[k]])));
@@ -126,7 +127,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         // legacy pin and deliberately never creates a subscription request.
         const excluded=relevant&&raw.event_type==='order.delivery.notice'&&p?.deliveryType==='fictitious'&&candidate===undefined;
         const state=!relevant?'unrelated' as const:excluded?'outside_subscription_contract' as const:candidate===undefined?'legacy_unattributed' as const
-          :marker?.unavailable===true&&Object.keys(marker).length===2&&[2,3,4,5].includes(Number(marker.format))?'unavailable' as const
+          :marker?.unavailable===true&&Object.keys(marker).length===2&&[2,3,4,5,6].includes(Number(marker.format))?'unavailable' as const
           :!scope?'scope_unavailable' as const:!request?'invalid' as const:sourceMatches?'authenticated_source_match' as const:'authenticated_source_mismatch' as const;
         return{raw,request,state};
       });
@@ -137,13 +138,14 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         const p=object(raw.payload),candidate=p?.routineSubscriptionIntent;
         const intent=scope&&raw.channel==='wechat_routine'&&candidate!==undefined?safely(()=>parseRoutineSubscriptionNoticeIntent(env,candidate,scope)):null;
         const sources=outboxes.filter(o=>o.raw.id===raw.outbox_id),source=sources.length===1?sources[0]:null;
-        const expectedMark=source?.request?.format===5?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
+        const expectedMark=source?.request?.format===5||source?.request?.format===6?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
           :source?.request?.format===2?source.request.body.deliveryType==='express'?'order_postage_success'
             :source.request.body.deliveryType==='fictitious'?'order_fictitious_success':'order_deliver_success':null;
         const sourceMatch=Boolean(intent&&source?.request&&source.state==='authenticated_source_match'
+          &&intent.format===source.request.format
           &&intent.requestSignature===source.request.signature&&intent.eventKey===source.request.eventKey&&intent.createdAt>=source.request.eventTime
           &&intent.source.orderId===source.request.body.orderId&&intent.source.buyerUid===source.request.body.userId
-          &&intent.source.templateMark===(source.request.format===4?'3098':source.request.format===3||source.request.format===5?'1451':source.request.body.deliveryType==='express'?'1458':'1128'));
+          &&intent.source.templateMark===(source.request.format===4?'3098':source.request.format===3||source.request.format===5||source.request.format===6?'1451':source.request.body.deliveryType==='express'?'1458':'1128'));
         const rowMatch=Boolean(intent&&raw.id===intent.deliveryId&&raw.outbox_id===intent.outboxId&&raw.event_key===intent.eventKey
           &&raw.order_id===intent.source.orderId&&raw.withdrawal_id===null&&raw.user_id===intent.source.buyerUid
           &&raw.notice_mark===expectedMark&&raw.target===intent.request.touser&&raw.template_code===intent.request.template_id
