@@ -978,7 +978,9 @@ export class PaidMembershipService {
     if (cardCode.length > 20 || cardPassword.length > 12) {
       throw new ValidateException("会员卡号或卡密格式错误");
     }
-    if (!channel) throw new ValidateException("非法渠道");
+    // Card redemption retains the legacy four body channels. Native App card
+    // callers use Form-type=app with body h5; paid purchases separately allow app.
+    if (!channel || channel === "app") throw new ValidateException("非法渠道");
 
     const enabled = normalizeConfigScalar(await this.container.systemConfigDao.getValue("member_card_status"));
     if (parseConfigInteger(enabled, 1) !== 1) {

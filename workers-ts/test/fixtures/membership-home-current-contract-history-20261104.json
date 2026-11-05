@@ -1,0 +1,99 @@
+{
+  "schema": "membership-home-current-contract-history/v1",
+  "gitSource": {
+    "commit": "4e8d6b14e429d06a0164d81c89a95407d20dda66",
+    "path": "workers-ts/test/membership-home-purchase-postgres.test.ts",
+    "verification": "Bytes match exact Phase65/baseline proof; no Git command executed by this adaptation."
+  },
+  "archivedFile": "workers-ts/test/fixtures/membership-home-purchase-pre-admission-20261104.test.ts.txt",
+  "bytes": 28742,
+  "sha256": "99cf31be6f20879485cbf502d8530bfc8278d3875bbf1658bb56a50df1521121",
+  "gitBlobSha1": "4329c31e814e677c8ac4934e2632ae825c0d41fc",
+  "historicalOutcome": {
+    "cases": 90,
+    "failed": 5,
+    "passed": 85,
+    "baselineProofSha256": "7ca56564a4ed5684f17b02129cbdc14ff4d4ca59ff445c5d8e634ed9582c53a0",
+    "notReclassified": true,
+    "scope": "Combined original home-purchase and card-activation native run, not this one archived file alone.",
+    "files": [
+      "workers-ts/test/membership-home-purchase-postgres.test.ts",
+      "workers-ts/test/membership-card-activation-postgres.test.ts"
+    ]
+  },
+  "currentContractChanges": [
+    "Native-only explicit published local-admission setup; original accounting/replay/negative assertions unchanged.",
+    "Owner-session App case expects business400 with the genuine catalog-unavailable reason for both supported from spellings. Readiness catches authority failure and assertWechatPaymentProfileAvailable throws ValidateException; this is not missing-AppID or runtime-role acceptance.",
+    "Independent fiveLOGIN current native acceptance covers officially commissioned App catalog missing-AppID400 and ownership; no readiness/provider-success substitution."
+  ],
+  "unchangedHistoricalSources": [
+    "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+    "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json"
+  ],
+  "readerPolicy": "Archive is evidence only. No reader wrapping current service/tests and no old-hash replacement.",
+  "currentFile": "workers-ts/test/membership-home-purchase-postgres.test.ts",
+  "current": {
+    "bytes": 28982,
+    "sha256": "6a6935d2032244741ddf820f35ef106aac15d5600af33e6271d634578f5e8fb8",
+    "gitBlobSha1": "9cfa1bd2922044e4bb8cfb8cd432bf15181d8d5e"
+  },
+  "exactEdits": [
+    {
+      "beforeStart": 11,
+      "afterStart": 11,
+      "before": [],
+      "after": [
+        "import {membershipHomeLocalAdmissionFixture} from './helpers/membershipHomeLocalAdmissionFixture';\n"
+      ]
+    },
+    {
+      "beforeStart": 40,
+      "afterStart": 41,
+      "before": [
+        " beforeAll(async()=>{f=await membershipHomeFixture();network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Membership home forbids external provider requests'));wiring.context=new AsyncLocalStorage<Container>();app=createApp();},45000);\n"
+      ],
+      "after": [
+        " beforeAll(async()=>{f=await (process.env.TEST_FINANCE_POSTGRES_URL?membershipHomeLocalAdmissionFixture():membershipHomeFixture());network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Membership home forbids external provider requests'));wiring.context=new AsyncLocalStorage<Container>();app=createApp();},45000);\n"
+      ]
+    },
+    {
+      "beforeStart": 170,
+      "afterStart": 171,
+      "before": [
+        " it('selects the actual App profile from Form-type=app with PHP body weixin and refuses missing App configuration before provider/accounting writes',async()=>{\n"
+      ],
+      "after": [
+        " it('refuses an uncommissioned native App catalog for both supported paid channels before provider/accounting writes',async()=>{\n"
+      ]
+    },
+    {
+      "beforeStart": 174,
+      "afterStart": 175,
+      "before": [
+        "  const result=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'weixin'}});expect(result.status,result.msg).toBe(400);expect(result.msg).toBe('App AppID 未配置');noWrite(result);expect(network).not.toHaveBeenCalled();\n",
+        "  const invalid=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'app'}});expect(invalid.status).toBe(400);expect(invalid.msg).toBe('非法渠道');noWrite(invalid);\n"
+      ],
+      "after": [
+        "  const result=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'weixin'}});expect(result.status,result.msg).toBe(400);expect(result.msg).toBe('原生App支付账号目录尚未就绪');noWrite(result);expect(network).not.toHaveBeenCalled();\n",
+        "  const supported=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'app'}});expect(supported.status).toBe(400);expect(supported.msg).toBe('原生App支付账号目录尚未就绪');noWrite(supported);expect(network).not.toHaveBeenCalled();\n"
+      ]
+    }
+  ],
+  "nativeAllowlist": {
+    "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+    "before": {
+      "bytes": 135467,
+      "sha256": "fb773ac4d04beeef18a7b94feaf04f558e210b765faa24e238f5d97815e7aabd",
+      "gitBlobSha1": "f4bf038e661e6d2202cb168579f5195ff1cc584b"
+    },
+    "after": {
+      "bytes": 135585,
+      "sha256": "e13677f85556261ea5d75d0eb4cde9265af0c53356386bafe0bc782d8dc9a188",
+      "gitBlobSha1": "a39957daae9810a3bba56c05d36f10f6ec18b83c"
+    },
+    "beforeLiteral": "    'test/membership-home-purchase-postgres.test.ts',\n",
+    "afterLiteral": "    'test/membership-home-purchase-postgres.test.ts',\n    'test/membership-native-app-admission-native.test.ts',\n",
+    "occurrences": 2,
+    "scope": "Admit the one native test and include it in the existing serial-native set. No CI structure, environment, timeout, command or authority change."
+  }
+}

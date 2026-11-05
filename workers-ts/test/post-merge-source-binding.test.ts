@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { closeSync, openSync, readFileSync } from 'node:fs';
+import { closeSync, openSync } from 'node:fs';
+import { readMembershipContinuityHistoricalFile as readFileSync } from './helpers/membershipContractSourceContinuity';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';

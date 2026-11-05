@@ -138,7 +138,7 @@ describe('paid membership admission uses SQL configuration authority', () => {
     expect(sequence).not.toHaveBeenCalled(); expect(await state()).toEqual(before);
   });
 
-  it.each(['weixin', 'alipay'] as const)('settles and idempotently replays an existing %s order after disabling admission', async payType => {
+  it.each(['weixin', 'alipay'] as const)('refuses an unverified %s settlement after disabling admission without granting rights', async payType => {
     const created = await create();
     await setFlag('0'); cachedFlag = '0';
     const initial = await state();
@@ -148,13 +148,11 @@ describe('paid membership admission uses SQL configuration authority', () => {
     await expect(service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 899))
       .rejects.toThrow('会员支付回调金额不匹配');
     expect(await state()).toEqual(initial);
-    expect(await service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900)).toBe(true);
-    const paid = await state();
-    expect(paid.orders).toMatchObject([{ paid: 1, payType, payPrice: '9.00', vipDay: 30, tradeNo: 'local-provider-evidence' }]);
-    expect(paid.statuses.filter(row => row.changeType === 'pay_success')).toHaveLength(1);
-    expect(paid.users).toMatchObject([{ isMoneyLevel: 1, nowMoney: '100.00' }]);
-    expect(await service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900)).toBe(true);
-    expect(await service.payOrder(11, { orderId: created.order_id, payType })).toMatchObject({ paid: true });
-    expect(await state()).toEqual(paid); expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
+    // A caller-selected transaction string is not a verified provider fact.
+    // Signed HTTP/Queue positives live in membership-paid-notice-native.test.ts.
+    await expect(service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900))
+      .rejects.toThrow('本地付款不能伪装提供方已验证入账');
+    expect(await state()).toEqual(initial);
+    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
   });
 });

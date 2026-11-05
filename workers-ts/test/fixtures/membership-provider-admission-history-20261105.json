@@ -1,0 +1,333 @@
+{
+  "format": 1,
+  "baseCommit": "71fc0a2e3b42384b54d7cbd7be489d16543c51f3",
+  "archivedUnitFile": "workers-ts/test/fixtures/paid-membership-config-authority-pre-provider-boundary-20261105.test.ts.txt",
+  "sources": [
+    {
+      "file": "workers-ts/test/paid-membership-config-authority.test.ts",
+      "before": {
+        "bytes": 9743,
+        "sha256": "cd397d057a736384a1f8cd838165abbb64dfa4200c156b6dafdbcbdfde4f15b4",
+        "gitBlobSha1": "1ea1bd2acae29224e787216a63a01ea249363ec2"
+      },
+      "current": {
+        "bytes": 9417,
+        "sha256": "474409fef457679488aaabdfe657712493eccd9ea46bf5b68a874bea38853f86",
+        "gitBlobSha1": "c926091aa7eaee98307ed90c0f02db5f25b096f3"
+      },
+      "exactEdits": [
+        {
+          "beforeStart": 140,
+          "afterStart": 140,
+          "before": [
+            "  it.each(['weixin', 'alipay'] as const)('settles and idempotently replays an existing %s order after disabling admission', async payType => {\n"
+          ],
+          "after": [
+            "  it.each(['weixin', 'alipay'] as const)('refuses an unverified %s settlement after disabling admission without granting rights', async payType => {\n"
+          ]
+        },
+        {
+          "beforeStart": 150,
+          "afterStart": 150,
+          "before": [
+            "    expect(await service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900)).toBe(true);\n",
+            "    const paid = await state();\n",
+            "    expect(paid.orders).toMatchObject([{ paid: 1, payType, payPrice: '9.00', vipDay: 30, tradeNo: 'local-provider-evidence' }]);\n",
+            "    expect(paid.statuses.filter(row => row.changeType === 'pay_success')).toHaveLength(1);\n",
+            "    expect(paid.users).toMatchObject([{ isMoneyLevel: 1, nowMoney: '100.00' }]);\n",
+            "    expect(await service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900)).toBe(true);\n",
+            "    expect(await service.payOrder(11, { orderId: created.order_id, payType })).toMatchObject({ paid: true });\n",
+            "    expect(await state()).toEqual(paid); expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();\n"
+          ],
+          "after": [
+            "    // A caller-selected transaction string is not a verified provider fact.\n",
+            "    // Signed HTTP/Queue positives live in membership-paid-notice-native.test.ts.\n",
+            "    await expect(service.settleExternalPayment(created.order_id, payType, 'local-provider-evidence', 900))\n",
+            "      .rejects.toThrow('本地付款不能伪装提供方已验证入账');\n",
+            "    expect(await state()).toEqual(initial);\n",
+            "    expect(get).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();\n"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "workers-ts/test/membership-paid-notice-native.test.ts",
+      "before": {
+        "bytes": 56703,
+        "sha256": "f2f93e106d39b1ab9cc16ea0f99d77127da13c8c324d38174feb5b9b07572435",
+        "gitBlobSha1": "1b34cba25ca3514d8ad305f1cc4987c57403fcef"
+      },
+      "current": {
+        "bytes": 60723,
+        "sha256": "b52711b660bc7a2518d05ea4a8ba2a3088fd3b4136f78fbd57fec1cc1d6bb285",
+        "gitBlobSha1": "ec958abd002ad62ac90494921a222583df0dd4c4"
+      },
+      "exactEdits": [
+        {
+          "beforeStart": 177,
+          "afterStart": 177,
+          "before": [],
+          "after": [
+            " async function closeNewAdmission(order:Member,provider:'weixin'|'alipay'){\n",
+            "  const offset=provider==='weixin'?10:11,batchId=BATCH+offset,cardId=CARD+offset;\n",
+            "  const code=provider==='weixin'?'ADMISSION-CARD-WX65':'ADMISSION-CARD-ALI65',secret='ADMIT65KEY';\n",
+            "  await f.maintenanceDb.insert(memberCardBatch).values({id:batchId,title:'关闭新准入实际未使用卡',totalNum:1,useNum:0,useDay:7,status:1});\n",
+            "  await f.maintenanceDb.insert(memberCard).values({id:cardId,cardBatchId:batchId,cardNumber:code,cardPassword:secret,status:1,useUid:0,useTime:0});\n",
+            "  await config({member_card_status:0});\n",
+            "  const original=f.env.CONFIG_KV;\n",
+            "  const cachedGet=vi.fn(async(...args:unknown[])=>args[0]==='cfg_member_card_status'?'1':Reflect.apply(original.get,original,args));\n",
+            "  f.env.CONFIG_KV=new Proxy(original,{get:(target,key,receiver)=>key==='get'?cachedGet:Reflect.get(target,key,receiver)});\n",
+            "  const restore=()=>{f.env.CONFIG_KV=original;};\n",
+            "  async function assertClosed(){\n",
+            "   expect(await app().systemConfigDao.getValue('member_card_status')).toBe('0');\n",
+            "   expect(await f.env.CONFIG_KV.get('cfg_member_card_status')).toBe('1');\n",
+            "   const before=await effects(),count=f.messages.length,requests=network.mock.calls.length,sequence=serial;\n",
+            "   const cards=await f.maintenanceDb.select().from(memberCard).where(eq(memberCard.id,cardId));\n",
+            "   const batches=await f.maintenanceDb.select().from(memberCardBatch).where(eq(memberCardBatch.id,batchId));\n",
+            "   expect(cards).toMatchObject([{useUid:0,useTime:0,status:1}]);expect(batches).toMatchObject([{useNum:0,status:1}]);\n",
+            "   const purchase=await f.request('/user/member/card/create',{member_type:MONTH,from:'routine',request_id:randomUUID()},undefined,order.uid);\n",
+            "   expect(purchase.body).toMatchObject({status:400,msg:'付费会员功能暂未开启'});\n",
+            "   const draw=await f.request('/user/member/card/draw',{member_card_code:code,member_card_pwd:secret,from:'h5'},undefined,order.uid);\n",
+            "   expect(draw.body).toMatchObject({status:400,msg:'会员功能暂未开启'});\n",
+            "   expect(await effects()).toEqual(before);expect(f.messages).toHaveLength(count);expect(network.mock.calls).toHaveLength(requests);expect(serial).toBe(sequence);\n",
+            "   expect(await f.maintenanceDb.select().from(memberCard).where(eq(memberCard.id,cardId))).toEqual(cards);\n",
+            "   expect(await f.maintenanceDb.select().from(memberCardBatch).where(eq(memberCardBatch.id,batchId))).toEqual(batches);\n",
+            "  }\n",
+            "  try{await assertClosed();return{assertClosed,restore};}catch(error){restore();throw error;}\n",
+            " }\n"
+          ]
+        },
+        {
+          "beforeStart": 192,
+          "afterStart": 219,
+          "before": [
+            "  const before=f.messages.length,response=await h.request('/api/pay/notify/routine-account/'+ACCOUNT,{method:'POST',headers:p.headers,body:p.body},f.env,\n",
+            "   {waitUntil:(p:Promise<unknown>)=>pending.push(p),props:{},passThroughOnException:()=>{throw Error('Unexpected fallback');}});\n",
+            "  await Promise.all(pending);expect(response.status).toBe(200);const text=await response.text();\n",
+            "  for(const secret of[PAYER,SUBSECRET,AES,f.env.APP_KEY])expect(text).not.toContain(secret);\n",
+            "  const message=f.messages.slice(before).find(isPaymentCallbackMessage);expect(message).toBeDefined();shippingTransactions.set(transaction,order.orderId);return{message:message!,transaction};\n"
+          ],
+          "after": [
+            "  const ingress=async()=>{\n",
+            "   const response=await h.request('/api/pay/notify/routine-account/'+ACCOUNT,{method:'POST',headers:p.headers,body:p.body},f.env,\n",
+            "    {waitUntil:(p:Promise<unknown>)=>pending.push(p),props:{},passThroughOnException:()=>{throw Error('Unexpected fallback');}});\n",
+            "   await Promise.all(pending.splice(0));expect(response.status).toBe(200);const text=await response.text();\n",
+            "   for(const secret of[PAYER,SUBSECRET,AES,f.env.APP_KEY])expect(text).not.toContain(secret);\n",
+            "  };\n",
+            "  const before=f.messages.length;await ingress();\n",
+            "  const message=f.messages.slice(before).find(isPaymentCallbackMessage);expect(message).toBeDefined();shippingTransactions.set(transaction,order.orderId);return{message:message!,transaction,ingress};\n"
+          ]
+        },
+        {
+          "beforeStart": 437,
+          "afterStart": 467,
+          "before": [
+            " it('uses a real Routine callback membership settlement for four notices and its independent original-account virtual upload',async()=>{\n"
+          ],
+          "after": [
+            " it('settles an existing member order through a real Routine callback after new admission closes, with four notices and independent virtual upload',async()=>{\n"
+          ]
+        },
+        {
+          "beforeStart": 439,
+          "afterStart": 469,
+          "before": [],
+          "after": [
+            "  let admission:Awaited<ReturnType<typeof closeNewAdmission>>|undefined;\n"
+          ]
+        },
+        {
+          "beforeStart": 440,
+          "afterStart": 471,
+          "before": [],
+          "after": [
+            "   admission=await closeNewAdmission(order,'weixin');\n",
+            "   const[buyer]=await f.maintenanceDb.select().from(user).where(eq(user.uid,order.uid));\n"
+          ]
+        },
+        {
+          "beforeStart": 443,
+          "afterStart": 476,
+          "before": [],
+          "after": [
+            "   expect(saved.overdueTime).toBe(Math.max(buyer.overdueTime,saved.payTime)+30*86400);\n",
+            "   expect((await f.maintenanceDb.select().from(user).where(eq(user.uid,order.uid)))[0]).toMatchObject({nowMoney:buyer.nowMoney,overdueTime:saved.overdueTime,isMoneyLevel:1});\n"
+          ]
+        },
+        {
+          "beforeStart": 448,
+          "afterStart": 483,
+          "before": [
+            "   const before=await effects(),sent=structuredClone(posts);expect(await service.processMessage(cb.message)).toBe('already-completed');\n",
+            "   expect(await effects()).toEqual(before);expect(posts).toEqual(sent);\n",
+            "  }finally{await current();}\n"
+          ],
+          "after": [
+            "   const before=await effects(),sent=structuredClone(posts),queueCount=f.messages.length;\n",
+            "   expect(await service.processMessage(cb.message)).toBe('already-completed');await cb.ingress();\n",
+            "   await ok('/user/member/card/pay',{uni:saved.orderId,paytype:'weixin',from:'h5'},saved.uid);\n",
+            "   expect(await effects()).toEqual(before);expect(posts).toEqual(sent);expect(f.messages).toHaveLength(queueCount);\n",
+            "   expect(await f.maintenanceDb.select().from(otherOrderStatus).where(and(eq(otherOrderStatus.oid,order.id),eq(otherOrderStatus.changeType,'pay_success')))).toHaveLength(1);\n",
+            "   expect(await f.maintenanceDb.execute(sql`SELECT id FROM public.payment_callback_event WHERE provider='wechat' AND order_no=${order.orderId}\n",
+            "    AND status='COMPLETED' AND order_domain='membership'`)).toHaveLength(1);\n",
+            "   await admission.assertClosed();\n",
+            "  }finally{admission?.restore();await current();}\n"
+          ]
+        },
+        {
+          "beforeStart": 470,
+          "afterStart": 511,
+          "before": [
+            " it('settles actual RSA2 Alipay callback membership with unique A ownership, four notices and no WeChat virtual shipment',async()=>{\n"
+          ],
+          "after": [
+            " it('settles an existing member order through a real RSA2 Alipay callback after new admission closes, with four notices and no WeChat virtual shipment',async()=>{\n"
+          ]
+        },
+        {
+          "beforeStart": 475,
+          "afterStart": 516,
+          "before": [],
+          "after": [
+            "  let admission:Awaited<ReturnType<typeof closeNewAdmission>>|undefined;\n"
+          ]
+        },
+        {
+          "beforeStart": 476,
+          "afterStart": 518,
+          "before": [],
+          "after": [
+            "   admission=await closeNewAdmission(order,'alipay');\n"
+          ]
+        },
+        {
+          "beforeStart": 515,
+          "afterStart": 558,
+          "before": [],
+          "after": [
+            "   await ok('/user/member/card/pay',{uni:saved.orderId,paytype:'alipay',from:'h5'},saved.uid);\n"
+          ]
+        },
+        {
+          "beforeStart": 523,
+          "afterStart": 567,
+          "before": [
+            "  }finally{Object.assign(f.env,originalEnv);await current();}\n"
+          ],
+          "after": [
+            "   await admission.assertClosed();\n",
+            "  }finally{admission?.restore();Object.assign(f.env,originalEnv);await current();}\n"
+          ]
+        }
+      ]
+    }
+  ],
+  "historicalOutcome": {
+    "cases": 18,
+    "failed": 2,
+    "passed": 16,
+    "notReclassified": true,
+    "unitSourceSha256": "cd397d057a736384a1f8cd838165abbb64dfa4200c156b6dafdbcbdfde4f15b4",
+    "caseVerdicts": [
+      {
+        "fullName": "paid membership admission uses SQL configuration authority uses SQL '1' despite the opposite cached flag '0' for purchase, redemption and page",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority uses SQL '0' despite the opposite cached flag '1' for purchase, redemption and page",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'missing' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'empty' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'quoted empty' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'malformed' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'boolean text' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'unsafe integer' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'quoted zero' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'legacy double-encoded zero' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'quoted one' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'other integer' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority retains existing admission semantics for 'negative integer' SQL values",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority uses the global sort/id winner even when the field is hidden, ignoring a higher store value",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority does not depend on membership KV availability or refill it during admission",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority propagates a failed SQL authority read before sequence allocation or business writes",
+        "status": "passed",
+        "leadingFailureMessages": []
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority settles and idempotently replays an existing weixin order after disabling admission",
+        "status": "failed",
+        "leadingFailureMessages": [
+          "ValidateException: 本地付款不能伪装提供方已验证入账"
+        ]
+      },
+      {
+        "fullName": "paid membership admission uses SQL configuration authority settles and idempotently replays an existing alipay order after disabling admission",
+        "status": "failed",
+        "leadingFailureMessages": [
+          "ValidateException: 本地付款不能伪装提供方已验证入账"
+        ]
+      }
+    ],
+    "originalReportSha256": "e67d9d9a48d9e1ccd46ed103731b3eda9ec1e6d555c86655a1f8de00c0d0ae5c",
+    "originalLogSha256": "ff911a48680ef83acaae1a00e5689425ccc85a1cb2762ce086f61ed5a0b18ba4"
+  },
+  "currentContract": "The owner-session configuration suite keeps its two amount/admission vectors and treats caller-selected external transaction strings as unverified. Its positive disabled-admission settlement/replay obligation is exercised by the full PG16 HTTP signature verifier and callback Queue for both providers in the existing seventeen-case native file. Runtime/provider authority is never replaced by this source projection.",
+  "legacyPhpUploaded": false,
+  "deployment": false
+}

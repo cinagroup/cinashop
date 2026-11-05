@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readMainMergePredecessor as readFileSync } from './migrationMergeSourceBinding';
 import { relative, resolve, sep } from 'node:path';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './routeSourceIncrement';
+import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './membershipContractSourceContinuity';
 
 type Path = Array<string | number>;
 type Scalar = string | number | boolean | null;
@@ -55,6 +56,7 @@ function inverse(source: string, proof: Source): string {
   return before;
 }
 function sourceIfPresent(file: string, source: string, p: ReviewedRouteTailBinding): string {
+  source = peelMembershipHistoricalSourceIfPresent(file, source);
   source = peelReviewedAdminHistoricalSourceIfPresent(file, source);
   const harness = p.harness_sources.find(row => row.file === file);
   if (harness && whole(source, harness, false)) return inverse(source, harness);
@@ -74,7 +76,7 @@ export function reverseReviewedRouteTailSource(file: string, source: string, p =
   if (source === before) throw Error('Unknown complete reviewed route tail source'); return before;
 }
 export function peelReviewedRouteTailRegisteredRoutesIfPresent(current: ReadonlySet<string>, p = reviewedRouteTailSourceBinding): Set<string> {
-  inventory(p); let result = new Set(current);
+  inventory(p); let result = peelMembershipHistoricalRoutesIfPresent(current);
   for (const stage of [...p.route_stages].reverse()) {
     if (sha(JSON.stringify([...result].sort())) !== stage.after_routes_sha256) continue;
     if (result.size !== stage.after_count || stage.added_routes.some(route => !result.has(route))) throw Error('Reviewed route tail exact routes differ');

@@ -9,6 +9,7 @@ import {createContainerFromDb,type Container,type DbClient} from '@/lib/di';
 import {memberShip,otherOrder,systemAttachment,user} from '@/models/schema';
 import {createToken,md5} from '@/utils/jwt';
 import {membershipHomeFixture} from './helpers/membershipHomeFixture';
+import {membershipHomeLocalAdmissionFixture} from './helpers/membershipHomeLocalAdmissionFixture';
 import {withFinancePeers,outcome} from './helpers/financePeers';
 import {sortedDiyState,type DiyStateRow as Row} from './helpers/diyStateFixture';
 const wiring=vi.hoisted(()=>({context:undefined as AsyncLocalStorage<Container>|undefined}));
@@ -38,7 +39,7 @@ async function blocked(observer:DbClient,writers:[number,number],holder:number){
 describe('membership home explicit purchase recovery and server accounting',()=>{
  let f:Awaited<ReturnType<typeof membershipHomeFixture>>,env:Env,app:ReturnType<typeof createApp>,network:ReturnType<typeof vi.spyOn>;
  let tokens=new Map<number,string>();
- beforeAll(async()=>{f=await membershipHomeFixture();network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Membership home forbids external provider requests'));wiring.context=new AsyncLocalStorage<Container>();app=createApp();},45000);
+ beforeAll(async()=>{f=await (process.env.TEST_FINANCE_POSTGRES_URL?membershipHomeLocalAdmissionFixture():membershipHomeFixture());network=vi.spyOn(globalThis,'fetch').mockRejectedValue(Error('Membership home forbids external provider requests'));wiring.context=new AsyncLocalStorage<Container>();app=createApp();},45000);
  beforeEach(async()=>{
   await f.restore();env={...f.env,APP_KEY:'owned-member-home-purchase-jwt',UPSTASH_REDIS_URL:'',UPSTASH_REDIS_TOKEN:''};tokens=new Map();
   for(const uid of[11,22]){const [row]=await f.db.select().from(user).where(eq(user.uid,uid));tokens.set(uid,(await createToken(uid,'api',md5(row!.pwd),env.APP_KEY)).token);}
@@ -168,12 +169,12 @@ describe('membership home explicit purchase recovery and server accounting',()=>
   const[account]=await f.db.select().from(user).where(eq(user.uid,11)),admin=(await createToken(11,'admin',md5(account!.pwd),env.APP_KEY)).token;
   for(const token of['',admin])for(const action of[()=>request('/api/user/member/card/index?home=1',{token}),()=>receipt(UUID,{token}),()=>create(purchase(),{token})]){const result=await action();expect(result.status).toBeGreaterThan(400);noWrite(result);}
  });
- it('selects the actual App profile from Form-type=app with PHP body weixin and refuses missing App configuration before provider/accounting writes',async()=>{
+ it('refuses an uncommissioned native App catalog for both supported paid channels before provider/accounting writes',async()=>{
   const order=created(await create(purchase(11002,'weixin'),{form:'app'}),11002,11,'wechat');
   for(const[key,value]of Object.entries({pay_weixin_open:'1',pay_weixin_mchid:'1900000109',pay_weixin_serial_no:'AB12CD34',site_url:'https://member.example.invalid',wechat_appid:'wx-owned-public',routine_appId:'wx-owned-routine',wechat_app_appid:''}))await f.config(key,value);
   env={...env,WECHAT_MCH_PRIVATE_KEY:'owned-unused-private-key',WECHAT_API_V3_KEY:'x'.repeat(32),WECHAT_PLATFORM_PUBLIC_KEY:'-----BEGIN PUBLIC KEY-----\\nowned-unused\\n-----END PUBLIC KEY-----'};
-  const result=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'weixin'}});expect(result.status,result.msg).toBe(400);expect(result.msg).toBe('App AppID 未配置');noWrite(result);expect(network).not.toHaveBeenCalled();
-  const invalid=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'app'}});expect(invalid.status).toBe(400);expect(invalid.msg).toBe('非法渠道');noWrite(invalid);
+  const result=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'weixin'}});expect(result.status,result.msg).toBe(400);expect(result.msg).toBe('原生App支付账号目录尚未就绪');noWrite(result);expect(network).not.toHaveBeenCalled();
+  const supported=await pay(String(order.order_id),{form:'app',body:{uni:order.order_id,paytype:'weixin',from:'app'}});expect(supported.status).toBe(400);expect(supported.msg).toBe('原生App支付账号目录尚未就绪');noWrite(supported);expect(network).not.toHaveBeenCalled();
  });
  it('forwards real explicit VIP recommendation pages, excludes invisible identities and keeps the old unpaged DTO',async()=>{
   const ids:number[]=[];for(const page of[1,2,3,4]){const result=await request('/api/groom/list/5?page='+page+'&limit=10');expect(result.status,result.msg).toBe(200);expect(Object.keys(result.data!).sort()).toEqual(['banner','list']);expect(result.data!.banner).toEqual([]);for(const row of result.data!.list as Row[])expect(row.image).toMatch(/^\/api\/assets\/[1-9]\d*\?expires=\d+&signature=[A-Za-z0-9_-]+$/u);const pageIds=(result.data!.list as Row[]).map(row=>Number(row.id));expect(pageIds).toHaveLength(page<3?10:page===3?4:0);ids.push(...pageIds);noWrite(result);}

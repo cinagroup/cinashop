@@ -175,6 +175,33 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
   'bills',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.user_bill t),
   'events',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.store_order_outbox t WHERE aggregate_type='membership'),
   'deliveries',(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.order_notification_delivery t WHERE subject_domain='membership')) AS value`);return row.value;}
+ async function closeNewAdmission(order:Member,provider:'weixin'|'alipay'){
+  const offset=provider==='weixin'?10:11,batchId=BATCH+offset,cardId=CARD+offset;
+  const code=provider==='weixin'?'ADMISSION-CARD-WX65':'ADMISSION-CARD-ALI65',secret='ADMIT65KEY';
+  await f.maintenanceDb.insert(memberCardBatch).values({id:batchId,title:'关闭新准入实际未使用卡',totalNum:1,useNum:0,useDay:7,status:1});
+  await f.maintenanceDb.insert(memberCard).values({id:cardId,cardBatchId:batchId,cardNumber:code,cardPassword:secret,status:1,useUid:0,useTime:0});
+  await config({member_card_status:0});
+  const original=f.env.CONFIG_KV;
+  const cachedGet=vi.fn(async(...args:unknown[])=>args[0]==='cfg_member_card_status'?'1':Reflect.apply(original.get,original,args));
+  f.env.CONFIG_KV=new Proxy(original,{get:(target,key,receiver)=>key==='get'?cachedGet:Reflect.get(target,key,receiver)});
+  const restore=()=>{f.env.CONFIG_KV=original;};
+  async function assertClosed(){
+   expect(await app().systemConfigDao.getValue('member_card_status')).toBe('0');
+   expect(await f.env.CONFIG_KV.get('cfg_member_card_status')).toBe('1');
+   const before=await effects(),count=f.messages.length,requests=network.mock.calls.length,sequence=serial;
+   const cards=await f.maintenanceDb.select().from(memberCard).where(eq(memberCard.id,cardId));
+   const batches=await f.maintenanceDb.select().from(memberCardBatch).where(eq(memberCardBatch.id,batchId));
+   expect(cards).toMatchObject([{useUid:0,useTime:0,status:1}]);expect(batches).toMatchObject([{useNum:0,status:1}]);
+   const purchase=await f.request('/user/member/card/create',{member_type:MONTH,from:'routine',request_id:randomUUID()},undefined,order.uid);
+   expect(purchase.body).toMatchObject({status:400,msg:'付费会员功能暂未开启'});
+   const draw=await f.request('/user/member/card/draw',{member_card_code:code,member_card_pwd:secret,from:'h5'},undefined,order.uid);
+   expect(draw.body).toMatchObject({status:400,msg:'会员功能暂未开启'});
+   expect(await effects()).toEqual(before);expect(f.messages).toHaveLength(count);expect(network.mock.calls).toHaveLength(requests);expect(serial).toBe(sequence);
+   expect(await f.maintenanceDb.select().from(memberCard).where(eq(memberCard.id,cardId))).toEqual(cards);
+   expect(await f.maintenanceDb.select().from(memberCardBatch).where(eq(memberCardBatch.id,batchId))).toEqual(batches);
+  }
+  try{await assertClosed();return{assertClosed,restore};}catch(error){restore();throw error;}
+ }
  function sqlStates(error:unknown){const states:unknown[]=[];while(error&&typeof error==='object'&&states.length<8){const r=error as {code?:unknown;cause?:unknown};states.push(r.code);error=r.cause;}return states;}
 
  function packet(order:Member,transaction:string){
@@ -190,11 +217,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
  async function callback(order:Member){
   const transaction='member_tx_'+randomUUID().replaceAll('-',''),p=packet(order,transaction),pending:Promise<unknown>[]=[];
   const h=new Hono<{Bindings:Env;Variables:AppVariables}>();h.use('*',async(c,next)=>{c.set('container',app());await next();});h.onError(errorHandler);h.route('/api',v1Routes);
-  const before=f.messages.length,response=await h.request('/api/pay/notify/routine-account/'+ACCOUNT,{method:'POST',headers:p.headers,body:p.body},f.env,
-   {waitUntil:(p:Promise<unknown>)=>pending.push(p),props:{},passThroughOnException:()=>{throw Error('Unexpected fallback');}});
-  await Promise.all(pending);expect(response.status).toBe(200);const text=await response.text();
-  for(const secret of[PAYER,SUBSECRET,AES,f.env.APP_KEY])expect(text).not.toContain(secret);
-  const message=f.messages.slice(before).find(isPaymentCallbackMessage);expect(message).toBeDefined();shippingTransactions.set(transaction,order.orderId);return{message:message!,transaction};
+  const ingress=async()=>{
+   const response=await h.request('/api/pay/notify/routine-account/'+ACCOUNT,{method:'POST',headers:p.headers,body:p.body},f.env,
+    {waitUntil:(p:Promise<unknown>)=>pending.push(p),props:{},passThroughOnException:()=>{throw Error('Unexpected fallback');}});
+   await Promise.all(pending.splice(0));expect(response.status).toBe(200);const text=await response.text();
+   for(const secret of[PAYER,SUBSECRET,AES,f.env.APP_KEY])expect(text).not.toContain(secret);
+  };
+  const before=f.messages.length;await ingress();
+  const message=f.messages.slice(before).find(isPaymentCallbackMessage);expect(message).toBeDefined();shippingTransactions.set(transaction,order.orderId);return{message:message!,transaction,ingress};
  }
  async function shipping(order:Member,transaction:string){
   const key='membership.paid.shipping:'+order.id;
@@ -435,20 +465,31 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
   expect(await f.maintenanceDb.execute(sql`SELECT attempt_id FROM public.routine_subscribe_attempt WHERE delivery_id=${mini!.deliveryId}`)).toHaveLength(1);
   expect(await f.maintenanceDb.execute(sql`SELECT r.result_id FROM public.routine_subscribe_result r JOIN public.routine_subscribe_attempt a USING(attempt_id) WHERE a.delivery_id=${mini!.deliveryId}`)).toHaveLength(1);
  });
- it('uses a real Routine callback membership settlement for four notices and its independent original-account virtual upload',async()=>{
+ it('settles an existing member order through a real Routine callback after new admission closes, with four notices and independent virtual upload',async()=>{
   const order=(await create()).order;await config({order_shipping_open:1});
+  let admission:Awaited<ReturnType<typeof closeNewAdmission>>|undefined;
   try{
+   admission=await closeNewAdmission(order,'weixin');
+   const[buyer]=await f.maintenanceDb.select().from(user).where(eq(user.uid,order.uid));
    const cb=await callback(order),service=new PaymentCallbackEventService(app(),f.env);
    expect(await service.processMessage(cb.message)).toBe('completed');
    const[saved]=await f.maintenanceDb.select().from(otherOrder).where(eq(otherOrder.id,order.id));expect(saved).toMatchObject({paid:1,payType:'weixin',tradeNo:cb.transaction});
+   expect(saved.overdueTime).toBe(Math.max(buyer.overdueTime,saved.payTime)+30*86400);
+   expect((await f.maintenanceDb.select().from(user).where(eq(user.uid,order.uid)))[0]).toMatchObject({nowMoney:buyer.nowMoney,overdueTime:saved.overdueTime,isMoneyLevel:1});
    const event=await notice(saved);expect(request(event)).toMatchObject({format:8,selection:{mode:'routine-original',appId:A,openid:OWNER[11]}});
    await send(event);await shipping(saved,cb.transaction);
    const[evidence]=await f.maintenanceDb.execute<{payload:{binding:{local:{domain:string;orderId:number;buyerUid:number}}}}>(sql`
     SELECT payload FROM public.routine_original_payment_evidence WHERE payload->'binding'->'local'->>'orderNo'=${order.orderId}`);
    expect(evidence.payload.binding.local).toMatchObject({domain:'membership',orderId:order.id,buyerUid:11});
-   const before=await effects(),sent=structuredClone(posts);expect(await service.processMessage(cb.message)).toBe('already-completed');
-   expect(await effects()).toEqual(before);expect(posts).toEqual(sent);
-  }finally{await current();}
+   const before=await effects(),sent=structuredClone(posts),queueCount=f.messages.length;
+   expect(await service.processMessage(cb.message)).toBe('already-completed');await cb.ingress();
+   await ok('/user/member/card/pay',{uni:saved.orderId,paytype:'weixin',from:'h5'},saved.uid);
+   expect(await effects()).toEqual(before);expect(posts).toEqual(sent);expect(f.messages).toHaveLength(queueCount);
+   expect(await f.maintenanceDb.select().from(otherOrderStatus).where(and(eq(otherOrderStatus.oid,order.id),eq(otherOrderStatus.changeType,'pay_success')))).toHaveLength(1);
+   expect(await f.maintenanceDb.execute(sql`SELECT id FROM public.payment_callback_event WHERE provider='wechat' AND order_no=${order.orderId}
+    AND status='COMPLETED' AND order_domain='membership'`)).toHaveLength(1);
+   await admission.assertClosed();
+  }finally{admission?.restore();await current();}
  });
  it('settles the actual membership through approved default signed-query and independently dispatches both Mini and virtual shipping',async()=>{
   const order=(await create()).order,transaction='member_query_'+randomUUID().replaceAll('-','');
@@ -468,12 +509,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
    expect(await effects()).toEqual(before);expect(posts).toEqual(sent);
   }finally{queried=undefined;await current();}
  });
- it('settles actual RSA2 Alipay callback membership with unique A ownership, four notices and no WeChat virtual shipment',async()=>{
+ it('settles an existing member order through a real RSA2 Alipay callback after new admission closes, with four notices and no WeChat virtual shipment',async()=>{
   const order=(await create()).order,aliKeys=paymentQueryKeys(),aliApp='2026110400000065',seller='2088000000000065';
   const originalEnv={ALIPAY_APP_ID:f.env.ALIPAY_APP_ID,ALIPAY_PUBLIC_KEY:f.env.ALIPAY_PUBLIC_KEY,ALIPAY_SELLER_ID:f.env.ALIPAY_SELLER_ID};
   Object.assign(f.env,{ALIPAY_APP_ID:aliApp,ALIPAY_PUBLIC_KEY:aliKeys.publicKey,ALIPAY_SELLER_ID:seller});
   await config({order_shipping_open:1});
+  let admission:Awaited<ReturnType<typeof closeNewAdmission>>|undefined;
   try{
+   admission=await closeNewAdmission(order,'alipay');
    const[buyer]=await f.maintenanceDb.select().from(user).where(eq(user.uid,order.uid));
    const originalEvidence=await f.maintenanceDb.execute(sql`SELECT * FROM public.routine_original_payment_evidence ORDER BY evidence_id`);
    const transaction='member_ali_'+randomUUID().replaceAll('-','');
@@ -513,6 +556,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
    expect(posts.filter(p=>p.orderNo===order.orderId&&p.channel==='shipping')).toHaveLength(0);
    const committed=await effects(),sent=structuredClone(posts),queueCount=f.messages.length;
    expect(await service.processMessage(message!)).toBe('already-completed');await ingress();
+   await ok('/user/member/card/pay',{uni:saved.orderId,paytype:'alipay',from:'h5'},saved.uid);
    expect(await effects()).toEqual(committed);expect(posts).toEqual(sent);expect(f.messages).toHaveLength(queueCount);
    expect(await f.maintenanceDb.select().from(otherOrderStatus).where(and(eq(otherOrderStatus.oid,order.id),eq(otherOrderStatus.changeType,'pay_success')))).toHaveLength(1);
    expect(await f.maintenanceDb.execute(sql`SELECT id FROM public.payment_callback_event WHERE provider='alipay' AND order_no=${order.orderId}
@@ -521,7 +565,8 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual membershi
     [membershipPaidSettlementKey(order.id),membershipPaidNoticeEventKey(order.id)]))).toHaveLength(2);
    expect(await f.maintenanceDb.execute(sql`SELECT attempt_id FROM public.routine_subscribe_attempt WHERE delivery_id=${mini.id}`)).toHaveLength(1);
    expect(posts.filter(p=>p.orderNo===order.orderId&&p.channel==='mini')).toHaveLength(1);
-  }finally{Object.assign(f.env,originalEnv);await current();}
+   await admission.assertClosed();
+  }finally{admission?.restore();Object.assign(f.env,originalEnv);await current();}
  });
  it('settles an actual permanent plan, sends all four channels and preserves rights/debit/notice on replay',async()=>{
   const[buyer]=await f.maintenanceDb.select().from(user).where(eq(user.uid,11));
