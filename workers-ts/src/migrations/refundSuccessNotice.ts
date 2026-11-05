@@ -94,7 +94,7 @@ export async function runRefundSuccessNoticeUpgrade(db: Pick<DbClient, '$client'
   await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
   const [row] = await tx.unsafe<{ definition: string }[]>(REFUND_SUCCESS_NOTICE_CATALOG_SQL);
   const generation = paidNoticeEventGeneration(row?.definition);
-  await tx.unsafe(generation?.membership ? paidNoticeAddonUpgradeSql('refund','',true) : generation?.paid ? paidNoticeAddonUpgradeSql('refund')
+  await tx.unsafe(generation?.membership ? paidNoticeAddonUpgradeSql('refund','',true,generation?.recharge===true) : generation?.paid ? paidNoticeAddonUpgradeSql('refund')
     : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? WRITEOFF_NOTICE_REFUND_SUCCESS_SQL : REFUND_SUCCESS_NOTICE_SQL);
  });
 }

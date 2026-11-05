@@ -233,8 +233,10 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual subscript
   }, 90000);
   it('rejects different immutable AppID pins, target, template, rendered data and UNKNOWN rather than reinterpreting old intents', async () => {
     const c = sources[3], before = await ledger();
+    const payload = c.delivery.payload;
+    if (payload.kind !== 'wechat_routine') throw Error('Expected the authored Mini subscription delivery');
     const patches = [{ target: TARGET_B }, { target: PAYER }, { templateCode: 'different_template' },
-      { payload: { ...c.delivery.payload, routineAppId: OTHER } }, { payload: { ...c.delivery.payload, data: { thing1: 'invented' } } }, { status: 'UNKNOWN' as const }];
+      { payload: { ...payload, routineAppId: OTHER } }, { payload: { ...payload, data: { thing1: 'invented' } } }, { status: 'UNKNOWN' as const }];
     for (const patch of patches) {
       await f.maintenanceDb.update(orderNotificationDelivery).set(patch).where(eq(orderNotificationDelivery.id, c.delivery.id));
       try { await denied(prepared(3)); } finally { await f.maintenanceDb.update(orderNotificationDelivery).set(c.delivery).where(eq(orderNotificationDelivery.id, c.delivery.id)); }

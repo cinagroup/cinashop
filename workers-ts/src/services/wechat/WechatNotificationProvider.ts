@@ -3,6 +3,7 @@ import type { Container } from "@/lib/di";
 import type {
   WechatShippingNotificationPayload,
   WechatTemplateNotificationPayload,
+  RechargeOfficialNotificationPayload,
 } from "@/models/schema";
 import { readOfficialAccountCredentials, officialCredentialCacheKey, type OfficialAccountCredentials } from "./OfficialAccountRuntimeConfig";
 import { cacheDelete, cacheGet, cacheSet } from "@/utils/cache";
@@ -89,7 +90,7 @@ export class WechatNotificationProvider {
   async sendOfficial(
     openid: string,
     templateCode: string,
-    payload: WechatTemplateNotificationPayload,
+    payload: WechatTemplateNotificationPayload | RechargeOfficialNotificationPayload,
   ): Promise<{ providerReference: string; requestId: string; responseCode: string }> {
     const data = await this.postWithToken("cgi-bin/message/template/send", {
       touser: openid,

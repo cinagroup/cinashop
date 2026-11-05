@@ -1,3 +1,4 @@
+import {RECHARGE_PAID_SUBJECT_DEFINITION} from './rechargePaidNoticeContract';
 import { normalizeWriteoffNoticeEventDefinition } from './writeoffNotice';
 import { REFUND_SUCCESS_NOTICE_PREDECESSORS, REFUND_SUCCESS_NOTICE_SUCCESSORS } from './refundSuccessNotice';
 import { sql } from 'drizzle-orm';
@@ -124,6 +125,8 @@ export const ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL = `WITH
 
 /** Exact classification is also used by DB-007 and Supplier's successor port. */
 export function classifyRoutineVirtualShippingSubjects(row: Record<string, unknown> | undefined): RoutineVirtualShippingSubjectsStructure {
+  const recharge=paidNoticeEventGeneration(row?.event_definition)?.recharge===true;
+  if(row&&recharge)row={...row,subject_definition:row.subject_definition===RECHARGE_PAID_SUBJECT_DEFINITION?MEMBERSHIP_PAID_SUBJECT_DEFINITION:'recharge subject successor drift'};
   const membership = paidNoticeEventGeneration(row?.event_definition)?.membership === true;
   if (row && membership) row = { ...row, subject_definition: row.subject_definition === MEMBERSHIP_PAID_SUBJECT_DEFINITION
     ? ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION : 'membership subject successor drift' };

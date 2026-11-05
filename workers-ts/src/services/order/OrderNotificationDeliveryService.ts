@@ -1,3 +1,6 @@
+import {prepareRechargePaidNoticeTx} from '@/migrations/rechargePaidNotice';
+import {rechargePaidNoticeSubjectId} from './RechargePaidNoticeCodec';
+import {assertRechargePaidDeliveryTx} from './RechargePaidNoticeService';
 import { prepareMembershipPaidNoticeTx } from '@/migrations/membershipPaidNotice';
 import { membershipPaidNoticeSubjectId } from './MembershipPaidNoticeCodec';
 import { assertMembershipPaidDeliveryTx } from './MembershipPaidNoticeService';
@@ -13,6 +16,7 @@ import {
   type SmsNotificationPayload,
   type WechatShippingNotificationPayload,
   type WechatTemplateNotificationPayload,
+  type RechargeOfficialNotificationPayload,
   type WecomRobotNotificationPayload,
 } from "@/models/schema";
 import {
@@ -76,11 +80,11 @@ export function isOrderNotificationDeliveryMessage(
   return message.action === "processOrderNotificationDelivery" &&
     Number.isSafeInteger(message.deliveryId) && Number(message.deliveryId) > 0 &&
     typeof message.eventKey === "string" &&
-    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:membership\.pay\.success\.notice|order\.pay\.success\.notice|order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
+    /^(?:(?:recharge|membership)\.paid\.shipping:[1-9]\d*|order\.paid:[1-9]\d*|order\.delivery\.notice:[1-9]\d*(?::city:[1-9]\d*)?|(?:recharge\.pay\.success\.notice|membership\.pay\.success\.notice|order\.pay\.success\.notice|order\.writeoff\.notice|order\.refund\.(?:refused|success)\.notice|order\.pink\.success\.notice|withdrawal\.(?:applied|approved|refused)\.notice):[1-9]\d*|order\.price\.revision:[1-9]\d{0,9}:[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|order\.second_card\.(?:advent|expired)\.notice:[1-9]\d*:[1-9]\d*)$/.test(message.eventKey) &&
     isChannel(message.channel) && (!message.eventKey.startsWith('order.pay.success.notice:') || ['sms','wechat_official','wechat_routine'].includes(String(message.channel))) &&
     (!message.eventKey.startsWith('order.writeoff.notice:') || message.channel === 'sms') && (!(message.eventKey.startsWith('order.paid:')||routineVirtualPaidKey(message.eventKey)!==null) || message.channel==='wechat_shipping') &&
-    (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null||membershipPaidNoticeSubjectId(message.eventKey)!==null) &&
-    (membershipPaidNoticeSubjectId(message.eventKey)===null||['sms','wechat_official','wechat_routine'].includes(String(message.channel)));
+    (!/^(?:recharge|membership)\./u.test(message.eventKey)||routineVirtualPaidKey(message.eventKey)!==null||membershipPaidNoticeSubjectId(message.eventKey)!==null||rechargePaidNoticeSubjectId(message.eventKey)!==null) &&
+    ((membershipPaidNoticeSubjectId(message.eventKey)===null&&rechargePaidNoticeSubjectId(message.eventKey)===null)||['sms','wechat_official','wechat_routine'].includes(String(message.channel)));
 }
 
 function retryDelaySeconds(attempt: number): number {
@@ -113,6 +117,7 @@ function stringRecord(value: unknown, label: string): Record<string, string> {
 function assertPayload(
   channel: OrderNotificationChannel,
   value: unknown,
+  eventKey: string,
 ): asserts value is OrderNotificationDeliveryPayload {
   const payload = requireRecord(value, "外部通知载荷");
   if (payload.kind !== channel) throw new ValidateException("外部通知渠道与载荷不匹配");
@@ -129,7 +134,11 @@ function assertPayload(
   }
   if (channel === "wechat_official" || channel === "wechat_routine") {
     stringRecord(payload.data, "微信模板变量");
-    if (typeof payload.url !== "string" || payload.url.length > 512) {
+    const rechargeNullUrl = channel === 'wechat_official' && rechargePaidNoticeSubjectId(eventKey) !== null
+      && payload.subjectDomain === 'recharge' && payload.url === null
+      && Object.keys(payload).sort().join(',') === 'data,kind,subjectDomain,url'
+      && Object.keys(requireRecord(payload.data, '充值公众号变量')).sort().join(',') === 'amount5,time11';
+    if (!rechargeNullUrl && (typeof payload.url !== "string" || payload.url.length > 512)) {
       throw new ValidateException("微信通知跳转地址无效");
     }
     return;
@@ -309,7 +318,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
     }
     const subscriptionNotice = message.channel === 'wechat_routine' && routineSubscriptionNoticePrefix(message.eventKey);
     const subscriptionReady = subscriptionNotice && await routineSubscriptionDeliveryCommissioned(this.container);
-    if (subscriptionNotice && (message.eventKey.startsWith('order.refund.success.notice:') || membershipPaidNoticeSubjectId(message.eventKey)!==null) && !subscriptionReady)
+    if (subscriptionNotice && (message.eventKey.startsWith('order.refund.success.notice:') || membershipPaidNoticeSubjectId(message.eventKey)!==null || rechargePaidNoticeSubjectId(message.eventKey)!==null) && !subscriptionReady)
       throw new WechatProviderConfigurationError('退款成功小程序通知的原账号协议尚未就绪');
     const subscriptionEnv = subscriptionReady ? captureRoutineSubscriptionDeliveryEnv(this.env) : undefined;
     const claim = await this.claim(message);
@@ -345,7 +354,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
     if (claim.eventKey.startsWith('order.writeoff.notice:')) {
       if (claim.channel !== 'sms') throw new WechatProviderConfigurationError('核销通知仅支持短信渠道');
       assertWriteoffSmsPayload(claim.payload);
-    } else assertPayload(claim.channel, claim.payload);
+    } else assertPayload(claim.channel, claim.payload, claim.eventKey);
     if (!claim.target) throw new WechatProviderConfigurationError("通知目标尚未配置");
     if (claim.channel === "wecom_robot") {
       if (claim.target !== WECOM_WITHDRAWAL_TARGET || claim.templateCode !== "") {
@@ -384,7 +393,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
       return provider.sendOfficial(
         claim.target,
         claim.templateCode,
-        claim.payload as WechatTemplateNotificationPayload,
+        claim.payload as WechatTemplateNotificationPayload | RechargeOfficialNotificationPayload,
       );
     }
     if (claim.channel === "wechat_routine") {
@@ -425,7 +434,8 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
     const now = Math.floor(Date.now() / 1_000);
     const leaseToken = crypto.randomUUID();
     return withTx(this.container, async (tx) => {
-      const membership = membershipPaidNoticeSubjectId(message.eventKey)!==null;
+      const membership = membershipPaidNoticeSubjectId(message.eventKey)!==null,recharge=rechargePaidNoticeSubjectId(message.eventKey)!==null;
+      if(recharge&&!await prepareRechargePaidNoticeTx(tx))throw new ValidateException('充值付款通知合同尚未就绪');
       if (membership && !await prepareMembershipPaidNoticeTx(tx)) throw new ValidateException('会员付款通知合同尚未就绪');
       const rows = await tx.select().from(orderNotificationDelivery)
         .where(eq(orderNotificationDelivery.id, message.deliveryId)).limit(1).for("update");
@@ -450,6 +460,7 @@ export class OrderNotificationDeliveryService extends OrderNotificationDeliveryD
         return "unknown";
       }
       if (row.status !== "ENQUEUED") return "busy";
+      if(recharge)await assertRechargePaidDeliveryTx(tx,this.env,row.id,row.eventKey,row.channel);
       if (membership) await assertMembershipPaidDeliveryTx(tx,this.env,row.id,row.eventKey,row.channel);
       if(routineVirtualPaidKey(row.eventKey)){
         // An application clock ahead of PG cannot consume the initial PHP

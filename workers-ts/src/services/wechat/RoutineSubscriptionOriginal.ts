@@ -52,10 +52,11 @@ export async function readRoutineSubscriptionMembershipOriginalTx(tx: DbClient, 
   input: RoutineSubscriptionOriginalExpected): Promise<RoutineSubscriptionOriginal> {
   return readOriginal(tx, env, input, 'membership');
 }
+export async function readRoutineSubscriptionRechargeOriginalTx(tx:DbClient,env:Signing,input:RoutineSubscriptionOriginalExpected):Promise<RoutineSubscriptionOriginal>{return readOriginal(tx,env,input,'recharge');}
 async function readOriginal(tx: DbClient, env: Signing, input: RoutineSubscriptionOriginalExpected,
-  domain: 'store_order' | 'membership'): Promise<RoutineSubscriptionOriginal> {
+  domain: 'store_order' | 'membership' | 'recharge'): Promise<RoutineSubscriptionOriginal> {
   env = { APP_KEY: env.APP_KEY }; const e = capture(input);
-  const table = domain === 'membership' ? 'other_order' : 'store_order';
+  const table = domain === 'membership' ? 'other_order' : domain === 'recharge' ? 'user_recharge' : 'store_order';
   try {
     if (!await assertRoutineSubscriptionReadTx(tx)) return routineSubscriptionUnavailable();
     const subscription = await inspectRoutineSubscriptionCatalog(tx), b = subscription.binding;
@@ -91,8 +92,8 @@ async function readOriginal(tx: DbClient, env: Signing, input: RoutineSubscripti
         return routineSubscriptionUnavailable();
     }
     const current = await tx.execute<{ uid: number; order_no: string; price: string; paid: number; pay_type: string; trade_no: string; shape: boolean }>(sql`
-      SELECT uid,order_id AS order_no,pay_price::text AS price,paid,pay_type,trade_no,
-      ${sql.raw(domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : 'pid IN (0,-1)')} AS shape
+      SELECT uid,order_id AS order_no,${sql.raw(domain==='recharge'?'price':'pay_price')}::text AS price,paid,${sql.raw(domain==='recharge'?'recharge_type':'pay_type')} AS pay_type,trade_no,
+      ${sql.raw(domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : domain==='recharge'?'true':'pid IN (0,-1)')} AS shape
       FROM ${sql.raw('public.' + table)} WHERE id=${e.rootId} LIMIT 2`);
     const root = current[0];
     if (current.length !== 1 || root.uid !== e.buyerUid || root.order_no !== e.orderNo || amountToCents(root.price) !== e.totalAmount

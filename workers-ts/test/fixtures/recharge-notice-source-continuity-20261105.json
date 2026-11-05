@@ -1,0 +1,2261 @@
+{
+  "schema": "recharge-notice-source-continuity/v1",
+  "predecessorCommit": "7e41a20eb64c99491847fab136a5890721689654",
+  "integrationBaseCommit": "0ecb7405a541722244c9a2acb4f109ce492db340",
+  "boundary": "Dated source-proof reads only. Four recharge implementation images, one narrow delivery payload schema and its provider parameter type, one native runner, three already-committed D3 review inputs and five reader/import wires are reversed literally to complete7e41 inputs; current native payment/HTTP/Queue tests keep native source. No old leaf/proof digest rewrite, global filesystem mock, runtime fallback or old-image acceptance as current.",
+  "sources": [
+    {
+      "file": "workers-ts/src/models/schema/order_outbox.ts",
+      "kind": "business",
+      "current": {
+        "bytes": 9340,
+        "sha256": "7c4090c597ee7563e05789ff0ac8004d05dc9fca858527a400ebdc592e15349d",
+        "gitBlobSha1": "d9e972988e3e71d9a1704d4b95061dcfafe34ba8"
+      },
+      "predecessor": {
+        "bytes": 8759,
+        "sha256": "57987a3073f7afe9b1bbe1a14ebc99a11f3b8dac5707ac9f20e3d1ab413a16a7",
+        "gitBlobSha1": "1f0cf4a27746693b36b3ed5bc1b4f37415b7d505"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import type {RechargePaidNoticeBusiness} from '@/services/order/RechargePaidNoticeCodec';\n",
+            "import type {RoutineSubscriptionRechargeRequest,RoutineSubscriptionRechargeUnavailable} from '@/services/wechat/RoutineSubscriptionRechargeRequest';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import type {RechargePaidNoticeBusiness} from '@/services/order/RechargePaidNoticeCodec';\n",
+            "import type {RoutineSubscriptionRechargeRequest,RoutineSubscriptionRechargeUnavailable} from '@/services/wechat/RoutineSubscriptionRechargeRequest';\n",
+            "/**\n",
+            " * 订单与提现的事务 outbox；aggregateType/aggregateId 明确区分业务域。\n"
+          ]
+        },
+        {
+          "start": 132,
+          "after": [
+            "  | (RechargePaidNoticeBusiness & {routineSubscriptionRequest?:RoutineSubscriptionRechargeRequest|RoutineSubscriptionRechargeUnavailable})\n",
+            "  | {scope:{database:string;databaseOid:string;maintenance:string;maintenanceOid:string};business:RechargePaidNoticeBusiness;bill:Record<string,unknown>;provider:Record<string,unknown>;signature:string}\n"
+          ],
+          "before": [],
+          "anchorStart": 130,
+          "anchor": [
+            "\n",
+            "export type OrderOutboxPayload =\n",
+            "  | (RechargePaidNoticeBusiness & {routineSubscriptionRequest?:RoutineSubscriptionRechargeRequest|RoutineSubscriptionRechargeUnavailable})\n",
+            "  | {scope:{database:string;databaseOid:string;maintenance:string;maintenanceOid:string};business:RechargePaidNoticeBusiness;bill:Record<string,unknown>;provider:Record<string,unknown>;signature:string}\n",
+            "  | (MembershipPaidNoticeBusiness & { routineSubscriptionRequest?: RoutineSubscriptionMembershipRequest | RoutineSubscriptionMembershipUnavailable })\n",
+            "  | { scope: {database:string;databaseOid:string;maintenance:string;maintenanceOid:string}; business: MembershipPaidNoticeBusiness; signature: string }\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/models/schema/order_outbox.ts",
+        "gitBlobSha1": "1f0cf4a27746693b36b3ed5bc1b4f37415b7d505"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/payment/PaymentCallbackEventService.ts",
+      "kind": "business",
+      "current": {
+        "bytes": 27800,
+        "sha256": "8e528b00bcad487eb32f05862e511ec4edfb153ff350013d70c6d3a3c8b249aa",
+        "gitBlobSha1": "8a80cdc278d2ea73970aa8af5f0a37c1f8c7cf64"
+      },
+      "predecessor": {
+        "bytes": 27468,
+        "sha256": "256b80d1bab63b3581a828dfdee84f2896792ea26659f2441ed963b7f52294a0",
+        "gitBlobSha1": "5854682b719956cf469745cc512f59dca1d3100a"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';\n",
+            "import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';\n",
+            "import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';\n"
+          ]
+        },
+        {
+          "start": 486,
+          "after": [
+            "        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:'callback',id:callback.eventId,replayKey:callback.replayKey},\n"
+          ],
+          "before": [],
+          "anchorStart": 484,
+          "anchor": [
+            "        expectedAmountCents: callback.amountCents,\n",
+            "        authorizeBeforePayment: tx => original(tx, 'recharge'),\n",
+            "        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:'callback',id:callback.eventId,replayKey:callback.replayKey},\n",
+            "        routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,\n",
+            "      });\n"
+          ]
+        },
+        {
+          "start": 489,
+          "after": [
+            "      await dispatchCommittedRechargePaidNotice(this.container,this.env,result.noticeEventKey);\n"
+          ],
+          "before": [],
+          "anchorStart": 487,
+          "anchor": [
+            "        routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,\n",
+            "      });\n",
+            "      await dispatchCommittedRechargePaidNotice(this.container,this.env,result.noticeEventKey);\n",
+            "      await dispatchCommittedRoutineVirtualShipping(this.container,this.env,result.shippingEventKey);\n",
+            "      return domainOutcome(\"recharge\", result.outcome);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/services/payment/PaymentCallbackEventService.ts",
+        "gitBlobSha1": "5854682b719956cf469745cc512f59dca1d3100a"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/payment/PaymentReconciliationService.ts",
+      "kind": "business",
+      "current": {
+        "bytes": 48488,
+        "sha256": "7831e608c2bb5588921d0ba8c761a9a5127b831c7fc55a75eb67af7190d2c616",
+        "gitBlobSha1": "d253eaf8601e0454cf8dc27e4a2a52e9e803096d"
+      },
+      "predecessor": {
+        "bytes": 48158,
+        "sha256": "9d67821e09f07793f3a0cc62ba6e43718c208e73a27f43ce8e42ef51c6df9202",
+        "gitBlobSha1": "bf7ba8443ac8939f459829f6fcb94fdd57c10395"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';\n",
+            "import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';\n",
+            "import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';\n"
+          ]
+        },
+        {
+          "start": 967,
+          "after": [
+            "        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:\"signed-query\",id:request.id,replayKey:request.replayKey},\n"
+          ],
+          "before": [],
+          "anchorStart": 965,
+          "anchor": [
+            "        expectedAmountCents: result.amountCents,\n",
+            "        authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, \"recharge\"),\n",
+            "        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:\"signed-query\",id:request.id,replayKey:request.replayKey},\n",
+            "        routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,\n",
+            "      });\n"
+          ]
+        },
+        {
+          "start": 970,
+          "after": [
+            "      await dispatchCommittedRechargePaidNotice(this.container,this.env,settled.noticeEventKey);\n"
+          ],
+          "before": [],
+          "anchorStart": 968,
+          "anchor": [
+            "        routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,\n",
+            "      });\n",
+            "      await dispatchCommittedRechargePaidNotice(this.container,this.env,settled.noticeEventKey);\n",
+            "      await dispatchCommittedRoutineVirtualShipping(this.container,this.env,settled.shippingEventKey);\n",
+            "      return settlementOutcome(\"recharge\", settled.outcome);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/services/payment/PaymentReconciliationService.ts",
+        "gitBlobSha1": "bf7ba8443ac8939f459829f6fcb94fdd57c10395"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/payment/RechargePaymentService.ts",
+      "kind": "business",
+      "current": {
+        "bytes": 10591,
+        "sha256": "5720c5a76cb1eb855b4fa66964b6bcfc28803d7b973a1425f1ec6164350afffd",
+        "gitBlobSha1": "758b05662a911dea5246d556f39e58e91fc71288"
+      },
+      "predecessor": {
+        "bytes": 9248,
+        "sha256": "5e3dee17afc6854554fb5c3e96a43f6a21d000f6e4908d2bfddf6ca5ea91a3c1",
+        "gitBlobSha1": "3bcbb891770cf2be6f3f6b549a18a86c5b9b94d5"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import {prepareRechargePaidNoticeTx} from '@/migrations/rechargePaidNotice';\n",
+            "import {rechargeNoticeSigning,type RechargeNoticeSigning,type RechargeNoticeProvider} from '@/services/order/RechargePaidNoticeSource';\n",
+            "import {enqueueRechargePaidNoticeTx} from '@/services/order/RechargePaidNoticeService';\n",
+            "import {rechargePaidNoticeEventKey} from '@/services/order/RechargePaidNoticeCodec';\n"
+          ],
+          "before": [],
+          "anchorStart": 0,
+          "anchor": [
+            "import {prepareRechargePaidNoticeTx} from '@/migrations/rechargePaidNotice';\n",
+            "import {rechargeNoticeSigning,type RechargeNoticeSigning,type RechargeNoticeProvider} from '@/services/order/RechargePaidNoticeSource';\n",
+            "import {enqueueRechargePaidNoticeTx} from '@/services/order/RechargePaidNoticeService';\n",
+            "import {rechargePaidNoticeEventKey} from '@/services/order/RechargePaidNoticeCodec';\n",
+            "import { and, eq, sql } from \"drizzle-orm\";\n",
+            "import type { Env } from \"@/env\";\n"
+          ]
+        },
+        {
+          "start": 29,
+          "after": [
+            "  routineNotice?:RechargeNoticeSigning;\n",
+            "  verifiedNoticeProvider?:RechargeNoticeProvider;\n"
+          ],
+          "before": [],
+          "anchorStart": 27,
+          "anchor": [
+            "  /** Passed only by the actual Routine callback/signed-query consumer. */\n",
+            "  routineShipping?: Pick<Env,'APP_KEY'>;\n",
+            "  routineNotice?:RechargeNoticeSigning;\n",
+            "  verifiedNoticeProvider?:RechargeNoticeProvider;\n",
+            "}\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 37,
+          "after": [
+            "  noticeEventKey?:string;\n"
+          ],
+          "before": [],
+          "anchorStart": 35,
+          "anchor": [
+            "  balance: string | null;\n",
+            "  shippingEventKey?: string;\n",
+            "  noticeEventKey?:string;\n",
+            "}\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 62,
+          "after": [
+            "  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}),...(params.routineNotice?{routineNotice:{APP_KEY:params.routineNotice.APP_KEY}}:{}),...(params.verifiedNoticeProvider?{verifiedNoticeProvider:{...params.verifiedNoticeProvider}}:{})};\n"
+          ],
+          "before": [
+            "  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{})};\n"
+          ],
+          "anchorStart": 60,
+          "anchor": [
+            "  params: ApplyRechargePaymentInput,\n",
+            "): Promise<ApplyRechargePaymentResult> {\n",
+            "  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}),...(params.routineNotice?{routineNotice:{APP_KEY:params.routineNotice.APP_KEY}}:{}),...(params.verifiedNoticeProvider?{verifiedNoticeProvider:{...params.verifiedNoticeProvider}}:{})};\n",
+            "  const orderId = params.orderId.trim();\n",
+            "  assertRechargeOrderId(orderId);\n"
+          ]
+        },
+        {
+          "start": 75,
+          "after": [
+            "    const noticeReady=await prepareRechargePaidNoticeTx(tx);\n"
+          ],
+          "before": [],
+          "anchorStart": 73,
+          "anchor": [
+            "\n",
+            "  return withTx(container, async (tx) => {\n",
+            "    const noticeReady=await prepareRechargePaidNoticeTx(tx);\n",
+            "    const orders = await tx\n",
+            "      .select()\n"
+          ]
+        },
+        {
+          "start": 103,
+          "after": [
+            "    const noticeSigning=noticeReady?rechargeNoticeSigning(params.routineNotice):undefined;\n",
+            "    if(noticeReady&&(!params.verifiedNoticeProvider||!params.authorizeBeforePayment))throw new ValidateException('充值付款通知必须来自实际验签回调或签名查单');\n"
+          ],
+          "before": [],
+          "anchorStart": 101,
+          "anchor": [
+            "    }\n",
+            "\n",
+            "    const noticeSigning=noticeReady?rechargeNoticeSigning(params.routineNotice):undefined;\n",
+            "    if(noticeReady&&(!params.verifiedNoticeProvider||!params.authorizeBeforePayment))throw new ValidateException('充值付款通知必须来自实际验签回调或签名查单');\n",
+            "    const totalCents = priceCents + giveCents;\n",
+            "    if (!Number.isSafeInteger(totalCents) || totalCents <= 0) {\n"
+          ]
+        },
+        {
+          "start": 130,
+          "after": [
+            "    const billRows=await tx.insert(userBill).values({\n"
+          ],
+          "before": [
+            "    await tx.insert(userBill).values({\n"
+          ],
+          "anchorStart": 128,
+          "anchor": [
+            "    if (!paidRows.length) throw new Error(\"充值订单支付状态更新失败\");\n",
+            "\n",
+            "    const billRows=await tx.insert(userBill).values({\n",
+            "      uid: order.uid,\n",
+            "      linkId: order.orderId,\n"
+          ]
+        },
+        {
+          "start": 145,
+          "after": [
+            "    }).returning({id:userBill.id});\n",
+            "    if(billRows.length!==1)throw Error('充值入账账本写入失败');\n",
+            "    if(noticeSigning)await enqueueRechargePaidNoticeTx(tx,noticeSigning,order.id,billRows[0].id,params.verifiedNoticeProvider!,now);\n"
+          ],
+          "before": [
+            "    });\n"
+          ],
+          "anchorStart": 143,
+          "anchor": [
+            "      status: 1,\n",
+            "      addTime: now,\n",
+            "    }).returning({id:userBill.id});\n",
+            "    if(billRows.length!==1)throw Error('充值入账账本写入失败');\n",
+            "    if(noticeSigning)await enqueueRechargePaidNoticeTx(tx,noticeSigning,order.id,billRows[0].id,params.verifiedNoticeProvider!,now);\n",
+            "\n",
+            "    const shippingEventKey=params.payType==='weixin'\n"
+          ]
+        },
+        {
+          "start": 151,
+          "after": [
+            "    return { outcome: \"paid\", balance,...(shippingEventKey?{shippingEventKey}:{}),...(noticeSigning?{noticeEventKey:rechargePaidNoticeEventKey(order.id)}:{}) };\n"
+          ],
+          "before": [
+            "    return { outcome: \"paid\", balance,...(shippingEventKey?{shippingEventKey}:{}) };\n"
+          ],
+          "anchorStart": 149,
+          "anchor": [
+            "    const shippingEventKey=params.payType==='weixin'\n",
+            "      ?await stageRoutineVirtualPaidShippingTx(tx,params.routineShipping,'recharge',order.id,now):null;\n",
+            "    return { outcome: \"paid\", balance,...(shippingEventKey?{shippingEventKey}:{}),...(noticeSigning?{noticeEventKey:rechargePaidNoticeEventKey(order.id)}:{}) };\n",
+            "  });\n",
+            "}\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/services/payment/RechargePaymentService.ts",
+        "gitBlobSha1": "3bcbb891770cf2be6f3f6b549a18a86c5b9b94d5"
+      }
+    },
+    {
+      "file": "workers-ts/src/models/schema/notification_delivery.ts",
+      "kind": "delivery-payload-schema",
+      "current": {
+        "bytes": 7229,
+        "sha256": "c53c0738cb15f6592cb814ac3846962ca873a428035d8b9d0bbf6914ae172451",
+        "gitBlobSha1": "95e18f6879114a4a2d26f9a2a37b2b67728bc108"
+      },
+      "predecessor": {
+        "bytes": 6864,
+        "sha256": "e0834f03baa1845e6ca3782c1cf95d5a15c91138f725b33d3a586c9ce59de4c5",
+        "gitBlobSha1": "1621a8a1ed63d1bd62c78f585da2936c8fc4ef11"
+      },
+      "inverseEdits": [
+        {
+          "start": 52,
+          "after": [
+            "/** Recharge42934 historically sends a JSON null URL. This explicit domain\n",
+            " * variant does not make any other official or Mini URL optional/nullable. */\n",
+            "export interface RechargeOfficialNotificationPayload {\n",
+            "  kind: \"wechat_official\";\n",
+            "  subjectDomain: \"recharge\";\n",
+            "  data: { time11: string; amount5: string };\n",
+            "  url: null;\n",
+            "}\n",
+            "\n"
+          ],
+          "before": [],
+          "anchorStart": 50,
+          "anchor": [
+            "}\n",
+            "\n",
+            "/** Recharge42934 historically sends a JSON null URL. This explicit domain\n",
+            " * variant does not make any other official or Mini URL optional/nullable. */\n",
+            "export interface RechargeOfficialNotificationPayload {\n",
+            "  kind: \"wechat_official\";\n",
+            "  subjectDomain: \"recharge\";\n",
+            "  data: { time11: string; amount5: string };\n",
+            "  url: null;\n",
+            "}\n",
+            "\n",
+            "export interface WechatShippingNotificationPayload {\n",
+            "  kind: \"wechat_shipping\";\n"
+          ]
+        },
+        {
+          "start": 83,
+          "after": [
+            "  | RechargeOfficialNotificationPayload\n"
+          ],
+          "before": [],
+          "anchorStart": 81,
+          "anchor": [
+            "  | SmsNotificationPayload\n",
+            "  | WechatTemplateNotificationPayload\n",
+            "  | RechargeOfficialNotificationPayload\n",
+            "  | WechatShippingNotificationPayload\n",
+            "  | WecomRobotNotificationPayload;\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/models/schema/notification_delivery.ts",
+        "gitBlobSha1": "1621a8a1ed63d1bd62c78f585da2936c8fc4ef11"
+      }
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "kind": "validation-runner",
+      "current": {
+        "bytes": 135793,
+        "sha256": "fec06b93e9a92dc3f3d1575c5c0a89e7f7cc2c882f2675c48b43cf95df24cafa",
+        "gitBlobSha1": "7eb54ad39c853cc3bf1b1d6da1698368bb1476c2"
+      },
+      "predecessor": {
+        "bytes": 135585,
+        "sha256": "e13677f85556261ea5d75d0eb4cde9265af0c53356386bafe0bc782d8dc9a188",
+        "gitBlobSha1": "a39957daae9810a3bba56c05d36f10f6ec18b83c"
+      },
+      "inverseEdits": [
+        {
+          "start": 386,
+          "after": [
+            "    'test/recharge-paid-notice-native.test.ts',\n",
+            "    'test/recharge-paid-notice-upgrade-native.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 348,
+          "anchor": [
+            "    'test/supplier-product-label-binding-http.test.ts',\n",
+            "    'test/supplier-product-label-native.test.ts',\n",
+            "    'test/supplier-product-label-runtime-native.test.ts',\n",
+            "    'test/admin-bargain-records-native.test.ts',\n",
+            "    'test/admin-wechat-menu-native.test.ts',\n",
+            "    'test/admin-wechat-open-native.test.ts',\n",
+            "    'test/admin-wechat-app-native.test.ts',\n",
+            "    'test/admin-wechat-routine-write-capability-postgres.test.ts',\n",
+            "    'test/admin-wechat-routine-upgrade-native.test.ts',\n",
+            "    'test/routine-original-payment-upgrade-native.test.ts',\n",
+            "    'test/routine-original-payment-evidence-native.test.ts',\n",
+            "    'test/routine-ownership-inventory-native.test.ts',\n",
+            "    'test/routine-notification-json-budget-native.test.ts',\n",
+            "    'test/routine-account-continuation-native.test.ts',\n",
+            "    'test/routine-identity-ownership-upgrade-native.test.ts',\n",
+            "    'test/routine-identity-ownership-native.test.ts',\n",
+            "    'test/routine-payment-account-policy-upgrade-native.test.ts',\n",
+            "    'test/routine-approved-account-native.test.ts',\n",
+            "    'test/routine-refund-account-policy-native.test.ts',\n",
+            "    'test/routine-refund-upgrade-native.test.ts',\n",
+            "    'test/routine-refund-dispatch-native.test.ts',\n",
+            "    'test/routine-refund-actor-principals-native.test.ts',\n",
+            "    'test/routine-refund-actors-upgrade-native.test.ts',\n",
+            "    'test/routine-refund-actors-native.test.ts',\n",
+            "    'test/routine-subscription-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-account-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-source-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-native.test.ts',\n",
+            "    'test/routine-subscription-notice-author-native.test.ts',\n",
+            "    'test/routine-subscription-refusal-notice-native.test.ts',\n",
+            "    'test/routine-subscription-refund-success-native.test.ts',\n",
+            "    'test/routine-subscription-materialized-refund-success-native.test.ts',\n",
+            "    'test/writeoff-notice-native.test.ts',\n",
+            "    'test/writeoff-notice-upgrade-native.test.ts',\n",
+            "    'test/paid-notice-native.test.ts',\n",
+            "    'test/membership-paid-notice-native.test.ts',\n",
+            "    'test/membership-paid-notice-upgrade-native.test.ts',\n",
+            "    'test/recharge-paid-notice-native.test.ts',\n",
+            "    'test/recharge-paid-notice-upgrade-native.test.ts',\n",
+            "    'test/paid-notice-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-pink-notice-native.test.ts',\n",
+            "    'test/fixed-role-fixture-lifecycle-native.test.ts',\n",
+            "    'test/routine-shipping-upgrade-native.test.ts',\n",
+            "    'test/routine-virtual-shipping-subjects-upgrade-native.test.ts',\n",
+            "    'test/routine-virtual-shipping-native.test.ts',\n",
+            "    'test/routine-shipping-account-native.test.ts',\n",
+            "    'test/routine-shipping-delivery-native.test.ts',\n",
+            "    'test/routine-refund-shipping-native.test.ts',\n",
+            "    'test/routine-pickup-shipping-native.test.ts',\n",
+            "    'test/fulfillment-city-conflict-reader-native.test.ts',\n",
+            "    'test/store-order-fulfillment-assignment-native.test.ts',\n",
+            "    'test/admin-order-fulfillment-assignment-native.test.ts',\n",
+            "    'test/manager-assigned-fulfillment-native.test.ts',\n",
+            "    'test/manager-assigned-fulfillment-http-native.test.ts',\n",
+            "    'test/admin-wechat-routine-http-native.test.ts',\n",
+            "    'test/admin-wechat-app-manager-coexist-native.test.ts',\n",
+            "    'test/native-app-runtime-config.test.ts',\n",
+            "    'test/routine-runtime-config.test.ts',\n",
+            "    'test/routine-auth-source.test.ts',\n",
+            "    'test/routine-auth-session.test.ts',\n",
+            "    'test/routine-identity-witness.test.ts',\n",
+            "    'test/routine-code-source.test.ts',\n",
+            "    'test/routine-live-source.test.ts',\n",
+            "    'test/routine-callback-source.test.ts',\n",
+            "    'test/routine-notification-source.test.ts',\n",
+            "    'test/routine-payment-public-source.test.ts',\n",
+            "    'test/routine-payment-initiation.test.ts',\n",
+            "    'test/routine-payment-callers.test.ts',\n",
+            "    'test/routine-payment-cross-channel.test.ts',\n",
+            "    'test/routine-payment-key-replay.test.ts',\n",
+            "    'test/routine-payment-local-admission.test.ts',\n",
+            "    'test/routine-payment-runtime-install.test.ts',\n",
+            "    'test/routine-payment-runtime-login.test.ts',\n",
+            "    'test/manager-routine-payment-runtime-native.test.ts',\n",
+            "    'test/manager-routine-payment-provision-native.test.ts',\n",
+            "    'test/customer-routine-payment-runtime-native.test.ts',\n",
+            "    'test/customer-routine-notification-compat-native.test.ts',\n"
+          ]
+        },
+        {
+          "start": 1516,
+          "after": [
+            "    'test/recharge-paid-notice-native.test.ts',\n",
+            "    'test/recharge-paid-notice-upgrade-native.test.ts',\n"
+          ],
+          "before": [],
+          "anchorStart": 1479,
+          "anchor": [
+            "        'test/supplier-product-label-native.test.ts',\n",
+            "    'test/supplier-product-label-runtime-native.test.ts',\n",
+            "    'test/admin-bargain-records-native.test.ts',\n",
+            "    'test/admin-wechat-menu-native.test.ts',\n",
+            "    'test/admin-wechat-open-native.test.ts',\n",
+            "    'test/admin-wechat-app-native.test.ts',\n",
+            "    'test/admin-wechat-routine-write-capability-postgres.test.ts',\n",
+            "    'test/admin-wechat-routine-upgrade-native.test.ts',\n",
+            "    'test/routine-original-payment-upgrade-native.test.ts',\n",
+            "    'test/routine-original-payment-evidence-native.test.ts',\n",
+            "    'test/routine-ownership-inventory-native.test.ts',\n",
+            "    'test/routine-notification-json-budget-native.test.ts',\n",
+            "    'test/routine-account-continuation-native.test.ts',\n",
+            "    'test/routine-identity-ownership-upgrade-native.test.ts',\n",
+            "    'test/routine-identity-ownership-native.test.ts',\n",
+            "    'test/routine-payment-account-policy-upgrade-native.test.ts',\n",
+            "    'test/routine-approved-account-native.test.ts',\n",
+            "    'test/routine-refund-account-policy-native.test.ts',\n",
+            "    'test/routine-refund-upgrade-native.test.ts',\n",
+            "    'test/routine-refund-dispatch-native.test.ts',\n",
+            "    'test/routine-refund-actor-principals-native.test.ts',\n",
+            "    'test/routine-refund-actors-upgrade-native.test.ts',\n",
+            "    'test/routine-refund-actors-native.test.ts',\n",
+            "    'test/routine-subscription-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-account-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-source-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-delivery-native.test.ts',\n",
+            "    'test/routine-subscription-notice-author-native.test.ts',\n",
+            "    'test/routine-subscription-refusal-notice-native.test.ts',\n",
+            "    'test/routine-subscription-refund-success-native.test.ts',\n",
+            "    'test/routine-subscription-materialized-refund-success-native.test.ts',\n",
+            "    'test/writeoff-notice-native.test.ts',\n",
+            "    'test/writeoff-notice-upgrade-native.test.ts',\n",
+            "    'test/paid-notice-native.test.ts',\n",
+            "    'test/membership-paid-notice-native.test.ts',\n",
+            "    'test/membership-paid-notice-upgrade-native.test.ts',\n",
+            "    'test/recharge-paid-notice-native.test.ts',\n",
+            "    'test/recharge-paid-notice-upgrade-native.test.ts',\n",
+            "    'test/paid-notice-upgrade-native.test.ts',\n",
+            "    'test/routine-subscription-pink-notice-native.test.ts',\n",
+            "    'test/fixed-role-fixture-lifecycle-native.test.ts',\n",
+            "    'test/routine-shipping-upgrade-native.test.ts',\n",
+            "    'test/routine-virtual-shipping-subjects-upgrade-native.test.ts',\n",
+            "    'test/routine-virtual-shipping-native.test.ts',\n",
+            "    'test/routine-shipping-account-native.test.ts',\n",
+            "    'test/routine-shipping-delivery-native.test.ts',\n",
+            "    'test/routine-refund-shipping-native.test.ts',\n",
+            "    'test/routine-pickup-shipping-native.test.ts',\n",
+            "    'test/fulfillment-city-conflict-reader-native.test.ts',\n",
+            "    'test/store-order-fulfillment-assignment-native.test.ts',\n",
+            "    'test/admin-order-fulfillment-assignment-native.test.ts',\n",
+            "    'test/manager-assigned-fulfillment-native.test.ts',\n",
+            "    'test/manager-assigned-fulfillment-http-native.test.ts',\n",
+            "    'test/admin-wechat-routine-http-native.test.ts',\n",
+            "    'test/admin-wechat-app-manager-coexist-native.test.ts',\n",
+            "    'test/native-app-runtime-config.test.ts',\n",
+            "    'test/routine-runtime-config.test.ts',\n",
+            "    'test/routine-auth-source.test.ts',\n",
+            "    'test/routine-auth-session.test.ts',\n",
+            "    'test/routine-identity-witness.test.ts',\n",
+            "    'test/routine-code-source.test.ts',\n",
+            "    'test/routine-live-source.test.ts',\n",
+            "    'test/routine-callback-source.test.ts',\n",
+            "    'test/routine-notification-source.test.ts',\n",
+            "    'test/routine-payment-public-source.test.ts',\n",
+            "    'test/routine-payment-initiation.test.ts',\n",
+            "    'test/routine-payment-callers.test.ts',\n",
+            "    'test/routine-payment-cross-channel.test.ts',\n",
+            "    'test/routine-payment-key-replay.test.ts',\n",
+            "    'test/routine-payment-local-admission.test.ts',\n",
+            "    'test/routine-payment-runtime-install.test.ts',\n",
+            "    'test/routine-payment-runtime-login.test.ts',\n",
+            "    'test/manager-routine-payment-runtime-native.test.ts',\n",
+            "    'test/manager-routine-payment-provision-native.test.ts',\n",
+            "    'test/customer-routine-payment-runtime-native.test.ts',\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/scripts/run-local-finance-postgres.mjs",
+        "gitBlobSha1": "a39957daae9810a3bba56c05d36f10f6ec18b83c"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+      "kind": "committed-advisory-review",
+      "current": {
+        "bytes": 37172,
+        "sha256": "3f9c818060156a52217a9ec917cab9f26ad0825c3146e88e38572966b52c002b",
+        "gitBlobSha1": "3a8b7baff170ab5fa6e2e70881cac5860114c8cb"
+      },
+      "predecessor": {
+        "bytes": 43061,
+        "sha256": "7a58b8fc5e3fb43bb1c0806dd683fd43c522cbd4759a6fa46c418504500a398e",
+        "gitBlobSha1": "98fce887389615e086e270e16830166d00ed8735"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "  \"reviewedReceipt\": \"2026-11-05 upstream affected-range correction for GHSA-g3hv-75wg-m249, updated2026-11-04T16:50:04Z: current affected range >=7.0.0 <11.0.1 excludes the unchanged installed callable3.1.5. This is not an upstream fixed3.x release, dependency upgrade or withdrawal of the active7-to10 advisory. Fresh official npm lock-only receipt SHAdba7acb608d1dfeef0ece4f3336134aec790ff0067dd049617bda99053edacba reports48 affected entries/25 direct objects/24 GHSA URLs,8 preserved chain definitions(6 active). Exactly source1244012 and its14 propagated-only entries leave the active inventory; six surviving entries receive the exact reviewed forward-path/severity/chain delta. All other42 complete entries,25 direct tuples,24 prior forbidden records, lock/package/vendor/installed bytes and gate comparison code remain unchanged. Source1244012 is now forbidden as an obsolete affected-range return. Full old62-entry baseline and its seven unresolved-range negative vectors remain separately executed as historical evidence. Exact raw receipt, upstream metadata projection and reversible delta are in workers-ts/audit/uni-d3-minimatch-range-review-20261105.json; the prior malformed centra cause is not established by this review.\",\n"
+          ],
+          "before": [
+            "  \"reviewedReceipt\": \"2026-11-01 scoped official consumer upgrade; actual lock-only raw SHA61f479703abab30377eefdf176d519d393a709c8e0cd2724813b78afafc3dc19 under Node24.14.1/npm11.11.0 reports62 affected entries/26 direct objects/25 GHSA URLs across8 preserved chain definitions (7 active). Official follow-redirects1.16.2 resolves source1244003 and preserves both prior forbidden redirect sources. Only the three named-API minimatch9 consumers move to official11.0.1, with all37 published files verified and actual unplugin CJS/ESM hooks and Vue template generation controls. The retained root callable minimatch3.1.5 still triggers npm source1244012/<11.0.1; it is explicitly retained as an unresolved version-range alert, not an official fixed3.x release or general safety claim. Exact official4-file bytes lack the advisory firstPhasePreProcess/secondPhasePreProcess/optimizationLevel mechanism. Only its single root installed node and complete14-new/6-existing-entry propagation closure are reviewed under glob-toolchain, with real Glob7/TestExclude6 behavior verified. Maintainer range clarification remains open. All25 earlier direct tuples and23 earlier forbidden source records remain unchanged; source1244003 is additionally forbidden. Unknown sources, tuples, paths, forward edges, severities and resolved returns remain fail-closed. Full pinned official receipts, exact lock/inventory delta and bounded consumer controls are bound by workers-ts/audit/uni-d3-consumer-upgrades-20261101.json. This does not establish the cause of the earlier malformed centra CI entry, which is absent from both captured fresh reports.\",\n"
+          ],
+          "anchorStart": 1,
+          "anchor": [
+            "  \"schemaVersion\": 1,\n",
+            "  \"lockSemanticSha256\": \"f0d1ebaf5e0c8e45f635c2118d2ce6c0e9f0cda2d179d593d0031effa55abf5a\",\n",
+            "  \"reviewedReceipt\": \"2026-11-05 upstream affected-range correction for GHSA-g3hv-75wg-m249, updated2026-11-04T16:50:04Z: current affected range >=7.0.0 <11.0.1 excludes the unchanged installed callable3.1.5. This is not an upstream fixed3.x release, dependency upgrade or withdrawal of the active7-to10 advisory. Fresh official npm lock-only receipt SHAdba7acb608d1dfeef0ece4f3336134aec790ff0067dd049617bda99053edacba reports48 affected entries/25 direct objects/24 GHSA URLs,8 preserved chain definitions(6 active). Exactly source1244012 and its14 propagated-only entries leave the active inventory; six surviving entries receive the exact reviewed forward-path/severity/chain delta. All other42 complete entries,25 direct tuples,24 prior forbidden records, lock/package/vendor/installed bytes and gate comparison code remain unchanged. Source1244012 is now forbidden as an obsolete affected-range return. Full old62-entry baseline and its seven unresolved-range negative vectors remain separately executed as historical evidence. Exact raw receipt, upstream metadata projection and reversible delta are in workers-ts/audit/uni-d3-minimatch-range-review-20261105.json; the prior malformed centra cause is not established by this review.\",\n",
+            "  \"chains\": {\n",
+            "    \"intlify\": \"DCloud-retained Intlify9.1.9 with a project-maintained mixed-argument escaping source backport; other existing Intlify advisories and configured client-graph exclusions remain separately scoped\",\n"
+          ]
+        },
+        {
+          "start": 189,
+          "after": [],
+          "before": [
+            "    },\n",
+            "    \"1244012\": {\n",
+            "      \"package\": \"minimatch\",\n",
+            "      \"url\": \"https://github.com/advisories/GHSA-g3hv-75wg-m249\",\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"range\": \"<11.0.1\",\n",
+            "      \"chain\": \"glob-toolchain\"\n"
+          ],
+          "anchorStart": 187,
+          "anchor": [
+            "      \"range\": \">=9.0.0-beta.12 <11.4.14\",\n",
+            "      \"chain\": \"intlify\"\n",
+            "    }\n",
+            "  },\n"
+          ]
+        },
+        {
+          "start": 290,
+          "after": [],
+          "before": [
+            "        \"glob-toolchain\",\n"
+          ],
+          "anchorStart": 288,
+          "anchor": [
+            "      \"chains\": [\n",
+            "        \"encrypted-zip\",\n",
+            "        \"intlify\",\n",
+            "        \"jest-toolchain\",\n"
+          ]
+        },
+        {
+          "start": 705,
+          "after": [
+            "      \"severity\": \"low\",\n"
+          ],
+          "before": [
+            "      \"severity\": \"moderate\",\n"
+          ],
+          "anchorStart": 703,
+          "anchor": [
+            "    },\n",
+            "    \"@jest/core\": {\n",
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ]
+        },
+        {
+          "start": 707,
+          "after": [
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ],
+          "before": [
+            "      \"range\": \"*\",\n"
+          ],
+          "anchorStart": 705,
+          "anchor": [
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/@jest/core\"\n"
+          ]
+        },
+        {
+          "start": 712,
+          "after": [],
+          "before": [
+            "        \"@jest/reporters\",\n",
+            "        \"@jest/transform\",\n"
+          ],
+          "anchorStart": 710,
+          "anchor": [
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-config\",\n",
+            "        \"jest-runner\"\n"
+          ]
+        },
+        {
+          "start": 713,
+          "after": [
+            "        \"jest-runner\"\n"
+          ],
+          "before": [
+            "        \"jest-resolve-dependencies\",\n",
+            "        \"jest-runner\",\n",
+            "        \"jest-runtime\",\n",
+            "        \"jest-snapshot\",\n",
+            "        \"rimraf\"\n"
+          ],
+          "anchorStart": 711,
+          "anchor": [
+            "      \"viaPackages\": [\n",
+            "        \"jest-config\",\n",
+            "        \"jest-runner\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n"
+          ]
+        },
+        {
+          "start": 716,
+          "after": [
+            "      \"effects\": [],\n"
+          ],
+          "before": [
+            "      \"effects\": [\n",
+            "        \"jest\",\n",
+            "        \"jest-cli\"\n",
+            "      ],\n"
+          ],
+          "anchorStart": 714,
+          "anchor": [
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n"
+          ]
+        },
+        {
+          "start": 718,
+          "after": [],
+          "before": [
+            "        \"glob-toolchain\",\n"
+          ],
+          "anchorStart": 716,
+          "anchor": [
+            "      \"effects\": [],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n"
+          ]
+        },
+        {
+          "start": 719,
+          "after": [],
+          "before": [
+            "      ]\n",
+            "    },\n",
+            "    \"@jest/reporters\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"*\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/@jest/reporters\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"@jest/transform\",\n",
+            "        \"glob\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/core\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"@jest/test-sequencer\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"<=28.0.0-alpha.11\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/@jest/test-sequencer\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-runtime\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"@jest/transform\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"*\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/@jest/transform\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"babel-plugin-istanbul\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"babel-jest\",\n",
+            "        \"jest-runner\",\n",
+            "        \"jest-runtime\",\n",
+            "        \"jest-snapshot\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n"
+          ],
+          "anchorStart": 716,
+          "anchor": [
+            "      \"effects\": [],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"@jimp/core\": {\n"
+          ]
+        },
+        {
+          "start": 909,
+          "after": [],
+          "before": [
+            "    \"babel-jest\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=24.0.0-alpha.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/babel-jest\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"@jest/transform\",\n",
+            "        \"babel-plugin-istanbul\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"babel-plugin-istanbul\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=5.0.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/babel-plugin-istanbul\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"test-exclude\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/transform\",\n",
+            "        \"babel-jest\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"glob\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"3.0.0 - 13.0.6\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/glob\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"minimatch\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/reporters\",\n",
+            "        \"jest-config\",\n",
+            "        \"jest-runtime\",\n",
+            "        \"rimraf\",\n",
+            "        \"test-exclude\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ],
+          "anchorStart": 907,
+          "anchor": [
+            "      ]\n",
+            "    },\n",
+            "    \"http-proxy-agent\": {\n",
+            "      \"severity\": \"low\",\n"
+          ]
+        },
+        {
+          "start": 928,
+          "after": [
+            "      \"severity\": \"low\",\n"
+          ],
+          "before": [
+            "      \"severity\": \"moderate\",\n"
+          ],
+          "anchorStart": 926,
+          "anchor": [
+            "    },\n",
+            "    \"jest\": {\n",
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ]
+        },
+        {
+          "start": 930,
+          "after": [
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ],
+          "before": [
+            "      \"range\": \">=19.1.0-alpha.eed82034\",\n"
+          ],
+          "anchorStart": 928,
+          "anchor": [
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest\"\n"
+          ]
+        },
+        {
+          "start": 943,
+          "after": [],
+          "before": [
+            "        \"glob-toolchain\",\n"
+          ],
+          "anchorStart": 940,
+          "anchor": [
+            "        \"@dcloudio/uni-automator\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ]
+        },
+        {
+          "start": 946,
+          "after": [],
+          "before": [
+            "    \"jest-circus\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=25.2.4\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-circus\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-runtime\",\n",
+            "        \"jest-snapshot\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ],
+          "anchorStart": 944,
+          "anchor": [
+            "      ]\n",
+            "    },\n",
+            "    \"jest-cli\": {\n",
+            "      \"severity\": \"low\",\n"
+          ]
+        },
+        {
+          "start": 947,
+          "after": [
+            "      \"severity\": \"low\",\n"
+          ],
+          "before": [
+            "      \"severity\": \"moderate\",\n"
+          ],
+          "anchorStart": 945,
+          "anchor": [
+            "    },\n",
+            "    \"jest-cli\": {\n",
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ]
+        },
+        {
+          "start": 949,
+          "after": [
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ],
+          "before": [
+            "      \"range\": \">=19.1.0-alpha.eed82034\",\n"
+          ],
+          "anchorStart": 947,
+          "anchor": [
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-cli\"\n"
+          ]
+        },
+        {
+          "start": 962,
+          "after": [],
+          "before": [
+            "        \"glob-toolchain\",\n"
+          ],
+          "anchorStart": 959,
+          "anchor": [
+            "        \"jest\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ]
+        },
+        {
+          "start": 966,
+          "after": [
+            "      \"severity\": \"low\",\n"
+          ],
+          "before": [
+            "      \"severity\": \"moderate\",\n"
+          ],
+          "anchorStart": 964,
+          "anchor": [
+            "    },\n",
+            "    \"jest-config\": {\n",
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": true,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ]
+        },
+        {
+          "start": 968,
+          "after": [
+            "      \"range\": \"27.0.1 - 27.5.1\",\n"
+          ],
+          "before": [
+            "      \"range\": \">=19.1.0-alpha.eed82034\",\n"
+          ],
+          "anchorStart": 966,
+          "anchor": [
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": true,\n",
+            "      \"range\": \"27.0.1 - 27.5.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-config\"\n"
+          ]
+        },
+        {
+          "start": 973,
+          "after": [],
+          "before": [
+            "        \"@jest/test-sequencer\",\n",
+            "        \"babel-jest\",\n",
+            "        \"glob\",\n",
+            "        \"jest-circus\",\n"
+          ],
+          "anchorStart": 971,
+          "anchor": [
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-environment-jsdom\",\n",
+            "        \"jest-runner\"\n"
+          ]
+        },
+        {
+          "start": 974,
+          "after": [],
+          "before": [
+            "        \"jest-jasmine2\",\n"
+          ],
+          "anchorStart": 972,
+          "anchor": [
+            "      \"viaPackages\": [\n",
+            "        \"jest-environment-jsdom\",\n",
+            "        \"jest-runner\"\n",
+            "      ],\n"
+          ]
+        },
+        {
+          "start": 978,
+          "after": [
+            "        \"@jest/core\",\n"
+          ],
+          "before": [],
+          "anchorStart": 976,
+          "anchor": [
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/core\",\n",
+            "        \"jest-cli\"\n",
+            "      ],\n"
+          ]
+        },
+        {
+          "start": 982,
+          "after": [],
+          "before": [
+            "        \"glob-toolchain\",\n"
+          ],
+          "anchorStart": 979,
+          "anchor": [
+            "        \"jest-cli\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ]
+        },
+        {
+          "start": 1004,
+          "after": [],
+          "before": [
+            "    \"jest-jasmine2\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=24.2.0-alpha.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-jasmine2\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-runtime\",\n",
+            "        \"jest-snapshot\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"jest-resolve-dependencies\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=27.0.0-next.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-resolve-dependencies\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-snapshot\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ],
+          "anchorStart": 1002,
+          "anchor": [
+            "      ]\n",
+            "    },\n",
+            "    \"jest-runner\": {\n",
+            "      \"severity\": \"low\",\n"
+          ]
+        },
+        {
+          "start": 1005,
+          "after": [
+            "      \"severity\": \"low\",\n"
+          ],
+          "before": [
+            "      \"severity\": \"moderate\",\n"
+          ],
+          "anchorStart": 1003,
+          "anchor": [
+            "    },\n",
+            "    \"jest-runner\": {\n",
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.4 - 27.5.1\",\n"
+          ]
+        },
+        {
+          "start": 1007,
+          "after": [
+            "      \"range\": \"27.0.4 - 27.5.1\",\n"
+          ],
+          "before": [
+            "      \"range\": \">=24.0.0-alpha.0\",\n"
+          ],
+          "anchorStart": 1005,
+          "anchor": [
+            "      \"severity\": \"low\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"27.0.4 - 27.5.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-runner\"\n"
+          ]
+        },
+        {
+          "start": 1012,
+          "after": [
+            "        \"jest-environment-jsdom\"\n"
+          ],
+          "before": [
+            "        \"@jest/transform\",\n",
+            "        \"jest-environment-jsdom\",\n",
+            "        \"jest-runtime\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\",\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"jest-runtime\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=24.0.0-alpha.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-runtime\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"@jest/transform\",\n",
+            "        \"glob\",\n",
+            "        \"jest-snapshot\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/test-sequencer\",\n",
+            "        \"jest-circus\",\n",
+            "        \"jest-jasmine2\",\n",
+            "        \"jest-runner\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"jest-snapshot\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \">=27.0.0-next.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/jest-snapshot\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"@jest/transform\"\n"
+          ],
+          "anchorStart": 1010,
+          "anchor": [
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"jest-environment-jsdom\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n"
+          ]
+        },
+        {
+          "start": 1017,
+          "after": [
+            "        \"jest-config\"\n"
+          ],
+          "before": [
+            "        \"jest-circus\",\n",
+            "        \"jest-jasmine2\",\n",
+            "        \"jest-resolve-dependencies\",\n",
+            "        \"jest-runtime\"\n"
+          ],
+          "anchorStart": 1015,
+          "anchor": [
+            "      \"effects\": [\n",
+            "        \"@jest/core\",\n",
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n"
+          ]
+        },
+        {
+          "start": 1020,
+          "after": [
+            "        \"jest-toolchain\"\n"
+          ],
+          "before": [
+            "        \"glob-toolchain\"\n"
+          ],
+          "anchorStart": 1017,
+          "anchor": [
+            "        \"jest-config\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"jest-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"jimp\": {\n"
+          ]
+        },
+        {
+          "start": 1079,
+          "after": [],
+          "before": [
+            "    \"minimatch\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"<11.0.1\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/minimatch\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [],\n",
+            "      \"advisorySources\": [\n",
+            "        1244012\n",
+            "      ],\n",
+            "      \"effects\": [\n",
+            "        \"glob\",\n",
+            "        \"test-exclude\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n"
+          ],
+          "anchorStart": 1077,
+          "anchor": [
+            "      ]\n",
+            "    },\n",
+            "    \"phin\": {\n",
+            "      \"severity\": \"moderate\",\n"
+          ]
+        },
+        {
+          "start": 1095,
+          "after": [],
+          "before": [
+            "      ]\n",
+            "    },\n",
+            "    \"rimraf\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"2.3.0 - 3.0.2 || >=4.2.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/rimraf\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"glob\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"@jest/core\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"test-exclude\": {\n",
+            "      \"severity\": \"moderate\",\n",
+            "      \"isDirect\": false,\n",
+            "      \"range\": \"4.2.2 || >=5.0.0\",\n",
+            "      \"nodes\": [\n",
+            "        \"node_modules/test-exclude\"\n",
+            "      ],\n",
+            "      \"viaPackages\": [\n",
+            "        \"glob\",\n",
+            "        \"minimatch\"\n",
+            "      ],\n",
+            "      \"advisorySources\": [],\n",
+            "      \"effects\": [\n",
+            "        \"babel-plugin-istanbul\"\n",
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"glob-toolchain\"\n"
+          ],
+          "anchorStart": 1092,
+          "anchor": [
+            "      ],\n",
+            "      \"chains\": [\n",
+            "        \"automator-qr\"\n",
+            "      ]\n",
+            "    },\n",
+            "    \"vite\": {\n"
+          ]
+        },
+        {
+          "start": 1291,
+          "after": [
+            "    },\n",
+            "    \"1244012\": {\n",
+            "      \"package\": \"minimatch\",\n",
+            "      \"url\": \"https://github.com/advisories/GHSA-g3hv-75wg-m249\",\n",
+            "      \"resolution\": \"upstream-affected-range-correction\",\n",
+            "      \"previousAffectedRange\": \"<11.0.1\",\n",
+            "      \"correctedAffectedRange\": \">=7.0.0 <11.0.1\",\n",
+            "      \"unchangedInstalledVersion\": \"3.1.5\",\n",
+            "      \"upstreamPatchedVersion\": \"11.0.1\",\n",
+            "      \"upstreamUpdatedAt\": \"2026-11-04T16:50:04Z\",\n",
+            "      \"advisoryWithdrawn\": false,\n",
+            "      \"dependencyUpgradePerformed\": false,\n",
+            "      \"reason\": \"Upstream narrowed the active advisory to major7 through10. The unchanged root3.1.5 is outside that corrected range; all installed major11 copies are already11.0.1. This is a dated range-correction decision, not a general3.x safety claim or a fixed3.x release. Reappearance of numeric source1244012 remains forbidden; future source IDs require independent review.\"\n"
+          ],
+          "before": [],
+          "anchorStart": 1289,
+          "anchor": [
+            "      \"affectedRange\": \">=1.16.0 <=1.16.1\",\n",
+            "      \"reason\": \"Adopted exact official1.16.2 package and all7 installed files; verified original1.16.1 index.js is recovered by reversing the two official fix fragments. Loopback object/array-form header controls reproduce only the original cross-realm custom credential forwarding; installed1.16.2 and actual Centra2.7.0 suppress it while preserving ordinary/same-origin behavior.\"\n",
+            "    },\n",
+            "    \"1244012\": {\n",
+            "      \"package\": \"minimatch\",\n",
+            "      \"url\": \"https://github.com/advisories/GHSA-g3hv-75wg-m249\",\n",
+            "      \"resolution\": \"upstream-affected-range-correction\",\n",
+            "      \"previousAffectedRange\": \"<11.0.1\",\n",
+            "      \"correctedAffectedRange\": \">=7.0.0 <11.0.1\",\n",
+            "      \"unchangedInstalledVersion\": \"3.1.5\",\n",
+            "      \"upstreamPatchedVersion\": \"11.0.1\",\n",
+            "      \"upstreamUpdatedAt\": \"2026-11-04T16:50:04Z\",\n",
+            "      \"advisoryWithdrawn\": false,\n",
+            "      \"dependencyUpgradePerformed\": false,\n",
+            "      \"reason\": \"Upstream narrowed the active advisory to major7 through10. The unchanged root3.1.5 is outside that corrected range; all installed major11 copies are already11.0.1. This is a dated range-correction decision, not a general3.x safety claim or a fixed3.x release. Reappearance of numeric source1244012 remains forbidden; future source IDs require independent review.\"\n",
+            "    }\n",
+            "  }\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+        "gitBlobSha1": "98fce887389615e086e270e16830166d00ed8735"
+      },
+      "committedCurrentOrigin": {
+        "commit": "0ecb7405a541722244c9a2acb4f109ce492db340",
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.baseline.json",
+        "gitBlobSha1": "3a8b7baff170ab5fa6e2e70881cac5860114c8cb"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+      "kind": "committed-advisory-review",
+      "current": {
+        "bytes": 54018,
+        "sha256": "e6b536e0ea2a7c04a2ccd39db87a2942143e712c5a5b78037cb96508bc30ccf4",
+        "gitBlobSha1": "3b28f3f821c71b01974481ab152f53d543a2d976"
+      },
+      "predecessor": {
+        "bytes": 47311,
+        "sha256": "f907e87570f671f5a3ddf0f90c28270d69c7e7fe2f394e9ae5648303d27991d0",
+        "gitBlobSha1": "c21e8f4e79a86cfc34ac3aa66bbfb4cfa31a78c7"
+      },
+      "inverseEdits": [
+        {
+          "start": 12,
+          "after": [
+            "const preRangeBaselineBytes = readFileSync(resolve(__dirname, \"d3-advisory-gate.pre-minimatch-range-20261105.baseline.json\"));\n",
+            "const preRangeBaseline = JSON.parse(preRangeBaselineBytes.toString(\"utf8\"));\n"
+          ],
+          "before": [],
+          "anchorStart": 10,
+          "anchor": [
+            "\n",
+            "const baseline = JSON.parse(readFileSync(resolve(__dirname, \"d3-advisory-gate.baseline.json\"), \"utf8\"));\n",
+            "const preRangeBaselineBytes = readFileSync(resolve(__dirname, \"d3-advisory-gate.pre-minimatch-range-20261105.baseline.json\"));\n",
+            "const preRangeBaseline = JSON.parse(preRangeBaselineBytes.toString(\"utf8\"));\n",
+            "const preSecurityBaselineBytes = readFileSync(resolve(__dirname, \"d3-advisory-gate.pre-security-backports-20261028.baseline.json\"));\n",
+            "const preSecurityBaseline = JSON.parse(preSecurityBaselineBytes.toString(\"utf8\"));\n"
+          ]
+        },
+        {
+          "start": 47,
+          "after": [
+            "function rejected(fixture, fragment, reviewed = baseline) {\n",
+            "  const result = evaluateAudit(fixture, reviewed);\n"
+          ],
+          "before": [
+            "function rejected(fixture, fragment) {\n",
+            "  const result = evaluateAudit(fixture, baseline);\n"
+          ],
+          "anchorStart": 45,
+          "anchor": [
+            "}\n",
+            "\n",
+            "function rejected(fixture, fragment, reviewed = baseline) {\n",
+            "  const result = evaluateAudit(fixture, reviewed);\n",
+            "  assert.equal(result.ok, false);\n",
+            "  assert.ok(result.issues.some((issue) => issue.includes(fragment)), JSON.stringify(result.issues));\n"
+          ]
+        },
+        {
+          "start": 80,
+          "after": [
+            "  assert.equal(Object.keys(baseline.entries).length, 48);\n",
+            "  assert.equal(Object.keys(baseline.advisories).length, 25);\n",
+            "  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 25);\n"
+          ],
+          "before": [
+            "  assert.equal(Object.keys(baseline.entries).length, 62);\n",
+            "  assert.equal(Object.keys(baseline.advisories).length, 26);\n",
+            "  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 24);\n"
+          ],
+          "anchorStart": 78,
+          "anchor": [
+            "\n",
+            "test(\"reviewed package entries each resolve to a scoped advisory chain\", () => {\n",
+            "  assert.equal(Object.keys(baseline.entries).length, 48);\n",
+            "  assert.equal(Object.keys(baseline.advisories).length, 25);\n",
+            "  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 25);\n",
+            "  assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0\n",
+            "    && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));\n"
+          ]
+        },
+        {
+          "start": 87,
+          "after": [
+            "  assert.equal(result.directAdvisoryObjects, 25);\n",
+            "  assert.equal(result.distinctAdvisoryUrls, 24);\n"
+          ],
+          "before": [
+            "  assert.equal(result.directAdvisoryObjects, 26);\n",
+            "  assert.equal(result.distinctAdvisoryUrls, 25);\n"
+          ],
+          "anchorStart": 85,
+          "anchor": [
+            "  const result = evaluateAudit(reviewedFixture(), baseline);\n",
+            "  assert.deepEqual(result.issues, []);\n",
+            "  assert.equal(result.directAdvisoryObjects, 25);\n",
+            "  assert.equal(result.distinctAdvisoryUrls, 24);\n",
+            "  assert.equal(Object.keys(baseline.chains).length, 8);\n",
+            "  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);\n"
+          ]
+        },
+        {
+          "start": 90,
+          "after": [
+            "  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);\n"
+          ],
+          "before": [
+            "  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);\n"
+          ],
+          "anchorStart": 88,
+          "anchor": [
+            "  assert.equal(result.distinctAdvisoryUrls, 24);\n",
+            "  assert.equal(Object.keys(baseline.chains).length, 8);\n",
+            "  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);\n",
+            "});\n",
+            "\n"
+          ]
+        },
+        {
+          "start": 94,
+          "after": [
+            "  const baseline = preRangeBaseline; // The dated unresolved-range review is preserved, not today's range decision.\n"
+          ],
+          "before": [],
+          "anchorStart": 92,
+          "anchor": [
+            "\n",
+            "test('scoped consumer upgrade preserves every old tuple and forbidden source except the exact pinned inventory delta', () => {\n",
+            "  const baseline = preRangeBaseline; // The dated unresolved-range review is preserved, not today's range decision.\n",
+            "  assert.equal(createHash('sha256').update(preConsumerBaselineBytes).digest('hex'),\n",
+            "    '7790eafd184b534236d93d81b51412b30c80fb42211e0c441fbed4a0c98dcdf6');\n"
+          ]
+        },
+        {
+          "start": 122,
+          "after": [
+            "  test('historical unresolved callable minimatch finding rejects changed ' + kind, () => {\n",
+            "    const report = reviewedFixture(preRangeBaseline), entry = report.vulnerabilities.minimatch, direct = entry.via[0];\n"
+          ],
+          "before": [
+            "  test('retained callable minimatch finding rejects changed ' + kind, () => {\n",
+            "    const report = reviewedFixture(), entry = report.vulnerabilities.minimatch, direct = entry.via[0];\n"
+          ],
+          "anchorStart": 120,
+          "anchor": [
+            "\n",
+            "for (const kind of ['source', 'url', 'severity', 'range', 'missing', 'new-node', 'new-forward-edge']) {\n",
+            "  test('historical unresolved callable minimatch finding rejects changed ' + kind, () => {\n",
+            "    const report = reviewedFixture(preRangeBaseline), entry = report.vulnerabilities.minimatch, direct = entry.via[0];\n",
+            "    if (kind === 'source') direct.source = 9999999;\n",
+            "    if (kind === 'url') direct.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';\n"
+          ]
+        },
+        {
+          "start": 141,
+          "after": [
+            "    rejected(report, expected, preRangeBaseline);\n"
+          ],
+          "before": [
+            "    rejected(report, expected);\n"
+          ],
+          "anchorStart": 139,
+          "anchor": [
+            "      : kind === 'new-forward-edge' ? 'affected package entry changed: vite'\n",
+            "      : 'direct advisory changed: 1244012';\n",
+            "    rejected(report, expected, preRangeBaseline);\n",
+            "  });\n",
+            "}\n"
+          ]
+        },
+        {
+          "start": 231,
+          "after": [
+            "test(\"all twenty-five resolved, withdrawn, replaced or range-corrected advisory source IDs remain forbidden\", () => {\n"
+          ],
+          "before": [
+            "test(\"all twenty-four resolved, withdrawn or replaced advisory source IDs remain forbidden\", () => {\n"
+          ],
+          "anchorStart": 229,
+          "anchor": [
+            "});\n",
+            "\n",
+            "test(\"all twenty-five resolved, withdrawn, replaced or range-corrected advisory source IDs remain forbidden\", () => {\n",
+            "  const fixture = reviewedFixture();\n",
+            "  for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {\n"
+          ]
+        },
+        {
+          "start": 307,
+          "after": [
+            "    assert.match(accepted.stdout, /48 affected package entries/);\n"
+          ],
+          "before": [
+            "    assert.match(accepted.stdout, /62 affected package entries/);\n"
+          ],
+          "anchorStart": 305,
+          "anchor": [
+            "      { encoding: \"utf8\", timeout: 10000, env });\n",
+            "    assert.equal(accepted.status, 0, accepted.stderr);\n",
+            "    assert.match(accepted.stdout, /48 affected package entries/);\n",
+            "\n",
+            "    writeFileSync(file, JSON.stringify({ message: \"simulated audit endpoint failure\", error: {} }));\n"
+          ]
+        },
+        {
+          "start": 638,
+          "after": [
+            "\n",
+            "\n",
+            "const rangeReviewBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-review-20261105.json'));\n",
+            "const rangeReview = JSON.parse(rangeReviewBytes.toString('utf8'));\n",
+            "const rangeAuditBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-npm-audit-20261105.json'));\n",
+            "const rangeAudit = JSON.parse(rangeAuditBytes.toString('utf8'));\n",
+            "const rangeUpstreamBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-upstream-20261105.json'));\n",
+            "const rangeUpstream = JSON.parse(rangeUpstreamBytes.toString('utf8'));\n",
+            "const digest = bytes => createHash('sha256').update(bytes).digest('hex');\n",
+            "\n",
+            "test('upstream minimatch range review preserves the full old62 image and admits only the exact14 removal and6 entry delta', () => {\n",
+            "  assert.equal(digest(rangeReviewBytes), '2f1aac03eb55e42d44302ff4f54324a73d14a77551b8a2101409d714b0e95890');\n",
+            "  assert.equal(digest(preRangeBaselineBytes), '7a58b8fc5e3fb43bb1c0806dd683fd43c522cbd4759a6fa46c418504500a398e');\n",
+            "  assert.equal(digest(preRangeBaselineBytes), rangeReview.originalBaseline.sha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.baseline.json'))), rangeReview.currentBaselineSha256);\n",
+            "  const expected = structuredClone(preRangeBaseline);\n",
+            "  assert.deepEqual(Object.keys(rangeReview.removedActiveAdvisories), ['1244012']);\n",
+            "  assert.deepEqual(expected.advisories['1244012'], rangeReview.removedActiveAdvisories['1244012']);\n",
+            "  delete expected.advisories['1244012'];\n",
+            "  assert.equal(Object.keys(rangeReview.removedEntries).length, 14);\n",
+            "  for (const [name, entry] of Object.entries(rangeReview.removedEntries)) {\n",
+            "    assert.deepEqual(expected.entries[name], entry, name + ' original complete entry'); delete expected.entries[name];\n",
+            "  }\n",
+            "  assert.equal(Object.keys(rangeReview.changedEntries).length, 6);\n",
+            "  for (const [name, delta] of Object.entries(rangeReview.changedEntries)) {\n",
+            "    assert.deepEqual(expected.entries[name], delta.old, name + ' exact predecessor'); expected.entries[name] = delta.new;\n",
+            "  }\n",
+            "  assert.equal(Object.keys(expected.entries).length, 48);\n",
+            "  expected.resolvedAdvisories['1244012'] = rangeReview.newForbiddenRangeCorrection;\n",
+            "  expected.reviewedReceipt = rangeReview.reviewedReceipt;\n",
+            "  assert.deepEqual(baseline, expected);\n",
+            "  assert.deepEqual(baseline.chains, preRangeBaseline.chains);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.cjs'))), rangeReview.gateImplementationSha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, '../package.json'))), rangeReview.packageJsonSha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, '../package-lock.json'))), rangeReview.packageLockRawSha256);\n",
+            "  assert.equal(baseline.lockSemanticSha256, preRangeBaseline.lockSemanticSha256);\n",
+            "});\n",
+            "\n",
+            "test('actual captured npm response passes the range-reviewed baseline and still fails its preserved predecessor', () => {\n",
+            "  assert.equal(digest(rangeAuditBytes), rangeReview.rawNpmReceipt.sha256);\n",
+            "  assert.equal(rangeAuditBytes.length, rangeReview.rawNpmReceipt.bytes);\n",
+            "  const current = evaluateAudit(rangeAudit, baseline), historical = evaluateAudit(rangeAudit, preRangeBaseline);\n",
+            "  assert.equal(current.ok, true); assert.deepEqual(current.issues, []);\n",
+            "  assert.deepEqual([current.packageEntries, current.directAdvisoryObjects, current.distinctAdvisoryUrls, current.scopedChains], [48,25,24,8]);\n",
+            "  assert.equal(historical.ok, false);\n",
+            "  assert.ok(historical.issues.includes('direct advisory disappeared without baseline review: 1244012'));\n",
+            "  assert.ok(historical.issues.includes('affected package entry disappeared without baseline review: test-exclude'));\n",
+            "  assert.equal(evaluateAudit(reviewedFixture(preRangeBaseline), preRangeBaseline).ok, true);\n",
+            "});\n",
+            "\n",
+            "test('current upstream range excludes installed3.1.5 while retaining an active7-to10 advisory and11.0.1 upstream patch', () => {\n",
+            "  assert.equal(digest(rangeUpstreamBytes), rangeReview.publicUpstreamMetadata.sha256);\n",
+            "  assert.equal(rangeUpstream.ghsaId, 'GHSA-g3hv-75wg-m249');\n",
+            "  assert.equal(rangeUpstream.updatedAt, '2026-11-04T16:50:04Z');\n",
+            "  assert.equal(rangeUpstream.withdrawnAt, null);\n",
+            "  assert.deepEqual(rangeUpstream.vulnerabilities, [{ package: { ecosystem:'npm', name:'minimatch' },\n",
+            "    vulnerable_version_range:'>= 7.0.0, < 11.0.1', first_patched_version:'11.0.1', vulnerable_functions:[] }]);\n",
+            "  const record = baseline.resolvedAdvisories['1244012'];\n",
+            "  assert.equal(record.resolution, 'upstream-affected-range-correction');\n",
+            "  assert.equal(record.unchangedInstalledVersion, '3.1.5'); assert.equal(record.advisoryWithdrawn, false);\n",
+            "  assert.equal(record.dependencyUpgradePerformed, false); assert.equal(record.upstreamPatchedVersion, '11.0.1');\n",
+            "  assert.equal(rangeReview.scope.officialFixed3xClaimed, false); assert.equal(rangeReview.scope.generalMinimatch3SafetyClaimed, false);\n",
+            "  const lock = JSON.parse(readFileSync(resolve(__dirname, '../package-lock.json'), 'utf8'));\n",
+            "  const installed = Object.entries(lock.packages).filter(([name]) => name.endsWith('/minimatch'));\n",
+            "  assert.equal(installed.length, 4); assert.equal(lock.packages['node_modules/minimatch'].version, '3.1.5');\n",
+            "  assert.ok(installed.every(([,entry]) => ['3.1.5','11.0.1'].includes(entry.version)));\n",
+            "});\n",
+            "\n",
+            "for (const kind of ['exact old alert', 'entire old62 report', 'same URL under a new source', 'propagated-only removed entry']) {\n",
+            "  test('current range policy rejects return of ' + kind, () => {\n",
+            "    let report = reviewedFixture();\n",
+            "    if (kind === 'entire old62 report') report = reviewedFixture(preRangeBaseline);\n",
+            "    else if (kind === 'propagated-only removed entry') {\n",
+            "      report.vulnerabilities['test-exclude'] = { name:'test-exclude', severity:'moderate', isDirect:false,\n",
+            "        range:'*', nodes:['node_modules/test-exclude'], effects:[], via:['vite'] };\n",
+            "    } else {\n",
+            "      report.vulnerabilities.minimatch = reviewedFixture(preRangeBaseline).vulnerabilities.minimatch;\n",
+            "      if (kind === 'same URL under a new source') report.vulnerabilities.minimatch.via[0].source = 9999999;\n",
+            "    }\n",
+            "    refreshMetadata(report);\n",
+            "    rejected(report, kind === 'propagated-only removed entry' ? 'unknown affected package entry: test-exclude'\n",
+            "      : kind === 'same URL under a new source' ? 'unknown direct advisory 9999999' : 'resolved advisory reappeared: 1244012');\n",
+            "  });\n",
+            "}\n"
+          ],
+          "before": [],
+          "anchorStart": 636,
+          "anchor": [
+            "  const fragment=kind==='source'?'unknown direct advisory 9999999':kind==='missing'?'direct advisory disappeared without baseline review':kind==='new-node'?'affected package entry changed: @intlify/core-base':'direct advisory changed: 1243629';assert.ok(result.issues.some(x=>x.includes(fragment)),JSON.stringify(result.issues));\n",
+            "});\n",
+            "\n",
+            "\n",
+            "const rangeReviewBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-review-20261105.json'));\n",
+            "const rangeReview = JSON.parse(rangeReviewBytes.toString('utf8'));\n",
+            "const rangeAuditBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-npm-audit-20261105.json'));\n",
+            "const rangeAudit = JSON.parse(rangeAuditBytes.toString('utf8'));\n",
+            "const rangeUpstreamBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-upstream-20261105.json'));\n",
+            "const rangeUpstream = JSON.parse(rangeUpstreamBytes.toString('utf8'));\n",
+            "const digest = bytes => createHash('sha256').update(bytes).digest('hex');\n",
+            "\n",
+            "test('upstream minimatch range review preserves the full old62 image and admits only the exact14 removal and6 entry delta', () => {\n",
+            "  assert.equal(digest(rangeReviewBytes), '2f1aac03eb55e42d44302ff4f54324a73d14a77551b8a2101409d714b0e95890');\n",
+            "  assert.equal(digest(preRangeBaselineBytes), '7a58b8fc5e3fb43bb1c0806dd683fd43c522cbd4759a6fa46c418504500a398e');\n",
+            "  assert.equal(digest(preRangeBaselineBytes), rangeReview.originalBaseline.sha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.baseline.json'))), rangeReview.currentBaselineSha256);\n",
+            "  const expected = structuredClone(preRangeBaseline);\n",
+            "  assert.deepEqual(Object.keys(rangeReview.removedActiveAdvisories), ['1244012']);\n",
+            "  assert.deepEqual(expected.advisories['1244012'], rangeReview.removedActiveAdvisories['1244012']);\n",
+            "  delete expected.advisories['1244012'];\n",
+            "  assert.equal(Object.keys(rangeReview.removedEntries).length, 14);\n",
+            "  for (const [name, entry] of Object.entries(rangeReview.removedEntries)) {\n",
+            "    assert.deepEqual(expected.entries[name], entry, name + ' original complete entry'); delete expected.entries[name];\n",
+            "  }\n",
+            "  assert.equal(Object.keys(rangeReview.changedEntries).length, 6);\n",
+            "  for (const [name, delta] of Object.entries(rangeReview.changedEntries)) {\n",
+            "    assert.deepEqual(expected.entries[name], delta.old, name + ' exact predecessor'); expected.entries[name] = delta.new;\n",
+            "  }\n",
+            "  assert.equal(Object.keys(expected.entries).length, 48);\n",
+            "  expected.resolvedAdvisories['1244012'] = rangeReview.newForbiddenRangeCorrection;\n",
+            "  expected.reviewedReceipt = rangeReview.reviewedReceipt;\n",
+            "  assert.deepEqual(baseline, expected);\n",
+            "  assert.deepEqual(baseline.chains, preRangeBaseline.chains);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.cjs'))), rangeReview.gateImplementationSha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, '../package.json'))), rangeReview.packageJsonSha256);\n",
+            "  assert.equal(digest(readFileSync(resolve(__dirname, '../package-lock.json'))), rangeReview.packageLockRawSha256);\n",
+            "  assert.equal(baseline.lockSemanticSha256, preRangeBaseline.lockSemanticSha256);\n",
+            "});\n",
+            "\n",
+            "test('actual captured npm response passes the range-reviewed baseline and still fails its preserved predecessor', () => {\n",
+            "  assert.equal(digest(rangeAuditBytes), rangeReview.rawNpmReceipt.sha256);\n",
+            "  assert.equal(rangeAuditBytes.length, rangeReview.rawNpmReceipt.bytes);\n",
+            "  const current = evaluateAudit(rangeAudit, baseline), historical = evaluateAudit(rangeAudit, preRangeBaseline);\n",
+            "  assert.equal(current.ok, true); assert.deepEqual(current.issues, []);\n",
+            "  assert.deepEqual([current.packageEntries, current.directAdvisoryObjects, current.distinctAdvisoryUrls, current.scopedChains], [48,25,24,8]);\n",
+            "  assert.equal(historical.ok, false);\n",
+            "  assert.ok(historical.issues.includes('direct advisory disappeared without baseline review: 1244012'));\n",
+            "  assert.ok(historical.issues.includes('affected package entry disappeared without baseline review: test-exclude'));\n",
+            "  assert.equal(evaluateAudit(reviewedFixture(preRangeBaseline), preRangeBaseline).ok, true);\n",
+            "});\n",
+            "\n",
+            "test('current upstream range excludes installed3.1.5 while retaining an active7-to10 advisory and11.0.1 upstream patch', () => {\n",
+            "  assert.equal(digest(rangeUpstreamBytes), rangeReview.publicUpstreamMetadata.sha256);\n",
+            "  assert.equal(rangeUpstream.ghsaId, 'GHSA-g3hv-75wg-m249');\n",
+            "  assert.equal(rangeUpstream.updatedAt, '2026-11-04T16:50:04Z');\n",
+            "  assert.equal(rangeUpstream.withdrawnAt, null);\n",
+            "  assert.deepEqual(rangeUpstream.vulnerabilities, [{ package: { ecosystem:'npm', name:'minimatch' },\n",
+            "    vulnerable_version_range:'>= 7.0.0, < 11.0.1', first_patched_version:'11.0.1', vulnerable_functions:[] }]);\n",
+            "  const record = baseline.resolvedAdvisories['1244012'];\n",
+            "  assert.equal(record.resolution, 'upstream-affected-range-correction');\n",
+            "  assert.equal(record.unchangedInstalledVersion, '3.1.5'); assert.equal(record.advisoryWithdrawn, false);\n",
+            "  assert.equal(record.dependencyUpgradePerformed, false); assert.equal(record.upstreamPatchedVersion, '11.0.1');\n",
+            "  assert.equal(rangeReview.scope.officialFixed3xClaimed, false); assert.equal(rangeReview.scope.generalMinimatch3SafetyClaimed, false);\n",
+            "  const lock = JSON.parse(readFileSync(resolve(__dirname, '../package-lock.json'), 'utf8'));\n",
+            "  const installed = Object.entries(lock.packages).filter(([name]) => name.endsWith('/minimatch'));\n",
+            "  assert.equal(installed.length, 4); assert.equal(lock.packages['node_modules/minimatch'].version, '3.1.5');\n",
+            "  assert.ok(installed.every(([,entry]) => ['3.1.5','11.0.1'].includes(entry.version)));\n",
+            "});\n",
+            "\n",
+            "for (const kind of ['exact old alert', 'entire old62 report', 'same URL under a new source', 'propagated-only removed entry']) {\n",
+            "  test('current range policy rejects return of ' + kind, () => {\n",
+            "    let report = reviewedFixture();\n",
+            "    if (kind === 'entire old62 report') report = reviewedFixture(preRangeBaseline);\n",
+            "    else if (kind === 'propagated-only removed entry') {\n",
+            "      report.vulnerabilities['test-exclude'] = { name:'test-exclude', severity:'moderate', isDirect:false,\n",
+            "        range:'*', nodes:['node_modules/test-exclude'], effects:[], via:['vite'] };\n",
+            "    } else {\n",
+            "      report.vulnerabilities.minimatch = reviewedFixture(preRangeBaseline).vulnerabilities.minimatch;\n",
+            "      if (kind === 'same URL under a new source') report.vulnerabilities.minimatch.via[0].source = 9999999;\n",
+            "    }\n",
+            "    refreshMetadata(report);\n",
+            "    rejected(report, kind === 'propagated-only removed entry' ? 'unknown affected package entry: test-exclude'\n",
+            "      : kind === 'same URL under a new source' ? 'unknown direct advisory 9999999' : 'resolved advisory reappeared: 1244012');\n",
+            "  });\n",
+            "}\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+        "gitBlobSha1": "c21e8f4e79a86cfc34ac3aa66bbfb4cfa31a78c7"
+      },
+      "committedCurrentOrigin": {
+        "commit": "0ecb7405a541722244c9a2acb4f109ce492db340",
+        "path": "view/uniapp-ts/scripts/d3-advisory-gate.test.cjs",
+        "gitBlobSha1": "3b28f3f821c71b01974481ab152f53d543a2d976"
+      }
+    },
+    {
+      "file": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+      "kind": "committed-advisory-review",
+      "current": {
+        "bytes": 24392,
+        "sha256": "736dc7d0b5c40fef87cf3c7ff686d124e81f6f65f8def3e4fad07a43f0627e12",
+        "gitBlobSha1": "e20af1b788fb92861d1c647c98ac5227d69afd18"
+      },
+      "predecessor": {
+        "bytes": 22943,
+        "sha256": "1568462131902d319d1e0cc3cfb1875c69b3930b36549075fdc9f87063467f54",
+        "gitBlobSha1": "22eda72250222256efa2d99cc0ac17102ec9c4ab"
+      },
+      "inverseEdits": [
+        {
+          "start": 211,
+          "after": [
+            "\n",
+            "\n",
+            "### 2026-11-05 upstream minimatch affected-range correction\n",
+            "\n",
+            "The upstream GHSA-g3hv-75wg-m249 metadata was updated at\n",
+            "2026-11-04T16:50:04Z to `>=7.0.0 <11.0.1`. The unchanged root callable\n",
+            "minimatch3.1.5 is outside that corrected range; all three named-API copies\n",
+            "remain11.0.1. This is not a fixed3.x release, a dependency upgrade, a withdrawal\n",
+            "of the active7-to10 advisory, or a general claim about minimatch3.\n",
+            "\n",
+            "The fresh lock-only official npm receipt reports48 affected package entries,\n",
+            "25 direct objects and24 GHSA URLs, with8 preserved chain definitions/6 active.\n",
+            "The exact review removes source1244012 and14 propagated-only entries, updates\n",
+            "six surviving entry fingerprints, and preserves all other42 complete entries,\n",
+            "25 direct tuples and24 earlier forbidden records. Source1244012 is now forbidden\n",
+            "on return. New source IDs and all unrelated missing/changed tuples, paths or\n",
+            "forward edges still fail the unchanged gate logic.\n",
+            "\n",
+            "The old62-entry baseline and its seven unresolved-range rejection vectors remain\n",
+            "executed as dated historical evidence. Exact before/after identities, raw npm\n",
+            "receipt, selected public upstream metadata and reversible inventory delta are\n",
+            "bound in `workers-ts/audit/uni-d3-minimatch-range-review-20261105.json`. The\n",
+            "package, lock, official installed sources and vendor bytes are unchanged.\n",
+            "This review does not identify the old malformed centra cause or complete the\n",
+            "PHP-to-TS migration/remote legacy-source gate.\n"
+          ],
+          "before": [],
+          "anchorStart": 209,
+          "anchor": [
+            "\n",
+            "This is a reviewable candidate. The remaining 84-entry inventory needs source/entrypoint classification on the current advisory feed, and the eventual immutable candidate needs exact-head Linux CI. TEST-004D3 remains unchecked.\n",
+            "\n",
+            "\n",
+            "### 2026-11-05 upstream minimatch affected-range correction\n",
+            "\n",
+            "The upstream GHSA-g3hv-75wg-m249 metadata was updated at\n",
+            "2026-11-04T16:50:04Z to `>=7.0.0 <11.0.1`. The unchanged root callable\n",
+            "minimatch3.1.5 is outside that corrected range; all three named-API copies\n",
+            "remain11.0.1. This is not a fixed3.x release, a dependency upgrade, a withdrawal\n",
+            "of the active7-to10 advisory, or a general claim about minimatch3.\n",
+            "\n",
+            "The fresh lock-only official npm receipt reports48 affected package entries,\n",
+            "25 direct objects and24 GHSA URLs, with8 preserved chain definitions/6 active.\n",
+            "The exact review removes source1244012 and14 propagated-only entries, updates\n",
+            "six surviving entry fingerprints, and preserves all other42 complete entries,\n",
+            "25 direct tuples and24 earlier forbidden records. Source1244012 is now forbidden\n",
+            "on return. New source IDs and all unrelated missing/changed tuples, paths or\n",
+            "forward edges still fail the unchanged gate logic.\n",
+            "\n",
+            "The old62-entry baseline and its seven unresolved-range rejection vectors remain\n",
+            "executed as dated historical evidence. Exact before/after identities, raw npm\n",
+            "receipt, selected public upstream metadata and reversible inventory delta are\n",
+            "bound in `workers-ts/audit/uni-d3-minimatch-range-review-20261105.json`. The\n",
+            "package, lock, official installed sources and vendor bytes are unchanged.\n",
+            "This review does not identify the old malformed centra cause or complete the\n",
+            "PHP-to-TS migration/remote legacy-source gate.\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+        "gitBlobSha1": "22eda72250222256efa2d99cc0ac17102ec9c4ab"
+      },
+      "committedCurrentOrigin": {
+        "commit": "0ecb7405a541722244c9a2acb4f109ce492db340",
+        "path": "view/uniapp-ts/scripts/d3-transitive-chain-audit.md",
+        "gitBlobSha1": "e20af1b788fb92861d1c647c98ac5227d69afd18"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/WechatNotificationProvider.ts",
+      "kind": "delivery-provider-type",
+      "current": {
+        "bytes": 14392,
+        "sha256": "abd0c6e927b1320a6c3017721073cf18952710926daca01c18ae59a63e54f570",
+        "gitBlobSha1": "a35d8c3e48e07613c18fb2c3e8130cdb9fd8742a"
+      },
+      "predecessor": {
+        "bytes": 14315,
+        "sha256": "9326581bd3c1f6ffb61ffe701ed2f92e04b628223373e6efdf38865a4655860b",
+        "gitBlobSha1": "ea3493574e318b99206093d9a9952b34de4f9396"
+      },
+      "inverseEdits": [
+        {
+          "start": 5,
+          "after": [
+            "  RechargeOfficialNotificationPayload,\n"
+          ],
+          "before": [],
+          "anchorStart": 3,
+          "anchor": [
+            "  WechatShippingNotificationPayload,\n",
+            "  WechatTemplateNotificationPayload,\n",
+            "  RechargeOfficialNotificationPayload,\n",
+            "} from \"@/models/schema\";\n",
+            "import { readOfficialAccountCredentials, officialCredentialCacheKey, type OfficialAccountCredentials } from \"./OfficialAccountRuntimeConfig\";\n"
+          ]
+        },
+        {
+          "start": 92,
+          "after": [
+            "    payload: WechatTemplateNotificationPayload | RechargeOfficialNotificationPayload,\n"
+          ],
+          "before": [
+            "    payload: WechatTemplateNotificationPayload,\n"
+          ],
+          "anchorStart": 90,
+          "anchor": [
+            "    openid: string,\n",
+            "    templateCode: string,\n",
+            "    payload: WechatTemplateNotificationPayload | RechargeOfficialNotificationPayload,\n",
+            "  ): Promise<{ providerReference: string; requestId: string; responseCode: string }> {\n",
+            "    const data = await this.postWithToken(\"cgi-bin/message/template/send\", {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/src/services/wechat/WechatNotificationProvider.ts",
+        "gitBlobSha1": "ea3493574e318b99206093d9a9952b34de4f9396"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/postMergeSourceBinding.ts",
+      "kind": "historical-reader-wiring",
+      "current": {
+        "bytes": 5777,
+        "sha256": "21fbb5501a8f2956bfa474da83a0b798e0d5d9985f775a81b8cd5ab8c3b6efd6",
+        "gitBlobSha1": "dee3fd7d252f08b504138de4516e1b8a666ab2d3"
+      },
+      "predecessor": {
+        "bytes": 5781,
+        "sha256": "a963357e65f20af8a3da6ef1492f1a13b6ac96abb5ac50b643bb43ef10ac8a8f",
+        "gitBlobSha1": "4aea2143e840034e4667e7ced736ccda6649de5b"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "import { readMembershipContinuityHistoricalFile as readDiskFileSync } from './rechargeNoticeSourceContinuity';\n"
+          ],
+          "before": [
+            "import { readMembershipContinuityHistoricalFile as readDiskFileSync } from './membershipContractSourceContinuity';\n"
+          ],
+          "anchorStart": 1,
+          "anchor": [
+            " * direct filesystem readers continue to use the real package/page/route files. */\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { readMembershipContinuityHistoricalFile as readDiskFileSync } from './rechargeNoticeSourceContinuity';\n",
+            "import { relative, resolve } from 'node:path';\n",
+            "import { fileURLToPath } from 'node:url';\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/test/helpers/postMergeSourceBinding.ts",
+        "gitBlobSha1": "4aea2143e840034e4667e7ced736ccda6649de5b"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/reviewedRouteTailSourceBinding.ts",
+      "kind": "historical-reader-wiring",
+      "current": {
+        "bytes": 12177,
+        "sha256": "d74a7baf51ea485cfbb85ddf48399770452c9ceebf6a32c68d7ff88af2892375",
+        "gitBlobSha1": "83c7da70eb4556daae550a08c0e9cb9cd95a0818"
+      },
+      "predecessor": {
+        "bytes": 12181,
+        "sha256": "7f4b7eafa0b77f70aa9e7907dda92f995d26e8141dd34b502849d7685431e9dd",
+        "gitBlobSha1": "c36beb846febebd283bc5a89a72ef37a2181859c"
+      },
+      "inverseEdits": [
+        {
+          "start": 6,
+          "after": [
+            "import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './rechargeNoticeSourceContinuity';\n"
+          ],
+          "before": [
+            "import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './membershipContractSourceContinuity';\n"
+          ],
+          "anchorStart": 4,
+          "anchor": [
+            "import { relative, resolve, sep } from 'node:path';\n",
+            "import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './routeSourceIncrement';\n",
+            "import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './rechargeNoticeSourceContinuity';\n",
+            "\n",
+            "type Path = Array<string | number>;\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/test/helpers/reviewedRouteTailSourceBinding.ts",
+        "gitBlobSha1": "c36beb846febebd283bc5a89a72ef37a2181859c"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/migrationMergeMainReport.ts",
+      "kind": "historical-reader-wiring",
+      "current": {
+        "bytes": 469,
+        "sha256": "a8aff7d2008cdf6de672f3e770b8f7a5a6954b7c88b987cd5c0ff0815e4d99c8",
+        "gitBlobSha1": "cb02fbb1ded6046f5b4ad7ec128f0e744cead635"
+      },
+      "predecessor": {
+        "bytes": 473,
+        "sha256": "335e1e98c89231507a6919024f43e66577da3ecfd9c053c91e52995cce85037e",
+        "gitBlobSha1": "89336be26e42b0838e3992b28b93dda972ca0daa"
+      },
+      "inverseEdits": [
+        {
+          "start": 3,
+          "after": [
+            "import {projectMembershipHistoricalReport} from './rechargeNoticeSourceContinuity';\n"
+          ],
+          "before": [
+            "import {projectMembershipHistoricalReport} from './membershipContractSourceContinuity';\n"
+          ],
+          "anchorStart": 1,
+          "anchor": [
+            "import {buildAdminFrontendApiAuditReport as buildCurrentReport} from '../../scripts/admin-frontend-api-audit';\n",
+            "import {projectMigrationMergeReport} from './migrationMergeSourceBinding';\n",
+            "import {projectMembershipHistoricalReport} from './rechargeNoticeSourceContinuity';\n",
+            "export const buildAdminFrontendApiAuditReport=()=>projectMigrationMergeReport(projectMembershipHistoricalReport(buildCurrentReport()),'main');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/test/helpers/migrationMergeMainReport.ts",
+        "gitBlobSha1": "89336be26e42b0838e3992b28b93dda972ca0daa"
+      }
+    },
+    {
+      "file": "workers-ts/test/post-merge-source-binding.test.ts",
+      "kind": "historical-reader-wiring",
+      "current": {
+        "bytes": 5082,
+        "sha256": "a157b32880f79725ee2aab576e57f3e6db74bb215c87069c4e33059c83ee1755",
+        "gitBlobSha1": "1ff1d4731b22bc8c0d437a2b54ff2a68359a785b"
+      },
+      "predecessor": {
+        "bytes": 5086,
+        "sha256": "a00be253032a7db627f7043f04b24a6ccff36546396df68e1cd497fe701fdd18",
+        "gitBlobSha1": "6fc92bc383de9914b99e174a2c98ccf4a150e5a0"
+      },
+      "inverseEdits": [
+        {
+          "start": 2,
+          "after": [
+            "import { readMembershipContinuityHistoricalFile as readFileSync } from './helpers/rechargeNoticeSourceContinuity';\n"
+          ],
+          "before": [
+            "import { readMembershipContinuityHistoricalFile as readFileSync } from './helpers/membershipContractSourceContinuity';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { createHash } from 'node:crypto';\n",
+            "import { closeSync, openSync } from 'node:fs';\n",
+            "import { readMembershipContinuityHistoricalFile as readFileSync } from './helpers/rechargeNoticeSourceContinuity';\n",
+            "import { resolve } from 'node:path';\n",
+            "import { pathToFileURL } from 'node:url';\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/test/post-merge-source-binding.test.ts",
+        "gitBlobSha1": "6fc92bc383de9914b99e174a2c98ccf4a150e5a0"
+      }
+    },
+    {
+      "file": "workers-ts/test/membership-contract-source-continuity.test.ts",
+      "kind": "historical-reader-wiring",
+      "current": {
+        "bytes": 12720,
+        "sha256": "05d9a9944d879472bb6a916e37df9adcd11b50988c95711461cbcd5482f52d27",
+        "gitBlobSha1": "edf1945914ae8893934d67638cc3e671d8748e8b"
+      },
+      "predecessor": {
+        "bytes": 12628,
+        "sha256": "6449198d984cef1557b6ce10bb7be9d57658a08e47a75929ca53115feb63c1e3",
+        "gitBlobSha1": "2efdc76ec890e8caa3835560fd11fcab3b709975"
+      },
+      "inverseEdits": [
+        {
+          "start": 1,
+          "after": [
+            "import { closeSync, openSync } from 'node:fs';\n",
+            "import { readRechargeNoticePredecessorFile as readFileSync } from './helpers/rechargeNoticeSourceContinuity';\n"
+          ],
+          "before": [
+            "import { closeSync, openSync, readFileSync } from 'node:fs';\n"
+          ],
+          "anchorStart": 0,
+          "anchor": [
+            "import { createHash } from 'node:crypto';\n",
+            "import { closeSync, openSync } from 'node:fs';\n",
+            "import { readRechargeNoticePredecessorFile as readFileSync } from './helpers/rechargeNoticeSourceContinuity';\n",
+            "import { resolve } from 'node:path';\n",
+            "import { pathToFileURL } from 'node:url';\n"
+          ]
+        },
+        {
+          "start": 28,
+          "after": [
+            "describe('dated 7e41 membership contract source continuity before older proofs', () => {\n"
+          ],
+          "before": [
+            "describe('closed current membership contract source continuity before dated proofs', () => {\n"
+          ],
+          "anchorStart": 26,
+          "anchor": [
+            "const report = () => currentReport ??= buildAdminFrontendApiAuditReport();\n",
+            "\n",
+            "describe('dated 7e41 membership contract source continuity before older proofs', () => {\n",
+            "  it('pins the independent complete proof and distinguishes committed evolution from historical source views', () => {\n",
+            "    expect(sha(readFileSync(resolve(root, MEMBERSHIP_SOURCE_CONTINUITY_FILE)))).toBe(MEMBERSHIP_SOURCE_CONTINUITY_SHA);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "7e41a20eb64c99491847fab136a5890721689654",
+        "path": "workers-ts/test/membership-contract-source-continuity.test.ts",
+        "gitBlobSha1": "2efdc76ec890e8caa3835560fd11fcab3b709975"
+      }
+    }
+  ],
+  "preserved": [
+    {
+      "file": "workers-ts/test/fixtures/membership-card-activation-source-binding-20261026.json",
+      "bytes": 26571,
+      "sha256": "66383437d4f55f432b11211d4f85e31ce2fe713a291988e70c273d913bb8f09c"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-rights-source-binding-20261026.json",
+      "bytes": 55307,
+      "sha256": "9d00ae1986e1669e7c19d5ba87642018e9f5debbafb5e0a07bd25f1ebcbba5ab"
+    },
+    {
+      "file": "workers-ts/test/fixtures/migration-merge-source-binding-20261030.json",
+      "bytes": 7185263,
+      "sha256": "11b657f6c1d223bcc730a21c604c4a89b61d379ac4145ea5b4938559db7ce4cb"
+    },
+    {
+      "file": "workers-ts/test/fixtures/post-merge-source-binding-20261103.json",
+      "bytes": 541540,
+      "sha256": "6b3f91d5ce47d8f49184637f5f7277e38ad0dcfbc9f9840545db80e5d4581187"
+    },
+    {
+      "file": "workers-ts/test/fixtures/reviewed-route-tail-source-binding-20261028.json",
+      "bytes": 71883,
+      "sha256": "1fd855b397eb496e1d2accca18eeeb96b905d5e7f499657dc785310c2b246d6c"
+    },
+    {
+      "file": "workers-ts/test/fixtures/membership-contract-source-continuity-20261104.json",
+      "bytes": 2740624,
+      "sha256": "e789b6ee0349439223c54ddde8341464537189d70a9487a138c1149ef13d0f58"
+    },
+    {
+      "file": "workers-ts/test/helpers/membershipContractSourceContinuity.ts",
+      "bytes": 14594,
+      "sha256": "dffde293de61d168a9d2406b81db0f7bfdb4f8d8aad548f82eaefa6b4c57d03a"
+    }
+  ]
+}

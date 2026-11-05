@@ -1,3 +1,4 @@
+import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';
 import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';
 import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
@@ -483,8 +484,10 @@ export class PaymentCallbackEventService {
         tradeNo: callback.transactionId,
         expectedAmountCents: callback.amountCents,
         authorizeBeforePayment: tx => original(tx, 'recharge'),
+        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:'callback',id:callback.eventId,replayKey:callback.replayKey},
         routineShipping: callback.provider==='wechat'&&callback.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
       });
+      await dispatchCommittedRechargePaidNotice(this.container,this.env,result.noticeEventKey);
       await dispatchCommittedRoutineVirtualShipping(this.container,this.env,result.shippingEventKey);
       return domainOutcome("recharge", result.outcome);
     }

@@ -1,3 +1,4 @@
+import {parseRoutineSubscriptionRechargeRequest} from '../src/services/wechat/RoutineSubscriptionRechargeRequest';
 import { parseRoutineSubscriptionMembershipRequest } from '../src/services/wechat/RoutineSubscriptionMembershipEvidenceCodec';
 /** Maintenance classification of signed notification history, never send
  * admission. Receipts remain historical facts when mutable projections drift. */
@@ -16,7 +17,7 @@ import { routineSubscriptionNoticePrefix } from '../src/services/wechat/RoutineS
 type Row=Record<string,unknown>;
 type Source={schema:string;name:string;oid:string;kind:string;owner:string;ownerOid:string};
 type Context={database:string;databaseOid:string;observedAt:number};
-type Request=ReturnType<typeof parseRoutineSubscriptionMembershipRequest>|ReturnType<typeof parseRoutineSubscriptionPaidRequest>|ReturnType<typeof parseRoutineSubscriptionMaterializedRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
+type Request=ReturnType<typeof parseRoutineSubscriptionRechargeRequest>|ReturnType<typeof parseRoutineSubscriptionMembershipRequest>|ReturnType<typeof parseRoutineSubscriptionPaidRequest>|ReturnType<typeof parseRoutineSubscriptionMaterializedRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionRefundSuccessRequest>|ReturnType<typeof parseRoutineSubscriptionNoticeRequest>|ReturnType<typeof parseRoutineSubscriptionRefusalRequest>|ReturnType<typeof parseRoutineSubscriptionPinkRequest>;
 type Intent=ReturnType<typeof parseRoutineSubscriptionNoticeIntent>;
 const policyName='routine_subscription_account_policy',originalName='routine_original_payment_evidence';
 const outboxName='store_order_outbox',deliveryName='order_notification_delivery',attemptName='routine_subscribe_attempt',resultName='routine_subscribe_result';
@@ -44,12 +45,22 @@ const rowStatuses=new Set(['PENDING','ENQUEUING','ENQUEUED','PROCESSING','RETRYA
 /** Historical reference projection only, after the signed codec succeeded.
  * The unique-UID payment variant has no original-provider record to reference. */
 function originalFacts(facts:Intent['source']){
-  if(facts.templateMark!=='1927')return{...facts,domain:'store_order' as const};
+  if(facts.templateMark!=='1927'&&facts.templateMark!=='755')return{...facts,domain:'store_order' as const};
   if(facts.payment.kind!=='routine-original')return null;
   return{evidenceId:facts.payment.evidenceId,evidenceSignature:facts.payment.evidenceSignature,
     appId:facts.appId,rootId:facts.rootId,buyerUid:facts.buyerUid,domain:'subjectDomain'in facts?facts.subjectDomain:'store_order' as const};
 }
 function paidSourceMatches(request:Request,intent:Intent){
+  if(request.format===9){
+    if(intent.format!==9)return false;
+    const f=intent.source,s=request.selection;
+    return f.subjectDomain==='recharge'&&f.orderId===request.body.orderId&&f.rootId===request.body.orderId
+      &&f.settlementNonce===request.body.settlementNonce&&f.settlementDigest===request.settlementDigest
+      &&f.appId===s.appId&&f.ownershipId===s.ownershipId&&f.bindingId===s.bindingId
+      &&f.observationId===s.observationId&&f.ownershipDigest===s.ownershipDigest&&intent.request.touser===s.openid
+      &&(s.mode==='routine-original'?f.payment.kind==='routine-original'
+        :f.payment.kind==='unique-identity'&&f.payment.payType===request.body.payType&&f.payment.paymentDigest===request.paymentDigest);
+  }
   if(request.format===8){
     if(intent.format!==8)return false;
     const f=intent.source,s=request.selection;
@@ -60,7 +71,7 @@ function paidSourceMatches(request:Request,intent:Intent){
       &&(s.mode==='routine-original'?f.payment.kind==='routine-original'
         :f.payment.kind==='unique-identity'&&f.payment.payType===request.body.payType&&f.payment.paymentDigest===request.paymentDigest);
   }
-  if(request.format!==7)return intent.format!==7&&intent.format!==8;
+  if(request.format!==7)return intent.format!==7&&intent.format!==8&&intent.format!==9;
   if(intent.format!==7)return false;
   const f=intent.source,s=request.selection;
   return f.paymentEventId===request.body.paymentEventId&&f.rootId===request.body.paymentOrderId
@@ -134,7 +145,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
       const originals=storage[originalName].map(raw=>({raw,row:safely(()=>parseRoutineOriginalEvidence(env,raw))}));
       const originalLink=(id:string)=>{const saved=originals.filter(o=>o.raw.evidence_id===id);return saved.length===1?paymentDigest('original-record',saved[0].raw):null;};
       const policyLink=(id:string)=>{const saved=policies.filter(p=>p.raw.record_id===id);return saved.length===1?paymentDigest('policy-record',[policyName,saved[0].raw]):null;};
-      const originalReference=(facts:{evidenceId:string;evidenceSignature:string;appId:string;rootId:number;buyerUid:number;domain:'store_order'|'membership'})=>{
+      const originalReference=(facts:{evidenceId:string;evidenceSignature:string;appId:string;rootId:number;buyerUid:number;domain:'store_order'|'membership'|'recharge'})=>{
         if(!selected.has(originalName))return'source_missing' as const;
         const saved=originals.filter(p=>p.raw.evidence_id===facts.evidenceId);
         if(!saved.length)return'missing' as const;
@@ -149,11 +160,11 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         let request:Request|null=null;
         if(relevant&&scope&&candidate!==undefined)request=safely(()=>{
           const format=object(candidate)?.format;
-          return format===8?parseRoutineSubscriptionMembershipRequest(env,candidate,scope):format===7?parseRoutineSubscriptionPaidRequest(env,candidate,scope):format===2?parseRoutineSubscriptionNoticeRequest(env,candidate,scope)
+          return format===9?parseRoutineSubscriptionRechargeRequest(env,candidate,scope):format===8?parseRoutineSubscriptionMembershipRequest(env,candidate,scope):format===7?parseRoutineSubscriptionPaidRequest(env,candidate,scope):format===2?parseRoutineSubscriptionNoticeRequest(env,candidate,scope)
             :format===3?parseRoutineSubscriptionRefusalRequest(env,candidate,scope):format===6?parseRoutineSubscriptionMaterializedRefundSuccessRequest(env,candidate,scope):format===5?parseRoutineSubscriptionRefundSuccessRequest(env,candidate,scope):parseRoutineSubscriptionPinkRequest(env,candidate,scope);
         });
-        const eventType=request?.format===8?'membership.pay.success.notice':request?.format===7?'order.pay.success.notice':request?.format===5||request?.format===6?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
-        const sourceMatches=request!==null&&p!==null&&raw.aggregate_type===(request.format===8?'membership':'order')&&raw.aggregate_id===request.aggregateId
+        const eventType=request?.format===9?'recharge.pay.success.notice':request?.format===8?'membership.pay.success.notice':request?.format===7?'order.pay.success.notice':request?.format===5||request?.format===6?'order.refund.success.notice':request?.format===2?'order.delivery.notice':request?.format===3?'order.refund.refused.notice':'order.pink.success.notice';
+        const sourceMatches=request!==null&&p!==null&&raw.aggregate_type===(request.format===9?'recharge':request.format===8?'membership':'order')&&raw.aggregate_id===request.aggregateId
           &&raw.event_key===request.eventKey&&raw.event_type===eventType&&raw.add_time===request.eventTime
           &&same(request.body,Object.fromEntries(Object.keys(request.body).map(k=>[k,p[k]])));
         const marker=object(candidate);
@@ -161,7 +172,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         // legacy pin and deliberately never creates a subscription request.
         const excluded=relevant&&raw.event_type==='order.delivery.notice'&&p?.deliveryType==='fictitious'&&candidate===undefined;
         const state=!relevant?'unrelated' as const:excluded?'outside_subscription_contract' as const:candidate===undefined?'legacy_unattributed' as const
-          :marker?.unavailable===true&&Object.keys(marker).length===2&&([2,3,4,5,6].includes(Number(marker.format))||marker.format===7||marker.format===8)?'unavailable' as const
+          :marker?.unavailable===true&&Object.keys(marker).length===2&&([2,3,4,5,6].includes(Number(marker.format))||marker.format===7||marker.format===8||marker.format===9)?'unavailable' as const
           :!scope?'scope_unavailable' as const:!request?'invalid' as const:sourceMatches?'authenticated_source_match' as const:'authenticated_source_mismatch' as const;
         return{raw,request,state};
       });
@@ -172,17 +183,17 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         const p=object(raw.payload),candidate=p?.routineSubscriptionIntent;
         const intent=scope&&raw.channel==='wechat_routine'&&candidate!==undefined?safely(()=>parseRoutineSubscriptionNoticeIntent(env,candidate,scope)):null;
         const sources=outboxes.filter(o=>o.raw.id===raw.outbox_id),source=sources.length===1?sources[0]:null;
-        const expectedMark=source?.request?.format===8||source?.request?.format===7?'order_pay_success':source?.request?.format===5||source?.request?.format===6?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
+        const expectedMark=source?.request?.format===9?'recharge_success':source?.request?.format===8||source?.request?.format===7?'order_pay_success':source?.request?.format===5||source?.request?.format===6?'order_refund':source?.request?.format===4?'order_user_groups_success':source?.request?.format===3?'send_order_refund_no_status'
           :source?.request?.format===2?source.request.body.deliveryType==='express'?'order_postage_success'
             :source.request.body.deliveryType==='fictitious'?'order_fictitious_success':'order_deliver_success':null;
         const sourceMatch=Boolean(intent&&source?.request&&source.state==='authenticated_source_match'
           &&intent.format===source.request.format
           &&intent.requestSignature===source.request.signature&&intent.eventKey===source.request.eventKey&&intent.createdAt>=source.request.eventTime
           &&intent.source.orderId===source.request.body.orderId&&intent.source.buyerUid===source.request.body.userId
-          &&intent.source.templateMark===(source.request.format===8||source.request.format===7?'1927':source.request.format===4?'3098':source.request.format===3||source.request.format===5||source.request.format===6?'1451':source.request.body.deliveryType==='express'?'1458':'1128')
+          &&intent.source.templateMark===(source.request.format===9?'755':source.request.format===8||source.request.format===7?'1927':source.request.format===4?'3098':source.request.format===3||source.request.format===5||source.request.format===6?'1451':source.request.body.deliveryType==='express'?'1458':'1128')
           &&paidSourceMatches(source.request,intent));
         const rowMatch=Boolean(intent&&raw.id===intent.deliveryId&&raw.outbox_id===intent.outboxId&&raw.event_key===intent.eventKey
-          &&(intent.format===8?membershipSubjectColumns&&raw.order_id===null&&raw.subject_domain==='membership'&&raw.subject_id===intent.source.orderId:raw.order_id===intent.source.orderId)
+          &&(intent.format===8||intent.format===9?membershipSubjectColumns&&raw.order_id===null&&raw.subject_domain===(intent.format===9?'recharge':'membership')&&raw.subject_id===intent.source.orderId:raw.order_id===intent.source.orderId)
           &&raw.withdrawal_id===null&&raw.user_id===intent.source.buyerUid
           &&raw.notice_mark===expectedMark&&raw.target===intent.request.touser&&raw.template_code===intent.request.template_id
           &&raw.add_time===intent.createdAt&&p?.kind==='wechat_routine'&&p.routineAppId===intent.source.appId
@@ -220,7 +231,7 @@ export function routineNotificationAccumulator(authenticator:string,fingerprintK
         const last=chain?.attempts.at(-1),lastResult=chain?.results.at(-1);
         const identity={id:raw.id,outboxId:raw.outbox_id,eventKey:raw.event_key,orderId:raw.order_id,withdrawalId:raw.withdrawal_id,
           userId:raw.user_id,noticeMark:raw.notice_mark,channel:raw.channel,target:raw.target,templateCode:raw.template_code,payload:raw.payload,addTime:raw.add_time,
-          ...(intent?.format===8?{subjectDomain:raw.subject_domain,subjectId:raw.subject_id}:{})};
+          ...((intent?.format===8||intent?.format===9)?{subjectDomain:raw.subject_domain,subjectId:raw.subject_id}:{})};
         const intentMatches=last?last.payload.intentDigest===routineEvidenceHmac(env,'subscription-delivery-intent',identity):null;
         const currentProjection=lastResult?.payload.result.code===0?raw.status==='SENT'&&raw.provider_reference===lastResult.result_id&&raw.response_code==='0'
           ?'matched' as const:'drifted' as const:'not_evaluated' as const;

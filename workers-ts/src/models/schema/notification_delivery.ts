@@ -50,6 +50,15 @@ export interface WechatTemplateNotificationPayload {
   url: string;
 }
 
+/** Recharge42934 historically sends a JSON null URL. This explicit domain
+ * variant does not make any other official or Mini URL optional/nullable. */
+export interface RechargeOfficialNotificationPayload {
+  kind: "wechat_official";
+  subjectDomain: "recharge";
+  data: { time11: string; amount5: string };
+  url: null;
+}
+
 export interface WechatShippingNotificationPayload {
   kind: "wechat_shipping";
   transactionId: string;
@@ -72,6 +81,7 @@ export interface WecomRobotNotificationPayload {
 export type OrderNotificationDeliveryPayload =
   | SmsNotificationPayload
   | WechatTemplateNotificationPayload
+  | RechargeOfficialNotificationPayload
   | WechatShippingNotificationPayload
   | WecomRobotNotificationPayload;
 

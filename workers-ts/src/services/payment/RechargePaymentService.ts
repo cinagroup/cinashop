@@ -1,3 +1,7 @@
+import {prepareRechargePaidNoticeTx} from '@/migrations/rechargePaidNotice';
+import {rechargeNoticeSigning,type RechargeNoticeSigning,type RechargeNoticeProvider} from '@/services/order/RechargePaidNoticeSource';
+import {enqueueRechargePaidNoticeTx} from '@/services/order/RechargePaidNoticeService';
+import {rechargePaidNoticeEventKey} from '@/services/order/RechargePaidNoticeCodec';
 import { and, eq, sql } from "drizzle-orm";
 import type { Env } from "@/env";
 import { withTx, type Container, type DbClient } from "@/lib/di";
@@ -23,12 +27,15 @@ export interface ApplyRechargePaymentInput {
   authorizeBeforePayment?: (tx: DbClient) => Promise<void>;
   /** Passed only by the actual Routine callback/signed-query consumer. */
   routineShipping?: Pick<Env,'APP_KEY'>;
+  routineNotice?:RechargeNoticeSigning;
+  verifiedNoticeProvider?:RechargeNoticeProvider;
 }
 
 export interface ApplyRechargePaymentResult {
   outcome: RechargePaymentOutcome;
   balance: string | null;
   shippingEventKey?: string;
+  noticeEventKey?:string;
 }
 
 function assertRechargeOrderId(orderId: string): void {
@@ -53,7 +60,7 @@ export async function applyRechargePayment(
   container: Container,
   params: ApplyRechargePaymentInput,
 ): Promise<ApplyRechargePaymentResult> {
-  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{})};
+  params={...params,...(params.routineShipping?{routineShipping:{APP_KEY:params.routineShipping.APP_KEY}}:{}),...(params.routineNotice?{routineNotice:{APP_KEY:params.routineNotice.APP_KEY}}:{}),...(params.verifiedNoticeProvider?{verifiedNoticeProvider:{...params.verifiedNoticeProvider}}:{})};
   const orderId = params.orderId.trim();
   assertRechargeOrderId(orderId);
   if (!params.tradeNo || params.tradeNo.length > 100) {
@@ -66,6 +73,7 @@ export async function applyRechargePayment(
   if (!Number.isSafeInteger(now) || now <= 0) throw new Error("充值支付时间无效");
 
   return withTx(container, async (tx) => {
+    const noticeReady=await prepareRechargePaidNoticeTx(tx);
     const orders = await tx
       .select()
       .from(userRecharge)
@@ -93,6 +101,8 @@ export async function applyRechargePayment(
       return { outcome: "already-paid", balance: null };
     }
 
+    const noticeSigning=noticeReady?rechargeNoticeSigning(params.routineNotice):undefined;
+    if(noticeReady&&(!params.verifiedNoticeProvider||!params.authorizeBeforePayment))throw new ValidateException('充值付款通知必须来自实际验签回调或签名查单');
     const totalCents = priceCents + giveCents;
     if (!Number.isSafeInteger(totalCents) || totalCents <= 0) {
       throw new ValidateException("充值入账金额无效");
@@ -118,7 +128,7 @@ export async function applyRechargePayment(
       .returning({ id: userRecharge.id });
     if (!paidRows.length) throw new Error("充值订单支付状态更新失败");
 
-    await tx.insert(userBill).values({
+    const billRows=await tx.insert(userBill).values({
       uid: order.uid,
       linkId: order.orderId,
       pm: 1,
@@ -133,11 +143,13 @@ export async function applyRechargePayment(
         : `充值 ¥${(priceCents / 100).toFixed(2)}`,
       status: 1,
       addTime: now,
-    });
+    }).returning({id:userBill.id});
+    if(billRows.length!==1)throw Error('充值入账账本写入失败');
+    if(noticeSigning)await enqueueRechargePaidNoticeTx(tx,noticeSigning,order.id,billRows[0].id,params.verifiedNoticeProvider!,now);
 
     const shippingEventKey=params.payType==='weixin'
       ?await stageRoutineVirtualPaidShippingTx(tx,params.routineShipping,'recharge',order.id,now):null;
-    return { outcome: "paid", balance,...(shippingEventKey?{shippingEventKey}:{}) };
+    return { outcome: "paid", balance,...(shippingEventKey?{shippingEventKey}:{}),...(noticeSigning?{noticeEventKey:rechargePaidNoticeEventKey(order.id)}:{}) };
   });
 }
 

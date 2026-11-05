@@ -1,0 +1,9 @@
+/** Dependency-free closed recharge addon, preserving every membership/virtual subject branch. */
+import {MEMBERSHIP_PAID_SUBJECT_DEFINITION,MEMBERSHIP_PAID_SUBJECT_CHECK_SQL} from './membershipPaidNoticeContract';
+export const RECHARGE_PAID_NOTICE_EVENT='recharge.pay.success.notice';
+export const RECHARGE_SETTLED_EVENT='recharge.settled';
+export const RECHARGE_PAID_EVENTS:readonly string[]=Object.freeze([RECHARGE_SETTLED_EVENT,RECHARGE_PAID_NOTICE_EVENT]);
+const neutral="((event_key)::text !~~ 'membership.pay.success.notice:%'::text)";
+const branch="((subject_domain IS NOT NULL) AND ((subject_domain)::text = 'recharge'::text) AND (subject_id IS NOT NULL) AND (subject_id > 0) AND (order_id IS NULL) AND (withdrawal_id IS NULL) AND ((channel)::text = ANY ((ARRAY['sms'::character varying, 'wechat_official'::character varying, 'wechat_routine'::character varying])::text[])) AND ((notice_mark)::text = 'recharge_success'::text) AND ((event_key)::text = ('recharge.pay.success.notice:'::text || (subject_id)::text)))";
+export const RECHARGE_PAID_SUBJECT_DEFINITION=MEMBERSHIP_PAID_SUBJECT_DEFINITION.replace(neutral,neutral+" AND ((event_key)::text !~~ 'recharge.pay.success.notice:%'::text)").slice(0,-2)+' OR '+branch+'))';
+export const RECHARGE_PAID_SUBJECT_CHECK_SQL=MEMBERSHIP_PAID_SUBJECT_CHECK_SQL.replace("event_key NOT LIKE 'membership.pay.success.notice:%'", "event_key NOT LIKE 'membership.pay.success.notice:%' AND event_key NOT LIKE 'recharge.pay.success.notice:%'").replace(/\n\)$/u,`\n OR (subject_domain IS NOT NULL AND subject_domain='recharge' AND subject_id IS NOT NULL AND subject_id>0\n   AND order_id IS NULL AND withdrawal_id IS NULL AND channel IN ('sms','wechat_official','wechat_routine')\n   AND notice_mark='recharge_success' AND event_key='recharge.pay.success.notice:'::text || subject_id::text)\n)`);

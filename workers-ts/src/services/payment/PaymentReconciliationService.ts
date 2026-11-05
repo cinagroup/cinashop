@@ -1,3 +1,4 @@
+import {dispatchCommittedRechargePaidNotice} from '@/services/order/RechargePaidNoticeService';
 import { dispatchCommittedMembershipPaidNotice } from '@/services/order/MembershipPaidNoticeService';
 import { dispatchCommittedRoutineVirtualShipping } from '@/services/order/RoutineVirtualPaidShippingQueue';
 import {
@@ -964,8 +965,10 @@ export class PaymentReconciliationService {
         tradeNo: result.transactionId,
         expectedAmountCents: result.amountCents,
         authorizeBeforePayment: (tx) => this.assertQueriedSettlementEvidenceTx(tx, request, result, "recharge"),
+        routineNotice:{APP_KEY:this.env.APP_KEY},verifiedNoticeProvider:{kind:"signed-query",id:request.id,replayKey:request.replayKey},
         routineShipping: request.provider==='wechat'&&request.profile==='routine'?{APP_KEY:this.env.APP_KEY??''}:undefined,
       });
+      await dispatchCommittedRechargePaidNotice(this.container,this.env,settled.noticeEventKey);
       await dispatchCommittedRoutineVirtualShipping(this.container,this.env,settled.shippingEventKey);
       return settlementOutcome("recharge", settled.outcome);
     }

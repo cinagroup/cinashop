@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readMainMergePredecessor as readFileSync } from './migrationMergeSourceBinding';
 import { relative, resolve, sep } from 'node:path';
 import { reverseRouteSourceFollowup, type RouteSourceFollowup } from './routeSourceIncrement';
-import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './membershipContractSourceContinuity';
+import { peelMembershipHistoricalSourceIfPresent, peelMembershipHistoricalRoutesIfPresent } from './rechargeNoticeSourceContinuity';
 
 type Path = Array<string | number>;
 type Scalar = string | number | boolean | null;

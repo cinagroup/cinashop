@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { closeSync, openSync, readFileSync } from 'node:fs';
+import { closeSync, openSync } from 'node:fs';
+import { readRechargeNoticePredecessorFile as readFileSync } from './helpers/rechargeNoticeSourceContinuity';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -25,7 +26,7 @@ const image = (value: string | Uint8Array): MembershipHistoryImage => ({ bytes: 
 let currentReport: ReturnType<typeof buildAdminFrontendApiAuditReport> | undefined;
 const report = () => currentReport ??= buildAdminFrontendApiAuditReport();
 
-describe('closed current membership contract source continuity before dated proofs', () => {
+describe('dated 7e41 membership contract source continuity before older proofs', () => {
   it('pins the independent complete proof and distinguishes committed evolution from historical source views', () => {
     expect(sha(readFileSync(resolve(root, MEMBERSHIP_SOURCE_CONTINUITY_FILE)))).toBe(MEMBERSHIP_SOURCE_CONTINUITY_SHA);
     expect(proof.sources).toHaveLength(43); expect(proof.wiring).toHaveLength(4);

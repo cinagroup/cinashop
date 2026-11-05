@@ -12,7 +12,7 @@ import { amountToCents } from '@/services/payment/RefundGateway';
 import { subscriptionMac, subscriptionSame } from '@/services/wechat/RoutineSubscriptionAccount';
 
 type Signing = Pick<Env, 'APP_KEY'>;
-type Source = { domain: 'store_order' | 'membership'; id: number; uid: number; orderNo: string; transactionId: string; amount: number };
+type Source = { domain: 'store_order' | 'membership' | 'recharge'; id: number; uid: number; orderNo: string; transactionId: string; amount: number };
 type Snapshot = { id: number; uid: number; order_no: string; price: string; paid: number; pay_type: string;
   trade_no: string; shape: boolean; xmin: string; ctid: string };
 type Identity = { database: string; database_oid: string; pid: number; role: string; session: string; role_oid: string; ready: boolean };
@@ -33,8 +33,8 @@ async function snapshot(tx: DbClient, s: Readonly<Source>): Promise<Snapshot> {
   // Identifiers come only from the closed original domain. The caller has
   // already locked this physical source in its business/root/child order; do
   // not acquire another row lock after entering the payment boundary.
-  const table = s.domain === 'membership' ? 'public.other_order' : 'public.store_order', price = 'pay_price', payType = 'pay_type',
-    shape = s.domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : 'pid IN (0,-1)';
+  const table = s.domain === 'membership' ? 'public.other_order' : s.domain==='recharge'?'public.user_recharge':'public.store_order', price = s.domain==='recharge'?'price':'pay_price', payType = s.domain==='recharge'?'recharge_type':'pay_type',
+    shape = s.domain === 'membership' ? 'type=1 AND is_free=0 AND is_del=0' : s.domain==='recharge'?'true':'pid IN (0,-1)';
   const [resolution] = await tx.execute<{ ready: boolean }>(sql`SELECT
     pg_catalog.to_regclass(${table.slice('public.'.length)})=pg_catalog.to_regclass(${table}) AS ready`);
   if (resolution?.ready !== true) throw unavailable();
@@ -96,6 +96,7 @@ export async function assertNativeAppExcludedForRoutineMembershipSubscriptionTx(
   proof: RoutineSubscriptionOriginal): Promise<void> {
   return assertExcluded(business, env, proof, 'membership');
 }
+export async function assertNativeAppExcludedForRoutineRechargeSubscriptionTx(business:DbClient,env:Env,proof:RoutineSubscriptionOriginal):Promise<void>{return assertExcluded(business,env,proof,'recharge');}
 async function assertExcluded(business: DbClient, env: Env, proof: RoutineSubscriptionOriginal, domain: Source['domain']): Promise<void> {
   // Deployment selection and original signature are detached before any await.
   const signing = { APP_KEY: env.APP_KEY }, binding = env.HYPERDRIVE?.connectionString;
@@ -153,7 +154,7 @@ async function assertExcluded(business: DbClient, env: Env, proof: RoutineSubscr
     const [deadline] = await business.execute<{ valid: boolean }>(sql`SELECT
       pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '5 seconds' AS valid`);
     if (deadline?.valid !== true) throw unavailable();
-  } catch { throw unavailable(); }
+  } catch(error) { if(domain==='recharge' && !(error instanceof ServiceUnavailableException))throw error; throw unavailable(); }
   finally {
     if (verifier) { try { await verifier.$client.end({ timeout: 5 }); } catch { throw unavailable(); } }
   }

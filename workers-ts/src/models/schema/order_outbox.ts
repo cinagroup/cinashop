@@ -1,3 +1,5 @@
+import type {RechargePaidNoticeBusiness} from '@/services/order/RechargePaidNoticeCodec';
+import type {RoutineSubscriptionRechargeRequest,RoutineSubscriptionRechargeUnavailable} from '@/services/wechat/RoutineSubscriptionRechargeRequest';
 /**
  * 订单与提现的事务 outbox；aggregateType/aggregateId 明确区分业务域。
  *
@@ -128,6 +130,8 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | (RechargePaidNoticeBusiness & {routineSubscriptionRequest?:RoutineSubscriptionRechargeRequest|RoutineSubscriptionRechargeUnavailable})
+  | {scope:{database:string;databaseOid:string;maintenance:string;maintenanceOid:string};business:RechargePaidNoticeBusiness;bill:Record<string,unknown>;provider:Record<string,unknown>;signature:string}
   | (MembershipPaidNoticeBusiness & { routineSubscriptionRequest?: RoutineSubscriptionMembershipRequest | RoutineSubscriptionMembershipUnavailable })
   | { scope: {database:string;databaseOid:string;maintenance:string;maintenanceOid:string}; business: MembershipPaidNoticeBusiness; signature: string }
   | OrderPaidNoticeOutboxPayload

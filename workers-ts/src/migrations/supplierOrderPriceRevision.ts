@@ -1,3 +1,4 @@
+import {RECHARGE_PAID_SUBJECT_DEFINITION} from './rechargePaidNoticeContract';
 import { normalizeWriteoffNoticeEventDefinition, WRITEOFF_NOTICE_SUCCESSORS, WRITEOFF_NOTICE_CATALOG_SQL, writeoffNoticeAddonUpgradeSql } from './writeoffNotice';
 import { paidNoticeEventGeneration, paidNoticeAddonUpgradeSql, NOTICE_MAINTENANCE_BUDGET_SQL } from './paidNotice';
 import { MEMBERSHIP_PAID_SUBJECT_DEFINITION } from './membershipPaidNoticeContract';
@@ -109,11 +110,12 @@ const writeoffPriceRevisionSql = writeoffNoticeAddonUpgradeSql('price', noticePr
 const paidPriceRevisionSql = paidNoticeAddonUpgradeSql('price', noticePriceVirtualGuard);
 const membershipPriceRevisionSql = paidNoticeAddonUpgradeSql('price',noticePriceVirtualGuard.replace(
   ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''"),MEMBERSHIP_PAID_SUBJECT_DEFINITION.replaceAll("'","''")),true);
+const rechargePriceRevisionSql=paidNoticeAddonUpgradeSql('price',noticePriceVirtualGuard.replace(ROUTINE_VIRTUAL_SHIPPING_SUBJECT_DEFINITION.replaceAll("'","''"),RECHARGE_PAID_SUBJECT_DEFINITION.replaceAll("'","''")),true,true);
 export async function installSupplierOrderPriceRevision(tx: Pick<DbClient, 'execute'>): Promise<void> {
   await tx.execute(sql.raw(NOTICE_MAINTENANCE_BUDGET_SQL));
   const [row] = await tx.execute<{ definition: string }>(sql.raw(WRITEOFF_NOTICE_CATALOG_SQL));
   const generation = paidNoticeEventGeneration(row?.definition);
-  await tx.execute(sql.raw(generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
+  await tx.execute(sql.raw(generation?.recharge ? rechargePriceRevisionSql : generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
     : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL));
 }
 export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'>): Promise<void> {
@@ -122,7 +124,7 @@ export async function runSupplierOrderPriceRevision(db: Pick<DbClient, '$client'
     await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     const [row] = await tx.unsafe<{ definition: string }[]>(WRITEOFF_NOTICE_CATALOG_SQL);
     const generation = paidNoticeEventGeneration(row?.definition);
-    await tx.unsafe(generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
+    await tx.unsafe(generation?.recharge ? rechargePriceRevisionSql : generation?.membership ? membershipPriceRevisionSql : generation?.paid ? paidPriceRevisionSql
       : typeof row?.definition === 'string' && WRITEOFF_NOTICE_SUCCESSORS.includes(row.definition) ? writeoffPriceRevisionSql : SUPPLIER_ORDER_PRICE_REVISION_SQL);
   });
 }
