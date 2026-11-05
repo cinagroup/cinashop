@@ -1,0 +1,22 @@
+{
+  "kind": "selected-public-upstream-advisory-metadata",
+  "sourceUrl": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+  "ghsaId": "GHSA-g3hv-75wg-m249",
+  "updatedAt": "2026-11-04T16:50:04Z",
+  "withdrawnAt": null,
+  "severity": "medium",
+  "vulnerabilities": [
+    {
+      "package": {
+        "ecosystem": "npm",
+        "name": "minimatch"
+      },
+      "vulnerable_version_range": ">= 7.0.0, < 11.0.1",
+      "first_patched_version": "11.0.1",
+      "vulnerable_functions": []
+    }
+  ],
+  "originalFullResponseSha256": "b324fca01e28e662e2dabba5ad7d2f4ab267420b2245ebe3068f5ec3a54dd30a",
+  "fullApiResponseRetainedLocally": true,
+  "fullApiDescriptionRepublished": false
+}

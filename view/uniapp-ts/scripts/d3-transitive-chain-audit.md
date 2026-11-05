@@ -209,3 +209,28 @@ In the separate `main@0f4a52e5` worktree, locked `npm ci --ignore-scripts --no-a
 The graph audit's first run failed because a broad package-name matcher also selected the business page `src/pages/order/express.vue`. The matcher now accepts bare package IDs and `node_modules` paths, with an explicit negative test for that page and a real Rollup external `proxy-addr` rejection. Both the failed and final raw runs are retained in `view/uniapp-ts/.cache/d3-reachability-20261007/`. The final graph test receipt `runtime-i18n-final.tap` has SHA-256 `6cd9ee9797005e847c483c2a973a5e8018671596816fa9b9f6bdcb1bbf3773a9`. The full `npm audit` receipt and each focused test/build log are in the same ignored local directory; they are not a committed artifact or a Linux result.
 
 This is a reviewable candidate. The remaining 84-entry inventory needs source/entrypoint classification on the current advisory feed, and the eventual immutable candidate needs exact-head Linux CI. TEST-004D3 remains unchecked.
+
+
+### 2026-11-05 upstream minimatch affected-range correction
+
+The upstream GHSA-g3hv-75wg-m249 metadata was updated at
+2026-11-04T16:50:04Z to `>=7.0.0 <11.0.1`. The unchanged root callable
+minimatch3.1.5 is outside that corrected range; all three named-API copies
+remain11.0.1. This is not a fixed3.x release, a dependency upgrade, a withdrawal
+of the active7-to10 advisory, or a general claim about minimatch3.
+
+The fresh lock-only official npm receipt reports48 affected package entries,
+25 direct objects and24 GHSA URLs, with8 preserved chain definitions/6 active.
+The exact review removes source1244012 and14 propagated-only entries, updates
+six surviving entry fingerprints, and preserves all other42 complete entries,
+25 direct tuples and24 earlier forbidden records. Source1244012 is now forbidden
+on return. New source IDs and all unrelated missing/changed tuples, paths or
+forward edges still fail the unchanged gate logic.
+
+The old62-entry baseline and its seven unresolved-range rejection vectors remain
+executed as dated historical evidence. Exact before/after identities, raw npm
+receipt, selected public upstream metadata and reversible inventory delta are
+bound in `workers-ts/audit/uni-d3-minimatch-range-review-20261105.json`. The
+package, lock, official installed sources and vendor bytes are unchanged.
+This review does not identify the old malformed centra cause or complete the
+PHP-to-TS migration/remote legacy-source gate.

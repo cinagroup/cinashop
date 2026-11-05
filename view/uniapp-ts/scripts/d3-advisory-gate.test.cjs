@@ -10,6 +10,8 @@ const test = require("node:test");
 const { evaluateAudit } = require("./d3-advisory-gate.cjs");
 
 const baseline = JSON.parse(readFileSync(resolve(__dirname, "d3-advisory-gate.baseline.json"), "utf8"));
+const preRangeBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-minimatch-range-20261105.baseline.json"));
+const preRangeBaseline = JSON.parse(preRangeBaselineBytes.toString("utf8"));
 const preSecurityBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-security-backports-20261028.baseline.json"));
 const preSecurityBaseline = JSON.parse(preSecurityBaselineBytes.toString("utf8"));
 const preConsumerBaselineBytes = readFileSync(resolve(__dirname, "d3-advisory-gate.pre-consumer-upgrades-20261101.baseline.json"));
@@ -43,8 +45,8 @@ function refreshMetadata(fixture) {
   fixture.metadata.vulnerabilities = counts;
 }
 
-function rejected(fixture, fragment) {
-  const result = evaluateAudit(fixture, baseline);
+function rejected(fixture, fragment, reviewed = baseline) {
+  const result = evaluateAudit(fixture, reviewed);
   assert.equal(result.ok, false);
   assert.ok(result.issues.some((issue) => issue.includes(fragment)), JSON.stringify(result.issues));
 }
@@ -76,20 +78,21 @@ test('entry header reports every failed field using static diagnostics', () => {
 });
 
 test("reviewed package entries each resolve to a scoped advisory chain", () => {
-  assert.equal(Object.keys(baseline.entries).length, 62);
-  assert.equal(Object.keys(baseline.advisories).length, 26);
-  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 24);
+  assert.equal(Object.keys(baseline.entries).length, 48);
+  assert.equal(Object.keys(baseline.advisories).length, 25);
+  assert.equal(Object.keys(baseline.resolvedAdvisories).length, 25);
   assert.ok(Object.values(baseline.entries).every((entry) => entry.chains.length > 0
     && entry.chains.every((chain) => Object.hasOwn(baseline.chains, chain))));
   const result = evaluateAudit(reviewedFixture(), baseline);
   assert.deepEqual(result.issues, []);
-  assert.equal(result.directAdvisoryObjects, 26);
-  assert.equal(result.distinctAdvisoryUrls, 25);
+  assert.equal(result.directAdvisoryObjects, 25);
+  assert.equal(result.distinctAdvisoryUrls, 24);
   assert.equal(Object.keys(baseline.chains).length, 8);
-  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 7);
+  assert.equal(new Set(Object.values(baseline.entries).flatMap(entry => entry.chains)).size, 6);
 });
 
 test('scoped consumer upgrade preserves every old tuple and forbidden source except the exact pinned inventory delta', () => {
+  const baseline = preRangeBaseline; // The dated unresolved-range review is preserved, not today's range decision.
   assert.equal(createHash('sha256').update(preConsumerBaselineBytes).digest('hex'),
     '7790eafd184b534236d93d81b51412b30c80fb42211e0c441fbed4a0c98dcdf6');
   assert.equal(createHash('sha256').update(consumerReviewBytes).digest('hex'),
@@ -117,8 +120,8 @@ test('scoped consumer upgrade preserves every old tuple and forbidden source exc
 });
 
 for (const kind of ['source', 'url', 'severity', 'range', 'missing', 'new-node', 'new-forward-edge']) {
-  test('retained callable minimatch finding rejects changed ' + kind, () => {
-    const report = reviewedFixture(), entry = report.vulnerabilities.minimatch, direct = entry.via[0];
+  test('historical unresolved callable minimatch finding rejects changed ' + kind, () => {
+    const report = reviewedFixture(preRangeBaseline), entry = report.vulnerabilities.minimatch, direct = entry.via[0];
     if (kind === 'source') direct.source = 9999999;
     if (kind === 'url') direct.url = 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc';
     if (kind === 'severity') direct.severity = 'high';
@@ -136,7 +139,7 @@ for (const kind of ['source', 'url', 'severity', 'range', 'missing', 'new-node',
       : kind === 'new-node' ? 'affected package entry changed: minimatch'
       : kind === 'new-forward-edge' ? 'affected package entry changed: vite'
       : 'direct advisory changed: 1244012';
-    rejected(report, expected);
+    rejected(report, expected, preRangeBaseline);
   });
 }
 
@@ -226,7 +229,7 @@ test("npm-only propagated range and reverse effects changes do not change the sc
   assert.equal(evaluateAudit(fixture, baseline).ok, true);
 });
 
-test("all twenty-four resolved, withdrawn or replaced advisory source IDs remain forbidden", () => {
+test("all twenty-five resolved, withdrawn, replaced or range-corrected advisory source IDs remain forbidden", () => {
   const fixture = reviewedFixture();
   for (const [source, record] of Object.entries(baseline.resolvedAdvisories)) {
     const name = record.package;
@@ -302,7 +305,7 @@ test("live CLI consumes npm audit JSON and rejects an endpoint error", () => {
     const accepted = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
       { encoding: "utf8", timeout: 10000, env });
     assert.equal(accepted.status, 0, accepted.stderr);
-    assert.match(accepted.stdout, /62 affected package entries/);
+    assert.match(accepted.stdout, /48 affected package entries/);
 
     writeFileSync(file, JSON.stringify({ message: "simulated audit endpoint failure", error: {} }));
     const denied = spawnSync(process.execPath, [resolve(__dirname, "d3-advisory-gate.cjs"), "--live"],
@@ -633,3 +636,87 @@ for(const kind of ['source','url','severity','range','missing','new-node'])test(
   const result=evaluateAudit(fixture,baseline);assert.equal(result.ok,false);
   const fragment=kind==='source'?'unknown direct advisory 9999999':kind==='missing'?'direct advisory disappeared without baseline review':kind==='new-node'?'affected package entry changed: @intlify/core-base':'direct advisory changed: 1243629';assert.ok(result.issues.some(x=>x.includes(fragment)),JSON.stringify(result.issues));
 });
+
+
+const rangeReviewBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-review-20261105.json'));
+const rangeReview = JSON.parse(rangeReviewBytes.toString('utf8'));
+const rangeAuditBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-npm-audit-20261105.json'));
+const rangeAudit = JSON.parse(rangeAuditBytes.toString('utf8'));
+const rangeUpstreamBytes = readFileSync(resolve(__dirname, '../../../workers-ts/audit/uni-d3-minimatch-range-upstream-20261105.json'));
+const rangeUpstream = JSON.parse(rangeUpstreamBytes.toString('utf8'));
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+
+test('upstream minimatch range review preserves the full old62 image and admits only the exact14 removal and6 entry delta', () => {
+  assert.equal(digest(rangeReviewBytes), '2f1aac03eb55e42d44302ff4f54324a73d14a77551b8a2101409d714b0e95890');
+  assert.equal(digest(preRangeBaselineBytes), '7a58b8fc5e3fb43bb1c0806dd683fd43c522cbd4759a6fa46c418504500a398e');
+  assert.equal(digest(preRangeBaselineBytes), rangeReview.originalBaseline.sha256);
+  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.baseline.json'))), rangeReview.currentBaselineSha256);
+  const expected = structuredClone(preRangeBaseline);
+  assert.deepEqual(Object.keys(rangeReview.removedActiveAdvisories), ['1244012']);
+  assert.deepEqual(expected.advisories['1244012'], rangeReview.removedActiveAdvisories['1244012']);
+  delete expected.advisories['1244012'];
+  assert.equal(Object.keys(rangeReview.removedEntries).length, 14);
+  for (const [name, entry] of Object.entries(rangeReview.removedEntries)) {
+    assert.deepEqual(expected.entries[name], entry, name + ' original complete entry'); delete expected.entries[name];
+  }
+  assert.equal(Object.keys(rangeReview.changedEntries).length, 6);
+  for (const [name, delta] of Object.entries(rangeReview.changedEntries)) {
+    assert.deepEqual(expected.entries[name], delta.old, name + ' exact predecessor'); expected.entries[name] = delta.new;
+  }
+  assert.equal(Object.keys(expected.entries).length, 48);
+  expected.resolvedAdvisories['1244012'] = rangeReview.newForbiddenRangeCorrection;
+  expected.reviewedReceipt = rangeReview.reviewedReceipt;
+  assert.deepEqual(baseline, expected);
+  assert.deepEqual(baseline.chains, preRangeBaseline.chains);
+  assert.equal(digest(readFileSync(resolve(__dirname, 'd3-advisory-gate.cjs'))), rangeReview.gateImplementationSha256);
+  assert.equal(digest(readFileSync(resolve(__dirname, '../package.json'))), rangeReview.packageJsonSha256);
+  assert.equal(digest(readFileSync(resolve(__dirname, '../package-lock.json'))), rangeReview.packageLockRawSha256);
+  assert.equal(baseline.lockSemanticSha256, preRangeBaseline.lockSemanticSha256);
+});
+
+test('actual captured npm response passes the range-reviewed baseline and still fails its preserved predecessor', () => {
+  assert.equal(digest(rangeAuditBytes), rangeReview.rawNpmReceipt.sha256);
+  assert.equal(rangeAuditBytes.length, rangeReview.rawNpmReceipt.bytes);
+  const current = evaluateAudit(rangeAudit, baseline), historical = evaluateAudit(rangeAudit, preRangeBaseline);
+  assert.equal(current.ok, true); assert.deepEqual(current.issues, []);
+  assert.deepEqual([current.packageEntries, current.directAdvisoryObjects, current.distinctAdvisoryUrls, current.scopedChains], [48,25,24,8]);
+  assert.equal(historical.ok, false);
+  assert.ok(historical.issues.includes('direct advisory disappeared without baseline review: 1244012'));
+  assert.ok(historical.issues.includes('affected package entry disappeared without baseline review: test-exclude'));
+  assert.equal(evaluateAudit(reviewedFixture(preRangeBaseline), preRangeBaseline).ok, true);
+});
+
+test('current upstream range excludes installed3.1.5 while retaining an active7-to10 advisory and11.0.1 upstream patch', () => {
+  assert.equal(digest(rangeUpstreamBytes), rangeReview.publicUpstreamMetadata.sha256);
+  assert.equal(rangeUpstream.ghsaId, 'GHSA-g3hv-75wg-m249');
+  assert.equal(rangeUpstream.updatedAt, '2026-11-04T16:50:04Z');
+  assert.equal(rangeUpstream.withdrawnAt, null);
+  assert.deepEqual(rangeUpstream.vulnerabilities, [{ package: { ecosystem:'npm', name:'minimatch' },
+    vulnerable_version_range:'>= 7.0.0, < 11.0.1', first_patched_version:'11.0.1', vulnerable_functions:[] }]);
+  const record = baseline.resolvedAdvisories['1244012'];
+  assert.equal(record.resolution, 'upstream-affected-range-correction');
+  assert.equal(record.unchangedInstalledVersion, '3.1.5'); assert.equal(record.advisoryWithdrawn, false);
+  assert.equal(record.dependencyUpgradePerformed, false); assert.equal(record.upstreamPatchedVersion, '11.0.1');
+  assert.equal(rangeReview.scope.officialFixed3xClaimed, false); assert.equal(rangeReview.scope.generalMinimatch3SafetyClaimed, false);
+  const lock = JSON.parse(readFileSync(resolve(__dirname, '../package-lock.json'), 'utf8'));
+  const installed = Object.entries(lock.packages).filter(([name]) => name.endsWith('/minimatch'));
+  assert.equal(installed.length, 4); assert.equal(lock.packages['node_modules/minimatch'].version, '3.1.5');
+  assert.ok(installed.every(([,entry]) => ['3.1.5','11.0.1'].includes(entry.version)));
+});
+
+for (const kind of ['exact old alert', 'entire old62 report', 'same URL under a new source', 'propagated-only removed entry']) {
+  test('current range policy rejects return of ' + kind, () => {
+    let report = reviewedFixture();
+    if (kind === 'entire old62 report') report = reviewedFixture(preRangeBaseline);
+    else if (kind === 'propagated-only removed entry') {
+      report.vulnerabilities['test-exclude'] = { name:'test-exclude', severity:'moderate', isDirect:false,
+        range:'*', nodes:['node_modules/test-exclude'], effects:[], via:['vite'] };
+    } else {
+      report.vulnerabilities.minimatch = reviewedFixture(preRangeBaseline).vulnerabilities.minimatch;
+      if (kind === 'same URL under a new source') report.vulnerabilities.minimatch.via[0].source = 9999999;
+    }
+    refreshMetadata(report);
+    rejected(report, kind === 'propagated-only removed entry' ? 'unknown affected package entry: test-exclude'
+      : kind === 'same URL under a new source' ? 'unknown direct advisory 9999999' : 'resolved advisory reappeared: 1244012');
+  });
+}

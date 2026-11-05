@@ -1,0 +1,618 @@
+{
+  "schema": "uni-d3-minimatch-range-review/v1",
+  "baseCommit": "7e41a20eb64c99491847fab136a5890721689654",
+  "kind": "dated-upstream-affected-range-correction-not-a-dependency-fix",
+  "originalBaseline": {
+    "file": "view/uniapp-ts/scripts/d3-advisory-gate.pre-minimatch-range-20261105.baseline.json",
+    "bytes": 43061,
+    "sha256": "7a58b8fc5e3fb43bb1c0806dd683fd43c522cbd4759a6fa46c418504500a398e"
+  },
+  "currentBaselineSha256": "3f9c818060156a52217a9ec917cab9f26ad0825c3146e88e38572966b52c002b",
+  "originalGateTestSha256": "f907e87570f671f5a3ddf0f90c28270d69c7e7fe2f394e9ae5648303d27991d0",
+  "gateImplementationSha256": "d773c44a5f71c5456a4de5f714bce5ab0c7574d0fe5bad753797c15227fc4927",
+  "packageJsonSha256": "8dadbccf7ae03c8b040267766eceb0dadcc9bb30cf29506db439790619273555",
+  "packageLockRawSha256": "781507e6d3f23f0597807fe02c2bed99c458522ae1d4763d37720caed3808d13",
+  "lockSemanticSha256": "f0d1ebaf5e0c8e45f635c2118d2ce6c0e9f0cda2d179d593d0031effa55abf5a",
+  "rawNpmReceipt": {
+    "file": "workers-ts/audit/uni-d3-minimatch-range-npm-audit-20261105.json",
+    "bytes": 35159,
+    "sha256": "dba7acb608d1dfeef0ece4f3336134aec790ff0067dd049617bda99053edacba",
+    "auditVersion": 2
+  },
+  "publicUpstreamMetadata": {
+    "file": "workers-ts/audit/uni-d3-minimatch-range-upstream-20261105.json",
+    "sha256": "02b64c66dc65aad118cfe5b3de45a653521ca6802203e23816db328d81799184",
+    "ghsa": "GHSA-g3hv-75wg-m249",
+    "updatedAt": "2026-11-04T16:50:04Z",
+    "correctedAffectedRange": ">=7.0.0 <11.0.1",
+    "upstreamPatchedVersion": "11.0.1",
+    "advisoryWithdrawn": false
+  },
+  "counts": {
+    "beforeEntries": 62,
+    "afterEntries": 48,
+    "beforeDirectObjects": 26,
+    "afterDirectObjects": 25,
+    "afterDistinctGhsaUrls": 24,
+    "chainDefinitions": 8,
+    "beforeActiveChains": 7,
+    "afterActiveChains": 6,
+    "oldResolvedRecordsPreserved": 24,
+    "afterResolvedRecords": 25
+  },
+  "removedActiveAdvisories": {
+    "1244012": {
+      "package": "minimatch",
+      "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+      "severity": "moderate",
+      "range": "<11.0.1",
+      "chain": "glob-toolchain"
+    }
+  },
+  "removedEntries": {
+    "@jest/reporters": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/reporters"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/test-sequencer": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<=28.0.0-alpha.11",
+      "nodes": [
+        "node_modules/@jest/test-sequencer"
+      ],
+      "viaPackages": [
+        "jest-runtime"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "@jest/transform": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "*",
+      "nodes": [
+        "node_modules/@jest/transform"
+      ],
+      "viaPackages": [
+        "babel-plugin-istanbul"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "babel-jest",
+        "jest-runner",
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "babel-jest": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.0.0-alpha.0",
+      "nodes": [
+        "node_modules/babel-jest"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "babel-plugin-istanbul"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "babel-plugin-istanbul": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=5.0.1",
+      "nodes": [
+        "node_modules/babel-plugin-istanbul"
+      ],
+      "viaPackages": [
+        "test-exclude"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/transform",
+        "babel-jest"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "glob": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "3.0.0 - 13.0.6",
+      "nodes": [
+        "node_modules/glob"
+      ],
+      "viaPackages": [
+        "minimatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/reporters",
+        "jest-config",
+        "jest-runtime",
+        "rimraf",
+        "test-exclude"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-circus": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=25.2.4",
+      "nodes": [
+        "node_modules/jest-circus"
+      ],
+      "viaPackages": [
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-jasmine2": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.2.0-alpha.0",
+      "nodes": [
+        "node_modules/jest-jasmine2"
+      ],
+      "viaPackages": [
+        "jest-runtime",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "jest-config"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-resolve-dependencies": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=27.0.0-next.0",
+      "nodes": [
+        "node_modules/jest-resolve-dependencies"
+      ],
+      "viaPackages": [
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-runtime": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=24.0.0-alpha.0",
+      "nodes": [
+        "node_modules/jest-runtime"
+      ],
+      "viaPackages": [
+        "@jest/transform",
+        "glob",
+        "jest-snapshot"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/test-sequencer",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-runner"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "jest-snapshot": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": ">=27.0.0-next.0",
+      "nodes": [
+        "node_modules/jest-snapshot"
+      ],
+      "viaPackages": [
+        "@jest/transform"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core",
+        "jest-circus",
+        "jest-jasmine2",
+        "jest-resolve-dependencies",
+        "jest-runtime"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "minimatch": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "<11.0.1",
+      "nodes": [
+        "node_modules/minimatch"
+      ],
+      "viaPackages": [],
+      "advisorySources": [
+        1244012
+      ],
+      "effects": [
+        "glob",
+        "test-exclude"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "rimraf": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "2.3.0 - 3.0.2 || >=4.2.0",
+      "nodes": [
+        "node_modules/rimraf"
+      ],
+      "viaPackages": [
+        "glob"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "@jest/core"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    },
+    "test-exclude": {
+      "severity": "moderate",
+      "isDirect": false,
+      "range": "4.2.2 || >=5.0.0",
+      "nodes": [
+        "node_modules/test-exclude"
+      ],
+      "viaPackages": [
+        "glob",
+        "minimatch"
+      ],
+      "advisorySources": [],
+      "effects": [
+        "babel-plugin-istanbul"
+      ],
+      "chains": [
+        "glob-toolchain"
+      ]
+    }
+  },
+  "changedEntries": {
+    "@dcloudio/uni-automator": {
+      "old": {
+        "severity": "high",
+        "isDirect": true,
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-automator"
+        ],
+        "viaPackages": [
+          "@dcloudio/uni-cli-shared",
+          "jest"
+        ],
+        "advisorySources": [],
+        "effects": [],
+        "chains": [
+          "encrypted-zip",
+          "glob-toolchain",
+          "intlify",
+          "jest-toolchain",
+          "vue-ssr"
+        ]
+      },
+      "new": {
+        "severity": "high",
+        "isDirect": true,
+        "range": "<=0.0.1-nvue3.3040020220301001 || >=2.0.1-32920211122002",
+        "nodes": [
+          "node_modules/@dcloudio/uni-automator"
+        ],
+        "viaPackages": [
+          "@dcloudio/uni-cli-shared",
+          "jest"
+        ],
+        "advisorySources": [],
+        "effects": [],
+        "chains": [
+          "encrypted-zip",
+          "intlify",
+          "jest-toolchain",
+          "vue-ssr"
+        ]
+      }
+    },
+    "@jest/core": {
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": "*",
+        "nodes": [
+          "node_modules/@jest/core"
+        ],
+        "viaPackages": [
+          "@jest/reporters",
+          "@jest/transform",
+          "jest-config",
+          "jest-resolve-dependencies",
+          "jest-runner",
+          "jest-runtime",
+          "jest-snapshot",
+          "rimraf"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "jest",
+          "jest-cli"
+        ],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "new": {
+        "severity": "low",
+        "isDirect": false,
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/@jest/core"
+        ],
+        "viaPackages": [
+          "jest-config",
+          "jest-runner"
+        ],
+        "advisorySources": [],
+        "effects": [],
+        "chains": [
+          "jest-toolchain"
+        ]
+      }
+    },
+    "jest": {
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": ">=19.1.0-alpha.eed82034",
+        "nodes": [
+          "node_modules/jest"
+        ],
+        "viaPackages": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@dcloudio/uni-automator"
+        ],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "new": {
+        "severity": "low",
+        "isDirect": false,
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest"
+        ],
+        "viaPackages": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@dcloudio/uni-automator"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      }
+    },
+    "jest-cli": {
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": ">=19.1.0-alpha.eed82034",
+        "nodes": [
+          "node_modules/jest-cli"
+        ],
+        "viaPackages": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "jest"
+        ],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "new": {
+        "severity": "low",
+        "isDirect": false,
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-cli"
+        ],
+        "viaPackages": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "jest"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      }
+    },
+    "jest-config": {
+      "old": {
+        "severity": "moderate",
+        "isDirect": true,
+        "range": ">=19.1.0-alpha.eed82034",
+        "nodes": [
+          "node_modules/jest-config"
+        ],
+        "viaPackages": [
+          "@jest/test-sequencer",
+          "babel-jest",
+          "glob",
+          "jest-circus",
+          "jest-environment-jsdom",
+          "jest-jasmine2",
+          "jest-runner"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "jest-cli"
+        ],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "new": {
+        "severity": "low",
+        "isDirect": true,
+        "range": "27.0.1 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-config"
+        ],
+        "viaPackages": [
+          "jest-environment-jsdom",
+          "jest-runner"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      }
+    },
+    "jest-runner": {
+      "old": {
+        "severity": "moderate",
+        "isDirect": false,
+        "range": ">=24.0.0-alpha.0",
+        "nodes": [
+          "node_modules/jest-runner"
+        ],
+        "viaPackages": [
+          "@jest/transform",
+          "jest-environment-jsdom",
+          "jest-runtime"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "jest-config"
+        ],
+        "chains": [
+          "glob-toolchain",
+          "jest-toolchain"
+        ]
+      },
+      "new": {
+        "severity": "low",
+        "isDirect": false,
+        "range": "27.0.4 - 27.5.1",
+        "nodes": [
+          "node_modules/jest-runner"
+        ],
+        "viaPackages": [
+          "jest-environment-jsdom"
+        ],
+        "advisorySources": [],
+        "effects": [
+          "@jest/core",
+          "jest-config"
+        ],
+        "chains": [
+          "jest-toolchain"
+        ]
+      }
+    }
+  },
+  "newForbiddenRangeCorrection": {
+    "package": "minimatch",
+    "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+    "resolution": "upstream-affected-range-correction",
+    "previousAffectedRange": "<11.0.1",
+    "correctedAffectedRange": ">=7.0.0 <11.0.1",
+    "unchangedInstalledVersion": "3.1.5",
+    "upstreamPatchedVersion": "11.0.1",
+    "upstreamUpdatedAt": "2026-11-04T16:50:04Z",
+    "advisoryWithdrawn": false,
+    "dependencyUpgradePerformed": false,
+    "reason": "Upstream narrowed the active advisory to major7 through10. The unchanged root3.1.5 is outside that corrected range; all installed major11 copies are already11.0.1. This is a dated range-correction decision, not a general3.x safety claim or a fixed3.x release. Reappearance of numeric source1244012 remains forbidden; future source IDs require independent review."
+  },
+  "reviewedReceipt": "2026-11-05 upstream affected-range correction for GHSA-g3hv-75wg-m249, updated2026-11-04T16:50:04Z: current affected range >=7.0.0 <11.0.1 excludes the unchanged installed callable3.1.5. This is not an upstream fixed3.x release, dependency upgrade or withdrawal of the active7-to10 advisory. Fresh official npm lock-only receipt SHAdba7acb608d1dfeef0ece4f3336134aec790ff0067dd049617bda99053edacba reports48 affected entries/25 direct objects/24 GHSA URLs,8 preserved chain definitions(6 active). Exactly source1244012 and its14 propagated-only entries leave the active inventory; six surviving entries receive the exact reviewed forward-path/severity/chain delta. All other42 complete entries,25 direct tuples,24 prior forbidden records, lock/package/vendor/installed bytes and gate comparison code remain unchanged. Source1244012 is now forbidden as an obsolete affected-range return. Full old62-entry baseline and its seven unresolved-range negative vectors remain separately executed as historical evidence. Exact raw receipt, upstream metadata projection and reversible delta are in workers-ts/audit/uni-d3-minimatch-range-review-20261105.json; the prior malformed centra cause is not established by this review.",
+  "scope": {
+    "remaining42CompleteEntriesUnchanged": true,
+    "remaining25DirectTuplesUnchanged": true,
+    "all24OldForbiddenRecordsUnchanged": true,
+    "all8ChainDefinitionsUnchanged": true,
+    "gateLogicUnchanged": true,
+    "lockAndPackageUnchanged": true,
+    "dependencyInstallOrUpgradePerformed": false,
+    "officialFixed3xClaimed": false,
+    "generalMinimatch3SafetyClaimed": false,
+    "centraFailureCauseClaimed": false,
+    "oldHistoricalCasesRelabelledCurrent": false
+  },
+  "legacyPhpUploaded": false,
+  "deployment": false
+}
