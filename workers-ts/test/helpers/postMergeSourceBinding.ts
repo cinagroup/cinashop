@@ -1,7 +1,7 @@
 /** Exact post-merge source views for historical proofs. The current runtime and
  * direct filesystem readers continue to use the real package/page/route files. */
 import { createHash } from 'node:crypto';
-import { readMembershipContinuityHistoricalFile as readDiskFileSync } from './rechargeNoticeSourceContinuity';
+import { readMembershipContinuityHistoricalFile as readDiskFileSync } from './rechargeRefundSourceContinuity';
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

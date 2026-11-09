@@ -33,7 +33,7 @@
           <el-table-column label="支付状态" width="105"><template #default="{ row }"><el-tag :type="row.paid === 1 ? 'success' : row.paid === 0 ? 'warning' : 'danger'">{{ row.paid_type }}</el-tag></template></el-table-column>
           <el-table-column prop="recharge_type_label" label="充值类型" width="130" />
           <el-table-column label="支付时间" width="170"><template #default="{ row }">{{ rechargeOrderTime(row.pay_time) }}</template></el-table-column>
-          <el-table-column label="操作" width="140" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openDetail(row)">查看详情</el-button><el-tag v-if="row.issues.length" size="small" type="warning">需核对</el-tag></template></el-table-column>
+          <el-table-column label="操作" width="205" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="openDetail(row)">查看详情</el-button><el-button v-if="canRefund && row.paid === 1 && row.recharge_type !== 'balance'" link type="danger" @click="openRefund(row)">{{ row.refund_price === '0.00' ? '退款' : '退款记录' }}</el-button><el-tag v-if="row.issues.length" size="small" type="warning">需核对</el-tag></template></el-table-column>
         </el-table></div>
         <el-pagination v-if="!loading && !listError" class="pager" :current-page="page" :page-size="20" :total="count" layout="total, prev, pager, next" @current-change="load" />
       </el-card>
@@ -66,6 +66,8 @@
         </div>
         <template #footer><el-button @click="detailVisible = false">关闭</el-button></template>
       </el-dialog>
+      <RechargeRefundDialog v-if="refundRow && canRefund" :key="`${auth.userInfo?.id}:${refundRow.id}`" :actor-id="auth.userInfo?.id ?? 0"
+        :recharge-id="refundRow.id" :order-no="refundRow.order_id" @close="closeRefund" @changed="refundChanged = true" />
     </template>
   </div>
 </template>
@@ -74,12 +76,14 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { getAdminSession, getToken } from '@/utils/auth';
+import RechargeRefundDialog from './RechargeRefundDialog.vue';
 import { apiRechargeOrderDetail, apiRechargeOrderList, apiRechargeOrderStats, normalizeRechargeOrderQuery, rechargeOrderTime,
   type RechargeOrderDetail, type RechargeOrderQuery, type RechargeOrderRow, type RechargeOrderStats, type RechargePaidFilter } from '@/api/rechargeOrders';
 
 const auth = useAuthStore();
 const canView = computed(() => !!auth.token && auth.token === getToken() && !!auth.userInfo &&
   (auth.userInfo.level === 0 || auth.uniqueAuth.includes('recharge_order.view')));
+const canRefund = computed(() => canView.value && !!auth.userInfo && (auth.userInfo.level === 0 || auth.uniqueAuth.includes('recharge_order.refund')));
 const identity = computed(() => `${auth.token}:${auth.userInfo?.id ?? 0}:${auth.userInfo?.level ?? ''}:${auth.uniqueAuth.join(',')}`);
 const descriptionColumns = computed(() => window.innerWidth <= 680 ? 1 : 2);
 const draftDates = ref<[string, string] | null>(null), draftPaid = ref<RechargePaidFilter>('all'), draftKeyword = ref('');
@@ -87,6 +91,7 @@ const applied = ref<Pick<RechargeOrderQuery, 'paid' | 'start_time' | 'end_time' 
 const page = ref(1), list = ref<RechargeOrderRow[]>([]), count = ref(0), loading = ref(false), listError = ref('');
 const stats = ref<RechargeOrderStats | null>(null), statsLoading = ref(false), statsError = ref(''), filterError = ref('');
 const detailVisible = ref(false), detail = ref<RechargeOrderDetail | null>(null), detailId = ref(0), detailLoading = ref(false), detailError = ref('');
+const refundRow = ref<RechargeOrderRow | null>(null); let refundChanged = false;
 let alive = false, syncing = false, generation = 0, detailVersion = 0, stored = localStorage.getItem('admin_session');
 let listAbort: AbortController | null = null, statsAbort: AbortController | null = null, detailAbort: AbortController | null = null;
 type Scope = { identity: string; generation: number; stored: string | null };
@@ -98,7 +103,12 @@ function resetDetail() { detailVersion++; detailAbort?.abort(); detailAbort = nu
   detailVisible.value = false; detailLoading.value = false; detailError.value = ''; }
 function closeDetail() { if (!detailVisible.value) resetDetail(); }
 function clear() { generation++; listAbort?.abort(); statsAbort?.abort(); listAbort = statsAbort = null; list.value = []; count.value = 0;
-  stats.value = null; listError.value = statsError.value = ''; loading.value = statsLoading.value = false; resetDetail(); }
+  stats.value = null; listError.value = statsError.value = ''; loading.value = statsLoading.value = false; resetDetail(); refundRow.value = null; refundChanged = false; }
+function openRefund(row: RechargeOrderRow) {
+  if (!current(scope()) || !canRefund.value || !list.value.includes(row) || row.paid !== 1 || row.recharge_type === 'balance') return;
+  refundChanged = false; refundRow.value = row;
+}
+function closeRefund() { const refresh = refundChanged; refundRow.value = null; refundChanged = false; if (refresh) void load(page.value); }
 async function load(target = page.value) {
   if (!alive || !canView.value || auth.token !== getToken() || stored !== localStorage.getItem('admin_session') ||
     !Number.isSafeInteger(target) || target < 1 || target > 501) return;

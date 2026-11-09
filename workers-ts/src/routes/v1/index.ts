@@ -68,6 +68,7 @@ import * as AdminLegacyRuntimeController from "@/controllers/api/v1/AdminLegacyR
 import * as WechatLiveController from "@/controllers/api/v1/WechatLiveController";
 import * as UserMessageController from "@/controllers/api/v1/UserMessageController";
 import * as WechatController from "@/controllers/api/v1/WechatController";
+import { rechargeRefundCallback } from '@/controllers/api/v1/RechargeRefundCallbackController';
 import * as NativeAppAuthController from "@/controllers/api/v1/NativeAppAuthController";
 import { merchantShipmentCallback } from "@/controllers/api/v1/MerchantShipmentCallbackController";
 import { cityDeliveryCallback } from "@/controllers/api/v1/CityDeliveryCallbackController";
@@ -897,6 +898,7 @@ v1Routes.all(
 );
 v1Routes.post("/pay/notify/wechat/refund", WechatController.wechatRefundNotify);
 v1Routes.post('/pay/notify/routine-refund/:dispatchId',WechatController.routineRefundNotify);
+v1Routes.all('/pay/notify/recharge-refund/:operationId',rechargeRefundCallback);
 // An opaque route selector chooses one explicitly approved verifier. The
 // decrypted AppID/merchant still require actual RSA/AES and exact policy match.
 v1Routes.post('/pay/notify/routine-account/:accountId', c =>

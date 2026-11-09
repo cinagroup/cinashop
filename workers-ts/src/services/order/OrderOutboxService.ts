@@ -14,6 +14,7 @@ import {
   inArray,
   lt,
   lte,
+  ne,
   or,
   sql,
   type SQL,
@@ -323,14 +324,20 @@ export class OrderOutboxService {
     const boundedLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
     const now = Math.floor(Date.now() / 1000);
     const leaseToken = crypto.randomUUID();
-    const eligible = or(
-      and(
-        inArray(storeOrderOutbox.status, ["PENDING", "FAILED"]),
-        lte(storeOrderOutbox.availableTime, now),
-      ),
-      and(
-        inArray(storeOrderOutbox.status, ["ENQUEUING", "ENQUEUED", "PROCESSING"]),
-        lte(storeOrderOutbox.leaseUntil, now),
+    // The dedicated authenticated recharge-refund consumer owns this UUID
+    // namespace. Exclude it before row locking/LIMIT/claims in the generic
+    // processor; its separate scanner supplies compensation without starvation.
+    const eligible = and(
+      ne(storeOrderOutbox.eventType, "recharge.refund.success.notice"),
+      or(
+        and(
+          inArray(storeOrderOutbox.status, ["PENDING", "FAILED"]),
+          lte(storeOrderOutbox.availableTime, now),
+        ),
+        and(
+          inArray(storeOrderOutbox.status, ["ENQUEUING", "ENQUEUED", "PROCESSING"]),
+          lte(storeOrderOutbox.leaseUntil, now),
+        ),
       ),
     );
 

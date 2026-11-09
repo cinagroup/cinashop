@@ -34,7 +34,7 @@ describe('subscription token transport hard deadline without approval/SQL claims
   await vi.advanceTimersByTimeAsync(7999);expect(settled).toBe(false);expect(fetcher).toHaveBeenCalledTimes(1);
   const [input,init]=fetcher.mock.calls[0],url=new URL(String(input));
   expect(url.origin+url.pathname).toBe('https://api.weixin.qq.com/cgi-bin/token');
-  expect(init).toMatchObject({method:'GET',redirect:'error'});expect(init?.signal?.aborted).toBe(false);
+  expect(init).toMatchObject({method:'GET',redirect:'manual'});expect(init?.signal?.aborted).toBe(false);
   await vi.advanceTimersByTimeAsync(1);await rejected;
   expect(init?.signal?.aborted).toBe(true);expect(admission.check).toHaveBeenCalledTimes(1);expect(vi.getTimerCount()).toBe(0);
  });

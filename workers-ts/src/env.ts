@@ -1,4 +1,6 @@
+import type {RechargeRefundNoticeMessage,RechargeRefundNoticeDispatch}from '@/services/payment/RechargeRefundNoticeQueue';
 import type {UserLabelSyncMessage} from './services/admin/AdminUserLabelSyncQueue';
+import type { RechargeRefundRecoveryDispatchMessage,RechargeRefundRecoveryMessage } from './services/payment/RechargeRefundRecoveryQueue';
 import type { CashierRuntimeConditionalBinding } from './migrations/cashierRuntimeConditionalBinding';
 import type { RoutinePaymentRuntimeTarget } from './migrations/routinePaymentRuntime';
 import type { RuntimeGiftPeerDeclarations } from './migrations/customerRuntimeGiftPeers';
@@ -515,6 +517,10 @@ export interface PaymentReconciliationDispatchMessage {
 }
 
 export type OrderMessage =
+  | RechargeRefundNoticeMessage
+  | RechargeRefundNoticeDispatch
+  | RechargeRefundRecoveryDispatchMessage
+  | RechargeRefundRecoveryMessage
   | UserLabelSyncMessage
   | OrderPaidOutboxMessage
   | PresaleDeliveryOutboxMessage

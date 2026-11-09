@@ -1,3 +1,4 @@
+import { RECHARGE_REFUND_NOTICE_EVENT } from './rechargeRefundNoticeContract';
 import {RECHARGE_PAID_EVENTS} from './rechargePaidNoticeContract';
 /** Explicit 0200 buyer payment notice commissioning. The historical CHECK and
  * prior standalone SQL remain immutable; the finite successors preserve all addons. */
@@ -16,7 +17,7 @@ export const NOTICE_MAINTENANCE_BUDGET_SQL = String.raw`SELECT pg_catalog.set_co
 const REFUND = 'order.refund.success.notice', WRITEOFF = 'order.writeoff.notice', PRICE = 'order.price.revision';
 const VIRTUAL = ['recharge.paid.shipping','membership.paid.shipping'] as const;
 export interface PaidNoticeGeneration { readonly price:boolean; readonly virtual:boolean; readonly paid:boolean;
-  readonly membership?:boolean; readonly recharge?:boolean;
+  readonly membership?:boolean; readonly recharge?:boolean; readonly rechargeRefundNotice?:boolean;
   readonly addons:readonly string[]; readonly events:readonly string[]; readonly definition:string }
 const definition=(events:readonly string[])=>`CHECK (((event_type)::text = ANY ((ARRAY[${events.map(e=>`'${e}'::character varying`).join(', ')}])::text[])))`;
 export const PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.freeze([false,true].flatMap(virtual=>[false,true].flatMap(price=>
@@ -31,11 +32,16 @@ export const MEMBERSHIP_PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=
   return Object.freeze({...g,membership:true,events,definition:definition(events)});
 }));
 export const RECHARGE_PAID_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.freeze(MEMBERSHIP_PAID_NOTICE_GENERATIONS.map(g=>{const events=Object.freeze([...g.events,...RECHARGE_PAID_EVENTS]);return Object.freeze({...g,recharge:true,events,definition:definition(events)});}));
+/** Exactly twenty descendants; the eighty predecessors retain their exact objects and SQL definitions. */
+export const RECHARGE_REFUND_NOTICE_GENERATIONS:readonly PaidNoticeGeneration[]=Object.freeze(RECHARGE_PAID_NOTICE_GENERATIONS.map(g=>{
+  const events=Object.freeze([...g.events,RECHARGE_REFUND_NOTICE_EVENT]);
+  return Object.freeze({...g,rechargeRefundNotice:true,events,definition:definition(events)});
+}));
 export function paidNoticeEventGeneration(value:unknown):PaidNoticeGeneration|null {
-  return typeof value==='string'?[...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS,...RECHARGE_PAID_NOTICE_GENERATIONS].find(g=>g.definition===value)??null:null;
+  return typeof value==='string'?[...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS,...RECHARGE_PAID_NOTICE_GENERATIONS,...RECHARGE_REFUND_NOTICE_GENERATIONS].find(g=>g.definition===value)??null:null;
 }
 export function normalizePaidNoticeEventDefinition(value:unknown):unknown {
-  const g=paidNoticeEventGeneration(value);return g&&(g.paid||g.membership||g.recharge)?definition(g.events.filter(e=>e!==PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(e)&&!RECHARGE_PAID_EVENTS.includes(e))):value;
+  const g=paidNoticeEventGeneration(value);return g&&(g.paid||g.membership||g.recharge)?definition(g.events.filter(e=>e!==PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(e)&&!RECHARGE_PAID_EVENTS.includes(e)&&e!==RECHARGE_REFUND_NOTICE_EVENT)):value;
 }
 export const PAID_NOTICE_CATALOG_SQL = String.raw`SELECT pg_catalog.pg_get_constraintdef(k.oid,false) AS definition,
   k.contype='c' AND k.convalidated AND NOT k.condeferrable AND NOT k.condeferred
@@ -57,17 +63,21 @@ const literal = (value: string) => "'" + value.replaceAll("'", "''") + "'";
  * successors can enter their addon branches; a raced unknown catalog is rejected
  * again under the same ACCESS EXCLUSIVE lock. The optional virtual guard is
  * fixed trusted SQL supplied by the Supplier wrapper, never input. */
-export function paidNoticeAddonUpgradeSql(addon: 'paid' | 'writeoff' | 'refund' | 'price' | 'membership' | 'recharge', virtualGuard = '', includeMembership = false, includeRecharge = false): string {
-  const all = includeRecharge ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS,...RECHARGE_PAID_NOTICE_GENERATIONS] : includeMembership ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS] : PAID_NOTICE_GENERATIONS;
-  const sources = addon==='recharge' ? all.filter(g=>g.membership) : addon === 'membership' ? all.filter(g=>g.virtual) : addon === 'paid' ? all : all.filter(g => g.paid || g.membership);
+export function paidNoticeAddonUpgradeSql(addon: 'paid' | 'writeoff' | 'refund' | 'price' | 'membership' | 'recharge' | 'recharge-refund', virtualGuard = '', includeMembership = false, includeRecharge = false, includeRechargeRefundNotice = false): string {
+  if (includeRechargeRefundNotice && (!includeMembership || !includeRecharge) || addon==='recharge-refund' && !includeRechargeRefundNotice)
+    throw Error('Recharge refund notice requires explicit complete recharge successor opt-in');
+  const all = includeRechargeRefundNotice ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS,...RECHARGE_PAID_NOTICE_GENERATIONS,...RECHARGE_REFUND_NOTICE_GENERATIONS] : includeRecharge ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS,...RECHARGE_PAID_NOTICE_GENERATIONS] : includeMembership ? [...PAID_NOTICE_GENERATIONS,...MEMBERSHIP_PAID_NOTICE_GENERATIONS] : PAID_NOTICE_GENERATIONS;
+  const sources = addon==='recharge-refund' ? all.filter(g=>g.recharge) : addon==='recharge' ? all.filter(g=>g.membership) : addon === 'membership' ? all.filter(g=>g.virtual) : addon === 'paid' ? all : all.filter(g => g.paid || g.membership);
   const cases = sources.map(generation => {
-    const enabled = addon==='recharge' ? generation.recharge===true : addon === 'membership' ? generation.membership===true : addon === 'price' ? generation.price : addon === 'paid' ? generation.paid : generation.addons.includes(addon === 'refund' ? REFUND : WRITEOFF);
-    const memberTail = [...(generation.membership ? MEMBERSHIP_PAID_EVENTS : []),...(generation.recharge?RECHARGE_PAID_EVENTS:[])];
-    const events = addon==='recharge' ? [...generation.events.filter(e=>!RECHARGE_PAID_EVENTS.includes(e)),...RECHARGE_PAID_EVENTS]
-      : addon === 'membership' ? [...generation.events.filter(e=>!MEMBERSHIP_PAID_EVENTS.includes(e)&&!RECHARGE_PAID_EVENTS.includes(e)),...MEMBERSHIP_PAID_EVENTS,...(generation.recharge?RECHARGE_PAID_EVENTS:[])]
+    const enabled = addon==='recharge-refund' ? generation.rechargeRefundNotice===true : addon==='recharge' ? generation.recharge===true : addon === 'membership' ? generation.membership===true : addon === 'price' ? generation.price : addon === 'paid' ? generation.paid : generation.addons.includes(addon === 'refund' ? REFUND : WRITEOFF);
+    const refundTail = generation.rechargeRefundNotice ? [RECHARGE_REFUND_NOTICE_EVENT] : [];
+    const memberTail = [...(generation.membership ? MEMBERSHIP_PAID_EVENTS : []),...(generation.recharge?RECHARGE_PAID_EVENTS:[]),...refundTail];
+    const events = addon==='recharge-refund' ? [...generation.events.filter(e=>e!==RECHARGE_REFUND_NOTICE_EVENT),RECHARGE_REFUND_NOTICE_EVENT]
+      : addon==='recharge' ? [...generation.events.filter(e=>!RECHARGE_PAID_EVENTS.includes(e)&&e!==RECHARGE_REFUND_NOTICE_EVENT),...RECHARGE_PAID_EVENTS,...refundTail]
+      : addon === 'membership' ? [...generation.events.filter(e=>!MEMBERSHIP_PAID_EVENTS.includes(e)&&!RECHARGE_PAID_EVENTS.includes(e)&&e!==RECHARGE_REFUND_NOTICE_EVENT),...MEMBERSHIP_PAID_EVENTS,...(generation.recharge?RECHARGE_PAID_EVENTS:[]),...refundTail]
       : addon === 'price'
       ? [...PRODUCT_SAVE_EFFECTS_EVENTS, PRICE, ...(generation.virtual ? VIRTUAL : []), ...generation.addons, ...(generation.paid ? [PAID_NOTICE_EVENT] : []),...memberTail]
-      : [...generation.events.filter(event => event !== PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(event)&&!RECHARGE_PAID_EVENTS.includes(event)),
+      : [...generation.events.filter(event => event !== PAID_NOTICE_EVENT&&!MEMBERSHIP_PAID_EVENTS.includes(event)&&!RECHARGE_PAID_EVENTS.includes(event)&&event!==RECHARGE_REFUND_NOTICE_EVENT),
         ...(addon === 'paid' ? [] : [addon === 'refund' ? REFUND : WRITEOFF]),
         ...(addon === 'paid'||generation.paid ? [PAID_NOTICE_EVENT] : []),...memberTail];
     return ` WHEN ${literal(generation.definition)} THEN already_enabled:=${enabled}; virtual_subjects:=${generation.virtual}; events:=${literal(events.map(literal).join(','))};`;
@@ -130,7 +140,9 @@ export async function runPaidNoticeUpgrade(db:Pick<DbClient,'$client'>):Promise<
   await db.$client.begin('isolation level read committed',async tx=>{
     await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     const rows=await tx.unsafe(PAID_NOTICE_CATALOG_SQL);
-    await tx.unsafe(rows.length===1&&paidNoticeEventGeneration(rows[0].definition)?.membership
-      ?paidNoticeAddonUpgradeSql('paid','',true,paidNoticeEventGeneration(rows[0].definition)?.recharge===true):PAID_NOTICE_SQL);
+    const generation=rows.length===1?paidNoticeEventGeneration(rows[0].definition):null;
+    if(generation?.rechargeRefundNotice)await (await import('./rechargeRefundNotice')).assertRechargeRefundNoticeActivePairUnsafeTx(tx);
+    await tx.unsafe(generation?.membership
+      ?paidNoticeAddonUpgradeSql('paid','',true,generation.recharge===true,generation.rechargeRefundNotice===true):PAID_NOTICE_SQL);
   });
 }

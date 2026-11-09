@@ -6,6 +6,7 @@ import { ApiErrorCode, AuthException, ValidateException } from "@/utils/errors";
 import { pcBaseMenuBinding, pcBasePermissionsFromMenus } from './AdminPcBasePermissionBinding';
 import { wechatAppMenuBinding, wechatAppPermissionsFromMenus } from './AdminWechatAppPermissionBinding';
 import { wechatRoutineMenuBinding, wechatRoutinePermissionsFromMenus } from './AdminWechatRoutinePermissionBinding';
+import { RECHARGE_REFUND_PERMISSION, rechargeRefundRoutePermission } from './AdminRechargeRefundPermission';
 
 export interface AdminPermissionGroup {
   key: string;
@@ -288,6 +289,7 @@ const permissionKeys = new Set(
   ]),
 );
 permissionKeys.add("order.assisted");
+permissionKeys.add(RECHARGE_REFUND_PERMISSION);
 permissionKeys.add("integral_log.export");
 permissionKeys.add("bill.export");
 permissionKeys.add("system.legacy_admin_view");
@@ -570,6 +572,9 @@ export function requiredAdminPermission(method: string, routePath: string): stri
   // The earlier mobile editor has a distinct /api/admin selection contract.
   if (['GET', 'HEAD'].includes(method.toUpperCase()) && routePath === '/api/admin/product/category') return PRODUCT_CATEGORY_SELECTION_PERMISSION;
   const route = normalizeAdminRoute(routePath);
+  if (route === 'finance/recharge-refunds' || route.startsWith('finance/recharge-refunds/')) {
+    return rechargeRefundRoutePermission(method, route);
+  }
   // This additive reader is a closed namespace: only the exact directory
   // and one canonical record's opt-in media GET/HEAD require extract.view.
   if (route === 'extract/directory' || route.startsWith('extract/directory/')) {
@@ -959,6 +964,7 @@ export function normalizeRoleRules(value: string | readonly string[] | undefined
       expanded.add("system.legacy_role_form_view");
     }
     if (token === "system.legacy_role_status" || token === "system.legacy_role_delete") expanded.add("system.legacy_role_view");
+    if (token === RECHARGE_REFUND_PERMISSION) expanded.add('recharge_order.view');
   }
   const orderedKeys = [...permissionKeys].filter((key) => expanded.has(key));
   const legacyIds = [...expanded]
@@ -1469,6 +1475,7 @@ export class AdminPermissionService {
         { key: `${group.key}.view`, label: "查看" },
         ...(group.manage ? [{ key: `${group.key}.manage`, label: "管理" }] : []),
         ...(group.key === "order" ? [{ key: "order.assisted", label: "代客下单" }] : []),
+        ...(group.key === 'recharge_order' ? [{ key: RECHARGE_REFUND_PERMISSION, label: '充值退款' }] : []),
         ...(group.key === "integral_log" ? [{ key: "integral_log.export", label: "导出" }] : []),
         ...(group.key === "bill" ? [{ key: "bill.export", label: "导出" }] : []),
         ...(group.key === "system" ? [

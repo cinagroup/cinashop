@@ -22,6 +22,7 @@ import { adminapiRoutes } from "@/routes/adminapi";
 import { adminFulfillmentAssignmentRoutes } from '@/routes/admin-fulfillment-assignments';
 import { managerAssignedFulfillmentRoutes } from '@/routes/manager-assigned-fulfillment';
 import { adminRefundOperationRoutes } from "@/routes/admin-refund-operations";
+import { adminRechargeRefundRoutes } from '@/routes/admin-recharge-refunds';
 import { adminRefundCreationRoutes } from "@/routes/admin-refund-creation";
 import { supplierapiRoutes } from "@/routes/supplierapi";
 import { outapiRoutes } from "@/routes/outapi";
@@ -59,6 +60,8 @@ export function createApp() {
   // auth/permission boundary; no public path exposes the SQL receipt service.
   app.route('/api/admin/refund/operations', adminRefundOperationRoutes);
   app.route('/adminapi/refund/operations', adminRefundOperationRoutes);
+  app.route('/api/admin/finance/recharge-refunds', adminRechargeRefundRoutes);
+  app.route('/adminapi/finance/recharge-refunds', adminRechargeRefundRoutes);
   app.route('/api/admin/refund/creation', adminRefundCreationRoutes);
   app.route('/adminapi/refund/creation', adminRefundCreationRoutes);
   app.route('/api/admin/order/fulfillment_assignment', adminFulfillmentAssignmentRoutes);

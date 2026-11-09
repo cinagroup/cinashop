@@ -22,7 +22,7 @@ import { prepareRoutineSubscriptionDeliveryNotice, prepareRoutineSubscriptionDel
   assertRoutineSubscriptionDeliveryNoticeTx } from './RoutineSubscriptionDeliveryNotice';
 import { getRoutineSubscriptionAccessToken } from './RoutineSubscriptionAccessToken';
 import { postRoutineSubscription, assertRoutineSubscriptionProviderResult } from './RoutineSubscriptionProvider';
-import { routineSubscriptionNoticeKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionRechargeRefundKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
 
 type Delivery = typeof orderNotificationDelivery.$inferSelect & { subjectDomain?: 'membership'|'recharge'; subjectId?: number };
 export interface RoutineSubscriptionClaim { id: number; eventKey: string; leaseToken: string }
@@ -64,7 +64,7 @@ function identity(row: Delivery) {
   return { id: row.id, outboxId: row.outboxId, eventKey: row.eventKey, orderId: row.orderId,
     withdrawalId: row.withdrawalId, userId: row.userId, noticeMark: row.noticeMark, channel: row.channel,
     target: row.target, templateCode: row.templateCode, payload: row.payload, addTime: row.addTime,
-    ...((routineSubscriptionMembershipKey(row.eventKey)||routineSubscriptionRechargeKey(row.eventKey)) ? { subjectDomain: row.subjectDomain, subjectId: row.subjectId } : {}) };
+    ...((routineSubscriptionMembershipKey(row.eventKey)||routineSubscriptionRechargeKey(row.eventKey)||routineSubscriptionRechargeRefundKey(row.eventKey)) ? { subjectDomain: row.subjectDomain, subjectId: row.subjectId } : {}) };
 }
 const sourceKey = (env: Env, c: Readonly<RoutineSubscriptionClaim>) => subscriptionMac(env, 'delivery-source-key', [c.eventKey, 'wechat_routine']);
 const intentDigest = (env: Env, row: Delivery) => subscriptionMac(env, 'delivery-intent', identity(row));
@@ -73,14 +73,14 @@ async function claimed(tx: DbClient, c: Readonly<RoutineSubscriptionClaim>) {
   const now = await routineSubscriptionClockTx(tx);
   if (!r || r.eventKey !== c.eventKey || r.channel !== 'wechat_routine' || r.status !== 'PROCESSING'
     || r.leaseToken !== c.leaseToken || r.leaseUntil <= now || r.leaseUntil > now + 180 || r.withdrawalId !== null
-    || ((routineSubscriptionMembershipKey(r.eventKey)||routineSubscriptionRechargeKey(r.eventKey)) ? r.orderId !== null : !subscriptionInteger(r.orderId)))
+    || ((routineSubscriptionMembershipKey(r.eventKey)||routineSubscriptionRechargeKey(r.eventKey)||routineSubscriptionRechargeRefundKey(r.eventKey)) ? r.orderId !== null : !subscriptionInteger(r.orderId)))
     return routineSubscriptionUnavailable();
-  if (routineSubscriptionMembershipKey(r.eventKey)||routineSubscriptionRechargeKey(r.eventKey)) {
-    const domain:'recharge'|'membership'=routineSubscriptionRechargeKey(r.eventKey)?'recharge':'membership';
+  if (routineSubscriptionMembershipKey(r.eventKey)||routineSubscriptionRechargeKey(r.eventKey)||routineSubscriptionRechargeRefundKey(r.eventKey)) {
+    const domain:'recharge'|'membership'=routineSubscriptionRechargeKey(r.eventKey)||routineSubscriptionRechargeRefundKey(r.eventKey)?'recharge':'membership';
     const rows = await tx.execute<{ subjectDomain: string; subjectId: number }>(sql`SELECT subject_domain AS "subjectDomain",subject_id AS "subjectId"
       FROM public.order_notification_delivery WHERE id=${r.id} LIMIT 2`), subject = rows[0];
     if (rows.length !== 1 || subject.subjectDomain !== domain || !subscriptionInteger(subject.subjectId)
-      || r.eventKey !== `${domain}.pay.success.notice:${subject.subjectId}`) return routineSubscriptionUnavailable();
+      || (!routineSubscriptionRechargeRefundKey(r.eventKey)&&r.eventKey !== `${domain}.pay.success.notice:${subject.subjectId}`)) return routineSubscriptionUnavailable();
     return { ...r, subjectDomain: domain, subjectId: subject.subjectId };
   }
   return r;
@@ -131,7 +131,7 @@ async function project(tx: DbClient, c: Readonly<RoutineSubscriptionClaim>, stat
  * complete semantic attempt history under the still-owned claim before undoing
  * its claim-only counter; no immutable attempt or provider POST is erased. */
 async function retryMembershipSourceSqlTx(tx: DbClient, env: Env, c: Readonly<RoutineSubscriptionClaim>, baseline: Awaited<ReturnType<typeof history>>) {
-  if (!(routineSubscriptionMembershipKey(c.eventKey)||routineSubscriptionRechargeKey(c.eventKey)) || !await assertRoutineSubscriptionDeliveryReadTx(tx)) return false;
+  if (!(routineSubscriptionMembershipKey(c.eventKey)||routineSubscriptionRechargeKey(c.eventKey)||routineSubscriptionRechargeRefundKey(c.eventKey)) || !await assertRoutineSubscriptionDeliveryReadTx(tx)) return false;
   const row = await claimed(tx, c), current = await history(tx, env, c), count = baseline.attempts.length;
   if (!subscriptionSame(current, baseline) || count >= 5 || row.attemptCount !== count + 1 || count === 0 && row.replayCount !== 0) return false;
   const code = baseline.results.at(-1)?.payload.result.code;
@@ -139,13 +139,13 @@ async function retryMembershipSourceSqlTx(tx: DbClient, env: Env, c: Readonly<Ro
   const now = await routineSubscriptionClockTx(tx);
   const [updated] = await tx.update(orderNotificationDelivery).set({ status: 'RETRYABLE', availableTime: now + 60,
     attemptCount: count, leaseToken: '', leaseUntil: 0, responseCode: '', providerReference: '', providerRequestId: '', sentTime: 0,
-    lastError: routineSubscriptionRechargeKey(c.eventKey)?'routine_recharge_source_sql_transient':'routine_membership_source_sql_transient', updateTime: now }).where(and(eq(orderNotificationDelivery.id, c.id),
+    lastError: routineSubscriptionRechargeRefundKey(c.eventKey)?'routine_recharge_refund_source_sql_transient':routineSubscriptionRechargeKey(c.eventKey)?'routine_recharge_source_sql_transient':'routine_membership_source_sql_transient', updateTime: now }).where(and(eq(orderNotificationDelivery.id, c.id),
     eq(orderNotificationDelivery.eventKey, c.eventKey), eq(orderNotificationDelivery.channel, 'wechat_routine'),
     eq(orderNotificationDelivery.status, 'PROCESSING'), eq(orderNotificationDelivery.leaseToken, c.leaseToken),
     eq(orderNotificationDelivery.attemptCount, count + 1), eq(orderNotificationDelivery.dispatchCount, row.dispatchCount),
     eq(orderNotificationDelivery.replayCount, row.replayCount), sql`${orderNotificationDelivery.leaseUntil}>${now}`,
     sql`${orderNotificationDelivery.orderId} IS NULL AND ${orderNotificationDelivery.withdrawalId} IS NULL
-      AND subject_domain=${routineSubscriptionRechargeKey(c.eventKey)?'recharge':'membership'} AND subject_id=${'subjectId' in row ? row.subjectId : 0}`)).returning({ id: orderNotificationDelivery.id });
+      AND subject_domain=${routineSubscriptionRechargeKey(c.eventKey)||routineSubscriptionRechargeRefundKey(c.eventKey)?'recharge':'membership'} AND subject_id=${'subjectId' in row ? row.subjectId : 0}`)).returning({ id: orderNotificationDelivery.id });
   return Boolean(updated);
 }
 export async function processRoutineSubscriptionDelivery(container: Container, env: Env, raw: RoutineSubscriptionClaim, fetcher: typeof fetch = fetch):
@@ -168,7 +168,7 @@ Promise<'sent' | 'retry-scheduled' | 'dead' | 'unknown'> {
     // History is complete and every preceding POST has an explicit rejection.
     uncertain = false;
     retryBaseline = prior;
-    membershipSourceSql = routineSubscriptionMembershipKey(c.eventKey)||routineSubscriptionRechargeKey(c.eventKey);
+    membershipSourceSql = routineSubscriptionMembershipKey(c.eventKey)||routineSubscriptionRechargeKey(c.eventKey)||routineSubscriptionRechargeRefundKey(c.eventKey);
     const source = await prepareRoutineSubscriptionDeliveryNotice(container, signing, { deliveryId: c.id, eventKey: c.eventKey });
     membershipSourceSql = false; // Token/network and durable admission are not this SQL-only window.
     const token = await getRoutineSubscriptionAccessToken(container, signing, source.account, { fetcher, forceRefresh: code !== undefined && invalidToken(code) });

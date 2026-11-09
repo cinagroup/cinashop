@@ -77,7 +77,8 @@ export async function upgradeCustomerFinancialRoutineRefundInTransaction(tx:Quer
   +'ONLY public.customer_financial_operation_request IN ACCESS EXCLUSIVE MODE NOWAIT'));
  if(!(await inspectRoutinePaymentRuntime(tx,t)).ready)throw Error('Existing Financial Routine binding refused');
  const inspectFinancial=(addon:boolean)=>inspectCustomerFinancialRuntimePrivileges(tx,{requireLogin:true,routine:{target:t,stage:'ready'},
-  ...c.previous,...(addon?{routineRefund:c.routineRefund}:{})});
+  ...c.previous,...(addon?{routineRefund:c.routineRefund}:{}),
+  ...(c.afterPeers.rechargeRefund?{rechargeRefund:c.afterPeers.rechargeRefund}:{})});
  const inspectBusiness=async(addon:boolean)=>({
   app:await inspectRuntimeBusinessProfileInTransaction(tx,'app',t,'current',addon?c.afterPeers:c.beforePeers,c.reader),
   admin:await inspectRuntimeBusinessProfileInTransaction(tx,'admin',t,'current',addon?c.afterPeers:c.beforePeers),

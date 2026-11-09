@@ -46,7 +46,9 @@ const rowStatuses=new Set(['PENDING','ENQUEUING','ENQUEUED','PROCESSING','RETRYA
  * The unique-UID payment variant has no original-provider record to reference. */
 function originalFacts(facts:Intent['source']){
   if(facts.templateMark!=='1927'&&facts.templateMark!=='755')return{...facts,domain:'store_order' as const};
-  if(facts.payment.kind!=='routine-original')return null;
+  // Refund format10 authenticates its own physical settlement/cause digest;
+  // this historical payment-reference projection cannot invent an evidence ID.
+  if(!('payment'in facts)||facts.payment.kind!=='routine-original')return null;
   return{evidenceId:facts.payment.evidenceId,evidenceSignature:facts.payment.evidenceSignature,
     appId:facts.appId,rootId:facts.rootId,buyerUid:facts.buyerUid,domain:'subjectDomain'in facts?facts.subjectDomain:'store_order' as const};
 }

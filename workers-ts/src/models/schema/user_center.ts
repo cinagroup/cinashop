@@ -148,7 +148,8 @@ export const userRecharge = pgTable(
     paid: smallint("paid").default(0).notNull(),
     payTime: integer("pay_time").default(0).notNull(),
     addTime: integer("add_time").default(0).notNull(),
-    refundPrice: decimal("refund_price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+    /** 0203 explicitly expands legacy numeric(10,2) to match principal capacity. */
+    refundPrice: decimal("refund_price", { precision: 12, scale: 2 }).default("0.00").notNull(),
     channelType: varchar("channel_type", { length: 255 }).default("").notNull(),
     remarks: varchar("remarks", { length: 255 }).default("").notNull(),
   },

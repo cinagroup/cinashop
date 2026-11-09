@@ -38,4 +38,27 @@ describe('actual middleware preflight for legacy staff confirmation headers', ()
       expect(response.headers.get('access-control-allow-origin')).toBeNull();
     }
   });
+  it.each(['/adminapi', '/api/admin'])('admits the explicit recharge refund protocol on %s', async prefix => {
+    for (const path of ['quote/11', 'execute/11', 'receipt', 'execution', 'query', 'abandon/11', 'cancel/11']) {
+      const response = await app().request(`${prefix}/finance/recharge-refunds/${path}`, { method: 'OPTIONS', headers: {
+        Origin: origin, 'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type,authorization,idempotency-key,x-recharge-refund-scope',
+      } }, env);
+      expect(response.status).toBe(204);
+      expect(response.headers.get('access-control-allow-origin')).toBe(origin);
+      expect(response.headers.get('access-control-allow-credentials')).toBe('true');
+      const admitted = response.headers.get('access-control-allow-headers')?.toLowerCase().split(',');
+      for (const name of ['content-type', 'authorization', 'idempotency-key', 'x-recharge-refund-scope']) expect(admitted).toContain(name);
+      expect(admitted).not.toContain('*');
+    }
+  });
+  it.each(['https://untrusted.test', 'https://work.cinashop.test', 'null', 'http://localhost:5173'])('does not admit %s to recharge refunds in production', async untrusted => {
+    for (const prefix of ['/adminapi', '/api/admin']) {
+      const response = await app().request(`${prefix}/finance/recharge-refunds/execute/11`, { method: 'OPTIONS', headers: {
+        Origin: untrusted, 'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type,authorization,idempotency-key,x-recharge-refund-scope',
+      } }, env);
+      expect(response.headers.get('access-control-allow-origin')).toBeNull();
+    }
+  });
 });

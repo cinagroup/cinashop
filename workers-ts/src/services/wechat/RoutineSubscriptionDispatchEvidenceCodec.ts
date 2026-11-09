@@ -1,3 +1,4 @@
+import {captureRoutineSubscriptionRechargeRefundFacts,RECHARGE_REFUND_SUBSCRIPTION_FACT_KEYS}from './RoutineSubscriptionRechargeRefundEvidenceCodec';
 import {captureRechargeSubscriptionFacts,RECHARGE_SUBSCRIPTION_FACT_KEYS} from './RoutineSubscriptionRechargeEvidenceCodec';
 import { captureMembershipSubscriptionFacts, MEMBERSHIP_SUBSCRIPTION_FACT_KEYS } from './RoutineSubscriptionMembershipEvidenceCodec';
 import { capturePaidSubscriptionFacts, PAID_SUBSCRIPTION_FACT_KEYS } from './RoutineSubscriptionPaidEvidenceCodec';
@@ -11,7 +12,7 @@ import { routineEvidenceCanonical, routineEvidenceHmac } from '../payment/Routin
 import { parseRoutineSubscriptionAccountJournal, type RoutineSubscriptionAccountJournal,
   type RoutineSubscriptionScope } from '../payment/RoutinePurposeAccountEvidenceCodec';
 import type { RoutineSubscriptionNoticeIntent } from './RoutineSubscriptionRequestEvidenceCodec';
-import { routineSubscriptionNoticeKey, routineSubscriptionPaidKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey, routineSubscriptionRefundSuccessKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionRechargeRefundKey, routineSubscriptionPaidKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey, routineSubscriptionRefusalKey, routineSubscriptionPinkKey, routineSubscriptionRefundSuccessKey } from './RoutineSubscriptionNoticeKinds';
 type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionNoticeIntent['source'];
 type RoutineSubscriptionNoticeRequest = RoutineSubscriptionNoticeIntent['request'];
 type Signing = Pick<Env, 'APP_KEY'>;
@@ -62,11 +63,12 @@ export function parseRoutineSubscriptionAttemptForActor(env: Signing, raw: unkno
   const r = subscriptionObject(raw, ['attempt_id', 'delivery_id', 'attempt_no', 'source_key', 'payload', 'created_at', 'signature']);
   const p = subscriptionObject(r.payload, ['format', 'purpose', 'scope', 'actor', 'previousAttemptId', 'intentDigest', 'claim', 'facts', 'policy', 'request']);
   const c = subscriptionObject(p.claim, ['eventKey', 'leaseToken', 'attemptCount', 'leaseUntil']);
-  const recharge=routineSubscriptionRechargeKey(c.eventKey), membership = routineSubscriptionMembershipKey(c.eventKey), paid = routineSubscriptionPaidKey(c.eventKey);
+  const rechargeRefund=routineSubscriptionRechargeRefundKey(c.eventKey),recharge=routineSubscriptionRechargeKey(c.eventKey), membership = routineSubscriptionMembershipKey(c.eventKey), paid = routineSubscriptionPaidKey(c.eventKey);
+  if(rechargeRefund)captureRoutineSubscriptionRechargeRefundFacts(p.facts);
   if(recharge)captureRechargeSubscriptionFacts(p.facts);
   if (membership) captureMembershipSubscriptionFacts(p.facts);
   if (paid) capturePaidSubscriptionFacts(p.facts);
-  const f = subscriptionObject(p.facts, recharge ? RECHARGE_SUBSCRIPTION_FACT_KEYS : membership ? MEMBERSHIP_SUBSCRIPTION_FACT_KEYS : paid ? PAID_SUBSCRIPTION_FACT_KEYS : ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',
+  const f = subscriptionObject(p.facts, rechargeRefund ? RECHARGE_REFUND_SUBSCRIPTION_FACT_KEYS : recharge ? RECHARGE_SUBSCRIPTION_FACT_KEYS : membership ? MEMBERSHIP_SUBSCRIPTION_FACT_KEYS : paid ? PAID_SUBSCRIPTION_FACT_KEYS : ['deliveryId', 'outboxId', 'eventKey', 'orderId', 'rootId', 'buyerUid', 'appId', 'ownershipId', 'bindingId',
     'observationId', 'evidenceId', 'evidenceSignature', 'relatedDigest', 'approvedUseDigest', 'templateMark', 'sourceDigest']);
   const q = subscriptionObject(p.request, ['touser', 'template_id', 'page', 'data']);
   const created = number(r.created_at);
@@ -77,10 +79,10 @@ export function parseRoutineSubscriptionAttemptForActor(env: Signing, raw: unkno
     || c.attemptCount !== r.attempt_no || !time(c.leaseUntil) || created >= c.leaseUntil
     || c.eventKey !== f.eventKey || r.delivery_id !== f.deliveryId || typeof c.eventKey !== 'string'
     || !routineSubscriptionNoticeKey(c.eventKey) || typeof f.templateMark !== 'string'
-    || !(recharge ? f.templateMark==='755' : membership || paid ? f.templateMark === '1927' : routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) || routineSubscriptionRefundSuccessKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
+    || !(rechargeRefund||recharge ? f.templateMark==='755' : membership || paid ? f.templateMark === '1927' : routineSubscriptionPinkKey(c.eventKey) ? f.templateMark === '3098' : routineSubscriptionRefusalKey(c.eventKey) || routineSubscriptionRefundSuccessKey(c.eventKey) ? f.templateMark === '1451' : ['1458', '1128'].includes(f.templateMark))
     || r.source_key !== sourceKey(env, { id: r.delivery_id, eventKey: c.eventKey, leaseToken: c.leaseToken })
     || !subscriptionInteger(f.orderId) || !subscriptionInteger(f.rootId) || !subscriptionInteger(f.buyerUid)
-    || !subscriptionHex(f.sourceDigest) || !paid && !membership && !recharge && (!subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest) || !subscriptionHex(f.evidenceSignature)) || typeof q.touser !== 'string' || typeof q.template_id !== 'string'
+    || !subscriptionHex(f.sourceDigest) || !paid && !membership && !recharge && !rechargeRefund && (!subscriptionHex(f.relatedDigest) || !subscriptionHex(f.approvedUseDigest) || !subscriptionHex(f.evidenceSignature)) || typeof q.touser !== 'string' || typeof q.template_id !== 'string'
     || typeof q.page !== 'string' || Buffer.byteLength(JSON.stringify(p), 'utf8') > 65536) return routineSubscriptionUnavailable();
   const policy = parseRoutineSubscriptionAccountJournal(env, p.policy, scope);
   if (policy.payload.data.state !== 'active' || f.appId !== policy.payload.data.appId || created < policy.created_at

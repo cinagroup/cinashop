@@ -1,5 +1,6 @@
 import { captureCustomerFinancialRoutineRefund, inspectCustomerFinancialRoutineRefund, CUSTOMER_FINANCIAL_ROUTINE_REFUND_TABLE_PRIVILEGES, type CustomerFinancialRoutineRefundAddon } from './customerFinancialRoutineRefund';
 import { is, sql } from 'drizzle-orm';
+import { captureRechargeRefundRuntimeAddon, applyRechargeRefundRuntimePlan, inspectRechargeRefundRuntimeProfile, RECHARGE_REFUND_PROFILE_FUNCTIONS, type RechargeRefundRuntimeAddon } from './rechargeRefundRuntimeProfile';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
 import * as models from '../models/schema';
 import type { DbClient } from '../lib/di';
@@ -36,7 +37,7 @@ import { captureCustomerFinancialOriginalPaymentReaders, CUSTOMER_FINANCIAL_ORIG
 type Query = Pick<DbClient, 'execute'>;
 /** Explicit maintenance extension; the historical base plan stays exact. */
 export interface CustomerFinancialManualRefundAddon { promotionOwner: string }
-function reviewedPlan(manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon, routineRefund?:CustomerFinancialRoutineRefundAddon) {
+function reviewedPlan(manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon, routineRefund?:CustomerFinancialRoutineRefundAddon,rechargeRefund?:RechargeRefundRuntimeAddon) {
   if (originalPaymentReaders) {
     captureCustomerFinancialOriginalPaymentReaders(originalPaymentReaders);
     if (!manualRefund) throw Error('Original-payment readers require the explicitly commissioned manual Financial profile');
@@ -46,6 +47,7 @@ function reviewedPlan(manualRefund?: CustomerFinancialManualRefundAddon, origina
   if (manualRefund) plan.tables.manager_order_operation_request = ['SELECT'];
   if (originalPaymentReaders) for (const table of CUSTOMER_FINANCIAL_ORIGINAL_PAYMENT_READ_TABLES) plan.tables[table] = ['SELECT'];
   if(routineRefund)for(const[table,privileges]of Object.entries(CUSTOMER_FINANCIAL_ROUTINE_REFUND_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
+  if(rechargeRefund){captureRechargeRefundRuntimeAddon(rechargeRefund);applyRechargeRefundRuntimePlan(plan,'financial');}
   return plan;
 }
 const sourceTables = new Map(Object.values(models).filter(value => is(value, PgTable)).map(table => {
@@ -72,8 +74,19 @@ sourceSequences.set('kefu_visitor_uid_seq', {
  * a fixture or the server's grants. This inspects existing protocols only. */
 export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Query, maintenance: string,
   manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon,
-  routineRefund?:CustomerFinancialRoutineRefundAddon, refundNames?:{app:string;admin:string}) {
-  const failures: string[] = [], plan = reviewedPlan(manualRefund, originalPaymentReaders,routineRefund);
+  routineRefund?:CustomerFinancialRoutineRefundAddon, refundNames?:{app:string;admin:string},rechargeRefund?:RechargeRefundRuntimeAddon,
+  rechargeTarget?:RoutinePaymentRuntimeTarget) {
+  const failures: string[] = [], plan = reviewedPlan(manualRefund, originalPaymentReaders,routineRefund,rechargeRefund);
+  // This public prerequisite must close the newly declared catalog itself;
+  // finding an unknown table name is never proof of a new profile's shape.
+  const rechargeProfile=rechargeRefund&&rechargeTarget
+    ?await inspectRechargeRefundRuntimeProfile(db,rechargeTarget,rechargeRefund):null;
+  if(rechargeRefund) {
+    if(!rechargeTarget||rechargeTarget.maintenance!==maintenance
+      ||refundNames&&(rechargeTarget.app!==refundNames.app||rechargeTarget.admin!==refundNames.admin))
+      failures.push('recharge_refund_target');
+    if(!rechargeProfile?.ready)failures.push(...(rechargeProfile?.failures??['complete_target_required']).map(name=>'recharge_refund:'+name));
+  }
   // These nullable fields are intentionally absent from the legacy Drizzle
   // model. Recognize them only as a complete owner-bound 16/17-event forward,
   // not as optional columns inferred from the server. This structural leaf
@@ -163,7 +176,7 @@ export async function inspectCustomerFinancialRuntimeCatalogPrerequisites(db: Qu
     ...(manual?.catalogReady && manual.manualFunctionOid ? [manual.manualFunctionOid] : [])];
   const unique = [...new Set(failures)].sort();
   return { ready: unique.length === 0, readOnly: true as const, failures: unique, ownedSequences, reviewedDefiners,
-    virtualShippingSubjectColumns,
+    virtualShippingSubjectColumns,...(rechargeRefund?{rechargeProfile}:{}),
     requiredTableCount: Object.keys(plan.tables).length };
 }
 
@@ -173,6 +186,7 @@ export interface CustomerFinancialRuntimeInspection {
   manualRefund?: CustomerFinancialManualRefundAddon;
   originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon;
   routineRefund?:CustomerFinancialRoutineRefundAddon;
+  rechargeRefund?:RechargeRefundRuntimeAddon;
 }
 
 /** Maintenance named-role comparison; no SET ROLE or automatic grants. */
@@ -180,8 +194,9 @@ export async function inspectCustomerFinancialRuntimePrivileges(db: Query, optio
   if (typeof options.requireLogin !== 'boolean' || !['before-customer', 'ready'].includes(options.routine?.stage))
     throw Error('Explicit Customer financial LOGIN and routine stage required');
   const role = CUSTOMER_FINANCIAL_RUNTIME_ROLE, { target, stage } = options.routine;
-  const catalogs = await inspectCustomerFinancialRuntimeCatalogPrerequisites(db, target.maintenance, options.manualRefund, options.originalPaymentReaders,options.routineRefund,target);
-  const failures = [...catalogs.failures], plan = reviewedPlan(options.manualRefund, options.originalPaymentReaders,options.routineRefund);
+  const catalogs = await inspectCustomerFinancialRuntimeCatalogPrerequisites(db, target.maintenance, options.manualRefund, options.originalPaymentReaders,options.routineRefund,target,options.rechargeRefund,target);
+  const failures = [...catalogs.failures], plan = reviewedPlan(options.manualRefund, options.originalPaymentReaders,options.routineRefund,options.rechargeRefund);
+  const recharge=catalogs.rechargeProfile??null;
   const manual = options.manualRefund ? await inspectCustomerFinancialManualRefundRuntime(db, {
     role, promotionOwner: options.manualRefund.promotionOwner, requirePrivileges: true,
   }) : null;
@@ -263,12 +278,15 @@ export async function inspectCustomerFinancialRuntimePrivileges(db: Query, optio
     has_function_privilege(${role},p.oid,'EXECUTE') AS executable,
     has_function_privilege(${role},p.oid,'EXECUTE WITH GRANT OPTION') AS delegate
     FROM pg_proc p WHERE p.pronamespace='public'::regnamespace`);
-  const declared = new Set(plan.functions), reviewed = new Set(catalogs.reviewedDefiners);
+  const declared = new Set(plan.functions), reviewed = new Set([...catalogs.reviewedDefiners,
+    ...(recharge?.ready&&recharge.lockSourceFunctionOid?[recharge.lockSourceFunctionOid]:[])]);
+  const reviewedRechargeInvoker=recharge?.ready?recharge.validFunctionOid:null;
   for (const row of routines) {
     const signature = String(row.signature);
     if (row.delegate !== false) failures.push(`routine_delegation:${signature}`);
     if (row.executable !== true) continue;
-    const privateInvoker = declared.has(signature) && row.prosecdef === false && signature.startsWith('customer_');
+    const privateInvoker = declared.has(signature) && row.prosecdef === false && (signature.startsWith('customer_')
+      ||signature===RECHARGE_REFUND_PROFILE_FUNCTIONS[0]&&String(row.oid)===reviewedRechargeInvoker);
     if (!reviewed.has(String(row.oid)) && !privateInvoker
       && (row.prosecdef !== false || MANAGER_PUBLIC_INVOKER_BASELINE[signature] !== row.fingerprint)) failures.push(`unreviewed_routine:${signature}`);
   }
@@ -291,7 +309,7 @@ export async function inspectCustomerFinancialRuntimePrivileges(db: Query, optio
 /** Independently authenticated LOGIN, not a maintenance SET ROLE session. */
 export async function auditCustomerFinancialRuntimePrivileges(db: DbClient, target: RoutinePaymentRuntimeTarget,
   manualRefund?: CustomerFinancialManualRefundAddon, originalPaymentReaders?: CustomerFinancialOriginalPaymentReadersAddon,
-  routineRefund?:CustomerFinancialRoutineRefundAddon) {
+  routineRefund?:CustomerFinancialRoutineRefundAddon,rechargeRefund?:RechargeRefundRuntimeAddon) {
   if (!Object.hasOwn(db, '$client') || !db.$client) throw Error('Root Customer financial connection required');
   return db.transaction(async tx => {
     await tx.execute(sql`SELECT set_config('search_path','public,pg_temp',true),
@@ -301,7 +319,7 @@ export async function auditCustomerFinancialRuntimePrivileges(db: DbClient, targ
     const [identity] = await tx.execute(sql`SELECT current_database() AS database,current_user AS role,session_user AS session,
       (SELECT r.rolname FROM pg_stat_activity a JOIN pg_roles r ON r.oid=a.usesysid WHERE a.pid=pg_backend_pid()) AS backend_role,
       current_setting('session_replication_role')='origin' AS origin`);
-    const result = await inspectCustomerFinancialRuntimePrivileges(tx, { requireLogin: true, routine: { target, stage: 'ready' }, manualRefund, originalPaymentReaders,routineRefund });
+    const result = await inspectCustomerFinancialRuntimePrivileges(tx, { requireLogin: true, routine: { target, stage: 'ready' }, manualRefund, originalPaymentReaders,routineRefund,rechargeRefund });
     const realLogin = identity?.role === CUSTOMER_FINANCIAL_RUNTIME_ROLE && identity.session === CUSTOMER_FINANCIAL_RUNTIME_ROLE
       && identity.backend_role === CUSTOMER_FINANCIAL_RUNTIME_ROLE && identity.database === target.database && identity.origin === true;
     return { ...result, identity, realLogin, ready: result.ready && realLogin,

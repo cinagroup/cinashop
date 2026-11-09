@@ -1,4 +1,5 @@
 import { inspectRoutineRefundCatalog, ROUTINE_REFUND_RUNTIME_PRIVILEGES } from './routineRefund';
+import { applyRechargeRefundRuntimePlan, inspectRechargeRefundRuntimeProfile } from './rechargeRefundRuntimeProfile';
 import { ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES } from './routineRefundActorAddon';
 import { inspectUserMessageReadCapability } from './userMessageReadCapability';
 import { inspectRoutineOriginalPaymentEvidenceCatalog, ROUTINE_ORIGINAL_PAYMENT_EVIDENCE_RUNTIME_PRIVILEGES } from './routineOriginalPaymentEvidence';
@@ -205,6 +206,14 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
           for(const[table,privileges]of Object.entries(ROUTINE_REFUND_ACTOR_TABLE_PRIVILEGES))plan.tables[table]=[...privileges];
       }
     }
+    // Explicit three-runtime recharge successor only. Source SELECT and all
+    // new namespace privileges are accepted only after the whole catalog leaf;
+    // owner-only staged storage keeps the historical profile unchanged.
+    const recharge=peers?.rechargeRefund?await inspectRechargeRefundRuntimeProfile(tx,peers.target,peers.rechargeRefund):null;
+    if(recharge&&(!recharge.ready||version!=='current'||peers?.target.maintenance!==names.maintenance
+      ||peers.target.app!==names.app||peers.target.admin!==names.admin))failures.push('recharge_refund_declaration');
+    else if(recharge?.ready)applyRechargeRefundRuntimePlan(plan,kind);
+    const reviewedRechargeSourceLock=recharge?.ready?recharge.lockSourceFunctionOid:null;
     // Assignment permission is a declared successor, not an installed-table
     // exception learned from ACLs. App retains no new data access.
     const assignment=await inspectStoreOrderFulfillmentAssignment(tx,{maintenance:names.maintenance,admin:names.admin});
@@ -480,7 +489,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
     onStage?.('pricing');
     let reviewed:{checkout:string|null;offline:string|null}={checkout:null,offline:null};
     if(kind==='app') {
-      if(verifyConnection) reviewed=await reviewedRuntimePricingCapabilities(tx,'public','shared-shop');
+      if(verifyConnection) reviewed=await reviewedRuntimePricingCapabilities(tx,'public','shared-shop',
+        recharge?.ready&&peers?.rechargeRefund?{target:peers.target,addon:peers.rechargeRefund}:undefined);
       else {
         // The full named-role checks above already reject membership, DDL,
         // ownership and every extra table/column privilege. Review the exact
@@ -537,7 +547,8 @@ async function inspectRuntimeBusinessProfile(tx:Pick<DbClient,'execute'>,kind:'a
       AND p.oid::text IS DISTINCT FROM ${reviewedSupplierLabel}
       AND p.oid::text IS DISTINCT FROM ${reviewedPlatformMenu}
       AND p.oid::text IS DISTINCT FROM ${reviewedRoutineWrite}
-      AND p.oid::text IS DISTINCT FROM ${reviewedCityReader}) AS no_unreviewed_definer,
+      AND p.oid::text IS DISTINCT FROM ${reviewedCityReader}
+      AND p.oid::text IS DISTINCT FROM ${reviewedRechargeSourceLock}) AS no_unreviewed_definer,
       NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.pronamespace='public'::regnamespace
         AND pg_catalog.has_function_privilege(${expectedRole},p.oid,'EXECUTE WITH GRANT OPTION')) AS no_delegation`);
     if(routines?.no_unreviewed_definer!==true || routines?.no_delegation!==true)failures.push('routine_authority');

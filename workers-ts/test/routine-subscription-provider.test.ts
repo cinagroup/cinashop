@@ -42,7 +42,7 @@ describe('subscription one-POST transport without dispatch/SQL claims',()=>{
   const [input,init]=fetcher.mock.calls[0],url=new URL(String(input));
   expect(url.origin+url.pathname).toBe('https://api.weixin.qq.com/cgi-bin/message/subscribe/send');
   expect([...url.searchParams]).toEqual([['access_token',token]]);
-  expect(init).toMatchObject({method:'POST',redirect:'error',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+  expect(init).toMatchObject({method:'POST',redirect:'manual',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
   expect(init?.signal?.aborted).toBe(false);
   expect(result).toEqual({code:0,httpStatus:200,rawDigest:digest(raw),requestStartedAt:started,verifiedAt:started+1});
   expect(Object.isFrozen(result)).toBe(true);expect(Object.keys(result)).toEqual(['code','httpStatus','rawDigest','requestStartedAt','verifiedAt']);
@@ -88,7 +88,11 @@ describe('subscription one-POST transport without dispatch/SQL claims',()=>{
  it('rejects a redirected response and never follows it',async()=>{
   const response=json({errcode:40014});Object.defineProperty(response,'redirected',{value:true});
   const fetcher=vi.fn<typeof fetch>(async()=>response);await rejected(postRoutineSubscription(issued(),fetcher));
-  expect(fetcher).toHaveBeenCalledTimes(1);expect(fetcher.mock.calls[0][1]?.redirect).toBe('error');expect(vi.getTimerCount()).toBe(0);
+  expect(fetcher).toHaveBeenCalledTimes(1);expect(fetcher.mock.calls[0][1]?.redirect).toBe('manual');expect(vi.getTimerCount()).toBe(0);
+ });
+ it.each([301,302,303,307,308])('rejects manual HTTP%s even with a syntactically valid provider rejection',async(status)=>{
+  const fetcher=vi.fn<typeof fetch>(async()=>json({errcode:-1},status));await rejected(postRoutineSubscription(issued(),fetcher));
+  expect(fetcher).toHaveBeenCalledTimes(1);expect(fetcher.mock.calls[0][1]?.redirect).toBe('manual');expect(vi.getTimerCount()).toBe(0);
  });
 
  it.each(['32769','-1','1.5','not-a-number','9007199254740992'])(

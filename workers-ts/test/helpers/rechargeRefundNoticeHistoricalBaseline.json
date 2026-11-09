@@ -1,0 +1,258 @@
+{
+  "oldFamilyCount": 80,
+  "oldFamilySha256": "93cd97d2a627ef8c74e5a3b1dd575412db16eb4684d0a825fad9e7984dccbd18",
+  "legacyGeneratorSamples": [
+    {
+      "addon": "paid",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "e245097a0ac37ff442bf1a69e1e65a21fec28e28f9cf99adc95b0c479ef78413"
+    },
+    {
+      "addon": "paid",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "520e946231bf1679fb9e39ccb33f00dbb1e6fae5b5a9d19e1f1a1eefc6878bbb"
+    },
+    {
+      "addon": "paid",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "b59aec1eb06ee8cbb48cb02f305c106e419f42ea34c1d11fea74a987240b8d1e"
+    },
+    {
+      "addon": "paid",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "1864116ab313d0b6ad9a32f9c9d8bb257748f18138ccb51f4eca09b5cd963f75"
+    },
+    {
+      "addon": "paid",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "9b9e2f57c4c3317d11a21a8ccd8a018f1a065a49b21f3b31fad7159d06e19195"
+    },
+    {
+      "addon": "paid",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "841ab93aeff4d855b2d8e309ecaf3dc0bd98e3207ddcc85fa127a5538cdcc4f3"
+    },
+    {
+      "addon": "writeoff",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "5c79c6327b8be92da1870b74a16fa473178b219d10861b37edce75c4b6b57131"
+    },
+    {
+      "addon": "writeoff",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "e8c4f212d64b7a6826d622fda0af80cb9a577f25101b976fc8345ab8c4c7cd55"
+    },
+    {
+      "addon": "writeoff",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "fdce8f19f7ed3080d35d90ca2f7f1429d1059140631bf8e4973d32e065ddcefd"
+    },
+    {
+      "addon": "writeoff",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "d4eeaf75ebac2c42f15c88b9bc27ba7d9423518cf77696223db4c18ccd9d26c8"
+    },
+    {
+      "addon": "writeoff",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "f8c506400f1045eed2975d1cf9ae84401d6fd3c2ba85542deb7d40b595e61e11"
+    },
+    {
+      "addon": "writeoff",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "4de84fa01ef850a2ab79ac7e1703b915d71b64115dc6d17ad723c32c3865a09e"
+    },
+    {
+      "addon": "refund",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "ff7786489568b4cc26103c9475993ab80f9cf7d845bf51eba4a84ab3258df2ca"
+    },
+    {
+      "addon": "refund",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "18f276c25d1acaa53e9030388186af45f9783144950ac47df5c5b66fbcf2893d"
+    },
+    {
+      "addon": "refund",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "4235a09619b9dce6e97e7b50f534fc09e2c12fd25ada0299d0b6b7966c5f04fe"
+    },
+    {
+      "addon": "refund",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "70bf871f8b3360980a78167f277c736bc1a378656b511235e9da9f5040da330a"
+    },
+    {
+      "addon": "refund",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "cac084fc2932f92a7e12f30a2063b0a92d8c41ca959ea54c15c255cd744ff330"
+    },
+    {
+      "addon": "refund",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "7f06c97d5ccba38d415733c15e2330a4455fd0bb761c9571d4613613577e8489"
+    },
+    {
+      "addon": "price",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "379d2ee76d7b75d28579a98656222ed8b1a856c050abd41a0fec70d094b68e31"
+    },
+    {
+      "addon": "price",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "40e71d275ee9fd7fa653b4b97158c5da3cc7d1c98b9f37fa7b8a69c1c3c5f5e5"
+    },
+    {
+      "addon": "price",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "174ce22eeb83f8956bf238e636b46faee5f8b97f6446238a974fc102addb4736"
+    },
+    {
+      "addon": "price",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "5550b4434800ac533259f8a84f699be0fba885831a254d32d598ef44b1cf4f44"
+    },
+    {
+      "addon": "price",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "33e1da4700d2828cce55bd575d9a875dc07d3ca4681a051ec3b9790634e83ffd"
+    },
+    {
+      "addon": "price",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "90d87c69bc5e96bc246942ceab37e5416016f401d78fa2520464348eec238173"
+    },
+    {
+      "addon": "membership",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "c14e6344d43b098ba198da0392c76f070dad2e7bddfe6b514bdeaf542884111e"
+    },
+    {
+      "addon": "membership",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "c843db29a3383c7e4d5323204a67210490d7e847a41f4c958c4e894c5657714d"
+    },
+    {
+      "addon": "membership",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "0a047f5364bc2de7bfc85d66b567969a72a9775116df20bd7af5d8e0d801dd48"
+    },
+    {
+      "addon": "membership",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "bfe5ae5e01878898e24f95f92b9423004b4acc207c55a444fe774afc144d992d"
+    },
+    {
+      "addon": "membership",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "2c88f4083afc74a2fd9aaf73bce0e7c76f05710e647d7dc6852fc85e7ced20d1"
+    },
+    {
+      "addon": "membership",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "d0376aff5d6666aba6f811ad2604b16569362e56e2587319a62c5cfe7938fa92"
+    },
+    {
+      "addon": "recharge",
+      "member": false,
+      "recharge": false,
+      "guard": "",
+      "hash": "2a19cdd352e1d95f56a0046437d72728f3a42991ebd4982b200ada040c4cac02"
+    },
+    {
+      "addon": "recharge",
+      "member": false,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "88811d996a620dce467996d2056785c58f2019d312b0667cb193501987a94cbf"
+    },
+    {
+      "addon": "recharge",
+      "member": true,
+      "recharge": false,
+      "guard": "",
+      "hash": "93c99419d1d093d0b5b129b937476dd7bb9f898848e7196823a8a18d51ff2f02"
+    },
+    {
+      "addon": "recharge",
+      "member": true,
+      "recharge": false,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "09daa1695b7b7dc55e1acce079f5407453987224c7610a4323b6b70845bb2429"
+    },
+    {
+      "addon": "recharge",
+      "member": true,
+      "recharge": true,
+      "guard": "",
+      "hash": "e00e8c13a2e7141d29fe2a9030f14fa1281c1cc67177c1e843b25f0012652f30"
+    },
+    {
+      "addon": "recharge",
+      "member": true,
+      "recharge": true,
+      "guard": "\n-- fixed historical guard\n",
+      "hash": "f86a64dd3930e952c3e72934c3059e0452dcadb7d78dcd8097ea3ab74c9926d5"
+    }
+  ]
+}

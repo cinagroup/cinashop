@@ -1,3 +1,4 @@
+import {parseRoutineSubscriptionRechargeRefundIntent,type RoutineSubscriptionRechargeRefundIntent}from './RoutineSubscriptionRechargeRefundEvidenceCodec';
 import {parseRoutineSubscriptionRechargeIntent,type RoutineSubscriptionRechargeIntent} from './RoutineSubscriptionRechargeEvidenceCodec';
 import { parseRoutineSubscriptionMembershipIntent, type RoutineSubscriptionMembershipIntent } from './RoutineSubscriptionMembershipEvidenceCodec';
 import { parseRoutineSubscriptionPaidIntent, type RoutineSubscriptionPaidIntent } from './RoutineSubscriptionPaidEvidenceCodec';
@@ -76,7 +77,7 @@ export interface RoutineSubscriptionLegacyNoticeIntent {
   source: RoutineSubscriptionLegacyDeliveryNoticeFacts; policy: RoutineSubscriptionAccountJournal;
   request: Readonly<DeliveryNoticeRequest>; signature: string;
 }
-export type RoutineSubscriptionNoticeIntent = RoutineSubscriptionLegacyNoticeIntent | RoutineSubscriptionPaidIntent | RoutineSubscriptionMembershipIntent | RoutineSubscriptionRechargeIntent;
+export type RoutineSubscriptionNoticeIntent = RoutineSubscriptionLegacyNoticeIntent | RoutineSubscriptionPaidIntent | RoutineSubscriptionMembershipIntent | RoutineSubscriptionRechargeIntent | RoutineSubscriptionRechargeRefundIntent;
 
 const noticeCodec = (() => {
 const name=(value:unknown):value is string=>typeof value==='string'&&/^[a-z_][a-z0-9_]{0,62}$/u.test(value)
@@ -325,6 +326,7 @@ function captureIntentScope(raw: unknown): RoutineSubscriptionScope {
 }
 function parseRoutineSubscriptionNoticeIntent(env: Pick<Env, 'APP_KEY'>, raw: unknown, scope: RoutineSubscriptionScope): Readonly<RoutineSubscriptionNoticeIntent> {
   const snapshot = captureIntentJson(raw);
+  if ((snapshot as {format?:unknown})?.format===10)return parseRoutineSubscriptionRechargeRefundIntent(env,snapshot,scope);
   if ((snapshot as {format?:unknown})?.format===9)return parseRoutineSubscriptionRechargeIntent(env,snapshot,scope);
   if ((snapshot as { format?: unknown })?.format === 8) return parseRoutineSubscriptionMembershipIntent(env, snapshot, scope);
   if ((snapshot as { format?: unknown })?.format === 7) return parseRoutineSubscriptionPaidIntent(env, snapshot, scope);

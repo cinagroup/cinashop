@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
-import { inspectRoutineRefundSourceAclMatrix } from './routineRefundActorAddon';
+import { inspectRoutineRefundSourceAclWithRecharge } from './routineRefundActorAddon';
 
 type Query=Pick<DbClient,'execute'>;
 export interface CustomerFinancialRoutineRefundAddon { routineRefund:true }
@@ -26,7 +26,7 @@ export async function inspectCustomerFinancialRoutineRefundReaders(tx:Query,name
  const {inspectRoutineRefundCatalog}=await import('./routineRefund');
  const catalog=await inspectRoutineRefundCatalog(tx),b=catalog.binding;
  if(!catalog.ready||b?.maintenance!==names.maintenance||b.app!==names.app||b.financial!==CUSTOMER_FINANCIAL_RUNTIME_ROLE||!b.financialOid)return false;
- return inspectRoutineRefundSourceAclMatrix(tx,names,[CUSTOMER_FINANCIAL_RUNTIME_ROLE,
+ return inspectRoutineRefundSourceAclWithRecharge(tx,names,[CUSTOMER_FINANCIAL_RUNTIME_ROLE,
   ...(b.adminRefund&&b.admin?[b.admin]:[]),...(b.manager?[b.manager]:[])]);
 }
 export async function inspectCustomerFinancialRoutineRefundSourceAcls(tx:Query,names:{maintenance:string;app:string}):Promise<boolean> {

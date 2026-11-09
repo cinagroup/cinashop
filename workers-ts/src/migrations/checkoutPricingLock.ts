@@ -19,6 +19,42 @@ const installationErrors = new Set([
   'Pricing capability final verification failed',
 ]);
 
+import type { RoutinePaymentRuntimeTarget } from './routinePaymentRuntime';
+import { captureRechargeRefundRuntimeAddon, type RechargeRefundRuntimeAddon } from './rechargeRefundRuntimeProfile';
+
+export interface RechargeRefundPricingDeclaration {
+  readonly target: RoutinePaymentRuntimeTarget;
+  readonly addon: RechargeRefundRuntimeAddon;
+}
+/** Capture declaration data before awaits; it is never an OID or ready proof. */
+export function captureRechargeRefundPricingDeclaration(input: RechargeRefundPricingDeclaration | undefined) {
+  if (input === undefined) return undefined;
+  const plain=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v)
+    && [Object.prototype,null].includes(Object.getPrototypeOf(v));
+  if(!plain(input))throw Error('Explicit recharge pricing declaration required');
+  const d=Object.getOwnPropertyDescriptors(input);
+  if(Reflect.ownKeys(d).length!==2||!['target','addon'].every(k=>d[k]?.enumerable&&'value'in d[k]))
+    throw Error('Exact recharge pricing declaration required');
+  const t=d.target.value;if(!plain(t))throw Error('Data-only recharge pricing target required');
+  const td=Object.getOwnPropertyDescriptors(t);
+  if(Reflect.ownKeys(td).some(k=>typeof k!=='string'||!['database','maintenance','app','admin','local','caseLock'].includes(k))
+    ||Object.values(td).some(v=>!v.enumerable||!('value'in v)))throw Error('Data-only recharge pricing target required');
+  const values=['database','maintenance','app','admin'].map(k=>{const v=td[k]?.value;if(typeof v!=='string')throw Error('Recharge pricing target name missing');pricingIdentifier(v);return v;});
+  const local=td.local?.value;
+  if(!Array.isArray(local)||Object.getPrototypeOf(local)!==Array.prototype)throw Error('Bounded data-only recharge pricing local roles required');
+  const ld=Object.getOwnPropertyDescriptors(local) as unknown as PropertyDescriptorMap,length=ld.length?.value;
+  if(!Number.isInteger(length)||length<0||length>16||Reflect.ownKeys(ld).length!==length+1)
+    throw Error('Bounded data-only recharge pricing local roles required');
+  const localCopy:string[]=[];
+  for(let i=0;i<length;i++){
+    const entry=ld[String(i)];
+    if(!entry?.enumerable||!('value'in entry)||typeof entry.value!=='string')throw Error('Data-only recharge pricing local role required');
+    pricingIdentifier(entry.value);localCopy.push(entry.value);
+  }
+  const target:RoutinePaymentRuntimeTarget={database:values[0]!,maintenance:values[1]!,app:values[2]!,admin:values[3]!,local:Object.freeze(localCopy)};
+  return Object.freeze({target:Object.freeze(target),addon:captureRechargeRefundRuntimeAddon(d.addon.value!)});
+}
+
 type Query = Pick<DbClient, 'execute'>;
 type Root = Pick<DbClient, 'transaction'> & Partial<Pick<DbClient, '$client'>>;
 function requireRoot(db: Root) {
@@ -76,7 +112,8 @@ export async function installCheckoutPricingLock(db: Root, ownerRole: string | u
 /** Read-only inspection of real connection identity and all membership paths.
  * Deliberately conservative: even NOINHERIT / SET-false ancestry is included.
  * This is the two-configuration-table envelope, not a complete app audit. */
-export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'public', scope: PricingRuntimeScope = 'isolated') {
+export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'public', scope: PricingRuntimeScope = 'isolated', declaredRecharge?: RechargeRefundPricingDeclaration) {
+  const rechargeDeclaration=captureRechargeRefundPricingDeclaration(declaredRecharge);
   validatePricingRuntimeScope(scope);
   pricingIdentifier(schema);
   const state=await inspectCheckoutPricingLock(tx,schema);
@@ -162,9 +199,28 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
         &&b[actor]===actual.role&&b[`${actor}Oid`]===actual.roleOid))cityReaderOid=city.functionOid;
     }
   }
+  // Only an explicit successor declaration can admit this separately
+  // commissioned lock. Re-read its complete catalog and actual LOGIN binding;
+  // a supplied function OID, role name or ready object is never accepted.
+  let rechargeSourceOid:string|null=null;
+  if(rechargeDeclaration&&sharedScope&&schema==='public'){
+    const recharge=await(await import('./rechargeRefundRuntimeProfile')).inspectRechargeRefundRuntimeProfile(
+      tx,rechargeDeclaration.target,rechargeDeclaration.addon),b=recharge.binding;
+    if(recharge.ready&&b&&recharge.lockSourceFunctionOid){
+      const [actual]=await tx.execute<{name:string;oid:string}>(sql`SELECT r.rolname AS name,r.oid::text AS oid
+        FROM pg_catalog.pg_roles r JOIN pg_catalog.pg_stat_activity a ON a.usesysid=r.oid
+        WHERE a.pid=pg_catalog.pg_backend_pid() AND r.rolname=current_user AND current_user=session_user
+          AND pg_catalog.current_setting('role')='none' AND pg_catalog.current_setting('session_replication_role')='origin'
+          AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolinherit OR r.rolreplication OR r.rolbypassrls)
+          AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid OR roleid=r.oid)`);
+      if(actual&&(['app','admin','financial'] as const).some(role=>b[role]===actual.name&&b[`${role}Oid`]===actual.oid))
+        rechargeSourceOid=recharge.lockSourceFunctionOid;
+    }
+  }
   const reviewedOids = [...managerOids,...managerCapabilityOids,...customerOids,...(manualOid?[manualOid]:[]),
     ...supplierManualOids,...ordinaryOids,...supplierLabelOids,...(managerCaseOid?[managerCaseOid]:[]),
-    ...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[]),...(cityReaderOid?[cityReaderOid]:[])];
+    ...(messageRead?.ready&&messageRead.functionOid?[messageRead.functionOid]:[]),...(cityReaderOid?[cityReaderOid]:[]),
+    ...(rechargeSourceOid?[rechargeSourceOid]:[])];
   const [row]=await tx.execute(sql`WITH RECURSIVE identities AS (
     SELECT oid FROM pg_catalog.pg_roles WHERE rolname IN (current_user,session_user)
     UNION SELECT usesysid FROM pg_catalog.pg_stat_activity WHERE pid=pg_catalog.pg_backend_pid()
@@ -194,6 +250,7 @@ export async function auditCheckoutPricingLockRuntime(tx: Query, schema = 'publi
       AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid::text=${state.functionOid}
         AND pg_catalog.has_function_privilege(current_user,oid,'EXECUTE')) AS "requiredPrivileges"`);
   return { ready: pricingCatalogReady(state) && row?.callerSafe===true && row?.requiredPrivileges===true && row?.noUnreviewedDefinerRoutine===true
+      && (!rechargeDeclaration || rechargeSourceOid!==null)
       && (!customerScopeSelected || customerScope?.ready===true)
       && (!taxonomyScope || (productCatalog?.ready===true&&userCatalog?.ready===true)),
     catalogReady: pricingCatalogReady(state), callerSafe: row?.callerSafe===true, requiredPrivileges: row?.requiredPrivileges===true,

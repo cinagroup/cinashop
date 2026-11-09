@@ -34,7 +34,7 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
   });
   it("retains every gate, pins the measured unit job budget and preserves catalog and child limits",()=>{
     const unit=job("worker-unit"),catalog=job("worker-catalog");
-    expect(names(unit)).toEqual([...setup.slice(0,3),"Check out fixed legacy PHP input","Verify full fixed legacy PHP checkout and expose sibling input",setup[3],"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Install locked Supplier dependencies for cross-package unit tests","Install locked Kefu dependencies for cross-package unit tests","Install locked Uni dependencies for customer SFC unit tests","Run both TypeScript configurations","Begin isolated native child diagnostic capture","Run Worker unit tests",
+    expect(names(unit)).toEqual([setup[0],"Fetch fixed TypeScript source proof predecessor",...setup.slice(1,3),"Check out fixed legacy PHP input","Verify full fixed legacy PHP checkout and expose sibling input",setup[3],"Audit production dependencies","Install locked Admin dependencies for cross-package unit tests","Install locked Supplier dependencies for cross-package unit tests","Install locked Kefu dependencies for cross-package unit tests","Install locked Uni dependencies for customer SFC unit tests","Run both TypeScript configurations","Begin isolated native child diagnostic capture","Run Worker unit tests",
       "Audit native child diagnostics including incomplete failed runs",
       "Preserve unit shard diagnostics even on failure",
       "Verify exact executed unit shard coverage",
@@ -85,6 +85,9 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
     for(const name of ["Audit production dependencies", "Run both TypeScript configurations", "Audit production observability contract",
       "Audit legacy-to-PostgreSQL schema drift", "Audit legacy-to-Worker route parity"])
       expect(unit).toContain("- name: "+name+"\n        if: matrix.shard == 1\n");
+    expect(unit).toContain("- name: Fetch fixed TypeScript source proof predecessor\n        run: |\n          git fetch --no-tags --depth=1 origin 78240b7801a617ed5b1c1e444860228c066311b8\n          git cat-file -e '78240b7801a617ed5b1c1e444860228c066311b8^{commit}'\n");
+    expect(unit.match(/git fetch --no-tags --depth=1 origin /g)).toHaveLength(1);
+    expect(catalog).not.toContain("Fetch fixed TypeScript source proof predecessor");
     expect(catalog).not.toContain("--shard");
     expect(unit).toContain("environment: legacy-php-readonly");
     expect(workflow.match(/secrets\.[A-Z_]+/g)).toEqual(["secrets.LEGACY_PHP_READONLY_SSH_KEY"]);

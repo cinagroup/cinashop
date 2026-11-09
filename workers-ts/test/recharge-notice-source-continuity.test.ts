@@ -1,12 +1,13 @@
 import {createHash} from 'node:crypto';
-import {closeSync,openSync,readFileSync} from 'node:fs';
+import {closeSync,openSync,readFileSync as readNativeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {describe,expect,it} from 'vitest';
 import {membershipContractSourceContinuity as old,projectMembershipHistoricalSource as originalProject} from './helpers/membershipContractSourceContinuity';
 import {RECHARGE_SOURCE_PROOF_FILE,RECHARGE_SOURCE_PROOF_SHA,rechargeNoticeSourceContinuity as proof,
- projectRechargeNoticePredecessor,projectMembershipHistoricalSource,readRechargeNoticePredecessorFile,
- readMembershipContinuityHistoricalFile,type RechargeHistoryImage} from './helpers/rechargeNoticeSourceContinuity';
+ projectRechargeNoticePredecessor,projectMembershipHistoricalSource,type RechargeHistoryImage} from './helpers/rechargeNoticeSourceContinuity';
+import {readRechargeRefundPredecessorFile as readFileSync,readRechargeNoticePredecessorFile,
+ readMembershipContinuityHistoricalFile} from './helpers/rechargeRefundSourceContinuity';
 const root=resolve(import.meta.dirname,'../..');
 const sha=(s:string|Uint8Array)=>createHash('sha256').update(s).digest('hex');
 const image=(s:string):RechargeHistoryImage=>({bytes:Buffer.byteLength(s),sha256:sha(s),gitBlobSha1:createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex')});
@@ -61,7 +62,7 @@ describe('actual recharge successor and strict 7e41 historical source boundary',
   const assertions=(s:string)=>s.slice(s.indexOf("  it('pins the independent complete proof"));expect(assertions(actual(file))).toBe(assertions(before));
  });
  it('preserves UTF8, Buffer, URL, byte path, native descriptors and unrelated reads without a global filesystem mock',()=>{
-  const row=proof.sources[0]!,name=resolve(root,row.file),current=actual(row.file),before=projectRechargeNoticePredecessor(row.file,current);
+  const row=proof.sources[0]!,name=resolve(root,row.file),current=actual(row.file),before=projectRechargeNoticePredecessor(row.file,current),physical=readNativeFileSync(name,'utf8');
   const historical=originalProject(row.file,before);
   for(const p of [name,pathToFileURL(name),Buffer.from(name)]){
    expect(readRechargeNoticePredecessorFile(p,'utf8')).toBe(before);expect(readRechargeNoticePredecessorFile(p)).toEqual(Buffer.from(before));
@@ -69,7 +70,7 @@ describe('actual recharge successor and strict 7e41 historical source boundary',
   }
   expect(()=>readRechargeNoticePredecessorFile(name,'ascii')).toThrow('requires exact UTF8 or bytes');
   expect(()=>readMembershipContinuityHistoricalFile(name,'latin1')).toThrow('requires exact UTF8 or bytes');
-  for(const read of [readRechargeNoticePredecessorFile,readMembershipContinuityHistoricalFile]){const fd=openSync(name,'r');try{expect(read(fd,'utf8')).toBe(current);}finally{closeSync(fd);}}
+  for(const read of [readRechargeNoticePredecessorFile,readMembershipContinuityHistoricalFile]){const fd=openSync(name,'r');try{expect(read(fd,'utf8')).toBe(physical);}finally{closeSync(fd);}}
   const unrelated=resolve(root,'workers-ts/tsconfig.json');expect(readRechargeNoticePredecessorFile(unrelated)).toEqual(readFileSync(unrelated));
   expect(projectRechargeNoticePredecessor('unrelated.ts','native bytes')).toBe('native bytes');
   expect(()=>readRechargeNoticePredecessorFile(resolve(root,'.missing-recharge-continuity'))).toThrow();

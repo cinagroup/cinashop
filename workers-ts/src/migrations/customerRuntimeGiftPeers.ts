@@ -3,6 +3,7 @@ import { captureRoutineRefundActorAddons, type RoutineRefundActorAddons } from '
 import { captureFulfillmentCityConflictReadersAddon, type FulfillmentCityConflictReadersAddon } from './fulfillmentCityConflictReader';
 import { captureStoreOrderFulfillmentAssignmentsAddon, type StoreOrderFulfillmentAssignmentsAddon } from './storeOrderFulfillmentAssignment';
 import { captureManagerAssignedWholeExpressAddon, type ManagerAssignedWholeExpressAddon } from './managerAssignedFulfillment';
+import { captureRechargeRefundRuntimeAddon, type RechargeRefundRuntimeAddon } from './rechargeRefundRuntimeProfile';
 import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
@@ -29,13 +30,14 @@ export interface RuntimeGiftPeerDeclarations {
   cityConflictReaders?:FulfillmentCityConflictReadersAddon;
   fulfillmentAssignments?:StoreOrderFulfillmentAssignmentsAddon;
   managerAssignedWholeExpress?:ManagerAssignedWholeExpressAddon;
+  rechargeRefund?:RechargeRefundRuntimeAddon;
 }
 const giftTable = 'store_order_promotion_gift_coupon_reward';
 const giftSequence = giftTable + '_id_seq';
 
 export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclarations): RuntimeGiftPeerDeclarations {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress'].includes(key))
+    || Object.keys(value).some(key => !['target', 'financial', 'cashierSecondCard', 'manager','routineRefundActors','cityConflictReaders','fulfillmentAssignments','managerAssignedWholeExpress','rechargeRefund'].includes(key))
     || !value.target || ![value.financial, value.cashierSecondCard, value.manager].some(Boolean))
     throw Error('Explicit bounded gift peer declarations required');
   const t = value.target;
@@ -77,6 +79,13 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
   const receipts=receiptDescriptor?.value===undefined?undefined:captureManagerAssignedWholeExpressAddon(receiptDescriptor.value);
   if(receipts&&(!assignments||!value.financial||!cashier||value.manager!==true))
     throw Error('Complete assignment and five runtime receipt peers required');
+  const rechargeDescriptor=Object.getOwnPropertyDescriptor(value,'rechargeRefund');
+  if(('rechargeRefund' in value)&&(!rechargeDescriptor||!rechargeDescriptor.enumerable||!('value'in rechargeDescriptor)))
+    throw Error('Data-only recharge refund declaration required');
+  const recharge=rechargeDescriptor?.value===undefined?undefined:captureRechargeRefundRuntimeAddon(rechargeDescriptor.value);
+  if(recharge&&(!value.financial||value.manager!==true||!cashier
+    ||!t.local?.includes(CUSTOMER_FINANCIAL_RUNTIME_ROLE)||!t.local.includes(MANAGER_RUNTIME_ROLE)))
+    throw Error('Complete existing five profiles are required for recharge refunds');
   return { target: { database: t.database, maintenance: t.maintenance, app: t.app, admin: t.admin,
     ...(t.local ? { local: [...t.local] } : {}),
     ...(t.caseLock ? { caseLock: { owner: t.caseLock.owner, runtimeRoles: [...t.caseLock.runtimeRoles] } } : {}) },
@@ -89,7 +98,7 @@ export function captureRuntimeGiftPeerDeclarations(value: RuntimeGiftPeerDeclara
       ...(cashier.formImages ? { formImages: true as const } : {}) } } : {}),
     ...(value.manager ? { manager: true as const } : {}),...(refundActors?{routineRefundActors:refundActors}:{}),
     ...(cityReaders?{cityConflictReaders:cityReaders}:{}),...(assignments?{fulfillmentAssignments:assignments}:{}),
-    ...(receipts?{managerAssignedWholeExpress:receipts}:{}) };
+    ...(receipts?{managerAssignedWholeExpress:receipts}:{}),...(recharge?{rechargeRefund:recharge}:{}) };
 }
 
 export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execute'>,
@@ -112,7 +121,7 @@ export async function inspectReviewedRuntimeGiftPeers(db: Pick<DbClient, 'execut
   // no skip-self or unchecked OID exception is used for a profile comparison.
   if (peers.financial) {
     const proof = await inspectCustomerFinancialRuntimePrivileges(db, { requireLogin: true,
-      routine: { target, stage: 'ready' }, ...peers.financial });
+      routine: { target, stage: 'ready' }, ...peers.financial,...(peers.rechargeRefund?{rechargeRefund:peers.rechargeRefund}:{}) });
     if (!proof.ready) failures.push(...proof.failures.map(name => 'financial:' + name));
     else {
       const privileges = customerFinancialRuntimePrivilegePlan().tables[giftTable];

@@ -29,10 +29,10 @@ export async function postRoutineSubscription(authority:RoutineSubscriptionSendA
   },DEADLINE_MS);});
   const receive=async()=>{
    onPostStart();
-   response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body,redirect:'error',signal:controller.signal});
+   response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body,redirect:'manual',signal:controller.signal});
    if(stopped){cancel();return routineSubscriptionUnavailable();}
    const declared=response.headers.get('content-length');
-   if(response.redirected||!response.body||!Number.isInteger(response.status)||response.status<200||response.status>599
+   if(response.redirected||!response.body||!Number.isInteger(response.status)||response.status<200||response.status>599||response.status>=300&&response.status<400
     ||declared!==null&&(!/^\d+$/u.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>MAX_BYTES))return routineSubscriptionUnavailable();
    reader=response.body.getReader();let complete=false,size=0;const chunks:Uint8Array[]=[];
    try{

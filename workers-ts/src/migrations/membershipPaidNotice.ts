@@ -1,3 +1,4 @@
+import { RECHARGE_REFUND_NOTICE_SUBJECT_DEFINITION } from './rechargeRefundNoticeContract';
 import {RECHARGE_PAID_SUBJECT_DEFINITION} from './rechargePaidNoticeContract';
 /** Explicit membership settlement/notice commissioning on installed domain
  * subjects. No business adoption, role grants or automatic runtime DDL. */
@@ -66,7 +67,8 @@ export async function membershipPaidNoticeCommissionedTx(tx:Pick<DbClient,'execu
   const row = rows[0], generation = paidNoticeEventGeneration(row.event_definition);
   const structure = classifyRoutineVirtualShippingSubjects(row);
   if (generation && !generation.membership && resolution?.resolved === true && structure.failures.length === 0) return false;
-  if (generation?.membership && (row.subject_definition === MEMBERSHIP_PAID_SUBJECT_DEFINITION||generation.recharge&&row.subject_definition===RECHARGE_PAID_SUBJECT_DEFINITION)
+  if (generation?.membership && (generation.rechargeRefundNotice ? row.subject_definition===RECHARGE_REFUND_NOTICE_SUBJECT_DEFINITION
+    : row.subject_definition === MEMBERSHIP_PAID_SUBJECT_DEFINITION||generation.recharge&&row.subject_definition===RECHARGE_PAID_SUBJECT_DEFINITION)
     && resolution?.resolved === true && structure.ready) return true;
   throw new ServiceUnavailableException('会员付款通知数据库合同发生漂移');
 }
@@ -86,7 +88,9 @@ export async function runMembershipPaidNoticeUpgrade(db:Pick<DbClient,'$client'>
     await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
     await tx.unsafe('LOCK TABLE ONLY public.store_order_outbox,ONLY public.order_notification_delivery IN ACCESS EXCLUSIVE MODE NOWAIT');
     const rows=await tx.unsafe(ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL),g=rows.length===1?paidNoticeEventGeneration(rows[0].event_definition):null;
-    if(g?.recharge){if(!classifyRoutineVirtualShippingSubjects(rows[0]).ready)throw Error('Recharge subject successor drift');await tx.unsafe(paidNoticeAddonUpgradeSql('membership','',true,true));}
+    if(g?.recharge){if(!classifyRoutineVirtualShippingSubjects(rows[0]).ready)throw Error('Recharge subject successor drift');
+      if(g.rechargeRefundNotice)await (await import('./rechargeRefundNotice')).assertRechargeRefundNoticeActivePairUnsafeTx(tx);
+      await tx.unsafe(paidNoticeAddonUpgradeSql('membership','',true,true,g.rechargeRefundNotice===true));}
     else await tx.unsafe(MEMBERSHIP_PAID_NOTICE_SQL);
   });
 }

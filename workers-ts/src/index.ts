@@ -188,9 +188,43 @@ export default {
     const waybillJobs = new OrderWaybillJobService(container, env);
 
     const {isUserLabelSyncMessage,dispatchQueuedUserLabelSync}=await import('./services/admin/AdminUserLabelSyncQueue');
+    const {isRechargeRefundRecoveryMessage,isRechargeRefundRecoveryDispatch}=await import('./services/payment/RechargeRefundRecoveryQueue');
+    const {RechargeRefundRecoveryQueueService}=await import('./services/payment/RechargeRefundRecoveryQueueService');
+
+    const {isRechargeRefundNoticeMessage,isRechargeRefundNoticeDispatch}=await import('./services/payment/RechargeRefundNoticeQueue');
+    const {RechargeRefundNoticeQueueService}=await import('./services/payment/RechargeRefundNoticeQueueService');
 
     for (const msg of batch.messages) {
       const messageStartedAt = Date.now();
+      if(isRechargeRefundNoticeMessage(msg.body)||isRechargeRefundNoticeDispatch(msg.body)){
+        try{
+          const notices=new RechargeRefundNoticeQueueService(container,env);
+          if(isRechargeRefundNoticeDispatch(msg.body))await notices.dispatch(msg.body);
+          else{const result=await notices.process(msg.body);if(result!=='waiting'&&result!=='dead')await notificationDeliveries.dispatchPending(10,msg.body.eventKey);}
+          msg.ack();
+        }catch(error){
+          emitOperationalEvent('warn',{event:'recharge_refund_notice_deferred',component:'queue',operation:'recharge_refund_notice',outcome:'retry',errorCode:operationalErrorCode(error)});
+          msg.retry({delaySeconds:60});
+        }
+        continue;
+      }
+
+      if(isRechargeRefundRecoveryDispatch(msg.body)||isRechargeRefundRecoveryMessage(msg.body)){
+        try{
+          const recovery=new RechargeRefundRecoveryQueueService(container,env);
+          const result=isRechargeRefundRecoveryDispatch(msg.body)?await recovery.dispatch(msg.body):await recovery.process(msg.body);
+          emitOperationalEvent('info',{event:'recharge_refund_recovery_completed',component:'refund',operation:'recharge_refund_recovery',
+            outcome:'outcome'in result&&!['captured','released'].includes(result.outcome)?'unknown':'success',durationMs:Date.now()-messageStartedAt,queueAttempt:msg.attempts,
+            ...('outcome'in result?{result:result.outcome}:{resourceCount:result.enqueued})});
+          msg.ack();
+        }catch(error){
+          const delaySeconds=Math.min(60*2**Math.min(Math.max(msg.attempts-1,0),4),900);
+          emitOperationalEvent('error',{event:'recharge_refund_recovery_failed',component:'refund',operation:'recharge_refund_recovery',outcome:'retry',
+            durationMs:Date.now()-messageStartedAt,queueAttempt:msg.attempts,retryDelaySeconds:delaySeconds,errorCode:operationalErrorCode(error)});
+          msg.retry({delaySeconds});
+        }
+        continue;
+      }
       if(isUserLabelSyncMessage(msg.body)){
         try{const result=await dispatchQueuedUserLabelSync(msg.body,env);if(result.done||hasExhaustedOrderQueueRetries(msg.attempts))msg.ack();else msg.retry({delaySeconds:30});}
         catch(error){emitOperationalEvent('error',{event:'user_label_sync_dispatch_failed',component:'queue',operation:'user_label_sync',outcome:'retry',queueAttempt:msg.attempts,errorCode:operationalErrorCode(error,'user_label_sync_dispatch_failed')});if(hasExhaustedOrderQueueRetries(msg.attempts))msg.ack();else msg.retry({delaySeconds:60});}
@@ -851,7 +885,11 @@ async function handleScheduled(env: Env, scheduledAt: number, cron: string): Pro
     await env.ORDER_QUEUE.send(createProductAutoShelfRoot(scheduledAt), { contentType: 'json' });
     return;
   }
+  const {createRechargeRefundRecoveryRoot}=await import('./services/payment/RechargeRefundRecoveryQueue');
+  const {createRechargeRefundNoticeRoot}=await import('./services/payment/RechargeRefundNoticeQueue');
   await Promise.all([
+    env.ORDER_QUEUE.send(createRechargeRefundRecoveryRoot(scheduledAt),{contentType:'json'}),
+    env.ORDER_QUEUE.send(createRechargeRefundNoticeRoot(),{contentType:'json'}),
     env.ORDER_QUEUE.send({ action: 'dispatchProductVideoCleanup', scope: 'admin' }),
     env.ORDER_QUEUE.send({ action: 'dispatchProductVideoCleanup', scope: 'supplier' }),
     env.ORDER_QUEUE.send({

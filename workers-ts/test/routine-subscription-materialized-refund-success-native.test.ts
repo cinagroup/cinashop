@@ -239,7 +239,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Financial
   function provider(s: Source, lost = false) {
     for (const key of transport.values.keys()) if (key.startsWith('routine:subscription:')) transport.values.delete(key);
     network.mockImplementation(async (input, init) => {
-      const url = new URL(String(input)); expect(url.origin).toBe('https://api.weixin.qq.com'); expect(init?.redirect).toBe('error');
+      const url = new URL(String(input)); expect(url.origin).toBe('https://api.weixin.qq.com'); expect(init?.redirect).toBe('manual');
       const [idle] = await f.maintenanceDb.execute<{ n: number }>(sql`SELECT count(*)::integer AS n FROM pg_stat_activity
         WHERE usename IN(${f.appRuntime.role},${f.financialRuntime.role}) AND state='idle in transaction'`); expect(idle.n).toBe(0);
       if (url.pathname === '/cgi-bin/token') {

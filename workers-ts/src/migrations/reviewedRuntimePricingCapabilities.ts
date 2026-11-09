@@ -1,12 +1,13 @@
 import type { DbClient } from '../lib/di';
 import { sql } from 'drizzle-orm';
-import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock } from './checkoutPricingLock';
+import { auditCheckoutPricingLockRuntime, inspectCheckoutPricingLock, captureRechargeRefundPricingDeclaration, type RechargeRefundPricingDeclaration } from './checkoutPricingLock';
 import { reviewedOfflinePricingOid, validatePricingRuntimeScope, type PricingRuntimeScope } from './reviewedOfflinePricingCapability';
 
 /** Only an explicitly shared application identity with both exact installed
  * pricing protocols may exempt these two OIDs from an unrelated permission
  * envelope. Never authorize by function name or invoke either capability. */
-export async function reviewedRuntimePricingCapabilities(tx: Pick<DbClient,'execute'>, schema: string, scope: PricingRuntimeScope) {
+export async function reviewedRuntimePricingCapabilities(tx: Pick<DbClient,'execute'>, schema: string, scope: PricingRuntimeScope, recharge?: RechargeRefundPricingDeclaration) {
+  const declaration=captureRechargeRefundPricingDeclaration(recharge);
   validatePricingRuntimeScope(scope);
   if (scope !== 'shared-shop') return { checkout:null, offline:null };
   // PostgreSQL's pg_get_* display qualification depends on search_path. The
@@ -17,7 +18,7 @@ export async function reviewedRuntimePricingCapabilities(tx: Pick<DbClient,'exec
   if(typeof previous?.value!=='string')throw Error('Missing catalog inspection search path');
   await tx.execute(sql`SELECT pg_catalog.set_config('search_path','public,pg_temp',true)`);
   try {
-    if (!(await auditCheckoutPricingLockRuntime(tx,schema,scope)).ready) return { checkout:null, offline:null };
+    if (!(await auditCheckoutPricingLockRuntime(tx,schema,scope,declaration)).ready) return { checkout:null, offline:null };
     return { checkout:(await inspectCheckoutPricingLock(tx,schema)).functionOid, offline:await reviewedOfflinePricingOid(tx,schema) };
   } finally { await tx.execute(sql`SELECT pg_catalog.set_config('search_path',${previous.value},true)`); }
 }

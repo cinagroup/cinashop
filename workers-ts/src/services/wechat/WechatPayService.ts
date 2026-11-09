@@ -1,4 +1,20 @@
 /** 微信支付 API v3：下单、回调验签、原路退款和退款查询。 */
+import { createHash, randomUUID } from 'node:crypto';
+import { sql } from 'drizzle-orm';
+import type { DbClient } from '@/lib/di';
+import { assertRechargeRefundRuntimeTx,type RechargeRefundRuntimeRole } from '@/migrations/rechargeRefund';
+import { consumeRechargeRefundQuery,type PreparedRechargeRefundQuery } from '@/services/payment/RechargeRefundQueryClaim';
+import { parseRechargeRefundQueryResult,type RechargeRefundQueryAttempt,type RechargeRefundQueryProviderStatus } from '@/services/payment/RechargeRefundQueryCodec';
+import { readRechargeRefundQueryAttemptTx } from '@/services/payment/RechargeRefundQueryHistory';
+import { consumeRechargeRefundFirstRequest, parseRechargeRefundFirstRequest, rechargeRefundTransportApproval,
+  type PreparedRechargeRefundFirstRequest, type RechargeRefundFirstRequest } from '@/services/payment/RechargeRefundFirstRequest';
+import { authenticateRechargeRefundRecord, insertRechargeRefundEvidenceTx, readRechargeRefundOperationByIdTx,
+  signRechargeRefundRecord, type RechargeRefundRecord } from '@/services/payment/RechargeRefundLedger';
+import { readRechargeRoutineRefundAccountJournalTx } from '@/services/payment/RechargeRoutineRefundAccount';
+import { requireRechargeRoutineRefundPurpose } from '@/services/payment/RechargeRoutineRefundAccountCodec';
+import { captureRechargeRefundJson } from '@/services/payment/RechargeRefundJournalCodec';
+import { routineCommittedMerchantMaterials } from '@/services/payment/RoutineApprovedPaymentAccount';
+import { routineEvidenceCanonical } from '@/services/payment/RoutineProviderObservation';
 import type { Container } from "@/lib/di";
 import type { Env } from "@/env";
 import { ValidateException } from "@/utils/errors";
@@ -65,6 +81,7 @@ interface WechatPayConfig extends WechatMerchantConfig {
 }
 
 interface WechatRefundResponse {
+  appid?:string;
   mchid?:string;
   refund_id?: string;
   out_refund_no?: string;
@@ -383,6 +400,117 @@ export class WechatPayService {
     }
   }
 
+  /** Consumes the sole committed Admin request before signing. No second POST
+   * can be obtained on any failure; only a verified response can mint a result. */
+  async requestRechargeRefundFirst(admitted:PreparedRechargeRefundFirstRequest):Promise<VerifiedRechargeRefundFirstResult>{
+    const signing={APP_KEY:this.env.APP_KEY};
+    const {binding,materials,rootDb}=consumeRechargeRefundFirstRequest(this.env,admitted),p=binding.payload,q=p.request;
+    if(rootDb!==this.container.db)return rechargeFirstUnavailable();
+    const cfg:WechatPayConfig={...materials,mchId:materials.merchantId,notifyUrl:'',refundNotifyUrl:p.notifyUrl};
+    const body={out_refund_no:q.outRefundNo,reason:q.reason,notify_url:p.notifyUrl,transaction_id:q.transactionId,
+      amount:{refund:q.refundAmount,total:q.totalAmount,currency:'CNY'}};
+    let captured:RechargeFirstVerifiedResponse|undefined;
+    let result:RechargeFirstProviderResult;
+    try{
+      const response=await this.callApi<WechatRefundResponse>('POST','/v3/refund/domestic/refunds',body,cfg,true,
+        (raw,serial,httpStatus)=>{captured={responseDigest:createHash('sha256').update(raw).digest('hex'),
+          verifierKey:serial,httpStatus,observedAt:rechargeFirstNow()};},
+        ()=>{
+          const now=rechargeFirstNow();
+          if(this.env.APP_KEY!==signing.APP_KEY||now<p.issuedAt-1||now>=admitted.expiresAt)rechargeFirstUnavailable();
+          const a=p.approval;
+          // Recheck after asynchronous RSA, immediately before fetch. No new
+          // materials are substituted for the already signed original pair.
+          routineCommittedMerchantMaterials(this.env,{appId:a.appId,merchantId:a.merchantId,credentialRef:a.credentialRef,
+            credentialVersion:a.credentialVersion,credentialStamp:a.credentialStamp});
+        });
+      if(!captured)return rechargeFirstUnavailable();
+      result=rechargeFirstResponseResult(binding,response,captured.observedAt);
+    }catch(error){
+      // A signed HTTP error is an UNKNOWN observation only. It never supplies
+      // definitive rejection or releases a wallet reservation.
+      if(!(error instanceof WechatApiError)||!captured||captured.httpStatus<400)throw error;
+      result={status:'UNKNOWN',providerRefundId:'',successTime:0,
+        errorCode:/^[A-Za-z0-9._:-]{1,128}$/u.test(error.code)?error.code:''};
+    }
+    if(!captured||captured.verifierKey!==materials.platformPublicKeyId)rechargeFirstUnavailable();
+    const evidence=captureRechargeRefundJson({format:1,purpose:'recharge-refund-first-provider-result-v1',scope:p.scope,
+      operationSignature:p.operationSignature,attemptSignature:binding.attempt.signature,requestHash:binding.attempt.request_hash,
+      approval:p.approval,request:p.request,result,verification:captured});
+    const row=signRechargeRefundRecord(signing,p.scope,'recharge_refund_result',{
+      result_id:randomUUID(),operation_id:p.operationId,attempt_id:binding.attempt.attempt_id,source:'request',
+      source_id:binding.attempt.attempt_id,status:result.status,evidence,created_at:captured.observedAt,caused_by_result_id:null});
+    const token=Object.freeze({operationId:p.operationId,attemptId:String(binding.attempt.attempt_id),status:result.status,
+      [rechargeFirstVerifiedBrand]:true as const});
+    rechargeFirstVerified.set(token,{binding,signing,row,owner:this,root:this.container.db});return token;
+  }
+
+  /** Independent evidence COMMIT. Deadlines/current wallet/source/credentials
+   * do not invalidate an already authenticated external observation. */
+  async persistRechargeRefundFirstResult(token:VerifiedRechargeRefundFirstResult):Promise<RechargeRefundProviderReceipt>{
+    const retained=token&&typeof token==='object'?rechargeFirstVerified.get(token):undefined;
+    if(!retained||retained.owner!==this||retained.root!==this.container.db)return rechargeFirstUnavailable();
+    if(retained.receipt)return retained.receipt;
+    if(retained.inFlight)return retained.inFlight;
+    const running=persistRechargeFirstResult(this.container.db,retained);
+    retained.inFlight=running;
+    try{
+      const receipt=await running;retained.receipt=receipt;return receipt;
+    }finally{
+      // The verified entry is deliberately retained after every failure. The
+      // same ID/observedAt retries a failed or ambiguously acknowledged COMMIT.
+      if(retained.inFlight===running)retained.inFlight=undefined;
+    }
+  }
+
+  /** Exactly one GET handoff, consumed before RSA/fetch. No SQL is open. */
+  async queryRechargeRefund(admitted:PreparedRechargeRefundQuery):Promise<VerifiedRechargeRefundQueryResult>{
+    const signing={APP_KEY:this.env.APP_KEY};
+    const {binding,materials,rootDb,role}=consumeRechargeRefundQuery(this.container.db,this.env,admitted.role,admitted);
+    if(rootDb!==this.container.db)return rechargeFirstUnavailable();
+    const p=binding.payload,cfg:WechatPayConfig={...materials,mchId:materials.merchantId,notifyUrl:'',refundNotifyUrl:binding.firstRequest.notifyUrl};
+    let captured:RechargeFirstVerifiedResponse|undefined,result:RechargeQueryProviderResult;
+    try{
+      const response=await this.callApi<WechatRefundResponse>('GET',p.request.path,undefined,cfg,true,
+        (raw,serial,httpStatus)=>{captured={responseDigest:createHash('sha256').update(raw).digest('hex'),verifierKey:serial,httpStatus,observedAt:rechargeFirstNow()};},
+        ()=>{
+          const now=rechargeFirstNow(),a=p.approval;
+          if(this.env.APP_KEY!==signing.APP_KEY||now<p.issuedAt-1||now>=admitted.expiresAt)return rechargeFirstUnavailable();
+          routineCommittedMerchantMaterials(this.env,{appId:a.appId,merchantId:a.merchantId,credentialRef:a.credentialRef,
+            credentialVersion:a.credentialVersion,credentialStamp:a.credentialStamp});
+        });
+      if(!captured)return rechargeFirstUnavailable();result=rechargeQueryResponseResult(binding,response,captured.observedAt);
+    }catch(error){
+      if(!(error instanceof WechatApiError)||!captured||captured.httpStatus<400||captured.httpStatus>599)throw error;
+      const notFound=captured.httpStatus===404&&error.code==='RESOURCE_NOT_EXISTS';
+      result={status:notFound?'NOT_FOUND':'UNKNOWN',providerRefundId:'',successTime:0,
+        errorCode:/^[A-Za-z0-9._:-]{1,128}$/u.test(error.code)?error.code:''};
+    }
+    if(!captured||captured.verifierKey!==materials.platformPublicKeyId)return rechargeFirstUnavailable();
+    const evidence=captureRechargeRefundJson({format:1,purpose:'recharge-refund-query-provider-result-v1',scope:p.scope,
+      operationSignature:p.operationSignature,firstAttemptId:p.firstAttemptId,firstAttemptSignature:p.firstAttemptSignature,
+      firstRequestHash:p.firstRequestHash,queryAttemptSignature:binding.attempt.signature,requestHash:binding.attempt.request_hash,
+      approval:p.approval,original:p.original,request:p.request,result,verification:captured});
+    const row=signRechargeRefundRecord(signing,p.scope,'recharge_refund_result',{result_id:randomUUID(),operation_id:p.operationId,
+      attempt_id:binding.attempt.attempt_id,source:'query',source_id:binding.attempt.attempt_id,status:result.status,evidence,
+      created_at:captured.observedAt,caused_by_result_id:null});
+    const parsed=parseRechargeRefundQueryResult(signing,p.scope,binding.operation,binding.firstAttempt,binding.firstApproval,
+      binding.attempt,binding.approval,row);
+    const token=Object.freeze({operationId:p.operationId,attemptId:String(binding.attempt.attempt_id),status:parsed.observation.status,
+      [rechargeQueryVerifiedBrand]:true as const});
+    rechargeQueryVerified.set(token,{binding,signing,row:parsed.record,owner:this,root:this.container.db,role});return token;
+  }
+
+  /** Retain verified truth independently of mutable state, actor, lease or live credentials. */
+  async persistRechargeRefundQueryResult(token:VerifiedRechargeRefundQueryResult):Promise<RechargeRefundQueryProviderReceipt>{
+    const retained=token&&typeof token==='object'?rechargeQueryVerified.get(token):undefined;
+    if(!retained||retained.owner!==this||retained.root!==this.container.db)return rechargeFirstUnavailable();
+    if(retained.receipt)return retained.receipt;if(retained.inFlight)return retained.inFlight;
+    const running=persistRechargeQueryResult(this.container.db,retained);retained.inFlight=running;
+    try{const receipt=await running;retained.receipt=receipt;return receipt;}
+    finally{if(retained.inFlight===running)retained.inFlight=undefined;}
+  }
+
   /** Historical Routine uses one authenticated first dispatch, never current
    * merchant configuration or a trial across the archive. SQL closes before I/O. */
   async requestRoutineRefund(dispatchId:string,request:RefundProviderRequest):Promise<RefundProviderResult>{
@@ -674,6 +802,7 @@ export class WechatPayService {
     cfg: WechatMerchantConfig,
     verifyErrorResponse = false,
     captureVerified?: (body: string, serial: string,status:number) => void,
+    beforeFetch?: () => void,
   ): Promise<T> {
     const body = bodyValue ? JSON.stringify(bodyValue) : "";
     const authorization = await buildV3Authorization(
@@ -691,6 +820,7 @@ export class WechatPayService {
     if (bodyValue) headers["Content-Type"] = "application/json";
     if (cfg.platformPublicKeyId) headers["Wechatpay-Serial"] = cfg.platformPublicKeyId;
 
+    beforeFetch?.();
     let response: Response;
     try {
       response = await fetch(`${BASE_URL}${path}`, {
@@ -907,4 +1037,177 @@ function assertCallbackUrl(value: string, label: string): void {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Private recharge-only transport attestation. No constructor/capture helper
+ * is exported; only the real verified first-POST path can populate this map. */
+const rechargeFirstVerifiedBrand:unique symbol=Symbol('recharge-refund-verified-first-response');
+export interface VerifiedRechargeRefundFirstResult{
+  readonly operationId:string;readonly attemptId:string;
+  readonly status:'SUCCESS'|'PROCESSING'|'CLOSED'|'ABNORMAL'|'UNKNOWN';
+  readonly [rechargeFirstVerifiedBrand]:true;
+}
+export interface RechargeRefundProviderReceipt{
+  readonly operationId:string;readonly attemptId:string;readonly resultId:string;
+  readonly status:VerifiedRechargeRefundFirstResult['status'];readonly signature:string;readonly replayed:boolean;
+}
+interface RechargeFirstVerifiedResponse{responseDigest:string;verifierKey:string;httpStatus:number;observedAt:number}
+interface RechargeFirstProviderResult{
+  status:VerifiedRechargeRefundFirstResult['status'];providerRefundId:string;successTime:number;errorCode:string;
+}
+interface RechargeFirstRetained{
+  binding:RechargeRefundFirstRequest;signing:Pick<Env,'APP_KEY'>;row:RechargeRefundRecord;
+  owner:WechatPayService;root:DbClient;
+  inFlight?:Promise<RechargeRefundProviderReceipt>;receipt?:RechargeRefundProviderReceipt;
+}
+const rechargeFirstVerified=new WeakMap<object,RechargeFirstRetained>();
+function rechargeFirstUnavailable():never{throw new ValidateException('充值退款渠道证据暂不可核对，请保留原操作并查询');}
+function rechargeFirstNow(){
+  const now=Math.floor(Date.now()/1000);
+  if(!Number.isSafeInteger(now)||now<1||now>2147483647)return rechargeFirstUnavailable();return now;
+}
+function rechargeFirstSame(a:unknown,b:unknown){return routineEvidenceCanonical(a)===routineEvidenceCanonical(b);}
+function rechargeFirstResponseResult(binding:RechargeRefundFirstRequest,response:WechatRefundResponse,observedAt:number):RechargeFirstProviderResult{
+  const p=binding.payload,q=p.request,status=response.status;
+  if(response.out_trade_no!==q.outTradeNo||response.transaction_id!==q.transactionId||response.out_refund_no!==q.outRefundNo
+    ||response.amount?.refund!==q.refundAmount||response.amount.total!==q.totalAmount||response.amount.currency!=='CNY'
+    ||response.mchid!==undefined&&response.mchid!==p.approval.merchantId
+    ||response.appid!==undefined&&response.appid!==p.approval.appId
+    ||typeof response.refund_id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/u.test(response.refund_id)
+    ||!['SUCCESS','PROCESSING','CLOSED','ABNORMAL'].includes(status??''))return rechargeFirstUnavailable();
+  let successTime=0;
+  if(status==='SUCCESS'){
+    if(typeof response.success_time!=='string'
+      ||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/u.test(response.success_time))return rechargeFirstUnavailable();
+    successTime=Math.floor(Date.parse(response.success_time)/1000);
+    if(!Number.isSafeInteger(successTime)||successTime<1||successTime>2147483647
+      ||successTime<p.issuedAt-300||successTime>observedAt+300)return rechargeFirstUnavailable();
+  }
+  return{status:status as RechargeFirstProviderResult['status'],providerRefundId:response.refund_id,successTime,errorCode:''};
+}
+async function persistRechargeFirstResult(root:DbClient,retained:RechargeFirstRetained):Promise<RechargeRefundProviderReceipt>{
+  const client=Object.getOwnPropertyDescriptor(root,'$client');
+  if(!client||!('value'in client)||!client.value||typeof client.value.begin!=='function')return rechargeFirstUnavailable();
+  const {binding,signing,row}=retained,p=binding.payload;
+  return root.transaction(async raw=>{
+    const tx=raw as unknown as DbClient;
+    await tx.execute(sql`SET LOCAL search_path TO public,pg_temp`);
+    await tx.execute(sql`SELECT
+      pg_catalog.set_config('statement_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000),5000)::text||'ms',true),
+      pg_catalog.set_config('lock_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000),1000)::text||'ms',true),
+      pg_catalog.set_config('idle_in_transaction_session_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000),5000)::text||'ms',true)`);
+    const scope=await assertRechargeRefundRuntimeTx(tx,'admin','write');
+    if(!rechargeFirstSame(scope,p.scope))return rechargeFirstUnavailable();
+    // This lock serializes evidence persistence, not provider sending. A hash
+    // collision serializes unrelated attempts; database uniqueness still wins.
+    const digest=createHash('sha256').update(String(binding.attempt.attempt_id)).digest('hex');
+    await tx.execute(sql`SELECT pg_catalog.pg_advisory_xact_lock(731733,${Number.parseInt(digest.slice(0,8),16)|0}::integer)`);
+    const operation=await readRechargeRefundOperationByIdTx(tx,signing,'admin',p.operationId,'write');
+    const attempts=await tx.execute(sql`SELECT * FROM public.recharge_refund_attempt
+      WHERE operation_id=${p.operationId}::uuid AND attempt_id=${binding.attempt.attempt_id}::uuid LIMIT 2`);
+    if(attempts.length!==1)return rechargeFirstUnavailable();
+    const parsed=parseRechargeRefundFirstRequest(signing,scope,operation,attempts[0]);
+    if(!rechargeFirstSame(parsed,binding))return rechargeFirstUnavailable();
+    const historical=await readRechargeRoutineRefundAccountJournalTx(tx,signing,p.approval.recordId,'admin','write');
+    // Evaluate the historical purpose at the actual request's issuedAt; never
+    // substitute latest policy, current credentials or a live original actor.
+    requireRechargeRoutineRefundPurpose(historical,'refund_request',p.issuedAt);
+    if(!rechargeFirstSame(rechargeRefundTransportApproval(historical),p.approval))return rechargeFirstUnavailable();
+    const saved=await tx.execute(sql`SELECT * FROM public.recharge_refund_result
+      WHERE (source='request' AND source_id=${binding.attempt.attempt_id})
+        OR attempt_id=${binding.attempt.attempt_id}::uuid OR result_id=${row.result_id}::uuid LIMIT 3`);
+    let result:RechargeRefundRecord;
+    if(saved.length){
+      if(saved.length!==1)return rechargeFirstUnavailable();
+      result=authenticateRechargeRefundRecord(signing,scope,'recharge_refund_result',saved[0]);
+      if(!rechargeFirstSame(result,row))return rechargeFirstUnavailable();
+    }else{
+      const {signature:_,...unsigned}=row;
+      result=await insertRechargeRefundEvidenceTx(tx,signing,'admin','recharge_refund_result',unsigned);
+      if(!rechargeFirstSame(result,row))return rechargeFirstUnavailable();
+    }
+    const [deadline]=await tx.execute<{ready:boolean}>(sql`SELECT
+      pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '5 seconds' AS ready`);
+    if(deadline?.ready!==true)return rechargeFirstUnavailable();
+    return Object.freeze({operationId:p.operationId,attemptId:String(binding.attempt.attempt_id),resultId:String(result.result_id),
+      status:result.status as VerifiedRechargeRefundFirstResult['status'],signature:String(result.signature),replayed:saved.length===1});
+  },{isolationLevel:'read committed',accessMode:'read write'});
+}
+
+/** Query-only private verifier entries. No caller rows/JSON can mint these. */
+const rechargeQueryVerifiedBrand:unique symbol=Symbol('recharge-refund-verified-query-response');
+export interface VerifiedRechargeRefundQueryResult{
+  readonly operationId:string;readonly attemptId:string;readonly status:RechargeRefundQueryProviderStatus;
+  readonly [rechargeQueryVerifiedBrand]:true;
+}
+export interface RechargeRefundQueryProviderReceipt{
+  readonly operationId:string;readonly attemptId:string;readonly resultId:string;readonly status:RechargeRefundQueryProviderStatus;
+  readonly signature:string;readonly replayed:boolean;
+}
+interface RechargeQueryProviderResult{
+  status:RechargeRefundQueryProviderStatus;providerRefundId:string;successTime:number;errorCode:string;
+}
+interface RechargeQueryRetained{
+  binding:RechargeRefundQueryAttempt;signing:Pick<Env,'APP_KEY'>;row:RechargeRefundRecord;
+  owner:WechatPayService;root:DbClient;role:RechargeRefundRuntimeRole;
+  inFlight?:Promise<RechargeRefundQueryProviderReceipt>;receipt?:RechargeRefundQueryProviderReceipt;
+}
+const rechargeQueryVerified=new WeakMap<object,RechargeQueryRetained>();
+function rechargeQueryResponseResult(binding:RechargeRefundQueryAttempt,response:WechatRefundResponse,observedAt:number):RechargeQueryProviderResult{
+  const p=binding.payload,q=p.original,status=response.status;
+  if(response.out_trade_no!==q.outTradeNo||response.transaction_id!==q.transactionId||response.out_refund_no!==q.outRefundNo
+    ||response.amount?.refund!==q.refundAmount||response.amount.total!==q.totalAmount||response.amount.currency!=='CNY'
+    ||response.mchid!==undefined&&response.mchid!==p.approval.merchantId
+    ||response.appid!==undefined&&response.appid!==p.approval.appId
+    ||typeof response.refund_id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/u.test(response.refund_id)
+    ||!['SUCCESS','PROCESSING','CLOSED','ABNORMAL'].includes(status??''))return rechargeFirstUnavailable();
+  let successTime=0;
+  if(status==='SUCCESS'){
+    if(typeof response.success_time!=='string'
+      ||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/u.test(response.success_time))return rechargeFirstUnavailable();
+    successTime=Math.floor(Date.parse(response.success_time)/1000);
+    if(!Number.isSafeInteger(successTime)||successTime<1||successTime>2147483647
+      ||successTime<p.firstIssuedAt-300||successTime>observedAt+300)return rechargeFirstUnavailable();
+  }
+  return{status:status as RechargeRefundQueryProviderStatus,providerRefundId:response.refund_id,successTime,errorCode:''};
+}
+async function persistRechargeQueryResult(root:DbClient,retained:RechargeQueryRetained):Promise<RechargeRefundQueryProviderReceipt>{
+  const client=Object.getOwnPropertyDescriptor(root,'$client');
+  if(!client||!('value'in client)||!client.value||typeof client.value.begin!=='function')return rechargeFirstUnavailable();
+  const {binding,signing,row,role}=retained,p=binding.payload;
+  return root.transaction(async raw=>{
+    const tx=raw as unknown as DbClient;await tx.execute(sql`SET LOCAL search_path TO public,pg_temp`);
+    await tx.execute(sql`SELECT
+      pg_catalog.set_config('statement_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='statement_timeout'),0),5000),5000)::text||'ms',true),
+      pg_catalog.set_config('lock_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='lock_timeout'),0),1000),1000)::text||'ms',true),
+      pg_catalog.set_config('idle_in_transaction_session_timeout',LEAST(COALESCE(NULLIF((SELECT setting::bigint FROM pg_catalog.pg_settings WHERE name='idle_in_transaction_session_timeout'),0),5000),5000)::text||'ms',true)`);
+    const scope=await assertRechargeRefundRuntimeTx(tx,role,'write');
+    if(!rechargeFirstSame(scope,p.scope))return rechargeFirstUnavailable();
+    // One per-attempt persistence fence, shared namespace with first results.
+    // No operation/state lock, source/hold/economic/current-policy dependency.
+    const digest=createHash('sha256').update(String(binding.attempt.attempt_id)).digest('hex');
+    await tx.execute(sql`SELECT pg_catalog.pg_advisory_xact_lock(731733,${Number.parseInt(digest.slice(0,8),16)|0}::integer)`);
+    const point=await readRechargeRefundQueryAttemptTx(tx,signing,role,p.operationId,binding.attempt.attempt_id,'write');
+    if(!rechargeFirstSame(point,binding))return rechargeFirstUnavailable();
+    const saved=await tx.execute(sql`SELECT * FROM public.recharge_refund_result
+      WHERE (source='query' AND source_id=${binding.attempt.attempt_id})
+        OR attempt_id=${binding.attempt.attempt_id}::uuid OR result_id=${row.result_id}::uuid LIMIT 3`);
+    let result:RechargeRefundRecord;
+    if(saved.length){
+      if(saved.length!==1)return rechargeFirstUnavailable();
+      result=authenticateRechargeRefundRecord(signing,point.scope,'recharge_refund_result',saved[0]);
+      if(!rechargeFirstSame(result,row))return rechargeFirstUnavailable();
+    }else{
+      const {signature:_,...unsigned}=row;
+      result=await insertRechargeRefundEvidenceTx(tx,signing,role,'recharge_refund_result',unsigned);
+      if(!rechargeFirstSame(result,row))return rechargeFirstUnavailable();
+    }
+    const parsed=parseRechargeRefundQueryResult(signing,point.scope,point.operation,point.firstAttempt,point.firstApproval,
+      point.attempt,point.approval,result);
+    const [deadline]=await tx.execute<{ready:boolean}>(sql`SELECT pg_catalog.clock_timestamp()<=pg_catalog.transaction_timestamp()+interval '5 seconds'
+      AND pg_catalog.current_setting('role')='none' AS ready`);
+    if(deadline?.ready!==true)return rechargeFirstUnavailable();
+    return Object.freeze({operationId:p.operationId,attemptId:String(point.attempt.attempt_id),resultId:String(parsed.record.result_id),
+      status:parsed.observation.status,signature:String(parsed.record.signature),replayed:saved.length===1});
+  },{isolationLevel:'read committed',accessMode:'read write'});
 }

@@ -121,7 +121,7 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(21);
+    expect(messages).toHaveLength(22);
     expect(messages.filter((message) => message.action === "runScheduledMaintenance"))
       .toHaveLength(12);
     expect(messages.filter(message => message.action === 'runScheduledMaintenance').map(message => message.job).sort())
@@ -134,6 +134,7 @@ describe("Worker runtime bindings", () => {
     expect(messages.map((message) => message.action).sort()).toEqual([
       "dispatchPaymentCallbackOutbox",
       "dispatchPaymentReconciliation",
+      "dispatchRechargeRefundRecovery",
       "dispatchMerchantShipmentCallbackOutbox",
       "dispatchCityDeliveryCallbacks",
       "dispatchWechatCallbackOutbox",
@@ -169,7 +170,7 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(22);
+    expect(messages).toHaveLength(23);
     expect(messages.filter((message) =>
       message.action === "runScheduledMaintenance" && message.job === "sign_remind_time"
     )).toHaveLength(1);

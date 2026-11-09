@@ -1,3 +1,4 @@
+import { RECHARGE_REFUND_NOTICE_SUBJECT_DEFINITION } from './rechargeRefundNoticeContract';
 /** Explicit recharge settlement/notice commissioning on installed domain
  * subjects. No business adoption, role grants or automatic runtime DDL. */
 import { sql } from 'drizzle-orm';
@@ -65,7 +66,7 @@ export async function rechargePaidNoticeCommissionedTx(tx:Pick<DbClient,'execute
   const row = rows[0], generation = paidNoticeEventGeneration(row.event_definition);
   const structure = classifyRoutineVirtualShippingSubjects(row);
   if (generation && !generation.recharge && resolution?.resolved === true && structure.failures.length === 0) return false;
-  if (generation?.recharge && row.subject_definition === RECHARGE_PAID_SUBJECT_DEFINITION
+  if (generation?.recharge && (generation.rechargeRefundNotice ? row.subject_definition === RECHARGE_REFUND_NOTICE_SUBJECT_DEFINITION : row.subject_definition === RECHARGE_PAID_SUBJECT_DEFINITION)
     && resolution?.resolved === true && structure.ready) return true;
   throw new ServiceUnavailableException('充值付款通知数据库合同发生漂移');
 }
@@ -81,5 +82,13 @@ export async function prepareRechargePaidNoticeTx(tx:Pick<DbClient,'execute'>):P
 }
 export async function runRechargePaidNoticeUpgrade(db:Pick<DbClient,'$client'>):Promise<void> {
   if (!db.$client) throw Error('Recharge notice upgrade requires a root database');
-  await db.$client.begin('isolation level read committed',async tx=>{await tx.unsafe(RECHARGE_PAID_NOTICE_SQL);});
+  await db.$client.begin('isolation level read committed',async tx=>{
+    await tx.unsafe(NOTICE_MAINTENANCE_BUDGET_SQL);
+    const rows=await tx.unsafe(ROUTINE_VIRTUAL_SHIPPING_STRUCTURE_SQL);
+    const g=rows.length===1?paidNoticeEventGeneration(rows[0].event_definition):null;
+    if(g?.rechargeRefundNotice){
+      await (await import('./rechargeRefundNotice')).assertRechargeRefundNoticeActivePairUnsafeTx(tx);
+      await tx.unsafe(paidNoticeAddonUpgradeSql('recharge','',true,true,true));
+    }else await tx.unsafe(RECHARGE_PAID_NOTICE_SQL);
+  });
 }

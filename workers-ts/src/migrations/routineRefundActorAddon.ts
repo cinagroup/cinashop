@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { DbClient } from '../lib/di';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
+import { readRechargeRefundSourceReaderPrincipals } from './rechargeRefundSourceReaderAddon';
 
 type Query=Pick<DbClient,'execute'>;
 export type RoutineRefundRuntimeRole='app'|'financial'|'admin'|'manager';
@@ -57,17 +58,37 @@ export async function inspectRoutineRefundSourceAclMatrix(tx:Query,names:{mainte
  return true;
 }
 
-/** Used only when an old source has extra readers. The complete refund catalog
- * proves the named actor identities and all three refund ACLs before the old
- * source accepts those exact SELECT deltas. No arbitrary grantee is adopted. */
+/** Finite ACL successor for already proved goods actors. The exact predecessor
+ * wins before consulting recharge commissioning. The only added reader set is
+ * independently bound recharge Admin/Financial; this wrapper never calls the
+ * goods or historical source inspectors, so a goods catalog may safely use it. */
+export async function inspectRoutineRefundSourceAclWithRecharge(tx:Query,names:{maintenance:string;app:string},readers:readonly string[]):Promise<boolean> {
+ try{[names.maintenance,names.app,...readers].forEach(pricingIdentifier);}catch{return false;}
+ if(new Set([names.maintenance,names.app,...readers]).size!==2+readers.length)return false;
+ if(await inspectRoutineRefundSourceAclMatrix(tx,names,readers))return true;
+ const recharge=await readRechargeRefundSourceReaderPrincipals(tx,names);
+ if(!recharge)return false;
+ const joint=[...new Set([...readers,...recharge.map(reader=>reader.name)])].sort();
+ return inspectRoutineRefundSourceAclMatrix(tx,names,joint);
+}
+
+/** Used only when an old source has extra readers. A complete recharge-only
+ * matrix is independent of goods installation/commissioning. Otherwise the
+ * full goods catalog proves its own actors before accepting the exact goods
+ * predecessor or union. Unknown or partially granted readers are not adopted. */
 export async function readRoutineRefundSourceReaders(tx:Query,names:{maintenance:string;app:string}):Promise<string[]|null> {
+ const recharge=await readRechargeRefundSourceReaderPrincipals(tx,names);
+ const rechargeReaders=recharge?.map(reader=>reader.name).sort();
+ if(rechargeReaders&&await inspectRoutineRefundSourceAclMatrix(tx,names,rechargeReaders))return rechargeReaders;
  const {inspectRoutineRefundCatalog}=await import('./routineRefund');
  const c=await inspectRoutineRefundCatalog(tx),b=c.binding;
  if(!c.ready||b?.maintenance!==names.maintenance||b.app!==names.app)return null;
  const readers=[...(b.financial===CUSTOMER_FINANCIAL_RUNTIME_ROLE?[b.financial]:[]),
   ...(b.adminRefund&&b.admin?[b.admin]:[]),...(b.manager?[b.manager]:[])];
- if(!readers.length||!await inspectRoutineRefundSourceAclMatrix(tx,names,readers))return null;
- return readers;
+ if(readers.length&&await inspectRoutineRefundSourceAclMatrix(tx,names,readers))return readers;
+ if(!rechargeReaders)return null;
+ const joint=[...new Set([...readers,...rechargeReaders])].sort();
+ return await inspectRoutineRefundSourceAclMatrix(tx,names,joint)?joint:null;
 }
 
 export async function inspectRoutineRefundActorAddon(tx:Query,names:{maintenance:string;app:string;admin:string},kind:'admin'|'manager') {

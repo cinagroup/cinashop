@@ -225,7 +225,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual Queue ori
   }
   function provider(code: number, hooks: { token?: () => Promise<void>; post?: () => Promise<void>; lost?: boolean } = {}) {
     network.mockImplementation(async (input, init) => {
-      const url = new URL(String(input)); expect(url.origin).toBe('https://api.weixin.qq.com'); expect(init?.redirect).toBe('error');
+      const url = new URL(String(input)); expect(url.origin).toBe('https://api.weixin.qq.com'); expect(init?.redirect).toBe('manual');
       const [idle] = await f.maintenanceDb.execute<{ n: number }>(sql`SELECT count(*)::integer AS n FROM pg_catalog.pg_stat_activity WHERE usename=${f.appRuntime.role} AND state='idle in transaction'`);
       expect(idle.n).toBe(0);
       if (url.pathname === '/cgi-bin/token') {

@@ -12,6 +12,9 @@ import {
 } from "@/models/schema";
 import { isSmsVerificationMessage } from "@/services/message/SmsVerificationService";
 import { isAdminProfileSmsMessage } from '@/services/admin/AdminProfileSmsService';
+import { isRechargeRefundRecoveryMessage,isRechargeRefundRecoveryDispatch,
+ captureRechargeRefundRecoveryMessage,captureRechargeRefundRecoveryDispatch } from '@/services/payment/RechargeRefundRecoveryQueue';
+import {isRechargeRefundNoticeMessage,isRechargeRefundNoticeDispatch,captureRechargeRefundNoticeMessage,captureRechargeRefundNoticeDispatch}from '@/services/payment/RechargeRefundNoticeQueue';
 import { isSignReminderMessage } from "@/services/message/SignReminderService";
 import {
   isOrderNotificationOutboxMessage,
@@ -197,6 +200,14 @@ function messageAction(value: unknown): string {
 
 /** Classify before persistence so sensitive or unsupported messages can never be replayed. */
 export function prepareOrderQueueDeadLetter(value: unknown): PreparedOrderQueueDeadLetter {
+  if(isRechargeRefundNoticeMessage(value)||isRechargeRefundNoticeDispatch(value)){
+    const body=isRechargeRefundNoticeMessage(value)?captureRechargeRefundNoticeMessage(value):captureRechargeRefundNoticeDispatch(value);
+    return{messageType:body.action,replayPolicy:'ALLOW',body:sanitizeUnknownQueueBody(body),replayMessage:body};
+  }
+  if(isRechargeRefundRecoveryMessage(value)||isRechargeRefundRecoveryDispatch(value)){
+    const body=isRechargeRefundRecoveryMessage(value)?captureRechargeRefundRecoveryMessage(value):captureRechargeRefundRecoveryDispatch(value);
+    return{messageType:body.action,replayPolicy:'ALLOW',body:sanitizeUnknownQueueBody(body),replayMessage:body};
+  }
   if (isPresaleDeliveryOutboxMessage(value)) {
     const body = { action: value.action, outboxId: value.outboxId, eventKey: value.eventKey };
     return { messageType: value.action, replayPolicy: 'ALLOW', body, replayMessage: body };

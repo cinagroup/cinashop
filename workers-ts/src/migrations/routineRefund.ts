@@ -4,7 +4,7 @@ import { ServiceUnavailableException } from '@/utils/errors';
 import { pricingIdentifier } from './checkoutPricingLockCatalog';
 import { CUSTOMER_FINANCIAL_RUNTIME_ROLE } from './customerFinancialRuntimePlan';
 import { inspectRoutineRefundActorPrincipals } from './routineRefundActorPrincipals';
-import { inspectRoutineRefundSourceAclMatrix, routineRefundSourceAppCandidate, type RoutineRefundRuntimeRole } from './routineRefundActorAddon';
+import { inspectRoutineRefundSourceAclWithRecharge, routineRefundSourceAppCandidate, type RoutineRefundRuntimeRole } from './routineRefundActorAddon';
 
 type Query = Pick<DbClient,'execute'>;
 export interface RoutineRefundNames { maintenance:string; app:string; admin:string }
@@ -291,7 +291,7 @@ export async function inspectRoutineRefundCatalog(tx:Query,declaredNames?:Routin
       FROM pg_catalog.pg_roles r WHERE rolname IN(${app},${financial},${admin},${manager})) AS roles,
     (SELECT oid::text FROM pg_catalog.pg_roles WHERE rolname=${admin}) AS admin_oid`);
   check('types_defaults',namespace?.safe===true);check('runtime_roles',namespace?.roles===true);
-  if(financial||actorAdmin||manager)check('joint_sources',!!app&&await inspectRoutineRefundSourceAclMatrix(tx,
+  if(financial||actorAdmin||manager)check('joint_sources',!!app&&await inspectRoutineRefundSourceAclWithRecharge(tx,
    {maintenance:binding.maintenance,app:app!},[...(financial?[financial]:[]),...(actorAdmin?[actorAdmin]:[]),...(manager?[manager]:[])]));
   const unique=[...new Set(failures)].sort();
   const{actorAdmin:_,actorAdminOid:__,...publicBinding}=binding;
@@ -332,7 +332,7 @@ async function requireRuntime(tx:Query,allowAbsent:boolean,gate:boolean,role?:Ro
    ||role==='admin'&&!isAdmin||role==='manager'&&!isManager||!isApp&&!isFinancial&&!isAdmin&&!isManager)throw Error();
   // Financial's source reads are commissioned as one complete explicit addon.
   if(b.financial||b.adminRefund||b.manager){
-   if(!await inspectRoutineRefundSourceAclMatrix(tx,{maintenance:b.maintenance,app:b.app},
+   if(!await inspectRoutineRefundSourceAclWithRecharge(tx,{maintenance:b.maintenance,app:b.app},
     [...(b.financial?[b.financial]:[]),...(b.adminRefund&&b.admin?[b.admin]:[]),...(b.manager?[b.manager]:[])]))throw Error();
    const {inspectRoutineOriginalPaymentEvidenceCatalog}=await import('./routineOriginalPaymentEvidence');
    const {inspectRoutinePaymentAccountPolicyCatalog}=await import('./routinePaymentAccountPolicy');

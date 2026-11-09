@@ -101,7 +101,7 @@ export async function stageRoutineSubscriptionRechargeNoticeTx(tx: DbClient, env
       }
       const source = await prepareRoutineSubscriptionNoticeAuthorTx(nested, captured, { outboxId: event.id, eventKey: event.eventKey });
       assertRoutineSubscriptionNoticeAuthorTx(nested, source);
-      if (!('subjectDomain' in source.facts) || source.facts.subjectDomain !== 'recharge') return unavailable();
+      if (!('subjectDomain' in source.facts) || source.facts.subjectDomain !== 'recharge' || !('settlementNonce' in source.facts)) return unavailable();
       const payload: WechatTemplateNotificationPayload = { kind: 'wechat_routine', routineAppId: source.facts.appId,
         data: Object.fromEntries(Object.entries(source.request.data).map(([key, value]) => [key, value.value])), url: source.request.page };
       const inserted = await createRechargePaidDeliveryTx(nested, { event, body, channel: 'wechat_routine', target: source.request.touser,

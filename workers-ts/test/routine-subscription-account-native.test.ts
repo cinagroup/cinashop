@@ -206,7 +206,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine subscrip
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(String(input)); expect(url.origin + url.pathname).toBe('https://api.weixin.qq.com/cgi-bin/token');
       expect([...url.searchParams]).toEqual([['grant_type','client_credential'],['appid',APP],['secret',SECRET]]);
-      expect(init).toMatchObject({ method: 'GET', redirect: 'error' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();
+      expect(init).toMatchObject({ method: 'GET', redirect: 'manual' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();
     });
     try {
       for (const value of ['wx_current_b','']) {

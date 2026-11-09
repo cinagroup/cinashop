@@ -1,3 +1,4 @@
+import type { signRechargeRefundSuccessNoticeIntent } from '@/services/payment/RechargeRefundLocalCaptureCodec';
 import type {RechargePaidNoticeBusiness} from '@/services/order/RechargePaidNoticeCodec';
 import type {RoutineSubscriptionRechargeRequest,RoutineSubscriptionRechargeUnavailable} from '@/services/wechat/RoutineSubscriptionRechargeRequest';
 /**
@@ -130,6 +131,7 @@ export interface WithdrawalApplicationOutboxPayload {
 }
 
 export type OrderOutboxPayload =
+  | ReturnType<typeof signRechargeRefundSuccessNoticeIntent>
   | (RechargePaidNoticeBusiness & {routineSubscriptionRequest?:RoutineSubscriptionRechargeRequest|RoutineSubscriptionRechargeUnavailable})
   | {scope:{database:string;databaseOid:string;maintenance:string;maintenanceOid:string};business:RechargePaidNoticeBusiness;bill:Record<string,unknown>;provider:Record<string,unknown>;signature:string}
   | (MembershipPaidNoticeBusiness & { routineSubscriptionRequest?: RoutineSubscriptionMembershipRequest | RoutineSubscriptionMembershipUnavailable })

@@ -1,3 +1,5 @@
+import {readRoutineSubscriptionRechargeRefundNoticeSourceTx}from './RoutineSubscriptionRechargeRefundSource';
+import type {RoutineSubscriptionRechargeRefundFacts}from './RoutineSubscriptionRechargeRefundEvidenceCodec';
 import {readRoutineSubscriptionRechargeNoticeSourceTx} from './RoutineSubscriptionRechargeSource';
 import type {RoutineSubscriptionRechargeNoticeFacts} from './RoutineSubscriptionRechargeEvidenceCodec';
 import { readRoutineSubscriptionMembershipNoticeSourceTx } from './RoutineSubscriptionMembershipSource';
@@ -25,7 +27,7 @@ import { parseRoutineSubscriptionRefundSuccessRequest, assertRoutineSubscription
 import { parseRoutineSubscriptionMaterializedRefundSuccessRequest, assertRoutineSubscriptionMaterializedRefundSuccessDecision } from './RoutineSubscriptionMaterializedRefundSuccessRequest';
 import { readRoutineMaterializedRefundSuccessSourceTx, type MaterializedRefundSuccessPublicRefund } from './RoutineSubscriptionMaterializedRefundSource';
 import { parseRoutineSubscriptionPinkRequest, readRoutineSubscriptionPinkTargetTx } from './RoutineSubscriptionPinkRequest';
-import { routineSubscriptionNoticeKey, routineSubscriptionPaidKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
+import { routineSubscriptionNoticeKey, routineSubscriptionRechargeRefundKey, routineSubscriptionPaidKey, routineSubscriptionRechargeKey, routineSubscriptionMembershipKey } from './RoutineSubscriptionNoticeKinds';
 import { parseRoutineSubscriptionNoticeIntent } from './RoutineSubscriptionNoticeIntent';
 import { captureRoutineSubscriptionEnv, freezeSubscription, prepareRoutineSubscriptionAccountTx,
   routineSubscriptionUnavailable, routineSubscriptionScopeTx, routineSubscriptionClockTx, subscriptionInteger, subscriptionMac, subscriptionObject, subscriptionSame,
@@ -46,7 +48,7 @@ export interface RoutineSubscriptionLegacyDeliveryNoticeFacts {
 }
 /** A 1927 paid source has its own closed payment variant; a balance payment
  * must never acquire synthetic legacy original-evidence fields. */
-export type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionLegacyDeliveryNoticeFacts | RoutineSubscriptionPaidNoticeFacts | RoutineSubscriptionMembershipNoticeFacts | RoutineSubscriptionRechargeNoticeFacts;
+export type RoutineSubscriptionDeliveryNoticeFacts = RoutineSubscriptionLegacyDeliveryNoticeFacts | RoutineSubscriptionPaidNoticeFacts | RoutineSubscriptionMembershipNoticeFacts | RoutineSubscriptionRechargeNoticeFacts | RoutineSubscriptionRechargeRefundFacts;
 const noticeSlot = Symbol('routine.subscription.delivery-notice-source.v1');
 export interface PreparedRoutineSubscriptionDeliveryNotice {
   readonly [noticeSlot]: true;
@@ -125,6 +127,7 @@ async function versionedRequest(tx: DbClient, env: Env, event: typeof storeOrder
 }
 async function readSource(tx: DbClient, env: Env, expected: Readonly<RoutineSubscriptionDeliveryNoticeInput> | Readonly<RoutineSubscriptionNoticeAuthorInput>) {
   await acquireRoutineSubscriptionNoticeSourceGatesTx(tx);
+  if(routineSubscriptionRechargeRefundKey(expected.eventKey))return readRoutineSubscriptionRechargeRefundNoticeSourceTx(tx,env,expected);
   if(routineSubscriptionRechargeKey(expected.eventKey))return readRoutineSubscriptionRechargeNoticeSourceTx(tx,env,expected);
   if (routineSubscriptionMembershipKey(expected.eventKey)) return readRoutineSubscriptionMembershipNoticeSourceTx(tx, env, expected);
   if (routineSubscriptionPaidKey(expected.eventKey)) return readRoutineSubscriptionPaidNoticeSourceTx(tx, env, expected);
@@ -321,7 +324,7 @@ export async function prepareRoutineSubscriptionDeliveryNoticeTx(tx: DbClient, e
     // Preserve only the new member protocol's bounded SQL cause. The dispatch
     // author still decides whether an untouched pre-attempt claim may retry;
     // durable admission/possible POST failures remain UNKNOWN.
-    if ((routineSubscriptionMembershipKey(captured.eventKey)||routineSubscriptionRechargeKey(captured.eventKey)) && membershipSubscriptionTransientSqlState(error)) throw error;
+    if ((routineSubscriptionMembershipKey(captured.eventKey)||routineSubscriptionRechargeKey(captured.eventKey)||routineSubscriptionRechargeRefundKey(captured.eventKey)) && membershipSubscriptionTransientSqlState(error)) throw error;
     return routineSubscriptionUnavailable();
   }
 }
@@ -338,7 +341,7 @@ export async function prepareRoutineSubscriptionDeliveryNotice(container: Contai
   catch (error) {
     // Older notice formats keep their existing conservative normalization.
     // A member SQL lock/timeout must reach the pre-attempt retry classifier.
-    if ((routineSubscriptionMembershipKey(captured.eventKey)||routineSubscriptionRechargeKey(captured.eventKey)) && membershipSubscriptionTransientSqlState(error)) throw error;
+    if ((routineSubscriptionMembershipKey(captured.eventKey)||routineSubscriptionRechargeKey(captured.eventKey)||routineSubscriptionRechargeRefundKey(captured.eventKey)) && membershipSubscriptionTransientSqlState(error)) throw error;
     return routineSubscriptionUnavailable();
   }
 }

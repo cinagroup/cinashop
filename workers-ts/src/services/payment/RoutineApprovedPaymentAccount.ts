@@ -8,6 +8,8 @@ import { inspectRoutinePaymentAccountPolicyCatalog, assertRoutinePaymentAccountP
 import { assertRoutineRefundReadInTx,assertRoutineRefundStatusReadTx, inspectRoutineRefundCatalog } from '@/migrations/routineRefund';
 import { assertRoutineShippingReadTx, inspectRoutineShippingCatalog } from '@/migrations/routineShipping';
 import { assertRoutineSubscriptionReadTx, inspectRoutineSubscriptionCatalog } from '@/migrations/routineSubscription';
+import { assertRechargeRefundRuntimeTx, inspectRechargeRefundCatalog } from '@/migrations/rechargeRefund';
+import type { RechargeRefundRuntimeRole } from '@/migrations/rechargeRefundContract';
 import { inspectRoutineOriginalPaymentEvidenceCatalog } from '@/migrations/routineOriginalPaymentEvidence';
 import type { RoutinePaymentRuntimeTarget } from '@/migrations/routinePaymentRuntime';
 import { ServiceUnavailableException } from '@/utils/errors';
@@ -286,19 +288,28 @@ export async function readRoutineApprovedUsesForSubscriptionTx(tx:DbClient,env:S
  original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[]) {
  return readRoutineApprovedConsumerUsesTx(tx,env,original,'subscription',false);
 }
+/** Recharge financial provenance has its own SQL commissioning. It neither
+ * requires physical-goods refund commissioning nor grants refund transport. */
+export async function readRoutineApprovedUsesForRechargeRefundTx(tx:DbClient,env:Signing,
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],role:RechargeRefundRuntimeRole,readOnly=false) {
+ return readRoutineApprovedConsumerUsesTx(tx,env,original,'recharge-refund',readOnly,role);
+}
 async function readRoutineApprovedConsumerUsesTx(tx:DbClient,env:Signing,
- original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],consumer:'refund'|'shipping'|'subscription',statusRead:boolean) {
+ original:RoutineOriginalEvidence|readonly RoutineOriginalEvidence[],consumer:'refund'|'shipping'|'subscription'|'recharge-refund',statusRead:boolean,
+ rechargeRole?:RechargeRefundRuntimeRole) {
  env={APP_KEY:env.APP_KEY};
  const originals=(Array.isArray(original)?original:[original]).map(row=>parseRoutineOriginalEvidence(env,row));
  if(!originals.length||originals.length>64||new Set(originals.map(row=>row.evidence_id)).size!==originals.length)return fail();
- if(!await(consumer==='shipping'?assertRoutineShippingReadTx(tx):consumer==='subscription'?assertRoutineSubscriptionReadTx(tx)
+ if(!await(consumer==='recharge-refund'?assertRechargeRefundRuntimeTx(tx,rechargeRole!,statusRead?'read':'write')
+  :consumer==='shipping'?assertRoutineShippingReadTx(tx):consumer==='subscription'?assertRoutineSubscriptionReadTx(tx)
   :statusRead?assertRoutineRefundStatusReadTx(tx):assertRoutineRefundReadInTx(tx)))return fail();
- const consumerCatalog=await(consumer==='shipping'?inspectRoutineShippingCatalog(tx):consumer==='subscription'
+ const consumerCatalog=await(consumer==='recharge-refund'?inspectRechargeRefundCatalog(tx):consumer==='shipping'?inspectRoutineShippingCatalog(tx):consumer==='subscription'
   ?inspectRoutineSubscriptionCatalog(tx):inspectRoutineRefundCatalog(tx)),binding=consumerCatalog.binding;
  const catalog=await inspectRoutinePaymentAccountPolicyCatalog(tx),source=await inspectRoutineOriginalPaymentEvidenceCatalog(tx);
- if(!consumerCatalog.ready||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
+ if(!(consumer==='recharge-refund'?'commissioned'in consumerCatalog&&consumerCatalog.commissioned:'ready'in consumerCatalog&&consumerCatalog.ready)
+  ||!binding?.app||!catalog.ready||!source.ready||catalog.binding?.maintenanceOid!==binding.maintenanceOid
   ||source.binding?.maintenanceOid!==binding.maintenanceOid||catalog.binding?.appOid!==binding.appOid||source.binding?.appOid!==binding.appOid)return fail();
- if(consumer==='subscription'&&(!binding.appOid||catalog.binding?.maintenance!==binding.maintenance
+ if((consumer==='subscription'||consumer==='recharge-refund')&&(!binding.appOid||catalog.binding?.maintenance!==binding.maintenance
   ||source.binding?.maintenance!==binding.maintenance||catalog.binding?.app!==binding.app||source.binding?.app!==binding.app))return fail();
  const [resolution]=await tx.execute<{ready:boolean}>(sql`SELECT
   pg_catalog.to_regclass('routine_original_payment_evidence')=pg_catalog.to_regclass('public.routine_original_payment_evidence')
@@ -322,7 +333,7 @@ async function readRoutineApprovedConsumerUsesTx(tx:DbClient,env:Signing,
   decoded.push(u);
  }
  return freeze({uses:decoded,digest:routineEvidenceHmac(env,consumer==='shipping'?'shipping-approved-use-set'
-  :consumer==='subscription'?'subscription-approved-use-set':'refund-approved-use-set',decoded)});
+  :consumer==='subscription'?'subscription-approved-use-set':consumer==='recharge-refund'?'recharge-refund-approved-use-set':'refund-approved-use-set',decoded)});
 }
 
 /** Explicit owner-only maintenance API. No HTTP route, config adoption, role
