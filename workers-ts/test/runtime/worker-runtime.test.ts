@@ -108,8 +108,11 @@ describe("Worker runtime bindings", () => {
     });
     const ctx = createExecutionContext();
     const messages: OrderMessage[] = [];
+    const databaseAccess = vi.fn(() => { throw new Error("Cron must not read PostgreSQL configuration"); });
     const runtimeEnv = {
       ...testEnv,
+      get HYPERDRIVE() { return databaseAccess(); },
+      get DATABASE_URL() { return databaseAccess(); },
       ORDER_QUEUE: {
         async send(body: OrderMessage) { messages.push(body); },
         async sendBatch(batch: MessageSendRequest<OrderMessage>[]) {
@@ -121,7 +124,8 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(22);
+    expect(databaseAccess).not.toHaveBeenCalled();
+    expect(messages).toHaveLength(23);
     expect(messages.filter((message) => message.action === "runScheduledMaintenance"))
       .toHaveLength(12);
     expect(messages.filter(message => message.action === 'runScheduledMaintenance').map(message => message.job).sort())
@@ -135,6 +139,7 @@ describe("Worker runtime bindings", () => {
       "dispatchPaymentCallbackOutbox",
       "dispatchPaymentReconciliation",
       "dispatchRechargeRefundRecovery",
+      "dispatchRechargeRefundNotices",
       "dispatchMerchantShipmentCallbackOutbox",
       "dispatchCityDeliveryCallbacks",
       "dispatchWechatCallbackOutbox",
@@ -148,7 +153,12 @@ describe("Worker runtime bindings", () => {
       { action: 'dispatchProductVideoCleanup', scope: 'admin' },
       { action: 'dispatchProductVideoCleanup', scope: 'supplier' },
     ]);
-    expect(messages.filter(message => message.action !== 'dispatchProductVideoCleanup').every((message) => "scheduledAt" in message
+    // This discovery root carries an address only; it has no scheduledAt field.
+    expect(messages.filter(message => message.action === 'dispatchRechargeRefundNotices')).toStrictEqual([
+      { action: 'dispatchRechargeRefundNotices', afterId: 0, cutoff: null },
+    ]);
+    expect(messages.filter(message => message.action !== 'dispatchProductVideoCleanup'
+      && message.action !== 'dispatchRechargeRefundNotices').every((message) => "scheduledAt" in message
       && message.scheduledAt === scheduledTime.getTime())).toBe(true);
   });
 
@@ -157,8 +167,11 @@ describe("Worker runtime bindings", () => {
     const controller = createScheduledController({ scheduledTime, cron: "*/5 * * * *" });
     const ctx = createExecutionContext();
     const messages: OrderMessage[] = [];
+    const databaseAccess = vi.fn(() => { throw new Error("Cron must not read PostgreSQL configuration"); });
     const runtimeEnv = {
       ...testEnv,
+      get HYPERDRIVE() { return databaseAccess(); },
+      get DATABASE_URL() { return databaseAccess(); },
       ORDER_QUEUE: {
         async send(body: OrderMessage) { messages.push(body); },
         async sendBatch(batch: MessageSendRequest<OrderMessage>[]) {
@@ -170,7 +183,11 @@ describe("Worker runtime bindings", () => {
     await worker.scheduled(controller, runtimeEnv, ctx);
     await waitOnExecutionContext(ctx);
 
-    expect(messages).toHaveLength(23);
+    expect(databaseAccess).not.toHaveBeenCalled();
+    expect(messages).toHaveLength(24);
+    expect(messages.filter(message => message.action === 'dispatchRechargeRefundNotices')).toStrictEqual([
+      { action: 'dispatchRechargeRefundNotices', afterId: 0, cutoff: null },
+    ]);
     expect(messages.filter((message) =>
       message.action === "runScheduledMaintenance" && message.job === "sign_remind_time"
     )).toHaveLength(1);
