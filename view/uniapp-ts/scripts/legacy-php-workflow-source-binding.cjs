@@ -6,6 +6,7 @@ const { createHash } = require('node:crypto');
 const { readFileSync: readDiskFileSync } = require('node:fs');
 const { relative, resolve } = require('node:path');
 const { fileURLToPath } = require('node:url');
+const { projectCurrentWorkflowToLegacyCandidate } = require('./workflow-source-continuity.cjs');
 
 const root = resolve(__dirname, '../../..');
 const WORKFLOW_FILE = '.github/workflows/workers-runtime-linux.yml';
@@ -82,15 +83,21 @@ function projectLegacyPhpWorkflowPredecessor(file, source, input = proof) {
 // Verify the complete derivation before supplying any historical read.
 projectLegacyPhpWorkflowPredecessor(WORKFLOW_FILE, proof.images.candidate.raw_utf8);
 
+function projectCurrentLegacyPhpWorkflowPredecessor(file, source, input = proof) {
+  if (file !== WORKFLOW_FILE) return source;
+  verifyProof(input);
+  return projectLegacyPhpWorkflowPredecessor(file, projectCurrentWorkflowToLegacyCandidate(file, source), input);
+}
+
 function readFileSync(file, options) {
   const value = readDiskFileSync(file, options);
   if (typeof file === 'number') return value;
   const path = resolve(typeof file === 'string' ? file : file instanceof URL ? fileURLToPath(file) : utf8(file));
   if (relative(root, path).replace(/\\/g, '/') !== WORKFLOW_FILE) return value;
   const source = typeof value === 'string' ? value : utf8(value);
-  const previous = projectLegacyPhpWorkflowPredecessor(WORKFLOW_FILE, source);
+  const previous = projectCurrentLegacyPhpWorkflowPredecessor(WORKFLOW_FILE, source);
   return typeof value === 'string' ? previous : Buffer.from(previous, 'utf8');
 }
 
 module.exports = { WORKFLOW_FILE, PROOF_FILE, PROOF_SHA, proof,
-  decodeLegacyPhpWorkflowProof, projectLegacyPhpWorkflowPredecessor, readFileSync };
+  decodeLegacyPhpWorkflowProof, projectLegacyPhpWorkflowPredecessor: projectCurrentLegacyPhpWorkflowPredecessor, readFileSync };

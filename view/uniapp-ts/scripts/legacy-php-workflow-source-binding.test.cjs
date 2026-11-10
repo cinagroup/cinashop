@@ -8,6 +8,8 @@ const { resolve, join } = require('node:path');
 const { tmpdir } = require('node:os');
 const { pathToFileURL } = require('node:url');
 const YAML = require('yaml');
+const { projectCurrentWorkflowToLegacyCandidate } = require('./workflow-source-continuity.cjs');
+require('./workflow-source-continuity.test.cjs');
 const { WORKFLOW_FILE, PROOF_FILE, PROOF_SHA, proof, decodeLegacyPhpWorkflowProof,
   projectLegacyPhpWorkflowPredecessor: project, readFileSync: historicalRead } = require('./legacy-php-workflow-source-binding.cjs');
 
@@ -19,8 +21,9 @@ const clone = () => structuredClone(proof);
 test('real current bytes use the existing complete five-edit Worker proof and exact f2 predecessor', () => {
   const bytes = readFileSync(resolve(root, PROOF_FILE));
   assert.equal(sha(bytes), PROOF_SHA);
-  assert.equal(current, proof.images.candidate.raw_utf8);
-  assert.equal(Buffer.byteLength(current), 20868);
+  const candidate = projectCurrentWorkflowToLegacyCandidate(WORKFLOW_FILE, current);
+  assert.equal(candidate, proof.images.candidate.raw_utf8);
+  assert.equal(Buffer.byteLength(candidate), 20868);
   assert.equal(project(WORKFLOW_FILE, current), previous);
   assert.equal(Buffer.byteLength(previous), 19659);
   assert.equal(sha(previous), '30c49172a5fa6fa01a18131f344f614cf9e640b50fd59daa39209e54631aecce');
