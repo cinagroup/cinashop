@@ -55,6 +55,7 @@ import { assertAllSequencesAligned, assertKefuSequenceAligned } from "./data-mig
 import { assertAllTablesAligned, TABLE_CATALOG_FIELDS } from "./data-migration/table-catalog-contracts";
 import { composeReviewedCashierAbandonCatalog, assertCashierAuditManualRedNoteCatalog, reviewedCashierAuditCatalogView } from './data-migration/cashier-abandon-catalog';
 import { ReviewedErpAuditContext, ERP_AUDIT_ORM_PATHS } from './data-migration/erp-bare-orm-catalog';
+import { composeReviewedRechargeRefundCatalog, assertRechargeRefundMaintainedCatalogsAligned, rechargeRefundCatalogArtifact, RECHARGE_REFUND_AUDIT_PATHS } from './data-migration/recharge-refund-catalog';
 import { inspectInvoiceManualRedNote } from '../src/migrations/invoiceManualRedNoteCatalog';
 import { assertIndexContracts, catalogKinds, classifyMissingIndexes, compareCatalogs, readCatalog, summarizeCatalogDiff, type Catalog, type CatalogRow } from "./data-migration/postgres-catalog-audit";
 
@@ -79,6 +80,9 @@ export async function auditOrmDdl(raw = process.env.TEST_FINANCE_POSTGRES_URL) {
   const pricingOwners: string[] = [];
   const catalogs: Record<string, Catalog> = {};
   const rawCompleteCatalogs: Record<string, Catalog> = {};
+  const rawMaintainedCatalogs: Record<string, Catalog> = {};
+  const rechargeRefundMaintainedCatalogs: Record<string, Catalog> = {};
+  const rechargeRefundMaintenanceVerification: Record<string, unknown> = {};
   const manualRedNoteOrmCatalogs: Record<string, Catalog> = {};
   const manualRedNoteOrmVerification: Record<string, unknown> = {};
   const erpBareOrmCatalogs: Record<string, Catalog> = {};
@@ -675,6 +679,14 @@ if (!registeredOfflineGift) {
         assert.deepEqual(Array.from(manualAfterRead.rows), Array.from(manualBeforeRead.rows), 'Manual ORM catalog changed during the complete five-category read');
         const erpReviewed = erpContext.review(rawCatalog, path);
         const reviewed = reviewedCashierAuditCatalogView(erpReviewed.nonErp, path, manualAfterRead.rows);
+        // The ORM intentionally has the post-0203 monetary capacity. Execute
+        // the same explicit owner maintenance on all nine owned constructions;
+        // compare actual installed rows, retaining the complete bare read too.
+        const recharge = await composeReviewedRechargeRefundCatalog(shippingDb, path, rawCatalog, reviewed.historical,
+          { database: name, databases: created });
+        rawMaintainedCatalogs[path] = recharge.raw;
+        rechargeRefundMaintainedCatalogs[path] = recharge.maintained;
+        rechargeRefundMaintenanceVerification[path] = recharge.verification;
         // Keep every raw table/column/index/constraint/sequence in the output.
         // Both independently verified bare realms are recorded separately;
         // the historical five-category gates retain their exact contracts.
@@ -684,7 +696,7 @@ if (!registeredOfflineGift) {
           sources: erpReviewed.sources, allFiveCategories: erpReviewed.erp,
           counts: Object.fromEntries(catalogKinds.map(kind => [kind, erpReviewed.erp[kind].length])),
           liveCompositionReadsVerified: true, scope: 'Raw table/column/constraint/index/sequence metadata only; no maintenance installation or privilege/policy/trigger equivalence claim' };
-        catalogs[path] = reviewed.historical;
+        catalogs[path] = recharge.historical;
         manualRedNoteOrmCatalogs[path] = reviewed.manual;
         manualRedNoteOrmVerification[path] = { profile: path === 'external' || path === 'embedded' ? 'absent' : 'exact-bare-orm',
           completeCatalogBefore: manualBeforeRead.rows, completeCatalogAfter: manualAfterRead.rows,
@@ -705,6 +717,9 @@ if (!registeredOfflineGift) {
     }
     const externalVsEmbedded = compareCatalogs(catalogs.external, catalogs.embedded);
     const externalVsOrm = compareCatalogs(catalogs.external, catalogs.orm);
+    assert.deepEqual(Object.keys(rechargeRefundMaintainedCatalogs).sort(), [...RECHARGE_REFUND_AUDIT_PATHS].sort(), 'Incomplete recharge maintenance construction audit');
+    for (const catalog of Object.values(rechargeRefundMaintainedCatalogs))
+      assertRechargeRefundMaintainedCatalogsAligned(rechargeRefundMaintainedCatalogs.external, catalog);
     if (!tableCatalogGateVerification) throw new Error("Table catalog engine gate verification is missing");
     const contractManifests = await Promise.all([
       "orm-query-index-reconciliation.json",
@@ -808,6 +823,12 @@ if (!registeredOfflineGift) {
       paths,
       rawCompleteCatalogs,
       rawCompleteCounts: Object.fromEntries(Object.entries(rawCompleteCatalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),
+      rawMaintainedCatalogArtifact: rechargeRefundCatalogArtifact(rawMaintainedCatalogs),
+      rechargeRefundMaintainedCatalogDigests: Object.fromEntries(Object.entries(rechargeRefundMaintainedCatalogs).map(([path, catalog]) => [path,
+        { sha256: createHash('sha256').update(JSON.stringify(catalog)).digest('hex'), counts: Object.fromEntries(catalogKinds.map(kind => [kind, catalog[kind].length])) }])),
+      rechargeRefundMaintenanceVerification,
+      rechargeRefundMaintenanceContract: { mode: 'All nine owned constructions execute the real explicit owner installer and replay; all four new tables plus every retained native row form an additional complete five-category equality gate. Complete bare and maintained catalogs are retained. The mature 287-table gate remains unchanged; no type normalization or runtime commissioning.',
+        completeTableCount: rechargeRefundMaintainedCatalogs.external.tables.length },
       manualRedNoteOrmVerification,
       erpBareOrmVerification,
       counts: Object.fromEntries(Object.entries(catalogs).map(([path, catalog]) => [path, Object.fromEntries(catalogKinds.map((kind) => [kind, catalog[kind].length]))])),

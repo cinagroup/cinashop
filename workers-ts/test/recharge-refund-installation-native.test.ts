@@ -1,11 +1,15 @@
 /** PG16 storage specimens only. No paid author, provider, refund transport,
  * current user balance mutation or business admission is established here. */
 import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { userRecharge } from '@/models/schema';
 import { inspectRechargeRefundCatalog, RECHARGE_REFUND_CATALOG_SQL, runRechargeRefundInstallation } from '@/migrations/rechargeRefund';
 import { financePostgres } from './helpers/financePostgres';
+import { composeReviewedRechargeRefundCatalog, reviewRechargeRefundTransition, rechargeRefundCatalogArtifact } from '../scripts/data-migration/recharge-refund-catalog';
+import { catalogKinds, readCatalog, type Catalog, type CatalogRow } from '../scripts/data-migration/postgres-catalog-audit';
 
 type Fixture = Awaited<ReturnType<typeof financePostgres>>;
 const namespace = () => sql`SELECT c.relname,c.oid::text,c.relowner::text,c.relacl::text,pg_catalog.obj_description(c.oid,'pg_class') AS comment
@@ -51,6 +55,72 @@ async function reservedSpecimen(f: Fixture) {
 }
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('recharge refund PG16 explicit storage installation', () => {
+  it.each(['external', 'orm'])('composes actual owner maintenance and full catalog replay from the %s precision profile', async path => {
+    const f = await financePostgres([userRecharge], { namespace: 'public' });
+    try {
+      if (path === 'external') await f.exec('ALTER TABLE public.user_recharge ALTER COLUMN refund_price TYPE numeric(10,2)');
+      // Storage specimens only: no paid state or business admission is claimed.
+      await f.db.insert(userRecharge).values({ orderId: 'czCatalogHistory', refundPrice: '1.99' });
+      const [identity] = await f.db.execute(sql`SELECT current_database() AS database`);
+      const query = async (text: string) => Array.from(await f.db.execute(sql.raw(text))) as CatalogRow[];
+      const before = await readCatalog(query), rows = await f.db.select().from(userRecharge);
+      const composed = await composeReviewedRechargeRefundCatalog(f.db, path, before, before,
+        { database: String(identity.database), databases: [String(identity.database)] });
+      expect(composed.verification).toMatchObject({ initialType: path === 'external' ? 'numeric(10,2)' : 'numeric(12,2)',
+        installedType: 'numeric(12,2)', ownerOnly: true, commissioned: false, sourceIdentityPreserved: true,
+        replayCompleteCatalogAndIdentityPreserved: true });
+      expect(composed.protocol.tables.map(row => row.name).sort()).toEqual([
+        'recharge_refund_attempt', 'recharge_refund_operation', 'recharge_refund_result', 'recharge_refund_state',
+      ]);
+      expect(composed.maintained).toEqual(composed.raw);
+      expect(composed.raw).toEqual(await readCatalog(query));
+      const artifact = rechargeRefundCatalogArtifact({ [path]: composed.raw });
+      const decoded = gunzipSync(Buffer.from(artifact.data, 'base64'));
+      expect(artifact.encoding).toBe('gzip+base64'); expect(decoded.byteLength).toBe(artifact.bytes);
+      expect(createHash('sha256').update(decoded).digest('hex')).toBe(artifact.sha256);
+      expect(JSON.parse(Buffer.from(decoded).toString('utf8'))).toEqual({ [path]: composed.raw });
+      expect(await f.db.select().from(userRecharge)).toEqual(rows);
+      expect(composed.historical.columns.find(row => row.key === 'user_recharge.refund_price')?.type).toBe('numeric(12,2)');
+      // Reject mutations of genuine before/after snapshots. These are catalog
+      // refusal specimens, not fabricated provider/payment business evidence.
+      for (const kind of catalogKinds) {
+        const changed = structuredClone(composed.raw);
+        if (changed[kind].length) {
+          changed[kind].push(changed[kind][0]);
+          expect(() => reviewRechargeRefundTransition(before, changed, before, path)).toThrow('Duplicate catalog row');
+        }
+      }
+      for (const field of ['type', 'default', 'notNull']) {
+        const changed = structuredClone(composed.raw);
+        changed.columns.find(row => row.key === 'user_recharge.refund_price')![field] = 'unknown';
+        expect(() => reviewRechargeRefundTransition(before, changed, before, path)).toThrow('changed an existing catalog row');
+      }
+      const omitted = structuredClone(composed.raw);
+      omitted.tables = omitted.tables.filter(row => row.name !== 'recharge_refund_state');
+      expect(() => reviewRechargeRefundTransition(before, omitted, before, path)).toThrow('Complete four-table');
+      const extra = structuredClone(composed.raw);
+      extra.tables.push({ ...extra.tables[0], key: 'unreviewed_table', name: 'unreviewed_table' });
+      expect(() => reviewRechargeRefundTransition(before, extra, before, path)).toThrow('Unreviewed recharge catalog addition');
+      const missing = structuredClone(composed.raw);
+      missing.columns = missing.columns.filter(row => row.key !== 'user_recharge.order_id');
+      expect(() => reviewRechargeRefundTransition(before, missing, before, path)).toThrow('changed an existing catalog row');
+      const wrongProfile: Catalog = structuredClone(before);
+      wrongProfile.columns.find(row => row.key === 'user_recharge.refund_price')!.type = 'numeric(11,2)';
+      expect(() => reviewRechargeRefundTransition(wrongProfile, composed.raw, wrongProfile, path)).toThrow('Unexpected bare recharge column');
+    } finally { await f.close(); }
+  }, 5000);
+
+  it('refuses an unowned database or wrong bare profile before executing maintenance', async () => fixture(async f => {
+    const query = async (text: string) => Array.from(await f.db.execute(sql.raw(text))) as CatalogRow[];
+    const before = await readCatalog(query), [identity] = await f.db.execute(sql`SELECT current_database() AS database`);
+    await expect(composeReviewedRechargeRefundCatalog(f.db, 'external', before, before,
+      { database: String(identity.database), databases: [] })).rejects.toThrow('not owned');
+    await expect(composeReviewedRechargeRefundCatalog(f.db, 'orm', before, before,
+      { database: String(identity.database), databases: [String(identity.database)] })).rejects.toThrow('Unexpected bare recharge column');
+    expect(await readCatalog(query)).toEqual(before);
+    expect((await f.db.execute(sql.raw(RECHARGE_REFUND_CATALOG_SQL)))[0].present).toBe(false);
+  }), 5000);
+
   it('widens only refund_price and preserves existing rows, identities, comments and replay catalog', async () => fixture(async f => {
     await f.db.insert(userRecharge).values({ uid: 11, orderId: 'czRetainedHistory', price: '100.00', givePrice: '20.00', refundPrice: '1.99', paid: 1 });
     await f.exec("COMMENT ON TABLE public.user_recharge IS 'retained source table';COMMENT ON COLUMN public.user_recharge.refund_price IS 'retained source column'");
