@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createGenericKeyCanary } from './gitleaks-canary-value.mjs';
 
 const REPOSITORY = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const VERSION = '8.29.0';
@@ -98,7 +99,7 @@ async function main() {
 
     // All values are newly generated for this disposable repository. Nothing
     // is a hard-coded credential, and no canary value is sent to a provider.
-    const apiKey = randomBytes(32).toString('base64url');
+    const apiKey = createGenericKeyCanary();
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
     const now = Math.floor(Date.now() / 1000);
     const payload = Buffer.from(JSON.stringify({ iss: 'gitleaks-canary.invalid', iat: now, exp: now + 3600, jti: randomUUID() })).toString('base64url');
@@ -125,10 +126,10 @@ async function main() {
     const additions = [
       { file: approval, entries: [{ rule: 'private-key', line: 13, text: `const privateKey = \`${privateKey}\`;` }] },
       { file: ledger, entries: [
-        { rule: 'generic-api-key', line: 10, text: `const request_key = '${randomBytes(32).toString('base64url')}';` },
-        { rule: 'generic-api-key', line: 26, text: `const other_request_key = '${randomBytes(32).toString('base64url')}';` },
+        { rule: 'generic-api-key', line: 10, text: `const request_key = '${createGenericKeyCanary()}';` },
+        { rule: 'generic-api-key', line: 26, text: `const other_request_key = '${createGenericKeyCanary()}';` },
       ] },
-      { file: contract, entries: [{ rule: 'generic-api-key', line: 10, text: `const key = '${randomBytes(32).toString('base64url')}';` }] },
+      { file: contract, entries: [{ rule: 'generic-api-key', line: 10, text: `const key = '${createGenericKeyCanary()}';` }] },
     ];
     for (const { file, entries } of additions) {
       const body = Array(Math.max(...entries.map(entry => entry.line))).fill('');
@@ -153,7 +154,7 @@ async function main() {
     for (const { file, rule, line } of expectedCanaries) {
       const matches = findings.filter(finding => finding.File === file
         && finding.RuleID === rule && finding.StartLine === line);
-      requireCondition(matches.length > 0, `Historical fingerprints suppressed or failed to detect the generated ${rule} canary`);
+      requireCondition(matches.length > 0, `Historical fingerprints suppressed or failed to detect the generated ${rule} canary at ${file}:${line}`);
       requireCondition(matches.every(finding => typeof finding.Fingerprint === 'string'
         && !fingerprints.includes(finding.Fingerprint)), 'A new canary unexpectedly reused a historical fingerprint');
     }
