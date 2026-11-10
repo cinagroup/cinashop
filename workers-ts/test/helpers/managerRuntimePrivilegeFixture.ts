@@ -3,13 +3,36 @@ import postgres from 'postgres';
 import { sql } from 'drizzle-orm';
 import { checkoutPricingMigrationDatabase } from './checkoutPricingMigrationDatabase';
 import { ownsSequenceRunnerEndpoint, validateSequenceRunnerTestUrl } from './kefuSequenceRunnerDatabase';
-import { createContainerFromDb } from '../../src/lib/di';
+import { createContainerFromDb, type DbClient } from '../../src/lib/di';
+import type { PgTable } from 'drizzle-orm/pg-core';
 import { MigrationService } from '../../src/services/MigrationService';
 import { runManagerOrderOperation } from '../../src/migrations/runManagerOrderOperation';
 import { installManagerScopeLock } from '../../src/migrations/runManagerScopeLock';
 import { inspectManagerRuntimeCatalogPrerequisites } from '../../src/migrations/auditManagerRuntimePrivileges';
 import { MANAGER_RUNTIME_ROLE } from '../../src/migrations/managerRuntimePrivilegePlan';
 import { installManagerRuntimeCapabilities } from '../../src/migrations/managerRuntimeCapabilities';
+import { createMerchantManagerRuntime, type MerchantRuntimeOptions } from './merchantManagerRuntime';
+
+/** Fixed-identity subset for the inherited financial fixture. Keep this real
+ * factory in the scheduler's existing fixed-role root: every transitive caller
+ * joins the serial project, including callers added later. The coordinator
+ * also protects role ownership against other owned Manager fixture sessions.
+ * This remains a subset, not a complete production-role commission. */
+export async function createManagerFinancialRuntime(owner:DbClient,tables:PgTable[],
+ options:Omit<MerchantRuntimeOptions,'fixedManagerRole'>={}) {
+ const base=validateSequenceRunnerTestUrl(process.env.TEST_FINANCE_POSTGRES_URL??'');
+ const coordinator=postgres(base.href,{max:1,prepare:false,connect_timeout:5,
+  connection:{options:'-c statement_timeout=180000 -c lock_timeout=3000'}});
+ try{
+  const [guard]=await coordinator`SELECT current_database() AS database,current_user AS role,
+   current_setting('server_version_num')::integer/10000=16 AS pg16`;
+  if(guard.database!=='cinashop_finance_test'||guard.role!=='finance_test'||guard.pg16!==true)
+   throw Error('Owned Manager financial coordinator changed');
+  await coordinator`SELECT pg_advisory_lock(731626,913)`;
+  const runtime=await createMerchantManagerRuntime(owner,tables,{...options,fixedManagerRole:true});
+  return{...runtime,close:async()=>{try{await runtime.close();}finally{await coordinator.end({timeout:5});}}};
+ }catch(error){await coordinator.end({timeout:5});throw error;}
+}
 
 /** Owned native PG16 only; creates no manager runtime LOGIN. Callers must mark
  * a successfully created role's OID before this fixture may remove it. */

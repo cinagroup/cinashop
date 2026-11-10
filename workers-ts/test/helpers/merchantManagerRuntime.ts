@@ -3,13 +3,15 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import type { DbClient } from '@/lib/di';
-import { managerRuntimePrivilegePlan } from '@/migrations/managerRuntimePrivilegePlan';
+import { managerRuntimePrivilegePlan, MANAGER_RUNTIME_ROLE } from '@/migrations/managerRuntimePrivilegePlan';
 import { installManagerScopeLock } from '@/migrations/runManagerScopeLock';
 import { installManagerRuntimeCapabilities } from '@/migrations/managerRuntimeCapabilities';
 import { ownsFinanceFixtureEndpoint, ownsFinanceFixtureTarget, validateFinanceFixtureUrl } from './financePostgres';
 
 const identifier=(value:string)=>{if(!/^[a-z_][a-z_0-9]*$/.test(value))throw Error('Invalid owned merchant runtime identifier');return `"${value}"`;};
 export interface MerchantRuntimeOptions {
+  /** Only the serialized fixed-role fixture factory may select this identity. */
+  fixedManagerRole?: true;
   installScopeLocks?:boolean;
   /** Explicitly install a reviewed lock-only protocol in this new owned DB.
    * No generic privilege repair and no caller-supplied production connection. */
@@ -22,7 +24,7 @@ export async function createMerchantManagerRuntime(owner:DbClient,tables:PgTable
   const base=validateFinanceFixtureUrl(process.env.TEST_FINANCE_POSTGRES_URL??'');
   const [origin]=await owner.execute<{database:string;schema:string;role:string;session:string;version:string;host:string;port:number}>(sql`SELECT current_database() AS database,current_schema() AS schema,current_user AS role,session_user AS session,current_setting('server_version_num') AS version,host(inet_server_addr()) AS host,inet_server_port() AS port`);
   if(!origin||origin.schema!=='public'||origin.role!=='finance_test'||origin.session!==origin.role||Math.floor(Number(origin.version)/10000)!==16||!ownsFinanceFixtureTarget(origin.database,origin.schema,base.href)||!ownsFinanceFixtureEndpoint(origin.database,origin.schema,base.href,origin.host,origin.port))throw Error('Merchant runtime requires the registered owned native PG16 fixture');
-  const role=`merchant_runtime_${crypto.randomUUID().replaceAll('-','')}`,password=crypto.randomUUID().replaceAll('-','');identifier(role);identifier(origin.database);
+  const role=options.fixedManagerRole?MANAGER_RUNTIME_ROLE:`merchant_runtime_${crypto.randomUUID().replaceAll('-','')}`,password=crypto.randomUUID().replaceAll('-','');identifier(role);identifier(origin.database);
   const execute=(statement:string)=>owner.execute(sql.raw(statement));
   const target=new URL(base.href);target.pathname=`/${origin.database}`;target.username=role;target.password=password;
   let created=false,client:ReturnType<typeof postgres>|undefined,protocolCleanup:void|(()=>Promise<void>)=undefined,closed:Promise<void>|undefined;

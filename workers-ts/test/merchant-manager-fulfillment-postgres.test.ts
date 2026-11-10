@@ -10,7 +10,7 @@ import { runManagerOrderOperation } from '@/migrations/runManagerOrderOperation'
 import { ManagerOrderOperationRequest, type ManagerOperationInput, type ManagerOperationContext } from '@/services/store/ManagerOrderOperationRequest';
 import { parseManagerDelivery, parseManagerRemark, StoreManagerOrderOperationService, storeManagerFulfillmentActions } from '@/services/store/StoreManagerOrderOperationService';
 import { merchantOrderRevision, requireStoreManagerScope } from '@/services/store/StoreManagerScope';
-import { deliveryService, expressCompany, orderWaybillJob, storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderInvoiceAllocation, storeOrderInvoiceEvidence, storeOrderOutbox, storeOrderRefund, storeOrderStatus, storePink, supplierFlowingWater, systemStore, systemStoreStaff, user } from '@/models/schema';
+import { deliveryService, expressCompany, orderWaybillJob, storeOrder, storeOrderCartInfo, storeOrderInvoice, storeOrderInvoiceAllocation, storeOrderInvoiceEvidence, storeOrderOutbox, storeOrderRefund, storeOrderStatus, storePink, supplierFlowingWater, systemConfig, systemStore, systemStoreStaff, user } from '@/models/schema';
 import { financePostgres } from './helpers/financePostgres';
 import { withFinancePeers, waitForFinanceBlock } from './helpers/financePeers';
 import { createMerchantManagerRuntime } from './helpers/merchantManagerRuntime';
@@ -39,7 +39,9 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native merchant 
   const intent=async(payload:unknown,id=1,storeId=77):Promise<ManagerOperationInput>=>({version:'merchant-order-operation-v1',store_id:storeId,scope_key:(await requireStoreManagerScope(f.db,11,storeId)).scope_key,order_id:id,expected_order_revision:await merchantOrderRevision(await current(id)),payload:payload as ManagerOperationInput['payload']});
   const state=async()=>({orders:await f.db.select().from(storeOrder).orderBy(storeOrder.id),carts:await f.db.select().from(storeOrderCartInfo).orderBy(storeOrderCartInfo.id),statuses:await f.db.select().from(storeOrderStatus).orderBy(storeOrderStatus.id),outbox:await f.db.select().from(storeOrderOutbox).orderBy(storeOrderOutbox.id),flows:await f.db.select().from(supplierFlowingWater).orderBy(supplierFlowingWater.id)});
   beforeAll(async()=>{
-    const tables=[user,systemStore,systemStoreStaff,deliveryService,expressCompany,storeOrder,storeOrderCartInfo,storeOrderRefund,storeOrderStatus,storeOrderOutbox,orderWaybillJob,storePink,storeOrderInvoice,storeOrderInvoiceAllocation,storeOrderInvoiceEvidence,supplierFlowingWater];
+    // The real notification author reads the Mini App configuration even when
+    // this legacy specimen has no commissioned account or provider credentials.
+    const tables=[user,systemConfig,systemStore,systemStoreStaff,deliveryService,expressCompany,storeOrder,storeOrderCartInfo,storeOrderRefund,storeOrderStatus,storeOrderOutbox,orderWaybillJob,storePink,storeOrderInvoice,storeOrderInvoiceAllocation,storeOrderInvoiceEvidence,supplierFlowingWater];
     f=await financePostgres(tables,{namespace:'public'});
     // Run the production DDL in this new registered local database only. This
     // fixture owner is not an assertion about production runtime ACL rollout.
