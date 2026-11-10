@@ -26,7 +26,7 @@ describe("withdrawal WeCom robot provider", () => {
       providerReference: "", requestId: "", responseCode: "0" });
     const [url, init] = vi.mocked(fetcher).mock.calls[0];
     expect(url).toBe(secret);
-    expect(init?.redirect).toBe("error");
+    expect(init?.redirect).toBe("manual");
     expect(init?.signal).toBeDefined();
     expect(JSON.parse(String(init?.body))).toEqual({ msgtype: "text",
       text: { content: "收到一笔提现申请，请在后台查看。申请编号：41" } });

@@ -7,6 +7,7 @@ import {relative,resolve} from 'node:path';
 import {fileURLToPath,URL} from 'node:url';
 import {types} from 'node:util';
 import * as old from './rechargeNoticeSourceContinuity';
+import {isProviderTransportSource,projectProviderTransportPredecessor} from './providerTransportSourceContinuity';
 export * from './rechargeNoticeSourceContinuity';
 
 const root=resolve(import.meta.dirname,'../../..');
@@ -204,11 +205,15 @@ function read(file:NativePath,options:NativeOptions,view:View):ReturnType<typeof
  else if(file instanceof URL)absolute=resolve(fileURLToPath(file));
  else{try{absolute=resolve(decode(file));}catch{return value;}}
  const name=relative(root,absolute).replace(/\\/g,'/');
- const selected=(view==='refund'?refundFiles:view==='recharge'?rechargeFiles:membershipFiles).has(name);
+ // Only the finite reviewed provider/test images map to fixed353 before the
+ // unchanged older leaves. Production and current tests use native source.
+ const transportType=isProviderTransportSource(name);
+ const selected=transportType||(view==='refund'?refundFiles:view==='recharge'?rechargeFiles:membershipFiles).has(name);
  if(!selected)return value;
  const encoding=typeof options==='string'?options:options?.encoding;
  if(encoding&&encoding!=='utf8'&&encoding!=='utf-8')throw Error('Refund historical reader requires exact UTF8 or bytes');
- const source=typeof value==='string'?value:decode(value);
+ const physical=typeof value==='string'?value:decode(value);
+ const source=transportType?projectProviderTransportPredecessor(name,physical):physical;
  const previous=refundFiles.has(name)?projectRechargeRefundPredecessor(name,source):source;
  const output=view==='refund'?previous:view==='recharge'?old.projectRechargeNoticePredecessor(name,previous)
   :old.projectMembershipHistoricalSource(name,previous);

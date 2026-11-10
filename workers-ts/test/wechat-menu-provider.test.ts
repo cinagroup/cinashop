@@ -63,7 +63,7 @@ describe('official-account menu isolated provider transport', () => {
     expect(String(sent.init?.body)).not.toContain(config.secret);
     expect(String(sent.init?.body)).not.toContain(accessToken);
     for (const request of runtime.seen) {
-      expect(request.init?.redirect).toBe('error');
+      expect(request.init?.redirect).toBe('manual');
       expect(request.init?.signal).toBeDefined();
     }
   });

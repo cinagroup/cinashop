@@ -115,7 +115,7 @@ describe("Enterprise WeChat provider client", () => {
     expect(tokenCalls.map((call) => call.url.searchParams.get("corpsecret")))
       .toEqual(["company-secret", "agent-secret", "directory-secret", "external-secret"]);
     expect(calls.at(-2)?.init?.method).toBe("POST");
-    expect(calls.every((call) => call.init?.redirect === "error")).toBe(true);
+    expect(calls.every((call) => call.init?.redirect === "manual")).toBe(true);
     expect(JSON.parse(String(calls.at(-2)?.init?.body))).toEqual({
       chat_id: "wr-chat-1",
       need_name: 0,

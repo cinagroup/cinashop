@@ -128,7 +128,7 @@ export class WechatFollowPosterService {
         if (actual !== source.mime) { await object.body.cancel().catch(() => {}); throw new ValidateException('关注二维码图片格式无效'); }
         return { bytes: await readBytes(object.body, object.size, signal), mime: actual };
       }
-      const response = await this.fetcher(source.url, { signal, redirect: 'error', headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' } });
+      const response = await this.fetcher(source.url, { signal, redirect: 'manual', headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' } });
       if (signal.aborted || !response.ok || response.redirected) { await response.body?.cancel().catch(() => {}); throw unavailable(); }
       const mime = rasterMime(response.headers.get('Content-Type') ?? '');
       if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(mime)) { await response.body?.cancel().catch(() => {}); throw new ValidateException('关注二维码图片格式无效'); }

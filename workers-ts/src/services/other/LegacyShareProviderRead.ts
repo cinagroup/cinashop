@@ -15,8 +15,12 @@ export async function readLegacyShareProvider(fetcher: typeof fetch, input: Requ
     }, limits.timeout ?? 10000);
   });
   const operation = (async () => {
-    const response = await fetcher(input,{...init,signal:controller.signal,redirect:'error'});
+    const response = await fetcher(input,{...init,signal:controller.signal,redirect:'manual'});
     if (timedOut) { void response.body?.cancel().catch(() => undefined); throw new ServiceUnavailableException('分享接口超时'); }
+    if (response.redirected || response.status >= 300 && response.status < 400) {
+      void response.body?.cancel().catch(() => undefined);
+      throw new ServiceUnavailableException('分享接口重定向，请稍后重试');
+    }
     const mime = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() ?? '';
     const image = ['image/png','image/jpeg','image/gif'].includes(mime), limit = image ? limits.image : limits.json;
     const length = response.headers.get('Content-Length');

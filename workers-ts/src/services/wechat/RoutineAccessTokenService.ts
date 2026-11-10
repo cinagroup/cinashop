@@ -58,7 +58,7 @@ async function providerJson(fetcher: typeof fetch, url: URL): Promise<Record<str
     timer = setTimeout(() => { stopped = true; controller.abort(); cancel(); reject(providerUnavailable()); }, PROVIDER_TIMEOUT_MS);
   });
   const receive = async () => {
-    response = await fetcher(url.toString(), { method: 'GET', redirect: 'error', signal: controller.signal });
+    response = await fetcher(url.toString(), { method: 'GET', redirect: 'manual', signal: controller.signal });
     if (stopped) { cancel(); throw providerUnavailable(); }
     const declared = response.headers.get('content-length');
     if (!response.ok || response.redirected || !response.body || declared !== null

@@ -76,7 +76,7 @@ describe('Actual HTTPS catalog transport and unchanged template/issue response b
     await listCrmebOnePassExpressCatalog(creds, r.fetcher);
     expect(r.calls.map(c => c.url)).toEqual(['https://sms.crmeb.net/api/v2/user/login', 'https://sms.crmeb.net/api/v2/expr/express', 'https://sms.crmeb.net/api/v2/expr/express']);
     const request = r.calls[1].init!;
-    expect(request.method).toBe('GET'); expect(request.body).toBeUndefined(); expect(request.redirect).toBe('error');
+    expect(request.method).toBe('GET'); expect(request.body).toBeUndefined(); expect(request.redirect).toBe('manual');
     expect(new Headers(request.headers).get('Authorization')).toBe('Bearer-owned-catalog-token');
     expect(new Headers(request.headers).get('Accept')).toBe('application/json'); expect(request.signal).toBeInstanceOf(AbortSignal);
     expect(r.calls[1].url).not.toContain(creds.secretKey); expect(r.calls.some(c => /dump|shipment|\/open/.test(c.url))).toBe(false);

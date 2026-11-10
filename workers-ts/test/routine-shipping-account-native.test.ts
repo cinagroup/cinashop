@@ -203,7 +203,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine shipping
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(String(input)); expect(url.origin + url.pathname).toBe('https://api.weixin.qq.com/cgi-bin/token');
       expect([...url.searchParams]).toEqual([['grant_type','client_credential'],['appid',APP],['secret',SECRET]]);
-      expect(init).toMatchObject({ method: 'GET', redirect: 'error' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();
+      expect(init).toMatchObject({ method: 'GET', redirect: 'manual' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();
     });
     try {
       for (const value of ['wx_current_b','']) {
@@ -227,6 +227,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Routine shipping
       finally { await f.maintenanceDb.execute(sql`ALTER FUNCTION public.routine_shipping_immutable_v1() COST 100`); }
     } finally { await f.maintenanceDb.delete(systemConfig).where(inArray(systemConfig.id, inserted.map(row => row.id))); }
   }, 90000);
+
+  it.each([301, 302, 303, 307, 308])('refuses token HTTP %s under real archived-account approval without caching redirect data', async status => {
+    const env = environment(), data = account(env); await append(env, data); const prepared = await prepare(env, data);
+    const canceled = vi.fn(), fetcher = vi.fn<typeof fetch>(async (_input, init) => {
+      expect(init?.redirect).toBe('manual');
+      return new Response(new ReadableStream<Uint8Array>({ start(controller) {
+        controller.enqueue(new TextEncoder().encode(JSON.stringify({ access_token: 'redirect-token-must-not-be-used', expires_in: 7200 })));
+      }, cancel: canceled }), { status, headers: { location: 'https://redirect-destination.invalid/never-followed' } });
+    });
+    await unavailable(getRoutineShippingAccessToken(appContainer(), env, prepared, { fetcher, forceRefresh: true }));
+    expect(fetcher).toHaveBeenCalledTimes(1); expect(canceled).toHaveBeenCalledTimes(1); expect(transport.redis.set).not.toHaveBeenCalled();
+  }, 5000);
 
   it('keeps token absolute short TTL, refreshes expired cache and redacts malformed/failed transport without exposing secrets', async () => {
     const env = environment(), data = account(env); await append(env, data); const prepared = await prepare(env, data), start = Date.now();

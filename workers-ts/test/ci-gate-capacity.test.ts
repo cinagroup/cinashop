@@ -86,7 +86,8 @@ describe("TEST-006 preserve required migration gate while separating catalog cap
       "Audit legacy-to-PostgreSQL schema drift", "Audit legacy-to-Worker route parity"])
       expect(unit).toContain("- name: "+name+"\n        if: matrix.shard == 1\n");
     expect(unit).toContain("- name: Fetch fixed TypeScript source proof predecessor\n        run: |\n          git fetch --no-tags --depth=1 origin 78240b7801a617ed5b1c1e444860228c066311b8\n          git cat-file -e '78240b7801a617ed5b1c1e444860228c066311b8^{commit}'\n");
-    expect(unit.match(/git fetch --no-tags --depth=1 origin /g)).toHaveLength(1);
+    expect(unit).toContain("git fetch --no-tags --depth=1 origin 353ec0ed03a860eafbc850e9983da505a7ade748\n          git cat-file -e '353ec0ed03a860eafbc850e9983da505a7ade748^{commit}'\n");
+    expect(unit.match(/git fetch --no-tags --depth=1 origin /g)).toHaveLength(2);
     expect(catalog).not.toContain("Fetch fixed TypeScript source proof predecessor");
     expect(catalog).not.toContain("--shard");
     expect(unit).toContain("environment: legacy-php-readonly");

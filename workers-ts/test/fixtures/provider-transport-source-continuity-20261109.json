@@ -1,0 +1,1102 @@
+{
+  "schema": "provider-transport-source-continuity/v1",
+  "predecessorCommit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+  "boundary": "Provider transport and current transport contracts only. Finite historical read ports verify complete current images before exact fixed353 originals. Original PHP, old proofs, assertions and inventories are preserved.",
+  "sources": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "kind": "validation-workflow",
+      "current": {
+        "bytes": 21512,
+        "sha256": "cd1d81bab3cb25272b3eca15dedb979527ecbeabb382bc9c17a7da156fa14cfa",
+        "gitBlobSha1": "552bed24653cb1ea22716fc7ddf5ab9545c830d5"
+      },
+      "predecessor": {
+        "bytes": 21344,
+        "sha256": "a46eeed08813737bb08db126c7cb15a6d348be4bef114e799f8dc877da8d7dab",
+        "gitBlobSha1": "9cde8f6322ea33aa867886bd7c6d850128e2c348"
+      },
+      "inverseEdits": [
+        {
+          "start": 95,
+          "after": [
+            "      # Dated TS proofs read these exact predecessors' Git objects; the default\n",
+            "      # checkout is shallow. Fetch only this repository's fixed commits without\n"
+          ],
+          "before": [
+            "      # Dated TS proofs read this exact predecessor's Git objects; the default\n",
+            "      # checkout is shallow. Fetch only this repository's fixed commit without\n"
+          ]
+        },
+        {
+          "start": 102,
+          "after": [
+            "          git fetch --no-tags --depth=1 origin 353ec0ed03a860eafbc850e9983da505a7ade748\n",
+            "          git cat-file -e '353ec0ed03a860eafbc850e9983da505a7ade748^{commit}'\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": ".github/workflows/workers-runtime-linux.yml",
+        "gitBlobSha1": "9cde8f6322ea33aa867886bd7c6d850128e2c348"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/other/LegacyShareProviderRead.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 3026,
+        "sha256": "6f53c28647cf170d92ee13da0fd7e158baf73486adefd880a7be72980bbcb31b",
+        "gitBlobSha1": "5c378b8fa7b66b029cfb9d370cf46ef9c3274d8c"
+      },
+      "predecessor": {
+        "bytes": 2790,
+        "sha256": "18442850071a97abc2532103c247ee4880896eac899c2c8c538fee37d22129fb",
+        "gitBlobSha1": "30c5bdccedda1b214cfdaffe1386bc90780a0e4d"
+      },
+      "inverseEdits": [
+        {
+          "start": 17,
+          "after": [
+            "    const response = await fetcher(input,{...init,signal:controller.signal,redirect:'manual'});\n"
+          ],
+          "before": [
+            "    const response = await fetcher(input,{...init,signal:controller.signal,redirect:'error'});\n"
+          ]
+        },
+        {
+          "start": 19,
+          "after": [
+            "    if (response.redirected || response.status >= 300 && response.status < 400) {\n",
+            "      void response.body?.cancel().catch(() => undefined);\n",
+            "      throw new ServiceUnavailableException('分享接口重定向，请稍后重试');\n",
+            "    }\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/other/LegacyShareProviderRead.ts",
+        "gitBlobSha1": "30c5bdccedda1b214cfdaffe1386bc90780a0e4d"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/system/PublicGeocodingService.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 8631,
+        "sha256": "a9b7bd74594f274650da19db599e6b70c85a380a445f0390c76d0827cd0db751",
+        "gitBlobSha1": "0589da52220ba3dc904d973a72aaa4f1fe265701"
+      },
+      "predecessor": {
+        "bytes": 8630,
+        "sha256": "0d754cdb60497826414573e86ad869b799b5db94815fed60ed4061c98dda00a7",
+        "gitBlobSha1": "c3e2b3dd1afcaca684e7b7eeae9731479e197639"
+      },
+      "inverseEdits": [
+        {
+          "start": 166,
+          "after": [
+            "          method: 'GET', redirect: 'manual', signal: abort.signal,\n"
+          ],
+          "before": [
+            "          method: 'GET', redirect: 'error', signal: abort.signal,\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/system/PublicGeocodingService.ts",
+        "gitBlobSha1": "c3e2b3dd1afcaca684e7b7eeae9731479e197639"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/waybill/CrmebOnePassWaybillProvider.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 17229,
+        "sha256": "fd697b69321d8474916a566fe77f732fc9124eba14c5751b23ac853d872e9780",
+        "gitBlobSha1": "5d58f0b9edc1d1a50aacfa5f20527810421cdcc5"
+      },
+      "predecessor": {
+        "bytes": 17035,
+        "sha256": "c279aa2336b37c0a091aa5207c00c44cfb9d9b1265c619efa07bdd6cd2fe744c",
+        "gitBlobSha1": "fa2df2da790246da774c8170ef9d8a77ba45c32b"
+      },
+      "inverseEdits": [
+        {
+          "start": 103,
+          "after": [
+            "  if (response.redirected || response.status >= 300 && response.status < 400) {\n",
+            "    void response.body?.cancel().catch(() => undefined);\n",
+            "    throw new Error(\"provider_redirect_rejected\");\n",
+            "  }\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 148,
+          "after": [
+            "      redirect: \"manual\",\n"
+          ],
+          "before": [
+            "      redirect: \"error\",\n"
+          ]
+        },
+        {
+          "start": 172,
+          "after": [
+            "      redirect: \"manual\",\n"
+          ],
+          "before": [
+            "      redirect: \"error\",\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/waybill/CrmebOnePassWaybillProvider.ts",
+        "gitBlobSha1": "fa2df2da790246da774c8170ef9d8a77ba45c32b"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/OfficialAccountMenuProvider.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 10439,
+        "sha256": "4b596b29ace308cb0ed1a3dd5f8704908100c976a9bb8a5ae08064b3fe3c0971",
+        "gitBlobSha1": "0243ed87f0b02dcfc2ec110b7ba60cacc8fe53a7"
+      },
+      "predecessor": {
+        "bytes": 10204,
+        "sha256": "6534cefca72ca1f9848cc694db8d6cf6fa492dac6773e12ca1ca51d6dedaf52d",
+        "gitBlobSha1": "ffed5b64fbf410851f630d9beaf8dc9e6567a95b"
+      },
+      "inverseEdits": [
+        {
+          "start": 90,
+          "after": [
+            "        method, redirect: 'manual', signal: controller.signal,\n"
+          ],
+          "before": [
+            "        method, redirect: 'error', signal: controller.signal,\n"
+          ]
+        },
+        {
+          "start": 96,
+          "after": [
+            "      if (response.redirected || response.status >= 300 && response.status < 400) {\n",
+            "        void response.body?.cancel().catch(() => undefined);\n",
+            "        throw new MenuReadFailure('公众号接口重定向，结果未确认');\n",
+            "      }\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/OfficialAccountMenuProvider.ts",
+        "gitBlobSha1": "ffed5b64fbf410851f630d9beaf8dc9e6567a95b"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/RoutineAccessTokenService.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 8533,
+        "sha256": "025279fd0632186e97d9b82669c2a9fdfcf4cbdb590877922b01d3e8f13ecfec",
+        "gitBlobSha1": "0b6fe79fcbed80549a4ab375364fcb3b3fb27d24"
+      },
+      "predecessor": {
+        "bytes": 8532,
+        "sha256": "5172cff94b8f7e8ac88ef714ade9eb1251a923b8b21b528afd9412093c962e80",
+        "gitBlobSha1": "4d79c85382e8c64dfa2de271f45baa58f23512a1"
+      },
+      "inverseEdits": [
+        {
+          "start": 60,
+          "after": [
+            "    response = await fetcher(url.toString(), { method: 'GET', redirect: 'manual', signal: controller.signal });\n"
+          ],
+          "before": [
+            "    response = await fetcher(url.toString(), { method: 'GET', redirect: 'error', signal: controller.signal });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/RoutineAccessTokenService.ts",
+        "gitBlobSha1": "4d79c85382e8c64dfa2de271f45baa58f23512a1"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/RoutineShippingAccessToken.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 6084,
+        "sha256": "4236bdfd085caeb2a5ec17e51ad66a07239336a1db64af55de17cb46a32baaca",
+        "gitBlobSha1": "af348525717791982746101f0b712900e4b15826"
+      },
+      "predecessor": {
+        "bytes": 6083,
+        "sha256": "c181aa2f2c1748ef236be0b8987c5bebd249b63b20bf0416ebdf0100a299cabd",
+        "gitBlobSha1": "1410ff09632a959095a1a7806b73df4ffc077d9b"
+      },
+      "inverseEdits": [
+        {
+          "start": 27,
+          "after": [
+            "  response=await fetcher(url,{method:'GET',redirect:'manual',signal:controller.signal});\n"
+          ],
+          "before": [
+            "  response=await fetcher(url,{method:'GET',redirect:'error',signal:controller.signal});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/RoutineShippingAccessToken.ts",
+        "gitBlobSha1": "1410ff09632a959095a1a7806b73df4ffc077d9b"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/RoutineShippingProvider.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 7934,
+        "sha256": "497bd49bd4011a1d6304044f2b2796b6247834b507bac0be533edb5952d48acb",
+        "gitBlobSha1": "68d553e6b5a7a8d8df7a64e323bddb9b0c01a97e"
+      },
+      "predecessor": {
+        "bytes": 7890,
+        "sha256": "57b63fcff08ccdf28c59bcd92295cccada33a00bec9cf9a5c858871c5ae049c6",
+        "gitBlobSha1": "c6271afc64ef26aa1c3c1786c673dc6ef8e5db67"
+      },
+      "inverseEdits": [
+        {
+          "start": 24,
+          "after": [
+            "  response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),redirect:'manual',signal:controller.signal});\n"
+          ],
+          "before": [
+            "  response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),redirect:'error',signal:controller.signal});\n"
+          ]
+        },
+        {
+          "start": 27,
+          "after": [
+            "  if(response.status>=300&&response.status<400||response.redirected||!response.body||declared!==null&&(!/^\\d+$/u.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>maxBytes))throw unknown();\n"
+          ],
+          "before": [
+            "  if(response.redirected||!response.body||declared!==null&&(!/^\\d+$/u.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>maxBytes))throw unknown();\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/RoutineShippingProvider.ts",
+        "gitBlobSha1": "c6271afc64ef26aa1c3c1786c673dc6ef8e5db67"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/WechatAppAuthService.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 17010,
+        "sha256": "b2035827dca243eee70cc9a8a835d771ad05e8468fa50e47384b4ddb396806b8",
+        "gitBlobSha1": "9ea15973cae451050df11f1c8a1678512c665924"
+      },
+      "predecessor": {
+        "bytes": 16930,
+        "sha256": "7087c70139c3672baeffcbdfbb3037d5a106a52da7608ec5cc0e61ceb421e987",
+        "gitBlobSha1": "e985e3fe6fa45b05437aa78cc4fa9b6de543cd64"
+      },
+      "inverseEdits": [
+        {
+          "start": 203,
+          "after": [
+            "      const response = await fetch(url.toString(), { method: 'GET', redirect: 'manual', signal: controller.signal });\n"
+          ],
+          "before": [
+            "      const response = await fetch(url.toString(), { method: 'GET', redirect: 'error', signal: controller.signal });\n"
+          ]
+        },
+        {
+          "start": 206,
+          "after": [
+            "        && (!/^\\d+$/u.test(declared) || Number(declared) > RESPONSE_BYTES)) {\n",
+            "        void response.body?.cancel().catch(() => undefined);\n",
+            "        throw Error('unavailable');\n",
+            "      }\n"
+          ],
+          "before": [
+            "        && (!/^\\d+$/u.test(declared) || Number(declared) > RESPONSE_BYTES)) throw Error('unavailable');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/WechatAppAuthService.ts",
+        "gitBlobSha1": "e985e3fe6fa45b05437aa78cc4fa9b6de543cd64"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/WechatFollowPosterService.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 16036,
+        "sha256": "c5117c725d0d28bd9332ed79b5d19f0012ce94b44a2dd46b02c59db5176953d0",
+        "gitBlobSha1": "607d3aaf493d1dd270c1cc961a72d08084791653"
+      },
+      "predecessor": {
+        "bytes": 16035,
+        "sha256": "71e9c78415843180318f33c9990bd254478b8ac19e608e0809e3bdd2b433eb88",
+        "gitBlobSha1": "46c5edaa64e6ebaafab65c32d4609af7dda01dca"
+      },
+      "inverseEdits": [
+        {
+          "start": 130,
+          "after": [
+            "      const response = await this.fetcher(source.url, { signal, redirect: 'manual', headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' } });\n"
+          ],
+          "before": [
+            "      const response = await this.fetcher(source.url, { signal, redirect: 'error', headers: { Accept: 'image/png,image/jpeg,image/webp,image/gif' } });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/WechatFollowPosterService.ts",
+        "gitBlobSha1": "46c5edaa64e6ebaafab65c32d4609af7dda01dca"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/WechatNotificationProvider.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 14444,
+        "sha256": "b399d1124a2b9b7df3477e05b7fa66bf4a6b58fa44341952e1afc6b270399991",
+        "gitBlobSha1": "3cf11136c4f32ea1c8c06fd6409e9085be315b39"
+      },
+      "predecessor": {
+        "bytes": 14392,
+        "sha256": "abd0c6e927b1320a6c3017721073cf18952710926daca01c18ae59a63e54f570",
+        "gitBlobSha1": "a35d8c3e48e07613c18fb2c3e8130cdb9fd8742a"
+      },
+      "inverseEdits": [
+        {
+          "start": 209,
+          "after": [
+            "        body: JSON.stringify(body), signal: controller.signal, redirect: 'manual' });\n"
+          ],
+          "before": [
+            "        body: JSON.stringify(body), signal: controller.signal, redirect: 'error' });\n"
+          ]
+        },
+        {
+          "start": 212,
+          "after": [
+            "      if (response.status >= 300 && response.status < 400 || response.redirected || !response.body || declared !== null &&\n"
+          ],
+          "before": [
+            "      if (response.redirected || !response.body || declared !== null &&\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/WechatNotificationProvider.ts",
+        "gitBlobSha1": "a35d8c3e48e07613c18fb2c3e8130cdb9fd8742a"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/wechat/WithdrawalWecomRobotProvider.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 4404,
+        "sha256": "16e506631ba5fbf9c4c94ee46f98b876fb05e8719dff526f454dabe29f63ac84",
+        "gitBlobSha1": "a357e5278750e4d8f92e79cc5ab99c09d434390d"
+      },
+      "predecessor": {
+        "bytes": 4380,
+        "sha256": "bd2cb36612a3eb24f0a5a8b576455b238cec813eeaa648d0dfd886e244ed7ecb",
+        "gitBlobSha1": "fe77a8f5ada8949f6d1d8cf995ede7ea0daf2d40"
+      },
+      "inverseEdits": [
+        {
+          "start": 66,
+          "after": [
+            "        method: \"POST\", headers: { \"content-type\": \"application/json\" }, redirect: \"manual\",\n"
+          ],
+          "before": [
+            "        method: \"POST\", headers: { \"content-type\": \"application/json\" }, redirect: \"error\",\n"
+          ]
+        },
+        {
+          "start": 70,
+          "after": [
+            "      if (!response.ok || response.redirected) {\n"
+          ],
+          "before": [
+            "      if (!response.ok) {\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/wechat/WithdrawalWecomRobotProvider.ts",
+        "gitBlobSha1": "fe77a8f5ada8949f6d1d8cf995ede7ea0daf2d40"
+      }
+    },
+    {
+      "file": "workers-ts/src/services/work/EnterpriseWechatProviderClient.ts",
+      "kind": "provider",
+      "current": {
+        "bytes": 32532,
+        "sha256": "416a3ebf31cc87e253fc704841a54805ae5d742a32343d3f2f24355bf345ebf1",
+        "gitBlobSha1": "d6abc8f0c621565323f97f32f16ebfeafb7f56da"
+      },
+      "predecessor": {
+        "bytes": 32337,
+        "sha256": "dd45343f0ad36d1e0f54274e0131c427e5e08571efb4a3453f82c0887df9cbc7",
+        "gitBlobSha1": "1e5e99b0feb94662cda9699e27a2e557b6ca4bd1"
+      },
+      "inverseEdits": [
+        {
+          "start": 235,
+          "after": [
+            "  if (response.redirected || response.status >= 300 && response.status < 400) {\n",
+            "    void response.body?.cancel().catch(() => undefined);\n",
+            "    throw new Error(\"provider_redirect_rejected\");\n",
+            "  }\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 473,
+          "after": [
+            "        response = await this.fetcher(url, { method: \"POST\", redirect: \"manual\", headers: { Accept: \"application/json\", \"Content-Type\": \"application/json\" }, body, signal: controller.signal });\n"
+          ],
+          "before": [
+            "        response = await this.fetcher(url, { method: \"POST\", redirect: \"error\", headers: { Accept: \"application/json\", \"Content-Type\": \"application/json\" }, body, signal: controller.signal });\n"
+          ]
+        },
+        {
+          "start": 791,
+          "after": [
+            "          redirect: \"manual\",\n"
+          ],
+          "before": [
+            "          redirect: \"error\",\n"
+          ]
+        },
+        {
+          "start": 891,
+          "after": [
+            "        redirect: \"manual\",\n"
+          ],
+          "before": [
+            "        redirect: \"error\",\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/src/services/work/EnterpriseWechatProviderClient.ts",
+        "gitBlobSha1": "1e5e99b0feb94662cda9699e27a2e557b6ca4bd1"
+      }
+    },
+    {
+      "file": "workers-ts/test/admin-express-provider.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 12528,
+        "sha256": "e2e4c3cd85378b4e0447c35c55328868fdfbd9f9dbbe2002d3432a1249540c80",
+        "gitBlobSha1": "a32598728d1bc60d85f64cbb6630ef2c4767f303"
+      },
+      "predecessor": {
+        "bytes": 12527,
+        "sha256": "f338d68abf5cde79af3f599d4290914eadfe07500de73055fdaf74c4b9c60a31",
+        "gitBlobSha1": "12e975377e39d8cda459cd2f965786b2703db5d2"
+      },
+      "inverseEdits": [
+        {
+          "start": 78,
+          "after": [
+            "    expect(request.method).toBe('GET'); expect(request.body).toBeUndefined(); expect(request.redirect).toBe('manual');\n"
+          ],
+          "before": [
+            "    expect(request.method).toBe('GET'); expect(request.body).toBeUndefined(); expect(request.redirect).toBe('error');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/admin-express-provider.test.ts",
+        "gitBlobSha1": "12e975377e39d8cda459cd2f965786b2703db5d2"
+      }
+    },
+    {
+      "file": "workers-ts/test/ci-gate-capacity.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 10290,
+        "sha256": "28b66d825465c7dae3d6df0d956a0aa4ef394fae6901f33e41724b964c2de3f5",
+        "gitBlobSha1": "d368eabea5e4c59bd44ec27317f6723f043ee193"
+      },
+      "predecessor": {
+        "bytes": 10100,
+        "sha256": "5266632f40e018364ab5cd5ece4a5ba1ec708467ff892fe28da979be175931bc",
+        "gitBlobSha1": "0bea084d6e2fd9a469bec31e89663e56a1144f69"
+      },
+      "inverseEdits": [
+        {
+          "start": 88,
+          "after": [
+            "    expect(unit).toContain(\"git fetch --no-tags --depth=1 origin 353ec0ed03a860eafbc850e9983da505a7ade748\\n          git cat-file -e '353ec0ed03a860eafbc850e9983da505a7ade748^{commit}'\\n\");\n",
+            "    expect(unit.match(/git fetch --no-tags --depth=1 origin /g)).toHaveLength(2);\n"
+          ],
+          "before": [
+            "    expect(unit.match(/git fetch --no-tags --depth=1 origin /g)).toHaveLength(1);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/ci-gate-capacity.test.ts",
+        "gitBlobSha1": "0bea084d6e2fd9a469bec31e89663e56a1144f69"
+      }
+    },
+    {
+      "file": "workers-ts/test/enterprise-wechat-label-directory-provider.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 9021,
+        "sha256": "738c1d0f8b82ab4b89d8dbd355887363d435441c86b527d6591fe0aa6cc533c3",
+        "gitBlobSha1": "d0905105bb0704fd728ced616a2f4f3ea214a4ed"
+      },
+      "predecessor": {
+        "bytes": 9020,
+        "sha256": "2316dbd9e135833af31bf4ea5acd3074a3ba58a4a1a923de04b4f11de36b5813",
+        "gitBlobSha1": "93dc89e87403d62f299fb7e299025a72a5720bfe"
+      },
+      "inverseEdits": [
+        {
+          "start": 21,
+          "after": [
+            " it('uses only the external-contact credential, exact POST body, HTTPS and existing token cache',async()=>{const f=fixture([token(),response(ack()),response({errcode:0,tag_group:[group()]})]);await expect(f.client.corpTagCreate(request)).resolves.toEqual(ack());await f.client.corpTagDirectory();expect(f.calls).toHaveLength(3);expect(f.calls[0]!.url.pathname).toBe('/cgi-bin/gettoken');expect(f.calls[0]!.url.searchParams.get('corpsecret')).toBe('controlled-external-secret');const write=f.calls[1]!;expect(write.url.origin).toBe('https://qyapi.weixin.qq.com');expect(write.url.pathname).toBe('/cgi-bin/externalcontact/add_corp_tag');expect(write.url.searchParams.get('access_token')).toBe('controlled-token');expect(write.init).toMatchObject({method:'POST',redirect:'manual',headers:{Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify(request)});expect(write.init!.signal).toBeInstanceOf(AbortSignal);expect(JSON.parse(f.calls[2]!.init!.body as string)).toEqual({tag_id:[],group_id:[]});expect(f.values.size).toBe(1);});\n"
+          ],
+          "before": [
+            " it('uses only the external-contact credential, exact POST body, HTTPS and existing token cache',async()=>{const f=fixture([token(),response(ack()),response({errcode:0,tag_group:[group()]})]);await expect(f.client.corpTagCreate(request)).resolves.toEqual(ack());await f.client.corpTagDirectory();expect(f.calls).toHaveLength(3);expect(f.calls[0]!.url.pathname).toBe('/cgi-bin/gettoken');expect(f.calls[0]!.url.searchParams.get('corpsecret')).toBe('controlled-external-secret');const write=f.calls[1]!;expect(write.url.origin).toBe('https://qyapi.weixin.qq.com');expect(write.url.pathname).toBe('/cgi-bin/externalcontact/add_corp_tag');expect(write.url.searchParams.get('access_token')).toBe('controlled-token');expect(write.init).toMatchObject({method:'POST',redirect:'error',headers:{Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify(request)});expect(write.init!.signal).toBeInstanceOf(AbortSignal);expect(JSON.parse(f.calls[2]!.init!.body as string)).toEqual({tag_id:[],group_id:[]});expect(f.values.size).toBe(1);});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/enterprise-wechat-label-directory-provider.test.ts",
+        "gitBlobSha1": "93dc89e87403d62f299fb7e299025a72a5720bfe"
+      }
+    },
+    {
+      "file": "workers-ts/test/enterprise-wechat-provider-client.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 24391,
+        "sha256": "5caa7b6d8b352d0d7dd47204392b7ea4326569b66bc1c63771da23d6a905ca74",
+        "gitBlobSha1": "f2b8401f43a18a1b34cbf1f8d4bcd890b83e974c"
+      },
+      "predecessor": {
+        "bytes": 24390,
+        "sha256": "c06d1d5b175f61ffa5034be56ed8fbe7f19915a71683d2d04c0bcc03c3b7c50a",
+        "gitBlobSha1": "aaf9b811ebbb03bb704a110771f87e67be36c47c"
+      },
+      "inverseEdits": [
+        {
+          "start": 117,
+          "after": [
+            "    expect(calls.every((call) => call.init?.redirect === \"manual\")).toBe(true);\n"
+          ],
+          "before": [
+            "    expect(calls.every((call) => call.init?.redirect === \"error\")).toBe(true);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/enterprise-wechat-provider-client.test.ts",
+        "gitBlobSha1": "aaf9b811ebbb03bb704a110771f87e67be36c47c"
+      }
+    },
+    {
+      "file": "workers-ts/test/helpers/rechargeRefundSourceContinuity.ts",
+      "kind": "historical-reader",
+      "current": {
+        "bytes": 16853,
+        "sha256": "f6cff6ef5ff9d156fa555fa9ed87e21db1568d3597190647ffcda16b21297f6e",
+        "gitBlobSha1": "6bdf78385de67aaf570c2f24116d707fbf88c95a"
+      },
+      "predecessor": {
+        "bytes": 16425,
+        "sha256": "0d7dcacebedd7d0fda374b7870e43cdecf7c2c263cfb3507fbd5ea9865891bfc",
+        "gitBlobSha1": "35b27170fca97a748b5c242bfea0e27d722573bf"
+      },
+      "inverseEdits": [
+        {
+          "start": 9,
+          "after": [
+            "import {isProviderTransportSource,projectProviderTransportPredecessor} from './providerTransportSourceContinuity';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 207,
+          "after": [
+            " // Only the finite reviewed provider/test images map to fixed353 before the\n",
+            " // unchanged older leaves. Production and current tests use native source.\n",
+            " const transportType=isProviderTransportSource(name);\n",
+            " const selected=transportType||(view==='refund'?refundFiles:view==='recharge'?rechargeFiles:membershipFiles).has(name);\n"
+          ],
+          "before": [
+            " const selected=(view==='refund'?refundFiles:view==='recharge'?rechargeFiles:membershipFiles).has(name);\n"
+          ]
+        },
+        {
+          "start": 214,
+          "after": [
+            " const physical=typeof value==='string'?value:decode(value);\n",
+            " const source=transportType?projectProviderTransportPredecessor(name,physical):physical;\n"
+          ],
+          "before": [
+            " const source=typeof value==='string'?value:decode(value);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/helpers/rechargeRefundSourceContinuity.ts",
+        "gitBlobSha1": "35b27170fca97a748b5c242bfea0e27d722573bf"
+      }
+    },
+    {
+      "file": "workers-ts/test/native-app-auth-service.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 25536,
+        "sha256": "007e8c40cbd886145d890dd895064f1feda8bba0a56aae58ae9fd6d1798f483c",
+        "gitBlobSha1": "57cab5d1be378db44eba6bf9d140a99fae1eaba8"
+      },
+      "predecessor": {
+        "bytes": 24710,
+        "sha256": "b432e19963e2556596f797e710279e6f0585c246f8ff46a3c1c3a82cf218dbbb",
+        "gitBlobSha1": "ee50e9d92d665709041067861ddcc3dd9de88c8f"
+      },
+      "inverseEdits": [
+        {
+          "start": 104,
+          "after": [
+            "    expect(network.mock.calls.every(call => call[1]?.redirect === 'manual')).toBe(true);\n"
+          ],
+          "before": [
+            "    expect(network.mock.calls.every(call => call[1]?.redirect === 'error')).toBe(true);\n"
+          ]
+        },
+        {
+          "start": 106,
+          "after": [
+            "  });\n",
+            "  it.each([301, 302, 303, 307, 308])('cancels token HTTP %s before any identity publication or redirect request', async status => {\n",
+            "    const flow = await start(), cancel = vi.fn();\n",
+            "    network.mockImplementation(async () => new Response(new ReadableStream<Uint8Array>({\n",
+            "      start(controller) { controller.enqueue(new TextEncoder().encode(JSON.stringify(tokenPayload()))); }, cancel,\n",
+            "    }), { status, headers: { location: 'https://redirect-destination.invalid/never-followed' } }));\n",
+            "    await expect(flow.login()).rejects.toBeInstanceOf(ServiceUnavailableException);\n",
+            "    expect(cancel).toHaveBeenCalledTimes(1); expect(network).toHaveBeenCalledTimes(1);\n",
+            "    expect(network.mock.calls[0][1]?.redirect).toBe('manual');\n",
+            "    expect(await f.db.select().from(wechatUser)).toEqual([]); expect(memory.buckets.size).toBe(0);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/native-app-auth-service.test.ts",
+        "gitBlobSha1": "ee50e9d92d665709041067861ddcc3dd9de88c8f"
+      }
+    },
+    {
+      "file": "workers-ts/test/product-share-code.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 7470,
+        "sha256": "c8af2f9246520a196c1b2c3887e2db2358bd15ea794daca6efd065a8bc7cb485",
+        "gitBlobSha1": "54116211e0f5c4c5decd761c5baeacb1b4ec684f"
+      },
+      "predecessor": {
+        "bytes": 7469,
+        "sha256": "34ad8c0f3f9cc5200f6570f29b5343954b6fdfe6b90fe82f902f2104f2e298e8",
+        "gitBlobSha1": "9dd351408fb8f224024c27c6f6f791ffcef3a6bf"
+      },
+      "inverseEdits": [
+        {
+          "start": 19,
+          "after": [
+            "  it('pins the provider endpoint and applies a real deadline and redirect rejection',async()=>{const calls:RequestInit[]=[];const fetcher=async(_input:RequestInfo|URL,init?:RequestInit)=>{calls.push(init!);return Response.json({ok:1});};const load=boundedProductShareFetch(fetcher);await load('https://api.weixin.qq.com/cgi-bin/token');expect(calls[0].signal).toBeInstanceOf(AbortSignal);expect(calls[0].redirect).toBe('manual');await expect(load('https://evil.example.com/cgi-bin/token')).rejects.toThrow();await expect(load('https://api.weixin.qq.com/other')).rejects.toThrow();expect(calls).toHaveLength(1);});\n"
+          ],
+          "before": [
+            "  it('pins the provider endpoint and applies a real deadline and redirect rejection',async()=>{const calls:RequestInit[]=[];const fetcher=async(_input:RequestInfo|URL,init?:RequestInit)=>{calls.push(init!);return Response.json({ok:1});};const load=boundedProductShareFetch(fetcher);await load('https://api.weixin.qq.com/cgi-bin/token');expect(calls[0].signal).toBeInstanceOf(AbortSignal);expect(calls[0].redirect).toBe('error');await expect(load('https://evil.example.com/cgi-bin/token')).rejects.toThrow();await expect(load('https://api.weixin.qq.com/other')).rejects.toThrow();expect(calls).toHaveLength(1);});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/product-share-code.test.ts",
+        "gitBlobSha1": "9dd351408fb8f224024c27c6f6f791ffcef3a6bf"
+      }
+    },
+    {
+      "file": "workers-ts/test/public-geocoding.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 16657,
+        "sha256": "af8d4d3a0dec81cfb39de7f94384b6880e63666736558cfe1e4d3d2e408cf604",
+        "gitBlobSha1": "6e5a054792466b05ded99a0c2ce61402a70a4728"
+      },
+      "predecessor": {
+        "bytes": 16656,
+        "sha256": "d41c073c068dd5581f40427af70b3b1c5ff0e30e867d50be16f6516329b66d4f",
+        "gitBlobSha1": "d3020a84ad7045383d2ca17ce16f11bdbcdd2edd"
+      },
+      "inverseEdits": [
+        {
+          "start": 92,
+          "after": [
+            "    expect(init).toMatchObject({ method: 'GET', redirect: 'manual', headers: { Accept: 'application/json' } });\n"
+          ],
+          "before": [
+            "    expect(init).toMatchObject({ method: 'GET', redirect: 'error', headers: { Accept: 'application/json' } });\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/public-geocoding.test.ts",
+        "gitBlobSha1": "d3020a84ad7045383d2ca17ce16f11bdbcdd2edd"
+      }
+    },
+    {
+      "file": "workers-ts/test/recharge-refund-source-continuity.test.ts",
+      "kind": "historical-reader",
+      "current": {
+        "bytes": 30833,
+        "sha256": "66bb3a751de13032ea99273c9237ada3f3c8a0a19b6d8070097f93d5dca9a369",
+        "gitBlobSha1": "89c15d138ca206415c8a959e227bae3ce3788496"
+      },
+      "predecessor": {
+        "bytes": 30610,
+        "sha256": "5e65340b3a1e455de1b4e7c43d09ba04669c75a0884c8566938756f70a1a0dca",
+        "gitBlobSha1": "478a6eae2232ddf34e3306cd67a9c781c6e18e2d"
+      },
+      "inverseEdits": [
+        {
+          "start": 10,
+          "after": [
+            "import {projectProviderTransportPredecessor} from './helpers/providerTransportSourceContinuity';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 19,
+          "after": [
+            "// The dated v10 image is fixed353 after the complete reviewed CI transport bridge.\n",
+            "const physical=(file:string)=>projectProviderTransportPredecessor(file,readNativeFileSync(resolve(root,file),'utf8'));\n"
+          ],
+          "before": [
+            "const physical=(file:string)=>readNativeFileSync(resolve(root,file),'utf8');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/recharge-refund-source-continuity.test.ts",
+        "gitBlobSha1": "478a6eae2232ddf34e3306cd67a9c781c6e18e2d"
+      }
+    },
+    {
+      "file": "workers-ts/test/routine-access-token.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 28946,
+        "sha256": "4f73d2c4ec9699d2c98e70b03cd0732f02c214819abe827328c0e7794f96c251",
+        "gitBlobSha1": "bfdc76818f35abd7b3a895486df3c04e69769d6c"
+      },
+      "predecessor": {
+        "bytes": 28945,
+        "sha256": "cc3c3897ac6c19353ba560742812b08bde1ab23722eb4d88d69d36f7e5b96320",
+        "gitBlobSha1": "631e9231ddf5b3046bc9c8390bc4763d3671b1bc"
+      },
+      "inverseEdits": [
+        {
+          "start": 107,
+          "after": [
+            "      expect(init).toMatchObject({ method: 'GET', redirect: 'manual' }); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ],
+          "before": [
+            "      expect(init).toMatchObject({ method: 'GET', redirect: 'error' }); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/routine-access-token.test.ts",
+        "gitBlobSha1": "631e9231ddf5b3046bc9c8390bc4763d3671b1bc"
+      }
+    },
+    {
+      "file": "workers-ts/test/routine-code-source.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 17522,
+        "sha256": "95f8bda997717f43b135001a8f855e6428eace1c377d46c96786fbc951bad7d8",
+        "gitBlobSha1": "76da143ce922740c4d6d76daf9f994783eb58b8b"
+      },
+      "predecessor": {
+        "bytes": 17521,
+        "sha256": "97ae6bc59c64f7f7ea6e4d1291c5e4961077586fddc87445665299dc38449a0a",
+        "gitBlobSha1": "5975421c3f053ca078825e0101f503ba6d54890a"
+      },
+      "inverseEdits": [
+        {
+          "start": 77,
+          "after": [
+            "      expect(init?.redirect).toBe('manual');expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ],
+          "before": [
+            "      expect(init?.redirect).toBe('error');expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/routine-code-source.test.ts",
+        "gitBlobSha1": "5975421c3f053ca078825e0101f503ba6d54890a"
+      }
+    },
+    {
+      "file": "workers-ts/test/routine-notification-source.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 21674,
+        "sha256": "151b6a5e7eb75266dc6da6c393bba8339bfe217dd643296c3cdb0a9592182067",
+        "gitBlobSha1": "854798044941c180df7a3f47d8953f31389af0e9"
+      },
+      "predecessor": {
+        "bytes": 21673,
+        "sha256": "bd5298e5e9cf2b5095ac596889e68da4245adf13a83e004bb629f6229762d037",
+        "gitBlobSha1": "ee9345be40f88192c6a1029c1702c79c3d04b1ca"
+      },
+      "inverseEdits": [
+        {
+          "start": 75,
+          "after": [
+            "      expect(init?.redirect).toBe('manual'); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ],
+          "before": [
+            "      expect(init?.redirect).toBe('error'); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/routine-notification-source.test.ts",
+        "gitBlobSha1": "ee9345be40f88192c6a1029c1702c79c3d04b1ca"
+      }
+    },
+    {
+      "file": "workers-ts/test/routine-shipping-account-native.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 24664,
+        "sha256": "1ab8818fa996ce6b4894933c61ed41ddb9256239c591ad0344d9e34fb2c1caf4",
+        "gitBlobSha1": "43b1855f5f1fa00796811a289cc7d1414192a862"
+      },
+      "predecessor": {
+        "bytes": 23644,
+        "sha256": "85546c4cab767adb4478a1036823472d66df5480f2315b1bd8011e4d439fcb29",
+        "gitBlobSha1": "124edc7cad19fb1128010a8b98562b16dde81621"
+      },
+      "inverseEdits": [
+        {
+          "start": 205,
+          "after": [
+            "      expect(init).toMatchObject({ method: 'GET', redirect: 'manual' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();\n"
+          ],
+          "before": [
+            "      expect(init).toMatchObject({ method: 'GET', redirect: 'error' }); expect(init?.signal).toBeInstanceOf(AbortSignal); return response();\n"
+          ]
+        },
+        {
+          "start": 229,
+          "after": [
+            "\n",
+            "  it.each([301, 302, 303, 307, 308])('refuses token HTTP %s under real archived-account approval without caching redirect data', async status => {\n",
+            "    const env = environment(), data = account(env); await append(env, data); const prepared = await prepare(env, data);\n",
+            "    const canceled = vi.fn(), fetcher = vi.fn<typeof fetch>(async (_input, init) => {\n",
+            "      expect(init?.redirect).toBe('manual');\n",
+            "      return new Response(new ReadableStream<Uint8Array>({ start(controller) {\n",
+            "        controller.enqueue(new TextEncoder().encode(JSON.stringify({ access_token: 'redirect-token-must-not-be-used', expires_in: 7200 })));\n",
+            "      }, cancel: canceled }), { status, headers: { location: 'https://redirect-destination.invalid/never-followed' } });\n",
+            "    });\n",
+            "    await unavailable(getRoutineShippingAccessToken(appContainer(), env, prepared, { fetcher, forceRefresh: true }));\n",
+            "    expect(fetcher).toHaveBeenCalledTimes(1); expect(canceled).toHaveBeenCalledTimes(1); expect(transport.redis.set).not.toHaveBeenCalled();\n",
+            "  }, 5000);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/routine-shipping-account-native.test.ts",
+        "gitBlobSha1": "124edc7cad19fb1128010a8b98562b16dde81621"
+      }
+    },
+    {
+      "file": "workers-ts/test/routine-shipping-delivery-native.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 41911,
+        "sha256": "343728b601955f99923696d17a91117427c8a3cb45c1342f28641a30899322d0",
+        "gitBlobSha1": "c6f0ec61b796667c014b50ce1d55101c25b820bf"
+      },
+      "predecessor": {
+        "bytes": 40649,
+        "sha256": "dc118a6ad07f2ad47021424f116da82e86b99fc5897a130c0f3022a08a4585e0",
+        "gitBlobSha1": "1db788102e66fecad04ab4e809619f1ed7931ca6"
+      },
+      "inverseEdits": [
+        {
+          "start": 181,
+          "after": [
+            "      expect(init?.redirect).toBe('manual');\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 274,
+          "after": [
+            "\n",
+            "  it.each([301,302,303,307,308])('keeps genuine shipping POST HTTP %s UNKNOWN without token refresh or Queue redispatch',async status=>{\n",
+            "    const c=await staged(),canceled=vi.fn(),calls=transport(c.order,async()=>new Response(new ReadableStream<Uint8Array>({\n",
+            "      start(controller){controller.enqueue(new TextEncoder().encode(JSON.stringify({errcode:40014})));},cancel:canceled,\n",
+            "    }),{status,headers:{location:'https://redirect-destination.invalid/never-followed'}}));\n",
+            "    expect(await consumer().processMessage(c.message)).toBe('unknown');nativeReached();expect(calls.uploads()).toBe(1);\n",
+            "    expect(canceled).toHaveBeenCalledTimes(1);expect(calls.carriers()).toBe(1);\n",
+            "    const first=await immutable(c.id),tokenReads=calls.tokens();expect(first.dispatch).toHaveLength(1);expect(first.evidence).toHaveLength(0);\n",
+            "    expect(await delivery(c.id)).toMatchObject({status:'UNKNOWN',lastError:'wechat_shipping_outcome_unknown'});\n",
+            "    expect(await consumer().processMessage(c.message)).toBe('unknown');expect((await consumer().dispatchPending(20,c.message.eventKey)).enqueued).toBe(0);\n",
+            "    expect(calls.uploads()).toBe(1);expect(calls.tokens()).toBe(tokenReads);expect(await immutable(c.id)).toEqual(first);\n",
+            "  },5000);\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/routine-shipping-delivery-native.test.ts",
+        "gitBlobSha1": "1db788102e66fecad04ab4e809619f1ed7931ca6"
+      }
+    },
+    {
+      "file": "workers-ts/test/wechat-follow-poster.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 14845,
+        "sha256": "9c8bab89d55adffc5a1a144af41b6b4f285c24b72e7a98108cd926f5f401cbd2",
+        "gitBlobSha1": "d819a901eb311bad5593af5772854de093adf31a"
+      },
+      "predecessor": {
+        "bytes": 14844,
+        "sha256": "27244eccc7b4cb3ee69b89228152cc4a07ed023c2c9c8ba19aa9db41e59eec68",
+        "gitBlobSha1": "ce01d0890827e0cfc01a5178d46fc9ecf0b5f8d9"
+      },
+      "inverseEdits": [
+        {
+          "start": 121,
+          "after": [
+            "    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { expect(init?.redirect).toBe('manual'); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ],
+          "before": [
+            "    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { expect(init?.redirect).toBe('error'); expect(init?.signal).toBeInstanceOf(AbortSignal);\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/wechat-follow-poster.test.ts",
+        "gitBlobSha1": "ce01d0890827e0cfc01a5178d46fc9ecf0b5f8d9"
+      }
+    },
+    {
+      "file": "workers-ts/test/wechat-menu-provider.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 20318,
+        "sha256": "e399e97432e16356c309e5323577686dd43214ed8d57a720dae25609c9e515e3",
+        "gitBlobSha1": "40c89e699c32a89ffce84e7adba6e872b0753585"
+      },
+      "predecessor": {
+        "bytes": 20317,
+        "sha256": "0d69772f31afb49db4a90c8becb4eb422abbdf3b9a3b1157f71481d40f3b9140",
+        "gitBlobSha1": "738508535bb5fa842a81d5a7ec17cbc9909d549a"
+      },
+      "inverseEdits": [
+        {
+          "start": 65,
+          "after": [
+            "      expect(request.init?.redirect).toBe('manual');\n"
+          ],
+          "before": [
+            "      expect(request.init?.redirect).toBe('error');\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/wechat-menu-provider.test.ts",
+        "gitBlobSha1": "738508535bb5fa842a81d5a7ec17cbc9909d549a"
+      }
+    },
+    {
+      "file": "workers-ts/test/withdrawal-wecom-robot-provider.test.ts",
+      "kind": "current-contract",
+      "current": {
+        "bytes": 4810,
+        "sha256": "53187f3a2720f9c65f6721b0be5809504002162e030992545f7bb2d4a0de39a5",
+        "gitBlobSha1": "b704e9e29090b45626d3bfdba6ead96a38474fdf"
+      },
+      "predecessor": {
+        "bytes": 4809,
+        "sha256": "ac0e9f3a76a715dca485fce4408e5d0a60c6734be1d96fedb133dd109f4330a7",
+        "gitBlobSha1": "86375b1a3eb2631a46ce9291de7bae7d91b6f147"
+      },
+      "inverseEdits": [
+        {
+          "start": 28,
+          "after": [
+            "    expect(init?.redirect).toBe(\"manual\");\n"
+          ],
+          "before": [
+            "    expect(init?.redirect).toBe(\"error\");\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/withdrawal-wecom-robot-provider.test.ts",
+        "gitBlobSha1": "86375b1a3eb2631a46ce9291de7bae7d91b6f147"
+      }
+    }
+  ]
+}

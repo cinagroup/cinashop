@@ -75,7 +75,7 @@ describe('routine QR consumers use fresh paired SQL source and isolate image pub
     await f.db.insert(user).values({uid:7,status:1,divisionType:2,divisionStatus:1,nowMoney:'25.00',integral:81,level:2,levelStatus:1});
     env={APP_KEY:IP_KEY,CONFIG_KV:{get:vi.fn(async()=>{transport.outside();throw Error('Credential KV fallback forbidden');}),put:vi.fn(),delete:vi.fn()}} as unknown as Env;
     fetcher=vi.fn(async(input,init)=>{transport.outside();const url=new URL(String(input));calls.push({url,body:init?.body?JSON.parse(String(init.body)):null});
-      expect(init?.redirect).toBe('error');expect(init?.signal).toBeInstanceOf(AbortSignal);
+      expect(init?.redirect).toBe('manual');expect(init?.signal).toBeInstanceOf(AbortSignal);
       return url.pathname==='/cgi-bin/token'?Response.json({access_token:'owned-qr-token',expires_in:7200}):new Response(PNG,{headers:{'Content-Type':'image/png'}});
     });
   });

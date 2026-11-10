@@ -73,7 +73,7 @@ describe('Mini notification immutable intended account and provider outcome ledg
     env = { APP_KEY: 'owned-notification-signing-key', CONFIG_KV: { get: vi.fn(async () => { cache.outside(); throw Error('Notification credential KV forbidden'); }), put: vi.fn(), delete: vi.fn() } } as unknown as Env;
     fetcher = vi.fn(async (input, init) => {
       cache.outside(); const url = new URL(String(input)); calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : null });
-      expect(init?.redirect).toBe('error'); expect(init?.signal).toBeInstanceOf(AbortSignal);
+      expect(init?.redirect).toBe('manual'); expect(init?.signal).toBeInstanceOf(AbortSignal);
       return url.pathname === '/cgi-bin/token' ? Response.json({ access_token: 'owned-fresh-token', expires_in: 7200 }) : Response.json({ errcode: 0 });
     });
   });

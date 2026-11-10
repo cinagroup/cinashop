@@ -207,10 +207,10 @@ export class WechatNotificationProvider {
     });
     const receive = async () => {
       response = await this.fetcher(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body), signal: controller.signal, redirect: 'error' });
+        body: JSON.stringify(body), signal: controller.signal, redirect: 'manual' });
       if (stopped) { cancel(); throw unknown(); }
       const declared = response.headers.get('content-length');
-      if (response.redirected || !response.body || declared !== null &&
+      if (response.status >= 300 && response.status < 400 || response.redirected || !response.body || declared !== null &&
         (!/^\d+$/u.test(declared) || !Number.isSafeInteger(Number(declared)) || Number(declared) > MAX_RESPONSE_BYTES)) throw unknown();
       reader = response.body.getReader();
       let complete = false, size = 0; const chunks: Uint8Array[] = [];

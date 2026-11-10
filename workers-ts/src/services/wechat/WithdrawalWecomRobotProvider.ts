@@ -64,11 +64,11 @@ export async function sendWithdrawalWecomRobot(
   try {
     return await Promise.race([timeout, (async () => {
       const response = await fetcher(secret, {
-        method: "POST", headers: { "content-type": "application/json" }, redirect: "error",
+        method: "POST", headers: { "content-type": "application/json" }, redirect: "manual",
         signal: controller.signal,
         body: JSON.stringify({ msgtype: "text", text: { content: `收到一笔提现申请，请在后台查看。申请编号：${payload.withdrawalId}` } }),
       });
-      if (!response.ok) {
+      if (!response.ok || response.redirected) {
         void response.body?.cancel().catch(() => undefined);
         throw new Error("企业微信机器人 HTTP 响应结果未知");
       }

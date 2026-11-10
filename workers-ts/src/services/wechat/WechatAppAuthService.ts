@@ -201,10 +201,13 @@ export class WechatAppAuthService {
     if (remaining <= 0) throw new ServiceUnavailableException('原生App微信授权服务超时，请重新授权');
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), remaining);
     try {
-      const response = await fetch(url.toString(), { method: 'GET', redirect: 'error', signal: controller.signal });
+      const response = await fetch(url.toString(), { method: 'GET', redirect: 'manual', signal: controller.signal });
       const declared = response.headers.get('content-length');
       if (!response.ok || response.redirected || !response.body || declared !== null
-        && (!/^\d+$/u.test(declared) || Number(declared) > RESPONSE_BYTES)) throw Error('unavailable');
+        && (!/^\d+$/u.test(declared) || Number(declared) > RESPONSE_BYTES)) {
+        void response.body?.cancel().catch(() => undefined);
+        throw Error('unavailable');
+      }
       const reader = response.body.getReader(), chunks: Uint8Array[] = []; let size = 0;
       try {
         while (true) {

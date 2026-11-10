@@ -102,8 +102,18 @@ describe('native App OAuth server-only capability and atomic identity publicatio
     const url = new URL(String(network.mock.calls[0][0])); expect(url.origin + url.pathname).toBe('https://api.weixin.qq.com/sns/oauth2/access_token');
     expect(url.searchParams.get('appid')).toBe(APP); expect(url.searchParams.get('secret')).toBe(SECRET);
     expect(url.searchParams.get('grant_type')).toBe('authorization_code');
-    expect(network.mock.calls.every(call => call[1]?.redirect === 'error')).toBe(true);
+    expect(network.mock.calls.every(call => call[1]?.redirect === 'manual')).toBe(true);
     expect(JSON.stringify(result)).not.toContain(SECRET); expect(env.CONFIG_KV.put).not.toHaveBeenCalled();
+  });
+  it.each([301, 302, 303, 307, 308])('cancels token HTTP %s before any identity publication or redirect request', async status => {
+    const flow = await start(), cancel = vi.fn();
+    network.mockImplementation(async () => new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new TextEncoder().encode(JSON.stringify(tokenPayload()))); }, cancel,
+    }), { status, headers: { location: 'https://redirect-destination.invalid/never-followed' } }));
+    await expect(flow.login()).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(cancel).toHaveBeenCalledTimes(1); expect(network).toHaveBeenCalledTimes(1);
+    expect(network.mock.calls[0][1]?.redirect).toBe('manual');
+    expect(await f.db.select().from(wechatUser)).toEqual([]); expect(memory.buckets.size).toBe(0);
   });
   it.each(['missing-app', 'missing-secret', 'missing-key', 'nul-app', 'multiline-secret'])('has no official/routine/env fallback for %s', async kind => {
     if (kind === 'missing-app') await f.db.delete(systemConfig).where(eq(systemConfig.id, 1));

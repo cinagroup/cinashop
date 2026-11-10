@@ -105,7 +105,7 @@ describe('Routine access token bound to the complete fresh SQL credential source
       const url = new URL(String(input));
       expect(url.origin + url.pathname).toBe('https://api.weixin.qq.com/cgi-bin/token');
       expect([...url.searchParams]).toEqual([['grant_type', 'client_credential'], ['appid', APP], ['secret', SECRET]]);
-      expect(init).toMatchObject({ method: 'GET', redirect: 'error' }); expect(init?.signal).toBeInstanceOf(AbortSignal);
+      expect(init).toMatchObject({ method: 'GET', redirect: 'manual' }); expect(init?.signal).toBeInstanceOf(AbortSignal);
       return tokenResponse();
     });
     expect(await getRoutineAccessToken(container(), env, credentials, { fetcher })).toBe('fresh-routine-token');

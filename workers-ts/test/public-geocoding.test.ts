@@ -90,7 +90,7 @@ describe('PHP geoLbscoder read compatibility', () => {
     const url = new URL(String(input));
     expect(url.origin + url.pathname).toBe('https://apis.map.qq.com/ws/geocoder/v1/');
     expect(Object.fromEntries(url.searchParams)).toEqual({ location: '22.5431,114.0579', key: TEST_KEY, output: 'json' });
-    expect(init).toMatchObject({ method: 'GET', redirect: 'error', headers: { Accept: 'application/json' } });
+    expect(init).toMatchObject({ method: 'GET', redirect: 'manual', headers: { Accept: 'application/json' } });
     expect(init?.signal?.aborted).toBe(true);
   });
 

@@ -101,6 +101,10 @@ async function sha256(value: string): Promise<string> {
 }
 
 async function boundedResponseText(response: Response, maximum = MAX_RESPONSE_BYTES): Promise<string> {
+  if (response.redirected || response.status >= 300 && response.status < 400) {
+    void response.body?.cancel().catch(() => undefined);
+    throw new Error("provider_redirect_rejected");
+  }
   if (!response.body) return "";
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -142,7 +146,7 @@ async function postForm(
       headers,
       body: form,
       signal: controller.signal,
-      redirect: "error",
+      redirect: "manual",
     });
     return { response, text: await boundedResponseText(response) };
   } finally {
@@ -166,7 +170,7 @@ async function getProviderJson(
       method: "GET",
       headers,
       signal: controller.signal,
-      redirect: "error",
+      redirect: "manual",
     });
     return { response, text: await boundedResponseText(response, maximum) };
   } finally {

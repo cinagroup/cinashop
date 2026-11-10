@@ -119,7 +119,7 @@ describe('legacy WeChat follow raster poster', () => {
   it('supports explicitly pinned legacy uploads without forwarding user credentials and rejects redirects', async () => {
     await fixture.db.update(systemConfig).set({ value: '"https://media.example.com/uploads/2026/follow.png"' }).where(eq(systemConfig.id, 1));
     resource.env.WECHAT_FOLLOW_IMAGE_ORIGINS = 'https://media.example.com';
-    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { expect(init?.redirect).toBe('error'); expect(init?.signal).toBeInstanceOf(AbortSignal);
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { expect(init?.redirect).toBe('manual'); expect(init?.signal).toBeInstanceOf(AbortSignal);
       expect(init?.headers).toEqual({ Accept: 'image/png,image/jpeg,image/webp,image/gif' }); return new Response(png, { headers: { 'Content-Type': 'image/png' } }); });
     const remote = new WechatFollowPosterService(createContainerFromDb(fixture.db), resource.env, fetcher, () => now);
     await remote.follow('https://api.example.com/api/wechat/follow'); expect(fetcher).toHaveBeenCalledTimes(1);

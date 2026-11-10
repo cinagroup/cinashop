@@ -88,12 +88,16 @@ async function withinDeadline<T>(fetcher: typeof fetch, run: (call: MenuCall) =>
     async json(url, method, body) {
       check();
       const response = await fetcher(url.toString(), {
-        method, redirect: 'error', signal: controller.signal,
+        method, redirect: 'manual', signal: controller.signal,
         headers: body === undefined ? { Accept: 'application/json' }
           : { Accept: 'application/json', 'Content-Type': 'application/json; charset=utf-8' },
         ...(body === undefined ? {} : { body }),
       });
       if (closed) { void response.body?.cancel().catch(() => undefined); check(); }
+      if (response.redirected || response.status >= 300 && response.status < 400) {
+        void response.body?.cancel().catch(() => undefined);
+        throw new MenuReadFailure('公众号接口重定向，结果未确认');
+      }
       const length = response.headers.get('Content-Length');
       if (!response.body || length !== null && (!/^\d+$/.test(length) || Number(length) > MAX_BYTES)) {
         void response.body?.cancel().catch(() => undefined);

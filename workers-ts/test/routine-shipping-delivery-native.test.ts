@@ -179,6 +179,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual original 
     let uploads=0,tokens=0,carriers=0;const bodies:RoutineShippingRequest[]=[],familyIds=options?.familyIds??[order.id];
     network.mockImplementation(async(input,init)=>{
       const url=new URL(String(input));expect(url.origin).toBe('https://api.weixin.qq.com');
+      expect(init?.redirect).toBe('manual');
       if(url.pathname==='/cgi-bin/token'){tokens++;expect(url.searchParams.get('appid')).toBe(APP);expect(url.searchParams.get('secret')).toBe(SECRET);
         return Response.json({access_token:'synthetic-shipping-access-A',expires_in:7200});}
       expect(url.searchParams.get('access_token')).toBe('synthetic-shipping-access-A');expect(init?.method).toBe('POST');
@@ -271,6 +272,18 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('actual original 
     expect(await consumer().processMessage(c.message)).toBe('unknown');expect((await consumer().dispatchPending(20,c.message.eventKey)).enqueued).toBe(0);
     expect(calls.uploads()).toBe(1);expect(await immutable(c.id)).toEqual(first);
   },90000);
+
+  it.each([301,302,303,307,308])('keeps genuine shipping POST HTTP %s UNKNOWN without token refresh or Queue redispatch',async status=>{
+    const c=await staged(),canceled=vi.fn(),calls=transport(c.order,async()=>new Response(new ReadableStream<Uint8Array>({
+      start(controller){controller.enqueue(new TextEncoder().encode(JSON.stringify({errcode:40014})));},cancel:canceled,
+    }),{status,headers:{location:'https://redirect-destination.invalid/never-followed'}}));
+    expect(await consumer().processMessage(c.message)).toBe('unknown');nativeReached();expect(calls.uploads()).toBe(1);
+    expect(canceled).toHaveBeenCalledTimes(1);expect(calls.carriers()).toBe(1);
+    const first=await immutable(c.id),tokenReads=calls.tokens();expect(first.dispatch).toHaveLength(1);expect(first.evidence).toHaveLength(0);
+    expect(await delivery(c.id)).toMatchObject({status:'UNKNOWN',lastError:'wechat_shipping_outcome_unknown'});
+    expect(await consumer().processMessage(c.message)).toBe('unknown');expect((await consumer().dispatchPending(20,c.message.eventKey)).enqueued).toBe(0);
+    expect(calls.uploads()).toBe(1);expect(calls.tokens()).toBe(tokenReads);expect(await immutable(c.id)).toEqual(first);
+  },5000);
 
   it('rejects revoked approval and changed physical source without token, carrier or upload requests',async()=>{
     const first=await staged();await approve('revoked');const none=transport(first.order);

@@ -164,7 +164,7 @@ export class PublicGeocodingService {
     try {
       return await Promise.race([deadline, (async () => {
         const response = await this.fetcher(url.toString(), {
-          method: 'GET', redirect: 'error', signal: abort.signal,
+          method: 'GET', redirect: 'manual', signal: abort.signal,
           headers: { Accept: 'application/json' },
         });
         if (abort.signal.aborted || !response.ok || response.redirected) {

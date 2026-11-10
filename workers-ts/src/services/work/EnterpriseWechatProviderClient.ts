@@ -233,6 +233,10 @@ async function readBoundedJson(
   operation: string,
   maxBytes: number,
 ): Promise<JsonRecord> {
+  if (response.redirected || response.status >= 300 && response.status < 400) {
+    void response.body?.cancel().catch(() => undefined);
+    throw new Error("provider_redirect_rejected");
+  }
   const declaredHeader = response.headers.get("Content-Length");
   if (declaredHeader !== null) {
     const declared = Number(declaredHeader);
@@ -467,7 +471,7 @@ export class EnterpriseWechatProviderClient {
       const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       let response: Response, data: JsonRecord;
       try {
-        response = await this.fetcher(url, { method: "POST", redirect: "error", headers: { Accept: "application/json", "Content-Type": "application/json" }, body, signal: controller.signal });
+        response = await this.fetcher(url, { method: "POST", redirect: "manual", headers: { Accept: "application/json", "Content-Type": "application/json" }, body, signal: controller.signal });
         // Any decode/size/stream failure after sending a write is UNKNOWN.
         data = await readBoundedJson(response, CORP_TAG_CREATE_OPERATION, MAX_RESPONSE_BYTES);
       } catch {
@@ -785,7 +789,7 @@ export class EnterpriseWechatProviderClient {
       try {
         response = await this.fetcher(url, {
           method: "POST",
-          redirect: "error",
+          redirect: "manual",
           headers: { Accept: "application/json", "Content-Type": "application/json" },
           body,
           signal: controller.signal,
@@ -885,7 +889,7 @@ export class EnterpriseWechatProviderClient {
     try {
       const response = await this.fetcher(url, {
         method: input.method,
-        redirect: "error",
+        redirect: "manual",
         headers: input.method === "POST"
           ? { Accept: "application/json", "Content-Type": "application/json" }
           : { Accept: "application/json" },

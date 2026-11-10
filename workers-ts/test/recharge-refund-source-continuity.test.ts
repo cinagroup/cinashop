@@ -8,6 +8,7 @@ import {pathToFileURL,URL} from 'node:url';
 import {describe,expect,it} from 'vitest';
 import * as recharge from './helpers/rechargeNoticeSourceContinuity';
 import * as membership from './helpers/membershipContractSourceContinuity';
+import {projectProviderTransportPredecessor} from './helpers/providerTransportSourceContinuity';
 import {RECHARGE_REFUND_SOURCE_PROOF_FILE,RECHARGE_REFUND_SOURCE_PROOF_SHA,rechargeRefundSourceContinuity as proof,
  projectRechargeRefundPredecessor,peelMembershipHistoricalSourceIfPresent,readRechargeRefundPredecessorFile,
  readRechargeNoticePredecessorFile,readMembershipContinuityHistoricalFile,type RechargeRefundHistoryImage} from './helpers/rechargeRefundSourceContinuity';
@@ -16,7 +17,8 @@ const root=resolve(import.meta.dirname,'../..');
 const sha=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 const image=(value:string|Uint8Array):RechargeRefundHistoryImage=>({bytes:Buffer.byteLength(value),sha256:sha(value),
  gitBlobSha1:createHash('sha1').update('blob '+Buffer.byteLength(value)+'\0').update(value).digest('hex')});
-const physical=(file:string)=>readNativeFileSync(resolve(root,file),'utf8');
+// The dated v10 image is fixed353 after the complete reviewed CI transport bridge.
+const physical=(file:string)=>projectProviderTransportPredecessor(file,readNativeFileSync(resolve(root,file),'utf8'));
 const origin=(file:string)=>execFileSync('git',['cat-file','blob',proof.predecessorCommit+':'+file],{cwd:root,encoding:'utf8'});
 
 describe('dated refund physical sources reverse exactly to fixed78240 before unchanged historical leaves',()=>{

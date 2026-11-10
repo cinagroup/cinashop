@@ -22,10 +22,10 @@ async function post(fetcher:typeof fetch,path:string,token:string,body:object,ma
  const requestStartedAt=Math.floor(Date.now()/1000);
  const deadline=new Promise<never>((_resolve,reject)=>{timer=setTimeout(()=>{stopped=true;controller.abort();cancel();reject(unknown());},8000);});
  const receive=async()=>{
-  response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),redirect:'error',signal:controller.signal});
+  response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),redirect:'manual',signal:controller.signal});
   if(stopped){cancel();throw unknown();}
   const declared=response.headers.get('content-length');
-  if(response.redirected||!response.body||declared!==null&&(!/^\d+$/u.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>maxBytes))throw unknown();
+  if(response.status>=300&&response.status<400||response.redirected||!response.body||declared!==null&&(!/^\d+$/u.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>maxBytes))throw unknown();
   reader=response.body.getReader();let complete=false,size=0;const chunks:Uint8Array[]=[];
   try{
    while(true){const next=await reader.read();if(stopped)throw unknown();if(next.done){complete=true;break;}size+=next.value.byteLength;if(size>maxBytes)throw unknown();chunks.push(next.value);}
