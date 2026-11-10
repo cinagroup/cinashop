@@ -3,6 +3,8 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
+import { assertMethodCall } from "./helpers/sourceMethodBinding";
 import { assertAllIndexesAligned, extendExternalDuplicateContracts } from "../scripts/data-migration/external-duplicate-index-contracts";
 import { extendOrdinaryIndexContracts } from "../scripts/data-migration/ordinary-index-contracts";
 import { extendIndexNameContracts } from "../scripts/data-migration/index-name-contracts";
@@ -32,11 +34,44 @@ describe("DB-009D2b3e external physical duplicate retirement", () => {
       expect(baseline.records.find(r => r.comparison === "externalVsEmbedded" && r.category === "indexes"
         && r.change === "referenceOnly" && r.value.key === e.key)?.value).toEqual(e.catalog);
       expect(e.retainedCatalog).toEqual({ ...e.catalog, key: e.retainedKey, name: e.retainedKey.split(".")[1] });
-      for (const source of [e.source, e.retainedSource, e.model, e.consumer]) {
+      for (const source of [e.source, e.retainedSource]) {
         expect(read(source.file).split("\n").slice(source.line - 1, source.line - 1 + source.sql.split("\n").length).join("\n")).toBe(source.sql);
+      }
+      assertModelDeclaration(read(e.model.file), String(e.catalog.table), e.model.sql);
+      if (e.key === "wechat_user.wu_openid_uq_idx" || e.key === "wechat_user.wu_unionid_idx") {
+        expect(e.consumer.file).toBe("src/services/wechat/WechatAuthService.ts");
+        const openid = e.key === "wechat_user.wu_openid_uq_idx";
+        expect(e.consumer.line).toBe(openid ? 189 : 1202);
+        assertMethodCall(read(e.consumer.file), openid ? "WechatUserDao" : "WechatAuthService",
+          openid ? "findByOpenid" : "findExistingIdentityUser", e.consumer.sql, openid ? 2 : 1);
+      } else {
+        expect(read(e.consumer.file).split("\n").slice(e.consumer.line - 1,
+          e.consumer.line - 1 + e.consumer.sql.split("\n").length).join("\n")).toBe(e.consumer.sql);
       }
     }
     expect(manifest.entries.filter(e => e.catalog.unique)).toHaveLength(1);
+  });
+
+  it("rejects comment, scope, duplication and query drift in shifted consumer anchors", () => {
+    const call = 'or(eq(wechatUser.openid, openid), eq(wechatUser.unionid, openid))';
+    const source = `class Consumer { find() { return ${call}; } other() { return ${call}; } }`;
+    expect(() => assertMethodCall("\n// shifted\n" + source, "Consumer", "find", call + ",")).not.toThrow();
+    expect(() => assertMethodCall('class Consumer { find() { return db.where(eq(t.uid, uid)); } }',
+      "Consumer", "find", '.where(eq(t.uid, uid))')).not.toThrow();
+    for (const drift of [source.replace("class Consumer", "class Wrong"), source.replace("find()", "missing()"),
+      source.replace(`return ${call};`, `/* ${call} */ return null;`),
+      source.replace(`return ${call};`, `${call}; return ${call};`), source + source,
+      source.replace("wechatUser.openid, openid", "wechatUser.uid, openid")]) {
+      expect(() => assertMethodCall(drift, "Consumer", "find", call)).toThrow();
+    }
+    const where = ".where(and(eq(storeProduct.isDel, 0), seckillCatalogSchedulePredicate(timeId, now)))";
+    const query = `class StoreSeckillDao { getByTimeId() { return db${where}; } }`;
+    expect(() => assertMethodCall(query, "StoreSeckillDao", "getByTimeId", where)).not.toThrow();
+    for (const drift of [query.replace("and(eq(storeProduct.isDel, 0), seckillCatalogSchedulePredicate(timeId, now))",
+      "seckillCatalogSchedulePredicate(timeId, now)"), query.replace("seckillCatalogSchedulePredicate(timeId, now)", "true"),
+      query.replace(`return db${where};`, `/* db${where} */ return db;`)]) {
+      expect(() => assertMethodCall(drift, "StoreSeckillDao", "getByTimeId", where)).toThrow();
+    }
   });
 
   it("registers a byte-exact guarded forward mirror without modifying the canonical models", () => {

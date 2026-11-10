@@ -3,11 +3,16 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { DbClient } from "../src/lib/di";
+import { storeOrderOutbox } from "../src/models/schema";
+import { PAID_NOTICE_GENERATIONS } from "../src/migrations/paidNotice";
+import { enqueueOrderPaidEvent } from "../src/services/order/OrderOutboxService";
 import { assertAllColumnsAligned, assertColumnDefaultContracts } from "../scripts/data-migration/column-default-contracts";
 import type { Catalog, CatalogRow } from "../scripts/data-migration/postgres-catalog-audit";
 import { COLUMN_DEFAULT_ALIGNMENT_SQL as sql } from "../src/migrations/columnDefaultAlignment";
 import { assertModelDeclaration } from "./helpers/modelDeclarationBinding";
+import { assertMethodCall } from "./helpers/sourceMethodBinding";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(join(root, path), "utf8").replace(/\r\n/g, "\n");
@@ -89,12 +94,36 @@ describe("DB-009E1 exact column default reconciliation", () => {
       { code: "23502", column: "payload", column_name: "other" }]) expect(() => matchesNullViolation(error, "payload")).toThrow();
   });
 
-  it("keeps application writers explicit: defaults do not replace event payloads or sanitization", () => {
-    expect(read("src/services/order/OrderOutboxService.ts")).toContain("payload: { orderId: order.id, orderNo: order.orderId }");
+  it.each([false, true])("keeps application writers explicit with paid notices enabled=%s: defaults do not replace payloads or sanitization", async admitted => {
+    // Catalog rows are unit inputs only. Run the actual writer and inspect what
+    // it supplies to INSERT, before any database default could fill a value.
+    type Insert = typeof storeOrderOutbox.$inferInsert;
+    const values = vi.fn((row: Insert) => ({
+      onConflictDoNothing: () => ({ returning: async () => [{ ...row, id: 77 }] }),
+    }));
+    const insert = vi.fn(() => ({ values }));
+    const db = {
+      execute: vi.fn(async () => admitted
+        ? [{ definition: PAID_NOTICE_GENERATIONS.find(generation => generation.paid)!.definition, safe: true }]
+        : []),
+      insert,
+    } as unknown as DbClient;
+    await expect(enqueueOrderPaidEvent(db, { id: 42, orderId: "explicit-paid-order" }, 1700))
+      .resolves.toStrictEqual({ id: 77, eventKey: "order.paid:42" });
+    expect(insert).toHaveBeenCalledExactlyOnceWith(storeOrderOutbox);
+    expect(values).toHaveBeenCalledOnce();
+    expect(values.mock.calls[0][0]).toStrictEqual({
+      eventKey: "order.paid:42", aggregateType: "order", aggregateId: 42, eventType: "order.paid",
+      payload: { orderId: 42, orderNo: "explicit-paid-order", ...(admitted ? {
+        payNoticeAdmission: { format: 1, nonce: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/) },
+      } : {}) },
+      status: "PENDING", availableTime: 1700, addTime: 1700, updateTime: 1700,
+    });
     const deadLetter = read("src/services/order/OrderQueueDeadLetterService.ts");
     for (const source of ["prepareOrderQueueDeadLetter(message.body)", "sha256(prepared.body)", "body: prepared.body", "bodySha256: bodyHash"])
       expect(deadLetter).toContain(source);
-    expect(read("src/dao/activity/ActivityDaos.ts")).toContain(".where(seckillCatalogSchedulePredicate(timeId, now))");
+    assertMethodCall(read("src/dao/activity/ActivityDaos.ts"), "StoreSeckillDao", "getByTimeId",
+      ".where(and(eq(storeProduct.isDel, 0), seckillCatalogSchedulePredicate(timeId, now)))");
     expect(read("src/services/activity/SeckillScheduleQuery.ts")).toContain("ids(storeSeckill.timeId)");
     expect(read("src/services/activity/SeckillScheduleQuery.ts")).toContain("string_to_array(CASE");
     expect(read("src/models/schema/brokerage.ts")).toContain("Active commission code uses user_brokerage.frozen_time instead.");
