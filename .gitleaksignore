@@ -274,3 +274,7 @@ d715da71abf6ce6f3dba6f2ee1b57e143744ebe3:workers-ts/audit/wechat-open-author-sou
 d715da71abf6ce6f3dba6f2ee1b57e143744ebe3:workers-ts/audit/wechat-open-author-source-binding-20261027.json:generic-api-key:2764
 d715da71abf6ce6f3dba6f2ee1b57e143744ebe3:workers-ts/audit/wechat-open-author-source-binding-20261027.json:jwt:52
 d715da71abf6ce6f3dba6f2ee1b57e143744ebe3:workers-ts/src/services/customer-work/CustomerCashierCapabilities.ts:generic-api-key:103
+353ec0ed03a860eafbc850e9983da505a7ade748:workers-ts/test/recharge-refund-account-approval-native.test.ts:private-key:13
+353ec0ed03a860eafbc850e9983da505a7ade748:workers-ts/test/recharge-refund-ledger.test.ts:generic-api-key:10
+353ec0ed03a860eafbc850e9983da505a7ade748:workers-ts/test/recharge-refund-ledger.test.ts:generic-api-key:26
+353ec0ed03a860eafbc850e9983da505a7ade748:workers-ts/test/recharge-refund-contract.test.ts:generic-api-key:10

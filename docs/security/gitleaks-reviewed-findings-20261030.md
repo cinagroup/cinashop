@@ -30,3 +30,20 @@ The secret-scan job first runs `workers-ts/scripts/verify-gitleaks-reviewed-find
 The canary pins the reviewed ignore file's SHA256 (`748d24df34557a5a66f244c6fc2dcebecc79d309254b6001f702ba7ecf11f531`), its 276 unique entries and their immutable commit format. Changes require a deliberate evidence review and update. It does not replace the existing full-history scan, which remains unchanged and runs afterward. A canary pass is evidence for detection of these generated cases, not a claim that every possible secret format is detectable.
 
 No entire snapshot, directory or rule is allowed by this change. A new commit at the same path does not reuse an old commit fingerprint. Future findings need their own investigation; this record does not authorize ignoring them.
+
+## Four recharge-refund findings reviewed on 2026-11-10 UTC
+
+The [scan at `6fe08e7a`](https://github.com/cinagroup/cinashop/actions/runs/42765769342/job/129661775637) scanned 921 commits and reported four additional findings, all introduced by the immutable commit `353ec0ed03a860eafbc850e9983da505a7ade748`. Static review classified each as `not_actionable` for the specific literal-as-credential claim. The three source blobs still match that commit byte for byte; the canary now checks their SHA256 digests from the actual Git objects before scanning.
+
+| Exact finding location in `353ec0ed` | Rule | Static evidence |
+| --- | --- | --- |
+| `workers-ts/test/recharge-refund-account-approval-native.test.ts:13` | `private-key` | The PEM body is the literal `fixture-not-provider-key`, which cannot encode a DER private key. The value is constructed in the test's merchant registry. The production Worker enters through `src/index.ts`; production sources contain no occurrence of this fixture literal. |
+| `workers-ts/test/recharge-refund-ledger.test.ts:10` | `generic-api-key` | A fixed v4 request UUID in a unit-test receipt. The complete receipt is signed using the test-local key; runtime reads scope the request identifier to the administrator and verify a separate record signature. |
+| `workers-ts/test/recharge-refund-ledger.test.ts:26` | `generic-api-key` | A different v4 request UUID used to mutate a signed receipt in a negative case that must reject authentication. |
+| `workers-ts/test/recharge-refund-contract.test.ts:10` | `generic-api-key` | A fixed idempotency UUID supplied to request-identity tests. `rechargeRefundIdentity` binds an independently supplied administrator id and the full request; the UUID is not an authentication key. |
+
+This is a static classification of those four literals. It does not certify adjacent values, external reuse, production credentials or all secret formats. No applicable root or scoped `SECURITY.md` was returned; the boundary assessment uses the deployment entrypoint and the cited source paths, including `RechargeRefundRequest.ts:37–44` and `RechargeRefundLedger.ts:83–87,120–127`.
+
+The original 276-line set retains SHA256 `748d24df34557a5a66f244c6fc2dcebecc79d309254b6001f702ba7ecf11f531`. Exactly four `commit:path:rule:line` fingerprints are appended; the 280-line file is pinned to `1f6204fa08c92058b8a8f3e9b99dfbcb90c4537da28de17fc782e3f8a4c988bb`. `.gitleaks.toml`, scanner version, workflow and existing full-history scan are unchanged.
+
+The original three generated canaries remain. Four additional generated canaries occupy the newly reviewed paths at the exact reported line numbers, in a fresh owned temporary Git commit: a real generated RSA key at approval line 13, and new random API-key values at ledger lines 10/26 and contract line 10. The real scanner must detect all seven cases, and none may reuse a reviewed historical fingerprint. Temporary values and scanner output remain withheld and the owned directory is removed. These checks establish detection for these generated cases only.
