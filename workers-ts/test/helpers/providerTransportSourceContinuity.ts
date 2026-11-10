@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { isUnitDiscoverySource, projectUnitDiscoveryPredecessor } from './unitDiscoverySourceContinuity';
 
 export const PROVIDER_TRANSPORT_PROOF_FILE = 'workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json';
 export const PROVIDER_TRANSPORT_PROOF_SHA = 'be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1';
@@ -28,11 +29,14 @@ if (proof.schema !== 'provider-transport-source-continuity/v1' || proof.predeces
   || proof.sources.length !== 30 || new Set(proof.sources.map(row => row.file)).size !== 30
   || proof.sources.filter(row => row.kind === 'provider').length !== 12) throw Error('Provider transport source set differs');
 
-export const isProviderTransportSource = (file: string) => proof.sources.some(row => row.file === file);
+// Peel the later discovery-only images before the unchanged older views. This
+// reader is historical; runtime tests and production always import native code.
+export const isProviderTransportSource = (file: string) => isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
 
 /** A selected old image is refused, including an otherwise valid predecessor.
  * Every changed line must match exactly; the whole output must be fixed353. */
 export function projectProviderTransportPredecessor(file: string, source: string): string {
+  source = projectUnitDiscoveryPredecessor(file, source);
   const row = proof.sources.find(item => item.file === file);
   if (!row) return source;
   if (typeof source !== 'string' || JSON.stringify(image(source)) !== JSON.stringify(row.current)) throw Error('Provider transport complete current source differs');

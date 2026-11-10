@@ -1,11 +1,13 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
 import { resolve } from "node:path";
 import { collectFixedRoleTestFiles } from "./scripts/fixedRoleTestFiles";
 
 const fixedRoleTestFiles = collectFixedRoleTestFiles(import.meta.dirname).files;
 const fixedRoleSet = new Set(fixedRoleTestFiles);
 
-export default defineConfig({
+// Inline projects share these values without reloading this file for each
+// project. Reloading recomputes the entire live fixture import graph.
+const shared = defineConfig({
   resolve: {
     alias: {
       "@": resolve(import.meta.dirname, "src"),
@@ -16,10 +18,14 @@ export default defineConfig({
     // 集成测试 (涉及 DO/Queue/Hyperdrive) 使用 @cloudflare/vitest-plugin
     environment: "node",
     globals: false,
+  },
+});
+
+export default defineConfig(mergeConfig(shared, {
+  test: {
     // Keep the full cluster-role snapshot isolated from other files' role setup and cleanup.
     projects: [
       {
-        extends: true as const,
         test: {
           name: "regular-unit",
           include: ["test/*.test.ts"],
@@ -30,7 +36,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-authority-maintenance-native",
           include: ["test/admin-authority-maintenance-native.test.ts"],
@@ -38,7 +43,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-profile-native",
           include: ["test/admin-profile-native.test.ts"],
@@ -48,7 +52,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-platform-menu-native",
           include: ["test/admin-platform-menu-native.test.ts"],
@@ -58,7 +61,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-express-native",
           include: ["test/admin-express-native.test.ts"],
@@ -68,7 +70,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-level-native",
           include: ["test/admin-level-native.test.ts"],
@@ -78,7 +79,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-label-native",
           include: ["test/admin-label-native.test.ts"],
@@ -88,7 +88,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-store-native",
           include: ["test/admin-store-native.test.ts"],
@@ -98,7 +97,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "admin-staff-native",
           include: ["test/admin-staff-native.test.ts"],
@@ -108,7 +106,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "fixed-role-native",
           include: fixedRoleTestFiles,
@@ -118,7 +115,6 @@ export default defineConfig({
         },
       },
       {
-        extends: true as const,
         test: {
           name: "guest-invoice-manual-red-note-native",
           include: ["test/admin-guest-invoice-manual-red-note-postgres.test.ts"],
@@ -132,6 +128,6 @@ export default defineConfig({
       // it must not be collected a second time by its former project.
       if (project.test.name === "regular-unit" || project.test.name === "fixed-role-native") return project;
       return { ...project, test: { ...project.test, include: project.test.include.filter(file => !fixedRoleSet.has(file)) } };
-    }).filter(project => project.test.include.length > 0),
+    }).filter(project => project.test.include.length > 0).map(project => mergeConfig(shared, project)),
   },
-});
+}));

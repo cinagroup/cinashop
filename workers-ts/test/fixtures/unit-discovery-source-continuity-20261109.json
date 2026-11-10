@@ -1,0 +1,358 @@
+{
+  "schema": "unit-discovery-source-continuity/v1",
+  "predecessorCommit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+  "boundary": "Only exact historical views. Current configuration, scheduler and acceptance use native code. All three fixed353 originals are identical at fixed82; existing CI already supplies fixed353. No inventory filtering, old proof/hash replacement or timeout change.",
+  "sources": [
+    {
+      "file": "workers-ts/scripts/fixedRoleTestFiles.ts",
+      "current": {
+        "bytes": 11083,
+        "sha256": "27629718bff43f949e664fef9f49ba9c4a9c934f826c69dc953acc29b1ccf2fd",
+        "gitBlobSha1": "0bd3b6f115d1e2fbbc59b402c12175187eb14de4"
+      },
+      "predecessor": {
+        "bytes": 10205,
+        "sha256": "143686a17adff45561450e54da54e8ee8472b630fc9a4b0c041232fafdc2cbc1",
+        "gitBlobSha1": "00c432e3bb0c094cc4f95534577d89b06992dd3a"
+      },
+      "inverseEdits": [
+        {
+          "start": 68,
+          "after": [
+            "  // Resolve repeated imports once during this live scan only. A later call must\n",
+            "  // see added files, changed imports and retargeted symlinks without stale state.\n",
+            "  const localTargets = new Map<string, string | null>();\n",
+            "  const fileStatus = new Map<string, boolean>();\n",
+            "  const realpaths = new Map<string, string>();\n",
+            "  const isFile = (file: string) => {\n",
+            "    if (!fileStatus.has(file)) fileStatus.set(file, existsSync(file) && statSync(file).isFile());\n",
+            "    return fileStatus.get(file)!;\n",
+            "  };\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 86,
+          "after": [
+            "    if (localTargets.has(base)) return localTargets.get(base)!;\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 90,
+          "after": [
+            "    const found = candidates.find(isFile);\n"
+          ],
+          "before": [
+            "    const found = candidates.find(file => existsSync(file) && statSync(file).isFile());\n"
+          ]
+        },
+        {
+          "start": 92,
+          "after": [
+            "    const actual = realpaths.get(found) ?? realpathSync(found);\n",
+            "    realpaths.set(found, actual);\n",
+            "    if (actual.split(sep).includes('node_modules') || dataExtensions.has(extname(actual))) { localTargets.set(base, null); return null; }\n"
+          ],
+          "before": [
+            "    const actual = realpathSync(found);\n",
+            "    if (actual.split(sep).includes('node_modules') || dataExtensions.has(extname(actual))) return null;\n"
+          ]
+        },
+        {
+          "start": 96,
+          "after": [
+            "    localTargets.set(base, actual);\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 111,
+          "after": [
+            "    // All text/position queries below supply source explicitly; parent links\n",
+            "    // are unnecessary for this read-only import inspection.\n",
+            "    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false);\n"
+          ],
+          "before": [
+            "    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);\n"
+          ]
+        },
+        {
+          "start": 160,
+          "after": [
+            "        const isGlob = ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'glob'\n",
+            "          && node.expression.getText(source) === 'import.meta.glob';\n"
+          ],
+          "before": [
+            "        const isGlob = node.expression.getText(source) === 'import.meta.glob';\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/scripts/fixedRoleTestFiles.ts",
+        "gitBlobSha1": "00c432e3bb0c094cc4f95534577d89b06992dd3a"
+      }
+    },
+    {
+      "file": "workers-ts/test/fixed-role-test-scheduling.test.ts",
+      "current": {
+        "bytes": 12516,
+        "sha256": "2c04bcfa6612dddd97b54460be7622b1cf74b1a011a049a9deb46c5227e7f540",
+        "gitBlobSha1": "ec6cccf77b1d3ae6e15d941da485a3ea5aeb8efe"
+      },
+      "predecessor": {
+        "bytes": 8172,
+        "sha256": "4cf6fe4d4177830567720359c7e1ec141fa86433fc921c9707af9f31b691eb9b",
+        "gitBlobSha1": "655c1b0373c442d0a2acb08f68c65d9fde93e9ab"
+      },
+      "inverseEdits": [
+        {
+          "start": 1,
+          "after": [
+            "import { execFileSync } from 'node:child_process';\n",
+            "import { createHash } from 'node:crypto';\n",
+            "import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';\n"
+          ],
+          "before": [
+            "import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';\n"
+          ]
+        },
+        {
+          "start": 8,
+          "after": [
+            "import { UNIT_DISCOVERY_PROOF_FILE, UNIT_DISCOVERY_PROOF_SHA, unitDiscoverySourceContinuity as proof,\n",
+            "  projectUnitDiscoveryPredecessor } from './helpers/unitDiscoverySourceContinuity';\n",
+            "import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 109,
+          "after": [
+            "  it('observes rewired imports, added entries and removed entries on every live scan', () => {\n",
+            "    const fixture = graph({\n",
+            "      'test/a.test.ts': \"import './helpers/bridge';\",\n",
+            "      'test/helpers/bridge.ts': \"import './customerFinancialRuntimeFixture';\",\n",
+            "    });\n",
+            "    expect(fixture.selection().files).toEqual(['test/a.test.ts']);\n",
+            "    writeFileSync(resolve(fixture.root, 'test/helpers/bridge.ts'), 'export {};');\n",
+            "    expect(fixture.selection().files).toEqual([]);\n",
+            "    writeFileSync(resolve(fixture.root, 'test/b.test.ts'), \"import './helpers/customerFinancialRuntimeFixture';\");\n",
+            "    expect(fixture.selection().files).toEqual(['test/b.test.ts']);\n",
+            "    rmSync(resolve(fixture.root, 'test/b.test.ts'));\n",
+            "    expect(fixture.selection().files).toEqual([]);\n",
+            "    writeFileSync(resolve(fixture.root, 'test/helpers/bridge.ts'), \"import './missing';\");\n",
+            "    expect(fixture.selection).toThrow('Unresolved local scheduling import');\n",
+            "  });\n",
+            "\n",
+            "  it('resolves the current symlink destination on a later scan', () => {\n",
+            "    const fixture = graph({\n",
+            "      'test/a.test.ts': \"import './helpers/linked/bridge';\",\n",
+            "      'test/helpers/active/bridge.ts': \"import '../customerFinancialRuntimeFixture';\",\n",
+            "      'test/helpers/independent/bridge.ts': 'export {};',\n",
+            "    });\n",
+            "    const link = resolve(fixture.root, 'test/helpers/linked');\n",
+            "    symlinkSync(resolve(fixture.root, 'test/helpers/active'), link, 'junction');\n",
+            "    expect(fixture.selection().files).toEqual(['test/a.test.ts']);\n",
+            "    rmSync(link);\n",
+            "    symlinkSync(resolve(fixture.root, 'test/helpers/independent'), link, 'junction');\n",
+            "    expect(fixture.selection().files).toEqual([]);\n",
+            "  });\n",
+            "\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 157,
+          "after": [
+            "\n",
+            "describe('exact unit discovery successor for historical readers', () => {\n",
+            "  const root = resolve(import.meta.dirname, '../..');\n",
+            "  const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');\n",
+            "  it('restores all three complete fixed353 Git originals without projecting current scheduler acceptance', () => {\n",
+            "    expect(createHash('sha256').update(readFileSync(resolve(root, UNIT_DISCOVERY_PROOF_FILE))).digest('hex')).toBe(UNIT_DISCOVERY_PROOF_SHA);\n",
+            "    expect(proof.sources.map(row => row.file)).toEqual([\n",
+            "      'workers-ts/scripts/fixedRoleTestFiles.ts', 'workers-ts/test/fixed-role-test-scheduling.test.ts', 'workers-ts/vitest.config.ts',\n",
+            "    ]);\n",
+            "    for (const row of proof.sources) {\n",
+            "      const current = physical(row.file);\n",
+            "      const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + row.file], { cwd: root, encoding: 'utf8' });\n",
+            "      expect(projectUnitDiscoveryPredecessor(row.file, current)).toBe(before);\n",
+            "      expect(projectProviderTransportPredecessor(row.file, current)).toBe(before);\n",
+            "      expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });\n",
+            "      expect(current).not.toBe(before);\n",
+            "    }\n",
+            "    expect(physical('workers-ts/vitest.config.ts')).toContain('mergeConfig(shared, project)');\n",
+            "    expect(projectUnitDiscoveryPredecessor('unrelated.ts', 'native bytes')).toBe('native bytes');\n",
+            "    expect(Object.isFrozen(proof.sources[0].inverseEdits[0].before)).toBe(true);\n",
+            "  });\n",
+            "  it.each(['prefix', 'suffix', 'CRLF', 'same-size edit', 'old complete image'])('rejects an unreviewed %s for every whole selected source', kind => {\n",
+            "    for (const row of proof.sources) {\n",
+            "      const current = physical(row.file), before = projectUnitDiscoveryPredecessor(row.file, current);\n",
+            "      const changed = kind === 'prefix' ? '// unknown\\n' + current : kind === 'suffix' ? current + '\\n// unknown\\n'\n",
+            "        : kind === 'CRLF' ? current.replaceAll('\\n', '\\r\\n') : kind === 'same-size edit' ? 'X' + current.slice(1) : before;\n",
+            "      expect(changed).not.toBe(current);\n",
+            "      expect(() => projectUnitDiscoveryPredecessor(row.file, changed)).toThrow('complete current source differs');\n",
+            "      expect(() => projectProviderTransportPredecessor(row.file, changed)).toThrow('complete current source differs');\n",
+            "    }\n",
+            "  });\n",
+            "});\n"
+          ],
+          "before": []
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/test/fixed-role-test-scheduling.test.ts",
+        "gitBlobSha1": "655c1b0373c442d0a2acb08f68c65d9fde93e9ab"
+      }
+    },
+    {
+      "file": "workers-ts/vitest.config.ts",
+      "current": {
+        "bytes": 4442,
+        "sha256": "d02332818aefb724c00e07e60f4ad77580d94fab97e7bc7426ac75c7d36f4690",
+        "gitBlobSha1": "d8411f6a2dd22da2404945b53d0e744971c1c94e"
+      },
+      "predecessor": {
+        "bytes": 4519,
+        "sha256": "bd412fa604a4baced0c4e514c3bc74e46cd1530a9ee5797bc4770c177bfe7dd9",
+        "gitBlobSha1": "055909ddcd5be52d86040eeb5e3b353234a58b5a"
+      },
+      "inverseEdits": [
+        {
+          "start": 0,
+          "after": [
+            "import { defineConfig, mergeConfig } from \"vitest/config\";\n"
+          ],
+          "before": [
+            "import { defineConfig } from \"vitest/config\";\n"
+          ]
+        },
+        {
+          "start": 7,
+          "after": [
+            "// Inline projects share these values without reloading this file for each\n",
+            "// project. Reloading recomputes the entire live fixture import graph.\n",
+            "const shared = defineConfig({\n"
+          ],
+          "before": [
+            "export default defineConfig({\n"
+          ]
+        },
+        {
+          "start": 20,
+          "after": [
+            "  },\n",
+            "});\n",
+            "\n",
+            "export default defineConfig(mergeConfig(shared, {\n",
+            "  test: {\n"
+          ],
+          "before": []
+        },
+        {
+          "start": 28,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 38,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 45,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 54,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 63,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 72,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 81,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 90,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 99,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 108,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 117,
+          "after": [],
+          "before": [
+            "        extends: true as const,\n"
+          ]
+        },
+        {
+          "start": 130,
+          "after": [
+            "    }).filter(project => project.test.include.length > 0).map(project => mergeConfig(shared, project)),\n"
+          ],
+          "before": [
+            "    }).filter(project => project.test.include.length > 0),\n"
+          ]
+        },
+        {
+          "start": 132,
+          "after": [
+            "}));\n"
+          ],
+          "before": [
+            "});\n"
+          ]
+        }
+      ],
+      "origin": {
+        "commit": "353ec0ed03a860eafbc850e9983da505a7ade748",
+        "path": "workers-ts/vitest.config.ts",
+        "gitBlobSha1": "055909ddcd5be52d86040eeb5e3b353234a58b5a"
+      }
+    }
+  ]
+}

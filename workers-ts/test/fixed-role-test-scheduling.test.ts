@@ -1,9 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import config from '../vitest.config';
 import { collectFixedRoleTestFiles, FIXED_ROLE_FIXTURE_ROOTS, LEGACY_MANAGER_TEST_FILES } from '../scripts/fixedRoleTestFiles';
+import { UNIT_DISCOVERY_PROOF_FILE, UNIT_DISCOVERY_PROOF_SHA, unitDiscoverySourceContinuity as proof,
+  projectUnitDiscoveryPredecessor } from './helpers/unitDiscoverySourceContinuity';
+import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';
 
 const temporary: string[] = [];
 afterEach(() => { for (const root of temporary.splice(0)) rmSync(root, { recursive: true, force: true }); });
@@ -102,6 +107,36 @@ describe('fixed-role fixture import scheduling', () => {
     expect(Object.values(result.reasons).every(reason => reason.legacyManager)).toBe(true);
   });
 
+  it('observes rewired imports, added entries and removed entries on every live scan', () => {
+    const fixture = graph({
+      'test/a.test.ts': "import './helpers/bridge';",
+      'test/helpers/bridge.ts': "import './customerFinancialRuntimeFixture';",
+    });
+    expect(fixture.selection().files).toEqual(['test/a.test.ts']);
+    writeFileSync(resolve(fixture.root, 'test/helpers/bridge.ts'), 'export {};');
+    expect(fixture.selection().files).toEqual([]);
+    writeFileSync(resolve(fixture.root, 'test/b.test.ts'), "import './helpers/customerFinancialRuntimeFixture';");
+    expect(fixture.selection().files).toEqual(['test/b.test.ts']);
+    rmSync(resolve(fixture.root, 'test/b.test.ts'));
+    expect(fixture.selection().files).toEqual([]);
+    writeFileSync(resolve(fixture.root, 'test/helpers/bridge.ts'), "import './missing';");
+    expect(fixture.selection).toThrow('Unresolved local scheduling import');
+  });
+
+  it('resolves the current symlink destination on a later scan', () => {
+    const fixture = graph({
+      'test/a.test.ts': "import './helpers/linked/bridge';",
+      'test/helpers/active/bridge.ts': "import '../customerFinancialRuntimeFixture';",
+      'test/helpers/independent/bridge.ts': 'export {};',
+    });
+    const link = resolve(fixture.root, 'test/helpers/linked');
+    symlinkSync(resolve(fixture.root, 'test/helpers/active'), link, 'junction');
+    expect(fixture.selection().files).toEqual(['test/a.test.ts']);
+    rmSync(link);
+    symlinkSync(resolve(fixture.root, 'test/helpers/independent'), link, 'junction');
+    expect(fixture.selection().files).toEqual([]);
+  });
+
   it('assigns every actual top-level test exactly once and all fixed-role entries to one serial project', () => {
     const projects = config.test!.projects! as Array<{ test: { name: string; include: string[]; exclude?: string[]; maxWorkers?: number; fileParallelism?: boolean; sequence?: { groupOrder?: number } } }>;
     const serial = projects.find(project => project.test.name === 'fixed-role-native')!.test;
@@ -117,6 +152,38 @@ describe('fixed-role fixture import scheduling', () => {
       const matches = projects.filter(({ test }) => test.include.some(pattern => pattern === entry || pattern === 'test/*.test.ts') && !test.exclude?.includes(entry));
       expect(matches.map(project => project.test.name), entry).toHaveLength(1);
       if (serial.include.includes(entry)) expect(matches[0].test.name, entry).toBe('fixed-role-native');
+    }
+  });
+});
+
+describe('exact unit discovery successor for historical readers', () => {
+  const root = resolve(import.meta.dirname, '../..');
+  const physical = (file: string) => readFileSync(resolve(root, file), 'utf8');
+  it('restores all three complete fixed353 Git originals without projecting current scheduler acceptance', () => {
+    expect(createHash('sha256').update(readFileSync(resolve(root, UNIT_DISCOVERY_PROOF_FILE))).digest('hex')).toBe(UNIT_DISCOVERY_PROOF_SHA);
+    expect(proof.sources.map(row => row.file)).toEqual([
+      'workers-ts/scripts/fixedRoleTestFiles.ts', 'workers-ts/test/fixed-role-test-scheduling.test.ts', 'workers-ts/vitest.config.ts',
+    ]);
+    for (const row of proof.sources) {
+      const current = physical(row.file);
+      const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + row.file], { cwd: root, encoding: 'utf8' });
+      expect(projectUnitDiscoveryPredecessor(row.file, current)).toBe(before);
+      expect(projectProviderTransportPredecessor(row.file, current)).toBe(before);
+      expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });
+      expect(current).not.toBe(before);
+    }
+    expect(physical('workers-ts/vitest.config.ts')).toContain('mergeConfig(shared, project)');
+    expect(projectUnitDiscoveryPredecessor('unrelated.ts', 'native bytes')).toBe('native bytes');
+    expect(Object.isFrozen(proof.sources[0].inverseEdits[0].before)).toBe(true);
+  });
+  it.each(['prefix', 'suffix', 'CRLF', 'same-size edit', 'old complete image'])('rejects an unreviewed %s for every whole selected source', kind => {
+    for (const row of proof.sources) {
+      const current = physical(row.file), before = projectUnitDiscoveryPredecessor(row.file, current);
+      const changed = kind === 'prefix' ? '// unknown\n' + current : kind === 'suffix' ? current + '\n// unknown\n'
+        : kind === 'CRLF' ? current.replaceAll('\n', '\r\n') : kind === 'same-size edit' ? 'X' + current.slice(1) : before;
+      expect(changed).not.toBe(current);
+      expect(() => projectUnitDiscoveryPredecessor(row.file, changed)).toThrow('complete current source differs');
+      expect(() => projectProviderTransportPredecessor(row.file, changed)).toThrow('complete current source differs');
     }
   });
 });

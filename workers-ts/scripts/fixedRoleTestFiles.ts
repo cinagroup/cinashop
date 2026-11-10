@@ -66,6 +66,15 @@ export function collectFixedRoleTestFiles(
   const reverse = new Map<string, Set<string>>(), risks = new Map<string, FixedRoleDynamicRisk[]>();
   const visited = new Set<string>(), pending = [...entries, ...roots];
   const label = (file: string) => portable(relative(root, file));
+  // Resolve repeated imports once during this live scan only. A later call must
+  // see added files, changed imports and retargeted symlinks without stale state.
+  const localTargets = new Map<string, string | null>();
+  const fileStatus = new Map<string, boolean>();
+  const realpaths = new Map<string, string>();
+  const isFile = (file: string) => {
+    if (!fileStatus.has(file)) fileStatus.set(file, existsSync(file) && statSync(file).isFile());
+    return fileStatus.get(file)!;
+  };
 
   const localTarget = (from: string, specifier: string): string | null => {
     if (specifier.startsWith('node:') || /^(?:data|https?):/u.test(specifier)) return null;
@@ -75,14 +84,17 @@ export function collectFixedRoleTestFiles(
     if (raw !== specifier) return null;
     const base = raw.startsWith('@/') ? resolve(root, 'src', raw.slice(2))
       : raw.startsWith('file:') ? fileURLToPath(raw) : resolve(dirname(from), raw);
+    if (localTargets.has(base)) return localTargets.get(base)!;
     const emitted = /\.[cm]?jsx?$/u.test(base) ? base.replace(/\.[cm]?jsx?$/u, '') : base;
     const candidates = [base, ...['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs', '.d.ts', '.d.mts', '.d.cts'].map(ext => emitted + ext),
       ...['index.ts', 'index.tsx', 'index.mts', 'index.js', 'index.mjs', 'index.cjs'].map(name => resolve(base, name))];
-    const found = candidates.find(file => existsSync(file) && statSync(file).isFile());
+    const found = candidates.find(isFile);
     if (!found) throw Error(`Unresolved local scheduling import in ${label(from)}: ${specifier}`);
-    const actual = realpathSync(found);
-    if (actual.split(sep).includes('node_modules') || dataExtensions.has(extname(actual))) return null;
+    const actual = realpaths.get(found) ?? realpathSync(found);
+    realpaths.set(found, actual);
+    if (actual.split(sep).includes('node_modules') || dataExtensions.has(extname(actual))) { localTargets.set(base, null); return null; }
     if (!inside(repository, actual)) throw Error(`Local scheduling import leaves the repository: ${label(from)} -> ${specifier}`);
+    localTargets.set(base, actual);
     return actual;
   };
 
@@ -97,7 +109,9 @@ export function collectFixedRoleTestFiles(
       continue;
     }
     const text = readFileSync(file, 'utf8');
-    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+    // All text/position queries below supply source explicitly; parent links
+    // are unnecessary for this read-only import inspection.
+    const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false);
     const parseDiagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
     if (parseDiagnostics.length) throw Error(`Cannot parse scheduling imports in ${label(file)}: ${ts.flattenDiagnosticMessageText(parseDiagnostics[0].messageText, ' ')}`);
     const literal = (node: ts.Expression): string | null => {
@@ -144,7 +158,8 @@ export function collectFixedRoleTestFiles(
       if (ts.isCallExpression(node)) {
         const isImport = node.expression.kind === ts.SyntaxKind.ImportKeyword;
         const isRequire = ts.isIdentifier(node.expression) && node.expression.text === 'require';
-        const isGlob = node.expression.getText(source) === 'import.meta.glob';
+        const isGlob = ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'glob'
+          && node.expression.getText(source) === 'import.meta.glob';
         if (isImport || isRequire) {
           const value = node.arguments[0], target = value && literal(value);
           if (target !== null && target !== undefined) add(target);
