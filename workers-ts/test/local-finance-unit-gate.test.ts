@@ -22,7 +22,7 @@ afterEach(() => { for (const path of owned.splice(0)) rmSync(path, { recursive: 
 describe('complete local unit gate', () => {
   it.each([1, 2])('uses native shard %i without file/name filters and keeps complete JSON output', shard => {
     expect(unitGateArguments(shard, 'output')).toEqual(['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.config.ts',
-      `--shard=${shard}/2`, '--maxWorkers=2', '--reporter=default', '--reporter=json', '--reporter=./scripts/local-unit-progress.mjs',
+      `--shard=${shard}/2`, '--maxWorkers=1', '--fileParallelism=false', '--reporter=default', '--reporter=json', '--reporter=./scripts/local-unit-progress.mjs',
       `--outputFile.json=${join('output', 'unit-shard-results.json')}`]);
   });
   it.each([0, 3, -1, '1', undefined])('rejects invalid shard %s', shard => {

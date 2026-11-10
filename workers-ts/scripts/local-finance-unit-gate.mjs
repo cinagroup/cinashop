@@ -47,8 +47,10 @@ export function changedUnitInputs(before, after) {
 
 export function unitGateArguments(shard, outputDirectory) {
   checkShard(shard);
+  // The shared VM permits one validation worker at a time. Keep both complete
+  // native partitions and all reporters; only local process scheduling changes.
   return ['node_modules/vitest/vitest.mjs', 'run', '--config', 'vitest.config.ts', `--shard=${shard}/2`,
-    '--maxWorkers=2', '--reporter=default', '--reporter=json', '--reporter=./scripts/local-unit-progress.mjs',
+    '--maxWorkers=1', '--fileParallelism=false', '--reporter=default', '--reporter=json', '--reporter=./scripts/local-unit-progress.mjs',
     `--outputFile.json=${join(outputDirectory, 'unit-shard-results.json')}`];
 }
 
