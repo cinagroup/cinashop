@@ -1,22 +1,24 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Hono } from 'hono';
 import { eq, sql } from 'drizzle-orm';
 import type { AppVariables, Env } from '../src/env';
 import { createContainerFromDb, type DbClient } from '../src/lib/di';
 import { orderCreate } from '../src/controllers/api/v1/OrderController';
-import { productCreate, productUpdate, productSetShow, productStockUpload } from '../src/controllers/out/OutApiController';
+import { productCreate, productInfo, productUpdate, productSetShow, productStockUpload } from '../src/controllers/out/OutApiController';
 import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
 import { completePurchaseOriginEvidenceOrm } from '../src/migrations/runPurchaseOriginEvidence';
 import { completePurchaseCancellationEvidenceOrm } from '../src/migrations/runPurchaseCancellationEvidence';
 import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
 import { waitForFinanceBlock } from './helpers/financePeers';
+import { runtimeBusinessPrivilegePlan } from '../src/migrations/runtimeBusinessPrivilegePlan';
 import { storeProduct, storeProductAttrValue, storeProductCategory, storeCart, storeProductRelation,
-  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription } from '../src/models/schema';
+  outProductWriteReplay, storeProductStockRecord, storeProductAttr, storeProductAttrResult, storeProductDescription, storeBrand } from '../src/models/schema';
 
 describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out product management versus checkout', () => {
   let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
   let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
   const key = '8c237c34-9995-4e47-8e02-c6d3e67524db';
   const input = { cartIds: [1], addressId: 11, couponId: 0, type: 0 };
   const productBody = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'isolated Out product',
@@ -33,12 +35,14 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
     a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
     a.post('/api/order/create/:key', orderCreate);
     a.post('/outapi/product', productCreate);
+    a.get('/outapi/product/:id', productInfo);
     a.put('/outapi/product/stock/upload', productStockUpload);
     a.put('/outapi/product/set_show/:id/:is_show', productSetShow);
     a.put('/outapi/product/:id', productUpdate);
     return a;
   };
   beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('External provider HTTP is not accepted by native Out product tests'));
     f = await createPcCheckoutQuoteFixture([], async () => {
       owned = await sequenceRunnerDatabase();
       try {
@@ -56,7 +60,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
     await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
     Object.assign(f.env, { SEQUENCE: { idFromName: () => 'isolated', get: () => ({ fetch: async () => new Response('out_product_concurrency_order') }) } });
   }, 120_000);
-  afterEach(async () => { await f?.close(); }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
   const request = async (a: ReturnType<typeof app>, path: string, body?: object, method = 'PUT', requestKey = key) => {
     const r = await a.request(path, { method, headers: { 'content-type': 'application/json', 'x-fixture-user': '11', 'Idempotency-Key': requestKey },
       ...(body ? { body: JSON.stringify(body) } : {}) }, f.env);
@@ -73,7 +77,7 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
   };
   const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay),
     stocks: await f.db.select().from(storeProductStockRecord), relations: await f.db.select().from(storeProductRelation),
-    attrs: await f.db.select().from(storeProductAttr), results: await f.db.select().from(storeProductAttrResult), descriptions: await f.db.select().from(storeProductDescription) });
+    attrs: await f.db.select().from(storeProductAttr), results: await f.db.select().from(storeProductAttrResult), descriptions: await f.db.select().from(storeProductDescription), brands: await f.db.select().from(storeBrand).orderBy(storeBrand.id) });
   const finishedOrBlocked = async (pid: number, blocker: number, finished: () => boolean) => {
     const deadline = performance.now() + 1_500;
     while (!finished() && performance.now() < deadline) {
@@ -253,4 +257,214 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('full-ORM Out pro
     expect(after.skus.find(row => row.id === 2)).toMatchObject({ stock: 99, isRetired: 1 });
     expect(after.products[0].stock).toBe(9); expect(after.stocks).toHaveLength(1);
   });
+
+  async function seedBrands() {
+    await f.db.insert(storeBrand).values([
+      { id: 30, brandName: '平台父品牌', pid: 0, storeId: 0, isShow: 1 },
+      { id: 31, brandName: '平台子品牌', pid: 30, storeId: 0, isShow: 1 },
+      { id: 32, brandName: '另一子品牌', pid: 30, storeId: 0, isShow: 1 },
+      { id: 33, brandName: '门店品牌', pid: 0, storeId: 9, isShow: 1 },
+      { id: 34, brandName: '隐藏品牌', pid: 0, storeId: 0, isShow: 0 },
+      { id: 35, brandName: '删除品牌', pid: 0, storeId: 0, isShow: 1, isDel: 1 },
+      { id: 40, brandName: '原品牌', pid: 0, storeId: 0, isShow: 1 },
+    ]);
+    await f.db.update(storeProduct).set({ brandId: 40, brandCom: '40' }).where(eq(storeProduct.id, 70));
+    await f.db.insert(storeProductRelation).values([
+      { id: 900, productId: 70, type: 2, relationId: 40, relationPid: 0, status: 1 },
+      { id: 901, productId: 70, type: 3, relationId: 90, relationPid: 0, status: 1 },
+      { id: 902, productId: 70, type: 5, relationId: 91, relationPid: 0, status: 0 },
+    ]);
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product_relation','id'),902,true)");
+  }
+  const unownedBrandRelations = () => f.db.execute(sql`SELECT id,xmin::text AS version,to_jsonb(r) AS data
+    FROM store_product_relation r WHERE product_id=70 AND type NOT IN(1,2) ORDER BY id`);
+
+  it('commits a full platform brand path and exact type2 rows with its replay while preserving historical relations and consumed stock', async () => {
+    const receipt = await confirm(), purchased = await buy(f.db, receipt);
+    expect(purchased.status, purchased.msg).toBe(200);
+    await seedBrands(); const protectedRows = await unownedBrandRelations(), before = await state();
+    expect(before.products[0]).toMatchObject({ stock: 6, sales: 2 });
+    const body = { ...productBody, brand_id: ['30', '31'] }, first = await request(app(f.db), '/outapi/product/70', body);
+    expect(first.status, first.msg).toBe(200); expect(first.data.stock_preserved).toBe(true);
+    const after = await state(); expect(after.products.find(row => row.id === 70)).toMatchObject({ brandId: 31, brandCom: '30,31', stock: before.products[0].stock, sales: before.products[0].sales });
+    expect(after.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales])).toEqual(before.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales]));
+    expect(after.orders).toEqual(before.orders); expect(after.bills).toEqual(before.bills);
+    expect(after.relations.filter(row => row.productId === 70 && row.type === 2)).toMatchObject([
+      { relationId: 30, relationPid: 0, status: 1 }, { relationId: 31, relationPid: 0, status: 1 },
+    ]);
+    expect(await unownedBrandRelations()).toEqual(protectedRows); expect(after.replays).toHaveLength(1);
+    await f.db.update(storeBrand).set({ isShow: 0 }).where(eq(storeBrand.id, 31));
+    const changedCatalog = await state(), replay = await request(app(f.db), '/outapi/product/70', body);
+    expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await state()).toEqual(changedCatalog);
+  });
+
+  it('creates one branded product and one receipt for two concurrent same-key authors', async () => {
+    await seedBrands(); await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const body = { ...productBody, brand_id: [30, 31] };
+    await peers(async ([_holder, first, second]) => {
+      const results = await Promise.all([request(app(first.db), '/outapi/product', body, 'POST'), request(app(second.db), '/outapi/product', body, 'POST')]);
+      for (const result of results) expect(result.status, result.msg).toBe(200);
+      expect(results.filter(row => row.data.idempotent)).toHaveLength(1);
+      expect(results[0].data.id).toBe(results[1].data.id);
+      const id = results[0].data.id;
+      expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, id)))[0]).toMatchObject({ type: 0, relationId: 0, brandId: 31, brandCom: '30,31' });
+      expect((await f.db.select().from(storeProductRelation)).filter(row => row.productId === id && row.type === 2).map(row => row.relationId)).toEqual([30, 31]);
+      expect(await f.db.select().from(outProductWriteReplay)).toHaveLength(1);
+    });
+  }, 20_000);
+
+  it('clears branding only with an explicit new intent and refuses borrowing the original selected-path replay key', async () => {
+    await seedBrands(); const protectedRows = await unownedBrandRelations();
+    expect((await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] })).status).toBe(200);
+    const before = await state(), conflict = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [] });
+    expect(conflict.status).not.toBe(200); expect(await state()).toEqual(before);
+    const cleared = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [] }, 'PUT', crypto.randomUUID());
+    expect(cleared.status, cleared.msg).toBe(200);
+    expect((await state()).products.find(row => row.id === 70)).toMatchObject({ brandId: 0, brandCom: '' });
+    expect((await state()).relations.filter(row => row.productId === 70 && row.type === 2)).toEqual([]);
+    expect(await unownedBrandRelations()).toEqual(protectedRows);
+  });
+
+  it('omitted branding preserves even unresolved old metadata without consulting the brand catalog', async () => {
+    await seedBrands(); await f.db.update(storeProduct).set({ brandId: 999, brandCom: 'unresolved-legacy-brand' }).where(eq(storeProduct.id, 70));
+    const priorRelations = await f.db.execute(sql`SELECT id,xmin::text AS version,to_jsonb(r) AS data FROM store_product_relation r WHERE product_id=70 AND type=2 ORDER BY id`);
+    await f.exec('ALTER TABLE store_brand RENAME TO hidden_out_brand_catalog');
+    const result = await request(app(f.db), '/outapi/product/70', productBody);
+    expect(result.status, result.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0]).toMatchObject({ brandId: 999, brandCom: 'unresolved-legacy-brand' });
+    expect(await f.db.execute(sql`SELECT id,xmin::text AS version,to_jsonb(r) AS data FROM store_product_relation r WHERE product_id=70 AND type=2 ORDER BY id`)).toEqual(priorRelations);
+  });
+
+  it.each([{ brand_id: [31] }, { brand_id: [31, 30] }, { brand_id: [30, 32, 31] },
+    { brand_id: [33] }, { brand_id: [34] }, { brand_id: [35] }, { brand_id: [999] }])('rejects a missing, crossed, hidden, deleted or non-root platform brand path $brand_id before receipt or business mutation', async ({ brand_id }) => {
+    await seedBrands(); const before = await state(), result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id });
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('品牌路径'); expect(await state()).toEqual(before);
+  });
+
+  it('refuses branding a Supplier-owned product through the platform Out writer without changing any row or receipt', async () => {
+    await seedBrands(); await f.db.update(storeProduct).set({ type: 2, relationId: 44 }).where(eq(storeProduct.id, 70));
+    const before = await state(), result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('不属于平台'); expect(await state()).toEqual(before);
+  });
+
+  it('uses the existing App privilege plan on a genuine restricted LOGIN for branding while brand catalog mutation remains denied', async () => {
+    await seedBrands(); if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) {
+        const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name];
+        if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name
+        FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped
+        WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const [identity] = await runtime.db.execute(sql`SELECT current_user AS role,session_user AS session,
+        (SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls FROM pg_roles WHERE rolname=current_user) AS elevated,
+        has_column_privilege(current_user,'public.store_brand','id','UPDATE') AS can_lock,
+        has_column_privilege(current_user,'public.store_brand','is_show','UPDATE') AS can_mutate`);
+      expect(identity).toEqual({ role: runtime.role, session: runtime.role, elevated: false, can_lock: true, can_mutate: false });
+      const ordinary = await request(app(runtime.db), '/outapi/product/70', productBody, 'PUT', crypto.randomUUID());
+      expect(ordinary.status, ordinary.msg).toBe(200);
+      const branded = await request(app(runtime.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+      expect(branded.status, branded.msg).toBe(200);
+      const read = await request(app(runtime.db), '/outapi/product/70', undefined, 'GET');
+      expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ brand_id: [30, 31], brand_selection: { consistent: true, available: true } });
+      await expect(runtime.exec('UPDATE store_brand SET is_show=0 WHERE id=31')).rejects.toMatchObject({ code: '42501' });
+    });
+  }, 30_000);
+
+  it('refuses a busy later brand row without keeping earlier brand/SKU/replay locks and permits the uncommitted key after release', async () => {
+    await seedBrands(); const before = await state(), body = { ...productBody, brand_id: [30, 31] };
+    await peers(async ([holder, editor, probe]) => {
+      await holder.exec('BEGIN; SELECT id FROM store_brand WHERE id=31 FOR UPDATE');
+      try {
+        const result = await request(app(editor.db), '/outapi/product/70', body);
+        expect(result.status).not.toBe(200); expect(result.msg).toContain('正在变化'); expect(await state()).toEqual(before);
+        await probe.exec('BEGIN; SELECT id FROM store_brand WHERE id=30 FOR UPDATE NOWAIT; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE NOWAIT');
+        const [locks] = await probe.db.execute(sql`SELECT pg_try_advisory_xact_lock(731602,0) AS sku,pg_try_advisory_xact_lock(744220001,7) AS replay`);
+        expect(locks).toEqual({ sku: true, replay: true }); await probe.exec('COMMIT');
+      } finally { await holder.exec('ROLLBACK'); }
+    });
+    expect((await request(app(f.db), '/outapi/product/70', body)).status).toBe(200);
+  }, 20_000);
+
+  it('pins the selected brand rows throughout a real blocked product write', async () => {
+    await seedBrands();
+    await f.exec("CREATE FUNCTION test_out_brand_gate() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id=70 THEN PERFORM pg_advisory_xact_lock(744220090,1); END IF; RETURN NEW; END $$; CREATE TRIGGER test_out_brand_gate BEFORE UPDATE ON store_product FOR EACH ROW EXECUTE FUNCTION test_out_brand_gate()");
+    await peers(async ([holder, editor, probe]) => {
+      await holder.exec('BEGIN; SELECT pg_advisory_xact_lock(744220090,1)');
+      const pending = request(app(editor.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+      try {
+        await waitForFinanceBlock(f.db, editor.pid, holder.pid);
+        await probe.exec('BEGIN');
+        await expect(probe.exec('SELECT id FROM store_brand WHERE id=31 FOR UPDATE NOWAIT')).rejects.toMatchObject({ code: '55P03' });
+        await probe.exec('ROLLBACK');
+      } finally { await holder.exec('COMMIT'); }
+      const result = await pending; expect(result.status, result.msg).toBe(200);
+    });
+  }, 20_000);
+
+  it('a final replay failure rolls back the already-authored brand scalars and exact relationship replacement', async () => {
+    await seedBrands(); const before = await state(), protectedRows = await unownedBrandRelations();
+    await f.exec("CREATE FUNCTION test_out_brand_receipt_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'isolated branded receipt failure'; END $$; CREATE TRIGGER test_out_brand_receipt_failure BEFORE INSERT ON out_product_write_replay FOR EACH ROW EXECUTE FUNCTION test_out_brand_receipt_failure()");
+    const result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+    expect(result.status).not.toBe(200); expect(await state()).toEqual(before); expect(await unownedBrandRelations()).toEqual(protectedRows);
+  });
+
+  it('rejects a brand trigger rewriting an unrelated row to the same values and rolls everything back', async () => {
+    await seedBrands(); const before = await state(), protectedRows = await unownedBrandRelations();
+    await f.exec("CREATE FUNCTION test_out_brand_interference() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_relation SET status=status WHERE id=901; RETURN NEW; END $$; CREATE TRIGGER test_out_brand_interference AFTER INSERT ON store_product_relation FOR EACH ROW WHEN(NEW.type=2) EXECUTE FUNCTION test_out_brand_interference()");
+    const result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('历史关联已变化');
+    expect(await state()).toEqual(before); expect(await unownedBrandRelations()).toEqual(protectedRows);
+  });
+
+  it('reads the stored brand path and availability without repairing malformed or newly unavailable history', async () => {
+    await seedBrands(); expect((await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] })).status).toBe(200);
+    let before = await state(), read = await request(app(f.db), '/outapi/product/70', undefined, 'GET');
+    expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ brand_id: [30, 31], brand_selection: { consistent: true, available: true } });
+    expect(await state()).toEqual(before);
+    await f.db.update(storeBrand).set({ isShow: 0 }).where(eq(storeBrand.id, 31)); before = await state();
+    read = await request(app(f.db), '/outapi/product/70', undefined, 'GET');
+    expect(read.data).toMatchObject({ brand_id: [30, 31], brand_selection: { consistent: true, available: false } }); expect(await state()).toEqual(before);
+    await f.db.update(storeProduct).set({ brandCom: '030,31' }).where(eq(storeProduct.id, 70)); before = await state();
+    read = await request(app(f.db), '/outapi/product/70', undefined, 'GET');
+    expect(read.data).toMatchObject({ brand_com: '030,31', brand_id: [], brand_selection: { brand_id: 31, brand_com: '030,31', consistent: false, available: false } });
+    expect(await state()).toEqual(before);
+  });
+
+  it('reads brand scalars and relationship rows from one real repeatable-read snapshot across a concurrent replacement', async () => {
+    await seedBrands(); expect((await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] })).status).toBe(200);
+    await peers(async ([holder, reader, _other]) => {
+      await holder.exec('BEGIN; LOCK TABLE store_product_relation IN ACCESS EXCLUSIVE MODE');
+      const pending = request(app(reader.db), '/outapi/product/70', undefined, 'GET');
+      try {
+        await waitForFinanceBlock(f.db, reader.pid, holder.pid);
+        await holder.exec("UPDATE store_product SET brand_id=32,brand_com='30,32' WHERE id=70; DELETE FROM store_product_relation WHERE product_id=70 AND type=2; INSERT INTO store_product_relation(product_id,type,relation_id,relation_pid,status) VALUES(70,2,30,0,1),(70,2,32,0,1)");
+      } finally { await holder.exec('COMMIT'); }
+      const old = await pending; expect(old.status, old.msg).toBe(200);
+      expect(old.data).toMatchObject({ brand_id: [30, 31], brand_selection: { consistent: true, available: true } });
+      const current = await request(app(reader.db), '/outapi/product/70', undefined, 'GET');
+      expect(current.data).toMatchObject({ brand_id: [30, 32], brand_selection: { consistent: true, available: true } });
+    });
+  }, 20_000);
+
+  it('rejects a successful receipt trigger rewriting a protected relationship after the brand author and rolls back the receipt too', async () => {
+    await seedBrands(); const before = await state(), protectedRows = await unownedBrandRelations();
+    await f.exec("CREATE FUNCTION test_out_brand_receipt_interference() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product_relation SET status=status WHERE id=901; RETURN NEW; END $$; CREATE TRIGGER test_out_brand_receipt_interference AFTER INSERT ON out_product_write_replay FOR EACH ROW EXECUTE FUNCTION test_out_brand_receipt_interference()");
+    const result = await request(app(f.db), '/outapi/product/70', { ...productBody, brand_id: [30, 31] });
+    expect(result.status).not.toBe(200); expect(result.msg).toContain('历史关联已变化');
+    expect(await state()).toEqual(before); expect(await unownedBrandRelations()).toEqual(protectedRows);
+  });
+
 });

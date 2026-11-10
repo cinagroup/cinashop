@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { outProductWriteReplay } from "@/models/schema";
+import { outRequestHash } from '@/services/out/OutIdempotency';
 import {
   normalizeOutPhysicalProductInput,
   normalizeOutProductRequestKey,
@@ -28,6 +29,23 @@ function physicalProduct() {
 }
 
 describe("Out API product write migration", () => {
+  it('accepts explicit complete brand paths, distinguishes clear from omission and binds the canonical path in replay', async () => {
+    const omitted = normalizeOutPhysicalProductInput(physicalProduct());
+    expect(Object.hasOwn(omitted, 'brandIds')).toBe(false);
+    expect(normalizeOutPhysicalProductInput({ ...physicalProduct(), brand_id: undefined })).toEqual(omitted);
+    const selected = normalizeOutPhysicalProductInput({ ...physicalProduct(), brand_id: ['30', '31'] });
+    expect(selected.brandIds).toEqual([30, 31]);
+    const clear = normalizeOutPhysicalProductInput({ ...physicalProduct(), brand_id: [] });
+    expect(clear.brandIds).toEqual([]);
+    expect(await outRequestHash(selected)).not.toBe(await outRequestHash(clear));
+    expect(await outRequestHash(omitted)).not.toBe(await outRequestHash(clear));
+  });
+  it.each([{ brand_id: null }, { brand_id: 0 }, { brand_id: '30,31' }, { brand_id: {} },
+    { brand_id: [30, 30] }, { brand_id: [true] }, { brand_id: ['030'] }, { brand_id: [2147483648] },
+    { brand_id: [1.5] }, { brand_id: Array(17).fill(1) }])(
+    'rejects malformed or ambiguous brand paths before database work ($brand_id)', ({ brand_id }) => {
+      expect(() => normalizeOutPhysicalProductInput({ ...physicalProduct(), brand_id })).toThrow('品牌');
+    });
   it("normalizes the bounded platform-only physical product contract", () => {
     const normalized = normalizeOutPhysicalProductInput(physicalProduct());
     expect(normalized).toMatchObject({

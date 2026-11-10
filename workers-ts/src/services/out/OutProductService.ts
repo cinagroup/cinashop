@@ -23,6 +23,8 @@ import {
 import { PRODUCT_SKU_IDENTITY_LOCK_NAMESPACE } from "@/services/product/ProductSkuIdentity";
 import { NotFoundException, ValidateException } from "@/utils/errors";
 import { normalizeOutRequestKey, outRequestHash } from "@/services/out/OutIdempotency";
+import { supplierProductBrandInput, lockSupplierProductBrandPath } from '@/services/supplier/SupplierProductBrandBindings';
+import { assertOutProductBrandBindings, outBrandProtectedRelations, outProductBrandSelection, replaceOutProductBrandBindings } from './OutProductBrandBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -41,6 +43,7 @@ interface OutAccountIdentity {
 }
 
 interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
+  brandIds?: number[];
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -143,7 +146,6 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "activity",
     "auto_off_time",
     "auto_on_time",
-    "brand_id",
     "coupon_ids",
     "custom_form",
     "ensure_id",
@@ -199,8 +201,10 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...sku,
     image: safeAsset(sku.image, "SKU图片", 128),
   }));
+  const brandIds = supplierProductBrandInput(input);
   return {
     ...base,
+    ...(brandIds === undefined ? {} : { brandIds }),
     sliderImages,
     skus,
     videoLink: safeAsset(base.videoLink, "商品视频", 500),
@@ -383,6 +387,7 @@ export class OutProductService {
   ) {
     const key = normalizeOutProductRequestKey(requestKeyInput);
     const input = normalizeOutPhysicalProductInput(rawInput);
+    const brandIds = input.brandIds;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -395,6 +400,7 @@ export class OutProductService {
         await lockBargainSourceProductChange(tx, productId);
       }
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${PRODUCT_SAVE_LOCK_NAMESPACE}, 0)`);
+      if (brandIds !== undefined) await inventoryLock(() => lockSupplierProductBrandPath(tx, brandIds));
       await tx.execute(sql`LOCK TABLE "store_product_category" IN SHARE ROW EXCLUSIVE MODE`);
       const categories = await this.categories(tx, input.cateIds);
 
@@ -455,6 +461,7 @@ export class OutProductService {
       );
       const now = Math.floor(Date.now() / 1000);
       const productValues = {
+        ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
         productType: PHYSICAL_PRODUCT_TYPE,
         type: PLATFORM_TYPE,
         relationId: PLATFORM_RELATION_ID,
@@ -502,6 +509,8 @@ export class OutProductService {
         autoOffTime: input.isShow ? 0 : (existing?.autoOffTime ?? 0),
       } as const;
 
+      const protectedBrandRows = brandIds !== undefined && existing
+        ? await inventoryLock(() => outBrandProtectedRelations(tx, productId)) : [];
       let savedProductId = productId;
       if (existing) {
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
@@ -608,76 +617,86 @@ export class OutProductService {
         type: PRODUCT_ATTR_TYPE,
       });
       await updateCartStatus(tx, savedProductId, input.isShow);
+      const brandProof = brandIds === undefined ? undefined
+        : await inventoryLock(() => replaceOutProductBrandBindings(tx, savedProductId, brandIds, protectedBrandRows));
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
+      if (brandProof) {
+        await inventoryLock(() => assertOutProductBrandBindings(tx, brandProof));
+        await inventoryLock(() => lockSupplierProductBrandPath(tx, brandProof.ids));
+      }
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }
 
   async detail(productId: number) {
-    const product = (
-      await this.container.db
-        .select()
-        .from(storeProduct)
-        .where(and(
-          eq(storeProduct.id, productId),
-          eq(storeProduct.type, PLATFORM_TYPE),
-          eq(storeProduct.relationId, PLATFORM_RELATION_ID),
-          eq(storeProduct.isDel, 0),
-        ))
-        .limit(1)
-    )[0];
-    if (!product) throw new NotFoundException("商品不存在或不属于平台");
-    const [categories, descriptions, dimensions, skus] = await Promise.all([
-      this.container.db
-        .select({ relation_id: storeProductRelation.relationId })
-        .from(storeProductRelation)
-        .where(and(
-          eq(storeProductRelation.productId, productId),
-          eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
-        ))
-        .orderBy(asc(storeProductRelation.id)),
-      this.container.db
-        .select({ description: storeProductDescription.description })
-        .from(storeProductDescription)
-        .where(and(
-          eq(storeProductDescription.productId, productId),
-          eq(storeProductDescription.type, PHYSICAL_PRODUCT_TYPE),
-        ))
-        .limit(1),
-      this.container.db
-        .select()
-        .from(storeProductAttr)
-        .where(and(
-          eq(storeProductAttr.productId, productId),
-          eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
-        ))
-        .orderBy(asc(storeProductAttr.id)),
-      this.container.db
-        .select()
-        .from(storeProductAttrValue)
-        .where(and(
-          eq(storeProductAttrValue.productId, productId),
-          eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
-        ))
-        .orderBy(asc(storeProductAttrValue.id)),
-    ]);
-    const items = dimensions.map((dimension) => ({
-      value: dimension.attrName,
-      detail: dimension.attrValues.split(",").filter(Boolean),
-    }));
-    return {
-      ...product,
-      cate_id: categories.map((row) => row.relation_id),
-      description: descriptions[0]?.description ?? "",
-      items,
-      attrs: skus.map((sku) => ({
-        ...sku,
-        detail: Object.fromEntries(items.map((item, index) => [
-          item.value,
-          sku.suk.split(",")[index] ?? "",
-        ])),
-      })),
-    };
+    return withTx(this.container, async tx => {
+      await tx.execute(sql`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY`);
+      const product = (
+        await tx
+          .select()
+          .from(storeProduct)
+          .where(and(
+            eq(storeProduct.id, productId),
+            eq(storeProduct.type, PLATFORM_TYPE),
+            eq(storeProduct.relationId, PLATFORM_RELATION_ID),
+            eq(storeProduct.isDel, 0),
+          ))
+          .limit(1)
+      )[0];
+      if (!product) throw new NotFoundException("商品不存在或不属于平台");
+      const [categories, descriptions, dimensions, skus] = await Promise.all([
+        tx
+          .select({ relation_id: storeProductRelation.relationId })
+          .from(storeProductRelation)
+          .where(and(
+            eq(storeProductRelation.productId, productId),
+            eq(storeProductRelation.type, CATEGORY_RELATION_TYPE),
+          ))
+          .orderBy(asc(storeProductRelation.id)),
+        tx
+          .select({ description: storeProductDescription.description })
+          .from(storeProductDescription)
+          .where(and(
+            eq(storeProductDescription.productId, productId),
+            eq(storeProductDescription.type, PHYSICAL_PRODUCT_TYPE),
+          ))
+          .limit(1),
+        tx
+          .select()
+          .from(storeProductAttr)
+          .where(and(
+            eq(storeProductAttr.productId, productId),
+            eq(storeProductAttr.type, PRODUCT_ATTR_TYPE),
+          ))
+          .orderBy(asc(storeProductAttr.id)),
+        tx
+          .select()
+          .from(storeProductAttrValue)
+          .where(and(
+            eq(storeProductAttrValue.productId, productId),
+            eq(storeProductAttrValue.type, PRODUCT_ATTR_TYPE),
+          ))
+          .orderBy(asc(storeProductAttrValue.id)),
+      ]);
+      const items = dimensions.map((dimension) => ({
+        value: dimension.attrName,
+        detail: dimension.attrValues.split(",").filter(Boolean),
+      }));
+      return {
+        ...product,
+        ...await outProductBrandSelection(tx, product),
+        cate_id: categories.map((row) => row.relation_id),
+        description: descriptions[0]?.description ?? "",
+        items,
+        attrs: skus.map((sku) => ({
+          ...sku,
+          detail: Object.fromEntries(items.map((item, index) => [
+            item.value,
+            sku.suk.split(",")[index] ?? "",
+          ])),
+        })),
+      };
+    });
   }
 
   async setShow(
