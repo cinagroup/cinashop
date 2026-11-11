@@ -159,3 +159,112 @@ describe('admin activity edits and retirement preserve existing records', () => 
     expect(await row('seckill', 501)).toEqual(before);
   });
 });
+
+// This independent native suite exercises the Out author and the existing
+// recommendation consumer against the same committed product and real PG16.
+import { sql } from 'drizzle-orm';
+import { createContainerFromDb, type DbClient } from '@/lib/di';
+import { storeBargain, storeProduct, storeProductAttrValue, storeProductCategory, storeProductRelation, outProductWriteReplay } from '@/models/schema';
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { RecommendationNavigationService } from '@/services/product/RecommendationNavigationService';
+import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { completePurchaseOriginEvidenceOrm } from '@/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '@/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out activity order and actual recommendation navigation on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  const body = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out activity product',
+    slider_image: ['/isolated.png'], delivery_type: [1], freight: 3, temp_id: 10, spec_type: 1, is_show: 1,
+    items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+    attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-A' }] };
+  const app = (db: DbClient) => {
+    const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db));
+      c.set('outInfo', { id: 7, appid: 'isolated-out-activity', title: 'isolated', rules: [] }); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', productCreate); a.put('/outapi/product/:id', productUpdate); a.get('/outapi/product/:id', productInfo);
+    return a;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out activity acceptance forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'isolated', isShow: 1 });
+    await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-A' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
+  const request = async (db: DbClient, data?: object, key = crypto.randomUUID(), path = '/outapi/product/70', method = 'PUT') => {
+    const response = await app(db).request(path, { method, headers: { 'content-type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, f.env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay), relations: await f.db.select().from(storeProductRelation) });
+
+  it('persists create and update, replays exactly, projects the detail and drives real navigation', async () => {
+    const now = new Date('2026-09-21T02:00:00Z');
+    await f.db.insert(storeBargain).values({ id: 1000, productId: 70, title: '测试砍价', startTime: now, stopTime: new Date('2026-09-21T03:00:00Z') });
+    const key = crypto.randomUUID(), data = { ...body, activity: ['砍价', '默认', '秒杀', '拼团'] };
+    const result = await request(f.db, data, key); expect(result.status, result.msg).toBe(200);
+    const [row] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)); expect(row.activity).toBe('2,0,1,3');
+    const target = await new RecommendationNavigationService(createContainerFromDb(f.db)).decorate([{ id: 70, activity: row.activity, is_presale_product: 0 }], now);
+    expect(target[0].recommendation_target).toMatchObject({ kind: 'bargain', id: 1000 });
+    const detail = await request(f.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.activity).toEqual(['砍价', '默认', '秒杀', '拼团']);
+    const saved = await state(); expect((await request(f.db, data, key)).data.idempotent).toBe(true); expect(await state()).toEqual(saved);
+    expect((await request(f.db, body)).status).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0].activity).toBe('2,0,1,3');
+    expect((await request(f.db, { ...body, activity: [] })).status).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0].activity).toBe('');
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const created = await request(f.db, { ...body, activity: ['拼团', '默认'] }, crypto.randomUUID(), '/outapi/product', 'POST');
+    expect(created.status, created.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, created.data.id)))[0].activity).toBe('3,0');
+  }, 30_000);
+
+  it('rejects ambiguous orders and rolls back receipt and product on deferred mutation', async () => {
+    const before = await state();
+    const invalid = await request(f.db, { ...body, activity: ['秒杀', '秒杀'] });
+    expect(invalid.status).not.toBe(200); expect(await state()).toEqual(before);
+    for (const mutation of ["activity='1'", 'activity=activity']) {
+      await f.exec(`CREATE FUNCTION test_out_activity_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET ${mutation} WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_activity_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_activity_damage()`);
+      const failed = await request(f.db, { ...body, activity: ['砍价', '默认'] });
+      expect(failed.status).not.toBe(200); expect(await state()).toEqual(before);
+      await f.exec('DROP TRIGGER test_out_activity_damage ON out_product_write_replay; DROP FUNCTION test_out_activity_damage()');
+    }
+  }, 30_000);
+
+  it('saves and reads with existing restricted App privileges', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const result = await request(runtime.db, { ...body, activity: ['砍价', '默认'] }); expect(result.status, result.msg).toBe(200);
+      const detail = await request(runtime.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+      expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.activity).toEqual(['砍价', '默认']);
+    });
+  }, 30_000);
+});

@@ -63,6 +63,7 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   autoOnTime?: number;
   autoOffTime?: number;
   scheduleIntentVersion?: 1;
+  activity?: string;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -162,7 +163,6 @@ function nonEmpty(value: unknown): boolean {
 
 function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
   const unsupported = [
-    "activity",
     "is_presale_product",
     "is_vip_product",
     "presale_day",
@@ -175,6 +175,21 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
   }
   const supplierId = strictInteger(input.supplier_id, "供应商ID", 0);
   if (supplierId !== 0) throw new ValidateException("Out API 商品写入只允许平台作用域");
+}
+
+function activityInput(input: UnknownRecord): string | undefined {
+  if (!Object.hasOwn(input, 'activity') || input.activity === undefined) return undefined;
+  if (!Array.isArray(input.activity) || input.activity.length > 4) {
+    throw new ValidateException('活动顺序格式错误');
+  }
+  const values = input.activity.map(value => {
+    if (typeof value !== 'string' || value.length > 32 || /[\u0000-\u001f\u007f]/u.test(value)) {
+      throw new ValidateException('活动顺序格式错误');
+    }
+    return value === '秒杀' ? 1 : value === '砍价' ? 2 : value === '拼团' ? 3 : 0;
+  });
+  if (new Set(values).size !== values.length) throw new ValidateException('活动顺序不能重复');
+  return values.join(',');
 }
 
 function deliveryTypes(value: unknown): string {
@@ -191,6 +206,7 @@ function deliveryTypes(value: unknown): string {
 export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysicalProductInput {
   rejectUnmigratedProductFeatures(input);
   const schedule = outProductScheduleInput(input);
+  const activity = activityInput(input);
   // The former shared adapter included explicit empty timestamps in old
   // receipt hashes even though Out ignored them. Remove them before invoking
   // the base parser and bind the new author intent to an explicit version.
@@ -233,6 +249,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...(customForm === undefined ? {} : { customForm }),
     ...(systemFormId === undefined ? {} : { systemFormId }),
     ...schedule,
+    ...(activity === undefined ? {} : { activity }),
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
     sliderImages,
@@ -503,6 +520,7 @@ export class OutProductService {
       const admittedForm = systemFormId === undefined ? undefined
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
+        ...(input.activity === undefined ? {} : { activity: input.activity }),
         ...(customForm === undefined ? {} : { customForm }),
         ...(systemFormId === undefined ? {} : { systemFormId }),
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
@@ -580,6 +598,13 @@ export class OutProductService {
 
       const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
       const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
+      const expectedActivity = input.activity ?? existing?.activity ?? '';
+      const assertActivity = async () => {
+        const [row] = await tx.select({ activity: storeProduct.activity }).from(storeProduct)
+          .where(eq(storeProduct.id, savedProductId)).limit(1);
+        if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
+      };
+      await assertActivity();
       if (!couponFence) {
         couponFence = await inventoryLock(() => captureOutProductCoupons(tx, savedProductId));
         if (couponFence.rows.length) throw new ValidateException("新商品优惠券关联已变化");
@@ -701,6 +726,7 @@ export class OutProductService {
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
       await inventoryLock(() => assertOutProductSchedule(tx, scheduleProof));
+      await assertActivity();
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

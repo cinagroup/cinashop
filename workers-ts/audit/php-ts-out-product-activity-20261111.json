@@ -1,0 +1,265 @@
+{
+  "schema": "php-ts-out-product-activity/v1",
+  "baseCommit": "5a15a6dc8489758b03d88dbe47675d7b0158d61d",
+  "preparedAt": "2026-11-11T15:42:24.522280+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          214,
+          215
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          454,
+          469
+        ],
+        [
+          901,
+          912
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out activity order authoring with omission versus clear and replay distinction",
+    "PHP label conversion with duplicate rejection required by actual recommendation navigation",
+    "Atomic product and receipt with deferred trigger row-position guard",
+    "Existing detail projection, real recommendation consumer and restricted App LOGIN"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 136,
+      "numPassedTests": 136,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-activity": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-schedule": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 33.406,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 265.339,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 114.483,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-activity",
+        "exit": 0,
+        "seconds": 79.577,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 589.52,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 565.328,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-schedule",
+        "exit": 0,
+        "seconds": 71.919,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalActivityTestsPreserved": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "retainedFailures": [
+    {
+      "file": "native-checkout-timeout.log",
+      "reason": "First final checkout run hit its original 600-second per-file timeout; runner stopped its owned cluster but reported one abandoned fixture database. The exact stopped disposable cluster was removed and the unchanged suite reran at the same budget.",
+      "cleanupRecord": "timeout-cleanup.json"
+    }
+  ],
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/product/RecommendationNavigationService.ts",
+      "sha256": "90c6559c9a405c73647a4b71fe20eafb53bfc12f0fb8916ea15f8fdbf5dfe0bd"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailProjection.ts",
+      "sha256": "5dda8db83f422ccaa35f8c943d9086e17670328dc034385297daeabfa924138f"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-activity-20261111.md",
+      "sha256": "bcb6e617e28ac9fd436923371e50432b09abc9c82cac9890ec867f15e3aee13c",
+      "bytes": 1797
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "bd997502e0af1bd06b28840b47b7461022fd7cc8062aa9f090eeaf911616a533",
+      "bytes": 40404
+    },
+    {
+      "file": "workers-ts/test/admin-activity-preservation.test.ts",
+      "sha256": "08db782caf09550212de01ecd17cb5680f64d6a6e9bd0e21be3e83cc32ee14ce",
+      "bytes": 18556
+    },
+    {
+      "file": "workers-ts/test/out-product-activity.test.ts",
+      "sha256": "6e9e731b25149f8d630e83d4bb239400860bc4f13be2bf9a7632bf6a3f8826c6",
+      "bytes": 1605
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity, isolated PostgreSQL, actual RecommendationNavigationService and separately authenticated restricted App LOGIN. No production identity or provider I/O.",
+  "previousCI": {
+    "commit": "5a15a6dc8489758b03d88dbe47675d7b0158d61d",
+    "runId": 43041388595,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43041388595",
+    "statusAtReview": "completed",
+    "conclusion": "failure",
+    "workerShards": "fixed legacy PHP checkout step failed; follow-on diagnostics failed",
+    "otherCompletedJobs": "success"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-activity-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "6d4d05cc60acbf72b9b903f1382f40ae47d5f6aff9c5877d5aa8b16f3d929190",
+      "bytes": 368
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "caf0bc66f27c3e1c9f8951bd87eb52d326cb1387ccf061e82d6edc1c4acc6685",
+      "bytes": 746
+    },
+    {
+      "name": "unit.json",
+      "sha256": "64f27ca98a5377db950003cd91b6bd187d395eb49f9936c670478e3fd9fb4ce0",
+      "bytes": 56637
+    },
+    {
+      "name": "unit.log",
+      "sha256": "a206ec6cef86db8679fd7b1ce3e40a18ca6c887f3ca5c871c8bcf9691a58640f",
+      "bytes": 420
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-activity.log",
+      "sha256": "d39f84bac05068a83c8725fc312b0b0940b74cddb68c35e5a33b2f0b52ed4807",
+      "bytes": 1392
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "a7c85ad1834b8829428141ea66a949040d122af92aa1c7ab0da2b263522443e6",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "d64a239afce2c12ae6401b9d017589fc5c8ad376bf3ac8dd99cc17155111cd70",
+      "bytes": 1393
+    },
+    {
+      "name": "native-schedule.log",
+      "sha256": "5eb3b540e8608e7600d25b440b8655ce0b16a69d24108d1f87be4ddf0ca94e21",
+      "bytes": 1389
+    },
+    {
+      "name": "native-initial.log",
+      "sha256": "495ff4b0a8b36a54d43de86c1859de266736b6dbdcfe0a8d02a6c1c34a832e3a",
+      "bytes": 1392
+    },
+    {
+      "name": "native-checkout-timeout.log",
+      "sha256": "4c5567d111ef323298f26c3d9a158137d4517c31c26d163707dff611f533ed6f",
+      "bytes": 1372
+    },
+    {
+      "name": "timeout-cleanup.json",
+      "sha256": "b42e3b5a12512ad9762b1c4ec166e70c5a0df6764e7708eed96ef740a8c8004f",
+      "bytes": 541
+    },
+    {
+      "name": "initial-validation-progress.json",
+      "sha256": "2a0247373ef9150ec9c4aba43914a496cec659ffb19564882bfa6871c7dbc4f4",
+      "bytes": 532
+    }
+  ]
+}
