@@ -67,6 +67,7 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput, OutProdu
   scheduleIntentVersion?: 1;
   activity?: string;
   recommendList?: string;
+  isVipProduct?: 0 | 1;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -164,13 +165,7 @@ function nonEmpty(value: unknown): boolean {
   return true;
 }
 
-function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
-  const unsupported = [
-    "is_vip_product",
-  ].filter((key) => nonEmpty(input[key]));
-  if (unsupported.length > 0) {
-    throw new ValidateException(`以下商品能力尚未迁移，不能静默丢弃：${unsupported.join(",")}`);
-  }
+function validateOutProductScope(input: UnknownRecord): void {
   // PHP explicitly unsets this old editor echo; recommendation flags are
   // independent fields, and this array does not author them.
   if (nonEmpty(input.recommend) && (!Array.isArray(input.recommend) || input.recommend.length > 100)) {
@@ -225,11 +220,14 @@ function deliveryTypes(value: unknown): string {
 }
 
 export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysicalProductInput {
-  rejectUnmigratedProductFeatures(input);
+  validateOutProductScope(input);
   const schedule = outProductScheduleInput(input);
   const activity = activityInput(input);
   const recommendList = recommendationInput(input);
   const presale = outProductPresaleInput(input);
+  const vipProduct = Object.hasOwn(input, 'is_vip_product') && input.is_vip_product !== undefined
+    ? flag(input.is_vip_product === false ? 0 : input.is_vip_product === true ? 1 : input.is_vip_product, '会员专属开关', 0)
+    : undefined;
   // The former shared adapter included explicit empty timestamps in old
   // receipt hashes even though Out ignored them. Remove them before invoking
   // the base parser and bind the new author intent to an explicit version.
@@ -274,6 +272,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...schedule,
     ...(activity === undefined ? {} : { activity }),
     ...(recommendList === undefined ? {} : { recommendList }),
+    ...(vipProduct === undefined ? {} : { isVipProduct: vipProduct }),
     ...presale,
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
@@ -547,6 +546,7 @@ export class OutProductService {
       const admittedForm = systemFormId === undefined ? undefined
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
+        ...(input.isVipProduct === undefined ? {} : { isVipProduct: input.isVipProduct }),
         ...(presalePlan.authored ? { isPresaleProduct: presalePlan.isPresaleProduct,
           presaleStartTime: presalePlan.presaleStartTime, presaleEndTime: presalePlan.presaleEndTime,
           presaleDay: presalePlan.presaleDay } : {}),
@@ -632,11 +632,14 @@ export class OutProductService {
       await assertOutProductPresale(tx, savedProductId, presalePlan);
       const expectedActivity = input.activity ?? existing?.activity ?? '';
       const expectedRecommendations = input.recommendList ?? existing?.recommendList ?? '';
+      const expectedVipProduct = input.isVipProduct ?? existing?.isVipProduct ?? 0;
       const assertProductSelections = async () => {
-        const [row] = await tx.select({ activity: storeProduct.activity, recommendList: storeProduct.recommendList }).from(storeProduct)
+        const [row] = await tx.select({ activity: storeProduct.activity, recommendList: storeProduct.recommendList,
+          isVipProduct: storeProduct.isVipProduct }).from(storeProduct)
           .where(eq(storeProduct.id, savedProductId)).limit(1);
         if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
         if (row.recommendList !== expectedRecommendations) throw new ValidateException('平台推荐商品列表已变化');
+        if (row.isVipProduct !== expectedVipProduct) throw new ValidateException('平台商品会员专属状态已变化');
       };
       await assertProductSelections();
       if (!couponFence) {

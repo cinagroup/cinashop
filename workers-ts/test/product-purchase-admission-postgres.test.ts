@@ -351,3 +351,258 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('base-product sin
     expect(Array.from(await sequences())).toEqual(beforeSequences);
   }, 30_000);
 });
+
+// Actual Out author, ordinary cart and checkout share one owned PG16 database.
+import { Hono } from 'hono';
+import type { AppVariables, Env } from '@/env';
+import { createContainerFromDb, type DbClient } from '@/lib/di';
+import { storeProductCategory, storeProductAttrValue, storeProductRelation, outProductWriteReplay, storeOrderCartInfo, user } from '@/models/schema';
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { normalizeOutPhysicalProductInput } from '@/services/out/OutProductService';
+import { outRequestHash } from '@/services/out/OutIdempotency';
+import { StoreCartService } from '@/services/order/StoreCartService';
+import { StoreOrderCreateService } from '@/services/order/StoreOrderCreateService';
+import { addPresaleCart } from '@/services/activity/PresaleCartService';
+import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { sequenceRunnerDatabase, type SequenceRunnerPeer } from './helpers/kefuSequenceRunnerDatabase';
+import { completePurchaseOriginEvidenceOrm } from '@/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '@/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+import { waitForFinanceClock } from './helpers/financePeers';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out member-only product and ordinary purchase on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  let sequence = 0;
+  const body = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out member-only product',
+    slider_image: ['/isolated.png'], delivery_type: [1], freight: 3, temp_id: 10, spec_type: 1, is_show: 1,
+    items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+    attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-A' }] };
+  const app = (db: DbClient) => {
+    const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db));
+      c.set('outInfo', { id: 7, appid: 'isolated-out-vip', title: 'isolated', rules: [] }); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', productCreate); a.put('/outapi/product/:id', productUpdate); a.get('/outapi/product/:id', productInfo);
+    return a;
+  };
+  beforeEach(async () => {
+    sequence = 0; network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out VIP acceptance forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.setConfig(Object.fromEntries(Object.keys(f.config).map(key => [key, '0'])));
+    await f.setConfig({ member_card_status: '1', svip_price_status: '0' });
+    await f.db.update(user).set({ isEverLevel: 0, isMoneyLevel: 0, overdueTime: 0 }).where(eq(user.uid, 11));
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'isolated', isShow: 1 });
+    await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-A' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_cart','id'),1,true)");
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
+  const request = async (db: DbClient, data?: object, key = crypto.randomUUID(), path = '/outapi/product/70', method = 'PUT') => {
+    const response = await app(db).request(path, { method, headers: { 'content-type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, f.env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay), relations: await f.db.select().from(storeProductRelation),
+    details: await f.db.select().from(storeOrderCartInfo) });
+  const cart = (db = f.db) => new StoreCartService(createContainerFromDb(db), f.env);
+  const add = (db = f.db) => cart(db).add({ uid: 11, productId: 70, unique: 'qared001', cartNum: 1, type: 0, isNew: 1 });
+  const peers = async (run: (peers: [SequenceRunnerPeer, SequenceRunnerPeer, SequenceRunnerPeer]) => Promise<void>) => {
+    const connect = owned.withPeer; if (!connect) throw Error('Dedicated PG16 peers required');
+    await connect(a => connect(b => connect(c => run([a, b, c]))));
+  };
+  const confirm = async (cartId = 1) => {
+    const selection = { cartIds: [cartId], type: 0, addressId: 11, shippingType: 1, useIntegral: false };
+    const response = await f.app.request('/api/order/confirm', { method: 'POST', headers: { 'content-type': 'application/json', 'x-fixture-user': '11' },
+      body: JSON.stringify(selection) }, f.env);
+    return { ...(await response.json() as { status: number; msg: string; data: { orderKey: string; quoteToken: string } }), selection };
+  };
+  const create = (db: DbClient, receipt: Awaited<ReturnType<typeof confirm>>) => StoreOrderCreateService.createWithRuntime(createContainerFromDb(db),
+    { CONFIG_KV: f.env.CONFIG_KV, requireConfirmation: true, requirePurchaseOrigin: true, nextOrderId: async () => `out_vip_local_${++sequence}` },
+    { ...receipt.selection, uid: 11, key: receipt.data.orderKey, quoteToken: receipt.data.quoteToken, userIp: '127.0.0.1' });
+  const member = () => f.db.update(user).set({ isEverLevel: 0, isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) + 3600 }).where(eq(user.uid, 11));
+
+  it('authors the flag, blocks nonmembers, and permits a real ordinary purchase without requiring member-price discounts', async () => {
+    const key = crypto.randomUUID(), data = { ...body, is_vip_product: 1 };
+    const saved = await request(f.db, data, key); expect(saved.status, saved.msg).toBe(200);
+    const detail = await request(f.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+    expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.is_vip_product).toBe(1);
+    const omitted = await request(f.db, body); expect(omitted.status, omitted.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0].isVipProduct).toBe(1);
+    const before = await state(), sequenceBefore = await f.exec('SELECT last_value,is_called FROM store_cart_id_seq');
+    await expect(add()).rejects.toThrow('付费会员'); expect(await state()).toEqual(before);
+    expect(await f.exec('SELECT last_value,is_called FROM store_cart_id_seq')).toEqual(sequenceBefore);
+    expect((await confirm()).status).not.toBe(200);
+    await member(); const selected = await add(); const receipt = await confirm(selected.id); expect(receipt.status, receipt.msg).toBe(200);
+    const created = await create(f.db, receipt), after = await state();
+    expect(after.orders.find(row => row.orderId === created.orderId)).toMatchObject({ type: 0, paid: 0 });
+    expect(after.details).toHaveLength(1);
+    const replay = await request(f.db, data, key); expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true);
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const added = await request(f.db, data, crypto.randomUUID(), '/outapi/product', 'POST'); expect(added.status, added.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, added.data.id)))[0].isVipProduct).toBe(1);
+  }, 30_000);
+
+  it('checks current qualification on ordinary add, quantity and SKU-edit paths and allows cleanup', async () => {
+    expect((await request(f.db, { ...body, is_vip_product: 1 })).status).toBe(200);
+    await f.db.update(storeCart).set({ isNew: 0 }).where(eq(storeCart.id, 1));
+    for (const scenario of ['nonmember', 'expired', 'disabled-feature'] as const) {
+      await f.db.update(user).set(scenario === 'nonmember' ? { isEverLevel: 0, isMoneyLevel: 0, overdueTime: 0 }
+        : { isEverLevel: 0, isMoneyLevel: 1, overdueTime: Math.floor(Date.now() / 1000) + (scenario === 'expired' ? -60 : 3600) }).where(eq(user.uid, 11));
+      await f.setConfig({ member_card_status: scenario === 'disabled-feature' ? '0' : '1' });
+      const before = await state();
+      await expect(add()).rejects.toThrow();
+      await expect(cart().setNum(11, 1, 1)).rejects.toThrow();
+      await expect(cart().setProductQuantityLegacy({ uid: 11, productId: 70, unique: 'qared001', cartNum: 1, mode: 1 })).rejects.toThrow();
+      await expect(cart().setNormalNumByProductLegacy(11, 70, 1)).rejects.toThrow();
+      await expect(cart().resetLegacyV2({ uid: 11, id: 1, productId: 70, unique: 'qared001', cartNum: 1 })).rejects.toThrow();
+      expect((await confirm()).status).not.toBe(200); expect(await state()).toEqual(before);
+      expect(await cart().list(11, { mode: 'cart' })).toMatchObject([{ id: 1, isValid: false, productInfo: null }]);
+      expect(await cart().listLegacyV2(11, { includeInvalid: true })).toMatchObject([{ id: 1, is_valid: 0 }]);
+      expect(await cart().listLegacyV2(11)).toEqual([]);
+    }
+    await f.setConfig({ member_card_status: '1' }); await f.db.update(user).set({ isEverLevel: 1, isMoneyLevel: 0, overdueTime: 0 }).where(eq(user.uid, 11));
+    expect(await cart().list(11, { mode: 'cart' })).toMatchObject([{ id: 1, isValid: true }]);
+    expect(await cart().listLegacyV2(11, { includeInvalid: true })).toMatchObject([{ id: 1, is_valid: 1 }]);
+    expect((await add()).cartNum).toBe(1);
+    await f.db.update(user).set({ isEverLevel: 0 }).where(eq(user.uid, 11));
+    expect(await cart().setProductQuantityLegacy({ uid: 11, productId: 70, unique: 'qared001', cartNum: 9, mode: 0 })).toMatchObject({ deleted: true });
+  }, 30_000);
+
+  it('preserves an already authorized assisted guest cart projection without granting ordinary guest purchase', async () => {
+    expect((await request(f.db, { ...body, is_vip_product: 1 })).status).toBe(200);
+    const [guest] = await f.db.insert(storeCart).values({ uid: 0, staffId: 101, touristUid: 'isolated-guest',
+      productId: 70, productAttrUnique: 'qared001', cartNum: 1, type: 0, isNew: 0, status: 1 }).returning();
+    expect(await cart().projectLegacyV2Rows(0, [guest])).toMatchObject([{ id: guest.id, is_valid: 1 }]);
+    await expect(cart().add({ uid: 0, productId: 70, unique: 'qared001', cartNum: 1, type: 0, isNew: 1 })).rejects.toThrow('付费会员');
+  });
+
+  it('rolls back an ordinary cart update if membership is revoked during a real cart-row wait', async () => {
+    await member(); expect((await request(f.db, { ...body, is_vip_product: 1 })).status).toBe(200);
+    await f.db.update(storeCart).set({ isNew: 0 }).where(eq(storeCart.id, 1));
+    await peers(async ([holder, buyer, editor]) => {
+      await holder.exec('BEGIN; SELECT id FROM store_cart WHERE id=1 FOR UPDATE');
+      const pending = outcome(cart(buyer.db).add({ uid: 11, productId: 70, unique: 'qared001', cartNum: 1, type: 0, isNew: 0 }));
+      let holding = true;
+      try {
+        await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+        await editor.db.update(user).set({ isMoneyLevel: 0 }).where(eq(user.uid, 11));
+        const before = await state(); await holder.exec('COMMIT'); holding = false; const result = await pending;
+        expect(result.ok).toBe(false); if (!result.ok) expect(result.error.message).toMatch(/会员|资格/);
+        expect(await state()).toEqual(before);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    });
+  }, 20_000);
+
+  it('reconfirms quotes on either change of the member-only flag and preserves ignored-empty receipt boundaries', async () => {
+    await member(); const normal = await confirm(); expect(normal.status, normal.msg).toBe(200);
+    expect((await request(f.db, { ...body, is_vip_product: 1 })).status).toBe(200);
+    let before = await state(); await expect(create(f.db, normal)).rejects.toThrow(); expect(await state()).toEqual(before);
+    const vip = await confirm(); expect(vip.status, vip.msg).toBe(200);
+    expect((await request(f.db, { ...body, is_vip_product: 0 })).status).toBe(200);
+    before = await state(); await expect(create(f.db, vip)).rejects.toThrow(); expect(await state()).toEqual(before);
+    const key = crypto.randomUUID(), old = normalizeOutPhysicalProductInput(body), hash = await outRequestHash({ operation: 'product_update', productId: 70, input: old });
+    await f.db.insert(outProductWriteReplay).values({ outAccountId: 7, operation: 'product_update', requestKey: key, requestHash: hash, productId: 70 });
+    before = await state(); const conflict = await request(f.db, { ...body, is_vip_product: 0 }, key); expect(conflict.status).not.toBe(200); expect(await state()).toEqual(before);
+  }, 30_000);
+
+  it('keeps the established presale membership rule when Out authors both flags', async () => {
+    await f.setConfig({ member_card_status: '0' });
+    const start = Math.floor(Date.now() / 1000) + 2, end = start + 3600;
+    const saved = await request(f.db, { ...body, is_vip_product: 1, is_presale_product: 1, presale_time: [start, end], presale_day: 1 });
+    expect(saved.status, saved.msg).toBe(200); await waitForFinanceClock(f.db, start * 1000);
+    const selection = { uid: 11, productId: 70, unique: 'qared001', cartNum: 1, type: 6, isNew: 1 };
+    const before = await state(); await expect(addPresaleCart(f.container, selection)).rejects.toThrow('付费会员'); expect(await state()).toEqual(before);
+    await f.db.update(user).set({ isEverLevel: 1 }).where(eq(user.uid, 11));
+    expect((await addPresaleCart(f.container, selection)).cartNum).toBe(1);
+  }, 20_000);
+
+  it.each(['revoke', 'disable-feature', 'expire'] as const)('rolls back after a real SKU wait when member eligibility changes: %s', async kind => {
+    await member(); expect((await request(f.db, { ...body, is_vip_product: 1 })).status).toBe(200);
+    if (kind === 'expire') {
+      const [clock] = await f.db.select({ millis: sql<string>`extract(epoch from clock_timestamp()) * 1000` }).from(sql`(VALUES (1)) AS probe(n)`);
+      await f.db.update(user).set({ overdueTime: Math.ceil((Number(clock.millis) + 700) / 1000) }).where(eq(user.uid, 11));
+    }
+    const receipt = await confirm(); expect(receipt.status, receipt.msg).toBe(200);
+    await peers(async ([holder, buyer, editor]) => {
+      await holder.exec('BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE');
+      const pending = outcome(create(buyer.db, receipt));
+      let holding = true;
+      try {
+        await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+        if (kind === 'revoke') await editor.db.update(user).set({ isMoneyLevel: 0 }).where(eq(user.uid, 11));
+        else if (kind === 'disable-feature') await editor.db.execute(sql`UPDATE system_config SET value='0' WHERE menu_name='member_card_status' AND is_store=0`);
+        else { const [account] = await f.db.select({ until: user.overdueTime }).from(user).where(eq(user.uid, 11)); await waitForFinanceClock(f.db, account.until * 1000); }
+        const before = await state(); await holder.exec('COMMIT'); holding = false; const result = await pending;
+        expect(result.ok).toBe(false); if (!result.ok) expect(result.error.message).toMatch(/会员|资格|重新确认/);
+        expect(await state()).toEqual(before);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    });
+  }, 20_000);
+
+  it('rejects checkout if a separate writer changes the product restriction while its SKU is locked', async () => {
+    await member(); const receipt = await confirm(); expect(receipt.status, receipt.msg).toBe(200);
+    await peers(async ([holder, buyer, editor]) => {
+      await holder.exec('BEGIN; SELECT id FROM store_product_attr_value WHERE id=1 FOR UPDATE');
+      const pending = outcome(create(buyer.db, receipt));
+      let holding = true;
+      try {
+        await waitForFinanceBlock(f.db, buyer.pid, holder.pid);
+        await editor.db.update(storeProduct).set({ isVipProduct: 1 }).where(eq(storeProduct.id, 70));
+        const before = await state(); await holder.exec('COMMIT'); holding = false; const result = await pending;
+        expect(result.ok).toBe(false); expect(await state()).toEqual(before);
+      } finally { if (holding) await holder.exec('ROLLBACK'); await pending; }
+    });
+  }, 20_000);
+
+  it('rolls back source and receipt if deferred triggers change or rewrite the flag', async () => {
+    const before = await state();
+    for (const mutation of ['is_vip_product=0', 'is_vip_product=is_vip_product']) {
+      await f.exec(`CREATE FUNCTION test_out_vip_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET ${mutation} WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_vip_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_vip_damage()`);
+      const failed = await request(f.db, { ...body, is_vip_product: 1 }); expect(failed.status).not.toBe(200); expect(await state()).toEqual(before);
+      await f.exec('DROP TRIGGER test_out_vip_damage ON out_product_write_replay; DROP FUNCTION test_out_vip_damage()');
+    }
+  }, 30_000);
+
+  it('writes, selects and checks out an entitled product with existing restricted App privileges', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await f.db.update(user).set({ isEverLevel: 1 }).where(eq(user.uid, 11));
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      expect(plan.functions).toContain('checkout_lock_pricing_v1()');
+      await f.exec(`GRANT EXECUTE ON FUNCTION public.checkout_lock_pricing_v1() TO ${quote(runtime.role)}`);
+      const saved = await request(runtime.db, { ...body, is_vip_product: 1 }); expect(saved.status, saved.msg).toBe(200);
+      const selected = await add(runtime.db); expect(selected.cartNum).toBe(1);
+      const receipt = await confirm(selected.id); expect(receipt.status, receipt.msg).toBe(200);
+      const created = await create(runtime.db, receipt);
+      expect((await f.db.select().from(storeOrderCartInfo)).find(row => row.oid > 0)?.oid).toBeGreaterThan(0);
+      expect(created.orderId).toContain('out_vip_local_');
+      const [rights] = await runtime.db.execute(sql`SELECT current_user=session_user AS direct_login,
+        has_table_privilege(current_user,'public.system_config','UPDATE') AS config_write,
+        has_table_privilege(current_user,'public.member_right','UPDATE') AS rights_write`);
+      expect(rights).toEqual({ direct_login: true, config_write: false, rights_write: false });
+    });
+  }, 30_000);
+});

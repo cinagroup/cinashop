@@ -325,3 +325,24 @@ describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('ordinary type0 multi SK
   const after=await facts();expect(after.orders).toEqual(before.orders);expect(after.lines).toEqual(before.lines);expect(after.skus).toEqual(before.skus);expect(after.audits).toEqual(before.audits);expect(after.events).toEqual(before.events);
  });
 });
+
+// Legacy UID 0 is admitted only through the existing authenticated cashier origin.
+import {afterEach,vi} from 'vitest';
+describe.skipIf(!process.env.TEST_FINANCE_POSTGRES_URL)('member-only ordinary product through real assisted cashier', {timeout:30000}, () => {
+ let f: Awaited<ReturnType<typeof customerCashierOrdinaryFixture>>;
+ let network: ReturnType<typeof vi.spyOn>;
+ beforeAll(async () => { f = await customerCashierOrdinaryFixture(); }, 180000);
+ beforeEach(async () => { await f.reset(); network = vi.spyOn(globalThis,'fetch').mockRejectedValue(new Error('Guest cashier test forbids external I/O')); });
+ afterEach(() => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); } });
+ afterAll(async () => { await f?.close(); }, 30000);
+ it('preserves authorized guest checkout while requiring eligibility for a registered buyer', async () => {
+  await f.maintenanceDb.update(storeProduct).set({isVipProduct:1}).where(eq(storeProduct.id,70));
+  const result = await f.create({shipping_type:1,manual_address:{realName:'隔离游客',phone:'00000000000',province:'本地省',city:'测试甲市',district:'测试甲区',street:'',detail:'隔离游客门牌',cityId:101}},
+   {buyer_uid:0,tourist_key:'isolated-vip-guest'});
+  expect(result.order).toMatchObject({uid:0,staffId:101,type:0,paid:0});
+  await f.reset(); await f.maintenanceDb.update(storeProduct).set({isVipProduct:1}).where(eq(storeProduct.id,70));
+  await f.maintenanceDb.update(user).set({isEverLevel:0,isMoneyLevel:0,overdueTime:0}).where(eq(user.uid,11));
+  await expect(f.create()).rejects.toThrow('付费会员');
+  expect(await f.db.select().from(storeOrder)).toEqual([]);
+ });
+});

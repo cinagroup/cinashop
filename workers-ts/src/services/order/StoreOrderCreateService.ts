@@ -1217,6 +1217,18 @@ export class StoreOrderCreateService {
       if (type !== 6 && product.isPresaleProduct !== 0) {
         throw new ValidateException('预售商品不能通过普通或其它活动订单购买，请重新选择');
       }
+      // Presale has its own established membership contract and final guard.
+      // For every other order kind, the base product's paid-member restriction
+      // applies independently of whether a member price is configured.
+      if (type !== 6) {
+        if (product.isVipProduct !== 0 && product.isVipProduct !== 1) throw new ValidateException('商品付费会员资格配置无效');
+        // PHP's ordinary cart checks paid membership only for a logged-in
+        // buyer. UID 0 has already been limited above to an authorized
+        // assisted/cashier origin; preserve that distinct guest contract.
+        if (product.isVipProduct === 1 && uid > 0 && (!activePaidMember || user?.status !== 1)) {
+          throw new ValidateException('该商品仅限有效付费会员购买');
+        }
+      }
       let itemSystemFormId = product.systemFormId;
       if (type === 1 && !validSeckillStoredSkuAlias(cart.productAttrUnique))
         throw new ValidateException('秒杀购物车规格标识无效，请重新选择商品');
@@ -1851,6 +1863,9 @@ export class StoreOrderCreateService {
         ownerType: item.product.type, relationId: item.product.relationId, activityId: item.cart.activityId,
         isSupportRefund: item.product.isSupportRefund,
         purchaseLimits: productPurchaseLimits(item.product),
+        // Preserve historical non-member-only confirmation hashes while
+        // invalidating stale quotes when the restriction changes either way.
+        ...(type !== 6 && item.product.isVipProduct === 1 ? { paidMemberOnly: true } : {}),
         ...(item.presale ? { presale: item.presale } : {}),
         integralRules: item.integralActivity ? { onceNum: item.integralActivity.onceNum, num: item.integralActivity.num,
           deliveryType: item.integralActivity.deliveryType, systemFormId: item.integralActivity.systemFormId } : null,
@@ -2854,6 +2869,7 @@ export class StoreOrderCreateService {
           })
           .where(and(eq(storeProduct.id, product.id), sql`stock >= ${cart.cartNum}`,
             productPurchaseQuoteGuard(product),
+            type !== 6 ? eq(storeProduct.isVipProduct, product.isVipProduct) : undefined,
             // The assisted form row is pinned above. Also pin the product's
             // choice of that row at its inventory UPDATE, so an editor cannot
             // swap form IDs between the pre-transaction quote and this commit.

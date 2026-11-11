@@ -17,7 +17,7 @@ describe('Out product presale authoring intent', () => {
     expect(disabled).toMatchObject({ isPresaleProduct: 0, presalePeriod: [], presaleDay: 0 });
     expect(await outRequestHash(disabled)).not.toBe(await outRequestHash(omitted));
     expect(outProductPresalePlan(disabled, existing)).toMatchObject({ isPresaleProduct: 0, presaleStartTime: 0, presaleEndTime: 0, presaleDay: 0 });
-    expect(() => normalizeOutPhysicalProductInput({ ...product, is_vip_product: 1 })).toThrow('尚未迁移');
+    expect(normalizeOutPhysicalProductInput({ ...product, is_vip_product: 1 }).isVipProduct).toBe(1);
   });
   it('normalizes Shanghai and UTC, preserves begun plans on unrelated edits, and validates newly authored windows', () => {
     const parsed = outProductPresaleInput({ is_presale_product: '1', presale_time: ['2026-10-17 16:00', '2026-10-17T09:00:00Z'], presale_day: '7' });

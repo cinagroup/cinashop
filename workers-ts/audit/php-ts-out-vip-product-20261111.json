@@ -1,0 +1,429 @@
+{
+  "schema": "php-ts-out-vip-product/v1",
+  "baseCommit": "4d4b28445fd58e61c84545aed3f3189edae6c05c",
+  "preparedAt": "2026-11-11T18:24:30.823463+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          231,
+          234
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          784,
+          785
+        ]
+      ]
+    },
+    {
+      "file": "app/services/order/StoreCartServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "2585c6fc693992a48e44954786c8570d7c72d857",
+      "sha256": "d4c2a3f74175979c23da0d93e9b239cc287b32d0b1e48c6082a785c8c0776d92",
+      "lineRanges": [
+        [
+          235,
+          253
+        ]
+      ]
+    },
+    {
+      "file": "app/services/user/UserServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "96efe26f229d40bef4f2653c7a43778312df63f2",
+      "sha256": "d8c5aae71df278a885b238bc44c1fc73d3644a5fa68441260a3cc22fdc2e6a25",
+      "lineRanges": [
+        [
+          158,
+          165
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out paid-member-only authoring with preserved omission and explicit clear receipt",
+    "Ordinary cart precheck, transaction-end product/membership/configuration locks and DB-clock expiry",
+    "Ordinary cart visibility, non-presale quote and guarded inventory update with backward-compatible non-VIP fingerprint",
+    "Actual Out/cart/checkout, concurrent revocation/expiry/config and product change, restricted App LOGIN and authorized guest cashier"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 237,
+      "numPassedTests": 236,
+      "numFailedTests": 0,
+      "numPendingTests": 1
+    },
+    "native": {
+      "native-admission": {
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-guest-cashier": {
+        "passed": 30,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-membership": {
+        "passed": 50,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-repurchase": {
+        "passed": 52,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-presale-cart": {
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-computation": {
+        "passed": 49,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 104.643,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 259.116,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 106.429,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-admission",
+        "exit": 0,
+        "seconds": 143.882,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-guest-cashier",
+        "exit": 0,
+        "seconds": 84.215,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-membership",
+        "exit": 0,
+        "seconds": 82.961,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-repurchase",
+        "exit": 0,
+        "seconds": 565.633,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-presale-cart",
+        "exit": 0,
+        "seconds": 22.735,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 562.257,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 546.101,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-computation",
+        "exit": 0,
+        "seconds": 36.212,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalPurchaseAdmissionTestsPreserved": true,
+    "originalGuestCashierTestsPreserved": true,
+    "presaleUnsupportedExpectationUpdatedForMigratedFlag": true,
+    "nativeOnlyUnitCaseExecutedInNativeComputation": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "retainedFailures": [
+    {
+      "file": "native-initial.log",
+      "reason": "Four new concurrency cases initially used a helper limited to a different fixture identity; source was also changed during this exploratory run. Replaced with three owned native peers and reran."
+    },
+    {
+      "file": "native-retry.log",
+      "reason": "The expiry case hit the fixture lock timeout before the membership deadline; changed only the test deadline to the established short DB-clock pattern, kept the timeout and reran."
+    }
+  ],
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/order/CheckoutMembershipSnapshot.ts",
+      "sha256": "ba1319b44b7f705a23cb7464639ab9d3ed5e777aa16e9f3bf20a13eca2b77636"
+    },
+    {
+      "file": "workers-ts/src/services/order/CheckoutPricingSources.ts",
+      "sha256": "f17baadb0242d9524b4d4bc681b18d1ae9c9df9ca70a01748c5ee6ede559a764"
+    },
+    {
+      "file": "workers-ts/src/services/activity/PresalePurchaseSnapshot.ts",
+      "sha256": "c651e8055cdfcb284fa928a92ec16f6be2ab227f2df3a48391f05c41f5e964ca"
+    },
+    {
+      "file": "workers-ts/src/services/activity/PresaleCartService.ts",
+      "sha256": "edb60abcf3b4ab8a390cdae8fb02e75217fe7f8795800af198953ebe2b446547"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-vip-product-20261111.md",
+      "sha256": "c4e7bcbf6fc07acc130b2a5c4e6ecda40c0748e881f159f0c8dac9dc9d62c08a",
+      "bytes": 2215
+    },
+    {
+      "file": "workers-ts/src/services/order/OrdinaryVipCartAdmission.ts",
+      "sha256": "ebdd82b8cf09a59b9fb23509cd8e16df63d1e066888c11e051c34a25f5125214",
+      "bytes": 4514
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreCartService.ts",
+      "sha256": "f6e1c9ee21e8e882deab94045b5187ef1fa9395c2946dcb3697f0853ad4b8df8",
+      "bytes": 83036
+    },
+    {
+      "file": "workers-ts/src/services/order/StoreOrderCreateService.ts",
+      "sha256": "87f5b945f39420e94e74ec47c1c16e0ab740319f0a88acea6eaefb106f61b316",
+      "bytes": 188009
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "b28bd109072d637f6a5f93dd97966a2db1a5c4654893e2338de0bb6066b01d9b",
+      "bytes": 43313
+    },
+    {
+      "file": "workers-ts/test/customer-cashier-ordinary-postgres.test.ts",
+      "sha256": "3e83430c3e0e1c8747896edeb958fa88521539354ecaf0cb53128936c8b8f2f5",
+      "bytes": 44092
+    },
+    {
+      "file": "workers-ts/test/out-product-presale.test.ts",
+      "sha256": "c831d0a6164cf1a4ebe1c9284eb3e2b26ce25bdcf36ba4fa9051b65b6a497b9f",
+      "bytes": 3214
+    },
+    {
+      "file": "workers-ts/test/out-product-vip.test.ts",
+      "sha256": "bafe8bb896672d5379cd5f9bb3ec7228faf25c79f4b75119228ca84b1affeb4f",
+      "bytes": 1592
+    },
+    {
+      "file": "workers-ts/test/product-purchase-admission-postgres.test.ts",
+      "sha256": "0190990a8224946bf9e40c5102d2900d4121eecd09db2ff981fd181b6545012a",
+      "bytes": 42709
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity and users, isolated PostgreSQL, actual cart and ordinary checkout. Restricted App LOGIN uses current privilege plan and the existing checkout pricing capability. Presale rules remain unchanged. No production identity or provider I/O.",
+  "previousCI": {
+    "commit": "4d4b28445fd58e61c84545aed3f3189edae6c05c",
+    "runId": 43063069386,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43063069386",
+    "statusAtReview": "completed",
+    "conclusion": "failure",
+    "workerShards": "both failed at fixed legacy PHP input checkout; downstream diagnostic steps also failed",
+    "otherJobs": "all completed successfully",
+    "knownRemoteCondition": "GitHub REST lookup of the fixed PHP commit in cinagroup/cinashop-php returned 409 Git Repository is empty on a prior run",
+    "observedAt": "2026-11-11T17:18:57.082666+00:00"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-vip-product-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "43f7ffe8a7ed32f5a2ae55a2db433d50570432983c7c3b8299f2616a7f50c3ee",
+      "bytes": 1004
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "107dc715dd09ea244861e01058707d1c7907dda9836bf8ef2138b298ba6d1331",
+      "bytes": 1191
+    },
+    {
+      "name": "unit.json",
+      "sha256": "f4fa3c97328595008e97ab672b4e6918ea49a5030d3050728d93ad4fbca95662",
+      "bytes": 99613
+    },
+    {
+      "name": "unit.log",
+      "sha256": "c6d3d4fd557b878be3b82a69173456951d82a88c0df76ca62eb87acbf84c969c",
+      "bytes": 415
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-admission.log",
+      "sha256": "425e93ff27dcb2ca48963f0f94a743305ea933b5855541b8f644d79704c0bc7d",
+      "bytes": 1401
+    },
+    {
+      "name": "native-guest-cashier.log",
+      "sha256": "cb8a0d2fd4dce3e1ac90ca3f85d559f7e3d0feddab49a9b87b5401a9865a4c90",
+      "bytes": 1398
+    },
+    {
+      "name": "native-membership.log",
+      "sha256": "e5b92e8fc3462b94557579ece49b6bd652fd90d98a0bea1233fa2b446089c65e",
+      "bytes": 1392
+    },
+    {
+      "name": "native-repurchase.log",
+      "sha256": "3838d9cf923161b3fbfb27971f95bdc740e22fe024b1862d468ee22d9fa1731a",
+      "bytes": 1400
+    },
+    {
+      "name": "native-presale-cart.log",
+      "sha256": "a6008aeca4494ba9c19324c39dcd4c28a77949f919a0e4f0eb5e36fc300e3863",
+      "bytes": 1384
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "d7a2b86eda025d570160008ddc9edc7d27ddb799069de12197b61b28e159ea94",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "e4d4c6c1d15f61d68605025eb538d3421f23ae01c30a746f0bb1ad6943a23723",
+      "bytes": 1393
+    },
+    {
+      "name": "native-computation.log",
+      "sha256": "b774674d28f1f3531eea3f4e2f6abeacbab650b483db3388737b8a4e7b05cc1c",
+      "bytes": 1386
+    },
+    {
+      "name": "unit-initial.log",
+      "sha256": "20f9a577789de2f3ef10f20ca7ed151dee2339f1a0771835f2d936442088e84e",
+      "bytes": 628
+    },
+    {
+      "name": "native-initial.log",
+      "sha256": "d03c65768b02f799566713fe1ad241b276c558b7981a62458bd4cdf94031db0c",
+      "bytes": 4090
+    },
+    {
+      "name": "native-retry.log",
+      "sha256": "98287d6f7bbec5476672c18606ba54996a67fb800e17f67aa1edbb20330c376b",
+      "bytes": 3532
+    },
+    {
+      "name": "native-retry2.log",
+      "sha256": "663cc4c41ba01e574b5224f53bf398dd99349dde3259e47f3f6c22dd717f9489",
+      "bytes": 1401
+    },
+    {
+      "name": "native-retry3.log",
+      "sha256": "d9daff124eb7c006582dadcbb85d29ca4a86150917493ef405bb81c770bf5f54",
+      "bytes": 1401
+    },
+    {
+      "name": "native-retry4.log",
+      "sha256": "f7fea61918722f6acc0865b0056657554ec3f3a3224eb456caf57903f908115a",
+      "bytes": 1401
+    },
+    {
+      "name": "guest-admission.log",
+      "sha256": "cd83d1fa81e4fea293ecbbe5c2b50cbbba56d100c2a1ee58157a49b7b90cf70b",
+      "bytes": 1401
+    },
+    {
+      "name": "guest-cashier.log",
+      "sha256": "b1a718f7bab5d3d30d066be072e1e81367f98133db9e10fc1c3650944f02c12d",
+      "bytes": 1398
+    },
+    {
+      "name": "guest-validation.json",
+      "sha256": "072393cb99b161d6603c71acb3021712616f39964174b4057dacb0ea35b1eaa8",
+      "bytes": 214
+    },
+    {
+      "name": "interrupted-guest-review/reason.json",
+      "sha256": "da0efc679ed6d4528b37c38334481a5c13a31d8a32a70dafec48c469427bc3ef",
+      "bytes": 257
+    },
+    {
+      "name": "preliminary-gitleaks.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    }
+  ]
+}

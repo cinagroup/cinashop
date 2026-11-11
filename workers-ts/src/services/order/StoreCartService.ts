@@ -16,6 +16,7 @@ import { assertProductCartQuantity, assertProductPurchaseBatch, assertProductPur
   lockProductCartScope, readReusableProductQuantity } from './ProductPurchaseAdmission';
 import type { SystemConfigEnv } from "@/services/system/SystemConfigService";
 import { readMembershipPricingPolicy } from "@/services/user/MembershipPricingPolicy";
+import { assertOrdinaryVipCandidate, protectOrdinaryVipCart } from './OrdinaryVipCartAdmission';
 import { ValidateException, NotFoundException } from "@/utils/errors";
 import {
   quoteFirstOrderDiscount,
@@ -80,6 +81,11 @@ export type CartReadScope = { mode: "cart" } | { mode: "buy"; ids: number[] }
 
 async function lockCartUser(tx: DbClient, uid: number): Promise<void> {
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${CART_ADVISORY_LOCK_NAMESPACE}, ${uid})`);
+}
+
+async function ordinaryVipCartVisible(db: DbClient, uid: number, product: typeof storeProduct.$inferSelect): Promise<boolean> {
+  try { await assertOrdinaryVipCandidate(db, uid, product); return true; }
+  catch (error) { if (error instanceof ValidateException) return false; throw error; }
 }
 
 async function normalProductAndSku(tx: DbClient, productId: number, unique: string) {
@@ -213,10 +219,21 @@ export class StoreCartService {
   async add(params: CartAddParams): Promise<{ id: number; cartNum: number }> {
     if ((params.type ?? 0) !== 2 && params.bargainUserId !== undefined)
       throw new ValidateException('非砍价购物车不能选择砍价记录');
-    if ((params.type ?? 0) === 0 && (params.isNew ?? 0) === 0) {
+    if ((params.type ?? 0) === 0) {
+      // Route presale before opening the ordinary transaction; the presale
+      // service owns its separate SKU/product lock order and final clock guard.
+      const hint = await this.container.storeProductDao.getById(params.productId);
+      if (hint && hint.isPresaleProduct !== 0) {
+        return addPresaleCart(this.container, { ...params, unique: params.requestedUnique ?? params.unique });
+      }
       return withTx(this.container, async tx => {
-        await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0 });
-        return new StoreCartService(createContainerFromDb(tx), this.env).addResolved(params);
+        if ((params.isNew ?? 0) === 0) await lockProductCartScope(tx, { uid: params.uid, productId: params.productId, type: 0 });
+        let selected: typeof storeProduct.$inferSelect | undefined;
+        const result = await new StoreCartService(createContainerFromDb(tx), this.env)
+          .addResolved(params, false, product => { selected = product; });
+        if (!selected) throw new ValidateException('商品状态已变化，请重新选择');
+        await protectOrdinaryVipCart(tx, params.uid, selected);
+        return result;
       });
     }
     if ((params.type ?? 0) === 6) {
@@ -239,7 +256,8 @@ export class StoreCartService {
     });
   }
 
-  private async addResolved(params: CartAddParams, firstAddLockHeld = false): Promise<{ id: number; cartNum: number }> {
+  private async addResolved(params: CartAddParams, firstAddLockHeld = false,
+    ordinarySelection?: (product: typeof storeProduct.$inferSelect) => void): Promise<{ id: number; cartNum: number }> {
     const { uid, cartNum } = params;
     const type = params.type ?? 0;
     const isNew = params.isNew ?? 0;
@@ -396,10 +414,15 @@ export class StoreCartService {
     if (type === 0 && product.isPresaleProduct !== 0) {
       // The unlocked routing read is only a hint. The presale path re-reads the
       // base SKU/product under its own locks and never trusts client type=6.
+      if (ordinarySelection) throw new ValidateException('商品已变为预售，请重新选择');
       return addPresaleCart(this.container, { ...params, unique: params.requestedUnique ?? params.unique });
     }
     if (!product.isShow || product.isDel) {
       throw new ValidateException("商品已下架");
+    }
+    if (type === 0) {
+      ordinarySelection?.(product);
+      await assertOrdinaryVipCandidate(this.container.db, uid, product);
     }
     await assertProductCartQuantity(this.container.db, product, cartNum, { uid, type, isNew });
 
@@ -563,6 +586,7 @@ export class StoreCartService {
     const promotionLines: OrderPromotionInputLine[] = [];
     let pricing: Awaited<ReturnType<StoreCartService['cartPricing']>> | undefined;
     let newcomerEligible: Promise<boolean> | undefined;
+    let ordinaryMemberEligible: Promise<boolean> | undefined;
     for (const cart of carts) {
       const product = products.get(cart.productId) as
         | (typeof import("@/models/schema").storeProduct.$inferSelect)
@@ -571,6 +595,11 @@ export class StoreCartService {
         || !product.isShow || product.isDel || (scope && product.isVerify !== 1) ||
         (cart.type === 7 && !newcomerBaseProductIsEligible(product)) || !presaleCartIsCurrent(cart, product)) {
         // 商品失效, 跳过但保留购物车项 (前端可提示)
+        result.push({ ...cart, isValid: false, productInfo: null });
+        continue;
+      }
+      if (cart.type === 0 && product.isVipProduct !== 0 &&
+          (product.isVipProduct !== 1 || !await (ordinaryMemberEligible ??= ordinaryVipCartVisible(this.container.db, uid, product)))) {
         result.push({ ...cart, isValid: false, productInfo: null });
         continue;
       }
@@ -922,13 +951,17 @@ export class StoreCartService {
 
     const result: Record<string, unknown>[] = [];
     const promotionLines: OrderPromotionInputLine[] = [];
+    let ordinaryMemberEligible: Promise<boolean> | undefined;
     for (const cart of carts) {
       const product = productById.get(cart.productId);
       if (!product) continue;
       let limitValid = true;
       try { assertProductPurchaseQuantity(product, quantities.get(cart.productId) ?? cart.cartNum); }
       catch (error) { if (!(error instanceof ValidateException)) throw error; limitValid = false; }
-      const productValid = limitValid && product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
+      const assistedGuest = uid === 0 && cart.uid === 0 && cart.staffId > 0 && Boolean(cart.touristUid);
+      const vipValid = cart.type !== 0 || product.isVipProduct === 0 || (product.isVipProduct === 1 &&
+        (assistedGuest || await (ordinaryMemberEligible ??= ordinaryVipCartVisible(this.container.db, uid, product))));
+      const productValid = vipValid && limitValid && product.isDel === 0 && product.isShow === 1 && product.isVerify === 1 && presaleCartIsCurrent(cart, product);
       if (!options.includeInvalid && !productValid) continue;
       const sku = skuByProductUnique.get(`${cart.productId}:${cart.productAttrUnique.trimEnd()}`);
       const rawPrice = String(sku?.price ?? product.price);
@@ -1291,6 +1324,7 @@ export class StoreCartService {
       if (!source) throw new NotFoundException("购物车项不存在");
       const { product, sku } = await normalProductAndSku(tx, params.productId, params.unique.trim());
       if (sku.stock <= 0) throw new ValidateException("选择的规格库存不足");
+      await assertOrdinaryVipCandidate(tx, params.uid, product);
 
       const targetRows = await tx
         .select()
@@ -1323,6 +1357,7 @@ export class StoreCartService {
           eq(storeCart.id, source.id),
           eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
+        await protectOrdinaryVipCart(tx, params.uid, product);
         return { id: target.id, cartNum };
       }
       await assertProductCartQuantity(tx, product, params.cartNum, { uid: params.uid, type: 0, isNew: 0, excludeCartId: source.id });
@@ -1334,6 +1369,7 @@ export class StoreCartService {
         cartNum: params.cartNum,
         addTime: now,
       }).where(and(eq(storeCart.id, source.id), eq(storeCart.uid, params.uid)));
+      await protectOrdinaryVipCart(tx, params.uid, product);
       return { id: source.id, cartNum: params.cartNum };
     });
   }
@@ -1394,6 +1430,7 @@ export class StoreCartService {
         ));
         return { id: existing.id, cartNum: 0, deleted: true };
       }
+      await assertOrdinaryVipCandidate(tx, params.uid, product);
       await assertProductCartQuantity(tx, product, desired, { uid: params.uid, type: 0, isNew: 0, excludeCartId: existing?.id });
       if (desired > sku.stock) throw new ValidateException(`该商品库存不足${desired}`);
       const now = Math.floor(Date.now() / 1000);
@@ -1402,6 +1439,7 @@ export class StoreCartService {
           eq(storeCart.id, existing.id),
           eq(storeCart.uid, params.uid), eq(storeCart.staffId, 0), eq(storeCart.touristUid, ''),
         ));
+        await protectOrdinaryVipCart(tx, params.uid, product);
         return { id: existing.id, cartNum: desired, deleted: false };
       }
       const inserted = await tx.insert(storeCart).values({
@@ -1419,6 +1457,7 @@ export class StoreCartService {
         status: 1,
         addTime: now,
       }).returning({ id: storeCart.id });
+      await protectOrdinaryVipCart(tx, params.uid, product);
       return { id: inserted[0].id, cartNum: desired, deleted: false };
     });
   }
@@ -1454,6 +1493,7 @@ export class StoreCartService {
       const cart = rows[0];
       if (!cart) throw new NotFoundException("购物车项不存在");
       const { product, sku } = await normalProductAndSku(tx, productId, cart.productAttrUnique);
+      await assertOrdinaryVipCandidate(tx, uid, product);
       await assertProductCartQuantity(tx, product, cartNum, { uid, type: 0, isNew: 0, excludeCartId: cart.id });
       if (cartNum > sku.stock) throw new ValidateException(`库存不足${cartNum}`);
       await tx.update(storeCart).set({
@@ -1467,6 +1507,7 @@ export class StoreCartService {
         eq(storeCart.isNew, 0),
         eq(storeCart.status, 1),
       ));
+      await protectOrdinaryVipCart(tx, uid, product);
     });
   }
 
@@ -1496,6 +1537,7 @@ export class StoreCartService {
       const sku = await scoped.storeProductAttrValueDao.getByUnique(current.productAttrUnique, 0, current.productId);
       if (!product || !sku || sku.productId !== current.productId || product.isShow !== 1 || product.isDel !== 0)
         throw new ValidateException('商品或规格已失效');
+      if (current.type === 0) await assertOrdinaryVipCandidate(tx, uid, product);
       await assertProductCartQuantity(tx, product, cartNum, { uid, type: current.type,
         isNew: current.isNew, excludeCartId: current.id });
       if (current.type === 4) {
@@ -1504,6 +1546,7 @@ export class StoreCartService {
         await service.assertIntegralQuantity(uid, context, cartNum);
       } else if (cartNum > sku.stock) throw new ValidateException(`库存不足, 当前库存 ${sku.stock}`);
       await tx.update(storeCart).set({ cartNum }).where(eq(storeCart.id, current.id));
+      if (current.type === 0) await protectOrdinaryVipCart(tx, uid, product);
     });
   }
 
