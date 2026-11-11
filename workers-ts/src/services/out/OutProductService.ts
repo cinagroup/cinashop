@@ -64,6 +64,7 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   autoOffTime?: number;
   scheduleIntentVersion?: 1;
   activity?: string;
+  recommendList?: string;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -167,14 +168,35 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "is_vip_product",
     "presale_day",
     "presale_time",
-    "recommend",
-    "recommend_list",
   ].filter((key) => nonEmpty(input[key]));
   if (unsupported.length > 0) {
     throw new ValidateException(`以下商品能力尚未迁移，不能静默丢弃：${unsupported.join(",")}`);
   }
+  // PHP explicitly unsets this old editor echo; recommendation flags are
+  // independent fields, and this array does not author them.
+  if (nonEmpty(input.recommend) && (!Array.isArray(input.recommend) || input.recommend.length > 100)) {
+    throw new ValidateException('商品推荐回显格式错误');
+  }
   const supplierId = strictInteger(input.supplier_id, "供应商ID", 0);
   if (supplierId !== 0) throw new ValidateException("Out API 商品写入只允许平台作用域");
+}
+
+function recommendationInput(input: UnknownRecord): string | undefined {
+  if (!Object.hasOwn(input, 'recommend_list') || input.recommend_list === undefined) return undefined;
+  if (!Array.isArray(input.recommend_list) || input.recommend_list.length > 100) {
+    throw new ValidateException('推荐商品列表格式错误');
+  }
+  const ids = input.recommend_list.map(value => {
+    if ((typeof value !== 'number' && typeof value !== 'string') || !/^\d+$/.test(String(value).trim())) {
+      throw new ValidateException('推荐商品ID格式错误');
+    }
+    const id = Number(String(value).trim());
+    if (!Number.isSafeInteger(id) || id <= 0 || id > 2_147_483_647) throw new ValidateException('推荐商品ID超出允许范围');
+    return id;
+  });
+  const encoded = ids.join(',');
+  if (encoded.length > 256) throw new ValidateException('推荐商品列表超过存储长度');
+  return encoded;
 }
 
 function activityInput(input: UnknownRecord): string | undefined {
@@ -207,6 +229,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   rejectUnmigratedProductFeatures(input);
   const schedule = outProductScheduleInput(input);
   const activity = activityInput(input);
+  const recommendList = recommendationInput(input);
   // The former shared adapter included explicit empty timestamps in old
   // receipt hashes even though Out ignored them. Remove them before invoking
   // the base parser and bind the new author intent to an explicit version.
@@ -250,6 +273,7 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
     ...(systemFormId === undefined ? {} : { systemFormId }),
     ...schedule,
     ...(activity === undefined ? {} : { activity }),
+    ...(recommendList === undefined ? {} : { recommendList }),
     ...(Object.keys(schedule).length ? { scheduleIntentVersion: 1 as const } : {}),
     ...outProductLabelInput(input),
     sliderImages,
@@ -521,6 +545,7 @@ export class OutProductService {
         : await inventoryLock(() => lockOutProductSystemForm(tx, systemFormId));
       const productValues = {
         ...(input.activity === undefined ? {} : { activity: input.activity }),
+        ...(input.recommendList === undefined ? {} : { recommendList: input.recommendList }),
         ...(customForm === undefined ? {} : { customForm }),
         ...(systemFormId === undefined ? {} : { systemFormId }),
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
@@ -599,12 +624,14 @@ export class OutProductService {
       const formProof = outProductFormProof(savedProductId, existing, customForm, systemFormId, admittedForm);
       const scheduleProof = await inventoryLock(() => outProductScheduleProof(tx, savedProductId, existing, input));
       const expectedActivity = input.activity ?? existing?.activity ?? '';
-      const assertActivity = async () => {
-        const [row] = await tx.select({ activity: storeProduct.activity }).from(storeProduct)
+      const expectedRecommendations = input.recommendList ?? existing?.recommendList ?? '';
+      const assertProductSelections = async () => {
+        const [row] = await tx.select({ activity: storeProduct.activity, recommendList: storeProduct.recommendList }).from(storeProduct)
           .where(eq(storeProduct.id, savedProductId)).limit(1);
         if (!row || row.activity !== expectedActivity) throw new ValidateException('平台商品活动顺序已变化');
+        if (row.recommendList !== expectedRecommendations) throw new ValidateException('平台推荐商品列表已变化');
       };
-      await assertActivity();
+      await assertProductSelections();
       if (!couponFence) {
         couponFence = await inventoryLock(() => captureOutProductCoupons(tx, savedProductId));
         if (couponFence.rows.length) throw new ValidateException("新商品优惠券关联已变化");
@@ -726,7 +753,7 @@ export class OutProductService {
       await inventoryLock(() => assertOutProductCoupons(tx, couponProof));
       await inventoryLock(() => assertOutProductForm(tx, formProof));
       await inventoryLock(() => assertOutProductSchedule(tx, scheduleProof));
-      await assertActivity();
+      await assertProductSelections();
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

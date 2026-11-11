@@ -1,0 +1,257 @@
+{
+  "schema": "php-ts-out-product-recommendations/v1",
+  "baseCommit": "71379a97edaa4897557eeea5610c861bbb27d1c1",
+  "preparedAt": "2026-11-11T16:18:27.140964+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          214,
+          225
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          360,
+          369
+        ],
+        [
+          472,
+          485
+        ],
+        [
+          913,
+          913
+        ],
+        [
+          931,
+          931
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Out ordered recommendation references and omission versus clear replay distinction",
+    "Preserve duplicate and unavailable references; legacy recommend echo does not alter flags",
+    "Atomic product and receipt with deferred trigger row-position guard",
+    "Actual Out and ordinary detail consumers and restricted App LOGIN"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 142,
+      "numPassedTests": 142,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-consumers": {
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-checkout": {
+        "passed": 71,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-out-labels": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-activity": {
+        "passed": 29,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit",
+        "exit": 0,
+        "seconds": 28.669,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 261.236,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 107.263,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-consumers",
+        "exit": 0,
+        "seconds": 68.255,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout",
+        "exit": 0,
+        "seconds": 562.71,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-out-labels",
+        "exit": 0,
+        "seconds": 544.302,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-activity",
+        "exit": 0,
+        "seconds": 72.786,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalConsumerTestsPreserved": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/product/ProductDetailDesignData.ts",
+      "sha256": "01578562cb6eadf15e94deb9068a203a6510459b1ed113a25773a9f4621d59a4"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "sha256": "9ae1c7db5dd775aa332044765c585aa8d1e308da3fdcd5c666c1ee5c484a9162"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailProjection.ts",
+      "sha256": "5dda8db83f422ccaa35f8c943d9086e17670328dc034385297daeabfa924138f"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-recommendations-20261111.md",
+      "sha256": "6b7c8548f4d061e0582bf5b398e67e201b5eea50c6cb0fd4de9c30b5773e9f70",
+      "bytes": 1689
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "sha256": "58c58310dcd9ec48956461eca8e80600ea97fe53b289054795a6c301c95afbd7",
+      "bytes": 42106
+    },
+    {
+      "file": "workers-ts/test/out-product-recommendations.test.ts",
+      "sha256": "fb0d9e1aa8b6dbfd34df025377fc708a51fe20b1052fd3f01605aa540661cabc",
+      "bytes": 2201
+    },
+    {
+      "file": "workers-ts/test/product-detail-design-consumers-postgres.test.ts",
+      "sha256": "2302f00b26a9095afda64782dbaa49186765ff60a4dbfa4f4dd033b343235620",
+      "bytes": 28809
+    }
+  ],
+  "runtimeBoundary": "Synthetic Out identity, isolated PostgreSQL, actual Out and ordinary product-detail recommendation consumers and separately authenticated restricted App LOGIN. No production identity or provider I/O.",
+  "previousCI": {
+    "commit": "71379a97edaa4897557eeea5610c861bbb27d1c1",
+    "runId": 43051183307,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43051183307",
+    "statusAtReview": "completed",
+    "workerShards": "failure: fixed legacy PHP checkout reports upload-pack not our ref for 8ed2a5b139f9170dd11b0dff91803f2fd59e40a5; follow-on diagnostics fail due to missing dependencies",
+    "remoteEvidence": "GitHub REST commit lookup for cinagroup/cinashop-php returned 409 Git Repository is empty",
+    "observedAt": "2026-11-11T16:03:21.269892+00:00",
+    "conclusion": "failure",
+    "otherJobs": "all completed successfully"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-recommendations-20261111",
+  "artifacts": [
+    {
+      "name": "frozen-source.json",
+      "sha256": "004bfe851a5a06b3ab269c42713c8efff5db03f7997940bc3c06a8526a8ca497",
+      "bytes": 388
+    },
+    {
+      "name": "validation-progress.json",
+      "sha256": "9fac56d5ee7f05861639d085439d3c6d04dc0404effc5128f13a59bfdfc46761",
+      "bytes": 747
+    },
+    {
+      "name": "unit.json",
+      "sha256": "d84e5b7c60d086b7887cd4ace8c59e465aa9d6bd9fa31fb0ba30e3111b75041b",
+      "bytes": 57759
+    },
+    {
+      "name": "unit.log",
+      "sha256": "44cfda94f71c10f5c7a3da26beae492df3f69de66a4b5eef894aac27762be6d8",
+      "bytes": 427
+    },
+    {
+      "name": "worker-unit-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "name": "native-consumers.log",
+      "sha256": "deb0b31c5b5cd3a89d63449f13a3de84650ef654fd36d878de3da779911d2022",
+      "bytes": 1404
+    },
+    {
+      "name": "native-checkout.log",
+      "sha256": "146c241ecc3e86ef6339e6ef446922e17dda8acd5930e7d8030f856ad1fd7093",
+      "bytes": 1398
+    },
+    {
+      "name": "native-out-labels.log",
+      "sha256": "fb2c0f1b876fdc1318ab954420bb9687f44a1acc88281089695a2f3843439527",
+      "bytes": 1393
+    },
+    {
+      "name": "native-activity.log",
+      "sha256": "24afbfa2610733ea1a7674a5fccf21c61e75a4c6ea57bf16eb2d856f1730ddbc",
+      "bytes": 1391
+    },
+    {
+      "name": "native-initial.log",
+      "sha256": "57c7b5a2ebe658689e7910d4cae4acdbafca9a3e0d72b6a248b589c819c0ad31",
+      "bytes": 1404
+    }
+  ]
+}

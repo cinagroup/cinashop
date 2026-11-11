@@ -107,3 +107,129 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('native full prod
     const after=await f.snapshot();for(const key of Object.keys(before))if(!['system_dise','store_product_description'].includes(key))expect(after[key as keyof typeof after]).toEqual(before[key as keyof typeof before]);
   });});});
 });
+
+// Out authoring and both existing detail consumers share this real PG16 fixture.
+import { sql } from 'drizzle-orm';
+import type { DbClient } from '@/lib/di';
+import { storeProductAttrValue, storeProductCategory, storeProductRelation, outProductWriteReplay, systemSupplier } from '@/models/schema';
+import { productCreate, productInfo, productUpdate } from '@/controllers/out/OutApiController';
+import { normalizeOutPhysicalProductInput } from '@/services/out/OutProductService';
+import { outRequestHash } from '@/services/out/OutIdempotency';
+import { readDetailRecommendations } from '@/services/product/ProductDetailDesignData';
+import { createPcCheckoutQuoteFixture } from './helpers/pcCheckoutQuoteFixture';
+import { sequenceRunnerDatabase } from './helpers/kefuSequenceRunnerDatabase';
+import { completePurchaseOriginEvidenceOrm } from '@/migrations/runPurchaseOriginEvidence';
+import { completePurchaseCancellationEvidenceOrm } from '@/migrations/runPurchaseCancellationEvidence';
+import { runtimeBusinessPrivilegePlan } from '@/migrations/runtimeBusinessPrivilegePlan';
+
+describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('Out recommendations and ordinary detail consumer on owned PG16', () => {
+  let f: Awaited<ReturnType<typeof createPcCheckoutQuoteFixture>>;
+  let owned: Awaited<ReturnType<typeof sequenceRunnerDatabase>>;
+  let network: ReturnType<typeof vi.spyOn>;
+  const body = { product_type: 0, supplier_id: 0, cate_id: [9], store_name: 'Out recommendation product',
+    slider_image: ['/isolated.png'], delivery_type: [1], freight: 3, temp_id: 10, spec_type: 1, is_show: 1,
+    items: [{ value: '颜色', detail: ['红色'] }, { value: '尺码', detail: ['大号'] }],
+    attrs: [{ suk: '红色,大号', detail: { 颜色: '红色', 尺码: '大号' }, unique: 'qared001', price: '10.00', stock: 999, bar_code: 'OUT-A' }] };
+  const app = (db: DbClient) => {
+    const a = new Hono<{ Bindings: Env; Variables: AppVariables }>();
+    a.use('*', async (c, next) => { c.set('container', createContainerFromDb(db));
+      c.set('outInfo', { id: 7, appid: 'isolated-out-recommendations', title: 'isolated', rules: [] }); await next(); });
+    a.onError((e, c) => c.json({ status: 400, msg: e.message, data: null }));
+    a.post('/outapi/product', productCreate); a.put('/outapi/product/:id', productUpdate); a.get('/outapi/product/:id', productInfo);
+    return a;
+  };
+  beforeEach(async () => {
+    network = vi.spyOn(globalThis, 'fetch').mockRejectedValue(Error('Out recommendation acceptance forbids external I/O'));
+    f = await createPcCheckoutQuoteFixture([], async () => {
+      owned = await sequenceRunnerDatabase();
+      try { const api = await import('drizzle-kit/api'), schema = await import('@/models/schema');
+        await owned.exec((await api.generateMigration(api.generateDrizzleJson({}), api.generateDrizzleJson(schema))).join('\n'));
+        await completePurchaseOriginEvidenceOrm(owned.db); await completePurchaseCancellationEvidenceOrm(owned.db); return owned;
+      } catch (error) { await owned.close(); throw error; }
+    });
+    await f.db.insert(storeProductCategory).values({ id: 9, cateName: 'isolated', isShow: 1 });
+    await f.db.update(storeProduct).set({ cateId: '9', specType: 1 }).where(eq(storeProduct.id, 70));
+    await f.db.update(storeProductAttrValue).set({ barCode: 'OUT-A' }).where(eq(storeProductAttrValue.id, 1));
+    await f.db.insert(storeProductRelation).values({ productId: 70, relationId: 9, type: 1, status: 1 });
+    await f.db.insert(systemSupplier).values({ id: 88, adminId: 88, supplierName: 'public supplier' });
+    await f.db.insert(storeProduct).values([
+      { id: 71, storeName: 'public platform', image: '/71.png', isShow: 1, isVerify: 1, sort: 2 },
+      { id: 72, storeName: 'member only', image: '/72.png', isShow: 1, isVerify: 1, isVipProduct: 1, sort: 6 },
+      { id: 73, storeName: 'hidden platform', image: '/73.png', isShow: 0, isVerify: 1 },
+      { id: 74, storeName: 'public supplier product', image: '/74.png', isShow: 1, isVerify: 1, type: 2, relationId: 88, sort: 4 },
+      { id: 75, storeName: 'fallback recommendation', image: '/75.png', isShow: 1, isVerify: 1, isGood: 1 },
+    ]);
+  }, 120_000);
+  afterEach(async () => { try { expect(network).not.toHaveBeenCalled(); } finally { network?.mockRestore(); await f?.close(); } }, 120_000);
+  const request = async (db: DbClient, data?: object, key = crypto.randomUUID(), path = '/outapi/product/70', method = 'PUT') => {
+    const response = await app(db).request(path, { method, headers: { 'content-type': 'application/json', 'Idempotency-Key': key },
+      ...(data ? { body: JSON.stringify(data) } : {}) }, f.env);
+    return response.json() as Promise<{ status: number; msg: string; data: any }>;
+  };
+  const state = async () => ({ ...await f.snapshot(), replays: await f.db.select().from(outProductWriteReplay), relations: await f.db.select().from(storeProductRelation) });
+  const references = [71, 74, 999, 71, 72, 73];
+
+  it('saves and replays the ordered legacy references while both real readers enforce their own visibility', async () => {
+    const key = crypto.randomUUID(), data = { ...body, recommend: ['is_hot'], recommend_list: references };
+    const result = await request(f.db, data, key); expect(result.status, result.msg).toBe(200);
+    const [row] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70));
+    expect(row.recommendList).toBe('71,74,999,71,72,73'); expect(row.isHot).toBe(0);
+    const detail = await request(f.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+    expect(detail.status, detail.msg).toBe(200);
+    const rows = detail.data.productInfo.recommend_list as Array<{ product_id: string; image: string }>;
+    expect(rows.map(row => row.product_id)).toEqual(references.map(String));
+    expect(rows[0].image).toBe('/71.png'); expect(rows[1].image).toBe(''); expect(rows[2].image).toBe('');
+    expect((await readDetailRecommendations(f.db, row, 100, false)).map(item => item.id)).toEqual([74, 71]);
+    expect((await readDetailRecommendations(f.db, row, 100, true)).map(item => item.id)).toEqual([72, 74, 71]);
+    const saved = await state(); expect((await request(f.db, data, key)).data.idempotent).toBe(true); expect(await state()).toEqual(saved);
+    const omitted = await request(f.db, body); expect(omitted.status, omitted.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)))[0].recommendList).toBe(row.recommendList);
+    const cleared = await request(f.db, { ...body, recommend_list: [] }); expect(cleared.status, cleared.msg).toBe(200);
+    const [empty] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)); expect(empty.recommendList).toBe('');
+    expect((await readDetailRecommendations(f.db, empty, 100, false)).map(item => item.id)).toEqual([75]);
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),75,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const created = await request(f.db, { ...body, recommend_list: [999, 71, 999] }, crypto.randomUUID(), '/outapi/product', 'POST');
+    expect(created.status, created.msg).toBe(200);
+    expect((await f.db.select().from(storeProduct).where(eq(storeProduct.id, created.data.id)))[0].recommendList).toBe('999,71,999');
+  }, 30_000);
+
+  it('rejects old ignored-empty receipts and rolls back receipt and product on deferred mutation', async () => {
+    await f.db.update(storeProduct).set({ recommendList: '71,999' }).where(eq(storeProduct.id, 70));
+    const key = crypto.randomUUID(), old = normalizeOutPhysicalProductInput(body);
+    const hash = await outRequestHash({ operation: 'product_update', productId: 70, input: old });
+    await f.db.insert(outProductWriteReplay).values({ outAccountId: 7, operation: 'product_update', requestKey: key, requestHash: hash, productId: 70 });
+    const before = await state(), conflict = await request(f.db, { ...body, recommend_list: [] }, key);
+    expect(conflict.status).not.toBe(200); expect(await state()).toEqual(before);
+    for (const mutation of ["recommend_list='72'", 'recommend_list=recommend_list']) {
+      await f.exec(`CREATE FUNCTION test_out_recommendation_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET ${mutation} WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_recommendation_damage AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_recommendation_damage()`);
+      const failed = await request(f.db, { ...body, recommend_list: [71, 74] });
+      expect(failed.status).not.toBe(200); expect(await state()).toEqual(before);
+      await f.exec('DROP TRIGGER test_out_recommendation_damage ON out_product_write_replay; DROP FUNCTION test_out_recommendation_damage()');
+    }
+  }, 30_000);
+
+  it('writes and reads with existing restricted App privileges', async () => {
+    if (!owned.withRuntimeRole) throw Error('Native restricted LOGIN required');
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => {
+        if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Invalid owned grant identifier'); return `"${name}"`;
+      };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) { const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,
+        pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) {
+        const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence');
+        await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`);
+      }
+      const result = await request(runtime.db, { ...body, recommend_list: [71, 74, 999] }); expect(result.status, result.msg).toBe(200);
+      const detail = await request(runtime.db, undefined, crypto.randomUUID(), '/outapi/product/70', 'GET');
+      expect(detail.status, detail.msg).toBe(200); expect(detail.data.productInfo.recommend_list.map((row: {product_id: string}) => row.product_id)).toEqual(['71', '74', '999']);
+      expect(detail.data.productInfo.recommend_list[1].image).toBe('');
+    });
+  }, 30_000);
+});
