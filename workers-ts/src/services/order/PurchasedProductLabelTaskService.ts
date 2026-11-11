@@ -10,6 +10,7 @@ import { capturePurchasedProductLabelMessage, purchasedLabelUuid, type Purchased
 import { capturePurchasedLabelResult } from './PurchasedProductLabelResult';
 import { readPurchasedLabelIntent, verifyPurchasedLabelIntent, type PurchasedLabelIntentRow } from './PurchasedProductLabelSource';
 import { grantPurchasedProductLabelsTx } from './PurchasedProductLabelGrant';
+import { purchasedLabelRecovery, type PurchasedLabelTaskItem } from '../../../../view/common/purchasedProductLabelTasks';
 
 type Environment = Pick<Env, 'ORDER_QUEUE'> & Partial<Pick<Env, 'PURCHASED_PRODUCT_LABEL_RUNTIME'>>;
 interface State { taskId: string; status: string; attemptCount: number; dispatchCount: number; replayCount: number;
@@ -162,20 +163,23 @@ export class PurchasedProductLabelTaskService {
     }
     return { claimed: claims.length, enqueued };
   }
-  async list(query: { status?: string; afterId?: string; limit?: number } = {}) {
+  async list(query: { status?: string; afterId?: string; taskId?: string; limit?: number } = {}) {
     const limit = query.limit ?? 50;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || query.status !== undefined && !statuses.includes(query.status)
-      || query.afterId !== undefined && !purchasedLabelUuid(query.afterId)) throw new ValidateException('购买标签查询范围无效');
+      || query.afterId !== undefined && !purchasedLabelUuid(query.afterId)
+      || query.taskId !== undefined && (!purchasedLabelUuid(query.taskId) || query.afterId!==undefined)) throw new ValidateException('购买标签查询范围无效');
     return this.transaction('read', async tx => {
-      const rows = await tx.execute(sql`SELECT i.task_id::text AS "taskId",i.event_key AS "eventKey",i.order_id AS "orderId",i.customer_uid AS "userId",
+      const observedAt=await time(tx);
+      const rows = await tx.execute<Omit<PurchasedLabelTaskItem,'recovery'>>(sql`SELECT i.task_id::text AS "taskId",i.event_key AS "eventKey",i.order_id AS "orderId",i.customer_uid AS "userId",
         i.created_at AS "createdAt",s.status,s.attempt_count AS "attemptCount",s.dispatch_count AS "dispatchCount",s.replay_count AS "replayCount",
-        s.available_at AS "availableAt",s.processed_at AS "processedAt",s.last_error AS "lastError",r.completed_at AS "receiptCompletedAt"
+        s.available_at AS "availableAt",s.lease_until AS "leaseUntil",s.processed_at AS "processedAt",s.last_error AS "lastError",r.completed_at AS "receiptCompletedAt"
         FROM public.purchased_product_label_intent i JOIN public.purchased_product_label_state s ON s.task_id=i.task_id
         LEFT JOIN public.purchased_product_label_result r ON r.task_id=i.task_id WHERE true
         ${query.status ? sql`AND s.status=${query.status}` : sql``} ${query.afterId ? sql`AND i.task_id>${query.afterId}::uuid` : sql``}
+        ${query.taskId ? sql`AND i.task_id=${query.taskId}::uuid` : sql``}
         ORDER BY i.task_id LIMIT ${limit+1}`);
-      const items = rows.slice(0, limit);
-      return { items, nextAfterId: rows.length > limit ? items[items.length-1]?.taskId : null };
+      const items = rows.slice(0, limit).map(row=>({...row,recovery:purchasedLabelRecovery(row,observedAt)}));
+      return { items, nextAfterId: rows.length > limit ? items[items.length-1]?.taskId ?? null : null, observedAt };
     });
   }
   /** Also used inside the existing authenticated DLQ replay transaction. */

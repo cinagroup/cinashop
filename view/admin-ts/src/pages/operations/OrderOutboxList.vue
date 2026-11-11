@@ -3,10 +3,11 @@
     <el-card class="section-switch" shadow="never">
       <div>
         <strong>任务运维</strong>
-        <span>区分业务 outbox 重试与 Cloudflare Queue 死信处置</span>
+        <span>支付后置任务、购买标签与 Queue 死信处置</span>
       </div>
       <el-radio-group v-model="activeSection" aria-label="选择任务运维视图">
         <el-radio-button value="outbox">支付后置任务</el-radio-button>
+        <el-radio-button value="purchased-labels">购买标签任务</el-radio-button>
         <el-radio-button value="dead-letter">Queue 死信</el-radio-button>
       </el-radio-group>
     </el-card>
@@ -102,12 +103,14 @@
       </el-card>
     </template>
 
+    <PurchasedProductLabelTasks v-else-if="activeSection === 'purchased-labels'" />
     <QueueDeadLetterPanel v-else />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   apiAdminOrderOutboxList,
@@ -116,6 +119,7 @@ import {
   type OrderOutboxStatus,
 } from "@/api/operations";
 import QueueDeadLetterPanel from "@/pages/operations/QueueDeadLetterPanel.vue";
+import PurchasedProductLabelTasks from '@/pages/operations/PurchasedProductLabelTasks.vue';
 
 const statusOptions: Array<{ label: string; value: OrderOutboxStatus }> = [
   { label: "待投递", value: "PENDING" },
@@ -127,7 +131,11 @@ const statusOptions: Array<{ label: string; value: OrderOutboxStatus }> = [
   { label: "已停止", value: "DEAD" },
 ];
 
-const activeSection = ref<"outbox" | "dead-letter">("outbox");
+const route=useRoute(),router=useRouter();
+const section=(value:unknown):'outbox'|'purchased-labels'|'dead-letter'=>value==='purchased-labels'||value==='dead-letter'?value:'outbox';
+const activeSection = ref(section(route.query.section));
+watch(()=>route.query.section,value=>{activeSection.value=section(value);});
+watch(activeSection,value=>{if(value!==section(route.query.section))void router.replace({query:{...route.query,section:value}});if(value==='outbox')void load();});
 const list = ref<OrderOutboxItem[]>([]);
 const loading = ref(false);
 const replayingId = ref<number | null>(null);
@@ -226,7 +234,7 @@ async function replay(row: OrderOutboxItem) {
   }
 }
 
-onMounted(load);
+onMounted(()=>{if(activeSection.value==='outbox')void load();});
 </script>
 
 <style scoped>
@@ -254,7 +262,8 @@ onMounted(load);
 }
 @media (max-width: 767px) {
   .section-switch :deep(.el-card__body) { align-items: stretch; flex-direction: column; }
-  .section-switch :deep(.el-radio-group) { display: grid; grid-template-columns: 1fr 1fr; }
-  .section-switch :deep(.el-radio-button__inner) { width: 100%; }
+  .section-switch :deep(.el-radio-group) { display: flex; flex-wrap: wrap; gap: 6px; }
+  .section-switch :deep(.el-radio-button) { flex: 1 1 120px; }
+  .section-switch :deep(.el-radio-button__inner) { width: 100%; border-left: 1px solid var(--el-border-color); }
 }
 </style>

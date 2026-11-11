@@ -1,3 +1,4 @@
+import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -24,7 +25,7 @@ describe('reviewed provider transport successor before unchanged historical proo
       const before = execFileSync('git', ['cat-file', 'blob', proof.predecessorCommit + ':' + row.file], { cwd: root, encoding: 'utf8' });
       const current = physical(row.file);
       expect(projectProviderTransportPredecessor(row.file, current)).toBe(before);
-      expect(sha(projectPurchasedLabelAuthorPredecessor(row.file, current))).toBe(row.current.sha256); expect(sha(before)).toBe(row.predecessor.sha256);
+      expect(sha(projectPurchasedLabelAuthorPredecessor(row.file, projectPurchasedLabelOperationsPredecessor(row.file, current)))).toBe(row.current.sha256); expect(sha(before)).toBe(row.predecessor.sha256);
       expect(row.origin).toEqual({ commit: proof.predecessorCommit, path: row.file, gitBlobSha1: row.predecessor.gitBlobSha1 });
       expect(current).not.toBe(before);
     }

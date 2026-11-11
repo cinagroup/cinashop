@@ -8,6 +8,8 @@ import { isOutLabelRunnerSource, projectOutLabelRunnerPredecessor } from './outP
 import { projectPurchasedLabelRunnerPredecessor } from './purchasedLabelStorageRunnerSourceContinuity';
 import { isPurchasedLabelAuthorSource, projectPurchasedLabelAuthorPredecessor } from './purchasedLabelAuthorSourceContinuity';
 
+import { isPurchasedLabelOperationsSource, projectPurchasedLabelOperationsPredecessor } from './purchasedLabelOperationsSourceContinuity';
+
 export const PROVIDER_TRANSPORT_PROOF_FILE = 'workers-ts/test/fixtures/provider-transport-source-continuity-20261109.json';
 export const PROVIDER_TRANSPORT_PROOF_SHA = 'be895c2c4a72e33c120aadd7da13fb71eae93b9ff6ff37e495ee6b8fcf81d1b1';
 interface Image { bytes: number; sha256: string; gitBlobSha1: string }
@@ -34,11 +36,12 @@ if (proof.schema !== 'provider-transport-source-continuity/v1' || proof.predeces
 
 // Peel the later discovery-only images before the unchanged older views. This
 // reader is historical; runtime tests and production always import native code.
-export const isProviderTransportSource = (file: string) => isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
+export const isProviderTransportSource = (file: string) => isPurchasedLabelOperationsSource(file) || isPurchasedLabelAuthorSource(file) || isOutLabelRunnerSource(file) || isUnitDiscoverySource(file) || proof.sources.some(row => row.file === file);
 
 /** A selected old image is refused, including an otherwise valid predecessor.
  * Every changed line must match exactly; the whole output must be fixed353. */
 export function projectProviderTransportPredecessor(file: string, source: string): string {
+  source = projectPurchasedLabelOperationsPredecessor(file, source);
   source = projectPurchasedLabelAuthorPredecessor(file, source);
   source = projectPurchasedLabelRunnerPredecessor(file, source);
   source = projectOutLabelRunnerPredecessor(file, source);

@@ -1,0 +1,379 @@
+{
+  "schema": "php-ts-purchased-label-operations/v1",
+  "baseCommit": "2e63c407db8b66baae76efbcb111f325417d1ad9",
+  "preparedAt": "2026-11-11T10:32:28.163440+00:00",
+  "scope": [
+    "Genuine Admin task list, status filter, UUID seek and exact-task recovery",
+    "Manage/view permissions and maintenance reason confirmation",
+    "Single POST exclusion and same-account in-memory recovery across panel destruction",
+    "Read original task after unconfirmed response; preserve completed receipt",
+    "Readable desktop and 375px layouts"
+  ],
+  "sourceContinuity": {
+    "proofFile": "workers-ts/test/fixtures/purchased-label-operations-continuity-20261110.json",
+    "sha256": "60144df5fb7fe5d781e24ba935060434d23efce30c24d06841b85f16c40271de",
+    "sources": 6,
+    "predecessorCommit": "2e63c407db8b66baae76efbcb111f325417d1ad9",
+    "oldProofsAndBudgetsChanged": false,
+    "nativeRuntimeUsesPhysicalSource": true
+  },
+  "validation": {
+    "workerUnit": {
+      "numTotalTests": 313,
+      "numPassedTests": 312,
+      "numFailedTests": 1,
+      "numPendingTests": 0
+    },
+    "exactBaseCapacity": {
+      "commit": "2e63c407db8b66baae76efbcb111f325417d1ad9",
+      "numTotalTests": 5,
+      "numPassedTests": 4,
+      "numFailedTests": 1
+    },
+    "adminRuntime": {
+      "passed": 22,
+      "failed": 0
+    },
+    "nativeApi": {
+      "passed": 3,
+      "failed": 0,
+      "remainingOwnedFixtures": 0
+    },
+    "browser": {
+      "stages": [
+        "initial",
+        "pagination",
+        "uncertain",
+        "restored",
+        "completed",
+        "viewer",
+        "mobile",
+        "finish"
+      ],
+      "innerViewportWidths": [
+        375,
+        1142,
+        1243
+      ],
+      "replayPosts": 1,
+      "consoleErrors": 0,
+      "finished": true,
+      "remainingOwnedFixtures": 0,
+      "buildFingerprintSha256": "b51e3327e3183c766eaf003dc4d96651be6560ac2ea2f7ecd2fe410bdd69f7ca"
+    },
+    "profiles": [
+      {
+        "name": "unit-final",
+        "exit": 1,
+        "seconds": 76.912,
+        "budgetSeconds": 600,
+        "numTotalTests": 313,
+        "numPassedTests": 312,
+        "numFailedTests": 1,
+        "retainedCapacityFailure": true
+      },
+      {
+        "name": "ci-capacity-base",
+        "exit": 1,
+        "seconds": 30.4,
+        "budgetSeconds": 600,
+        "numTotalTests": 5,
+        "numPassedTests": 4,
+        "numFailedTests": 1,
+        "retainedCapacityFailure": true
+      },
+      {
+        "name": "admin-runtime",
+        "exit": 0,
+        "seconds": 4.338,
+        "budgetSeconds": 600
+      },
+      {
+        "name": "worker-unit-types",
+        "exit": 0,
+        "seconds": 311.094,
+        "budgetSeconds": 600
+      },
+      {
+        "name": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 130.395,
+        "budgetSeconds": 600
+      },
+      {
+        "name": "admin-build",
+        "exit": 0,
+        "seconds": 104.971,
+        "budgetSeconds": 600
+      }
+    ]
+  },
+  "retainedFailure": {
+    "case": "uses the real native partition and refuses omitted, duplicate, skipped or failed executed results",
+    "file": "workers-ts/test/ci-gate-capacity.test.ts",
+    "childBudgetMs": 10000,
+    "caseBudgetMs": 15000,
+    "sameFailureOnExactBase": true,
+    "notSkippedOrMarkedGreen": true
+  },
+  "boundaries": {
+    "browser": "Actual built Admin, Hono/JWT, independent restricted runtime LOGINs, real assisted/offline paid authors and original task grant. Labelled synthetic session bootstrap, config maintenance, committed-response loss and direct Queue invocation.",
+    "noRealLoginFormOrProductionDeviceClaim": true,
+    "providerRequests": 0,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "fullMigrationComplete": false,
+    "remotePassingCIForCandidateVerified": false
+  },
+  "evidenceReconstruction": "Earlier /tmp artifacts were lost during interruption. This record hashes reproduced final-run artifacts on the frozen candidate. Five reconstructed CUA attempts exceeded the unchanged six-minute operator window before the final eight-stage pass; their available logs/checkpoints remain hashed here. Final automation waited for rendered state and queried the original accepted task without a second POST. Earlier outcomes remain in the chat.",
+  "artifactDirectory": "/tmp/php-ts-purchased-label-operations-20261110",
+  "artifacts": [
+    {
+      "name": "unit-final.json",
+      "bytes": 129818,
+      "sha256": "ebf61c4b698787f091b043ce6c4a7f5f6ccbe89bb440925d5d8801aafc561841"
+    },
+    {
+      "name": "ci-capacity-base.json",
+      "bytes": 4537,
+      "sha256": "4453cb0f6dfb01ddb83a664a53fdaa25263c3b5bf67d1d1c5c9eab2104473008"
+    },
+    {
+      "name": "admin-runtime.log",
+      "bytes": 2435,
+      "sha256": "006b610d2af77698f6f28598ebb3147affc8123e2f93372babda3bc86ea92246"
+    },
+    {
+      "name": "worker-unit-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "admin-build.log",
+      "bytes": 27702,
+      "sha256": "ebdaf1c4e750b6fd5b160878a4c1d980e46e7e7d7b6a8ffb2373aab94eaaf4bf"
+    },
+    {
+      "name": "native-final.log",
+      "bytes": 14593,
+      "sha256": "08c349a22fb7ecf48ac3dabe970e5104f7aad4c0a139e1c6a808510054e0e69b"
+    },
+    {
+      "name": "browser-final.log",
+      "bytes": 1143,
+      "sha256": "5d2300af5fbd3da72cd723e5e45fc8c9cba9407599a97d5a8c1c9c7d1f19a988"
+    },
+    {
+      "name": "browser-checkpoints.json",
+      "bytes": 87205,
+      "sha256": "69ecf0a260072d2471b0d678ded1076f3d5b12066392d78bdafd9bd27e7b7006"
+    },
+    {
+      "name": "browser-completed.jpg",
+      "bytes": 92764,
+      "sha256": "396ad3036811074cffc72b62f08abaa96e78803c7fe0456442010d0ef22f6071"
+    },
+    {
+      "name": "browser-mobile.jpg",
+      "bytes": 77304,
+      "sha256": "07ea9d3ec13f3f81b7b11fa957ec5ddb37a0540824277c8ff0a6552d0f4c9b6e"
+    },
+    {
+      "name": "browser-checkpoints-window-expired.json",
+      "bytes": 94145,
+      "sha256": "35220ab1251777158d5254e093f90dc9d19c7130f29fb58d594319e5bd166018"
+    },
+    {
+      "name": "browser-checkpoints.json.expired-5",
+      "bytes": 84473,
+      "sha256": "fc2b6f609416b17712399b53bc2cc79aaa55965644dd3251b326f985357c3716"
+    },
+    {
+      "name": "browser-final.log.expired-5",
+      "bytes": 15234,
+      "sha256": "a8d31a09f9ff1070b6283add10f516c895f7ce85be91dd3a8a3d1c9f1273dbc7"
+    },
+    {
+      "name": "browser-ready-window-expired-2.json",
+      "bytes": 322,
+      "sha256": "6060b1823fc8aa3bc6828ad202dff10d9870696b4d732abbe0d781008eb098d7"
+    },
+    {
+      "name": "browser-ready-window-expired-3.json",
+      "bytes": 322,
+      "sha256": "bb8123097f812bb792660a9edd36dba05b4f5c2cc87671796a6fc6b4182e1e5c"
+    },
+    {
+      "name": "browser-ready-window-expired-4.json",
+      "bytes": 322,
+      "sha256": "2351eb4e3ed1634f81d5fdb48219fc76421311c6f40dd0ea555ba4b60160149e"
+    },
+    {
+      "name": "browser-ready-window-expired.json",
+      "bytes": 322,
+      "sha256": "82b03a630329e2902e5c2eef3dc0d745bd213cc4fd45dec83967ea8ff9161fae"
+    },
+    {
+      "name": "browser-ready.json.expired-5",
+      "bytes": 322,
+      "sha256": "258c700dc35e274e5b157f01f1f5125e392b1b9d1c8927a1566ac736e42a37f5"
+    },
+    {
+      "name": "browser-window-expired-2.log",
+      "bytes": 15276,
+      "sha256": "074ebcc523ef7bab79ea1aace232df83cb707aa08680359b47ae8b923bc56fb1"
+    },
+    {
+      "name": "browser-window-expired-3.log",
+      "bytes": 15139,
+      "sha256": "bcfd0009ebefd183c532bc2a2bbf77dff591d2522a0f0c9989c2f14567bc18e5"
+    },
+    {
+      "name": "browser-window-expired-4.log",
+      "bytes": 15097,
+      "sha256": "53a1717f570c6a049323862faf2b652120cb0e1710834058ac5c94f09ff2d63b"
+    },
+    {
+      "name": "browser-window-expired.log",
+      "bytes": 15139,
+      "sha256": "80d889bd58e7f63ce843e509dad430ecb94b9d2d81a943317f3d676c1a5e2e85"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "bytes": 21550,
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "view/admin-ts/package.json",
+      "bytes": 7918,
+      "sha256": "9993601a00e18b9a05854de87b41265a9d135ea7b09194e5b415f5e7c4d6eedf"
+    },
+    {
+      "file": "view/admin-ts/scripts/helpers/purchased-label-tasks-runtime.cjs",
+      "bytes": 5732,
+      "sha256": "f0d6f3a41bf51b74dfe6e3827c4d26c57dc99705547ebd875debcdd737a38390"
+    },
+    {
+      "file": "view/admin-ts/scripts/purchased-label-tasks-runtime.test.cjs",
+      "bytes": 5063,
+      "sha256": "2ff1064d06dd2cfe7874e42243fb338739c55ff9f3b4850623b236cf42401c88"
+    },
+    {
+      "file": "view/admin-ts/src/api/purchasedProductLabelTasks.ts",
+      "bytes": 1848,
+      "sha256": "fd801823f2009e4506bdcb07e932ce3095ab13f49b16e353194bf02b44ef5c25"
+    },
+    {
+      "file": "view/admin-ts/src/composables/usePurchasedLabelTasks.ts",
+      "bytes": 8159,
+      "sha256": "b8a5855e079dbfb110b9988e0bed59174029ca391e0fd5cd0cdad83e19a76312"
+    },
+    {
+      "file": "view/admin-ts/src/pages/operations/OrderOutboxList.vue",
+      "bytes": 11425,
+      "sha256": "aa4615bfbc3d52a2d5f0ba6fa8d3ad926303553ec6ef1d99b2838950fdf7704f"
+    },
+    {
+      "file": "view/admin-ts/src/pages/operations/PurchasedProductLabelTasks.vue",
+      "bytes": 9268,
+      "sha256": "f1c685e89e90773886746cec1e544eae69968a32adebf7506de924ddcf0e4112"
+    },
+    {
+      "file": "view/common/purchasedProductLabelTasks.ts",
+      "bytes": 5668,
+      "sha256": "8102ee1c829b971ed561e2845fa8949293ab01f56dd1734641797636dc4f045f"
+    },
+    {
+      "file": "workers-ts/docs/php-ts-purchased-label-operations-20261110.md",
+      "bytes": 4099,
+      "sha256": "47b76046018a6a6f0835b61030a37ecbd4948e992077d320edacfba52acd6d4f"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 139955,
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/controllers/api/v1/AdminOrderOutboxController.ts",
+      "bytes": 5542,
+      "sha256": "252bc93d3c4effcfda605f22652272a4124686c37d6283bb13a8f17b85a47f47"
+    },
+    {
+      "file": "workers-ts/src/services/order/PurchasedProductLabelTaskService.ts",
+      "bytes": 17756,
+      "sha256": "1f994280055af0ada3a1fd3d75f448d6f0f92e82b02b7fbc2e9a89a2c4b9eaef"
+    },
+    {
+      "file": "workers-ts/test/browser/purchased-label-operations.acceptance.ts",
+      "bytes": 14151,
+      "sha256": "d45b008cb5afd521bff7794a62ccf8a762cc7beaac743705a17a84b3680ae612"
+    },
+    {
+      "file": "workers-ts/test/fixtures/purchased-label-operations-continuity-20261110.json",
+      "bytes": 37217,
+      "sha256": "60144df5fb7fe5d781e24ba935060434d23efce30c24d06841b85f16c40271de"
+    },
+    {
+      "file": "workers-ts/test/helpers/providerTransportSourceContinuity.ts",
+      "bytes": 5079,
+      "sha256": "ad378d49c8c98c959cdefd6ba36e31b75e4e6ce64eeb0160754274e0f3fc2487"
+    },
+    {
+      "file": "workers-ts/test/helpers/purchasedLabelOperationsFixture.ts",
+      "bytes": 3881,
+      "sha256": "0a25473071482fdc6a122e053eb15864323875926cf82301b65bc0ac0cc4c18c"
+    },
+    {
+      "file": "workers-ts/test/helpers/purchasedLabelOperationsSourceContinuity.ts",
+      "bytes": 4126,
+      "sha256": "b976a074ac7d89c19ac361b7af584bdcc57268f98a330aded4d37f6039ef46ed"
+    },
+    {
+      "file": "workers-ts/test/out-product-label-runner-source-continuity.test.ts",
+      "bytes": 4392,
+      "sha256": "5d7fe73eba061fbbd285d56842cc471b4fddfa7f37f277d79e3c3c9343f23342"
+    },
+    {
+      "file": "workers-ts/test/provider-transport-source-continuity.test.ts",
+      "bytes": 4394,
+      "sha256": "58777a7169b90a7b6cb270f5f2073d5a13366143b4ed7b3f0bb08092731413b7"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-author-source-continuity.test.ts",
+      "bytes": 3160,
+      "sha256": "86e6d9a7bad52dfa6663afd294c54e4143e28d3a99f7f767e571c85524cf22f3"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-operations-native.test.ts",
+      "bytes": 3813,
+      "sha256": "51456940ba34358f645d6172cbeb4403b0610e9cc196317ad2cd413943a623d9"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-operations-source-continuity.test.ts",
+      "bytes": 3063,
+      "sha256": "413b5430bf29978f322babc89755ec3bc0f1a8a7b3995f28a17ec847f6427a2b"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-operations.test.ts",
+      "bytes": 3919,
+      "sha256": "bd2b3119c896a54ff4c99a1c0a3b0a0f24b8e5a2178ca26d940054ade2c5a32e"
+    },
+    {
+      "file": "workers-ts/test/purchased-label-storage-runner-source-continuity.test.ts",
+      "bytes": 3237,
+      "sha256": "464275660013b518831ba9c67af3a226de73b2c2f3dd1f30c8af54a04ec2afdc"
+    },
+    {
+      "file": "workers-ts/vitest.purchased-label-operations-browser.config.ts",
+      "bytes": 573,
+      "sha256": "3fdcc2e0bf078b147fb76688dd2fc191bdbab3a03fed71c3925827819b595a90"
+    }
+  ]
+}

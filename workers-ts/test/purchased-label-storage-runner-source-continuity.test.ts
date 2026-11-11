@@ -1,3 +1,4 @@
+import { projectPurchasedLabelOperationsPredecessor } from './helpers/purchasedLabelOperationsSourceContinuity';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -8,7 +9,7 @@ import { projectOutLabelRunnerPredecessor } from './helpers/outProductLabelRunne
 import { projectProviderTransportPredecessor } from './helpers/providerTransportSourceContinuity';
 import { projectPurchasedLabelAuthorPredecessor } from './helpers/purchasedLabelAuthorSourceContinuity';
 const root = resolve(import.meta.dirname, '../..'), physical = readFileSync(resolve(root, file), 'utf8');
-const native = projectPurchasedLabelAuthorPredecessor(file, physical);
+const native = projectPurchasedLabelAuthorPredecessor(file, projectPurchasedLabelOperationsPredecessor(file, physical));
 const admission = "    'test/purchased-product-label-storage-native.test.ts',\n";
 // Fixed Git image metadata was independently checked against fc568ece locally.
 // No new shallow-CI commit supply dependency is introduced by this successor.

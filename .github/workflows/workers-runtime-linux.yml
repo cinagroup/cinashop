@@ -472,7 +472,7 @@ jobs:
       - name: Verify grouped Admin navigation
         if: matrix.directory == 'admin-ts'
         working-directory: view/admin-ts
-        run: npm run test:admin-navigation
+        run: npm run test:admin-navigation && npm run test:purchased-label-tasks
 
       - name: Verify Admin user filters
         if: matrix.directory == 'admin-ts'

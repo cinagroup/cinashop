@@ -50,7 +50,8 @@
     "test:parameter-author": "node --max-old-space-size=1024 --test --test-concurrency=1 scripts/parameter-author-page-runtime.test.cjs",
     "test:ensure-author": "node --max-old-space-size=1024 --test --test-concurrency=1 scripts/ensure-author-page-runtime.test.cjs",
     "test:hotword-author": "node --max-old-space-size=1024 --test --test-concurrency=1 scripts/hotword-author-page-runtime.test.cjs",
-    "test:product-label-author": "node --max-old-space-size=1024 --test --test-concurrency=1 scripts/product-label-author-page-runtime.test.cjs"
+    "test:product-label-author": "node --max-old-space-size=1024 --test --test-concurrency=1 scripts/product-label-author-page-runtime.test.cjs",
+    "test:purchased-label-tasks": "node --test --test-concurrency=1 scripts/purchased-label-tasks-runtime.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",

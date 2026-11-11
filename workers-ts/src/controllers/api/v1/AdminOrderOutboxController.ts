@@ -137,7 +137,7 @@ export async function orderQueueDeadLetterResolve(c: C) {
 export async function orderPurchasedLabelList(c: C) {
   const q = c.req.query();
   return jsonOk(c, await new PurchasedProductLabelTaskService(c.get('container'), c.env).list({
-    status: q.status || undefined, afterId: q.after_id || undefined, limit: positiveInt(q.limit, '每页数量'),
+    status: q.status || undefined, afterId: q.after_id || undefined, taskId: q.task_id || undefined, limit: positiveInt(q.limit, '每页数量'),
   }));
 }
 export async function orderPurchasedLabelReplay(c: C) {
