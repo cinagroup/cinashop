@@ -1,0 +1,294 @@
+{
+  "schema": "php-ts-out-product-parameters/v1",
+  "baseCommit": "25acfcd22940fe4d84bac90afd76c3ffe2897740",
+  "preparedAt": "2026-11-11T12:18:30.380896+00:00",
+  "phpSources": [
+    {
+      "file": "app/controller/out/Product.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "5a55a3a43001325abfd36cee3c6af3e3b45cac66",
+      "sha256": "a52f6c6392594116e66803572a67e6c15d424fa13eac48df6bc9d7a6ef01c24a",
+      "lineRanges": [
+        [
+          240,
+          241
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/product/StoreProductServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "f8163c25f694dd0ff84486d89926ef004ba9e81e",
+      "sha256": "edf89202f65c2f6b161dbbccdb7cc68ef6270ae31c11afe91ab26aa285722943",
+      "lineRanges": [
+        [
+          750,
+          759
+        ],
+        [
+          818,
+          833
+        ]
+      ]
+    },
+    {
+      "file": "app/services/product/specs/StoreProductSpecsServices.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "bd52d19096814a7cea9413eb790897482b8b3121",
+      "sha256": "dc3eb604655408100bce17cb088cb012a889827452eef6777510dfa96698409b",
+      "lineRanges": [
+        [
+          32,
+          41
+        ],
+        [
+          68,
+          79
+        ]
+      ]
+    },
+    {
+      "file": "app/listener/product/CreateSuccess.php",
+      "commit": "8ed2a5b139f9170dd11b0dff91803f2fd59e40a5",
+      "gitBlobSha1": "1db3d791f0db7ec5da1515e9bd2570ccaa16075f",
+      "sha256": "06402ea2098c72255c99b63e005324651f1ea0ec53c1b742812de746c3c6ff70",
+      "lineRanges": [
+        [
+          44,
+          52
+        ]
+      ]
+    }
+  ],
+  "scope": [
+    "Platform Out specs_id/specs pair, optional omission and explicit clear",
+    "PHP five-field self-authored snapshot; platform group3 owner0 template admission",
+    "Atomic scalar/type6/other metadata/unchanged relation-version/receipt assertions including deferred damage",
+    "Existing stock/SKU identities and old request replay preserved",
+    "Read-only legacy bytes and additive consistency/availability projection"
+  ],
+  "validation": {
+    "unit": {
+      "numTotalTests": 115,
+      "numPassedTests": 115,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "native": {
+      "native-checkout-compatibility": {
+        "passed": 58,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      },
+      "native-final": {
+        "passed": 69,
+        "failed": 0,
+        "skipped": 0,
+        "remainingOwnedFixtures": 0
+      }
+    },
+    "profiles": [
+      {
+        "profile": "unit-final",
+        "exit": 0,
+        "seconds": 20.022,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-unit-types",
+        "exit": 0,
+        "seconds": 264.323,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "worker-runtime-types",
+        "exit": 0,
+        "seconds": 110.995,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-checkout-compatibility",
+        "exit": 0,
+        "seconds": 468.093,
+        "budgetSeconds": 600
+      },
+      {
+        "profile": "native-final",
+        "exit": 0,
+        "seconds": 554.048,
+        "budgetSeconds": 600
+      }
+    ],
+    "originalNativeAssertionsRetainedByteForByte": true,
+    "originalNativeChildBudgetSeconds": 600
+  },
+  "unchangedInputs": [
+    {
+      "file": ".github/workflows/workers-runtime-linux.yml",
+      "bytes": 21550,
+      "sha256": "94f08a84a76181eb0f0229f0f82d1f731b9c39ebbe09b5ceebb4ae3741d6cac6"
+    },
+    {
+      "file": "workers-ts/scripts/run-local-finance-postgres.mjs",
+      "bytes": 139955,
+      "sha256": "32c5fff9c6dbfaa30720fbd72dd729a3ea7a1e7fc3a02be5515fb541af55a074"
+    },
+    {
+      "file": "workers-ts/src/migrations/runtimeBusinessPrivilegePlan.ts",
+      "bytes": 18783,
+      "sha256": "4044d51930d72620f9d124c375779e37a99fdfb8e8c815cf2cb30420080d4324"
+    },
+    {
+      "file": "workers-ts/src/services/supplier/SupplierProductParameterBindings.ts",
+      "bytes": 9591,
+      "sha256": "217e008dd0143672b22df8406d285c6df1d15e269505497963059c95a5a5eef7"
+    }
+  ],
+  "candidateImages": [
+    {
+      "file": "workers-ts/docs/php-ts-out-product-parameters-20261111.md",
+      "bytes": 3225,
+      "sha256": "25bc90687cdfcfb435d8b1126aa45e343c201ec792497f8dc280af4c5b50af32"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductDetailRead.ts",
+      "bytes": 13617,
+      "sha256": "a08625fbd50efaaabea999d4786702e14690e78d168f5029e64c4cda013faaf2"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductParameterBindings.ts",
+      "bytes": 5530,
+      "sha256": "a403b91441f1a90ac475e06489d170d303f901461c43542afedcf8b7ba4e2502"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductRelationFence.ts",
+      "bytes": 2919,
+      "sha256": "b760fb15b1f6251908c03d75f679002f7b06d1b1cfc54c1ed44c148121ed0f4d"
+    },
+    {
+      "file": "workers-ts/src/services/out/OutProductService.ts",
+      "bytes": 36260,
+      "sha256": "281a07f9375f8ffd7b43dc852e5fb96a6faa4bf2e028d3ed53ce6ab985765db1"
+    },
+    {
+      "file": "workers-ts/test/out-product-labels-postgres.test.ts",
+      "bytes": 62667,
+      "sha256": "c9e8033b4d47743ce433af6db90f5896bf70161415f6801ca6c5905633cdab4c"
+    },
+    {
+      "file": "workers-ts/test/out-product-parameters.test.ts",
+      "bytes": 4049,
+      "sha256": "a040ea3fcd5bda1976ebbebf62f5973c6d9d5fb7827cca21c3e682ae3569aa4a"
+    }
+  ],
+  "retainedFailures": [
+    {
+      "file": "initial-command-config-failure.log",
+      "reason": "Nonexistent vitest.unit.config.ts; startup failed before any test."
+    },
+    {
+      "file": "native-initial.log",
+      "passed": 65,
+      "failed": 1,
+      "reason": "New creation fixture supplied a SKU unique longer than the existing eight-character contract."
+    },
+    {
+      "file": "native-sequence-fixture-failure.log",
+      "passed": 68,
+      "failed": 1,
+      "reason": "New creation fixture had manually seeded IDs without advancing product/SKU sequences; corrected using the original creation fixture setup."
+    }
+  ],
+  "runtimeBoundary": "Actual Hono/Out handlers/services and independent PG16 databases. Out middleware identity is synthetic; parameter update/read also uses a genuine non-elevated LOGIN with the current static App privilege plan projected in the disposable database. This is not a production role-installation or real customer authentication proof.",
+  "parentCI": {
+    "commit": "25acfcd22940fe4d84bac90afd76c3ffe2897740",
+    "runId": 43007994393,
+    "url": "https://github.com/cinagroup/cinashop/actions/runs/43007994393",
+    "conclusion": "failure",
+    "allFrontendGroups": "success",
+    "workerRuntime": "success",
+    "migrationCatalog": "success",
+    "secretScan": "success",
+    "remainingFailure": "Required fixed legacy PHP checkout in both Worker shards"
+  },
+  "boundaries": {
+    "noSchemaMigration": true,
+    "noRunnerAdmissionChange": true,
+    "noWorkflowOrBudgetChange": true,
+    "noProductionGrantChange": true,
+    "providerRequestsInOutNativeAcceptance": 0,
+    "deploymentPerformed": false,
+    "legacyPhpUploaded": false,
+    "newCommitRemoteCIVerified": false,
+    "wholeMigrationComplete": false
+  },
+  "artifactDirectory": "/tmp/php-ts-out-product-parameters-20261111",
+  "artifacts": [
+    {
+      "name": "candidate-plan.json",
+      "bytes": 1201,
+      "sha256": "469d4bab8f28a0ee516d5fe74864fc42d4e3077ce3c176507b057a07557119a7"
+    },
+    {
+      "name": "followup-progress.json",
+      "bytes": 550,
+      "sha256": "9a728f9e81adf3688c815876c70def7761fe813855c962d726c653610597fd3d"
+    },
+    {
+      "name": "unit-final.json",
+      "bytes": 57092,
+      "sha256": "662f435d3fab041378c5fee75f0008b3437fe777700870931ac79c15f67ea9e3"
+    },
+    {
+      "name": "unit-final.log",
+      "bytes": 428,
+      "sha256": "dd6cc88b19679e4bb884802f3fd4c9c802278cbc44b0deff5c572292d23fc6fb"
+    },
+    {
+      "name": "worker-unit-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "worker-runtime-types.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "native-checkout-compatibility.log",
+      "bytes": 1398,
+      "sha256": "270aa1a01c5b5d0e02ae0ea4343e420b2abd0f64cad715fb2befe8939e0ee467"
+    },
+    {
+      "name": "native-final.log",
+      "bytes": 1393,
+      "sha256": "3b713a982dbc955df7f06ccb1d6a6f0a0855a9696382fe1558beb95270dafebd"
+    },
+    {
+      "name": "native-initial.log",
+      "bytes": 2701,
+      "sha256": "d3fee3040fec34e790fe547537ba009925ab5c6b327f19dd62decb3856254325"
+    },
+    {
+      "name": "native-sequence-fixture-failure.log",
+      "bytes": 3468,
+      "sha256": "731590480e9425503842025e70060895e557472067a027ec573cfbdd0dc5a8c2"
+    },
+    {
+      "name": "candidate-sequence-fixture-failure.json",
+      "bytes": 1201,
+      "sha256": "fce0ed4dceda4957bade1e41cc881da067357512d26a9b7354521e586cd8e5a3"
+    },
+    {
+      "name": "initial-command-config-failure.log",
+      "bytes": 2237,
+      "sha256": "75c628310f3a850e378cbe10ba0eca9b6933002c7b371b1c4fafaf66e34d2132"
+    },
+    {
+      "name": "php-source-identity.json",
+      "bytes": 1438,
+      "sha256": "1dec1f9a83480d43c73c922242ea343f884372613d43894fdad456fd1e37cc8d"
+    }
+  ]
+}

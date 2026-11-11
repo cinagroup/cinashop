@@ -27,9 +27,10 @@ import { supplierProductBrandInput, lockSupplierProductBrandPath } from '@/servi
 import { assertOutProductBrandBindings, replaceOutProductBrandBindings } from './OutProductBrandBindings';
 import { supplierProductEnsureInput } from '@/services/supplier/SupplierProductEnsureBindings';
 import { assertOutProductEnsureBindings, lockOutProductEnsures, replaceOutProductEnsureBindings } from './OutProductEnsureBindings';
-import { captureOutProductRelationFence } from './OutProductRelationFence';
+import { captureOutProductRelationFence, assertOutProductRelationFence } from './OutProductRelationFence';
 import { readOutProductDetail } from './OutProductDetailRead';
 import { outProductLabelInput, lockOutProductLabels, replaceOutProductLabelBindings, assertOutProductLabelBindings } from './OutProductLabelBindings';
+import { outProductParameterInput, lockOutProductParameterTemplate, replaceOutProductParameterBindings, assertOutProductParameterBindings } from './OutProductParameterBindings';
 
 type UnknownRecord = Record<string, unknown>;
 type ProductWriteOperation = "product_create" | "product_update" | "product_show" | "stock_upload";
@@ -52,6 +53,7 @@ interface OutPhysicalProductInput extends SupplierPhysicalProductInput {
   ensureIds?: number[];
   storeLabelIds?: number[];
   userLabelIds?: number[];
+  parameters?: NonNullable<ReturnType<typeof outProductParameterInput>>;
   deliveryType: string;
   freight: 1 | 2 | 3;
   isShow: 0 | 1;
@@ -162,8 +164,6 @@ function rejectUnmigratedProductFeatures(input: UnknownRecord): void {
     "presale_time",
     "recommend",
     "recommend_list",
-    "specs",
-    "specs_id",
   ].filter((key) => nonEmpty(input[key]));
   if (unsupported.length > 0) {
     throw new ValidateException(`以下商品能力尚未迁移，不能静默丢弃：${unsupported.join(",")}`);
@@ -208,10 +208,12 @@ export function normalizeOutPhysicalProductInput(input: UnknownRecord): OutPhysi
   }));
   const brandIds = supplierProductBrandInput(input);
   const ensureIds = supplierProductEnsureInput(input);
+  const parameters = outProductParameterInput(input);
   return {
     ...base,
     ...(brandIds === undefined ? {} : { brandIds }),
     ...(ensureIds === undefined ? {} : { ensureIds }),
+    ...(parameters === undefined ? {} : { parameters }),
     ...outProductLabelInput(input),
     sliderImages,
     skus,
@@ -397,7 +399,7 @@ export class OutProductService {
     const input = normalizeOutPhysicalProductInput(rawInput);
     const brandIds = input.brandIds;
     const ensureIds = input.ensureIds;
-    const { storeLabelIds, userLabelIds } = input;
+    const { storeLabelIds, userLabelIds, parameters } = input;
     const operation: ProductWriteOperation = productId > 0 ? "product_update" : "product_create";
     const hash = await outRequestHash({ operation, productId, input });
     return withTx(this.container, async (tx) => {
@@ -476,11 +478,14 @@ export class OutProductService {
         : await inventoryLock(() => lockOutProductLabels(tx, 'product', storeLabelIds));
       const admittedUserLabels = userLabelIds === undefined ? undefined
         : await inventoryLock(() => lockOutProductLabels(tx, 'user', userLabelIds));
+      const admittedParameters = parameters === undefined ? undefined
+        : await inventoryLock(() => lockOutProductParameterTemplate(tx, parameters.specs_id));
       const productValues = {
         ...(brandIds === undefined ? {} : { brandId: brandIds.at(-1) ?? 0, brandCom: brandIds.join(',') }),
         ...(ensureIds === undefined ? {} : { ensureId: ensureIds.join(',') }),
         ...(storeLabelIds === undefined ? {} : { storeLabelId: storeLabelIds.join(',') }),
         ...(userLabelIds === undefined ? {} : { labelId: userLabelIds.join(',') }),
+        ...(parameters === undefined ? {} : { specsId: parameters.specs_id, specs: parameters.specs.length ? JSON.stringify(parameters.specs) : '' }),
         productType: PHYSICAL_PRODUCT_TYPE,
         type: PLATFORM_TYPE,
         relationId: PLATFORM_RELATION_ID,
@@ -528,10 +533,9 @@ export class OutProductService {
         autoOffTime: input.isShow ? 0 : (existing?.autoOffTime ?? 0),
       } as const;
 
-      const relationFence = [brandIds, ensureIds, storeLabelIds, userLabelIds].every(ids => ids === undefined) ? undefined
-        : await inventoryLock(() => captureOutProductRelationFence(tx, existing,
+      const relationFence = await inventoryLock(() => captureOutProductRelationFence(tx, existing,
           [1, ...(brandIds === undefined ? [] : [2]), ...(storeLabelIds === undefined ? [] : [3]),
-            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5])]));
+            ...(userLabelIds === undefined ? [] : [4]), ...(ensureIds === undefined ? [] : [5]), ...(parameters === undefined ? [] : [6])]));
       let savedProductId = productId;
       if (existing) {
         await tx.update(storeProduct).set(productValues).where(eq(storeProduct.id, productId));
@@ -647,6 +651,8 @@ export class OutProductService {
         : await inventoryLock(() => replaceOutProductLabelBindings(tx, savedProductId, admittedProductLabels, relationFence!));
       const userLabelProof = admittedUserLabels === undefined ? undefined
         : await inventoryLock(() => replaceOutProductLabelBindings(tx, savedProductId, admittedUserLabels, relationFence!));
+      const parameterProof = parameters === undefined ? undefined
+        : await inventoryLock(() => replaceOutProductParameterBindings(tx, savedProductId, parameters, admittedParameters, relationFence));
       await recordReplay(tx, account.id, operation, key, hash, savedProductId);
       if (brandProof) {
         await inventoryLock(() => assertOutProductBrandBindings(tx, brandProof));
@@ -655,6 +661,9 @@ export class OutProductService {
       if (ensureProof) await inventoryLock(() => assertOutProductEnsureBindings(tx, ensureProof));
       if (productLabelProof) await inventoryLock(() => assertOutProductLabelBindings(tx, productLabelProof));
       if (userLabelProof) await inventoryLock(() => assertOutProductLabelBindings(tx, userLabelProof));
+      if (parameterProof) await inventoryLock(() => assertOutProductParameterBindings(tx, parameterProof));
+      await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`);
+      await inventoryLock(() => assertOutProductRelationFence(tx, relationFence));
       return { id: savedProductId, idempotent: false, stock_preserved: !!existing };
     });
   }

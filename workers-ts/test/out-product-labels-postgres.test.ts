@@ -491,4 +491,127 @@ describe.runIf(Boolean(process.env.TEST_FINANCE_POSTGRES_URL))('real PG16 Out pr
     }
   });
 
+  // Continue the existing admitted Out metadata acceptance file. The original
+  // label/detail assertions above remain intact; no runner admission changes.
+  const parameters = [{ id: 999, temp_id: 888, name: ' 材质 ', value: ' 自写棉 ', sort: -2 }];
+  const parameterBody = () => ({ ...combined(), specs_id: 600, specs: parameters });
+  const seedParameters = () => f.db.insert(legacyCategory).values([
+    { id: 600, name: '平台参数', group: 3 }, { id: 601, name: '供应商参数', group: 3, type: 2, relationId: 44 },
+    { id: 602, name: '错误分组', group: 2 }, { id: 603, name: '错误维护归属', group: 3, ownerId: 7 },
+    { id: 604, name: '错误平台归属', group: 3, relationId: 44 }, { id: 605, name: '伪平台供应商', group: 3, type: 2 },
+    { id: 606, name: '隐藏的参数模板', group: 3, isShow: 0 },
+  ]);
+  it('creates a genuine Out product with a five-key parameter snapshot and a type6 relation in its original receipt', async () => {
+    await seedParameters();
+    await f.exec("SELECT setval(pg_get_serial_sequence('store_product','id'),70,true); SELECT setval(pg_get_serial_sequence('store_product_attr_value','id'),1,true)");
+    const input = { ...parameterBody(), attrs: body.attrs.map(row => ({ ...row, unique: 'parmnew1', bar_code: 'PARAM-NEW' })) };
+    const saved = await request(f.db, input, operationId, '/outapi/product', 'POST'); expect(saved.status, saved.msg).toBe(200);
+    const created = await f.db.select().from(storeProduct).where(eq(storeProduct.id, saved.data.id));
+    expect(created[0]).toMatchObject({ specsId: 600, specs: JSON.stringify(parameters), stock: 999 });
+    const read = await request(f.db, undefined, operationId, '/outapi/product/'+saved.data.id, 'GET');
+    expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ specs_id: 600, specs_selection: { consistent: true, available: true }, productInfo: { specs_id: 600, specs: parameters } });
+    const before = await state(), replay = await request(f.db, input, operationId, '/outapi/product', 'POST');
+    expect(replay.data).toMatchObject({ id: saved.data.id, idempotent: true }); expect(await state()).toEqual(before);
+  }, 20_000);
+  it('atomically replaces parameters with all metadata, preserves existing stock and replays before later template admission', async () => {
+    await seedParameters(); const before = await state(), untouched = await protectedRows([1, 2, 3, 4, 5, 6]);
+    const saved = await request(f.db, parameterBody()); expect(saved.status, saved.msg).toBe(200);
+    const after = await state(); expect(after.products[0]).toMatchObject({ specsId: 600, specs: JSON.stringify(parameters), brandCom: '30,31', ensureId: '92', storeLabelId: '101,102', labelId: '201,202' });
+    expect(after.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales])).toEqual(before.skus.map(row => [row.id, row.unique, row.stock, row.sumStock, row.sales]));
+    expect(after.orders).toEqual(before.orders); expect(after.bills).toEqual(before.bills); expect(await protectedRows([1, 2, 3, 4, 5, 6])).toEqual(untouched);
+    await f.db.update(legacyCategory).set({ type: 2, relationId: 44 }).where(eq(legacyCategory.id, 600));
+    const retained = await state(), replay = await request(f.db, parameterBody()); expect(replay.status, replay.msg).toBe(200); expect(replay.data.idempotent).toBe(true); expect(await state()).toEqual(retained);
+    const conflict = await request(f.db, { ...parameterBody(), specs: [{ ...parameters[0], value: '不同意图' }] }); expect(conflict.status).not.toBe(200); expect(await state()).toEqual(retained);
+    const fresh = await request(f.db, parameterBody(), crypto.randomUUID()); expect(fresh.status).not.toBe(200); expect(await state()).toEqual(retained);
+  }, 20_000);
+  it('preserves omitted parameter bytes and relation versions without reading the template catalog', async () => {
+    await seedParameters(); const saved = await request(f.db, parameterBody()); expect(saved.status, saved.msg).toBe(200);
+    const before = await protectedRows([1]), product = (await state()).products[0];
+    await f.exec('ALTER TABLE category RENAME TO hidden_out_parameter_category');
+    try {
+      const result = await request(f.db, body, crypto.randomUUID()); expect(result.status, result.msg).toBe(200);
+      expect(await protectedRows([1])).toEqual(before);
+      const [after] = await f.db.select().from(storeProduct).where(eq(storeProduct.id, 70)); expect([after.specsId, after.specs]).toEqual([product.specsId, product.specs]);
+    } finally { await f.exec('ALTER TABLE hidden_out_parameter_category RENAME TO category'); }
+  }, 20_000);
+  it('clears only the explicit type6 selection and also accepts unbound custom snapshots and hidden platform templates', async () => {
+    await seedParameters(); const before = await protectedRows([1, 6]);
+    for (const input of [{ specs_id: 0, specs: [] }, { specs_id: 0, specs: parameters }, { specs_id: 606, specs: parameters }]) {
+      const result = await request(f.db, { ...body, ...input }, crypto.randomUUID()); expect(result.status, result.msg).toBe(200);
+      expect(await protectedRows([1, 6])).toEqual(before);
+      const read = await detail(); expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ specs_id: input.specs_id, specs_selection: { consistent: true, available: true }, productInfo: { specs: input.specs } });
+    }
+    for (const show of [0, 1]) {
+      const changed = await request(f.db, undefined, crypto.randomUUID(), '/outapi/product/set_show/70/'+show, 'PUT'); expect(changed.status, changed.msg).toBe(200);
+      const read = await detail(); expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ specs_selection: { consistent: true, available: true } });
+    }
+  }, 20_000);
+  it.each([601, 602, 603, 604, 605, 999])('rejects missing or foreign parameter template %i with no partial writes', async id => {
+    await seedParameters(); const before = await state();
+    const result = await request(f.db, { ...parameterBody(), specs_id: id }); expect(result.status).not.toBe(200); expect(result.msg).toContain('参数模板'); expect(await state()).toEqual(before);
+  });
+  it('fails refreshably on a real separate-session parameter template lock without changing the business snapshot', async () => {
+    await seedParameters(); await peers(async ([holder, writer]) => {
+      await holder.exec('BEGIN; SELECT id FROM category WHERE id=600 FOR UPDATE'); const before = await state();
+      try { const result = await request(writer.db, parameterBody()); expect(result.status).not.toBe(200); expect(result.msg).toMatch(/变化|重试/); expect(await state()).toEqual(before); }
+      finally { await holder.exec('ROLLBACK'); }
+    });
+  }, 20_000);
+  it.each(['template', 'snapshot', 'unowned relation', 'owned brand'])('rolls the entire save and receipt back when the parameter writer corrupts %s', async kind => {
+    await seedParameters(); const before = await state();
+    const damage = kind === 'template' ? "UPDATE category SET name='被触发器改写' WHERE id=600;"
+      : kind === 'snapshot' ? "UPDATE store_product SET specs='[]' WHERE id=70;" : kind === 'owned brand' ? "UPDATE store_product SET brand_id=40,brand_com='40' WHERE id=70;" : 'UPDATE store_product_relation SET status=1 WHERE id=1006;';
+    await f.exec(`CREATE FUNCTION test_out_parameters_damage() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN ${damage} RETURN NEW; END $$; CREATE TRIGGER test_out_parameters_damage AFTER INSERT ON store_product_relation FOR EACH ROW WHEN(NEW.type=6) EXECUTE FUNCTION test_out_parameters_damage()`);
+    const result = await request(f.db, parameterBody()); expect(result.status).not.toBe(200); expect(await state()).toEqual(before);
+  });
+  it('detects parameter damage by the final receipt writer, including an omitted-field update', async () => {
+    await seedParameters(); const saved = await request(f.db, parameterBody()); expect(saved.status, saved.msg).toBe(200);
+    await f.exec("CREATE FUNCTION test_out_parameters_receipt() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE store_product SET specs_id=606,specs='[]' WHERE id=70; RETURN NEW; END $$; CREATE CONSTRAINT TRIGGER test_out_parameters_receipt AFTER INSERT ON out_product_write_replay DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION test_out_parameters_receipt()");
+    const before = await state();
+    for (const input of [parameterBody(), body]) { const result = await request(f.db, input, crypto.randomUUID()); expect(result.status).not.toBe(200); expect(await state()).toEqual(before); }
+  }, 20_000);
+  it('keeps raw legacy parameter history and reports inconsistent or foreign selections without read repair', async () => {
+    await seedParameters();
+    for (const value of [{ specsId: 600, specs: 'broken snapshot' }, { specsId: 601, specs: JSON.stringify(parameters) }]) {
+      await f.db.update(storeProduct).set(value).where(eq(storeProduct.id, 70));
+      await f.db.update(storeProductRelation).set({ relationId: value.specsId }).where(eq(storeProductRelation.id, 1005));
+      const before = await state(), read = await detail(); expect(read.status, read.msg).toBe(200);
+      expect(read.data).toMatchObject({ specs: value.specs, specs_selection: { specs_id: value.specsId, specs: value.specs, available: false } }); expect(await state()).toEqual(before);
+    }
+  });
+  it('reads parameter snapshots, type6 identity and template authority from one real repeatable-read snapshot', async () => {
+    await seedParameters(); const saved = await request(f.db, parameterBody()); expect(saved.status, saved.msg).toBe(200);
+    await peers(async ([holder, reader]) => {
+      await holder.exec('BEGIN; LOCK TABLE store_product_relation IN ACCESS EXCLUSIVE MODE'); const pending = detail(reader.db);
+      try { await waitForFinanceBlock(f.db, reader.pid, holder.pid); await holder.exec("UPDATE store_product SET specs_id=606,specs='[]' WHERE id=70; UPDATE store_product_relation SET relation_id=606 WHERE product_id=70 AND type=6; UPDATE category SET type=2,relation_id=44 WHERE id=600"); }
+      finally { await holder.exec('COMMIT'); }
+      const old = await pending; expect(old.status, old.msg).toBe(200); expect(old.data).toMatchObject({ specs_id: 600, specs: JSON.stringify(parameters), specs_selection: { consistent: true, available: true } });
+      const current = await detail(reader.db); expect(current.status, current.msg).toBe(200); expect(current.data).toMatchObject({ specs_id: 606, specs: '[]', specs_selection: { consistent: true, available: true } });
+    });
+  }, 20_000);
+  it('refuses reusing an omitted-field receipt key for an explicit parameter clear after upgrade', async () => {
+    const saved = await request(f.db, body); expect(saved.status, saved.msg).toBe(200); const before = await state();
+    const cleared = await request(f.db, { ...body, specs_id: 0, specs: [] }); expect(cleared.status).not.toBe(200); expect(await state()).toEqual(before);
+  });
+  it('uses the existing App plan on a genuine independent LOGIN for parameter save and read without changing catalog contents', async () => {
+    await seedParameters(); if (!owned.withRuntimeRole) throw Error('Actual restricted LOGIN required');
+    const catalog = await f.db.select().from(legacyCategory).orderBy(legacyCategory.id);
+    await owned.withRuntimeRole(async runtime => {
+      const plan = runtimeBusinessPrivilegePlan('app'), quote = (name: string) => { if (!/^[a-z_][a-z_0-9]*$/.test(name)) throw Error('Unexpected owned identifier'); return `"${name}"`; };
+      const tables = await f.db.execute<{ name: string }>(sql`SELECT relname AS name FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' ORDER BY relname`);
+      for (const { name } of tables) {
+        const rights = plan.tables[name]; if (!rights) continue;
+        await f.exec(`GRANT ${rights.join(',')} ON public.${quote(name)} TO ${quote(runtime.role)}`);
+        const columns = plan.updateColumns[name]; if (columns?.length) await f.exec(`GRANT UPDATE(${columns.map(quote).join(',')}) ON public.${quote(name)} TO ${quote(runtime.role)}`);
+      }
+      const sequences = await f.db.execute<{ table_name: string; sequence_name: string | null }>(sql`SELECT c.relname AS table_name,pg_get_serial_sequence('public.'||quote_ident(c.relname),a.attname) AS sequence_name FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped WHERE c.relnamespace='public'::regnamespace AND c.relkind='r'`);
+      for (const row of sequences) if (row.sequence_name && plan.tables[row.table_name]?.includes('INSERT')) { const parts = row.sequence_name.split('.'); if (parts.length !== 2 || parts[0] !== 'public') throw Error('Unexpected owned sequence'); await f.exec(`GRANT USAGE ON SEQUENCE public.${quote(parts[1])} TO ${quote(runtime.role)}`); }
+      const [identity] = await runtime.db.execute(sql`SELECT current_user AS role,session_user AS session,(SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls FROM pg_roles WHERE rolname=current_user) AS elevated`);
+      expect(identity).toEqual({ role: runtime.role, session: runtime.role, elevated: false });
+      const saved = await request(runtime.db, parameterBody()); expect(saved.status, saved.msg).toBe(200);
+      const read = await detail(runtime.db); expect(read.status, read.msg).toBe(200); expect(read.data).toMatchObject({ specs_id: 600, specs_selection: { consistent: true, available: true } });
+    });
+    expect(await f.db.select().from(legacyCategory).orderBy(legacyCategory.id)).toEqual(catalog);
+  }, 20_000);
+
 });
